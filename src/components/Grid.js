@@ -48,7 +48,7 @@ export default class Grid extends PureComponent {
       .filter(entity => (
         new RegExp(query, 'i').test(entity.title) ||
         new RegExp(query, 'i').test(entity.original_title) ||
-        new RegExp(query, 'i').test(entity.state)
+        query.substring(1) === entity.state // :wished|:archived
       ))
 
     return (!filtered.length ? (
