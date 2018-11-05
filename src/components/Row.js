@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import Movie from 'components/Movie'
-import TMDB from 'store/services/tmdb'
+import TMDB from 'shared/services/TMDB'
 import theme from 'theme'
 
 const styles = {

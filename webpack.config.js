@@ -1,6 +1,5 @@
 const path = require('path')
 const dotenv = require('dotenv-webpack')
-const html = require('html-webpack-plugin')
 
 module.exports = {
   entry: ['@babel/polyfill', 'reset-css', path.resolve(__dirname, 'src', 'index.js')],
@@ -35,11 +34,11 @@ module.exports = {
       path.join(__dirname, 'src'),
       'node_modules',
     ],
+    alias: {
+      shared: path.join(__dirname, 'shared'),
+    }
   },
   plugins: [
     new dotenv(),
-    new html({
-      template: path.join(__dirname, 'src', 'views', 'index.html'),
-    }),
   ],
 }

@@ -1,0 +1,16 @@
+Usage: sensorr [command] [options]
+
+Commands:
+  🔍 search <query>      Search for <query> movie in TMDB and manage it or look for releases
+  📼 record              Automatically loop your wished movies and try to download best release
+  📚 manage              Manage your movies library (change movie state, look for releases)
+
+Options:
+  -d, --db <url>         Use PouchDB <url> to sync database [default: http://localhost:5984]
+  -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
+  -f, --filter <regexp>  Filter releases returned by configured XZNAB
+  -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
+  -D, --descending       Sort releases in descending order
+  -a, --auto             Automatically select first release according to --filter, --sort and --descending options
+  -h, --help             Output usage information
+  -v, --version          Output the version number

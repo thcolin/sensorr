@@ -1,0 +1,17 @@
+{
+  "db": "http://localhost:5984",
+  "blackhole": "/tmp",
+  "xznabs": [
+    {
+      "name": "Cardigann",
+      "url": "http://localhost:5060/torznab/aggregate",
+      "key": ""
+    }
+  ],
+  "filter": "resolution=720p|1080p, language=TRUEFRENCH|FRENCH|MULTi",
+  "sort": "seeders",
+  "descending": false,
+  "auth": {
+    "sensorr": "sensorr"
+  }
+}

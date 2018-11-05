@@ -2,16 +2,12 @@ import React, { PureComponent } from 'react'
 import Row from 'components/Row'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
-import TMDB from 'store/services/tmdb'
-import XZNAB from 'store/services/xznab'
+import TMDB from 'shared/services/TMDB'
+import history from 'store/history'
 import filesize from 'filesize'
 import database from 'store/database'
+import config from 'store/config'
 import theme from 'theme'
-
-const xznab = new XZNAB({
-  base: '',
-  key: ''
-})
 
 const styles = {
   element: {
@@ -176,22 +172,7 @@ export default class Movie extends PureComponent {
       sorting: 'Title',
       reverse: false,
       unpinned: true,
-      query: '1080p|720p, TRUEFRENCH|FRENCH|MULTi',
-    }
-
-    this.filter = (a) => this.state.query.split(', ').length === this.state.query.split(', ')
-      .map(query => new RegExp(`(${query})`, 'i').test(a.Title))
-      .reduce((total, current) => total += current, 0)
-
-    this.sort = (a, b) => {
-      if (this.state.reverse) {
-        if (a[this.state.sorting] < b[this.state.sorting]) return 1;
-        if (a[this.state.sorting] > b[this.state.sorting]) return -1;
-      } else {
-        if (a[this.state.sorting] < b[this.state.sorting]) return -1;
-        if (a[this.state.sorting] > b[this.state.sorting]) return 1;
-      }
-      return 0;
+      query: config.filter,
     }
 
     this.look = this.look.bind(this)
@@ -201,7 +182,7 @@ export default class Movie extends PureComponent {
   }
 
   async componentDidMount() {
-    document.getElementById('movie').scrollIntoView()
+    setTimeout(() => document.getElementById('movie').scrollIntoView(), 200)
 
     try {
       const entity = await TMDB.fetch(['movie', this.props.match.params.id])
@@ -211,7 +192,9 @@ export default class Movie extends PureComponent {
       const db = await database.get()
       const doc = await db.movies.findOne().where('id').eq(entity.id.toString()).exec()
       this.setState({ doc: doc.toJSON() })
-    } catch(e) {}
+    } catch(e) {
+      history.push('/')
+    }
   }
 
   async componentDidUpdate(props) {
@@ -236,6 +219,7 @@ export default class Movie extends PureComponent {
         id: this.state.entity.id.toString(),
         title: this.state.entity.title,
         original_title: this.state.entity.original_title,
+        year: new Date(this.state.entity.release_date).getFullYear(),
         poster_path: this.state.entity.poster_path,
         state: 'wished',
       })
@@ -246,6 +230,7 @@ export default class Movie extends PureComponent {
         id: this.state.entity.id.toString(),
         title: this.state.entity.title,
         original_title: this.state.entity.original_title,
+        year: new Date(this.state.entity.release_date).getFullYear(),
         poster_path: this.state.entity.poster_path,
         state: 'archived',
       })
@@ -270,32 +255,34 @@ export default class Movie extends PureComponent {
 
   look() {
     const { entity } = this.state
+
     this.setState({ results: [], unpinned: false, loading: true, })
-
     setTimeout(() => document.getElementById('results').scrollIntoView(), 200)
+    this.setState({ loading: false })
 
-    xznab.search(entity.title)
-      .then(localized => {
-        setTimeout(() => document.getElementById('results').scrollIntoView(), 500)
-
-        if (entity.title !== entity.original_title) {
-          return xznab.search(entity.original_title)
-            .then(original => this.setState({
-              results: [
-                ...localized.Items,
-                ...original.Items.filter(item => !localized.Items.map(x => x.Title).includes(item.Title)),
-              ],
-              loading: false,
-            }))
-        } else {
-          this.setState({
-            results: [
-              ...localized.Items,
-            ],
-            loading: false,
-          })
-        }
-      })
+    // TODO: Refactor to Observable, look at bin/sensorr
+    // xznab.search(entity.title)
+    //   .then(localized => {
+    //     setTimeout(() => document.getElementById('results').scrollIntoView(), 500)
+    //
+    //     if (entity.title !== entity.original_title) {
+    //       return xznab.search(entity.original_title)
+    //         .then(original => this.setState({
+    //           results: [
+    //             ...localized.Items,
+    //             ...original.Items.filter(item => !localized.Items.map(x => x.Title).includes(item.Title)),
+    //           ],
+    //           loading: false,
+    //         }))
+    //     } else {
+    //       this.setState({
+    //         results: [
+    //           ...localized.Items,
+    //         ],
+    //         loading: false,
+    //       })
+    //     }
+    //   })
   }
 
   render() {
@@ -380,14 +367,14 @@ export default class Movie extends PureComponent {
                 </tr>
               </thead>
               <tbody>
-                {!loading && !results.filter(this.filter).length ? (
+                {!loading && !results.filter(config.filtering).length ? (
                   <tr>
                     <td colSpan={6}>
                       <Empty />
                     </td>
                   </tr>
                 ) : (
-                  results.filter(this.filter).sort(this.sort).map((release, index) => (
+                  results.filter(config.filtering).sort(config.sorting).map((release, index) => (
                     <tr key={index} style={styles.tr}>
                       <td style={{ ...styles.td, textAlign: 'left', }}>{release.Title}</td>
                       <td style={styles.td}>{release.Site}</td>

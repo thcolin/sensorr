@@ -1,0 +1,304 @@
+#!/usr/bin/env node
+const fs = require('fs')
+const inquirer = require('inquirer')
+const chalk = require('chalk')
+const ora = require('ora')
+const spinners = require('cli-spinners')
+const oleoo = require('oleoo')
+const filesize = require('filesize')
+const similarity = require('string-similarity')
+const { Observable, from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
+const { map, toArray, concatAll, tap, merge, filter, mergeMap, pluck, takeWhile, timeout, retry, catchError } = require('rxjs/operators')
+const RxDB = require('rxdb')
+const Database = require('../shared/database')
+const configure = require('../shared/configure')
+const current = require('../config.json')
+const package = require('../package.json')
+const { _, ...argv } = require('minimist')(process.argv.slice(2))
+
+const commands = _
+const log = console.error
+const SIMILARITY_MINIMUM_SCORE = 0.6
+
+RxDB.plugin(require('pouchdb-adapter-leveldb'))
+
+global.fetch = require('node-fetch')
+
+main(configure({ ...current, ...argv }))
+
+async function main(config) {
+  await logo()
+
+  if (argv.v || argv.version) {
+    await version()
+    await exit()
+  } else if (argv.h || argv.help || !['search', 'record', 'manage'].includes(commands[0])) {
+    await help()
+    await exit()
+  }
+
+  const loading = ora({
+    spinner: spinners.earth,
+    text: `Syncing database with ${chalk.gray(config.db)} ...`,
+  })
+
+  // Waiting feature [Using RxDB to only wrap remote (couch) endpoints #247](https://github.com/pubkey/rxdb/issues/247) to be implemented
+  const db = await new Database({
+    name: `${__dirname}/db/sensorr`,
+    adapter: 'leveldb',
+  }).get()
+    .then(db => new Promise(resolve =>
+      db.movies.sync({
+        remote: `${config.db}/sensorr`,
+        options: {
+          live: false
+        },
+      })
+      .complete$
+      .pipe(
+        takeWhile(res => !res || !res.pull.ok),
+      )
+      .subscribe(
+        () => loading.start(),
+        null,
+        () => {
+          db.movies.sync({ remote: `${config.db}/sensorr` })
+
+          setTimeout(() => {
+            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(config.db)} !` })
+            resolve(db)
+          }, 500)
+        }
+      )
+    ))
+
+  switch (commands[0]) {
+    case 'search':
+      await search()
+      break
+    case 'record':
+      await record()
+      break
+    case 'manage':
+      await manage()
+      break
+  }
+
+  exit(0, db)
+
+  async function exit(code = 0, db) {
+    if (db) {
+      await db.destroy()
+    }
+
+    process.exit(code)
+  }
+
+  async function logo() {
+    const text = fs.createReadStream(`${__dirname}/logo`)
+    text.pipe(process.stderr)
+    await new Promise(resolve => text.on('end', resolve))
+    log('')
+    log('🍿 📼', ' - ', `${chalk.bold('Movie release radar')} (CouchPotato, Radarr and Watcher3 alternative)`)
+    log('')
+  }
+
+  async function version() {
+    log(`${package.description}`)
+    log(`${chalk.bold(package.name)} v${package.version}`)
+  }
+
+  async function help() {
+    const text = fs.createReadStream(`${__dirname}/help`)
+    text.pipe(process.stderr)
+    await new Promise(resolve => text.on('end', resolve))
+    log('')
+  }
+
+  async function record() {
+    await new Promise(resolve =>
+      from(db.movies.dump()).pipe(
+        pluck('docs'),
+        tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
+        mergeMap(movies => from(movies)),
+        filter(movie => movie.state === 'wished'),
+        mergeMap(movie => of(movie).pipe(
+          mergeMap(movie => look(movie)),
+          mergeMap(({ movie, release }) => grab(movie, release)),
+          catchError(err => {
+            log('🚨', err.toString())
+            return EMPTY
+          }),
+        ), null, 1),
+      ).subscribe(
+        ({ movie, release, file }) => log(
+          '📼',
+          'Archiving',
+          `movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`,
+          'with',
+          `release ${chalk.inverse(release.title)}`,
+          'to',
+          chalk.gray(file)
+        ),
+        (err) => log('🚨 ', err),
+        () => {
+          log('')
+          resolve()
+        },
+      )
+    )
+  }
+
+  function look(movie) {
+    log('')
+    log('🍿', `Looking for wished movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`)
+
+    return of(
+      ...[
+        movie.title.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+      ].concat(movie.original_title && movie.original_title !== movie.title ? [
+        movie.original_title.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+      ] : [])
+    ).pipe(
+      mergeMap(title => from(config.xznabs).pipe(
+        tap(xznab => log(
+          `☠️ `,
+          `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`
+        )),
+        mergeMap(xznab => xznab.search(title)),
+        timeout(15000),
+        retry(2),
+        catchError(() => of({ items: [] })),
+        pluck('items'),
+        tap(releases => log(
+          '🎞️ ',
+          `Found ${chalk.bold(releases.length)} releases`
+        )),
+        concatAll(),
+        map(release => ({
+          ...release,
+          meta: oleoo.parse(release.title, {
+            strict: false,
+            flagged: true,
+            defaults: {
+              language: 'ENGLISH',
+              resolution: 'SD',
+              year: 0,
+            },
+          }),
+        })),
+        map(release => ({
+          ...release,
+          score: similarity.compareTwoStrings(title, release.meta.title).toFixed(2),
+          valid: true,
+        })),
+        map(release => !release.valid ? release : ({
+          ...release,
+          valid: release.seeders,
+          reason: `No seeders (0)`,
+          color: 'red',
+        })),
+        map(release => !release.valid ? release : ({
+          ...release,
+          valid: (release.score >= SIMILARITY_MINIMUM_SCORE),
+          reason: `Score too low : ${release.score}`,
+          color: 'red',
+        })),
+        map(release => !release.valid ? release : ({
+          ...release,
+          valid: (new Date(release.publishDate).getFullYear() >= movie.year),
+          reason: `Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release year (${movie.year})`,
+          color: 'red',
+        })),
+        map(release => !release.valid ? release : ({
+          ...release,
+          valid: (parseInt(release.meta.year) === 0 || parseInt(release.meta.year) === movie.year),
+          reason: `Release year (${release.meta.year}) ${
+            parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie year (${movie.year})`
+          }`,
+          color: 'red',
+        })),
+        map(release => !release.valid ? release : ({
+          ...release,
+          valid: config.filtering(release),
+          reason: `Release doesn't pass configured filtering (${config.filter})`,
+          color: 'yellow',
+        })),
+        map(release => ({
+          ...release,
+          reason: release.valid ? null : release.reason,
+          color: release.valid ? 'green' : release.color,
+        })),
+        tap(({ color, ...release }) => log(
+          '*',
+          chalk[color](release.title),
+          chalk.gray(release.valid ? `(${release.score})` : release.reason),
+        )),
+        filter(release => release.valid),
+      ), null, 1),
+      toArray(),
+      filter(releases => releases.length),
+      map(releases => releases.filter((a, index, self) => index === self.findIndex(b => a.guid === b.guid))),
+      map(releases => releases.sort(config.sorting)),
+      tap(releases => log(
+        '🚧',
+        `Filtering and ordering ${releases.length} releases`,
+        chalk.gray(`[${config.sort}]`),
+        { true: '🔻', false: '🔺' }[config.descending],
+      )),
+      filter(releases => releases.length),
+      mergeMap(releases => {
+        const choices = releases.map(release => [
+          (argv.a || argv.auto) ? chalk.green(release.title) : release.title,
+          chalk.gray(`(${filesize(release.size)} - ${release.peers} ↓ / ${release.seeders} ↑)`),
+        ].join(' '))
+
+        if (argv.a || argv.auto) {
+          choices.forEach(choice => log('*', choice))
+          return of(releases[0])
+        } else {
+          return inquirer.prompt([
+            {
+              type: 'list',
+              name: 'release',
+              message: 'Choose release :',
+              choices,
+            }
+          ]).then(answers => releases[choices.indexOf(answers.release)])
+        }
+      }),
+      map(release => ({
+        movie,
+        release,
+      }))
+    )
+  }
+
+  function grab(movie, release) {
+    log('🎟️ ', `Grabbing ${chalk.inverse(release.title)} from ${chalk.gray(release.site)}`)
+
+    return of(null).pipe(
+      mergeMap(() => of(config.blackhole).pipe(
+        mergeMap(blackhole => bindNodeCallback(fs.access)(blackhole, fs.constants.W_OK).pipe(
+          map(err => !err),
+          mergeMap(exist => exist ? of(null) : bindNodeCallback(fs.mkdir)(blackhole, { recursive: true })),
+          mergeMap(err => err ? throwError(err) : of(null)),
+        )),
+      )),
+      mergeMap(() => of(release.link).pipe(
+        mergeMap(link => fetch(link)),
+        mergeMap(res => res.buffer()),
+        mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${config.blackhole}/${release.meta.generated}.torrent`, buffer).pipe(
+          mergeMap(err => err ? throwError(err) : of(`${config.blackhole}/${release.meta.generated}.torrent`)),
+        )),
+      )),
+      mergeMap(file => of(null).pipe(
+        mergeMap(() => db.movies.atomicUpsert({
+          ...movie,
+          state: 'archived',
+        })),
+        map(() => ({ movie, release, file })),
+      )),
+    )
+  }
+}

@@ -61,6 +61,7 @@ export default class Movie extends PureComponent {
         id: this.props.entity.id.toString(),
         title: this.props.entity.title,
         original_title: this.props.entity.original_title,
+        year: this.props.entity.year || new Date(this.props.entity.release_date).getFullYear(),
         poster_path: this.props.entity.poster_path,
         state: 'wished',
       })
@@ -71,6 +72,7 @@ export default class Movie extends PureComponent {
         id: this.props.entity.id.toString(),
         title: this.props.entity.title,
         original_title: this.props.entity.original_title,
+        year: this.props.entity.year || new Date(this.props.entity.release_date).getFullYear(),
         poster_path: this.props.entity.poster_path,
         state: 'archived',
       })

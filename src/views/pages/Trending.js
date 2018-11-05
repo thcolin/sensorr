@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react'
 import Row from 'components/Row'
-import TMDB, { GENRES } from 'store/services/tmdb'
+import TMDB, { GENRES } from 'shared/services/TMDB'
 
 const styles = {
   element: {
