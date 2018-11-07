@@ -52,7 +52,14 @@ export default class Search extends PureComponent {
 
     return (
       <div style={styles.element}>
-        <input ref={this.input} type="text" defaultValue={this.state.query} onKeyUp={this.handleKeyUp} style={styles.input} placeholder="Search..." />
+        <input
+          ref={this.input}
+          type="text"
+          defaultValue={this.state.query}
+          onKeyUp={this.handleKeyUp}
+          style={styles.input}
+          placeholder="Search..."
+        />
         {query && (
           <Row
             title={query}

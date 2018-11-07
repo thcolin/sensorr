@@ -21,11 +21,11 @@ const styles = {
     display: 'flex',
     flexWrap: 'nowrap',
     overflowX: 'auto',
-    height: '20em',
   },
   entity: {
     flex: '0 0 auto',
-    height: '100%',
+    height: '20.5em',
+    width: '15em',
     padding: '2em',
   },
 }

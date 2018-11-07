@@ -1,8 +1,8 @@
 import Database from 'shared/Database'
-import config from 'store/config'
+import sensorr from 'store/sensorr'
 
 const database = new Database({
-  sync: config.db,
+  sync: sensorr.config.db,
 })
 
 export default database

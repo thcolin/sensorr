@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react'
 import { Link } from 'react-router-dom'
 import database from 'store/database'
+import Doc from 'shared/Doc'
 import theme from 'theme'
 
 const styles = {
   element: {
     position: 'relative',
     height: '100%',
+    width: '100%',
   },
   state: {
     cursor: 'pointer',
@@ -30,53 +32,39 @@ export default class Movie extends PureComponent {
 
     this.state = {
       doc: null,
+      ready: false,
     }
 
+    this.bootstrap = this.bootstrap.bind(this)
     this.handleStateChange = this.handleStateChange.bind(this)
   }
 
-  async componentDidMount() {
+  componentDidMount() {
+    this.bootstrap()
+  }
+
+  componentDidUpdate(props) {
+    if (props.entity.id !== this.props.entity.id) {
+      this.bootstrap()
+    }
+  }
+
+  async bootstrap() {
     try {
       const db = await database.get()
       const doc = await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).exec()
-      this.setState({ doc: doc.toJSON() })
+      this.setState({ doc: doc ? doc.toJSON() : null })
     } catch(e) {}
-  }
-
-  async componentDidUpdate(props) {
-    if (props.entity.id !== this.props.entity.id) {
-      try {
-        const db = await database.get()
-        const doc = await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).exec()
-        this.setState({ doc: doc.toJSON() })
-      } catch(e) {}
-    }
   }
 
   async handleStateChange() {
     const db = await database.get()
 
     if (!this.state.doc) {
-      const doc = await db.movies.atomicUpsert({
-        id: this.props.entity.id.toString(),
-        title: this.props.entity.title,
-        original_title: this.props.entity.original_title,
-        year: this.props.entity.year || new Date(this.props.entity.release_date).getFullYear(),
-        poster_path: this.props.entity.poster_path,
-        state: 'wished',
-      })
-
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.props.entity, state: 'wished' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert({
-        id: this.props.entity.id.toString(),
-        title: this.props.entity.title,
-        original_title: this.props.entity.original_title,
-        year: this.props.entity.year || new Date(this.props.entity.release_date).getFullYear(),
-        poster_path: this.props.entity.poster_path,
-        state: 'archived',
-      })
-
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.props.entity, state: 'archived' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'archived') {
       await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).remove()
@@ -86,17 +74,17 @@ export default class Movie extends PureComponent {
 
   render() {
     const { entity, ...props } = this.props
-    const { doc, ...state } = this.state
+    const { doc, ready, ...state } = this.state
 
     return (
-      <div style={styles.element}>
+      <div style={{ ...styles.element, backgroundColor: ready ? 'transparent' : theme.colors.grey }}>
         <span style={styles.state} onClick={this.handleStateChange}>
           {!doc && ('🔕')}
           {doc && doc.state === 'wished' && ('🍿')}
           {doc && doc.state === 'archived' && ('📼')}
         </span>
         <Link to={`/movie/${entity.id}`}>
-          <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} style={styles.poster} />
+          <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
         </Link>
       </div>
     )

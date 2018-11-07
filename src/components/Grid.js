@@ -19,6 +19,7 @@ const styles = {
   },
   entity: {
     width: '10em',
+    height: '15em',
   }
 }
 
@@ -48,7 +49,7 @@ export default class Grid extends PureComponent {
       .filter(entity => (
         new RegExp(query, 'i').test(entity.title) ||
         new RegExp(query, 'i').test(entity.original_title) ||
-        query.substring(1) === entity.state // :wished|:archived
+        (query.substring(0, 1) === ':' && query.substring(1) === entity.state) // :wished|:archived
       ))
 
     return (!filtered.length ? (

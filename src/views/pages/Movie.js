@@ -2,11 +2,11 @@ import React, { PureComponent } from 'react'
 import Row from 'components/Row'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
+import Look from 'views/layout/Look'
 import TMDB from 'shared/services/TMDB'
 import history from 'store/history'
-import filesize from 'filesize'
 import database from 'store/database'
-import config from 'store/config'
+import Doc from 'shared/Doc'
 import theme from 'theme'
 
 const styles = {
@@ -21,7 +21,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  entity: {
+  payload: {
     position: 'relative',
     overflow: 'hidden',
     flex: 1,
@@ -109,54 +109,6 @@ const styles = {
     overflow: 'auto',
     fontSize: '0.75em',
   },
-  results: {
-
-  },
-  table: {
-    width: '100%',
-  },
-  thead: {
-    position: 'sticky',
-    top: '-1px',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-  },
-  th: {
-    padding: '1em',
-  },
-  input: {
-    width: '100%',
-    backgroundColor: theme.colors.grey,
-    border: 'none',
-    padding: 0,
-    margin: 0,
-    fontSize: '1.25em',
-    padding: '0.75em 1em',
-    textAlign: 'center',
-    color: theme.colors.secondary,
-    fontFamily: 'inherit',
-  },
-  query: {
-    backgroundColor: theme.colors.grey,
-    color: theme.colors.secondary,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    padding: '1em',
-  },
-  td: {
-    verticalAlign: 'middle',
-    fontFamily: theme.fonts.secondary,
-    padding: '1em',
-    textAlign: 'center',
-    borderBottom: `1px solid ${theme.colors.grey}`
-  },
-  grab: {
-    cursor: 'pointer',
-    fontSize: '2em',
-    textDecoration: 'none',
-  },
 }
 
 export default class Movie extends PureComponent {
@@ -164,50 +116,37 @@ export default class Movie extends PureComponent {
     super(props)
 
     this.state = {
+      payload: null,
       doc: null,
-      entity: null,
-      similar: [],
-      results: [],
-      looking: false,
-      sorting: 'Title',
-      reverse: false,
-      unpinned: true,
-      query: config.filter,
+      unpinned: false,
     }
 
-    this.look = this.look.bind(this)
+    this.bootstrap = this.bootstrap.bind(this)
+    this.handleLookClick = this.handleLookClick.bind(this)
     this.handleStateChange = this.handleStateChange.bind(this)
-    this.handleSortChange = this.handleSortChange.bind(this)
-    this.handleQueryChange = this.handleQueryChange.bind(this)
   }
 
-  async componentDidMount() {
-    setTimeout(() => document.getElementById('movie').scrollIntoView(), 200)
+  componentDidMount() {
+    this.bootstrap()
+  }
 
+  componentDidUpdate(props) {
+    if (this.props.match.params.id !== props.match.params.id) {
+      this.bootstrap()
+    }
+  }
+
+  async bootstrap() {
     try {
-      const entity = await TMDB.fetch(['movie', this.props.match.params.id])
-
-      this.setState({ entity })
-
+      this.setState({ unpinned: false })
+      const payload = await TMDB.fetch(['movie', this.props.match.params.id])
+      this.setState({ payload })
       const db = await database.get()
-      const doc = await db.movies.findOne().where('id').eq(entity.id.toString()).exec()
-      this.setState({ doc: doc.toJSON() })
+      const doc = await db.movies.findOne().where('id').eq(payload.id.toString()).exec()
+      this.setState({ doc: doc ? doc.toJSON() : null })
+      setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(e) {
       history.push('/')
-    }
-  }
-
-  async componentDidUpdate(props) {
-    if (this.props.match.params.id !== props.match.params.id) {
-      try {
-        const entity = await TMDB.fetch(['movie', this.props.match.params.id])
-
-        this.setState({ entity, unpinned: true })
-
-        const db = await database.get()
-        const doc = await db.movies.findOne().where('id').eq(this.props.match.params.id.toString()).exec()
-        this.setState({ doc: doc ? doc.toJSON() : null })
-      } catch(e) {}
     }
   }
 
@@ -215,86 +154,32 @@ export default class Movie extends PureComponent {
     const db = await database.get()
 
     if (!this.state.doc) {
-      const doc = await db.movies.atomicUpsert({
-        id: this.state.entity.id.toString(),
-        title: this.state.entity.title,
-        original_title: this.state.entity.original_title,
-        year: new Date(this.state.entity.release_date).getFullYear(),
-        poster_path: this.state.entity.poster_path,
-        state: 'wished',
-      })
-
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.payload, state: 'wished' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert({
-        id: this.state.entity.id.toString(),
-        title: this.state.entity.title,
-        original_title: this.state.entity.original_title,
-        year: new Date(this.state.entity.release_date).getFullYear(),
-        poster_path: this.state.entity.poster_path,
-        state: 'archived',
-      })
-
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.payload, state: 'archived' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'archived') {
-      await db.movies.findOne().where('id').eq(this.state.entity.id.toString()).remove()
+      await db.movies.findOne().where('id').eq(this.state.payload.id.toString()).remove()
       this.setState({ doc: null })
     }
   }
 
-  handleQueryChange(e) {
-    this.setState({ query: e.target.value, })
-  }
-
-  handleSortChange(sorting) {
-    this.setState({
-      sorting,
-      reverse: sorting === this.state.sorting ? !this.state.reverse : this.state.reverse,
-    })
-  }
-
-  look() {
-    const { entity } = this.state
-
-    this.setState({ results: [], unpinned: false, loading: true, })
-    setTimeout(() => document.getElementById('results').scrollIntoView(), 200)
-    this.setState({ loading: false })
-
-    // TODO: Refactor to Observable, look at bin/sensorr
-    // xznab.search(entity.title)
-    //   .then(localized => {
-    //     setTimeout(() => document.getElementById('results').scrollIntoView(), 500)
-    //
-    //     if (entity.title !== entity.original_title) {
-    //       return xznab.search(entity.original_title)
-    //         .then(original => this.setState({
-    //           results: [
-    //             ...localized.Items,
-    //             ...original.Items.filter(item => !localized.Items.map(x => x.Title).includes(item.Title)),
-    //           ],
-    //           loading: false,
-    //         }))
-    //     } else {
-    //       this.setState({
-    //         results: [
-    //           ...localized.Items,
-    //         ],
-    //         loading: false,
-    //       })
-    //     }
-    //   })
+  handleLookClick() {
+    this.setState({ unpinned: false })
+    setTimeout(() => this.setState({ unpinned: true }), 100)
   }
 
   render() {
-    const { doc, entity, loading, unpinned, sorting, results, query, ...state } = this.state
+    const { doc, payload, loading, unpinned, ...state } = this.state
 
     return (
       <div id="movie" style={styles.element}>
-        {entity ? [
-          <div key="entity" style={{ ...styles.entity, backgroundImage: `url(http://image.tmdb.org/t/p/original${entity.backdrop_path})` }}>
+        {payload ? [
+          <div key="payload" style={{ ...styles.payload, backgroundImage: `url(http://image.tmdb.org/t/p/original${payload.backdrop_path})` }}>
             <div style={styles.metadata}>
-              <h3 style={styles.popularity}>{entity.vote_average} {entity.vote_average < 5 ? '👎' : entity.vote_average < 8 ? '👍' : '🙏'}</h3>
-              <h4 style={styles.runtime}>{entity.runtime} mins 🕙</h4>
+              <h3 style={styles.popularity}>{payload.vote_average} {payload.vote_average < 5 ? '👎' : payload.vote_average < 8 ? '👍' : '🙏'}</h3>
+              <h4 style={styles.runtime}>{payload.runtime} mins 🕙</h4>
               <div style={styles.badges}>
                 {!doc && (
                   <div style={styles.badge} onClick={this.handleStateChange}>
@@ -314,7 +199,7 @@ export default class Movie extends PureComponent {
                     Archived
                   </div>
                 )}
-                <div style={styles.badge} onClick={this.look}>
+                <div style={styles.badge} onClick={this.handleLookClick}>
                   <span style={styles.emoji}>🔍</span>
                   Look
                 </div>
@@ -322,79 +207,30 @@ export default class Movie extends PureComponent {
             </div>
             <div style={styles.informations}>
               <div>
-                <img src={`http://image.tmdb.org/t/p/original${entity.poster_path}`} style={styles.poster} />
+                <img src={`http://image.tmdb.org/t/p/original${payload.poster_path}`} style={styles.poster} />
               </div>
               <div>
-                <h1 style={styles.title}>{entity.title}</h1>
+                <h1 style={styles.title}>{payload.title}</h1>
                 <h2 style={styles.subtitle}>
-                  {entity.title !== entity.original_title && (
-                    <span style={{ margin: '0 0.5em 0 0' }}>{entity.original_title}</span>
+                  {payload.title !== payload.original_title && (
+                    <span style={{ margin: '0 0.5em 0 0' }}>{payload.original_title}</span>
                   )}
-                  <span>({new Date(entity.release_date).getFullYear()})</span>
+                  <span>({new Date(payload.release_date).getFullYear()})</span>
                 </h2>
-                {!!entity.tagline && (
-                  <h3 style={styles.tagline}>{entity.tagline}</h3>
+                {!!payload.tagline && (
+                  <h3 style={styles.tagline}>{payload.tagline}</h3>
                 )}
-                <p style={styles.plot}>{entity.overview}</p>
-                <p style={styles.genres}>{entity.genres.map(genre => genre.name).join(', ')}</p>
+                <p style={styles.plot}>{payload.overview}</p>
+                <p style={styles.genres}>{payload.genres.map(genre => genre.name).join(', ')}</p>
               </div>
             </div>
             <div style={styles.similar}>
               <Row uri={['movie', this.props.match.params.id, 'similar']} />
             </div>
           </div>,
-          <div key="results" id="results" style={styles.results} hidden={unpinned}>
-            <table style={styles.table}>
-              <thead style={styles.thead}>
-                <tr>
-                  <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('Title')}>Title</th>
-                  <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('Site')}>Source</th>
-                  <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('Peers')}>Peers</th>
-                  <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('Seeders')}>Seeders</th>
-                  <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('Size')}>Size</th>
-                  <th style={styles.th}>Grab</th>
-                </tr>
-                <tr>
-                  <td colSpan={6}>
-                    <input
-                      type="text"
-                      defaultValue={query}
-                      onKeyUp={this.handleQueryChange}
-                      style={styles.input}
-                      placeholder="Filter..."
-                    />
-                  </td>
-                </tr>
-              </thead>
-              <tbody>
-                {!loading && !results.filter(config.filtering).length ? (
-                  <tr>
-                    <td colSpan={6}>
-                      <Empty />
-                    </td>
-                  </tr>
-                ) : (
-                  results.filter(config.filtering).sort(config.sorting).map((release, index) => (
-                    <tr key={index} style={styles.tr}>
-                      <td style={{ ...styles.td, textAlign: 'left', }}>{release.Title}</td>
-                      <td style={styles.td}>{release.Site}</td>
-                      <td style={styles.td}>{release.Peers}</td>
-                      <td style={styles.td}>{release.Seeders}</td>
-                      <td style={{ ...styles.td, textAlign: 'right' }}>{filesize(release.Size)}</td>
-                      <td style={{ ...styles.td, padding: 0 }}>
-                        <a href={release.Link} style={styles.grab} target="_blank">🎟</a>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-            {loading && (
-              <div style={styles.loading}>
-                <Spinner />
-              </div>
-            )}
-          </div>
+          (unpinned && (
+            <Look key="releases" movie={payload} />
+          ))
         ] : (
           <div style={styles.loading}>
             <Spinner />
