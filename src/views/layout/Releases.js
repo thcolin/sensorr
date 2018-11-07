@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
+import Doc from 'shared/Doc'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import filesize from 'filesize'
@@ -14,6 +15,7 @@ const styles = {
     width: '100%',
   },
   thead: {
+    zIndex: 1,
     position: 'sticky',
     top: '-1px',
     backgroundColor: theme.colors.primary,
@@ -57,7 +59,7 @@ const styles = {
   },
 }
 
-export default class Movie extends PureComponent {
+export default class Releases extends PureComponent {
   static propTypes = {
     movie: PropTypes.object.isRequired,
   }
@@ -80,7 +82,7 @@ export default class Movie extends PureComponent {
   componentDidMount() {
     setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
 
-    sensorr.look(this.props.movie).subscribe(
+    sensorr.look(new Doc(this.props.movie).normalize()).subscribe(
       (releases) => this.setState({ releases }),
       (err) => {
         this.setState({ loading: false })
@@ -141,7 +143,12 @@ export default class Movie extends PureComponent {
             ) : (
               releases.filter(sensorr.filter(filter)).sort(sensorr.sort(sort, descending)).map((release, index) => (
                 <tr key={index} style={styles.tr}>
-                  <td style={{ ...styles.td, textAlign: 'left', }}>{release.title}</td>
+                  <td
+                    title={release.valid ? `Score : ${release.score}` : release.reason}
+                    style={{ ...styles.td, textAlign: 'left', opacity: [1, 0.5, 0.25][release.warning] }}
+                  >
+                    {release.title}
+                  </td>
                   <td style={styles.td}>{release.site}</td>
                   <td style={styles.td}>{release.peers}</td>
                   <td style={styles.td}>{release.seeders}</td>

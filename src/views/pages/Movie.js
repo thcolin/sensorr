@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import Row from 'components/Row'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
-import Look from 'views/layout/Look'
+import Releases from 'views/layout/Releases'
 import TMDB from 'shared/services/TMDB'
 import history from 'store/history'
 import database from 'store/database'
@@ -229,7 +229,7 @@ export default class Movie extends PureComponent {
             </div>
           </div>,
           (unpinned && (
-            <Look key="releases" movie={payload} />
+            <Releases key="releases" movie={payload} />
           ))
         ] : (
           <div style={styles.loading}>
