@@ -9,23 +9,23 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     padding: '4em',
+    color: theme.colors.secondary,
   },
   emoji: {
     fontSize: '5em',
   },
   title: {
     padding: '1em 0',
-    color: theme.colors.secondary,
     fontWeight: 800,
     textTransform: 'uppercase',
   },
   subtitle: {
-    color: theme.colors.secondary,
+
   }
 }
 
-export default ({ ...props }) => (
-  <div style={styles.element}>
+export default ({ style, ...props }) => (
+  <div style={{ ...styles.element, ...style }}>
     <h1 style={styles.emoji}>👻</h1>
     <h2 style={styles.title}>Bouhouuu ! I'm the scary empty ghost !</h2>
     <p style={styles.subtitle}>Sorry, no results.</p>

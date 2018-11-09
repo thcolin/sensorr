@@ -11,6 +11,7 @@ class Doc {
       year: this.payload.release_date ? new Date(this.payload.release_date).getFullYear() : this.payload.year,
       poster_path: this.payload.poster_path,
       state: this.payload.state || 'wished',
+      time: Date.now(),
     }
   }
 }

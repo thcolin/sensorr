@@ -14,7 +14,7 @@ module.exports = class XZNAB {
 
   search(query) {
     return fetch(this.build({
-      q: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ''),
+      q: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ' ').replace(/[ ]+/, ' '),
       t: 'search',
       cat: '2000,2010,2020,2030,2040,2050,2060',
     }))

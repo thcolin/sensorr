@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react'
-import Row from 'components/Row'
+import Row from 'components/Layout/Row'
+import Film from 'components/Entity/Film'
 import TMDB, { GENRES } from 'shared/services/TMDB'
 
 const styles = {
   element: {
     padding: '2em 0',
+    fontSize: '1.125em',
   },
   row: {
     cursor: 'pointer',
@@ -40,30 +42,36 @@ export default class Trending extends PureComponent {
     return (
       <div style={styles.element}>
         <Row
-          title="Trending"
+          label="Trending"
           uri={['trending', 'movie', 'week']}
           params={{ sort_by: 'popularity.desc' }}
+          child={Film}
         />
         <Row
-          title="Discover"
+          label="Discover"
           uri={['discover', 'movie']}
+          child={Film}
         />
         <Row
-          title={`Discover (${year})`}
+          label={`Discover (${year})`}
+          title="Randomize year"
           uri={['discover', 'movie']}
           params={{
             primary_release_year: year,
             sort_by: 'popularity.desc'
           }}
+          child={Film}
           onClick={() => this.handleRowClick('year')}
           style={styles.row}
         />
         <Row
-          title={`Discover (${GENRES[genre]})`}
+          label={`Discover (${GENRES[genre]})`}
+          title="Randomize genre"
           uri={['discover', 'movie']}
           params={{
             with_genres: genre,
           }}
+          child={Film}
           onClick={() => this.handleRowClick('genre')}
           style={styles.row}
         />

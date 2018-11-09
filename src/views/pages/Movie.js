@@ -1,5 +1,8 @@
 import React, { PureComponent } from 'react'
-import Row from 'components/Row'
+import { Link } from 'react-router-dom'
+import Row from 'components/Layout/Row'
+import Persona from 'components/Entity/Persona'
+import Film from 'components/Entity/Film'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import Releases from 'views/layout/Releases'
@@ -11,9 +14,13 @@ import theme from 'theme'
 
 const styles = {
   element: {
+    position: 'relative',
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
+  },
+  link: {
+    color: theme.colors.white,
   },
   loading: {
     flex: 1,
@@ -21,9 +28,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  payload: {
-    position: 'relative',
-    overflow: 'hidden',
+  details: {
     flex: 1,
     minHeight: '100vh',
     display: 'flex',
@@ -50,12 +55,20 @@ const styles = {
     fontSize: '1em',
     fontWeight: 600,
     color: theme.colors.white,
-    padding: '1em 0',
+    padding: '1em 0 0',
+  },
+  preview: {
+    fontFamily: theme.fonts.secondary,
+    fontSize: '1em',
+    fontWeight: 600,
+    color: theme.colors.white,
+    padding: '1em 0 0',
   },
   badges: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'end',
+    padding: '1em 0 0',
   },
   badge: {
     cursor: 'pointer',
@@ -71,12 +84,16 @@ const styles = {
     margin: '0 0.75em 0 0',
   },
   informations: {
+    width: '100%',
     display: 'flex',
     padding: '5em 13em 2em 3em',
   },
   poster: {
     maxWidth: '15em',
     margin: '0 3em'
+  },
+  wrapper: {
+    flex: 1,
   },
   title: {
     fontSize: '4em',
@@ -89,6 +106,16 @@ const styles = {
     fontWeight: 600,
     color: theme.colors.white,
   },
+  genres: {
+    fontWeight: 600,
+    color: theme.colors.white,
+    padding: '1em 0 0 0',
+  },
+  directors: {
+    fontWeight: 600,
+    color: theme.colors.white,
+    padding: '1em 0 0 0',
+  },
   tagline: {
     color: theme.colors.white,
     fontWeight: 600,
@@ -98,17 +125,25 @@ const styles = {
     maxWidth: '50em',
     lineHeight: '1.5em',
     color: theme.colors.white,
+    whiteSpace: 'pre-line',
     padding: '1em 1em 1em 0',
   },
-  genres: {
-    fontWeight: 600,
-    color: theme.colors.white,
+  credits: {
+    margin: '3em 0 0',
+    overflow: 'visible',
+    fontSize: '0.5em',
   },
-  similar: {
+  more: {
     width: '100%',
-    overflow: 'auto',
     fontSize: '0.75em',
   },
+  label: {
+    color: theme.colors.white,
+    cursor: 'pointer',
+  },
+  empty: {
+    color: theme.colors.white,
+  }
 }
 
 export default class Movie extends PureComponent {
@@ -116,14 +151,16 @@ export default class Movie extends PureComponent {
     super(props)
 
     this.state = {
-      payload: null,
+      details: null,
       doc: null,
       unpinned: false,
+      more: 'recommendations'
     }
 
     this.bootstrap = this.bootstrap.bind(this)
-    this.handleLookClick = this.handleLookClick.bind(this)
     this.handleStateChange = this.handleStateChange.bind(this)
+    this.handleMoreChange = this.handleMoreChange.bind(this)
+    this.handleLookClick = this.handleLookClick.bind(this)
   }
 
   componentDidMount() {
@@ -139,10 +176,13 @@ export default class Movie extends PureComponent {
   async bootstrap() {
     try {
       this.setState({ unpinned: false })
-      const payload = await TMDB.fetch(['movie', this.props.match.params.id])
-      this.setState({ payload })
+      const details = await TMDB.fetch(
+        ['movie', this.props.match.params.id],
+        { append_to_response: 'videos,credits,similar,recommendations' }
+      )
+      this.setState({ details })
       const db = await database.get()
-      const doc = await db.movies.findOne().where('id').eq(payload.id.toString()).exec()
+      const doc = await db.movies.findOne().where('id').eq(details.id.toString()).exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(e) {
@@ -154,15 +194,19 @@ export default class Movie extends PureComponent {
     const db = await database.get()
 
     if (!this.state.doc) {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.payload, state: 'wished' }).normalize())
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'wished' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.payload, state: 'archived' }).normalize())
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'archived' }).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'archived') {
-      await db.movies.findOne().where('id').eq(this.state.payload.id.toString()).remove()
+      await db.movies.findOne().where('id').eq(this.state.details.id.toString()).remove()
       this.setState({ doc: null })
     }
+  }
+
+  handleMoreChange() {
+    this.setState({ more: { similar: 'recommendations', recommendations: 'similar' }[this.state.more] })
   }
 
   handleLookClick() {
@@ -171,15 +215,30 @@ export default class Movie extends PureComponent {
   }
 
   render() {
-    const { doc, payload, loading, unpinned, ...state } = this.state
+    const { match, ...props } = this.props
+    const { doc, details, loading, unpinned, more, ...state } = this.state
+
+    const trailer = !details ? null : details.videos.results
+      .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser', 'Clip'].includes(video.type))
+      .pop()
 
     return (
       <div id="movie" style={styles.element}>
-        {payload ? [
-          <div key="payload" style={{ ...styles.payload, backgroundImage: `url(http://image.tmdb.org/t/p/original${payload.backdrop_path})` }}>
+        {details ? [
+          <div
+            key="details"
+            style={{ ...styles.details, backgroundImage: `url(http://image.tmdb.org/t/p/original${details.backdrop_path})` }}
+          >
             <div style={styles.metadata}>
-              <h3 style={styles.popularity}>{payload.vote_average} {payload.vote_average < 5 ? '👎' : payload.vote_average < 8 ? '👍' : '🙏'}</h3>
-              <h4 style={styles.runtime}>{payload.runtime} mins 🕙</h4>
+              <h3 style={styles.popularity}>
+                {details.vote_average.toFixed(1)} {details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}
+              </h3>
+              <h4 style={styles.runtime}>{details.runtime} mins 🕙</h4>
+              {trailer && (
+                <a href={`https://youtu.be/${trailer.key}`} target="_blank" style={{ textDecoration: 'none' }}>
+                  <h4 style={styles.preview}>Preview 🎬</h4>
+                </a>
+              )}
               <div style={styles.badges}>
                 {!doc && (
                   <div style={styles.badge} onClick={this.handleStateChange}>
@@ -207,29 +266,55 @@ export default class Movie extends PureComponent {
             </div>
             <div style={styles.informations}>
               <div>
-                <img src={`http://image.tmdb.org/t/p/original${payload.poster_path}`} style={styles.poster} />
+                <img src={`http://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
               </div>
-              <div>
-                <h1 style={styles.title}>{payload.title}</h1>
+              <div style={styles.wrapper}>
+                <h1 style={styles.title}>{details.title}</h1>
                 <h2 style={styles.subtitle}>
-                  {payload.title !== payload.original_title && (
-                    <span style={{ margin: '0 0.5em 0 0' }}>{payload.original_title}</span>
+                  {details.title !== details.original_title && (
+                    <span style={{ margin: '0 0.5em 0 0' }}>{details.original_title}</span>
                   )}
-                  <span>({new Date(payload.release_date).getFullYear()})</span>
+                  <span title={new Date(details.release_date).toLocaleDateString()}>
+                    ({new Date(details.release_date).getFullYear()})
+                  </span>
                 </h2>
-                {!!payload.tagline && (
-                  <h3 style={styles.tagline}>{payload.tagline}</h3>
+                <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
+                {!!details.credits.crew.filter(credit => credit.job === 'Editor').length && (
+                  <p style={styles.directors}>
+                    🎥 &nbsp; {
+                      details.credits.crew
+                        .filter(credit => credit.job === 'Editor')
+                        .map(credit => <Link to={`/star/${credit.id}`} style={styles.link} key={credit.id}>{credit.name}</Link>)
+                        .reduce((prev, curr) => [prev, ', ', curr])
+                    }
+                  </p>
                 )}
-                <p style={styles.plot}>{payload.overview}</p>
-                <p style={styles.genres}>{payload.genres.map(genre => genre.name).join(', ')}</p>
+                {!!details.tagline && (
+                  <h3 style={styles.tagline}>{details.tagline}</h3>
+                )}
+                <p style={styles.plot}>{details.overview}</p>
+                <div style={styles.credits}>
+                  <Row
+                    items={details.credits.cast.slice(0, 10)}
+                    child={Persona}
+                    space={0}
+                  />
+                </div>
               </div>
             </div>
-            <div style={styles.similar}>
-              <Row uri={['movie', this.props.match.params.id, 'similar']} />
+            <div style={styles.more}>
+              <Row
+                label={`${more.charAt(0).toUpperCase()}${more.slice(1)}`}
+                onClick={() => this.handleMoreChange()}
+                items={details[more].results}
+                style={styles.label}
+                child={Film}
+                empty={styles.empty}
+              />
             </div>
           </div>,
           (unpinned && (
-            <Releases key="releases" movie={payload} />
+            <Releases key="releases" movie={details} />
           ))
         ] : (
           <div style={styles.loading}>

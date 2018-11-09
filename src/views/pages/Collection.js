@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
-import Grid from 'components/Grid'
+import Grid from 'components/Layout/Grid'
+import Film from 'components/Entity/Film'
 import theme from 'theme'
 
 const styles = {
@@ -47,7 +48,7 @@ export default class Collection extends PureComponent {
           style={styles.input}
           placeholder="Filter..."
         />
-        <Grid query={query} />
+        <Grid query={query} child={Film} />
       </div>
     )
   }

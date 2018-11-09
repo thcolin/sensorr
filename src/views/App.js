@@ -6,6 +6,7 @@ import Trending from 'views/pages/Trending'
 import Collection from 'views/pages/Collection'
 import Search from 'views/pages/Search'
 import Movie from 'views/pages/Movie'
+import Star from 'views/pages/Star'
 
 const styles = {
   element: {
@@ -24,6 +25,7 @@ export default ({ ...props }) => (
       <Route path="/collection" exact component={Collection} />
       <Route path="/search/:query?" exact component={Search} />
       <Route path="/movie/:id" exact component={Movie} />
+      <Route path="/star/:id" exact component={Star} />
     </div>
   </Router>
 )

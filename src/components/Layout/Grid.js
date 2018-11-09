@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react'
-import Movie from 'components/Movie'
 import Empty from 'components/Empty'
 import database from 'store/database'
 
@@ -39,12 +38,12 @@ export default class Grid extends PureComponent {
   }
 
   render() {
-    const { query, ...props } = this.props
+    const { query, child, ...props } = this.props
     const { entities, ...state } = this.state
 
     const filtered = entities
-      .reverse()
       .map(entity => entity.toJSON())
+      .sort((a, b) => (b.time || 0) - (a.time || 0))
       .filter(entity => entity.poster_path)
       .filter(entity => (
         new RegExp(query, 'i').test(entity.title) ||
@@ -60,7 +59,7 @@ export default class Grid extends PureComponent {
       <div style={styles.grid}>
         {filtered.map((entity, index) => (
           <div key={index} style={styles.entity}>
-            <Movie entity={entity} />
+            {React.createElement(child, { entity })}
           </div>
         ))}
       </div>

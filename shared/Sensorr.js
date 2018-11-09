@@ -143,7 +143,10 @@ class Sensorr {
       )),
       toArray(),
       filter(releases => releases.length),
-      map(releases => releases.filter((a, index, self) => index === self.findIndex(b => a.guid === b.guid))),
+      map(releases => Object
+        .values(releases.reduce((results, release) => ({ ...results, [release.guid]: [...(results[release.guid] || []), release] }), {}))
+        .map(results => results.sort((a, b) => b.score - a.score).shift())
+    ),
     )
   }
 }

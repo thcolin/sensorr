@@ -61,7 +61,8 @@ Options:
 
 # Roadmap
 * `WebUI`
-  * Sync `database`
+  * Follow `stars`
+  * Search `stars`
   * Pages
     * `Movie`
       * Allow alternative `title` correction

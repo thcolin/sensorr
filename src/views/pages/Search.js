@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
-import Row from 'components/Row'
+import Row from 'components/Layout/Row'
+import Film from 'components/Entity/Film'
 import nanobounce from 'nanobounce'
 import history from 'store/history'
 import theme from 'theme'
@@ -62,12 +63,10 @@ export default class Search extends PureComponent {
         />
         {query && (
           <Row
-            title={query}
+            label={query}
+            child={Film}
             uri={['search', 'movie']}
-            params={{
-              query,
-              sort_by: 'popularity.desc'
-            }}
+            params={{ query, sort_by: 'popularity.desc' }}
           />
         )}
       </div>
