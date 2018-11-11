@@ -22,5 +22,11 @@ module.exports = merge(common, {
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
+    proxy: {
+      '/grab': {
+        target: 'http://localhost:7000',
+        secure: false,
+      }
+    },
   },
 })

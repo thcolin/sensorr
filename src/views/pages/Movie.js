@@ -24,6 +24,7 @@ const styles = {
   },
   loading: {
     flex: 1,
+    minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -219,7 +220,7 @@ export default class Movie extends PureComponent {
     const { doc, details, loading, unpinned, more, ...state } = this.state
 
     const trailer = !details ? null : details.videos.results
-      .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser', 'Clip'].includes(video.type))
+      .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
       .pop()
 
     return (

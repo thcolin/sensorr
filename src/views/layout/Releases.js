@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import Doc from 'shared/Doc'
+import { withToastManager } from 'react-toast-notifications'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import filesize from 'filesize'
@@ -59,7 +60,7 @@ const styles = {
   },
 }
 
-export default class Releases extends PureComponent {
+class Releases extends PureComponent {
   static propTypes = {
     movie: PropTypes.object.isRequired,
   }
@@ -77,6 +78,7 @@ export default class Releases extends PureComponent {
 
     this.handleSortChange = this.handleSortChange.bind(this)
     this.handleQueryChange = this.handleQueryChange.bind(this)
+    this.handleGrabClick = this.handleGrabClick.bind(this)
   }
 
   componentDidMount() {
@@ -103,6 +105,46 @@ export default class Releases extends PureComponent {
     this.setState({
       sort,
       descending: sort === this.state.sort ? !this.state.descending : this.state.descending,
+    })
+  }
+
+  handleGrabClick(release) {
+    const { toastManager } = this.props
+    let loading = null
+
+    toastManager.add((
+      <span>Trying to grab release <strong>{release.title}</strong>...</span>
+    ), {
+      appearance: 'info',
+      autoDismiss: true,
+    }, id => loading = id)
+
+    fetch(`/grab`, {
+      method: 'POST',
+      headers: new Headers({
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Basic ${new Buffer(`${sensorr.config.auth.username}:${sensorr.config.auth.password}`).toString('base64')}`,
+      }),
+      body: JSON.stringify({ release }),
+    })
+    .then(res => {
+      try {
+        res.json().then(body => {
+          if (res.ok) {
+            toastManager.add((
+              <span>Release <strong>{release.title}</strong> grabbed to <strong>{body.filename}</strong></span>
+            ), { appearance: 'success', autoDismiss: true, })
+          } else {
+            toastManager.add((
+              <span>Something went wrong during <strong>{release.title}</strong> grabing : <strong>{body.reason}</strong></span>
+            ), { appearance: 'error', autoDismiss: true, })
+          }
+        })
+      } catch(e) {
+        toastManager.add((
+          <span>Unexpected error during <strong>{release.title}</strong> grabing : <strong>{res.statusText}</strong></span>
+        ), { appearance: 'error', autoDismiss: true, })
+      }
     })
   }
 
@@ -154,7 +196,17 @@ export default class Releases extends PureComponent {
                   <td style={styles.td}>{release.seeders}</td>
                   <td style={{ ...styles.td, textAlign: 'right' }}>{filesize(release.size)}</td>
                   <td style={{ ...styles.td, padding: 0 }}>
-                    <a href={release.link} style={styles.grab} target="_blank">🎟</a>
+                    <a
+                      href={release.link}
+                      style={styles.grab}
+                      target="_blank"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        this.handleGrabClick(release)
+                      }}
+                    >
+                      🎟
+                    </a>
                   </td>
                 </tr>
               ))
@@ -170,3 +222,5 @@ export default class Releases extends PureComponent {
     )
   }
 }
+
+export default withToastManager(Releases)

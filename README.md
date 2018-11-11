@@ -61,9 +61,16 @@ Options:
 
 # Roadmap
 * `WebUI`
-  * Follow `stars`
-  * Search `stars`
+  * Refactoring
+    * Use `react-emotion` for style
+  * Features
+    * Follow `stars`
+    * Search `stars`
   * Pages
+    * `Logs`
+      * Display `CLI` logs
+    * `Config`
+      * Form for every `config.json` fields
     * `Movie`
       * Allow alternative `title` correction
         * `Pirates des Caraibes La Fontaine de Jouvence 2011 French DvDRip x264 AC3-OkonEdet (Pirates of the Caribbean On Stranger Tides) `
@@ -82,10 +89,11 @@ Options:
         * `// Grabbing [result] from [results]`
         * `// Sending [filename] to [blackhole]`
 * `Server`
-  * Setup local `pouch-db`
+  * Secure local `pouch-db` with `config.auth`
+  * Handle `[GET|POST] /config`
 * `CLI`
+  * Improve `logs`
   * Commands
-    * `--db=[string] --blackhole=[string] --filter=[string] --sort=[string] --descending=[bool] --silent=[bool]`
     * `🔍 search [query]`
       * `_tmdb_ [query]`
       * `display: [movies]`
@@ -93,11 +101,6 @@ Options:
       * `_look_ [movie]`
       * `display: [results]`
       * `input: [result]`
-      * `_grab_ [result]`
-    * `📼 record`
-      * `display: [movies]`
-      * `_look_ [movie]`
-      * `?input: [result]`
       * `_grab_ [result]`
     * `📚 manage`
       * `display: [movies]`
@@ -110,8 +113,6 @@ Options:
       * [commander.js](https://github.com/tj/commander.js)
       * [oclif](https://github.com/oclif/oclif)
       * [ink](https://github.com/vadimdemedes/ink)
-  * Behavior
-    * ~`Dumb` (arguments only) or~ `Smart` (database aware) ?
   * Build with `webpack`
 * `Production`
   * Use `Docker`

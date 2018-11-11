@@ -12,6 +12,13 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
   },
+  loading: {
+    flex: 1,
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     minHeight: '100vh',

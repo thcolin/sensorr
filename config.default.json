@@ -12,6 +12,7 @@
   "sort": "seeders",
   "descending": false,
   "auth": {
-    "sensorr": "sensorr"
+    "username": "sensorr",
+    "password": "sensorr"
   }
 }
