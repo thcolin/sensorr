@@ -7,6 +7,7 @@ import Collection from 'views/pages/Collection'
 import Search from 'views/pages/Search'
 import Movie from 'views/pages/Movie'
 import Star from 'views/pages/Star'
+import Configure from 'views/pages/Configure'
 
 const styles = {
   element: {
@@ -26,6 +27,7 @@ export default ({ ...props }) => (
       <Route path="/search/:query?" exact component={Search} />
       <Route path="/movie/:id" exact component={Movie} />
       <Route path="/star/:id" exact component={Star} />
+      <Route path="/configure" exact component={Configure} />
     </div>
   </Router>
 )

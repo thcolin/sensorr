@@ -43,7 +43,8 @@
     "rxjs": "^6.3.3",
     "string-similarity": "^2.0.0",
     "typeface-open-sans": "0.0.54",
-    "typeface-raleway": "0.0.54"
+    "typeface-raleway": "0.0.54",
+    "validator": "^10.9.0"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",

@@ -69,8 +69,6 @@ Options:
   * Pages
     * `Logs`
       * Display `CLI` logs
-    * `Config`
-      * Form for every `config.json` fields
     * `Movie`
       * Allow alternative `title` correction
         * `Pirates des Caraibes La Fontaine de Jouvence 2011 French DvDRip x264 AC3-OkonEdet (Pirates of the Caribbean On Stranger Tides) `
@@ -90,7 +88,6 @@ Options:
         * `// Sending [filename] to [blackhole]`
 * `Server`
   * Secure local `pouch-db` with `config.auth`
-  * Handle `[GET|POST] /config`
 * `CLI`
   * Improve `logs`
   * Commands

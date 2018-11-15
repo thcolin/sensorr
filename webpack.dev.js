@@ -3,7 +3,6 @@ const webpack = require('webpack')
 const merge = require('webpack-merge')
 const html = require('html-webpack-plugin')
 const common = require('./webpack.config.js')
-const config = require('./config.json')
 
 module.exports = merge(common, {
   mode: 'development',
@@ -12,7 +11,6 @@ module.exports = merge(common, {
     new webpack.SourceMapDevToolPlugin({}),
     new html({
       template: path.join(__dirname, 'src', 'views', 'index.html'),
-      config,
     }),
   ],
   devServer: {
@@ -23,10 +21,7 @@ module.exports = merge(common, {
       'Access-Control-Allow-Origin': '*',
     },
     proxy: {
-      '/grab': {
-        target: 'http://localhost:7000',
-        secure: false,
-      }
+      '/api': 'http://localhost:7000',
     },
   },
 })

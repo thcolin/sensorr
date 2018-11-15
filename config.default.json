@@ -8,7 +8,7 @@
       "key": ""
     }
   ],
-  "filter": "resolution=720p|1080p, language=TRUEFRENCH|FRENCH|MULTi",
+  "filter": "resolution=720p|1080p",
   "sort": "seeders",
   "descending": false,
   "auth": {

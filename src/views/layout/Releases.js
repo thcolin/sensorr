@@ -110,16 +110,12 @@ class Releases extends PureComponent {
 
   handleGrabClick(release) {
     const { toastManager } = this.props
-    let loading = null
 
     toastManager.add((
       <span>Trying to grab release <strong>{release.title}</strong>...</span>
-    ), {
-      appearance: 'info',
-      autoDismiss: true,
-    }, id => loading = id)
+    ), { appearance: 'info', autoDismiss: true, })
 
-    fetch(`/grab`, {
+    fetch('/api/grab', {
       method: 'POST',
       headers: new Headers({
         'Content-Type': 'application/json; charset=utf-8',
