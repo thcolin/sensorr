@@ -12,6 +12,8 @@ const { map, tap, merge, filter, mergeMap, pluck, takeWhile, catchError } = requ
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
 const Sensorr = require('../shared/Sensorr')
+const logger = require('../shared/utils/logger')
+const uuidv4 = require('uuid/v4')
 const config = require('../config.json')
 const package = require('../package.json')
 const { _, ...argv } = require('minimist')(process.argv.slice(2))
@@ -122,25 +124,41 @@ async function main(sensorr) {
         tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
         mergeMap(movies => from(movies)),
         filter(movie => movie.state === 'wished'),
-        mergeMap(movie => of(movie).pipe(
-          mergeMap(movie => look(movie)),
-          mergeMap(({ movie, release }) => grab(movie, release)),
-          catchError(err => {
-            log('🚨', err.toString())
-            return EMPTY
-          }),
-        ), null, 1),
+        mergeMap(movie => {
+          const uuid = uuidv4()
+
+          return of(movie).pipe(
+            mergeMap(movie => look(movie, uuid)),
+            mergeMap(({ movie, release }) => grab(movie, release, uuid)),
+            map(values => ({ ...values, uuid })),
+            catchError(err => {
+              log('🚨', err.toString())
+              logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { movie, uuid }, err)
+              return EMPTY
+            }),
+          )
+        }, null, 1),
       ).subscribe(
-        ({ movie, release, file }) => log(
-          '📼',
-          'Archiving',
-          `movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`,
-          'with',
-          `release ${chalk.inverse(release.title)}`,
-          'to',
-          chalk.gray(file)
-        ),
-        (err) => log('🚨 ', err),
+        ({ movie, release, file, uuid }) => {
+          log(
+            '📼',
+            'Archiving',
+            `movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`,
+            'with',
+            `release ${chalk.inverse(release.title)}`,
+            'to',
+            chalk.gray(file)
+          )
+
+          logger.spawn(
+            `📼 Archiving movie **${movie.title}** ${`(${movie.year})`} with release **${release.title}** to _${file}_`,
+            { movie, release, file, uuid },
+          )
+        },
+        (err) => {
+          log('🚨', err)
+          logger.error(`🚨 Error during recording process`, { uuid: uuidv4() }, err)
+        },
         () => {
           log('')
           resolve()
@@ -149,15 +167,33 @@ async function main(sensorr) {
     )
   }
 
-  function look(movie) {
+  function look(movie, uuid = null) {
     log('')
     log('🍿', `Looking for wished movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`)
+    logger.input(`🍿 Looking for wished movie **${movie.title}** (${movie.year})`, { movie, uuid })
 
     const hooks = {
-      search: (xznab, title) => log('☠️ ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`),
-      found: (xznab, title, items) => log('🎞️ ', `Found ${chalk.bold(items.length)} releases`),
-      release: (xznab, title, release) => log('*', chalk[['green', 'yellow', 'red'][release.warning]](release.title), chalk.gray(release.valid ? `(${release.score})` : release.reason)),
-      sorted: (releases) => log('🚧', `Filtering and ordering ${releases.length} releases`, chalk.gray(`[${sensorr.config.sort}]`), { true: '🔻', false: '🔺' }[sensorr.config.descending]),
+      search: (xznab, title) => {
+        log('☠️ ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
+        logger.fetch(`☠️ Looking for **${title}** on **${xznab.name}** XZNAB`, { movie, xznab, title, uuid })
+      },
+      found: (xznab, title, items) => {
+        log('🎞️ ', `Found ${chalk.bold(items.length)} releases`)
+        logger.receive(`🎞️ Found **${items.length}** releases` , { movie, xznab, title, items, uuid })
+      },
+      release: (xznab, title, release) => {
+        log('*', chalk[['green', 'yellow', 'red'][release.warning]](release.title), chalk.gray(release.valid ? `(${release.score})` : release.reason))
+        logger.receive(`- ${['**', '**_', '~~'][release.warning]}${release.title}${['**', '_**', '~~'][release.warning]} _${(release.valid ? `(${release.score})` : release.reason)}_`, { movie, xznab, title, release, uuid })
+      },
+      sorted: (releases) => {
+        if (releases.length) {
+          log('🚧', `Filtering and ordering ${releases.length} releases`, chalk.gray(`[${sensorr.config.sort}]`), { true: '🔻', false: '🔺' }[sensorr.config.descending])
+          logger.finish(`🚧 Filtering and ordering **${releases.length}** releases [${sensorr.config.sort}] ${{ true: '🔻', false: '🔺' }[sensorr.config.descending]}`, { movie, releases, sort: sensorr.config.sort, descending: sensorr.config.descending, uuid })
+        } else {
+          log('📭', `️Sorry, no valid releases found`)
+          logger.receive(`📭 Sorry, no valid releases found`, { movie, uuid })
+        }
+      },
     }
 
     return sensorr.look(movie, true, hooks).pipe(
@@ -188,8 +224,9 @@ async function main(sensorr) {
     )
   }
 
-  function grab(movie, release) {
+  function grab(movie, release, uuid = null) {
     log('🎟️ ', `Grabbing ${chalk.inverse(release.title)} from ${chalk.gray(release.site)}`)
+    logger.fetch(`🎟️ Grabbing **${release.title}** from **_${release.site}_**`, { movie, release, uuid })
 
     return of(null).pipe(
       mergeMap(() => of(sensorr.config.blackhole).pipe(

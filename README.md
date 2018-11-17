@@ -19,9 +19,13 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
   * Look for `results` on `sources` (`torznab` / `newznab` with `CORS` enabled)
     * Request with `title` (localized) and `original_title`
   * Grab a `result`
+* See `logs` details
+  * Every wished `movie` processed
 * Language aware
   * By default search on [TMDB](https://www.themoviedb.org/) with first `window.navigator.languages`
   * Fallback to `en-US`
+* Simple configuration
+* Secured WebUI (with `basic-auth`)
 
 # Screenshots
 | Trending | Collection | Search | Movie |
@@ -63,12 +67,11 @@ Options:
 * `WebUI`
   * Refactoring
     * Use `react-emotion` for style
+    * Fix `Film` display on `chrome`
   * Features
     * Follow `stars`
     * Search `stars`
   * Pages
-    * `Logs`
-      * Display `CLI` logs
     * `Movie`
       * Allow alternative `title` correction
         * `Pirates des Caraibes La Fontaine de Jouvence 2011 French DvDRip x264 AC3-OkonEdet (Pirates of the Caribbean On Stranger Tides) `
@@ -77,19 +80,9 @@ Options:
         * Production and Release year can be different
         * `Benjamin Gates Et Le Livre Des Secrets (2007) BDRip x265 10bit 1080p AAC 5.1 Fr Eng Subs Fr Eng [SireHawk]`
         * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
-    * `Logs`
-      * All "Grab" actions
-        * `// Movie [id]`
-        * `// Results with [title]`
-        * `// Results with [original_title]`
-        * `// Filtering using strategy [regexp]`
-        * `// Ordering using [key] and [direction]`
-        * `// Grabbing [result] from [results]`
-        * `// Sending [filename] to [blackhole]`
 * `Server`
   * Secure local `pouch-db` with `config.auth`
 * `CLI`
-  * Improve `logs`
   * Commands
     * `🔍 search [query]`
       * `_tmdb_ [query]`
@@ -103,16 +96,26 @@ Options:
       * `display: [movies]`
       * `input: [movie:state]`
       * `_look_ [movie]`
-  * Look at
-    * [minimist](https://github.com/substack/minimist)
-    * `UI`
-      * [Inquirer.js](https://github.com/SBoudrias/Inquirer.js)
-      * [commander.js](https://github.com/tj/commander.js)
-      * [oclif](https://github.com/oclif/oclif)
-      * [ink](https://github.com/vadimdemedes/ink)
+  * Summary command result
+    * `record`:
+      ```
+        ${found} Movies archived to ${sensorr.config.blackhole} ! 🎉
+          * ${movie.title} (${movie.year}) with release ${release.generated}
+        But ${notfound} still not found.. 😶
+          * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
+      ```
   * Build with `webpack`
 * `Production`
   * Use `Docker`
+
+# Inspiration
+* CLI
+  * [minimist](https://github.com/substack/minimist)
+  * `UI`
+    * [Inquirer.js](https://github.com/SBoudrias/Inquirer.js)
+    * [commander.js](https://github.com/tj/commander.js)
+    * [oclif](https://github.com/oclif/oclif)
+    * [ink](https://github.com/vadimdemedes/ink)
 
 # Family
 * [CouchPotato](https://github.com/CouchPotato/CouchPotatoServer)

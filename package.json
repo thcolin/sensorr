@@ -14,13 +14,17 @@
   "license": "ISC",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "@studio/log": "^2.0.0",
+    "@studio/ndjson": "^2.0.0",
     "chalk": "^2.4.1",
     "country-emoji": "^1.3.0",
     "dotenv": "^6.1.0",
     "express": "^4.16.4",
     "express-basic-auth": "^1.1.6",
     "filesize": "^3.6.1",
+    "fs-reverse": "0.0.3",
     "inquirer": "^6.2.0",
+    "marksy": "^6.1.0",
     "nanobounce": "^1.0.1",
     "node-fetch": "^2.2.0",
     "oleoo": "^1.0.5",
@@ -35,6 +39,7 @@
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "react-emotion": "^9.2.12",
+    "react-infinite-scroller": "^1.2.2",
     "react-router-dom": "^4.3.1",
     "react-toast-notifications": "^1.3.1",
     "react-transition-group": "^2.5.0",
@@ -44,6 +49,7 @@
     "string-similarity": "^2.0.0",
     "typeface-open-sans": "0.0.54",
     "typeface-raleway": "0.0.54",
+    "uuid": "^3.3.2",
     "validator": "^10.9.0"
   },
   "devDependencies": {

@@ -6,6 +6,7 @@ const path = require('path')
 const cors = require('cors')
 const bauth = require('express-basic-auth')
 const validator = require('validator')
+const tail = require('fs-reverse')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { map, mergeMap } = require('rxjs/operators')
 
@@ -22,6 +23,32 @@ const api = express()
 app.use(cors())
 app.use(express.json())
 app.use(bauth({ authorizer }))
+
+api.get('/history', function (req, res) {
+  const file = `${__dirname}/history.log`
+  const start = Math.max(parseInt(req.query.start) || 0, 0)
+  const end = Math.max(10, parseInt(req.query.end) || 0)
+
+  fs.access(file, fs.constants.R_OK, (err) => {
+    if (err) {
+      res.status(200).send({ history: [] })
+    } else {
+      const stream = tail(file)
+      const history = []
+
+      stream.on('close', () => res.status(200).send({ history: history.slice(start) }))
+      stream.on('data', (line) => {
+        if (line) {
+          history.push(JSON.parse(line))
+
+          if (history.length === end) {
+            stream.destroy()
+          }
+        }
+      })
+    }
+  })
+})
 
 api.post('/configure', function (req, res) {
   const file = `${__dirname}/config.json`

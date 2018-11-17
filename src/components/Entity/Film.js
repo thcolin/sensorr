@@ -20,6 +20,11 @@ const styles = {
     backgroundColor: theme.colors.shadows.grey,
     borderRadius: '50%',
     padding: '0.5em',
+    height: '2em',
+    width: '2em',
+  },
+  link: {
+    display: 'block',
   },
   poster: {
     cursor: 'pointer',
@@ -80,7 +85,7 @@ export default class Film extends PureComponent {
 
     return (
       <div
-        title={`${entity.title} (${new Date(entity.release_date).getFullYear()})`}
+        title={`${entity.title} (${entity.year || new Date(entity.release_date).getFullYear()})`}
         style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
       >
         <span style={styles.state} onClick={this.handleStateChange}>
@@ -88,10 +93,10 @@ export default class Film extends PureComponent {
           {doc && doc.state === 'wished' && ('🍿')}
           {doc && doc.state === 'archived' && ('📼')}
         </span>
-        <Link to={`/movie/${entity.id}`}>
+        <Link to={`/movie/${entity.id}`} style={styles.link}>
           <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
         </Link>
-        {/*
+        {/* // Debug
           <span style={{ color: 'white' }}><br/>📆 {entity.release_date}</span>
           <span style={{ color: 'white' }}><br/>💯 {entity.vote_average}</span>
           <span style={{ color: 'white' }}><br/>🔢 {entity.vote_count}</span>

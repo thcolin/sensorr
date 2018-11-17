@@ -18,6 +18,10 @@ b, strong {
   font-weight: bold;
 }
 
+em {
+  font-style: italic;
+}
+
 @-webkit-keyframes bounce {
   0%, 100% { -webkit-transform: scale(0.0) }
   50% { -webkit-transform: scale(1.0) }

@@ -68,7 +68,7 @@ const styles = {
   badges: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'end',
+    alignItems: 'flex-end',
     padding: '1em 0 0',
   },
   badge: {
