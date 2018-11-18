@@ -1,5 +1,4 @@
 const path = require('path')
-const dotenv = require('dotenv-webpack')
 const favicon = require('favicons-webpack-plugin')
 
 module.exports = {
@@ -47,7 +46,6 @@ module.exports = {
     }
   },
   plugins: [
-    new dotenv(),
     new favicon({
       logo: path.join(__dirname, 'src', 'ressources', 'favicon.png'),
       prefix: 'assets/favicon/'

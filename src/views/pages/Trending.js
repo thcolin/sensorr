@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
-import TMDB, { GENRES } from 'shared/services/TMDB'
+import { GENRES } from 'shared/services/TMDB'
 
 const styles = {
   element: {

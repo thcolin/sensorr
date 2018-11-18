@@ -18,7 +18,7 @@ class TMDB {
   }
 }
 
-export default new TMDB({ key: process.env.TMDB_API_KEY })
+export default TMDB
 
 export const GENRES = {
   28: 'Action',

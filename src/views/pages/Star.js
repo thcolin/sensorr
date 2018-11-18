@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import Spinner from 'components/Spinner'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
-import TMDB from 'shared/services/TMDB'
+import tmdb from 'store/tmdb'
 import history from 'store/history'
 import theme from 'theme'
 
@@ -129,7 +129,7 @@ export default class Star extends PureComponent {
 
   async bootstrap() {
     try {
-      const details = await TMDB.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
+      const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
       this.setState({ details })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(e) {

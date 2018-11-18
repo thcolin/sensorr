@@ -6,7 +6,7 @@ import Film from 'components/Entity/Film'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import Releases from 'views/layout/Releases'
-import TMDB from 'shared/services/TMDB'
+import tmdb from 'store/tmdb'
 import history from 'store/history'
 import database from 'store/database'
 import Doc from 'shared/Doc'
@@ -177,7 +177,7 @@ export default class Movie extends PureComponent {
   async bootstrap() {
     try {
       this.setState({ unpinned: false })
-      const details = await TMDB.fetch(
+      const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations' }
       )

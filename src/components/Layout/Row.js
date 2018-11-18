@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
-import TMDB from 'shared/services/TMDB'
+import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
@@ -60,7 +60,7 @@ export default class Row extends PureComponent {
   componentDidMount() {
     if (this.props.uri) {
       this.setState({ loading: true })
-      TMDB.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) }))
+      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) }))
     }
   }
 
@@ -70,7 +70,7 @@ export default class Row extends PureComponent {
       (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params))
     ) {
       this.setState({ loading: true })
-      TMDB.fetch(this.props.uri, this.props.params).then(res => {
+      tmdb.fetch(this.props.uri, this.props.params).then(res => {
         this.setState({ loading: false, entities: this.props.transform(res) })
         this.reference.current.scroll(0, 0)
       })

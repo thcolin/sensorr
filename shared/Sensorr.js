@@ -10,6 +10,7 @@ class Sensorr {
     this.SIMILARITY_MINIMUM_SCORE = 0.6
 
     this.config = {
+      tmdb: '',
       blackhole: '/tmp',
       xznabs: [],
       filter: '',
