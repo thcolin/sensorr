@@ -3,7 +3,7 @@ const { tap, map, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, c
 const oleoo = require('oleoo')
 const similarity = require('string-similarity')
 const XZNAB = require('./services/XZNAB')
-const fallback = require('../config.default.json')
+const fallback = require('../config/default.json')
 
 class Sensorr {
   constructor(config) {

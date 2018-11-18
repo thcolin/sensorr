@@ -12,7 +12,7 @@ const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 
 const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
-let config = require('./config.json')
+let config = require('./config/config.json')
 
 const authorizer = (username, password) => (
   (!config.username && !config.password) ||
@@ -59,7 +59,7 @@ api.get('/history', function (req, res) {
 })
 
 api.post('/configure', function (req, res) {
-  const file = `${__dirname}/config.json`
+  const file = `${__dirname}/config/config.json`
   const body = req.body.config || {}
   const payload = {
     blackhole: body.blackhole,

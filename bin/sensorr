@@ -14,7 +14,7 @@ const Database = require('../shared/Database')
 const Sensorr = require('../shared/Sensorr')
 const logger = require('../shared/utils/logger')
 const uuidv4 = require('uuid/v4')
-const config = require('../config.json')
+const config = require('../config/config.json')
 const package = require('../package.json')
 const { _, ...argv } = require('minimist')(process.argv.slice(2))
 

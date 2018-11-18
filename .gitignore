@@ -3,5 +3,5 @@ node_modules
 dist
 log.txt
 pouchdb.json
-config.json
+config/config.json
 history.log
