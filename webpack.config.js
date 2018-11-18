@@ -3,6 +3,12 @@ const favicon = require('favicons-webpack-plugin')
 
 module.exports = {
   entry: ['@babel/polyfill', 'reset-css', path.resolve(__dirname, 'src', 'index.js')],
+  output: {
+    filename: '[name].bundle.js',
+    chunkFilename: '[name].bundle.js',
+    path: path.join(__dirname, 'dist'),
+    publicPath: '/',
+  },
   module: {
     rules: [
       {

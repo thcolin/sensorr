@@ -19,10 +19,4 @@ module.exports = merge(common, {
       config: '__WEBPACK_INJECT_CONFIG__'
     }),
   ],
-  output: {
-    filename: '[name].bundle.js',
-    chunkFilename: '[name].bundle.js',
-    path: path.join(__dirname, 'dist'),
-    publicPath: '/',
-  },
 })

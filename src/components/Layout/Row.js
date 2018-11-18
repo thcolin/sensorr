@@ -20,6 +20,7 @@ const styles = {
     display: 'flex',
     flexWrap: 'nowrap',
     overflowX: 'auto',
+    overflowY: 'hidden',
   },
   entity: {
     flex: '0 0 auto',
