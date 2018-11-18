@@ -100,7 +100,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
         But ${notfound} still not found.. 😶
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
-  * Build with `webpack`
 * `Production`
   * Use `Docker`
 

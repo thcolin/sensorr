@@ -6,6 +6,6 @@
   </head>
   <body>
     <div id="mount"></div>
-    <script>var config = <%= JSON.stringify(require('../../config.json')) %></script>
+    <script>var config = <%= JSON.stringify(htmlWebpackPlugin.options.config || require('../../config.json')) %></script>
   </body>
 </html>

@@ -1,13 +1,9 @@
 const path = require('path')
 const dotenv = require('dotenv-webpack')
+const favicon = require('favicons-webpack-plugin')
 
 module.exports = {
   entry: ['@babel/polyfill', 'reset-css', path.resolve(__dirname, 'src', 'index.js')],
-  output: {
-    filename: 'assets/scripts/[name].[hash].js',
-    path: path.resolve(__dirname, 'dist'),
-    publicPath: '/',
-  },
   module: {
     rules: [
       {
@@ -17,7 +13,13 @@ module.exports = {
       },
       {
         test: /\.(jpe?g|png)?$/,
-        use: ['url-loader'],
+        use: [{
+          loader: 'file-loader',
+          options: {
+            name: '[name].[hash].[ext]',
+            outputPath: 'assets/images/',
+          },
+        }],
       },
       {
         test: /\.(css)?$/,
@@ -25,7 +27,13 @@ module.exports = {
       },
       {
         test: /\.(eot|ttf|svg|woff2?)(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url-loader'],
+        use: [{
+          loader: 'file-loader',
+          options: {
+            name: '[name].[hash].[ext]',
+            outputPath: 'assets/fonts/',
+          },
+        }],
       }
     ],
   },
@@ -40,5 +48,9 @@ module.exports = {
   },
   plugins: [
     new dotenv(),
+    new favicon({
+      logo: path.join(__dirname, 'src', 'ressources', 'favicon.png'),
+      prefix: 'assets/favicon/'
+    }),
   ],
 }

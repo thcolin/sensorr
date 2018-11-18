@@ -4,12 +4,14 @@ const express = require('express')
 const fetch = require('node-fetch')
 const path = require('path')
 const cors = require('cors')
+const compression = require('compression')
 const bauth = require('express-basic-auth')
 const tail = require('fs-reverse')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 
+const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
 let config = require('./config.json')
 
 const authorizer = (username, password) => (
@@ -18,11 +20,17 @@ const authorizer = (username, password) => (
 )
 
 const app = express()
-const api = express()
 
 app.use(cors())
+app.use(compression())
 app.use(express.json())
-app.use(bauth({ authorizer }))
+app.use(bauth({
+  authorizer,
+  challenge: true,
+  realm: 'Sensorr - Movie release radar',
+}))
+
+const api = express()
 
 api.get('/history', function (req, res) {
   const file = `${__dirname}/history.log`
@@ -118,6 +126,8 @@ api.post('/grab', function (req, res) {
   )
 })
 
+app.use('/api', api)
+
 const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
   configPath: `${__dirname}/pouchdb.json`,
   mode: 'fullCouchDB',
@@ -130,22 +140,15 @@ const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
   },
 })
 
-app.use('/api', api)
 app.use('/db', db)
 
 if (app.get('env') === 'production') {
   app.use(express.static('./dist'))
 
-  app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, './dist', 'index.html'))
-  })
-
-  app.get('*.js', function (req, res, next) {
-    req.url = req.url + '.gz'
-    res.set('Content-Encoding', 'gzip')
-    res.set('Content-Type', 'text/javascript')
-    next()
+  app.use(function (req, res) {
+    console.log(`${chalk.bgGreen(chalk.black(' SERVED '))} ${chalk.green('index.html')}`)
+    res.send(template.replace(/"__WEBPACK_INJECT_CONFIG__"/, JSON.stringify(config)))
   })
 }
 
-app.listen(process.env.PORT || (app.get('env') === 'production' ? 5070 : 7000))
+app.listen(app.get('env') === 'production' ? 5070 : 7000)
