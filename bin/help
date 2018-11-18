@@ -1,9 +1,7 @@
 Usage: sensorr [command] [options]
 
 Commands:
-  🔍 search <query>      Search for <query> movie in TMDB and manage it or look for releases
   📼 record              Automatically loop your wished movies and try to download best release
-  📚 manage              Manage your movies library (change movie state, look for releases)
 
 Options:
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
@@ -13,3 +11,5 @@ Options:
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
   -h, --help             Output usage information
   -v, --version          Output the version number
+
+Tips: Sensorr will use your `config.js` and fallback on default

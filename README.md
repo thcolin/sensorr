@@ -28,9 +28,9 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 * Secured WebUI (with `basic-auth`)
 
 # Screenshots
-| Trending | Collection | Search | Movie |
-|----------|------------|--------|-------|
-| ![Trending](/doc/screenshots/trending.jpg?raw=true) | ![Collection](/doc/screenshots/collection.jpg?raw=true) | ![Search](/doc/screenshots/search.jpg?raw=true) | ![Movie](/doc/screenshots/movie.jpg?raw=true) |
+| Trending | Collection | Search | Movie | Star | Configure | Logs |
+|----------|------------|--------|-------|------|-----------|------|
+| ![Trending](/doc/screenshots/trending.jpg?raw=true) | ![Collection](/doc/screenshots/collection.jpg?raw=true) | ![Search](/doc/screenshots/search.jpg?raw=true) | ![Movie](/doc/screenshots/movie.jpg?raw=true) | ![Star](/doc/screenshots/star.jpg?raw=true) | ![Configure](/doc/screenshots/configure.jpg?raw=true) | ![Logs](/doc/screenshots/logs.jpg?raw=true) |
 
 # CLI
 Goal of this project is running a `cron` every day, to scrape automatically best release for wished movies : `0 0 * * * bin/sensorr record -a`
@@ -48,9 +48,7 @@ Goal of this project is running a `cron` every day, to scrape automatically best
 Usage: sensorr [command] [options]
 
 Commands:
-  🔍 search <query>      Search for <query> movie in TMDB and manage it or look for releases
   📼 record              Automatically loop your wished movies and try to download best release
-  📚 manage              Manage your movies library (change movie state, look for releases)
 
 Options:
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
@@ -60,6 +58,8 @@ Options:
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
   -h, --help             Output usage information
   -v, --version          Output the version number
+
+Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
