@@ -12,7 +12,7 @@ const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 
 const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
-let config = require('./config/config.json')
+let config = require(path.join(__dirname, 'config', 'config.json'))
 
 const authorizer = (username, password) => (
   (!config.username && !config.password) ||
@@ -33,7 +33,7 @@ app.use(bauth({
 const api = express()
 
 api.get('/history', function (req, res) {
-  const file = `${__dirname}/history.log`
+  const file = path.join(__dirname, 'history.log')
   const start = Math.max(parseInt(req.query.start) || 0, 0)
   const end = Math.max(10, parseInt(req.query.end) || 0)
 
@@ -59,9 +59,10 @@ api.get('/history', function (req, res) {
 })
 
 api.post('/configure', function (req, res) {
-  const file = `${__dirname}/config/config.json`
+  const file = path.join(__dirname, 'config', 'config.json')
   const body = req.body.config || {}
   const payload = {
+    tmdb: body.tmdb,
     blackhole: body.blackhole,
     xznabs: Array.isArray(body.xznabs) ? body.xznabs : [],
     filter: (body.filter || '').toString(),
@@ -108,8 +109,8 @@ api.post('/grab', function (req, res) {
     mergeMap(() => of(release.link).pipe(
       mergeMap(link => fetch(link)),
       mergeMap(res => res.buffer()),
-      mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${config.blackhole}/${release.meta.generated}.torrent`, buffer).pipe(
-        mergeMap(err => err ? throwError(err) : of(`${config.blackhole}/${release.meta.generated}.torrent`)),
+      mergeMap(buffer => bindNodeCallback(fs.writeFile)(path.join(config.blackhole, `${release.meta.generated}.torrent`), buffer).pipe(
+        mergeMap(err => err ? throwError(err) : of(path.join(config.blackhole, `${release.meta.generated}.torrent`))),
       )),
     ))
   ).subscribe(
@@ -129,7 +130,7 @@ api.post('/grab', function (req, res) {
 app.use('/api', api)
 
 const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
-  configPath: `${__dirname}/pouchdb.json`,
+  configPath: path.join(__dirname, 'pouchdb.json'),
   mode: 'fullCouchDB',
   overrideMode: {
     exclude: [
@@ -143,12 +144,14 @@ const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
 app.use('/db', db)
 
 if (app.get('env') === 'production') {
-  app.use(express.static('./dist'))
-
-  app.use(function (req, res) {
+  const index = function (req, res) {
     console.log(`${chalk.bgGreen(chalk.black(' SERVED '))} ${chalk.green('index.html')}`)
     res.send(template.replace(/"__WEBPACK_INJECT_CONFIG__"/, JSON.stringify(config)))
-  })
+  }
+
+  app.get('/', index)
+  app.use(express.static(path.join(__dirname, 'dist')))
+  app.use(index)
 }
 
 app.listen(app.get('env') === 'production' ? 5070 : 7000)
