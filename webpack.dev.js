@@ -21,6 +21,7 @@ module.exports = merge(common, {
       'Access-Control-Allow-Origin': '*',
     },
     proxy: {
+      '/db': 'http://localhost:7000',
       '/api': 'http://localhost:7000',
     },
   },

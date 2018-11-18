@@ -74,7 +74,6 @@ const styles = {
 }
 
 const placeholder = {
-  db: 'http://localhost:5984',
   blackhole: '/tmp',
   xznab: {
     name: 'Name',
@@ -155,6 +154,7 @@ class Configure extends PureComponent {
           <p style={styles.paragraph}>
             To securize your Sensorr instance you can fill a username and a password. Leave blank for no authentication.
             <br/>
+            <br/>
             Specify <code style={styles.code}>username</code> and <code style={styles.code}>password</code> :
           </p>
           <div style={styles.column}>
@@ -175,24 +175,6 @@ class Configure extends PureComponent {
           </div>
         </div>
         <div style={styles.section}>
-          <h1 style={styles.title}>Database</h1>
-          <p style={{ ...styles.paragraph, flex: 1, }}>
-            Under the hood, Sensorr synchronise a <a href="https://pouchdb.com/" style={styles.link}>PouchDB</a> database between your local browser, server and CLI.
-            <br/>
-            <br/>
-          </p>
-          <p style={styles.paragraph}>
-            Here you need to specify <a href="https://pouchdb.com/" style={styles.link}>PouchDB</a> <strong>server URL</strong> :
-          </p>
-          <input
-            type="text"
-            placeholder={placeholder.db}
-            style={styles.input}
-            defaultValue={values.db}
-            onChange={e => this.handleChange('db', e.target.value)}
-          />
-        </div>
-        <div style={styles.section}>
           <h1 style={styles.title}>Blackhole</h1>
           <p style={{ ...styles.paragraph, flex: 1, }}>
             Sensorr works with <strong>XZNAB</strong> API servers and will download any <code style={styles.code}>.torrent</code> or <code style={styles.code}>.nzb</code> file into defined Server <code style={styles.code}>blackhole</code> path.
@@ -200,7 +182,7 @@ class Configure extends PureComponent {
             <br/>
           </p>
           <p style={styles.paragraph}>
-            Here you need to server <strong>blackhole path</strong> :
+            Here you need to fill <strong>server</strong> blackhole <strong>path</strong> :
           </p>
           <input
             type="text"

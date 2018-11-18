@@ -10,7 +10,6 @@ class Sensorr {
     this.SIMILARITY_MINIMUM_SCORE = 0.6
 
     this.config = {
-      db: 'http://localhost:5984',
       blackhole: '/tmp',
       xznabs: [],
       filter: '',

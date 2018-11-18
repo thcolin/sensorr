@@ -6,7 +6,6 @@ Commands:
   📚 manage              Manage your movies library (change movie state, look for releases)
 
 Options:
-  -d, --db <url>         Use PouchDB <url> to sync database [default: http://localhost:5984]
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
   -f, --filter <regexp>  Filter releases returned by configured XZNAB
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]

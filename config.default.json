@@ -1,5 +1,4 @@
 {
-  "db": "http://localhost:5984",
   "blackhole": "/tmp",
   "xznabs": [
     {

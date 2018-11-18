@@ -26,7 +26,14 @@ RxDB.plugin(require('pouchdb-adapter-leveldb'))
 
 global.fetch = require('node-fetch')
 
-main(new Sensorr({ ...config, ...argv }))
+const parse = (values) => ({
+  ...((values.b && { blackhole: values.b }) || (values.blackhole && { blackhole: values.blackhole }) || {}),
+  ...((values.f && { filter: values.f }) || (values.filter && { filter: values.filter }) || {}),
+  ...((values.s && { sort: values.s }) || (values.sort && { sort: values.sort }) || {}),
+  ...((values.d && { descending: values.d }) || (values.descending && { descending: values.descending }) || {}),
+})
+
+main(new Sensorr({ ...config, ...parse(argv) }))
 
 async function main(sensorr) {
   await logo()
@@ -39,9 +46,11 @@ async function main(sensorr) {
     await exit()
   }
 
+  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${process.env.NODE_ENV === 'production' ? 5070 : 7000}`
+
   const loading = ora({
     spinner: spinners.earth,
-    text: `Syncing database with ${chalk.gray(sensorr.config.db)} ...`,
+    text: `Syncing database with ${chalk.gray(remote)} ...`,
   })
 
   // Waiting feature [Using RxDB to only wrap remote (couch) endpoints #247](https://github.com/pubkey/rxdb/issues/247) to be implemented
@@ -51,7 +60,7 @@ async function main(sensorr) {
   }).get()
     .then(db => new Promise(resolve =>
       db.movies.sync({
-        remote: `${sensorr.config.db}/sensorr`,
+        remote: `${remote}/db/sensorr`,
         options: {
           live: false
         },
@@ -64,10 +73,10 @@ async function main(sensorr) {
         () => loading.start(),
         null,
         () => {
-          db.movies.sync({ remote: `${sensorr.config.db}/sensorr` })
+          db.movies.sync({ remote: `${remote}/db/sensorr` })
 
           setTimeout(() => {
-            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(sensorr.config.db)} !` })
+            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(remote)} !` })
             resolve(db)
           }, 500)
         }
@@ -246,6 +255,7 @@ async function main(sensorr) {
       mergeMap(file => of(null).pipe(
         mergeMap(() => db.movies.atomicUpsert({
           ...movie,
+          time: Date.now(),
           state: 'archived',
         })),
         map(() => ({ movie, release, file })),

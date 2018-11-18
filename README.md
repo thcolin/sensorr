@@ -15,7 +15,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 * See `collection` (`wished` and `archived` movies)
   * Filter by title and `:[wished|archived]`
 * See `movie` details
-  * Consider movie `ignored`, `wished` or `archived`
+  * Consider movie as, `🔕` `ignored`, `🍿` `wished` or `📼` `archived`
   * Look for `results` on `sources` (`torznab` / `newznab` with `CORS` enabled)
     * Request with `title` (localized) and `original_title`
   * Grab a `result`
@@ -53,7 +53,6 @@ Commands:
   📚 manage              Manage your movies library (change movie state, look for releases)
 
 Options:
-  -d, --db <url>         Use PouchDB <url> to sync database [default: http://localhost:5984]
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
   -f, --filter <regexp>  Filter releases returned by configured XZNAB
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
@@ -67,7 +66,6 @@ Options:
 * `WebUI`
   * Refactoring
     * Use `react-emotion` for style
-    * Fix `Film` display on `chrome`
   * Features
     * Follow `stars`
     * Search `stars`
@@ -80,8 +78,6 @@ Options:
         * Production and Release year can be different
         * `Benjamin Gates Et Le Livre Des Secrets (2007) BDRip x265 10bit 1080p AAC 5.1 Fr Eng Subs Fr Eng [SireHawk]`
         * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
-* `Server`
-  * Secure local `pouch-db` with `config.auth`
 * `CLI`
   * Commands
     * `🔍 search [query]`
@@ -111,11 +107,10 @@ Options:
 # Inspiration
 * CLI
   * [minimist](https://github.com/substack/minimist)
-  * `UI`
-    * [Inquirer.js](https://github.com/SBoudrias/Inquirer.js)
-    * [commander.js](https://github.com/tj/commander.js)
-    * [oclif](https://github.com/oclif/oclif)
-    * [ink](https://github.com/vadimdemedes/ink)
+  * [Inquirer.js](https://github.com/SBoudrias/Inquirer.js)
+  * [commander.js](https://github.com/tj/commander.js)
+  * [oclif](https://github.com/oclif/oclif)
+  * [ink](https://github.com/vadimdemedes/ink)
 
 # Family
 * [CouchPotato](https://github.com/CouchPotato/CouchPotatoServer)

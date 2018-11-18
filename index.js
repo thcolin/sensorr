@@ -5,10 +5,10 @@ const fetch = require('node-fetch')
 const path = require('path')
 const cors = require('cors')
 const bauth = require('express-basic-auth')
-const validator = require('validator')
 const tail = require('fs-reverse')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { map, mergeMap } = require('rxjs/operators')
+const PouchDB = require('pouchdb')
 
 let config = require('./config.json')
 
@@ -54,7 +54,6 @@ api.post('/configure', function (req, res) {
   const file = `${__dirname}/config.json`
   const body = req.body.config || {}
   const payload = {
-    db: body.db,
     blackhole: body.blackhole,
     xznabs: Array.isArray(body.xznabs) ? body.xznabs : [],
     filter: (body.filter || '').toString(),
@@ -67,7 +66,6 @@ api.post('/configure', function (req, res) {
   }
 
   of(null).pipe(
-    mergeMap(() => validator.isURL(payload.db, { require_tld: false, require_protocol: true }) ? of(file) : throwError(`Error: database should be an URL (like http://localhost:5984)`)),
     mergeMap(() => bindNodeCallback(fs.access)(payload.blackhole, fs.constants.W_OK)),
     mergeMap(err => err ? throwError(err) : of(file)),
     mergeMap(() => bindNodeCallback(fs.access)(file, fs.constants.W_OK)),
@@ -120,7 +118,20 @@ api.post('/grab', function (req, res) {
   )
 })
 
+const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
+  configPath: `${__dirname}/pouchdb.json`,
+  mode: 'fullCouchDB',
+  overrideMode: {
+    exclude: [
+      'routes/authentication',
+      'routes/authorization',
+      'routes/session',
+    ],
+  },
+})
+
 app.use('/api', api)
+app.use('/db', db)
 
 if (app.get('env') === 'production') {
   app.use(express.static('./dist'))
@@ -137,4 +148,4 @@ if (app.get('env') === 'production') {
   })
 }
 
-app.listen(process.env.PORT || (app.get('env') === 'production' ? 8080 : 7000))
+app.listen(process.env.PORT || (app.get('env') === 'production' ? 5070 : 7000))
