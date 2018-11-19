@@ -7,7 +7,7 @@
     "dev": "webpack-dev-server --progress --config webpack.dev.js",
     "start": "node index.js",
     "build": "npx webpack --progress --config webpack.prod.js",
-    "prod": "NODE_ENV=production node index.js",
+    "prod": "pm2-runtime start ecosystem.config.js --env=production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

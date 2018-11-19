@@ -1,13 +1,7 @@
 {
   "tmdb": "",
   "blackhole": "/tmp",
-  "xznabs": [
-    {
-      "name": "Cardigann",
-      "url": "http://localhost:5060/torznab/aggregate",
-      "key": ""
-    }
-  ],
+  "xznabs": [],
   "filter": "resolution=720p|1080p",
   "sort": "seeders",
   "descending": false,

@@ -196,6 +196,8 @@ class Configure extends PureComponent {
           <p style={{ ...styles.paragraph, flex: 1, }}>
             Sensorr works with <strong>XZNAB</strong> API servers and will download any <code style={styles.code}>.torrent</code> or <code style={styles.code}>.nzb</code> file into defined Server <code style={styles.code}>blackhole</code> path.
             <br/>
+            If you run Sensorr from <a href="https://hub.docker.com/r/thcolin/sensorr/" style={styles.link}>Docker</a> image, keep it to <code style={styles.code}>/app/sensorr/blackhole</code>.
+            <br/>
             <br/>
           </p>
           <p style={styles.paragraph}>

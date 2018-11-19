@@ -61,7 +61,7 @@ export default class Row extends PureComponent {
   componentDidMount() {
     if (this.props.uri) {
       this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) }))
+      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) || [] }))
     }
   }
 

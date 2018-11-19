@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+const { exec } = require('child_process')
+const job = process.argv.slice(2).join(' ')
+
+console.log(`job "${job}" working...`)
+exec(job, function (error, stderr, stdout) {
+  if (error) {
+    console.error(`job "${job}" error: ${error}`)
+    return
+  }
+
+  console.log(`job "${job}" done !`)
+})

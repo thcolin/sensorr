@@ -1,5 +1,13 @@
+const fs = require('fs')
 const path = require('path')
 const favicon = require('favicons-webpack-plugin')
+
+try {
+  fs.accessSync(path.join(__dirname, 'config', 'config.json'), fs.constants.R_OK)
+} catch(e) {
+  const fallback = require(path.join(__dirname, 'config.default.json'))
+  fs.writeFileSync(path.join(__dirname, 'config', 'config.json'), JSON.stringify(fallback, null, 2))
+}
 
 module.exports = {
   entry: ['@babel/polyfill', 'reset-css', path.resolve(__dirname, 'src', 'index.js')],

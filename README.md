@@ -32,8 +32,28 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 |----------|------------|--------|-------|------|-----------|------|
 | ![Trending](/doc/screenshots/trending.jpg?raw=true) | ![Collection](/doc/screenshots/collection.jpg?raw=true) | ![Search](/doc/screenshots/search.jpg?raw=true) | ![Movie](/doc/screenshots/movie.jpg?raw=true) | ![Star](/doc/screenshots/star.jpg?raw=true) | ![Configure](/doc/screenshots/configure.jpg?raw=true) | ![Logs](/doc/screenshots/logs.jpg?raw=true) |
 
+# Scripts
+  * `dev`: launch development server for `React` _frontend_
+  * `start`: launch Sensorr `web server` without serving _frontend_
+  * `build`: build _frontend_ to `dist` folder
+  * `prod`: run `pm2` apps, Sensorr (`web server`) and Sensorr (`record cron`)
+
+# Docker
+Checkout Sensorr [Docker image](https://hub.docker.com/r/thcolin/sensorr/), it let you skip every complex environment configuration and just run a clean installation, just open a terminal with `docker` installed and run:
+
+```
+# `/home/user/.sensorr` will be your config path
+# `/home/user/downloads` will be your blackhole path
+docker run -p 5070:5070 -v /home/user/.sensorr:/app/sensorr/config -v /home/user/downloads:/app/sensorr/blackhole --name="sensorr" thcolin/sensorr
+```
+
+# Configure
+* Edit default configuration in `config/config.json` or `http://localhost:5070/configure`
+
 # CLI
-Goal of this project is running a `cron` every day, to scrape automatically best release for wished movies : `0 0 * * * bin/sensorr record -a`
+Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js`. It will launch `./bin/sensorr record -a` everyday at `17:00` / `5:00PM`
+
+**🚨 Warning:** CLI tool need to communicate with Sensorr web server at `http://localhost:5070` to sync databases ! Be sure Sensorr web server is launched before launching `record` command.
 
 ```
 
@@ -64,6 +84,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * Search on `history.onpopstate`
   * Refactoring
     * Use `react-emotion` for style
   * Features
@@ -100,8 +122,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
         But ${notfound} still not found.. 😶
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
-* `Production`
-  * Use `Docker`
 
 # Inspiration
 * CLI

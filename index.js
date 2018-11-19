@@ -12,6 +12,14 @@ const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 
 const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
+
+try {
+  fs.accessSync(path.join(__dirname, 'config', 'config.json'), fs.constants.R_OK)
+} catch(e) {
+  const fallback = require(path.join(__dirname, 'config.default.json'))
+  fs.writeFileSync(path.join(__dirname, 'config', 'config.json'), JSON.stringify(fallback, null, 2))
+}
+
 let config = require(path.join(__dirname, 'config', 'config.json'))
 
 const authorizer = (username, password) => (
@@ -145,8 +153,16 @@ app.use('/db', db)
 
 if (app.get('env') === 'production') {
   const index = function (req, res) {
-    console.log(`${chalk.bgGreen(chalk.black(' SERVED '))} ${chalk.green('index.html')}`)
-    res.send(template.replace(/"__WEBPACK_INJECT_CONFIG__"/, JSON.stringify(config)))
+    fs.readFile(path.join(__dirname, 'config', 'config.json'), 'utf8', (err, data) => {
+      if (!err) {
+        try {
+          config = JSON.parse(data)
+        } catch(e) {}
+      }
+
+      console.log(`${chalk.bgGreen(chalk.black(' SERVED '))} ${chalk.green('index.html')}`)
+      res.send(template.replace(/"__WEBPACK_INJECT_CONFIG__"/, JSON.stringify(config)))
+    })
   }
 
   app.get('/', index)
