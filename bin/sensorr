@@ -8,7 +8,7 @@ const oleoo = require('oleoo')
 const filesize = require('filesize')
 const similarity = require('string-similarity')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, tap, merge, filter, mergeMap, pluck, takeWhile, catchError } = require('rxjs/operators')
+const { map, tap, merge, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
 const Sensorr = require('../shared/Sensorr')
@@ -260,6 +260,7 @@ async function main(sensorr) {
         })),
         map(() => ({ movie, release, file })),
       )),
+      delay(3000),
     )
   }
 }
