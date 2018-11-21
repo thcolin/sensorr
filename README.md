@@ -3,7 +3,7 @@
 A simple movie release radar like CouchPotato, Radarr and Watcher3, written in Javascript with `React`
 
 # Warning
-🚨 This is early experimental, currently will only support [`cardigann`](https://github.com/cardigann/cardigann) cause of `CORS` issue on [Jackett](https://github.com/Jackett/Jackett/issues/2818).
+🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett).
 
 # Features
 * See `trending` movies on home page

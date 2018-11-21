@@ -12,19 +12,20 @@ const styles = {
   element: {
 
   },
-  table: {
-    width: '100%',
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
   },
-  thead: {
-    zIndex: 1,
+  search: {
     position: 'sticky',
     top: '-1px',
     backgroundColor: theme.colors.primary,
     color: theme.colors.white,
     fontWeight: 800,
     textTransform: 'uppercase',
+    zIndex: 1,
   },
-  th: {
+  column: {
     padding: '1em',
   },
   input: {
@@ -46,12 +47,43 @@ const styles = {
     textTransform: 'uppercase',
     padding: '1em',
   },
-  td: {
-    verticalAlign: 'middle',
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexGrow: 0,
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  rows: {
+    title: {
+      width: '60%',
+    },
+    site: {
+      width: '12%',
+    },
+    peers: {
+      width: '6%',
+    },
+    seeders: {
+      width: '8%',
+    },
+    size: {
+      width: '8%',
+    },
+    grab: {
+      width: '6%',
+    },
+  },
+  cell: {
+    textAlign: 'center',
     fontFamily: theme.fonts.secondary,
     padding: '1em',
-    textAlign: 'center',
-    borderBottom: `1px solid ${theme.colors.grey}`
+    borderBottom: `1px solid ${theme.colors.grey}`,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  },
+  link: {
+    color: theme.colors.primary
   },
   grab: {
     cursor: 'pointer',
@@ -149,66 +181,94 @@ class Releases extends PureComponent {
 
     return (
       <div key="releases" id="releases" style={styles.element}>
-        <table style={styles.table}>
-          <thead style={styles.thead}>
-            <tr>
-              <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('title')}>Title</th>
-              <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('site')}>Source</th>
-              <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('peers')}>Peers</th>
-              <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('seeders')}>Seeders</th>
-              <th style={{ ...styles.th, cursor: 'pointer', }} onClick={() => this.handleSortChange('size')}>Size</th>
-              <th style={styles.th}>Grab</th>
-            </tr>
-            <tr>
-              <td colSpan={6}>
-                <input
-                  type="text"
-                  defaultValue={filter}
-                  onKeyUp={this.handleQueryChange}
-                  style={styles.input}
-                  placeholder="Filter..."
-                />
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && !releases.filter(sensorr.filter(filter)).length ? (
-              <tr>
-                <td colSpan={6}>
-                  <Empty />
-                </td>
-              </tr>
-            ) : (
-              releases.filter(sensorr.filter(filter)).sort(sensorr.sort(sort, descending)).map((release, index) => (
-                <tr key={index} style={styles.tr}>
-                  <td
-                    title={release.valid ? `Score : ${release.score}` : release.reason}
-                    style={{ ...styles.td, textAlign: 'left', opacity: [1, 0.5, 0.25][release.warning] }}
+        <div style={styles.container}>
+          <div style={styles.search}>
+            <div style={styles.row}>
+              <div
+                style={{ ...styles.column, ...styles.rows.title, cursor: 'pointer', }}
+                onClick={() => this.handleSortChange('title')}
+              >
+                Title
+              </div>
+              <div
+                style={{ ...styles.column, ...styles.rows.site, cursor: 'pointer', textAlign: 'center', }}
+                onClick={() => this.handleSortChange('site')}
+              >
+                Source
+              </div>
+              <div
+                style={{ ...styles.column, ...styles.rows.peers, cursor: 'pointer', textAlign: 'center', }}
+                onClick={() => this.handleSortChange('peers')}
+              >
+                Peers
+              </div>
+              <div
+                style={{ ...styles.column, ...styles.rows.seeders, cursor: 'pointer', textAlign: 'center', }}
+                onClick={() => this.handleSortChange('seeders')}
+              >
+                Seeders
+              </div>
+              <div
+                style={{ ...styles.column, ...styles.rows.size, cursor: 'pointer', textAlign: 'center', }}
+                onClick={() => this.handleSortChange('size')}
+              >
+                Size
+              </div>
+              <div style={{ ...styles.column, ...styles.rows.grab, textAlign: 'center', }}>
+                Grab
+              </div>
+            </div>
+            <div style={styles.row}>
+              <input
+                type="text"
+                defaultValue={filter}
+                onKeyUp={this.handleQueryChange}
+                style={styles.input}
+                placeholder="Filter..."
+              />
+            </div>
+          </div>
+          {!loading && !releases.filter(sensorr.filter(filter)).length ? (
+            <div style={styles.row}>
+              <Empty />
+            </div>
+          ) : (
+            releases.filter(sensorr.filter(filter)).sort(sensorr.sort(sort, descending)).map((release, index) => (
+              <div key={index} style={styles.row}>
+                <div
+                  title={release.valid ? `Score : ${release.score}` : release.reason}
+                  style={{
+                    ...styles.cell,
+                    ...styles.rows.title,
+                    flexGrow: 1,
+                    textAlign: 'left',
+                    textOverflow: 'ellipsis',
+                    opacity: [1, 0.5, 0.25][release.warning],
+                  }}
+                >
+                  {release.title}
+                </div>
+                <div style={{ ...styles.cell, ...styles.rows.site, }}><a href={release.guid} style={styles.link}>{release.site}</a></div>
+                <div style={{ ...styles.cell, ...styles.rows.peers, }}>{release.peers}</div>
+                <div style={{ ...styles.cell, ...styles.rows.seeders, }}>{release.seeders}</div>
+                <div style={{ ...styles.cell, ...styles.rows.size, textAlign: 'right', }}>{filesize(release.size)}</div>
+                <div style={{ ...styles.cell, ...styles.rows.grab, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, }}>
+                  <a
+                    href={release.link}
+                    style={styles.grab}
+                    target="_blank"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      this.handleGrabClick(release)
+                    }}
                   >
-                    {release.title}
-                  </td>
-                  <td style={styles.td}>{release.site}</td>
-                  <td style={styles.td}>{release.peers}</td>
-                  <td style={styles.td}>{release.seeders}</td>
-                  <td style={{ ...styles.td, textAlign: 'right' }}>{filesize(release.size)}</td>
-                  <td style={{ ...styles.td, padding: 0 }}>
-                    <a
-                      href={release.link}
-                      style={styles.grab}
-                      target="_blank"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        this.handleGrabClick(release)
-                      }}
-                    >
-                      🎟
-                    </a>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    🎟
+                  </a>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
         {loading && (
           <div style={styles.loading}>
             <Spinner />
