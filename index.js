@@ -1,6 +1,7 @@
 const fs = require('fs')
 const chalk = require('chalk')
 const express = require('express')
+const request = require('request')
 const fetch = require('node-fetch')
 const path = require('path')
 const cors = require('cors')
@@ -10,6 +11,8 @@ const tail = require('fs-reverse')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
+const atob = require('atob')
+const escape = require('escape-string-regexp')
 
 const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
 
@@ -37,6 +40,18 @@ app.use(bauth({
   challenge: true,
   realm: 'Sensorr - Movie release radar',
 }))
+
+app.get('/proxy', function (req, res) {
+  const url = atob(req.query.url)
+
+  if (config.xznabs.some(xznab => url.match(new RegExp(`^${escape(xznab.url)}`)))) {
+    console.log(`${chalk.bgGreen(chalk.black(' ALLOW '))} ${chalk.green(url)}`)
+    req.pipe(request(url)).pipe(res)
+  } else{
+    console.log(`${chalk.bgRed(chalk.black(' DENY '))} ${chalk.red(url)} ${chalk.gray(JSON.stringify(req.query))}`)
+    res.status(403).send('Blacklisted URL')
+  }
+})
 
 const api = express()
 

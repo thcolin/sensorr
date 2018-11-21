@@ -78,7 +78,7 @@ const placeholder = {
   blackhole: '/tmp',
   xznab: {
     name: 'Name',
-    url: 'http://localhost:5060/torznab/aggregate',
+    url: 'http://localhost:5060/torznab/aggregate/api',
     key: 'API Key',
   },
   filter: 'resolution=720p|1080p, source=BLURAY',

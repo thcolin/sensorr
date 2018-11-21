@@ -23,6 +23,7 @@ module.exports = merge(common, {
     proxy: {
       '/db': 'http://localhost:7000',
       '/api': 'http://localhost:7000',
+      '/proxy': 'http://localhost:7000',
     },
   },
 })

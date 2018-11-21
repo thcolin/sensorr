@@ -6,8 +6,10 @@ const XZNAB = require('./services/XZNAB')
 const fallback = require('../config.default.json')
 
 class Sensorr {
-  constructor(config) {
+  constructor(config, options = {}) {
     this.SIMILARITY_MINIMUM_SCORE = 0.6
+
+    this.options = options
 
     this.config = {
       tmdb: '',
@@ -20,7 +22,7 @@ class Sensorr {
       ...config,
     }
 
-    this.xznabs = (this.config.xznabs || []).map(xznab => new XZNAB(xznab))
+    this.xznabs = (this.config.xznabs || []).map(xznab => new XZNAB(xznab, options))
   }
 
   filter(query) {
