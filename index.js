@@ -129,7 +129,7 @@ api.post('/grab', function (req, res) {
         mergeMap(err => err ? throwError(err) : of(null)),
       )),
     )),
-    mergeMap(() => of(release.link).pipe(
+    mergeMap(() => of(encodeURI(release.link)).pipe(
       mergeMap(link => fetch(link)),
       mergeMap(res => res.buffer()),
       mergeMap(buffer => bindNodeCallback(fs.writeFile)(path.join(config.blackhole, `${release.meta.generated}.torrent`), buffer).pipe(
@@ -139,6 +139,7 @@ api.post('/grab', function (req, res) {
   ).subscribe(
     (filename) => {
       console.log(`${chalk.bgGreen(chalk.black(' GRABBED '))} ${chalk.green(release.title)}`)
+      console.log(chalk.gray(release.link))
       console.log(chalk.gray(filename))
       res.status(200).send({ release, filename })
     },

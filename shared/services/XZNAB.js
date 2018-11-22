@@ -1,4 +1,5 @@
 const X2J = require('xml2json-light')
+const unescape = require('unescape')
 
 module.exports = class XZNAB {
   constructor({ name, key, url }, { proxify, headers }) {
@@ -64,7 +65,8 @@ module.exports = class XZNAB {
             ...item
           }) => ({
             ...item,
-            enclosure: item.enclosure.url,
+            link: unescape(item.link, 'all'),
+            enclosure: unescape(item.enclosure.url, 'all'),
             grabs: parseInt(item.grabs),
             size: parseInt(item.size),
             downloadVolumeFactor: parseInt(downloadvolumefactor),
