@@ -4,7 +4,7 @@
   "xznabs": [],
   "filter": "resolution=720p|1080p",
   "sort": "seeders",
-  "descending": false,
+  "descending": true,
   "auth": {
     "username": "sensorr",
     "password": "sensorr"
