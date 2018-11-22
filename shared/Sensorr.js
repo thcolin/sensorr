@@ -27,10 +27,10 @@ class Sensorr {
 
   filter(query) {
     return (release) => {
-      return query.split(', ').length === query.split(', ')
+      return query.split(',').length === query.split(',')
         .map(input => {
           const payload = {
-            pattern: input,
+            pattern: input.trim(),
             key: 'original',
             negate: false,
           }
