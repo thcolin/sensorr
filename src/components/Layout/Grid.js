@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import PropTypes from 'prop-types'
 import Empty from 'components/Empty'
 import database from 'store/database'
 
@@ -23,28 +24,54 @@ const styles = {
 }
 
 export default class Grid extends PureComponent {
+  static propTypes = {
+    query: PropTypes.string,
+    filter: PropTypes.func,
+    child: PropTypes.func.isRequired,
+  }
+
+  static defaultProps = {
+    query: '',
+    filter: () => true,
+  }
+
   constructor(props) {
     super(props)
 
     this.state = {
       entities: [],
+      subscription: null,
     }
   }
 
   async componentDidMount() {
     const db = await database.get()
-    const entities = await db.movies.find().exec()
-    this.setState({ entities })
+    const query = db.movies.find()
+    const entities = await query.exec()
+    const subscription = query.$.subscribe(entities => this.setState(state => {
+      const states = entities.reduce((states, entity) => ({ ...states, [entity.id]: entity.state }), {})
+
+      return {
+        entities: state.entities.map(entity => ({ ...entity, state: states[entity.id] }))
+      }
+    }))
+    this.setState({ subscription, entities: entities.map(entity => entity.toJSON()) })
+  }
+
+  async componentWillUnmount() {
+    if (this.state.subscription) {
+      this.state.subscription.unsubscribe()
+    }
   }
 
   render() {
-    const { query, child, ...props } = this.props
+    const { query, filter, child, ...props } = this.props
     const { entities, ...state } = this.state
 
     const filtered = entities
-      .map(entity => entity.toJSON())
       .sort((a, b) => (b.time || 0) - (a.time || 0))
       .filter(entity => entity.poster_path)
+      .filter(filter)
       .filter(entity => (
         new RegExp(query, 'i').test(entity.title) ||
         new RegExp(query, 'i').test(entity.original_title) ||
