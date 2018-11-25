@@ -70,6 +70,8 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'flex-end',
     padding: '1em 0 0',
+    userSelect: 'none',
+    MozUserSelect: 'none',
   },
   badge: {
     cursor: 'pointer',

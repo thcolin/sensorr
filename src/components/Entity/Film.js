@@ -22,6 +22,8 @@ const styles = {
     padding: '0.5em',
     height: '2em',
     width: '2em',
+    userSelect: 'none',
+    MozUserSelect: 'none',
   },
   link: {
     display: 'block',
