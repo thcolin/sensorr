@@ -28,6 +28,7 @@ const styles = {
     color: theme.colors.black,
   },
   list: {
+    lineHeight: 1.75,
     listStyle: 'inside',
   },
   link: {
@@ -220,12 +221,12 @@ class Configure extends PureComponent {
             Sensorr works with <strong>XZNAB</strong> (<a href="https://github.com/Sonarr/Sonarr/wiki/Implementing-a-Torznab-indexer" style={styles.link}>Torznab</a> or <a href="http://www.newznab.com/" style={styles.link}>Newznab</a>) API servers, add as many as you wish, they will be used to perform looks query.
             <br/>
             <br/>
-            <p>Example:</p>
-            <ul style={styles.list}>
-              <li>Jackett: <code style={styles.code}>http://localhost:9117/api/v2.0/indexers/xxx/results/torznab/</code></li>
-              <li>Cardigann: <code style={styles.code}>http://localhost:5060/torznab/xxx/api</code> (don't forget <code style={styles.code}>/api</code> after copied Cardigann Torznab link !)</li>
-            </ul>
           </p>
+          <p style={styles.paragraph}>Example:</p>
+          <ul style={styles.list}>
+            <li>Jackett: <code style={styles.code}>http://localhost:9117/api/v2.0/indexers/xxx/results/torznab/</code></li>
+            <li>Cardigann: <code style={styles.code}>http://localhost:5060/torznab/xxx/api</code> (don't forget <code style={styles.code}>/api</code> after copied Cardigann Torznab link !)</li>
+          </ul>
           {(values.xznabs.length ? values.xznabs : [{ name: '', url: '', key: '' }]).map((xznab, index, self) => (
             <div style={styles.column} key={index}>
               <input
