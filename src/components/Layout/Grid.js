@@ -40,6 +40,7 @@ export default class Grid extends PureComponent {
 
     this.state = {
       entities: [],
+      buffer: [],
       subscription: null,
     }
   }
@@ -48,14 +49,17 @@ export default class Grid extends PureComponent {
     const db = await database.get()
     const query = db.movies.find()
     const entities = await query.exec()
-    const subscription = query.$.subscribe(entities => this.setState(state => {
-      const states = entities.reduce((states, entity) => ({ ...states, [entity.id]: entity.state }), {})
-
-      return {
-        entities: state.entities.map(entity => ({ ...entity, state: states[entity.id] }))
-      }
-    }))
+    const subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
     this.setState({ subscription, entities: entities.map(entity => entity.toJSON()) })
+  }
+
+  componentDidUpdate(props, state) {
+    if (this.state.buffer.length && (props.query !== this.props.query || props.filter !== this.props.filter)) {
+      this.setState({
+        entities: this.state.buffer,
+        buffer: [],
+      })
+    }
   }
 
   async componentWillUnmount() {
