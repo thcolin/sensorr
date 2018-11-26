@@ -234,7 +234,9 @@ export default class Movie extends PureComponent {
           >
             <div style={styles.metadata}>
               <h3 style={styles.popularity}>
-                {details.vote_average.toFixed(1)} {details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}
+                <span>{details.vote_average.toFixed(1)}</span>
+                <span> </span>
+                <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
               </h3>
               <h4 style={styles.runtime}>{details.runtime} mins 🕙</h4>
               {trailer && (
@@ -277,9 +279,11 @@ export default class Movie extends PureComponent {
                   {details.title !== details.original_title && (
                     <span style={{ margin: '0 0.5em 0 0' }}>{details.original_title}</span>
                   )}
-                  <span title={new Date(details.release_date).toLocaleDateString()}>
-                    ({new Date(details.release_date).getFullYear()})
-                  </span>
+                  {details.release_date && (
+                    <span title={new Date(details.release_date).toLocaleDateString()}>
+                      ({new Date(details.release_date).getFullYear()})
+                    </span>
+                  )}
                 </h2>
                 <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
                 {!!details.credits.crew.filter(credit => credit.job === 'Editor').length && (

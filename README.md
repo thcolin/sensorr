@@ -85,7 +85,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * State change on movie without release date, `movie/423204`
+    * Improve `document.title`
   * Refactoring
     * Use `react-emotion` for style or [martinandert/babel-plugin-css-in-js](https://github.com/martinandert/babel-plugin-css-in-js)
   * Features
