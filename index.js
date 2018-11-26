@@ -44,7 +44,7 @@ app.use(bauth({
 app.get('/proxy', function (req, res) {
   const url = atob(req.query.url)
 
-  if (config.xznabs.some(xznab => url.match(new RegExp(`^${escape(xznab.url)}`)))) {
+  if (config.xznabs.some(xznab => url.match(new RegExp(`^${escape(new URL(xznab.url).origin)}`)))) {
     console.log(`${chalk.bgGreen(chalk.black(' ALLOW '))} ${chalk.green(url)}`)
     req.pipe(request(url)).pipe(res)
   } else{

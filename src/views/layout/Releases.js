@@ -243,10 +243,9 @@ class Releases extends PureComponent {
                     flexGrow: 1,
                     textAlign: 'left',
                     textOverflow: 'ellipsis',
-                    opacity: [1, 0.5, 0.25][release.warning],
                   }}
                 >
-                  {release.title}
+                  <span style={{ opacity: [1, 0.5, 0.25][release.warning] }}>{release.title}</span>
                 </div>
                 <div style={{ ...styles.cell, ...styles.rows.site, }}><a href={release.guid} style={styles.link}>{release.site}</a></div>
                 <div style={{ ...styles.cell, ...styles.rows.peers, }}>{release.peers}</div>
@@ -254,7 +253,7 @@ class Releases extends PureComponent {
                 <div style={{ ...styles.cell, ...styles.rows.size, textAlign: 'right', }}>{filesize(release.size)}</div>
                 <div style={{ ...styles.cell, ...styles.rows.grab, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, }}>
                   <a
-                    href={release.link}
+                    href={`/proxy?url=${window.btoa(release.link)}`}
                     style={styles.grab}
                     target="_blank"
                     onClick={(e) => {
