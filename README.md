@@ -85,7 +85,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Search on `history.onpopstate`
     * State change on movie without release date, `movie/423204`
     * Proxify release link on `Releases`
   * Refactoring

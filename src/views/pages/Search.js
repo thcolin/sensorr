@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
+import { fromEvent } from 'rxjs'
 import nanobounce from 'nanobounce'
 import history from 'store/history'
 import theme from 'theme'
@@ -34,10 +35,24 @@ export default class Search extends PureComponent {
     this.input = React.createRef()
     this.debounce = nanobounce()
     this.handleKeyUp = this.handleKeyUp.bind(this)
+
+    this.subscription = fromEvent(window, 'popstate').subscribe(
+      () => {
+        const matches = window.location.pathname.match(/^\/search\/(.*?)$/)
+
+        if (matches) {
+          this.setState({ query: decodeURI(matches[1]) })
+        }
+      }
+    )
   }
 
   componentDidMount() {
     this.input.current.focus()
+  }
+
+  componentWillUnmount() {
+    this.subscription.unsubscribe()
   }
 
   handleKeyUp(e) {
