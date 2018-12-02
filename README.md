@@ -16,7 +16,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
   * Filter by title and `:[wished|archived]`
 * See `movie` details
   * Consider movie as, `🔕` `ignored`, `🍿` `wished` or `📼` `archived`
-  * Look for `results` on `sources` (`torznab` / `newznab` with `CORS` enabled)
+  * Look for `results` on `sources` (`torznab` / `newznab`)
     * Request with `title` (localized) and `original_title`
   * Grab a `result`
 * See `logs` details
@@ -51,7 +51,7 @@ docker run -p 5070:5070 -v /home/user/.sensorr:/app/sensorr/config -v /home/user
 * Edit default configuration in `config/config.json` or `http://localhost:5070/configure`
 
 # CLI
-Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js`. It will launch `./bin/sensorr record -a` everyday at `17:00` / `5:00PM`
+Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js` which launch `./bin/sensorr record -a` everyday at `17:00` / `5:00PM`
 
 **🚨 Warning:** CLI tool need to communicate with Sensorr web server at `http://localhost:5070` to sync databases ! Be sure Sensorr web server is launched before launching `record` command.
 
@@ -89,7 +89,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Features
     * Trending `studios`
     * Follow `stars`
-    * Search `stars`
   * Pages
     * `Movie`
       * Allow alternative `title` correction

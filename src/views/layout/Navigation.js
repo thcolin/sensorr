@@ -51,7 +51,7 @@ export default ({ ...props}) => (
     <div style={styles.menu}>
       <Link to="/" style={{...styles.link, ...window.location.pathname.match(/^\/$/) ? styles.active : {}}}>Trending</Link>
       <Link to="/collection" style={{...styles.link, ...window.location.pathname.match(/^\/collection$/) ? styles.active : {}}}>Collection</Link>
-      <Link to="/search" style={{...styles.link, ...window.location.pathname.match(/^\/search/) ? styles.active : {}}}>Search</Link>
+      <Link to="/search/movie" style={{...styles.link, ...window.location.pathname.match(/^\/search/) ? styles.active : {}}}>Search</Link>
     </div>
     <div style={styles.emojis}>
       <Language />

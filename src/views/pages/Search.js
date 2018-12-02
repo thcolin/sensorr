@@ -2,6 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
+import Persona from 'components/Entity/Persona'
 import { fromEvent } from 'rxjs'
 import nanobounce from 'nanobounce'
 import history from 'store/history'
@@ -9,7 +10,7 @@ import theme from 'theme'
 
 const styles = {
   element: {
-
+    position: 'relative',
   },
   input: {
     width: '100%',
@@ -22,7 +23,16 @@ const styles = {
     textAlign: 'center',
     color: theme.colors.secondary,
     fontFamily: 'inherit',
-  }
+  },
+  state: {
+    position: 'absolute',
+    cursor: 'pointer',
+    right: '1em',
+    top: '0.375em',
+    fontSize: '2em',
+    userSelect: 'none',
+    MozUserSelect: 'none',
+  },
 }
 
 export default class Search extends PureComponent {
@@ -30,6 +40,7 @@ export default class Search extends PureComponent {
     super(props)
 
     this.state = {
+      state: props.match.params.state || 'movie',
       query: props.match.params.query || '',
     }
 
@@ -39,10 +50,10 @@ export default class Search extends PureComponent {
 
     this.subscription = fromEvent(window, 'popstate').subscribe(
       () => {
-        const matches = window.location.pathname.match(/^\/search\/(.*?)$/)
+        const matches = window.location.pathname.match(/^\/search\/(.*?)\/(.*?)$/)
 
         if (matches) {
-          this.setState({ query: decodeURI(matches[1]) })
+          this.setState({ state: ['movie', 'person'].includes(matches[1]) ? matches[1] : 'movie', query: decodeURI(matches[2]), })
         }
       }
     )
@@ -60,32 +71,45 @@ export default class Search extends PureComponent {
     const query = e.target.value
     this.debounce(() => {
       this.setState({ query })
-      history.push(`/search/${query}`)
+      history.push(`/search/${this.state.state}/${query}`)
     })
   }
 
+  handleStateChange(state) {
+    const next = { movie: 'person', person: 'movie' }[state]
+    this.setState({ state: next })
+    history.push(`/search/${next}/${this.state.query}`)
+  }
+
   render() {
-    const { query, ...state } = this.state
+    const { query, state } = this.state
 
     return (
       <Fragment>
         <Helmet>
-          <title>Sensorr - Search{this.state.query && `: "${this.state.query}"`}</title>
+          <title>Sensorr - Search{query && `: "${query}" (${{ movie: 'Movies', person: 'Stars' }[state]})`}</title>
         </Helmet>
         <div style={styles.element}>
           <input
             ref={this.input}
             type="text"
-            defaultValue={this.state.query}
+            defaultValue={query}
             onKeyUp={this.handleKeyUp}
             style={styles.input}
             placeholder="Search..."
           />
+          <i
+            onClick={() => this.handleStateChange(state)}
+            title={{ movie: 'Movies', person: 'Stars' }[state]}
+            style={styles.state}
+          >
+            {{ movie: '🎞️', person: '⭐' }[state]}
+          </i>
           {query && (
             <Row
               label={query}
-              child={Film}
-              uri={['search', 'movie']}
+              child={{ movie: Film, person: (props) => <Persona brand="flat" {...props} /> }[state]}
+              uri={['search', state]}
               params={{ query, sort_by: 'popularity.desc' }}
             />
           )}
