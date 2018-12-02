@@ -45,10 +45,10 @@ app.get('/proxy', function (req, res) {
   const url = atob(req.query.url)
 
   if (config.xznabs.some(xznab => url.match(new RegExp(`^${escape(new URL(xznab.url).origin)}`)))) {
-    console.log(`${chalk.bgGreen(chalk.black(' ALLOW '))} ${chalk.green(url)}`)
+    console.log(`${chalk.bgGreen(chalk.black(' PROXY '))} ${chalk.green(url)}`)
     req.pipe(request(url)).pipe(res)
   } else{
-    console.log(`${chalk.bgRed(chalk.black(' DENY '))} ${chalk.red(url)} ${chalk.gray(JSON.stringify(req.query))}`)
+    console.log(`${chalk.bgRed(chalk.black(' PROXY '))} ${chalk.red(url)} ${chalk.gray(JSON.stringify(req.query))}`)
     res.status(403).send('Blacklisted URL')
   }
 })
@@ -106,12 +106,12 @@ api.post('/configure', function (req, res) {
     mergeMap(err => err ? throwError(err) : of(file)),
   ).subscribe(
     () => {
-      console.log(`${chalk.bgGreen(chalk.black(' CONFIGURED '))} ${chalk.green(file)}`)
+      console.log(`${chalk.bgGreen(chalk.black(' CONFIGURE '))} ${chalk.green(file)}`)
       config = payload
       res.status(200).send({ file })
     },
     (reason) => {
-      console.log(`${chalk.bgRed(chalk.black(' FAILURE '))} ${chalk.red(reason)}`)
+      console.log(`${chalk.bgRed(chalk.black(' CONFIGURE '))} ${chalk.red(reason)}`)
       console.log(chalk.gray(JSON.stringify(payload, null, 2)))
       res.status(520).send({ file, reason: reason.toString(), })
     },
@@ -138,13 +138,13 @@ api.post('/grab', function (req, res) {
     ))
   ).subscribe(
     (filename) => {
-      console.log(`${chalk.bgGreen(chalk.black(' GRABBED '))} ${chalk.green(release.title)}`)
+      console.log(`${chalk.bgGreen(chalk.black(' GRAB '))} ${chalk.green(release.title)}`)
       console.log(chalk.gray(release.link))
       console.log(chalk.gray(filename))
       res.status(200).send({ release, filename })
     },
     (reason) => {
-      console.log(`${chalk.bgRed(chalk.black(' FAILURE '))} ${chalk.red(release.title)} ${chalk.red(reason)}`)
+      console.log(`${chalk.bgRed(chalk.black(' GRAB '))} ${chalk.red(release.title)} ${chalk.red(reason)}`)
       console.log(chalk.gray(JSON.stringify(release, null, 2)))
       res.status(520).send({ release, reason: reason.toString(), })
     },
@@ -176,7 +176,7 @@ if (app.get('env') === 'production') {
         } catch(e) {}
       }
 
-      console.log(`${chalk.bgGreen(chalk.black(' SERVED '))} ${chalk.green('index.html')}`)
+      console.log(`${chalk.bgGreen(chalk.black(' SERVE '))} ${chalk.green('index.html')}`)
       res.send(template.replace(/"__WEBPACK_INJECT_CONFIG__"/, JSON.stringify(config)))
     })
   }
