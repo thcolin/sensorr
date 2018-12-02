@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent, Fragment } from 'react'
+import { Helmet } from 'react-helmet'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import { GENRES } from 'shared/services/TMDB'
@@ -40,42 +41,47 @@ export default class Trending extends PureComponent {
     const { year, genre, ...props } = this.state
 
     return (
-      <div style={styles.element}>
-        <Row
-          label="Trending"
-          uri={['trending', 'movie', 'week']}
-          params={{ sort_by: 'popularity.desc' }}
-          child={Film}
-        />
-        <Row
-          label="Discover"
-          uri={['discover', 'movie']}
-          child={Film}
-        />
-        <Row
-          label={`Discover (${year})`}
-          title="Randomize year"
-          uri={['discover', 'movie']}
-          params={{
-            primary_release_year: year,
-            sort_by: 'popularity.desc'
-          }}
-          child={Film}
-          onClick={() => this.handleRowClick('year')}
-          style={styles.row}
-        />
-        <Row
-          label={`Discover (${GENRES[genre]})`}
-          title="Randomize genre"
-          uri={['discover', 'movie']}
-          params={{
-            with_genres: genre,
-          }}
-          child={Film}
-          onClick={() => this.handleRowClick('genre')}
-          style={styles.row}
-        />
-      </div>
+      <Fragment>
+        <Helmet>
+          <title>Sensorr - Trending</title>
+        </Helmet>
+        <div style={styles.element}>
+          <Row
+            label="Trending"
+            uri={['trending', 'movie', 'week']}
+            params={{ sort_by: 'popularity.desc' }}
+            child={Film}
+          />
+          <Row
+            label="Discover"
+            uri={['discover', 'movie']}
+            child={Film}
+          />
+          <Row
+            label={`Discover (${year})`}
+            title="Randomize year"
+            uri={['discover', 'movie']}
+            params={{
+              primary_release_year: year,
+              sort_by: 'popularity.desc'
+            }}
+            child={Film}
+            onClick={() => this.handleRowClick('year')}
+            style={styles.row}
+          />
+          <Row
+            label={`Discover (${GENRES[genre]})`}
+            title="Randomize genre"
+            uri={['discover', 'movie']}
+            params={{
+              with_genres: genre,
+            }}
+            child={Film}
+            onClick={() => this.handleRowClick('genre')}
+            style={styles.row}
+          />
+        </div>
+      </Fragment>
     )
   }
 }

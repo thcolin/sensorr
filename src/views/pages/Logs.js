@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent, Fragment } from 'react'
+import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
 import InfiniteScroll from 'react-infinite-scroller'
 import Film from 'components/Entity/Film'
@@ -98,49 +99,54 @@ class Logs extends PureComponent {
     const groups = lines.reduce((groups, line) => ({ ...groups, [line.data.uuid]: [line, ...(groups[line.data.uuid] || [])] }), {})
 
     return (
-      <InfiniteScroll
-        pageStart={0}
-        loadMore={this.handleLoadMore}
-        hasMore={!done}
-        loader={<Spinner key="spinner" />}
-        style={styles.element}
-      >
-        {done && !Object.keys(groups).length && (
-          <Empty />
-        )}
-        {Object.keys(groups).map(uuid => {
-          const group = groups[uuid]
+      <Fragment>
+        <Helmet>
+          <title>Sensorr - History</title>
+        </Helmet>
+        <InfiniteScroll
+          pageStart={0}
+          loadMore={this.handleLoadMore}
+          hasMore={!done}
+          loader={<Spinner key="spinner" />}
+          style={styles.element}
+        >
+          {done && !Object.keys(groups).length && (
+            <Empty />
+          )}
+          {Object.keys(groups).map(uuid => {
+            const group = groups[uuid]
 
-          return (
-            <div style={styles.group} key={uuid}>
-              {group[0].data.movie && (
-                <div style={styles.film}>
-                  <Film entity={group[0].data.movie} />
-                </div>
-              )}
-              <div style={styles.scroller}>
-                <h4 style={styles.title}># {new Date(group[0].ts).toLocaleString()}</h4>
-                {group.map((log, index) => (
-                  <div style={styles.wrapper} key={`${uuid}-${index}`}>
-                    <div style={styles.container}>
-                      <p
-                        style={styles.text}
-                        onClick={() => this.setState({ data: data === `${uuid}-${index}` ? null : `${uuid}-${index}` })}
-                      >
-                        {markdown(log.msg).tree}
-                      </p>
-                      {data === `${uuid}-${index}` && (
-                        <div style={styles.data}>{JSON.stringify(log, null, 2)}</div>
-                      )}
-                    </div>
-                    <br/>
+            return (
+              <div style={styles.group} key={uuid}>
+                {group[0].data.movie && (
+                  <div style={styles.film}>
+                    <Film entity={group[0].data.movie} />
                   </div>
-                ))}
+                )}
+                <div style={styles.scroller}>
+                  <h4 style={styles.title}># {new Date(group[0].ts).toLocaleString()}</h4>
+                  {group.map((log, index) => (
+                    <div style={styles.wrapper} key={`${uuid}-${index}`}>
+                      <div style={styles.container}>
+                        <p
+                          style={styles.text}
+                          onClick={() => this.setState({ data: data === `${uuid}-${index}` ? null : `${uuid}-${index}` })}
+                        >
+                          {markdown(log.msg).tree}
+                        </p>
+                        {data === `${uuid}-${index}` && (
+                          <div style={styles.data}>{JSON.stringify(log, null, 2)}</div>
+                        )}
+                      </div>
+                      <br/>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )
-        })}
-      </InfiniteScroll>
+            )
+          })}
+        </InfiniteScroll>
+      </Fragment>
     )
   }
 }

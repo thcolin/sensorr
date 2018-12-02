@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent, Fragment } from 'react'
+import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import theme from 'theme'
@@ -59,24 +60,29 @@ export default class Collection extends PureComponent {
     const { ...props } = this.props
 
     return (
-      <div>
-        <div style={styles.filter}>
-          <input
-            type="text"
-            onKeyUp={this.handleQueryChange}
-            style={styles.input}
-            placeholder="Filter..."
-          />
-          <i
-            onClick={() => this.handleStateChange(state)}
-            title={{ all: 'All', wished: 'Wished', archived: 'Archived' }[state]}
-            style={styles.state}
-          >
-            {{ all: '📚', wished: '🍿', archived: '📼' }[state]}
-          </i>
+      <Fragment>
+        <Helmet>
+          <title>Sensorr - Collection</title>
+        </Helmet>
+        <div>
+          <div style={styles.filter}>
+            <input
+              type="text"
+              onKeyUp={this.handleQueryChange}
+              style={styles.input}
+              placeholder="Filter..."
+            />
+            <i
+              onClick={() => this.handleStateChange(state)}
+              title={{ all: 'All', wished: 'Wished', archived: 'Archived' }[state]}
+              style={styles.state}
+            >
+              {{ all: '📚', wished: '🍿', archived: '📼' }[state]}
+            </i>
+          </div>
+          <Grid query={query} filter={entity => state === 'all' || entity.state === state} child={Film} />
         </div>
-        <Grid query={query} filter={entity => state === 'all' || entity.state === state} child={Film} />
-      </div>
+      </Fragment>
     )
   }
 }

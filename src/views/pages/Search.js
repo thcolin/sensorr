@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent, Fragment } from 'react'
+import { Helmet } from 'react-helmet'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import { fromEvent } from 'rxjs'
@@ -67,24 +68,29 @@ export default class Search extends PureComponent {
     const { query, ...state } = this.state
 
     return (
-      <div style={styles.element}>
-        <input
-          ref={this.input}
-          type="text"
-          defaultValue={this.state.query}
-          onKeyUp={this.handleKeyUp}
-          style={styles.input}
-          placeholder="Search..."
-        />
-        {query && (
-          <Row
-            label={query}
-            child={Film}
-            uri={['search', 'movie']}
-            params={{ query, sort_by: 'popularity.desc' }}
+      <Fragment>
+        <Helmet>
+          <title>Sensorr - Search{this.state.query && `: "${this.state.query}"`}</title>
+        </Helmet>
+        <div style={styles.element}>
+          <input
+            ref={this.input}
+            type="text"
+            defaultValue={this.state.query}
+            onKeyUp={this.handleKeyUp}
+            style={styles.input}
+            placeholder="Search..."
           />
-        )}
-      </div>
+          {query && (
+            <Row
+              label={query}
+              child={Film}
+              uri={['search', 'movie']}
+              params={{ query, sort_by: 'popularity.desc' }}
+            />
+          )}
+        </div>
+      </Fragment>
     )
   }
 }

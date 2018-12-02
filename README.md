@@ -84,8 +84,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * Improve `document.title`
   * Refactoring
     * Use `react-emotion` for style or [martinandert/babel-plugin-css-in-js](https://github.com/martinandert/babel-plugin-css-in-js)
   * Features

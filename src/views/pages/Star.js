@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent, Fragment } from 'react'
+import { Helmet } from 'react-helmet'
 import Spinner from 'components/Spinner'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
@@ -153,59 +154,68 @@ export default class Star extends PureComponent {
     const { details, loading, order, sort, ...state } = this.state
 
     return (
-      <div id="star" style={styles.element}>
-        {details ? (
-          <div style={{
-            ...styles.container,
-            ...(details.images.profiles.length ? {
-              backgroundImage: `url(http://image.tmdb.org/t/p/original${
-                (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
-              })`,
-            } : {}),
-          }}>
-            <div style={styles.informations}>
-              <div style={styles.poster}>
-                {details.profile_path && (
-                  <img src={`http://image.tmdb.org/t/p/original${details.profile_path}`} height="100%" />
-                )}
+      <Fragment>
+        <Helmet>
+          {details ? (
+            <title>Sensorr - {details.name}</title>
+          ) : (
+            <title>Sensorr - Star ({match.params.id})</title>
+          )}
+        </Helmet>
+        <div id="star" style={styles.element}>
+          {details ? (
+            <div style={{
+              ...styles.container,
+              ...(details.images.profiles.length ? {
+                backgroundImage: `url(http://image.tmdb.org/t/p/original${
+                  (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
+                })`,
+              } : {}),
+            }}>
+              <div style={styles.informations}>
+                <div style={styles.poster}>
+                  {details.profile_path && (
+                    <img src={`http://image.tmdb.org/t/p/original${details.profile_path}`} height="100%" />
+                  )}
+                </div>
+                <div style={styles.wrapper}>
+                  <h1 style={styles.title}>{details.name}</h1>
+                  <h2 style={styles.subtitle}>{details.place_of_birthday} ({new Date(details.birthday).getFullYear()})</h2>
+                  <p style={styles.biography}>{details.biography}</p>
+                </div>
               </div>
-              <div style={styles.wrapper}>
-                <h1 style={styles.title}>{details.name}</h1>
-                <h2 style={styles.subtitle}>{details.place_of_birthday} ({new Date(details.birthday).getFullYear()})</h2>
-                <p style={styles.biography}>{details.biography}</p>
-              </div>
+              {!!details.movie_credits.cast.length && (
+                <div style={styles.credits}>
+                  <Row
+                    label={`Casting - ${sort[order.cast].emoji}`}
+                    title={sort[order.cast].title}
+                    onClick={() => this.handleSortChange('cast')}
+                    items={details.movie_credits.cast.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.cast].apply)}
+                    child={Film}
+                    style={styles.row}
+                  />
+                </div>
+              )}
+              {!!details.movie_credits.crew.length && (
+                <div style={styles.credits}>
+                  <Row
+                    label={`Crew - ${sort[order.crew].emoji}`}
+                    title={sort[order.crew].title}
+                    onClick={() => this.handleSortChange('crew')}
+                    items={details.movie_credits.crew.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.crew].apply)}
+                    child={Film}
+                    style={styles.row}
+                  />
+                </div>
+              )}
             </div>
-            {!!details.movie_credits.cast.length && (
-              <div style={styles.credits}>
-                <Row
-                  label={`Casting - ${sort[order.cast].emoji}`}
-                  title={sort[order.cast].title}
-                  onClick={() => this.handleSortChange('cast')}
-                  items={details.movie_credits.cast.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.cast].apply)}
-                  child={Film}
-                  style={styles.row}
-                />
-              </div>
-            )}
-            {!!details.movie_credits.crew.length && (
-              <div style={styles.credits}>
-                <Row
-                  label={`Crew - ${sort[order.crew].emoji}`}
-                  title={sort[order.crew].title}
-                  onClick={() => this.handleSortChange('crew')}
-                  items={details.movie_credits.crew.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.crew].apply)}
-                  child={Film}
-                  style={styles.row}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={styles.loading}>
-            <Spinner />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div style={styles.loading}>
+              <Spinner />
+            </div>
+          )}
+        </div>
+      </Fragment>
     )
   }
 }
