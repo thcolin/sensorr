@@ -1,5 +1,6 @@
 **/.DS_Store
-**/db/*
+bin/db/*
+db/*
 node_modules
 dist
 log.txt
