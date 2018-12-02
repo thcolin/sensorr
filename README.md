@@ -30,7 +30,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 # Screenshots
 | Trending | Collection | Search | Movie | Star | Configure | Logs |
 |----------|------------|--------|-------|------|-----------|------|
-| ![Trending](/doc/screenshots/trending.jpg?raw=true) | ![Collection](/doc/screenshots/collection.jpg?raw=true) | ![Search](/doc/screenshots/search.jpg?raw=true) | ![Movie](/doc/screenshots/movie.jpg?raw=true) | ![Star](/doc/screenshots/star.jpg?raw=true) | ![Configure](/doc/screenshots/configure.jpg?raw=true) | ![Logs](/doc/screenshots/logs.jpg?raw=true) |
+| ![Trending](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.jpg?raw=true) | ![Collection](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.jpg?raw=true) | ![Search](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search.jpg?raw=true) | ![Movie](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/movie.jpg?raw=true) | ![Star](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.jpg?raw=true) | ![Configure](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/configure.jpg?raw=true) | ![Logs](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/logs.jpg?raw=true) |
 
 # Scripts
   * `dev`: launch development server for `React` _frontend_
