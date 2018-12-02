@@ -132,8 +132,8 @@ api.post('/grab', function (req, res) {
     mergeMap(() => of(encodeURI(release.link)).pipe(
       mergeMap(link => fetch(link)),
       mergeMap(res => res.buffer()),
-      mergeMap(buffer => bindNodeCallback(fs.writeFile)(path.join(config.blackhole, `${release.meta.generated}.torrent`), buffer).pipe(
-        mergeMap(err => err ? throwError(err) : of(path.join(config.blackhole, `${release.meta.generated}.torrent`))),
+      mergeMap(buffer => bindNodeCallback(fs.writeFile)(path.join(config.blackhole, `${release.meta.generated}-${release.site}.torrent`), buffer).pipe(
+        mergeMap(err => err ? throwError(err) : of(path.join(config.blackhole, `${release.meta.generated}-${release.site}.torrent`))),
       )),
     ))
   ).subscribe(

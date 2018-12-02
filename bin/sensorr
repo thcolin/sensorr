@@ -248,8 +248,8 @@ async function main(sensorr) {
       mergeMap(() => of(release.link).pipe(
         mergeMap(link => fetch(encodeURI(link))),
         mergeMap(res => res.buffer()),
-        mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${sensorr.config.blackhole}/${release.meta.generated}.torrent`, buffer).pipe(
-          mergeMap(err => err ? throwError(err) : of(`${sensorr.config.blackhole}/${release.meta.generated}.torrent`)),
+        mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`, buffer).pipe(
+          mergeMap(err => err ? throwError(err) : of(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`)),
         )),
       )),
       mergeMap(file => of(null).pipe(

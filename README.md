@@ -104,7 +104,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `CLI`
   * Fix
     * Log `retry` on `record` command
-    * Save `.torrent` with `${release.site}` in filename
   * Commands
     * `🔍 search [query]`
       * `_tmdb_ [query]`
