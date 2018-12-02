@@ -142,7 +142,7 @@ class Sensorr {
           tap(release => typeof hooks.release === 'function' && hooks.release(xznab, title, release)),
           filter(release => !strict || release.valid),
         ), null, 1),
-      )),
+      ), null, 1),
       toArray(),
       map(releases => Object
         .values(releases.reduce((results, release) => ({ ...results, [release.guid]: [...(results[release.guid] || []), release] }), {}))

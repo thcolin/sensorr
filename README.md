@@ -103,7 +103,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
 * `CLI`
   * Fix
-    * Search only one `XZNAB` at a time
     * Log `retry` on `record` command
     * Save `.torrent` with `${release.site}` in filename
   * Commands
