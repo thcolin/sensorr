@@ -89,6 +89,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Refactoring
     * Use `react-emotion` for style or [martinandert/babel-plugin-css-in-js](https://github.com/martinandert/babel-plugin-css-in-js)
   * Features
+    * Trending `studios`
     * Follow `stars`
     * Search `stars`
   * Pages
@@ -104,6 +105,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Fix
     * Search only one `XZNAB` at a time
     * Log `retry` on `record` command
+    * Save `.torrent` with `${release.site}` in filename
   * Commands
     * `🔍 search [query]`
       * `_tmdb_ [query]`

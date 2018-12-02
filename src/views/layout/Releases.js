@@ -104,7 +104,7 @@ class Releases extends PureComponent {
       releases: [],
       loading: true,
       sort: sensorr.config.sort,
-      descending: false,
+      descending: sensorr.config.descending,
       filter: sensorr.config.filter,
     }
 
