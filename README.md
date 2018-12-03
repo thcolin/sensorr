@@ -47,6 +47,8 @@ Checkout Sensorr [Docker image](https://hub.docker.com/r/thcolin/sensorr/), it l
 docker run -p 5070:5070 -v /home/user/.sensorr:/app/sensorr/config -v /home/user/downloads:/app/sensorr/blackhole --name="sensorr" thcolin/sensorr
 ```
 
+Tips: Docker image is based on `alpine`, so you can add `TZ` env variable with `-e TZ=Europe/Paris`
+
 # Configure
 * Edit default configuration in `config/config.json` or `http://localhost:5070/configure`
 
@@ -84,8 +86,11 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Refactoring
-    * Use `react-emotion` for style or [martinandert/babel-plugin-css-in-js](https://github.com/martinandert/babel-plugin-css-in-js)
+  * Fix
+    * Movie `title` props with `year` to `NaN` (see `393624`)
+    * Refactor to [`aphrodite`](https://github.com/Khan/aphrodite) for style
+    * Add `bounce` animation to `Trigger` element in `Navigation` layout on click
+    * Improve `Language` support with full `<select>` on `Configure` page
   * Features
     * Trending `studios`
     * Follow `stars`

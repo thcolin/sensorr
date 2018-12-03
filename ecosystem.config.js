@@ -18,7 +18,7 @@ module.exports = {
       name: 'Sensorr (cron record)',
       cron: '0 17 * * *',
       exec_mode: 'fork',
-      script: './bin/job',
+      script: './bin/exec',
       args: ['./bin/sensorr', 'record', '-a'],
       env: {
         NODE_ENV: 'development'

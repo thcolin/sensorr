@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { PureComponent } from 'react'
+import { withToastManager } from 'react-toast-notifications'
 import { Link } from 'react-router-dom'
 import Language from 'components/Language'
+import sensorr from 'store/sensorr'
 import theme from 'theme'
 
 const styles = {
@@ -42,21 +44,73 @@ const styles = {
     textDecoration: 'none',
   },
   logs: {
+    margin: '0 1em 0 0',
+    textDecoration: 'none',
+  },
+  trigger: {
+    cursor: 'pointer',
     textDecoration: 'none',
   },
 }
 
-export default ({ ...props}) => (
-  <div style={styles.element}>
-    <div style={styles.menu}>
-      <Link to="/" style={{...styles.link, ...window.location.pathname.match(/^\/$/) ? styles.active : {}}}>Trending</Link>
-      <Link to="/collection" style={{...styles.link, ...window.location.pathname.match(/^\/collection$/) ? styles.active : {}}}>Collection</Link>
-      <Link to="/search/movie" style={{...styles.link, ...window.location.pathname.match(/^\/search/) ? styles.active : {}}}>Search</Link>
-    </div>
-    <div style={styles.emojis}>
-      <Language />
-      <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
-      <Link to="/logs" style={styles.logs} title="History">📖</Link>
-    </div>
-  </div>
-)
+class Navigation extends PureComponent {
+  constructor(props) {
+    super(props)
+
+    this.triggerJob = this.triggerJob.bind(this)
+  }
+
+  triggerJob(type) {
+    const { toastManager } = this.props
+
+    fetch('/api/trigger', {
+      method: 'POST',
+      headers: new Headers({
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Basic ${new Buffer(`${sensorr.config.auth.username}:${sensorr.config.auth.password}`).toString('base64')}`,
+      }),
+      body: JSON.stringify({ type })
+    })
+    .then(res => {
+      try {
+        res.json().then(body => {
+          if (res.ok) {
+            toastManager.add({
+              record: <span><strong>Record</strong> job triggered ! See <strong>Logs</strong> page to follow progress !</span>,
+            }[type], { appearance: 'success', autoDismiss: true, })
+          } else {
+            toastManager.add({
+              record: <span><strong>Record</strong> job already in progress</span>,
+            }[type], { appearance: 'error', autoDismiss: true, })
+          }
+        })
+      } catch(e) {
+        toastManager.add((
+          <span>Unexpected error during configuration update : <strong>{res.statusText}</strong></span>
+        ), { appearance: 'error', autoDismiss: true, })
+      }
+    })
+  }
+
+  render() {
+    const { toastManager, ...props} = this.props
+
+    return (
+      <div style={styles.element}>
+        <div style={styles.menu}>
+          <Link to="/" style={{...styles.link, ...window.location.pathname.match(/^\/$/) ? styles.active : {}}}>Trending</Link>
+          <Link to="/collection" style={{...styles.link, ...window.location.pathname.match(/^\/collection$/) ? styles.active : {}}}>Collection</Link>
+          <Link to="/search/movie" style={{...styles.link, ...window.location.pathname.match(/^\/search/) ? styles.active : {}}}>Search</Link>
+        </div>
+        <div style={styles.emojis}>
+          <Language />
+          <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
+          <Link to="/logs" style={styles.logs} title="History">📖</Link>
+          <div style={styles.trigger} title={'Trigger "Record" job'} onClick={() => this.triggerJob('record')}>🚀</div>
+        </div>
+      </div>
+    )
+  }
+}
+
+export default withToastManager(Navigation)

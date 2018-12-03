@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { spawn } = require('child_process')
 const chalk = require('chalk')
 const express = require('express')
 const request = require('request')
@@ -14,7 +15,15 @@ const PouchDB = require('pouchdb')
 const atob = require('atob')
 const escape = require('escape-string-regexp')
 
-const template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
+let job, template = null
+
+try {
+  fs.accessSync(path.join(__dirname, 'dist', 'index.html'), fs.constants.R_OK)
+  template = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8')
+} catch(e) {
+  template = fs.readFileSync(path.join(__dirname, 'src', 'views', 'index.html'), 'utf8')
+    .replace(/<script>var config = .*?<\/script>/, '<script>var config = "__WEBPACK_INJECT_CONFIG__"</script>')
+}
 
 try {
   fs.accessSync(path.join(__dirname, 'config', 'config.json'), fs.constants.R_OK)
@@ -49,11 +58,31 @@ app.get('/proxy', function (req, res) {
     req.pipe(request(url)).pipe(res)
   } else{
     console.log(`${chalk.bgRed(chalk.black(' PROXY '))} ${chalk.red(url)} ${chalk.gray(JSON.stringify(req.query))}`)
-    res.status(403).send('Blacklisted URL')
+    res.status(403).send({ message: 'Blacklisted URL' })
   }
 })
 
 const api = express()
+
+api.post('/trigger', function (req, res) {
+  const type = req.body.type
+
+  if (!job) {
+    console.log(`${chalk.bgGreen(chalk.black(' EXEC '))} ${chalk.green('./bin/sensorr')}  ${chalk.gray(JSON.stringify(['record', '-a', '-p', app.get('env') === 'production' ? 5070 : 7000]))}`)
+
+    switch (type) {
+      case 'record':
+        job = spawn('./bin/sensorr', ['record', '-a', '-p', app.get('env') === 'production' ? 5070 : 7000])
+        job.on('close', (code) => job = null)
+      break
+    }
+
+    res.status(200).send({ message: `Trigger "${type}" job`, })
+  } else {
+    console.log(`${chalk.bgRed(chalk.black(' EXEC '))} ${chalk.red('Job already in progress')}`)
+    res.status(409).send({ message: 'Job already in progress', })
+  }
+})
 
 api.get('/history', function (req, res) {
   const file = path.join(__dirname, 'history.log')
