@@ -2,7 +2,7 @@ module.exports = {
   // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
   apps : [
     {
-      name: 'Sensorr (web server)',
+      name: 'sensorr:web',
       script: 'index.js',
       instances: 1,
       autorestart: true,
@@ -15,9 +15,10 @@ module.exports = {
       },
     },
     {
-      name: 'Sensorr (cron record)',
+      name: 'sensorr:record',
       cron: '0 17 * * *',
       exec_mode: 'fork',
+      autorestart: false,
       script: './bin/exec',
       args: ['./bin/sensorr', 'record', '-a'],
       env: {

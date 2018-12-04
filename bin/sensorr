@@ -46,7 +46,7 @@ async function main(sensorr) {
     await exit()
   }
 
-  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || aprocess.env.NODE_ENV === 'development' ? 7000 : 5070)}`
+  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || process.env.NODE_ENV === 'development' ? 7000 : 5070)}`
 
   const loading = ora({
     spinner: spinners.earth,

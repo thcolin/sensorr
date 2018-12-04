@@ -27,4 +27,4 @@ RUN mkdir -p blackhole \
 
 EXPOSE 5070
 
-CMD [ "pm2-runtime", "start", "ecosystem.config.js", "--env", "production" ]
+CMD [ "npm", "run", "prod" ]

@@ -89,9 +89,12 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Fix
     * Movie `title` props with `year` to `NaN` (see `393624`)
     * Refactor to [`aphrodite`](https://github.com/Khan/aphrodite) for style
-    * Add `bounce` animation to `Trigger` element in `Navigation` layout on click
+    * Monitor `sensorr:record` job status with `bounce` animation on `Trigger` element in `Navigation` layout
+      * On `componentDidMount` make a `GET /api/status` request : `{ record: false }`
     * Improve `Language` support with full `<select>` on `Configure` page
+    * Fix timeout and retry on `look`
   * Features
+    * Disable `XZNAB`
     * Trending `studios`
     * Follow `stars`
   * Pages

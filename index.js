@@ -1,5 +1,5 @@
 const fs = require('fs')
-const { spawn } = require('child_process')
+const pm2 = require('pm2')
 const chalk = require('chalk')
 const express = require('express')
 const request = require('request')
@@ -15,7 +15,16 @@ const PouchDB = require('pouchdb')
 const atob = require('atob')
 const escape = require('escape-string-regexp')
 
-let job, template = null
+let template = null
+
+pm2.connect(function(err) {
+  if (!err) {
+    console.log(`${chalk.bgGreen(chalk.black(' PM2 '))} ${chalk.green('Connected successfully')}`)
+  } else {
+    console.log(`${chalk.bgRed(chalk.black(' PM2 '))} ${chalk.red(url)} ${chalk.gray(`Unable to connect : ${err}`)}`)
+    exit(2)
+  }
+})
 
 try {
   fs.accessSync(path.join(__dirname, 'dist', 'index.html'), fs.constants.R_OK)
@@ -67,21 +76,32 @@ const api = express()
 api.post('/trigger', function (req, res) {
   const type = req.body.type
 
-  if (!job) {
-    console.log(`${chalk.bgGreen(chalk.black(' EXEC '))} ${chalk.green('./bin/sensorr')}  ${chalk.gray(JSON.stringify(['record', '-a', '-p', app.get('env') === 'production' ? 5070 : 7000]))}`)
+  pm2.list((err, jobs) => {
+    if (!err) {
+      const job = jobs.filter(job => job.name !== 'sensorr:web' && job.name === `sensorr:${type}`).pop()
 
-    switch (type) {
-      case 'record':
-        job = spawn('./bin/sensorr', ['record', '-a', '-p', app.get('env') === 'production' ? 5070 : 7000])
-        job.on('close', (code) => job = null)
-      break
+      if (job && job.pid === 0) {
+        pm2.restart(job.name, err => {
+          if (!err) {
+            console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(job.name)}`)
+            res.status(200).send({ message: `Trigger "${type}" job`, })
+          } else {
+            console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(job.name)} ${err}`)
+            res.status(409).send({ message: `Error during "${type}" job pm2 restart`, err, })
+          }
+        })
+      } else if (!job) {
+        console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(`Unknown "${type}" job`)} ${chalk.gray(`sensorr:${type}`)}`)
+        res.status(400).send({ message: `Unknown "${type}" job`, })
+      } else {
+        console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} ${err}`)
+        res.status(409).send({ message: 'Job already triggered', err, })
+      }
+    } else {
+      console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(`Error on pm2 process list`)}`)
+      res.status(400).send({ message: `Error on pm2 process list`, })
     }
-
-    res.status(200).send({ message: `Trigger "${type}" job`, })
-  } else {
-    console.log(`${chalk.bgRed(chalk.black(' EXEC '))} ${chalk.red('Job already in progress')}`)
-    res.status(409).send({ message: 'Job already in progress', })
-  }
+  })
 })
 
 api.get('/history', function (req, res) {
