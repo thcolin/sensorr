@@ -54,6 +54,7 @@
     "typeface-open-sans": "0.0.54",
     "typeface-raleway": "0.0.54",
     "unescape": "^1.0.1",
+    "universal-rxjs-ajax": "^2.0.1",
     "uuid": "^3.3.2",
     "xml2json-light": "^1.0.6"
   },

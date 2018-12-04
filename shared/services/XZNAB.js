@@ -1,5 +1,7 @@
 const X2J = require('xml2json-light')
 const unescape = require('unescape')
+const { request } = require('universal-rxjs-ajax')
+const { map, catchError } = require('rxjs/operators')
 
 module.exports = class XZNAB {
   constructor({ name, key, url }, { proxify, headers }) {
@@ -22,7 +24,6 @@ module.exports = class XZNAB {
     if (this.options.proxify) {
       return [`/proxy?url=${window.btoa(target)}`, {
         headers: new Headers({
-          'Content-Type': 'application/json; charset=utf-8',
           ...this.options.headers,
         }),
       }]
@@ -32,62 +33,65 @@ module.exports = class XZNAB {
   }
 
   search(query) {
-    return fetch(...this.build({
+    const [ url, settings ] = this.build({
       q: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ' ').replace(/[ ]+/, ' '),
       Query: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ' ').replace(/[ ]+/, ' '),
       t: 'search',
       cat: '2000,2010,2020,2030,2040,2050,2060',
-    }))
-    .then(res => res.text())
-    .then(text => {
-      try {
-        return JSON.parse(text)
-      } catch (e) {
-        const body = X2J.xml2json(text)
-        const items = (typeof body.rss.channel.item === 'undefined' ? [] : Array.isArray(body.rss.channel.item) ? body.rss.channel.item : [body.rss.channel.item])
-          .map(({ torznab, ...item }) => ({
-            ...(torznab.reduce((obj, attr) => ({
-              ...obj,
-              [attr.name]: (
-                !obj[attr.name] ?
-                  attr.value :
-                  (Array.isArray(obj[attr.name]) ? [...obj[attr.name], attr.value] : [obj[attr.name], attr.value])
-              ),
-            }), {})),
-            ...item,
-          }))
-          .map(({
-            downloadvolumefactor,
-            minimumratio,
-            minimumseedtime,
-            pubDate,
-            uploadvolumefactor,
-            ...item
-          }) => ({
-            ...item,
-            link: unescape(item.link, 'all'),
-            enclosure: unescape(item.enclosure.url, 'all'),
-            grabs: parseInt(item.grabs),
-            size: parseInt(item.size),
-            downloadVolumeFactor: parseInt(downloadvolumefactor),
-            minimumRatio: parseInt(minimumratio),
-            minimumSeedTime: parseInt(minimumseedtime),
-            peers: parseInt(item.peers),
-            publishDate: pubDate,
-            seeders: parseInt(item.seeders),
-            site: item.link.split(`${body.rss.channel.atom.href}dl/`).pop().split('/').shift(),
-            uploadVolumeFactor: parseInt(uploadvolumefactor),
-            category: Array.isArray(item) ? item.category.map(category => parseInt(category)) : parseInt(item.category),
-          }))
+    })
 
-        return { items }
-      }
-    })
-    .then(payload => camelize(payload))
-    .catch((e) => {
-      console.warn(e)
-      return { items: [] }
-    })
+    return request({ url, responseType: 'text', ...settings }).pipe(
+      map(res => res.response),
+      map(text => {
+        try {
+          return JSON.parse(text)
+        } catch (e) {
+          const body = X2J.xml2json(text)
+          const items = (typeof body.rss.channel.item === 'undefined' ? [] : Array.isArray(body.rss.channel.item) ? body.rss.channel.item : [body.rss.channel.item])
+            .map(({ torznab, ...item }) => ({
+              ...(torznab.reduce((obj, attr) => ({
+                ...obj,
+                [attr.name]: (
+                  !obj[attr.name] ?
+                    attr.value :
+                    (Array.isArray(obj[attr.name]) ? [...obj[attr.name], attr.value] : [obj[attr.name], attr.value])
+                ),
+              }), {})),
+              ...item,
+            }))
+            .map(({
+              downloadvolumefactor,
+              minimumratio,
+              minimumseedtime,
+              pubDate,
+              uploadvolumefactor,
+              ...item
+            }) => ({
+              ...item,
+              link: unescape(item.link, 'all'),
+              enclosure: unescape(item.enclosure.url, 'all'),
+              grabs: parseInt(item.grabs),
+              size: parseInt(item.size),
+              downloadVolumeFactor: parseInt(downloadvolumefactor),
+              minimumRatio: parseInt(minimumratio),
+              minimumSeedTime: parseInt(minimumseedtime),
+              peers: parseInt(item.peers),
+              publishDate: pubDate,
+              seeders: parseInt(item.seeders),
+              site: item.link.split(`${body.rss.channel.atom.href}dl/`).pop().split('/').shift(),
+              uploadVolumeFactor: parseInt(uploadvolumefactor),
+              category: Array.isArray(item) ? item.category.map(category => parseInt(category)) : parseInt(item.category),
+            }))
+
+          return { items }
+        }
+      }),
+      map(payload => camelize(payload)),
+      catchError((e) => {
+        console.warn(e)
+        return { items: [] }
+      }),
+    )
   }
 }
 

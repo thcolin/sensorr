@@ -89,12 +89,10 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Fix
     * Movie `title` props with `year` to `NaN` (see `393624`)
     * Refactor to [`aphrodite`](https://github.com/Khan/aphrodite) for style
-    * Monitor `sensorr:record` job status with `bounce` animation on `Trigger` element in `Navigation` layout
-      * On `componentDidMount` make a `GET /api/status` request : `{ record: false }`
     * Improve `Language` support with full `<select>` on `Configure` page
-    * Fix timeout and retry on `look`
   * Features
     * Disable `XZNAB`
+    * Refresh `logs`
     * Trending `studios`
     * Follow `stars`
   * Pages
@@ -107,8 +105,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `Benjamin Gates Et Le Livre Des Secrets (2007) BDRip x265 10bit 1080p AAC 5.1 Fr Eng Subs Fr Eng [SireHawk]`
         * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
 * `CLI`
-  * Fix
-    * Log `retry` on `record` command
   * Commands
     * `🔍 search [query]`
       * `_tmdb_ [query]`

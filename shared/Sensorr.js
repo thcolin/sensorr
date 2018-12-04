@@ -1,4 +1,4 @@
-const { from, of } = require('rxjs')
+const { from, of, throwError } = require('rxjs')
 const { tap, map, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, catchError } = require('rxjs/operators')
 const oleoo = require('oleoo')
 const similarity = require('string-similarity')
@@ -78,8 +78,15 @@ class Sensorr {
         mergeMap(title => of(title).pipe(
           tap(title => typeof hooks.search === 'function' && hooks.search(xznab, title)),
           mergeMap(title => xznab.search(title)),
-          timeout(15000),
-          retry(2),
+          timeout(10000),
+          catchError(e => {
+            if (e.name === 'TimeoutError' && typeof hooks.timeout === 'function') {
+              hooks.timeout(xznab, title)
+            }
+
+            return throwError(e)
+          }),
+          retry(1),
           catchError(() => of({ items: [] })),
           pluck('items'),
           tap(items => typeof hooks.found === 'function' && hooks.found(xznab, title, items)),

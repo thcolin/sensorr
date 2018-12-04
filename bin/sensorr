@@ -186,6 +186,10 @@ async function main(sensorr) {
         log('☠️ ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
         logger.fetch(`☠️ Looking for **${title}** on **${xznab.name}** XZNAB`, { movie, xznab, title, uuid })
       },
+      timeout: (xznab, title) => {
+        log('⌛ ', `Request for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB timed out ! Retrying...`)
+        logger.fetch(`⌛ Request for **${title}** on **${xznab.name}** XZNAB timed out ! Retrying...`, { movie, xznab, title, uuid })
+      },
       found: (xznab, title, items) => {
         log('🎞️ ', `Found ${chalk.bold(items.length)} releases`)
         logger.receive(`🎞️ Found **${items.length}** releases` , { movie, xznab, title, items, uuid })
