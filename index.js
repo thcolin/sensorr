@@ -73,6 +73,22 @@ app.get('/proxy', function (req, res) {
 
 const api = express()
 
+api.get('/status', function (req, res) {
+  pm2.list((err, jobs) => {
+    if (!err) {
+      res.status(200).send({
+        status: jobs
+          .filter(job => job.name !== 'sensorr:web')
+          .reduce((status, job) => ({ ...status, [job.name.replace(/sensorr:/, '')]: job.pid !== 0 }), {}),
+      })
+    } else {
+      res.status(200).send({
+        status: {},
+      })
+    }
+  })
+})
+
 api.post('/trigger', function (req, res) {
   const type = req.body.type
 
