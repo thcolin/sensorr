@@ -87,8 +87,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Movie `title` props with `year` to `NaN` (see `393624`)
     * Refactor to [`aphrodite`](https://github.com/Khan/aphrodite) for style
+    * Monitor `status.record` with `bounce` animation on `Trigger` element in `Navigation` layout
     * Improve `Language` support with full `<select>` on `Configure` page
   * Features
     * Disable `XZNAB`
@@ -97,13 +97,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Follow `stars`
   * Pages
     * `Movie`
-      * Allow alternative `title` correction
-        * `Pirates des Caraibes La Fontaine de Jouvence 2011 French DvDRip x264 AC3-OkonEdet (Pirates of the Caribbean On Stranger Tides) `
-        * `Pirates.des.caraibes.4.3D.1080p.side.by.side.Truefrench.djneal.mkv`
-      * Allow range `year` correction
-        * Production and Release year can be different
-        * `Benjamin Gates Et Le Livre Des Secrets (2007) BDRip x265 10bit 1080p AAC 5.1 Fr Eng Subs Fr Eng [SireHawk]`
-        * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
+      * Customize `Doc` for `Sensorr.look` (in modal ?)
+        * Don't `remove` `Doc`, just set `{ state: ignored }`
+        * Alternative `title`
+          * `Pirates des Caraibes La Fontaine de Jouvence 2011 French DvDRip x264 AC3-OkonEdet (Pirates of the Caribbean On Stranger Tides) `
+          * `Pirates.des.caraibes.4.3D.1080p.side.by.side.Truefrench.djneal.mkv`
+        * Range `year`
+          * Production and Release year can be different
+          * `Benjamin Gates Et Le Livre Des Secrets (2007) BDRip x265 10bit 1080p AAC 5.1 Fr Eng Subs Fr Eng [SireHawk]`
+          * `Benjamin Gates et le livre des secrets.2008.MULTI.VF2.1080p.WEB-DL.AC3.x264-NoTag`)
 * `CLI`
   * Commands
     * `🔍 search [query]`

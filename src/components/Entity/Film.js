@@ -87,7 +87,7 @@ export default class Film extends PureComponent {
 
     return (
       <div
-        title={`${entity.title} (${entity.year || new Date(entity.release_date).getFullYear()})`}
+        title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
         style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
       >
         <span style={styles.state} onClick={this.handleStateChange}>
