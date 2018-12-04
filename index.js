@@ -107,14 +107,14 @@ api.post('/trigger', function (req, res) {
           }
         })
       } else if (!job) {
-        console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(`Unknown "${type}" job`)} ${chalk.gray(`sensorr:${type}`)}`)
+        console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Unknown "${type}" job`)} ${chalk.gray(`sensorr:${type}`)}`)
         res.status(400).send({ message: `Unknown "${type}" job`, })
       } else {
         console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} ${err}`)
         res.status(409).send({ message: 'Job already triggered', err, })
       }
     } else {
-      console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(`Error on pm2 process list`)}`)
+      console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Error on pm2 process list`)}`)
       res.status(400).send({ message: `Error on pm2 process list`, })
     }
   })
