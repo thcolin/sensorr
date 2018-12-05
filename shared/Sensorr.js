@@ -22,7 +22,7 @@ class Sensorr {
       ...config,
     }
 
-    this.xznabs = (this.config.xznabs || []).map(xznab => new XZNAB(xznab, options))
+    this.xznabs = (this.config.xznabs || []).filter(xznab => !xznab.disabled).map(xznab => new XZNAB(xznab, options))
   }
 
   filter(query) {

@@ -91,7 +91,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Monitor `status.record` with `bounce` animation on `Trigger` element in `Navigation` layout
     * Improve `Language` support with full `<select>` on `Configure` page
   * Features
-    * Disable `XZNAB`
     * Refresh `logs`
     * Trending `studios`
     * Follow `stars`

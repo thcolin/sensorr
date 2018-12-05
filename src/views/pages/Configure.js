@@ -42,6 +42,9 @@ const styles = {
     fontSize: '0.875em',
     whiteSpace: 'nowrap',
   },
+  checkbox: {
+    padding: '0.5em',
+  },
   code: {
     backgroundColor: theme.colors.primary,
     padding: '0.125em 0.375em',
@@ -235,9 +238,16 @@ class Configure extends PureComponent {
             {(values.xznabs.length ? values.xznabs : [{ name: '', url: '', key: '' }]).map((xznab, index, self) => (
               <div style={styles.column} key={index}>
                 <input
+                  type="checkbox"
+                  title={xznab.disabled ? 'Disabled' : 'Enabled'}
+                  style={styles.checkbox}
+                  checked={!xznab.disabled}
+                  onChange={e => this.handleChange('xznabs', self.map((foo, i) => i === index ? { ...xznab, disabled: !e.target.checked } : foo))}
+                />
+                <input
                   type="text"
                   placeholder={placeholder.xznab.name}
-                  style={{ ...styles.input, marginRight: '1em', }}
+                  style={{ ...styles.input, marginLeft: '1em', marginRight: '1em', }}
                   value={xznab.name}
                   onChange={e => this.handleChange('xznabs', self.map((foo, i) => i === index ? { ...xznab, name: e.target.value } : foo))}
                 />
