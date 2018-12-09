@@ -58,15 +58,22 @@ async function main(sensorr) {
     name: `${__dirname}/db/sensorr`,
     adapter: 'leveldb',
   }).get()
-    .then(db => new Promise(resolve =>
-      db.movies.sync({
+    .then(db => new Promise(resolve => {
+      const replication = db.movies.sync({
         remote: `${remote}/db/sensorr`,
+        waitForLeadership: false,
         options: {
-          live: false
+          live: false,
+          retry: true,
         },
       })
-      .complete$
-      .pipe(
+
+      replication.error$.subscribe(err => {
+        loading.stopAndPersist({ symbol: '🚨', text: `Error during Database syncing with ${chalk.gray(remote)} : ${err}` })
+        exit(1)
+      })
+
+      replication.complete$.pipe(
         takeWhile(res => !res || !res.pull.ok),
       )
       .subscribe(
@@ -81,7 +88,7 @@ async function main(sensorr) {
           }, 500)
         }
       )
-    ))
+    }))
 
   switch (commands[0]) {
     case 'search':
