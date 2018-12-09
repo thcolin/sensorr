@@ -1,4 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
+import { countries, flag, name } from 'country-emoji'
+import cl from 'country-language'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
 import sensorr from 'store/sensorr'
@@ -35,12 +37,22 @@ const styles = {
   link: {
     color: theme.colors.primary,
   },
+  select: {
+    width: '100%',
+    padding: '0.5em',
+    margin: '1em 0',
+    fontSize: '0.875em',
+    borderRadius: 0,
+    border: `0.0625em solid ${theme.colors.gray}`,
+  },
   input: {
     width: '100%',
     padding: '0.5em',
     margin: '1em 0',
     fontSize: '0.875em',
     whiteSpace: 'nowrap',
+    borderRadius: 0,
+    border: `0.0625em solid ${theme.colors.gray}`,
   },
   checkbox: {
     padding: '0.5em',
@@ -97,12 +109,34 @@ class Configure extends PureComponent {
   constructor(props) {
     super(props)
 
+    if (!localStorage.getItem('region')) {
+      localStorage.setItem('region', window.navigator.languages.filter(region => region.match(/-/)).reverse().pop())
+    }
+
     this.state = {
       values: { ...sensorr.config },
+      regions: [],
+      region: localStorage.getItem('region'),
     }
 
     this.handleSubmit = this.handleSubmit.bind(this)
     this.handleChange = this.handleChange.bind(this)
+    this.handleRegionChange = this.handleRegionChange.bind(this)
+  }
+
+  componentDidMount() {
+    Promise.all(
+      Object.keys(countries).map(country => new Promise(resolve => cl.getCountryLanguages(country, (err, languages) => {
+        if (!err && languages && languages.length && languages[0].iso639_1) {
+          resolve({ country, language: languages[0].iso639_1, emoji: flag(country), name: name(country) })
+        } else {
+          resolve(null)
+        }
+      })))
+    )
+    .then(regions => this.setState({
+      regions: regions.filter(region => region)
+    }))
   }
 
   handleSubmit(e) {
@@ -153,8 +187,14 @@ class Configure extends PureComponent {
     })
   }
 
+  handleRegionChange(region) {
+    localStorage.setItem('region', region)
+    this.setState({ region })
+    location.reload()
+  }
+
   render() {
-    const { values } = this.state
+    const { values, regions, region } = this.state
 
     return (
       <Fragment>
@@ -162,6 +202,22 @@ class Configure extends PureComponent {
           <title>Sensorr - Configure</title>
         </Helmet>
         <form style={styles.element} onSubmit={this.handleSubmit}>
+          <div style={styles.section}>
+            <h1 style={styles.title}>Region</h1>
+            <p style={styles.paragraph}>
+              When you <code style={styles.code}>wish</code> a movie, all data about movie (like title, year and stuff) are saved from <a href="https://www.themoviedb.org/" style={styles.link}>The Movie Database</a> in configured region language.
+              <br/>
+              <br/>
+              You can overide it here, just select your <code style={styles.code}>region</code> :
+            </p>
+            <select style={styles.select} value={region} onChange={(e) => this.handleRegionChange(e.target.value)}>
+              {regions.sort((a, b) => a.name.localeCompare(b.name)).map(region => (
+                <option key={region.country} value={`${region.language}-${region.country}`}>
+                  {region.name} {region.emoji}
+                </option>
+              ))}
+            </select>
+          </div>
           <div style={styles.section}>
             <h1 style={styles.title}>Authentication</h1>
             <p style={styles.paragraph}>

@@ -23,7 +23,6 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
   * Every wished `movie` processed
 * Language aware
   * By default search on [TMDB](https://www.themoviedb.org/) with first `window.navigator.languages`
-  * Fallback to `en-US`
 * Simple configuration
 * Secured WebUI (with `basic-auth`)
 
@@ -86,8 +85,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * Improve `Language` support with full `<select>` on `Configure` page
   * Features
     * Summarize each `logs` entry
     * Refresh `logs`

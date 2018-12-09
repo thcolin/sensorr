@@ -4,6 +4,7 @@ export default {
     secondary: '#081C24',
     white: '#FFFFFF',
     grey: '#EEEEEE',
+    gray: '#CCCCCC',
     black: '#000000',
     shadows: {
       black: 'hsla(0, 0%, 0%, 0.75)',

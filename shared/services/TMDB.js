@@ -7,7 +7,7 @@ class TMDB {
   }
 
   build(uri, params = {}) {
-    params.language = localStorage.getItem('language')
+    params.language = localStorage.getItem('region')
     params.api_key = this.key
 
     return `${this.base}${uri.join('/')}?${qs.stringify(params)}`

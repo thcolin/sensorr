@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react'
 import { StyleSheet, css } from 'aphrodite'
 import { withToastManager } from 'react-toast-notifications'
 import { Link } from 'react-router-dom'
-import Language from 'components/Language'
 import sensorr from 'store/sensorr'
 import theme from 'theme'
 
@@ -178,7 +177,6 @@ class Navigation extends PureComponent {
           </Link>
         </div>
         <div style={styles.emojis}>
-          <Language />
           <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
           <Link to="/logs" style={styles.logs} title="History">📖</Link>
           <div
