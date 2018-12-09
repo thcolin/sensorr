@@ -1,9 +1,33 @@
 import React, { PureComponent } from 'react'
+import { StyleSheet, css } from 'aphrodite'
 import { withToastManager } from 'react-toast-notifications'
 import { Link } from 'react-router-dom'
 import Language from 'components/Language'
 import sensorr from 'store/sensorr'
 import theme from 'theme'
+
+const animations = {
+  bounce: {
+    '0%': {
+      transform: 'translateY(-0.0625em)'
+    },
+    '50%': {
+      transform: 'translateY(0.25em)'
+    },
+    '100%': {
+      transform: 'translateY(-0.0625em)'
+    },
+  }
+}
+
+const suits = StyleSheet.create({
+  bounce: {
+    animationName: animations.bounce,
+    animationDuration: '1.5s',
+    animationIterationCount: 'infinite',
+    animationTimingFunction: 'ease-in-out',
+  }
+})
 
 const styles = {
   element: {
@@ -50,9 +74,6 @@ const styles = {
   trigger: {
     cursor: 'pointer',
     textDecoration: 'none',
-  },
-  bounce: {
-    // backgroundColor: 'red',
   },
 }
 
@@ -161,7 +182,8 @@ class Navigation extends PureComponent {
           <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
           <Link to="/logs" style={styles.logs} title="History">📖</Link>
           <div
-            style={{ ...styles.trigger, ...(status.record ? styles.bounce : {}) }}
+            className={status.record ? css(suits.bounce) : ''}
+            style={styles.trigger}
             title={'Trigger "Record" job'}
             onClick={() => this.triggerJob('record')}
           >

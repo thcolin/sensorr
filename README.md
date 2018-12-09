@@ -87,10 +87,9 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Refactor to [`aphrodite`](https://github.com/Khan/aphrodite) for style
-    * Monitor `status.record` with `bounce` animation on `Trigger` element in `Navigation` layout
     * Improve `Language` support with full `<select>` on `Configure` page
   * Features
+    * Summarize each `logs` entry
     * Refresh `logs`
     * Trending `studios`
     * Follow `stars`

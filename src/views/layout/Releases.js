@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import { StyleSheet, css } from 'aphrodite'
 import PropTypes from 'prop-types'
 import Doc from 'shared/Doc'
 import { withToastManager } from 'react-toast-notifications'
@@ -7,6 +8,15 @@ import Spinner from 'components/Spinner'
 import filesize from 'filesize'
 import sensorr from 'store/sensorr'
 import theme from 'theme'
+
+const suits = StyleSheet.create({
+  striped: {
+    backgroundColor: 'hsl(0, 0%, 100%)',
+    ':nth-child(2n)': {
+      backgroundColor: 'hsl(0, 0%, 98%)',
+    }
+  }
+})
 
 const styles = {
   element: {
@@ -75,9 +85,10 @@ const styles = {
     },
   },
   cell: {
+    fontSize: '0.9em',
     textAlign: 'center',
     fontFamily: theme.fonts.secondary,
-    padding: '1em',
+    padding: '0.8em',
     borderBottom: `1px solid ${theme.colors.grey}`,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
@@ -160,7 +171,7 @@ class Releases extends PureComponent {
         res.json().then(body => {
           if (res.ok) {
             toastManager.add((
-              <span>Release <strong>{release.title}</strong> grabbed to <strong>{body.filename}</strong></span>
+              <span>Release <strong>{release.title}</strong> grabbed to <strong>{sensorr.config.blackhole}</strong></span>
             ), { appearance: 'success', autoDismiss: true, })
           } else {
             toastManager.add((
@@ -234,7 +245,7 @@ class Releases extends PureComponent {
             </div>
           ) : (
             releases.filter(sensorr.filter(filter)).sort(sensorr.sort(sort, descending)).map((release, index) => (
-              <div key={index} style={styles.row}>
+              <div key={index} className={css(suits.striped)} style={styles.row}>
                 <div
                   title={release.valid ? `Score : ${release.score}` : release.reason}
                   style={{

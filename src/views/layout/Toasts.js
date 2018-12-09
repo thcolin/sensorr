@@ -1,10 +1,26 @@
 import React, { Children } from 'react'
-import { keyframes } from 'react-emotion'
+import { StyleSheet, css } from 'aphrodite'
 import { TransitionGroup } from 'react-transition-group'
 import { CloseIcon as Close, InfoIcon, CheckIcon, FlameIcon, AlertIcon } from 'react-toast-notifications/dist/icons'
 
+const animations = {
+  shrink: {
+    from: {
+      height: '100%',
+    },
+    to: {
+      height: '0%',
+    }
+  },
+}
+
+const suits = StyleSheet.create({
+  shrink: {
+    animationName: animations.shrink,
+  }
+})
+
 const styles = {
-  shrink: keyframes`from { height: 100% } to { height: 0% }`,
   container: {
     position: 'fixed',
     bottom: 0,
@@ -131,9 +147,11 @@ export const Toast = ({
       }}
     >
       <div
+        className={css(suits.shrink)}
         style={{
           ...styles.timeout,
-          animation: `${styles.shrink} ${autoDismissTimeout}ms linear`,
+          animationTimingFunction: 'linear',
+          animationDuration: `${autoDismissTimeout}ms`,
           opacity: autoDismiss ? 1 : 0,
         }}
       />
