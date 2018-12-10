@@ -1,4 +1,4 @@
-require('url-polyfill')
+require('universal-url').shim()
 
 const fs = require('fs')
 const pm2 = require('pm2')
