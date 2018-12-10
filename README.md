@@ -87,7 +87,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Features
     * Summarize each `logs` entry
-    * Refresh `logs`
     * Trending `studios`
     * Follow `stars`
   * Pages

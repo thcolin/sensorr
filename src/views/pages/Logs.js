@@ -69,6 +69,16 @@ class Logs extends PureComponent {
     this.handleLoadMore = this.handleLoadMore.bind(this)
   }
 
+  componentDidUpdate(props, state) {
+    if (props.location.key !== this.props.location.key) {
+      this.setState({
+        lines: [],
+        done: false,
+        data: null,
+      })
+    }
+  }
+
   handleLoadMore() {
     const { lines } = this.state
 
