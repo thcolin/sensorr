@@ -1,3 +1,5 @@
+require('url-polyfill')
+
 const fs = require('fs')
 const pm2 = require('pm2')
 const chalk = require('chalk')
