@@ -96,7 +96,14 @@ class Database {
 
     await Promise.all(Object.keys(SCHEMAS).map(key => database
       .collection({ name: key, schema: SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
-      .then(collection => typeof sync === 'string' ? collection.sync({ remote: `${sync}/sensorr` }) : null)
+      .then(collection => typeof sync === 'string' ? collection.sync({
+        remote: `${sync}/sensorr`,
+        waitForLeadership: false,
+        options: {
+          live: true,
+          retry: true,
+        },
+      }) : null)
     ))
 
     return database
