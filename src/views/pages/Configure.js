@@ -369,7 +369,7 @@ class Configure extends PureComponent {
                   defaultValue={values.sort}
                   onChange={e => this.handleChange('sort', e.target.value)}
                 />
-                <label htmlFor="descending" style={styles.input}>
+                <label htmlFor="descending" style={{ ...styles.input, borderColor: 'transparent' }}>
                   <input
                     id="descending"
                     type="checkbox"
