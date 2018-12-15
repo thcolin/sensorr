@@ -182,7 +182,7 @@ export default class Movie extends PureComponent {
       this.setState({ unpinned: false })
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
-        { append_to_response: 'videos,credits,similar,recommendations' }
+        { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
       )
       this.setState({ details })
       const db = await database.get()
@@ -197,15 +197,15 @@ export default class Movie extends PureComponent {
   async handleStateChange() {
     const db = await database.get()
 
-    if (!this.state.doc) {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'wished' }).normalize())
+    if (!this.state.doc || this.state.doc.state === 'ignored') {
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'wished' }, localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'archived' }).normalize())
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'archived' }, localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'archived') {
-      await db.movies.findOne().where('id').eq(this.state.details.id.toString()).remove()
-      this.setState({ doc: null })
+      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'ignored' }, localStorage.getItem('region')).normalize())
+      this.setState({ doc: doc.toJSON() })
     }
   }
 
@@ -254,7 +254,7 @@ export default class Movie extends PureComponent {
                   </a>
                 )}
                 <div style={styles.badges}>
-                  {!doc && (
+                  {(!doc || doc.state === 'ignored') && (
                     <div style={styles.badge} onClick={this.handleStateChange}>
                       <span style={styles.emoji}>🔕</span>
                       Ignored

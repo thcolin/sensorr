@@ -127,7 +127,7 @@ class Releases extends PureComponent {
   componentDidMount() {
     setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
 
-    sensorr.look(new Doc(this.props.movie).normalize()).subscribe(
+    sensorr.look(new Doc(this.props.movie, localStorage.getItem('region')).normalize()).subscribe(
       (releases) => this.setState({ releases }),
       (err) => {
         this.setState({ loading: false })

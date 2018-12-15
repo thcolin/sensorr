@@ -34,8 +34,8 @@ module.exports = class XZNAB {
 
   search(query) {
     const [ url, settings ] = this.build({
-      q: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ' ').replace(/[ ]+/, ' '),
-      Query: query.toLowerCase().replace(/[^\sa-zA-Z0-9]/g, ' ').replace(/[ ]+/, ' '),
+      q: query,
+      Query: query,
       t: 'search',
       cat: '2000,2010,2020,2030,2040,2050,2060',
     })

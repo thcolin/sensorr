@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
 import { Link } from 'react-router-dom'
+import tmdb from 'store/tmdb'
 import database from 'store/database'
 import Doc from 'shared/Doc'
 import theme from 'theme'
@@ -42,6 +43,7 @@ export default class Film extends PureComponent {
     this.state = {
       doc: null,
       ready: false,
+      entity: props.entity,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -68,16 +70,24 @@ export default class Film extends PureComponent {
 
   async handleStateChange() {
     const db = await database.get()
+    let entity = this.state.entity
 
-    if (!this.state.doc) {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.props.entity, state: 'wished' }).normalize())
-      this.setState({ doc: doc.toJSON() })
+    if (!entity.alternative_titles || !entity.release_dates) {
+      entity = await tmdb.fetch(
+        ['movie', entity.id],
+        { append_to_response: 'alternative_titles,release_dates' }
+      )
+    }
+
+    if (!this.state.doc || this.state.doc.state === 'ignored') {
+      const doc = await db.movies.atomicUpsert(new Doc({ ...entity, state: 'wished' }, localStorage.getItem('region')).normalize())
+      this.setState({ doc: doc.toJSON(), entity })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.props.entity, state: 'archived' }).normalize())
-      this.setState({ doc: doc.toJSON() })
+      const doc = await db.movies.atomicUpsert(new Doc({ ...entity, state: 'archived' }, localStorage.getItem('region')).normalize())
+      this.setState({ doc: doc.toJSON(), entity })
     } else if (this.state.doc.state === 'archived') {
-      await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).remove()
-      this.setState({ doc: null })
+      const doc = await db.movies.atomicUpsert(new Doc({ ...entity, state: 'ignored' }, localStorage.getItem('region')).normalize())
+      this.setState({ doc: doc.toJSON(), entity })
     }
   }
 
@@ -91,7 +101,7 @@ export default class Film extends PureComponent {
         style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
       >
         <span style={styles.state} onClick={this.handleStateChange}>
-          {!doc && ('🔕')}
+          {(!doc || doc.state === 'ignored') && ('🔕')}
           {doc && doc.state === 'wished' && ('🍿')}
           {doc && doc.state === 'archived' && ('📼')}
         </span>

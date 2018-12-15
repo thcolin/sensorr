@@ -47,7 +47,7 @@ export default class Grid extends PureComponent {
 
   async componentDidMount() {
     const db = await database.get()
-    const query = db.movies.find()
+    const query = db.movies.find().where('state').ne('ignored')
     const entities = await query.exec()
     const subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
     this.setState({ subscription, entities: entities.map(entity => entity.toJSON()) })

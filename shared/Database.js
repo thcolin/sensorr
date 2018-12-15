@@ -6,7 +6,7 @@ RxDB.plugin(require('pouchdb-adapter-http'))
 const SCHEMAS = {
   movies: {
     title: 'movie',
-    version: 1,
+    version: 2,
     description: 'Describe a TMDB movie',
     type: 'object',
     required: ['id', 'title', 'year', 'poster_path'],
@@ -38,6 +38,19 @@ const SCHEMAS = {
       time: {
         type: 'number',
       },
+      terms: {
+        type: 'object',
+        properties: {
+          'titles': {
+            type: 'array',
+            uniqueItems: true,
+          },
+          'years': {
+            type: 'array',
+            uniqueItems: true,
+          },
+        }
+      }
     },
   },
 }
@@ -46,6 +59,21 @@ const MIGRATIONS = {
   movies: {
     1: (doc) => {
       doc.time = Date.now()
+      return doc
+    },
+    2: (doc) => {
+      doc.terms = {
+        titles: [
+          ...new Set([doc.title, doc.original_title].map(title => title
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\sa-zA-Z0-9]/g, ' ')
+            .replace(/ +/g, ' ')
+          )
+        )],
+        years: [doc.year],
+      }
       return doc
     },
   },

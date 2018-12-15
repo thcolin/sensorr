@@ -71,10 +71,7 @@ class Sensorr {
 
   look(movie, strict = false, hooks = {}) {
     return from(this.xznabs).pipe(
-      mergeMap(xznab => from(
-        movie.original_title && movie.original_title !== movie.title ? [movie.title, movie.original_title] : [movie.title]
-      ).pipe(
-        map(title => title.normalize('NFD').replace(/[\u0300-\u036f]/g, '')),
+      mergeMap(xznab => from(movie.terms.titles).pipe(
         mergeMap(title => of(title).pipe(
           tap(title => typeof hooks.search === 'function' && hooks.search(xznab, title)),
           mergeMap(title => xznab.search(title)),
@@ -105,7 +102,15 @@ class Sensorr {
           })),
           map(release => ({
             ...release,
-            score: similarity.compareTwoStrings(title, release.meta.title).toFixed(2),
+            score: similarity.compareTwoStrings(
+              title,
+              release.meta.title
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\sa-zA-Z0-9]/g, ' ')
+                .replace(/ +/g, ' ')
+              ).toFixed(2),
             valid: true,
             warning: 0,
           })),
@@ -123,15 +128,15 @@ class Sensorr {
           })),
           map(release => !release.valid ? release : ({
             ...release,
-            valid: (new Date(release.publishDate).getFullYear() >= movie.year),
-            reason: `Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release year (${movie.year})`,
+            valid: movie.terms.years.every(year => new Date(release.publishDate).getFullYear() >= year),
+            reason: `Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release years (${movie.terms.years.join(', ')})`,
             warning: 2,
           })),
           map(release => !release.valid ? release : ({
             ...release,
-            valid: (parseInt(release.meta.year) === 0 || parseInt(release.meta.year) === movie.year),
+            valid: (parseInt(release.meta.year) === 0 || movie.terms.years.some(year => parseInt(release.meta.year) === year)),
             reason: `Release year (${release.meta.year}) ${
-              parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie year (${movie.year})`
+              parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${movie.terms.years.join(', ')})`
             }`,
             warning: 2,
           })),

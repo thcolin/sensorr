@@ -4,8 +4,9 @@
   "description": "🍿📼 Sensorr - A movie release radar like CouchPotato, Radarr and Watcher3",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --progress --config webpack.dev.js",
-    "dev:server": "pm2-runtime start ecosystem.config.js --env=development",
+    "start": "npm run build && npm run prod",
+    "dev": "npx webpack-dev-server --progress --config webpack.dev.js",
+    "express": "pm2-runtime start ecosystem.config.js --env=development",
     "build": "npx webpack --progress --config webpack.prod.js",
     "prod": "pm2-runtime start ecosystem.config.js --env=production",
     "test": "echo \"Error: no test specified\" && exit 1"
