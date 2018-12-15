@@ -254,3 +254,4 @@ if (app.get('env') === 'production') {
 }
 
 app.listen(app.get('env') === 'production' ? 5070 : 7000)
+process.send('ready')

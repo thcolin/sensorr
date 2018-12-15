@@ -86,6 +86,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * `Logs` reload
   * Features
     * Summarize each `logs` entry
     * Trending `studios`
