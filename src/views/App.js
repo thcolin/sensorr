@@ -21,8 +21,8 @@ const styles = {
 export default ({ ...props }) => (
   <Router>
     <div style={styles.element}>
-      <Header key="header" />
-      <Navigation key="navigation" />
+      <Header />
+      <Navigation />
       <Route path="/" exact component={Trending} />
       <Route path="/collection" exact component={Collection} />
       <Route path="/search/:state/:query?" exact component={Search} />

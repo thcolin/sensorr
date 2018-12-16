@@ -178,7 +178,7 @@ class Navigation extends PureComponent {
         </div>
         <div style={styles.emojis}>
           <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
-          <Link to="/logs" style={styles.logs} title="History">📖</Link>
+          <Link to="/logs" style={styles.logs} title="History" replace={location.pathname === '/logs'}>📖</Link>
           <div
             className={status.record ? css(suits.bounce) : ''}
             style={styles.trigger}

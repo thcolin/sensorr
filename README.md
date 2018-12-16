@@ -86,26 +86,21 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * `Logs` reload
+  * Refactor
+    * `status` with `mercure.rocks` (current solution is ineffective with many tabs open)
   * Features
     * Summarize each `logs` entry
+      * Focus on movie with results which doesn't pass configured `filter`
     * Trending `studios`
     * Follow `stars`
 * `CLI`
+  * Fix
+    * Movies `sort` on `record` to `doc.time`
   * Commands
-    * `🔍 search [query]`
-      * `_tmdb_ [query]`
-      * `display: [movies]`
-      * `input: [movie]`
-      * `_look_ [movie]`
-      * `display: [results]`
-      * `input: [result]`
-      * `_grab_ [result]`
-    * `📚 manage`
-      * `display: [movies]`
-      * `input: [movie:state]`
-      * `_look_ [movie]`
+    * `📰 stalk`
+      * `display: [stars]`
+      * `_fetch_ [star]`
+      * `_save_ [star:movies]`
   * Summary command result
     * `record`:
       ```
