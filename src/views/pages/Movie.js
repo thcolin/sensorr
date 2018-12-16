@@ -295,11 +295,11 @@ export default class Movie extends PureComponent {
                     )}
                   </h2>
                   <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
-                  {!!details.credits.crew.filter(credit => credit.job === 'Editor').length && (
+                  {!!details.credits.crew.filter(credit => ['Director'].includes(credit.job)).length && (
                     <p style={styles.directors}>
                       🎥 &nbsp; {
                         details.credits.crew
-                          .filter(credit => credit.job === 'Editor')
+                          .filter(credit => ['Director'].includes(credit.job))
                           .map(credit => <Link to={`/star/${credit.id}`} style={styles.link} key={credit.id}>{credit.name}</Link>)
                           .reduce((prev, curr) => [prev, ', ', curr])
                       }
