@@ -3,6 +3,7 @@ import { StyleSheet, css } from 'aphrodite'
 import PropTypes from 'prop-types'
 import Doc from 'shared/Doc'
 import { withToastManager } from 'react-toast-notifications'
+import Clear from 'icons/Clear'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import filesize from 'filesize'
@@ -51,11 +52,19 @@ const styles = {
     fontFamily: 'inherit',
   },
   filter: {
+    position: 'relative',
     backgroundColor: theme.colors.grey,
     color: theme.colors.secondary,
     fontWeight: 800,
     textTransform: 'uppercase',
     padding: '1em',
+  },
+  clear: {
+    position: 'absolute',
+    right: '1.25em',
+    alignSelf: 'center',
+    width: '1.25em',
+    cursor: 'pointer',
   },
   row: {
     display: 'flex',
@@ -232,11 +241,18 @@ class Releases extends PureComponent {
             <div style={styles.row}>
               <input
                 type="text"
-                defaultValue={filter}
-                onKeyUp={this.handleQueryChange}
+                value={filter}
+                onChange={this.handleQueryChange}
                 style={styles.input}
                 placeholder="Filter..."
               />
+              <span style={styles.clear} onClick={() => this.handleQueryChange({ target: { value: !!filter ? '' : sensorr.config.filter } })}>
+                {!!filter ? (
+                  <Clear />
+                ) : (
+                  <span style={{ fontSize: '1.5em' }}>🔙</span>
+                )}
+              </span>
             </div>
           </div>
           {!loading && !releases.filter(sensorr.filter(filter)).length ? (
