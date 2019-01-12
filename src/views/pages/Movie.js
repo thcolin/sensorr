@@ -156,7 +156,7 @@ export default class Movie extends PureComponent {
 
     this.state = {
       details: null,
-      doc: null,
+      doc: false,
       unpinned: false,
       more: 'recommendations'
     }
@@ -179,7 +179,7 @@ export default class Movie extends PureComponent {
 
   async bootstrap() {
     try {
-      this.setState({ unpinned: false })
+      this.setState({ doc: false, unpinned: false })
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
@@ -196,6 +196,10 @@ export default class Movie extends PureComponent {
 
   async handleStateChange() {
     const db = await database.get()
+
+    if (this.state.doc === false) {
+      return
+    }
 
     if (!this.state.doc || this.state.doc.state === 'ignored') {
       const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'wished' }, localStorage.getItem('region')).normalize())
@@ -254,7 +258,13 @@ export default class Movie extends PureComponent {
                   </a>
                 )}
                 <div style={styles.badges}>
-                  {(!doc || doc.state === 'ignored') && (
+                  {doc === false && (
+                    <div style={{ ...styles.badge, cursor: 'default' }}>
+                      <span style={styles.emoji}>⌛</span>
+                      Loading
+                    </div>
+                  )}
+                  {(doc === null || (doc && doc.state === 'ignored')) && (
                     <div style={styles.badge} onClick={this.handleStateChange}>
                       <span style={styles.emoji}>🔕</span>
                       Ignored

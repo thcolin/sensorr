@@ -14,7 +14,6 @@ const styles = {
     backgroundSize: '50%',
   },
   state: {
-    cursor: 'pointer',
     position: 'absolute',
     right: '0.5em',
     top: '0.5em',
@@ -41,9 +40,8 @@ export default class Film extends PureComponent {
     super(props)
 
     this.state = {
-      doc: null,
+      doc: false,
       ready: false,
-      entity: props.entity,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -62,6 +60,7 @@ export default class Film extends PureComponent {
 
   async bootstrap() {
     try {
+      this.setState({ doc: false })
       const db = await database.get()
       const doc = await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
@@ -70,13 +69,17 @@ export default class Film extends PureComponent {
 
   async handleStateChange() {
     const db = await database.get()
-    let entity = this.state.entity
+    let entity = this.props.entity
 
     if (!entity.alternative_titles || !entity.release_dates) {
       entity = await tmdb.fetch(
         ['movie', entity.id],
         { append_to_response: 'alternative_titles,release_dates' }
       )
+    }
+
+    if (this.state.doc === false) {
+      return
     }
 
     if (!this.state.doc || this.state.doc.state === 'ignored') {
@@ -100,8 +103,9 @@ export default class Film extends PureComponent {
         title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
         style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
       >
-        <span style={styles.state} onClick={this.handleStateChange}>
-          {(!doc || doc.state === 'ignored') && ('🔕')}
+        <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'cursor' }} onClick={this.handleStateChange}>
+          {doc === false && ('⌛')}
+          {(doc === null || (doc && doc.state === 'ignored')) && ('🔕')}
           {doc && doc.state === 'wished' && ('🍿')}
           {doc && doc.state === 'archived' && ('📼')}
         </span>
