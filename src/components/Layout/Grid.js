@@ -62,7 +62,7 @@ export default class Grid extends PureComponent {
     }
   }
 
-  async componentWillUnmount() {
+  componentWillUnmount() {
     if (this.state.subscription) {
       this.state.subscription.unsubscribe()
     }

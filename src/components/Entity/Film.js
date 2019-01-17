@@ -103,7 +103,7 @@ export default class Film extends PureComponent {
         title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
         style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
       >
-        <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'cursor' }} onClick={this.handleStateChange}>
+        <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'pointer' }} onClick={this.handleStateChange}>
           {doc === false && ('⌛')}
           {(doc === null || (doc && doc.state === 'ignored')) && ('🔕')}
           {doc && doc.state === 'wished' && ('🍿')}

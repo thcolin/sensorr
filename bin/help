@@ -9,7 +9,7 @@ Options:
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
   -D, --descending       Sort releases in descending order
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
-  -p, --port             Specify localhost <port> [default: 7000]
+  -p, --port             Specify localhost <port> [default: 5070]
   -h, --help             Output usage information
   -v, --version          Output the version number
 

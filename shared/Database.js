@@ -4,6 +4,43 @@ RxDB.plugin(require('pouchdb-adapter-idb'))
 RxDB.plugin(require('pouchdb-adapter-http'))
 
 const SCHEMAS = {
+  records: {
+    title: 'record',
+    version: 0,
+    description: 'Describe a Sensorr record entry',
+    type: 'object',
+    required: ['uuid', 'session', 'time', 'message'],
+    attachments: {},
+    properties: {
+      uuid: {
+        type: 'string',
+        primary: true,
+      },
+      record: {
+        type: 'string',
+        index: true,
+      },
+      session: {
+        type: 'string',
+        index: true,
+      },
+      data: {
+        type: 'object',
+        default: {},
+      },
+      success: {
+        type: 'boolean',
+        default: false,
+      },
+      time: {
+        type: 'number',
+        index: true,
+      },
+      message: {
+        type: 'string',
+      }
+    },
+  },
   movies: {
     title: 'movie',
     version: 2,
@@ -41,11 +78,11 @@ const SCHEMAS = {
       terms: {
         type: 'object',
         properties: {
-          'titles': {
+          titles: {
             type: 'array',
             uniqueItems: true,
           },
-          'years': {
+          years: {
             type: 'array',
             uniqueItems: true,
           },
@@ -91,18 +128,17 @@ class Database {
     const database = await RxDB.create({
       name: 'sensorr',
       adapter: 'idb',
+      multiInstance: true,
       ...options,
     })
 
     await Promise.all(Object.keys(SCHEMAS).map(key => database
       .collection({ name: key, schema: SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
       .then(collection => typeof sync === 'string' ? collection.sync({
-        remote: `${sync}/sensorr`,
-        waitForLeadership: false,
-        options: {
-          live: true,
-          retry: true,
-        },
+        remote: `${sync}/sensorr-${key}`,
+        waitForLeadership: true,
+        direction: { pull: true, push: true },
+        options: { live: true, retry: true },
       }) : null)
     ))
 

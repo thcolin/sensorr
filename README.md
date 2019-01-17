@@ -86,11 +86,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Refactor
-    * `status` with `mercure.rocks` (current solution is ineffective with many tabs open)
   * Features
-    * Summarize each `logs` entry
-      * Focus on movie with results which doesn't pass configured `filter`
+    * Focus `Logs` session on movie with results which doesn't pass configured `filter`
     * Trending `studios`
     * Follow `stars`
 * `CLI`

@@ -21,9 +21,10 @@ module.exports = merge(common, {
       'Access-Control-Allow-Origin': '*',
     },
     proxy: {
-      '/db': 'http://localhost:7000',
-      '/api': 'http://localhost:7000',
-      '/proxy': 'http://localhost:7000',
+      '/db': 'http://localhost:5070',
+      '/api': 'http://localhost:5070',
+      '/proxy': 'http://localhost:5070',
+      '/socket.io': 'http://localhost:5070',
     },
   },
 })

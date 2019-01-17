@@ -1,19 +1,58 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
-import InfiniteScroll from 'react-infinite-scroller'
 import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import markdown from 'utils/markdown'
-import sensorr from 'store/sensorr'
+import database from 'store/database'
+import when from 'utils/when'
 import theme from 'theme'
 
 const styles = {
   element: {
     padding: '1em',
   },
-  group: {
+  summary: {
+    display: 'flex',
+  },
+  digest: {
+    margin: '1em',
+    display: 'flex',
+  },
+  catch: {
+    flex: 1,
+    textAlign: 'center',
+    lineHeight: '1.4em',
+    fontSize: '0.75em',
+    fontFamily: theme.fonts.monospace,
+  },
+  bar: {
+    zIndex: 1,
+    position: 'sticky',
+    display: 'flex',
+    justifyContent: 'space-between',
+    top: '-1px',
+    width: '100%',
+    backgroundColor: theme.colors.grey,
+    fontFamily: theme.fonts.monospace,
+    fontSize: '1.25em',
+    padding: '0.75em 1em',
+    textAlign: 'center',
+    color: theme.colors.secondary,
+  },
+  small: {
+    opacity: 0.5,
+    fontSize: '0.75em',
+    margin: '0 0.75em',
+  },
+  navigator: {
+    cursor: 'pointer',
+    margin: '0 0.125em',
+    userSelect: 'none',
+    MozUserSelect: 'none',
+  },
+  record: {
     display: 'flex',
     padding: '1em',
   },
@@ -46,7 +85,7 @@ const styles = {
     cursor: 'pointer',
     padding: '0 2em 0 1em',
   },
-  data: {
+  focus: {
     flex: 1,
     whiteSpace: 'pre',
     backgroundColor: theme.colors.grey,
@@ -61,101 +100,162 @@ class Logs extends PureComponent {
     super(props)
 
     this.state = {
-      lines: [],
-      done: false,
-      data: null,
+      subscription: {},
+      sessions: [],
+      session: null,
+      records: [],
+      buffer: [],
+      focus: null,
     }
 
-    this.handleLoadMore = this.handleLoadMore.bind(this)
+    this.bufferize = this.bufferize.bind(this)
   }
 
-  componentDidUpdate(props, state) {
-    if (props.location.key !== this.props.location.key) {
-      this.setState({
-        lines: [],
-        done: false,
-        data: null,
-      })
+  async componentDidMount() {
+    const days = (nb) => nb * 86400 * 1000
+
+    const db = await database.get()
+    const query = db.records.find().where('time').gt(Date.now() - days(7))
+    const subscription = query.$
+      .subscribe(records => this.setState(state => {
+        const sessions = Object.values(
+            records.reduce((acc, record) => ({ ...acc, [record.get('session')]: {
+              uuid: record.get('session'),
+              time: when(record.get('session')),
+            } }), {})
+          )
+          .filter(session => session.time >= (Date.now() - days(6)))
+          .sort((a, b) => a.time - b.time)
+
+        const session = state.session === null ? (sessions.length - 1) : state.session
+
+        return {
+          sessions,
+          session,
+          records,
+        }
+      }, () => {
+        const buffer = this.state.records.filter(record => record.get('session') === this.state.sessions[this.state.session].uuid)
+
+        if (buffer.length !== this.state.buffer.length) {
+          this.bufferize(this.state.session)
+        }
+      }))
+
+    this.setState({ subscription })
+  }
+
+  componentWillUnmount() {
+    if (this.state.subscription) {
+      this.state.subscription.unsubscribe()
     }
   }
 
-  handleLoadMore() {
-    const { lines } = this.state
-
-    fetch(`/api/history?start=${lines.length}&end=${lines.length + 200}`, {
-      method: 'GET',
-      headers: new Headers({
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Basic ${new Buffer(`${sensorr.config.auth.username}:${sensorr.config.auth.password}`).toString('base64')}`,
-      }),
-    })
-    .then(res => {
-      try {
-        res.json().then(body => {
-          if (res.ok) {
-            this.setState({ lines: [...this.state.lines, ...body.history], done: body.history.length < 200 })
+  bufferize(session) {
+    this.setState({
+      session,
+      buffer: Object.values(this.state.records
+        .filter(record => record.get('session') === this.state.sessions[session].uuid)
+        .map(record => record.toJSON())
+        .reduce((acc, record) => ({
+          ...acc,
+          [record.record]: {
+            ...(acc[record.record] || {}),
+            time: record.time,
+            ...(typeof (record.data || {}).success !== 'undefined' ? { success: record.data.success } : {}),
+            ...(typeof (record.data || {}).movie !== 'undefined' ? { movie: record.data.movie } : {}),
+            logs: [...(acc[record.record] || { logs: [] }).logs, record].sort((a, b) => a.time - b.time),
           }
-        })
-      } catch(e) {
-        toastManager.add((
-          <span>Unexpected error during history fetch : <strong>{res.statusText}</strong></span>
-        ), { appearance: 'error', autoDismiss: true, })
-      }
+        }), {}))
+        .sort((a, b) => b.time - a.time)
     })
   }
 
   render() {
-    const { lines, done, data, ...state } = this.state
-    const groups = lines.reduce((groups, line) => ({ ...groups, [line.data.uuid]: [line, ...(groups[line.data.uuid] || [])] }), {})
+    const { ...props } = this.props
+    const { sessions, session, buffer, focus, ...state } = this.state
 
     return (
       <Fragment>
         <Helmet>
           <title>Sensorr - History</title>
         </Helmet>
-        <InfiniteScroll
-          pageStart={0}
-          loadMore={this.handleLoadMore}
-          hasMore={!done}
-          loader={<Spinner key="spinner" />}
-          style={styles.element}
-        >
-          {done && !Object.keys(groups).length && (
+        {sessions.length > 0 && (
+          <div style={styles.bar}>
+            <span style={(session > 0 ? {} : { visibility: 'hidden' })}>
+              <a onClick={() => session > 0 && this.bufferize(0)} style={styles.navigator}>⏪</a>
+              <a onClick={() => session > 0 && this.bufferize(session - 1)} style={styles.navigator}>⬅️</a>
+            </span>
+            <div>
+              <span>{sessions[session].time.toLocaleString()}</span>
+              <span style={styles.small}>#{sessions[session].uuid.split('-').pop()}</span>
+            </div>
+            <span style={(session < (sessions.length - 1) ? {} : { visibility: 'hidden' })}>
+              <a onClick={() => session < (sessions.length - 1) && this.bufferize(session + 1)} style={styles.navigator}>➡️</a>
+              <a onClick={() => session < (sessions.length - 1) && this.bufferize(sessions.length - 1)} style={styles.navigator}>⏩</a>
+            </span>
+          </div>
+        )}
+        <div style={styles.element}>
+          {!buffer.length && (
             <Empty />
           )}
-          {Object.keys(groups).map(uuid => {
-            const group = groups[uuid]
-
-            return (
-              <div style={styles.group} key={uuid}>
-                {group[0].data.movie && (
-                  <div style={styles.film}>
-                    <Film entity={group[0].data.movie} />
-                  </div>
-                )}
-                <div style={styles.scroller}>
-                  <h4 style={styles.title}># {new Date(group[0].ts).toLocaleString()}</h4>
-                  {group.map((log, index) => (
-                    <div style={styles.wrapper} key={`${uuid}-${index}`}>
-                      <div style={styles.container}>
-                        <p
-                          style={styles.text}
-                          onClick={() => this.setState({ data: data === `${uuid}-${index}` ? null : `${uuid}-${index}` })}
-                        >
-                          {markdown(log.msg).tree}
-                        </p>
-                        {data === `${uuid}-${index}` && (
-                          <div style={styles.data}>{JSON.stringify(log, null, 2)}</div>
-                        )}
-                      </div>
-                      <br/>
-                    </div>
-                  ))}
-                </div>
+          {buffer.length > 0 && (
+            <div style={styles.summary}>
+              <div style={{ ...styles.focus, ...styles.digest }}>
+                <span>🍿</span>
+                <span style={styles.catch}>
+                  {markdown(`Searching for **${buffer.length}** movies`).tree}
+                </span>
               </div>
-            )
-          })}
-        </InfiniteScroll>
+              <div style={{ ...styles.focus, ...styles.digest }}>
+                <span>📼</span>
+                <span style={styles.catch}>
+                  {buffer.filter(record => record.success > 0).length > 0 ?
+                    markdown(`Amazing ! **${buffer.filter(record => record.success).length}** movies were archived !`).tree :
+                    markdown('Oops... No movies were archived').tree
+                  }
+                </span>
+              </div>
+              {buffer.filter(record => !record.success).length > 0 && (
+                <div style={{ ...styles.focus, ...styles.digest }}>
+                  <span>📭</span>
+                  <span style={styles.catch}>
+                    {markdown(`Sorry, **${buffer.filter(record => !record.success).length}** movies still missing`).tree}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          {buffer.map(record => (
+            <div style={styles.record} key={record.time}>
+              {record.movie && (
+                <div style={styles.film}>
+                  <Film entity={record.movie} />
+                </div>
+              )}
+              <div style={styles.scroller}>
+                <h4 style={styles.title}># {new Date(record.time).toLocaleString()}</h4>
+                {record.logs.map((log, index) => (
+                  <div style={styles.wrapper} key={`${record.time}-${index}`}>
+                    <div style={styles.container}>
+                      <p
+                        style={styles.text}
+                        onClick={() => this.setState({ focus: focus === `${record.time}-${index}` ? null : `${record.time}-${index}` })}
+                      >
+                        {markdown(log.message).tree}
+                      </p>
+                      {focus === `${record.time}-${index}` && (
+                        <div style={styles.focus}>{JSON.stringify(log, null, 2)}</div>
+                      )}
+                    </div>
+                    <br/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </Fragment>
     )
   }

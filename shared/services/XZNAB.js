@@ -47,7 +47,7 @@ module.exports = class XZNAB {
           return JSON.parse(text)
         } catch (e) {
           const body = X2J.xml2json(text)
-          const items = (typeof body.rss.channel.item === 'undefined' ? [] : Array.isArray(body.rss.channel.item) ? body.rss.channel.item : [body.rss.channel.item])
+          const items = (typeof (body.rss || { channel: {} }).channel.item === 'undefined' ? [] : Array.isArray(body.rss.channel.item) ? body.rss.channel.item : [body.rss.channel.item])
             .map(({ torznab, ...item }) => ({
               ...(torznab.reduce((obj, attr) => ({
                 ...obj,

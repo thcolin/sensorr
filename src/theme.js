@@ -12,8 +12,8 @@ export default {
     },
   },
   fonts: {
-    primary: 'Raleway',
-    secondary: 'Open Sans',
-    monospace: 'Maison Mono',
+    primary: 'Raleway, sans-serif',
+    secondary: 'Open Sans, sans-serif',
+    monospace: 'Maison Mono, monospace',
   },
 }

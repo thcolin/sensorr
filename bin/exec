@@ -1,15 +1,27 @@
 #!/usr/bin/env node
 const { exec } = require('child_process')
+const tcp = require('tcp-port-used')
 const job = process.argv.slice(2).join(' ')
 
-console.log(`job "${job}" working...`)
-exec(job, function (error, stderr, stdout) {
-  if (error) {
-    console.error(`job "${job}" error: ${error}`)
-    process.exit(1)
-    return
-  }
+console.log(`job "${job}" waiting...`)
 
-  console.log(`job "${job}" done !`)
-  process.exit(0)
-})
+tcp.waitUntilUsed(5070, 1000, 60000)
+  .then(
+    () => {
+      console.log(`job "${job}" working...`)
+      exec(job, function (err, stderr, stdout) {
+        if (err) {
+          console.error(`job "${job}" error: ${err}`)
+          process.exit(1)
+          return
+        }
+
+        console.log(`job "${job}" done !`)
+        process.exit(0)
+      })
+    },
+    (err) => {
+      console.error(`job "${job}" error: ${err}`)
+      process.exit(1)
+    }
+  )

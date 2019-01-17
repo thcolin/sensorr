@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 const fs = require('fs')
+const path = require('path')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const ora = require('ora')
 const spinners = require('cli-spinners')
-const oleoo = require('oleoo')
 const filesize = require('filesize')
-const similarity = require('string-similarity')
+const microtime = require('microtime')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
 const { map, tap, merge, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
 const Sensorr = require('../shared/Sensorr')
-const logger = require('../shared/utils/logger')
+const Transform = require('stream').Transform
+const studio = require('@studio/log')
+const StringifyTransform = require('@studio/ndjson/stringify')
+const uuidv1 = require('uuid/v1')
 const uuidv4 = require('uuid/v4')
 const config = require('../config/config.json')
 const package = require('../package.json')
@@ -46,7 +49,7 @@ async function main(sensorr) {
     await exit()
   }
 
-  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || process.env.NODE_ENV === 'development' ? 7000 : 5070)}`
+  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || 5070)}`
 
   const loading = ora({
     spinner: spinners.earth,
@@ -60,8 +63,8 @@ async function main(sensorr) {
   }).get()
     .then(db => new Promise(resolve => {
       const replication = db.movies.sync({
-        remote: `${remote}/db/sensorr`,
-        waitForLeadership: false,
+        remote: `${remote}/db/sensorr-movies`,
+        waitForLeadership: true,
         options: {
           live: false,
           retry: true,
@@ -80,7 +83,8 @@ async function main(sensorr) {
         () => loading.start(),
         null,
         () => {
-          db.movies.sync({ remote: `${remote}/db/sensorr` })
+          db.movies.sync({ remote: `${remote}/db/sensorr-movies`, options: { live: true, retry: true } })
+          db.records.sync({ remote: `${remote}/db/sensorr-records`, options: { live: true, retry: true } })
 
           setTimeout(() => {
             loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(remote)} !` })
@@ -89,6 +93,29 @@ async function main(sensorr) {
         }
       )
     }))
+
+  const history = fs.createWriteStream(path.join(__dirname, '..', 'history.log'), { flags: 'a' })
+
+  studio
+    .pipe(new Transform({
+      readableObjectMode: true,
+      writableObjectMode: true,
+      transform: ({ data: { context, ...data }, ...entry }, encoding, callback) => {
+        db.records.atomicUpsert({
+          uuid: uuidv4(),
+          ...context,
+          data,
+          time: microtime.now() / 1000,
+          message: entry.msg,
+        })
+
+        callback(null, { ...entry, data: { context, ...data } })
+      }
+    }))
+    .pipe(new StringifyTransform())
+    .pipe(history)
+
+  const logger = studio('sensorr')
 
   switch (commands[0]) {
     case 'search':
@@ -105,11 +132,13 @@ async function main(sensorr) {
   exit(0, db)
 
   async function exit(code = 0, db) {
-    if (db) {
-      await db.destroy()
-    }
+    setTimeout(async () => {
+      if (db) {
+        await db.destroy()
+      }
 
-    process.exit(code)
+      process.exit(code)
+    }, 2000)
   }
 
   async function logo() {
@@ -134,6 +163,8 @@ async function main(sensorr) {
   }
 
   async function record() {
+    const session = uuidv1()
+
     await new Promise(resolve =>
       from(db.movies.dump()).pipe(
         pluck('docs'),
@@ -141,21 +172,22 @@ async function main(sensorr) {
         mergeMap(movies => from(movies)),
         filter(movie => movie.state === 'wished'),
         mergeMap(movie => {
-          const uuid = uuidv4()
+          const record = uuidv4()
+          const context = { session, record }
 
           return of(movie).pipe(
-            mergeMap(movie => look(movie, uuid)),
-            mergeMap(({ movie, release }) => grab(movie, release, uuid)),
-            map(values => ({ ...values, uuid })),
+            mergeMap(movie => look(movie, context)),
+            mergeMap(({ movie, release }) => grab(movie, release, context)),
+            map(values => ({ ...values, context })),
             catchError(err => {
               log('🚨', err.toString())
-              logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { movie, uuid }, err)
+              logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { context, movie }, err)
               return EMPTY
             }),
           )
         }, null, 1),
       ).subscribe(
-        ({ movie, release, file, uuid }) => {
+        ({ movie, release, file, context }) => {
           log(
             '📼',
             'Archiving',
@@ -168,13 +200,10 @@ async function main(sensorr) {
 
           logger.spawn(
             `📼 Archiving movie **${movie.title}** ${`(${movie.year})`} with release **${release.title}** to _${file}_`,
-            { movie, release, file, uuid },
+            { context, release, file },
           )
         },
-        (err) => {
-          log('🚨', err)
-          logger.error(`🚨 Error during recording process`, { uuid: uuidv4() }, err)
-        },
+        (err) => log('🚨', err),
         () => {
           log('')
           resolve()
@@ -183,35 +212,35 @@ async function main(sensorr) {
     )
   }
 
-  function look(movie, uuid = null) {
+  function look(movie, context = {}) {
     log('')
     log('🍿', `Looking for wished movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`)
-    logger.input(`🍿 Looking for wished movie **${movie.title}** (${movie.year})`, { movie, uuid })
+    logger.input(`🍿 Looking for wished movie **${movie.title}** (${movie.year})`, { context, movie })
 
     const hooks = {
       search: (xznab, title) => {
         log('☠️ ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
-        logger.fetch(`☠️ Looking for **${title}** on **${xznab.name}** XZNAB`, { movie, xznab, title, uuid })
+        logger.fetch(`☠️ Looking for **${title}** on **${xznab.name}** XZNAB`, { context, xznab, title })
       },
       timeout: (xznab, title) => {
         log('⌛ ', `Request for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB timed out ! Retrying...`)
-        logger.fetch(`⌛ Request for **${title}** on **${xznab.name}** XZNAB timed out ! Retrying...`, { movie, xznab, title, uuid })
+        logger.fetch(`⌛ Request for **${title}** on **${xznab.name}** XZNAB timed out ! Retrying...`, { context, xznab, title })
       },
       found: (xznab, title, items) => {
         log('🎞️ ', `Found ${chalk.bold(items.length)} releases`)
-        logger.receive(`🎞️ Found **${items.length}** releases` , { movie, xznab, title, items, uuid })
+        logger.receive(`🎞️ Found **${items.length}** releases` , { context, xznab, title, items })
       },
       release: (xznab, title, release) => {
         log('*', chalk[['green', 'yellow', 'red'][release.warning]](release.title), chalk.gray(release.valid ? `(${release.score})` : release.reason))
-        logger.receive(`- ${['**', '**_', '~~'][release.warning]}${release.title}${['**', '_**', '~~'][release.warning]} _${(release.valid ? `(${release.score})` : release.reason)}_`, { movie, xznab, title, release, uuid })
+        logger.receive(`- ${['**', '**_', '~~'][release.warning]}${release.title}${['**', '_**', '~~'][release.warning]} _${(release.valid ? `(${release.score})` : release.reason)}_`, { context, xznab, title, release })
       },
       sorted: (releases) => {
         if (releases.length) {
           log('🚧', `Filtering and ordering ${releases.length} releases`, chalk.gray(`[${sensorr.config.sort}]`), { true: '🔻', false: '🔺' }[sensorr.config.descending])
-          logger.finish(`🚧 Filtering and ordering **${releases.length}** releases [${sensorr.config.sort}] ${{ true: '🔻', false: '🔺' }[sensorr.config.descending]}`, { movie, releases, sort: sensorr.config.sort, descending: sensorr.config.descending, uuid })
+          logger.finish(`🚧 Filtering and ordering **${releases.length}** releases [${sensorr.config.sort}] ${{ true: '🔻', false: '🔺' }[sensorr.config.descending]}`, { context, releases, sort: sensorr.config.sort, descending: sensorr.config.descending })
         } else {
           log('📭', `️Sorry, no valid releases found`)
-          logger.receive(`📭 Sorry, no valid releases found`, { movie, uuid })
+          logger.receive(`📭 Sorry, no valid releases found`, { context })
         }
       },
     }
@@ -244,9 +273,9 @@ async function main(sensorr) {
     )
   }
 
-  function grab(movie, release, uuid = null) {
+  function grab(movie, release, context = {}) {
     log('🎟️ ', `Grabbing ${chalk.inverse(release.title)} from ${chalk.gray(release.site)}`)
-    logger.fetch(`🎟️ Grabbing **${release.title}** from **_${release.site}_**`, { movie, release, uuid })
+    logger.fetch(`🎟️ Grabbing **${release.title}** from **_${release.site}_**`, { context, success: true, release })
 
     return of(null).pipe(
       mergeMap(() => of(sensorr.config.blackhole).pipe(

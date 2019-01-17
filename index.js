@@ -3,14 +3,16 @@ require('universal-url').shim()
 const fs = require('fs')
 const pm2 = require('pm2')
 const chalk = require('chalk')
+const http = require('http')
+const parser = require('body-parser')
 const express = require('express')
+const io = require('socket.io')
 const request = require('request')
 const fetch = require('node-fetch')
 const path = require('path')
 const cors = require('cors')
 const compression = require('compression')
 const bauth = require('express-basic-auth')
-const tail = require('fs-reverse')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { map, mergeMap } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
@@ -51,6 +53,9 @@ const authorizer = (username, password) => (
 )
 
 const app = express()
+
+app.use(parser.json({ limit: '5mb' }))
+app.use(parser.urlencoded({ limit: '5mb', extended: true }))
 
 app.use(cors())
 app.use(compression())
@@ -110,7 +115,7 @@ api.post('/trigger', function (req, res) {
         })
       } else if (!job) {
         console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Unknown "${type}" job`)} ${chalk.gray(`sensorr:${type}`)}`)
-        res.status(400).send({ message: `Unknown "${type}" job`, })
+        res.status(400).send({ message: `Unknown pm2 "${type}" job`, })
       } else {
         console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} ${err}`)
         res.status(409).send({ message: 'Job already triggered', err, })
@@ -118,32 +123,6 @@ api.post('/trigger', function (req, res) {
     } else {
       console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Error on pm2 process list`)}`)
       res.status(400).send({ message: `Error on pm2 process list`, })
-    }
-  })
-})
-
-api.get('/history', function (req, res) {
-  const file = path.join(__dirname, 'history.log')
-  const start = Math.max(parseInt(req.query.start) || 0, 0)
-  const end = Math.max(10, parseInt(req.query.end) || 0)
-
-  fs.access(file, fs.constants.R_OK, (err) => {
-    if (err) {
-      res.status(200).send({ history: [] })
-    } else {
-      const stream = tail(file)
-      const history = []
-
-      stream.on('close', () => res.status(200).send({ history: history.slice(start) }))
-      stream.on('data', (line) => {
-        if (line) {
-          history.push(JSON.parse(line))
-
-          if (history.length === end) {
-            stream.destroy()
-          }
-        }
-      })
     }
   })
 })
@@ -253,5 +232,45 @@ if (app.get('env') === 'production') {
   app.use(index)
 }
 
-app.listen(app.get('env') === 'production' ? 5070 : 7000)
-process.send('ready')
+const server = http.createServer(app)
+const socket = io(server)
+const jobs = ['record']
+const events = { online: true, exit: false }
+const status = {}
+
+pm2.list((err, payload) => {
+  if (!err) {
+    payload
+      .filter(job => jobs.includes(job.name.split(':').pop()))
+      .forEach(job => status[job.name.split(':').pop()] = job.pm2_env.status === 'online')
+  }
+})
+
+socket.on('connection', client => {
+  console.log(`${chalk.bgGreen(chalk.black(' Socket '))} ${chalk.green(`Client #${client.id} connected`)}`)
+
+  client.emit('status', { status })
+  console.log(`${chalk.bgGreen(chalk.black(' Socket '))} ${chalk.green(`Client #${client.id}`)} ${chalk.gray(JSON.stringify({ status }))}`)
+
+  client.on('disconnect', (reason) => console.log(
+    `${chalk.bgRed(chalk.black(' Socket '))} ${chalk.red(`Client #${client.id} disconnected`)} ${chalk.gray(JSON.stringify(reason))}`
+  ))
+
+  client.on('error', (data) => console.log(
+    `${chalk.bgRed(chalk.black(' Socket '))} ${chalk.red(`Client #${client.id} error`)} ${chalk.gray(JSON.stringify(data))}`
+  ))
+})
+
+pm2.launchBus((err, bus) => {
+  bus.on('process:*', (e, data) => {
+    const job = data.process.name.split(':').pop()
+
+    if (jobs.includes(job) && Object.keys(events).includes(data.event)) {
+      status[job] = events[data.event]
+      socket.emit('status', { status })
+      console.log(`${chalk.bgGreen(chalk.black(' Socket '))} ${chalk.green(`Broadcast`)} ${chalk.gray(JSON.stringify({ status }))}`)
+    }
+  })
+})
+
+server.listen(5070, () => process.send('ready'))

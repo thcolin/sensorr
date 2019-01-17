@@ -19,8 +19,6 @@ module.exports = {
       cron: '0 17 * * *',
       exec_mode: 'fork',
       autorestart: false,
-      wait_ready: true,
-      listen_timeout: 3000,
       script: './bin/exec',
       args: ['./bin/sensorr', 'record', '-a'],
       env: {
