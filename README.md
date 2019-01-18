@@ -92,7 +92,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Follow `stars`
 * `CLI`
   * Fix
-    * Sync `rxdb` before close
     * Movies `sort` on `record` to `doc.time`
   * Commands
     * `📰 stalk`

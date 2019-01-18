@@ -7,8 +7,8 @@ const ora = require('ora')
 const spinners = require('cli-spinners')
 const filesize = require('filesize')
 const microtime = require('microtime')
-const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, tap, merge, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
+const { from, of, merge, throwError, bindNodeCallback, EMPTY } = require('rxjs')
+const { map, tap, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
 const Sensorr = require('../shared/Sensorr')
@@ -20,6 +20,8 @@ const uuidv4 = require('uuid/v4')
 const config = require('../config/config.json')
 const package = require('../package.json')
 const { _, ...argv } = require('minimist')(process.argv.slice(2))
+
+require('events').EventEmitter.defaultMaxListeners = 15
 
 const commands = _
 const log = console.error
@@ -49,72 +51,12 @@ async function main(sensorr) {
     await exit()
   }
 
-  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || 5070)}`
-
-  const loading = ora({
-    spinner: spinners.earth,
-    text: `Syncing database with ${chalk.gray(remote)} ...`,
-  })
-
   // Waiting feature [Using RxDB to only wrap remote (couch) endpoints #247](https://github.com/pubkey/rxdb/issues/247) to be implemented
-  const db = await new Database({
-    name: `${__dirname}/db/sensorr`,
-    adapter: 'leveldb',
-  }).get()
-    .then(db => new Promise(resolve => {
-      const replication = db.movies.sync({
-        remote: `${remote}/db/sensorr-movies`,
-        waitForLeadership: true,
-        options: {
-          live: false,
-          retry: true,
-        },
-      })
+  const db = await new Database({ name: `${__dirname}/db/sensorr`, adapter: 'leveldb' }).get()
+  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || 5070)}`
+  await synchronize()
 
-      replication.error$.subscribe(err => {
-        loading.stopAndPersist({ symbol: '🚨', text: `Error during Database syncing with ${chalk.gray(remote)} : ${err}` })
-        exit(1)
-      })
-
-      replication.complete$.pipe(
-        takeWhile(res => !res || !res.pull.ok),
-      )
-      .subscribe(
-        () => loading.start(),
-        null,
-        () => {
-          db.movies.sync({ remote: `${remote}/db/sensorr-movies`, options: { live: true, retry: true } })
-          db.records.sync({ remote: `${remote}/db/sensorr-records`, options: { live: true, retry: true } })
-
-          setTimeout(() => {
-            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(remote)} !` })
-            resolve(db)
-          }, 500)
-        }
-      )
-    }))
-
-  const history = fs.createWriteStream(path.join(__dirname, '..', 'history.log'), { flags: 'a' })
-
-  studio
-    .pipe(new Transform({
-      readableObjectMode: true,
-      writableObjectMode: true,
-      transform: ({ data: { context, ...data }, ...entry }, encoding, callback) => {
-        db.records.atomicUpsert({
-          uuid: uuidv4(),
-          ...context,
-          data,
-          time: microtime.now() / 1000,
-          message: entry.msg,
-        })
-
-        callback(null, { ...entry, data: { context, ...data } })
-      }
-    }))
-    .pipe(new StringifyTransform())
-    .pipe(history)
-
+  historize()
   const logger = studio('sensorr')
 
   switch (commands[0]) {
@@ -129,16 +71,80 @@ async function main(sensorr) {
       break
   }
 
-  exit(0, db)
+  exit(0)
 
-  async function exit(code = 0, db) {
-    setTimeout(async () => {
-      if (db) {
-        await db.destroy()
-      }
+  function historize() {
+    const history = fs.createWriteStream(path.join(__dirname, '..', 'history.log'), { flags: 'a' })
 
-      process.exit(code)
-    }, 2000)
+    studio
+      .pipe(new Transform({
+        readableObjectMode: true,
+        writableObjectMode: true,
+        transform: ({ data: { context, ...data }, ...entry }, encoding, callback) => {
+          db.records.atomicUpsert({
+            uuid: uuidv4(),
+            ...context,
+            data,
+            time: microtime.now() / 1000,
+            message: entry.msg,
+          })
+
+          callback(null, { ...entry, data: { context, ...data } })
+        }
+      }))
+      .pipe(new StringifyTransform())
+      .pipe(history)
+  }
+
+  async function synchronize (keep = true) {
+    return new Promise(resolve => {
+      const loading = ora({
+        spinner: spinners.earth,
+        text: `Syncing database with ${chalk.gray(remote)} ...`,
+      })
+
+      const replications = Object.keys(Database.SCHEMAS).map(schema => db[schema].sync({
+        remote: `${remote}/db/sensorr-${schema}`,
+        waitForLeadership: true,
+        options: {
+          live: false,
+          retry: true,
+        },
+      }))
+
+      merge(...replications.map(replication => replication.error$)).subscribe(err => {
+        loading.stopAndPersist({ symbol: '🚨', text: `Error during Database syncing with ${chalk.gray(remote)} : ${err}` })
+        exit(1)
+      })
+
+      merge(...replications.map(replication => replication.complete$.pipe(
+        takeWhile(res => !res || !res.pull.ok),
+      )))
+      .subscribe(
+        () => loading.start(),
+        null,
+        () => {
+          if (keep) {
+            Object.keys(Database.SCHEMAS).forEach(schema =>
+              db[schema].sync({ remote: `${remote}/db/sensorr-${schema}`, options: { live: true, retry: true } })
+            )
+          }
+
+          setTimeout(() => {
+            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(remote)} !` })
+            resolve()
+          }, 500)
+        }
+      )
+    })
+  }
+
+  async function exit(code = 0) {
+    if (db) {
+      await synchronize(false)
+    }
+
+    process.exit(code)
   }
 
   async function logo() {

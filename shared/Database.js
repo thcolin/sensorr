@@ -132,8 +132,8 @@ class Database {
       ...options,
     })
 
-    await Promise.all(Object.keys(SCHEMAS).map(key => database
-      .collection({ name: key, schema: SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
+    await Promise.all(Object.keys(Database.SCHEMAS).map(key => database
+      .collection({ name: key, schema: Database.SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
       .then(collection => typeof sync === 'string' ? collection.sync({
         remote: `${sync}/sensorr-${key}`,
         waitForLeadership: true,
@@ -153,5 +153,7 @@ class Database {
     return this.instance
   }
 }
+
+Database.SCHEMAS = SCHEMAS
 
 module.exports = Database
