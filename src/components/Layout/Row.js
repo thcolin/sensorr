@@ -66,17 +66,16 @@ export default class Row extends PureComponent {
   }
 
   componentDidUpdate(props) {
-    if (
-      this.props.uri &&
-      (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params))
-    ) {
-      this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(res => {
-        this.setState({ loading: false, entities: this.props.transform(res) })
+    if (this.props.uri) {
+      if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
+        this.setState({ loading: true })
+        tmdb.fetch(this.props.uri, this.props.params).then(res => {
+          this.setState({ loading: false, entities: this.props.transform(res) })
+          this.reference.current.scroll(0, 0)
+        })
+      } else {
         this.reference.current.scroll(0, 0)
-      })
-    } else {
-      this.reference.current.scroll(0, 0)
+      }
     }
   }
 
@@ -88,6 +87,9 @@ export default class Row extends PureComponent {
     const { items, uri, params, child, transform, label, space, empty, ...props } = this.props
     const { entities, loading, ...state } = this.state
 
+    const filtered = [...items, ...entities]
+      .filter(entity => this.valid(entity))
+
     return (
       <div style={styles.element}>
         <h1 {...props} style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
@@ -95,10 +97,10 @@ export default class Row extends PureComponent {
           {loading && (
             <Spinner />
           )}
-          {!loading && ![...items, ...entities].length && (
+          {!loading && !filtered.length && (
             <Empty style={empty} />
           )}
-          {[...items, ...entities].filter(entity => this.valid(entity)).map((entity, index) => (
+          {filtered.map((entity, index) => (
             <div key={index} style={{ ...styles.entity, padding: `${space}em` }}>
               {React.createElement(child, { entity })}
             </div>

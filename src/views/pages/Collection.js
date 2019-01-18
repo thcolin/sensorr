@@ -79,7 +79,14 @@ export default class Collection extends PureComponent {
               {{ all: '📚', wished: '🍿', archived: '📼' }[state]}
             </i>
           </div>
-          <Grid query={query} filter={entity => state === 'all' || entity.state === state} child={Film} />
+          <Grid
+            query={(db) => db.movies.find().where('state').ne('ignored')}
+            filter={entity => (
+              (state === 'all' || entity.state === state) &&
+              (new RegExp(query, 'i').test(entity.title) || new RegExp(query, 'i').test(entity.original_title))
+            )}
+            child={Film}
+          />
         </div>
       </Fragment>
     )

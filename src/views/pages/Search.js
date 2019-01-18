@@ -1,8 +1,9 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
-import Row from 'components/Layout/Row'
+import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
+import Empty from 'components/Empty'
 import { fromEvent } from 'rxjs'
 import nanobounce from 'nanobounce'
 import history from 'store/history'
@@ -105,12 +106,18 @@ export default class Search extends PureComponent {
           >
             {{ movie: '🎞️', person: '⭐' }[state]}
           </i>
-          {query && (
-            <Row
+          {query ? (
+            <Grid
               label={query}
-              child={{ movie: Film, person: (props) => <Persona brand="flat" {...props} /> }[state]}
+              child={{ movie: Film, person: (props) => <Persona context="portrait" {...props} /> }[state]}
               uri={['search', state]}
               params={{ query, sort_by: 'popularity.desc' }}
+            />
+          ) : (
+            <Empty
+              emoji={{ movie: '🎞️', person: '⭐' }[state]}
+              title={`Are you looking for a ${{ movie: 'movie', person: 'star' }[state]} ?`}
+              subtitle={`Search ${{ movie: 'anything, like "Inception"', person: 'anyone, like "Audrey Hepburn"' }[state]}`}
             />
           )}
         </div>

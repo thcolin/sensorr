@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react'
-import { Link } from 'react-router-dom'
+import React, { Component } from 'react'
+import { NavLink } from 'react-router-dom'
 import StatusRecording from 'containers/StatusRecording'
 import theme from 'theme'
 
@@ -27,7 +27,7 @@ const styles = {
   },
   active: {
     borderBottom: `0.1em solid ${theme.colors.white}`,
-    paddingBottom: '0.25em'
+    paddingBottom: '0.25em',
   },
   emojis: {
     position: 'absolute',
@@ -47,32 +47,20 @@ const styles = {
   },
 }
 
-class Navigation extends PureComponent {
+class Navigation extends Component {
   render() {
     const { ...props } = this.props
 
     return (
       <div style={styles.element}>
         <div style={styles.menu}>
-          <Link to="/"
-            style={{...styles.link, ...window.location.pathname.match(/^\/$/) ? styles.active : {}}}
-          >
-            Trending
-          </Link>
-          <Link to="/collection"
-            style={{...styles.link, ...window.location.pathname.match(/^\/collection$/) ? styles.active : {}}}
-          >
-            Collection
-          </Link>
-          <Link to="/search/movie"
-            style={{...styles.link, ...window.location.pathname.match(/^\/search/) ? styles.active : {}}}
-          >
-            Search
-          </Link>
+          <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
+          <NavLink to="/collection" exact={true} style={styles.link} activeStyle={styles.active}>Collection</NavLink>
+          <NavLink to="/search/movie" exact={true} style={styles.link} activeStyle={styles.active}>Search</NavLink>
         </div>
         <div style={styles.emojis}>
-          <Link to="/configure" style={styles.configure} title="Configure">🎚</Link>
-          <Link to="/logs" style={styles.logs} title="History" replace={location.pathname === '/logs'}>📖</Link>
+          <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
+          <NavLink to="/logs" exact={true} style={styles.logs} title="History" replace={location.pathname === '/logs'}>📖</NavLink>
           <StatusRecording />
         </div>
       </div>

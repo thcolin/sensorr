@@ -12,14 +12,12 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     cursor: 'pointer',
-    margin: '0 -2em 0 0',
     padding: '0 0 3em 0',
   },
   poster: {
-    height: '10em',
+    height: '14em',
     width: '10em',
     border: 'solid 0.375em white',
-    borderRadius: '50%',
     overflow: 'hidden',
   },
   img: {
@@ -28,30 +26,38 @@ const styles = {
   tooltip: {
     backgroundColor: theme.colors.shadows.black,
     borderRadius: '0.25em',
-    fontSize: '2em',
     color: theme.colors.white,
     textAlign: 'center',
     whiteSpace: 'nowrap',
-    padding: '0.25em',
+    padding: '0.25em 0.5em',
   },
 }
 
-const brands = {
-  flat: {
+const contexts = {
+  portrait: {
     element: {
 
     },
     tooltip: {
       margin: '0.5em 0',
+      width: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
   },
-  hover: {
+  avatar: {
     element: {
       width: '10em',
+      margin: '0 -2em 0 0',
+    },
+    poster: {
+      height: '10em',
+      borderRadius: '50%',
     },
     tooltip: {
       position: 'absolute',
       margin: '5.5em 0',
+      fontSize: '2em',
     },
   },
 }
@@ -59,11 +65,11 @@ const brands = {
 export default class Persona extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
-    brand: PropTypes.oneOf(['flat', 'hover']),
+    context: PropTypes.oneOf(['portrait', 'avatar']),
   }
 
   static defaultProps = {
-    brand: 'hover',
+    context: 'avatar',
   }
 
   constructor(props) {
@@ -76,20 +82,20 @@ export default class Persona extends PureComponent {
   }
 
   render() {
-    const { entity, brand, ...props } = this.props
+    const { entity, context, ...props } = this.props
     const { ready, tooltip, ...state } = this.state
 
     return (
       <Link to={`/star/${entity.id}`} style={styles.link}>
-        <div style={{ ...styles.element, ...brands[brand].element }}>
+        <div style={{ ...styles.element, ...contexts[context].element }}>
           <div
-            style={{ ...styles.poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}
+            style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}
             onMouseEnter={() => this.setState({ tooltip: true })}
             onMouseLeave={() => this.setState({ tooltip: false })}
           >
             <img src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`} onLoad={() => this.setState({ ready: true })} style={styles.img} />
           </div>
-          <h5 style={{ ...styles.tooltip, ...brands[brand].tooltip }} hidden={brand !== 'flat' && !tooltip}>{entity.name}</h5>
+          <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
         </div>
       </Link>
     )

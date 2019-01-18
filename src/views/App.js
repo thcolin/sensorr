@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Route } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import Header from 'views/layout/Header'
 import Navigation from 'views/layout/Navigation'
 import Trending from 'views/pages/Trending'
@@ -19,17 +19,15 @@ const styles = {
 }
 
 export default ({ ...props }) => (
-  <Router>
-    <div style={styles.element}>
-      <Header />
-      <Navigation />
-      <Route path="/" exact component={Trending} />
-      <Route path="/collection" exact component={Collection} />
-      <Route path="/search/:state/:query?" exact component={Search} />
-      <Route path="/movie/:id" exact component={Movie} />
-      <Route path="/star/:id" exact component={Star} />
-      <Route path="/configure" exact component={Configure} />
-      <Route path="/logs" exact component={Logs} />
-    </div>
-  </Router>
+  <div style={styles.element}>
+    <Header />
+    <Navigation />
+    <Route path="/" exact component={Trending} />
+    <Route path="/collection" exact component={Collection} />
+    <Route path="/search/:state/:query?" exact component={Search} />
+    <Route path="/movie/:id" exact component={Movie} />
+    <Route path="/star/:id" exact component={Star} />
+    <Route path="/configure" exact component={Configure} />
+    <Route path="/logs" exact component={Logs} />
+  </div>
 )

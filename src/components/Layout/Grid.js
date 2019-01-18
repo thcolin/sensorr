@@ -2,6 +2,8 @@ import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import Empty from 'components/Empty'
 import database from 'store/database'
+import tmdb from 'store/tmdb'
+import theme from 'theme'
 
 const styles = {
   empty: {
@@ -9,6 +11,12 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  label: {
+    padding: '0 2em',
+    fontSize: '2em',
+    fontWeight: 'bold',
+    color: theme.colors.black,
   },
   grid: {
     display: 'grid',
@@ -25,13 +33,20 @@ const styles = {
 
 export default class Grid extends PureComponent {
   static propTypes = {
-    query: PropTypes.string,
+    items: PropTypes.array,
+    query: PropTypes.func,
+    uri: PropTypes.array,
+    params: PropTypes.object,
+    transform: PropTypes.func,
     filter: PropTypes.func,
+    label: PropTypes.string,
     child: PropTypes.func.isRequired,
   }
 
   static defaultProps = {
-    query: '',
+    items: [],
+    params: {},
+    transform: (res) => res.results,
     filter: () => true,
   }
 
@@ -39,6 +54,7 @@ export default class Grid extends PureComponent {
     super(props)
 
     this.state = {
+      loading: false,
       entities: [],
       buffer: [],
       subscription: null,
@@ -46,19 +62,32 @@ export default class Grid extends PureComponent {
   }
 
   async componentDidMount() {
-    const db = await database.get()
-    const query = db.movies.find().where('state').ne('ignored')
-    const entities = await query.exec()
-    const subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
-    this.setState({ subscription, entities: entities.map(entity => entity.toJSON()) })
+    if (this.props.query) {
+      this.setState({ loading: true })
+      const db = await database.get()
+      const query = this.props.query(db)
+      const entities = await query.exec()
+      const subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
+      this.setState({ subscription, loading: false, entities: entities.map(entity => entity.toJSON()) })
+    } else if (this.props.uri) {
+      this.setState({ loading: true })
+      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) || [] }))
+    }
   }
 
   componentDidUpdate(props, state) {
-    if (this.state.buffer.length && (props.query !== this.props.query || props.filter !== this.props.filter)) {
-      this.setState({
-        entities: this.state.buffer,
-        buffer: [],
-      })
+    if (this.props.query) {
+      if (this.state.buffer.length && (props.filter !== this.props.filter)) {
+        this.setState({
+          entities: this.state.buffer,
+          buffer: [],
+        })
+      }
+    } else if (this.props.uri) {
+      if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
+        this.setState({ loading: true })
+        tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) }))
+      }
     }
   }
 
@@ -68,32 +97,36 @@ export default class Grid extends PureComponent {
     }
   }
 
+  valid(entity) {
+    return entity.poster_path || entity.profile_path
+  }
+
   render() {
-    const { query, filter, child, ...props } = this.props
-    const { entities, ...state } = this.state
+    const { items, filter, child, label, ...props } = this.props
+    const { loading, entities, ...state } = this.state
 
-    const filtered = entities
+    const filtered = [...entities, ...items]
       .sort((a, b) => (b.time || 0) - (a.time || 0))
-      .filter(entity => entity.poster_path)
+      .filter(entity => this.valid(entity))
       .filter(filter)
-      .filter(entity => (
-        new RegExp(query, 'i').test(entity.title) ||
-        new RegExp(query, 'i').test(entity.original_title) ||
-        (query.substring(0, 1) === ':' && query.substring(1) === entity.state) // :wished|:archived
-      ))
 
-    return (!filtered.length ? (
-      <div style={styles.empty}>
-        <Empty />
-      </div>
-    ) : (
-      <div style={styles.grid}>
-        {filtered.map((entity, index) => (
-          <div key={index} style={styles.entity}>
-            {React.createElement(child, { entity })}
+    return (
+      <div style={styles.element}>
+        <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+        {!filtered.length ? (
+          <div style={styles.empty}>
+            <Empty />
           </div>
-        ))}
+        ) : (
+          <div style={styles.grid}>
+            {filtered.map((entity, index) => (
+              <div key={index} style={styles.entity}>
+                {React.createElement(child, { entity })}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    ))
+    )
   }
 }

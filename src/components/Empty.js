@@ -24,10 +24,10 @@ const styles = {
   }
 }
 
-export default ({ style, ...props }) => (
+export default ({ style, emoji, title, subtitle, ...props }) => (
   <div style={{ ...styles.element, ...style }}>
-    <h1 style={styles.emoji}>👻</h1>
-    <h2 style={styles.title}>Bouhouuu ! I'm the scary empty ghost !</h2>
-    <p style={styles.subtitle}>Sorry, no results.</p>
+    <h1 style={styles.emoji}>{emoji || '👻'}</h1>
+    <h2 style={styles.title}>{title || "Bouhouuu ! I'm the scary empty ghost !"}</h2>
+    <p style={styles.subtitle}>{subtitle || 'Sorry, no results.'}</p>
   </div>
 )
