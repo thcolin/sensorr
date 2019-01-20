@@ -87,14 +87,13 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Features
-    * Focus `Logs` session on movie with results which doesn't pass configured `filter`
     * Trending `studios`
-    * Follow `stars`
+    * "Stalk" `stars`
 * `CLI`
   * Fix
     * Movies `sort` on `record` to `doc.time`
   * Commands
-    * `📰 stalk`
+    * `📰 stalk` (useful ?)
       * `display: [stars]`
       * `_fetch_ [star]`
       * `_save_ [star:movies]`

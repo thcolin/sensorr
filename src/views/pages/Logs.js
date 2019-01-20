@@ -15,13 +15,20 @@ const styles = {
   },
   summary: {
     display: 'flex',
+    overflowX: 'auto',
+    padding: '1em 0 1em 1em',
   },
   digest: {
-    margin: '1em',
     display: 'flex',
+    margin: '1em',
+    border: 'none',
+    fontSize: '1em',
+    lineHeight: '1em',
+    cursor: 'pointer',
   },
   catch: {
     flex: 1,
+    padding: '0 0 0 2em',
     textAlign: 'center',
     lineHeight: '1.4em',
     fontSize: '0.75em',
@@ -99,12 +106,20 @@ class Logs extends PureComponent {
   constructor(props) {
     super(props)
 
+    this.filters = {
+      all: () => true,
+      success: record => record.success,
+      filtered: record => !record.success && record.logs.some(log => log.message.match(/Release doesn't pass configured filtering/)),
+      missing: record => !record.success && !record.logs.some(log => log.message.match(/Release doesn't pass configured filtering/)),
+    }
+
     this.state = {
       subscription: {},
       sessions: [],
       session: null,
       records: [],
       buffer: [],
+      filter: this.filters.all,
       focus: null,
     }
 
@@ -173,7 +188,9 @@ class Logs extends PureComponent {
 
   render() {
     const { ...props } = this.props
-    const { sessions, session, buffer, focus, ...state } = this.state
+    const { sessions, session, buffer, filter, focus, ...state } = this.state
+
+    const filtered = buffer.filter(filter)
 
     return (
       <Fragment>
@@ -196,38 +213,59 @@ class Logs extends PureComponent {
             </span>
           </div>
         )}
+        {buffer.length > 0 && (
+          <div style={styles.summary}>
+            <button
+              style={{ ...styles.focus, ...styles.digest }}
+              onClick={() => this.setState({ filter: this.filters.all })}
+            >
+              <span>🍿</span>
+              <span style={styles.catch}>
+                {markdown(`Searching for **${buffer.length}** movies`).tree}
+              </span>
+            </button>
+            <button
+              style={{ ...styles.focus, ...styles.digest }}
+              onClick={() => this.setState({ filter: this.filters.success })}
+            >
+              <span>📼</span>
+              <span style={styles.catch}>
+                {buffer.filter(record => record.success > 0).length > 0 ?
+                  markdown(`Amazing ! **${buffer.filter(record => record.success).length}** movies were archived !`).tree :
+                  markdown('Oops... No movies were archived').tree
+                }
+              </span>
+            </button>
+            {!!buffer.filter(this.filters.missing).length && (
+              <button
+                style={{ ...styles.focus, ...styles.digest }}
+                onClick={() => this.setState({ filter: this.filters.missing })}
+              >
+                <span>📭</span>
+                <span style={styles.catch}>
+                  {markdown(`Sorry, **${buffer.filter(this.filters.missing).length}** movies still missing`).tree}
+                </span>
+              </button>
+            )}
+            {!!buffer.filter(this.filters.filtered).length && (
+              <button
+                style={{ ...styles.focus, ...styles.digest }}
+                onClick={() => this.setState({ filter: this.filters.filtered })}
+              >
+                <span>💎</span>
+                <span style={styles.catch}>
+                  {markdown(`But if you lower your filter you could get **${buffer.filter(this.filters.filtered).length}** more movies !`).tree}
+                </span>
+              </button>
+            )}
+            <div style={{ flex: '0 0 1em' }}></div>
+          </div>
+        )}
         <div style={styles.element}>
-          {!buffer.length && (
+          {!filtered.length && (
             <Empty />
           )}
-          {buffer.length > 0 && (
-            <div style={styles.summary}>
-              <div style={{ ...styles.focus, ...styles.digest }}>
-                <span>🍿</span>
-                <span style={styles.catch}>
-                  {markdown(`Searching for **${buffer.length}** movies`).tree}
-                </span>
-              </div>
-              <div style={{ ...styles.focus, ...styles.digest }}>
-                <span>📼</span>
-                <span style={styles.catch}>
-                  {buffer.filter(record => record.success > 0).length > 0 ?
-                    markdown(`Amazing ! **${buffer.filter(record => record.success).length}** movies were archived !`).tree :
-                    markdown('Oops... No movies were archived').tree
-                  }
-                </span>
-              </div>
-              {buffer.filter(record => !record.success).length > 0 && (
-                <div style={{ ...styles.focus, ...styles.digest }}>
-                  <span>📭</span>
-                  <span style={styles.catch}>
-                    {markdown(`Sorry, **${buffer.filter(record => !record.success).length}** movies still missing`).tree}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-          {buffer.map(record => (
+          {filtered.map(record => (
             <div style={styles.record} key={record.time}>
               {record.movie && (
                 <div style={styles.film}>
