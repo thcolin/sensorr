@@ -57,7 +57,6 @@ export default class Grid extends PureComponent {
       loading: false,
       entities: [],
       buffer: [],
-      subscription: null,
     }
   }
 
@@ -67,8 +66,8 @@ export default class Grid extends PureComponent {
       const db = await database.get()
       const query = this.props.query(db)
       const entities = await query.exec()
-      const subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
-      this.setState({ subscription, loading: false, entities: entities.map(entity => entity.toJSON()) })
+      this.subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
+      this.setState({ loading: false, entities: entities.map(entity => entity.toJSON()) })
     } else if (this.props.uri) {
       this.setState({ loading: true })
       tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) || [] }))
@@ -92,8 +91,8 @@ export default class Grid extends PureComponent {
   }
 
   componentWillUnmount() {
-    if (this.state.subscription) {
-      this.state.subscription.unsubscribe()
+    if (this.subscription) {
+      this.subscription.unsubscribe()
     }
   }
 

@@ -1,16 +1,24 @@
-import React, { Component } from 'react'
-import { NavLink } from 'react-router-dom'
+import React, { Component, Fragment } from 'react'
+import { withRouter, NavLink } from 'react-router-dom'
 import StatusRecording from 'containers/StatusRecording'
 import theme from 'theme'
 
 const styles = {
-  element: {
+  primary: {
     position: 'relative',
     display: 'flex',
     justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: theme.colors.secondary,
     padding: '2em 0',
+  },
+  secondary: {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    padding: '1em 0',
   },
   menu: {
     display: 'flex',
@@ -24,6 +32,10 @@ const styles = {
     textTransform: 'uppercase',
     textDecoration: 'none',
     paddingBottom: '0.35em'
+  },
+  light: {
+    fontSize: '0.95em',
+    fontWeight: 600,
   },
   active: {
     borderBottom: `0.1em solid ${theme.colors.white}`,
@@ -49,23 +61,41 @@ const styles = {
 
 class Navigation extends Component {
   render() {
-    const { ...props } = this.props
+    const { location, ...props } = this.props
+    const section = location.pathname.split('/').slice(1, 2).pop()
 
     return (
-      <div style={styles.element}>
-        <div style={styles.menu}>
-          <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
-          <NavLink to="/collection" exact={true} style={styles.link} activeStyle={styles.active}>Collection</NavLink>
-          <NavLink to="/search/movie" exact={true} style={styles.link} activeStyle={styles.active}>Search</NavLink>
+      <Fragment>
+        <div style={styles.primary}>
+          <div style={styles.menu}>
+            <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
+            <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...(section === 'movies' ? styles.active : {}) }}>Movies</NavLink>
+            <NavLink to="/stars/search" exact={true} style={{ ...styles.link, ...(section === 'stars' ? styles.active : {}) }}>Stars</NavLink>
+          </div>
+          <div style={styles.emojis}>
+            <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
+            <NavLink to="/logs" exact={true} style={styles.logs} title="History">📖</NavLink>
+            <StatusRecording />
+          </div>
         </div>
-        <div style={styles.emojis}>
-          <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
-          <NavLink to="/logs" exact={true} style={styles.logs} title="History" replace={location.pathname === '/logs'}>📖</NavLink>
-          <StatusRecording />
-        </div>
-      </div>
+        {{
+          movies: (
+            <div style={styles.secondary}>
+              <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Collection</NavLink>
+              <NavLink to="/movies/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
+            </div>
+          ),
+          stars: (
+            <div style={styles.secondary}>
+              {/* <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink> */}
+              {/* <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink> */}
+              <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
+            </div>
+          ),
+        }[section]}
+      </Fragment>
     )
   }
 }
 
-export default Navigation
+export default withRouter(Navigation)

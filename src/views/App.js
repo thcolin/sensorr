@@ -23,8 +23,9 @@ export default ({ ...props }) => (
     <Header />
     <Navigation />
     <Route path="/" exact component={Trending} />
-    <Route path="/collection" exact component={Collection} />
-    <Route path="/search/:state/:query?" exact component={Search} />
+    <Route path="/movies/collection" exact component={Collection} />
+    <Route path="/movies/search/:query?" exact component={(props) => <Search state="movie" {...props} />} />
+    <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
     <Route path="/movie/:id" exact component={Movie} />
     <Route path="/star/:id" exact component={Star} />
     <Route path="/configure" exact component={Configure} />
