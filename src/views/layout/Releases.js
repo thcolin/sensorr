@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import { StyleSheet, css } from 'aphrodite'
 import PropTypes from 'prop-types'
-import Doc from 'shared/Doc'
+import { Movie } from 'shared/Documents'
 import { withToastManager } from 'react-toast-notifications'
 import Clear from 'icons/Clear'
 import Empty from 'components/Empty'
@@ -136,7 +136,7 @@ class Releases extends PureComponent {
   componentDidMount() {
     setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
 
-    sensorr.look(new Doc(this.props.movie, localStorage.getItem('region')).normalize()).subscribe(
+    sensorr.look(new Movie(this.props.movie, localStorage.getItem('region')).normalize()).subscribe(
       (releases) => this.setState({ releases }),
       (err) => {
         this.setState({ loading: false })

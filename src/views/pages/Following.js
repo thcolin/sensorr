@@ -1,7 +1,8 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
+import { Link } from 'react-router-dom'
 import Grid from 'components/Layout/Grid'
-import Film from 'components/Entity/Film'
+import Persona from 'components/Entity/Persona'
 import theme from 'theme'
 
 const styles = {
@@ -22,49 +23,37 @@ const styles = {
     color: theme.colors.secondary,
     fontFamily: 'inherit',
   },
-  state: {
-    position: 'absolute',
-    cursor: 'pointer',
-    right: '1em',
-    top: '0.375em',
-    fontSize: '2em',
-    userSelect: 'none',
-    MozUserSelect: 'none',
-  },
   wrapper: {
     padding: '2em 0',
   },
+  link: {
+    color: theme.colors.primary,
+  },
 }
 
-export default class Collection extends PureComponent {
+export default class Following extends PureComponent {
   constructor(props) {
     super(props)
 
     this.state = {
       query: '',
-      state: 'all',
     }
 
     this.handleQueryChange = this.handleQueryChange.bind(this)
-    this.handleStateChange = this.handleStateChange.bind(this)
   }
 
   handleQueryChange(e) {
     this.setState({ query: e.target.value })
   }
 
-  handleStateChange(state) {
-    this.setState({ state: { all: 'wished', wished: 'archived', archived: 'all' }[state] })
-  }
-
   render() {
-    const { query, state } = this.state
+    const { query } = this.state
     const { ...props } = this.props
 
     return (
       <Fragment>
         <Helmet>
-          <title>Sensorr - Collection</title>
+          <title>Sensorr - Following</title>
         </Helmet>
         <div>
           <div style={styles.filter}>
@@ -74,22 +63,21 @@ export default class Collection extends PureComponent {
               style={styles.input}
               placeholder="Filter..."
             />
-            <i
-              onClick={() => this.handleStateChange(state)}
-              title={{ all: 'All', wished: 'Wished', archived: 'Archived' }[state]}
-              style={styles.state}
-            >
-              {{ all: '📚', wished: '🍿', archived: '📼' }[state]}
-            </i>
           </div>
           <div style={styles.wrapper}>
             <Grid
-              query={(db) => db.movies.find().where('state').ne('ignored')}
-              filter={entity => (
-                (state === 'all' || entity.state === state) &&
-                [entity.title, entity.original_title].some(string => new RegExp(query, 'i').test(string))
-              )}
-              child={Film}
+              query={(db) => db.stars.find().where('state').ne('ignored')}
+              filter={entity => [entity.name, ...(entity.also_known_as || [])].some(string => new RegExp(query, 'i').test(string))}
+              child={(props) => <Persona context="portrait" {...props} />}
+              empty={{
+                emoji: '👩‍🎤',
+                title: "Oh no, you are not following anyone",
+                subtitle: (
+                  <span>
+                    You should try to <Link to="/stars/search/" style={styles.link}>search</Link> for stars and start following them !
+                  </span>
+                ),
+              }}
             />
           </div>
         </div>

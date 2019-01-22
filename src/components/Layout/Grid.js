@@ -41,6 +41,7 @@ export default class Grid extends PureComponent {
     filter: PropTypes.func,
     label: PropTypes.string,
     child: PropTypes.func.isRequired,
+    empty: PropTypes.object,
   }
 
   static defaultProps = {
@@ -48,6 +49,7 @@ export default class Grid extends PureComponent {
     params: {},
     transform: (res) => res.results,
     filter: () => true,
+    empty: {},
   }
 
   constructor(props) {
@@ -101,7 +103,7 @@ export default class Grid extends PureComponent {
   }
 
   render() {
-    const { items, filter, child, label, ...props } = this.props
+    const { items, filter, child, label, empty, ...props } = this.props
     const { loading, entities, ...state } = this.state
 
     const filtered = [...entities, ...items]
@@ -114,7 +116,7 @@ export default class Grid extends PureComponent {
         <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
         {!filtered.length ? (
           <div style={styles.empty}>
-            <Empty />
+            <Empty {...empty} />
           </div>
         ) : (
           <div style={styles.grid}>

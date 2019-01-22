@@ -38,7 +38,7 @@ const SCHEMAS = {
       },
       message: {
         type: 'string',
-      }
+      },
     },
   },
   movies: {
@@ -51,23 +51,23 @@ const SCHEMAS = {
     properties: {
       id: {
         type: 'string',
-        primary: true
+        primary: true,
       },
       state: {
         type: 'string',
         default: 'wished',
       },
       imdb_id: {
-        type: 'string'
+        type: 'string',
       },
       title: {
-        type: 'string'
+        type: 'string',
       },
       original_title: {
-        type: 'string'
+        type: 'string',
       },
       year: {
-        type: 'number'
+        type: 'number',
       },
       poster_path: {
         type: 'string',
@@ -86,10 +86,52 @@ const SCHEMAS = {
             type: 'array',
             uniqueItems: true,
           },
-        }
-      }
+        },
+      },
     },
   },
+  stars: {
+    title: 'star',
+    version: 0,
+    description: 'Describe a TMDB star',
+    type: 'object',
+    required: ['id', 'state', 'name'],
+    attachments: {},
+    properties: {
+      id: {
+        type: 'string',
+        primary: true,
+      },
+      state: {
+        type: 'string',
+        default: 'stalked',
+      },
+      imdb_id: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+      },
+      also_known_as: {
+        type: 'array',
+      },
+      birthday: {
+        type: 'string'
+      },
+      popularity: {
+        type: 'number'
+      },
+      profile_path: {
+        type: 'string',
+      },
+      time: {
+        type: 'number',
+      },
+      credits: {
+        type: 'array',
+      }
+    },
+  }
 }
 
 const MIGRATIONS = {

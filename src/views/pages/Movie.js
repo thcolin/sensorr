@@ -9,7 +9,7 @@ import Releases from 'views/layout/Releases'
 import tmdb from 'store/tmdb'
 import history from 'store/history'
 import database from 'store/database'
-import Doc from 'shared/Doc'
+import Documents from 'shared/Documents'
 import theme from 'theme'
 
 const styles = {
@@ -201,13 +201,13 @@ export default class Movie extends PureComponent {
     }
 
     if (!this.state.doc || this.state.doc.state === 'ignored') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'wished' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'wished' }, localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'archived' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'archived' }, localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON() })
     } else if (this.state.doc.state === 'archived') {
-      const doc = await db.movies.atomicUpsert(new Doc({ ...this.state.details, state: 'ignored' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'ignored' }, localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON() })
     }
   }

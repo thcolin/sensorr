@@ -5,6 +5,8 @@ import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
 import history from 'store/history'
+import database from 'store/database'
+import Documents from 'shared/Documents'
 import theme from 'theme'
 
 const styles = {
@@ -21,6 +23,7 @@ const styles = {
     justifyContent: 'center',
   },
   container: {
+    position: 'relative',
     flex: 1,
     minHeight: '100vh',
     display: 'flex',
@@ -29,6 +32,33 @@ const styles = {
     backgroundSize: 'cover',
     backgroundPosition: 'center center',
     boxShadow: `inset 0 0 0 100em ${theme.colors.shadows.black}`,
+  },
+  metadata: {
+    position: 'absolute',
+    right: '2em',
+    top: '2em',
+    textAlign: 'right',
+  },
+  badges: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    padding: '1em 0 0',
+    userSelect: 'none',
+    MozUserSelect: 'none',
+  },
+  badge: {
+    cursor: 'pointer',
+    backgroundColor: theme.colors.shadows.grey,
+    borderRadius: '5em',
+    padding: '1em',
+    margin: '0.5em 0',
+    fontWeight: 800,
+    color: theme.colors.white,
+    textTransform: 'uppercase'
+  },
+  emoji: {
+    margin: '0 0.75em 0 0',
   },
   informations: {
     width: '100%',
@@ -90,6 +120,7 @@ export default class Star extends PureComponent {
     super(props)
 
     this.state = {
+      doc: false,
       details: null,
       order: {
         cast: 'vote_average',
@@ -115,6 +146,7 @@ export default class Star extends PureComponent {
     }
 
     this.bootstrap = this.bootstrap.bind(this)
+    this.handleStateChange = this.handleStateChange.bind(this)
     this.handleSortChange = this.handleSortChange.bind(this)
   }
 
@@ -132,9 +164,29 @@ export default class Star extends PureComponent {
     try {
       const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
       this.setState({ details })
+      const db = await database.get()
+      const doc = await db.stars.findOne().where('id').eq(details.id.toString()).exec()
+      this.setState({ doc: doc ? doc.toJSON() : null })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(e) {
       history.push('/')
+    }
+  }
+
+  async handleStateChange() {
+    const db = await database.get()
+    let entity = this.state.details
+
+    if (this.state.doc === false) {
+      return
+    }
+
+    if (!this.state.doc || this.state.doc.state === 'ignored') {
+      const doc = await db.stars.atomicUpsert(new Documents.Star({ ...entity, state: 'stalked' }).normalize())
+      this.setState({ doc: doc.toJSON(), entity })
+    } else if (this.state.doc.state === 'stalked') {
+      const doc = await db.stars.atomicUpsert(new Documents.Star({ ...entity, state: 'ignored' }).normalize())
+      this.setState({ doc: doc.toJSON(), entity })
     }
   }
 
@@ -151,7 +203,7 @@ export default class Star extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { details, loading, order, sort, ...state } = this.state
+    const { doc, details, loading, order, sort, ...state } = this.state
 
     return (
       <Fragment>
@@ -172,6 +224,28 @@ export default class Star extends PureComponent {
                 })`,
               } : {}),
             }}>
+              <div style={styles.metadata}>
+                <div style={styles.badges}>
+                  {doc === false && (
+                    <div style={{ ...styles.badge, cursor: 'default' }}>
+                      <span style={styles.emoji}>⌛</span>
+                      Loading
+                    </div>
+                  )}
+                  {(doc === null || (doc && doc.state === 'ignored')) && (
+                    <div style={styles.badge} onClick={this.handleStateChange}>
+                      <span style={styles.emoji}>🔕</span>
+                      Ignored
+                    </div>
+                  )}
+                  {doc && doc.state === 'stalked' && (
+                    <div style={styles.badge} onClick={this.handleStateChange}>
+                      <span style={styles.emoji}>🔔</span>
+                      Following
+                    </div>
+                  )}
+                </div>
+              </div>
               <div style={styles.informations}>
                 <div style={styles.poster}>
                   {details.profile_path && (

@@ -1,4 +1,4 @@
-class Doc {
+class Movie {
   constructor(payload, region) {
     this.payload = payload
     this.countries = ['US', 'UK', region.split('-').pop()]
@@ -7,6 +7,7 @@ class Doc {
   normalize() {
     return {
       id: this.payload.id.toString(),
+      imdb_id: this.payload.imdb_id,
       title: this.payload.title,
       original_title: this.payload.original_title,
       year: this.payload.year ? this.payload.year : (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
@@ -41,4 +42,28 @@ class Doc {
   }
 }
 
-module.exports = Doc
+class Star {
+  constructor(payload) {
+    this.payload = payload
+  }
+
+  normalize() {
+    return {
+      id: this.payload.id.toString(),
+      imdb_id: this.payload.imdb_id,
+      name: this.payload.name,
+      also_known_as: this.payload.also_known_as || [],
+      birthday: this.payload.birthday,
+      popularity: this.payload.popularity,
+      profile_path: this.payload.profile_path,
+      state: this.payload.state || 'stalked',
+      time: Date.now(),
+      ...(this.payload.credits ? { credits: [...this.payload.credits.cast, ...this.payload.credits.crew] } : {}),
+    }
+  }
+}
+
+module.exports = {
+  Movie,
+  Star,
+}
