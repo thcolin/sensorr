@@ -59,6 +59,7 @@ class Star {
       state: this.payload.state || 'stalked',
       time: Date.now(),
       ...(this.payload.credits ? { credits: [...this.payload.credits.cast, ...this.payload.credits.crew] } : {}),
+      ...(this.payload.movie_credits ? { credits: [...this.payload.movie_credits.cast, ...this.payload.movie_credits.crew] } : {}),
     }
   }
 }

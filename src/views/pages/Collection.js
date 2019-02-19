@@ -84,6 +84,7 @@ export default class Collection extends PureComponent {
           </div>
           <div style={styles.wrapper}>
             <Grid
+              limit={true}
               query={(db) => db.movies.find().where('state').ne('ignored')}
               filter={entity => (
                 (state === 'all' || entity.state === state) &&

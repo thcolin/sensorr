@@ -171,6 +171,8 @@ async function main(sensorr) {
   async function record() {
     const session = uuidv1()
 
+    db.sessions.atomicUpsert({ uuid: session, time: microtime.now() / 1000 })
+
     await new Promise(resolve =>
       from(db.movies.dump()).pipe(
         pluck('docs'),

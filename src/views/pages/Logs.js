@@ -1,6 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
+import InfiniteScroll from 'react-infinite-scroller'
 import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
@@ -59,6 +60,11 @@ const styles = {
     userSelect: 'none',
     MozUserSelect: 'none',
   },
+  loading: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '90vh',
+  },
   record: {
     display: 'flex',
     padding: '1em',
@@ -106,6 +112,7 @@ class Logs extends PureComponent {
   constructor(props) {
     super(props)
 
+    this.subscriptions = {}
     this.filters = {
       all: () => true,
       success: record => record.success,
@@ -114,83 +121,86 @@ class Logs extends PureComponent {
     }
 
     this.state = {
-      subscription: {},
+      loading: true,
       sessions: [],
       session: null,
       records: [],
-      buffer: [],
       filter: this.filters.all,
       focus: null,
+      max: 5,
     }
 
-    this.bufferize = this.bufferize.bind(this)
+    this.move = this.move.bind(this)
+    this.expand = this.expand.bind(this)
   }
 
   async componentDidMount() {
-    const days = (nb) => nb * 86400 * 1000
-
     const db = await database.get()
-    const query = db.records.find().where('time').gt(Date.now() - days(7))
-    const subscription = query.$
-      .subscribe(records => this.setState(state => {
-        const sessions = Object.values(
-            records.reduce((acc, record) => ({ ...acc, [record.get('session')]: {
-              uuid: record.get('session'),
-              time: when(record.get('session')),
-            } }), {})
-          )
-          .filter(session => session.time >= (Date.now() - days(6)))
-          .sort((a, b) => a.time - b.time)
+    const query = db.sessions.find()
+    const subscription = query.$.subscribe(sessions => this.setState(state => ({
+      loading: false,
+      sessions,
+      ...({ session: !sessions.length ? null : state.session === null ? sessions.length - 1 : state.session }),
+    })))
 
-        const session = state.session === null ? (sessions.length - 1) : state.session
-
-        return {
-          sessions,
-          session,
-          records,
-        }
-      }, () => {
-        const buffer = this.state.records.filter(record => record.get('session') === this.state.sessions[this.state.session].uuid)
-
-        if (buffer.length !== this.state.buffer.length) {
-          this.bufferize(this.state.session)
-        }
-      }))
-
-    this.setState({ subscription })
+    this.subscriptions.sessions = subscription
   }
 
-  componentWillUnmount() {
-    if (this.state.subscription) {
-      this.state.subscription.unsubscribe()
+  async componentDidUpdate(props, state) {
+    if (this.state.session !== null && state.session !== this.state.session) {
+      this.setState({ loading: true, records: [], max: 5 })
+      const db = await database.get()
+      const query = db.records.find().where('session').eq(this.state.sessions.sort((a, b) => a.time - b.time)[this.state.session].uuid)
+      const subscription = query.$.subscribe(records => this.setState({
+        loading: false,
+        records: Object.values(records
+          .map(record => record.toJSON())
+          .reduce((acc, record) => ({
+            ...acc,
+            [record.record]: {
+              ...(acc[record.record] || {}),
+              time: record.time,
+              ...(typeof (record.data || {}).success !== 'undefined' ? { success: record.data.success } : {}),
+              ...(typeof (record.data || {}).movie !== 'undefined' ? { movie: record.data.movie } : {}),
+              logs: [...(acc[record.record] || { logs: [] }).logs, record].sort((a, b) => a.time - b.time),
+            }
+          }), {}))
+          .sort((a, b) => b.time - a.time),
+      }))
+
+      if (this.subscriptions.records) {
+        this.subscriptions.records.unsubscribe()
+      }
+
+      this.subscriptions.records = subscription
     }
   }
 
-  bufferize(session) {
-    this.setState({
-      session,
-      buffer: Object.values(this.state.records
-        .filter(record => record.get('session') === this.state.sessions[session].uuid)
-        .map(record => record.toJSON())
-        .reduce((acc, record) => ({
-          ...acc,
-          [record.record]: {
-            ...(acc[record.record] || {}),
-            time: record.time,
-            ...(typeof (record.data || {}).success !== 'undefined' ? { success: record.data.success } : {}),
-            ...(typeof (record.data || {}).movie !== 'undefined' ? { movie: record.data.movie } : {}),
-            logs: [...(acc[record.record] || { logs: [] }).logs, record].sort((a, b) => a.time - b.time),
-          }
-        }), {}))
-        .sort((a, b) => b.time - a.time)
-    })
+  componentWillUnmount() {
+    if (this.subscriptions.sessions) {
+      this.subscriptions.sessions.unsubscribe()
+    }
+
+    if (this.subscriptions.records) {
+      this.subscriptions.records.unsubscribe()
+    }
+  }
+
+  move(session) {
+    this.setState({ session })
+  }
+
+  expand() {
+    this.setState(state => ({ max: state.max + 5 }))
   }
 
   render() {
     const { ...props } = this.props
-    const { sessions, session, buffer, filter, focus, ...state } = this.state
+    const { loading, sessions, session, records, filter, focus, max, ...state } = this.state
 
-    const filtered = buffer.filter(filter)
+    const filtered = records
+      .filter(filter)
+      .filter((a, index) => index <= max)
 
     return (
       <Fragment>
@@ -200,20 +210,20 @@ class Logs extends PureComponent {
         {sessions.length > 0 && (
           <div style={styles.bar}>
             <span style={(session > 0 ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => session > 0 && this.bufferize(0)} style={styles.navigator}>⏪</a>
-              <a onClick={() => session > 0 && this.bufferize(session - 1)} style={styles.navigator}>⬅️</a>
+              <a onClick={() => session > 0 && this.move(0)} style={styles.navigator}>⏪</a>
+              <a onClick={() => session > 0 && this.move(session - 1)} style={styles.navigator}>⬅️</a>
             </span>
             <div>
-              <span>{sessions[session].time.toLocaleString()}</span>
+              <span>{new Date(sessions[session].time).toLocaleString()}</span>
               <span style={styles.small}>#{sessions[session].uuid.split('-').pop()}</span>
             </div>
             <span style={(session < (sessions.length - 1) ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => session < (sessions.length - 1) && this.bufferize(session + 1)} style={styles.navigator}>➡️</a>
-              <a onClick={() => session < (sessions.length - 1) && this.bufferize(sessions.length - 1)} style={styles.navigator}>⏩</a>
+              <a onClick={() => session < (sessions.length - 1) && this.move(session + 1)} style={styles.navigator}>➡️</a>
+              <a onClick={() => session < (sessions.length - 1) && this.move(sessions.length - 1)} style={styles.navigator}>⏩</a>
             </span>
           </div>
         )}
-        {buffer.length > 0 && (
+        {records.length > 0 && (
           <div style={styles.summary}>
             <button
               style={{ ...styles.focus, ...styles.digest }}
@@ -221,7 +231,7 @@ class Logs extends PureComponent {
             >
               <span>🍿</span>
               <span style={styles.catch}>
-                {markdown(`Searching for **${buffer.length}** movies`).tree}
+                {markdown(`Searching for **${records.length}** movies`).tree}
               </span>
             </button>
             <button
@@ -230,31 +240,31 @@ class Logs extends PureComponent {
             >
               <span>📼</span>
               <span style={styles.catch}>
-                {buffer.filter(record => record.success > 0).length > 0 ?
-                  markdown(`Amazing ! **${buffer.filter(record => record.success).length}** movies were archived !`).tree :
+                {records.filter(record => record.success > 0).length > 0 ?
+                  markdown(`Amazing ! **${records.filter(record => record.success).length}** movies were archived !`).tree :
                   markdown('Oops... No movies were archived').tree
                 }
               </span>
             </button>
-            {!!buffer.filter(this.filters.missing).length && (
+            {!!records.filter(this.filters.missing).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
                 onClick={() => this.setState({ filter: this.filters.missing })}
               >
                 <span>📭</span>
                 <span style={styles.catch}>
-                  {markdown(`Sorry, **${buffer.filter(this.filters.missing).length}** movies still missing`).tree}
+                  {markdown(`Sorry, **${records.filter(this.filters.missing).length}** movies still missing`).tree}
                 </span>
               </button>
             )}
-            {!!buffer.filter(this.filters.filtered).length && (
+            {!!records.filter(this.filters.filtered).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
                 onClick={() => this.setState({ filter: this.filters.filtered })}
               >
                 <span>💎</span>
                 <span style={styles.catch}>
-                  {markdown(`But if you lower your filter you could get **${buffer.filter(this.filters.filtered).length}** more movies !`).tree}
+                  {markdown(`But if you lower your filter you could get **${records.filter(this.filters.filtered).length}** more movies !`).tree}
                 </span>
               </button>
             )}
@@ -262,37 +272,48 @@ class Logs extends PureComponent {
           </div>
         )}
         <div style={styles.element}>
-          {!filtered.length && (
+          {loading ? (
+            <div style={styles.loading}>
+              <Spinner />
+            </div>
+          ) : !filtered.length && (
             <Empty />
           )}
-          {filtered.map(record => (
-            <div style={styles.record} key={record.time}>
-              {record.movie && (
-                <div style={styles.film}>
-                  <Film entity={record.movie} />
-                </div>
-              )}
-              <div style={styles.scroller}>
-                <h4 style={styles.title}># {new Date(record.time).toLocaleString()}</h4>
-                {record.logs.map((log, index) => (
-                  <div style={styles.wrapper} key={`${record.time}-${index}`}>
-                    <div style={styles.container}>
-                      <p
-                        style={styles.text}
-                        onClick={() => this.setState({ focus: focus === `${record.time}-${index}` ? null : `${record.time}-${index}` })}
-                      >
-                        {markdown(log.message).tree}
-                      </p>
-                      {focus === `${record.time}-${index}` && (
-                        <div style={styles.focus}>{JSON.stringify(log, null, 2)}</div>
-                      )}
-                    </div>
-                    <br/>
+          <InfiniteScroll
+            pageStart={0}
+            hasMore={max < filtered.length}
+            loadMore={this.expand}
+            loader={<Spinner key="spinner" />}
+          >
+            {filtered.map(record => (
+              <div style={styles.record} key={record.time}>
+                {record.movie && (
+                  <div style={styles.film}>
+                    <Film entity={record.movie} />
                   </div>
-                ))}
+                )}
+                <div style={styles.scroller}>
+                  <h4 style={styles.title}># {new Date(record.time).toLocaleString()}</h4>
+                  {record.logs.map((log, index) => (
+                    <div style={styles.wrapper} key={`${record.time}-${index}`}>
+                      <div style={styles.container}>
+                        <p
+                          style={styles.text}
+                          onClick={() => this.setState({ focus: focus === `${record.time}-${index}` ? null : `${record.time}-${index}` })}
+                        >
+                          {markdown(log.message).tree}
+                        </p>
+                        {focus === `${record.time}-${index}` && (
+                          <div style={styles.focus}>{JSON.stringify(log, null, 2)}</div>
+                        )}
+                      </div>
+                      <br/>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </InfiniteScroll>
         </div>
       </Fragment>
     )

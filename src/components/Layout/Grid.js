@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react'
+import InfiniteScroll from 'react-infinite-scroller'
 import PropTypes from 'prop-types'
+import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import database from 'store/database'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
-  empty: {
+  placeholder: {
     flex: 1,
     display: 'flex',
     justifyContent: 'center',
@@ -42,6 +44,7 @@ export default class Grid extends PureComponent {
     label: PropTypes.string,
     child: PropTypes.func.isRequired,
     empty: PropTypes.object,
+    limit: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -50,6 +53,7 @@ export default class Grid extends PureComponent {
     transform: (res) => res.results,
     filter: () => true,
     empty: {},
+    limit: false,
   }
 
   constructor(props) {
@@ -59,7 +63,10 @@ export default class Grid extends PureComponent {
       loading: false,
       entities: [],
       buffer: [],
+      max: 20,
     }
+
+    this.expand = this.expand.bind(this)
   }
 
   async componentDidMount() {
@@ -98,34 +105,49 @@ export default class Grid extends PureComponent {
     }
   }
 
-  valid(entity) {
+  validate(entity) {
     return entity.poster_path || entity.profile_path
   }
 
+  expand() {
+    this.setState(state => ({ max: state.max + 20 }))
+  }
+
   render() {
-    const { items, filter, child, label, empty, ...props } = this.props
-    const { loading, entities, ...state } = this.state
+    const { items, query, uri, params, transform, filter, label, child, empty, spinner, limit, ...props } = this.props
+    const { loading, entities, max, ...state } = this.state
 
     const filtered = [...entities, ...items]
       .sort((a, b) => (b.time || 0) - (a.time || 0))
-      .filter(entity => this.valid(entity))
+      .filter(entity => this.validate(entity))
       .filter(filter)
+      .filter((a, index) => !limit || index <= max)
 
     return (
-      <div style={styles.element}>
+      <div {...props} style={styles.element}>
         <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
-        {!filtered.length ? (
-          <div style={styles.empty}>
+        {loading ? (
+          <div style={styles.placeholder}>
+            <Spinner {...spinner} />
+          </div>
+        ) : !filtered.length ? (
+          <div style={styles.placeholder}>
             <Empty {...empty} />
           </div>
         ) : (
-          <div style={styles.grid}>
+          <InfiniteScroll
+            pageStart={0}
+            hasMore={limit && (max < filtered.length)}
+            loadMore={this.expand}
+            loader={<Spinner key="spinner" {...spinner} />}
+            style={styles.grid}
+          >
             {filtered.map((entity, index) => (
               <div key={index} style={styles.entity}>
                 {React.createElement(child, { entity })}
               </div>
             ))}
-          </div>
+          </InfiniteScroll>
         )}
       </div>
     )

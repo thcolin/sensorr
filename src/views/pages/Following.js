@@ -66,6 +66,7 @@ export default class Following extends PureComponent {
           </div>
           <div style={styles.wrapper}>
             <Grid
+              limit={true}
               query={(db) => db.stars.find().where('state').ne('ignored')}
               filter={entity => [entity.name, ...(entity.also_known_as || [])].some(string => new RegExp(query, 'i').test(string))}
               child={(props) => <Persona context="portrait" {...props} />}

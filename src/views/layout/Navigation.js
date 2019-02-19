@@ -70,7 +70,7 @@ class Navigation extends Component {
           <div style={styles.menu}>
             <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
             <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...(section === 'movies' ? styles.active : {}) }}>Movies</NavLink>
-            <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...(section === 'stars' ? styles.active : {}) }}>Stars</NavLink>
+            <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...(section === 'stars' ? styles.active : {}) }}>Stars</NavLink>
           </div>
           <div style={styles.emojis}>
             <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
@@ -87,7 +87,7 @@ class Navigation extends Component {
           ),
           stars: (
             <div style={styles.secondary}>
-              {/* <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink> */}
+              <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
               <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink>
               <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
             </div>

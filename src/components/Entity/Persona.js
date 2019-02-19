@@ -149,7 +149,7 @@ export default class Persona extends PureComponent {
     const { doc, loading, ready, tooltip, ...state } = this.state
 
     return (
-      <div style={context === 'portrait' ? styles.wrapper : {}}>
+      <div {...props} style={{ ...(props.style ? props.style : {}), ...(context === 'portrait' ? styles.wrapper : {})}}>
         {context === 'portrait' && (
           <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'pointer' }} onClick={this.handleStateChange}>
             {(loading || doc === false) && ('⌛')}

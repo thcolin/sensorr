@@ -4,6 +4,24 @@ RxDB.plugin(require('pouchdb-adapter-idb'))
 RxDB.plugin(require('pouchdb-adapter-http'))
 
 const SCHEMAS = {
+  sessions: {
+    title: 'session',
+    version: 0,
+    description: 'List Sensorr sessions',
+    type: 'object',
+    required: ['uuid', 'time'],
+    attachments: {},
+    properties: {
+      uuid: {
+        type: 'string',
+        primary: true,
+      },
+      time: {
+        type: 'number',
+        index: true,
+      },
+    },
+  },
   records: {
     title: 'record',
     version: 0,
