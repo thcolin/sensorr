@@ -89,8 +89,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Features
     * Trending `studios`
 * `CLI`
-  * Fix
-    * Movies `sort` on `record` to `doc.time`
   * Commands
     * `📰 stalk`
       * `display: [stars]`

@@ -177,6 +177,7 @@ async function main(sensorr) {
       from(db.movies.dump()).pipe(
         pluck('docs'),
         tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
+        map(movies => movies.sort((a, b) => a.time - b.time)),
         mergeMap(movies => from(movies)),
         filter(movie => movie.state === 'wished'),
         mergeMap(movie => {
