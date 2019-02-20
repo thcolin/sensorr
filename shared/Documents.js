@@ -35,7 +35,12 @@ class Movie {
               this.payload.years :
               (this.payload.release_dates.results || [])
                 .filter(date => this.countries.includes(date.iso_3166_1))
-                .reduce((years, payload) => [...years, ...payload.release_dates.map(date => new Date(date.release_date).getFullYear())], [])
+                .reduce((years, payload) => [
+                  ...years,
+                  ...payload.release_dates.map(date => new Date(date.release_date).getFullYear())
+                ], [
+                  (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
+                ])
         )],
       }
     }
@@ -53,13 +58,17 @@ class Star {
       imdb_id: this.payload.imdb_id,
       name: this.payload.name,
       also_known_as: this.payload.also_known_as || [],
-      birthday: this.payload.birthday,
+      birthday: this.payload.birthday || '',
       popularity: this.payload.popularity,
       profile_path: this.payload.profile_path,
       state: this.payload.state || 'stalked',
       time: Date.now(),
-      ...(this.payload.credits ? { credits: [...this.payload.credits.cast, ...this.payload.credits.crew] } : {}),
-      ...(this.payload.movie_credits ? { credits: [...this.payload.movie_credits.cast, ...this.payload.movie_credits.crew] } : {}),
+      credits: [
+        ...(this.payload.credits || { cast: [] }).cast,
+        ...(this.payload.credits || { crew: [] }).crew,
+        ...(this.payload.movie_credits || { cast: [] }).cast,
+        ...(this.payload.movie_credits || { crew: [] }).crew,
+      ],
     }
   }
 }

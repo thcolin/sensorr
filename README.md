@@ -88,10 +88,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Features
     * Trending `studios`
-    * Releases
-      * Issue with some movies like [/movie/454033](http://localhost:8000/movie/454033)
-    * "Stalk" `stars`
-      * Issue with some stars like [/star/145123](http://localhost:8000/star/145123)
 * `CLI`
   * Fix
     * Movies `sort` on `record` to `doc.time`
