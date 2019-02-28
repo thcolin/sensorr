@@ -63,7 +63,7 @@ class Star {
       profile_path: this.payload.profile_path,
       state: this.payload.state || 'stalked',
       time: Date.now(),
-      credits: [
+      credits: Array.isArray(this.payload.credits) ? this.payload.credits : [
         ...(this.payload.credits || { cast: [] }).cast,
         ...(this.payload.credits || { crew: [] }).crew,
         ...(this.payload.movie_credits || { cast: [] }).cast,

@@ -1,26 +1,40 @@
-import qs from 'query-string'
+const qs = require('query-string')
 
-class TMDB {
-  constructor({ key }) {
+module.exports = class TMDB {
+  constructor({ key, region = 'en-US' }) {
     this.key = key
+    this.region = region
     this.base = 'https://api.themoviedb.org/3/'
   }
 
   build(uri, params = {}) {
-    params.language = localStorage.getItem('region')
+    params.language = this.region
     params.api_key = this.key
 
     return `${this.base}${uri.join('/')}?${qs.stringify(params)}`
   }
 
   fetch(uri, params = {}) {
-    return fetch(this.build(uri, params)).then(res => res.json())
+    return fetch(this.build(uri, params))
+      .then(res => {
+        return new Promise((resolve, reject) => {
+          try {
+            res.json().then(body => {
+              if (res.ok) {
+                resolve(body)
+              } else {
+                reject(body)
+              }
+            })
+          } catch(e) {
+            reject(e)
+          }
+        })
+      })
   }
 }
 
-export default TMDB
-
-export const GENRES = {
+module.exports.GENRES = {
   28: 'Action',
   12: 'Aventure',
   16: 'Animation',

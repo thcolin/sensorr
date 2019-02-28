@@ -83,13 +83,13 @@ export default class Film extends PureComponent {
     }
 
     if (!this.state.doc || this.state.doc.state === 'ignored') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'wished' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'wished' }, global.config.region || localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON(), entity })
     } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'archived' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'archived' }, global.config.region || localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON(), entity })
     } else if (this.state.doc.state === 'archived') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'ignored' }, localStorage.getItem('region')).normalize())
+      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'ignored' }, global.config.region || localStorage.getItem('region')).normalize())
       this.setState({ doc: doc.toJSON(), entity })
     }
   }

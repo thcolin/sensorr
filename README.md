@@ -53,7 +53,7 @@ Tips: Docker image is based on `alpine`, so you can add `TZ` env variable with `
 * Edit default configuration in `config/config.json` or `http://localhost:5070/configure`
 
 # CLI
-Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js` which launch `./bin/sensorr record -a` everyday at `17:00` / `5:00PM`
+Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js` which launch `./bin/sensorr record -a` everyday at `17:00 / 5:00PM` and `./bin/sensorr stalk` everyday at `00:00`
 
 **🚨 Warning:** CLI tool need to communicate with Sensorr web server at `http://localhost:5070` to sync databases ! Be sure Sensorr web server is launched before launching `record` command.
 
@@ -70,16 +70,20 @@ Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.j
 Usage: sensorr [command] [options]
 
 Commands:
-  📼 record              Automatically loop your wished movies and try to download best release
+  📰 stalk               Stalk stars and update movie credits
+  📼 record              Try to "record" (aka download best release) every wished movies
 
 Options:
+  -p, --port             Specify localhost <port> [default: 5070]
+  -h, --help             Output usage information
+  -v, --version          Output the version number
+  # record
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
   -f, --filter <regexp>  Filter releases returned by configured XZNAB
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
   -D, --descending       Sort releases in descending order
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
-  -h, --help             Output usage information
-  -v, --version          Output the version number
+
 
 Tips: Sensorr will use your `config.js` and fallback on default
 ```
@@ -89,12 +93,11 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Features
     * Trending `studios`
 * `CLI`
-  * Commands
-    * `📰 stalk`
-      * `display: [stars]`
-      * `_fetch_ [star]`
-      * `_save_ [star:movies]`
   * Summary command result
+    * `stalk`:
+      ```
+        ${stars} Stars stalked with ${total} movie credits ! 🎉
+      ```
     * `record`:
       ```
         ${found} Movies archived to ${sensorr.config.blackhole} ! 🎉

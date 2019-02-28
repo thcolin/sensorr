@@ -5,6 +5,7 @@
   "filter": "resolution=720p|1080p",
   "sort": "seeders",
   "descending": true,
+  "region": "en-US",
   "auth": {
     "username": "sensorr",
     "password": "sensorr"

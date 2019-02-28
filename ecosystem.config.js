@@ -27,6 +27,20 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production'
       },
+    },
+    {
+      name: 'sensorr:stalk',
+      cron: '0 0 * * *',
+      exec_mode: 'fork',
+      autorestart: false,
+      script: './bin/exec',
+      args: ['./bin/sensorr', 'stalk'],
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
     }
   ],
 };

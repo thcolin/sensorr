@@ -109,19 +109,16 @@ class Configure extends PureComponent {
   constructor(props) {
     super(props)
 
-    if (!localStorage.getItem('region')) {
-      localStorage.setItem('region', window.navigator.languages.filter(region => region.match(/-/)).reverse().pop())
-    }
-
     this.state = {
-      values: { ...sensorr.config },
+      values: {
+        ...sensorr.config,
+        region: global.config.region || localStorage.getItem('region') || window.navigator.languages.filter(region => region.match(/-/)).reverse().pop() || 'en-US',
+      },
       regions: [],
-      region: localStorage.getItem('region'),
     }
 
     this.handleSubmit = this.handleSubmit.bind(this)
     this.handleChange = this.handleChange.bind(this)
-    this.handleRegionChange = this.handleRegionChange.bind(this)
   }
 
   componentDidMount() {
@@ -187,14 +184,8 @@ class Configure extends PureComponent {
     })
   }
 
-  handleRegionChange(region) {
-    localStorage.setItem('region', region)
-    this.setState({ region })
-    location.reload()
-  }
-
   render() {
-    const { values, regions, region } = this.state
+    const { values, regions } = this.state
 
     return (
       <Fragment>
@@ -210,7 +201,7 @@ class Configure extends PureComponent {
               <br/>
               You can overide it here, just select your <code style={styles.code}>region</code> :
             </p>
-            <select style={styles.select} value={region} onChange={(e) => this.handleRegionChange(e.target.value)}>
+            <select style={styles.select} value={values.region} onChange={(e) => this.handleChange('region', e.target.value)}>
               {regions.sort((a, b) => a.name.localeCompare(b.name)).map(region => (
                 <option key={region.country} value={`${region.language}-${region.country}`}>
                   {region.name} {region.emoji}

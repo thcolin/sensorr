@@ -106,7 +106,7 @@ class Upcoming extends PureComponent {
 
     const years = Object.keys(entities)
     const goal = (new Date()).getFullYear()
-    const year = years.reduce((prev, curr) => Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev)
+    const year = years.reduce((prev, curr) => Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev, 0)
 
     this.setState({ loading: false, entities, year })
   }

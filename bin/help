@@ -1,16 +1,19 @@
 Usage: sensorr [command] [options]
 
 Commands:
-  📼 record              Automatically loop your wished movies and try to download best release
+  📰 stalk               Stalk stars and update movie credits
+  📼 record              Try to "record" (aka download best release) every wished movies
 
 Options:
+  -p, --port             Specify localhost <port> [default: 5070]
+  -h, --help             Output usage information
+  -v, --version          Output the version number
+  # record
   -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
   -f, --filter <regexp>  Filter releases returned by configured XZNAB
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
   -D, --descending       Sort releases in descending order
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
-  -p, --port             Specify localhost <port> [default: 5070]
-  -h, --help             Output usage information
-  -v, --version          Output the version number
+
 
 Tips: Sensorr will use your `config.js` and fallback on default

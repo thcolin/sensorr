@@ -137,6 +137,7 @@ api.post('/configure', function (req, res) {
     filter: (body.filter || '').toString(),
     sort: ['seeders', 'peers', 'size'].includes(body.sort) ? body.sort : 'seeders',
     descending: !!body.descending,
+    region: body.region,
     auth: {
       username: (body.auth.username || '').toString(),
       password: (body.auth.password || '').toString()

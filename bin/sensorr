@@ -7,11 +7,13 @@ const ora = require('ora')
 const spinners = require('cli-spinners')
 const filesize = require('filesize')
 const microtime = require('microtime')
-const { from, of, merge, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, tap, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
+const { from, of, merge, interval, zip, throwError, bindNodeCallback, EMPTY } = require('rxjs')
+const { map, mapTo, tap, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
+const Documents = require('../shared/Documents')
 const Sensorr = require('../shared/Sensorr')
+const TMDB = require('../shared/services/TMDB')
 const Transform = require('stream').Transform
 const studio = require('@studio/log')
 const StringifyTransform = require('@studio/ndjson/stringify')
@@ -46,7 +48,7 @@ async function main(sensorr) {
   if (argv.v || argv.version) {
     await version()
     await exit()
-  } else if (argv.h || argv.help || !['search', 'record', 'manage'].includes(commands[0])) {
+  } else if (argv.h || argv.help || !['record', 'stalk'].includes(commands[0])) {
     await help()
     await exit()
   }
@@ -60,14 +62,11 @@ async function main(sensorr) {
   const logger = studio('sensorr')
 
   switch (commands[0]) {
-    case 'search':
-      await search()
-      break
     case 'record':
       await record()
       break
-    case 'manage':
-      await manage()
+    case 'stalk':
+      await stalk()
       break
   }
 
@@ -140,9 +139,11 @@ async function main(sensorr) {
   }
 
   async function exit(code = 0) {
-    if (db) {
-      await synchronize(false)
-    }
+    try { // else, "UnhandledPromiseRejectionWarning: ReferenceError: db is not defined", `typeof db !== 'undefined'` doesn't work
+      if (db) {
+        await synchronize(false)
+      }
+    } catch(e) {}
 
     process.exit(code)
   }
@@ -173,7 +174,7 @@ async function main(sensorr) {
 
     db.sessions.atomicUpsert({ uuid: session, time: microtime.now() / 1000 })
 
-    await new Promise(resolve =>
+    return await new Promise(resolve =>
       from(db.movies.dump()).pipe(
         pluck('docs'),
         tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
@@ -310,6 +311,42 @@ async function main(sensorr) {
         map(() => ({ movie, release, file })),
       )),
       delay(3000),
+    )
+  }
+
+  async function stalk() {
+    const tmdb = new TMDB({ key: config.tmdb, region: config.region })
+    log('')
+
+    return await new Promise(resolve =>
+      from(db.stars.dump()).pipe(
+        pluck('docs'),
+        tap(stars => stars.filter(star => star.state === 'stalked').length ? '' : log('🧐', `Oh. It seems you're not stalking anyone.`)),
+        mergeMap(stars => zip(
+          from(stars.filter(star => star.state === 'stalked')),
+          interval(1000),
+          (a, b) => a),
+        ),
+        mergeMap(star => from(tmdb.fetch(['person', star.id], { append_to_response: 'images,movie_credits' })).pipe(
+          mergeMap(entity => from(db.stars.atomicUpsert(new Documents.Star(entity).normalize())).pipe(
+            mapTo({ previous: star, current: new Documents.Star(entity).normalize() }),
+          )),
+          delay(2000),
+        )),
+      ).subscribe(
+        ({ previous, current }) => log(
+          '📰',
+          'Stalked',
+          `star ${chalk.inverse(current.name)}${current.birthday ? chalk.gray(` (${current.birthday})`) : ''}`,
+          'with',
+          `${chalk.inverse(current.credits.length)}${current.credits.length > previous.credits.length ? ` (+${current.credits.length - previous.credits.length})` : ''} movie credits !`,
+        ),
+        (err) => log('🚨', err),
+        () => {
+          log('')
+          resolve()
+        },
+      )
     )
   }
 }
