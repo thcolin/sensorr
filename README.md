@@ -6,30 +6,135 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett).
 
 # Features
-* See `trending` movies on home page
-  * Trending
-  * Discover (Popular)
-  * Discover (Random year)
-  * Discover (Random genre)
-* Search for a `movie` by it's title
-* See `collection` (`wished` and `archived` movies)
-  * Filter by title and `:[wished|archived]`
-* See `movie` details
-  * Consider movie as, `🔕` `ignored`, `🍿` `wished` or `📼` `archived`
-  * Look for `results` on `sources` (`torznab` / `newznab`)
-    * Request with `title` (localized) and `original_title`
-  * Grab a `result`
-* See `logs` details
-  * Every wished `movie` processed
-* Language aware
-  * By default search on [TMDB](https://www.themoviedb.org/) with first `window.navigator.languages`
-* Simple configuration
-* Secured WebUI (with `basic-auth`)
-
-# Screenshots
-| Trending | Collection | Search | Movie | Star | Configure | Logs |
-|----------|------------|--------|-------|------|-----------|------|
-| ![Trending](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.jpg?raw=true) | ![Collection](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.jpg?raw=true) | ![Search](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search.jpg?raw=true) | ![Movie](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/movie.jpg?raw=true) | ![Star](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.jpg?raw=true) | ![Configure](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/configure.jpg?raw=true) | ![Logs](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/logs.jpg?raw=true) |
+<table>
+  <tbody>
+    <tr>
+      <th>Screenshot</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Trending</b>
+        <ul>
+          <li>Trending</li>
+          <li>Discover (Popular)</li>
+          <li>Discover (Random year)</li>
+          <li>Discover (Random genre)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Movies / Collection</b>
+        <ul>
+          <li>Manage your movies <code>collection</code> (<code>wished</code> and <code>archived</code>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search-movie.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Movies / Search</b>
+        <ul>
+          <li>Search for a <code>movie</code> by it's title</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/movie.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Movies / Details</b>
+        <ul>
+          <li>See <code>movie</code> details</li>
+          <li>Consider movie as, <code>🔕</code> <code>ignored</code>, <code>🍿</code> <code>wished</code> or <code>📼</code> <code>archived</code></li>
+          <li>Look for <code>results</code> on <code>sources</code> (<code>torznab</code> / <code>newznab</code>) - requested with <code>title</code> (localized) and <code>original_title</code></li>
+          <li>Grab a <code>result</code></li>
+          <li>Manage your movies <code>collection</code> (<code>wished</code> and <code>archived</code>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/upcoming.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Stars / Upcoming</b>
+        <ul>
+          <li>Track upcoming movies from <code>followed</code> stars !</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/following.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Stars / Following</b>
+        <ul>
+          <li>Manage stars you're <code>following</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search-star.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Stars / Search</b>
+        <ul>
+          <li>Search for <code>stars</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Stars / Details</b>
+        <ul>
+          <li>See <code>star</code> details</li>
+          <li>Follow star <code>🔕</code> <code>ignored</code>, <code>🔔</code> <code>followed</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/configure.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Configure</b>
+        <ul>
+          <li>Simple configuration</li>
+          <li>Secured WebUI (with <code>basic-auth</code>)</li>
+          <li>Language aware, by default search on <a href="https://www.themoviedb.org/">TMDB</a> with first <code>window.navigator.languages</code></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/logs.jpg?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Logs</b>
+        <ul>
+          <li>See <code>logs</code> details</li>
+          <li>Every wished <code>movie</code> processed</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 # Scripts
   * `dev`: launch development server for `React` _frontend_
@@ -90,8 +195,13 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * `Upcoming`
+      * Improve `entities` reducer speed
   * Features
+    * Display `Persona` director on `Movie`
     * Trending `studios`
+    * Responsive design / mobile UI-UX
 * `CLI`
   * Summary command result
     * `stalk`:
