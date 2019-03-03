@@ -29,7 +29,7 @@ const styles = {
   },
   entity: {
     width: '10em',
-    height: '15em',
+    height: '16em',
   }
 }
 
