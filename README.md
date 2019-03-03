@@ -195,9 +195,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * `Upcoming`
-      * Improve `entities` reducer speed
   * Features
     * Display `Persona` director on `Movie`
     * Trending `studios`
