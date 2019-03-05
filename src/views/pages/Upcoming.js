@@ -72,7 +72,6 @@ class Upcoming extends PureComponent {
     this.state = {
       loading: true,
       movies: [],
-      year: (new Date()).getFullYear(),
       month: 0,
     }
 
@@ -108,17 +107,18 @@ class Upcoming extends PureComponent {
 
   loadPrevious() {
     document.querySelector('#wrapper').scrollIntoView(true)
-    setTimeout(() => this.setState(state => ({ year: state.year - 1, month: 0 })), 400)
+    setTimeout(() => this.setState({ month: 0 }, () => this.props.history.push(`/stars/upcoming/${parseInt(this.props.match.params.year || (new Date).getFullYear()) - 1}`), 400))
   }
 
   loadNext() {
     document.querySelector('#wrapper').scrollIntoView(true)
-    setTimeout(() => this.setState(state => ({ year: state.year + 1, month: 0 })), 400)
+    setTimeout(() => this.setState({ month: 0 }, () => this.props.history.push(`/stars/upcoming/${parseInt(this.props.match.params.year || (new Date).getFullYear()) + 1}`), 400))
   }
 
   render() {
-    const { ...props } = this.props
-    const { loading, movies, year, month, ...state } = this.state
+    const { match: { params }, ...props } = this.props
+    const { loading, movies, month, ...state } = this.state
+    const year = parseInt(params.year) || (new Date).getFullYear()
 
     const groups = {}
 
@@ -132,7 +132,7 @@ class Upcoming extends PureComponent {
     return (
       <Fragment>
         <Helmet key="helmet">
-          <title>Sensorr - Upcoming</title>
+          <title>{`Sensorr - Upcoming (${year})`}</title>
         </Helmet>
         <div style={styles.wrapper} key="wrapper" id="wrapper">
           {loading ? (

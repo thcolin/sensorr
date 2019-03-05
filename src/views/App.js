@@ -27,7 +27,7 @@ export default ({ ...props }) => (
     <Route path="/" exact component={Trending} />
     <Route path="/movies/collection" exact component={Collection} />
     <Route path="/movies/search/:query?" exact component={(props) => <Search state="movie" {...props} />} />
-    <Route path="/stars/upcoming" exact component={Upcoming} />
+    <Route path="/stars/upcoming/:year?" exact component={Upcoming} />
     <Route path="/stars/following" exact component={Following} />
     <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
     <Route path="/movie/:id" exact component={Movie} />

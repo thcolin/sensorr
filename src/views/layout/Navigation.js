@@ -87,7 +87,7 @@ class Navigation extends Component {
           ),
           stars: (
             <div style={styles.secondary}>
-              <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
+              <NavLink to="/stars/upcoming" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
               <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink>
               <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
             </div>
