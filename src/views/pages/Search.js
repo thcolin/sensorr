@@ -4,9 +4,7 @@ import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import Empty from 'components/Empty'
-import { fromEvent } from 'rxjs'
 import nanobounce from 'nanobounce'
-import history from 'store/history'
 import theme from 'theme'
 
 const styles = {
