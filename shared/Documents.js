@@ -60,7 +60,7 @@ class Star {
       also_known_as: this.payload.also_known_as || [],
       birthday: this.payload.birthday || '',
       popularity: this.payload.popularity,
-      profile_path: this.payload.profile_path,
+      profile_path: this.payload.profile_path || '',
       state: this.payload.state || 'stalked',
       time: Date.now(),
       credits: Array.isArray(this.payload.credits) ? this.payload.credits : [
