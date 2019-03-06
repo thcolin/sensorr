@@ -7,6 +7,10 @@ import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+  },
   wrapper: {
     position: 'relative',
   },
@@ -18,24 +22,16 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     cursor: 'pointer',
-    padding: '0 0 3em 0',
   },
   state: {
     position: 'absolute',
-    right: '0.75em',
-    top: '0.75em',
     backgroundColor: theme.colors.shadows.grey,
-    borderRadius: '50%',
-    padding: '0.5em',
-    height: '2em',
-    width: '2em',
     userSelect: 'none',
     MozUserSelect: 'none',
   },
   poster: {
     height: '14em',
     width: '10em',
-    border: 'solid 0.375em white',
     overflow: 'hidden',
   },
   img: {
@@ -53,8 +49,19 @@ const styles = {
 
 const contexts = {
   portrait: {
-    element: {
-
+    container: {
+      flexDirection: 'column',
+    },
+    wrapper: {},
+    element: {},
+    poster: {},
+    state: {
+      right: '0.75em',
+      top: '0.75em',
+      borderRadius: '50%',
+      padding: '0.5em',
+      height: '2em',
+      width: '2em',
     },
     tooltip: {
       margin: '0.5em 0',
@@ -64,17 +71,34 @@ const contexts = {
     },
   },
   avatar: {
+    container: {
+      margin: '0 -2em 0 0',
+      alignItems: 'flex-end',
+    },
+    wrapper: {
+      borderRadius: '50%',
+      border: 'solid 0.375em white',
+      overflow: 'hidden',
+    },
     element: {
       width: '10em',
-      margin: '0 -2em 0 0',
     },
     poster: {
       height: '10em',
-      borderRadius: '50%',
+    },
+    state: {
+      width: '50%',
+      height: '100%',
+      right: 0,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '0 0.5em 0 0',
+      fontSize: '2em',
     },
     tooltip: {
       position: 'absolute',
-      margin: '5.5em 0',
+      margin: '2.5em 0 0',
       fontSize: '2em',
     },
   },
@@ -105,15 +129,7 @@ export default class Persona extends PureComponent {
   }
 
   componentDidMount() {
-    if (this.props.context === 'portrait') {
-      this.bootstrap()
-    }
-  }
-
-  componentDidUpdate(props) {
-    if ((props.entity.id !== this.props.entity.id || props.context !== this.props.context) && this.props.context === 'portrait') {
-      this.bootstrap()
-    }
+    this.bootstrap()
   }
 
   async bootstrap() {
@@ -149,26 +165,35 @@ export default class Persona extends PureComponent {
     const { doc, loading, ready, tooltip, ...state } = this.state
 
     return (
-      <div {...props} style={{ ...(props.style ? props.style : {}), ...(context === 'portrait' ? styles.wrapper : {})}}>
-        {context === 'portrait' && (
-          <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'pointer' }} onClick={this.handleStateChange}>
+      <div
+        {...props}
+        style={{ ...styles.container, ...contexts[context].container, ...(props.style ? props.style : {})}}
+        onMouseEnter={() => this.setState({ tooltip: true })}
+        onMouseLeave={() => this.setState({ tooltip: false })}
+      >
+        <div style={{ ...styles.wrapper, ...contexts[context].wrapper }}>
+          <div
+            style={{
+              ...styles.state,
+              ...contexts[context].state,
+              cursor: doc === false ? 'default' : 'pointer',
+              ...(context !== 'portrait' && !tooltip ? { display: 'none' } : {}),
+            }}
+            onClick={this.handleStateChange}
+          >
             {(loading || doc === false) && ('⌛')}
             {(!loading && (doc === null || (doc && doc.state === 'ignored'))) && ('🔕')}
             {(!loading && (doc && doc.state === 'stalked')) && ('🔔')}
-          </span>
-        )}
-        <Link to={`/star/${entity.id}`} style={styles.link}>
-          <div style={{ ...styles.element, ...contexts[context].element }}>
-            <div
-              style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}
-              onMouseEnter={() => this.setState({ tooltip: true })}
-              onMouseLeave={() => this.setState({ tooltip: false })}
-            >
-              <img src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`} onLoad={() => this.setState({ ready: true })} style={styles.img} />
-            </div>
-            <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
           </div>
-        </Link>
+          <Link to={`/star/${entity.id}`} style={styles.link}>
+            <div style={{ ...styles.element, ...contexts[context].element }}>
+              <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}>
+                <img src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`} onLoad={() => this.setState({ ready: true })} style={styles.img} />
+              </div>
+            </div>
+          </Link>
+        </div>
+        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
       </div>
     )
   }

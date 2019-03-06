@@ -107,7 +107,7 @@ const styles = {
   },
   credits: {
     width: '100%',
-    fontSize: '0.75em',
+    fontSize: '0.85em',
   },
   row: {
     color: theme.colors.white,
