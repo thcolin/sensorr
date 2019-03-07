@@ -7,6 +7,7 @@ import theme from 'theme'
 
 const styles = {
   element: {
+    position: 'relative',
     padding: '2em 0',
   },
   label: {

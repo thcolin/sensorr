@@ -192,7 +192,13 @@ class Upcoming extends PureComponent {
                                   .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
                                   .filter((star, index) => index < 4)
                                   .map((star, index) => (
-                                    <Persona style={{ ...styles.star, right: `${index * 6}em` }} entity={star} context="avatar" key={star.id} />
+                                    <Persona
+                                      entity={star}
+                                      context="avatar"
+                                      updatable={false}
+                                      key={star.id}
+                                      style={{ ...styles.star, right: `${index * 6}em` }}
+                                    />
                                   ))
                                 }
                               </div>

@@ -73,6 +73,7 @@ const contexts = {
   avatar: {
     container: {
       margin: '0 -2em 0 0',
+      padding: '0 0 1.5rem',
       alignItems: 'flex-end',
     },
     wrapper: {
@@ -98,7 +99,7 @@ const contexts = {
     },
     tooltip: {
       position: 'absolute',
-      margin: '2.5em 0 0',
+      bottom: 0,
       fontSize: '2em',
     },
   },
@@ -108,10 +109,12 @@ export default class Persona extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     context: PropTypes.oneOf(['portrait', 'avatar']),
+    updatable: PropTypes.bool,
   }
 
   static defaultProps = {
     context: 'avatar',
+    updatable: true,
   }
 
   constructor(props) {
@@ -129,7 +132,15 @@ export default class Persona extends PureComponent {
   }
 
   componentDidMount() {
-    this.bootstrap()
+    if (this.props.updatable) {
+      this.bootstrap()
+    }
+  }
+
+  componentDidUpdate(props) {
+    if (!props.updatable && this.props.updatable) {
+      this.bootstrap()
+    }
   }
 
   async bootstrap() {
@@ -161,7 +172,7 @@ export default class Persona extends PureComponent {
   }
 
   render() {
-    const { entity, context, ...props } = this.props
+    const { entity, context, updatable, ...props } = this.props
     const { doc, loading, ready, tooltip, ...state } = this.state
 
     return (
@@ -177,7 +188,7 @@ export default class Persona extends PureComponent {
               ...styles.state,
               ...contexts[context].state,
               cursor: doc === false ? 'default' : 'pointer',
-              ...(context !== 'portrait' && !tooltip ? { display: 'none' } : {}),
+              ...(!updatable || (context !== 'portrait' && !tooltip) ? { display: 'none' } : {}),
             }}
             onClick={this.handleStateChange}
           >
