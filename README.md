@@ -6,7 +6,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett).
 
 # Features
-<table>
+<table className="markdown-table">
   <tbody>
     <tr>
       <th>Screenshot</th>
@@ -59,7 +59,6 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
           <li>Consider movie as, <code>🔕</code> <code>ignored</code>, <code>🍿</code> <code>wished</code> or <code>📼</code> <code>archived</code></li>
           <li>Look for <code>results</code> on <code>sources</code> (<code>torznab</code> / <code>newznab</code>) - requested with <code>title</code> (localized) and <code>original_title</code></li>
           <li>Grab a <code>result</code></li>
-          <li>Manage your movies <code>collection</code> (<code>wished</code> and <code>archived</code>)</li>
         </ul>
       </td>
     </tr>
@@ -142,6 +141,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
   * `build`: build _frontend_ to `dist` folder
   * `prod`: run `pm2` apps, Sensorr (`web server`) and Sensorr (`record cron`)
   * `start`: launch `build` and `prod` scripts
+  * `doc`: launch `docz` documentation server
 
 # Docker
 Checkout Sensorr [Docker image](https://hub.docker.com/r/thcolin/sensorr/), it let you skip every complex environment configuration and just run a clean installation, just open a terminal with `docker` installed and run:
@@ -195,7 +195,19 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * `404` fallback view
+    * Display `role` on `Star.Row (crew)` tooltip
+    * `Search.handleKeyUp` debounce
+    * `Persona.status` displaying "followed" when not followed, see `/movie/10625`
   * Features
+    * Improve `filter` ("I prefer MULTI, else I want TRUEFRENCH, else FRENCH is good, finally I'm ok with VOSTFR")
+    * Export/Import `database`
+    * Import `Plex` export
+      * Use [`ExportTools`](https://forums.plex.tv/t/rel-exporttools/175915/) from `UAS`
+      * Export `movies` at `level3`
+      * Use `MetaDb link` which supports IMDB, TheMovieDB, Data18
+    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
     * Display `Persona` director on `Movie`
     * Trending `studios`
     * Responsive design / mobile UI-UX
@@ -212,6 +224,10 @@ Tips: Sensorr will use your `config.js` and fallback on default
         But ${notfound} still not found.. 😶
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
+* `App` (Phone / TV)
+  * Features
+    * Connect to server with QR code
+    * Streaming
 
 # Inspiration
 * CLI
