@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import tmdb from 'store/tmdb'
 import database from 'store/database'
@@ -59,12 +60,20 @@ export default class Film extends PureComponent {
     }
   }
 
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+    }
+  }
+
   async bootstrap() {
     try {
       this.setState({ doc: false })
       const db = await database.get()
-      const doc = await db.movies.findOne().where('id').eq(this.props.entity.id.toString()).exec()
+      const query = db.movies.findOne().where('id').eq(this.props.entity.id.toString())
+      const doc = await query.exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
+      this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
     } catch(e) {}
   }
 
@@ -122,4 +131,16 @@ export default class Film extends PureComponent {
       </div>
     )
   }
+}
+
+Film.propTypes = {
+  entity: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    alternative_titles: PropTypes.arrayOf(PropTypes.string),
+    year: PropTypes.number,
+    release_date: PropTypes.string,
+    release_dates: PropTypes.arrayOf(PropTypes.string),
+    poster_path: PropTypes.string.isRequired,
+  })
 }

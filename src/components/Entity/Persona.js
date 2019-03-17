@@ -143,12 +143,20 @@ export default class Persona extends PureComponent {
     }
   }
 
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+    }
+  }
+
   async bootstrap() {
     try {
       this.setState({ doc: false })
       const db = await database.get()
-      const doc = await db.stars.findOne().where('id').eq(this.props.entity.id.toString()).exec()
+      const query = db.stars.findOne().where('id').eq(this.props.entity.id.toString())
+      const doc = await query.exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
+      this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
     } catch(e) {}
   }
 
