@@ -128,7 +128,7 @@ class Sensorr {
           })),
           map(release => !release.valid ? release : ({
             ...release,
-            valid: movie.terms.years.every(year => new Date(release.publishDate).getFullYear() >= year),
+            valid: movie.terms.years.some(year => new Date(release.publishDate).getFullYear() >= year),
             reason: `Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release years (${movie.terms.years.join(', ')})`,
             warning: 2,
           })),
