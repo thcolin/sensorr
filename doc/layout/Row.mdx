@@ -1,0 +1,57 @@
+---
+name: Row
+menu: Layout
+route: /layout/row
+---
+
+import { Playground, PropsTable } from 'docz'
+import Row from 'components/Layout/Row'
+import Film from 'components/Entity/Film'
+import Persona from 'components/Entity/Persona'
+import fixtures from 'fixtures'
+
+# Row
+<PropsTable of={Row} />
+
+## Credits usage
+Filled by `items` with no `space` between `child`
+<Playground style={{ fontSize: '0.375em' }}>
+  <Row
+    items={fixtures.movie.credits.cast.slice(0, 10)}
+    child={Persona}
+    space={0}
+  />
+</Playground>
+
+## Movies usage
+Filled dynamicly with `TMDB` api
+<Playground style={{ fontSize: '0.5em' }}>
+  <Row
+    label="Trending"
+    uri={['trending', 'movie', 'week']}
+    params={{ sort_by: 'popularity.desc' }}
+    child={Film}
+    style={{ color: 'white' }}
+  />
+</Playground>
+
+Filled by `items`, `style` css applied to `h1.label`
+<Playground style={{ fontSize: '0.5em' }}>
+  <Row
+    label="Similar"
+    items={fixtures.movie.similar.results}
+    child={Film}
+    style={{ color: 'white' }}
+  />
+</Playground>
+
+With `empty` props applied to `Empty` child component
+<Playground style={{ fontSize: '0.5em' }}>
+  <Row
+    label="Recommendations"
+    items={[]}
+    child={Film}
+    style={{ color: 'white' }}
+    empty={{ style: { color: 'white' } }}
+  />
+</Playground>

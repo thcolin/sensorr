@@ -12,6 +12,7 @@ const styles = {
   },
   label: {
     padding: '0 2em',
+    margin: 0,
     fontSize: '2em',
     fontWeight: 'bold',
     color: theme.colors.black,
@@ -99,7 +100,7 @@ export default class Row extends PureComponent {
             <Spinner />
           )}
           {!loading && !filtered.length && (
-            <Empty style={empty} />
+            <Empty {...empty} />
           )}
           {filtered.map((entity, index) => (
             <div key={index} style={{ ...styles.entity, padding: `${space}em` }}>

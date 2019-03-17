@@ -1,0 +1,47 @@
+---
+name: Grid
+menu: Layout
+route: /layout/grid
+---
+
+import { Playground, PropsTable } from 'docz'
+import Grid from 'components/Layout/Grid'
+import Film from 'components/Entity/Film'
+import Persona from 'components/Entity/Persona'
+
+# Grid
+<PropsTable of={Grid} />
+
+# Persona usage
+Filled dynamicly with `TMDB` api
+<Playground>
+  <Grid
+    label="Brie"
+    child={(props) => <Persona context="portrait" {...props} />}
+    uri={['search', 'person']}
+    params={{ query: 'Brie', sort_by: 'popularity.desc' }}
+    style={{ color: 'white' }}
+  />
+</Playground>
+
+# Collection usage
+Filled with `db.collection.query`, use `limit` when large amount of data (see `react-infinite-scroller`), filtered on `Avengers` titles
+<Playground>
+  <Grid
+    limit={true}
+    query={(db) => db.movies.find().where('state').ne('ignored')}
+    filter={entity => [entity.title, entity.original_title].some(string => new RegExp('Avengers', 'i').test(string))}
+    empty={{ style: { color: 'white' } }}
+    child={Film}
+  />
+</Playground>
+
+# Empty usage
+With `empty` props applied to `Empty` child component
+<Playground>
+  <Grid
+    items={[]}
+    empty={{ style: { color: 'white' } }}
+    child={Film}
+  />
+</Playground>

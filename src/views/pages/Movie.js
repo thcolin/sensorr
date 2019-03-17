@@ -140,7 +140,7 @@ const styles = {
     width: '100%',
     fontSize: '0.75em',
   },
-  label: {
+  row: {
     color: theme.colors.white,
     cursor: 'pointer',
   },
@@ -332,9 +332,9 @@ export default class Movie extends PureComponent {
                   label={`${more.charAt(0).toUpperCase()}${more.slice(1)}`}
                   onClick={() => this.handleMoreChange()}
                   items={details[more].results}
-                  style={styles.label}
+                  style={styles.row}
                   child={Film}
-                  empty={styles.empty}
+                  empty={{ style: styles.empty }}
                 />
               </div>
             </div>,

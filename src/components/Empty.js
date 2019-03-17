@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import theme from 'theme'
 
 const styles = {
@@ -13,21 +14,38 @@ const styles = {
   },
   emoji: {
     fontSize: '5em',
+    margin: 0,
   },
   title: {
     padding: '1em 0',
+    margin: 0,
     fontWeight: 800,
     textTransform: 'uppercase',
   },
   subtitle: {
-
+    padding: 0,
+    margin: 0,
   }
 }
 
-export default ({ style, emoji, title, subtitle, ...props }) => (
+const Empty = ({ style, emoji, title, subtitle, ...props }) => (
   <div style={{ ...styles.element, ...style }}>
-    <h1 style={styles.emoji}>{emoji || '👻'}</h1>
-    <h2 style={styles.title}>{title || "Bouhouuu ! I'm the scary empty ghost !"}</h2>
-    <p style={styles.subtitle}>{subtitle || 'Sorry, no results.'}</p>
+    <h1 style={styles.emoji}>{emoji}</h1>
+    <h2 style={styles.title}>{title}</h2>
+    <p style={styles.subtitle}>{subtitle}</p>
   </div>
 )
+
+Empty.propTypes = {
+  emoji: PropTypes.string,
+  title: PropTypes.node,
+  subtitle: PropTypes.node,
+}
+
+Empty.defaultProps = {
+  emoji: '👻',
+  title: "Bouhouuu ! I'm the scary empty ghost !",
+  subtitle: 'Sorry, no results.',
+}
+
+export default Empty

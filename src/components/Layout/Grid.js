@@ -16,6 +16,7 @@ const styles = {
   },
   label: {
     padding: '0 2em',
+    margin: 0,
     fontSize: '2em',
     fontWeight: 'bold',
     color: theme.colors.black,
@@ -44,6 +45,7 @@ export default class Grid extends PureComponent {
     label: PropTypes.string,
     child: PropTypes.func.isRequired,
     empty: PropTypes.object,
+    spinner: PropTypes.object,
     limit: PropTypes.bool,
   }
 
@@ -53,6 +55,7 @@ export default class Grid extends PureComponent {
     transform: (res) => res.results,
     filter: () => true,
     empty: {},
+    spinner: {},
     limit: false,
   }
 

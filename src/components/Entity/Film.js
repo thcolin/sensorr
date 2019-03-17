@@ -17,6 +17,9 @@ const styles = {
   },
   state: {
     position: 'absolute',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     right: '0.5em',
     top: '0.5em',
     backgroundColor: theme.colors.shadows.grey,
@@ -38,6 +41,10 @@ const styles = {
 }
 
 export default class Film extends PureComponent {
+  static propTypes = {
+    entity: PropTypes.object.isRequired,
+  }
+
   constructor(props) {
     super(props)
 
@@ -131,16 +138,4 @@ export default class Film extends PureComponent {
       </div>
     )
   }
-}
-
-Film.propTypes = {
-  entity: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired,
-    alternative_titles: PropTypes.arrayOf(PropTypes.string),
-    year: PropTypes.number,
-    release_date: PropTypes.string,
-    release_dates: PropTypes.arrayOf(PropTypes.string),
-    poster_path: PropTypes.string.isRequired,
-  })
 }

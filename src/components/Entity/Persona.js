@@ -44,6 +44,7 @@ const styles = {
     textAlign: 'center',
     whiteSpace: 'nowrap',
     padding: '0.25em 0.5em',
+    margin: 0,
   },
 }
 
@@ -56,6 +57,9 @@ const contexts = {
     element: {},
     poster: {},
     state: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       right: '0.75em',
       top: '0.75em',
       borderRadius: '50%',
@@ -73,7 +77,7 @@ const contexts = {
   avatar: {
     container: {
       margin: '0 -2em 0 0',
-      padding: '0 0 1.5rem',
+      padding: '0 0 3.5em',
       alignItems: 'flex-end',
     },
     wrapper: {

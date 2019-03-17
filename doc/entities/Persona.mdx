@@ -1,0 +1,39 @@
+---
+name: Persona
+menu: Entities
+route: /entities/persona
+---
+
+import { Playground, PropsTable } from 'docz'
+import Persona from 'components/Entity/Persona'
+import fixtures from 'fixtures'
+
+# Persona
+<PropsTable of={Persona} />
+
+## Avatar usage
+Mainly used with `TMDB` results injected by `Row` component or in `Upcoming` page
+<Playground
+  style={{
+   display: 'flex',
+   flexWrap: 'nowrap',
+   overflow: 'auto hidden',
+   fontSize: '0.5em',
+ }}
+>
+  <Persona entity={fixtures.persona} context="avatar" />
+  <Persona entity={fixtures.persona} context="avatar" updatable={false} />
+</Playground>
+
+## Portrait usage
+Mainly used with `TMDB` results injected by `Grid` component
+<Playground
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, 10em)',
+    gap: '2rem 2rem',
+    justifyContent: 'space-between',
+ }}
+>
+  <Persona entity={fixtures.persona} context="portrait" />
+</Playground>

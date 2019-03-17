@@ -1,0 +1,43 @@
+---
+name: Empty
+menu: Miscellaneous
+route: /miscellaneous/empty
+---
+
+import { Playground, PropsTable } from 'docz'
+import Empty from 'components/Empty'
+
+# Empty
+<PropsTable of={Empty} />
+
+## Basic usage
+<Playground>
+  <Empty style={{ color: 'white' }} />
+</Playground>
+
+<Playground>
+  <Empty
+    emoji="🎞️"
+    title="Are you looking for a movie ?"
+    subtitle={`Search anything, like "Inception"`}
+    style={{ color: 'white' }}
+  />
+</Playground>
+
+<Playground>
+  <Empty
+    emoji="⭐"
+    title="Are you looking for a star ?"
+    subtitle={`Search anyone, like "Audrey Hepburn"`}
+    style={{ color: 'white' }}
+  />
+</Playground>
+
+<Playground>
+  <Empty
+    emoji="👩‍🎤"
+    title="Sorry, no upcoming movies this year"
+    subtitle={`Try to follow more stars !`}
+    style={{ color: 'white' }}
+  />
+</Playground>
