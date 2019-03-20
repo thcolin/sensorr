@@ -11,6 +11,7 @@ import Upcoming from 'views/pages/Upcoming'
 import Following from 'views/pages/Following'
 import Configure from 'views/pages/Configure'
 import Logs from 'views/pages/Logs'
+import Blank from 'views/pages/Blank'
 
 const styles = {
   element: {
@@ -34,5 +35,6 @@ export default ({ ...props }) => (
     <Route path="/star/:id" exact component={Star} />
     <Route path="/configure" exact component={Configure} />
     <Route path="/logs" exact component={Logs} />
+    <Route component={Blank} />
   </div>
 )

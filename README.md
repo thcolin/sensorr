@@ -197,7 +197,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Fix
     * Filter `adult` content (like `/star/1412545`) - optional
-    * `404` fallback view
     * Display `role` on `Star.Row (crew)` tooltip
     * `Search.handleKeyUp` debounce
     * `Persona.status` displaying "followed" when not followed, see `/movie/10625`
