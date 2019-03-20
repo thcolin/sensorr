@@ -8,6 +8,7 @@ import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import filesize from 'filesize'
 import sensorr from 'store/sensorr'
+import database from 'store/database'
 import theme from 'theme'
 
 const suits = StyleSheet.create({
@@ -182,6 +183,11 @@ class Releases extends PureComponent {
             toastManager.add((
               <span>Release <strong>{release.title}</strong> grabbed to <strong>{sensorr.config.blackhole}</strong></span>
             ), { appearance: 'success', autoDismiss: true, })
+
+            database.get().then(db => db.movies.atomicUpsert(new Movie({
+              ...this.props.movie,
+              state: 'archived'
+            }, global.config.region || localStorage.getItem('region')).normalize()))
           } else {
             toastManager.add((
               <span>Something went wrong during <strong>{release.title}</strong> grabing : <strong>{body.reason}</strong></span>

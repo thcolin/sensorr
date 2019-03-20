@@ -197,7 +197,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Fix
     * Filter `adult` content (like `/star/1412545`) - optional
-    * When `downloading` movie on `WebUI`, change state to `archived`
     * `404` fallback view
     * Display `role` on `Star.Row (crew)` tooltip
     * `Search.handleKeyUp` debounce

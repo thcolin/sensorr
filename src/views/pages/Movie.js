@@ -176,6 +176,12 @@ export default class Movie extends PureComponent {
     }
   }
 
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+    }
+  }
+
   async bootstrap() {
     try {
       this.setState({ doc: false, unpinned: false })
@@ -185,8 +191,10 @@ export default class Movie extends PureComponent {
       )
       this.setState({ details })
       const db = await database.get()
-      const doc = await db.movies.findOne().where('id').eq(details.id.toString()).exec()
+      const query = db.movies.findOne().where('id').eq(details.id.toString())
+      const doc = await query.exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
+      this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(e) {
       history.push('/')
