@@ -196,17 +196,17 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
+    * `Search.handleKeyUp` debounce
+  * Features
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip
-    * `Search.handleKeyUp` debounce
-    * `Persona.status` displaying "followed" when not followed, see `/movie/10625`
-  * Features
     * Improve `filter` ("I prefer MULTI, else I want TRUEFRENCH, else FRENCH is good, finally I'm ok with VOSTFR")
     * Export/Import `database`
     * Import `Plex` export
       * Use [`ExportTools`](https://forums.plex.tv/t/rel-exporttools/175915/) from `UAS`
       * Export `movies` at `level3`
       * Use `MetaDb link` which supports IMDB, TheMovieDB, Data18
+      * Better to find a solution to always be in sync (use `plex-api`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
     * Display `Persona` director on `Movie`
     * Trending `studios`
