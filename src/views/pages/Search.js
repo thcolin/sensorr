@@ -41,27 +41,37 @@ export default class Search extends PureComponent {
   constructor(props) {
     super(props)
 
+    this.state = {
+      value: props.match.params.query || '',
+      query: props.match.params.query || '',
+    }
+
     this.input = React.createRef()
-    this.debounce = nanobounce()
-    this.handleKeyUp = this.handleKeyUp.bind(this)
+    this.debounce = nanobounce(500)
+    this.handleChange = this.handleChange.bind(this)
   }
 
   componentDidMount() {
     this.input.current.focus()
   }
 
-  handleKeyUp(e) {
-    const previous = this.props.match.params.query
+  handleChange(e) {
+    const previous = this.state.query
     const next = e.target.value
 
     if (previous !== next) {
-      this.debounce(() => this.props.history.push(this.props.match.path.replace(':query?', next)))
+      this.setState({ value: next })
+
+      this.debounce(() => {
+        this.props.history.push(this.props.match.path.replace(':query?', next))
+        this.setState({ query: next })
+      })
     }
   }
 
   render() {
-    const { state, match, ...props } = this.props
-    const query = match.params.query || ''
+    const { state, ...props } = this.props
+    const { value, query } = this.state
 
     return (
       <Fragment>
@@ -72,8 +82,8 @@ export default class Search extends PureComponent {
           <input
             ref={this.input}
             type="text"
-            defaultValue={query}
-            onKeyUp={this.handleKeyUp}
+            value={value}
+            onChange={this.handleChange}
             style={styles.input}
             placeholder="Search..."
           />

@@ -195,8 +195,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * `Search.handleKeyUp` debounce
   * Features
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip

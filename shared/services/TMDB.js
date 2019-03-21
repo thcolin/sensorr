@@ -8,10 +8,13 @@ module.exports = class TMDB {
   }
 
   build(uri, params = {}) {
-    params.language = this.region
-    params.api_key = this.key
+    const query = {
+      ...params,
+      language: this.region,
+      api_key: this.key,
+    }
 
-    return `${this.base}${uri.join('/')}?${qs.stringify(params)}`
+    return `${this.base}${uri.join('/')}?${qs.stringify(query)}`
   }
 
   fetch(uri, params = {}) {
