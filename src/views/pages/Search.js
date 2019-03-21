@@ -43,7 +43,6 @@ export default class Search extends PureComponent {
 
     this.state = {
       value: props.match.params.query || '',
-      query: props.match.params.query || '',
     }
 
     this.input = React.createRef()
@@ -56,22 +55,19 @@ export default class Search extends PureComponent {
   }
 
   handleChange(e) {
-    const previous = this.state.query
+    const previous = this.props.match.params.query
     const next = e.target.value
 
     if (previous !== next) {
       this.setState({ value: next })
-
-      this.debounce(() => {
-        this.props.history.push(this.props.match.path.replace(':query?', next))
-        this.setState({ query: next })
-      })
+      this.debounce(() => this.props.history.push(this.props.match.path.replace(':query?', next)))
     }
   }
 
   render() {
-    const { state, ...props } = this.props
-    const { value, query } = this.state
+    const { state, match: { params }, ...props } = this.props
+    const { value } = this.state
+    const query = params.query || ''
 
     return (
       <Fragment>
