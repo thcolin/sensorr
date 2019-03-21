@@ -44,6 +44,8 @@ const styles = {
     fontSize: '0.875em',
     borderRadius: 0,
     border: `0.0625em solid ${theme.colors.gray}`,
+    WebkitAppearance: 'none',
+    background: theme.colors.white,
   },
   input: {
     width: '100%',
