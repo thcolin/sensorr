@@ -54,12 +54,8 @@ const authorizer = (username, password) => (
 
 const app = express()
 
-app.use(parser.json({ limit: '5mb' }))
-app.use(parser.urlencoded({ limit: '5mb', extended: true }))
-
 app.use(cors())
 app.use(compression())
-app.use(express.json())
 app.use(bauth({
   authorizer,
   challenge: true,
@@ -232,6 +228,10 @@ if (app.get('env') === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')))
   app.use(index)
 }
+
+app.use(express.json())
+app.use(parser.json({ limit: '10mb' }))
+app.use(parser.urlencoded({ limit: '10mb', extended: true }))
 
 const server = http.createServer(app)
 const socket = io(server)
