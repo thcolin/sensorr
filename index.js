@@ -54,6 +54,7 @@ const authorizer = (username, password) => (
 
 const app = express()
 
+app.use(express.json())
 app.use(cors())
 app.use(compression())
 app.use(bauth({
@@ -229,7 +230,6 @@ if (app.get('env') === 'production') {
   app.use(index)
 }
 
-app.use(express.json())
 app.use(parser.json({ limit: '10mb' }))
 app.use(parser.urlencoded({ limit: '10mb', extended: true }))
 
