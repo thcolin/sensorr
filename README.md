@@ -195,21 +195,28 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip
     * Improve `filter` ("I prefer MULTI, else I want TRUEFRENCH, else FRENCH is good, finally I'm ok with VOSTFR")
+      * Use [`react-sortable-hoc`](https://github.com/clauderic/react-sortable-hoc) to order and delete prop
+      * Use [`react-autocomplete`](https://github.com/reactjs/react-autocomplete) to add listed props (use `oleoo`)
+      * Sections
+        * `avoid`: `READNFO, [...]`
+        * `prefer`: `REMASTERED, [...]`
     * Export/Import `database`
-    * Import `Plex` export
-      * Use [`ExportTools`](https://forums.plex.tv/t/rel-exporttools/175915/) from `UAS`
-      * Export `movies` at `level3`
-      * Use `MetaDb link` which supports IMDB, TheMovieDB, Data18
-      * Better to find a solution to always be in sync (use `plex-api`)
+    * Sync with `Plex`
+      * Sync `archived` movies available on `Plex` server
+      * More features ?
+        * `Plex` manage all `medias`, we can retrieve them and detect `release` (`source`, `language`, `resolution`, ...) and download better if available, like `CouchPotato`
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
     * Display `Persona` director on `Movie`
     * Trending `studios`
     * Responsive design / mobile UI-UX
 * `CLI`
+  * Download "grouped" by `title` and not `xznab` (should reduce timeout error on some `xznab`)
   * Summary command result
     * `stalk`:
       ```

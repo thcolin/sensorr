@@ -37,6 +37,8 @@
     "node-fetch": "^2.3.0",
     "oleoo": "^1.0.6",
     "ora": "^3.0.0",
+    "plex-api": "^5.2.1",
+    "plex-api-pinauth": "^0.1.0",
     "pm2": "^3.2.2",
     "pouchdb": "^7.0.0",
     "pouchdb-adapter-http": "^7.0.0",

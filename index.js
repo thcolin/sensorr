@@ -13,11 +13,12 @@ const path = require('path')
 const cors = require('cors')
 const compression = require('compression')
 const bauth = require('express-basic-auth')
-const { of, throwError, bindNodeCallback } = require('rxjs')
-const { map, mergeMap } = require('rxjs/operators')
+const { of, from, interval, throwError, bindNodeCallback } = require('rxjs')
+const { tap, map, mergeMap, takeWhile, takeLast, catchError } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 const atob = require('atob')
 const escape = require('escape-string-regexp')
+const Plex = require('./shared/services/Plex')
 
 let template = null
 
@@ -155,7 +156,22 @@ api.post('/configure', function (req, res) {
     auth: {
       username: (body.auth.username || '').toString(),
       password: (body.auth.password || '').toString()
-    }
+    },
+    plex: {
+      url: '',
+      pin: {},
+      token: '',
+      ...config.plex,
+      ...((body.plex || {}).url !== config.plex.url ? {
+        url: body.plex.url,
+        pin: {},
+        token: '',
+      } : {})
+    },
+  }
+
+  if (!payload.plex.pin.code) {
+    setStatus('plex', 'off')
   }
 
   of(null).pipe(
@@ -175,6 +191,79 @@ api.post('/configure', function (req, res) {
       console.log(`${chalk.bgRed(chalk.black(' CONFIGURE '))} ${chalk.red(reason)}`)
       console.log(chalk.gray(JSON.stringify(payload, null, 2)))
       res.status(520).send({ file, reason: reason.toString(), })
+    },
+  )
+})
+
+api.post('/plex', function (req, res) {
+  const file = path.join(__dirname, 'config', 'config.json')
+  const url = req.body.url || ''
+  const unregister = !url
+
+  const payload = {
+    url: url || config.plex.url || '',
+    pin: {},
+    token: '',
+  }
+
+  of(null).pipe(
+    mergeMap(() => bindNodeCallback(fs.access)(file, fs.constants.W_OK)),
+    mergeMap(err => err ? throwError({ code: 520, body: { err: 'Unable to write Plex configuration to config.json' } }) : of(null)),
+    mergeMap(() => bindNodeCallback(fs.writeFile)(file, JSON.stringify({ ...config, plex: payload }, null, 2))),
+    mergeMap(err => err ? throwError({ code: 520, body: { err: 'Unable to write Plex configuration to config.json' } }) : of(null)),
+    tap(() => config.plex = payload),
+    mergeMap(() => unregister ?
+      of(null).pipe(
+        tap(() => res.status(200).send({ plex: config.plex })),
+        tap(() => setStatus('plex', 'off')),
+        tap(() => {
+          console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`${config.plex.url || 'empty'}`)}`)
+          console.log(chalk.gray(JSON.stringify(config.plex, null, 2)))
+          console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green('status=off')}`)
+        }),
+      ) :
+      of(new Plex(config.plex)).pipe(
+        mergeMap(plex => from(plex.register()).pipe(
+          catchError(err => {
+            console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+            setStatus('plex', 'error')
+            throwError({ code: 400, body: { err } })
+          }),
+          tap(pin => payload.pin = pin),
+          mergeMap(() => bindNodeCallback(fs.writeFile)(file, JSON.stringify({ ...config, plex: payload }, null, 2))),
+          mergeMap(err => err ? throwError({ code: 520, body: { err: 'Unable to write Plex configuration to config.json' } }) : of(null)),
+          tap(() => config.plex = payload),
+          tap(() => res.status(200).send({ plex: config.plex })),
+          tap(() => {
+            console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`${config.plex.url || 'empty'}`)}`)
+            console.log(chalk.gray(JSON.stringify(config.plex, null, 2)))
+          }),
+          mergeMap(() => interval(5000).pipe(
+            mergeMap(() => from(plex.status())),
+            catchError(err => {
+              console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+              setStatus('plex', 'error')
+              throwError({ code: 400, body: { err } })
+            }),
+            tap(status => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`status=${status}`)}`)),
+            tap(status => setStatus('plex', status)),
+            takeWhile(status => status === 'waiting'),
+            takeLast(1),
+            map(() => plex.auth.token),
+            tap(token => payload.token = token),
+            mergeMap(() => bindNodeCallback(fs.writeFile)(file, JSON.stringify({ ...config, plex: payload }, null, 2))),
+            mergeMap(err => err ? throwError({ code: 520, body: { err: 'Unable to write Plex configuration to config.json' } }) : of(null)),
+            tap(() => config.plex = payload),
+          )),
+        )),
+      )
+    ),
+  ).subscribe(
+    () => {},
+    (err) => {
+      console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red('error')}`)
+      console.log(chalk.gray(JSON.stringify((err || {}).body, null, 2)))
+      res.status(err.code || 400).send(err.body || { err: 'Unknown error' })
     },
   )
 })
@@ -239,6 +328,37 @@ const jobs = ['record']
 const events = { online: true, exit: false }
 const status = {}
 
+function setStatus(key, value) {
+  status[key] = value
+  socket.emit('status', { status })
+}
+
+if (config.plex && config.plex.url) {
+  of(new Plex(config.plex)).pipe(
+    mergeMap((plex) => interval(5000).pipe(
+      mergeMap(() => from(plex.status())),
+      tap(status => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`status=${status}`)}`)),
+      tap(status => setStatus('plex', status)),
+      takeWhile(status => status === 'waiting'),
+      takeLast(1),
+      map(() => plex.client.authToken),
+      map(token => ({ ...config, plex: { ...config.plex, token } })),
+      mergeMap(payload => bindNodeCallback(fs.writeFile)(file, JSON.stringify(payload, null, 2)).pipe(
+        mergeMap((err) => err ? throwError(err) : of(payload)),
+        tap(payload => config = payload),
+      )),
+    )
+  )).subscribe(
+    () => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green('status=authorized')}`),
+    (err) => {
+      console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+      setStatus('plex', 'error')
+    },
+  )
+} else {
+  setStatus('plex', 'off')
+}
+
 pm2.list((err, payload) => {
   if (!err) {
     payload
@@ -267,8 +387,7 @@ pm2.launchBus((err, bus) => {
     const job = data.process.name.split(':').pop()
 
     if (jobs.includes(job) && Object.keys(events).includes(data.event)) {
-      status[job] = events[data.event]
-      socket.emit('status', { status })
+      setStatus(job, events[data.event])
       console.log(`${chalk.bgGreen(chalk.black(' Socket '))} ${chalk.green(`Broadcast`)} ${chalk.gray(JSON.stringify({ status }))}`)
     }
   })
