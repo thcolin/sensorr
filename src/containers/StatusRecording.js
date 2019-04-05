@@ -131,7 +131,7 @@ export default connect(
   (state) => ({
     ongoing: state.status.record,
   }),
-  null,
+  () => ({}),
 )(
   withToastManager(Status)
 )
