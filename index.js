@@ -54,7 +54,24 @@ const authorizer = (username, password) => (
 
 const app = express()
 
+const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
+  configPath: path.join(__dirname, 'pouchdb.json'),
+  mode: 'fullCouchDB',
+  overrideMode: {
+    exclude: [
+      'routes/authentication',
+      'routes/authorization',
+      'routes/session',
+    ],
+  },
+})
+
+app.use('/db', db)
+
 app.use(express.json())
+app.use(parser.json({ limit: '10mb' }))
+app.use(parser.urlencoded({ limit: '10mb', extended: true }))
+
 app.use(cors())
 app.use(compression())
 app.use(bauth({
@@ -197,20 +214,6 @@ api.post('/grab', function (req, res) {
 
 app.use('/api', api)
 
-const db = require('express-pouchdb')(PouchDB.defaults({ prefix: `db/` }), {
-  configPath: path.join(__dirname, 'pouchdb.json'),
-  mode: 'fullCouchDB',
-  overrideMode: {
-    exclude: [
-      'routes/authentication',
-      'routes/authorization',
-      'routes/session',
-    ],
-  },
-})
-
-app.use('/db', db)
-
 if (app.get('env') === 'production') {
   const index = function (req, res) {
     fs.readFile(path.join(__dirname, 'config', 'config.json'), 'utf8', (err, data) => {
@@ -229,9 +232,6 @@ if (app.get('env') === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')))
   app.use(index)
 }
-
-app.use(parser.json({ limit: '10mb' }))
-app.use(parser.urlencoded({ limit: '10mb', extended: true }))
 
 const server = http.createServer(app)
 const socket = io(server)
