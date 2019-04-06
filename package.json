@@ -6,9 +6,9 @@
   "scripts": {
     "start": "npm run build && npm run prod",
     "dev": "npx webpack-dev-server --progress --config webpack.dev.js",
-    "server": "pm2-runtime start ecosystem.config.js --env=development --only 'sensorr:web'",
+    "server": "pm2-runtime start ecosystem.config.js --env=development",
     "build": "npx webpack --progress --config webpack.prod.js",
-    "prod": "pm2-runtime start ecosystem.config.js --env=production --only 'sensorr:web'",
+    "prod": "pm2-runtime start ecosystem.config.js --env=production",
     "doc": "npx docz dev --port 4000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

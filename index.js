@@ -126,7 +126,7 @@ api.post('/trigger', function (req, res) {
        console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} Job already triggered`)
        res.status(409).send({ message: 'Job already triggered', err, })
       } else {
-        pm2[{ true: 'restart', false: 'start' }[job.pid === 0]]({ true: job.name, false: job }[job.pid === 0], err => {
+        pm2.restart(job.name, err => {
           if (!err) {
             console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(job.name)}`)
             res.status(200).send({ message: `Trigger "${type}" job`, })
@@ -260,9 +260,7 @@ api.post('/plex', function (req, res) {
               ecosystem.apps.filter(job => job.name === `sensorr:sync`).pop()
             )),
             filter(job => job),
-            mergeMap(job => bindNodeCallback(
-              pm2[{ true: 'restart', false: 'start' }[typeof job.pid !== 'undefined']].bind(pm2)
-            )({ true: job.name, false: job }[typeof job.pid !== 'undefined']).pipe(
+            mergeMap(job => bindNodeCallback(pm2.restart.bind(pm2))(job.name).pipe(
               tap(() => console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(job.name)}`)),
             )),
           )),
@@ -347,13 +345,15 @@ function setStatus(key, value) {
   socket.emit('status', { status })
 }
 
-if (config.plex && config.plex.url) {
+if (config.plex && config.plex.token) {
+  setStatus('plex', 'authorized')
+  console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green('status=authorized')}`)
+} else if (config.plex && config.plex.url) {
   of(new Plex(config.plex)).pipe(
     mergeMap((plex) => interval(5000).pipe(
       mergeMap(() => from(plex.status())),
       tap(status => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`status=${status}`)}`)),
       tap(status => setStatus('plex', status)),
-      tap(status => status === 'authorized' && !config.plex.token && throwError('Valid PIN but empty token')),
       takeWhile(status => status === 'waiting'),
       takeLast(1),
       map(() => ({ ...config, plex: { ...config.plex, token: plex.token } })),
@@ -363,7 +363,7 @@ if (config.plex && config.plex.url) {
       )),
     )
   )).subscribe(
-    () => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green('status=authorized')}`),
+    () => {},
     (err) => {
       console.log(`${chalk.bgRed(chalk.black(' PLEX '))} err=${chalk.red(err)}`)
       setStatus('plex', 'error')
@@ -372,6 +372,8 @@ if (config.plex && config.plex.url) {
 } else {
   setStatus('plex', 'off')
 }
+
+ecosystem.apps.filter(job => job.name !== 'sensorr:web').forEach(job => pm2.stop(job.name))
 
 pm2.list((err, payload) => {
   if (!err) {
