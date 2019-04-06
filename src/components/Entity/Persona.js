@@ -143,6 +143,10 @@ export default class Persona extends PureComponent {
 
   componentDidUpdate(props) {
     if (!props.updatable && this.props.updatable) {
+      if (this.subscription) {
+        this.subscription.unsubscribe()
+      }
+
       this.bootstrap()
     }
   }

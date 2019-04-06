@@ -63,6 +63,10 @@ export default class Film extends PureComponent {
 
   componentDidUpdate(props) {
     if (props.entity.id !== this.props.entity.id) {
+      if (this.subscription) {
+        this.subscription.unsubscribe()
+      }
+
       this.bootstrap()
     }
   }
