@@ -239,7 +239,7 @@ api.post('/plex', function (req, res) {
             console.log(chalk.gray(JSON.stringify(config.plex, null, 2)))
           }),
           mergeMap(() => interval(5000).pipe(
-            mergeMap(() => from(plex.status())),
+            mergeMap(() => plex.status()),
             catchError(err => {
               console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
               setStatus('plex', 'error')
