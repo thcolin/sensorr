@@ -41,6 +41,20 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production'
       },
-    }
+    },
+    {
+      name: 'sensorr:sync',
+      cron: '0 1 * * *',
+      exec_mode: 'fork',
+      autorestart: false,
+      script: './bin/exec',
+      args: ['./bin/sensorr', 'sync'],
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+    },
   ],
 };

@@ -8,16 +8,11 @@ module.exports = class Plex {
     this.pin = options.pin || {}
     this.token = options.token || ''
 
-    this.auth = pinAuth()
     this.client = new PlexAPI({
       hostname: this.url.hostname,
       port: this.url.port || 32400,
       https: this.url.protocol === 'https:',
-      ...(this.token ? {
-        token: this.token,
-      } : {
-        authenticator: this.auth,
-      }),
+      authenticator: pinAuth({ token: this.token }),
       options: {
         identifier: '56dc3686-4a64-4e26-9389-4d04fe588850',
         product: app.name,
@@ -28,7 +23,7 @@ module.exports = class Plex {
   }
 
   register() {
-    return this.auth.getNewPin().then(pin => {
+    return this.client.authenticator.getNewPin().then(pin => {
       this.pin = pin
       return pin
     })
@@ -39,10 +34,14 @@ module.exports = class Plex {
       if (!this.pin.code) {
         reject('Empty PIN code')
       } else {
-        this.auth.checkPinForAuth(this.pin, (err, status) => {
+        this.client.authenticator.checkPinForAuth(this.pin, (err, status) => {
           if (err) {
             reject(err)
           } else {
+            if (status === 'authorized') {
+              this.token = this.client.authenticator.token
+            }
+
             resolve(status)
           }
         })

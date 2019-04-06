@@ -9,5 +9,13 @@
   "auth": {
     "username": "sensorr",
     "password": "sensorr"
+  },
+  "plex": {
+    "url": "",
+    "pin": {
+      "code": "",
+      "id": ""
+    },
+    "token": ""
   }
 }

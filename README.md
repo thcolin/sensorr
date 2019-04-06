@@ -117,6 +117,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
           <li>Simple configuration</li>
           <li>Secured WebUI (with <code>basic-auth</code>)</li>
           <li>Language aware, by default search on <a href="https://www.themoviedb.org/">TMDB</a> with first <code>window.navigator.languages</code></li>
+          <li>Plex synchronization, never inadvertently download a movie you already own !</li>
         </ul>
       </td>
     </tr>
@@ -177,6 +178,7 @@ Usage: sensorr [command] [options]
 Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
+  🔗 sync                Consider all movies from your Plex server as "archived"
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -208,9 +210,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `prefer`: `REMASTERED, [...]`
     * Export/Import `database`
     * Sync with `Plex`
-      * Sync `archived` movies available on `Plex` server
       * More features ?
-        * `Plex` manage all `medias`, we can retrieve them and detect `release` (`source`, `language`, `resolution`, ...) and download better if available, like `CouchPotato`
+        * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and download better if available, like `CouchPotato`
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
     * Display `Persona` director on `Movie`
     * Trending `studios`

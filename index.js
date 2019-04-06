@@ -14,11 +14,12 @@ const cors = require('cors')
 const compression = require('compression')
 const bauth = require('express-basic-auth')
 const { of, from, interval, throwError, bindNodeCallback } = require('rxjs')
-const { tap, map, mergeMap, takeWhile, takeLast, catchError } = require('rxjs/operators')
+const { tap, map, mergeMap, filter, delay, takeWhile, takeLast, catchError } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 const atob = require('atob')
 const escape = require('escape-string-regexp')
 const Plex = require('./shared/services/Plex')
+const ecosystem = require('./ecosystem.config')
 
 let template = null
 
@@ -116,10 +117,16 @@ api.post('/trigger', function (req, res) {
 
   pm2.list((err, jobs) => {
     if (!err) {
-      const job = jobs.filter(job => job.name !== 'sensorr:web' && job.name === `sensorr:${type}`).pop()
+      const job = (
+        jobs.filter(job => job.name !== 'sensorr:web' && job.name === `sensorr:${type}`).pop() ||
+        ecosystem.apps.filter(job => job.name !== 'sensorr:web' && job.name === `sensorr:${type}`).pop()
+      )
 
-      if (job && job.pid === 0) {
-        pm2.restart(job.name, err => {
+      if (job && job.pid) {
+       console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} Job already triggered`)
+       res.status(409).send({ message: 'Job already triggered', err, })
+      } else {
+        pm2[{ true: 'restart', false: 'start' }[job.pid === 0]]({ true: job.name, false: job }[job.pid === 0], err => {
           if (!err) {
             console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(job.name)}`)
             res.status(200).send({ message: `Trigger "${type}" job`, })
@@ -128,12 +135,6 @@ api.post('/trigger', function (req, res) {
             res.status(409).send({ message: `Error during "${type}" job pm2 restart`, err, })
           }
         })
-      } else if (!job) {
-        console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Unknown "${type}" job`)} ${chalk.gray(`sensorr:${type}`)}`)
-        res.status(400).send({ message: `Unknown pm2 "${type}" job`, })
-      } else {
-        console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`sensorr:${type}`)} ${err}`)
-        res.status(409).send({ message: 'Job already triggered', err, })
       }
     } else {
       console.log(`${chalk.bgRed(chalk.black(' TRIGGER '))} ${chalk.red(`Error on pm2 process list`)}`)
@@ -225,7 +226,7 @@ api.post('/plex', function (req, res) {
       of(new Plex(config.plex)).pipe(
         mergeMap(plex => from(plex.register()).pipe(
           catchError(err => {
-            console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+            console.log(`${chalk.bgRed(chalk.black(' PLEX '))} err=${chalk.red(err)}`)
             setStatus('plex', 'error')
             throwError({ code: 400, body: { err } })
           }),
@@ -241,7 +242,7 @@ api.post('/plex', function (req, res) {
           mergeMap(() => interval(5000).pipe(
             mergeMap(() => plex.status()),
             catchError(err => {
-              console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+              console.log(`${chalk.bgRed(chalk.black(' PLEX '))} err=${chalk.red(err)}`)
               setStatus('plex', 'error')
               throwError({ code: 400, body: { err } })
             }),
@@ -249,11 +250,21 @@ api.post('/plex', function (req, res) {
             tap(status => setStatus('plex', status)),
             takeWhile(status => status === 'waiting'),
             takeLast(1),
-            map(() => plex.auth.token),
-            tap(token => payload.token = token),
+            tap(() => payload.token = plex.token),
             mergeMap(() => bindNodeCallback(fs.writeFile)(file, JSON.stringify({ ...config, plex: payload }, null, 2))),
             mergeMap(err => err ? throwError({ code: 520, body: { err: 'Unable to write Plex configuration to config.json' } }) : of(null)),
             tap(() => config.plex = payload),
+            mergeMap(() => bindNodeCallback(pm2.list.bind(pm2))()),
+            map(jobs => (
+              jobs.filter(job => job.name === `sensorr:sync`).pop() ||
+              ecosystem.apps.filter(job => job.name === `sensorr:sync`).pop()
+            )),
+            filter(job => job),
+            mergeMap(job => bindNodeCallback(
+              pm2[{ true: 'restart', false: 'start' }[typeof job.pid !== 'undefined']].bind(pm2)
+            )({ true: job.name, false: job }[typeof job.pid !== 'undefined']).pipe(
+              tap(() => console.log(`${chalk.bgGreen(chalk.black(' TRIGGER '))} ${chalk.green(job.name)}`)),
+            )),
           )),
         )),
       )
@@ -263,7 +274,10 @@ api.post('/plex', function (req, res) {
     (err) => {
       console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red('error')}`)
       console.log(chalk.gray(JSON.stringify((err || {}).body, null, 2)))
-      res.status(err.code || 400).send(err.body || { err: 'Unknown error' })
+
+      if (!res.headersSent) {
+        res.status(err.code || 400).send(err.body || { err: 'Unknown error' })
+      }
     },
   )
 })
@@ -339,10 +353,10 @@ if (config.plex && config.plex.url) {
       mergeMap(() => from(plex.status())),
       tap(status => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green(`status=${status}`)}`)),
       tap(status => setStatus('plex', status)),
+      tap(status => status === 'authorized' && !config.plex.token && throwError('Valid PIN but empty token')),
       takeWhile(status => status === 'waiting'),
       takeLast(1),
-      map(() => plex.client.authToken),
-      map(token => ({ ...config, plex: { ...config.plex, token } })),
+      map(() => ({ ...config, plex: { ...config.plex, token: plex.token } })),
       mergeMap(payload => bindNodeCallback(fs.writeFile)(file, JSON.stringify(payload, null, 2)).pipe(
         mergeMap((err) => err ? throwError(err) : of(payload)),
         tap(payload => config = payload),
@@ -351,7 +365,7 @@ if (config.plex && config.plex.url) {
   )).subscribe(
     () => console.log(`${chalk.bgGreen(chalk.black(' PLEX '))} ${chalk.green('status=authorized')}`),
     (err) => {
-      console.log(`${chalk.bgRed(chalk.black(' PLEX '))} ${chalk.red(err)}`)
+      console.log(`${chalk.bgRed(chalk.black(' PLEX '))} err=${chalk.red(err)}`)
       setStatus('plex', 'error')
     },
   )

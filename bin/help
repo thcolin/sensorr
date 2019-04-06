@@ -3,6 +3,7 @@ Usage: sensorr [command] [options]
 Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
+  🔗 sync                Consider all movies from your Plex server as "archived"
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]

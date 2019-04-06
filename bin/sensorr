@@ -8,12 +8,13 @@ const spinners = require('cli-spinners')
 const filesize = require('filesize')
 const microtime = require('microtime')
 const { from, of, merge, interval, zip, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, mapTo, tap, filter, mergeMap, delay, pluck, takeWhile, catchError } = require('rxjs/operators')
+const { map, mapTo, tap, filter, mergeMap, delay, pluck, takeWhile, timeout, catchError } = require('rxjs/operators')
 const RxDB = require('rxdb')
 const Database = require('../shared/Database')
 const Documents = require('../shared/Documents')
 const Sensorr = require('../shared/Sensorr')
 const TMDB = require('../shared/services/TMDB')
+const Plex = require('../shared/services/Plex')
 const Transform = require('stream').Transform
 const studio = require('@studio/log')
 const StringifyTransform = require('@studio/ndjson/stringify')
@@ -48,14 +49,14 @@ async function main(sensorr) {
   if (argv.v || argv.version) {
     await version()
     await exit()
-  } else if (argv.h || argv.help || !['record', 'stalk'].includes(commands[0])) {
+  } else if (argv.h || argv.help || !['record', 'stalk', 'sync'].includes(commands[0])) {
     await help()
     await exit()
   }
 
   // Waiting feature [Using RxDB to only wrap remote (couch) endpoints #247](https://github.com/pubkey/rxdb/issues/247) to be implemented
   const db = await new Database({ name: `${__dirname}/db/sensorr`, adapter: 'leveldb' }).get()
-  const remote = `http://${sensorr.config.auth.username}:${sensorr.config.auth.username}@localhost:${parseInt(argv.p || argv.port || 5070)}`
+  const remote = `http://${sensorr.config.auth.username ? `${sensorr.config.auth.username}:${sensorr.config.auth.username}@` : ''}localhost:${parseInt(argv.p || argv.port || 5070)}`
   await synchronize()
 
   historize()
@@ -67,6 +68,9 @@ async function main(sensorr) {
       break
     case 'stalk':
       await stalk()
+      break
+    case 'sync':
+      await sync()
       break
   }
 
@@ -325,8 +329,8 @@ async function main(sensorr) {
         mergeMap(stars => zip(
           from(stars.filter(star => star.state === 'stalked')),
           interval(1000),
-          (a, b) => a),
-        ),
+          (star, i) => star,
+        )),
         mergeMap(star => from(tmdb.fetch(['person', star.id], { append_to_response: 'images,movie_credits' })).pipe(
           mergeMap(entity => from(db.stars.atomicUpsert(new Documents.Star(entity).normalize())).pipe(
             mapTo({ previous: star, current: new Documents.Star(entity).normalize() }),
@@ -348,5 +352,70 @@ async function main(sensorr) {
         },
       )
     )
+  }
+
+  async function sync() {
+    log('')
+
+    return await new Promise(resolve => {
+      if (config.plex && config.plex.token) {
+        const plex = new Plex(config.plex)
+        const tmdb = new TMDB({ key: config.tmdb, region: config.region })
+
+        log(`📺 `, `Looking for owned movies on ${chalk.inverse(plex.url)} Plex server ...`)
+
+        from(plex.client.query('/library/sections')).pipe(
+          mergeMap(payload => from(payload.MediaContainer.Directory.filter((directory) => directory.type === 'movie'))),
+          mergeMap(section => plex.client.query(`/library/sections/${section.key}/all`)),
+          tap(payload => log('🎞️ ', `Found ${chalk.bold(payload.MediaContainer.Metadata.length)} movies available on Plex server`)),
+          mergeMap(payload => from(payload.MediaContainer.Metadata)),
+          mergeMap(payload => from(plex.client.query(payload.key)).pipe(
+            map(payload => payload.MediaContainer.Metadata.pop().guid),
+            map(guid => guid.split('://').reduce(
+              (acc, curr, index, arr) => ['com.plexapp.agents.imdb', 'com.plexapp.agents.themoviedb'].includes(arr[0]) ?
+              { agent: arr[0], id: arr[1].split('?').shift() } :
+              null
+            )),
+            filter(guid => guid),
+            tap(guid => log('🔗 ', `Handle ${chalk.bold(JSON.stringify(guid))} guid from Plex server`)),
+            mergeMap(guid => of(guid).pipe(
+              mergeMap(guid => db.movies.findOne().where({ 'com.plexapp.agents.imdb': 'imdb_id', 'com.plexapp.agents.themoviedb': 'id' }[guid.agent]).eq(guid.id).exec()),
+              mergeMap(doc => doc ?
+                of(doc.toJSON()).pipe(
+                  tap(movie => movie.state === 'archived' && log('📼', `Sensorr movie ${chalk.inverse(movie.title)} already ${chalk.gray('archived')}`)),
+                  filter(movie => movie.state !== 'archived'),
+                  map(movie => ({ ...movie, time: Date.now(), state: 'archived' })),
+                ) :
+                of(guid).pipe(
+                  tap(guid => log('📭', `Missing ${chalk.inverse({ 'com.plexapp.agents.imdb': 'IMDB', 'com.plexapp.agents.themoviedb': 'TMDB' }[guid.agent])} movie ${chalk.gray(guid.id)}`)),
+                  mergeMap(guid => ({
+                    'com.plexapp.agents.themoviedb': of(guid.id),
+                    'com.plexapp.agents.imdb': from(tmdb.fetch(['find', guid.id], { external_source: 'imdb_id' })).pipe(map(payload => payload.movie_results.pop().id)),
+                  }[guid.agent])),
+                  mergeMap(id => tmdb.fetch(['movie', id], { append_to_response: 'alternative_titles,release_dates' })),
+                  map(entity => new Documents.Movie({ ...entity, state: 'archived' }, config.region).normalize()),
+                )
+              ),
+              mergeMap(movie => from(db.movies.atomicUpsert(movie)).pipe(mapTo(movie))),
+            )),
+            delay(2000),
+          ), null, 1),
+        ).subscribe(
+          (movie) => log('📼', `Sensorr movie ${chalk.inverse(movie.title)} is available on Plex server, will now be ${chalk.gray('archived')}`),
+          (err) => {
+            log('🚨', err)
+            resolve()
+          },
+          () => {
+            log('')
+            resolve()
+          },
+        )
+      } else {
+        log('🚨', 'Missing token, are you sure Plex server is connected with your Sensorr instance ?')
+        log('')
+        resolve()
+      }
+    })
   }
 }
