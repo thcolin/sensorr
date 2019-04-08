@@ -9,7 +9,7 @@ tcp.waitUntilUsed(5070, 1000, 60000)
   .then(
     () => {
       console.log(`job "${job}" working...`)
-      exec(job, function (err, stderr, stdout) {
+      exec(job, { maxBuffer: 1024 * 1024 }, function (err, stderr, stdout) {
         if (err) {
           console.error(`job "${job}" error: ${err}`)
           process.exit(1)
