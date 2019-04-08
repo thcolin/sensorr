@@ -1,6 +1,7 @@
 const X2J = require('xml2json-light')
 const unescape = require('unescape')
 const { request } = require('universal-rxjs-ajax')
+const { of } = require('rxjs')
 const { map, catchError } = require('rxjs/operators')
 
 module.exports = class XZNAB {
@@ -89,7 +90,7 @@ module.exports = class XZNAB {
       map(payload => camelize(payload)),
       catchError((e) => {
         console.warn(e)
-        return { items: [] }
+        return of({ items: [] })
       }),
     )
   }
