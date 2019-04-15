@@ -59,6 +59,7 @@ const styles = {
     margin: '0 0.125em',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   loading: {
     display: 'flex',

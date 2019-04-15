@@ -30,6 +30,7 @@ const styles = {
     fontSize: '2em',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   wrapper: {
     padding: '2em 0',

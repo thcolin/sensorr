@@ -28,6 +28,7 @@ const styles = {
     backgroundColor: theme.colors.shadows.grey,
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   poster: {
     height: '14em',

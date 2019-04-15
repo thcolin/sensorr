@@ -31,6 +31,7 @@ const styles = {
     fontSize: '2em',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   container: {
     margin: '2em 0'

@@ -31,6 +31,7 @@ const styles = {
     padding: '0.125em',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   label: {
     position: 'sticky',

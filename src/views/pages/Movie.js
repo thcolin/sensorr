@@ -72,6 +72,7 @@ const styles = {
     padding: '1em 0 0',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   badge: {
     cursor: 'pointer',

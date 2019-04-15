@@ -29,6 +29,7 @@ const styles = {
     width: '2em',
     userSelect: 'none',
     MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
   },
   link: {
     display: 'block',
