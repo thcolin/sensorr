@@ -151,6 +151,10 @@ api.post('/configure', function (req, res) {
     blackhole: body.blackhole,
     xznabs: Array.isArray(body.xznabs) ? body.xznabs : [],
     filter: (body.filter || '').toString(),
+    policy: {
+      restricted: ((body.policy || {}).restricted || {}),
+      prefered: ((body.policy || {}).prefered || {}),
+    },
     sort: ['seeders', 'peers', 'size'].includes(body.sort) ? body.sort : 'seeders',
     descending: !!body.descending,
     region: body.region,

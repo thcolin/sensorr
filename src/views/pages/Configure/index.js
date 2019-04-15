@@ -6,8 +6,7 @@ import Authentication from './blocks/Authentication'
 import TMDB from './blocks/TMDB'
 import Blackhole from './blocks/Blackhole'
 import XZNAB from './blocks/XZNAB'
-import Filter from './blocks/Filter'
-import Sort from './blocks/Sort'
+import Policy from './blocks/Policy'
 import Plex from './blocks/Plex'
 import sensorr from 'store/sensorr'
 import theme from 'theme'
@@ -29,6 +28,12 @@ export const styles = {
   title: {
     padding: '0 0 0.5em',
     fontSize: '2em',
+    fontWeight: 'bold',
+    color: theme.colors.black,
+  },
+  subtitle: {
+    padding: '0 0 0.25em',
+    fontSize: '1.5em',
     fontWeight: 'bold',
     color: theme.colors.black,
   },
@@ -180,10 +185,7 @@ class Configure extends PureComponent {
           <Plex values={values} handleChange={this.handleChange} />
           <Blackhole values={values} handleChange={this.handleChange} />
           <XZNAB values={values} handleChange={this.handleChange} />
-          <div style={styles.column}>
-            <Filter values={values} handleChange={this.handleChange} />
-            <Sort values={values} handleChange={this.handleChange} />
-          </div>
+          <Policy values={values} handleChange={this.handleChange} />
           <button type="submit" style={{ ...styles.button, marginTop: '1em' }}>
             💾&nbsp;&nbsp;Save
           </button>

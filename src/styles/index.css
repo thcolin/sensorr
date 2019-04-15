@@ -12,6 +12,7 @@ body {
   position: relative;
   font-size: 1rem;
   font-family: 'Raleway';
+  list-style: none;
 }
 
 b, strong {

@@ -209,12 +209,12 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `avoid`: `READNFO, [...]`
         * `prefer`: `REMASTERED, [...]`
     * Export/Import `database`
-    * Sync with `Plex`
-      * More features ?
-        * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and download better if available, like `CouchPotato`
+    * Replace `Plex` available releases by better if available, like `CouchPotato`
+      * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
     * Display `Persona` director on `Movie`
     * Trending `studios`
+    * Trending `sagas` (`TMDB API 4` lists ?)
     * Responsive design / mobile UI-UX
 * `CLI`
   * Download "grouped" by `title` and not `xznab` (should reduce timeout error on some `xznab`)
