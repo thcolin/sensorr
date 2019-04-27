@@ -1,3 +1,5 @@
+const { clean } = require('./utils/string')
+
 class Movie {
   constructor(payload, region) {
     this.payload = payload
@@ -22,13 +24,8 @@ class Movie {
               (this.payload.alternative_titles.titles || [])
                 .filter(title => this.countries.includes(title.iso_3166_1))
                 .map(title => title.title)
-        ).map(title => title
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^\sa-zA-Z0-9]/g, ' ')
-          .replace(/ +/g, ' ')
-        ))].filter((title, index, titles) => !titles.some(query => query !== title && new RegExp(`^${query}`).test(title))),
+          ).map(title => clean(title))),
+        ].filter((title, index, titles) => !titles.some(query => query !== title && new RegExp(`^${query}`).test(title))),
         years: [
           ...new Set(
             this.payload.years ?

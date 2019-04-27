@@ -23,7 +23,7 @@ const XZNAB = ({ values, handleChange, ...props }) => (
       <li>Cardigann: <code style={styles.code}>http://localhost:5060/torznab/xxx/api</code> (don't forget <code style={styles.code}>/api</code> after copied Cardigann Torznab link !)</li>
     </ul>
     {(values.xznabs.length ? values.xznabs : [{ name: '', url: '', key: '' }]).map((xznab, index, self) => (
-      <div style={styles.column} key={index}>
+      <div style={{ ...styles.column, alignItems: 'center' }} key={index}>
         <input
           type="checkbox"
           title={xznab.disabled ? 'Disabled' : 'Enabled'}

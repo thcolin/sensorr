@@ -11,8 +11,8 @@
     "password": "sensorr"
   },
   "policy": {
-    "restricted": {},
-    "prefered": {}
+    "prefer": {},
+    "avoid": {}
   },
   "plex": {
     "url": "",

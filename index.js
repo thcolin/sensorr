@@ -152,8 +152,8 @@ api.post('/configure', function (req, res) {
     xznabs: Array.isArray(body.xznabs) ? body.xznabs : [],
     filter: (body.filter || '').toString(),
     policy: {
-      restricted: ((body.policy || {}).restricted || {}),
-      prefered: ((body.policy || {}).prefered || {}),
+      prefer: ((body.policy || {}).prefer || {}),
+      avoid: ((body.policy || {}).avoid || {}),
     },
     sort: ['seeders', 'peers', 'size'].includes(body.sort) ? body.sort : 'seeders',
     descending: !!body.descending,

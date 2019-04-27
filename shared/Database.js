@@ -1,4 +1,5 @@
 const RxDB = require('rxdb')
+const { clean } = require('./utils/string')
 
 RxDB.plugin(require('pouchdb-adapter-idb'))
 RxDB.plugin(require('pouchdb-adapter-http'))
@@ -161,13 +162,7 @@ const MIGRATIONS = {
     2: (doc) => {
       doc.terms = {
         titles: [
-          ...new Set([doc.title, doc.original_title].map(title => title
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^\sa-zA-Z0-9]/g, ' ')
-            .replace(/ +/g, ' ')
-          )
+          ...new Set([doc.title, doc.original_title].map(title => clean(title))
         )],
         years: [doc.year],
       }

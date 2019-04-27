@@ -28,7 +28,6 @@ require('events').EventEmitter.defaultMaxListeners = 15
 
 const commands = _
 const log = console.error
-const SIMILARITY_MINIMUM_SCORE = 0.6
 
 RxDB.plugin(require('pouchdb-adapter-leveldb'))
 

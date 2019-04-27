@@ -89,7 +89,7 @@ module.exports = class XZNAB {
       }),
       map(payload => camelize(payload)),
       catchError((e) => {
-        console.warn(e)
+        console.warn('XZNAB Search error :', e)
         return of({ items: [] })
       }),
     )

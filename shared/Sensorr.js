@@ -1,13 +1,13 @@
 const { from, of, throwError } = require('rxjs')
 const { tap, map, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, catchError } = require('rxjs/operators')
 const oleoo = require('oleoo')
-const similarity = require('string-similarity')
+const string = require('./utils/string')
 const XZNAB = require('./services/XZNAB')
 const fallback = require('../config.default.json')
 
 class Sensorr {
   constructor(config, options = {}) {
-    this.SIMILARITY_MINIMUM_SCORE = 0.6
+    this.MINIMUM_SIMILARITY = 0.6
 
     this.options = options
 
@@ -25,47 +25,45 @@ class Sensorr {
     this.xznabs = (this.config.xznabs || []).filter(xznab => !xznab.disabled).map(xznab => new XZNAB(xznab, options))
   }
 
-  filter(query) {
-    return (release) => {
-      return query.split(',').length === query.split(',')
-        .map(input => {
-          const payload = {
-            pattern: input.trim(),
-            key: 'original',
-            negate: false,
-          }
+  score(release) {
+    return Object.keys(this.config.policy.prefer || {})
+      .map(tag => this.config.policy.prefer[tag].map(
+        (keyword, index, arr) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword) ? arr.length - index : 0)
+      )
+      .reduce((score, value) => score += parseInt(value), 0)
+  }
 
-          if (payload.pattern.charAt(0) === '!') {
-            payload.negate = true
-            payload.pattern = payload.pattern.slice(1)
-          }
+  filter(release) {
+    return Object.keys(this.config.policy.avoid || {})
+      .map(tag => {
+        const intersection = this.config.policy.avoid[tag].filter(
+          keyword => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
+        )
 
-          if (payload.pattern.match(/=/)) {
-            payload.key = payload.pattern.split('=')[0]
-            payload.pattern = payload.pattern.split('=')[1]
-          }
+        if (intersection.length) {
+          throw new Error(`Release doesn't pass configured policy (${tag}=${intersection.join(', ')})`)
+        }
 
-          return payload
-        })
-        .map(({ negate, pattern, key }) => {
-          const result = new RegExp(`(${pattern})`, 'i').test((release.meta[key] || '').toString())
-          return negate ? !result : result
-        })
-        .reduce((total, current) => total += current, 0)
-    }
+        return true
+      })
+      .every(bool => bool)
   }
 
   sort(key, descending) {
     return (a, b) => {
-      if (descending) {
-        if (a[key] < b[key]) return 1
-        if (a[key] > b[key]) return -1
-      } else {
-        if (a[key] < b[key]) return -1
-        if (a[key] > b[key]) return 1
+      if (a.score === b.score) {
+        if (descending) {
+          if (a[key] < b[key]) return 1
+          if (a[key] > b[key]) return -1
+        } else {
+          if (a[key] < b[key]) return -1
+          if (a[key] > b[key]) return 1
+        }
+
+        return 0
       }
 
-      return 0
+      return a.score < b.score ? 1 : -1
     }
   }
 
@@ -102,28 +100,23 @@ class Sensorr {
           })),
           map(release => ({
             ...release,
-            score: similarity.compareTwoStrings(
-              title,
-              release.meta.title
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^\sa-zA-Z0-9]/g, ' ')
-                .replace(/ +/g, ' ')
-              ).toFixed(2),
-            valid: true,
-            warning: 0,
+            score: this.score(release),
           })),
+          map(release => {
+            const similarity = string.similarity(title, string.clean(release.meta.title)).toFixed(2)
+
+            return ({
+              ...release,
+              similarity,
+              valid: (similarity >= this.MINIMUM_SIMILARITY),
+              reason: `Similarity too low : ${similarity} (${string.clean(release.meta.title)} / ${title})`,
+              warning: 2,
+            })
+          }),
           map(release => !release.valid ? release : ({
             ...release,
             valid: release.seeders,
             reason: `No seeders (0)`,
-            warning: 2,
-          })),
-          map(release => !release.valid ? release : ({
-            ...release,
-            valid: (release.score >= this.SIMILARITY_MINIMUM_SCORE),
-            reason: `Score too low : ${release.score}`,
             warning: 2,
           })),
           map(release => !release.valid ? release : ({
@@ -140,12 +133,27 @@ class Sensorr {
             }`,
             warning: 2,
           })),
-          map(release => !release.valid ? release : ({
-            ...release,
-            valid: this.filter(this.config.filter)(release),
-            reason: `Release doesn't pass configured filtering (${this.config.filter})`,
-            warning: 1,
-          })),
+          map(release => {
+            if (!release.valid) {
+              return release
+            } else {
+              try {
+                return ({
+                  ...release,
+                  valid: this.filter(release),
+                  reason: null,
+                  warning: 0,
+                })
+              } catch (e) {
+                return ({
+                  ...release,
+                  valid: false,
+                  reason: e.message,
+                  warning: 1,
+                })
+              }
+            }
+          }),
           map(release => ({
             ...release,
             reason: release.valid ? null : release.reason,
@@ -157,9 +165,10 @@ class Sensorr {
       ), null, 1),
       toArray(),
       map(releases => Object
-        .values(releases.reduce((results, release) => ({ ...results, [release.guid]: [...(results[release.guid] || []), release] }), {}))
+        .values(releases.reduce((resullts, release) => ({ ...resullts, [release.guid]: [...(resullts[release.guid] || []), release] }), {}))
         .map(results => results.sort((a, b) => b.score - a.score).shift())
       ),
+      map(releases => releases.sort(this.sort(this.config.sort, this.config.descending))),
     )
   }
 }

@@ -76,16 +76,16 @@ const styles = {
   },
   rows: {
     title: {
-      width: '60%',
+      width: '56%',
     },
     site: {
       width: '12%',
     },
     peers: {
-      width: '6%',
+      width: '8%',
     },
     seeders: {
-      width: '8%',
+      width: '10%',
     },
     size: {
       width: '8%',
@@ -126,9 +126,10 @@ class Releases extends PureComponent {
       loading: true,
       sort: sensorr.config.sort,
       descending: sensorr.config.descending,
-      filter: sensorr.config.filter,
+      filter: '',
     }
 
+    this.filter = this.filter.bind(this)
     this.handleSortChange = this.handleSortChange.bind(this)
     this.handleQueryChange = this.handleQueryChange.bind(this)
     this.handleGrabClick = this.handleGrabClick.bind(this)
@@ -148,6 +149,10 @@ class Releases extends PureComponent {
         setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
       }
     )
+  }
+
+  filter(release) {
+    return this.state.filter.split(',').every(query => new RegExp(query.trim(), 'i').test(release.title))
   }
 
   handleQueryChange(e) {
@@ -214,31 +219,46 @@ class Releases extends PureComponent {
                 style={{ ...styles.column, ...styles.rows.title, cursor: 'pointer', }}
                 onClick={() => this.handleSortChange('title')}
               >
-                Title
+                {sort === 'title' && (
+                  <span>{descending ? '🔻' : '🔺'} </span>
+                )}
+                <span>Title</span>
               </div>
               <div
                 style={{ ...styles.column, ...styles.rows.site, cursor: 'pointer', textAlign: 'center', }}
                 onClick={() => this.handleSortChange('site')}
               >
-                Source
+                {sort === 'site' && (
+                  <span>{descending ? '🔻' : '🔺'} </span>
+                )}
+                <span>Source</span>
               </div>
               <div
                 style={{ ...styles.column, ...styles.rows.peers, cursor: 'pointer', textAlign: 'center', }}
                 onClick={() => this.handleSortChange('peers')}
               >
-                Peers
+                {sort === 'peers' && (
+                  <span>{descending ? '🔻' : '🔺'} </span>
+                )}
+                <span>Peers</span>
               </div>
               <div
                 style={{ ...styles.column, ...styles.rows.seeders, cursor: 'pointer', textAlign: 'center', }}
                 onClick={() => this.handleSortChange('seeders')}
               >
-                Seeders
+                {sort === 'seeders' && (
+                  <span>{descending ? '🔻' : '🔺'} </span>
+                )}
+                <span>Seeders</span>
               </div>
               <div
                 style={{ ...styles.column, ...styles.rows.size, cursor: 'pointer', textAlign: 'center', }}
                 onClick={() => this.handleSortChange('size')}
               >
-                Size
+                {sort === 'size' && (
+                  <span>{descending ? '🔻' : '🔺'} </span>
+                )}
+                <span>Size</span>
               </div>
               <div style={{ ...styles.column, ...styles.rows.grab, textAlign: 'center', }}>
                 Grab
@@ -252,21 +272,19 @@ class Releases extends PureComponent {
                 style={styles.input}
                 placeholder="Filter..."
               />
-              <span style={styles.clear} onClick={() => this.handleQueryChange({ target: { value: !!filter ? '' : sensorr.config.filter } })}>
-                {!!filter ? (
+              <span style={styles.clear} onClick={() => this.handleQueryChange({ target: { value: '' } })}>
+                {filter && (
                   <Clear />
-                ) : (
-                  <span style={{ fontSize: '1.5em' }}>🔙</span>
                 )}
               </span>
             </div>
           </div>
-          {!loading && !releases.filter(sensorr.filter(filter)).length ? (
+          {!loading && !releases.filter(this.filter).length ? (
             <div style={styles.row}>
               <Empty />
             </div>
           ) : (
-            releases.filter(sensorr.filter(filter)).sort(sensorr.sort(sort, descending)).map((release, index) => (
+            releases.filter(this.filter).sort(sensorr.sort(sort, descending)).map((release, index) => (
               <div key={index} className={css(suits.striped)} style={styles.row}>
                 <div
                   title={release.valid ? `Score : ${release.score}` : release.reason}

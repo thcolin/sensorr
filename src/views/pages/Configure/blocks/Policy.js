@@ -26,12 +26,12 @@ const Behavior = ({ values, behavior, handleChange }) => {
   const [keyword, setKeyword] = useState(Object.keys(rules[tag]).filter(k => !(values.policy[behavior][tag] || []).includes(k)).shift() || '')
 
   return (
-    <div style={{ prefered: { margin: '0 1em 0 0' }, restricted: { margin: '0 0 0 1em' } }[behavior]}>
+    <div style={{ prefer: { margin: '0 1em 0 0' }, avoid: { margin: '0 0 0 1em' } }[behavior]}>
       <h2 style={{ ...styles.subtitle, textTransform: 'capitalize' }}>{behavior}</h2>
       <p style={styles.paragraph}>
         {{
-          prefered: 'Here you can specify and order prefered keywords, top ones will get a better "score" when choosing appropriate release',
-          restricted: 'Here you can specify custom restricted keywords, if any is found in a release title, this one will be filtered',
+          prefer: 'Here you can specify and order prefered keywords, top ones will get a better "score" when choosing appropriate release',
+          avoid: 'Here you can specify custom avoided keywords, if any is found in a release title, this one will be filtered',
         }[behavior]}
       </p>
       <div style={{ ...styles.column, alignItems: 'center' }}>
@@ -68,8 +68,8 @@ const Behavior = ({ values, behavior, handleChange }) => {
           }}
         >
           {{
-            prefered: '👍',
-            restricted: '👎',
+            prefer: '👍',
+            avoid: '👎',
           }[behavior]}
         </button>
       </div>
@@ -78,11 +78,11 @@ const Behavior = ({ values, behavior, handleChange }) => {
         const SortableKeywords = SortableContainer(({ items }) => (
           <ul
             style={{
-              prefered: {
+              prefer: tag === 'flags' ? {} : {
                 listStyle: 'decimal',
                 padding: '0 0 0 2em',
               },
-              restricted: {},
+              avoid: {},
             }[behavior]}
           >
             {items.map((value, index) => (
@@ -90,7 +90,7 @@ const Behavior = ({ values, behavior, handleChange }) => {
                 key={index}
                 index={index}
                 value={value}
-                disabled={behavior === 'restricted'}
+                disabled={behavior === 'avoid' || tag === 'flags'}
                 onRemoveClick={() => handleChange('policy', ({
                   ...values.policy,
                   [behavior]: {
@@ -103,35 +103,33 @@ const Behavior = ({ values, behavior, handleChange }) => {
           </ul>
         ))
 
-        return (
-          <>
-            <h3
-              key="title"
-              style={{
-                textTransform: 'capitalize',
-                padding: '0.5em 0',
-                fontSize: '1.125em',
-              }}
-            >
-              <strong>{tag}</strong>
-            </h3>
-            <div key="list">
-              <SortableKeywords
-                items={values.policy[behavior][tag]}
-                lockAxis="y"
-                distance={10}
-                lockToContainerEdges={true}
-                onSortEnd={({ oldIndex, newIndex }) => handleChange('policy', ({
-                  ...values.policy,
-                  [behavior]: {
-                    ...values.policy[behavior],
-                    [tag]: reorder(values.policy[behavior][tag], oldIndex, newIndex),
-                  }
-                }))}
-              />
-            </div>
-          </>
-        )
+        return [
+          <h3
+            key="title"
+            style={{
+              textTransform: 'capitalize',
+              padding: '0.5em 0',
+              fontSize: '1.125em',
+            }}
+          >
+            <strong>{tag}</strong>
+          </h3>,
+          <div key="list">
+            <SortableKeywords
+              items={values.policy[behavior][tag]}
+              lockAxis="y"
+              distance={10}
+              lockToContainerEdges={true}
+              onSortEnd={({ oldIndex, newIndex }) => handleChange('policy', ({
+                ...values.policy,
+                [behavior]: {
+                  ...values.policy[behavior],
+                  [tag]: reorder(values.policy[behavior][tag], oldIndex, newIndex),
+                }
+              }))}
+            />
+          </div>
+        ]
       })}
     </div>
   )
@@ -172,11 +170,12 @@ class Policy extends PureComponent {
               Descending
             </label>
           </div>
+          <br/>
+          <br/>
         </div>
-        <br/>
         <div style={styles.column}>
-          <Behavior behavior="prefered" values={values} handleChange={handleChange} />
-          <Behavior behavior="restricted" values={values} handleChange={handleChange} />
+          <Behavior behavior="prefer" values={values} handleChange={handleChange} />
+          <Behavior behavior="avoid" values={values} handleChange={handleChange} />
         </div>
       </div>
     )
