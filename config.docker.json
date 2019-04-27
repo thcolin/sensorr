@@ -12,7 +12,7 @@
   },
   "policy": {
     "prefer": {},
-    "avoid": {},
+    "avoid": {}
   },
   "plex": {
     "url": "",
