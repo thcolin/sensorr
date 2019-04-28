@@ -27,10 +27,14 @@ class Sensorr {
 
   score(release) {
     return Object.keys(this.config.policy.prefer || {})
-      .map(tag => this.config.policy.prefer[tag].map(
-        (keyword, index, arr) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword) ? arr.length - index : 0)
+      .map(tag => this.config.policy.prefer[tag]
+        .map((keyword, index, arr) =>
+          (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword) ?
+          (tag === 'flags' ? 1 : (arr.length - index) / arr.length) : 0
+        )
+        .reduce((score, value) => score += parseInt(value * 100), 0)
       )
-      .reduce((score, value) => score += parseInt(value), 0)
+      .reduce((score, value) => score += value, 0)
   }
 
   filter(release) {
@@ -109,7 +113,7 @@ class Sensorr {
               ...release,
               similarity,
               valid: (similarity >= this.MINIMUM_SIMILARITY),
-              reason: `Similarity too low : ${similarity} (${string.clean(release.meta.title)} / ${title})`,
+              reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${title})`,
               warning: 2,
             })
           }),
@@ -166,7 +170,7 @@ class Sensorr {
       toArray(),
       map(releases => Object
         .values(releases.reduce((resullts, release) => ({ ...resullts, [release.guid]: [...(resullts[release.guid] || []), release] }), {}))
-        .map(results => results.sort((a, b) => b.score - a.score).shift())
+        .map(results => results.sort((a, b) => a.valid ? a : b).shift())
       ),
       map(releases => releases.sort(this.sort(this.config.sort, this.config.descending))),
     )
