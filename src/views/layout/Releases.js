@@ -129,6 +129,7 @@ class Releases extends PureComponent {
       filter: '',
     }
 
+    this.subscription = null
     this.filter = this.filter.bind(this)
     this.handleSortChange = this.handleSortChange.bind(this)
     this.handleQueryChange = this.handleQueryChange.bind(this)
@@ -138,7 +139,24 @@ class Releases extends PureComponent {
   componentDidMount() {
     setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
 
-    sensorr.look(new Movie(this.props.movie, global.config.region || localStorage.getItem('region')).normalize()).subscribe(
+    this.subscription = sensorr.look(
+      new Movie(this.props.movie, global.config.region || localStorage.getItem('region')).normalize(),
+      false,
+      {
+        search: (xznab, title) => console.log('🔫 ', `Looking for "${title}" on "${xznab.name}" XZNAB`),
+        timeout: (xznab, title) => console.log('⌛ ', `Request for "${title}" on "${xznab.name}" XZNAB timed out ! Retrying...`),
+        found: (xznab, title, items) => console.log('🎞️ ', `Found "${items.length}" releases`),
+        release: (xznab, title, release) => console.log('*', release.title, release.valid ? `(${release.score})` : release.reason),
+        sorted: (releases) => {
+          if (releases.length) {
+            console.log('🚧', `Filtering and ordering "${releases.length}" releases`, `[${this.state.sort}]`, { true: '🔻', false: '🔺' }[this.state.descending])
+          } else {
+            console.log('📭', `️Sorry, no valid releases found`)
+          }
+        },
+      },
+    )
+    .subscribe(
       (releases) => this.setState({ releases }),
       (err) => {
         this.setState({ loading: false })
@@ -149,6 +167,12 @@ class Releases extends PureComponent {
         setTimeout(() => document.getElementById('releases').scrollIntoView(), 100)
       }
     )
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+    }
   }
 
   filter(release) {

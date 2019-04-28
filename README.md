@@ -219,7 +219,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Trending `sagas` (`TMDB API 4` lists ?)
     * Responsive design / mobile UI-UX
 * `CLI`
-  * Download "grouped" by `title` and not `xznab` (should reduce timeout error on some `xznab`)
   * Summary command result
     * `stalk`:
       ```

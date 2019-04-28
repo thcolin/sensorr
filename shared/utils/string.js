@@ -7,5 +7,6 @@ module.exports = {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\sa-zA-Z0-9]/g, ' ')
-    .replace(/ +/g, ' '),
+    .replace(/ +/g, ' ')
+    .trim(),
 }

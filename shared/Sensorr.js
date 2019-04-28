@@ -1,5 +1,5 @@
 const { from, of, throwError } = require('rxjs')
-const { tap, map, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, catchError } = require('rxjs/operators')
+const { tap, map, delay, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, catchError } = require('rxjs/operators')
 const oleoo = require('oleoo')
 const string = require('./utils/string')
 const XZNAB = require('./services/XZNAB')
@@ -72,19 +72,21 @@ class Sensorr {
   }
 
   look(movie, strict = false, hooks = {}) {
-    return from(this.xznabs).pipe(
-      mergeMap(xznab => from(movie.terms.titles).pipe(
-        mergeMap(title => of(title).pipe(
-          tap(title => typeof hooks.search === 'function' && hooks.search(xznab, title)),
-          mergeMap(title => xznab.search(title)),
-          timeout(10000),
-          catchError(e => {
-            if (e.name === 'TimeoutError' && typeof hooks.timeout === 'function') {
-              hooks.timeout(xznab, title)
-            }
+    return from(movie.terms.titles).pipe(
+      mergeMap(title => from(this.xznabs).pipe(
+        mergeMap(xznab => of(xznab).pipe(
+          tap(xznab => typeof hooks.search === 'function' && hooks.search(xznab, title)),
+          delay(2000),
+          mergeMap(xznab => xznab.search(title).pipe(
+            timeout(10000),
+            catchError(e => {
+              if (e.name === 'TimeoutError' && typeof hooks.timeout === 'function') {
+                hooks.timeout(xznab, title)
+              }
 
-            return throwError(e)
-          }),
+              return throwError(e)
+            }),
+          )),
           retry(1),
           catchError(() => of({ items: [] })),
           pluck('items'),
@@ -107,13 +109,16 @@ class Sensorr {
             score: this.score(release),
           })),
           map(release => {
-            const similarity = string.similarity(title, string.clean(release.meta.title)).toFixed(2)
+            const similarity = movie.terms.titles
+              .map(title => string.similarity(title, string.clean(release.meta.title)).toFixed(2))
+              .sort((a, b) => b - a)
+              .shift()
 
             return ({
               ...release,
               similarity,
               valid: (similarity >= this.MINIMUM_SIMILARITY),
-              reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${title})`,
+              reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${movie.terms.titles.join(', ')})`,
               warning: 2,
             })
           }),

@@ -232,8 +232,8 @@ async function main(sensorr) {
 
     const hooks = {
       search: (xznab, title) => {
-        log('☠️ ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
-        logger.fetch(`☠️ Looking for **${title}** on **${xznab.name}** XZNAB`, { context, xznab, title })
+        log('🔫 ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
+        logger.fetch(`🔫 Looking for **${title}** on **${xznab.name}** XZNAB`, { context, xznab, title })
       },
       timeout: (xznab, title) => {
         log('⌛ ', `Request for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB timed out ! Retrying...`)
