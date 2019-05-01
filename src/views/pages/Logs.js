@@ -155,17 +155,18 @@ class Logs extends PureComponent {
       const subscription = query.$.subscribe(records => this.setState({
         loading: false,
         records: Object.values(records
-          .map(record => record.toJSON())
-          .reduce((acc, record) => ({
-            ...acc,
-            [record.record]: {
-              ...(acc[record.record] || {}),
-              time: record.time,
-              ...(typeof (record.data || {}).success !== 'undefined' ? { success: record.data.success } : {}),
-              ...(typeof (record.data || {}).movie !== 'undefined' ? { movie: record.data.movie } : {}),
-              logs: [...(acc[record.record] || { logs: [] }).logs, record].sort((a, b) => a.time - b.time),
-            }
-          }), {}))
+            .map(record => record.toJSON())
+            .reduce((acc, record) => ({
+              ...acc,
+              [record.record]: {
+                ...(acc[record.record] || {}),
+                time: record.time,
+                ...(typeof (record.data || {}).success !== 'undefined' ? { success: record.data.success } : {}),
+                ...(typeof (record.data || {}).movie !== 'undefined' ? { movie: record.data.movie } : {}),
+                logs: [...(acc[record.record] || { logs: [] }).logs, record].sort((a, b) => a.time - b.time),
+              }
+            }), {})
+          )
           .sort((a, b) => b.time - a.time),
       }))
 

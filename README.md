@@ -198,7 +198,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Refactor `rxdb` to `pouchdb` (remote) on `/bin/sensorr` and reduce db count (from `browser-server-cli` to `browser-server` only)
     * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
     * Filter `adult` content (like `/star/1412545`) - optional

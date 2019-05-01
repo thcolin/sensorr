@@ -3,13 +3,11 @@ const fs = require('fs')
 const path = require('path')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
-const ora = require('ora')
-const spinners = require('cli-spinners')
 const filesize = require('filesize')
 const microtime = require('microtime')
 const { from, of, merge, interval, zip, throwError, bindNodeCallback, EMPTY } = require('rxjs')
 const { map, mapTo, tap, filter, mergeMap, delay, pluck, takeWhile, timeout, catchError } = require('rxjs/operators')
-const RxDB = require('rxdb')
+const PouchDB = require('pouchdb')
 const Database = require('../shared/Database')
 const Documents = require('../shared/Documents')
 const Sensorr = require('../shared/Sensorr')
@@ -29,7 +27,7 @@ require('events').EventEmitter.defaultMaxListeners = 15
 const commands = _
 const log = console.error
 
-RxDB.plugin(require('pouchdb-adapter-leveldb'))
+PouchDB.plugin(require('pouchdb-find'))
 
 global.fetch = require('node-fetch')
 
@@ -53,13 +51,10 @@ async function main(sensorr) {
     await exit()
   }
 
-  // Waiting feature [Using RxDB to only wrap remote (couch) endpoints #247](https://github.com/pubkey/rxdb/issues/247) to be implemented
-  const db = await new Database({ name: `${__dirname}/db/sensorr`, adapter: 'leveldb' }).get()
-  const remote = `http://${sensorr.config.auth.username ? `${sensorr.config.auth.username}:${sensorr.config.auth.username}@` : ''}localhost:${parseInt(argv.p || argv.port || 5070)}`
-  await synchronize()
+  const logger = studio('sensorr')
+  const db = await new Database({ name: `http://localhost:${parseInt(argv.p || argv.port || 5070)}/db`, auth: sensorr.config.auth }).get(Database._POUCHDB)
 
   historize()
-  const logger = studio('sensorr')
 
   switch (commands[0]) {
     case 'record':
@@ -83,8 +78,11 @@ async function main(sensorr) {
         readableObjectMode: true,
         writableObjectMode: true,
         transform: ({ data: { context, ...data }, ...entry }, encoding, callback) => {
-          db.records.atomicUpsert({
-            uuid: uuidv4(),
+          const uuid = uuidv4()
+
+          db.records.put({
+            _id: uuid,
+            uuid,
             ...context,
             data,
             time: microtime.now() / 1000,
@@ -98,56 +96,7 @@ async function main(sensorr) {
       .pipe(history)
   }
 
-  async function synchronize (keep = true) {
-    return new Promise(resolve => {
-      const loading = ora({
-        spinner: spinners.earth,
-        text: `Syncing database with ${chalk.gray(remote)} ...`,
-      })
-
-      const replications = Object.keys(Database.SCHEMAS).map(schema => db[schema].sync({
-        remote: `${remote}/db/sensorr-${schema}`,
-        waitForLeadership: true,
-        options: {
-          live: false,
-          retry: true,
-        },
-      }))
-
-      merge(...replications.map(replication => replication.error$)).subscribe(err => {
-        loading.stopAndPersist({ symbol: '🚨', text: `Error during Database syncing with ${chalk.gray(remote)} : ${err}` })
-        exit(1)
-      })
-
-      merge(...replications.map(replication => replication.complete$.pipe(
-        takeWhile(res => !res || !res.pull.ok),
-      )))
-      .subscribe(
-        () => loading.start(),
-        null,
-        () => {
-          if (keep) {
-            Object.keys(Database.SCHEMAS).forEach(schema =>
-              db[schema].sync({ remote: `${remote}/db/sensorr-${schema}`, options: { live: true, retry: true } })
-            )
-          }
-
-          setTimeout(() => {
-            loading.stopAndPersist({ symbol: '🏛️ ', text: `Database synced with ${chalk.gray(remote)} !` })
-            resolve()
-          }, 500)
-        }
-      )
-    })
-  }
-
   async function exit(code = 0) {
-    try { // else, "UnhandledPromiseRejectionWarning: ReferenceError: db is not defined", `typeof db !== 'undefined'` doesn't work
-      if (db) {
-        await synchronize(false)
-      }
-    } catch(e) {}
-
     process.exit(code)
   }
 
@@ -175,11 +124,12 @@ async function main(sensorr) {
   async function record() {
     const session = uuidv1()
 
-    db.sessions.atomicUpsert({ uuid: session, time: microtime.now() / 1000 })
+    db.sessions.put({ _id: session, uuid: session, time: microtime.now() / 1000 })
 
     return await new Promise(resolve =>
-      from(db.movies.dump()).pipe(
-        pluck('docs'),
+      from(db.movies.allDocs({ include_docs: true })).pipe(
+        pluck('rows'),
+        map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
         tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
         map(movies => movies.sort((a, b) => a.time - b.time)),
         mergeMap(movies => from(movies)),
@@ -306,7 +256,8 @@ async function main(sensorr) {
         )),
       )),
       mergeMap(file => of(null).pipe(
-        mergeMap(() => db.movies.atomicUpsert({
+        mergeMap(() => db.movies.put({
+          _id: movie.id,
           ...movie,
           time: Date.now(),
           state: 'archived',
@@ -322,16 +273,21 @@ async function main(sensorr) {
     log('')
 
     return await new Promise(resolve =>
-      from(db.stars.dump()).pipe(
-        pluck('docs'),
+      from(db.stars.allDocs({ include_docs: true })).pipe(
+        pluck('rows'),
+        map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
         tap(stars => stars.filter(star => star.state === 'stalked').length ? '' : log('🧐', `Oh. It seems you're not stalking anyone.`)),
         mergeMap(stars => zip(
           from(stars.filter(star => star.state === 'stalked')),
           interval(1000),
           (star, i) => star,
         )),
-        mergeMap(star => from(tmdb.fetch(['person', star.id], { append_to_response: 'images,movie_credits' })).pipe(
-          mergeMap(entity => from(db.stars.atomicUpsert(new Documents.Star(entity).normalize())).pipe(
+        mergeMap(star => from(tmdb.fetch(['person', star._id], { append_to_response: 'images,movie_credits' })).pipe(
+          catchError((err) => {
+            log('🚨', { star, err })
+            return EMPTY
+          }),
+          mergeMap(entity => from(db.stars.put({ ...star, ...new Documents.Star(entity).normalize() })).pipe(
             mapTo({ previous: star, current: new Documents.Star(entity).normalize() }),
           )),
           delay(2000),
@@ -378,12 +334,14 @@ async function main(sensorr) {
             filter(guid => guid),
             tap(guid => log('🔗 ', `Handle ${chalk.bold(JSON.stringify(guid))} guid from Plex server`)),
             mergeMap(guid => of(guid).pipe(
-              mergeMap(guid => db.movies.findOne().where({ 'com.plexapp.agents.imdb': 'imdb_id', 'com.plexapp.agents.themoviedb': 'id' }[guid.agent]).eq(guid.id).exec()),
+              mergeMap(guid => db.movies.find({ selector: { [{ 'com.plexapp.agents.imdb': 'imdb_id', 'com.plexapp.agents.themoviedb': 'id' }[guid.agent]]: { $eq: guid.id } } })),
+              map(result => result.docs.length ? result.docs[0] : null),
               mergeMap(doc => doc ?
-                of(doc.toJSON()).pipe(
+                of(doc).pipe(
                   tap(movie => movie.state === 'archived' && log('📼', `Sensorr movie ${chalk.inverse(movie.title)} already ${chalk.gray('archived')}`)),
                   filter(movie => movie.state !== 'archived'),
                   map(movie => ({ ...movie, time: Date.now(), state: 'archived' })),
+                  mergeMap(movie => from(db.movies.put({ ...doc, ...movie })).pipe(mapTo(movie))),
                 ) :
                 of(guid).pipe(
                   tap(guid => log('📭', `Missing ${chalk.inverse({ 'com.plexapp.agents.imdb': 'IMDB', 'com.plexapp.agents.themoviedb': 'TMDB' }[guid.agent])} movie ${chalk.gray(guid.id)}`)),
@@ -393,9 +351,9 @@ async function main(sensorr) {
                   }[guid.agent])),
                   mergeMap(id => tmdb.fetch(['movie', id], { append_to_response: 'alternative_titles,release_dates' })),
                   map(entity => new Documents.Movie({ ...entity, state: 'archived' }, config.region).normalize()),
+                  mergeMap(movie => from(db.movies.put({ _id: movie.id, ...movie })).pipe(mapTo(movie))),
                 )
               ),
-              mergeMap(movie => from(db.movies.atomicUpsert(movie)).pipe(mapTo(movie))),
             )),
             delay(2000),
           ), null, 1),

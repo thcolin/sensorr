@@ -1,5 +1,9 @@
 const RxDB = require('rxdb')
+const PouchDB = require('pouchdb')
 const { clean } = require('./utils/string')
+
+const _POUCHDB = 'pouchdb'
+const _RXDB = 'rxdb'
 
 RxDB.plugin(require('pouchdb-adapter-idb'))
 RxDB.plugin(require('pouchdb-adapter-http'))
@@ -177,38 +181,49 @@ class Database {
     this.options = options
   }
 
-  async bootstrap() {
-    const { sync, ...options } = this.options
+  async bootstrap(version) {
+    switch (version) {
+      case _POUCHDB:
+        return Object.keys(Database.SCHEMAS).reduce((db, key) => ({
+          ...db,
+          [key]: new PouchDB({ ...this.options, name: `${this.options.name}/sensorr-${key}` }),
+        }), {})
+      case _RXDB:
+        const { sync, ...options } = this.options
 
-    const database = await RxDB.create({
-      name: 'sensorr',
-      adapter: 'idb',
-      multiInstance: true,
-      ...options,
-    })
+        const database = await RxDB.create({
+          name: 'sensorr',
+          adapter: 'idb',
+          multiInstance: true,
+          ...options,
+        })
 
-    await Promise.all(Object.keys(Database.SCHEMAS).map(key => database
-      .collection({ name: key, schema: Database.SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
-      .then(collection => typeof sync === 'string' ? collection.sync({
-        remote: `${sync}/sensorr-${key}`,
-        waitForLeadership: true,
-        direction: { pull: true, push: true },
-        options: { live: true, retry: true },
-      }) : null)
-    ))
+        await Promise.all(Object.keys(Database.SCHEMAS).map(key => database
+          .collection({ name: key, schema: Database.SCHEMAS[key], migrationStrategies: MIGRATIONS[key] })
+          .then(collection => typeof sync === 'string' ? collection.sync({
+            remote: `${sync}/sensorr-${key}`,
+            waitForLeadership: true,
+            direction: { pull: true, push: true },
+            options: { live: true, retry: true },
+          }) : null)
+        ))
 
-    return database
+        return database
+    }
+
   }
 
-  get() {
+  get(version = _RXDB) {
     if (!this.instance) {
-      this.instance = this.bootstrap()
+      this.instance = this.bootstrap(version)
     }
 
     return this.instance
   }
 }
 
+Database._POUCHDB = _POUCHDB
+Database._RXDB = _RXDB
 Database.SCHEMAS = SCHEMAS
 
 module.exports = Database
