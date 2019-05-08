@@ -56,5 +56,19 @@ module.exports = {
         NODE_ENV: 'production'
       },
     },
+    {
+      name: 'sensorr:clean',
+      cron: '0 2 * * *',
+      exec_mode: 'fork',
+      autorestart: false,
+      script: './bin/exec',
+      args: ['./bin/sensorr', 'clean'],
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+    },
   ],
 };

@@ -5,8 +5,8 @@ const inquirer = require('inquirer')
 const chalk = require('chalk')
 const filesize = require('filesize')
 const microtime = require('microtime')
-const { from, of, merge, interval, zip, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, mapTo, tap, filter, mergeMap, delay, pluck, takeWhile, timeout, catchError } = require('rxjs/operators')
+const { from, of, interval, zip, throwError, bindNodeCallback, EMPTY } = require('rxjs')
+const { map, mapTo, tap, filter, mergeMap, delay, pluck, reduce, catchError } = require('rxjs/operators')
 const PouchDB = require('pouchdb')
 const Database = require('../shared/Database')
 const Documents = require('../shared/Documents')
@@ -46,7 +46,7 @@ async function main(sensorr) {
   if (argv.v || argv.version) {
     await version()
     await exit()
-  } else if (argv.h || argv.help || !['record', 'stalk', 'sync'].includes(commands[0])) {
+  } else if (argv.h || argv.help || !['record', 'stalk', 'sync', 'clean'].includes(commands[0])) {
     await help()
     await exit()
   }
@@ -65,6 +65,9 @@ async function main(sensorr) {
       break
     case 'sync':
       await sync()
+      break
+    case 'clean':
+      await clean()
       break
   }
 
@@ -97,7 +100,15 @@ async function main(sensorr) {
   }
 
   async function exit(code = 0) {
-    process.exit(code)
+    try { // else, "UnhandledPromiseRejectionWarning: ReferenceError: db is not defined", `typeof db !== 'undefined'` doesn't work
+      if (db) {
+        log('')
+        log('🚪', 'Gracefully stoping (5s)...')
+        setTimeout(() => process.exit(code), 5000)
+      }
+    } catch(e) {
+      process.exit(code)
+    }
   }
 
   async function logo() {
@@ -373,6 +384,33 @@ async function main(sensorr) {
         log('')
         resolve()
       }
+    })
+  }
+
+  async function clean() {
+    log('')
+
+    return await new Promise(resolve => {
+      const limit = (microtime.now() / 1000) - (7 * 24 * 3600 * 1000)
+
+      from(['sessions', 'records'])
+        .pipe(
+          mergeMap(table => from(db[table].find({ selector: { 'time': { $lt: limit } } })).pipe(
+            pluck('docs'),
+            filter(docs => docs.length),
+            map(docs => docs.map(doc => ({ ...doc, _deleted: true }))),
+            mergeMap(docs => from(db[table].bulkDocs(docs)).pipe(mapTo(docs.length))),
+          ), null, 1),
+          reduce((acc, curr) => acc + curr, 0),
+        )
+        .subscribe(
+          (total) => log('🗑️ ', `Records sessions > 7 days cleaned (${total}) !`),
+          (err) => log('🚨', err),
+          () => {
+            log('')
+            resolve()
+          },
+        )
     })
   }
 }

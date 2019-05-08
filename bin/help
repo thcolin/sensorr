@@ -4,6 +4,7 @@ Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
+  🗑️ clean               Clean records sessions and logs > 7 days
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]

@@ -179,6 +179,7 @@ Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
+  🗑️ clean               Clean records sessions and logs > 7 days
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -198,8 +199,11 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
+    * Fix empty titles on `/movie/346`
     * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
+    * Refactor `Logs`
+    * Refactor `Upcoming`
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip
     * Improve `filter` ("I prefer MULTI, else I want TRUEFRENCH, else FRENCH is good, finally I'm ok with VOSTFR")
