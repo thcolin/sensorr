@@ -308,39 +308,44 @@ class Releases extends PureComponent {
               <Empty />
             </div>
           ) : (
-            releases.filter(this.filter).sort(sensorr.sort(sort, descending)).map((release, index) => (
-              <div key={index} className={css(suits.striped)} style={styles.row}>
-                <div
-                  title={release.valid ? `Score : ${release.score}` : release.reason}
-                  style={{
-                    ...styles.cell,
-                    ...styles.rows.title,
-                    flexGrow: 1,
-                    textAlign: 'left',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  <span style={{ opacity: [1, 0.5, 0.25][release.warning] }}>{release.title}</span>
-                </div>
-                <div style={{ ...styles.cell, ...styles.rows.site, }}><a href={release.guid} style={styles.link}>{release.site}</a></div>
-                <div style={{ ...styles.cell, ...styles.rows.peers, }}>{release.peers}</div>
-                <div style={{ ...styles.cell, ...styles.rows.seeders, }}>{release.seeders}</div>
-                <div style={{ ...styles.cell, ...styles.rows.size, textAlign: 'right', }}>{filesize(release.size)}</div>
-                <div style={{ ...styles.cell, ...styles.rows.grab, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, }}>
-                  <a
-                    href={`/proxy?url=${window.btoa(release.link)}`}
-                    style={styles.grab}
-                    target="_blank"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      this.handleGrabClick(release)
+            releases.filter(this.filter).sort(sensorr.sort(sort, descending)).map((release, index) => {
+              const link = new URL(release.link)
+              link.searchParams.set('file', release.meta.generated.normalize('NFD').replace(/[^\x00-\x7F]/g, ''))
+
+              return (
+                <div key={index} className={css(suits.striped)} style={styles.row}>
+                  <div
+                    title={release.valid ? `Score : ${release.score}` : release.reason}
+                    style={{
+                      ...styles.cell,
+                      ...styles.rows.title,
+                      flexGrow: 1,
+                      textAlign: 'left',
+                      textOverflow: 'ellipsis',
                     }}
                   >
-                    🎟
-                  </a>
+                    <span style={{ opacity: [1, 0.5, 0.25][release.warning] }}>{release.title}</span>
+                  </div>
+                  <div style={{ ...styles.cell, ...styles.rows.site, }}><a href={release.guid} style={styles.link}>{release.site}</a></div>
+                  <div style={{ ...styles.cell, ...styles.rows.peers, }}>{release.peers}</div>
+                  <div style={{ ...styles.cell, ...styles.rows.seeders, }}>{release.seeders}</div>
+                  <div style={{ ...styles.cell, ...styles.rows.size, textAlign: 'right', }}>{filesize(release.size)}</div>
+                  <div style={{ ...styles.cell, ...styles.rows.grab, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, }}>
+                    <a
+                      href={`/proxy?url=${window.btoa(link.toString())}`}
+                      style={styles.grab}
+                      target="_blank"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        this.handleGrabClick(release)
+                      }}
+                    >
+                      🎟
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
         {loading && (

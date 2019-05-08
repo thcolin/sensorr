@@ -24,7 +24,7 @@ class Movie {
               (this.payload.alternative_titles.titles || [])
                 .filter(title => this.countries.includes(title.iso_3166_1))
                 .map(title => title.title)
-          ).map(title => clean(title))),
+          ).map(title => clean(title)).filter(title => title)),
         ].filter((title, index, titles) => !titles.some(query => query !== title && new RegExp(`^${query}`).test(title))),
         years: [
           ...new Set(

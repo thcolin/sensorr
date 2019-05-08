@@ -199,7 +199,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Fix empty titles on `/movie/346`
     * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
     * Refactor `Logs`
