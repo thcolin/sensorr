@@ -7,7 +7,6 @@ import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Releases from 'views/layout/Releases'
 import tmdb from 'store/tmdb'
-import history from 'store/history'
 import database from 'store/database'
 import Documents from 'shared/Documents'
 import theme from 'theme'
@@ -198,7 +197,7 @@ export default class Movie extends PureComponent {
       this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(e) {
-      history.push('/')
+      this.props.history.push('/')
     }
   }
 

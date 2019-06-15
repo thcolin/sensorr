@@ -4,7 +4,6 @@ import Spinner from 'components/Spinner'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
-import history from 'store/history'
 import database from 'store/database'
 import Documents from 'shared/Documents'
 import theme from 'theme'
@@ -170,7 +169,7 @@ export default class Star extends PureComponent {
       this.setState({ doc: doc ? doc.toJSON() : null })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(e) {
-      history.push('/')
+      this.props.history.push('/')
     }
   }
 
