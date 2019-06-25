@@ -1,13 +1,19 @@
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux'
 import { combineEpics, createEpicMiddleware } from 'redux-observable'
-import * as statusDucks from 'store/ducks/status'
+import * as jobsDuck from 'store/ducks/jobs'
+import * as plexDuck from 'store/ducks/plex'
+import * as sessionsDuck from 'store/ducks/sessions'
 
 const reducers = combineReducers({
-  status: statusDucks.default,
+  jobs: jobsDuck.default,
+  plex: plexDuck.default,
+  sessions: sessionsDuck.default,
 })
 
 export const epic = combineEpics(
-  statusDucks.epics,
+  jobsDuck.epics,
+  plexDuck.epics,
+  sessionsDuck.epics,
 )
 
 const epicMiddleware = createEpicMiddleware()

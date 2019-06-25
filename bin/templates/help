@@ -4,7 +4,6 @@ Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
-  🗑️ clean               Clean records sessions and logs > 7 days
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -18,4 +17,4 @@ Options:
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
 
 
-Tips: Sensorr will use your `config.js` and fallback on default
+Tips: Sensorr will use your "config/config.js" and fallback on default

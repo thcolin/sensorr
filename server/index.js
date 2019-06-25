@@ -1,0 +1,42 @@
+require('./utils/polyfill')
+
+const parser = require('body-parser')
+const express = require('express')
+const path = require('path')
+const cors = require('cors')
+const compression = require('compression')
+const bauth = require('express-basic-auth')
+const app = require('@server/store/app')
+const server = require('@server/store/server')
+const Config = require('@server/store/config')
+
+app.use('/db', require('@server/db'))
+
+// Setup express app after require('db') to override PouchDB defaults
+app.use(express.json())
+app.use(parser.json({ limit: '10mb' }))
+app.use(parser.urlencoded({ limit: '10mb', extended: true }))
+
+app.use(cors())
+app.use(compression())
+app.use(bauth({
+  realm: 'Sensorr - Movie release radar',
+  challenge: true,
+  authorizer: (username, password) => (
+    (!Config.payload.username & !Config.payload.password) ||
+    (bauth.safeCompare(username, Config.payload.username) & bauth.safeCompare(password, Config.payload.password))
+  ),
+}))
+
+app.get('/proxy', require('@server/controllers/proxy'))
+app.use('/api', require('@server/api'))
+
+if (app.get('env') === 'production') {
+  app.get('/', require('@server/controllers/production'))
+  app.use(express.static(path.join(__dirname, '..', 'dist')))
+  app.use(require('@server/controllers/production')) // * route
+}
+
+require('@server/io')
+
+server.listen(5070, () => process.send && process.send('ready'))

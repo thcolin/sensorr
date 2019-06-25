@@ -129,7 +129,7 @@ class Status extends PureComponent {
 
 export default connect(
   (state) => ({
-    ongoing: state.status.record,
+    ongoing: state.jobs['sensorr:record'],
   }),
   () => ({}),
 )(

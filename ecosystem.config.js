@@ -3,7 +3,7 @@ module.exports = {
   apps : [
     {
       name: 'sensorr:web',
-      script: 'index.js',
+      script: './server/index.js',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -49,20 +49,6 @@ module.exports = {
       autorestart: false,
       script: './bin/exec',
       args: ['./bin/sensorr', 'sync'],
-      env: {
-        NODE_ENV: 'development'
-      },
-      env_production: {
-        NODE_ENV: 'production'
-      },
-    },
-    {
-      name: 'sensorr:clean',
-      cron: '0 2 * * *',
-      exec_mode: 'fork',
-      autorestart: false,
-      script: './bin/exec',
-      args: ['./bin/sensorr', 'clean'],
       env: {
         NODE_ENV: 'development'
       },

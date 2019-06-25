@@ -9,61 +9,6 @@ RxDB.plugin(require('pouchdb-adapter-idb'))
 RxDB.plugin(require('pouchdb-adapter-http'))
 
 const SCHEMAS = {
-  sessions: {
-    title: 'session',
-    version: 0,
-    description: 'List Sensorr sessions',
-    type: 'object',
-    required: ['uuid', 'time'],
-    attachments: {},
-    properties: {
-      uuid: {
-        type: 'string',
-        primary: true,
-      },
-      time: {
-        type: 'number',
-        index: true,
-      },
-    },
-  },
-  records: {
-    title: 'record',
-    version: 0,
-    description: 'Describe a Sensorr record entry',
-    type: 'object',
-    required: ['uuid', 'session', 'time', 'message'],
-    attachments: {},
-    properties: {
-      uuid: {
-        type: 'string',
-        primary: true,
-      },
-      record: {
-        type: 'string',
-        index: true,
-      },
-      session: {
-        type: 'string',
-        index: true,
-      },
-      data: {
-        type: 'object',
-        default: {},
-      },
-      success: {
-        type: 'boolean',
-        default: false,
-      },
-      time: {
-        type: 'number',
-        index: true,
-      },
-      message: {
-        type: 'string',
-      },
-    },
-  },
   movies: {
     title: 'movie',
     version: 2,
@@ -190,6 +135,9 @@ class Database {
         }), {})
       case _RXDB:
         const { sync, ...options } = this.options
+
+        await RxDB.removeDatabase('sessions', 'idb')
+        await RxDB.removeDatabase('records', 'idb')
 
         const database = await RxDB.create({
           name: 'sensorr',

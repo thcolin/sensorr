@@ -16,6 +16,7 @@ const Authentication = ({ values, handleChange, ...props }) => (
         placeholder={'Username'}
         style={{ ...styles.input, marginRight: '1em', }}
         defaultValue={values.auth.username}
+        required={true}
         onChange={e => handleChange('auth', { ...values.auth, username: e.target.value })}
       />
       <input
@@ -23,6 +24,7 @@ const Authentication = ({ values, handleChange, ...props }) => (
         placeholder={'Password'}
         style={{ ...styles.input, marginLeft: '1em', }}
         defaultValue={values.auth.password}
+        required={true}
         onChange={e => handleChange('auth', { ...values.auth, password: e.target.value })}
       />
     </div>

@@ -97,6 +97,7 @@ class Plex extends PureComponent {
             style={{ fontSize: '1.5em', display: 'flex', alignItems: 'center', flexBasis: '2em', margin: '0 0.25em 0 0', }}
           >
             {{
+              unknown: '⌛',
               loading: '⌛',
               off: '🚫',
               waiting: '📲',
@@ -116,15 +117,21 @@ class Plex extends PureComponent {
         <button
           type="button" style={{
             ...styles.button,
-            cursor: ['loading', 'waiting'].includes(status) ? 'default' : 'pointer',
-            ...(!['authorized', 'loading', 'waiting'].includes(status) ? {} : {
-              backgroundColor: ({ authorized: theme.colors.gray, loading: theme.colors.grey, waiting: theme.colors.grey })[status],
+            cursor: ['unknown', 'loading', 'waiting'].includes(status) ? 'default' : 'pointer',
+            ...(!['unknown', 'authorized', 'loading', 'waiting'].includes(status) ? {} : {
+              backgroundColor: ({
+                authorized: theme.colors.gray,
+                loading: theme.colors.grey,
+                unknown: theme.colors.grey,
+                waiting: theme.colors.grey
+              })[status],
             })
           }}
           disabled={!action}
           onClick={action || (() => {})}
         >
           {{
+            unknown: 'Loading',
             loading: 'Loading',
             off: 'Connect',
             waiting: 'Enter PIN',
@@ -154,7 +161,7 @@ class Plex extends PureComponent {
 
 export default connect(
   (state) => ({
-    status: state.status.plex || 'loading',
+    status: state.plex.status || 'loading',
   }),
   () => ({}),
 )(

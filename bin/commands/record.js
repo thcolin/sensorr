@@ -1,0 +1,154 @@
+const fs = require('fs')
+const inquirer = require('inquirer')
+const filesize = require('filesize')
+const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
+const { map, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
+const uuidv4 = require('uuid/v4')
+const chalk = require('chalk')
+
+async function record({ argv, log, session, logger, sensorr, db }) {
+  logger.init()
+
+  return await new Promise(resolve =>
+    from(db.movies.allDocs({ include_docs: true })).pipe(
+      pluck('rows'),
+      map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
+      tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
+      map(movies => movies.sort((a, b) => a.time - b.time)),
+      mergeMap(movies => from(movies)),
+      filter(movie => movie.state === 'wished'),
+      mergeMap(movie => {
+        const record = uuidv4()
+        const context = { session, record }
+
+        return of(movie).pipe(
+          mergeMap(movie => look(movie, context)),
+          mergeMap(({ movie, release }) => grab(movie, release, context)),
+          map(values => ({ ...values, context })),
+          catchError(err => {
+            log('🚨', err.toString())
+            logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { context, movie }, err)
+            return EMPTY
+          }),
+        )
+      }, null, 1),
+    ).subscribe(
+      ({ movie, release, file, context }) => {
+        log(
+          '📼',
+          'Archiving',
+          `movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`,
+          'with',
+          `release ${chalk.inverse(release.title)}`,
+          'to',
+          chalk.gray(file)
+        )
+
+        logger.spawn(
+          `📼 Archiving movie **${movie.title}** ${`(${movie.year})`} with release **${release.title}** to _${file}_`,
+          { context, release, file, done: true },
+        )
+      },
+      (err) => log('🚨', err),
+      () => {
+        log('')
+        resolve()
+      },
+    )
+  )
+
+  function look(movie, context = {}) {
+    log('')
+    log('🍿', `Looking for wished movie ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`)
+    logger.input(`🍿 Looking for wished movie **${movie.title}** (${movie.year})`, { context, movie })
+
+    const hooks = {
+      search: (xznab, title) => {
+        log('🔫 ', `Looking for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB`)
+        logger.fetch(`🔫 Looking for **${title}** on **${xznab.name}** XZNAB`, { context, xznab, title })
+      },
+      timeout: (xznab, title) => {
+        log('⌛ ', `Request for ${chalk.bold(title)} on ${chalk.underline(xznab.name)} XZNAB timed out ! Retrying...`)
+        logger.fetch(`⌛ Request for **${title}** on **${xznab.name}** XZNAB timed out ! Retrying...`, { context, xznab, title })
+      },
+      found: (xznab, title, items) => {
+        log('🎞️ ', `Found ${chalk.bold(items.length)} releases`)
+        logger.receive(`🎞️ Found **${items.length}** releases` , { context, xznab, title, items })
+      },
+      release: (xznab, title, release) => {
+        log('*', chalk[['green', 'yellow', 'red'][release.warning]](release.title), chalk.gray(release.valid ? `(${release.score})` : release.reason))
+        logger.receive(`- ${['**', '**_', '~~'][release.warning]}${release.title}${['**', '_**', '~~'][release.warning]} _${(release.valid ? `(${release.score})` : release.reason)}_`, { context, xznab, title, release })
+      },
+      sorted: (releases) => {
+        if (releases.length) {
+          log('🚧', `Filtering and ordering ${releases.length} releases`, chalk.gray(`[${sensorr.config.sort}]`), { true: '🔻', false: '🔺' }[sensorr.config.descending])
+          logger.finish(`🚧 Filtering and ordering **${releases.length}** releases [${sensorr.config.sort}] ${{ true: '🔻', false: '🔺' }[sensorr.config.descending]}`, { context, releases, sort: sensorr.config.sort, descending: sensorr.config.descending })
+        } else {
+          log('📭', `️Sorry, no valid releases found`)
+          logger.receive(`📭 Sorry, no valid releases found`, { context, done: true })
+        }
+      },
+    }
+
+    return sensorr.look(movie, true, hooks).pipe(
+      map(releases => releases.sort(sensorr.sort(sensorr.config.sort, sensorr.config.descending))),
+      tap(releases => hooks.sorted(releases)),
+      filter(releases => releases.length),
+      mergeMap(releases => {
+        const choices = releases.map(release => [
+          (argv.a || argv.auto) ? chalk.green(release.title) : release.title,
+          chalk.gray(`(${filesize(release.size)} - ${release.peers} ↓ / ${release.seeders} ↑)`),
+        ].join(' '))
+
+        if (argv.a || argv.auto) {
+          choices.forEach(choice => log('*', choice))
+          return of(releases[0])
+        } else {
+          return inquirer.prompt([
+            {
+              type: 'list',
+              name: 'release',
+              message: 'Choose release :',
+              choices,
+            }
+          ]).then(answers => releases[choices.indexOf(answers.release)])
+        }
+      }),
+      map(release => ({ movie, release }))
+    )
+  }
+
+  function grab(movie, release, context = {}) {
+    log('🎟️ ', `Grabbing ${chalk.inverse(release.title)} from ${chalk.gray(release.site)}`)
+    logger.fetch(`🎟️ Grabbing **${release.title}** from **_${release.site}_**`, { context, success: true, release })
+
+    return of(null).pipe(
+      mergeMap(() => of(sensorr.config.blackhole).pipe(
+        mergeMap(blackhole => bindNodeCallback(fs.access)(blackhole, fs.constants.W_OK).pipe(
+          map(err => !err),
+          mergeMap(exist => exist ? of(null) : bindNodeCallback(fs.mkdir)(blackhole, { recursive: true })),
+          mergeMap(err => err ? throwError(err) : of(null)),
+        )),
+      )),
+      mergeMap(() => of(release.link).pipe(
+        mergeMap(link => fetch(encodeURI(link))),
+        mergeMap(res => res.buffer()),
+        mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`, buffer).pipe(
+          mergeMap(err => err ? throwError(err) : of(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`)),
+        )),
+      )),
+      mergeMap(file => of(null).pipe(
+        mergeMap(() => db.movies.put({
+          _id: movie.id,
+          ...movie,
+          time: Date.now(),
+          state: 'archived',
+        })),
+        map(() => ({ movie, release, file })),
+      )),
+      delay(3000),
+    )
+  }
+}
+
+module.exports = record

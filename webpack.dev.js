@@ -24,7 +24,6 @@ module.exports = merge(common, {
       '/db': 'http://localhost:5070',
       '/api': 'http://localhost:5070',
       '/proxy': 'http://localhost:5070',
-      '/socket.io': 'http://localhost:5070',
     },
   },
 })

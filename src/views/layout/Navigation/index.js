@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react'
 import { withRouter, NavLink } from 'react-router-dom'
-import StatusRecording from 'containers/StatusRecording'
+import StatusRecording from './containers/StatusRecording'
 import theme from 'theme'
 
 const styles = {

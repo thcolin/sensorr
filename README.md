@@ -179,7 +179,6 @@ Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
-  🗑️ clean               Clean records sessions and logs > 7 days
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -201,16 +200,16 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Fix
     * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
+    * Make `clean` configurable (max time or size ?)
+    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
+    * Translate (`fr`, `en`)
+    * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
+    * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
+    * Movie state `pinned` (waiting for `wished`)
     * Refactor `Logs`
     * Refactor `Upcoming`
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip
-    * Improve `filter` ("I prefer MULTI, else I want TRUEFRENCH, else FRENCH is good, finally I'm ok with VOSTFR")
-      * Use [`react-sortable-hoc`](https://github.com/clauderic/react-sortable-hoc) to order and delete prop
-      * Use [`react-autocomplete`](https://github.com/reactjs/react-autocomplete) to add listed props (use `oleoo`)
-      * Sections
-        * `avoid`: `READNFO, [...]`
-        * `prefer`: `REMASTERED, [...]`
     * Export/Import `database`
     * Synchronize with `trakt.tv`
     * Replace `Plex` available releases by better if available, like `CouchPotato`
@@ -221,11 +220,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Trending `sagas` (`TMDB API 4` lists ?)
     * Responsive design / mobile UI-UX
 * `CLI`
+  * Add `clean` command (cron job too)
   * Summary command result
-    * `stalk`:
-      ```
-        ${stars} Stars stalked with ${total} movie credits ! 🎉
-      ```
     * `record`:
       ```
         ${found} Movies archived to ${sensorr.config.blackhole} ! 🎉
