@@ -1,6 +1,6 @@
 {
   "name": "sensorr",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "🍿📼 Sensorr - A movie release radar like CouchPotato, Radarr and Watcher3",
   "main": "index.js",
   "scripts": {
