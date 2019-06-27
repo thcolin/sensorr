@@ -7,7 +7,7 @@ VOLUME /app/sensorr/blackhole
 
 ENV NPM_CONFIG_LOGLEVEL warn
 
-COPY .babelrc package.json ecosystem.config.js webpack.*.js ./
+COPY .babelrc package.json package-lock.json ecosystem.config.js webpack.*.js ./
 COPY config.docker.json config.default.json
 COPY bin ./bin
 COPY server ./server
