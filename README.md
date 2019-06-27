@@ -197,9 +197,9 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Fix
-    * Handle TMDB errors (like `"Invalid API key: You must be granted a valid key."`) on `components`
   * Features
+    * Filter `Trending` movies with release date < +3 months
+    * When `recording`, filter movies with release date < +3 months (useless to search for movies still in production)
     * Make `clean` configurable (max time or size ?)
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)

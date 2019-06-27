@@ -5,6 +5,7 @@ import Row from 'components/Layout/Row'
 import Persona from 'components/Entity/Persona'
 import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
+import Empty from 'components/Empty'
 import Releases from 'views/layout/Releases'
 import tmdb from 'store/tmdb'
 import database from 'store/database'
@@ -154,10 +155,12 @@ export default class Movie extends PureComponent {
     super(props)
 
     this.state = {
+      loading: true,
       details: null,
       doc: false,
       unpinned: false,
-      more: 'recommendations'
+      more: 'recommendations',
+      err: null,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -189,15 +192,23 @@ export default class Movie extends PureComponent {
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
       )
-      this.setState({ details })
+      this.setState({ loading: false, details })
       const db = await database.get()
       const query = db.movies.findOne().where('id').eq(details.id.toString())
       const doc = await query.exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
       this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
-    } catch(e) {
-      this.props.history.push('/')
+    } catch(err) {
+      if (err.status_code) {
+        this.setState({
+          loading: false,
+          err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+        })
+      } else {
+        console.warn(err)
+        this.props.history.push('/')
+      }
     }
   }
 
@@ -231,7 +242,7 @@ export default class Movie extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { doc, details, loading, unpinned, more, ...state } = this.state
+    const { doc, details, loading, err, unpinned, more, ...state } = this.state
 
     const trailer = !details ? null : details.videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
@@ -247,112 +258,120 @@ export default class Movie extends PureComponent {
           )}
         </Helmet>
         <div id="movie" style={styles.element}>
-          {details ? [
-            <div
-              key="details"
-              style={{ ...styles.details, backgroundImage: `url(http://image.tmdb.org/t/p/original${details.backdrop_path})` }}
-            >
-              <div style={styles.metadata}>
-                <h3 style={styles.popularity}>
-                  <span>{details.vote_average.toFixed(1)}</span>
-                  <span> </span>
-                  <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
-                </h3>
-                <h4 style={styles.runtime}>{details.runtime} mins 🕙</h4>
-                {trailer && (
-                  <a href={`https://youtu.be/${trailer.key}`} target="_blank" style={{ textDecoration: 'none' }}>
-                    <h4 style={styles.preview}>Preview 🎬</h4>
-                  </a>
-                )}
-                <div style={styles.badges}>
-                  {doc === false && (
-                    <div style={{ ...styles.badge, cursor: 'default' }}>
-                      <span style={styles.emoji}>⌛</span>
-                      Loading
-                    </div>
+          {details ? (
+            <>
+              <div
+                key="details"
+                style={{ ...styles.details, backgroundImage: `url(http://image.tmdb.org/t/p/original${details.backdrop_path})` }}
+              >
+                <div style={styles.metadata}>
+                  <h3 style={styles.popularity}>
+                    <span>{details.vote_average.toFixed(1)}</span>
+                    <span> </span>
+                    <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
+                  </h3>
+                  <h4 style={styles.runtime}>{details.runtime} mins 🕙</h4>
+                  {trailer && (
+                    <a href={`https://youtu.be/${trailer.key}`} target="_blank" style={{ textDecoration: 'none' }}>
+                      <h4 style={styles.preview}>Preview 🎬</h4>
+                    </a>
                   )}
-                  {(doc === null || (doc && doc.state === 'ignored')) && (
-                    <div style={styles.badge} onClick={this.handleStateChange}>
-                      <span style={styles.emoji}>🔕</span>
-                      Ignored
+                  <div style={styles.badges}>
+                    {doc === false && (
+                      <div style={{ ...styles.badge, cursor: 'default' }}>
+                        <span style={styles.emoji}>⌛</span>
+                        Loading
+                      </div>
+                    )}
+                    {(doc === null || (doc && doc.state === 'ignored')) && (
+                      <div style={styles.badge} onClick={this.handleStateChange}>
+                        <span style={styles.emoji}>🔕</span>
+                        Ignored
+                      </div>
+                    )}
+                    {doc && doc.state === 'wished' && (
+                      <div style={styles.badge} onClick={this.handleStateChange}>
+                        <span style={styles.emoji}>🍿</span>
+                        Wished
+                      </div>
+                    )}
+                    {doc && doc.state === 'archived' && (
+                      <div style={styles.badge} onClick={this.handleStateChange}>
+                        <span style={styles.emoji}>📼</span>
+                        Archived
+                      </div>
+                    )}
+                    <div style={styles.badge} onClick={this.handleLookClick}>
+                      <span style={styles.emoji}>🔍</span>
+                      Look
                     </div>
-                  )}
-                  {doc && doc.state === 'wished' && (
-                    <div style={styles.badge} onClick={this.handleStateChange}>
-                      <span style={styles.emoji}>🍿</span>
-                      Wished
-                    </div>
-                  )}
-                  {doc && doc.state === 'archived' && (
-                    <div style={styles.badge} onClick={this.handleStateChange}>
-                      <span style={styles.emoji}>📼</span>
-                      Archived
-                    </div>
-                  )}
-                  <div style={styles.badge} onClick={this.handleLookClick}>
-                    <span style={styles.emoji}>🔍</span>
-                    Look
                   </div>
                 </div>
-              </div>
-              <div style={styles.informations}>
-                <div>
-                  <img src={`http://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
-                </div>
-                <div style={styles.wrapper}>
-                  <h1 style={styles.title}>{details.title}</h1>
-                  <h2 style={styles.subtitle}>
-                    {details.title !== details.original_title && (
-                      <span style={{ margin: '0 0.5em 0 0' }}>{details.original_title}</span>
+                <div style={styles.informations}>
+                  <div>
+                    <img src={`http://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
+                  </div>
+                  <div style={styles.wrapper}>
+                    <h1 style={styles.title}>{details.title}</h1>
+                    <h2 style={styles.subtitle}>
+                      {details.title !== details.original_title && (
+                        <span style={{ margin: '0 0.5em 0 0' }}>{details.original_title}</span>
+                      )}
+                      {details.release_date && (
+                        <span title={new Date(details.release_date).toLocaleDateString()}>
+                          ({new Date(details.release_date).getFullYear()})
+                        </span>
+                      )}
+                    </h2>
+                    <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
+                    {!!details.credits.crew.filter(credit => ['Director'].includes(credit.job)).length && (
+                      <p style={styles.directors}>
+                        🎥 &nbsp; {
+                          details.credits.crew
+                            .filter(credit => ['Director'].includes(credit.job))
+                            .map(credit => <Link to={`/star/${credit.id}`} style={styles.link} key={credit.id}>{credit.name}</Link>)
+                            .reduce((prev, curr) => [prev, ', ', curr])
+                        }
+                      </p>
                     )}
-                    {details.release_date && (
-                      <span title={new Date(details.release_date).toLocaleDateString()}>
-                        ({new Date(details.release_date).getFullYear()})
-                      </span>
+                    {!!details.tagline && (
+                      <h3 style={styles.tagline}>{details.tagline}</h3>
                     )}
-                  </h2>
-                  <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
-                  {!!details.credits.crew.filter(credit => ['Director'].includes(credit.job)).length && (
-                    <p style={styles.directors}>
-                      🎥 &nbsp; {
-                        details.credits.crew
-                          .filter(credit => ['Director'].includes(credit.job))
-                          .map(credit => <Link to={`/star/${credit.id}`} style={styles.link} key={credit.id}>{credit.name}</Link>)
-                          .reduce((prev, curr) => [prev, ', ', curr])
-                      }
-                    </p>
-                  )}
-                  {!!details.tagline && (
-                    <h3 style={styles.tagline}>{details.tagline}</h3>
-                  )}
-                  <p style={styles.plot}>{details.overview}</p>
-                  <div style={styles.credits}>
-                    <Row
-                      items={details.credits.cast.slice(0, 10)}
-                      child={Persona}
-                      space={0}
-                    />
+                    <p style={styles.plot}>{details.overview}</p>
+                    <div style={styles.credits}>
+                      <Row
+                        items={details.credits.cast.slice(0, 10)}
+                        child={Persona}
+                        space={0}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div style={styles.more}>
-                <Row
-                  label={`${more.charAt(0).toUpperCase()}${more.slice(1)}`}
-                  onClick={() => this.handleMoreChange()}
-                  items={details[more].results}
-                  style={styles.row}
-                  child={Film}
-                  empty={{ style: styles.empty }}
-                />
-              </div>
-            </div>,
-            (unpinned && (
-              <Releases key="releases" movie={details} />
-            ))
-          ] : (
+                <div style={styles.more}>
+                  <Row
+                    label={`${more.charAt(0).toUpperCase()}${more.slice(1)}`}
+                    onClick={() => this.handleMoreChange()}
+                    items={details[more].results}
+                    style={styles.row}
+                    child={Film}
+                    empty={{ style: styles.empty }}
+                  />
+                </div>
+              </div>,
+              {(unpinned && (
+                <Releases key="releases" movie={details} />
+              ))}
+            </>
+          ) : loading ? (
             <div style={styles.loading}>
               <Spinner />
             </div>
+          ) : (
+            <Empty
+              title={err ? 'Oh ! You came across a bug...' : null}
+              emoji={err ? '🐛' : null}
+              subtitle={err ? err : null}
+            />
           )}
         </div>
       </Fragment>

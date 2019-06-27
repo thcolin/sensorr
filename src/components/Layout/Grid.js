@@ -67,6 +67,7 @@ export default class Grid extends PureComponent {
       entities: [],
       buffer: [],
       max: 20,
+      err: null,
     }
 
     this.expand = this.expand.bind(this)
@@ -82,7 +83,15 @@ export default class Grid extends PureComponent {
       this.setState({ loading: false, entities: entities.map(entity => entity.toJSON()) })
     } else if (this.props.uri) {
       this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) || [] }))
+      tmdb.fetch(this.props.uri, this.props.params).then(
+        res => this.setState({ loading: false, entities: this.props.transform(res) || [] }),
+        err => {
+          this.setState({
+            loading: false,
+            err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+          })
+        }
+      )
     }
   }
 
@@ -97,7 +106,15 @@ export default class Grid extends PureComponent {
     } else if (this.props.uri) {
       if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
         this.setState({ loading: true })
-        tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) }))
+        tmdb.fetch(this.props.uri, this.props.params).then(
+          res => this.setState({ loading: false, entities: this.props.transform(res) }),
+          err => {
+            this.setState({
+              loading: false,
+              err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+            })
+          }
+        )
       }
     }
   }
@@ -118,7 +135,7 @@ export default class Grid extends PureComponent {
 
   render() {
     const { items, query, uri, params, transform, filter, label, child, empty, spinner, limit, ...props } = this.props
-    const { loading, entities, max, ...state } = this.state
+    const { entities, max, loading, err, ...state } = this.state
 
     const filtered = [...entities, ...items]
       .sort((a, b) => (b.time || 0) - (a.time || 0))
@@ -135,7 +152,12 @@ export default class Grid extends PureComponent {
           </div>
         ) : !filtered.length ? (
           <div style={styles.placeholder}>
-            <Empty {...empty} />
+            <Empty
+              {...empty}
+              title={err ? 'Oh ! You came across a bug...' : empty.title}
+              emoji={err ? '🐛' : empty.emoji}
+              subtitle={err ? err : empty.subtitle}
+            />
           </div>
         ) : (
           <InfiniteScroll

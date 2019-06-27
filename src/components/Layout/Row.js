@@ -55,6 +55,7 @@ export default class Row extends PureComponent {
     this.state = {
       entities: [],
       loading: false,
+      err: null,
     }
 
     this.reference = React.createRef()
@@ -63,7 +64,15 @@ export default class Row extends PureComponent {
   componentDidMount() {
     if (this.props.uri) {
       this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(res => this.setState({ loading: false, entities: this.props.transform(res) || [] }))
+      tmdb.fetch(this.props.uri, this.props.params).then(
+        res => this.setState({ loading: false, entities: this.props.transform(res) || [] }),
+        err => {
+          this.setState({
+            loading: false,
+            err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+          })
+        }
+      )
     }
   }
 
@@ -71,10 +80,18 @@ export default class Row extends PureComponent {
     if (this.props.uri) {
       if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
         this.setState({ loading: true })
-        tmdb.fetch(this.props.uri, this.props.params).then(res => {
-          this.setState({ loading: false, entities: this.props.transform(res) })
-          this.reference.current.scroll(0, 0)
-        })
+        tmdb.fetch(this.props.uri, this.props.params).then(
+          res => {
+            this.setState({ loading: false, entities: this.props.transform(res) })
+            this.reference.current.scroll(0, 0)
+          },
+          err => {
+            this.setState({
+              loading: false,
+              err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+            })
+          }
+        )
       } else {
         this.reference.current.scroll(0, 0)
       }
@@ -87,7 +104,7 @@ export default class Row extends PureComponent {
 
   render() {
     const { items, uri, params, child, transform, label, space, empty, ...props } = this.props
-    const { entities, loading, ...state } = this.state
+    const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
       .filter(entity => this.valid(entity))
@@ -100,7 +117,12 @@ export default class Row extends PureComponent {
             <Spinner />
           )}
           {!loading && !filtered.length && (
-            <Empty {...empty} />
+            <Empty
+              {...empty}
+              title={err ? 'Oh ! You came across a bug...' : empty.title}
+              emoji={err ? '🐛' : empty.emoji}
+              subtitle={err ? err : empty.subtitle}
+            />
           )}
           {filtered.map((entity, index) => (
             <div key={index} style={{ ...styles.entity, padding: `${space}em` }}>

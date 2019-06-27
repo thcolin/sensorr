@@ -1,6 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Spinner from 'components/Spinner'
+import Empty from 'components/Empty'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
@@ -122,6 +123,8 @@ export default class Star extends PureComponent {
     this.state = {
       doc: false,
       details: null,
+      loading: false,
+      err: null,
       order: {
         cast: 'vote_average',
         crew: 'vote_average',
@@ -163,13 +166,21 @@ export default class Star extends PureComponent {
   async bootstrap() {
     try {
       const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
-      this.setState({ details })
+      this.setState({ loading: false, details })
       const db = await database.get()
       const doc = await db.stars.findOne().where('id').eq(details.id.toString()).exec()
       this.setState({ doc: doc ? doc.toJSON() : null })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
-    } catch(e) {
-      this.props.history.push('/')
+    } catch(err) {
+      if (err.status_code) {
+        this.setState({
+          loading: false,
+          err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+        })
+      } else {
+        console.warn(err)
+        this.props.history.push('/')
+      }
     }
   }
 
@@ -203,7 +214,7 @@ export default class Star extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { doc, details, loading, order, sort, ...state } = this.state
+    const { doc, details, loading, err, order, sort, ...state } = this.state
 
     return (
       <Fragment>
@@ -283,10 +294,16 @@ export default class Star extends PureComponent {
                 </div>
               )}
             </div>
-          ) : (
+          ) : loading ? (
             <div style={styles.loading}>
               <Spinner />
             </div>
+          ) : (
+            <Empty
+              title={err ? 'Oh ! You came across a bug...' : null}
+              emoji={err ? '🐛' : null}
+              subtitle={err ? err : null}
+            />
           )}
         </div>
       </Fragment>
