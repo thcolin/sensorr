@@ -5,6 +5,6 @@ dist
 log.txt
 pouchdb.json
 config/config.json
-bin/.sessions/*
-!bin/.sessions/.gitkeep
+.sessions/*
+!.sessions/.gitkeep
 .docz

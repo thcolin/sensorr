@@ -45,7 +45,7 @@ socket.on('connection', client => {
   // Client "request"
   client.on('session', ({ session, stop = false }) => {
     if (stop) {
-      if (client.sensorr.streams[session]) {
+      if (client.sensorr.streams[session] && client.sensorr.streams[session].unwatch) {
         client.sensorr.streams[session].removeAllListeners('line')
         client.sensorr.streams[session].unwatch()
         delete client.sensorr.streams[session]

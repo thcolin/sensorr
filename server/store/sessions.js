@@ -9,7 +9,7 @@ class Sessions extends EventEmitter {
     super()
 
     this.entities = {}
-    this.root = path.join(__dirname, '..', '..', 'bin', '.sessions')
+    this.root = path.join(__dirname, '..', '..', '.sessions')
 
     fs.readdir(this.root, (err, files) => {
       files
