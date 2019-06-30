@@ -1,9 +1,9 @@
 **/.DS_Store
-bin/db/*
-db/*
 node_modules
 dist
 log.txt
-pouchdb.json
 config/config.json
-history.log
+config/.db/*
+!config/.db/.gitignore
+config/.sessions/*
+!config/.sessions/.gitignore

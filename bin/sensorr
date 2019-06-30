@@ -56,7 +56,7 @@ async function main() {
         transform: (obj, encoding, callback) => callback(null, { ...obj, uuid: uuidv4() })
       }))
       .pipe(new StringifyTransform())
-      .pipe(fs.createWriteStream(path.join(__dirname, '.sessions', '..', `${session}-${_[0]}.log`), { flags: 'a' }))
+      .pipe(fs.createWriteStream(path.join(__dirname, '..', 'config', '.sessions', `${session}-${_[0]}.log`), { flags: 'a' }))
 
     await commands[_[0]]({ argv, log, session, logger, sensorr, db })
     await exit(0)

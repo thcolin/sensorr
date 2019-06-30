@@ -3,8 +3,5 @@ blackhole
 node_modules
 dist
 log.txt
-pouchdb.json
 config/config.json
-.sessions/*
-!.sessions/.gitkeep
 .docz
