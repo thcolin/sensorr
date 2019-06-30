@@ -2,19 +2,22 @@ const fs = require('fs')
 const path = require('path')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { mergeMap, mapTo } = require('rxjs/operators')
+const constants = require('@server/utils/constants')
+const paths = {
+  ...constants.paths,
+  file: path.join(constants.paths.config, 'config.json'),
+  fallback: path.join(constants.paths.root, 'config.default.json'),
+}
 
 class Config {
   constructor() {
-    this.filepath = path.join(__dirname, '..', '..', 'config', 'config.json')
-    this.fallback = require(path.join(__dirname, '..', '..', 'config.default.json'))
-
     try {
-      fs.accessSync(this.filepath, fs.constants.R_OK)
+      fs.accessSync(paths.file, fs.constants.R_OK)
     } catch(e) {
-      fs.writeFileSync(this.filepath, JSON.stringify(this.fallback, null, 2))
+      fs.writeFileSync(paths.file, JSON.stringify(paths.fallback, null, 2))
     }
 
-    this.payload = require(this.filepath)
+    this.payload = require(paths.file)
   }
 
   replace(partial) {
@@ -66,12 +69,12 @@ class Config {
 
     return of(null).pipe(
       mergeMap(() => bindNodeCallback(fs.access)(this.payload.blackhole, fs.constants.W_OK)),
-      mergeMap(err => err ? throwError(`Blackhole not writable : ${err}`) : of(this.filepath)),
-      mergeMap(() => bindNodeCallback(fs.access)(this.filepath, fs.constants.W_OK)),
-      mergeMap(err => err ? throwError(`Config file not writable : ${err}`) : of(this.filepath)),
-      mergeMap(() => bindNodeCallback(fs.writeFile)(this.filepath, JSON.stringify(this.payload, null, 2))),
-      mergeMap(err => err ? throwError(`Unable to write config : ${err}`) : of(this.filepath)),
-      mapTo(this.filepath),
+      mergeMap(err => err ? throwError(`Blackhole not writable : ${err}`) : of(paths.file)),
+      mergeMap(() => bindNodeCallback(fs.access)(paths.file, fs.constants.W_OK)),
+      mergeMap(err => err ? throwError(`Config file not writable : ${err}`) : of(paths.file)),
+      mergeMap(() => bindNodeCallback(fs.writeFile)(paths.file, JSON.stringify(this.payload, null, 2))),
+      mergeMap(err => err ? throwError(`Unable to write config : ${err}`) : of(paths.file)),
+      mapTo(paths.file),
     )
   }
 }

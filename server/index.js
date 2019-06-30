@@ -9,6 +9,7 @@ const bauth = require('express-basic-auth')
 const app = require('@server/store/app')
 const server = require('@server/store/server')
 const Config = require('@server/store/config')
+const { paths } = require('@server/utils/constants')
 
 app.use('/db', require('@server/db'))
 
@@ -33,7 +34,7 @@ app.use('/api', require('@server/api'))
 
 if (app.get('env') === 'production') {
   app.get('/', require('@server/controllers/production'))
-  app.use(express.static(path.join(__dirname, '..', 'dist')))
+  app.use(express.static(paths.dist))
   app.use(require('@server/controllers/production')) // * route
 }
 

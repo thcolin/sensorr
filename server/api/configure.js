@@ -12,7 +12,7 @@ function configure(req, res) {
     },
     (err) => {
       log('configure', { err }, { err: true })
-      res.status(520).send({ file: Config.filepath, reason: err.toString(), })
+      res.status(520).send({ reason: err.toString(), })
     },
   )
 }

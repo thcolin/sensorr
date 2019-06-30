@@ -3,21 +3,21 @@ const path = require('path')
 const Tail = require('tail').Tail
 const Readable = require('stream').Readable
 const EventEmitter = require('events')
+const { paths } = require('@server/utils/constants')
 
 class Sessions extends EventEmitter {
   constructor() {
     super()
 
     this.entities = {}
-    this.folder = path.join(__dirname, '..', '..', 'config', '.sessions')
 
     try {
-      fs.accessSync(this.folder, fs.constants.W_OK)
+      fs.accessSync(paths.sessions, fs.constants.W_OK)
     } catch (err) {
-      fs.mkdirSync(this.folder, { recursive: true })
+      fs.mkdirSync(paths.sessions, { recursive: true })
     }
 
-    fs.readdir(this.folder, (err, files) => {
+    fs.readdir(paths.sessions, (err, files) => {
       files
         .map(file => ({
           file,
@@ -26,7 +26,7 @@ class Sessions extends EventEmitter {
         }))
         .filter(session => session.job && session.uuid)
         .forEach(session => fs.stat(
-          path.join(this.folder, session.file),
+          path.join(paths.sessions, session.file),
           (err, stats) => this.entities[session.uuid] = {
             ...session,
             time: stats.birthtime,
@@ -36,7 +36,7 @@ class Sessions extends EventEmitter {
       this.emit('change')
     })
 
-    fs.watch(this.folder, (e, file) => {
+    fs.watch(paths.sessions, (e, file) => {
       const session = {
         file,
         job: file.split('-').pop().split('.').shift(),
@@ -52,7 +52,7 @@ class Sessions extends EventEmitter {
   stream(uuid) {
     if (this.entities[uuid]) {
       return new Tail(
-        path.join(this.folder, this.entities[uuid].file),
+        path.join(paths.sessions, this.entities[uuid].file),
         {
           fromBeginning: true,
           useWatchFile: true,
