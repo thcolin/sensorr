@@ -166,10 +166,16 @@ export default class Movie extends PureComponent {
   async bootstrap() {
     try {
       this.setState({ unpinned: false })
+
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
       )
+
+      if (details.adult && !tmdb.adult) {
+        throw { status_code: -1, status_message: 'Adult content disabled' }
+      }
+
       this.setState({ loading: false, details })
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(err) {

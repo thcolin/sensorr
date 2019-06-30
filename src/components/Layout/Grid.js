@@ -126,7 +126,7 @@ export default class Grid extends PureComponent {
   }
 
   validate(entity) {
-    return entity.poster_path || entity.profile_path
+    return (entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
   }
 
   expand() {

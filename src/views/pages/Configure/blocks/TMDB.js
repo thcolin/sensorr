@@ -14,13 +14,25 @@ const TMDB = ({ values, handleChange, ...props }) => (
       <br/>
       Specify <code style={styles.code}>API Key</code> (v3 auth) :
     </p>
-    <input
-      type="text"
-      placeholder={placeholder.tmdb}
-      style={styles.input}
-      defaultValue={values.tmdb}
-      onChange={e => handleChange('tmdb', e.target.value)}
-    />
+    <div style={styles.column}>
+      <input
+        type="text"
+        placeholder={placeholder.tmdb}
+        style={styles.input}
+        defaultValue={values.tmdb}
+        onChange={e => handleChange('tmdb', e.target.value)}
+      />
+      {/* <label htmlFor="adult" style={{ ...styles.input, borderColor: 'transparent' }}>
+        <input
+          id="adult"
+          type="checkbox"
+          defaultChecked={values.adult}
+          onChange={e => handleChange('adult', e.target.checked)}
+          style={{ marginRight: '1em', }}
+        />
+        Allow adult content ? 🍑
+      </label> */}
+    </div>
   </div>
 )
 

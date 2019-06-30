@@ -98,8 +98,8 @@ export default class Row extends PureComponent {
     }
   }
 
-  valid(entity) {
-    return entity.poster_path || entity.profile_path
+  validate(entity) {
+    return (entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
   }
 
   render() {
@@ -107,7 +107,7 @@ export default class Row extends PureComponent {
     const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
-      .filter(entity => this.valid(entity))
+      .filter(entity => this.validate(entity))
 
     return (
       <div style={styles.element}>

@@ -45,6 +45,7 @@ class Config {
       sort: (['seeders', 'peers', 'size'].includes(payload.sort) ? payload.sort : 'seeders').toString(),
       descending: !!payload.descending,
       region: (payload.region || 'en-US').toString(),
+      adult: !!payload.adult,
       auth: {
         username: ((payload.auth || {}).username || '').toString(),
         password: ((payload.auth || {}).password || '').toString()

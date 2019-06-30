@@ -1,9 +1,10 @@
 const qs = require('query-string')
 
 module.exports = class TMDB {
-  constructor({ key, region = 'en-US' }) {
+  constructor({ key, adult, region = 'en-US' }) {
     this.key = key
     this.region = region
+    this.adult = !!adult
     this.base = 'https://api.themoviedb.org/3/'
   }
 
@@ -12,6 +13,7 @@ module.exports = class TMDB {
       ...params,
       language: this.region,
       api_key: this.key,
+      include_adult: this.adult,
     }
 
     return `${this.base}${uri.join('/')}?${qs.stringify(query)}`

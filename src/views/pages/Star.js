@@ -150,6 +150,11 @@ export default class Star extends PureComponent {
   async bootstrap() {
     try {
       const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
+
+      if (details.adult && !tmdb.adult) {
+        throw { status_code: -1, status_message: 'Adult content disabled' }
+      }
+
       this.setState({ loading: false, details })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(err) {
