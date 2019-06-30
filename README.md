@@ -200,7 +200,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Features
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Filter `Trending` movies with release date < +3 months
-    * When `recording`, filter movies with release date < +3 months (useless to search for movies still in production)
     * Make `clean` configurable (max time or size ?)
     * Translate (`fr`, `en`)
     * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
@@ -220,7 +219,10 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Trending `sagas` (`TMDB API 4` lists ?)
     * Responsive design / mobile UI-UX
 * `CLI`
+  * Use `PouchDB` db (avoiding using `HTTP`)
+    * Need to refactor `shared/Database` and split client / server database
   * Add `clean` command (cron job too)
+  * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production)
   * Summary command result
     * `record`:
       ```

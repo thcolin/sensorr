@@ -14,14 +14,10 @@ COPY server ./server
 COPY shared ./shared
 COPY src ./src
 
-RUN mkdir -p blackhole \
-  && chmod 666 blackhole \
-  && mkdir -p config \
-  && chmod 660 config \
-  && mkdir -p config/.db \
-  && chmod 660 config/.db \
-  && mkdir -p config/.sessions \
-  && chmod 660 config/.sessions \
+RUN mkdir -p config \
+  && chmod 666 config \
+  && mkdir -p blackhole \
+  && chmod 660 blackhole \
   && apk add -U python make g++ \
   && npm install \
   && npm run build \
