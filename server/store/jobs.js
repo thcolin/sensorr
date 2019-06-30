@@ -10,6 +10,8 @@ class Jobs extends EventEmitter {
       'online': true,
       'stopping': false,
       'stopped': false,
+      'restart': false,
+      'exit': false,
       'stop': false,
       'launching': true,
       'errored': false,
