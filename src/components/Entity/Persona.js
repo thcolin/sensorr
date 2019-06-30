@@ -236,7 +236,7 @@ export class State extends PureComponent {
 
     if (doc === null || (doc && doc.state === 'ignored')) {
       return <Badge {...props} onClick={this.handleStateChange} emoji="🔕" label={!compact && 'Ignored'} />
-    } else if (doc && doc.state === 'following') {
+    } else if (doc && doc.state === 'stalked') {
       return <Badge {...props} onClick={this.handleStateChange} emoji="🔔" label={!compact && 'Following'} />
     } else {
       return <Badge {...props} emoji="⌛" label={!compact && 'Loading'} style={{ ...(props.style || {}), cursor: 'default' }} />
