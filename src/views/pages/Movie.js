@@ -3,13 +3,12 @@ import { Helmet } from 'react-helmet'
 import { Link } from 'react-router-dom'
 import Row from 'components/Layout/Row'
 import Persona from 'components/Entity/Persona'
-import Film from 'components/Entity/Film'
+import Film, { State } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
+import Badge from 'components/Badge'
 import Releases from 'views/layout/Releases'
 import tmdb from 'store/tmdb'
-import database from 'store/database'
-import Documents from 'shared/Documents'
 import theme from 'theme'
 
 const styles = {
@@ -73,19 +72,6 @@ const styles = {
     userSelect: 'none',
     MozUserSelect: 'none',
     WebkitUserSelect: 'none',
-  },
-  badge: {
-    cursor: 'pointer',
-    backgroundColor: theme.colors.shadows.grey,
-    borderRadius: '5em',
-    padding: '1em',
-    margin: '0.5em 0',
-    fontWeight: 800,
-    color: theme.colors.white,
-    textTransform: 'uppercase'
-  },
-  emoji: {
-    margin: '0 0.75em 0 0',
   },
   informations: {
     width: '100%',
@@ -157,14 +143,12 @@ export default class Movie extends PureComponent {
     this.state = {
       loading: true,
       details: null,
-      doc: false,
       unpinned: false,
       more: 'recommendations',
       err: null,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
-    this.handleStateChange = this.handleStateChange.bind(this)
     this.handleMoreChange = this.handleMoreChange.bind(this)
     this.handleLookClick = this.handleLookClick.bind(this)
   }
@@ -179,25 +163,14 @@ export default class Movie extends PureComponent {
     }
   }
 
-  componentWillUnmount() {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-    }
-  }
-
   async bootstrap() {
     try {
-      this.setState({ doc: false, unpinned: false })
+      this.setState({ unpinned: false })
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
       )
       this.setState({ loading: false, details })
-      const db = await database.get()
-      const query = db.movies.findOne().where('id').eq(details.id.toString())
-      const doc = await query.exec()
-      this.setState({ doc: doc ? doc.toJSON() : null })
-      this.subscription = query.$.subscribe(doc => this.setState({ doc: doc ? doc.toJSON() : null }))
       setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
@@ -212,25 +185,6 @@ export default class Movie extends PureComponent {
     }
   }
 
-  async handleStateChange() {
-    const db = await database.get()
-
-    if (this.state.doc === false) {
-      return
-    }
-
-    if (!this.state.doc || this.state.doc.state === 'ignored') {
-      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'wished' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON() })
-    } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'archived' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON() })
-    } else if (this.state.doc.state === 'archived') {
-      const doc = await db.movies.atomicUpsert(new Documents.Movie({ ...this.state.details, state: 'ignored' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON() })
-    }
-  }
-
   handleMoreChange() {
     this.setState({ more: { similar: 'recommendations', recommendations: 'similar' }[this.state.more] })
   }
@@ -242,7 +196,7 @@ export default class Movie extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { doc, details, loading, err, unpinned, more, ...state } = this.state
+    const { details, loading, err, unpinned, more, ...state } = this.state
 
     const trailer = !details ? null : details.videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
@@ -277,34 +231,8 @@ export default class Movie extends PureComponent {
                     </a>
                   )}
                   <div style={styles.badges}>
-                    {doc === false && (
-                      <div style={{ ...styles.badge, cursor: 'default' }}>
-                        <span style={styles.emoji}>⌛</span>
-                        Loading
-                      </div>
-                    )}
-                    {(doc === null || (doc && doc.state === 'ignored')) && (
-                      <div style={styles.badge} onClick={this.handleStateChange}>
-                        <span style={styles.emoji}>🔕</span>
-                        Ignored
-                      </div>
-                    )}
-                    {doc && doc.state === 'wished' && (
-                      <div style={styles.badge} onClick={this.handleStateChange}>
-                        <span style={styles.emoji}>🍿</span>
-                        Wished
-                      </div>
-                    )}
-                    {doc && doc.state === 'archived' && (
-                      <div style={styles.badge} onClick={this.handleStateChange}>
-                        <span style={styles.emoji}>📼</span>
-                        Archived
-                      </div>
-                    )}
-                    <div style={styles.badge} onClick={this.handleLookClick}>
-                      <span style={styles.emoji}>🔍</span>
-                      Look
-                    </div>
+                    <State entity={details} compact={false} />
+                    <Badge emoji="🔍" label="Look" onClick={this.handleLookClick} />
                   </div>
                 </div>
                 <div style={styles.informations}>
@@ -357,7 +285,7 @@ export default class Movie extends PureComponent {
                     empty={{ style: styles.empty }}
                   />
                 </div>
-              </div>,
+              </div>
               {(unpinned && (
                 <Releases key="releases" movie={details} />
               ))}

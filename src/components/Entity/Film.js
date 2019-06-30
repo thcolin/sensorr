@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
+import Badge from 'components/Badge'
 import tmdb from 'store/tmdb'
 import database from 'store/database'
 import { Movie } from 'shared/Documents'
+import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
 const styles = {
@@ -17,19 +19,23 @@ const styles = {
   },
   state: {
     position: 'absolute',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
     right: '0.5em',
     top: '0.5em',
-    backgroundColor: theme.colors.shadows.grey,
-    borderRadius: '50%',
-    padding: '0.5em',
-    height: '2em',
-    width: '2em',
-    userSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
+  },
+  label: {
+    position: 'relative',
+    display: 'flex',
+  },
+  select: {
+    position: 'absolute',
+    opacity: 0,
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: '100%',
+    appearance: 'none',
+    border: 'none',
+    cursor: 'pointer',
   },
   link: {
     display: 'block',
@@ -50,8 +56,50 @@ export default class Film extends PureComponent {
     super(props)
 
     this.state = {
-      doc: false,
       ready: false,
+    }
+  }
+
+  render() {
+    const { entity, ...props } = this.props
+    const { ready, ...state } = this.state
+
+    return (
+      <div
+        title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
+        style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
+      >
+        <State entity={entity} style={styles.state} />
+        <Link to={`/movie/${entity.id}`} style={styles.link}>
+          <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
+        </Link>
+        {/* // Debug
+          <span style={{ color: 'white' }}><br/>📆 {entity.release_date}</span>
+          <span style={{ color: 'white' }}><br/>💯 {entity.vote_average}</span>
+          <span style={{ color: 'white' }}><br/>🔢 {entity.vote_count}</span>
+          <span style={{ color: 'white' }}><br/>📣 {entity.popularity}</span>
+        */}
+      </div>
+    )
+  }
+}
+
+export class State extends PureComponent {
+  static propTypes = {
+    entity: PropTypes.object.isRequired,
+    compact: PropTypes.bool,
+  }
+
+  static defaultProps = {
+    compact: true,
+  }
+
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      doc: false,
+      id: uuidv4(),
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -89,7 +137,8 @@ export default class Film extends PureComponent {
     } catch(e) {}
   }
 
-  async handleStateChange() {
+  async handleStateChange(e) {
+    const value = e.target.value
     const db = await database.get()
     let entity = this.props.entity
 
@@ -104,42 +153,70 @@ export default class Film extends PureComponent {
       return
     }
 
-    if (!this.state.doc || this.state.doc.state === 'ignored') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'wished' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON(), entity })
-    } else if (this.state.doc.state === 'wished') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'archived' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON(), entity })
-    } else if (this.state.doc.state === 'archived') {
-      const doc = await db.movies.atomicUpsert(new Movie({ ...entity, state: 'ignored' }, global.config.region || localStorage.getItem('region')).normalize())
-      this.setState({ doc: doc.toJSON(), entity })
-    }
+    const movie = new Movie({ ...entity, state: value }, global.config.region || localStorage.getItem('region')).normalize()
+    const doc = await db.movies.atomicUpsert(movie)
+    this.setState({ doc: doc.toJSON(), entity })
   }
 
   render() {
-    const { entity, ...props } = this.props
-    const { doc, ready, ...state } = this.state
+    const { entity, compact, ...props } = this.props
+    const { id, doc, ...state } = this.state
+
+    const options = {
+      loading: {
+        emoji: '⌛',
+        label: 'Loading',
+      },
+      ignored: {
+        emoji: '🔕',
+        label: 'Ignored',
+      },
+      pinned: {
+        emoji: '📍',
+        label: 'Pinned',
+      },
+      wished: {
+        emoji: '🍿',
+        label: 'Wished',
+      },
+      archived: {
+        emoji: '📼',
+        label: 'Archived',
+      },
+    }
+
+    let current = 'loading'
+
+    if (doc === null || (doc && doc.state === 'ignored')) {
+      current = 'ignored'
+    } else if (doc && doc.state === 'pinned') {
+      current = 'pinned'
+    } else if (doc && doc.state === 'wished') {
+      current = 'wished'
+    } else if (doc && doc.state === 'archived') {
+      current = 'archived'
+    } else {
+      current = 'loading'
+    }
 
     return (
-      <div
-        title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
-        style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
-      >
-        <span style={{ ...styles.state, cursor: doc === false ? 'default' : 'pointer' }} onClick={this.handleStateChange}>
-          {doc === false && ('⌛')}
-          {(doc === null || (doc && doc.state === 'ignored')) && ('🔕')}
-          {doc && doc.state === 'wished' && ('🍿')}
-          {doc && doc.state === 'archived' && ('📼')}
-        </span>
-        <Link to={`/movie/${entity.id}`} style={styles.link}>
-          <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
-        </Link>
-        {/* // Debug
-          <span style={{ color: 'white' }}><br/>📆 {entity.release_date}</span>
-          <span style={{ color: 'white' }}><br/>💯 {entity.vote_average}</span>
-          <span style={{ color: 'white' }}><br/>🔢 {entity.vote_count}</span>
-          <span style={{ color: 'white' }}><br/>📣 {entity.popularity}</span>
-        */}
+      <div {...props}>
+        <label htmlFor={id} style={styles.label}>
+          {current !== 'loading' && (
+            <select id={id} value={current} onChange={this.handleStateChange} style={styles.select}>
+              {Object.keys(options).filter(key => !['loading'].includes(key)).map(key => (
+                <option key={key} value={key}>{options[key].emoji} - {options[key].label}</option>
+              ))}
+            </select>
+          )}
+          <Badge
+            emoji={options[current].emoji}
+            title={options[current].label}
+            {...(compact ? {} : { label: options[current].label })}
+            {...(current === 'loading' ? { style: { cursor: 'default' } } : {})}
+            {...(current !== 'loading' ? { onClick: this.handleStateChange } : {})}
+          />
+        </label>
       </div>
     )
   }

@@ -3,10 +3,9 @@ import { Helmet } from 'react-helmet'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import Row from 'components/Layout/Row'
+import { State } from 'components/Entity/Persona'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
-import database from 'store/database'
-import Documents from 'shared/Documents'
 import theme from 'theme'
 
 const styles = {
@@ -47,19 +46,6 @@ const styles = {
     userSelect: 'none',
     MozUserSelect: 'none',
     WebkitUserSelect: 'none',
-  },
-  badge: {
-    cursor: 'pointer',
-    backgroundColor: theme.colors.shadows.grey,
-    borderRadius: '5em',
-    padding: '1em',
-    margin: '0.5em 0',
-    fontWeight: 800,
-    color: theme.colors.white,
-    textTransform: 'uppercase'
-  },
-  emoji: {
-    margin: '0 0.75em 0 0',
   },
   informations: {
     width: '100%',
@@ -121,7 +107,6 @@ export default class Star extends PureComponent {
     super(props)
 
     this.state = {
-      doc: false,
       details: null,
       loading: false,
       err: null,
@@ -149,7 +134,6 @@ export default class Star extends PureComponent {
     }
 
     this.bootstrap = this.bootstrap.bind(this)
-    this.handleStateChange = this.handleStateChange.bind(this)
     this.handleSortChange = this.handleSortChange.bind(this)
   }
 
@@ -167,9 +151,6 @@ export default class Star extends PureComponent {
     try {
       const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
       this.setState({ loading: false, details })
-      const db = await database.get()
-      const doc = await db.stars.findOne().where('id').eq(details.id.toString()).exec()
-      this.setState({ doc: doc ? doc.toJSON() : null })
       setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
@@ -181,23 +162,6 @@ export default class Star extends PureComponent {
         console.warn(err)
         this.props.history.push('/')
       }
-    }
-  }
-
-  async handleStateChange() {
-    const db = await database.get()
-    let entity = this.state.details
-
-    if (this.state.doc === false) {
-      return
-    }
-
-    if (!this.state.doc || this.state.doc.state === 'ignored') {
-      const doc = await db.stars.atomicUpsert(new Documents.Star({ ...entity, state: 'stalked' }).normalize())
-      this.setState({ doc: doc.toJSON(), entity })
-    } else if (this.state.doc.state === 'stalked') {
-      const doc = await db.stars.atomicUpsert(new Documents.Star({ ...entity, state: 'ignored' }).normalize())
-      this.setState({ doc: doc.toJSON(), entity })
     }
   }
 
@@ -214,7 +178,7 @@ export default class Star extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { doc, details, loading, err, order, sort, ...state } = this.state
+    const { details, loading, err, order, sort, ...state } = this.state
 
     return (
       <Fragment>
@@ -237,24 +201,7 @@ export default class Star extends PureComponent {
             }}>
               <div style={styles.metadata}>
                 <div style={styles.badges}>
-                  {doc === false && (
-                    <div style={{ ...styles.badge, cursor: 'default' }}>
-                      <span style={styles.emoji}>⌛</span>
-                      Loading
-                    </div>
-                  )}
-                  {(doc === null || (doc && doc.state === 'ignored')) && (
-                    <div style={styles.badge} onClick={this.handleStateChange}>
-                      <span style={styles.emoji}>🔕</span>
-                      Ignored
-                    </div>
-                  )}
-                  {doc && doc.state === 'stalked' && (
-                    <div style={styles.badge} onClick={this.handleStateChange}>
-                      <span style={styles.emoji}>🔔</span>
-                      Following
-                    </div>
-                  )}
+                  <State entity={details} compact={false} />
                 </div>
               </div>
               <div style={styles.informations}>

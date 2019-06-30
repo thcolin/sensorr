@@ -198,15 +198,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Features
+    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Filter `Trending` movies with release date < +3 months
     * When `recording`, filter movies with release date < +3 months (useless to search for movies still in production)
     * Make `clean` configurable (max time or size ?)
-    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
-    * Movie state `pinned` (waiting for `wished`)
-    * Refactor `Logs`
+    * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
+      * Think about "groups" ? (like `default` or `blockbuster` for example) - Movies will be grouped, why not make `Lists` views ?
     * Refactor `Upcoming`
     * Filter `adult` content (like `/star/1412545`) - optional
     * Display `role` on `Star.Row (crew)` tooltip

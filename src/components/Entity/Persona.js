@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
+import Badge from 'components/Badge'
 import { Star } from 'shared/Documents'
 import database from 'store/database'
 import tmdb from 'store/tmdb'
@@ -22,13 +23,6 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     cursor: 'pointer',
-  },
-  state: {
-    position: 'absolute',
-    backgroundColor: theme.colors.shadows.grey,
-    userSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
   },
   poster: {
     height: '14em',
@@ -58,15 +52,9 @@ const contexts = {
     element: {},
     poster: {},
     state: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      position: 'absolute',
       right: '0.75em',
       top: '0.75em',
-      borderRadius: '50%',
-      padding: '0.5em',
-      height: '2em',
-      width: '2em',
     },
     tooltip: {
       margin: '0.5em 0',
@@ -93,12 +81,11 @@ const contexts = {
       height: '10em',
     },
     state: {
+      position: 'absolute',
       width: '50%',
       height: '100%',
       right: 0,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      borderRadius: 0,
       padding: '0 0.5em 0 0',
       fontSize: '2em',
     },
@@ -126,10 +113,65 @@ export default class Persona extends PureComponent {
     super(props)
 
     this.state = {
-      doc: false,
-      loading: false,
       ready: false,
       tooltip: false,
+    }
+  }
+
+  render() {
+    const { entity, context, updatable, ...props } = this.props
+    const { ready, tooltip, ...state } = this.state
+
+    return (
+      <div
+        {...props}
+        style={{ ...styles.container, ...contexts[context].container, ...(props.style ? props.style : {})}}
+        onMouseEnter={() => this.setState({ tooltip: true })}
+        onMouseLeave={() => this.setState({ tooltip: false })}
+      >
+        <div style={{ ...styles.wrapper, ...contexts[context].wrapper }}>
+          {!(!updatable || (context !== 'portrait' && !tooltip)) && (
+            <State
+              entity={entity}
+              updatable={updatable}
+              style={contexts[context].state}
+            />
+          )}
+          <Link to={`/star/${entity.id}`} style={styles.link}>
+            <div style={{ ...styles.element, ...contexts[context].element }}>
+              <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}>
+                <img
+                  src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`}
+                  onLoad={() => this.setState({ ready: true })} style={styles.img}
+                />
+              </div>
+            </div>
+          </Link>
+        </div>
+        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
+      </div>
+    )
+  }
+}
+
+export class State extends PureComponent {
+  static propTypes = {
+    entity: PropTypes.object.isRequired,
+    updatable: PropTypes.bool,
+    compact: PropTypes.bool,
+  }
+
+  static defaultProps = {
+    updatable: true,
+    compact: true,
+  }
+
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      doc: false,
+      loading: false,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -189,40 +231,15 @@ export default class Persona extends PureComponent {
   }
 
   render() {
-    const { entity, context, updatable, ...props } = this.props
-    const { doc, loading, ready, tooltip, ...state } = this.state
+    const { entity, updatable, compact, ...props } = this.props
+    const { doc, loading, ...state } = this.state
 
-    return (
-      <div
-        {...props}
-        style={{ ...styles.container, ...contexts[context].container, ...(props.style ? props.style : {})}}
-        onMouseEnter={() => this.setState({ tooltip: true })}
-        onMouseLeave={() => this.setState({ tooltip: false })}
-      >
-        <div style={{ ...styles.wrapper, ...contexts[context].wrapper }}>
-          <div
-            style={{
-              ...styles.state,
-              ...contexts[context].state,
-              cursor: doc === false ? 'default' : 'pointer',
-              ...(!updatable || (context !== 'portrait' && !tooltip) ? { display: 'none' } : {}),
-            }}
-            onClick={this.handleStateChange}
-          >
-            {(loading || doc === false) && ('⌛')}
-            {(!loading && (doc === null || (doc && doc.state === 'ignored'))) && ('🔕')}
-            {(!loading && (doc && doc.state === 'stalked')) && ('🔔')}
-          </div>
-          <Link to={`/star/${entity.id}`} style={styles.link}>
-            <div style={{ ...styles.element, ...contexts[context].element }}>
-              <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}>
-                <img src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`} onLoad={() => this.setState({ ready: true })} style={styles.img} />
-              </div>
-            </div>
-          </Link>
-        </div>
-        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
-      </div>
-    )
+    if (doc === null || (doc && doc.state === 'ignored')) {
+      return <Badge {...props} onClick={this.handleStateChange} emoji="🔕" label={!compact && 'Ignored'} />
+    } else if (doc && doc.state === 'following') {
+      return <Badge {...props} onClick={this.handleStateChange} emoji="🔔" label={!compact && 'Following'} />
+    } else {
+      return <Badge {...props} emoji="⌛" label={!compact && 'Loading'} style={{ ...(props.style || {}), cursor: 'default' }} />
+    }
   }
 }

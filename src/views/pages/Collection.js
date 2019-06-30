@@ -55,7 +55,7 @@ export default class Collection extends PureComponent {
   }
 
   handleStateChange(state) {
-    this.setState({ state: { all: 'wished', wished: 'archived', archived: 'all' }[state] })
+    this.setState({ state: { all: 'pinned', pinned: 'wished', wished: 'archived', archived: 'all' }[state] })
   }
 
   render() {
@@ -77,10 +77,10 @@ export default class Collection extends PureComponent {
             />
             <i
               onClick={() => this.handleStateChange(state)}
-              title={{ all: 'All', wished: 'Wished', archived: 'Archived' }[state]}
+              title={{ all: 'All', pinned: 'Pinned', wished: 'Wished', archived: 'Archived' }[state]}
               style={styles.state}
             >
-              {{ all: '📚', wished: '🍿', archived: '📼' }[state]}
+              {{ all: '📚', pinned: '📍', wished: '🍿', archived: '📼' }[state]}
             </i>
           </div>
           <div style={styles.wrapper}>
