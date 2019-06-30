@@ -18,6 +18,8 @@ RUN mkdir -p blackhole \
   && chmod 666 blackhole \
   && mkdir -p db \
   && chmod 660 db \
+  && mkdir -p .sessions \
+  && chmod 660 .sessions \
   && apk add -U python make g++ \
   && npm install \
   && npm run build \
