@@ -17,8 +17,8 @@ const { header } = require('@bin/utils/layout')
 const { version, help } = require('@bin/utils/args')
 const { _, ...argv } = require('minimist')(process.argv.slice(2))
 
-
 PouchDB.plugin(require('pouchdb-find'))
+PouchDB.plugin(require('pouchdb-upsert'))
 
 async function main() {
   const log = console.error

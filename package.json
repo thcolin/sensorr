@@ -48,6 +48,7 @@
     "pouchdb-adapter-idb": "^7.1.1",
     "pouchdb-adapter-leveldb": "^7.1.1",
     "pouchdb-find": "^7.1.1",
+    "pouchdb-upsert": "^2.2.0",
     "prop-types": "^15.7.2",
     "query-string": "^6.8.1",
     "react": "^16.8.6",

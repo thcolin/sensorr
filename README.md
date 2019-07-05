@@ -199,6 +199,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Features
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
+      * Need some UI actions for some pages, like `Movie`, how to handle ? Use `puppeteer` ?
     * Make `clean` configurable (max time or size ?)
     * Translate (`fr`, `en`)
     * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)

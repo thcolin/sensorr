@@ -36,8 +36,7 @@ async function sync({ log, sensorr, db }) {
               of(doc).pipe(
                 tap(movie => movie.state === 'archived' && log('📼', `Sensorr movie ${chalk.inverse(movie.title)} already ${chalk.gray('archived')}`)),
                 filter(movie => movie.state !== 'archived'),
-                map(movie => ({ ...movie, time: Date.now(), state: 'archived' })),
-                mergeMap(movie => from(db.movies.put({ ...doc, ...movie })).pipe(mapTo(movie))),
+                mergeMap(movie => from(db.movies.upsert(movie.id, (doc) => ({ ...doc, ...movie, time: Date.now(), state: 'archived' }))).pipe(mapTo(movie))),
               ) :
               of(guid).pipe(
                 tap(guid => log('📭', `Missing ${chalk.inverse({ 'com.plexapp.agents.imdb': 'IMDB', 'com.plexapp.agents.themoviedb': 'TMDB' }[guid.agent])} movie ${chalk.gray(guid.id)}`)),
@@ -47,7 +46,7 @@ async function sync({ log, sensorr, db }) {
                 }[guid.agent])),
                 mergeMap(id => tmdb.fetch(['movie', id], { append_to_response: 'alternative_titles,release_dates' })),
                 map(entity => new Documents.Movie({ ...entity, state: 'archived' }, sensorr.config.region).normalize()),
-                mergeMap(movie => from(db.movies.put({ _id: movie.id, ...movie })).pipe(mapTo(movie))),
+                mergeMap(movie => from(db.movies.upsert(movie.id, (doc) => ({ ...doc, ...movie }))).pipe(mapTo(movie))),
               )
             ),
           )),

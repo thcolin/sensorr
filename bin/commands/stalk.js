@@ -1,6 +1,6 @@
 const { from, interval, zip, EMPTY } = require('rxjs')
 const { map, mapTo, tap, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
-const Documents = require('@shared/Documents')
+const { Star } = require('@shared/Documents')
 const TMDB = require('@shared/services/TMDB')
 const chalk = require('chalk')
 
@@ -18,13 +18,13 @@ async function stalk({ log, sensorr, db }) {
         interval(1000),
         (star, i) => star,
       )),
-      mergeMap(star => from(tmdb.fetch(['person', star._id], { append_to_response: 'images,movie_credits' })).pipe(
+      mergeMap(star => from(tmdb.fetch(['person', star.id], { append_to_response: 'images,movie_credits' })).pipe(
         catchError((err) => {
           log('🚨', { star, err })
           return EMPTY
         }),
-        mergeMap(entity => from(db.stars.put({ ...star, ...new Documents.Star(entity).normalize() })).pipe(
-          mapTo({ previous: star, current: new Documents.Star(entity).normalize() }),
+        mergeMap(entity => from(db.stars.upsert(star.id, (doc) => ({ ...doc, ...new Star(entity).normalize() }))).pipe(
+          mapTo({ previous: star, current: new Star(entity).normalize() }),
         )),
         delay(2000),
       )),

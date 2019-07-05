@@ -2,11 +2,14 @@ const fs = require('fs')
 const inquirer = require('inquirer')
 const filesize = require('filesize')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
-const { map, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
+const { map, mapTo, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
+const TMDB = require('@shared/services/TMDB')
+const { Movie } = require('@shared/Documents')
 const uuidv4 = require('uuid/v4')
 const chalk = require('chalk')
 
 async function record({ argv, log, session, logger, sensorr, db }) {
+  const tmdb = new TMDB({ key: sensorr.config.tmdb, region: sensorr.config.region })
   logger.init()
 
   return await new Promise(resolve =>
@@ -22,6 +25,9 @@ async function record({ argv, log, session, logger, sensorr, db }) {
         const context = { session, record }
 
         return of(movie).pipe(
+          mergeMap(movie => tmdb.fetch(['movie', movie.id], { append_to_response: 'credits,alternative_titles,release_dates' })),
+          map(details => new Movie(details, sensorr.config.region || 'en-US').normalize()),
+          mergeMap(movie => from(db.movies.upsert(movie.id, (doc) => ({ ...doc, ...movie }))).pipe(mapTo(movie))),
           mergeMap(movie => look(movie, context)),
           mergeMap(({ movie, release }) => grab(movie, release, context)),
           map(values => ({ ...values, context })),
@@ -30,6 +36,7 @@ async function record({ argv, log, session, logger, sensorr, db }) {
             logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { context, movie }, err)
             return EMPTY
           }),
+          delay(2000),
         )
       }, null, 1),
     ).subscribe(
@@ -138,15 +145,14 @@ async function record({ argv, log, session, logger, sensorr, db }) {
         )),
       )),
       mergeMap(file => of(null).pipe(
-        mergeMap(() => db.movies.put({
-          _id: movie.id,
+        mergeMap(() => db.movies.upsert(movie.id, (doc) => ({
+          ...doc,
           ...movie,
           time: Date.now(),
           state: 'archived',
-        })),
-        map(() => ({ movie, release, file })),
+        }))),
+        mapTo({ movie, release, file }),
       )),
-      delay(3000),
     )
   }
 }

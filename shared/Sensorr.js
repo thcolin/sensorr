@@ -76,7 +76,6 @@ class Sensorr {
       mergeMap(title => from(this.xznabs).pipe(
         mergeMap(xznab => of(xznab).pipe(
           tap(xznab => typeof hooks.search === 'function' && hooks.search(xznab, title)),
-          delay(2000),
           mergeMap(xznab => xznab.search(title).pipe(
             timeout(10000),
             catchError(e => {
@@ -170,6 +169,7 @@ class Sensorr {
           })),
           tap(release => typeof hooks.release === 'function' && hooks.release(xznab, title, release)),
           filter(release => !strict || release.valid),
+          delay(2000),
         ), null, 1),
       ), null, 1),
       toArray(),
