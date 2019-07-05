@@ -119,9 +119,11 @@ class Logs extends PureComponent {
 
     this.filters = {
       all: () => true,
-      success: record => record.success,
-      filtered: record => !record.success && record.logs.some(log => log.message.match(/Release doesn't pass configured filtering/)),
-      missing: record => !record.success && !record.logs.some(log => log.message.match(/Release doesn't pass configured filtering/)),
+      ongoing: record => !record.done,
+      success: record => record.done && record.success,
+      filtered: record => record.done && !record.success && record.logs.some(log => ((log.data || {}).release || {}).warning === 1),
+      missing: record => record.done && !record.success && record.logs.every(log => ((log.data || {}).release || {}).warning !== 1),
+      error: record => record.logs.some(log => (log.data || {}).err),
     }
 
     this.state = {
@@ -157,8 +159,8 @@ class Logs extends PureComponent {
           session: session,
           record: record,
           time: Math.min((this.records[record] || {}).time || log.time, log.time),
-          done: (this.records[record] || {}).done || !!log.data.done,
-          success: (this.records[record] || {}).success || !!log.data.success,
+          done: (this.records[record] || {}).done || !!(log.data || {}).done,
+          success: (this.records[record] || {}).success || !!(log.data || {}).success,
           ...(typeof (log.data || {}).movie !== 'undefined' ? { movie: log.data.movie } : {}),
           logs: Object.values({
             ...(this.records[record] || { logs: [] }).logs.reduce((acc, log) => ({ ...acc, [log.uuid]: log }), {}),
@@ -199,7 +201,7 @@ class Logs extends PureComponent {
   }
 
   move(index) {
-    this.setState({ loading: true, index })
+    this.setState({ loading: true, filter: this.filters.all, index })
   }
 
   expand() {
@@ -249,21 +251,40 @@ class Logs extends PureComponent {
             >
               <span>🍿</span>
               <span style={styles.catch}>
-                {markdown(`Searching for **${records.length}** movies`).tree}
+                {markdown(`${records.length} __Wished__ movies`).tree}
               </span>
             </button>
+            {records.some(this.filters.ongoing) && (
+              <button
+                style={{ ...styles.focus, ...styles.digest }}
+                onClick={() => this.setState({ filter: this.filters.ongoing })}
+              >
+                <span>⌛</span>
+                <span style={styles.catch}>
+                  {markdown(`${records.filter(this.filters.ongoing).length} __Ongoing__ records`).tree}
+                </span>
+              </button>
+            )}
             <button
               style={{ ...styles.focus, ...styles.digest }}
               onClick={() => this.setState({ filter: this.filters.success })}
             >
               <span>📼</span>
               <span style={styles.catch}>
-                {records.filter(record => record.success > 0).length > 0 ?
-                  markdown(`Amazing ! **${records.filter(record => record.success).length}** movies were archived !`).tree :
-                  markdown('Oops... No movies were archived').tree
-                }
+                {markdown(`${records.filter(this.filters.success).length} __Archived__ movies`).tree}
               </span>
             </button>
+            {!!records.filter(this.filters.filtered).length && (
+              <button
+                style={{ ...styles.focus, ...styles.digest }}
+                onClick={() => this.setState({ filter: this.filters.filtered })}
+              >
+                <span>👮</span>
+                <span style={styles.catch}>
+                  {markdown(`${records.filter(this.filters.filtered).length} __Filtered__ records`).tree}
+                </span>
+              </button>
+            )}
             {!!records.filter(this.filters.missing).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
@@ -271,18 +292,18 @@ class Logs extends PureComponent {
               >
                 <span>📭</span>
                 <span style={styles.catch}>
-                  {markdown(`Sorry, **${records.filter(this.filters.missing).length}** movies still missing`).tree}
+                  {markdown(`${records.filter(this.filters.missing).length} __Missing__ movies`).tree}
                 </span>
               </button>
             )}
-            {!!records.filter(this.filters.filtered).length && (
+            {!!records.filter(this.filters.error).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.filtered })}
+                onClick={() => this.setState({ filter: this.filters.error })}
               >
-                <span>💎</span>
+                <span>❌</span>
                 <span style={styles.catch}>
-                  {markdown(`But if you lower your filter you could get **${records.filter(this.filters.filtered).length}** more movies !`).tree}
+                  {markdown(`${records.filter(this.filters.error).length} __Error__ records`).tree}
                 </span>
               </button>
             )}

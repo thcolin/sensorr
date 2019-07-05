@@ -33,7 +33,7 @@ async function record({ argv, log, session, logger, sensorr, db }) {
           map(values => ({ ...values, context })),
           catchError(err => {
             log('🚨', err.toString())
-            logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { context, movie }, err)
+            logger.error(`🚨 Error during **${movie.title}** (${movie.year}) recording`, { context, movie, err }, err)
             return EMPTY
           }),
           delay(2000),

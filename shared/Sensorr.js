@@ -106,21 +106,10 @@ class Sensorr {
           map(release => ({
             ...release,
             score: this.score(release),
+            valid: true,
+            reason: null,
+            warning: 0,
           })),
-          map(release => {
-            const similarity = movie.terms.titles
-              .map(title => string.similarity(title, string.clean(release.meta.title)).toFixed(2))
-              .sort((a, b) => b - a)
-              .shift()
-
-            return ({
-              ...release,
-              similarity,
-              valid: (similarity >= this.MINIMUM_SIMILARITY),
-              reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${movie.terms.titles.join(', ')})`,
-              warning: 2,
-            })
-          }),
           map(release => !release.valid ? release : ({
             ...release,
             valid: release.seeders,
@@ -141,6 +130,24 @@ class Sensorr {
             }`,
             warning: 2,
           })),
+          map(release => {
+            if (!release.valid) {
+              return release
+            } else {
+              const similarity = movie.terms.titles
+                .map(title => string.similarity(title, string.clean(release.meta.title)).toFixed(2))
+                .sort((a, b) => b - a)
+                .shift()
+
+              return ({
+                ...release,
+                similarity,
+                valid: (similarity >= this.MINIMUM_SIMILARITY),
+                reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${movie.terms.titles.join(', ')})`,
+                warning: 2,
+              })
+            }
+          }),
           map(release => {
             if (!release.valid) {
               return release
