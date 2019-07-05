@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { of, throwError, bindNodeCallback } = require('rxjs')
 const { mergeMap, mapTo } = require('rxjs/operators')
-const constants = require('@server/utils/constants')
+const constants = require('@shared/utils/constants')
 const paths = {
   ...constants.paths,
   file: path.join(constants.paths.config, 'config.json'),

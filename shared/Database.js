@@ -127,15 +127,15 @@ class Database {
   }
 
   async bootstrap(version) {
+    const { sync, ...options } = this.options
+
     switch (version) {
       case _POUCHDB:
         return Object.keys(Database.SCHEMAS).reduce((db, key) => ({
           ...db,
-          [key]: new PouchDB({ ...this.options, name: `${this.options.name}/sensorr-${key}` }),
+          [key]: new PouchDB({ ...options, name: `${options.name || ''}sensorr-${key}` }),
         }), {})
       case _RXDB:
-        const { sync, ...options } = this.options
-
         await RxDB.removeDatabase('sessions', 'idb')
         await RxDB.removeDatabase('records', 'idb')
 

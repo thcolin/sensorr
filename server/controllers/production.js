@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const loggers = require('@server/utils/loggers')
 const log = loggers.default
-const { paths } = require('@server/utils/constants')
+const { paths } = require('@shared/utils/constants')
 
 let html = ''
 

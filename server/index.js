@@ -9,7 +9,7 @@ const bauth = require('express-basic-auth')
 const app = require('@server/store/app')
 const server = require('@server/store/server')
 const Config = require('@server/store/config')
-const { paths } = require('@server/utils/constants')
+const { paths } = require('@shared/utils/constants')
 
 app.use('/db', require('@server/db'))
 

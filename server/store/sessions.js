@@ -3,7 +3,7 @@ const path = require('path')
 const Tail = require('tail').Tail
 const Readable = require('stream').Readable
 const EventEmitter = require('events')
-const { paths } = require('@server/utils/constants')
+const { paths } = require('@shared/utils/constants')
 
 class Sessions extends EventEmitter {
   constructor() {

@@ -218,8 +218,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Trending `sagas` (`TMDB API 4` lists ?)
     * Responsive design / mobile UI-UX
 * `CLI`
-  * Use server `PouchDB` db (avoiding using `HTTP`, see [pouchdb-server#pouchdb-defaults](https://github.com/pouchdb/pouchdb-server#pouchdb-defaults))
-    * Need to refactor `shared/Database` and split client / server database
   * Add `clean` command (cron job too)
   * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production)
   * Summary command result

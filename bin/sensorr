@@ -12,6 +12,7 @@ const Transform = require('stream').Transform
 const uuidv1 = require('uuid/v1')
 const uuidv4 = require('uuid/v4')
 const config = require('@config/config.json')
+const { paths } = require('@shared/utils/constants')
 const commands = require('@bin/commands')
 const { header } = require('@bin/utils/layout')
 const { version, help } = require('@bin/utils/args')
@@ -45,7 +46,7 @@ async function main() {
     })
 
     const db = await new Database({
-      name: `http://localhost:${parseInt(argv.p || argv.port || 5070)}/db`,
+      name: `http://localhost:${parseInt(argv.p || argv.port || 5070)}/db/`,
       auth: sensorr.config.auth
     }).get(Database._POUCHDB)
 
@@ -56,7 +57,7 @@ async function main() {
         transform: (obj, encoding, callback) => callback(null, { ...obj, uuid: uuidv4() })
       }))
       .pipe(new StringifyTransform())
-      .pipe(fs.createWriteStream(path.join(__dirname, '..', 'config', '.sessions', `${session}-${_[0]}.log`), { flags: 'a' }))
+      .pipe(fs.createWriteStream(path.join(paths.sessions, `${session}-${_[0]}.log`), { flags: 'a' }))
 
     await commands[_[0]]({ argv, log, session, logger, sensorr, db })
     await exit(0)
