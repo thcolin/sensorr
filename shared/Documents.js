@@ -1,7 +1,7 @@
 const { clean } = require('./utils/string')
 
 class Movie {
-  constructor(payload, region) {
+  constructor(payload, region = 'en-US') {
     this.payload = payload
     this.countries = ['US', 'UK', region.split('-').pop()]
   }

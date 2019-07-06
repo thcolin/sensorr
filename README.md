@@ -206,20 +206,34 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
     * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
       * Think about "groups" ? (like `default` or `blockbuster` for example) - Movies will be grouped, why not make `Lists` views ?
-    * Refactor `Upcoming`
-    * Display `role` on `Star.Row (crew)` tooltip
     * Export/Import `database`
     * Synchronize with `trakt.tv`
     * Replace `Plex` available releases by better if available, like `CouchPotato`
       * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
-    * Display `Persona` director on `Movie`
-    * Trending `studios`
-    * Trending `sagas` (`TMDB API 4` lists ?)
+  * UI/UX
     * Responsive design / mobile UI-UX
+    * Display `Persona` director on `Movie`
+    * Display `role` on `Star.Row (crew)` tooltip
+    * Refactor
+      * `Trending`
+        * Display `studios`
+        * Display `sagas` ? (using `TMDB API 4` lists ?)
+        * Customize ?
+      * `Stars`
+        * `Upcoming`
+        * Merge `Following` and `Search` ?
+        * `Following`
+          * Add stats (count, etc...)
+          * Better filters by `Document` type
+      * `Movies`
+        * Merge `Collection` and `Search` ?
+        * `Collection`
+          * Add stats (count, etc...)
+          * Better filters by `Document` type
 * `CLI`
   * Add `clean` command (cron job too)
-  * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production)
+  * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
   * Summary command result
     * `record`:
       ```
@@ -231,7 +245,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `App` (Phone / TV)
   * Features
     * Connect to server with QR code
-    * Streaming
+    * Streaming from `Releases` (how to know which file read ?)
+  * PWA ?
 
 # Inspiration
 * CLI
