@@ -119,7 +119,7 @@ class Logs extends PureComponent {
 
     this.filters = {
       all: () => true,
-      ongoing: record => !record.done,
+      ongoing: record => !record.done && !record.logs.some(log => (log.data || {}).err),
       success: record => record.done && record.success,
       filtered: record => record.done && !record.success && record.logs.some(log => ((log.data || {}).release || {}).warning === 1),
       missing: record => record.done && !record.success && record.logs.every(log => ((log.data || {}).release || {}).warning !== 1),
