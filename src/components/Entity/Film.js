@@ -143,10 +143,16 @@ export class State extends PureComponent {
     let entity = this.props.entity
 
     if (!entity.alternative_titles || !entity.release_dates) {
-      entity = await tmdb.fetch(
-        ['movie', entity.id],
-        { append_to_response: 'alternative_titles,release_dates' }
-      )
+      try {
+        entity = await tmdb.fetch(
+          ['movie', entity.id],
+          { append_to_response: 'alternative_titles,release_dates' }
+        )
+      } catch (e) {
+        console.warn(e)
+        entity.alternative_titles = {}
+        entity.release_dates = {}
+      }
     }
 
     if (this.state.doc === false) {
