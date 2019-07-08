@@ -8,6 +8,7 @@ import Blackhole from './blocks/Blackhole'
 import XZNAB from './blocks/XZNAB'
 import Policy from './blocks/Policy'
 import Plex from './blocks/Plex'
+import Database from './blocks/Database'
 import sensorr from 'store/sensorr'
 import theme from 'theme'
 
@@ -21,7 +22,7 @@ export const styles = {
     display: 'flex',
   },
   section: {
-    padding: '1em',
+    padding: '2em 1em',
     display: 'flex',
     flexDirection: 'column',
   },
@@ -181,6 +182,7 @@ class Configure extends PureComponent {
         <form style={styles.element} onSubmit={this.handleSubmit}>
           <Region values={values} handleChange={this.handleChange} />
           <Authentication values={values} handleChange={this.handleChange} />
+          <Database />
           <TMDB values={values} handleChange={this.handleChange} />
           <Plex values={values} handleChange={this.handleChange} />
           <Blackhole values={values} handleChange={this.handleChange} />

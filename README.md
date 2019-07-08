@@ -206,7 +206,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
     * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
       * Think about "groups" ? (like `default` or `blockbuster` for example) - Movies will be grouped, why not make `Lists` views ?
-    * Export/Import `database`
     * Synchronize with `trakt.tv`
     * Replace `Plex` available releases by better if available, like `CouchPotato`
       * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
@@ -217,17 +216,20 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Display `role` on `Star.Row (crew)` tooltip
     * Refactor
       * `Trending`
+        * Display `stars`
         * Display `studios`
         * Display `sagas` ? (using `TMDB API 4` lists ?)
         * Customize ?
       * `Stars`
         * `Upcoming`
         * Merge `Following` and `Search` ?
+          * See how `Spotify` handle this in playlist (search / filter)
         * `Following`
           * Add stats (count, etc...)
           * Better filters by `Document` type
       * `Movies`
         * Merge `Collection` and `Search` ?
+          * See how `Spotify` handle this in playlist (search / filter)
         * `Collection`
           * Add stats (count, etc...)
           * Better filters by `Document` type
