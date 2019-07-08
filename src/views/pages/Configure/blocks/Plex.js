@@ -115,7 +115,8 @@ class Plex extends PureComponent {
           />
         </div>
         <button
-          type="button" style={{
+          type="button"
+          style={{
             ...styles.button,
             cursor: ['unknown', 'loading', 'waiting'].includes(status) ? 'default' : 'pointer',
             ...(!['unknown', 'authorized', 'loading', 'waiting'].includes(status) ? {} : {
