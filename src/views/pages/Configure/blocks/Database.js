@@ -96,7 +96,7 @@ class Database extends PureComponent {
       <div style={styles.section}>
         <h1 style={styles.title}>Database</h1>
         <p style={styles.paragraph}>
-          Want to work with <em>your data</em> ? Habit of <em>backup everything</em> ? You can now dump and import your whole <strong>database</strong> ({Object.keys(SCHEMAS).join(', ')}) in JSON format !
+          Want to work with <em>your data</em> ? Habit of <em>backup everything</em> ? You can dump and import your whole <strong>database</strong> ({Object.keys(SCHEMAS).join(', ')}) in JSON format !
           <br/>
           <br/>
         </p>
