@@ -179,6 +179,7 @@ Commands:
   📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
+  🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -200,7 +201,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Features
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
       * Need some UI actions for some pages, like `Movie`, how to handle ? Use `puppeteer` ?
-    * Make `clean` configurable (max time or size ?)
     * Translate (`fr`, `en`)
     * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
@@ -234,7 +234,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add stats (count, etc...)
           * Better filters by `Document` type
 * `CLI`
-  * Add `clean` command (cron job too)
   * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
   * Summary command result
     * `record`:

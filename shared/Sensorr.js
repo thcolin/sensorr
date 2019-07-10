@@ -2,16 +2,17 @@ const { from, of, throwError } = require('rxjs')
 const { tap, map, delay, toArray, concatAll, filter, mergeMap, pluck, timeout, retry, catchError } = require('rxjs/operators')
 const oleoo = require('oleoo')
 const string = require('./utils/string')
+const filesize = require('./utils/filesize')
 const XZNAB = require('./services/XZNAB')
 const fallback = require('../config.default.json')
 
 class Sensorr {
-  constructor(config, options = {}) {
+  constructor(payload, options = {}) {
     this.MINIMUM_SIMILARITY = 0.6
 
     this.options = options
 
-    this.config = {
+    const config = {
       tmdb: '',
       blackhole: '/tmp',
       xznabs: [],
@@ -19,7 +20,15 @@ class Sensorr {
       sort: 'seeders',
       descending: false,
       ...fallback,
+      ...payload,
+    }
+
+    this.config = {
       ...config,
+      logs: {
+        ...config.logs,
+        limit: filesize.parse(`${config.logs.limit}MB`),
+      }
     }
 
     this.xznabs = (this.config.xznabs || []).filter(xznab => !xznab.disabled).map(xznab => new XZNAB(xznab, options))

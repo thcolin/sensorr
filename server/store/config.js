@@ -61,6 +61,9 @@ class Config {
           token: '',
         })
       },
+      logs: {
+        limit: parseInt(payload.logs.limit || 10),
+      }
     }
 
     if (!this.payload.plex.pin.code) {

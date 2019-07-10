@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
 import Region from './blocks/Region'
 import Authentication from './blocks/Authentication'
+import Logs from './blocks/Logs'
 import TMDB from './blocks/TMDB'
 import Blackhole from './blocks/Blackhole'
 import XZNAB from './blocks/XZNAB'
@@ -182,6 +183,7 @@ class Configure extends PureComponent {
         <form style={styles.element} onSubmit={this.handleSubmit}>
           <Region values={values} handleChange={this.handleChange} />
           <Authentication values={values} handleChange={this.handleChange} />
+          <Logs values={values} handleChange={this.handleChange} />
           <Database />
           <TMDB values={values} handleChange={this.handleChange} />
           <Plex values={values} handleChange={this.handleChange} />
