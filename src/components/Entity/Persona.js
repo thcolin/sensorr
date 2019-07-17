@@ -148,7 +148,15 @@ export default class Persona extends PureComponent {
             </div>
           </Link>
         </div>
-        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>{entity.name}</h5>
+        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>
+          <span>{entity.name}</span>
+          {entity.job && (
+            <span>{` (${entity.job})`}</span>
+          )}
+          {entity.character && (
+            <span>{` (${entity.character})`}</span>
+          )}
+        </h5>
       </div>
     )
   }
@@ -235,11 +243,11 @@ export class State extends PureComponent {
     const { doc, loading, ...state } = this.state
 
     if (doc === null || (doc && doc.state === 'ignored')) {
-      return <Badge {...props} onClick={this.handleStateChange} emoji="🔕" label={!compact && 'Ignored'} />
+      return <Badge {...props} onClick={this.handleStateChange} emoji="🔕" label={(!compact && 'Ignored') || ''} />
     } else if (doc && doc.state === 'stalked') {
-      return <Badge {...props} onClick={this.handleStateChange} emoji="🔔" label={!compact && 'Following'} />
+      return <Badge {...props} onClick={this.handleStateChange} emoji="🔔" label={(!compact && 'Following') || ''} />
     } else {
-      return <Badge {...props} emoji="⌛" label={!compact && 'Loading'} style={{ ...(props.style || {}), cursor: 'default' }} />
+      return <Badge {...props} emoji="⌛" label={(!compact && 'Loading') || ''} style={{ ...(props.style || {}), cursor: 'default' }} />
     }
   }
 }

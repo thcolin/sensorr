@@ -109,16 +109,21 @@ const styles = {
   tagline: {
     color: theme.colors.white,
     fontWeight: 600,
-    padding: '2em 0 0 0',
+    margin: '0 0 1em',
   },
   plot: {
     maxWidth: '50em',
     lineHeight: '1.5em',
     color: theme.colors.white,
     whiteSpace: 'pre-line',
-    padding: '1em 1em 1em 0',
+    padding: '0 1em 1em 0',
   },
-  credits: {
+  crew: {
+    margin: '1em 0 -2em',
+    overflow: 'visible',
+    fontSize: '0.5em',
+  },
+  cast: {
     margin: '3em 0 0',
     overflow: 'visible',
     fontSize: '0.5em',
@@ -259,20 +264,19 @@ export default class Movie extends PureComponent {
                     </h2>
                     <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
                     {!!details.credits.crew.filter(credit => ['Director'].includes(credit.job)).length && (
-                      <p style={styles.directors}>
-                        🎥 &nbsp; {
-                          details.credits.crew
-                            .filter(credit => ['Director'].includes(credit.job))
-                            .map(credit => <Link to={`/star/${credit.id}`} style={styles.link} key={credit.id}>{credit.name}</Link>)
-                            .reduce((prev, curr) => [prev, ', ', curr])
-                        }
-                      </p>
+                      <div style={styles.crew}>
+                        <Row
+                          items={details.credits.crew.filter(credit => ['Director'].includes(credit.job))}
+                          child={Persona}
+                          space={0}
+                        />
+                      </div>
                     )}
                     {!!details.tagline && (
                       <h3 style={styles.tagline}>{details.tagline}</h3>
                     )}
                     <p style={styles.plot}>{details.overview}</p>
-                    <div style={styles.credits}>
+                    <div style={styles.cast}>
                       <Row
                         items={details.credits.cast.slice(0, 10)}
                         child={Persona}

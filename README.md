@@ -198,23 +198,11 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
-  * Features
-    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
-      * Need some UI actions for some pages, like `Movie`, how to handle ? Use `puppeteer` ?
-    * Translate (`fr`, `en`)
-    * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
-    * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
-    * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
-      * Think about "groups" ? (like `default` or `blockbuster` for example) - Movies will be grouped, why not make `Lists` views ?
-    * Synchronize with `trakt.tv`
-    * Replace `Plex` available releases by better if available, like `CouchPotato`
-      * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
-    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
   * UI/UX
     * Responsive design / mobile UI-UX
-    * Display `Persona` director on `Movie`
-    * Display `role` on `Star.Row (crew)` tooltip
     * Refactor
+      * `Configure`
+        * Split `Blocks` into grouped tabs
       * `Trending`
         * Display `stars`
         * Display `studios`
@@ -222,17 +210,35 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * Customize ?
       * `Stars`
         * `Upcoming`
+          * Improve performance too
         * Merge `Following` and `Search` ?
           * See how `Spotify` handle this in playlist (search / filter)
         * `Following`
-          * Add stats (count, etc...)
+          * Add stats - order - filter (count, etc...)
           * Better filters by `Document` type
       * `Movies`
+        * Improve `Releases`
         * Merge `Collection` and `Search` ?
           * See how `Spotify` handle this in playlist (search / filter)
+        * `List` (grouped movies by "policy")
         * `Collection`
-          * Add stats (count, etc...)
+          * Add stats - order - filter (count, etc...)
           * Better filters by `Document` type
+  * Features
+    * Improve `history` implementation (move some state into `history.params` with default/fallback)
+      * `Collection/Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
+      * `Releases` (on/off)
+      * `Logs` (date)
+    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
+    * Translate (`fr`, `en`)
+    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
+    * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
+      * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
+      * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
+    * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
+    * Synchronize with `trakt.tv`
+    * Replace `Plex` available releases by better if available, like `CouchPotato`
+      * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
 * `CLI`
   * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
   * Summary command result
