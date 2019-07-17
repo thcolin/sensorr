@@ -2,7 +2,14 @@ import React, { PureComponent, useState } from 'react'
 import { SortableContainer, SortableElement } from 'react-sortable-hoc'
 import reorder from 'array-move'
 import { styles } from '../index.js'
-import rules from 'oleoo/src/rules.json'
+import standards from 'oleoo/src/rules.json'
+
+const rules = {
+  ...Object.keys(standards)
+    .filter(rule => !['erase'].includes(rule))
+    .reduce((acc, key) => ({ ...acc, [key]: standards[key] }), {}),
+  custom: {},
+}
 
 const SortableItem = SortableElement(({ value, index, disabled, onRemoveClick, ...props }) => (
   <li key={index} style={{ listStyle: 'inherit', cursor: disabled ? 'default' : 'pointer' }}>
@@ -31,7 +38,7 @@ const Behavior = ({ values, behavior, handleChange }) => {
       <p style={styles.paragraph}>
         {{
           prefer: 'Here you can specify and order prefered keywords, top ones will get a better "score" when choosing appropriate release',
-          avoid: 'Here you can specify custom avoided keywords, if any is found in a release title, this one will be filtered',
+          avoid: 'Here you can specify avoided keywords, if any is found in a release title, this one will be filtered',
         }[behavior]}
       </p>
       <div style={{ ...styles.column, alignItems: 'center' }}>
@@ -43,12 +50,16 @@ const Behavior = ({ values, behavior, handleChange }) => {
             <option key={t} value={t}>{`${t.charAt(0).toUpperCase()}${t.slice(1)}`}</option>
           ))}
         </select>
-        <select style={{ ...styles.select, margin: '1em' }} value={keyword} onChange={e => setKeyword(e.target.value)}>
-          <option key="null" value={''} disabled={true}>-</option>
-          {Object.keys(rules[tag]).map(k => (
-            <option key={k} value={k} disabled={(values.policy[behavior][tag] || []).includes(k)}>{`${k.charAt(0).toUpperCase()}${k.slice(1)}`}</option>
-          ))}
-        </select>
+        {tag === 'custom' ? (
+          <input type="text" value={keyword} onChange={e => setKeyword(e.target.value)} style={{ ...styles.select, margin: '1em' }} />
+        ) : (
+          <select value={keyword} onChange={e => setKeyword(e.target.value)} style={{ ...styles.select, margin: '1em' }}>
+            <option key="null" value={''} disabled={true}>-</option>
+            {Object.keys(rules[tag]).map(k => (
+              <option key={k} value={k} disabled={(values.policy[behavior][tag] || []).includes(k)}>{`${k.charAt(0).toUpperCase()}${k.slice(1)}`}</option>
+            ))}
+          </select>
+        )}
         <button
           type="button"
           style={{ background: 'none', border: 'none', fontSize: '1.25em', cursor: keyword ? 'pointer' : 'default' }}

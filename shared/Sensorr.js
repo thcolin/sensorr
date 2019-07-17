@@ -37,10 +37,15 @@ class Sensorr {
   score(release) {
     return Object.keys(this.config.policy.prefer || {})
       .map(tag => this.config.policy.prefer[tag]
-        .map((keyword, index, arr) =>
-          (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword) ?
-          (tag === 'flags' ? 1 : (arr.length - index) / arr.length) : 0
-        )
+        .map((keyword, index, arr) => {
+          const score = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
+          const test = (tag === 'custom' ?
+            (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
+            (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
+          )
+
+          return test(keyword) ? score : 0
+        })
         .reduce((score, value) => score += parseInt(value * 100), 0)
       )
       .reduce((score, value) => score += value, 0)
@@ -49,9 +54,12 @@ class Sensorr {
   filter(release) {
     return Object.keys(this.config.policy.avoid || {})
       .map(tag => {
-        const intersection = this.config.policy.avoid[tag].filter(
-          keyword => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
+        const test = (tag === 'custom' ?
+          (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
+          (keyword) => Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]].includes(keyword)
         )
+
+        const intersection = this.config.policy.avoid[tag].filter(test)
 
         if (intersection.length) {
           throw new Error(`Release doesn't pass configured policy (${tag}=${intersection.join(', ')})`)
