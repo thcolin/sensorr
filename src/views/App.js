@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { BrowserRouter, Switch, Route, Redirect } from 'react-router-dom'
 import Header from 'views/layout/Header'
 import Navigation from 'views/layout/Navigation'
 import Trending from 'views/pages/Trending'
@@ -21,22 +21,26 @@ const styles = {
   }
 }
 
-export default ({ ...props }) => (
-  <div style={styles.element}>
-    <Header />
-    <Navigation />
-    <Switch>
-      <Route path="/" exact component={Trending} />
-      <Route path="/movies/collection" exact component={Collection} />
-      <Route path="/movies/search/:query?" exact component={(props) => <Search state="movie" {...props} />} />
-      <Route path="/stars/upcoming/:year?" exact component={Upcoming} />
-      <Route path="/stars/following" exact component={Following} />
-      <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
-      <Route path="/movie/:id" exact component={Movie} />
-      <Route path="/star/:id" exact component={Star} />
-      <Route path="/configure" exact component={Configure} />
-      <Route path="/logs" exact component={Logs} />
-      <Route component={Blank} />
-    </Switch>
-  </div>
+export default () => (
+  <BrowserRouter>
+    <div style={styles.element}>
+      <Header />
+      <Navigation />
+      <Switch>
+        <Route path="/" exact component={Trending} />
+        <Route path="/movies" exact component={() => <Redirect to="/movies/collection" />} />
+        <Route path="/movies/collection" exact component={Collection} />
+        <Route path="/movies/search/:query?" exact component={(props) => <Search state="movie" {...props} />} />
+        <Route path="/stars" exact component={() => <Redirect to="/stars/upcoming" />} />
+        <Route path="/stars/upcoming/:year?" exact component={Upcoming} />
+        <Route path="/stars/following" exact component={Following} />
+        <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
+        <Route path="/movie/:id" exact component={Movie} />
+        <Route path="/star/:id" exact component={Star} />
+        <Route path="/configure" exact component={Configure} />
+        <Route path="/logs" exact component={Logs} />
+        <Route component={Blank} />
+      </Switch>
+    </div>
+  </BrowserRouter>
 )

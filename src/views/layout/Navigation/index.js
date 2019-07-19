@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react'
-import { withRouter, NavLink } from 'react-router-dom'
+import { NavLink, Route } from 'react-router-dom'
 import StatusRecording from './containers/StatusRecording'
 import theme from 'theme'
 
@@ -61,16 +61,13 @@ const styles = {
 
 class Navigation extends Component {
   render() {
-    const { location, ...props } = this.props
-    const section = location.pathname.split('/').slice(1, 2).pop()
-
     return (
       <Fragment>
         <div style={styles.primary}>
           <div style={styles.menu}>
             <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
-            <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...(section === 'movies' ? styles.active : {}) }}>Movies</NavLink>
-            <NavLink to="/stars/upcoming" exact={true} style={{ ...styles.link, ...(section === 'stars' ? styles.active : {}) }}>Stars</NavLink>
+            <NavLink to="/movies" exact={false} style={styles.link} activeStyle={styles.active}>Movies</NavLink>
+            <NavLink to="/stars" exact={false} style={styles.link} activeStyle={styles.active}>Stars</NavLink>
           </div>
           <div style={styles.emojis}>
             <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
@@ -78,24 +75,28 @@ class Navigation extends Component {
             <StatusRecording />
           </div>
         </div>
-        {{
-          movies: (
+        <Route
+          path="/movies"
+          component={() => (
             <div style={styles.secondary}>
               <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Collection</NavLink>
               <NavLink to="/movies/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
             </div>
-          ),
-          stars: (
+          )}
+        />
+        <Route
+          path="/stars"
+          component={() => (
             <div style={styles.secondary}>
               <NavLink to="/stars/upcoming" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
               <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink>
               <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
             </div>
-          ),
-        }[section]}
+          )}
+        />
       </Fragment>
     )
   }
 }
 
-export default withRouter(Navigation)
+export default Navigation
