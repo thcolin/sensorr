@@ -201,10 +201,14 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * UI/UX
     * Responsive design / mobile UI-UX
     * Refactor
+      * Use global `search` over movie/star split ?
       * `Trending`
-        * Display `stars`
-        * Display `studios`
-        * Display `sagas` ? (using `TMDB API 4` lists ?)
+        * Use `select` over random on `Row` titles for "Discover (year or genre)"
+          * Add `random` behavior with `🎰` emoji only visible on `Row.title:hover`
+        * `Row` with *trending* `stars`
+        * `Row` with *upcoming* `movies` from *followed* `stars`
+        * `Row` with random *studios* `movies`
+        * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?)
         * Customize ?
       * `Stars`
         * `Upcoming`
@@ -212,7 +216,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * Merge `Following` and `Search` ?
           * See how `Spotify` handle this in playlist (search / filter)
         * `Following`
-          * Add stats - order - filter (count, etc...)
+          * Add stats (count, etc...), order and filter
           * Better filters by `Document` type
       * `Movies`
         * Improve `Releases`
@@ -220,13 +224,13 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * See how `Spotify` handle this in playlist (search / filter)
         * `List` (grouped movies by "policy")
         * `Collection`
-          * Add stats - order - filter (count, etc...)
+          * Add stats (count, etc...), order and filter
           * Better filters by `Document` type
   * Features
+    * Allow `filter` by job on *crew* `Row` from Movie page
     * Improve `history` implementation (move some state into `history.params` with default/fallback)
-      * `Collection/Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
-      * `Releases` (on/off)
-      * `Logs` (date)
+      * `Collection` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
+      * `Logs` (index)
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page

@@ -35,7 +35,7 @@ export default () => (
         <Route path="/stars/upcoming/:year?" exact component={Upcoming} />
         <Route path="/stars/following" exact component={Following} />
         <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
-        <Route path="/movie/:id" exact component={Movie} />
+        <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
         <Route path="/star/:id" exact component={Star} />
         <Route path="/configure/(plex|downloads|database)?" exact component={Configure} />
         <Route path="/logs" exact component={Logs} />

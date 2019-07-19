@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
-import { Link } from 'react-router-dom'
+import { Link, Route } from 'react-router-dom'
 import Row from 'components/Layout/Row'
 import Persona from 'components/Entity/Persona'
 import Film, { State } from 'components/Entity/Film'
@@ -138,6 +138,9 @@ const styles = {
   },
   empty: {
     color: theme.colors.white,
+  },
+  link: {
+    textDecoration: 'none',
   }
 }
 
@@ -148,14 +151,12 @@ export default class Movie extends PureComponent {
     this.state = {
       loading: true,
       details: null,
-      unpinned: false,
       more: 'recommendations',
       err: null,
     }
 
     this.bootstrap = this.bootstrap.bind(this)
     this.handleMoreChange = this.handleMoreChange.bind(this)
-    this.handleLookClick = this.handleLookClick.bind(this)
   }
 
   componentDidMount() {
@@ -170,8 +171,6 @@ export default class Movie extends PureComponent {
 
   async bootstrap() {
     try {
-      this.setState({ unpinned: false })
-
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
         { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
@@ -200,14 +199,9 @@ export default class Movie extends PureComponent {
     this.setState({ more: { similar: 'recommendations', recommendations: 'similar' }[this.state.more] })
   }
 
-  handleLookClick() {
-    this.setState({ unpinned: false })
-    setTimeout(() => this.setState({ unpinned: true }), 100)
-  }
-
   render() {
     const { match, ...props } = this.props
-    const { details, loading, err, unpinned, more, ...state } = this.state
+    const { details, loading, err, more, ...state } = this.state
 
     const trailer = !details ? null : details.videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
@@ -217,7 +211,7 @@ export default class Movie extends PureComponent {
       <Fragment>
         <Helmet>
           {details ? (
-            <title>Sensorr - {details.title}{details.release_date && ` (${new Date(details.release_date).getFullYear()})`}</title>
+            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!match.params.releases && ` - 🔍`) || ''}</title>
           ) : (
             <title>Sensorr - Movie ({match.params.id})</title>
           )}
@@ -243,7 +237,9 @@ export default class Movie extends PureComponent {
                   )}
                   <div style={styles.badges}>
                     <State entity={details} compact={false} />
-                    <Badge emoji="🔍" label="Look" onClick={this.handleLookClick} />
+                    <Link to={`/movie/${details.id}/releases`} replace style={styles.link}>
+                      <Badge emoji="🔍" label="Look" />
+                    </Link>
                   </div>
                 </div>
                 <div style={styles.informations}>
@@ -302,9 +298,13 @@ export default class Movie extends PureComponent {
                   />
                 </div>
               </div>
-              {(unpinned && (
-                <Releases key="releases" movie={details} />
-              ))}
+              <Route
+                path={`/movie/${details.id}/releases`}
+                exact={true}
+                component={() => (
+                  <Releases key="releases" movie={details} />
+                )}
+              />
             </>
           ) : loading ? (
             <div style={styles.loading}>
