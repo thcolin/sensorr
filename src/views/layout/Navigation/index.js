@@ -66,8 +66,8 @@ class Navigation extends Component {
         <div style={styles.primary}>
           <div style={styles.menu}>
             <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
-            <NavLink to="/movies" exact={false} style={styles.link} activeStyle={styles.active}>Movies</NavLink>
-            <NavLink to="/stars" exact={false} style={styles.link} activeStyle={styles.active}>Stars</NavLink>
+            <NavLink to="/movies" style={styles.link} activeStyle={styles.active}>Movies</NavLink>
+            <NavLink to="/stars" style={styles.link} activeStyle={styles.active}>Stars</NavLink>
           </div>
           <div style={styles.emojis}>
             <NavLink to="/configure" exact={true} style={styles.configure} title="Configure">🎚</NavLink>
@@ -91,6 +91,17 @@ class Navigation extends Component {
               <NavLink to="/stars/upcoming" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
               <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink>
               <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink>
+            </div>
+          )}
+        />
+        <Route
+          path="/configure"
+          component={() => (
+            <div style={styles.secondary}>
+              <NavLink to="/configure" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>General</NavLink>
+              <NavLink to="/configure/downloads" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Downloads</NavLink>
+              <NavLink to="/configure/plex" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Plex</NavLink>
+              <NavLink to="/configure/database" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Database</NavLink>
             </div>
           )}
         />

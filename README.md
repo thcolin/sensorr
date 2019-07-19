@@ -201,8 +201,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * UI/UX
     * Responsive design / mobile UI-UX
     * Refactor
-      * `Configure`
-        * Split `Blocks` into grouped tabs
       * `Trending`
         * Display `stars`
         * Display `studios`

@@ -1,4 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
+import { Route } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
 import Region from './blocks/Region'
@@ -109,6 +110,12 @@ export const styles = {
   }
 }
 
+const Submit = () => (
+  <button type="submit" style={{ ...styles.button, marginTop: '1em' }}>
+    💾&nbsp;&nbsp;Save
+  </button>
+)
+
 class Configure extends PureComponent {
   constructor(props) {
     super(props)
@@ -181,18 +188,45 @@ class Configure extends PureComponent {
           <title>Sensorr - Configure</title>
         </Helmet>
         <form style={styles.element} onSubmit={this.handleSubmit}>
-          <Region values={values} handleChange={this.handleChange} />
-          <Authentication values={values} handleChange={this.handleChange} />
-          <Logs values={values} handleChange={this.handleChange} />
-          <Database />
-          <TMDB values={values} handleChange={this.handleChange} />
-          <Plex values={values} handleChange={this.handleChange} />
-          <Blackhole values={values} handleChange={this.handleChange} />
-          <XZNAB values={values} handleChange={this.handleChange} />
-          <Policy values={values} handleChange={this.handleChange} />
-          <button type="submit" style={{ ...styles.button, marginTop: '1em' }}>
-            💾&nbsp;&nbsp;Save
-          </button>
+          <Route
+            path="/configure"
+            exact={true}
+            component={() => (
+              <>
+                <Authentication values={values} handleChange={this.handleChange} />
+                <TMDB values={values} handleChange={this.handleChange} />
+                <Region values={values} handleChange={this.handleChange} />
+                <Logs values={values} handleChange={this.handleChange} />
+                <Submit />
+              </>
+            )}
+          />
+          <Route
+            path="/configure/downloads"
+            exact={true}
+            component={() => (
+              <>
+                <Blackhole values={values} handleChange={this.handleChange} />
+                <XZNAB values={values} handleChange={this.handleChange} />
+                <Policy values={values} handleChange={this.handleChange} />
+                <Submit />
+              </>
+            )}
+          />
+          <Route
+            path="/configure/plex"
+            exact={true}
+            component={() => (
+              <Plex values={values} handleChange={this.handleChange} />
+            )}
+          />
+          <Route
+            path="/configure/database"
+            exact={true}
+            component={() => (
+              <Database />
+            )}
+          />
         </form>
       </Fragment>
     )

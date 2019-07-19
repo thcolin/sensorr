@@ -37,7 +37,7 @@ export default () => (
         <Route path="/stars/search/:query?" exact component={(props) => <Search state="person" {...props} />} />
         <Route path="/movie/:id" exact component={Movie} />
         <Route path="/star/:id" exact component={Star} />
-        <Route path="/configure" exact component={Configure} />
+        <Route path="/configure/(plex|downloads|database)?" exact component={Configure} />
         <Route path="/logs" exact component={Logs} />
         <Route component={Blank} />
       </Switch>

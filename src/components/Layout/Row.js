@@ -107,7 +107,7 @@ export default class Row extends PureComponent {
   }
 
   render() {
-    const { items, uri, params, child, transform, label, space, empty, ...props } = this.props
+    const { items, uri, params, child, transform, label, space, empty, strict, ...props } = this.props
     const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
