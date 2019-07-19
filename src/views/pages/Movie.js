@@ -269,6 +269,9 @@ export default class Movie extends PureComponent {
                           items={details.credits.crew.filter(credit => ['Director'].includes(credit.job))}
                           child={Persona}
                           space={0}
+                          strict={false}
+                          style={styles.row}
+                          empty={{ style: styles.empty }}
                         />
                       </div>
                     )}
@@ -281,6 +284,9 @@ export default class Movie extends PureComponent {
                         items={details.credits.cast.slice(0, 10)}
                         child={Persona}
                         space={0}
+                        strict={false}
+                        style={styles.row}
+                        empty={{ style: styles.empty }}
                       />
                     </div>
                   </div>

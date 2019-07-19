@@ -224,6 +224,7 @@ export default class Star extends PureComponent {
               {!!details.movie_credits.cast.length && (
                 <div style={styles.credits}>
                   <Row
+                    strict={false}
                     label={`Casting - ${sort[order.cast].emoji}`}
                     title={sort[order.cast].title}
                     onClick={() => this.handleSortChange('cast')}
@@ -236,6 +237,7 @@ export default class Star extends PureComponent {
               {!!details.movie_credits.crew.length && (
                 <div style={styles.credits}>
                   <Row
+                    strict={false}
                     label={`Crew - ${sort[order.crew].emoji}`}
                     title={sort[order.crew].title}
                     onClick={() => this.handleSortChange('crew')}

@@ -185,6 +185,7 @@ class Upcoming extends PureComponent {
                         </h1>
                         <div style={styles.grid} key={`${year}-${month}-grid`}>
                           <Grid
+                            strict={false}
                             items={movies}
                             child={({ entity: { stars, ...entity }, ...props }) => (
                               <div style={styles.movie} key={entity.id}>

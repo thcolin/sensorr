@@ -39,6 +39,7 @@ export default class Row extends PureComponent {
     label: PropTypes.string,
     space: PropTypes.number,
     empty: PropTypes.object,
+    strict: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -47,6 +48,7 @@ export default class Row extends PureComponent {
     transform: (res) => res.results,
     space: 2,
     empty: {},
+    strict: true,
   }
 
   constructor(props) {
@@ -57,6 +59,8 @@ export default class Row extends PureComponent {
       loading: false,
       err: null,
     }
+
+    this.validate = this.validate.bind(this)
 
     this.reference = React.createRef()
   }
@@ -99,7 +103,7 @@ export default class Row extends PureComponent {
   }
 
   validate(entity) {
-    return (entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
+    return (!this.props.strict || entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
   }
 
   render() {

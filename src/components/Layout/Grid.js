@@ -47,6 +47,7 @@ export default class Grid extends PureComponent {
     empty: PropTypes.object,
     spinner: PropTypes.object,
     limit: PropTypes.bool,
+    strict: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -57,6 +58,7 @@ export default class Grid extends PureComponent {
     empty: {},
     spinner: {},
     limit: false,
+    strict: true,
   }
 
   constructor(props) {
@@ -71,6 +73,7 @@ export default class Grid extends PureComponent {
     }
 
     this.expand = this.expand.bind(this)
+    this.validate = this.validate.bind(this)
   }
 
   async componentDidMount() {
@@ -126,7 +129,7 @@ export default class Grid extends PureComponent {
   }
 
   validate(entity) {
-    return (entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
+    return (!this.props.strict || entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
   }
 
   expand() {

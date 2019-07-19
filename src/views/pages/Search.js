@@ -87,6 +87,7 @@ export default class Search extends PureComponent {
           <div style={styles.container}>
             {query ? (
               <Grid
+                strict={false}
                 label={query}
                 child={{ movie: Film, person: (props) => <Persona context="portrait" {...props} /> }[state]}
                 uri={['search', state]}

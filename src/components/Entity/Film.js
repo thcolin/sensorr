@@ -71,7 +71,9 @@ export default class Film extends PureComponent {
       >
         <State entity={entity} style={styles.state} />
         <Link to={`/movie/${entity.id}`} style={styles.link}>
-          <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
+          {entity.poster_path && (
+            <img src={`http://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
+          )}
         </Link>
         {/* // Debug
           <span style={{ color: 'white' }}><br/>📆 {entity.release_date}</span>
