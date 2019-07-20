@@ -137,7 +137,7 @@ export default class Grid extends PureComponent {
   }
 
   render() {
-    const { items, query, uri, params, transform, filter, label, child, empty, spinner, limit, ...props } = this.props
+    const { items, query, uri, params, transform, filter, label, child, empty, spinner, limit, strict, ...props } = this.props
     const { entities, max, loading, err, ...state } = this.state
 
     const filtered = [...entities, ...items]

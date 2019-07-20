@@ -61,7 +61,7 @@ module.exports.GENRES = {
   37: 'Western',
 }
 
-module.exports.MAJORS = {
+module.exports.STUDIOS = {
   "Disney": [
     {
       id: 3166,

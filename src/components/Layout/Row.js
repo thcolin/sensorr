@@ -36,7 +36,7 @@ export default class Row extends PureComponent {
     uri: PropTypes.array,
     params: PropTypes.object,
     transform: PropTypes.func,
-    label: PropTypes.string,
+    label: PropTypes.node,
     space: PropTypes.number,
     empty: PropTypes.object,
     strict: PropTypes.bool,

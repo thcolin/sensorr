@@ -207,7 +207,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add `random` behavior with `🎰` emoji only visible on `Row.title:hover`
         * `Row` with *trending* `stars`
         * `Row` with *upcoming* `movies` from *followed* `stars`
-        * `Row` with random *studios* `movies`
         * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?)
         * Customize ?
       * `Stars`
