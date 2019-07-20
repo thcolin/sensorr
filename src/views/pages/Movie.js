@@ -289,7 +289,7 @@ export default class Movie extends PureComponent {
                 </div>
                 <div style={styles.more}>
                   <Row
-                    label={`${more.charAt(0).toUpperCase()}${more.slice(1)}`}
+                    label={`${more.charAt(0).toUpperCase()}${more.slice(1)} - ${{ 'similar': '👯', 'recommendations': '💬' }[more]}`}
                     onClick={() => this.handleMoreChange()}
                     items={details[more].results}
                     style={styles.row}
