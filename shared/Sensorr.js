@@ -56,7 +56,7 @@ class Sensorr {
       .map(tag => {
         const test = (tag === 'custom' ?
           (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
-          (keyword) => Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]].includes(keyword)
+          (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
         )
 
         const intersection = this.config.policy.avoid[tag].filter(test)

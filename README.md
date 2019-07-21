@@ -226,6 +226,9 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add stats (count, etc...), order and filter
           * Better filters by `Document` type
   * Features
+    * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
+    * Polish `Trending` *discover* row
+      * Load 2 page and filter with *trending* ones
     * Allow `filter` by job on *crew* `Row` from Movie page
     * Improve `history` implementation (move some state into `history.params` with default/fallback)
       * `Collection` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
