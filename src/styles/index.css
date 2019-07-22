@@ -22,3 +22,7 @@ b, strong {
 em {
   font-style: italic;
 }
+
+*[hidden] {
+  display: none !important;
+}

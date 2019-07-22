@@ -104,6 +104,7 @@ export default class Grid extends PureComponent {
         this.setState({
           entities: this.state.buffer,
           buffer: [],
+          max: 20,
         })
       }
     } else if (this.props.uri) {

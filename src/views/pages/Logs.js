@@ -247,7 +247,7 @@ class Logs extends PureComponent {
           <div style={styles.summary}>
             <button
               style={{ ...styles.focus, ...styles.digest }}
-              onClick={() => this.setState({ filter: this.filters.all })}
+              onClick={() => this.setState({ filter: this.filters.all, max: 5 })}
             >
               <span>🍿</span>
               <span style={styles.catch}>
@@ -257,7 +257,7 @@ class Logs extends PureComponent {
             {records.some(this.filters.ongoing) && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.ongoing })}
+                onClick={() => this.setState({ filter: this.filters.ongoing, max: 5 })}
               >
                 <span>⌛</span>
                 <span style={styles.catch}>
@@ -267,7 +267,7 @@ class Logs extends PureComponent {
             )}
             <button
               style={{ ...styles.focus, ...styles.digest }}
-              onClick={() => this.setState({ filter: this.filters.success })}
+              onClick={() => this.setState({ filter: this.filters.success, max: 5 })}
             >
               <span>📼</span>
               <span style={styles.catch}>
@@ -277,7 +277,7 @@ class Logs extends PureComponent {
             {!!records.filter(this.filters.filtered).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.filtered })}
+                onClick={() => this.setState({ filter: this.filters.filtered, max: 5 })}
               >
                 <span>👮</span>
                 <span style={styles.catch}>
@@ -288,7 +288,7 @@ class Logs extends PureComponent {
             {!!records.filter(this.filters.missing).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.missing })}
+                onClick={() => this.setState({ filter: this.filters.missing, max: 5 })}
               >
                 <span>📭</span>
                 <span style={styles.catch}>
@@ -299,7 +299,7 @@ class Logs extends PureComponent {
             {!!records.filter(this.filters.error).length && (
               <button
                 style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.error })}
+                onClick={() => this.setState({ filter: this.filters.error, max: 5 })}
               >
                 <span>❌</span>
                 <span style={styles.catch}>
