@@ -67,7 +67,7 @@ export default class Film extends PureComponent {
     return (
       <div
         title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
-        style={{ ...styles.element, background: ready ? 'none' : styles.element.background }}
+        style={{ ...styles.element, background: (entity.poster_path && ready) ? 'none' : styles.element.background }}
       >
         <State entity={entity} style={styles.state} />
         <Link to={`/movie/${entity.id}`} style={styles.link}>

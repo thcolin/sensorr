@@ -141,7 +141,7 @@ export default class Persona extends PureComponent {
           )}
           <Link to={`/star/${entity.id}`} style={styles.link}>
             <div style={{ ...styles.element, ...contexts[context].element }}>
-              <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: ready ? 'transparent' : theme.colors.grey }}>
+              <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: (entity.profile_path && ready) ? 'transparent' : theme.colors.grey }}>
                 {entity.profile_path && (
                   <img
                     src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`}
