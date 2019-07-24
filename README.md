@@ -202,34 +202,60 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Responsive design / mobile UI-UX
     * Refactor
       * Use global `search` over movie/star split ?
+        * `🔍` emoji always on `Navigation`
+          * `onClick` slide `<Input />` from right to left
+          * Search for `movies`, `stars` and `studio`
+            * Allow to disable search on `subject`
+              * Use `emoji` + 🚫 (hover)
+        * `Search` "page" absolute
+          * Only display when `!!value`
+        * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
+        * Save search on `location` (history) ?
+          * Save previous `location` and go back after `close` ?
+      * `Studio` page
+        * Display available data from `TMDB`
+          * Affiliated `studio` `Row` ?
+        * From where you access `studio/123` ?
+          * `Trending` ? - no, not studio but group of
+          * Display *studio* in `Movie` ? - yes
+        * Show in `Navigation` ? - no, no actions or views are useful for now
+          * `Search` ? - use `global`
       * `Trending`
-        * Use `select` over random on `Row` titles for "Discover (year or genre)"
-          * Add `random` behavior with `🎰` emoji only visible on `Row.title:hover`
-        * `Row` with *trending* `stars`
         * `Row` with *upcoming* `movies` from *followed* `stars`
-        * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?)
-        * Customize ?
+          * `Link` to `Upcoming` ?
+        * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?) - no
+        * Customize ? (order & hidden)
+      * `Movies`
+        * Improve `Releases`
+          * Fix `sort` (avoid using `score` first)
+          * Improve UI
+          * Improve UX
+            * Display `ongoing` requests (which `terms` & `xznab`)
+              * Like `progress`
+            * Display results as soon as they're available
+              * Need to refactor `Sensorr.look`
+        * Merge `Collection` and `Search` ?
+          * See how `Spotify` handle this in playlist (search / filter)
+        * `List` page ?
+          * Grouped movies by "policy"
+        * `Collection`
+          * Add stats (length, etc...), order and filter, take a look at `Plex`
+            * Better filters by `Document` type, take a look at `Plex`
       * `Stars`
         * `Upcoming`
-          * Improve performance too
+          * Improve UI (try ?)
+          * Improve UX
+            * Save `scroll` position
+          * Improve performance
         * Merge `Following` and `Search` ?
           * See how `Spotify` handle this in playlist (search / filter)
         * `Following`
-          * Add stats (count, etc...), order and filter
-          * Better filters by `Document` type
-      * `Movies`
-        * Improve `Releases`
-        * Merge `Collection` and `Search` ?
-          * See how `Spotify` handle this in playlist (search / filter)
-        * `List` (grouped movies by "policy")
-        * `Collection`
-          * Add stats (count, etc...), order and filter
-          * Better filters by `Document` type
+          * Add stats (length, etc...), order and filter, take a look at `Plex`
+            * Better filters by `Document` type, take a look at `Plex`
   * Features
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
-    * Allow `filter` by job on *crew* `Row` from Movie page
     * Improve `history` implementation (move some state into `history.params` with default/fallback)
       * `Collection` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
       * `Logs` (index)

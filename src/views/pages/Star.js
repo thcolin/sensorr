@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
-import Row from 'components/Layout/Row'
+import Row, { Label } from 'components/Layout/Row'
 import { State } from 'components/Entity/Persona'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
@@ -99,7 +99,10 @@ const styles = {
   row: {
     color: theme.colors.white,
     cursor: 'pointer',
-  }
+  },
+  empty: {
+    color: theme.colors.white,
+  },
 }
 
 export default class Star extends PureComponent {
@@ -110,6 +113,7 @@ export default class Star extends PureComponent {
       details: null,
       loading: false,
       err: null,
+      job: '',
       order: {
         cast: 'vote_average',
         crew: 'vote_average',
@@ -117,20 +121,20 @@ export default class Star extends PureComponent {
       sort: {
         release_date: {
           emoji: '📆',
-          title: 'Ordered by release date',
+          title: 'currently sorted by release date',
           apply: (a, b) => new Date(b.release_date) - new Date(a.release_date),
         },
         vote_average: {
           emoji: '💯',
-          title: 'Ordered by vote average',
+          title: 'currently sorted by vote average',
           apply: (a, b) => (b.vote_average - (500 / b.vote_count)) - (a.vote_average - (500 / a.vote_count)),
         },
         popularity: {
           emoji: '📣',
-          title: 'Ordered by popularity',
+          title: 'currently sorted by popularity',
           apply: (a, b) => b.popularity - a.popularity,
         },
-      }
+      },
     }
 
     this.bootstrap = this.bootstrap.bind(this)
@@ -183,7 +187,7 @@ export default class Star extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { details, loading, err, order, sort, ...state } = this.state
+    const { details, loading, err, job, order, sort, ...state } = this.state
 
     return (
       <Fragment>
@@ -225,12 +229,30 @@ export default class Star extends PureComponent {
                 <div style={styles.credits}>
                   <Row
                     strict={false}
-                    label={`Casting - ${sort[order.cast].emoji}`}
-                    title={sort[order.cast].title}
-                    onClick={() => this.handleSortChange('cast')}
-                    items={details.movie_credits.cast.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.cast].apply)}
+                    label={(
+                      <Label
+                        id="star-cast"
+                        compact={true}
+                        actions={(
+                          <span
+                            style={{ cursor: 'pointer' }}
+                            title={`Sort (${sort[order.cast].title})`}
+                            onClick={() => this.handleSortChange('cast')}
+                          >
+                            {sort[order.cast].emoji}
+                          </span>
+                        )}
+                      >
+                        Casting
+                      </Label>
+                    )}
+                    items={details.movie_credits.cast
+                      .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
+                      .sort(sort[order.cast].apply)
+                    }
                     child={Film}
                     style={styles.row}
+                    empty={{ style: styles.empty }}
                   />
                 </div>
               )}
@@ -238,12 +260,40 @@ export default class Star extends PureComponent {
                 <div style={styles.credits}>
                   <Row
                     strict={false}
-                    label={`Crew - ${sort[order.crew].emoji}`}
-                    title={sort[order.crew].title}
-                    onClick={() => this.handleSortChange('crew')}
-                    items={details.movie_credits.crew.filter((a, index, self) => index === self.findIndex(b => a.id === b.id)).sort(sort[order.crew].apply)}
+                    label={(
+                      <Label
+                        id="star-crew"
+                        title={`Filter movies by job`}
+                        compact={true}
+                        value={job}
+                        onChange={(value) => this.setState({ job: value })}
+                        options={[{ value: '', label: 'All' }]
+                          .concat(details.movie_credits.crew.map(credit => ({ value: credit.job, label: credit.job })))
+                          .filter((a, index, self) => index === self.findIndex(b => a.value === b.value))
+                        }
+                        actions={(
+                          <span
+                            style={{ cursor: 'pointer' }}
+                            title={`Sort (${sort[order.crew].title})`}
+                            onClick={() => this.handleSortChange('crew')}
+                          >
+                            {sort[order.crew].emoji}
+                          </span>
+                        )}
+                      >
+                        <span>Crew</span>
+                        <span> </span>
+                        <span style={{ fontSize: 'smaller' }}>({job || 'All'})</span>
+                      </Label>
+                    )}
+                    items={details.movie_credits.crew
+                      .filter(credit => !job || credit.job === job)
+                      .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
+                      .sort(sort[order.crew].apply)
+                    }
                     child={Film}
                     style={styles.row}
+                    empty={{ style: styles.empty }}
                   />
                 </div>
               )}

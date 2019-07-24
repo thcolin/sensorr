@@ -1,7 +1,6 @@
-import React, { PureComponent, Fragment, useState } from 'react'
-import { useHover } from 'react-hooks-lib'
+import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
-import Row from 'components/Layout/Row'
+import Row, { Label } from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
@@ -11,39 +10,6 @@ const styles = {
     padding: '2em 0',
     fontSize: '1.125em',
   },
-  select: {
-    position: 'absolute',
-    opacity: 0,
-    top: 0,
-    left: 0,
-    height: '100%',
-    width: '100%',
-    appearance: 'none',
-    border: 'none',
-    cursor: 'pointer',
-  },
-}
-
-const Label = ({ id, title, actions, value, onChange, options, children }) => {
-  const { hovered, bind } = useHover()
-
-  return (
-    <span {...bind} style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-      <label htmlFor={id} title={title} style={{ position: 'relative' }}>
-        {children}
-        {!!options && (
-          <select id={id} value={value} onChange={(e) => onChange(e.target.value)} style={styles.select}>
-            {options.map(option => (
-              <option key={option.label} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        )}
-      </label>
-      {actions && (
-        <span hidden={!hovered}>{actions}</span>
-      )}
-    </span>
-  )
 }
 
 export default class Trending extends PureComponent {
@@ -101,7 +67,7 @@ export default class Trending extends PureComponent {
                 actions={(
                   <>
                     <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleRowClick('year', year - 1)}>
-                      &nbsp;&nbsp;⬅️
+                      ⬅️
                     </span>
                     <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('year')}>
                       &nbsp;&nbsp;🎰&nbsp;&nbsp;
@@ -132,7 +98,7 @@ export default class Trending extends PureComponent {
                 options={Object.keys(GENRES).map(id => ({ value: id, label: GENRES[id] }))}
                 actions={(
                   <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('genre')}>
-                    &nbsp;&nbsp;🎰
+                    🎰
                   </span>
                 )}
               >
@@ -155,7 +121,7 @@ export default class Trending extends PureComponent {
                 options={Object.keys(STUDIOS).map(studio => ({ value: studio, label: studio }))}
                 actions={(
                   <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('studio')}>
-                    &nbsp;&nbsp;🎰
+                    🎰
                   </span>
                 )}
               >
