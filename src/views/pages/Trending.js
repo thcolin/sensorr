@@ -24,7 +24,7 @@ const styles = {
   },
 }
 
-const Label = ({ id, title, randomize, value, onChange, options, children }) => {
+const Label = ({ id, title, actions, value, onChange, options, children }) => {
   const { hovered, bind } = useHover()
 
   return (
@@ -39,7 +39,9 @@ const Label = ({ id, title, randomize, value, onChange, options, children }) => 
           </select>
         )}
       </label>
-      <span style={{ cursor: 'pointer' }} title="Randomize" hidden={!randomize || !hovered} onClick={randomize}>&nbsp;&nbsp;🎰</span>
+      {actions && (
+        <span hidden={!hovered}>{actions}</span>
+      )}
     </span>
   )
 }
@@ -93,7 +95,23 @@ export default class Trending extends PureComponent {
           />
           <Row
             label={(
-              <Label title="Discover movies by random year" id="discover-year" randomize={() => this.handleRowClick('year')}>
+              <Label
+                id="discover-year"
+                title="Discover movies by random year"
+                actions={(
+                  <>
+                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleRowClick('year', year - 1)}>
+                      &nbsp;&nbsp;⬅️
+                    </span>
+                    <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('year')}>
+                      &nbsp;&nbsp;🎰&nbsp;&nbsp;
+                    </span>
+                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleRowClick('year', year + 1)}>
+                      ➡️
+                    </span>
+                  </>
+                )}
+              >
                 📅&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({year})</span>
               </Label>
             )}
@@ -109,10 +127,14 @@ export default class Trending extends PureComponent {
               <Label
                 id="discover-genre"
                 title="Discover movies by genre"
-                randomize={() => this.handleRowClick('genre')}
                 value={genre}
                 onChange={(value) => this.handleRowClick('genre', value)}
                 options={Object.keys(GENRES).map(id => ({ value: id, label: GENRES[id] }))}
+                actions={(
+                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('genre')}>
+                    &nbsp;&nbsp;🎰
+                  </span>
+                )}
               >
                 🎞️&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({GENRES[genre]})</span>
               </Label>
@@ -128,10 +150,14 @@ export default class Trending extends PureComponent {
               <Label
                 id="discover-studio"
                 title="Discover movies by famous studio"
-                randomize={() => this.handleRowClick('studio')}
                 value={studio}
                 onChange={(value) => this.handleRowClick('studio', value)}
                 options={Object.keys(STUDIOS).map(studio => ({ value: studio, label: studio }))}
+                actions={(
+                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('studio')}>
+                    &nbsp;&nbsp;🎰
+                  </span>
+                )}
               >
                 🏛️&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({studio})</span>
               </Label>

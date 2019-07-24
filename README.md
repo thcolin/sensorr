@@ -226,7 +226,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add stats (count, etc...), order and filter
           * Better filters by `Document` type
   * Features
-    * Improve `Trending` *discover* year row with `⬅️` & `➡️`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
