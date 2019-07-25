@@ -221,7 +221,7 @@ export default class Movie extends PureComponent {
             <>
               <div
                 key="details"
-                style={{ ...styles.details, backgroundImage: `url(http://image.tmdb.org/t/p/original${details.backdrop_path})` }}
+                style={{ ...styles.details, backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})` }}
               >
                 <div style={styles.metadata}>
                   <h3 style={styles.popularity}>
@@ -244,7 +244,7 @@ export default class Movie extends PureComponent {
                 </div>
                 <div style={styles.informations}>
                   <div>
-                    <img src={`http://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
+                    <img src={`https://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
                   </div>
                   <div style={styles.wrapper}>
                     <h1 style={styles.title}>{details.title}</h1>

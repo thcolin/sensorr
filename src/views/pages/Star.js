@@ -203,7 +203,7 @@ export default class Star extends PureComponent {
             <div style={{
               ...styles.container,
               ...(details.images.profiles.length ? {
-                backgroundImage: `url(http://image.tmdb.org/t/p/original${
+                backgroundImage: `url(https://image.tmdb.org/t/p/original${
                   (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
                 })`,
               } : {}),
@@ -216,7 +216,7 @@ export default class Star extends PureComponent {
               <div style={styles.informations}>
                 <div style={styles.poster}>
                   {details.profile_path && (
-                    <img src={`http://image.tmdb.org/t/p/original${details.profile_path}`} height="100%" />
+                    <img src={`https://image.tmdb.org/t/p/original${details.profile_path}`} height="100%" />
                   )}
                 </div>
                 <div style={styles.wrapper}>

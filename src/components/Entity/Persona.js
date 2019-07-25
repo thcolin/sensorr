@@ -144,7 +144,7 @@ export default class Persona extends PureComponent {
               <div style={{ ...styles.poster, ...contexts[context].poster, backgroundColor: (entity.profile_path && ready) ? 'transparent' : theme.colors.grey }}>
                 {entity.profile_path && (
                   <img
-                    src={`http://image.tmdb.org/t/p/w300${entity.profile_path}`}
+                    src={`https://image.tmdb.org/t/p/w300${entity.profile_path}`}
                     onLoad={() => this.setState({ ready: true })}
                     style={styles.img}
                   />
