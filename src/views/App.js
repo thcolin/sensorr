@@ -38,7 +38,7 @@ export default () => (
         <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
         <Route path="/star/:id" exact component={Star} />
         <Route path="/configure/(plex|downloads|database)?" exact component={Configure} />
-        <Route path="/logs" exact component={Logs} />
+        <Route path="/logs/:uuid?" exact component={Logs} />
         <Route component={Blank} />
       </Switch>
     </div>

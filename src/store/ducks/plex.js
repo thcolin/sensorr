@@ -1,7 +1,7 @@
 import { combineEpics } from 'redux-observable'
 import { fromEvent } from 'rxjs'
 import { map } from 'rxjs/operators'
-import io from 'store/io'
+import socket from 'store/socket'
 
 const initial = {
   status: 'unknown',
@@ -34,7 +34,7 @@ export const epics = combineEpics(
 )
 
 function listenStatusEpic(action$) {
-  return fromEvent(io, 'plex').pipe(
+  return fromEvent(socket, 'plex').pipe(
     map(({ status, err }) => amendStatus(status, err))
   )
 }

@@ -1,7 +1,7 @@
 import { combineEpics } from 'redux-observable'
 import { fromEvent } from 'rxjs'
 import { map } from 'rxjs/operators'
-import io from 'store/io'
+import socket from 'store/socket'
 
 const initial = {
   loading: true,
@@ -42,7 +42,7 @@ export const epics = combineEpics(
 )
 
 function listenSessionsEpic(action$) {
-  return fromEvent(io, 'sessions').pipe(
+  return fromEvent(socket, 'sessions').pipe(
     map(({ sessions }) => amendSessions(sessions))
   )
 }

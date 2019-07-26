@@ -43,36 +43,25 @@ socket.on('connection', client => {
   log({ plex: Plex.status }, { client, color: Plex.status === 'off' ? 'red' : Plex.status === 'authorized' ? 'green' : 'yellow' })
 
   // Client "request"
-  client.on('session', ({ session, stop = false }) => {
-    if (stop) {
-      if (client.sensorr.streams[session] && client.sensorr.streams[session].unwatch) {
-        client.sensorr.streams[session].removeAllListeners('line')
-        client.sensorr.streams[session].unwatch()
-        delete client.sensorr.streams[session]
-        log({ event: 'unwatched', session, stop }, { client, color: 'yellow' })
-      } else {
-        log({ event: 'not-found', session, stop }, { client, err: true })
-      }
-    } else {
-      if (!client.sensorr.streams[session]) {
-        client.sensorr.streams[session] = Sessions.stream(session)
-        client.sensorr.streams[session].on('line', (line) => {
-          const { data: { context, ...data }, ...entry } = JSON.parse(line)
+  client.on('session', ({ session }) => {
+    if (!client.sensorr.streams[session]) {
+      client.sensorr.streams[session] = Sessions.stream(session)
+      client.sensorr.streams[session].on('line', (line) => {
+        const { data: { context, ...data }, ...entry } = JSON.parse(line)
 
-          client.emit('session', {
-            ...context,
-            data,
-            uuid: entry.uuid,
-            time: entry.ts,
-            message: entry.msg,
-          })
+        client.emit('session', {
+          ...context,
+          data,
+          uuid: entry.uuid,
+          time: entry.ts,
+          message: entry.msg,
         })
+      })
 
-        setTimeout(() => client.emit('session', { session }), 5000)
-        log({ event: 'streaming', session, stop }, { client })
-      } else {
-        log({ event: 'already-streaming', session, stop }, { client, color: 'yellow' })
-      }
+      setTimeout(() => client.emit('session', { session }), 5000)
+      log({ event: 'streaming', session }, { client })
+    } else {
+      log({ event: 'already-streaming', session }, { client, color: 'yellow' })
     }
   })
 

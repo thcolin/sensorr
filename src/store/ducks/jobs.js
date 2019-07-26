@@ -1,7 +1,7 @@
 import { combineEpics } from 'redux-observable'
 import { fromEvent } from 'rxjs'
 import { map } from 'rxjs/operators'
-import io from 'store/io'
+import socket from 'store/socket'
 
 const initial = {
   // record: false,
@@ -31,7 +31,7 @@ export const epics = combineEpics(
 )
 
 function listenJobsEpic(action$) {
-  return fromEvent(io, 'jobs').pipe(
+  return fromEvent(socket, 'jobs').pipe(
     map(({ jobs }) => amendJobs(jobs))
   )
 }

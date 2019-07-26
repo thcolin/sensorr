@@ -253,12 +253,12 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
   * Features
+    * Fix weird empty `Film` (see `star/112561`)
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
     * Improve `history` implementation (move some state into `history.params` with default/fallback)
       * `Collection` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
-      * `Logs` (index)
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
