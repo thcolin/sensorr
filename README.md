@@ -199,7 +199,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Fix `torrent` download with unescaped filename, like `The.Pianist./.Le.Pianiste.2002.MULTI.1080p.BLURAY.x264-PopHD.torrent`
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
     * Responsive design / mobile UI-UX

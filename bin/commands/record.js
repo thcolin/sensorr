@@ -1,6 +1,7 @@
 const fs = require('fs')
 const inquirer = require('inquirer')
 const filesize = require('filesize')
+const filenamify = require('filenamify')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
 const { map, mapTo, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
 const TMDB = require('@shared/services/TMDB')
@@ -140,9 +141,13 @@ async function record({ argv, log, session, logger, sensorr, db }) {
       mergeMap(() => of(release.link).pipe(
         mergeMap(link => fetch(encodeURI(link))),
         mergeMap(res => res.buffer()),
-        mergeMap(buffer => bindNodeCallback(fs.writeFile)(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`, buffer).pipe(
-          mergeMap(err => err ? throwError(err) : of(`${sensorr.config.blackhole}/${release.meta.generated}-${release.site}.torrent`)),
-        )),
+        mergeMap(buffer => {
+          const filename = `${sensorr.config.blackhole}/${filenamify(`${release.meta.generated}-${release.site}`)}.torrent`
+
+          return bindNodeCallback(fs.writeFile)(filename, buffer).pipe(
+            mergeMap(err => err ? throwError(err) : of(filename)),
+          )
+        }),
       )),
       mergeMap(file => of(null).pipe(
         mergeMap(() => db.movies.upsert(movie.id, (doc) => ({
