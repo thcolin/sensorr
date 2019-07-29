@@ -2,6 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { connect } from 'react-redux'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
+import nanobounce from 'nanobounce'
 import InfiniteScroll from 'react-infinite-scroller'
 import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
@@ -128,7 +129,8 @@ class Logs extends PureComponent {
     this.state = {
       socket: null,
       loading: false,
-      records: {},
+      records: [],
+      fetched: 0,
       filter: this.filters.all,
       focus: null,
       max: 1,
@@ -136,21 +138,23 @@ class Logs extends PureComponent {
 
     this.fetch = this.fetch.bind(this)
     this.expand = this.expand.bind(this)
+
+    this.debounce = nanobounce(500)
+    this.records = {}
   }
 
   componentDidMount() {
-    if (Object.keys(this.props.sessions).includes(this.props.match.params.uuid)) {
-      this.setState({ loading: true, max: 1, filter: this.filters.all })
-      this.fetch(this.props.match.params.uuid)
-    } else if (Object.keys(this.props.sessions).length && !this.props.match.params.uuid) {
+    if (Object.keys(this.props.sessions).length && !this.props.match.params.uuid) {
       this.props.history.replace(
         `/logs/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
       )
+    } else if (Object.keys(this.props.sessions).includes(this.props.match.params.uuid)) {
+      this.fetch(this.props.match.params.uuid)
     }
   }
 
   componentDidUpdate(props) {
-    if (!this.props.match.params.uuid && Object.keys(this.props.sessions).length) {
+    if (Object.keys(this.props.sessions).length && !this.props.match.params.uuid) {
       this.props.history.replace(
         `/logs/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
       )
@@ -161,7 +165,7 @@ class Logs extends PureComponent {
       Object.keys(this.props.sessions).includes(this.props.match.params.uuid) &&
       (
         props.match.params.uuid !== this.props.match.params.uuid ||
-        Object.keys(props.sessions).length !== Object.keys(this.props.sessions).length
+        (!Object.keys(props.sessions).length && Object.keys(this.props.sessions).length)
       )
     ) {
       this.fetch(this.props.match.params.uuid)
@@ -183,31 +187,36 @@ class Logs extends PureComponent {
 
     socket.on('session', ({ session, record, ...log }) => {
       if (record) {
-        this.setState(state => ({
-          records: {
-            ...(state.records || {}),
-            [record]: {
-              ...((state.records || {})[record] || {}),
-              session: session,
-              record: record,
-              time: Math.min(((state.records || {})[record] || {}).time || log.time, log.time),
-              done: ((state.records || {})[record] || {}).done || !!(log.data || {}).done,
-              success: ((state.records || {})[record] || {}).success || !!(log.data || {}).success,
-              ...(typeof (log.data || {}).movie !== 'undefined' ? { movie: log.data.movie } : {}),
-              logs: Object.values({
-                ...((state.records || {})[record] || { logs: [] }).logs.reduce((acc, log) => ({ ...acc, [log.uuid]: log }), {}),
-                [log.uuid]: log,
-              })
-              .sort((a, b) => a.time - b.time),
-            }
+        this.records = {
+          ...(this.records || {}),
+          [record]: {
+            ...((this.records || {})[record] || {}),
+            session: session,
+            record: record,
+            time: Math.min(((this.records || {})[record] || {}).time || log.time, log.time),
+            done: ((this.records || {})[record] || {}).done || !!(log.data || {}).done,
+            success: ((this.records || {})[record] || {}).success || !!(log.data || {}).success,
+            ...(typeof (log.data || {}).movie !== 'undefined' ? { movie: log.data.movie } : {}),
+            logs: Object.values({
+              ...((this.records || {})[record] || { logs: [] }).logs.reduce((acc, log) => ({ ...acc, [log.uuid]: log }), {}),
+              [log.uuid]: log,
+            })
+            .sort((a, b) => a.time - b.time),
           }
-        }))
+        }
+
+        if (this.state.fetched !== Object.keys(this.records).length) {
+          this.setState({ fetched: Object.keys(this.records).length })
+        }
+
+        this.debounce(() => this.setState({ records: Object.values(this.records).sort((a, b) => b.time - a.time), loading: false }))
       } else if (session === uuid) {
-        this.setState({ loading: false })
+        this.setState({ records: Object.values(this.records).sort((a, b) => b.time - a.time), loading: false })
       }
     })
 
-    this.setState({ socket, records: {}, loading: true, max: 1, filter: this.filters.all })
+    this.records = {}
+    this.setState({ socket, records: [], fetched: 0, loading: true, max: 1, filter: this.filters.all })
     socket.emit('session', { session: uuid })
   }
 
@@ -217,7 +226,7 @@ class Logs extends PureComponent {
 
   render() {
     const { history, match, sessions, ...props } = this.props
-    const { filter, focus, max, ...state } = this.state
+    const { records, fetched, filter, focus, max, ...state } = this.state
 
     const uuids = Object.values(sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).map(session => session.uuid)
     const index = uuids.indexOf(match.params.uuid)
@@ -227,10 +236,6 @@ class Logs extends PureComponent {
     }
 
     const loading = props.loading || state.loading
-
-    const records = Object.values(state.records)
-      .filter(record => session && record.session === session.uuid)
-      .sort((a, b) => b.time - a.time)
 
     const filtered = records
       .filter(filter)
@@ -264,7 +269,7 @@ class Logs extends PureComponent {
             >
               <span>📡</span>
               <span style={styles.catch}>
-                {markdown(`${records.length} __Fetched__ records`).tree}
+                {markdown(`${fetched} __Fetched__ records`).tree}
               </span>
             </button>
           </div>
@@ -355,7 +360,7 @@ class Logs extends PureComponent {
           ) : (
             <InfiniteScroll
               pageStart={0}
-              hasMore={max < records.length}
+              hasMore={max < filtered.length}
               loadMore={this.expand}
               loader={<Spinner key="spinner" />}
             >

@@ -198,6 +198,9 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * `WebUI`
+  * Fix
+    * Fix `torrent` download with unescaped filename, like `The.Pianist./.Le.Pianiste.2002.MULTI.1080p.BLURAY.x264-PopHD.torrent`
+    * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
     * Responsive design / mobile UI-UX
     * Refactor
@@ -226,6 +229,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?) - no
         * Customize ? (order & hidden)
       * `Movies`
+        * `Movie`
+          * Focus on followed `casting` (+ length ?)
         * Improve `Releases`
           * Fix `sort` (avoid using `score` first)
           * Improve UI
@@ -253,7 +258,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
   * Features
-    * Fix weird empty `Film` (see `star/112561`)
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
