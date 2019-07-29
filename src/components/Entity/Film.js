@@ -69,6 +69,8 @@ export default class Film extends PureComponent {
     if (props.entity.poster_path !== this.props.entity.poster_path || !this.props.entity.poster_path) {
       this.setState({ ready: false })
     }
+
+    return null
   }
 
   render() {

@@ -129,6 +129,8 @@ export default class Persona extends PureComponent {
     if (props.entity.profile_path !== this.props.entity.profile_path || !this.props.entity.profile_path) {
       this.setState({ ready: false })
     }
+
+    return null
   }
 
   render() {
