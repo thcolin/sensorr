@@ -73,7 +73,7 @@
     "string-similarity": "^3.0.0",
     "tail": "^2.0.2",
     "tcp-port-used": "^1.0.1",
-    "typeface-open-sans": "0.0.54",
+    "typeface-open-sans": "0.0.75",
     "typeface-raleway": "0.0.54",
     "unescape": "^1.0.1",
     "universal-rxjs-ajax": "^2.0.1",
