@@ -61,7 +61,7 @@
     "react-router-dom": "^5.0.1",
     "react-sortable-hoc": "^1.9.1",
     "react-toast-notifications": "^1.4.0",
-    "react-transition-group": "^4.1.1",
+    "react-transition-group": "^4.2.1",
     "redux": "^4.0.1",
     "redux-observable": "^1.1.0",
     "regenerator-runtime": "^0.13.2",
