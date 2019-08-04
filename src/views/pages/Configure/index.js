@@ -191,7 +191,7 @@ class Configure extends PureComponent {
           <Route
             path="/configure"
             exact={true}
-            component={() => (
+            render={() => (
               <>
                 <Authentication values={values} handleChange={this.handleChange} />
                 <TMDB values={values} handleChange={this.handleChange} />
@@ -204,7 +204,7 @@ class Configure extends PureComponent {
           <Route
             path="/configure/downloads"
             exact={true}
-            component={() => (
+            render={() => (
               <>
                 <Blackhole values={values} handleChange={this.handleChange} />
                 <XZNAB values={values} handleChange={this.handleChange} />
@@ -216,14 +216,14 @@ class Configure extends PureComponent {
           <Route
             path="/configure/plex"
             exact={true}
-            component={() => (
+            render={() => (
               <Plex values={values} handleChange={this.handleChange} />
             )}
           />
           <Route
             path="/configure/database"
             exact={true}
-            component={() => (
+            render={() => (
               <Database />
             )}
           />
