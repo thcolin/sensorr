@@ -203,18 +203,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * UI/UX
     * Responsive design / mobile UI-UX
     * Refactor
-      * Use global `search` over movie/star split ?
-        * `🔍` emoji always on `Navigation`
-          * `onClick` slide `<Input />` from right to left
-          * Search for `movies`, `stars` and `studio`
-            * Allow to disable search on `subject`
-              * Use `emoji` + 🚫 (hover)
-        * `Search` "page" absolute
-          * Only display when `!!value`
-        * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
-        * Save search on `location` (history) ?
-          * Save previous `location` and go back after `close` ?
-      * `Studio` page
+      * `Navigation`
+        * Add `Go To Top` button
+      * `Search`
+        * Handle other `sticky` behavior (`Collection`, `Upcoming`, `Records`)
+        * Search for `movies`, `stars` and `studio`
+          * Allow to disable search on `subject`
+            * Use `emoji` + 🚫 (hover)
+            * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
+      * `Studio` page (`company` entity)
         * Display available data from `TMDB`
           * Affiliated `studio` `Row` ?
         * From where you access `studio/123` ?
@@ -226,37 +223,42 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * `Row` with *upcoming* `movies` from *followed* `stars`
           * `Link` to `Upcoming` ?
         * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?) - no
+        * `Row` with random *collections* `movies` ?
         * Customize ? (order & hidden)
       * `Movies`
         * `Movie`
           * Focus on followed `casting` (+ length ?)
-        * Improve `Releases`
-          * Fix `sort` (avoid using `score` first)
-          * Improve UI
+          * Improve `Releases`
+            * Fix `sort` (avoid using `score` first)
+            * Improve UI
+            * Improve UX
+              * Display `ongoing` requests (which `terms` & `xznab`)
+                * Like `progress`
+              * Display results as soon as they're available
+                * Need to refactor `Sensorr.look`
+        * `Upcoming`
+          * Improve UI (try ?)
           * Improve UX
-            * Display `ongoing` requests (which `terms` & `xznab`)
-              * Like `progress`
-            * Display results as soon as they're available
-              * Need to refactor `Sensorr.look`
-        * Merge `Collection` and `Search` ?
-          * See how `Spotify` handle this in playlist (search / filter)
+            * Save `scroll` position
+          * Improve performance
+        <!-- * Merge `Collection` and `Search` ?
+          * See how `Spotify` handle this in playlist (search / filter) -->
         * `List` page ?
           * Grouped movies by "policy"
         * `Collection`
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
       * `Stars`
-        * `Upcoming`
-          * Improve UI (try ?)
-          * Improve UX
-            * Save `scroll` position
-          * Improve performance
-        * Merge `Following` and `Search` ?
-          * See how `Spotify` handle this in playlist (search / filter)
+        <!-- * Merge `Following` and `Search` ?
+          * See how `Spotify` handle this in playlist (search / filter) -->
         * `Following`
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
   * Features
+    * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
+    * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
+    * Fix `order=release_date`, cf. `/star/19274`
+    * Implement `onKeyPress === 'escape'` behavior on `input` (`Collection.Filter`, `Following.Filter`)
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones

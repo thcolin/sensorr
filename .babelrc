@@ -1,4 +1,10 @@
 {
-  "presets": ["@babel/env", "@babel/react"],
-  "plugins": ["@babel/plugin-proposal-class-properties", "@babel/plugin-transform-modules-commonjs"]
+  "presets": [
+    "@babel/env",
+    "@babel/react",
+    "@emotion/babel-preset-css-prop"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties"
+  ]
 }

@@ -9,6 +9,7 @@ html {
 }
 
 body {
+  scroll-behavior: smooth;
   position: relative;
   font-size: 1rem;
   font-family: 'Raleway';

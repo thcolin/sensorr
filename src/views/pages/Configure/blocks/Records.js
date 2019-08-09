@@ -2,11 +2,11 @@ import React from 'react'
 import { styles } from '../index.js'
 import filesize from 'shared/utils/filesize'
 
-const Logs = ({ values, handleChange, ...props }) => (
+const Records = ({ values, handleChange, ...props }) => (
   <div style={styles.section}>
-    <h1 style={styles.title}>Logs</h1>
+    <h1 style={styles.title}>Records</h1>
     <p style={styles.paragraph}>
-      Some Sensorr jobs (recording) create log files that can reach a considerable size, to avoid filling your disk space, you can specify here the maximum space (in <code style={styles.code}>MB</code>) allowed.
+      Movies records create log files that can reach a considerable size, to avoid filling your disk space, you can specify here the maximum space (in <code style={styles.code}>MB</code>) allowed.
       <br/>
       A <code style={styles.code}>clean</code> job will remove oldest log sessions if directory space exceeds configured value.
     </p>
@@ -23,4 +23,4 @@ const Logs = ({ values, handleChange, ...props }) => (
   </div>
 )
 
-export default Logs
+export default Records

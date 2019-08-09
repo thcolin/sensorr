@@ -7,8 +7,8 @@ import { GENRES, STUDIOS } from 'shared/services/TMDB'
 
 const styles = {
   element: {
-    padding: '2em 0',
     fontSize: '1.125em',
+    padding: '2em 0 0',
   },
 }
 

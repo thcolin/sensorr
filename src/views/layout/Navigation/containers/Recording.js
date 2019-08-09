@@ -63,7 +63,7 @@ const styles = {
   },
 }
 
-class Status extends PureComponent {
+class Recording extends PureComponent {
   constructor(props) {
     super(props)
 
@@ -116,8 +116,9 @@ class Status extends PureComponent {
 
     return (
       <div
+        {...props}
         className={loading ? css(suits.rotate) : ongoing ? css(suits.bounce) : ''}
-        style={{ ...styles.element, ...(ongoing ? {} : { cursor: 'pointer '}) }}
+        style={{ ...styles.element, ...(props.style || {}), ...(ongoing ? {} : { cursor: 'pointer '}) }}
         title={'Trigger "Record" job'}
         onClick={() => !ongoing && this.triggerJob('record')}
       >
@@ -133,5 +134,5 @@ export default connect(
   }),
   () => ({}),
 )(
-  withToastManager(Status)
+  withToastManager(Recording)
 )

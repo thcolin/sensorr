@@ -113,7 +113,7 @@ const styles = {
   }
 }
 
-class Logs extends PureComponent {
+class Records extends PureComponent {
   constructor(props) {
     super(props)
 
@@ -146,7 +146,7 @@ class Logs extends PureComponent {
   componentDidMount() {
     if (Object.keys(this.props.sessions).length && !this.props.match.params.uuid) {
       this.props.history.replace(
-        `/logs/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
+        `/movies/records/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
       )
     } else if (Object.keys(this.props.sessions).includes(this.props.match.params.uuid)) {
       this.fetch(this.props.match.params.uuid)
@@ -156,7 +156,7 @@ class Logs extends PureComponent {
   componentDidUpdate(props) {
     if (Object.keys(this.props.sessions).length && !this.props.match.params.uuid) {
       this.props.history.replace(
-        `/logs/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
+        `/movies/records/${Object.values(this.props.sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop().uuid}`
       )
     }
 
@@ -244,21 +244,21 @@ class Logs extends PureComponent {
     return (
       <Fragment>
         <Helmet>
-          <title>Sensorr - History{!!session ? ` (${session.datetime} - #${session.uuid.split('-').pop()})` : ''}</title>
+          <title>Sensorr - Records{!!session ? ` (${session.datetime} - #${session.uuid.split('-').pop()})` : ''}</title>
         </Helmet>
         {!!session && (
           <div style={styles.bar}>
             <span style={(index > 0 ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => index > 0 && history.push(`/logs/${uuids[0]}`)} style={styles.navigator}>⏪</a>
-              <a onClick={() => index > 0 && history.push(`/logs/${uuids[index - 1]}`)} style={styles.navigator}>⬅️</a>
+              <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[0]}`)} style={styles.navigator}>⏪</a>
+              <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[index - 1]}`)} style={styles.navigator}>⬅️</a>
             </span>
             <div>
               <span>{session.datetime}</span>
               <span style={styles.small}>#{session.uuid.split('-').pop()}</span>
             </div>
             <span style={(index < (uuids.length - 1) ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => index < (uuids.length - 1) && history.push(`/logs/${uuids[index + 1]}`)} style={styles.navigator}>➡️</a>
-              <a onClick={() => index < (uuids.length - 1) && history.push(`/logs/${uuids[uuids.length - 1]}`)} style={styles.navigator}>⏩</a>
+              <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={styles.navigator}>➡️</a>
+              <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[uuids.length - 1]}`)} style={styles.navigator}>⏩</a>
             </span>
           </div>
         )}
@@ -408,6 +408,6 @@ const connected = connect(
   () => ({
 
   })
-)(Logs)
+)(Records)
 
 export default withToastManager(connected)

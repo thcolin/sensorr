@@ -1,10 +1,10 @@
 import React, { PureComponent, Fragment } from 'react'
-import { Route } from 'react-router-dom'
+import { Switch, Route } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
 import Region from './blocks/Region'
 import Authentication from './blocks/Authentication'
-import Logs from './blocks/Logs'
+import Records from './blocks/Records'
 import TMDB from './blocks/TMDB'
 import Blackhole from './blocks/Blackhole'
 import XZNAB from './blocks/XZNAB'
@@ -188,45 +188,47 @@ class Configure extends PureComponent {
           <title>Sensorr - Configure</title>
         </Helmet>
         <form style={styles.element} onSubmit={this.handleSubmit}>
-          <Route
-            path="/configure"
-            exact={true}
-            render={() => (
-              <>
-                <Authentication values={values} handleChange={this.handleChange} />
-                <TMDB values={values} handleChange={this.handleChange} />
-                <Region values={values} handleChange={this.handleChange} />
-                <Logs values={values} handleChange={this.handleChange} />
-                <Submit />
-              </>
-            )}
-          />
-          <Route
-            path="/configure/downloads"
-            exact={true}
-            render={() => (
-              <>
-                <Blackhole values={values} handleChange={this.handleChange} />
-                <XZNAB values={values} handleChange={this.handleChange} />
-                <Policy values={values} handleChange={this.handleChange} />
-                <Submit />
-              </>
-            )}
-          />
-          <Route
-            path="/configure/plex"
-            exact={true}
-            render={() => (
-              <Plex values={values} handleChange={this.handleChange} />
-            )}
-          />
-          <Route
-            path="/configure/database"
-            exact={true}
-            render={() => (
-              <Database />
-            )}
-          />
+          <Switch>
+            <Route
+              path="/configure"
+              exact={true}
+              render={() => (
+                <>
+                  <Authentication values={values} handleChange={this.handleChange} />
+                  <TMDB values={values} handleChange={this.handleChange} />
+                  <Region values={values} handleChange={this.handleChange} />
+                  <Records values={values} handleChange={this.handleChange} />
+                  <Submit />
+                </>
+              )}
+            />
+            <Route
+              path="/configure/downloads"
+              exact={true}
+              render={() => (
+                <>
+                  <Blackhole values={values} handleChange={this.handleChange} />
+                  <XZNAB values={values} handleChange={this.handleChange} />
+                  <Policy values={values} handleChange={this.handleChange} />
+                  <Submit />
+                </>
+              )}
+            />
+            <Route
+              path="/configure/plex"
+              exact={true}
+              render={() => (
+                <Plex values={values} handleChange={this.handleChange} />
+              )}
+            />
+            <Route
+              path="/configure/database"
+              exact={true}
+              render={() => (
+                <Database />
+              )}
+            />
+          </Switch>
         </form>
       </Fragment>
     )

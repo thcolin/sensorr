@@ -24,7 +24,7 @@ const styles = {
 }
 
 export default ({ ...props }) => (
-  <div style={styles.element}>
+  <div {...props} style={{ ...styles.element, ...(props.style || {}) }}>
     <div style={styles.circle}></div>
     <div style={{ ...styles.circle, ...styles.second}}></div>
   </div>
