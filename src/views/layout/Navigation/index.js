@@ -123,8 +123,8 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
               </div>
               <div style={styles.menu}>
                 <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
-                <NavLink to="/movies/collection" style={styles.link} activeStyle={styles.active}>Movies</NavLink>
-                <NavLink to="/stars/following" style={styles.link} activeStyle={styles.active}>Stars</NavLink>
+                <NavLink to="/movies" style={styles.link} activeStyle={styles.active}>Movies</NavLink>
+                <NavLink to="/stars" style={styles.link} activeStyle={styles.active}>Stars</NavLink>
               </div>
               <div style={{ ...styles.emojis, ...styles.right }}>
                 <Search.Icon style={styles.icons.search} />
