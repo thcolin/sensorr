@@ -203,8 +203,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * UI/UX
     * Responsive design / mobile UI-UX
     * Refactor
-      * `Navigation`
-        * Add `Go To Top` button
       * `Search`
         * Handle other `sticky` behavior (`Collection`, `Upcoming`, `Records`)
         * Search for `movies`, `stars` and `studio`

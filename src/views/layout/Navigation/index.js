@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { withRouter, Switch, NavLink, Route } from 'react-router-dom'
+import { triggerScrollTop } from 'views/enhancers/ScrollTop'
 import { Sticky } from 'react-sticky'
 import Search from 'views/layout/Search'
 import Recording from './containers/Recording'
@@ -70,6 +71,12 @@ const styles = {
     padding: '0 1em',
     fontSize: '2em',
   },
+  left: {
+    left: 0,
+  },
+  right: {
+    right: 0,
+  },
   search: {
     position: 'absolute',
     width: '100%',
@@ -83,6 +90,10 @@ const styles = {
     transform: 'translateY(100%)',
   },
   icons: {
+    scrolltop: {
+      cursor: 'pointer',
+      textDecoration: 'none',
+    },
     search: {
       margin: '0 1em',
       textDecoration: 'none',
@@ -107,12 +118,15 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
               <Search.Input />
             </div>
             <div style={styles.primary}>
+              <div style={{ ...styles.emojis, ...styles.left }}>
+                <a onClick={() => triggerScrollTop()} style={styles.icons.scrolltop} title="Scroll Top" hidden={!isSticky}>⏫</a>
+              </div>
               <div style={styles.menu}>
                 <NavLink to="/" exact={true} style={styles.link} activeStyle={styles.active}>Trending</NavLink>
                 <NavLink to="/movies/collection" style={styles.link} activeStyle={styles.active}>Movies</NavLink>
                 <NavLink to="/stars/following" style={styles.link} activeStyle={styles.active}>Stars</NavLink>
               </div>
-              <div style={styles.emojis}>
+              <div style={{ ...styles.emojis, ...styles.right }}>
                 <Search.Icon style={styles.icons.search} />
                 <NavLink to="/configure" exact={true} style={styles.icons.configure} title="Configure">🎚</NavLink>
                 <Recording />
