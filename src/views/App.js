@@ -11,6 +11,11 @@ const styles = {
     flexDirection: 'column',
     minHeight: '100vh',
   },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+  }
 }
 
 const App = () => {
@@ -18,7 +23,7 @@ const App = () => {
     <BrowserRouter>
       <div style={styles.element}>
         <Header />
-        <StickyContainer>
+        <StickyContainer style={styles.container}>
           <Navigation />
           <Body />
         </StickyContainer>

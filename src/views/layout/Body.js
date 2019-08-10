@@ -13,6 +13,10 @@ import Blank from 'views/pages/Blank'
 import qs from 'query-string'
 
 const styles = {
+  element: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
   hidden: {
     display: 'none',
   },
@@ -24,7 +28,7 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
   return (
     <>
       <Search.Results />
-      <div style={{ ...(query ? styles.hidden : {}) }}>
+      <div style={{ ...styles.element, ...(query ? styles.hidden : {}) }}>
         <Switch>
           <Route path="/" exact component={Trending} />
           <Route path="/movies/collection" exact component={Collection} />
