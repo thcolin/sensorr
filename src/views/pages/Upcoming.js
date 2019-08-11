@@ -7,6 +7,7 @@ import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import database from 'store/database'
+import capitalize from 'utils/capitalize'
 import theme from 'theme'
 
 const styles = {
@@ -101,12 +102,12 @@ class Upcoming extends PureComponent {
     const month = Math.min(12, Math.max(1, parseInt(match.params.month)))
 
     const entities = Object.values(movies)
-      .filter(movie => movie.release_date.getFullYear() === year && movie.release_date.getMonth() === month)
+      .filter(movie => movie.release_date.getFullYear() === year && movie.release_date.getMonth() === month - 1)
 
     return (
       <Fragment>
         <Helmet key="helmet">
-          <title>{`Sensorr - Upcoming (${year})`}</title>
+          <title>{`Sensorr - Upcoming (${capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))} ${year})`}</title>
         </Helmet>
         <div style={styles.wrapper}>
           {loading ? (
@@ -168,7 +169,7 @@ export const Navigation = withRouter(({ location, history, match, staticContext,
         <a onClick={() => history.push(`/movies/upcoming/${month === 1 ? year - 1 : year}/${month === 1 ? 12 : month - 1}`)} style={styles.navigator}>⬅️</a>
       </span>
       <div>
-        <span style={{ textTransform: 'capitalize' }}>{new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' })}</span>
+        <span>{capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))}</span>
         <span style={styles.small}>{year}</span>
       </div>
       <span style={{ ...(year >= ((new Date()).getFullYear() + 8) ? styles.hidden : {}) }}>
