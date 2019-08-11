@@ -1,6 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import { connect } from 'react-redux'
 import { Helmet } from 'react-helmet'
+import { withRouter } from 'react-router'
 import { withToastManager } from 'react-toast-notifications'
 import nanobounce from 'nanobounce'
 import InfiniteScroll from 'react-infinite-scroller'
@@ -39,9 +40,7 @@ const styles = {
     fontSize: '0.75em',
     fontFamily: theme.fonts.monospace,
   },
-  bar: {
-    zIndex: 1,
-    position: 'sticky',
+  navigation: {
     display: 'flex',
     justifyContent: 'space-between',
     top: '-1px',
@@ -228,8 +227,6 @@ class Records extends PureComponent {
     const { history, match, sessions, ...props } = this.props
     const { records, fetched, filter, focus, max, ...state } = this.state
 
-    const uuids = Object.values(sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).map(session => session.uuid)
-    const index = uuids.indexOf(match.params.uuid)
     const session = !Object.keys(sessions).includes(match.params.uuid) ? null : {
       ...sessions[match.params.uuid],
       datetime: new Date(sessions[match.params.uuid].time).toLocaleString(),
@@ -246,22 +243,6 @@ class Records extends PureComponent {
         <Helmet>
           <title>Sensorr - Records{!!session ? ` (${session.datetime} - #${session.uuid.split('-').pop()})` : ''}</title>
         </Helmet>
-        {!!session && (
-          <div style={styles.bar}>
-            <span style={(index > 0 ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[0]}`)} style={styles.navigator}>⏪</a>
-              <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[index - 1]}`)} style={styles.navigator}>⬅️</a>
-            </span>
-            <div>
-              <span>{session.datetime}</span>
-              <span style={styles.small}>#{session.uuid.split('-').pop()}</span>
-            </div>
-            <span style={(index < (uuids.length - 1) ? {} : { visibility: 'hidden' })}>
-              <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={styles.navigator}>➡️</a>
-              <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[uuids.length - 1]}`)} style={styles.navigator}>⏩</a>
-            </span>
-          </div>
-        )}
         {loading ? (
           <div style={styles.summary}>
             <button
@@ -345,7 +326,7 @@ class Records extends PureComponent {
             <div style={styles.loading}>
               <Spinner />
             </div>
-          ) : !uuids.length ? (
+          ) : !Object.keys(sessions).length ? (
             <Empty
               emoji="📖"
               title="No session available yet"
@@ -400,14 +381,41 @@ class Records extends PureComponent {
   }
 }
 
-const connected = connect(
+export default withToastManager(connect(
   (state) => ({
     sessions: state.sessions.entities,
     loading: state.sessions.loading,
   }),
-  () => ({
+  () => ({})
+)(Records))
 
-  })
-)(Records)
+export const Navigation = withRouter(connect(
+  (state) => ({
+    sessions: state.sessions.entities,
+  }),
+  () => ({})
+)(({ sessions, location, history, match, staticContext, ...props }) => {
+  const uuids = Object.values(sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).map(session => session.uuid)
+  const index = uuids.indexOf(match.params.uuid)
+  const session = !Object.keys(sessions).includes(match.params.uuid) ? null : {
+    ...sessions[match.params.uuid],
+    datetime: new Date(sessions[match.params.uuid].time).toLocaleString(),
+  }
 
-export default withToastManager(connected)
+  return !!session && (
+    <div style={styles.navigation}>
+      <span style={(index > 0 ? {} : { visibility: 'hidden' })}>
+        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[0]}`)} style={styles.navigator}>⏪</a>
+        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[index - 1]}`)} style={styles.navigator}>⬅️</a>
+      </span>
+      <div>
+        <span>{session.datetime}</span>
+        <span style={styles.small}>#{session.uuid.split('-').pop()}</span>
+      </div>
+      <span style={(index < (uuids.length - 1) ? {} : { visibility: 'hidden' })}>
+        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={styles.navigator}>➡️</a>
+        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[uuids.length - 1]}`)} style={styles.navigator}>⏩</a>
+      </span>
+    </div>
+  )
+}))

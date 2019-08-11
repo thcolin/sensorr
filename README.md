@@ -204,19 +204,19 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Responsive design / mobile UI-UX
     * Refactor
       * `Search`
-        * Handle other `sticky` behavior (`Collection`, `Upcoming`, `Records`)
         * Search for `movies`, `stars` and `studio`
           * Allow to disable search on `subject`
             * Use `emoji` + 🚫 (hover)
             * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
+            * Useful ?
       * `Studio` page (`company` entity)
         * Display available data from `TMDB`
           * Affiliated `studio` `Row` ?
-        * From where you access `studio/123` ?
+        * Where `studio/123` is referred ?
           * `Trending` ? - no, not studio but group of
           * Display *studio* in `Movie` ? - yes
         * Show in `Navigation` ? - no, no actions or views are useful for now
-          * `Search` ? - use `global`
+          * `Search` ? - yes
       * `Trending`
         * `Row` with *upcoming* `movies` from *followed* `stars`
           * `Link` to `Upcoming` ?
@@ -236,19 +236,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
                 * Need to refactor `Sensorr.look`
         * `Upcoming`
           * Improve UI (try ?)
+            * Add release day on each `Film`
           * Improve UX
-            * Save `scroll` position
-          * Improve performance
-        <!-- * Merge `Collection` and `Search` ?
-          * See how `Spotify` handle this in playlist (search / filter) -->
+            * Add hidden `select` or `daypicker` (with only month + year) on "title"
         * `List` page ?
           * Grouped movies by "policy"
         * `Collection`
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
       * `Stars`
-        <!-- * Merge `Following` and `Search` ?
-          * See how `Spotify` handle this in playlist (search / filter) -->
         * `Following`
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
@@ -256,7 +252,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
     * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
     * Fix `order=release_date`, cf. `/star/19274`
-    * Implement `onKeyPress === 'escape'` behavior on `input` (`Collection.Filter`, `Following.Filter`)
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones

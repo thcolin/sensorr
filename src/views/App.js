@@ -1,6 +1,8 @@
 import React from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { StickyContainer } from 'react-sticky'
+import { Provider as CollectionProvider } from 'views/pages/Collection'
+import { Provider as FollowingProvider } from 'views/pages/Following'
 import Header from 'views/layout/Header'
 import Navigation from 'views/layout/Navigation'
 import Body from 'views/layout/Body'
@@ -23,10 +25,14 @@ const App = () => {
     <BrowserRouter>
       <div style={styles.element}>
         <Header />
-        <StickyContainer style={styles.container}>
-          <Navigation />
-          <Body />
-        </StickyContainer>
+        <CollectionProvider>
+          <FollowingProvider>
+            <StickyContainer style={styles.container}>
+              <Navigation />
+              <Body />
+            </StickyContainer>
+          </FollowingProvider>
+        </CollectionProvider>
       </div>
     </BrowserRouter>
   )

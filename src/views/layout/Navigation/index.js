@@ -4,6 +4,10 @@ import { triggerScrollTop } from 'views/enhancers/ScrollTop'
 import { Sticky } from 'react-sticky'
 import Search from 'views/layout/Search'
 import Recording from './containers/Recording'
+import * as Collection from 'views/pages/Collection'
+import * as Upcoming from 'views/pages/Upcoming'
+import * as Following from 'views/pages/Following'
+import * as Records from 'views/pages/Records'
 import qs from 'query-string'
 import theme from 'theme'
 
@@ -93,6 +97,7 @@ const styles = {
     scrolltop: {
       cursor: 'pointer',
       textDecoration: 'none',
+      padding: '0.25em 0 0',
     },
     search: {
       margin: '0 1em',
@@ -141,7 +146,6 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
                   <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Collection</NavLink>
                   <NavLink to="/movies/upcoming" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
                   <NavLink to="/movies/records" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Records</NavLink>
-                  {/* <NavLink to="/movies/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink> */}
                 </div>
               )}
             />
@@ -150,7 +154,6 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
               render={() => (
                 <div css={styles.secondary}>
                   <NavLink to="/stars/following" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Following</NavLink>
-                  {/* <NavLink to="/stars/search" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Search</NavLink> */}
                 </div>
               )}
             />
@@ -174,6 +177,14 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
               )}
             />
           </Switch>
+          {!query && (
+            <Switch>
+              <Route path="/movies/collection" exact component={Collection.Navigation} />
+              <Route path="/movies/upcoming/:year/:month" exact component={Upcoming.Navigation} />
+              <Route path="/movies/records/:uuid?" exact component={Records.Navigation} />
+              <Route path="/stars/following" exact component={Following.Navigation} />
+            </Switch>
+          )}
         </nav>
       )}
     </Sticky>

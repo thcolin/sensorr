@@ -1,8 +1,10 @@
-import React, { PureComponent, Fragment } from 'react'
+import React, { Fragment, useState, useContext, useRef } from 'react'
 import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import theme from 'theme'
+
+const Context = React.createContext()
 
 const styles = {
   filter: {
@@ -21,6 +23,7 @@ const styles = {
     textAlign: 'center',
     color: theme.colors.secondary,
     fontFamily: 'inherit',
+    outline: 'none',
   },
   state: {
     position: 'absolute',
@@ -37,66 +40,76 @@ const styles = {
   },
 }
 
-export default class Collection extends PureComponent {
-  constructor(props) {
-    super(props)
+const Collection = ({ ...props }) => {
+  const { query, state } = useContext(Context)
 
-    this.state = {
-      query: '',
-      state: 'all',
-    }
+  return (
+    <Fragment>
+      <Helmet>
+        <title>Sensorr - Collection</title>
+      </Helmet>
+      <div style={styles.wrapper}>
+        <Grid
+          limit={true}
+          strict={false}
+          query={(db) => db.movies.find().where('state').ne('ignored')}
+          filter={entity => (
+            (state === 'all' || entity.state === state) &&
+            [entity.title, entity.original_title].some(string => new RegExp(query, 'i').test(string))
+          )}
+          child={Film}
+        />
+      </div>
+    </Fragment>
+  )
+}
 
-    this.handleQueryChange = this.handleQueryChange.bind(this)
-    this.handleStateChange = this.handleStateChange.bind(this)
+export default Collection
+
+export const Provider = ({ ...props }) => {
+  const [query, setQuery] = useState('')
+  const [state, setState] = useState('all')
+
+  return (
+    <Context.Provider
+      {...props}
+      value={{
+        query,
+        setQuery,
+        state,
+        setState,
+      }}
+    />
+  )
+}
+
+export const Navigation = ({ ...props }) => {
+  const ref = useRef(null)
+  const { query, setQuery, state, setState } = useContext(Context)
+
+  const close = () => {
+    setQuery('')
+    ref.current.blur()
   }
 
-  handleQueryChange(e) {
-    this.setState({ query: e.target.value })
-  }
-
-  handleStateChange(state) {
-    this.setState({ state: { all: 'pinned', pinned: 'wished', wished: 'archived', archived: 'all' }[state] })
-  }
-
-  render() {
-    const { query, state } = this.state
-    const { ...props } = this.props
-
-    return (
-      <Fragment>
-        <Helmet>
-          <title>Sensorr - Collection</title>
-        </Helmet>
-        <div>
-          <div style={styles.filter}>
-            <input
-              type="text"
-              onKeyUp={this.handleQueryChange}
-              style={styles.input}
-              placeholder="Filter..."
-            />
-            <i
-              onClick={() => this.handleStateChange(state)}
-              title={{ all: 'All', pinned: 'Pinned', wished: 'Wished', archived: 'Archived' }[state]}
-              style={styles.state}
-            >
-              {{ all: '📚', pinned: '📍', wished: '🍿', archived: '📼' }[state]}
-            </i>
-          </div>
-          <div style={styles.wrapper}>
-            <Grid
-              limit={true}
-              strict={false}
-              query={(db) => db.movies.find().where('state').ne('ignored')}
-              filter={entity => (
-                (state === 'all' || entity.state === state) &&
-                [entity.title, entity.original_title].some(string => new RegExp(query, 'i').test(string))
-              )}
-              child={Film}
-            />
-          </div>
-        </div>
-      </Fragment>
-    )
-  }
+  return (
+    <div style={styles.filter}>
+      <input
+        ref={ref}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => e.key === 'Escape' && close()}
+        style={styles.input}
+        placeholder="Filter..."
+      />
+      <i
+        onClick={() => setState({ all: 'pinned', pinned: 'wished', wished: 'archived', archived: 'all' }[state])}
+        title={{ all: 'All', pinned: 'Pinned', wished: 'Wished', archived: 'Archived' }[state]}
+        style={styles.state}
+      >
+        {{ all: '📚', pinned: '📍', wished: '🍿', archived: '📼' }[state]}
+      </i>
+    </div>
+  )
 }

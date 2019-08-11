@@ -41,7 +41,7 @@ const styles = {
   metadata: {
     position: 'absolute',
     right: '2em',
-    top: '2em',
+    top: '6em',
     textAlign: 'right',
   },
   popularity: {
@@ -76,7 +76,7 @@ const styles = {
   informations: {
     width: '100%',
     display: 'flex',
-    padding: '5em 13em 2em 3em',
+    padding: '8em 13em 2em 3em',
   },
   poster: {
     maxWidth: '15em',

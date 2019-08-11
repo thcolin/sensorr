@@ -35,7 +35,7 @@ const styles = {
   metadata: {
     position: 'absolute',
     right: '2em',
-    top: '2em',
+    top: '5em',
     textAlign: 'right',
   },
   badges: {
@@ -51,7 +51,7 @@ const styles = {
     width: '100%',
     display: 'flex',
     alignItems: 'start',
-    padding: '5em 3em 2em 3em',
+    padding: '7em 3em 2em 3em',
   },
   poster: {
     width: '15em',

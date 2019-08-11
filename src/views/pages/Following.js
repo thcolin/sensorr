@@ -1,9 +1,10 @@
-import React, { PureComponent, Fragment } from 'react'
+import React, { Fragment, useState, useContext, useRef } from 'react'
 import { Helmet } from 'react-helmet'
-import { Link } from 'react-router-dom'
 import Grid from 'components/Layout/Grid'
 import Persona from 'components/Entity/Persona'
 import theme from 'theme'
+
+const Context = React.createContext()
 
 const styles = {
   filter: {
@@ -22,68 +23,81 @@ const styles = {
     textAlign: 'center',
     color: theme.colors.secondary,
     fontFamily: 'inherit',
+    outline: 'none',
   },
   wrapper: {
     padding: '2em 0',
   },
-  link: {
-    color: theme.colors.primary,
-  },
 }
 
-export default class Following extends PureComponent {
-  constructor(props) {
-    super(props)
+const Following = ({ ...props }) => {
+  const { query } = useContext(Context)
 
-    this.state = {
-      query: '',
-    }
-
-    this.handleQueryChange = this.handleQueryChange.bind(this)
-  }
-
-  handleQueryChange(e) {
-    this.setState({ query: e.target.value })
-  }
-
-  render() {
-    const { query } = this.state
-    const { ...props } = this.props
-
-    return (
-      <Fragment>
-        <Helmet>
-          <title>Sensorr - Following</title>
-        </Helmet>
-        <div>
-          <div style={styles.filter}>
-            <input
-              type="text"
-              onKeyUp={this.handleQueryChange}
-              style={styles.input}
-              placeholder="Filter..."
-            />
-          </div>
-          <div style={styles.wrapper}>
-            <Grid
-              limit={true}
-              strict={false}
-              query={(db) => db.stars.find().where('state').ne('ignored')}
-              filter={entity => [entity.name, ...(entity.also_known_as || [])].some(string => new RegExp(query, 'i').test(string))}
-              child={(props) => <Persona context="portrait" {...props} />}
-              empty={{
-                emoji: '👩‍🎤',
-                title: "Oh no, you are not following anyone",
-                subtitle: (
-                  <span>
-                    You should try to <Link to="/stars/search/" style={styles.link}>search</Link> for stars and start following them !
-                  </span>
-                ),
-              }}
-            />
-          </div>
+  return (
+    <Fragment>
+      <Helmet>
+        <title>Sensorr - Following</title>
+      </Helmet>
+      <div>
+        <div style={styles.wrapper}>
+          <Grid
+            limit={true}
+            strict={false}
+            query={(db) => db.stars.find().where('state').ne('ignored')}
+            filter={entity => [entity.name, ...(entity.also_known_as || [])].some(string => new RegExp(query, 'i').test(string))}
+            child={(props) => <Persona context="portrait" {...props} />}
+            empty={{
+              emoji: '👩‍🎤',
+              title: "Oh no, you are not following anyone",
+              subtitle: (
+                <span>
+                  You should try to search for stars and start following them !
+                </span>
+              ),
+            }}
+          />
         </div>
-      </Fragment>
-    )
+      </div>
+    </Fragment>
+  )
+}
+
+export default Following
+
+export const Provider = ({ ...props }) => {
+  const [query, setQuery] = useState('')
+
+  return (
+    <Context.Provider
+      {...props}
+      value={{
+        query,
+        setQuery,
+      }}
+    />
+  )
+}
+
+export const Navigation = ({ ...props }) => {
+  const ref = useRef(null)
+  const { query, setQuery } = useContext(Context)
+
+  const close = () => {
+    setQuery('')
+    ref.current.blur()
   }
+
+  return (
+    <div style={styles.filter}>
+      <input
+        ref={ref}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => e.key === 'Escape' && close()}
+        style={styles.input}
+        placeholder="Filter..."
+      />
+    </div>
+  )
 }

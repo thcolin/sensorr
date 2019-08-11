@@ -33,7 +33,8 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
           <Route path="/" exact component={Trending} />
           <Route path="/movies" exact component={() => <Redirect to="/movies/collection" />} />
           <Route path="/movies/collection" exact component={Collection} />
-          <Route path="/movies/upcoming/:year?" exact component={Upcoming} />
+          <Route path="/movies/upcoming/:year/:month" exact component={Upcoming} />
+          <Route path="/movies/upcoming" exact component={() => <Redirect to={`/movies/upcoming/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
           <Route path="/movies/records/:uuid?" exact component={Records} />
           <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
           <Route path="/stars/following" exact component={Following} />
