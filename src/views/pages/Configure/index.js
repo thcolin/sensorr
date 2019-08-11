@@ -16,6 +16,7 @@ import theme from 'theme'
 
 export const styles = {
   element: {
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     padding: '2em 2em 3em',

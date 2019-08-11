@@ -17,8 +17,8 @@ const styles = {
     width: '100%',
     backgroundColor: theme.colors.grey,
     border: 'none',
-    fontSize: '1.25em',
-    padding: '0.75em 1em',
+    fontSize: '1.125em',
+    padding: '0.792em 1em',
     margin: 0,
     textAlign: 'center',
     color: theme.colors.secondary,
@@ -36,6 +36,9 @@ const styles = {
     WebkitUserSelect: 'none',
   },
   wrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
     padding: '2em 0',
   },
 }

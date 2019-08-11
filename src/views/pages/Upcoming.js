@@ -11,12 +11,20 @@ import theme from 'theme'
 
 const styles = {
   wrapper: {
-    padding: '0 0 2em 0',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    padding: '2em 0',
+  },
+  placeholder: {
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   navigation: {
     display: 'flex',
     justifyContent: 'space-between',
-    top: '-1px',
     width: '100%',
     backgroundColor: theme.colors.grey,
     fontFamily: theme.fonts.monospace,
@@ -100,19 +108,23 @@ class Upcoming extends PureComponent {
         <Helmet key="helmet">
           <title>{`Sensorr - Upcoming (${year})`}</title>
         </Helmet>
-        <div style={styles.wrapper} key="wrapper">
+        <div style={styles.wrapper}>
           {loading ? (
-            <Spinner />
+            <div style={styles.placeholder}>
+              <Spinner />
+            </div>
           ) : !entities.length ? (
-            <Empty
-              emoji="👩‍🎤"
-              title="Sorry, no upcoming movies this month"
-              subtitle={(
-                <span>
-                  Try to follow more stars !
-                </span>
-              )}
-            />
+            <div style={styles.placeholder}>
+              <Empty
+                emoji="👩‍🎤"
+                title="Sorry, no upcoming movies this month"
+                subtitle={(
+                  <span>
+                    Try to follow more stars !
+                  </span>
+                )}
+              />
+            </div>
           ) : (
             <Grid
               strict={false}

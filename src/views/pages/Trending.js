@@ -7,6 +7,9 @@ import { GENRES, STUDIOS } from 'shared/services/TMDB'
 
 const styles = {
   element: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
     fontSize: '1.125em',
     padding: '2em 0 0',
   },

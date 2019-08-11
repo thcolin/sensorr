@@ -8,6 +8,11 @@ import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+  },
   placeholder: {
     flex: 1,
     display: 'flex',
@@ -149,7 +154,9 @@ export default class Grid extends PureComponent {
 
     return (
       <div {...props} style={styles.element}>
-        <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+        {!!label && (
+          <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+        )}
         {loading ? (
           <div style={styles.placeholder}>
             <Spinner {...spinner} />

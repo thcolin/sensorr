@@ -14,6 +14,8 @@ import qs from 'query-string'
 
 const styles = {
   element: {
+    display: 'flex',
+    flexDirection: 'column',
     flex: 1,
     backgroundColor: 'white',
   },
