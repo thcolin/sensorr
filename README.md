@@ -202,6 +202,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
     * Responsive design / mobile UI-UX
+    * Improve `ScrollTop` behavior
     * Refactor
       * `Search`
         * Search for `movies`, `stars` and `studio`
