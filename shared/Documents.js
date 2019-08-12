@@ -38,7 +38,8 @@ class Movie {
                 ], [
                   (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
                 ])
-        )],
+          )
+        ],
       }
     }
   }

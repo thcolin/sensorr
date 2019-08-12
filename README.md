@@ -235,7 +235,10 @@ Tips: Sensorr will use your `config.js` and fallback on default
                 * Like `progress`
               * Display results as soon as they're available
                 * Need to refactor `Sensorr.look`
+        * `Discover`
+          * Search by many options (`release_date`, `genre`, etc...)
         * `Upcoming`
+          * Improve performance
           * Improve UI (try ?)
             * Add release day on each `Film`
           * Improve UX
@@ -254,6 +257,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
     * Fix `order=release_date`, cf. `/star/19274`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
+      * Better, display `Grid` when scroll end + `entities.length > 10`
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
     * Improve `history` implementation (move some state into `history.params` with default/fallback)

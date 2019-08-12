@@ -69,8 +69,7 @@ module.exports = class XZNAB {
               ...item
             }) => ({
               ...item,
-              link: unescape(item.link, 'all'),
-              enclosure: unescape(item.enclosure.url, 'all'),
+              link: unescape(item.enclosure.url, 'all'),
               grabs: parseInt(item.grabs),
               size: parseInt(item.size),
               downloadVolumeFactor: parseInt(downloadvolumefactor),
