@@ -2,7 +2,7 @@ import React from 'react'
 import { withRouter, Switch, Route, Redirect } from 'react-router-dom'
 import Search from 'views/layout/Search'
 import Trending from 'views/pages/Trending'
-import Collection from 'views/pages/Collection'
+import Library from 'views/pages/Library'
 import Movie from 'views/pages/Movie'
 import Star from 'views/pages/Star'
 import Upcoming from 'views/pages/Upcoming'
@@ -33,8 +33,8 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
       <div style={{ ...styles.element, ...(query ? styles.hidden : {}) }}>
         <Switch>
           <Route path="/" exact component={Trending} />
-          <Route path="/movies" exact component={() => <Redirect to="/movies/collection" />} />
-          <Route path="/movies/collection" exact component={Collection} />
+          <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
+          <Route path="/movies/library" exact component={Library} />
           <Route path="/movies/upcoming/:year/:month" exact component={Upcoming} />
           <Route path="/movies/upcoming" exact component={() => <Redirect to={`/movies/upcoming/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
           <Route path="/movies/records/:uuid?" exact component={Records} />

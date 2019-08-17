@@ -43,13 +43,13 @@ const styles = {
   },
 }
 
-const Collection = ({ ...props }) => {
+const Library = ({ ...props }) => {
   const { query, state } = useContext(Context)
 
   return (
     <Fragment>
       <Helmet>
-        <title>Sensorr - Collection</title>
+        <title>Sensorr - Library</title>
       </Helmet>
       <div style={styles.wrapper}>
         <Grid
@@ -67,7 +67,7 @@ const Collection = ({ ...props }) => {
   )
 }
 
-export default Collection
+export default Library
 
 export const Provider = ({ ...props }) => {
   const [query, setQuery] = useState('')

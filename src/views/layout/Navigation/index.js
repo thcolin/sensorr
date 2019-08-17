@@ -4,7 +4,7 @@ import { triggerScrollTop } from 'views/enhancers/ScrollTop'
 import { Sticky } from 'react-sticky'
 import Search from 'views/layout/Search'
 import Recording from './containers/Recording'
-import * as Collection from 'views/pages/Collection'
+import * as Library from 'views/pages/Library'
 import * as Upcoming from 'views/pages/Upcoming'
 import * as Following from 'views/pages/Following'
 import * as Records from 'views/pages/Records'
@@ -143,7 +143,7 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
               path="/movies"
               render={() => (
                 <div css={styles.secondary}>
-                  <NavLink to="/movies/collection" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Collection</NavLink>
+                  <NavLink to="/movies/library" exact={true} style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Library</NavLink>
                   <NavLink to="/movies/upcoming" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Upcoming</NavLink>
                   <NavLink to="/movies/records" style={{ ...styles.link, ...styles.light }} activeStyle={styles.active}>Records</NavLink>
                 </div>
@@ -179,7 +179,7 @@ const Navigation = withRouter(({ location, history, match, staticContext, ...pro
           </Switch>
           {!query && (
             <Switch>
-              <Route path="/movies/collection" exact component={Collection.Navigation} />
+              <Route path="/movies/library" exact component={Library.Navigation} />
               <Route path="/movies/upcoming/:year/:month" exact component={Upcoming.Navigation} />
               <Route path="/movies/records/:uuid?" exact component={Records.Navigation} />
               <Route path="/stars/following" exact component={Following.Navigation} />

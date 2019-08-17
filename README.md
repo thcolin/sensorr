@@ -31,9 +31,9 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
       <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.jpg?raw=true" width="100" />
       </td>
       <td>
-        <b>Movies / Collection</b>
+        <b>Movies / Library</b>
         <ul>
-          <li>Manage your movies <code>collection</code> (<code>wished</code> and <code>archived</code>)</li>
+          <li>Manage your movies <code>library</code> (<code>wished</code> and <code>archived</code>)</li>
         </ul>
       </td>
     </tr>
@@ -227,6 +227,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
       * `Movies`
         * `Movie`
           * Focus on followed `casting` (+ length ?)
+          * Add "Collection" `Row` with `belongs_to_collection`
           * Improve `Releases`
             * Fix `sort` (avoid using `score` first)
             * Improve UI
@@ -245,7 +246,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
             * Add hidden `select` or `daypicker` (with only month + year) on "title"
         * `List` page ?
           * Grouped movies by "policy"
-        * `Collection`
+        * `Library`
           * Add stats (length, etc...), order and filter, take a look at `Plex`
             * Better filters by `Document` type, take a look at `Plex`
       * `Stars`
@@ -261,7 +262,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
     * Improve `history` implementation (move some state into `history.params` with default/fallback)
-      * `Collection` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
+      * `Library` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
