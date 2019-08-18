@@ -196,27 +196,27 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
       <Row
         label="🎞️&nbsp; Movies"
         title={`Search for "${query}" movies`}
+        hide={true}
         uri={['search', 'movie']}
         params={{ query, sort_by: 'popularity.desc' }}
         child={Film}
       />
       <Row
+        label="📚&nbsp; Collections"
+        title={`Search for "${query}" collections`}
+        hide={true}
+        uri={['search', 'collection']}
+        params={{ query, sort_by: 'popularity.desc' }}
+        child={(props) => <Film withState={false} link={(entity) => `/collection/${entity.id}`} {...props} />}
+      />
+      <Row
         label="⭐&nbsp; Stars"
         title={`Search for "${query}" movies`}
+        hide={true}
         uri={['search', 'person']}
         params={{ query, sort_by: 'popularity.desc' }}
         child={(props) => <Persona context="portrait" {...props} />}
       />
-      {/*
-        // How to display "collection" ?
-        <Row
-          label="📚&nbsp; Collections"
-          title={`Search for "${query}" collections`}
-          uri={['search', 'collections']}
-          params={{ query, sort_by: 'popularity.desc' }}
-          // child={(props) => <Persona context="portrait" {...props} />}
-        />
-      */}
       {/*
         // How to display "company" ?
         <Row

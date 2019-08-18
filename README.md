@@ -205,7 +205,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Improve `ScrollTop` behavior
     * Refactor
       * `Search`
-        * Search for `movies`, `stars` and `studio`
+        * Search for `movies`, `collection`, `stars` and `studio`
           * Allow to disable search on `subject`
             * Use `emoji` + 🚫 (hover)
             * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
@@ -227,7 +227,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
       * `Movies`
         * `Movie`
           * Focus on followed `casting` (+ length ?)
-          * Add "Collection" `Row` with `belongs_to_collection`
           * Improve `Releases`
             * Fix `sort` (avoid using `score` first)
             * Improve UI
@@ -244,7 +243,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
             * Add release day on each `Film`
           * Improve UX
             * Add hidden `select` or `daypicker` (with only month + year) on "title"
-        * `List` page ?
+        * `List` (?)
           * Grouped movies by "policy"
         * `Library`
           * Add stats (length, etc...), order and filter, take a look at `Plex`

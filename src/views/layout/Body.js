@@ -4,6 +4,7 @@ import Search from 'views/layout/Search'
 import Trending from 'views/pages/Trending'
 import Library from 'views/pages/Library'
 import Movie from 'views/pages/Movie'
+import Collection from 'views/pages/Collection'
 import Star from 'views/pages/Star'
 import Upcoming from 'views/pages/Upcoming'
 import Following from 'views/pages/Following'
@@ -41,6 +42,7 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
           <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
           <Route path="/stars/following" exact component={Following} />
           <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
+          <Route path="/collection/:id" exact component={Collection} />
           <Route path="/star/:id" exact component={Star} />
           <Route path="/configure/(plex|downloads|database)?" exact component={Configure} />
           <Route component={Blank} />

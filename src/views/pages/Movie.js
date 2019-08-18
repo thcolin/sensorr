@@ -134,6 +134,7 @@ const styles = {
   },
   row: {
     color: theme.colors.white,
+    textDecoration: 'none',
     cursor: 'pointer',
   },
   empty: {
@@ -202,6 +203,8 @@ export default class Movie extends PureComponent {
   render() {
     const { match, ...props } = this.props
     const { details, loading, err, more, ...state } = this.state
+
+    console.log(details)
 
     const trailer = !details ? null : details.videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
@@ -288,6 +291,19 @@ export default class Movie extends PureComponent {
                   </div>
                 </div>
                 <div style={styles.more}>
+                  {details.belongs_to_collection && (
+                    <Row
+                      label={(
+                        <Link to={`/collection/${details.belongs_to_collection.id}`} style={styles.row}>
+                          {`${details.belongs_to_collection.name} - 📀`}
+                        </Link>
+                      )}
+                      uri={['collection', details.belongs_to_collection.id]}
+                      transform={(res) => res.parts.sort((a, b) => new Date(a.release_date) - new Date(b.release_date))}
+                      style={styles.row}
+                      child={Film}
+                    />
+                  )}
                   <Row
                     label={`${more.charAt(0).toUpperCase()}${more.slice(1)} - ${{ 'similar': '👯', 'recommendations': '💬' }[more]}`}
                     onClick={() => this.handleMoreChange()}

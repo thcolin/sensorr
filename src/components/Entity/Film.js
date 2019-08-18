@@ -55,6 +55,13 @@ const styles = {
 export default class Film extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
+    link: PropTypes.func,
+    withState: PropTypes.bool,
+  }
+
+  static defaultProps = {
+    link: (entity) => `/movie/${entity.id}`,
+    withState: true,
   }
 
   constructor(props) {
@@ -74,19 +81,21 @@ export default class Film extends PureComponent {
   }
 
   render() {
-    const { entity, ...props } = this.props
+    const { entity, link, withState, ...props } = this.props
     const { ready, ...state } = this.state
 
     return (
       <div
-        title={`${entity.title}${(entity.year || entity.release_date) && ` (${entity.year || new Date(entity.release_date).getFullYear()})`}`}
+        title={`${entity.title || entity.name}${(entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''}`}
         style={{
           ...styles.element,
           ...(!entity.poster_path || !ready ? styles.empty : {}),
         }}
       >
-        <State entity={entity} style={styles.state} />
-        <Link to={`/movie/${entity.id}`} style={styles.link}>
+        {withState && (
+          <State entity={entity} style={styles.state} />
+        )}
+        <Link to={link(entity)} style={styles.link}>
           {entity.poster_path && (
             <img src={`https://image.tmdb.org/t/p/w300${entity.poster_path}`} onLoad={() => this.setState({ ready: true })} style={styles.poster} />
           )}

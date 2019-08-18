@@ -41,6 +41,7 @@ export default class Row extends PureComponent {
     space: PropTypes.number,
     empty: PropTypes.object,
     strict: PropTypes.bool,
+    hide: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -50,6 +51,7 @@ export default class Row extends PureComponent {
     space: 2,
     empty: {},
     strict: true,
+    hide: false,
   }
 
   constructor(props) {
@@ -88,7 +90,7 @@ export default class Row extends PureComponent {
         tmdb.fetch(this.props.uri, this.props.params).then(
           res => {
             this.setState({ loading: false, entities: this.props.transform(res) })
-            this.reference.current.scroll(0, 0)
+            this.reference.current && this.reference.current.scroll(0, 0)
           },
           err => {
             this.setState({
@@ -98,7 +100,7 @@ export default class Row extends PureComponent {
           }
         )
       } else {
-        this.reference.current.scroll(0, 0)
+        this.reference.current && this.reference.current.scroll(0, 0)
       }
     }
   }
@@ -108,13 +110,13 @@ export default class Row extends PureComponent {
   }
 
   render() {
-    const { items, uri, params, child, transform, label, space, empty, strict, ...props } = this.props
+    const { items, uri, params, child, transform, label, space, empty, strict, hide, ...props } = this.props
     const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
       .filter(entity => this.validate(entity))
 
-    return (
+    return (!!filtered.length || !hide) && (
       <div style={styles.element}>
         <h1 {...props} style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
         <div style={styles.row} ref={this.reference}>
