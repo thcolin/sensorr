@@ -204,8 +204,6 @@ export default class Movie extends PureComponent {
     const { match, ...props } = this.props
     const { details, loading, err, more, ...state } = this.state
 
-    console.log(details)
-
     const trailer = !details ? null : details.videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
       .pop()
