@@ -62,7 +62,7 @@
     "react-sortable-hoc": "^1.9.1",
     "react-sticky": "^6.0.3",
     "react-toast-notifications": "^1.4.0",
-    "react-transition-group": "^4.1.1",
+    "react-transition-group": "^4.3.0",
     "redux": "^4.0.1",
     "redux-observable": "^1.1.0",
     "regenerator-runtime": "^0.13.2",
