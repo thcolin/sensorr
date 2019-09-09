@@ -1,5 +1,7 @@
 * {
   box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
   scroll-behavior: smooth;
 }
 
@@ -23,6 +25,15 @@ b, strong {
 
 em {
   font-style: italic;
+}
+
+small {
+  font-size: 0.75em;
+}
+
+code {
+  font-weight: normal;
+  font-family: 'Maison Mono', monospace;
 }
 
 *[hidden] {

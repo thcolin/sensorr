@@ -5,6 +5,7 @@ Commands:
   📼 record              Try to "record" (aka download best release) every wished movies
   🔗 sync                Consider all movies from your Plex server as "archived"
   🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
+  ♻️ refresh             Refresh movies collection data (vote_average, popularity, etc...)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]

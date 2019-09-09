@@ -1,6 +1,7 @@
-import React, { PureComponent } from 'react'
-import InfiniteScroll from 'react-infinite-scroller'
+import React, { PureComponent, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
+import InfiniteScroll from 'react-infinite-scroller'
+import Controls from 'components/Layout/Controls'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import database from 'store/database'
@@ -36,7 +37,7 @@ const styles = {
   entity: {
     width: '10em',
     height: '16em',
-  }
+  },
 }
 
 export default class Grid extends PureComponent {
@@ -46,35 +47,45 @@ export default class Grid extends PureComponent {
     uri: PropTypes.array,
     params: PropTypes.object,
     transform: PropTypes.func,
-    filter: PropTypes.func,
+    controls: PropTypes.shape({
+      filters: PropTypes.object,
+      sortings: PropTypes.object,
+      defaults: PropTypes.shape({
+        filtering: PropTypes.object,
+        sorting: PropTypes.object,
+        reverse: PropTypes.bool,
+      }),
+    }),
     label: PropTypes.string,
     child: PropTypes.func.isRequired,
     empty: PropTypes.object,
     spinner: PropTypes.object,
     limit: PropTypes.bool,
     strict: PropTypes.bool,
+    subscribe: PropTypes.bool,
   }
 
   static defaultProps = {
     items: [],
     params: {},
-    transform: (res) => res.results,
-    filter: () => true,
     empty: {},
     spinner: {},
     limit: false,
     strict: true,
+    subscribe: true,
   }
 
   constructor(props) {
     super(props)
 
     this.state = {
-      loading: false,
       entities: [],
+      loading: false,
       buffer: [],
-      max: 20,
       err: null,
+      max: 20,
+      filter: () => true,
+      sort: () => 0,
     }
 
     this.expand = this.expand.bind(this)
@@ -87,12 +98,15 @@ export default class Grid extends PureComponent {
       const db = await database.get()
       const query = this.props.query(db)
       const entities = await query.exec()
-      this.subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
-      this.setState({ loading: false, entities: entities.map(entity => entity.toJSON()) })
+      this.setState({ loading: false, entities: (this.props.transform || ((entities) => entities.map(entity => entity.toJSON())))(entities) })
+
+      if (this.props.subscribe) {
+        this.subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
+      }
     } else if (this.props.uri) {
       this.setState({ loading: true })
       tmdb.fetch(this.props.uri, this.props.params).then(
-        res => this.setState({ loading: false, entities: this.props.transform(res) || [] }),
+        res => this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] }),
         err => {
           this.setState({
             loading: false,
@@ -143,49 +157,57 @@ export default class Grid extends PureComponent {
   }
 
   render() {
-    const { items, query, uri, params, transform, filter, label, child, empty, spinner, limit, strict, ...props } = this.props
-    const { entities, max, loading, err, ...state } = this.state
+    const { items, query, uri, params, transform, controls, label, child, empty, spinner, limit, strict, subscribe, ...props } = this.props
+    const { entities, loading, err, max, filter, sort, ...state } = this.state
 
-    const filtered = [...entities, ...items]
-      .sort((a, b) => (b.time || 0) - (a.time || 0))
-      .filter(entity => this.validate(entity))
-      .filter(filter)
-      .filter((a, index) => !limit || index <= max)
+    const approved = [...entities, ...items].filter(entity => this.validate(entity))
+    const filtered = approved.sort(sort).filter(filter).filter((a, index) => !limit || index <= max)
 
     return (
-      <div {...props} style={styles.element}>
-        {!!label && (
-          <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+      <>
+        {controls && (
+          <Controls
+            key="controls"
+            entities={approved}
+            {...controls}
+            filters={Object.keys(controls.filters).reduce((acc, key) => ({ ...acc, [key]: controls.filters[key](approved) }), {})}
+            onChange={({ filter, sort }) => this.setState({ filter, sort })}
+          />
         )}
-        {loading ? (
-          <div style={styles.placeholder}>
-            <Spinner {...spinner} />
-          </div>
-        ) : !filtered.length ? (
-          <div style={styles.placeholder}>
-            <Empty
-              {...empty}
-              title={err ? 'Oh ! You came across a bug...' : empty.title}
-              emoji={err ? '🐛' : empty.emoji}
-              subtitle={err ? err : empty.subtitle}
-            />
-          </div>
-        ) : (
-          <InfiniteScroll
-            pageStart={0}
-            hasMore={limit && (max < filtered.length)}
-            loadMore={this.expand}
-            loader={<Spinner key="spinner" {...spinner} />}
-            style={styles.grid}
-          >
-            {filtered.map((entity, index) => (
-              <div key={index} style={styles.entity}>
-                {React.createElement(child, { entity })}
-              </div>
-            ))}
-          </InfiniteScroll>
-        )}
-      </div>
+        <div key="element" {...props} style={styles.element}>
+          {!!label && (
+            <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+          )}
+          {loading ? (
+            <div style={styles.placeholder}>
+              <Spinner {...spinner} />
+            </div>
+          ) : !filtered.length ? (
+            <div style={styles.placeholder}>
+              <Empty
+                {...empty}
+                title={err ? 'Oh ! You came across a bug...' : empty.title}
+                emoji={err ? '🐛' : empty.emoji}
+                subtitle={err ? err : empty.subtitle}
+              />
+            </div>
+          ) : (
+            <InfiniteScroll
+              pageStart={0}
+              hasMore={limit && (max < filtered.length)}
+              loadMore={this.expand}
+              loader={<Spinner key="spinner" {...spinner} />}
+              style={styles.grid}
+            >
+              {filtered.map((entity, index) => (
+                <div key={index} style={styles.entity}>
+                  {React.createElement(child, { entity })}
+                </div>
+              ))}
+            </InfiniteScroll>
+          )}
+        </div>
+      </>
     )
   }
 }

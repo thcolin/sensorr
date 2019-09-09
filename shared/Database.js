@@ -11,7 +11,7 @@ RxDB.plugin(require('pouchdb-adapter-http'))
 const SCHEMAS = {
   movies: {
     title: 'movie',
-    version: 2,
+    version: 4,
     description: 'Describe a TMDB movie',
     type: 'object',
     required: ['id', 'title', 'year', 'poster_path'],
@@ -34,11 +34,26 @@ const SCHEMAS = {
       original_title: {
         type: 'string',
       },
+      genres: {
+        type: 'array',
+      },
       year: {
+        type: 'number',
+      },
+      release_date: {
         type: 'number',
       },
       poster_path: {
         type: 'string',
+      },
+      runtime: {
+        type: 'number',
+      },
+      popularity: {
+        type: 'number',
+      },
+      vote_average: {
+        type: 'number',
       },
       time: {
         type: 'number',
@@ -60,7 +75,7 @@ const SCHEMAS = {
   },
   stars: {
     title: 'star',
-    version: 0,
+    version: 2,
     description: 'Describe a TMDB star',
     type: 'object',
     required: ['id', 'state', 'name'],
@@ -82,6 +97,12 @@ const SCHEMAS = {
       },
       also_known_as: {
         type: 'array',
+      },
+      gender: {
+        type: 'number',
+      },
+      known_for_department: {
+        type: 'string',
       },
       birthday: {
         type: 'string'
@@ -115,6 +136,27 @@ const MIGRATIONS = {
         )],
         years: [doc.year],
       }
+      return doc
+    },
+    3: (doc) => {
+      doc.runtime = 0
+      doc.release_date = 0
+      doc.popularity = 0
+      doc.vote_average = 0
+      return doc
+    },
+    4: (doc) => {
+      doc.genres = []
+      return doc
+    },
+  },
+  stars: {
+    1: (doc) => {
+      doc.gender = 0
+      return doc
+    },
+    2: (doc) => {
+      doc.known_for_department = ''
       return doc
     },
   },

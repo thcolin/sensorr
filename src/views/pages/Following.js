@@ -1,7 +1,8 @@
-import React, { Fragment, useState, useContext, useRef } from 'react'
+import React, { Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Persona from 'components/Entity/Persona'
+import { Star } from 'shared/Documents'
 import theme from 'theme'
 
 const Context = React.createContext()
@@ -29,25 +30,39 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+  },
+  grid: {
     padding: '2em 0',
   },
 }
 
 const Following = ({ ...props }) => {
-  const { query } = useContext(Context)
-
   return (
     <Fragment>
       <Helmet>
         <title>Sensorr - Following</title>
       </Helmet>
-      <div style={styles.wrapper}>
+      <div css={styles.wrapper}>
         <Grid
           limit={true}
           strict={false}
           query={(db) => db.stars.find().where('state').ne('ignored')}
-          filter={entity => [entity.name, ...(entity.also_known_as || [])].some(string => new RegExp(query, 'i').test(string))}
           child={(props) => <Persona context="portrait" {...props} />}
+          css={styles.grid}
+          controls={{
+            label: ({ total, reset }) => (
+              <button css={theme.resets.button} onClick={() => reset()}>
+                <span><strong>{total}</strong> Stars</span>
+              </button>
+            ),
+            filters: Star.Filters,
+            sortings: Star.Sortings,
+            defaults: {
+              filtering: {},
+              sorting: Star.Sortings.time,
+              reverse: false,
+            },
+          }}
           empty={{
             emoji: '👩‍🎤',
             title: "Oh no, you are not following anyone",
@@ -64,41 +79,3 @@ const Following = ({ ...props }) => {
 }
 
 export default Following
-
-export const Provider = ({ ...props }) => {
-  const [query, setQuery] = useState('')
-
-  return (
-    <Context.Provider
-      {...props}
-      value={{
-        query,
-        setQuery,
-      }}
-    />
-  )
-}
-
-export const Navigation = ({ ...props }) => {
-  const ref = useRef(null)
-  const { query, setQuery } = useContext(Context)
-
-  const close = () => {
-    setQuery('')
-    ref.current.blur()
-  }
-
-  return (
-    <div style={styles.filter}>
-      <input
-        ref={ref}
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => e.key === 'Escape' && close()}
-        style={styles.input}
-        placeholder="Filter..."
-      />
-    </div>
-  )
-}

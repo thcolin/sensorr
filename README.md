@@ -199,60 +199,61 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
+    * Empty `config.json` on __Docker__ build
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
+    * `Search`
+      * Use `Controls` - ?
+        * Useful ? Few results to filter/order
+    * `Releases`
+      * Use `Controls` with `List` component
+      * Fix `sort` (avoid using `score` first)
+      * Improve UI (see [`feedly.com`](feedly.com))
+      * Improve UX
+        * Display `ongoing` requests (which `terms` & `xznab`)
+          * Like `progress`
+        * Display results as soon as they're available
+          * Need to refactor `Sensorr.look`
+    * Add context on `Movie/Star` when filtered or sorted
+      * Add `label` like `State` on `left`
     * Responsive design / mobile UI-UX
+    * Dark mode
     * Improve `ScrollTop` behavior
-    * Refactor
-      * `Search`
-        * Search for `movies`, `collection`, `stars` and `studio`
-          * Allow to disable search on `subject`
-            * Use `emoji` + 🚫 (hover)
-            * Display `Grid` when `subjects.length === 1`, else display *n* `Row`
-            * Useful ?
-      * `Studio` page (`company` entity)
-        * Display available data from `TMDB`
-          * Affiliated `studio` `Row` ?
-        * Where `studio/123` is referred ?
-          * `Trending` ? - no, not studio but group of
-          * Display *studio* in `Movie` ? - yes
+    * `Loading` page waiting sync of `db` with progress ?
+    * `Row`
+      * Display `n` firsts with `backdrop_path` (with contextual informations ? like `popularity`)
+    * `Discover`
+      * `Grid` with location params driven `Controls`
+      * See [TMDB api/discover](https://www.themoviedb.org/documentation/api/discover)
+    * `Studio` page (`company` entity)
+      * Use predefined `Discover` page
+      <!-- * Display available data from `TMDB` (`name`, `logo_path` and `origin_country`) -->
+      <!-- * Display `Grid` with `uri={['discover', 'movie']}` and `params={{ with_companies: [company.id].join(',') }}` -->
+      * Where `studio/123` is referred ?
+        * `Trending` ? - no, not studio but group of
         * Show in `Navigation` ? - no, no actions or views are useful for now
-          * `Search` ? - yes
-      * `Trending`
-        * `Row` with *upcoming* `movies` from *followed* `stars`
-          * `Link` to `Upcoming` ?
-        * `Row` with random *sagas* `movies` ? (using `TMDB API 4` lists ?) - no
-        * `Row` with random *collections* `movies` ?
-        * Customize ? (order & hidden)
-      * `Movies`
-        * `Movie`
-          * Focus on followed `casting` (+ length ?)
-          * Improve `Releases`
-            * Fix `sort` (avoid using `score` first)
-            * Improve UI
-            * Improve UX
-              * Display `ongoing` requests (which `terms` & `xznab`)
-                * Like `progress`
-              * Display results as soon as they're available
-                * Need to refactor `Sensorr.look`
-        * `Discover`
-          * Search by many options (`release_date`, `genre`, etc...)
-        * `Upcoming`
-          * Improve performance
-          * Improve UI (try ?)
-            * Add release day on each `Film`
-          * Improve UX
-            * Add hidden `select` or `daypicker` (with only month + year) on "title"
-        * `List` (?)
-          * Grouped movies by "policy"
-        * `Library`
-          * Add stats (length, etc...), order and filter, take a look at `Plex`
-            * Better filters by `Document` type, take a look at `Plex`
-      * `Stars`
-        * `Following`
-          * Add stats (length, etc...), order and filter, take a look at `Plex`
-            * Better filters by `Document` type, take a look at `Plex`
+        * Display *studio* in `Movie` ? - yes
+        * Display *studio* `Search` ? - yes
+    * `Trending`
+      * `Row` with *upcoming* `movies` from *followed* `stars`
+        * `Link` to `Upcoming` ?
+      * `Row` with random/popular *collections* `movies` ? - how ?
+      * `Row` link to location params driven `Controls`
+      * Customize ? (order & hidden)
+    * `Movies`
+      * `Movie`
+        * Focus on followed `casting` (+ length ?)
+      * `Upcoming`
+        * Improve performance
+        * Improve UI (try ?)
+          * Add release day on each `Film` (with a `tag` on left ?)
+        * Improve UX
+          * Add hidden `select` or `daypicker` (with only month + year) on "title"
+      * `List` (?)
+        * Grouped movies by "policy"
   * Features
+    * Remove `aphrodite`
+    * Look at [`react-slot-fill`](https://github.com/camwest/react-slot-fill)
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
     * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
     * Fix `order=release_date`, cf. `/star/19274`
@@ -260,8 +261,17 @@ Tips: Sensorr will use your `config.js` and fallback on default
       * Better, display `Grid` when scroll end + `entities.length > 10`
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
-    * Improve `history` implementation (move some state into `history.params` with default/fallback)
-      * `Library` and `Following` (state/filter) - FIRST IMPROVE UI/UX (add stats) !
+    * Improve `Controls`
+      * Save to `localStorage` ?
+    * Improve `Documents.*.Filters`
+      * `Movie`
+        * `country` - `multiple` (use `original_language` ? - no)
+        * `studio` - `multiple`
+        * `time` - `range` - useful ?
+        * `list` (implement `list` feature before) - `multiple`
+      * `Star`
+        * `active_years` - `range` - useful ?
+        * `time` - `range` - useful ?
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page

@@ -2,8 +2,9 @@ import React, { PureComponent, Fragment } from 'react'
 import { Switch, Route } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { withToastManager } from 'react-toast-notifications'
-import Region from './blocks/Region'
+import About from './blocks/About'
 import Authentication from './blocks/Authentication'
+import Region from './blocks/Region'
 import Records from './blocks/Records'
 import TMDB from './blocks/TMDB'
 import Blackhole from './blocks/Blackhole'
@@ -117,7 +118,7 @@ const Submit = () => (
   </button>
 )
 
-class Configure extends PureComponent {
+class Settings extends PureComponent {
   constructor(props) {
     super(props)
 
@@ -186,15 +187,16 @@ class Configure extends PureComponent {
     return (
       <Fragment>
         <Helmet>
-          <title>Sensorr - Configure</title>
+          <title>Sensorr - Settings</title>
         </Helmet>
         <form style={styles.element} onSubmit={this.handleSubmit}>
           <Switch>
             <Route
-              path="/configure"
+              path="/settings"
               exact={true}
               render={() => (
                 <>
+                  <About />
                   <Authentication values={values} handleChange={this.handleChange} />
                   <TMDB values={values} handleChange={this.handleChange} />
                   <Region values={values} handleChange={this.handleChange} />
@@ -204,7 +206,7 @@ class Configure extends PureComponent {
               )}
             />
             <Route
-              path="/configure/downloads"
+              path="/settings/downloads"
               exact={true}
               render={() => (
                 <>
@@ -216,14 +218,14 @@ class Configure extends PureComponent {
               )}
             />
             <Route
-              path="/configure/plex"
+              path="/settings/plex"
               exact={true}
               render={() => (
                 <Plex values={values} handleChange={this.handleChange} />
               )}
             />
             <Route
-              path="/configure/database"
+              path="/settings/database"
               exact={true}
               render={() => (
                 <Database />
@@ -236,4 +238,4 @@ class Configure extends PureComponent {
   }
 }
 
-export default withToastManager(Configure)
+export default withToastManager(Settings)

@@ -1,66 +1,60 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import { withToastManager } from 'react-toast-notifications'
-import { StyleSheet, css } from 'aphrodite'
+import { keyframes } from '@emotion/core'
 import sensorr from 'store/sensorr'
+import nanobounce from 'nanobounce'
+import theme from 'theme'
 
-const animations = {
-  bounce: {
-    '0%': {
-      transform: 'translateY(-0.0625em)'
-    },
-    '50%': {
-      transform: 'translateY(0.25em)'
-    },
-    '100%': {
-      transform: 'translateY(-0.0625em)'
-    },
-  },
-  rotate: {
-    '0%': {
-      transform: 'rotateY(0deg)',
-    },
-    '10%': {
-      transform: 'rotateY(0deg)',
-    },
-    '45%': {
-      transform: 'rotateY(180deg)',
-    },
-    '55%': {
-      transform: 'rotateY(180deg)',
-    },
-    '90%': {
-      transform: 'rotateY(360deg)',
-    },
-    '100%': {
-      transform: 'rotateY(360deg)',
-    },
-  }
-}
+const debounce = nanobounce(1000)
 
-const suits = StyleSheet.create({
-  bounce: {
-    animationName: animations.bounce,
-    animationDuration: '1.5s',
-    animationIterationCount: 'infinite',
-    animationTimingFunction: 'ease-in-out',
-  },
-  rotate: {
-    perspective: '2em',
-    textAlign: 'center',
-    animationName: animations.rotate,
-    animationDuration: '3s',
-    animationIterationCount: 'infinite',
-    animationTimingFunction: 'linear',
-    animationDirection: 'alternate',
-    transformStyle: 'preserve-3d',
+const blink = keyframes`
+  0% {
+    visibility: visible;
   }
-})
+  50% {
+    visibility: hidden;
+  }
+  75% {
+    visibility: hidden;
+  }
+  100% {
+    visibility: visible;
+  }
+`
 
 const styles = {
   element: {
-
+    position: 'relative',
+    padding: '0.25em 0 0.25em 0.3125em',
   },
+  button: {
+    ...theme.resets.button,
+    color: 'black',
+    '&:disabled': {
+      opacity: 0.5,
+    }
+  },
+  indicator: {
+    element: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      height: '0.25em',
+      width: '0.25em',
+      borderRadius: '50%',
+      animation: `1.5s linear infinite ${blink}`,
+    },
+    ongoing: {
+      backgroundColor: theme.colors.wrong,
+    },
+    loading: {
+      backgroundColor: theme.colors.gray,
+    },
+    hidden: {
+      display: 'none',
+    }
+  }
 }
 
 class Recording extends PureComponent {
@@ -105,7 +99,7 @@ class Recording extends PureComponent {
           <span>Unexpected error during job trigger : <strong>{res.statusText}</strong></span>
         ), { appearance: 'error', autoDismiss: true, })
       } finally {
-        this.setState({ loading: false })
+        debounce(() => this.setState({ loading: false }))
       }
     })
   }
@@ -115,14 +109,21 @@ class Recording extends PureComponent {
     const { loading, ...state } = this.state
 
     return (
-      <div
-        {...props}
-        className={loading ? css(suits.rotate) : ongoing ? css(suits.bounce) : ''}
-        style={{ ...styles.element, ...(props.style || {}), ...(ongoing ? {} : { cursor: 'pointer '}) }}
-        title={'Trigger "Record" job'}
-        onClick={() => !ongoing && this.triggerJob('record')}
-      >
-        {loading ? '🏗' : '🚀'}
+      <div css={styles.element}>
+        <span
+          css={[
+            styles.indicator.element,
+            ongoing ? styles.indicator.ongoing : loading ? styles.indicator.loading : styles.indicator.hidden,
+          ]}
+        ></span>
+        <button
+          css={styles.button}
+          title={`Record${(ongoing || loading) ? 'ing' : ''} wished movies from collection`}
+          onClick={() => !ongoing && this.triggerJob('record')}
+          disabled={ongoing || loading}
+        >
+          📼
+        </button>
       </div>
     )
   }

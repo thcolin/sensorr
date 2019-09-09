@@ -5,6 +5,9 @@ import { withRouter } from 'react-router'
 import { withToastManager } from 'react-toast-notifications'
 import nanobounce from 'nanobounce'
 import InfiniteScroll from 'react-infinite-scroller'
+import Left from 'icons/Left'
+import Right from 'icons/Right'
+import Controls from 'components/Layout/Controls'
 import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
@@ -40,29 +43,56 @@ const styles = {
     fontSize: '0.75em',
     fontFamily: theme.fonts.monospace,
   },
+  controls: {
+    width: '120%',
+    margin: '0 -10%',
+  },
   navigation: {
     display: 'flex',
     justifyContent: 'space-between',
-    top: '-1px',
     width: '100%',
-    backgroundColor: theme.colors.grey,
     fontFamily: theme.fonts.monospace,
-    fontSize: '1.25em',
-    padding: '0.75em 1em',
+    fontSize: '1em',
     textAlign: 'center',
-    color: theme.colors.secondary,
+    color: 'white',
+    '>div': {
+      display: 'flex',
+      alignItems: 'center',
+      '&:first-child,&:last-child': {
+        fontSize: '1.25em',
+        '>a': {
+          display: 'flex',
+          alignItems: 'center',
+          padding: '1.5em 0.75em',
+        },
+      },
+      '&:nth-child(2)': {
+        '>a': {
+          fontSize: '0.75em',
+          padding: '1.5em',
+          margin: '0 0.5em',
+        },
+      },
+      '>a': {
+        opacity: 0.9,
+        cursor: 'pointer',
+        '&:hover': {
+          opacity: 1,
+        },
+        '>svg': {
+          height: '1em',
+          width: '1em',
+        },
+      },
+      '>button': {
+        ...theme.resets.button,
+        color: 'white',
+      }
+    },
   },
   small: {
     opacity: 0.5,
     fontSize: '0.75em',
-    margin: '0 0.75em',
-  },
-  navigator: {
-    cursor: 'pointer',
-    margin: '0 0.125em',
-    userSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
   },
   loading: {
     display: 'flex',
@@ -109,28 +139,164 @@ const styles = {
     borderRadius: '0.5em',
     margin: '1em',
     padding: '1em 2em',
+  },
+}
+
+const Navigation = withRouter(({ sessions, session, onClick, edges = true, location, history, match, staticContext, ...props }) => {
+  const uuids = Object.values(sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).map(session => session.uuid)
+  const index = uuids.indexOf(match.params.uuid)
+
+  return (
+    <div css={styles.navigation}>
+      <div style={!edges || !(index > 0) ? { visibility: 'hidden' } : {}}>
+        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[0]}`)}>
+          <Left end={true} />
+        </a>
+      </div>
+      <div>
+        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[index - 1]}`)} style={!(index > 0) ? { visibility: 'hidden' } : {}}>
+          <Left />
+        </a>
+        {onClick ? (
+          <button onClick={onClick}>
+            <span>{session.datetime}</span>
+            <span>&nbsp;</span>
+            <span css={styles.small}>#{session.uuid.split('-').pop()}</span>
+          </button>
+        ) : (
+          <div>
+            <span>{session.datetime}</span>
+            <span>&nbsp;</span>
+            <span css={styles.small}>#{session.uuid.split('-').pop()}</span>
+          </div>
+        )}
+        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={!(index < (uuids.length - 1)) ? { visibility: 'hidden' } : {}}>
+          <Right />
+        </a>
+      </div>
+      <div style={!edges || !(index < (uuids.length - 1)) ? { visibility: 'hidden' } : {}}>
+        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[uuids.length - 1]}`)}>
+          <Right end={true} />
+        </a>
+      </div>
+    </div>
+  )
+})
+
+const Controler = ({ sessions, session, records, fetched, onChange, ...props }) => {
+  const filters = {
+    source: (entities) => {
+      const compute = (entity) => entity.success && entity.logs
+        .map(log => ((log.data || {}).release || {}).site)
+        .filter(site => site)
+        .pop()
+
+      const histogram = (entities) => entities.reduce((histogram, entity) => ({
+        ...histogram,
+        [compute(entity)]: (histogram[compute(entity)] || 0) + 1,
+      }), { false: 0 })
+
+      return {
+        label: 'Source',
+        type: 'checkbox',
+        inputs: Object.keys(histogram(entities)).map(key => ({
+          label: key === 'false' ? 'none' : key,
+          value: key,
+        })),
+        default: [],
+        apply: (entity, values) => !values.length || values.some(value => !value || compute(entity) === value),
+        histogram,
+      }
+    },
+    state: (entities) => {
+      const compute = (entity) => {
+        if (!entity.done && !entity.logs.some(log => (log.data || {}).err)) {
+          return 'ongoing'
+        } else if (entity.done && entity.success) {
+          return 'success'
+        } else if (entity.done && !entity.success && entity.logs.some(log => ((log.data || {}).release || {}).warning === 1)) {
+          return 'filtered'
+        } else if (entity.done && !entity.success && entity.logs.every(log => ((log.data || {}).release || {}).warning !== 1)) {
+          return 'missing'
+        } else if (entity.logs.some(log => (log.data || {}).err)) {
+          return 'error'
+        }
+      }
+
+      return {
+        label: 'State',
+        type: 'checkbox',
+        inputs: [
+          {
+            label: '⌛  Ongoing',
+            value: 'ongoing',
+          },
+          {
+            label: '📼  Success',
+            value: 'success',
+          },
+          {
+            label: '👮  Filtered',
+            value: 'filtered',
+          },
+          {
+            label: '📭  Missing',
+            value: 'missing',
+          },
+          {
+            label: '❌  Error',
+            value: 'error',
+          },
+        ],
+        default: [],
+        apply: (entity, values) => !values.length || values.some(value => compute(entity) === value),
+        histogram: (entities) => entities.reduce((histogram, entity) => ({
+          ...histogram,
+          [compute(entity)]: histogram[compute(entity)] + 1,
+        }), { ongoing: 0, success: 0, filtered: 0, missing: 0, error: 0 }),
+      }
+    },
   }
+
+  return !!session && (
+    <Controls
+      entities={records}
+      label={({ reset }) => (
+        <span style={{ display: 'flex', flex: 1 }}>
+          <button css={theme.resets.button} style={{ width: '8em', textAlign: 'left' }} onClick={() => reset()}>
+            <span><strong>{fetched}</strong> Records</span>
+          </button>
+          <span style={{ flex: 1, justifyContent: 'center' }}>
+            <Navigation sessions={sessions} session={session} edges={false} />
+          </span>
+        </span>
+      )}
+      filters={Object.keys(filters).reduce((acc, key) => ({ ...acc, [key]: filters[key](records) }), {})}
+      onChange={({ filter }) => onChange(filter)}
+      defaults={{
+        filtering: {},
+        reverse: false,
+      }}
+    >
+      {({ setOpen }) => (
+        <div css={styles.controls}>
+          <Navigation sessions={sessions} session={session} onClick={() => setOpen(true)} />
+        </div>
+      )}
+    </Controls>
+  )
 }
 
 class Records extends PureComponent {
   constructor(props) {
     super(props)
 
-    this.filters = {
-      all: () => true,
-      ongoing: record => !record.done && !record.logs.some(log => (log.data || {}).err),
-      success: record => record.done && record.success,
-      filtered: record => record.done && !record.success && record.logs.some(log => ((log.data || {}).release || {}).warning === 1),
-      missing: record => record.done && !record.success && record.logs.every(log => ((log.data || {}).release || {}).warning !== 1),
-      error: record => record.logs.some(log => (log.data || {}).err),
-    }
-
     this.state = {
       socket: null,
       loading: false,
       records: [],
       fetched: 0,
-      filter: this.filters.all,
+      filter: () => true,
       focus: null,
       max: 1,
     }
@@ -215,7 +381,7 @@ class Records extends PureComponent {
     })
 
     this.records = {}
-    this.setState({ socket, records: [], fetched: 0, loading: true, max: 1, filter: this.filters.all })
+    this.setState({ socket, records: [], fetched: 0, loading: true, max: 1 }) // TODO: fix: setState({ filter: this.filters.all })
     socket.emit('session', { session: uuid })
   }
 
@@ -233,94 +399,20 @@ class Records extends PureComponent {
     }
 
     const loading = props.loading || state.loading
-
-    const filtered = records
-      .filter(filter)
-      .filter((record, index) => index <= max)
+    const filtered = records.filter(filter).filter((record, index) => index <= max)
 
     return (
       <Fragment>
         <Helmet>
           <title>Sensorr - Records{!!session ? ` (${session.datetime} - #${session.uuid.split('-').pop()})` : ''}</title>
         </Helmet>
-        {loading ? (
-          <div style={styles.summary}>
-            <button
-              style={{ ...styles.focus, ...styles.digest }}
-            >
-              <span>📡</span>
-              <span style={styles.catch}>
-                {markdown(`${fetched} __Fetched__ records`).tree}
-              </span>
-            </button>
-          </div>
-        ) : (
-          <div style={styles.summary}>
-            <button
-              style={{ ...styles.focus, ...styles.digest }}
-              onClick={() => this.setState({ filter: this.filters.all, max: 1 })}
-            >
-              <span>🍿</span>
-              <span style={styles.catch}>
-                {markdown(`${records.length} __Wished__ movies`).tree}
-              </span>
-            </button>
-            {records.some(this.filters.ongoing) && (
-              <button
-                style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.ongoing, max: 1 })}
-              >
-                <span>⌛</span>
-                <span style={styles.catch}>
-                  {markdown(`${records.filter(this.filters.ongoing).length} __Ongoing__ records`).tree}
-                </span>
-              </button>
-            )}
-            <button
-              style={{ ...styles.focus, ...styles.digest }}
-              onClick={() => this.setState({ filter: this.filters.success, max: 1 })}
-            >
-              <span>📼</span>
-              <span style={styles.catch}>
-                {markdown(`${records.filter(this.filters.success).length} __Archived__ movies`).tree}
-              </span>
-            </button>
-            {!!records.filter(this.filters.filtered).length && (
-              <button
-                style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.filtered, max: 1 })}
-              >
-                <span>👮</span>
-                <span style={styles.catch}>
-                  {markdown(`${records.filter(this.filters.filtered).length} __Filtered__ records`).tree}
-                </span>
-              </button>
-            )}
-            {!!records.filter(this.filters.missing).length && (
-              <button
-                style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.missing, max: 1 })}
-              >
-                <span>📭</span>
-                <span style={styles.catch}>
-                  {markdown(`${records.filter(this.filters.missing).length} __Missing__ movies`).tree}
-                </span>
-              </button>
-            )}
-            {!!records.filter(this.filters.error).length && (
-              <button
-                style={{ ...styles.focus, ...styles.digest }}
-                onClick={() => this.setState({ filter: this.filters.error, max: 1 })}
-              >
-                <span>❌</span>
-                <span style={styles.catch}>
-                  {markdown(`${records.filter(this.filters.error).length} __Error__ records`).tree}
-                </span>
-              </button>
-            )}
-            <div style={{ flex: '0 0 1em' }}></div>
-          </div>
-        )}
+        <Controler
+          session={session}
+          sessions={sessions}
+          records={records}
+          fetched={fetched}
+          onChange={(filter) => this.setState({ filter })}
+        />
         <div style={styles.element}>
           {loading ? (
             <div style={styles.loading}>
@@ -388,34 +480,3 @@ export default withToastManager(connect(
   }),
   () => ({})
 )(Records))
-
-export const Navigation = withRouter(connect(
-  (state) => ({
-    sessions: state.sessions.entities,
-  }),
-  () => ({})
-)(({ sessions, location, history, match, staticContext, ...props }) => {
-  const uuids = Object.values(sessions).sort((a, b) => new Date(a.time) - new Date(b.time)).map(session => session.uuid)
-  const index = uuids.indexOf(match.params.uuid)
-  const session = !Object.keys(sessions).includes(match.params.uuid) ? null : {
-    ...sessions[match.params.uuid],
-    datetime: new Date(sessions[match.params.uuid].time).toLocaleString(),
-  }
-
-  return !!session && (
-    <div style={styles.navigation}>
-      <span style={(index > 0 ? {} : { visibility: 'hidden' })}>
-        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[0]}`)} style={styles.navigator}>⏪</a>
-        <a onClick={() => index > 0 && history.push(`/movies/records/${uuids[index - 1]}`)} style={styles.navigator}>⬅️</a>
-      </span>
-      <div>
-        <span>{session.datetime}</span>
-        <span style={styles.small}>#{session.uuid.split('-').pop()}</span>
-      </div>
-      <span style={(index < (uuids.length - 1) ? {} : { visibility: 'hidden' })}>
-        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={styles.navigator}>➡️</a>
-        <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[uuids.length - 1]}`)} style={styles.navigator}>⏩</a>
-      </span>
-    </div>
-  )
-}))

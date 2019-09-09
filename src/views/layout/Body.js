@@ -8,17 +8,18 @@ import Collection from 'views/pages/Collection'
 import Star from 'views/pages/Star'
 import Upcoming from 'views/pages/Upcoming'
 import Following from 'views/pages/Following'
-import Configure from 'views/pages/Configure'
+import Settings from 'views/pages/Settings'
 import Records from 'views/pages/Records'
 import Blank from 'views/pages/Blank'
 import qs from 'query-string'
+import theme from 'theme'
 
 const styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.smoke,
   },
   hidden: {
     display: 'none',
@@ -30,8 +31,12 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
 
   return (
     <>
-      <Search.Results />
-      <div style={{ ...styles.element, ...(query ? styles.hidden : {}) }}>
+      {!!query && (
+        <div css={styles.element}>
+          <Search.Results />
+        </div>
+      )}
+      <div css={[styles.element, query && styles.hidden]}>
         <Switch>
           <Route path="/" exact component={Trending} />
           <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
@@ -44,7 +49,7 @@ const Body = withRouter(({ location, history, match, staticContext, ...props }) 
           <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
           <Route path="/collection/:id" exact component={Collection} />
           <Route path="/star/:id" exact component={Star} />
-          <Route path="/configure/(plex|downloads|database)?" exact component={Configure} />
+          <Route path="/settings/(plex|downloads|database)?" exact component={Settings} />
           <Route component={Blank} />
         </Switch>
       </div>

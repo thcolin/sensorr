@@ -30,6 +30,7 @@ class Config {
         name: (xznab.name || '').toString(),
         url: (xznab.url || '').toString(),
         key: (xznab.key || '').toString(),
+        disabled: !!xznab.disabled,
       })),
       filter: (payload.filter || '').toString(),
       policy: {

@@ -5,7 +5,7 @@ const placeholder = {
   blackhole: '/tmp',
 }
 
-const XZNAB = ({ values, handleChange, ...props }) => (
+const Blackhole = ({ values, handleChange, ...props }) => (
   <div style={styles.section}>
     <h1 style={styles.title}>Blackhole</h1>
     <p style={{ ...styles.paragraph, flex: 1, }}>
@@ -28,4 +28,4 @@ const XZNAB = ({ values, handleChange, ...props }) => (
   </div>
 )
 
-export default XZNAB
+export default Blackhole

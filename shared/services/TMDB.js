@@ -40,25 +40,25 @@ module.exports = class TMDB {
 }
 
 module.exports.GENRES = {
-  28: 'Action',
   12: 'Aventure',
+  14: 'Fantastique',
   16: 'Animation',
+  18: 'Drame',
+  27: 'Horreur',
+  28: 'Action',
   35: 'Comédie',
+  36: 'Histoire',
+  37: 'Western',
+  53: 'Thriller',
   80: 'Crime',
   99: 'Documentaire',
-  18: 'Drame',
-  10751: 'Familial',
-  14: 'Fantastique',
-  36: 'Histoire',
-  27: 'Horreur',
-  10402: 'Musique',
-  9648: 'Mystère',
-  10749: 'Romance',
   878: 'Science-Fiction',
-  10770: 'Téléfilm',
-  53: 'Thriller',
+  9648: 'Mystère',
+  10402: 'Musique',
+  10749: 'Romance',
+  10751: 'Familial',
   10752: 'Guerre',
-  37: 'Western',
+  10770: 'Téléfilm',
 }
 
 module.exports.STUDIOS = {

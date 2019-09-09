@@ -5,7 +5,7 @@ const styles = {
     width: '40px',
     height: '40px',
     position: 'relative',
-    margin: '100px auto',
+    margin: '0 auto',
   },
   circle: {
     width: '100%',
@@ -20,12 +20,12 @@ const styles = {
   },
   second: {
     animationDelay: '-1.0s',
-  }
+  },
 }
 
 export default ({ ...props }) => (
-  <div {...props} style={{ ...styles.element, ...(props.style || {}) }}>
-    <div style={styles.circle}></div>
-    <div style={{ ...styles.circle, ...styles.second}}></div>
+  <div {...props} css={[styles.element, props.css]}>
+    <div css={styles.circle}></div>
+    <div css={[styles.circle, styles.second]}></div>
   </div>
 )

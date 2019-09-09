@@ -1,5 +1,4 @@
-import React, { useRef, useState, useContext } from 'react'
-import { usePrevious } from 'hooks'
+import React, { useRef, useState } from 'react'
 import { withRouter } from 'react-router-dom'
 import Row from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
@@ -10,189 +9,114 @@ import nanobounce from 'nanobounce'
 import qs from 'query-string'
 import theme from 'theme'
 
-const debounce = {
-  input: nanobounce(500),
+const styles = {
+  input: {
+    element: {
+      position: 'relative',
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+    },
+    input: {
+      ...theme.resets.input,
+      fontSize: '0.6125em',
+      padding: '1.36em 0.5em',
+    },
+    icon: {
+      height: '0.75em',
+      width: '0.75em',
+      margin: '0 0.25em',
+      cursor: 'pointer',
+      transition: 'color ease 300ms',
+    },
+    focused: {
+      color: theme.colors.primary,
+      opacity: 1,
+    },
+    blured: {
+      color: theme.colors.rangoon,
+      opacity: 0.8,
+    },
+    clear: {
+      ...theme.resets.button,
+      position: 'absolute',
+      right: '1.25em',
+      alignSelf: 'center',
+      width: '0.583em',
+      cursor: 'pointer',
+    },
+  },
+  results: {
+    element: {
+      padding: '2em 0',
+    },
+  },
 }
 
-export const Contexts = {
-  input: React.createContext(),
-  toggled: React.createContext(),
-}
+const debounce = nanobounce(500)
 
-const Providers = {
-  input: withRouter(({ location, history, match, staticContext, ...props }) => {
-    const { query } = qs.parse(location.search)
-    const [input, setInput] = useState(query)
-
-    return (
-      <Contexts.input.Provider {...props} value={{ input, setInput }} />
-    )
-  }),
-  toggled: withRouter(({ location, history, match, staticContext, ...props }) => {
-    const { query } = qs.parse(location.search)
-    const [toggled, setToggled] = useState(!!query)
-
-    return (
-      <Contexts.toggled.Provider {...props} value={{ toggled, setToggled }} />
-    )
-  }),
-  safety: withRouter(({ location, children }) => {
-    const { setInput } = useContext(Contexts.input)
-    const { toggled, setToggled } = useContext(Contexts.toggled)
-    const { query } = qs.parse(location.search)
-    const previous = usePrevious(location.search)
-
-    // from `/x?query=y` to `/x` (from user action, like link click) should setToggled(false) && setInput(null)
-    if (previous && !location.search) {
-      setToggled(false)
-      setInput(null)
-    }
-
-    // from `/x?query=y` to `/x?query=yz` (from user action, like history back) should setInput(yz)
-    if (typeof query !== 'undefined' && !toggled) {
-      setInput(query)
-      setToggled(true)
-    }
-
-    return children
-  })
-}
-
-export const Provider = ({ children, ...props }) => (
-  <Providers.input>
-    <Providers.toggled >
-      {children}
-    </Providers.toggled>
-  </Providers.input>
-)
-
-export const Icon = withRouter(({ location, history, match, staticContext, ...props }) => {
-  const { setInput } = useContext(Contexts.input)
-  const { toggled, setToggled } = useContext(Contexts.toggled)
-  const { query } = qs.parse(location.search)
-  const setQuery = (query) => history.replace({
-    pathname: location.pathname,
-    ...(query ? { search: `?query=${query}` } : {}),
-  })
-
-  return (
-    <Providers.safety >
-      <div
-        {...props}
-        onClick={() => {
-          setInput(null)
-          setToggled(!toggled)
-
-          if (query) {
-            setQuery(null)
-          }
-        }}
-        style={{ ...(props.style || {}), cursor: 'pointer' }}
-      >
-        🔍
-      </div>
-    </Providers.safety>
-  )
-})
-
-export const Input = withRouter(({ location, history, match, staticContext, style = {}, ...props }) => {
+export const Input = withRouter(({ location, history, match, staticContext, ...props }) => {
   const reference = useRef()
-  const { input, setInput } = useContext(Contexts.input)
-  const { toggled, setToggled } = useContext(Contexts.toggled)
-  const { query } = qs.parse(location.search)
-  const setQuery = (query) => history.replace({
-    pathname: location.pathname,
-    ...(query !== null ? { search: `?query=${query}` } : {}),
-  })
+  const [query, setQuery] = [
+    qs.parse(location.search).query || '',
+    (query) => history.replace({ pathname: location.pathname, ...(query ? { search: `?query=${query}` } : {}) }),
+  ]
+  const [input, setInput] = useState(query || '')
+  const [focused, setFocused] = useState(false)
+
+  const onChange = (value) => {
+    setInput(value)
+    debounce(() => setQuery(value || ''))
+  }
 
   const close = () => {
-    setToggled(false)
-    setInput(null)
-    setQuery(null)
-  }
-
-  if (toggled) {
-    reference.current && reference.current.focus()
-  } else {
-    reference.current && reference.current.blur()
+    setInput('')
+    setQuery('')
+    reference.current.blur()
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      {(input && input !== query) && (
-        <Spinner
-          style={{
-            position: 'absolute',
-            left: '1.25em',
-            alignSelf: 'center',
-            width: '1.25em',
-            height: '1.25em',
-            margin: 0,
-            opacity: 0.6,
-          }}
-        />
+    <div css={styles.input.element}>
+      {input && input !== query ? (
+        <Spinner css={styles.input.icon} />
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 129 129"
+          css={[
+            styles.input.icon,
+            (focused || query ? styles.input.focused : styles.input.blured),
+          ]}
+          onClick={() => reference.current.focus()}
+        >
+          <path fill="currentColor" d="M51.6 96.7c11 0 21-3.9 28.8-10.5l35 35c.8.8 1.8 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.6-1.6 1.6-4.2 0-5.8l-35-35c6.5-7.8 10.5-17.9 10.5-28.8 0-24.9-20.2-45.1-45.1-45.1-24.8 0-45.1 20.3-45.1 45.1 0 24.9 20.3 45.1 45.1 45.1zm0-82c20.4 0 36.9 16.6 36.9 36.9C88.5 72 72 88.5 51.6 88.5S14.7 71.9 14.7 51.6c0-20.3 16.6-36.9 36.9-36.9z"/>
+        </svg>
       )}
       <input
-        {...props}
-        type="text"
-        value={input || ''}
-        onChange={(e) => {
-          e.persist()
-          setInput(e.target.value)
-          debounce.input(() => setQuery(e.target.value || ''))
-        }}
-        onKeyDown={(e) => e.key === 'Escape' && close()}
-        placeholder="Search..."
         ref={reference}
-        css={{
-          width: '100%',
-          backgroundColor: theme.colors.primary,
-          border: 'none',
-          padding: 0,
-          margin: 0,
-          fontSize: '1.25em',
-          padding: '0.75em',
-          textAlign: 'center',
-          color: theme.colors.white,
-          fontFamily: 'inherit',
-          outline: 'none',
-          '&::placeholder': {
-            color: theme.colors.white,
-            opacity: 0.5,
-          },
-        }}
+        type="text"
+        placeholder="Search for anything"
+        value={input}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => e.key === 'Escape' && close()}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        css={styles.input.input}
       />
       {!!input && (
-        <span
-          onClick={() => close()}
-          style={{
-            position: 'absolute',
-            right: '1.25em',
-            alignSelf: 'center',
-            width: '1.25em',
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={() => close()} css={styles.input.clear}>
           <Clear />
-        </span>
+        </button>
       )}
     </div>
   )
 })
 
-export const Results = withRouter(({ location, history, match, staticContext, children, style, ...props }) => {
+export const Results = withRouter(({ location, history, match, staticContext, children, ...props }) => {
   const { query } = qs.parse(location.search)
 
   return !!query && (
-    <div
-      {...props}
-      key="search-results"
-      style={{
-        ...(style || {}),
-        background: 'white',
-        padding: '2em 0',
-      }}
-    >
+    <div {...props} css={styles.results.element}>
       <Row
         label="🎞️&nbsp; Movies"
         title={`Search for "${query}" movies`}
@@ -243,9 +167,6 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
 })
 
 export default {
-  Contexts,
-  Provider,
-  Icon,
   Input,
   Results,
 }

@@ -27,7 +27,7 @@ async function record({ argv, log, session, logger, sensorr, db }) {
 
         return of(movie).pipe(
           mergeMap(movie => tmdb.fetch(['movie', movie.id], { append_to_response: 'credits,alternative_titles,release_dates' })),
-          map(details => new Movie(details, sensorr.config.region || 'en-US').normalize()),
+          map(details => new Movie({ ...movie, ...details }, sensorr.config.region || 'en-US').normalize()),
           mergeMap(movie => from(db.movies.upsert(movie.id, (doc) => ({ ...doc, ...movie }))).pipe(mapTo(movie))),
           mergeMap(movie => look(movie, context)),
           mergeMap(({ movie, release }) => grab(movie, release, context)),

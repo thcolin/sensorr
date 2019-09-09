@@ -26,4 +26,7 @@ module.exports = merge(common, {
       '/proxy': 'http://localhost:5070',
     },
   },
+  watchOptions: {
+      poll: true
+  },
 })

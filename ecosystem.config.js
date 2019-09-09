@@ -29,8 +29,22 @@ module.exports = {
       },
     },
     {
+      name: 'sensorr:refresh',
+      cron: '3 1 * * *',
+      exec_mode: 'fork',
+      autorestart: false,
+      script: './bin/exec',
+      args: ['./bin/sensorr', 'refresh'],
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+    },
+    {
       name: 'sensorr:stalk',
-      cron: '1 0 * * *',
+      cron: '3 2 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
@@ -44,7 +58,7 @@ module.exports = {
     },
     {
       name: 'sensorr:sync',
-      cron: '1 1 * * *',
+      cron: '3 3 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
@@ -58,7 +72,7 @@ module.exports = {
     },
     {
       name: 'sensorr:clean',
-      cron: '1 2 * * *',
+      cron: '3 4 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',

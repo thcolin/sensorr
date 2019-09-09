@@ -1,7 +1,8 @@
-import React, { Fragment, useState, useContext, useRef } from 'react'
+import React, { Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
+import { Movie } from 'shared/Documents'
 import theme from 'theme'
 
 const Context = React.createContext()
@@ -39,80 +40,51 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+  },
+  grid: {
     padding: '2em 0',
   },
 }
 
-const Library = ({ ...props }) => {
-  const { query, state } = useContext(Context)
-
-  return (
-    <Fragment>
-      <Helmet>
-        <title>Sensorr - Library</title>
-      </Helmet>
-      <div style={styles.wrapper}>
-        <Grid
-          limit={true}
-          strict={false}
-          query={(db) => db.movies.find().where('state').ne('ignored')}
-          filter={entity => (
-            (state === 'all' || entity.state === state) &&
-            [entity.title, entity.original_title].some(string => new RegExp(query, 'i').test(string))
-          )}
-          child={Film}
-        />
-      </div>
-    </Fragment>
-  )
-}
+const Library = ({ ...props }) => (
+  <Fragment>
+    <Helmet>
+      <title>Sensorr - Library</title>
+    </Helmet>
+    <div css={styles.wrapper}>
+      <Grid
+        limit={true}
+        strict={false}
+        query={(db) => db.movies.find().where('state').ne('ignored')}
+        child={Film}
+        css={styles.grid}
+        // child={(props) => <Film {...props} subtitle={sorting.labelize && sorting.labelize(props.entity)} />}
+        controls={{
+          label: ({ total, reset }) => (
+            <button css={theme.resets.button} onClick={() => reset()}>
+              <span><strong>{total}</strong> Movies</span>
+            </button>
+          ),
+          filters: Movie.Filters,
+          sortings: Movie.Sortings,
+          defaults: {
+            filtering: {},
+            sorting: Movie.Sortings.time,
+            reverse: false,
+          },
+        }}
+        empty={{
+          emoji: '🍿',
+          title: "Oh no, your collection is empty",
+          subtitle: (
+            <span>
+              You should try to search for wished movie, <em>Interstellar</em> maybe ?
+            </span>
+          ),
+        }}
+      />
+    </div>
+  </Fragment>
+)
 
 export default Library
-
-export const Provider = ({ ...props }) => {
-  const [query, setQuery] = useState('')
-  const [state, setState] = useState('all')
-
-  return (
-    <Context.Provider
-      {...props}
-      value={{
-        query,
-        setQuery,
-        state,
-        setState,
-      }}
-    />
-  )
-}
-
-export const Navigation = ({ ...props }) => {
-  const ref = useRef(null)
-  const { query, setQuery, state, setState } = useContext(Context)
-
-  const close = () => {
-    setQuery('')
-    ref.current.blur()
-  }
-
-  return (
-    <div style={styles.filter}>
-      <input
-        ref={ref}
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => e.key === 'Escape' && close()}
-        style={styles.input}
-        placeholder="Filter..."
-      />
-      <i
-        onClick={() => setState({ all: 'pinned', pinned: 'wished', wished: 'archived', archived: 'all' }[state])}
-        title={{ all: 'All', pinned: 'Pinned', wished: 'Wished', archived: 'Archived' }[state]}
-        style={styles.state}
-      >
-        {{ all: '📚', pinned: '📍', wished: '🍿', archived: '📼' }[state]}
-      </i>
-    </div>
-  )
-}
