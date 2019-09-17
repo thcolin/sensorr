@@ -27,6 +27,6 @@ module.exports = merge(common, {
     },
   },
   watchOptions: {
-      poll: true
+      poll: 1000,
   },
 })

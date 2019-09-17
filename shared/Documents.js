@@ -31,7 +31,7 @@ class Movie {
                 .filter(title => this.countries.includes(title.iso_3166_1))
                 .map(title => title.title)
           ).map(title => clean(title)).filter(title => title)),
-        ].filter((title, index, titles) => !titles.some(query => query !== title && new RegExp(`^${query}`).test(title))),
+        ],
         years: [
           ...new Set(
             this.payload.years ?
@@ -98,6 +98,7 @@ Movie.Filters = {
       label: GENRES[id],
     })),
     default: [],
+    orderize: true,
     apply: (entity, values) => !values.length || values.some(id => (entity.genres || entity.genre_ids || []).includes(parseInt(id))),
     histogram: (entities) => entities.reduce((histogram, entity) => ({
       ...histogram,
@@ -122,6 +123,7 @@ Movie.Filters = {
       },
     ],
     default: [],
+    orderize: true,
     apply: (entity, values) => !values.length || values.some(state => entity.state === state),
     histogram: (entities) => entities.reduce((histogram, entity) => ({
       ...histogram,
@@ -129,8 +131,9 @@ Movie.Filters = {
     }), { pinned: 0, wished: 0, archived: 0 }),
   }),
   year: (entities) => {
+    const step = 1
     const min = 1900
-    const max = Math.max(
+    const max = step + Math.max(
       (new Date()).getFullYear() + 7,
       entities.reduce((year, entity) => entity.year > year ? entity.year : year, (new Date()).getFullYear()),
     )
@@ -141,16 +144,17 @@ Movie.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => entity.year > values[0] && entity.year <= values[1],
+      step: step,
+      apply: (entity, values) => entity.year >= values[0] && entity.year < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [parseInt(entity.year || 0)]: (histogram[parseInt(entity.year || 0)] || 0) + 1,
-      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index + 1]: 0 }), {})),
+      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index]: 0 }), {})),
     }
   },
   popularity: (entities) => {
     const highest = entities.reduce((popularity, entity) => entity.popularity > popularity ? entity.popularity : popularity, 0)
-    const compute = (popularity = 0) => Math.max(1, parseInt((popularity / highest) * 100))
+    const compute = (popularity = 0) => Math.max(0, parseInt((popularity / highest) * 100) - 1)
     const min = 0
     const max = 100
 
@@ -160,15 +164,15 @@ Movie.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => compute(entity.popularity) > values[0] && compute(entity.popularity) <= values[1],
+      apply: (entity, values) => compute(entity.popularity) >= values[0] && compute(entity.popularity) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.popularity)]: (histogram[compute(entity.popularity)] || 0) + 1,
-      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index + 1]: 0 }), {})),
+      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index]: 0 }), {})),
     }
   },
   vote_average: (entities) => {
-    const compute = (vote_average = 0) => Math.min(10, Math.max(1, Math.floor(vote_average)))
+    const compute = (vote_average = 0) => Math.min(9, Math.max(0, Math.floor(vote_average)))
     const min = 0
     const max = 10
 
@@ -178,17 +182,18 @@ Movie.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => compute(entity.vote_average) > values[0] && compute(entity.vote_average) <= values[1],
+      apply: (entity, values) => compute(entity.vote_average) >= values[0] && compute(entity.vote_average) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.vote_average)]: (histogram[compute(entity.vote_average)] || 0) + 1,
-      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [index + 1]: 0 }), {})),
+      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [index]: 0 }), {})),
     }
   },
   runtime: (entities) => {
-    const compute = (runtime = 0) => Math.max(10, parseInt(runtime / 10) * 10)
+    const compute = (runtime = 0) => Math.max(0, parseInt(runtime / 10) * 10)
+    const step = 10
     const min = 0
-    const max = compute(entities.reduce((runtime, entity) => entity.runtime > runtime ? entity.runtime : runtime, 0))
+    const max = step + compute(entities.reduce((runtime, entity) => entity.runtime > runtime ? entity.runtime : runtime, 0))
 
     return {
       label: 'Duration',
@@ -196,12 +201,13 @@ Movie.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      step: 10,
-      apply: (entity, values) => compute(entity.runtime) > values[0] && compute(entity.runtime) <= values[1],
+      step: step,
+      unit: 'min',
+      apply: (entity, values) => compute(entity.runtime) >= values[0] && compute(entity.runtime) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.runtime)]: (histogram[compute(entity.runtime)] || 0) + 1,
-      }), Array((max - min) / 10).fill(true).reduce((acc, curr, index) => ({ ...acc, [(index + 1) * 10]: 0 }), {})),
+      }), Array(Math.floor((max - min) / 10)).fill(true).reduce((acc, curr, index) => ({ ...acc, [index * 10]: 0 }), {})),
     }
   },
 }
@@ -272,6 +278,7 @@ Star.Filters = {
         value: department,
       })),
       default: [],
+      orderize: true,
       apply: (entity, values) => !values.length || values.some(department => entity.known_for_department === department),
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
@@ -297,6 +304,7 @@ Star.Filters = {
       },
     ],
     default: [],
+    orderize: true,
     apply: (entity, values) => !values.length || values.some(gender => entity.gender === gender),
     histogram: (entities) => entities.reduce((histogram, entity) => ({
       ...histogram,
@@ -306,7 +314,7 @@ Star.Filters = {
   birth: (entities) => {
     const compute = (birthday) => new Date(birthday || 0).getFullYear()
 
-    const max = Math.max((new Date()).getFullYear() - 10, entities.reduce((birthyear, entity) =>
+    const max = 1 + Math.max((new Date()).getFullYear() - 10, entities.reduce((birthyear, entity) =>
       compute(entity.birthday) > birthyear ?
       compute(entity.birthday) : birthyear,
     1800))
@@ -322,16 +330,16 @@ Star.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => compute(entity.birthday) > values[0] && compute(entity.birthday) <= values[1],
+      apply: (entity, values) => compute(entity.birthday) >= values[0] && compute(entity.birthday) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.birthday)]: (histogram[compute(entity.birthday)] || 0) + 1,
-      }), Array(Math.max(0, max - min)).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index + 1]: 0 }), {})),
+      }), Array(Math.max(0, max - min)).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index]: 0 }), {})),
     }
   },
   popularity: (entities) => {
     const highest = entities.reduce((popularity, entity) => entity.popularity > popularity ? entity.popularity : popularity, 0)
-    const compute = (popularity = 0) => Math.max(1, parseInt((popularity / highest) * 100))
+    const compute = (popularity = 0) => Math.max(0, parseInt((popularity / highest) * 100) - 1)
     const min = 0
     const max = 100
 
@@ -341,11 +349,11 @@ Star.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => compute(entity.popularity) > values[0] && compute(entity.popularity) <= values[1],
+      apply: (entity, values) => compute(entity.popularity) >= values[0] && compute(entity.popularity) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.popularity)]: (histogram[compute(entity.popularity)] || 0) + 1,
-      }), Array(max - min + 1).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index + 1]: 0 }), {})),
+      }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [min + index]: 0 }), {})),
     }
   },
 }

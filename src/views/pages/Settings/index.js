@@ -200,7 +200,6 @@ class Settings extends PureComponent {
                   <Authentication values={values} handleChange={this.handleChange} />
                   <TMDB values={values} handleChange={this.handleChange} />
                   <Region values={values} handleChange={this.handleChange} />
-                  <Records values={values} handleChange={this.handleChange} />
                   <Submit />
                 </>
               )}
@@ -210,6 +209,7 @@ class Settings extends PureComponent {
               exact={true}
               render={() => (
                 <>
+                  <Records values={values} handleChange={this.handleChange} />
                   <Blackhole values={values} handleChange={this.handleChange} />
                   <XZNAB values={values} handleChange={this.handleChange} />
                   <Policy values={values} handleChange={this.handleChange} />

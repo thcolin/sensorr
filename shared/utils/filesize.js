@@ -7,6 +7,6 @@ module.exports = {
   },
   stringify: (bytes, unit = true) => {
     const exponent = bytes == 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1024))
-    return `${(bytes / Math.pow(1024, exponent)).toFixed(2) * 1}${unit ? units[exponent] : ''}`
+    return `${(bytes / Math.pow(1024, exponent)).toFixed(2) * 1} ${unit ? units[exponent] : ''}`
   }
 }

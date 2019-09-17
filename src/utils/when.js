@@ -1,5 +1,4 @@
 // [How is a Time-based UUID / GUID made](https://www.famkruithof.net/guid-uuid-timebased.html)
-
 module.exports = function (uuid) {
   return new Date(
     Math.floor(

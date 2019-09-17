@@ -62,6 +62,18 @@ const Following = ({ ...props }) => {
               sorting: Star.Sortings.time,
               reverse: false,
             },
+            render: {
+              filters: (Blocks) => (
+                <>
+                  <Blocks.known_for_department />
+                  <Blocks.gender />
+                  <div css={[theme.styles.row, theme.styles.spacings.row]}>
+                    <Blocks.birth display="column" />
+                    <Blocks.popularity display="column" />
+                  </div>
+                </>
+              ),
+            },
           }}
           empty={{
             emoji: '👩‍🎤',

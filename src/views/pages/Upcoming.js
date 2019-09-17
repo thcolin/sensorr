@@ -43,7 +43,7 @@ const styles = {
     '>div': {
       display: 'flex',
       alignItems: 'center',
-      '&:first-child,&:last-child': {
+      '&:first-of-type,&:last-of-type': {
         fontSize: '1.25em',
         '>a': {
           display: 'flex',
@@ -51,7 +51,7 @@ const styles = {
           padding: '1.5em 0.75em',
         },
       },
-      '&:nth-child(2)': {
+      '&:nth-of-type(2)': {
         '>a': {
           fontSize: '0.75em',
           padding: '1.5em',
@@ -73,9 +73,6 @@ const styles = {
         },
       },
     },
-  },
-  semitransparent: {
-    opacity: 0.5,
   },
   navigator: {
     cursor: 'pointer',
@@ -101,36 +98,46 @@ export const Navigation = withRouter(({ onClick, edges = true, location, history
   const year = Math.min(((new Date()).getFullYear() + 8), Math.max(1900, parseInt(match.params.year)))
   const month = Math.min(12, Math.max(1, parseInt(match.params.month)))
 
+  const previous = [
+    () => history.push(`/movies/upcoming/${month === 1 ? year - 1 : year}/${month === 1 ? 12 : month - 1}`),
+    () => history.push(`/movies/upcoming/${year - 1}/1`),
+  ]
+
+  const next = [
+    () => history.push(`/movies/upcoming/${month === 12 ? year + 1 : year}/${month === 12 ? 1 : month + 1}`),
+    () => history.push(`/movies/upcoming/${year + 1}/1`),
+  ]
+
   return (
     <div css={styles.navigation}>
       <div style={!edges || (year <= 1900) ? { visibility: 'hidden' } : {}}>
-        <a onClick={() => history.push(`/movies/upcoming/${year - 1}/1`)}>
+        <a onClick={previous[1]}>
           <Left end={true} />
         </a>
       </div>
       <div>
-        <a onClick={() => history.push(`/movies/upcoming/${month === 1 ? year - 1 : year}/${month === 1 ? 12 : month - 1}`)} style={(month === 1 && year <= 1900) ? { visibility: 'hidden' } : {}}>
+        <a onClick={previous[0]} style={(month === 1 && year <= 1900) ? { visibility: 'hidden' } : {}}>
           <Left />
         </a>
         {onClick ? (
           <button css={theme.resets.button} onClick={onClick}>
             <code>{capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))}</code>
             <span>&nbsp;</span>
-            <code><small style={styles.semitransparent}>{year}</small></code>
+            <code><small style={theme.styles.semitransparent}>{year}</small></code>
           </button>
         ) : (
           <div>
             <code>{capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))}</code>
             <span>&nbsp;</span>
-            <code><small style={styles.semitransparent}>{year}</small></code>
+            <code><small style={theme.styles.semitransparent}>{year}</small></code>
           </div>
         )}
-        <a onClick={() => history.push(`/movies/upcoming/${month === 12 ? year + 1 : year}/${month === 12 ? 1 : month + 1}`)} style={(month === 12 && year >= (new Date()).getFullYear() + 8) ? { visibility: 'hidden' } : {}}>
+        <a onClick={next[0]} style={(month === 12 && year >= (new Date()).getFullYear() + 8) ? { visibility: 'hidden' } : {}}>
           <Right />
         </a>
       </div>
       <div style={!edges || (year >= ((new Date()).getFullYear() + 8)) ? { visibility: 'hidden' } : {}}>
-        <a onClick={() => history.push(`/movies/upcoming/${year + 1}/1`)}>
+        <a onClick={next[1]}>
           <Right end={true} />
         </a>
       </div>
@@ -255,11 +262,22 @@ class Upcoming extends PureComponent {
                   sorting: Movie.Sortings.release_date,
                   reverse: true,
                 },
-                children: ({ setOpen }) => (
-                  <div css={styles.controls}>
-                    <Navigation onClick={() => setOpen(true)} />
-                  </div>
-                )
+                render: {
+                  menu: ({ setOpen }) => (
+                    <div css={styles.controls}>
+                      <Navigation onClick={() => setOpen(true)} />
+                    </div>
+                  ),
+                  filters: (Blocks) => (
+                    <>
+                      <Blocks.genre />
+                      <div css={[theme.styles.row, theme.styles.spacings.row]}>
+                        <Blocks.popularity display="column" />
+                        <Blocks.vote_average display="column" />
+                      </div>
+                    </>
+                  ),
+                },
               }}
             />
           )}

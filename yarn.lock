@@ -3381,6 +3381,10 @@ country-language@0.1.7:
     underscore "~1.7.0"
     underscore.deep "~0.5.1"
 
+countup.js@^1.9.3:
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/countup.js/-/countup.js-1.9.3.tgz#ce3e50cd7160441e478f07da31895edcc0f1c9dd"
+
 create-ecdh@^4.0.0:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/create-ecdh/-/create-ecdh-4.0.3.tgz#c9111b6f33045c4697f144787f9254cdc77c45ff"
@@ -4988,10 +4992,6 @@ fileset@^2.0.2:
 filesize@3.6.1, filesize@^3.6.1:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/filesize/-/filesize-3.6.1.tgz#090bb3ee01b6f801a8a8be99d31710b3422bb317"
-
-filesize@4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/filesize/-/filesize-4.1.2.tgz#fcd570af1353cea97897be64f56183adb995994b"
 
 fill-range@^2.1.0:
   version "2.2.4"
@@ -8513,9 +8513,9 @@ obuf@^1.0.0, obuf@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/obuf/-/obuf-1.1.2.tgz#09bea3343d41859ebd446292d11c9d4db619084e"
 
-oleoo@1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.0.7.tgz#5be3458fcd0aa5baacedb28f25b3196a7de573cb"
+oleoo@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.0.8.tgz#5cf52d2fced8eef69f02364c963bfc267b3c2c5c"
 
 on-finished@^2.3.0, on-finished@~2.3.0:
   version "2.3.0"
@@ -10106,6 +10106,14 @@ react-animate-height@2.0.15:
 react-codemirror2@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-6.0.0.tgz#180065df57a64026026cde569a9708fdf7656525"
+
+react-countup@^4.2.2:
+  version "4.2.2"
+  resolved "https://registry.yarnpkg.com/react-countup/-/react-countup-4.2.2.tgz#b98c1bf4a311411548000373b15f5c9b8d3cd6ac"
+  dependencies:
+    countup.js "^1.9.3"
+    prop-types "^15.6.2"
+    warning "^4.0.2"
 
 react-dev-utils@^9.0.1:
   version "9.0.3"
@@ -12867,7 +12875,7 @@ warning@^3.0.0:
   dependencies:
     loose-envify "^1.0.0"
 
-warning@^4.0.1:
+warning@^4.0.1, warning@^4.0.2:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/warning/-/warning-4.0.3.tgz#16e9e077eb8a86d6af7d64aa1e05fd85b4678ca3"
   dependencies:

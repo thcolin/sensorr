@@ -23,12 +23,22 @@ const styles = {
       cursor: 'pointer',
     },
     '>div': {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, 12em)',
-      justifyContent: 'space-between',
       '>label': {
         fontSize: '0.917em',
       },
+    },
+  },
+  grid: {
+    '>div': {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, 12em)',
+      justifyContent: 'space-between',
+    },
+  },
+  column: {
+    '>div': {
+      display: 'flex',
+      flexDirection: 'column',
     },
   },
 }
@@ -40,8 +50,8 @@ export const Input = ({ id, children, ...props }) => (
   </label>
 )
 
-const Checkbox = ({ label, inputs, values, onChange, ...props }) => (
-  <div css={styles.element}>
+const Checkbox = ({ label, inputs, values, onChange, display = 'grid', ...props }) => inputs.length > 1 && (
+  <div css={[styles.element, styles[display]]} {...props}>
     <label onClick={() => onChange([])}>{label}</label>
     <div>
       {inputs.map(input => (

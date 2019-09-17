@@ -7,9 +7,7 @@ const styles = {
     alignItems: 'center',
     padding: '0.25em 0',
     cursor: 'pointer',
-    ':not(:last-child)': {
-      margin: '0 0 0.5em 0',
-    },
+    margin: '0 0 0.5em 0',
     '>input': {
       ...theme.resets.input,
       ...theme.resets.radio,

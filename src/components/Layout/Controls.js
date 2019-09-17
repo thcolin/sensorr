@@ -41,10 +41,10 @@ const styles = {
         margin: '0 0.75em',
         fontSize: '0.8em',
       },
-      '>div>button:first-child': {
+      '>div>button:first-of-type': {
         margin: '0 0.75em 0 0',
       },
-      '>div>button:last-child': {
+      '>div>button:last-of-type': {
         margin: '0 0 0 0.75em',
       },
     },
@@ -87,47 +87,20 @@ const styles = {
       transition: 'opacity ease-in-out 500ms 750ms',
       '>*': {
         margin: '2em 0',
-        ':first-child:not(:last-child)': {
+        ':first-of-type:not(:last-of-type)': {
           margin: '2em 0 1em 0',
         },
-        ':last-child:not(:first-child)': {
+        ':last-of-type:not(:first-of-type)': {
           margin: '1em 0 2em',
         },
       },
     },
   },
-  checkboxes: {
-    display: 'flex',
-    flexDirection: 'column',
-    '>*': {
-      flex: 1,
-      margin: '1em 0',
-      ':first-child': {
-        margin: '0 0 1em',
-      },
-      ':last-child': {
-        margin: '1em 0 0',
-      },
-      ':first-child:last-child': {
-        margin: 0,
-      },
-    },
+  checkbox: {
+    flex: 1,
   },
-  ranges: {
-    display: 'flex',
-    '>*': {
-      flex: 1,
-      margin: '0 1em 0.5em',
-      ':first-child': {
-        margin: '0 1em 0.5em 0',
-      },
-      ':last-child': {
-        margin: '0 0 0.5em 1em',
-      },
-      ':first-child:last-child': {
-        margin: '0 0 0.5em 0',
-      },
-    },
+  range: {
+    flex: 1,
   },
   sort: {
     display: 'flex',
@@ -135,14 +108,11 @@ const styles = {
       flex: 1,
     }
   },
-  reverse: {
-    ...theme.resets.button,
-  }
 }
 
 const debounce = nanobounce(500)
 
-const Controls = ({ label, entities, filters, sortings, defaults, onChange, children, ...props }) => {
+const Controls = ({ label, entities, filters, sortings, defaults, onChange, render = {}, ...props }) => {
   const [filtering, setFiltering] = useState(defaults.filtering)
   const [sorting, setSorting] = useState(defaults.sorting)
   const [reverse, setReverse] = useState(defaults.reverse)
@@ -150,6 +120,10 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, chil
   const [previous, setPrevious] = useState(defaults)
   const [open, setOpen] = useState(false)
   const input = useRef(null)
+
+  const active = Object.keys(filtering)
+    .filter(key => !['query'].includes(key))
+    .filter(key => !filters[key].default || JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default))
 
   const without = (keys) => entities
     .filter((entity) => Object.keys(filtering).filter(key => !keys.includes(key)).every(key => filters[key].apply(entity, filtering[key])))
@@ -191,52 +165,59 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, chil
     apply(query, false)
   }, [])
 
-  const Checkboxes = ({ filters }) => !!Object.keys(filters).length && (
-    <div css={styles.checkboxes}>
-      {Object.keys(filters).map(key => {
-        const filter = filters[key]
-        const histogram = filter.histogram ? filter.histogram(without([key])) : {}
+  const Blocks = Object.keys(filters)
+    .reduce((Blocks, key) => {
+      const filter = filters[key]
+      const histogram = filter.histogram ? filter.histogram(without([key])) : {}
 
-        return (
-          <Checkbox
-            key={key}
-            label={filter.label}
-            inputs={filter.inputs.map(input => ({ ...input, count: histogram[input.value] || 0 }))}
-            onChange={values => setFiltering({ ...filtering, [key]: values })}
-            values={filtering[key] || filter.default || []}
-          />
-        )
-      })}
-    </div>
-  )
-
-  const Ranges = ({ filters }) => !!Object.keys(filters).length && (
-    <div css={styles.ranges}>
-      {Object.keys(filters).map(key => {
-        const filter = filters[key]
-        const histogram = filter.histogram ? filter.histogram(without([key])) : {}
-
-        return (
-          <Range
-            key={key}
-            label={filter.label}
-            values={filtering[key] || filter.default || [filter.min, filter.max]}
-            onChange={(values) => setFiltering({ ...filtering, [key]: values })}
-            min={filter.min || 0}
-            max={filter.max || 100}
-            step={filter.step || 1}
-            data={histogram}
-          />
-        )
-      })}
-    </div>
-  )
+      switch (filter.type) {
+        case 'checkbox':
+          return {
+            ...Blocks,
+            [key]: (props) => (
+              <Checkbox
+                {...props}
+                key={key}
+                css={[styles.checkbox, props.css]}
+                label={filter.label}
+                inputs={filter.inputs
+                  .map(input => ({ ...input, count: histogram[input.value] }))
+                  .sort((a, b) => filter.orderize ? b.count - a.count : 0)
+                }
+                onChange={values => setFiltering({ ...filtering, [key]: values })}
+                values={filtering[key] || filter.default || []}
+              />
+            ),
+          }
+        case 'range':
+          return {
+            ...Blocks,
+            [key]: (props) => (
+              <Range
+                {...props}
+                key={key}
+                css={[styles.range, props.css]}
+                label={filter.label}
+                values={filtering[key] || filter.default || [filter.min, filter.max]}
+                onChange={(values) => setFiltering({ ...filtering, [key]: values })}
+                min={filter.min || 0}
+                max={filter.max || 100}
+                step={filter.step || 1}
+                unit={filter.unit || null}
+                data={histogram}
+              />
+            ),
+          }
+        default:
+          return Blocks
+      }
+    }, {})
 
   return (
     <div css={styles.element}>
       <div css={styles.menu}>
-        {children ? (
-          children({ setOpen })
+        {render.menu ? (
+          render.menu({ setOpen })
         ) : (
           <>
             <input
@@ -254,41 +235,33 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, chil
               placeholder="Filter"
             />
             <div key="summary" css={styles.summary}>
-              {Object.keys(filtering)
-                .filter(key => !['query'].includes(key))
-                .filter(key => !filters[key].default || JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default))
-                .map(key => {
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setOpen(true)}
-                      title={({
-                        range: () => filtering[key]
-                          .join('-'),
-                        checkbox: () => filtering[key]
-                          .map(value => filters[key].inputs.filter(filter => filter.value === value).pop().label)
-                          .join(', '),
-                      }[filters[key].type])() || false}
-                    >
-                      <span>{filters[key].label}</span>
-                      <Chevron.Down />
-                    </button>
-                  )
-                })
-              }
-              {!Object.keys(filtering)
-                .filter(key => !['query'].includes(key))
-                .filter(key => !filters[key].default || JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default)).length &&
-              (
+              {active.length ? active.map(key => (
+                <button
+                  key={key}
+                  onClick={() => setOpen(true)}
+                  title={({
+                    range: () => filtering[key]
+                      .join('-'),
+                    checkbox: () => filtering[key]
+                      .map(value => filters[key].inputs.filter(filter => filter.value === value).pop().label)
+                      .join(', '),
+                  }[filters[key].type])() || false}
+                >
+                  <span>{filters[key].label}</span>
+                  <Chevron.Down />
+                </button>
+              )) : (
                 <button onClick={() => setOpen(true)}>
                   <span>All</span>
                   <Chevron.Down />
                 </button>
               )}
-              <button onClick={() => setOpen(true)} title={`Sorted by ${sorting.label} ${reverse ? '↓' : '↑'}`}>
-                <span>Sort</span>
-                <Chevron.Down />
-              </button>
+              {sorting && (
+                <button onClick={() => setOpen(true)} title={`Sorted by ${sorting.label} ${reverse ? '↓' : '↑'}`}>
+                  <span>Sort</span>
+                  <Chevron.Down />
+                </button>
+              )}
             </div>
           </>
         )}
@@ -310,18 +283,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, chil
       </div>
       <AnimateHeight css={styles.panel} height={open ? 'auto' : 0} delay={open ? 250 : 0}>
         <div {...(open ? {} : { style: { opacity: 0 } })}>
-          <Checkboxes
-            filters={Object.keys(filters)
-              .filter(key => filters[key].type === 'checkbox')
-              .reduce((acc, key) => ({ ...acc, [key]: filters[key] }), {})
-            }
-          />
-          <Ranges
-            filters={Object.keys(filters)
-              .filter(key => filters[key].type === 'range')
-              .reduce((acc, key) => ({ ...acc, [key]: filters[key] }), {})
-            }
-          />
+          {render.filters ? render.filters(Blocks) : Object.values(Blocks).map(Block => <Block />)}
           {sortings && (
             <div css={styles.sort}>
               <Radio

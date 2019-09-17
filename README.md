@@ -199,70 +199,79 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
+    * Remove `aphrodite`
+    * Migrate from `webpack` to `parcel` ?
+    * Look at [`react-slot-fill`](https://github.com/camwest/react-slot-fill)
+    * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
+    * Fix `order=release_date`, cf. `/star/19274`
+    * `Controls` query performance
+    * `Controls` blur en `render`
+    * Look at `nanobounce/debounce` usage in functional component (define by instance not "global")
     * Empty `config.json` on __Docker__ build
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
     * `Search`
-      * Use `Controls` - ?
-        * Useful ? Few results to filter/order
-    * `Releases`
-      * Use `Controls` with `List` component
-      * Fix `sort` (avoid using `score` first)
-      * Improve UI (see [`feedly.com`](feedly.com))
-      * Improve UX
-        * Display `ongoing` requests (which `terms` & `xznab`)
-          * Like `progress`
-        * Display results as soon as they're available
-          * Need to refactor `Sensorr.look`
-    * Add context on `Movie/Star` when filtered or sorted
-      * Add `label` like `State` on `left`
-    * Responsive design / mobile UI-UX
-    * Dark mode
-    * Improve `ScrollTop` behavior
-    * `Loading` page waiting sync of `db` with progress ?
+      * Add previous `query` (see [inspiration](https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/b8693543661487.5800ac370a2c2.png))
+      * Remove `query` from location params
+      * Show/Hide results on `focus/blur` - ?
+      * Add right `select` `in [All|Movie|Collection|Star]` - ? (see [inspiration](https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/4b75c062431121.5a990e65204e6.png))
+      * Display grouped results as a small `List`, not `Row`
     * `Row`
-      * Display `n` firsts with `backdrop_path` (with contextual informations ? like `popularity`)
+      * Beautify `n` firsts
+        * Use offset (see [inspiration](https://dribbble.com/shots/2647399-Sneak-Peek-Unique-UI))
+        * Use `backdrop_path` (blurred ? see [inspiration](https://dribbble.com/shots/4525124-Online-streaming-Web-App-UI))
+        * Use custom colors (use `react-image-palette`, see [inspiration](https://dribbble.com/shots/4859422-Lights-Camera-Cinero))
+    * Add contextual data on `Film` & `Persona` when filtered or sorted
+      * Add `label` "tag" on left (with emoji ?) - ?
+      * `:hover`, bottom to top animation revealing overlay (see [inspiration](https://dribbble.com/shots/4649643-Cinematic-UI))
+      * `:hover`, shadow animation (see [inspiration](https://dribbble.com/shots/4652768-Website-design-for-Movies-TV-Shows-Concept))
+    * `Movie`
+      * Focus on followed `casting` (+ length ?)
+      * Improve layout
+        * See [inspiration](https://dribbble.com/shots/3206359-Movie-site)
+        * Improve `trailer` integration (see [inspiration](https://dribbble.com/shots/5514434-Front-Row-Entertainment-Single-Movie-Page))
+        * Improve `Row` integration (see [inspiration](https://dribbble.com/shots/4131890-Cinema-Website))
+      * Improve `Button` (& global layout, see [inspiration](https://dribbble.com/shots/5532138-UI-Design-002-Minions)) colors with `picked` colors from `poster` (use `react-image-palette`, see [inspiration](https://dribbble.com/shots/4859422-Lights-Camera-Cinero))
+      * Add `keywords`
+    * `Upcoming`
+      * Improve performance
+      * Add release day as contextual data on `Film`
+      * Add hidden `select` or `daypicker` (with only month + year) on "title"
     * `Discover`
       * `Grid` with location params driven `Controls`
       * See [TMDB api/discover](https://www.themoviedb.org/documentation/api/discover)
-    * `Studio` page (`company` entity)
+    * `Studio`
       * Use predefined `Discover` page
-      <!-- * Display available data from `TMDB` (`name`, `logo_path` and `origin_country`) -->
-      <!-- * Display `Grid` with `uri={['discover', 'movie']}` and `params={{ with_companies: [company.id].join(',') }}` -->
-      * Where `studio/123` is referred ?
-        * `Trending` ? - no, not studio but group of
+      * Referring
+        * `Trending` ? - yes, use multiple values
         * Show in `Navigation` ? - no, no actions or views are useful for now
         * Display *studio* in `Movie` ? - yes
         * Display *studio* `Search` ? - yes
     * `Trending`
+      * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
       * `Row` with *upcoming* `movies` from *followed* `stars`
-        * `Link` to `Upcoming` ?
-      * `Row` with random/popular *collections* `movies` ? - how ?
-      * `Row` link to location params driven `Controls`
-      * Customize ? (order & hidden)
-    * `Movies`
-      * `Movie`
-        * Focus on followed `casting` (+ length ?)
-      * `Upcoming`
-        * Improve performance
-        * Improve UI (try ?)
-          * Add release day on each `Film` (with a `tag` on left ?)
-        * Improve UX
-          * Add hidden `select` or `daypicker` (with only month + year) on "title"
-      * `List` (?)
-        * Grouped movies by "policy"
+        * Link to `Upcoming`
+      * Link `Discover` `Row` to `Discover` page
+      * Customize
+        * Pinned sortable `Trending|Discover` `Rows`
+          * `type=[Popular|Top|Upcoming|Trending|Discover]`
+          * `uri={...}`
+          * `params={...}`
+    * `List`
+      * Grouped movies by "policy"
+      * Same layout as `Trending` page
+    * Onboarding
+    * Improve `ScrollTop` behavior
+    * Responsive design / mobile UI-UX
+    * Dark mode
   * Features
-    * Remove `aphrodite`
-    * Look at [`react-slot-fill`](https://github.com/camwest/react-slot-fill)
+    * `Loading` page waiting sync of `db` with progress ?
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
-    * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
-    * Fix `order=release_date`, cf. `/star/19274`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
     * Polish `Trending` *discover* row
       * Load 2 page and filter with *trending* ones
-    * Improve `Controls`
-      * Save to `localStorage` ?
+    * Save `Controls` to `localStorage` ?
     * Improve `Documents.*.Filters`
       * `Movie`
         * `country` - `multiple` (use `original_language` ? - no)
@@ -292,6 +301,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
         But ${notfound} still not found.. 😶
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
+  * Notify `summary` (email, sms, etc...)
 * `App` (Phone / TV)
   * Features
     * Connect to server with QR code

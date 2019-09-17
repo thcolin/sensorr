@@ -118,7 +118,7 @@ class Recording extends PureComponent {
         ></span>
         <button
           css={styles.button}
-          title={`Record${(ongoing || loading) ? 'ing' : ''} wished movies from collection`}
+          title={`📹 Record${(ongoing || loading) ? 'ing' : ''} wished movies from collection`}
           onClick={() => !ongoing && this.triggerJob('record')}
           disabled={ongoing || loading}
         >

@@ -72,6 +72,20 @@ const Library = ({ ...props }) => (
             sorting: Movie.Sortings.time,
             reverse: false,
           },
+          render: {
+            filters: (Blocks) => (
+              <>
+                <Blocks.genre />
+                <Blocks.state />
+                <div css={[theme.styles.row, theme.styles.spacings.row]}>
+                  <Blocks.year display="column" />
+                  <Blocks.popularity display="column" />
+                  <Blocks.vote_average display="column" />
+                  <Blocks.runtime display="column" />
+                </div>
+              </>
+            ),
+          }
         }}
         empty={{
           emoji: '🍿',

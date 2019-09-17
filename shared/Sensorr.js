@@ -35,7 +35,7 @@ class Sensorr {
   }
 
   score(release) {
-    return Object.keys(this.config.policy.prefer || {})
+    return release.score + Object.keys(this.config.policy.prefer || {})
       .map(tag => this.config.policy.prefer[tag]
         .map((keyword, index, arr) => {
           const score = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
@@ -62,7 +62,7 @@ class Sensorr {
         const intersection = this.config.policy.avoid[tag].filter(test)
 
         if (intersection.length) {
-          throw new Error(`Release doesn't pass configured policy (${tag}=${intersection.join(', ')})`)
+          throw new Error(`👮 Release doesn't pass configured policy (${tag}=${intersection.join(', ')})`)
         }
 
         return true
@@ -110,6 +110,12 @@ class Sensorr {
           concatAll(),
           map(release => ({
             ...release,
+            term: title,
+            similarity: 0,
+            score: 0,
+            valid: true,
+            reason: null,
+            warning: 0,
             meta: oleoo.parse(release.title, {
               strict: false,
               flagged: true,
@@ -120,33 +126,32 @@ class Sensorr {
               },
             }),
           })),
-          map(release => ({
-            ...release,
-            score: this.score(release),
-            valid: true,
-            reason: null,
-            warning: 0,
-          })),
-          map(release => !release.valid ? release : ({
-            ...release,
-            valid: release.seeders,
-            reason: `No seeders (0)`,
-            warning: 2,
-          })),
-          map(release => !release.valid ? release : ({
-            ...release,
-            valid: movie.terms.years.some(year => new Date(release.publishDate).getFullYear() >= year),
-            reason: `Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release years (${movie.terms.years.join(', ')})`,
-            warning: 2,
-          })),
-          map(release => !release.valid ? release : ({
-            ...release,
-            valid: (parseInt(release.meta.year) === 0 || movie.terms.years.some(year => parseInt(release.meta.year) === year)),
-            reason: `Release year (${release.meta.year}) ${
-              parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${movie.terms.years.join(', ')})`
-            }`,
-            warning: 2,
-          })),
+          map(release => {
+            const valid = movie.terms.years.some(year => new Date(release.publishDate).getFullYear() >= year)
+
+            return {
+              ...release,
+              valid,
+              reason: valid ? null : `📰 Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release years (${movie.terms.years.join(', ')})`,
+              warning: valid ? 0 : 2,
+            }
+          }),
+          map(release => {
+            if (!release.valid) {
+              return release
+            } else {
+              const valid = (parseInt(release.meta.year) === 0 || movie.terms.years.some(year => parseInt(release.meta.year) === year))
+
+              return {
+                ...release,
+                valid,
+                reason: valid ? null : `🕰 Release year (${release.meta.year}) ${
+                  parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${movie.terms.years.join(', ')})`
+                }`,
+                warning: valid ? 0 : 2,
+              }
+            }
+          }),
           map(release => {
             if (!release.valid) {
               return release
@@ -156,12 +161,15 @@ class Sensorr {
                 .sort((a, b) => b - a)
                 .shift()
 
+              const valid = similarity >= this.MINIMUM_SIMILARITY
+
               return ({
                 ...release,
                 similarity,
-                valid: (similarity >= this.MINIMUM_SIMILARITY),
-                reason: `Similarity too low : ${similarity} (📩 ${string.clean(release.meta.title)} / 🎯 ${movie.terms.titles.join(', ')})`,
-                warning: 2,
+                score: valid ? release.score + 1000 : release.score,
+                valid,
+                reason: valid ? null : `🎯 Similarity too low : ${similarity} ("${string.clean(release.meta.title)}" doesn't match with "${movie.terms.titles.join(', ')}")`,
+                warning: valid ? 0 : 2,
               })
             }
           }),
@@ -186,11 +194,21 @@ class Sensorr {
               }
             }
           }),
-          map(release => ({
-            ...release,
-            reason: release.valid ? null : release.reason,
-            warning: release.valid ? 0 : release.warning,
-          })),
+          map(release => {
+            if (!release.valid) {
+              return release
+            } else {
+              const valid = !!release.seeders
+
+              return {
+                ...release,
+                valid,
+                reason: valid ? null : `🌍 No seeders`,
+                warning: valid ? 0 : 1,
+              }
+            }
+          }),
+          map(release => ({ ...release, score: this.score(release) })),
           tap(release => typeof hooks.release === 'function' && hooks.release(xznab, title, release)),
           filter(release => !strict || release.valid),
           delay(2000),

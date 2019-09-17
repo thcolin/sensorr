@@ -113,8 +113,53 @@ const resets = {
   },
 }
 
+const styles = {
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  column: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  spacings: {
+    row: {
+      '>*': {
+        margin: '0 1em',
+        ':first-of-type': {
+          margin: '0 1em 0 0',
+        },
+        ':last-of-type': {
+          margin: '0 0 0 1em',
+        },
+        ':first-of-type:last-of-type': {
+          margin: 0,
+        },
+      },
+    },
+    column: {
+      '>*': {
+        margin: '1em 0',
+        ':first-of-type': {
+          margin: '0 0 1em',
+        },
+        ':last-of-type': {
+          margin: '1em 0 0',
+        },
+        ':first-of-type:last-of-type': {
+          margin: 0,
+        },
+      },
+    },
+  },
+  semitransparent: {
+    opacity: 0.5,
+  },
+}
+
 export default {
   colors,
   fonts,
   resets,
+  styles,
 }

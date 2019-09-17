@@ -1,11 +1,11 @@
 const fs = require('fs')
 const inquirer = require('inquirer')
-const filesize = require('filesize')
 const filenamify = require('filenamify')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
 const { map, mapTo, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
 const TMDB = require('@shared/services/TMDB')
 const { Movie } = require('@shared/Documents')
+const filesize = require('@shared/utils/filesize')
 const uuidv4 = require('uuid/v4')
 const chalk = require('chalk')
 
@@ -105,7 +105,7 @@ async function record({ argv, log, session, logger, sensorr, db }) {
       mergeMap(releases => {
         const choices = releases.map(release => [
           (argv.a || argv.auto) ? chalk.green(release.title) : release.title,
-          chalk.gray(`(${filesize(release.size)} - ${release.peers} ↓ / ${release.seeders} ↑)`),
+          chalk.gray(`(${filesize.stringify(release.size)} - ${release.peers} ↓ / ${release.seeders} ↑)`),
         ].join(' '))
 
         if (argv.a || argv.auto) {

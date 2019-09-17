@@ -25,10 +25,10 @@ const styles = {
         paddingRight: '0.5em',
         paddingLeft: '0.5em',
       },
-      '>div:first-child': {
+      '>div:first-of-type': {
         padding: '0 0.5em 0 0',
       },
-      '>div:last-child': {
+      '>div:last-of-type': {
         padding: '0 0 0 0.5em',
       },
     },
@@ -61,10 +61,10 @@ const styles = {
       '>*': {
         margin: '0 0.5em',
       },
-      '>*:first-child': {
+      '>*:first-of-type': {
         margin: '0 0.5em 0 0',
       },
-      '>*:last-child': {
+      '>*:last-of-type': {
         margin: '0 0 0 0.5em',
       },
     },
@@ -192,7 +192,7 @@ const Navbar = ({ ...props }) => (
 )
 
 const Header = ({ ...props }) => {
-  const [navbar, setNavbar] = useState(false)
+  const [navbar, setNavbar] = useState(true)
 
   return (
     <>

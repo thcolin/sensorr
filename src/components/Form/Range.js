@@ -78,7 +78,7 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
               key={key}
               style={{
                 height: `${(100 * data[key]) / highest || 0}%`,
-                ...(Object.keys(data)[index] > state[0] && Object.keys(data)[index] <= state[1] ? {
+                ...(parseInt(Object.keys(data)[index]) >= state[0] && parseInt(Object.keys(data)[index]) < state[1] ? {
                   backgroundColor: theme.colors.tertiary,
                 } : {
                   backgroundColor: theme.colors.tertiary,
@@ -102,12 +102,12 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
   )
 }
 
-const Range = ({ label, values, onChange, min, max, step = 1, data = {}, ...props }) => (
-  <div css={styles.element}>
+const Range = ({ label, values, onChange, min, max, step = 1, unit, data = {}, ...props }) => (
+  <div css={styles.element} {...props}>
     <label onClick={() => onChange([min, max])}>
       <span>{label}</span>
       <span>&nbsp;</span>
-      <small><code>({values.join('-')})</code></small>
+      <small><code>({values.join('-')}{unit ? ` ${unit}` : ''})</code></small>
     </label>
     <Input
       values={values}

@@ -51,14 +51,13 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
-    fontFamily: theme.fonts.monospace,
     fontSize: '1em',
     textAlign: 'center',
     color: 'white',
     '>div': {
       display: 'flex',
       alignItems: 'center',
-      '&:first-child,&:last-child': {
+      '&:first-of-type,&:last-of-type': {
         fontSize: '1.25em',
         '>a': {
           display: 'flex',
@@ -66,7 +65,7 @@ const styles = {
           padding: '1.5em 0.75em',
         },
       },
-      '&:nth-child(2)': {
+      '&:nth-of-type(2)': {
         '>a': {
           fontSize: '0.75em',
           padding: '1.5em',
@@ -89,10 +88,6 @@ const styles = {
         color: 'white',
       }
     },
-  },
-  small: {
-    opacity: 0.5,
-    fontSize: '0.75em',
   },
   loading: {
     display: 'flex',
@@ -159,15 +154,15 @@ const Navigation = withRouter(({ sessions, session, onClick, edges = true, locat
         </a>
         {onClick ? (
           <button onClick={onClick}>
-            <span>{session.datetime}</span>
-            <span>&nbsp;</span>
-            <span css={styles.small}>#{session.uuid.split('-').pop()}</span>
+            <code>{session.datetime}</code>
+            <code>&nbsp;</code>
+            <code css={theme.styles.semitransparent}><small>#{session.uuid.split('-').pop()}</small></code>
           </button>
         ) : (
           <div>
-            <span>{session.datetime}</span>
-            <span>&nbsp;</span>
-            <span css={styles.small}>#{session.uuid.split('-').pop()}</span>
+            <code>{session.datetime}</code>
+            <code>&nbsp;</code>
+            <code css={theme.styles.semitransparent}><small>#{session.uuid.split('-').pop()}</small></code>
           </div>
         )}
         <a onClick={() => index < (uuids.length - 1) && history.push(`/movies/records/${uuids[index + 1]}`)} style={!(index < (uuids.length - 1)) ? { visibility: 'hidden' } : {}}>
@@ -276,6 +271,14 @@ const Controler = ({ sessions, session, records, fetched, onChange, ...props }) 
       defaults={{
         filtering: {},
         reverse: false,
+      }}
+      render={{
+        filters: (Blocks) => (
+          <>
+            <Blocks.source />
+            <Blocks.state />
+          </>
+        ),
       }}
     >
       {({ setOpen }) => (
