@@ -7,6 +7,24 @@ class Movie {
     this.countries = ['US', 'UK', region.split('-').pop()]
   }
 
+  judge() {
+    const { vote_average } = this.payload
+
+    if (!vote_average) {
+      return '🤷'
+    } else if (vote_average < 5) {
+      return '👎'
+    } else if (vote_average < 7) {
+      return '👍'
+    } else if (vote_average < 7.5) {
+      return '👏'
+    } else if (vote_average < 8) {
+      return '🙌'
+    } else {
+      return '🙏'
+    }
+  }
+
   normalize() {
     return {
       id: this.payload.id.toString(),

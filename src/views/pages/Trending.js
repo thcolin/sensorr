@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Row, { Label } from 'components/Layout/Row'
 import Film from 'components/Entity/Film'
-import Persona from 'components/Entity/Persona'
+import PersonaDefault from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
 
 const styles = {
@@ -14,6 +14,8 @@ const styles = {
     padding: '2em 0 0',
   },
 }
+
+const Persona = (props) => <PersonaDefault {...props} context="portrait" />
 
 export default class Trending extends PureComponent {
   constructor(props) {
@@ -55,12 +57,16 @@ export default class Trending extends PureComponent {
             uri={['trending', 'movie', 'week']}
             params={{ sort_by: 'popularity.desc' }}
             child={Film}
+            prettify={5}
+            spinner={{ css: { margin: '10.563rem auto' } }}
           />
           <Row
             label="👀&nbsp; Discover"
             title="Discover movies"
             uri={['discover', 'movie']}
             child={Film}
+            prettify={5}
+            spinner={{ css: { margin: '10.563rem auto' } }}
           />
           <Row
             label={(
@@ -90,6 +96,8 @@ export default class Trending extends PureComponent {
               sort_by: 'popularity.desc'
             }}
             child={Film}
+            prettify={5}
+            spinner={{ css: { margin: '10.563rem auto' } }}
           />
           <Row
             label={(
@@ -113,6 +121,8 @@ export default class Trending extends PureComponent {
               with_genres: genre,
             }}
             child={Film}
+            prettify={5}
+            spinner={{ css: { margin: '10.563rem auto' } }}
           />
           <Row
             label={(
@@ -137,13 +147,15 @@ export default class Trending extends PureComponent {
               sort_by: 'popularity.desc'
             }}
             child={Film}
+            prettify={5}
+            spinner={{ css: { margin: '10.563rem auto' } }}
           />
           <Row
             label="👩‍🎤&nbsp; Trending"
             title="Trending stars"
             uri={['trending', 'person', 'week']}
             params={{ sort_by: 'popularity.desc' }}
-            child={(props) => <Persona context="portrait" {...props} />}
+            child={Persona}
           />
         </div>
       </Fragment>

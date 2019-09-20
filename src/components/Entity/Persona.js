@@ -109,11 +109,13 @@ export default class Persona extends PureComponent {
     entity: PropTypes.object.isRequired,
     context: PropTypes.oneOf(['portrait', 'avatar']),
     updatable: PropTypes.bool,
+    prettify: PropTypes.bool,
   }
 
   static defaultProps = {
     context: 'avatar',
     updatable: true,
+    prettify: false,
   }
 
   constructor(props) {
@@ -134,7 +136,7 @@ export default class Persona extends PureComponent {
   }
 
   render() {
-    const { entity, context, updatable, ...props } = this.props
+    const { entity, context, updatable, prettify, ...props } = this.props
     const { ready, tooltip, ...state } = this.state
 
     return (

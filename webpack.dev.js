@@ -27,6 +27,8 @@ module.exports = merge(common, {
     },
   },
   watchOptions: {
-      poll: 1000,
+    poll: true,
+    aggregateTimeout: 1000,
+    ignored: /node_modules/,
   },
 })

@@ -160,7 +160,7 @@ export default class Star extends PureComponent {
       }
 
       this.setState({ loading: false, details })
-      setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
+      // setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
         this.setState({

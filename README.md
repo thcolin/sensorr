@@ -200,7 +200,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * `WebUI`
   * Fix
     * Remove `aphrodite`
-    * Migrate from `webpack` to `parcel` ?
+    * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
     * Look at [`react-slot-fill`](https://github.com/camwest/react-slot-fill)
     * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
     * Fix `order=release_date`, cf. `/star/19274`
@@ -216,11 +216,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
       * Show/Hide results on `focus/blur` - ?
       * Add right `select` `in [All|Movie|Collection|Star]` - ? (see [inspiration](https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/4b75c062431121.5a990e65204e6.png))
       * Display grouped results as a small `List`, not `Row`
-    * `Row`
-      * Beautify `n` firsts
-        * Use offset (see [inspiration](https://dribbble.com/shots/2647399-Sneak-Peek-Unique-UI))
-        * Use `backdrop_path` (blurred ? see [inspiration](https://dribbble.com/shots/4525124-Online-streaming-Web-App-UI))
-        * Use custom colors (use `react-image-palette`, see [inspiration](https://dribbble.com/shots/4859422-Lights-Camera-Cinero))
     * Add contextual data on `Film` & `Persona` when filtered or sorted
       * Add `label` "tag" on left (with emoji ?) - ?
       * `:hover`, bottom to top animation revealing overlay (see [inspiration](https://dribbble.com/shots/4649643-Cinematic-UI))
@@ -233,6 +228,11 @@ Tips: Sensorr will use your `config.js` and fallback on default
         * Improve `Row` integration (see [inspiration](https://dribbble.com/shots/4131890-Cinema-Website))
       * Improve `Button` (& global layout, see [inspiration](https://dribbble.com/shots/5532138-UI-Design-002-Minions)) colors with `picked` colors from `poster` (use `react-image-palette`, see [inspiration](https://dribbble.com/shots/4859422-Lights-Camera-Cinero))
       * Add `keywords`
+      * Add `policies`
+        * `Checkbox` displayed as grid or column
+          * After `Row` ? - Bad UX, far away from `state`
+        * Create `policy` option (will copy/paste `default`)
+        * Edit `policy` link
     * `Upcoming`
       * Improve performance
       * Add release day as contextual data on `Film`

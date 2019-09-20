@@ -24,6 +24,7 @@
     "atob": "2.1.2",
     "body-parser": "1.19.0",
     "chalk": "2.4.2",
+    "color": "^3.1.2",
     "compression": "1.7.4",
     "core-js": "3.2.1",
     "country-emoji": "1.4.4",
@@ -82,6 +83,7 @@
     "universal-rxjs-ajax": "2.0.3",
     "universal-url": "2.0.0",
     "uuid": "3.3.3",
+    "worker-plugin": "^3.2.0",
     "xml2json-light": "1.0.6"
   },
   "devDependencies": {

@@ -38,6 +38,11 @@ const styles = {
     width: '10em',
     height: '16em',
   },
+  spinner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 }
 
 export default class Grid extends PureComponent {
@@ -83,7 +88,7 @@ export default class Grid extends PureComponent {
       loading: false,
       buffer: [],
       err: null,
-      max: 20,
+      max: 25,
       filter: () => true,
       sort: () => 0,
     }
@@ -123,7 +128,7 @@ export default class Grid extends PureComponent {
         this.setState({
           entities: this.state.buffer,
           buffer: [],
-          max: 20,
+          max: 25,
         })
       }
     } else if (this.props.uri) {
@@ -153,7 +158,7 @@ export default class Grid extends PureComponent {
   }
 
   expand() {
-    this.setState(state => ({ max: state.max + 20 }))
+    this.setState(state => ({ max: state.max + 25 }))
   }
 
   render() {
@@ -161,7 +166,8 @@ export default class Grid extends PureComponent {
     const { entities, loading, err, max, filter, sort, ...state } = this.state
 
     const approved = [...entities, ...items].filter(entity => this.validate(entity))
-    const filtered = approved.sort(sort).filter(filter).filter((a, index) => !limit || index <= max)
+    const filtered = approved.sort(sort).filter(filter)
+    const limited = filtered.filter((a, index) => !limit || index <= max)
 
     return (
       <>
@@ -171,7 +177,7 @@ export default class Grid extends PureComponent {
             entities={approved}
             {...controls}
             filters={Object.keys(controls.filters).reduce((acc, key) => ({ ...acc, [key]: controls.filters[key](approved) }), {})}
-            onChange={({ filter, sort }) => this.setState({ filter, sort })}
+            onChange={({ filter, sort }) => this.setState({ filter, sort, max: 25 })}
           />
         )}
         <div key="element" {...props} style={styles.element}>
@@ -182,7 +188,7 @@ export default class Grid extends PureComponent {
             <div style={styles.placeholder}>
               <Spinner {...spinner} />
             </div>
-          ) : !filtered.length ? (
+          ) : !limited.length ? (
             <div style={styles.placeholder}>
               <Empty
                 {...empty}
@@ -194,12 +200,17 @@ export default class Grid extends PureComponent {
           ) : (
             <InfiniteScroll
               pageStart={0}
-              hasMore={limit && (max < filtered.length)}
+              hasMore={limit && (max < limited.length)}
               loadMore={this.expand}
-              loader={<Spinner key="spinner" {...spinner} />}
+              loader={(
+                <div key="spinner" style={styles.spinner}>
+                  <Spinner {...spinner} />
+                </div>
+              )}
+              threshold={1000}
               style={styles.grid}
             >
-              {filtered.map((entity, index) => (
+              {limited.map((entity, index) => (
                 <div key={index} style={styles.entity}>
                   {React.createElement(child, { entity })}
                 </div>

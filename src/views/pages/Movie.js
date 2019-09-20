@@ -8,6 +8,7 @@ import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import Badge from 'components/Badge'
 import Releases from 'views/layout/Releases'
+import Documents from 'shared/Documents'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
 
@@ -182,7 +183,7 @@ export default class Movie extends PureComponent {
       }
 
       this.setState({ loading: false, details })
-      setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
+      // setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
         this.setState({
@@ -228,7 +229,7 @@ export default class Movie extends PureComponent {
                   <h3 style={styles.popularity}>
                     <span>{details.vote_average.toFixed(1)}</span>
                     <span> </span>
-                    <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
+                    <span>{new Documents.Movie(details).judge()}</span>
                   </h3>
                   <h4 style={styles.runtime}>{details.runtime} mins 🕙</h4>
                   {trailer && (

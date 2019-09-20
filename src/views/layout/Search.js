@@ -112,6 +112,11 @@ export const Input = withRouter(({ location, history, match, staticContext, ...p
   )
 })
 
+const Childs = {
+  collection: (props) => <Film withState={false} link={(entity) => `/collection/${entity.id}`} {...props} />,
+  persona: (props) => <Persona context="portrait" {...props} />,
+}
+
 export const Results = withRouter(({ location, history, match, staticContext, children, ...props }) => {
   const { query } = qs.parse(location.search)
 
@@ -131,7 +136,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
         hide={true}
         uri={['search', 'collection']}
         params={{ query, sort_by: 'popularity.desc' }}
-        child={(props) => <Film withState={false} link={(entity) => `/collection/${entity.id}`} {...props} />}
+        child={Childs.collection}
       />
       <Row
         label="⭐&nbsp; Stars"
@@ -139,7 +144,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
         hide={true}
         uri={['search', 'person']}
         params={{ query, sort_by: 'popularity.desc' }}
-        child={(props) => <Persona context="portrait" {...props} />}
+        child={Childs.persona}
       />
       {/*
         // How to display "company" ?

@@ -28,11 +28,11 @@ const styles = {
   }
 }
 
-const Empty = ({ style, emoji, title, subtitle, ...props }) => (
-  <div style={{ ...styles.element, ...style }}>
-    <h1 style={styles.emoji}>{emoji}</h1>
-    <h2 style={styles.title}>{title}</h2>
-    <p style={styles.subtitle}>{subtitle}</p>
+const Empty = ({ emoji, title, subtitle, ...props }) => (
+  <div {...props} css={[styles.element, props.css]}>
+    <h1 css={styles.emoji}>{emoji}</h1>
+    <h2 css={styles.title}>{title}</h2>
+    <p css={styles.subtitle}>{subtitle}</p>
   </div>
 )
 

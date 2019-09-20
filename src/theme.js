@@ -17,9 +17,9 @@ const colors = {
 }
 
 const fonts = {
-  primary: 'Raleway, sans-serif',
-  secondary: 'Open Sans, sans-serif',
-  monospace: 'Maison Mono, monospace',
+  primary: '"Raleway", sans-serif',
+  secondary: '"Open Sans", sans-serif',
+  monospace: '"Maison Mono", monospace',
 }
 
 const resets = {

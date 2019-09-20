@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const favicon = require('favicons-webpack-plugin')
+const worker = require('worker-plugin')
 
 try {
   fs.accessSync(path.resolve(__dirname, 'config', 'config.json'), fs.constants.R_OK)
@@ -63,9 +63,6 @@ module.exports = {
     }
   },
   plugins: [
-    new favicon({
-      logo: path.resolve(__dirname, 'src', 'ressources', 'favicon.png'),
-      prefix: 'assets/favicon/'
-    }),
+    new worker(),
   ],
 }
