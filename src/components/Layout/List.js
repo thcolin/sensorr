@@ -8,30 +8,54 @@ import nanobounce from 'nanobounce'
 import theme from 'theme'
 
 const styles = {
-  element: {
-    position: 'relative',
-    padding: '2em 0',
+  list: {
+    element: {
+      position: 'relative',
+      padding: '2em 0',
+    },
+    label: {
+      padding: '0 2em',
+      margin: 0,
+      fontSize: '2em',
+      fontWeight: 'bold',
+      color: theme.colors.black,
+    },
+    container: {
+      left: 0,
+      display: 'flex',
+      flexWrap: 'nowrap',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+    },
+    entity: {
+      flex: '0 0 auto',
+    },
   },
   label: {
-    padding: '0 2em',
-    margin: 0,
-    fontSize: '2em',
-    fontWeight: 'bold',
-    color: theme.colors.black,
-  },
-  row: {
-    left: 0,
-    display: 'flex',
-    flexWrap: 'nowrap',
-    overflowX: 'auto',
-    overflowY: 'hidden',
-  },
-  entity: {
-    flex: '0 0 auto',
+    element: {
+      position: 'relative',
+      display: 'flex',
+      width: '100%',
+      'select': {
+        position: 'absolute',
+        opacity: 0,
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        appearance: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: 1,
+      },
+    },
   },
 }
 
-export default class Row extends PureComponent {
+export default class List extends PureComponent {
   static propTypes = {
     items: PropTypes.array,
     child: PropTypes.elementType.isRequired,
@@ -39,6 +63,7 @@ export default class Row extends PureComponent {
     params: PropTypes.object,
     transform: PropTypes.func,
     label: PropTypes.node,
+    display: PropTypes.oneOf(['row']),
     space: PropTypes.number,
     empty: PropTypes.object,
     spinner: PropTypes.object,
@@ -51,6 +76,7 @@ export default class Row extends PureComponent {
     items: [],
     params: {},
     transform: (res) => res.results,
+    display: 'row',
     space: 2,
     empty: {},
     spinner: {},
@@ -123,21 +149,21 @@ export default class Row extends PureComponent {
   }
 
   render() {
-    const { items, uri, params, child, transform, label, space, empty, spinner, strict, hide, prettify, ...props } = this.props
+    const { items, uri, params, child, transform, label, display, space, empty, spinner, strict, hide, prettify, ...props } = this.props
     const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
       .filter(entity => this.validate(entity))
 
     return (!!filtered.length || !hide) && (
-      <div style={styles.element}>
-        <h1 {...props} style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
-        <div style={styles.row} ref={this.reference}>
+      <div css={styles.list.element}>
+        <h1 {...props} css={[styles.list.label, props.css]}>{label}</h1>
+        <div css={[styles.list.container, styles.list[display]]} ref={this.reference}>
           {loading ? (
             <Spinner {...spinner} />
           ) : filtered.length ? (
             filtered.map((entity, index) => (
-              <div key={index} style={{ ...styles.entity, padding: `${space}em` }}>
+              <div key={index} css={styles.list.entity} style={{ padding: `${space}em` }}>
                 {React.createElement(child, { entity: entity, prettify: index < prettify })}
               </div>
             ))
@@ -159,7 +185,7 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
   const { hovered, bind } = useHover()
 
   return (
-    <span {...bind} style={{ position: 'relative', display: 'flex', justifyContent: { true: 'flex-start', false: 'space-between' }[compact], width: '100%' }}>
+    <span {...bind} css={styles.label.element} style={{ justifyContent: { true: 'flex-start', false: 'space-between' }[compact] }}>
       <label htmlFor={id} {...(title ? { title } : {})} style={{ position: 'relative' }}>
         {children}
         {!!(options || []).length && (
@@ -167,18 +193,6 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
             id={id}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            style={{
-              position: 'absolute',
-              opacity: 0,
-              top: 0,
-              left: 0,
-              height: '100%',
-              width: '100%',
-              appearance: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              zIndex: 1,
-            }}
           >
             {options.map(option => (
               <option key={option.label} value={option.value}>{option.label}</option>

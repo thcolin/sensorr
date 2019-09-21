@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
-import Row, { Label } from 'components/Layout/Row'
+import List, { Label } from 'components/Layout/List'
 import Film from 'components/Entity/Film'
 import PersonaDefault from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
@@ -33,10 +33,10 @@ export default class Trending extends PureComponent {
       studio: this.randomize.studio(),
     }
 
-    this.handleRowClick = this.handleRowClick.bind(this)
+    this.handleListClick = this.handleListClick.bind(this)
   }
 
-  handleRowClick(key, value) {
+  handleListClick(key, value) {
     this.setState({
       [key]: value || this.randomize[key](),
     })
@@ -51,7 +51,7 @@ export default class Trending extends PureComponent {
           <title>Sensorr - Trending</title>
         </Helmet>
         <div style={styles.element}>
-          <Row
+          <List
             label="📣&nbsp; Trending"
             title="Trending movies"
             uri={['trending', 'movie', 'week']}
@@ -60,7 +60,7 @@ export default class Trending extends PureComponent {
             prettify={5}
             spinner={{ css: { margin: '10.563rem auto' } }}
           />
-          <Row
+          <List
             label="👀&nbsp; Discover"
             title="Discover movies"
             uri={['discover', 'movie']}
@@ -68,20 +68,20 @@ export default class Trending extends PureComponent {
             prettify={5}
             spinner={{ css: { margin: '10.563rem auto' } }}
           />
-          <Row
+          <List
             label={(
               <Label
                 id="discover-year"
                 title="Discover movies by random year"
                 actions={(
                   <>
-                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleRowClick('year', year - 1)}>
+                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleListClick('year', year - 1)}>
                       ⬅️
                     </span>
-                    <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('year')}>
+                    <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('year')}>
                       &nbsp;&nbsp;🎰&nbsp;&nbsp;
                     </span>
-                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleRowClick('year', year + 1)}>
+                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleListClick('year', year + 1)}>
                       ➡️
                     </span>
                   </>
@@ -99,16 +99,16 @@ export default class Trending extends PureComponent {
             prettify={5}
             spinner={{ css: { margin: '10.563rem auto' } }}
           />
-          <Row
+          <List
             label={(
               <Label
                 id="discover-genre"
                 title="Discover movies by genre"
                 value={genre}
-                onChange={(value) => this.handleRowClick('genre', value)}
+                onChange={(value) => this.handleListClick('genre', value)}
                 options={Object.keys(GENRES).map(id => ({ value: id, label: GENRES[id] }))}
                 actions={(
-                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('genre')}>
+                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('genre')}>
                     🎰
                   </span>
                 )}
@@ -124,16 +124,16 @@ export default class Trending extends PureComponent {
             prettify={5}
             spinner={{ css: { margin: '10.563rem auto' } }}
           />
-          <Row
+          <List
             label={(
               <Label
                 id="discover-studio"
                 title="Discover movies by famous studio"
                 value={studio}
-                onChange={(value) => this.handleRowClick('studio', value)}
+                onChange={(value) => this.handleListClick('studio', value)}
                 options={Object.keys(STUDIOS).map(studio => ({ value: studio, label: studio }))}
                 actions={(
-                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleRowClick('studio')}>
+                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('studio')}>
                     🎰
                   </span>
                 )}
@@ -150,7 +150,7 @@ export default class Trending extends PureComponent {
             prettify={5}
             spinner={{ css: { margin: '10.563rem auto' } }}
           />
-          <Row
+          <List
             label="👩‍🎤&nbsp; Trending"
             title="Trending stars"
             uri={['trending', 'person', 'week']}

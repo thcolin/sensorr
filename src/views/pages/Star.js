@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
-import Row, { Label } from 'components/Layout/Row'
+import List, { Label } from 'components/Layout/List'
 import { State } from 'components/Entity/Persona'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
@@ -227,7 +227,7 @@ export default class Star extends PureComponent {
               </div>
               {!!details.movie_credits.cast.length && (
                 <div style={styles.credits}>
-                  <Row
+                  <List
                     strict={false}
                     label={(
                       <Label
@@ -258,7 +258,7 @@ export default class Star extends PureComponent {
               )}
               {!!details.movie_credits.crew.length && (
                 <div style={styles.credits}>
-                  <Row
+                  <List
                     strict={false}
                     label={(
                       <Label

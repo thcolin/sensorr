@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
-import Row from 'components/Layout/Row'
+import List from 'components/Layout/List'
 import Film, { State } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
@@ -204,7 +204,7 @@ export default class Collection extends PureComponent {
                   </div>
                 </div>
                 <div style={styles.more}>
-                  <Row
+                  <List
                     label="Parts - 📀"
                     items={details.parts}
                     style={styles.row}

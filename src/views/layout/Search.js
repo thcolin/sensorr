@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { withRouter } from 'react-router-dom'
-import Row from 'components/Layout/Row'
+import List from 'components/Layout/List'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import Spinner from 'components/Spinner'
@@ -27,7 +27,7 @@ const styles = {
       width: '0.75em',
       margin: '0 0.25em',
       cursor: 'pointer',
-      transition: 'color ease 300ms',
+      transition: 'color ease 600ms',
     },
     focused: {
       color: theme.colors.primary,
@@ -122,7 +122,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
 
   return !!query && (
     <div {...props} css={styles.results.element}>
-      <Row
+      <List
         label="🎞️&nbsp; Movies"
         title={`Search for "${query}" movies`}
         hide={true}
@@ -130,7 +130,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
         params={{ query, sort_by: 'popularity.desc' }}
         child={Film}
       />
-      <Row
+      <List
         label="📚&nbsp; Collections"
         title={`Search for "${query}" collections`}
         hide={true}
@@ -138,7 +138,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
         params={{ query, sort_by: 'popularity.desc' }}
         child={Childs.collection}
       />
-      <Row
+      <List
         label="⭐&nbsp; Stars"
         title={`Search for "${query}" movies`}
         hide={true}
@@ -148,7 +148,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
       />
       {/*
         // How to display "company" ?
-        <Row
+        <List
           label="🏛️&nbsp; Companies"
           title={`Search for "${query}" companies`}
           uri={['search', 'company']}
@@ -158,7 +158,7 @@ export const Results = withRouter(({ location, history, match, staticContext, ch
       */}
       {/*
         // How to display "keyword" ?
-        <Row
+        <List
           label="🔗&nbsp; Keywords"
           //label="🏷️&nbsp; Keywords"
           title={`Search for "${query}" keywords`}

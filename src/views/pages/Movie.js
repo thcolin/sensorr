@@ -1,7 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import { Link, Route } from 'react-router-dom'
-import Row from 'components/Layout/Row'
+import List from 'components/Layout/List'
 import Persona from 'components/Entity/Persona'
 import Film, { State } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
@@ -263,7 +263,7 @@ export default class Movie extends PureComponent {
                     <p style={styles.genres}>{details.genres.map(genre => genre.name).join(', ')}</p>
                     {!!details.credits.crew.filter(credit => ['Director'].includes(credit.job)).length && (
                       <div style={styles.crew}>
-                        <Row
+                        <List
                           items={details.credits.crew.filter(credit => ['Director'].includes(credit.job))}
                           child={Persona}
                           space={0}
@@ -278,7 +278,7 @@ export default class Movie extends PureComponent {
                     )}
                     <p style={styles.plot}>{details.overview}</p>
                     <div style={styles.cast}>
-                      <Row
+                      <List
                         items={details.credits.cast.slice(0, 10)}
                         child={Persona}
                         space={0}
@@ -291,7 +291,7 @@ export default class Movie extends PureComponent {
                 </div>
                 <div style={styles.more}>
                   {details.belongs_to_collection && (
-                    <Row
+                    <List
                       label={(
                         <Link to={`/collection/${details.belongs_to_collection.id}`} style={styles.row}>
                           {`${details.belongs_to_collection.name} - 📀`}
@@ -303,7 +303,7 @@ export default class Movie extends PureComponent {
                       child={Film}
                     />
                   )}
-                  <Row
+                  <List
                     label={`${more.charAt(0).toUpperCase()}${more.slice(1)} - ${{ 'similar': '👯', 'recommendations': '💬' }[more]}`}
                     onClick={() => this.handleMoreChange()}
                     items={details[more].results}
