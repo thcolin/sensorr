@@ -20,6 +20,6 @@ module.exports = {
       0,
     ))
 
-    return position === str.length ? str : `${str.substring(0, position - 1).trimEnd()}${options.ellipsis}`
+    return position === str.length ? str : `${str.substring(0, position - 1).trimEnd()}${position > 1 ? options.ellipsis : ''}`
   },
 }

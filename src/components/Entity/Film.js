@@ -14,7 +14,7 @@ import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
 const styles = {
-  prettified: {
+  pretty: {
     element: {
       position: 'relative',
       display: 'flex',
@@ -72,9 +72,45 @@ const styles = {
       },
     },
   },
+  card: {
+    element: {
+      display: 'flex',
+      alignItems: 'center',
+      width: '30em',
+    },
+    poster: {
+      fontSize: '0.4em',
+    },
+    container: {
+      ...theme.resets.a,
+      flex: 1,
+      padding: '0 0 0 1em',
+      fontSize: '0.75em',
+      color: theme.colors.rangoon,
+      transition: 'opacity 400ms ease-in-out',
+      '>h1': {
+        fontSize: '1em',
+        fontWeight: 'bold',
+        margin: '0 0 0.5em 0',
+      },
+      '>span': {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        margin: '0 0 0.5em 0',
+        fontFamily: theme.fonts.secondary,
+      },
+      '>p': {
+        '&:not(:last-of-type)': {
+          margin: '0 0 0.5em 0',
+        },
+      },
+    },
+  },
   poster: {
     element: {
       position: 'relative',
+      display: 'block',
       overflow: 'hidden',
       height: '15em',
       width: '10em',
@@ -134,14 +170,14 @@ export default class Film extends PureComponent {
     entity: PropTypes.object.isRequired,
     link: PropTypes.func,
     subtitle: PropTypes.node,
-    prettify: PropTypes.bool,
+    display: PropTypes.oneOf(['default', 'pretty', 'card']),
     withState: PropTypes.bool,
   }
 
   static defaultProps = {
     link: (entity) => `/movie/${entity.id}`,
     subtitle: '',
-    prettify: false,
+    display: 'default',
     withState: true,
   }
 
@@ -152,7 +188,7 @@ export default class Film extends PureComponent {
       poster: null,
       backdrop: null,
       palette: {
-        backgroundColor: theme.colors[props.prettify ? 'rangoon' : 'gray'],
+        backgroundColor: theme.colors[{ default: 'gray', pretty: 'rangoon', card: 'gray'}[props.display]],
         color: '#ffffff',
         alternativeColor: '#ffffff',
         negativeColor: '#ffffff',
@@ -161,7 +197,7 @@ export default class Film extends PureComponent {
   }
 
   componentDidMount() {
-    if (this.props.prettify) {
+    if (this.props.display === 'pretty') {
       const { poster_path, backdrop_path } = this.props.entity
 
       if (poster_path) {
@@ -175,7 +211,7 @@ export default class Film extends PureComponent {
   }
 
   componentDidUpdate(props) {
-    if (this.props.prettify && props.entity.id !== this.props.entity.id) {
+    if (this.props.display === 'pretty' && props.entity.id !== this.props.entity.id) {
       const { poster_path, backdrop_path } = this.props.entity
 
       this.setState(state => ({
@@ -226,70 +262,124 @@ export default class Film extends PureComponent {
   }
 
   render() {
-    const { entity, prettify, ...props } = this.props
+    const { entity, display, link, ...props } = this.props
     const { poster, backdrop, palette, ...state } = this.state
 
-    return !prettify ? (
-      <Poster {...this.props} />
-    ) : (
-      <div css={styles.prettified.element}>
-        <div css={styles.prettified.backdrop}>
-          <img
-            src={backdrop}
-            style={{
-              opacity: backdrop ? 1 : 0,
-              // filter: `blur(${backdrop ? '0.125rem' : '3rem'})`,
-              ...(!backdrop ? { transition: 'none' } : {}),
-            }}
-          />
-          <div style={{ boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}` }} />
-        </div>
-        <div css={styles.prettified.poster}>
-          <Poster {...this.props} img={poster} style={{ backgroundColor: Color(palette.backgroundColor).rgb().string() }} />
-        </div>
-        {entity.id && (
-          <div
-            css={styles.prettified.about}
-            style={{
-              opacity: (backdrop || entity.backdrop_path === null) ? 1 : 0,
-              ...((!backdrop && entity.backdrop_path !== null) ? { transition: 'none' } : {}),
-            }}
-          >
-            <h1
-              style={{ color: palette.color }}
-              {...((entity.title || entity.original_title).length > 45 ? { title: (entity.title || entity.original_title) } : {})}
-            >
-              {(entity.title || entity.original_title).length > 45 ?
-                `${(entity.title || entity.original_title).substring(0, 45)}...` :
-                (entity.title || entity.original_title)
-              }
-            </h1>
-            <div style={{ color: palette.negativeColor }} >
-              <small>
-                <span>📆  </span>
-                <span>
-                  {new Date(entity.release_date).toLocaleString(global.config.region, { year: 'numeric', month: '2-digit', day: '2-digit' })}
-                </span>
-              </small>
-              <small>
-                <span>{new Movie(entity).judge()}  </span>
-                <strong>{entity.vote_average.toFixed(1)}</strong>
-              </small>
+    const title = entity.title || entity.original_title || entity.name || entity.original_name || ''
+
+    switch (display) {
+      case 'default':
+        return (
+          <Poster {...this.props} />
+        )
+      case 'pretty':
+        return (
+          <div css={styles.pretty.element}>
+            <div css={styles.pretty.backdrop}>
+              <img
+                src={backdrop}
+                style={{
+                  opacity: backdrop ? 1 : 0,
+                  // filter: `blur(${backdrop ? '0.125rem' : '3rem'})`,
+                  ...(!backdrop ? { transition: 'none' } : {}),
+                }}
+              />
+              <div style={{ boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}` }} />
             </div>
-            <p style={{ color: palette.alternativeColor }}>
-              <small><strong>{entity.genre_ids.map(id => GENRES[id]).join(', ')}</strong></small>
-            </p>
-            <p style={{ color: palette.negativeColor }}>
-              <small>{truncate(entity.overview, 200)}</small>
-            </p>
+            <div css={styles.pretty.poster}>
+              <Poster {...this.props} img={poster} style={{ backgroundColor: Color(palette.backgroundColor).rgb().string() }} />
+            </div>
+            {entity.id && (
+              <div
+                css={styles.pretty.about}
+                style={{
+                  opacity: (backdrop || entity.backdrop_path === null) ? 1 : 0,
+                  ...((!backdrop && entity.backdrop_path !== null) ? { transition: 'none' } : {}),
+                }}
+              >
+                <h1 style={{ color: palette.color }} {...(title.length > 45 ? { title } : {})}>
+                  {title.length > 45 ? `${title.substring(0, 45)}...` : title}
+                </h1>
+                {(entity.release_date || entity.vote_average) && (
+                  <div style={{ color: palette.negativeColor }} >
+                    {!!entity.release_date && (
+                      <small>
+                        <span>📆  </span>
+                        <span>
+                          {new Date(entity.release_date).toLocaleString(global.config.region, { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                        </span>
+                      </small>
+                    )}
+                    {typeof entity.vote_average !== 'undefined' && (
+                      <small>
+                        <span>{new Movie(entity).judge()}  </span>
+                        <strong>{entity.vote_average.toFixed(1)}</strong>
+                      </small>
+                    )}
+                  </div>
+                )}
+                {Array.isArray(entity.genre_ids) && (
+                  <p style={{ color: palette.alternativeColor }}>
+                    <small><strong>{entity.genre_ids.map(id => GENRES[id]).join(', ')}</strong></small>
+                  </p>
+                )}
+                {!!entity.overview && (
+                  <p style={{ color: palette.negativeColor }}>
+                    <small>{truncate(entity.overview, 200)}</small>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    )
+        )
+      case 'card':
+        return (
+          <div css={styles.card.element}>
+            <Poster {...this.props} css={styles.card.poster} />
+            {entity.id && (
+              <Link to={link(entity)} css={styles.card.container}>
+                <h1 {...(title.length > 45 ? { title } : {} )}>
+                  {title.length > 45 ? `${title.substring(0, 45)}...` : title}
+                </h1>
+                {(entity.release_date || typeof entity.vote_average !== 'undefined') && (
+                  <span>
+                    {!!entity.release_date && (
+                      <small>
+                        <span>📆  </span>
+                        <span>
+                          {new Date(entity.release_date).toLocaleString(global.config.region, { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                        </span>
+                      </small>
+                    )}
+                    {typeof entity.vote_average !== 'undefined' && (
+                      <small>
+                        <span>{new Movie(entity).judge()}  </span>
+                        <strong>{entity.vote_average.toFixed(1)}</strong>
+                      </small>
+                    )}
+                  </span>
+                )}
+                {Array.isArray(entity.genre_ids) && (
+                  <p>
+                    <small><strong>{entity.genre_ids.map(id => GENRES[id]).join(', ')}</strong></small>
+                  </p>
+                )}
+                {!!entity.overview && (
+                  <p>
+                    <small>{truncate(entity.overview, 200)}</small>
+                  </p>
+                )}
+              </Link>
+            )}
+          </div>
+        )
+      default:
+        return null
+    }
   }
 }
 
-export const Poster = ({ entity, img, subtitle, link, prettify, withState, ...props }) => {
+export const Poster = ({ entity, img, subtitle, link, display, withState, ...props }) => {
   const [ready, setReady] = useState(false)
   const previous = usePrevious(entity)
 
@@ -298,27 +388,31 @@ export const Poster = ({ entity, img, subtitle, link, prettify, withState, ...pr
   }
 
   return (
-    <div
-      title={`${entity.title || entity.name}${(entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''}${subtitle ? ` - ${subtitle}` : ''}`}
-      css={[styles.poster.element, !entity.poster_path && entity.poster_path !== false && styles.poster.empty]}
+    <span
       {...props}
+      title={`${entity.title || entity.name}${(entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''}${subtitle ? ` - ${subtitle}` : ''}`}
+      css={[styles.poster.element, !entity.poster_path && entity.poster_path !== false && styles.poster.empty, props.css]}
     >
       {withState && (
         <State entity={entity} css={styles.poster.state} style={{ opacity: ready ? 1 : 0, ...(!ready ? { transition: 'none' } : {}) }} />
       )}
       <Link to={link(entity)} css={styles.poster.link}>
         <img
-          src={(prettify ? img : `https://image.tmdb.org/t/p/w300${entity.poster_path}`)}
+          src={{
+            default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
+            pretty: img,
+            card: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
+          }[display]}
           css={styles.poster.img}
           style={{
             opacity: ready ? 1 : 0,
-            // ...(prettify ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
+            // ...(display === 'pretty' ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
             ...(!ready ? { transition: 'none' } : {}),
           }}
           onLoad={() => setReady(true)}
         />
       </Link>
-    </div>
+    </span>
   )
 }
 

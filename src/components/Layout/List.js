@@ -24,11 +24,16 @@ const styles = {
       left: 0,
       display: 'flex',
       flexWrap: 'nowrap',
-      overflowX: 'auto',
-      overflowY: 'hidden',
     },
     row: {
       flexDirection: 'row',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+    },
+    column: {
+      flexDirection: 'column',
+      overflowX: 'hidden',
+      overflowY: 'auto',
     },
     entity: {
       flex: '0 0 auto',
@@ -62,8 +67,9 @@ export default class List extends PureComponent {
     uri: PropTypes.array,
     params: PropTypes.object,
     transform: PropTypes.func,
+    filter: PropTypes.func,
     label: PropTypes.node,
-    display: PropTypes.oneOf(['row']),
+    display: PropTypes.oneOf(['row', 'column']),
     space: PropTypes.number,
     empty: PropTypes.object,
     spinner: PropTypes.object,
@@ -74,8 +80,10 @@ export default class List extends PureComponent {
 
   static defaultProps = {
     items: [],
+    uri: [],
     params: {},
     transform: (res) => res.results,
+    filter: () => true,
     display: 'row',
     space: 2,
     empty: {},
@@ -101,7 +109,7 @@ export default class List extends PureComponent {
   }
 
   componentDidMount() {
-    if (this.props.uri) {
+    if (this.props.uri.length) {
       this.setState({ loading: true })
       tmdb.fetch(this.props.uri, this.props.params).then(
         res => this.debounce(() => {
@@ -118,7 +126,7 @@ export default class List extends PureComponent {
   }
 
   componentDidUpdate(props) {
-    if (this.props.uri) {
+    if (this.props.uri.length) {
       if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
         this.setState({ entities: Array(this.state.entities.length).fill({ poster_path: false, profile_path: false }) })
         tmdb.fetch(this.props.uri, this.props.params).then(
@@ -136,7 +144,7 @@ export default class List extends PureComponent {
       }
     }
 
-    if (this.props.items.length && this.props.items[0].id !== props.items[0].id) {
+    if (this.props.items.length && (this.props.items[0] || {}).id !== (props.items[0] || {}).id) {
       this.reference.current && this.reference.current.scroll(0, 0)
     }
   }
@@ -149,22 +157,25 @@ export default class List extends PureComponent {
   }
 
   render() {
-    const { items, uri, params, child, transform, label, display, space, empty, spinner, strict, hide, prettify, ...props } = this.props
+    const { items, uri, params, child, transform, filter, label, display, space, empty, spinner, strict, hide, prettify, ...props } = this.props
     const { entities, loading, err, ...state } = this.state
 
     const filtered = [...items, ...entities]
       .filter(entity => this.validate(entity))
+      .filter(filter)
 
     return (!!filtered.length || !hide) && (
       <div css={styles.list.element}>
-        <h1 {...props} css={[styles.list.label, props.css]}>{label}</h1>
+        {!!label && (
+          <h1 {...props} css={[styles.list.label, props.css]}>{label}</h1>
+        )}
         <div css={[styles.list.container, styles.list[display]]} ref={this.reference}>
           {loading ? (
             <Spinner {...spinner} />
           ) : filtered.length ? (
             filtered.map((entity, index) => (
               <div key={index} css={styles.list.entity} style={{ padding: `${space}em` }}>
-                {React.createElement(child, { entity: entity, prettify: index < prettify })}
+                {React.createElement(child, { entity: entity, display: (index < prettify ? 'pretty' : 'default' ) })}
               </div>
             ))
           ) : (

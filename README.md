@@ -199,23 +199,28 @@ Tips: Sensorr will use your `config.js` and fallback on default
 # Roadmap
 * `WebUI`
   * Fix
-    * Remove `aphrodite`
-    * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
-    * Look at [`react-slot-fill`](https://github.com/camwest/react-slot-fill)
+    * Remove `aphrodite` and use `emotion` `css` props everywhere
     * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
     * Fix `order=release_date`, cf. `/star/19274`
-    * `Controls` query performance
-    * `Controls` blur en `render`
+    * Fix `Controls` query performance
+    * Fix `Controls` blur on `re-render`
     * Look at `nanobounce/debounce` usage in functional component (define by instance not "global")
     * Empty `config.json` on __Docker__ build
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
+    * `Film`
+      * Add `Link` to `genre`
     * `Search`
-      * Add previous `query` (see [inspiration](https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/b8693543661487.5800ac370a2c2.png))
-      * Remove `query` from location params
-      * Show/Hide results on `focus/blur` - ?
-      * Add right `select` `in [All|Movie|Collection|Star]` - ? (see [inspiration](https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/4b75c062431121.5a990e65204e6.png))
-      * Display grouped results as a small `List`, not `Row`
+      * Animate `height`
+        * `auto` > `50vh` `(!query > query && full)`
+        * `auto` > `auto` (+/-) `(!query > query && !full)`
+        * `auto` > `100%` `(!full > !full && expanded)`
+        * `50vh` > `100%` `(full > full && expanded)`
+        * `100%` > `auto` `(expanded > !full)`
+        * `100%` > `50vh` `(expanded > full)`
+      * Listen on `document` for `escape` keydown and `setActive(false)`
+      * Add remove `suggestion` button
+      * Focus `Search` when `document.onKeyDown`
     * Add contextual data on `Film` & `Persona` when filtered or sorted
       * Add `label` "tag" on left (with emoji ?) - ?
       * `:hover`, bottom to top animation revealing overlay (see [inspiration](https://dribbble.com/shots/4649643-Cinematic-UI))
@@ -260,11 +265,12 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * `List`
       * Grouped movies by "policy"
       * Same layout as `Trending` page
-    * Onboarding
+    * `Onboarding`
     * Improve `ScrollTop` behavior
     * Responsive design / mobile UI-UX
     * Dark mode
   * Features
+    * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
     * `Loading` page waiting sync of `db` with progress ?
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)

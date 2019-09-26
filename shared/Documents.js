@@ -8,7 +8,7 @@ class Movie {
   }
 
   judge() {
-    const { vote_average } = this.payload
+    const { vote_average = 0 } = this.payload
 
     if (!vote_average) {
       return '🤷'
