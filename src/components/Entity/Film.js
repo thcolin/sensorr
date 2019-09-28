@@ -135,12 +135,36 @@ const styles = {
       height: '100%',
       cursor: 'pointer',
     },
+    focus: {
+      position: 'absolute',
+      top: 0,
+      transition: 'opacity 250ms ease-in-out',
+    },
     img: {
       height: '100%',
       width: '100%',
       objectFit: 'cover',
       objectPosition: 'center center',
       transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
+    },
+    hover: {
+      position: 'absolute',
+      bottom: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      width: '100%',
+      backgroundColor: theme.colors.shadows.black,
+      color: 'white',
+      padding: '1em',
+      fontSize: '0.7em',
+      transition: 'transform 250ms ease-in-out',
+      '>span': {
+        display: 'block',
+        '&:not(:last-child)': {
+          margin: '0 0 0.5em 0',
+        },
+      },
     },
   },
   state: {
@@ -162,23 +186,32 @@ const styles = {
       border: 'none',
       cursor: 'pointer',
     },
-  }
+  },
+  focus: {
+    element: {
+      padding: '0.5em 0.75em',
+      margin: '1em 0.5em',
+      fontSize: '0.75em',
+    },
+  },
 }
 
 export default class Film extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     link: PropTypes.func,
-    subtitle: PropTypes.node,
+    focus: PropTypes.oneOf(['vote_average', 'release_date', 'popularity', 'runtime']),
     display: PropTypes.oneOf(['default', 'pretty', 'card']),
     withState: PropTypes.bool,
+    withHover: PropTypes.bool,
   }
 
   static defaultProps = {
     link: (entity) => `/movie/${entity.id}`,
-    subtitle: '',
+    focus: null,
     display: 'default',
     withState: true,
+    withHover: true,
   }
 
   constructor(props) {
@@ -287,7 +320,7 @@ export default class Film extends PureComponent {
               <div style={{ boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}` }} />
             </div>
             <div css={styles.pretty.poster}>
-              <Poster {...this.props} img={poster} style={{ backgroundColor: Color(palette.backgroundColor).rgb().string() }} />
+              <Poster {...this.props} img={poster} withHover={false} style={{ backgroundColor: Color(palette.backgroundColor).rgb().string() }} />
             </div>
             {entity.id && (
               <div
@@ -335,7 +368,7 @@ export default class Film extends PureComponent {
       case 'card':
         return (
           <div css={styles.card.element}>
-            <Poster {...this.props} css={styles.card.poster} />
+            <Poster {...this.props} withHover={false} css={styles.card.poster} />
             {entity.id && (
               <Link to={link(entity)} css={styles.card.container}>
                 <h1 {...(title.length > 45 ? { title } : {} )}>
@@ -379,8 +412,9 @@ export default class Film extends PureComponent {
   }
 }
 
-export const Poster = ({ entity, img, subtitle, link, display, withState, ...props }) => {
+export const Poster = ({ entity, img, focus, link, display, withState, withHover, ...props }) => {
   const [ready, setReady] = useState(false)
+  const [hover, setHover] = useState(false)
   const previous = usePrevious(entity)
 
   if (previous && ready && previous.poster_path !== entity.poster_path) {
@@ -390,13 +424,26 @@ export const Poster = ({ entity, img, subtitle, link, display, withState, ...pro
   return (
     <span
       {...props}
-      title={`${entity.title || entity.name}${(entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''}${subtitle ? ` - ${subtitle}` : ''}`}
+      {...(withHover ? {} : {
+        title: `${
+          entity.title || entity.original_title || entity.name || entity.original_name || ''
+        }${
+          (entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''
+        }`,
+      })}
       css={[styles.poster.element, !entity.poster_path && entity.poster_path !== false && styles.poster.empty, props.css]}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
       {withState && (
         <State entity={entity} css={styles.poster.state} style={{ opacity: ready ? 1 : 0, ...(!ready ? { transition: 'none' } : {}) }} />
       )}
       <Link to={link(entity)} css={styles.poster.link}>
+        {(withHover || focus) && (
+          <span css={styles.poster.focus} style={{ opacity: (ready && (hover || focus)) ? 1 : 0 }}>
+            <Focus entity={entity} property={focus || 'vote_average'} />
+          </span>
+        )}
         <img
           src={{
             default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
@@ -411,6 +458,21 @@ export const Poster = ({ entity, img, subtitle, link, display, withState, ...pro
           }}
           onLoad={() => setReady(true)}
         />
+        {withHover && (
+          <span css={styles.poster.hover} style={{ transform: `translateY(${(ready && hover) ? 0 : 100}%)` }}>
+            <span>
+              <strong>{`${entity.title || entity.original_title || entity.name || entity.original_name || ''}`}</strong>
+              {(entity.year || entity.release_date) && (
+                <span> ({entity.year || new Date(entity.release_date).getFullYear()})</span>
+              )}
+            </span>
+            {(Array.isArray(entity.genre_ids) || Array.isArray(entity.genres)) && (
+              <span>
+                <small>{(entity.genre_ids || entity.genres).map(id => GENRES[id]).join(', ')}</small>
+              </span>
+            )}
+          </span>
+        )}
       </Link>
     </span>
   )
@@ -559,3 +621,21 @@ export class State extends PureComponent {
     )
   }
 }
+
+export const Focus = ({ entity, property, ...props }) => (
+  <Badge
+    emoji={{
+      vote_average: new Movie(entity).judge(),
+      release_date: '📅',
+      popularity: '📣',
+      runtime: '🕙',
+    }[property]}
+    label={{
+      vote_average: `${entity.vote_average.toFixed(1)}`,
+      release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
+      popularity: `${parseInt(entity.popularity || 0)}`,
+      runtime: entity.runtime || 'Unknown',
+    }[property]}
+    style={styles.focus.element}
+  />
+)

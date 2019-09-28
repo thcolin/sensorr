@@ -175,7 +175,7 @@ export default class List extends PureComponent {
           ) : filtered.length ? (
             filtered.map((entity, index) => (
               <div key={index} css={styles.list.entity} style={{ padding: `${space}em` }}>
-                {React.createElement(child, { entity: entity, display: (index < prettify ? 'pretty' : 'default' ) })}
+                {React.createElement(child, { entity: entity, ...(index < prettify ? { display: 'pretty' } : {}) })}
               </div>
             ))
           ) : (

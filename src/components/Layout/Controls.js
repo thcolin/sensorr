@@ -153,6 +153,8 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
     }
 
     onChange({
+      sorting,
+      filtering,
       sort: (a, b) => sorting.apply(a, b, reverse),
       filter: (entity) =>
         Object.keys(filtering).every(key => filters[key].apply(entity, filtering[key])) &&

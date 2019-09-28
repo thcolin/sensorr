@@ -212,19 +212,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
       * Add `Link` to `genre`
     * `Search`
       * Animate `height`
-        * `auto` > `50vh` `(!query > query && full)`
-        * `auto` > `auto` (+/-) `(!query > query && !full)`
-        * `auto` > `100%` `(!full > !full && expanded)`
-        * `50vh` > `100%` `(full > full && expanded)`
-        * `100%` > `auto` `(expanded > !full)`
-        * `100%` > `50vh` `(expanded > full)`
-      * Listen on `document` for `escape` keydown and `setActive(false)`
       * Add remove `suggestion` button
-      * Focus `Search` when `document.onKeyDown`
-    * Add contextual data on `Film` & `Persona` when filtered or sorted
-      * Add `label` "tag" on left (with emoji ?) - ?
-      * `:hover`, bottom to top animation revealing overlay (see [inspiration](https://dribbble.com/shots/4649643-Cinematic-UI))
-      * `:hover`, shadow animation (see [inspiration](https://dribbble.com/shots/4652768-Website-design-for-Movies-TV-Shows-Concept))
     * `Movie`
       * Focus on followed `casting` (+ length ?)
       * Improve layout

@@ -91,6 +91,7 @@ export default class Grid extends PureComponent {
       max: 25,
       filter: () => true,
       sort: () => 0,
+      focus: null,
     }
 
     this.expand = this.expand.bind(this)
@@ -163,7 +164,7 @@ export default class Grid extends PureComponent {
 
   render() {
     const { items, query, uri, params, transform, controls, label, child, empty, spinner, limit, strict, subscribe, ...props } = this.props
-    const { entities, loading, err, max, filter, sort, ...state } = this.state
+    const { entities, loading, err, max, filter, sort, focus, ...state } = this.state
 
     const approved = [...entities, ...items].filter(entity => this.validate(entity))
     const filtered = approved.sort(sort).filter(filter)
@@ -177,7 +178,12 @@ export default class Grid extends PureComponent {
             entities={approved}
             {...controls}
             filters={Object.keys(controls.filters).reduce((acc, key) => ({ ...acc, [key]: controls.filters[key](approved) }), {})}
-            onChange={({ filter, sort }) => this.setState({ filter, sort, max: 25 })}
+            onChange={({ filter, sort, sorting }) => this.setState({
+              filter,
+              sort,
+              max: 25,
+              focus: sorting.value === 'time' ? null : sorting.value,
+            })}
           />
         )}
         <div key="element" {...props} style={styles.element}>
@@ -212,7 +218,7 @@ export default class Grid extends PureComponent {
             >
               {limited.map((entity, index) => (
                 <div key={index} style={styles.entity}>
-                  {React.createElement(child, { entity })}
+                  {React.createElement(child, { entity, focus })}
                 </div>
               ))}
             </InfiniteScroll>
