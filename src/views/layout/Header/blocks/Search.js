@@ -21,7 +21,7 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   const [expanded, setExpandedState] = useState(false)
   const [query, setQuery] = [
     qs.parse(location.search).query || '',
-    (query) => history.replace({ pathname: location.pathname, ...(query ? { search: `?query=${query}` } : {}) }),
+    (query) => history.replace(query ? { search: `?query=${query}` } : {}),
   ]
 
   const trapScroll = (enable) => {
@@ -61,6 +61,12 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
       document.removeEventListener('keydown', handleEsc)
     }
   }, [])
+
+  useEffect(() => {
+    if (!query) {
+      setActive(false)
+    }
+  }, [location.pathname])
 
   return (
     <Context.Provider {...props} value={{ active, setActive, expanded, setExpanded, query, setQuery }}>

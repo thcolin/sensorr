@@ -18,6 +18,7 @@ const styles = {
       margin: 0,
       fontSize: '2em',
       fontWeight: 'bold',
+      lineHeight: '1.25',
       color: theme.colors.black,
     },
     container: {
@@ -26,9 +27,11 @@ const styles = {
       flexWrap: 'nowrap',
     },
     row: {
+      alignItems: 'center',
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',
+      padding: '2em 0',
     },
     column: {
       flexDirection: 'column',
@@ -76,6 +79,7 @@ export default class List extends PureComponent {
     strict: PropTypes.bool,
     hide: PropTypes.bool,
     prettify: PropTypes.number,
+    placeholder: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -91,6 +95,7 @@ export default class List extends PureComponent {
     strict: true,
     hide: false,
     prettify: 0,
+    placeholder: false,
   }
 
   constructor(props) {
@@ -128,7 +133,7 @@ export default class List extends PureComponent {
   componentDidUpdate(props) {
     if (this.props.uri.length) {
       if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
-        this.setState({ entities: Array(this.state.entities.length).fill({ poster_path: false, profile_path: false }) })
+        this.setState({ loading: true, entities: [] })
         tmdb.fetch(this.props.uri, this.props.params).then(
           res => this.debounce(() => {
             this.setState({ loading: false, entities: this.props.transform(res) })
@@ -145,6 +150,7 @@ export default class List extends PureComponent {
     }
 
     if (this.props.items.length && (this.props.items[0] || {}).id !== (props.items[0] || {}).id) {
+      this.setState({ entities: [] })
       this.reference.current && this.reference.current.scroll(0, 0)
     }
   }
@@ -157,10 +163,27 @@ export default class List extends PureComponent {
   }
 
   render() {
-    const { items, uri, params, child, transform, filter, label, display, space, empty, spinner, strict, hide, prettify, ...props } = this.props
     const { entities, loading, err, ...state } = this.state
+    const {
+      items,
+      uri,
+      params,
+      child,
+      transform,
+      filter,
+      label,
+      display,
+      space,
+      empty,
+      spinner,
+      strict,
+      hide,
+      prettify,
+      placeholder,
+      ...props
+    } = this.props
 
-    const filtered = [...items, ...entities]
+    const filtered = uri.length ? entities : items
       .filter(entity => this.validate(entity))
       .filter(filter)
 
@@ -169,13 +192,23 @@ export default class List extends PureComponent {
         {!!label && (
           <h1 {...props} css={[styles.list.label, props.css]}>{label}</h1>
         )}
-        <div css={[styles.list.container, styles.list[display]]} ref={this.reference}>
-          {loading ? (
+        <div ref={this.reference} css={[styles.list.container, styles.list[display]]}>
+          {(loading && !placeholder) ? (
             <Spinner {...spinner} />
-          ) : filtered.length ? (
-            filtered.map((entity, index) => (
-              <div key={index} css={styles.list.entity} style={{ padding: `${space}em` }}>
-                {React.createElement(child, { entity: entity, ...(index < prettify ? { display: 'pretty' } : {}) })}
+          ) : (filtered.length || placeholder) ? (
+            (filtered.length ? filtered : Array(15).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
+              <div
+                key={index}
+                css={styles.list.entity}
+                style={{
+                  padding: { row: `0 ${space}em`, column: `${space}em 0` }[display],
+                }}
+              >
+                {React.createElement(child, {
+                  entity: entity,
+                  placeholder: placeholder,
+                  ...(index < prettify ? { display: 'pretty' } : {}),
+                })}
               </div>
             ))
           ) : (

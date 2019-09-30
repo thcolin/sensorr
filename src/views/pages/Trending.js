@@ -58,7 +58,7 @@ export default class Trending extends PureComponent {
             params={{ sort_by: 'popularity.desc' }}
             child={Film}
             prettify={5}
-            spinner={{ css: { margin: '10.563rem auto' } }}
+            placeholder={true}
           />
           <List
             label="👀&nbsp; Discover"
@@ -66,7 +66,7 @@ export default class Trending extends PureComponent {
             uri={['discover', 'movie']}
             child={Film}
             prettify={5}
-            spinner={{ css: { margin: '10.563rem auto' } }}
+            placeholder={true}
           />
           <List
             label={(
@@ -97,7 +97,7 @@ export default class Trending extends PureComponent {
             }}
             child={Film}
             prettify={5}
-            spinner={{ css: { margin: '10.563rem auto' } }}
+            placeholder={true}
           />
           <List
             label={(
@@ -122,7 +122,7 @@ export default class Trending extends PureComponent {
             }}
             child={Film}
             prettify={5}
-            spinner={{ css: { margin: '10.563rem auto' } }}
+            placeholder={true}
           />
           <List
             label={(
@@ -148,7 +148,7 @@ export default class Trending extends PureComponent {
             }}
             child={Film}
             prettify={5}
-            spinner={{ css: { margin: '10.563rem auto' } }}
+            placeholder={true}
           />
           <List
             label="👩‍🎤&nbsp; Trending"

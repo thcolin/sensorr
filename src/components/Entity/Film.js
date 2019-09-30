@@ -13,195 +13,13 @@ import palette from 'utils/palette'
 import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
-const styles = {
-  pretty: {
-    element: {
-      position: 'relative',
-      display: 'flex',
-      width: '35em',
-      margin: '3em 0 0 0',
-    },
-    backdrop: {
-      position: 'absolute',
-      height: '100%',
-      width: '100%',
-      overflow: 'hidden',
-      '>*': {
-        position: 'absolute',
-        height: '100%',
-        width: '100%',
-      },
-      '>div': {
-        transition: 'box-shadow 400ms ease-in-out',
-      },
-      '>img': {
-        objectFit: 'cover',
-        objectPosition: 'center center',
-        transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
-      },
-    },
-    poster: {
-      flexShrink: 0,
-      margin: '-3em 0 0 0',
-      padding: '0 0 2em 1.5em',
-    },
-    about: {
-      position: 'relative',
-      flex: 1,
-      padding: '1.5em',
-      transition: 'opacity 400ms ease-in-out',
-      '>h1': {
-        fontSize: '1.5em',
-        fontWeight: 'bold',
-        margin: '0 0 0.5em 0',
-        transition: 'color 400ms ease-in-out',
-      },
-      '>div': {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        margin: '0 0 0.5em 0',
-        fontFamily: theme.fonts.secondary,
-        transition: 'color 400ms ease-in-out',
-      },
-      '>p': {
-        transition: 'color 400ms ease-in-out',
-        '&:not(:last-of-type)': {
-          margin: '0 0 1em 0',
-        },
-      },
-    },
-  },
-  card: {
-    element: {
-      display: 'flex',
-      alignItems: 'center',
-      width: '30em',
-    },
-    poster: {
-      fontSize: '0.4em',
-    },
-    container: {
-      ...theme.resets.a,
-      flex: 1,
-      padding: '0 0 0 1em',
-      fontSize: '0.75em',
-      color: theme.colors.rangoon,
-      transition: 'opacity 400ms ease-in-out',
-      '>h1': {
-        fontSize: '1em',
-        fontWeight: 'bold',
-        margin: '0 0 0.5em 0',
-      },
-      '>span': {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        margin: '0 0 0.5em 0',
-        fontFamily: theme.fonts.secondary,
-      },
-      '>p': {
-        '&:not(:last-of-type)': {
-          margin: '0 0 0.5em 0',
-        },
-      },
-    },
-  },
-  poster: {
-    element: {
-      position: 'relative',
-      display: 'block',
-      overflow: 'hidden',
-      height: '15em',
-      width: '10em',
-      backgroundColor: theme.colors.grey,
-      transition: 'background-color 400ms ease-in-out',
-      zIndex: 0,
-    },
-    empty: {
-      backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: '50%',
-    },
-    state: {
-      position: 'absolute',
-      right: '0.5em',
-      top: '0.5em',
-      transition: 'opacity 400ms ease-in-out 400ms',
-    },
-    link: {
-      display: 'block',
-      height: '100%',
-      cursor: 'pointer',
-    },
-    focus: {
-      position: 'absolute',
-      top: 0,
-      transition: 'opacity 250ms ease-in-out',
-    },
-    img: {
-      height: '100%',
-      width: '100%',
-      objectFit: 'cover',
-      objectPosition: 'center center',
-      transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
-    },
-    hover: {
-      position: 'absolute',
-      bottom: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      width: '100%',
-      backgroundColor: theme.colors.shadows.black,
-      color: 'white',
-      padding: '1em',
-      fontSize: '0.7em',
-      transition: 'transform 250ms ease-in-out',
-      '>span': {
-        display: 'block',
-        '&:not(:last-child)': {
-          margin: '0 0 0.5em 0',
-        },
-      },
-    },
-  },
-  state: {
-    element: {
-      zIndex: 1,
-    },
-    label: {
-      position: 'relative',
-      display: 'flex',
-    },
-    select: {
-      position: 'absolute',
-      opacity: 0,
-      top: 0,
-      left: 0,
-      height: '100%',
-      width: '100%',
-      appearance: 'none',
-      border: 'none',
-      cursor: 'pointer',
-    },
-  },
-  focus: {
-    element: {
-      padding: '0.5em 0.75em',
-      margin: '1em 0.5em',
-      fontSize: '0.75em',
-    },
-  },
-}
-
 export default class Film extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     link: PropTypes.func,
     focus: PropTypes.oneOf(['vote_average', 'release_date', 'popularity', 'runtime']),
     display: PropTypes.oneOf(['default', 'pretty', 'card']),
+    placeholder: PropTypes.bool,
     withState: PropTypes.bool,
     withHover: PropTypes.bool,
   }
@@ -210,8 +28,107 @@ export default class Film extends PureComponent {
     link: (entity) => `/movie/${entity.id}`,
     focus: null,
     display: 'default',
+    placeholder: false,
     withState: true,
     withHover: true,
+  }
+
+  static styles = {
+    pretty: {
+      element: {
+        position: 'relative',
+        display: 'flex',
+        height: '100%',
+        width: '35em',
+        padding: '3em 0 0 0',
+      },
+      backdrop: {
+        position: 'absolute',
+        height: 'calc(100% - 3em)',
+        width: '100%',
+        overflow: 'hidden',
+        '>*': {
+          position: 'absolute',
+          height: '100%',
+          width: '100%',
+        },
+        '>div': {
+          transition: 'box-shadow 400ms ease-in-out',
+        },
+        '>img': {
+          objectFit: 'cover',
+          objectPosition: 'center center',
+          transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
+        },
+      },
+      poster: {
+        flexShrink: 0,
+        margin: '-3em 0 0 0',
+        padding: '0 0 2em 1.5em',
+      },
+      about: {
+        position: 'relative',
+        flex: 1,
+        margin: '1.5em',
+        overflowY: 'auto',
+        transition: 'opacity 400ms ease-in-out',
+        '>h1': {
+          fontSize: '1.5em',
+          fontWeight: 'bold',
+          margin: '0 0 0.5em 0',
+          transition: 'color 400ms ease-in-out',
+        },
+        '>div': {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          margin: '0 0 0.5em 0',
+          fontFamily: theme.fonts.secondary,
+          transition: 'color 400ms ease-in-out',
+        },
+        '>p': {
+          transition: 'color 400ms ease-in-out',
+          '&:not(:last-of-type)': {
+            margin: '0 0 1em 0',
+          },
+        },
+      },
+    },
+    card: {
+      element: {
+        display: 'flex',
+        alignItems: 'center',
+        width: '30em',
+      },
+      poster: {
+        fontSize: '0.4em',
+      },
+      container: {
+        ...theme.resets.a,
+        flex: 1,
+        padding: '0 0 0 1em',
+        fontSize: '0.75em',
+        color: theme.colors.rangoon,
+        transition: 'opacity 400ms ease-in-out',
+        '>h1': {
+          fontSize: '1em',
+          fontWeight: 'bold',
+          margin: '0 0 0.5em 0',
+        },
+        '>span': {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          margin: '0 0 0.5em 0',
+          fontFamily: theme.fonts.secondary,
+        },
+        '>p': {
+          '&:not(:last-of-type)': {
+            margin: '0 0 0.5em 0',
+          },
+        },
+      },
+    },
   }
 
   constructor(props) {
@@ -295,7 +212,7 @@ export default class Film extends PureComponent {
   }
 
   render() {
-    const { entity, display, link, ...props } = this.props
+    const { entity, display, link, placeholder, ...props } = this.props
     const { poster, backdrop, palette, ...state } = this.state
 
     const title = entity.title || entity.original_title || entity.name || entity.original_name || ''
@@ -307,8 +224,8 @@ export default class Film extends PureComponent {
         )
       case 'pretty':
         return (
-          <div css={styles.pretty.element}>
-            <div css={styles.pretty.backdrop}>
+          <div css={Film.styles.pretty.element}>
+            <div css={[Film.styles.pretty.backdrop, (!entity.id && placeholder) && theme.styles.placeholder]}>
               <img
                 src={backdrop}
                 style={{
@@ -319,12 +236,20 @@ export default class Film extends PureComponent {
               />
               <div style={{ boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}` }} />
             </div>
-            <div css={styles.pretty.poster}>
-              <Poster {...this.props} img={poster} withHover={false} style={{ backgroundColor: Color(palette.backgroundColor).rgb().string() }} />
+            <div css={Film.styles.pretty.poster}>
+              <Poster
+                {...this.props}
+                img={poster}
+                withHover={false}
+                style={{
+                  backgroundColor: palette.backgroundColor,
+                  transition: 'background-color 400ms ease-in-out',
+                }}
+              />
             </div>
             {entity.id && (
               <div
-                css={styles.pretty.about}
+                css={Film.styles.pretty.about}
                 style={{
                   opacity: (backdrop || entity.backdrop_path === null) ? 1 : 0,
                   ...((!backdrop && entity.backdrop_path !== null) ? { transition: 'none' } : {}),
@@ -333,7 +258,7 @@ export default class Film extends PureComponent {
                 <h1 style={{ color: palette.color }} {...(title.length > 45 ? { title } : {})}>
                   {title.length > 45 ? `${title.substring(0, 45)}...` : title}
                 </h1>
-                {(entity.release_date || entity.vote_average) && (
+                {!!(entity.release_date || entity.vote_average) && (
                   <div style={{ color: palette.negativeColor }} >
                     {!!entity.release_date && (
                       <small>
@@ -367,10 +292,10 @@ export default class Film extends PureComponent {
         )
       case 'card':
         return (
-          <div css={styles.card.element}>
-            <Poster {...this.props} withHover={false} css={styles.card.poster} />
+          <div css={Film.styles.card.element}>
+            <Poster {...this.props} withHover={false} css={Film.styles.card.poster} />
             {entity.id && (
-              <Link to={link(entity)} css={styles.card.container}>
+              <Link to={link(entity)} css={Film.styles.card.container}>
                 <h1 {...(title.length > 45 ? { title } : {} )}>
                   {title.length > 45 ? `${title.substring(0, 45)}...` : title}
                 </h1>
@@ -412,7 +337,7 @@ export default class Film extends PureComponent {
   }
 }
 
-export const Poster = ({ entity, img, focus, link, display, withState, withHover, ...props }) => {
+export const Poster = ({ entity, img, focus, link, display, placeholder, withState, withHover, ...props }) => {
   const [ready, setReady] = useState(false)
   const [hover, setHover] = useState(false)
   const previous = usePrevious(entity)
@@ -421,9 +346,10 @@ export const Poster = ({ entity, img, focus, link, display, withState, withHover
     setReady(false)
   }
 
+  const Container = link && entity.id ? Link : 'span'
+
   return (
     <span
-      {...props}
       {...(withHover ? {} : {
         title: `${
           entity.title || entity.original_title || entity.name || entity.original_name || ''
@@ -431,26 +357,35 @@ export const Poster = ({ entity, img, focus, link, display, withState, withHover
           (entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''
         }`,
       })}
-      css={[styles.poster.element, !entity.poster_path && entity.poster_path !== false && styles.poster.empty, props.css]}
+      {...props}
+      css={[
+        Poster.styles.element,
+        !entity.poster_path && entity.poster_path !== false && Poster.styles.empty,
+        (!entity.id && placeholder) && display !== 'pretty' && {
+          ...theme.styles.placeholder,
+          background: `linear-gradient(to right, ${theme.colors.grey} 20%, ${theme.colors.mercury} 50%, ${theme.colors.grey} 80%)`,
+        },
+        props.css
+      ]}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
       {withState && (
-        <State entity={entity} css={styles.poster.state} style={{ opacity: ready ? 1 : 0, ...(!ready ? { transition: 'none' } : {}) }} />
+        <State entity={entity} css={Poster.styles.state} style={{ opacity: ready ? 1 : 0, ...(!ready ? { transition: 'none' } : {}) }} />
       )}
-      <Link to={link(entity)} css={styles.poster.link}>
+      <Container {...(link ? { to: link(entity) } : {})} css={Poster.styles.link}>
         {(withHover || focus) && (
-          <span css={styles.poster.focus} style={{ opacity: (ready && (hover || focus)) ? 1 : 0 }}>
+          <span css={Poster.styles.focus} style={{ opacity: (ready && (hover || focus)) ? 1 : 0 }}>
             <Focus entity={entity} property={focus || 'vote_average'} />
           </span>
         )}
         <img
-          src={{
+          src={img ? img : {
             default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
             pretty: img,
             card: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
           }[display]}
-          css={styles.poster.img}
+          css={Poster.styles.img}
           style={{
             opacity: ready ? 1 : 0,
             // ...(display === 'pretty' ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
@@ -459,7 +394,7 @@ export const Poster = ({ entity, img, focus, link, display, withState, withHover
           onLoad={() => setReady(true)}
         />
         {withHover && (
-          <span css={styles.poster.hover} style={{ transform: `translateY(${(ready && hover) ? 0 : 100}%)` }}>
+          <span css={Poster.styles.hover} style={{ transform: `translateY(${(ready && hover) ? 0 : 100}%)` }}>
             <span>
               <strong>{`${entity.title || entity.original_title || entity.name || entity.original_name || ''}`}</strong>
               {(entity.year || entity.release_date) && (
@@ -473,9 +408,68 @@ export const Poster = ({ entity, img, focus, link, display, withState, withHover
             )}
           </span>
         )}
-      </Link>
+      </Container>
     </span>
   )
+}
+
+Poster.styles = {
+  element: {
+    position: 'relative',
+    display: 'block',
+    overflow: 'hidden',
+    height: '15em',
+    width: '10em',
+    backgroundColor: theme.colors.grey,
+    zIndex: 0,
+  },
+  empty: {
+    backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==)',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    backgroundSize: '50%',
+  },
+  state: {
+    position: 'absolute',
+    right: '0.5em',
+    top: '0.5em',
+    transition: 'opacity 400ms ease-in-out 400ms',
+  },
+  link: {
+    display: 'block',
+    height: '100%',
+  },
+  focus: {
+    position: 'absolute',
+    top: 0,
+    transition: 'opacity 250ms ease-in-out',
+  },
+  img: {
+    height: '100%',
+    width: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center center',
+    transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
+  },
+  hover: {
+    position: 'absolute',
+    bottom: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    width: '100%',
+    backgroundColor: theme.colors.shadows.black,
+    color: 'white',
+    padding: '1em',
+    fontSize: '0.7em',
+    transition: 'transform 250ms ease-in-out',
+    '>span': {
+      display: 'block',
+      '&:not(:last-child)': {
+        margin: '0 0 0.5em 0',
+      },
+    },
+  },
 }
 
 export class State extends PureComponent {
@@ -600,10 +594,10 @@ export class State extends PureComponent {
     }
 
     return (
-      <div {...props} css={[styles.state.element, props.css]}>
-        <label htmlFor={id} css={styles.state.label}>
+      <div {...props} css={[State.styles.element, props.css]}>
+        <label htmlFor={id} css={State.styles.label}>
           {current !== 'loading' && (
-            <select id={id} value={current} onChange={this.handleStateChange} css={styles.state.select}>
+            <select id={id} value={current} onChange={this.handleStateChange} css={State.styles.select}>
               {Object.keys(options).filter(key => !['loading'].includes(key)).map(key => (
                 <option key={key} value={key}>{options[key].emoji} - {options[key].label}</option>
               ))}
@@ -622,20 +616,55 @@ export class State extends PureComponent {
   }
 }
 
-export const Focus = ({ entity, property, ...props }) => (
-  <Badge
-    emoji={{
-      vote_average: new Movie(entity).judge(),
-      release_date: '📅',
-      popularity: '📣',
-      runtime: '🕙',
-    }[property]}
-    label={{
-      vote_average: `${entity.vote_average.toFixed(1)}`,
-      release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
-      popularity: `${parseInt(entity.popularity || 0)}`,
-      runtime: entity.runtime || 'Unknown',
-    }[property]}
-    style={styles.focus.element}
-  />
-)
+State.styles = {
+  element: {
+    zIndex: 1,
+  },
+  label: {
+    position: 'relative',
+    display: 'flex',
+  },
+  select: {
+    position: 'absolute',
+    opacity: 0,
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: '100%',
+    appearance: 'none',
+    border: 'none',
+    cursor: 'pointer',
+  },
+}
+
+export const Focus = ({ entity, property, ...props }) => {
+  if (!entity.id) {
+    return null
+  }
+
+  return (
+    <Badge
+      emoji={{
+        vote_average: new Movie(entity).judge(),
+        release_date: '📅',
+        popularity: '📣',
+        runtime: '🕙',
+      }[property]}
+      label={{
+        vote_average: `${entity.vote_average.toFixed(1)}`,
+        release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
+        popularity: `${parseInt(entity.popularity || 0)}`,
+        runtime: entity.runtime || 'Unknown',
+      }[property]}
+      style={Focus.styles.element}
+    />
+  )
+}
+
+Focus.styles = {
+  element: {
+    padding: '0.5em 0.75em',
+    margin: '1em 0.5em',
+    fontSize: '0.75em',
+  },
+}

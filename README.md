@@ -197,6 +197,46 @@ Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
+* Feature `Discover`
+  * Add `Discover` page
+    * `Grid` with location params driven `Controls`
+    * See [TMDB api/discover](https://www.themoviedb.org/documentation/api/discover)
+  * `Film`
+    * Add `Link` to `genre`
+  * `Movie`
+    * Add `keywords` (with `Link`)
+  * Add `Studio` page (?) - no, use predefined `Discover` page
+    * Referring
+      * `Trending` ? - yes, but refactor need (use multiple values)
+      * Display *studio* in `Movie` ? - yes
+      * Display *studio* `Search` ? - yes
+  * `Trending`
+    * Link `Discover` `Row` to `Discover` page
+* Feature `Persona`
+  * `Persona`
+    * Implement `display` props
+  * `Search`
+    * Add `search/person` request
+  * `Trending`
+    * Polish integration
+  * `Following`
+    * Polish integration
+  * `Movie`
+    * Polish integration
+    * Focus on followed `casting` (with metadata, like "how many stars i follow act in this movie ?")
+* Feature `Policies`
+  * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
+    * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
+    * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
+  * `Movie`
+    * Add `policies`
+      * `Checkbox` displayed as grid or column
+        * After `Row` ? - Bad UX, far away from `state`
+      * Create `policy` option (will copy/paste `default`)
+      * Edit `policy` link
+  * Add `List` page
+    * Grouped movies by "policy"
+    * Same layout as `Trending` page
 * `WebUI`
   * Fix
     * Remove `aphrodite` and use `emotion` `css` props everywhere
@@ -208,51 +248,22 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Empty `config.json` on __Docker__ build
     * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
   * UI/UX
-    * `Film`
-      * Add `Link` to `genre`
     * `Search`
       * Animate `height`
       * Add remove `suggestion` button
-    * `Movie`
-      * Focus on followed `casting` (+ length ?)
-      * Improve layout
-        * See [inspiration](https://dribbble.com/shots/3206359-Movie-site)
-        * Improve `trailer` integration (see [inspiration](https://dribbble.com/shots/5514434-Front-Row-Entertainment-Single-Movie-Page))
-        * Improve `Row` integration (see [inspiration](https://dribbble.com/shots/4131890-Cinema-Website))
-      * Improve `Button` (& global layout, see [inspiration](https://dribbble.com/shots/5532138-UI-Design-002-Minions)) colors with `picked` colors from `poster` (use `react-image-palette`, see [inspiration](https://dribbble.com/shots/4859422-Lights-Camera-Cinero))
-      * Add `keywords`
-      * Add `policies`
-        * `Checkbox` displayed as grid or column
-          * After `Row` ? - Bad UX, far away from `state`
-        * Create `policy` option (will copy/paste `default`)
-        * Edit `policy` link
     * `Upcoming`
       * Improve performance
       * Add release day as contextual data on `Film`
       * Add hidden `select` or `daypicker` (with only month + year) on "title"
-    * `Discover`
-      * `Grid` with location params driven `Controls`
-      * See [TMDB api/discover](https://www.themoviedb.org/documentation/api/discover)
-    * `Studio`
-      * Use predefined `Discover` page
-      * Referring
-        * `Trending` ? - yes, use multiple values
-        * Show in `Navigation` ? - no, no actions or views are useful for now
-        * Display *studio* in `Movie` ? - yes
-        * Display *studio* `Search` ? - yes
     * `Trending`
       * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
       * `Row` with *upcoming* `movies` from *followed* `stars`
         * Link to `Upcoming`
-      * Link `Discover` `Row` to `Discover` page
       * Customize
         * Pinned sortable `Trending|Discover` `Rows`
           * `type=[Popular|Top|Upcoming|Trending|Discover]`
           * `uri={...}`
           * `params={...}`
-    * `List`
-      * Grouped movies by "policy"
-      * Same layout as `Trending` page
     * `Onboarding`
     * Improve `ScrollTop` behavior
     * Responsive design / mobile UI-UX
@@ -278,9 +289,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
     * Translate (`fr`, `en`)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
-    * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
-      * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
-      * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
     * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
     * Synchronize with `trakt.tv`
     * Replace `Plex` available releases by better if available, like `CouchPotato`

@@ -58,7 +58,7 @@ const Library = ({ ...props }) => (
         query={(db) => db.movies.find().where('state').ne('ignored')}
         child={Film}
         css={styles.grid}
-        // child={(props) => <Film {...props} subtitle={sorting.labelize && sorting.labelize(props.entity)} />}
+        placeholder={true}
         controls={{
           label: ({ total, reset }) => (
             <button css={theme.resets.button} onClick={() => reset()}>

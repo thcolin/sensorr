@@ -68,6 +68,7 @@ export default class Grid extends PureComponent {
     limit: PropTypes.bool,
     strict: PropTypes.bool,
     subscribe: PropTypes.bool,
+    placeholder: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -78,6 +79,7 @@ export default class Grid extends PureComponent {
     limit: false,
     strict: true,
     subscribe: true,
+    placeholder: true,
   }
 
   constructor(props) {
@@ -163,8 +165,24 @@ export default class Grid extends PureComponent {
   }
 
   render() {
-    const { items, query, uri, params, transform, controls, label, child, empty, spinner, limit, strict, subscribe, ...props } = this.props
     const { entities, loading, err, max, filter, sort, focus, ...state } = this.state
+    const {
+      items,
+      query,
+      uri,
+      params,
+      transform,
+      controls,
+      label,
+      child,
+      empty,
+      spinner,
+      limit,
+      strict,
+      subscribe,
+      placeholder,
+      ...props
+    } = this.props
 
     const approved = [...entities, ...items].filter(entity => this.validate(entity))
     const filtered = approved.sort(sort).filter(filter)
@@ -190,11 +208,11 @@ export default class Grid extends PureComponent {
           {!!label && (
             <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
           )}
-          {loading ? (
+          {(loading && !placeholder) ? (
             <div style={styles.placeholder}>
               <Spinner {...spinner} />
             </div>
-          ) : !limited.length ? (
+          ) : (!limited.length && !placeholder) ? (
             <div style={styles.placeholder}>
               <Empty
                 {...empty}
@@ -216,9 +234,9 @@ export default class Grid extends PureComponent {
               threshold={1000}
               style={styles.grid}
             >
-              {limited.map((entity, index) => (
+              {(limited.length ? limited : Array(25).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
                 <div key={index} style={styles.entity}>
-                  {React.createElement(child, { entity, focus })}
+                  {React.createElement(child, { entity, focus, placeholder })}
                 </div>
               ))}
             </InfiniteScroll>

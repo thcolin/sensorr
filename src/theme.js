@@ -1,3 +1,5 @@
+import { keyframes } from '@emotion/core'
+
 const colors = {
   primary: '#01D277',
   secondary: '#081C24',
@@ -113,6 +115,17 @@ const resets = {
   },
 }
 
+const animations = {
+  placeholder: keyframes`
+    0%{
+      background-position: 100% 0
+    }
+    100%{
+      background-position: -50% 0
+    }
+  `
+}
+
 const styles = {
   row: {
     display: 'flex',
@@ -155,11 +168,18 @@ const styles = {
   semitransparent: {
     opacity: 0.5,
   },
+  placeholder: {
+    animation: `${animations.placeholder} 2s linear infinite`,
+    animationFillMode: 'forwards',
+    background: `linear-gradient(to right, transparent 20%, ${colors.gray} 50%, transparent 80%)`,
+    backgroundSize: '300%',
+  },
 }
 
 export default {
   colors,
   fonts,
   resets,
+  animations,
   styles,
 }
