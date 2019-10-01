@@ -4,6 +4,7 @@ import List, { Label } from 'components/Layout/List'
 import Film from 'components/Entity/Film'
 import PersonaDefault from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
+import theme from 'theme'
 
 const styles = {
   element: {
@@ -12,6 +13,13 @@ const styles = {
     flex: 1,
     fontSize: '1.125em',
     padding: '2em 0 0',
+  },
+  subtitle: {
+    textAlign: 'right',
+    color: theme.colors.rangoon,
+    padding: '1em 3em',
+    fontSize: '0.5em',
+    opacity: 0.5,
   },
 }
 
@@ -50,7 +58,7 @@ export default class Trending extends PureComponent {
         <Helmet>
           <title>Sensorr - Trending</title>
         </Helmet>
-        <div style={styles.element}>
+        <div css={styles.element}>
           <List
             label="📣&nbsp; Trending"
             title="Trending movies"
@@ -73,21 +81,8 @@ export default class Trending extends PureComponent {
               <Label
                 id="discover-year"
                 title="Discover movies by random year"
-                actions={(
-                  <>
-                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleListClick('year', year - 1)}>
-                      ⬅️
-                    </span>
-                    <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('year')}>
-                      &nbsp;&nbsp;🎰&nbsp;&nbsp;
-                    </span>
-                    <span style={{ cursor: 'pointer', fontSize: '0.75em' }} onClick={() => this.handleListClick('year', year + 1)}>
-                      ➡️
-                    </span>
-                  </>
-                )}
               >
-                📅&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({year})</span>
+                📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
               </Label>
             )}
             uri={['discover', 'movie']}
@@ -98,6 +93,16 @@ export default class Trending extends PureComponent {
             child={Film}
             prettify={5}
             placeholder={true}
+            subtitle={(
+              <div css={styles.subtitle}>
+                <span>Travel through </span>
+                <button onClick={() => this.handleListClick('year', year - 1)} css={theme.resets.button}>years ⬅️</button>
+                <span> </span>
+                <button onClick={() => this.handleListClick('year', year + 1)} css={theme.resets.button}>➡️, or</button>
+                <span> just let </span>
+                <button onClick={() => this.handleListClick('year')} css={theme.resets.button}> chance 🎰 play for you</button>
+              </div>
+            )}
           />
           <List
             label={(
@@ -107,13 +112,8 @@ export default class Trending extends PureComponent {
                 value={genre}
                 onChange={(value) => this.handleListClick('genre', value)}
                 options={Object.keys(GENRES).map(id => ({ value: id, label: GENRES[id] }))}
-                actions={(
-                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('genre')}>
-                    🎰
-                  </span>
-                )}
               >
-                🎞️&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({GENRES[genre]})</span>
+                🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
               </Label>
             )}
             uri={['discover', 'movie']}
@@ -123,6 +123,13 @@ export default class Trending extends PureComponent {
             child={Film}
             prettify={5}
             placeholder={true}
+            subtitle={(
+              <div css={styles.subtitle}>
+                <button onClick={() => this.handleListClick('genre')} css={theme.resets.button}>
+                  Let yourself be tempted by a random 🎰 genre
+                </button>
+              </div>
+            )}
           />
           <List
             label={(
@@ -132,13 +139,8 @@ export default class Trending extends PureComponent {
                 value={studio}
                 onChange={(value) => this.handleListClick('studio', value)}
                 options={Object.keys(STUDIOS).map(studio => ({ value: studio, label: studio }))}
-                actions={(
-                  <span style={{ cursor: 'pointer' }} title="Randomize" onClick={() => this.handleListClick('studio')}>
-                    🎰
-                  </span>
-                )}
               >
-                🏛️&nbsp; Discover <span style={{ fontSize: 'smaller' }}>({studio})</span>
+                🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
               </Label>
             )}
             uri={['discover', 'movie']}
@@ -149,6 +151,13 @@ export default class Trending extends PureComponent {
             child={Film}
             prettify={5}
             placeholder={true}
+            subtitle={(
+              <div css={styles.subtitle}>
+                <button onClick={() => this.handleListClick('studio')} css={theme.resets.button}>
+                  Let yourself be tempted by a random 🎰 studio
+                </button>
+              </div>
+            )}
           />
           <List
             label="👩‍🎤&nbsp; Trending"

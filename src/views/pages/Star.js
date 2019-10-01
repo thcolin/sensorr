@@ -122,7 +122,7 @@ export default class Star extends PureComponent {
         release_date: {
           emoji: '📆',
           title: 'currently sorted by release date',
-          apply: (a, b) => new Date(b.release_date) - new Date(a.release_date),
+          apply: (a, b) => new Date(b.release_date || null) - new Date(a.release_date || null),
         },
         vote_average: {
           emoji: '💯',
@@ -160,7 +160,6 @@ export default class Star extends PureComponent {
       }
 
       this.setState({ loading: false, details })
-      // setTimeout(() => document.getElementById('star').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
         this.setState({

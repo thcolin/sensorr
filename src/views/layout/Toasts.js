@@ -101,7 +101,7 @@ const styles = {
   },
 }
 
-export const ToastContainer = ({ children, autoDismissTimeout, transitionDuration, ...props }) => (
+export const ToastContainer = ({ children, autoDismissTimeout, transitionDuration, hasToasts, ...props }) => (
   <div
     {...props}
     style={{

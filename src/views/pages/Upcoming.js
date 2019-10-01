@@ -168,7 +168,7 @@ class Upcoming extends PureComponent {
           movies[movie.id] = {
             ...(movies[movie.id] || {}),
             ...movie,
-            release_date: new Date(movie.release_date),
+            release_date: new Date(movie.release_date || null),
             stars: [
               ...((movies[movie.id] || {}).stars || []),
               star,
@@ -253,13 +253,19 @@ class Upcoming extends PureComponent {
                   vote_average: Movie.Filters.vote_average,
                 },
                 sortings: {
-                  release_date: Movie.Sortings.release_date,
+                  release_date_upcoming: {
+                    ...Movie.Sortings.release_date,
+                    value: 'release_date_upcoming',
+                  },
                   popularity: Movie.Sortings.popularity,
                   vote_average: Movie.Sortings.vote_average,
                 },
                 defaults: {
                   filtering: {},
-                  sorting: Movie.Sortings.release_date,
+                  sorting: {
+                    ...Movie.Sortings.release_date,
+                    value: 'release_date_upcoming',
+                  },
                   reverse: true,
                 },
                 render: {

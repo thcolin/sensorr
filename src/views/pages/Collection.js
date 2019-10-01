@@ -135,7 +135,7 @@ export default class Collection extends PureComponent {
 
       details.popularity = details.parts.reduce((popularity, part) => popularity + part.popularity, 0) / details.parts.length
       details.vote_average = details.parts.reduce((vote_average, part) => vote_average + part.vote_average, 0) / details.parts.length
-      details.release_dates = details.parts.map(part => part.release_date).sort((a, b) => new Date(a) - new Date(b))
+      details.release_dates = details.parts.map(part => part.release_date).sort((a, b) => new Date(a || null) - new Date(b || null))
         .reduce((acc, release_date, index, releases_dates) => [releases_dates[0], releases_dates[releases_dates.length - 1]])
 
       if (details.adult && !tmdb.adult) {
@@ -143,7 +143,6 @@ export default class Collection extends PureComponent {
       }
 
       this.setState({ loading: false, details })
-      // setTimeout(() => document.getElementById('collection').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
         this.setState({

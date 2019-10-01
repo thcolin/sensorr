@@ -197,6 +197,38 @@ Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
+* Feature `Refactor`
+  * `Search`
+    * Hide `results` / `suggestions` on history previous
+  * `Controls`
+    * Fix query performance
+    * Fix blur on `re-render` (especially on `Releases`)
+  * `List`
+    * Avoid `select` on `Label`, too much actions needed, find another solution
+    * Refactor sort usage with `subtitle` in `Star`
+  * `Trending`
+    * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
+  * Remove `aphrodite` and use `emotion` `css` props everywhere
+  * Responsive design / mobile UI-UX
+* Feature `Persona`
+  * `Persona`
+    * Replace `context` to `display` props
+    * Implement `placeholder` props
+    * Try to keep same `height` as `Film`
+  * `Search`
+    * Add `search/person` request
+  * `Upcoming`
+    * Polish integration (`Film.withHover` doesn't work well with current solution)
+  * `Trending`
+    * Polish integration
+  * `Following`
+    * Polish integration
+  * `Movie`
+    * Polish integration
+    * Focus on followed `casting` (with metadata, like "how many stars i follow act in this movie ?")
+* Feature `0.9.0`
+  * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
+  * Improve `README`
 * Feature `Discover`
   * Add `Discover` page
     * `Grid` with location params driven `Controls`
@@ -207,27 +239,18 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Add `keywords` (with `Link`)
   * Add `Studio` page (?) - no, use predefined `Discover` page
     * Referring
-      * `Trending` ? - yes, but refactor need (use multiple values)
+      * `Trending` ? - yes, but refactor needed (currently use multiple values)
       * Display *studio* in `Movie` ? - yes
       * Display *studio* `Search` ? - yes
   * `Trending`
     * Link `Discover` `Row` to `Discover` page
-* Feature `Persona`
-  * `Persona`
-    * Implement `display` props
-  * `Search`
-    * Add `search/person` request
-  * `Trending`
-    * Polish integration
-  * `Following`
-    * Polish integration
-  * `Movie`
-    * Polish integration
-    * Focus on followed `casting` (with metadata, like "how many stars i follow act in this movie ?")
 * Feature `Policies`
   * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
     * Add configurable `prefer` terms on `Movie` (like `/movie/447404` I want in `FRENCH` and not `VOSTFR`)
+  * Add `size` property on `Settings/blocks/Policy` (how to handle it ? `min/max` ?)
+  * Improve `Documents.*.Filters`
+    * `policies` - `multiple`
   * `Movie`
     * Add `policies`
       * `Checkbox` displayed as grid or column
@@ -237,64 +260,42 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * Add `List` page
     * Grouped movies by "policy"
     * Same layout as `Trending` page
-* `WebUI`
-  * Fix
-    * Remove `aphrodite` and use `emotion` `css` props everywhere
-    * Fix empty `Film` link, cf. `/movies/search/Thomas Crown`
-    * Fix `order=release_date`, cf. `/star/19274`
-    * Fix `Controls` query performance
-    * Fix `Controls` blur on `re-render`
-    * Look at `nanobounce/debounce` usage in functional component (define by instance not "global")
-    * Empty `config.json` on __Docker__ build
-    * `Release.score` (see `/movie/4232/releases`, why `Scream 1 1996 Multi-VF2 HDlight 1080p BDRip.x264~Tonyk~(Frissons)` = `200` and `Scream.1996.MULTi.1080p.BluRay.x264-FiDELiO` = `300` ?)
-  * UI/UX
-    * `Search`
-      * Animate `height`
-      * Add remove `suggestion` button
-    * `Upcoming`
-      * Improve performance
-      * Add release day as contextual data on `Film`
-      * Add hidden `select` or `daypicker` (with only month + year) on "title"
-    * `Trending`
-      * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
-      * `Row` with *upcoming* `movies` from *followed* `stars`
-        * Link to `Upcoming`
-      * Customize
-        * Pinned sortable `Trending|Discover` `Rows`
-          * `type=[Popular|Top|Upcoming|Trending|Discover]`
-          * `uri={...}`
-          * `params={...}`
-    * `Onboarding`
-    * Improve `ScrollTop` behavior
-    * Responsive design / mobile UI-UX
-    * Dark mode
-  * Features
-    * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
-    * `Loading` page waiting sync of `db` with progress ?
+* Feature `performance`
+  * `Upcoming`
+    * Fix first load performance (create `calendar` or `upcoming` schema)
+    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - see [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates))
+  * `Server`
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
-    * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
-      * Better, display `Grid` when scroll end + `entities.length > 10`
-    * Polish `Trending` *discover* row
-      * Load 2 page and filter with *trending* ones
-    * Save `Controls` to `localStorage` ?
+  * `CLI`
+    * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
+* Feature `Config`
+  * Fix empty `config.json` on __Docker__ build
+  * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
+* Feature `1.0.0`
+  * 🎉
+  * Fix `docz`
+  * Improve `README`
+* Feature `Notifications`
+  * Notify `records` summary (email, sms, etc...)
+* Feature `UI/UX sugar`
+  * `Search`
+    * Animate `height`
+    * Add remove `suggestion` button
+  * `Upcoming`
+    * Add hidden `select` or `daypicker` (with only month + year) on "title"
+  * `Trending`
+    * Polish *discover* row, load 2 page and filter with *trending* ones
+  * `Controls`
     * Improve `Documents.*.Filters`
       * `Movie`
         * `country` - `multiple` (use `original_language` ? - no)
         * `studio` - `multiple`
-        * `time` - `range` - useful ?
-        * `list` (implement `list` feature before) - `multiple`
       * `Star`
         * `active_years` - `range` - useful ?
-        * `time` - `range` - useful ?
-    * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
-    * Translate (`fr`, `en`)
-    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - cf. [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates)) on `Upcoming` page
-    * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
-    * Synchronize with `trakt.tv`
-    * Replace `Plex` available releases by better if available, like `CouchPotato`
-      * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
-* `CLI`
-  * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
+  * `Row`
+    * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
+      * Better, display `Grid` when scroll end + `entities.length > 10`
+  * Save `Controls` to `localStorage` ?
   * Summary command result
     * `record`:
       ```
@@ -303,11 +304,30 @@ Tips: Sensorr will use your `config.js` and fallback on default
         But ${notfound} still not found.. 😶
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
-  * Notify `summary` (email, sms, etc...)
-* `App` (Phone / TV)
-  * Features
-    * Connect to server with QR code
-    * Streaming from `Releases` (how to know which file read ?)
+  * `Loading` page waiting sync of `db` with progress ?
+  * Translate (`fr`, `en`)
+  * Dark mode
+* Feature `Custom Home`
+  * `Trending`
+    * `Row` with *upcoming* `movies` from *followed* `stars`
+      * Link to `Upcoming`
+    * Customize
+      * Pinned sortable `Trending|Discover` `Rows`
+        * `type=[Popular|Top|Upcoming|Trending|Discover]`
+        * `uri={...}`
+        * `params={...}`
+* Feature `Takecare`
+  * Replace `Plex` available releases by better if available, like `CouchPotato`
+    * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
+* Feature `Onboarding`
+  * Add `Onboarding` page
+* Feature `Browser Plugin`
+  * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
+* Feature `import/export`
+  * Synchronize with `trakt.tv`
+* Feature `App` (TV/Mobile ?)
+  * Connect to server with QR code
+  * Streaming from `Releases` (how to know which file read ? - ask user)
   * PWA ?
 
 # Inspiration

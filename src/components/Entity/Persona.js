@@ -11,6 +11,7 @@ const styles = {
   container: {
     display: 'flex',
     justifyContent: 'center',
+    width: '10em',
   },
   wrapper: {
     position: 'relative',
@@ -168,7 +169,11 @@ export default class Persona extends PureComponent {
             </div>
           </Link>
         </div>
-        <h5 style={{ ...styles.tooltip, ...contexts[context].tooltip }} hidden={context !== 'portrait' && !tooltip}>
+        <h5
+          style={{ ...styles.tooltip, ...contexts[context].tooltip }}
+          title={`${entity.name}${entity.job ? ` (${entity.job})` : ''}${entity.character ? ` (${entity.character})` : ''}`}
+          hidden={context !== 'portrait' && !tooltip}
+        >
           <span>{entity.name}</span>
           {entity.job && (
             <span>{` (${entity.job})`}</span>

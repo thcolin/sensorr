@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import AnimateHeight from 'react-animate-height'
 import Range from 'components/Form/Range'
 import Checkbox from 'components/Form/Checkbox'
@@ -110,8 +110,6 @@ const styles = {
   },
 }
 
-const debounce = nanobounce(500)
-
 const Controls = ({ label, entities, filters, sortings, defaults, onChange, render = {}, ...props }) => {
   const [filtering, setFiltering] = useState(defaults.filtering)
   const [sorting, setSorting] = useState(defaults.sorting)
@@ -119,6 +117,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
   const [query, setQuery] = useState('')
   const [previous, setPrevious] = useState(defaults)
   const [open, setOpen] = useState(false)
+  const debounce = useMemo(() => nanobounce(500), [])
   const input = useRef(null)
 
   const active = Object.keys(filtering)

@@ -6,8 +6,6 @@ import sensorr from 'store/sensorr'
 import nanobounce from 'nanobounce'
 import theme from 'theme'
 
-const debounce = nanobounce(1000)
-
 const blink = keyframes`
   0% {
     visibility: visible;
@@ -66,6 +64,7 @@ class Recording extends PureComponent {
     }
 
     this.triggerJob = this.triggerJob.bind(this)
+    this.debounce = nanobounce(1000)
   }
 
   triggerJob(type) {
@@ -99,7 +98,7 @@ class Recording extends PureComponent {
           <span>Unexpected error during job trigger : <strong>{res.statusText}</strong></span>
         ), { appearance: 'error', autoDismiss: true, })
       } finally {
-        debounce(() => this.setState({ loading: false }))
+        this.debounce(() => this.setState({ loading: false }))
       }
     })
   }

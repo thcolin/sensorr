@@ -3,6 +3,7 @@ import { Switch, NavLink, Route } from 'react-router-dom'
 import Navbar from './blocks/Navbar'
 import Recording from './blocks/Recording'
 import Search from './blocks/Search'
+import { triggerScrollToTop } from 'views/enhancers/ScrollToTop'
 import theme from 'theme'
 
 const styles = {
@@ -104,7 +105,7 @@ const Header = ({ ...props }) => (
           <NavLink to="/" exact={true} title="Sensorr">🍿</NavLink>
         </div>
         <div css={styles.navigator}>
-          <button onClick={() => { /* triggerScrollTop() */ }}>
+          <button onClick={() => triggerScrollToTop()}>
             <Switch>
               <Route path="/" exact={true} render={() => "Trending"} />
               <Route path="/movies" render={() => "Movies"} />

@@ -4,7 +4,7 @@ import Color from 'color'
 import ReactPlayer from 'react-player'
 import List, { Label } from 'components/Layout/List'
 import Button from 'components/Button'
-import Persona from 'components/Entity/Persona'
+import PersonaDefault from 'components/Entity/Persona'
 import Film, { State, Poster } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
@@ -124,7 +124,6 @@ const styles = {
   },
   list: {
     margin: '0 0 -5em 0',
-    // fontSize: '0.8em',
     '>div': {
       padding: 0,
     }
@@ -139,6 +138,8 @@ const styles = {
     color: theme.colors.white,
   },
 }
+
+const Persona = (props) => <PersonaDefault {...props} context="portrait" />
 
 export default class Movie extends PureComponent {
   constructor(props) {
@@ -191,8 +192,6 @@ export default class Movie extends PureComponent {
           { palette: true }
         )
       }
-
-      // setTimeout(() => document.getElementById('movie').scrollIntoView(), 100)
     } catch(err) {
       if (err.status_code) {
         this.setState({
@@ -404,7 +403,7 @@ export default class Movie extends PureComponent {
                     )}
                     {...(more === 'collection' ? {
                       uri: ['collection', details.belongs_to_collection.id],
-                      transform: (res) => res.parts.sort((a, b) => new Date(a.release_date) - new Date(b.release_date)),
+                      transform: (res) => [...res.parts].sort((a, b) => new Date(a.release_date || null) - new Date(b.release_date || null)),
                     } : {
                       items: {
                         recommendations: details.recommendations.results,

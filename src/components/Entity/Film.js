@@ -646,12 +646,14 @@ export const Focus = ({ entity, property, ...props }) => {
     <Badge
       emoji={{
         vote_average: new Movie(entity).judge(),
+        release_date_upcoming: '📅',
         release_date: '📅',
         popularity: '📣',
         runtime: '🕙',
       }[property]}
       label={{
         vote_average: `${entity.vote_average.toFixed(1)}`,
+        release_date_upcoming: entity.release_date ? new Date(entity.release_date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) : 'Unknown',
         release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
         popularity: `${parseInt(entity.popularity || 0)}`,
         runtime: entity.runtime || 'Unknown',

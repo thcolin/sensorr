@@ -14,12 +14,12 @@ const styles = {
       padding: '2em 0',
     },
     label: {
-      padding: '0 2em',
+      padding: '0 1.5em',
       margin: 0,
-      fontSize: '2em',
-      fontWeight: 'bold',
+      fontSize: '1em',
+      fontWeight: '800',
       lineHeight: '1.25',
-      color: theme.colors.black,
+      color: theme.colors.rangoon,
     },
     container: {
       left: 0,
@@ -80,6 +80,7 @@ export default class List extends PureComponent {
     hide: PropTypes.bool,
     prettify: PropTypes.number,
     placeholder: PropTypes.bool,
+    subtitle: PropTypes.node,
   }
 
   static defaultProps = {
@@ -180,6 +181,7 @@ export default class List extends PureComponent {
       hide,
       prettify,
       placeholder,
+      subtitle,
       ...props
     } = this.props
 
@@ -220,6 +222,7 @@ export default class List extends PureComponent {
             />
           )}
         </div>
+        {subtitle}
       </div>
     )
   }

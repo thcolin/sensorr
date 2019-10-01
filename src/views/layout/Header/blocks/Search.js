@@ -333,10 +333,11 @@ export const Input = ({ location, history, match, staticContext, ...props }) => 
   const { active, setActive, query, setQuery } = useContext(Context)
   const reference = useRef()
   const [input, setInput] = useState('')
+  const debounce = useMemo(() => nanobounce(500), [])
 
   const onChange = (value) => {
     setInput(value)
-    Input.debounce(() => setQuery(value || ''))
+    debounce(() => setQuery(value || ''))
   }
 
   const close = (active = false) => {
@@ -352,6 +353,7 @@ export const Input = ({ location, history, match, staticContext, ...props }) => 
       !e.shiftKey &&
       !e.altKey &&
       !e.metaKey &&
+      document.activeElement.tagName !== 'INPUT' &&
       /^[a-zA-Z0-9]{1}$/.test(e.key)
     ) {
       reference.current.focus()
@@ -409,8 +411,6 @@ export const Input = ({ location, history, match, staticContext, ...props }) => 
     </div>
   )
 }
-
-Input.debounce = nanobounce(500)
 
 Input.styles = {
   element: {
