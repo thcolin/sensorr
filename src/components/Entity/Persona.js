@@ -143,26 +143,26 @@ export default class Persona extends PureComponent {
     return (
       <div
         {...props}
-        style={{ ...styles.container, ...contexts[context].container, ...(props.style ? props.style : {})}}
+        css={[styles.container, contexts[context].container, props.css]}
         onMouseEnter={() => this.setState({ tooltip: true })}
         onMouseLeave={() => this.setState({ tooltip: false })}
       >
-        <div style={{ ...styles.wrapper, ...contexts[context].wrapper }}>
+        <div css={[styles.wrapper,contexts[context].wrapper]}>
           {!(!updatable || (context !== 'portrait' && !tooltip)) && (
             <State
               entity={entity}
               updatable={updatable}
-              style={contexts[context].state}
+              css={contexts[context].state}
             />
           )}
-          <Link to={`/star/${entity.id}`} style={styles.link}>
-            <div style={{ ...styles.element, ...contexts[context].element }}>
-              <div style={{ ...styles.poster, ...contexts[context].poster, ...(!entity.profile_path || !ready ? styles.empty : {}) }}>
+          <Link to={`/star/${entity.id}`} css={styles.link}>
+            <div css={[styles.element, contexts[context].element]}>
+              <div css={[styles.poster, contexts[context].poster, (!entity.profile_path || !ready ? styles.empty : {})]}>
                 {entity.profile_path && (
                   <img
                     src={`https://image.tmdb.org/t/p/w300${entity.profile_path}`}
                     onLoad={() => this.setState({ ready: true })}
-                    style={styles.img}
+                    css={styles.img}
                   />
                 )}
               </div>
@@ -170,7 +170,7 @@ export default class Persona extends PureComponent {
           </Link>
         </div>
         <h5
-          style={{ ...styles.tooltip, ...contexts[context].tooltip }}
+          css={[styles.tooltip, contexts[context].tooltip]}
           title={`${entity.name}${entity.job ? ` (${entity.job})` : ''}${entity.character ? ` (${entity.character})` : ''}`}
           hidden={context !== 'portrait' && !tooltip}
         >

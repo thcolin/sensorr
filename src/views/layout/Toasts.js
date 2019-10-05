@@ -1,24 +1,16 @@
 import React, { Children } from 'react'
-import { StyleSheet, css } from 'aphrodite'
+import { keyframes } from '@emotion/core'
 import { TransitionGroup } from 'react-transition-group'
 import { CloseIcon as Close, InfoIcon, CheckIcon, FlameIcon, AlertIcon } from 'react-toast-notifications/dist/icons'
 
-const animations = {
-  shrink: {
-    from: {
-      height: '100%',
-    },
-    to: {
-      height: '0%',
-    }
-  },
-}
-
-const suits = StyleSheet.create({
-  shrink: {
-    animationName: animations.shrink,
+const shrink = keyframes`
+  0% {
+    height: 100%;
   }
-})
+  100% {
+    height: 0%;
+  }
+`
 
 const styles = {
   container: {
@@ -92,6 +84,7 @@ const styles = {
     bottom: 0,
     height: 0,
     left: 0,
+    animation: `${shrink} linear 1s`,
     position: 'absolute',
     width: '100%',
   },
@@ -104,10 +97,10 @@ const styles = {
 export const ToastContainer = ({ children, autoDismissTimeout, transitionDuration, hasToasts, ...props }) => (
   <div
     {...props}
+    css={styles.container}
     style={{
-      ...styles.container,
+      ...(props.style || {}),
       pointerEvents: Children.count(children) ? 'auto' : 'none',
-      ...(props.style || {})
     }}
   >
     <TransitionGroup component={null}>{children}</TransitionGroup>
@@ -126,8 +119,8 @@ export const Toast = ({
   transitionState,
 }) => (
   <div
+    css={styles.toast}
     style={{
-      ...styles.toast,
       backgroundColor: styles.appearances[appearance].bg,
       color: styles.appearances[appearance].text,
       transition: `transform ${transitionDuration}ms cubic-bezier(0.2, 0, 0, 1)`,
@@ -140,16 +133,15 @@ export const Toast = ({
     }}
   >
     <div
+      css={styles.icon}
       style={{
-        ...styles.icon,
         backgroundColor: styles.appearances[appearance].fg,
         color: styles.appearances[appearance].bg,
       }}
     >
       <div
-        className={css(suits.shrink)}
+        css={styles.timeout}
         style={{
-          ...styles.timeout,
           animationTimingFunction: 'linear',
           animationDuration: `${autoDismissTimeout}ms`,
           opacity: autoDismiss ? 1 : 0,
@@ -160,9 +152,9 @@ export const Toast = ({
         fill: styles.appearances[appearance].bg,
       })}
     </div>
-    <div style={styles.content}>{children}</div>
+    <div css={styles.content}>{children}</div>
     {onDismiss ? (
-      <div onClick={onDismiss} role="button" style={styles.button}>
+      <div onClick={onDismiss} role="button" css={styles.button}>
         <Close />
       </div>
     ) : null}

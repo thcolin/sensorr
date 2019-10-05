@@ -34,15 +34,15 @@ const Behavior = ({ values, behavior, handleChange }) => {
 
   return (
     <div style={{ prefer: { margin: '0 1em 0 0' }, avoid: { margin: '0 0 0 1em' } }[behavior]}>
-      <h2 style={{ ...styles.subtitle, textTransform: 'capitalize' }}>{behavior}</h2>
-      <p style={styles.paragraph}>
+      <h2 css={styles.subtitle} style={{ textTransform: 'capitalize' }}>{behavior}</h2>
+      <p css={styles.paragraph}>
         {{
           prefer: 'Here you can specify and order prefered keywords, top ones will get a better "score" when choosing appropriate release',
           avoid: 'Here you can specify avoided keywords, if any is found in a release title, this one will be filtered',
         }[behavior]}
       </p>
-      <div style={{ ...styles.column, alignItems: 'center' }}>
-        <select style={styles.select} value={tag} onChange={e => {
+      <div css={styles.column} style={{ alignItems: 'center' }}>
+        <select css={styles.select} value={tag} onChange={e => {
           setTag(e.target.value)
           setKeyword(Object.keys(rules[e.target.value]).filter(k => !(values.policy[behavior][e.target.value] || []).includes(k)).shift() || '')
         }}>
@@ -51,9 +51,9 @@ const Behavior = ({ values, behavior, handleChange }) => {
           ))}
         </select>
         {tag === 'custom' ? (
-          <input type="text" value={keyword} onChange={e => setKeyword(e.target.value)} style={{ ...styles.select, margin: '1em' }} />
+          <input type="text" value={keyword} onChange={e => setKeyword(e.target.value)} css={styles.select} style={{ margin: '1em' }} />
         ) : (
-          <select value={keyword} onChange={e => setKeyword(e.target.value)} style={{ ...styles.select, margin: '1em' }}>
+          <select value={keyword} onChange={e => setKeyword(e.target.value)} css={styles.select} style={{ margin: '1em' }}>
             <option key="null" value={''} disabled={true}>-</option>
             {Object.keys(rules[tag]).map(k => (
               <option key={k} value={k} disabled={(values.policy[behavior][tag] || []).includes(k)}>{`${k.charAt(0).toUpperCase()}${k.slice(1)}`}</option>
@@ -151,26 +151,26 @@ class Policy extends PureComponent {
     const { values, handleChange, ...props } = this.props
 
     return (
-      <div style={styles.section}>
-        <h1 style={styles.title}>Policy</h1>
-        <p style={{ ...styles.paragraph, flex: 1, }}>
-          When using CLI with <code style={styles.code}>-a</code> or <code style={styles.code}>--auto</code> option, results will be filtered and ordered with defined <code style={styles.code}>policy</code>
+      <div css={styles.section}>
+        <h1 css={styles.title}>Policy</h1>
+        <p css={styles.paragraph} style={{ flex: 1, }}>
+          When using CLI with <code css={styles.code}>-a</code> or <code css={styles.code}>--auto</code> option, results will be filtered and ordered with defined <code css={styles.code}>policy</code>
           <br/>
           <br/>
         </p>
         <div>
-          <h2 style={styles.subtitle}>Sort</h2>
-          <p style={{ ...styles.paragraph, flex: 1, }}>
-            Choose default <code style={styles.code}>sort</code> option :
+          <h2 css={styles.subtitle}>Sort</h2>
+          <p css={styles.paragraph} style={{ flex: 1, }}>
+            Choose default <code css={styles.code}>sort</code> option :
             <br/>
           </p>
-          <div style={styles.column}>
-            <select style={{ ...styles.select, margin: '1em 1em 1em 0' }} value={values.sort} onChange={e => handleChange('sort', e.target.value)}>
+          <div css={styles.column}>
+            <select css={styles.select} style={{ margin: '1em 1em 1em 0' }} value={values.sort} onChange={e => handleChange('sort', e.target.value)}>
               {['seeders', 'peers', 'size'].map(sort => (
                 <option key={sort} value={sort}>{`${sort.charAt(0).toUpperCase()}${sort.slice(1)}`}</option>
               ))}
             </select>
-            <label htmlFor="descending" style={{ ...styles.input, borderColor: 'transparent' }}>
+            <label htmlFor="descending" css={styles.input} style={{ borderColor: 'transparent' }}>
               <input
                 id="descending"
                 type="checkbox"
@@ -184,7 +184,7 @@ class Policy extends PureComponent {
           <br/>
           <br/>
         </div>
-        <div style={styles.column}>
+        <div css={styles.column}>
           <Behavior behavior="prefer" values={values} handleChange={handleChange} />
           <Behavior behavior="avoid" values={values} handleChange={handleChange} />
         </div>

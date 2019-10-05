@@ -1,15 +1,14 @@
 import React from 'react'
 import { keyframes } from '@emotion/core'
 
-const bounce = keyframes`{
+const bounce = keyframes`
   0%, 100% {
     transform: scale(0.0) translateZ(0);
-    -webkit-transform: scale(0.0);
-  } 50% {
-    transform: scale(1.0) translateZ(0);
-    -webkit-transform: scale(1.0);
   }
-}`
+  50% {
+    transform: scale(1.0) translateZ(0);
+  }
+`
 
 const styles = {
   element: {
@@ -36,6 +35,6 @@ const styles = {
 export default ({ color = '#333', ...props }) => (
   <div {...props} css={[styles.element, props.css]}>
     <div css={styles.circle} style={{ backgroundColor: color }}></div>
-    <div css={[styles.circle, styles.second]}></div>
+    <div css={[styles.circle, styles.second]} style={{ backgroundColor: color }}></div>
   </div>
 )

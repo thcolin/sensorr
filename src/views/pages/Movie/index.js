@@ -370,9 +370,9 @@ export default class Movie extends PureComponent {
                       )}
                     </p>
                     {!!details.tagline && (
-                      <h3 style={styles.tagline}>{details.tagline}</h3>
+                      <h3 css={styles.tagline}>{details.tagline}</h3>
                     )}
-                    <p style={styles.plot}>{details.overview}</p>
+                    <p css={styles.plot}>{details.overview}</p>
                   </div>
                 </div>
                 <div css={styles.list}>

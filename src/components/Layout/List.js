@@ -47,6 +47,9 @@ const styles = {
       position: 'relative',
       display: 'flex',
       width: '100%',
+      'label': {
+        position: 'relative',
+      },
       'select': {
         position: 'absolute',
         opacity: 0,
@@ -233,7 +236,7 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
 
   return (
     <span {...bind} css={styles.label.element} style={{ justifyContent: { true: 'flex-start', false: 'space-between' }[compact] }}>
-      <label htmlFor={id} {...(title ? { title } : {})} style={{ position: 'relative' }}>
+      <label htmlFor={id} {...(title ? { title } : {})}>
         {children}
         {!!(options || []).length && (
           <select

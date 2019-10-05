@@ -84,14 +84,14 @@ class Plex extends PureComponent {
     }[status]
 
     return (
-      <div style={styles.section}>
-        <h1 style={styles.title}>Plex</h1>
-        <p style={{ ...styles.paragraph, flex: 1, }}>
-          <a href="https://www.plex.tv/" target="_blank" style={styles.link}>Plex</a> user ? You can connect your <strong>Sensorr</strong> instance to your <strong>Plex</strong> server and never inadvertently download a movie you already own !
+      <div css={styles.section}>
+        <h1 css={styles.title}>Plex</h1>
+        <p css={styles.paragraph} style={{ flex: 1, }}>
+          <a href="https://www.plex.tv/" target="_blank" css={styles.link}>Plex</a> user ? You can connect your <strong>Sensorr</strong> instance to your <strong>Plex</strong> server and never inadvertently download a movie you already own !
           <br/>
-          All movies from your <strong>Plex</strong> server will be considered as <code style={styles.code}>📼 archived</code> on <strong>Sensorr</strong>.
+          All movies from your <strong>Plex</strong> server will be considered as <code css={styles.code}>📼 archived</code> on <strong>Sensorr</strong>.
         </p>
-        <div style={styles.column}>
+        <div css={styles.column}>
           <span
             title={`Status: ${status}`}
             style={{ fontSize: '1.5em', display: 'flex', alignItems: 'center', flexBasis: '2em', margin: '0 0.25em 0 0', }}
@@ -109,15 +109,15 @@ class Plex extends PureComponent {
           <input
             type="text"
             placeholder={placeholder.plex}
-            style={styles.input}
+            css={styles.input}
             defaultValue={(values.plex || {}).url}
             onChange={e => this.handleChange('url', e.target.value)}
           />
         </div>
         <button
           type="button"
+          css={styles.button}
           style={{
-            ...styles.button,
             cursor: ['unknown', 'loading', 'waiting'].includes(status) ? 'default' : 'pointer',
             ...(!['unknown', 'authorized', 'loading', 'waiting'].includes(status) ? {} : {
               backgroundColor: ({
@@ -146,13 +146,13 @@ class Plex extends PureComponent {
             <em>Just go to </em>
             <a
               href={`https://plex.tv/pin?code=${((values.plex || {}).pin || {}).code}`}
-              style={styles.link}
+              css={styles.link}
               target="_blank"
             >
               https://plex.tv/pin
             </a>
             <em> and enter PIN code </em>
-            <code style={styles.code}>{((values.plex || {}).pin || {}).code}</code>.
+            <code css={styles.code}>{((values.plex || {}).pin || {}).code}</code>.
           </p>
         )}
       </div>

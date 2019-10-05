@@ -51,9 +51,9 @@ export default class Badge extends PureComponent {
     const { emoji, label, ...props } = this.props
 
     return (
-      <div {...props} style={{ ...styles.element, ...styles.compact[!!label], ...(props.style || {}) }}>
-        <span style={styles.emoji}>{emoji}</span>
-        {!!label && <span style={styles.label}>{label}</span>}
+      <div {...props} css={[styles.element, styles.compact[!!label], props.css]}>
+        <span css={styles.emoji}>{emoji}</span>
+        {!!label && <span css={styles.label}>{label}</span>}
       </div>
     )
   }

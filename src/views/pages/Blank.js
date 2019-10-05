@@ -13,7 +13,7 @@ const styles = {
 }
 
 const Blank = ({ ...props }) => (
-  <div style={styles.wrapper}>
+  <div css={styles.wrapper}>
     <Empty
       emoji="🗺️"
       title="Are you lost ?"

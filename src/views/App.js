@@ -12,7 +12,7 @@ const styles = {
 
 const App = () => {
   return (
-    <div style={styles.element}>
+    <div css={styles.element}>
       <Header />
       <Body />
     </div>

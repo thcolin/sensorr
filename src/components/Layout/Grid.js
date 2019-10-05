@@ -181,6 +181,7 @@ export default class Grid extends PureComponent {
       strict,
       subscribe,
       placeholder,
+      style,
       ...props
     } = this.props
 
@@ -204,16 +205,16 @@ export default class Grid extends PureComponent {
             })}
           />
         )}
-        <div key="element" {...props} style={styles.element}>
+        <div key="element" {...props} css={styles.element}>
           {!!label && (
-            <h1 style={{ ...styles.label, ...(props.style || {}) }}>{label}</h1>
+            <h1 css={styles.label} style={style || {}}>{label}</h1>
           )}
           {(loading && !placeholder) ? (
-            <div style={styles.placeholder}>
+            <div css={styles.placeholder}>
               <Spinner {...spinner} />
             </div>
           ) : (!limited.length && !placeholder) ? (
-            <div style={styles.placeholder}>
+            <div css={styles.placeholder}>
               <Empty
                 {...empty}
                 title={err ? 'Oh ! You came across a bug...' : empty.title}
@@ -227,15 +228,15 @@ export default class Grid extends PureComponent {
               hasMore={limit && (max < limited.length)}
               loadMore={this.expand}
               loader={(
-                <div key="spinner" style={styles.spinner}>
+                <div key="spinner" css={styles.spinner}>
                   <Spinner {...spinner} />
                 </div>
               )}
               threshold={1000}
-              style={styles.grid}
+              css={styles.grid}
             >
               {(limited.length ? limited : Array(25).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
-                <div key={index} style={styles.entity}>
+                <div key={index} css={styles.entity}>
                   {React.createElement(child, { entity, focus, placeholder })}
                 </div>
               ))}

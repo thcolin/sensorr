@@ -169,40 +169,41 @@ export default class Collection extends PureComponent {
             <title>Sensorr - Collection ({match.params.id})</title>
           )}
         </Helmet>
-        <div id="collection" style={styles.element}>
+        <div id="collection" css={styles.element}>
           {details ? (
             <>
               <div
                 key="details"
-                style={{ ...styles.details, backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})` }}
+                css={styles.details}
+                style={{ backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})` }}
               >
-                <div style={styles.metadata}>
-                  <h3 style={styles.popularity}>
+                <div css={styles.metadata}>
+                  <h3 css={styles.popularity}>
                     <span>{details.vote_average.toFixed(1)}</span>
                     <span> </span>
                     <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
                   </h3>
                 </div>
-                <div style={styles.informations}>
+                <div css={styles.informations}>
                   <div>
-                    <img src={`https://image.tmdb.org/t/p/original${details.poster_path}`} style={styles.poster} />
+                    <img src={`https://image.tmdb.org/t/p/original${details.poster_path}`} css={styles.poster} />
                   </div>
-                  <div style={styles.wrapper}>
-                    <h1 style={styles.title}>{details.name}</h1>
-                    <h2 style={styles.subtitle}>
+                  <div css={styles.wrapper}>
+                    <h1 css={styles.title}>{details.name}</h1>
+                    <h2 css={styles.subtitle}>
                       <span>
                         ({new Date(details.release_dates[0]).getFullYear()} - {new Date(details.release_dates[1]).getFullYear()})
                       </span>
                     </h2>
-                    <p style={styles.genres}>
+                    <p css={styles.genres}>
                       {[...new Set(
                         details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
                       ].map(id => GENRES[id]).join(', ')}
                     </p>
-                    <p style={styles.plot}>{details.overview}</p>
+                    <p css={styles.plot}>{details.overview}</p>
                   </div>
                 </div>
-                <div style={styles.more}>
+                <div css={styles.more}>
                   <List
                     label="Parts - 📀"
                     items={details.parts}
@@ -214,7 +215,7 @@ export default class Collection extends PureComponent {
               </div>
             </>
           ) : loading ? (
-            <div style={styles.loading}>
+            <div css={styles.loading}>
               <Spinner />
             </div>
           ) : (

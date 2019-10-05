@@ -93,14 +93,14 @@ class Database extends PureComponent {
     const { job, loading, total, ...state } = this.state
 
     return (
-      <div style={styles.section}>
-        <h1 style={styles.title}>Database</h1>
-        <p style={styles.paragraph}>
+      <div css={styles.section}>
+        <h1 css={styles.title}>Database</h1>
+        <p css={styles.paragraph}>
           Want to work with <em>your data</em> ? Habit of <em>backup everything</em> ? You can dump and import your whole <strong>database</strong> ({Object.keys(SCHEMAS).join(', ')}) in JSON format !
           <br/>
           <br/>
         </p>
-        <div style={styles.column}>
+        <div css={styles.column}>
           <button
             type="button"
             style={{
@@ -117,8 +117,8 @@ class Database extends PureComponent {
           </button>
           <button
             type="button"
+            css={styles.button}
             style={{
-              ...styles.button,
               flex: 1,
               margin: '0 0 0 10px',
               backgroundColor: theme.colors.secondary,

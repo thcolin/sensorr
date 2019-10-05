@@ -416,9 +416,9 @@ class Records extends PureComponent {
           fetched={fetched}
           onChange={(filter) => this.setState({ filter })}
         />
-        <div style={styles.element}>
+        <div css={styles.element}>
           {loading ? (
-            <div style={styles.loading}>
+            <div css={styles.loading}>
               <Spinner />
             </div>
           ) : !Object.keys(sessions).length ? (
@@ -441,25 +441,25 @@ class Records extends PureComponent {
               loader={<Spinner key="spinner" />}
             >
               {filtered.map(record => (
-                <div style={styles.record} key={record.record}>
+                <div css={styles.record} key={record.record}>
                   {record.movie && (
-                    <div style={styles.film}>
+                    <div css={styles.film}>
                       <Film entity={record.movie} />
                     </div>
                   )}
-                  <div style={styles.scroller}>
-                    <h4 style={styles.title}># {new Date(record.time).toLocaleString()}</h4>
+                  <div css={styles.scroller}>
+                    <h4 css={styles.title}># {new Date(record.time).toLocaleString()}</h4>
                     {record.logs.filter(log => log.message).map((log, index) => (
-                      <div style={styles.wrapper} key={log.uuid}>
-                        <div style={styles.container}>
+                      <div css={styles.wrapper} key={log.uuid}>
+                        <div css={styles.container}>
                           <p
-                            style={styles.text}
+                            css={styles.text}
                             onClick={() => this.setState({ focus: focus === `${record.time}-${index}` ? null : `${record.time}-${index}` })}
                           >
                             {markdown(log.message).tree}
                           </p>
                           {focus === `${record.time}-${index}` && (
-                            <div style={styles.focus}>{JSON.stringify(log, null, 2)}</div>
+                            <div css={styles.focus}>{JSON.stringify(log, null, 2)}</div>
                           )}
                         </div>
                         <br/>

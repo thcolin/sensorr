@@ -198,23 +198,27 @@ Tips: Sensorr will use your `config.js` and fallback on default
 
 # Roadmap
 * Feature `Refactor`
+  * `List`
+    * Avoid `select` on `Label`, too much actions needed, find another solution
+      * Move `Upcoming.genres` and `Upcoming.studio` in `subtitle`
+      * Move `Movie.[collection|recommendations|similar|casting|crew]` to `Tabs` (?)
   * `Search`
     * Hide `results` / `suggestions` on history previous
+      * Save it with `useState` over `history.search` ?
   * `Controls`
     * Fix query performance
     * Fix blur on `re-render` (especially on `Releases`)
-  * `List`
-    * Avoid `select` on `Label`, too much actions needed, find another solution
-    * Refactor sort usage with `subtitle` in `Star`
-  * `Trending`
-    * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
-  * Remove `aphrodite` and use `emotion` `css` props everywhere
+  * `Upcoming`
+    * Fix first load performance (create `calendar` or `upcoming` schema with keys on `month` & `year`)
   * Responsive design / mobile UI-UX
 * Feature `Persona`
   * `Persona`
     * Replace `context` to `display` props
     * Implement `placeholder` props
     * Try to keep same `height` as `Film`
+  * `Star`
+    * Refactor completely, see `Movie`
+    * Refactor `List.sort` usage with `subtitle`
   * `Search`
     * Add `search/person` request
   * `Upcoming`
@@ -262,7 +266,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Same layout as `Trending` page
 * Feature `performance`
   * `Upcoming`
-    * Fix first load performance (create `calendar` or `upcoming` schema)
     * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - see [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates))
   * `Server`
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
@@ -285,6 +288,7 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Add hidden `select` or `daypicker` (with only month + year) on "title"
   * `Trending`
     * Polish *discover* row, load 2 page and filter with *trending* ones
+    * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
   * `Controls`
     * Improve `Documents.*.Filters`
       * `Movie`
