@@ -220,7 +220,7 @@ Movie.Filters = {
       min: min,
       max: max,
       step: step,
-      unit: 'min',
+      unit: 'mins',
       apply: (entity, values) => compute(entity.runtime) >= values[0] && compute(entity.runtime) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,

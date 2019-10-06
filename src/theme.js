@@ -79,7 +79,9 @@ const resets = {
     width: '1em',
     border: '0.075em solid white',
     borderRadius: '0.125em',
-    cursor: 'pointer',
+    '&:not(:disabled)': {
+      cursor: 'pointer',
+    },
     '&:checked': {
       '&:before': {
         content: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMTczLjg5OCA0MzkuNDA0bC0xNjYuNC0xNjYuNGMtOS45OTctOS45OTctOS45OTctMjYuMjA2IDAtMzYuMjA0bDM2LjIwMy0zNi4yMDRjOS45OTctOS45OTggMjYuMjA3LTkuOTk4IDM2LjIwNCAwTDE5MiAzMTIuNjkgNDMyLjA5NSA3Mi41OTZjOS45OTctOS45OTcgMjYuMjA3LTkuOTk3IDM2LjIwNCAwbDM2LjIwMyAzNi4yMDRjOS45OTcgOS45OTcgOS45OTcgMjYuMjA2IDAgMzYuMjA0bC0yOTQuNCAyOTQuNDAxYy05Ljk5OCA5Ljk5Ny0yNi4yMDcgOS45OTctMzYuMjA0LS4wMDF6Ij48L3BhdGg+PC9zdmc+)',
@@ -88,8 +90,10 @@ const resets = {
         padding: '0.2em',
         height: '1em',
         width: '1em',
-        cursor: 'pointer',
       },
+      '&:not(:disabled):before': {
+        cursor: 'pointer',
+      }
     },
   },
   radio: {
@@ -100,7 +104,9 @@ const resets = {
     width: '1em',
     border: '0.075em solid white',
     borderRadius: '50%',
-    cursor: 'pointer',
+    '&:not(:disabled)': {
+      cursor: 'pointer',
+    },
     '&:checked': {
       '&:before': {
         content: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMTczLjg5OCA0MzkuNDA0bC0xNjYuNC0xNjYuNGMtOS45OTctOS45OTctOS45OTctMjYuMjA2IDAtMzYuMjA0bDM2LjIwMy0zNi4yMDRjOS45OTctOS45OTggMjYuMjA3LTkuOTk4IDM2LjIwNCAwTDE5MiAzMTIuNjkgNDMyLjA5NSA3Mi41OTZjOS45OTctOS45OTcgMjYuMjA3LTkuOTk3IDM2LjIwNCAwbDM2LjIwMyAzNi4yMDRjOS45OTcgOS45OTcgOS45OTcgMjYuMjA2IDAgMzYuMjA0bC0yOTQuNCAyOTQuNDAxYy05Ljk5OCA5Ljk5Ny0yNi4yMDcgOS45OTctMzYuMjA0LS4wMDF6Ij48L3BhdGg+PC9zdmc+)',
@@ -109,7 +115,9 @@ const resets = {
         padding: '0.2em',
         height: '1em',
         width: '1em',
-        cursor: 'pointer',
+        '&:not(:disabled):before': {
+          cursor: 'pointer',
+        },
       },
     },
   },

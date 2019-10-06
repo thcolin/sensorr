@@ -408,7 +408,7 @@ export default class Movie extends PureComponent {
                     )}
                     {...(more === 'collection' ? {
                       uri: ['collection', details.belongs_to_collection.id],
-                      transform: (res) => [...res.parts].sort((a, b) => new Date(a.release_date || null) - new Date(b.release_date || null)),
+                      transform: (res) => [...res.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15)),
                     } : {
                       items: {
                         recommendations: details.recommendations.results,

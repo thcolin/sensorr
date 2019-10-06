@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
+import * as Emotion from '@emotion/core'
 import { withToastManager } from 'react-toast-notifications'
 import { Movie } from 'shared/Documents'
 import AnimateHeight from 'react-animate-height'
@@ -12,6 +13,7 @@ import database from 'store/database'
 import filesize from 'shared/utils/filesize'
 import { clean } from 'shared/utils/string'
 import nanobounce from 'nanobounce'
+import rules from 'oleoo/src/rules.json'
 import theme from 'theme'
 
 const styles = {
@@ -266,7 +268,10 @@ class Releases extends PureComponent {
               <span><strong>{total}</strong> Releases</span>
             </button>
           )}
-          filters={Object.keys(Releases.Filters).reduce((acc, key) => ({ ...acc, [key]: Releases.Filters[key](releases, movie) }), {})}
+          filters={Object.keys(Releases.Filters).reduce((acc, key) => ({
+            ...acc,
+            [key]: Releases.Filters[key](releases, movie)
+          }), {})}
           sortings={Releases.Sortings}
           onChange={({ filter, sort }) => this.setState({ filter, sort })}
           defaults={{
@@ -275,25 +280,25 @@ class Releases extends PureComponent {
             reverse: false,
           }}
           render={{
-            filters: (Blocks) => (
+            filters: (blocks) => (
               <>
-                <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                  <Blocks.languages display="column" />
-                  <Blocks.sources display="column" />
-                  <Blocks.resolutions display="column" />
-                  <Blocks.encodings display="column" />
-                  <Blocks.dubs display="column" />
+                <div css={[theme.styles.row, theme.styles.spacings.row]} key={0}>
+                  {Emotion.jsx(blocks.languages.element, { ...blocks.languages.props, display: 'column' })}
+                  {Emotion.jsx(blocks.sources.element, { ...blocks.sources.props, display: 'column' })}
+                  {Emotion.jsx(blocks.resolutions.element, { ...blocks.resolutions.props, display: 'column' })}
+                  {Emotion.jsx(blocks.encodings.element, { ...blocks.encodings.props, display: 'column' })}
+                  {Emotion.jsx(blocks.dubs.element, { ...blocks.dubs.props, display: 'column' })}
                 </div>
-                <Blocks.flags />
-                <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                  <Blocks.score />
-                  <Blocks.peers />
-                  <Blocks.size />
+                {Emotion.jsx(blocks.flags.element, blocks.flags.props)}
+                <div css={[theme.styles.row, theme.styles.spacings.row]} key={1}>
+                  {Emotion.jsx(blocks.score.element, blocks.score.props)}
+                  {Emotion.jsx(blocks.peers.element, blocks.peers.props)}
+                  {Emotion.jsx(blocks.size.element, blocks.size.props)}
                 </div>
-                <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                  <Blocks.terms display="column" />
-                  <Blocks.websites display="column" />
-                  <Blocks.state display="column" />
+                <div css={[theme.styles.row, theme.styles.spacings.row]} key={2}>
+                  {Emotion.jsx(blocks.terms.element, { ...blocks.terms.props, display: 'column' })}
+                  {Emotion.jsx(blocks.websites.element, { ...blocks.websites.props, display: 'column' })}
+                  {Emotion.jsx(blocks.state.element, { ...blocks.state.props, display: 'column' })}
                 </div>
               </>
             )
@@ -452,7 +457,7 @@ Releases.Filters = {
     return {
       label: 'Source',
       type: 'checkbox',
-      inputs: Object.keys(sources).map(source => ({
+      inputs: (Object.keys(sources).length ? Object.keys(sources) : Object.keys(rules.source).slice(0, 5)).map(source => ({
         label: source,
         value: source,
       })),
@@ -471,7 +476,7 @@ Releases.Filters = {
     return {
       label: 'Encoding',
       type: 'checkbox',
-      inputs: Object.keys(encodings).map(encoding => ({
+      inputs: (Object.keys(encodings).length ? Object.keys(encodings) : Object.keys(rules.encoding)).map(encoding => ({
         label: encoding,
         value: encoding,
       })),
@@ -490,7 +495,7 @@ Releases.Filters = {
     return {
       label: 'Resolution',
       type: 'checkbox',
-      inputs: Object.keys(resolutions).map(resolution => ({
+      inputs: (Object.keys(resolutions).length ? Object.keys(resolutions) : Object.keys(rules.resolution)).map(resolution => ({
         label: resolution,
         value: resolution,
       })),
@@ -509,7 +514,7 @@ Releases.Filters = {
     return {
       label: 'Dub',
       type: 'checkbox',
-      inputs: Object.keys(dubs).map(dub => ({
+      inputs: (Object.keys(dubs).length ? Object.keys(dubs) : Object.keys(rules.dub)).map(dub => ({
         label: dub,
         value: dub,
       })),
@@ -528,7 +533,7 @@ Releases.Filters = {
     return {
       label: 'Language',
       type: 'checkbox',
-      inputs: Object.keys(languages).map(language => ({
+      inputs: (Object.keys(languages).length ? Object.keys(languages) : Object.keys(rules.language).slice(0, 5)).map(language => ({
         label: language,
         value: language,
       })),
@@ -586,7 +591,7 @@ Releases.Filters = {
     return {
       label: 'Website',
       type: 'checkbox',
-      inputs: Object.keys(websites).map(website => ({
+      inputs: (Object.keys(websites).length ? Object.keys(websites) : ['unknown']).map(website => ({
         label: website,
         value: website,
       })),

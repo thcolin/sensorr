@@ -55,7 +55,7 @@ const Navbar = ({ ...props }) => (
     <div css={styles.element}>
       <div css={styles.container}>
         <NavLink to="/" exact={true} activeStyle={styles.active}>Trending</NavLink>
-        <NavLink to="/movies" activeStyle={styles.active}>Movies</NavLink>
+        <NavLink to="/movies/library" activeStyle={styles.active}>Movies</NavLink>
         <Route
           path="/movies"
           render={() => (
@@ -69,7 +69,7 @@ const Navbar = ({ ...props }) => (
             </div>
           )}
         />
-        <NavLink to="/stars" activeStyle={styles.active}>Stars</NavLink>
+        <NavLink to="/stars/following" activeStyle={styles.active}>Stars</NavLink>
         <Route
           path="/stars"
           render={() => (

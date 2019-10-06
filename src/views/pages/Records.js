@@ -1,4 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
+import * as Emotion from '@emotion/core'
 import { connect } from 'react-redux'
 import { Helmet } from 'react-helmet'
 import { withRouter } from 'react-router'
@@ -273,10 +274,10 @@ const Controler = ({ sessions, session, records, fetched, onChange, ...props }) 
         reverse: false,
       }}
       render={{
-        filters: (Blocks) => (
+        filters: (blocks) => (
           <>
-            <Blocks.source />
-            <Blocks.state />
+            {Emotion.jsx(blocks.source.element, blocks.source.props)}
+            {Emotion.jsx(blocks.state.element, blocks.state.props)}
           </>
         ),
       }}

@@ -1,5 +1,5 @@
 import React, { Children } from 'react'
-import { keyframes } from '@emotion/core'
+import { jsx, keyframes } from '@emotion/core'
 import { TransitionGroup } from 'react-transition-group'
 import { CloseIcon as Close, InfoIcon, CheckIcon, FlameIcon, AlertIcon } from 'react-toast-notifications/dist/icons'
 
@@ -147,7 +147,7 @@ export const Toast = ({
           opacity: autoDismiss ? 1 : 0,
         }}
       />
-      {React.createElement(styles.appearances[appearance].icon, {
+      {jsx(styles.appearances[appearance].icon, {
         style: styles.svg,
         fill: styles.appearances[appearance].bg,
       })}

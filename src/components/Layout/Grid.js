@@ -1,5 +1,6 @@
 import React, { PureComponent, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
+import * as Emotion from '@emotion/core'
 import InfiniteScroll from 'react-infinite-scroller'
 import Controls from 'components/Layout/Controls'
 import Spinner from 'components/Spinner'
@@ -237,7 +238,7 @@ export default class Grid extends PureComponent {
             >
               {(limited.length ? limited : Array(25).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
                 <div key={index} css={styles.entity}>
-                  {React.createElement(child, { entity, focus, placeholder })}
+                  {Emotion.jsx(child, { entity, focus, placeholder })}
                 </div>
               ))}
             </InfiniteScroll>

@@ -6,7 +6,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     padding: '0.25em 0',
-    cursor: 'pointer',
     margin: '0 0 0.5em 0',
     '>input': {
       ...theme.resets.input,
@@ -20,7 +19,6 @@ const styles = {
     '>label': {
       padding: '0 0 1em 0',
       fontWeight: 600,
-      cursor: 'pointer',
     },
     '>div': {
       display: 'grid',
@@ -34,15 +32,15 @@ const styles = {
 }
 
 export const Input = ({ id, children, ...props }) => (
-  <label css={styles.input} key={id} htmlFor={id}>
+  <label css={styles.input} style={!props.disabled ? { cursor: 'pointer' } : {}} key={id} htmlFor={id}>
     <input {...props} id={id} type="radio" />
     {children}
   </label>
 )
 
-const Radio = ({ label, inputs, value, onChange, ...props }) => (
+const Radio = ({ label, inputs, value, onChange, disabled, ...props }) => (
   <div css={styles.element}>
-    <label onClick={() => onChange()}>{label}</label>
+    <label onClick={() => !disabled && onChange()} style={!disabled ? { cursor: 'pointer' } : {}}>{label}</label>
     <div>
       {inputs.map(input => (
         <Input
@@ -50,6 +48,7 @@ const Radio = ({ label, inputs, value, onChange, ...props }) => (
           id={input.value}
           checked={value === input.value}
           onChange={e => !!e.target.checked && onChange(input.value)}
+          disabled={disabled}
         >
           <span>{input.label}</span>
           {typeof input.count === 'number' && (

@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
+import * as Emotion from '@emotion/core'
 import { useHover } from 'react-hooks-lib'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
@@ -209,7 +210,7 @@ export default class List extends PureComponent {
                   padding: { row: `0 ${space}em`, column: `${space}em 0` }[display],
                 }}
               >
-                {React.createElement(child, {
+                {Emotion.jsx(child, {
                   entity: entity,
                   placeholder: placeholder,
                   ...(index < prettify ? { display: 'pretty' } : {}),

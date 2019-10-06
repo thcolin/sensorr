@@ -276,10 +276,10 @@ class Upcoming extends PureComponent {
                   ),
                   filters: (Blocks) => (
                     <>
-                      <Blocks.genre />
+                      {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
                       <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                        <Blocks.popularity display="column" />
-                        <Blocks.vote_average display="column" />
+                        {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+                        {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
                       </div>
                     </>
                   ),

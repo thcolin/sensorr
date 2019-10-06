@@ -63,13 +63,13 @@ const Following = ({ ...props }) => {
               reverse: false,
             },
             render: {
-              filters: (Blocks) => (
+              filters: (blocks) => (
                 <>
-                  <Blocks.known_for_department />
-                  <Blocks.gender />
+                  {Emotion.jsx(blocks.known_for_department.element, blocks.known_for_department.props)}
+                  {Emotion.jsx(blocks.gender.element, blocks.gender.props)}
                   <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                    <Blocks.birth display="column" />
-                    <Blocks.popularity display="column" />
+                    {Emotion.jsx(blocks.birth.element, { ...blocks.birth.props, display: 'column' })}
+                    {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
                   </div>
                 </>
               ),

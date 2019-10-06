@@ -205,9 +205,8 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * `Search`
     * Hide `results` / `suggestions` on history previous
       * Save it with `useState` over `history.search` ?
-  * `Controls`
-    * Fix query performance
-    * Fix blur on `re-render` (especially on `Releases`)
+  * `Film`
+    * Fix `duration` usage (from `minutes` to `0h 00m`)
   * `Upcoming`
     * Fix first load performance (create `calendar` or `upcoming` schema with keys on `month` & `year`)
   * Responsive design / mobile UI-UX

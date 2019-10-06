@@ -23,6 +23,10 @@ const styles = {
       display: 'block',
       padding: 0,
     },
+    disabled: {
+      color: 'white !important',
+      opacity: 0.5,
+    },
     valueLabel: {
       '&>span': {
         color: theme.colors.tertiary,
@@ -52,7 +56,6 @@ const styles = {
     '>label': {
       padding: '0 0 1em 0',
       fontWeight: 600,
-      cursor: 'pointer',
     },
   },
 }
@@ -90,6 +93,7 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
         </div>
       )}
       <Slider
+        {...props}
         value={state}
         onChange={(e, values) => setState(values)}
         onChangeCommitted={(e, values) => onChange(values)}
@@ -102,9 +106,9 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
   )
 }
 
-const Range = ({ label, values, onChange, min, max, step = 1, unit, data = {}, ...props }) => (
+const Range = ({ label, values, onChange, min, max, step = 1, disabled, unit, data = {}, ...props }) => (
   <div css={styles.element} {...props}>
-    <label onClick={() => onChange([min, max])}>
+    <label onClick={() => !disabled && onChange([min, max])} style={!disabled ? { cursor: 'pointer' } : {}}>
       <span>{label}</span>
       <span>&nbsp;</span>
       <small><code>({values.join('-')}{unit ? ` ${unit}` : ''})</code></small>
@@ -116,6 +120,7 @@ const Range = ({ label, values, onChange, min, max, step = 1, unit, data = {}, .
       max={max}
       step={step}
       data={data}
+      disabled={disabled}
     />
   </div>
 )

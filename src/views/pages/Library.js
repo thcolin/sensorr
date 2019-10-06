@@ -1,11 +1,10 @@
 import React, { Fragment } from 'react'
+import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Film from 'components/Entity/Film'
 import { Movie } from 'shared/Documents'
 import theme from 'theme'
-
-const Context = React.createContext()
 
 const styles = {
   filter: {
@@ -73,15 +72,15 @@ const Library = ({ ...props }) => (
             reverse: false,
           },
           render: {
-            filters: (Blocks) => (
+            filters: (blocks) => (
               <>
-                <Blocks.genre />
-                <Blocks.state />
+                {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
+                {Emotion.jsx(blocks.state.element, blocks.state.props)}
                 <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                  <Blocks.year display="column" />
-                  <Blocks.popularity display="column" />
-                  <Blocks.vote_average display="column" />
-                  <Blocks.runtime display="column" />
+                  {Emotion.jsx(blocks.year.element, { ...blocks.year.props, display: 'column' })}
+                  {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+                  {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
+                  {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
                 </div>
               </>
             ),

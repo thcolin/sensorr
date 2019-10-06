@@ -6,7 +6,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     padding: '0.25em 0',
-    cursor: 'pointer',
     margin: '0 0 0.5em 0',
     '>input': {
       ...theme.resets.input,
@@ -20,7 +19,6 @@ const styles = {
     '>label': {
       padding: '0 0 1em 0',
       fontWeight: 600,
-      cursor: 'pointer',
     },
     '>div': {
       '>label': {
@@ -44,15 +42,15 @@ const styles = {
 }
 
 export const Input = ({ id, children, ...props }) => (
-  <label css={styles.input} key={id} htmlFor={id}>
+  <label css={styles.input} style={!props.disabled ? { cursor: 'pointer' } : {}} key={id} htmlFor={id}>
     <input {...props} id={id} type="checkbox" />
     {children}
   </label>
 )
 
-const Checkbox = ({ label, inputs, values, onChange, display = 'grid', ...props }) => inputs.length > 1 && (
+const Checkbox = ({ label, inputs, values, onChange, disabled, display = 'grid', ...props }) => inputs.length > 0 && (
   <div css={[styles.element, styles[display]]} {...props}>
-    <label onClick={() => onChange([])}>{label}</label>
+    <label onClick={() => !disabled && onChange([])} style={!disabled ? { cursor: 'pointer' } : {}}>{label}</label>
     <div>
       {inputs.map(input => (
         <Input
@@ -60,6 +58,7 @@ const Checkbox = ({ label, inputs, values, onChange, display = 'grid', ...props 
           id={input.value}
           checked={values.includes(input.value)}
           onChange={e => onChange([...new Set([input.value, ...values])].filter(value => !!e.target.checked || input.value !== value))}
+          disabled={disabled}
         >
           <span>{input.label}</span>
           {typeof input.count === 'number' && (

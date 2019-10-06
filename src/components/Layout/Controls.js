@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import * as Emotion from '@emotion/core'
 import AnimateHeight from 'react-animate-height'
 import Range from 'components/Form/Range'
 import Checkbox from 'components/Form/Checkbox'
@@ -49,7 +50,7 @@ const styles = {
       },
     },
   },
-  query: {
+  input: {
     ...theme.resets.input,
     flex: 1,
     padding: '1.75em 0',
@@ -110,15 +111,41 @@ const styles = {
   },
 }
 
-const Controls = ({ label, entities, filters, sortings, defaults, onChange, render = {}, ...props }) => {
+const Input = ({ onChange, ...props }) => {
+  const input = useRef(null)
+  const [value, setValue] = useState('')
+  const debounce = useMemo(() => nanobounce(500), [])
+
+  return (
+    <input
+      ref={input}
+      type="text"
+      value={value}
+      onChange={(e) => {
+        const value = e.target.value || ''
+        setValue(value)
+        debounce(() => onChange(value))
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setValue('')
+          onChange('')
+          input.current.blur()
+        }
+      }}
+      css={styles.input}
+      placeholder="Filter"
+    />
+  )
+}
+
+const Controls = ({ label, entities, filters, sortings, defaults, onChange, render = {}, disabled, ...props }) => {
   const [filtering, setFiltering] = useState(defaults.filtering)
   const [sorting, setSorting] = useState(defaults.sorting)
   const [reverse, setReverse] = useState(defaults.reverse)
   const [query, setQuery] = useState('')
   const [previous, setPrevious] = useState(defaults)
   const [open, setOpen] = useState(false)
-  const debounce = useMemo(() => nanobounce(500), [])
-  const input = useRef(null)
 
   const active = Object.keys(filtering)
     .filter(key => !['query'].includes(key))
@@ -126,11 +153,6 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
 
   const without = (keys) => entities
     .filter((entity) => Object.keys(filtering).filter(key => !keys.includes(key)).every(key => filters[key].apply(entity, filtering[key])))
-
-  const blur = () => {
-    setQuery('')
-    input.current.blur()
-  }
 
   const reset = () => {
     setFiltering(defaults.filtering)
@@ -166,51 +188,52 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
     apply(query, false)
   }, [])
 
-  const Blocks = Object.keys(filters)
-    .reduce((Blocks, key) => {
+  const blocks = Object.keys(filters)
+    .reduce((blocks, key) => {
       const filter = filters[key]
       const histogram = filter.histogram ? filter.histogram(without([key])) : {}
 
       switch (filter.type) {
         case 'checkbox':
           return {
-            ...Blocks,
-            [key]: (props) => (
-              <Checkbox
-                {...props}
-                key={key}
-                css={[styles.checkbox, props.css]}
-                label={filter.label}
-                inputs={filter.inputs
+            ...blocks,
+            [key]: {
+              element: Checkbox,
+              props: {
+                key: key,
+                css: styles.checkbox,
+                label: filter.label,
+                inputs: filter.inputs
                   .map(input => ({ ...input, count: histogram[input.value] }))
-                  .sort((a, b) => filter.orderize ? b.count - a.count : 0)
-                }
-                onChange={values => setFiltering({ ...filtering, [key]: values })}
-                values={filtering[key] || filter.default || []}
-              />
-            ),
+                  .sort((a, b) => filter.orderize ? b.count - a.count : 0),
+                onChange: values => setFiltering({ ...filtering, [key]: values }),
+                values: filtering[key] || filter.default || [],
+                disabled: disabled,
+              },
+            },
           }
         case 'range':
           return {
-            ...Blocks,
-            [key]: (props) => (
-              <Range
-                {...props}
-                key={key}
-                css={[styles.range, props.css]}
-                label={filter.label}
-                values={filtering[key] || filter.default || [filter.min, filter.max]}
-                onChange={(values) => setFiltering({ ...filtering, [key]: values })}
-                min={filter.min || 0}
-                max={filter.max || 100}
-                step={filter.step || 1}
-                unit={filter.unit || null}
-                data={histogram}
-              />
-            ),
+            ...blocks,
+            [key]: {
+              element: Range,
+              props: {
+                key: key,
+                css: styles.range,
+                label: filter.label,
+                values: filtering[key] || filter.default || [filter.min, filter.max],
+                onChange: (values) => setFiltering({ ...filtering, [key]: values }),
+                min: filter.min || 0,
+                max: filter.max || 100,
+                step: filter.step || 1,
+                unit: filter.unit || null,
+                data: histogram,
+                disabled: disabled,
+              },
+            }
           }
         default:
-          return Blocks
+          return blocks
       }
     }, {})
 
@@ -221,19 +244,12 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
           render.menu({ setOpen })
         ) : (
           <>
-            <input
+            <Input
               key="query"
-              ref={input}
-              type="text"
-              value={query}
-              onChange={(e) => {
-                const query = e.target.value || ''
+              onChange={query => {
                 setQuery(query)
-                debounce(() => apply(query))
+                apply(query, false)
               }}
-              onKeyDown={(e) => e.key === 'Escape' && blur()}
-              css={styles.query}
-              placeholder="Filter"
             />
             <div key="summary" css={styles.summary}>
               {active.length ? active.map(key => (
@@ -274,7 +290,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
           }}
         >
           <div {...(open ? {} : { style: { opacity: 0 } })}>
-            {React.createElement(label, { total: without([]).length, reset })}
+            {Emotion.jsx(label, { total: without([]).length, reset })}
             <div>
               <Button look={1} onClick={() => cancel()}>Cancel</Button>
               <Button onClick={() => apply(query)}>Apply</Button>
@@ -284,7 +300,10 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
       </div>
       <AnimateHeight css={styles.panel} height={open ? 'auto' : 0} delay={open ? 250 : 0}>
         <div {...(open ? {} : { style: { opacity: 0 } })}>
-          {render.filters ? render.filters(Blocks) : Object.values(Blocks).map(Block => <Block />)}
+          {render.filters ?
+            render.filters(blocks) :
+            Object.values(blocks).map(({ element, props }) => Emotion.jsx(element, props))
+          }
           {sortings && (
             <div css={styles.sort}>
               <Radio
@@ -292,6 +311,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
                 inputs={Object.values(sortings)}
                 onChange={value => value ? setSorting(sortings[value]) : setReverse(!reverse)}
                 value={sorting.value}
+                disabled={disabled}
               />
             </div>
           )}
