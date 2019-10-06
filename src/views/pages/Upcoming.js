@@ -1,4 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
+import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import { withRouter } from 'react-router'
 import Spinner from 'components/Spinner'
@@ -274,7 +275,7 @@ class Upcoming extends PureComponent {
                       <Navigation onClick={() => setOpen(true)} />
                     </div>
                   ),
-                  filters: (Blocks) => (
+                  filters: (blocks) => (
                     <>
                       {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
                       <div css={[theme.styles.row, theme.styles.spacings.row]}>

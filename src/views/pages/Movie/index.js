@@ -128,6 +128,25 @@ const styles = {
       padding: 0,
     }
   },
+  tabs: {
+    display: 'flex',
+    flexDirection: 'row',
+    'alignItems': 'center',
+    justifyContent: 'space-between',
+    padding: '2em 1em 1em 1em',
+    '>div': {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      '>span': {
+        margin: '0 1em',
+        fontSize: '1.125em',
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: 'opacity 300ms ease-in-out',
+      },
+    },
+  },
   loading: {
     flex: 1,
     display: 'flex',
@@ -381,31 +400,45 @@ export default class Movie extends PureComponent {
                   </div>
                 </div>
                 <div css={styles.list}>
-                  <List
-                    label={(
-                      <Label
-                        id="more"
-                        value={more}
-                        onChange={(value) => this.setState({ more: value })}
-                        options={[
-                          ...(details.belongs_to_collection ? [
-                            { value: 'collection', label: `📀 ${(details.belongs_to_collection || {}).name}` }
-                          ] : []),
-                          { value: 'recommendations', label: '💬 Recommendations' },
-                          { value: 'similar', label: '👯 Similar' },
-                          { value: 'casting', label: '👩‍🎤️ Casting' },
-                          { value: 'crew', label: '🎬 Crew' },
-                        ]}
+                  <div css={styles.tabs}>
+                    <div>
+                      {!!details.belongs_to_collection && (
+                        <span
+                          style={{ opacity: more === 'collection' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'collection' })}
+                        >
+                          📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
+                        </span>
+                      )}
+                      <span
+                        style={{ opacity: more === 'recommendations' ? 1 : 0.25 }}
+                        onClick={() => this.setState({ more: 'recommendations' })}
                       >
-                        {{
-                          collection: `📀 ${(details.belongs_to_collection || {}).name}`,
-                          recommendations: '💬 Recommendations',
-                          similar: '👯 Similar',
-                          casting: '👩‍🎤️ Casting',
-                          crew: '🎬 Crew',
-                        }[more]}
-                      </Label>
-                    )}
+                        💬 &nbsp;{`Recommendations`}
+                      </span>
+                      <span
+                        style={{ opacity: more === 'similar' ? 1 : 0.25 }}
+                        onClick={() => this.setState({ more: 'similar' })}
+                      >
+                        👯 &nbsp;{`Similar`}
+                      </span>
+                    </div>
+                    <div>
+                      <span
+                        style={{ opacity: more === 'casting' ? 1 : 0.25 }}
+                        onClick={() => this.setState({ more: 'casting' })}
+                      >
+                        👩‍🎤️ &nbsp;{`Casting`}
+                      </span>
+                      <span
+                        style={{ opacity: more === 'crew' ? 1 : 0.25 }}
+                        onClick={() => this.setState({ more: 'crew' })}
+                      >
+                        🎬 &nbsp;{`Crew`}
+                      </span>
+                    </div>
+                  </div>
+                  <List
                     {...(more === 'collection' ? {
                       uri: ['collection', details.belongs_to_collection.id],
                       transform: (res) => [...res.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15)),

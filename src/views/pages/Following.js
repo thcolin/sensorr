@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import Grid from 'components/Layout/Grid'
 import Persona from 'components/Entity/Persona'
