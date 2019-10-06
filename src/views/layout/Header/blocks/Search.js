@@ -10,7 +10,6 @@ import Expand from 'icons/Expand'
 import Reduce from 'icons/Reduce'
 import tmdb from 'store/tmdb'
 import nanobounce from 'nanobounce'
-import qs from 'query-string'
 import theme from 'theme'
 
 export const Context = React.createContext()
@@ -19,10 +18,7 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   const reference = useRef()
   const [active, setActiveState] = useState(false)
   const [expanded, setExpandedState] = useState(false)
-  const [query, setQuery] = [
-    qs.parse(location.search).query || '',
-    (query) => history.replace(query ? { search: `?query=${query}` } : {}),
-  ]
+  const [query, setQuery] = useState('')
 
   const trapScroll = (enable) => {
     document.body.style['max-height'] = enable ? '100vh' : 'initial'
@@ -48,7 +44,7 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   const handleEsc = (e) => {
     if (e.key === 'Escape') {
       setActive(false)
-      setQuery(null)
+      setQuery('')
     }
   }
 
@@ -63,9 +59,8 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   }, [])
 
   useEffect(() => {
-    if (!query) {
-      setActive(false)
-    }
+    setActive(false)
+    setQuery('')
   }, [location.pathname])
 
   return (
@@ -95,22 +90,20 @@ export const Results = ({ children, ...props }) => {
   const [state, dispatch] = useReducer(Results.reducer, Results.initialState)
 
   const suggestions = useMemo(() => {
-    const next = [
-      ...new Set([
-        query,
-        ...(JSON.parse(localStorage.getItem('sensorr-search-suggestions')) || [])
-      ].filter(q => (
-        !!q &&
-        (
-          query !== q ||
-          !Object.values(state).every(value => Array.isArray(value) && !value.length))
-        )
-      ))
-    ].slice(0, 10)
+    const next = Object.values({
+      ...JSON.parse(localStorage.getItem('sensorr-search-suggestions') || '[]')
+        .reduce((acc, query) => ({ ...acc, [query[0]]: [query[0], new Date(query[1])] }), {}),
+      ...(!!query && !Object.values(state).every(value => Array.isArray(value) && !value.length) ?
+        { [query]: [query, new Date(Date.now() + (5 * 24 * 60 * 60 * 1000))] } : {} // 5 days timeout
+      ),
+    })
+    .filter(query => query[1] > new Date())
+    .sort((a, b) => (b[1] - a[1]))
+    .slice(0, 10)
 
     localStorage.setItem('sensorr-search-suggestions', JSON.stringify(next))
 
-    return next
+    return next.map(query => query[0])
   }, [query, state])
 
   const fetchItems = useCallback(async (uri, params) => {
@@ -329,7 +322,7 @@ Results.styles = {
   },
 }
 
-export const Input = ({ location, history, match, staticContext, ...props }) => {
+export const Input = ({ ...props }) => {
   const { active, setActive, query, setQuery } = useContext(Context)
   const reference = useRef()
   const [input, setInput] = useState('')

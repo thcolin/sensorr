@@ -202,9 +202,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Avoid `select` on `Label`, too much actions needed, find another solution
       * Move `Upcoming.genres` and `Upcoming.studio` in `subtitle`
       * Move `Movie.[collection|recommendations|similar|casting|crew]` to `Tabs` (?)
-  * `Search`
-    * Hide `results` / `suggestions` on history previous
-      * Save it with `useState` over `history.search` ?
   * `Upcoming`
     * Fix first load performance (create `calendar` or `upcoming` schema with keys on `month` & `year`)
   * Responsive design / mobile UI-UX
