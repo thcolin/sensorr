@@ -656,7 +656,7 @@ export const Focus = ({ entity, property, ...props }) => {
         release_date_upcoming: entity.release_date ? new Date(entity.release_date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) : 'Unknown',
         release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
         popularity: `${parseInt(entity.popularity || 0)}`,
-        runtime: entity.runtime || 'Unknown',
+        runtime: <span style={{ textTransform: 'none' }}>{new Movie(entity).duration() || 'Unknown'}</span>,
       }[property]}
       style={Focus.styles.element}
     />

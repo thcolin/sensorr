@@ -25,6 +25,14 @@ class Movie {
     }
   }
 
+  duration() {
+    const { runtime = 0 } = this.payload
+    const hours = parseInt(runtime / 60)
+    const minutes = parseInt(runtime % 60)
+
+    return `${hours > 0 ? `${hours}h ` : ''}${minutes}m`
+  }
+
   normalize() {
     return {
       id: this.payload.id.toString(),

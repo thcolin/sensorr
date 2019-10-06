@@ -360,7 +360,7 @@ export default class Movie extends PureComponent {
                     <p css={styles.metadata}>
                       {!!details.runtime && (
                         <span>
-                          🕙 &nbsp;<strong>{details.runtime}</strong> mins
+                          🕙 &nbsp;<strong>{new Documents.Movie(details).duration()}</strong>
                         </span>
                       )}
                       {!!details.genres.length && (

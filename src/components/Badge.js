@@ -40,7 +40,7 @@ const styles = {
 export default class Badge extends PureComponent {
   static propTypes = {
     emoji: PropTypes.string.isRequired,
-    label: PropTypes.string,
+    label: PropTypes.node,
   }
 
   static defaultProps = {
