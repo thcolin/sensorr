@@ -233,6 +233,11 @@ export default class Movie extends PureComponent {
       })
   }
 
+  refreshReleases = () => {
+    this.setState({ releases: uuidv4() })
+    setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 200)
+  }
+
   render() {
     const { match, ...props } = this.props
     const { details, poster, palette, trailer, releases, loading, err, ...state } = this.state
@@ -427,7 +432,7 @@ export default class Movie extends PureComponent {
               </div>
               <Button
                 look={1}
-                onClick={() => this.setState({ releases: uuidv4() })}
+                onClick={() => this.refreshReleases()}
                 style={{
                   color: palette.color,
                   borderColor: palette.color,
