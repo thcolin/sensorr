@@ -1,8 +1,8 @@
 Usage: sensorr [command] [options]
 
 Commands:
-  📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
+  📰 stalk               Stalk stars and update calendar with "recents" movies (+/- 8 years from now)
   🔗 sync                Consider all movies from your Plex server as "archived"
   🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
   ♻️ refresh             Refresh movies collection data (vote_average, popularity, etc...)

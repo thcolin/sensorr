@@ -21,12 +21,22 @@ const styles = {
       fontWeight: 600,
     },
     '>div': {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, 12em)',
-      justifyContent: 'space-between',
       '>label': {
         fontSize: '0.917em',
       },
+    },
+  },
+  grid: {
+    '>div': {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, 12em)',
+      justifyContent: 'space-between',
+    },
+  },
+  column: {
+    '>div': {
+      display: 'flex',
+      flexDirection: 'column',
     },
   },
 }
@@ -38,8 +48,8 @@ export const Input = ({ id, children, ...props }) => (
   </label>
 )
 
-const Radio = ({ label, inputs, value, onChange, disabled, ...props }) => (
-  <div css={styles.element}>
+const Radio = ({ label, inputs, value, onChange, disabled, display = 'grid', ...props }) => (
+  <div {...props} css={[styles.element, styles[display], props.css]}>
     <label onClick={() => !disabled && onChange()} style={!disabled ? { cursor: 'pointer' } : {}}>{label}</label>
     <div>
       {inputs.map(input => (

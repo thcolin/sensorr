@@ -80,9 +80,9 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
 })
 
 const Childs = {
-  movie: (props) => <Film {...props} display="card" />,
-  collection: (props) => <Film {...props} display="card"  withState={false} link={(entity) => `/collection/${entity.id}`} />,
-  persona: (props) => <Persona context="portrait" {...props} />,
+  Movie: (props) => <Film {...props} display="card" />,
+  Collection: (props) => <Film {...props} display="card"  withState={false} link={(entity) => `/collection/${entity.id}`} />,
+  Persona: (props) => <Persona context="portrait" {...props} />,
 }
 
 export const Results = ({ children, ...props }) => {
@@ -165,7 +165,7 @@ export const Results = ({ children, ...props }) => {
                 label="🎞️&nbsp; Movies"
                 items={state.movie}
                 hide={true}
-                child={Childs.movie}
+                child={Childs.Movie}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}
@@ -175,14 +175,14 @@ export const Results = ({ children, ...props }) => {
               label="⭐&nbsp; Stars"
               uri={['search', 'person']}
               params={{ query, sort_by: 'popularity.desc' }}
-              child={Childs.persona}
+              child={Childs.Persona}
             /> */}
             {state.collection && (
               <List
                 label="📚&nbsp; Collections"
                 items={state.collection}
                 hide={true}
-                child={Childs.collection}
+                child={Childs.Collection}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}

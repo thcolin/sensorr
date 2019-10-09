@@ -37,6 +37,18 @@ const styles = {
   },
 }
 
+const Pane = (blocks) => (
+  <>
+    {Emotion.jsx(blocks.known_for_department.element, blocks.known_for_department.props)}
+    {Emotion.jsx(blocks.gender.element, blocks.gender.props)}
+    <div css={[theme.styles.row, theme.styles.spacings.row]}>
+      {Emotion.jsx(blocks.birth.element, { ...blocks.birth.props, display: 'column' })}
+      {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+    </div>
+    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+  </>
+)
+
 const Following = ({ ...props }) => {
   return (
     <Fragment>
@@ -48,7 +60,7 @@ const Following = ({ ...props }) => {
           limit={true}
           strict={false}
           query={(db) => db.stars.find().where('state').ne('ignored')}
-          child={(props) => <Persona context="portrait" {...props} />}
+          child={Following.Childs.Persona}
           css={styles.grid}
           controls={{
             label: ({ total, reset }) => (
@@ -64,16 +76,7 @@ const Following = ({ ...props }) => {
               reverse: false,
             },
             render: {
-              filters: (blocks) => (
-                <>
-                  {Emotion.jsx(blocks.known_for_department.element, blocks.known_for_department.props)}
-                  {Emotion.jsx(blocks.gender.element, blocks.gender.props)}
-                  <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                    {Emotion.jsx(blocks.birth.element, { ...blocks.birth.props, display: 'column' })}
-                    {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
-                  </div>
-                </>
-              ),
+              pane: Pane,
             },
           }}
           empty={{
@@ -89,6 +92,10 @@ const Following = ({ ...props }) => {
       </div>
     </Fragment>
   )
+}
+
+Following.Childs = {
+  Persona: (props) => <Persona context="portrait" {...props} />,
 }
 
 export default Following

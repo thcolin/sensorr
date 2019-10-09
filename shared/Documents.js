@@ -53,7 +53,7 @@ class Movie {
           ...new Set([this.payload.title, this.payload.original_title].concat(
             this.payload.titles ?
               this.payload.titles :
-              (this.payload.alternative_titles.titles || [])
+              ((this.payload.alternative_titles || {}).titles || [])
                 .filter(title => this.countries.includes(title.iso_3166_1))
                 .map(title => title.title)
           ).map(title => clean(title)).filter(title => title)),
@@ -62,7 +62,7 @@ class Movie {
           ...new Set(
             this.payload.years ?
               this.payload.years :
-              (this.payload.release_dates.results || [])
+              ((this.payload.release_dates || {}).results || [])
                 .filter(date => this.countries.includes(date.iso_3166_1))
                 .reduce((years, payload) => [
                   ...years,

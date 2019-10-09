@@ -135,6 +135,30 @@ const styles = {
   },
 }
 
+const Pane = (blocks) => (
+  <>
+    <div css={[theme.styles.row, theme.styles.spacings.row]} key={0}>
+      {Emotion.jsx(blocks.languages.element, { ...blocks.languages.props, display: 'column' })}
+      {Emotion.jsx(blocks.sources.element, { ...blocks.sources.props, display: 'column' })}
+      {Emotion.jsx(blocks.resolutions.element, { ...blocks.resolutions.props, display: 'column' })}
+      {Emotion.jsx(blocks.encodings.element, { ...blocks.encodings.props, display: 'column' })}
+      {Emotion.jsx(blocks.dubs.element, { ...blocks.dubs.props, display: 'column' })}
+    </div>
+    {Emotion.jsx(blocks.flags.element, blocks.flags.props)}
+    <div css={[theme.styles.row, theme.styles.spacings.row]} key={1}>
+      {Emotion.jsx(blocks.score.element, blocks.score.props)}
+      {Emotion.jsx(blocks.peers.element, blocks.peers.props)}
+      {Emotion.jsx(blocks.size.element, blocks.size.props)}
+    </div>
+    <div css={[theme.styles.row, theme.styles.spacings.row]} key={2}>
+      {Emotion.jsx(blocks.terms.element, { ...blocks.terms.props, display: 'column' })}
+      {Emotion.jsx(blocks.websites.element, { ...blocks.websites.props, display: 'column' })}
+      {Emotion.jsx(blocks.state.element, { ...blocks.state.props, display: 'column' })}
+    </div>
+    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+  </>
+)
+
 class Releases extends PureComponent {
   static propTypes = {
     movie: PropTypes.object.isRequired,
@@ -280,28 +304,7 @@ class Releases extends PureComponent {
             reverse: false,
           }}
           render={{
-            filters: (blocks) => (
-              <>
-                <div css={[theme.styles.row, theme.styles.spacings.row]} key={0}>
-                  {Emotion.jsx(blocks.languages.element, { ...blocks.languages.props, display: 'column' })}
-                  {Emotion.jsx(blocks.sources.element, { ...blocks.sources.props, display: 'column' })}
-                  {Emotion.jsx(blocks.resolutions.element, { ...blocks.resolutions.props, display: 'column' })}
-                  {Emotion.jsx(blocks.encodings.element, { ...blocks.encodings.props, display: 'column' })}
-                  {Emotion.jsx(blocks.dubs.element, { ...blocks.dubs.props, display: 'column' })}
-                </div>
-                {Emotion.jsx(blocks.flags.element, blocks.flags.props)}
-                <div css={[theme.styles.row, theme.styles.spacings.row]} key={1}>
-                  {Emotion.jsx(blocks.score.element, blocks.score.props)}
-                  {Emotion.jsx(blocks.peers.element, blocks.peers.props)}
-                  {Emotion.jsx(blocks.size.element, blocks.size.props)}
-                </div>
-                <div css={[theme.styles.row, theme.styles.spacings.row]} key={2}>
-                  {Emotion.jsx(blocks.terms.element, { ...blocks.terms.props, display: 'column' })}
-                  {Emotion.jsx(blocks.websites.element, { ...blocks.websites.props, display: 'column' })}
-                  {Emotion.jsx(blocks.state.element, { ...blocks.state.props, display: 'column' })}
-                </div>
-              </>
-            )
+            pane: Pane,
           }}
         />
         <AnimateHeight css={styles.releases.ongoing} height={ongoing.title && ongoing.xznab ? 'auto' : 0}>

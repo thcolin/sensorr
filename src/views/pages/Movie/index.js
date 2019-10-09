@@ -4,7 +4,7 @@ import Color from 'color'
 import ReactPlayer from 'react-player'
 import List, { Label } from 'components/Layout/List'
 import Button from 'components/Button'
-import PersonaDefault from 'components/Entity/Persona'
+import Persona from 'components/Entity/Persona'
 import Film, { State, Poster } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
@@ -158,9 +158,11 @@ const styles = {
   },
 }
 
-const Persona = (props) => <PersonaDefault {...props} context="portrait" />
-
 export default class Movie extends PureComponent {
+  static Childs = {
+    Persona: (props) => <Persona {...props} context="portrait" />
+  }
+
   constructor(props) {
     super(props)
 
@@ -456,8 +458,8 @@ export default class Movie extends PureComponent {
                       collection: Film,
                       recommendations: Film,
                       similar: Film,
-                      casting: Persona,
-                      crew: Persona,
+                      casting: Movie.Childs.Persona,
+                      crew: Movie.Childs.Persona,
                     }[more]}
                     empty={{ style: styles.empty }}
                   />

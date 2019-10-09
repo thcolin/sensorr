@@ -179,6 +179,13 @@ const Navigation = withRouter(({ sessions, session, onClick, edges = true, locat
   )
 })
 
+const Pane = (blocks) => (
+  <>
+    {Emotion.jsx(blocks.state.element, blocks.state.props)}
+    {Emotion.jsx(blocks.source.element, blocks.source.props)}
+  </>
+)
+
 const Controler = ({ sessions, session, records, fetched, onChange, ...props }) => {
   const filters = {
     source: (entities) => {
@@ -274,12 +281,7 @@ const Controler = ({ sessions, session, records, fetched, onChange, ...props }) 
         reverse: false,
       }}
       render={{
-        filters: (blocks) => (
-          <>
-            {Emotion.jsx(blocks.source.element, blocks.source.props)}
-            {Emotion.jsx(blocks.state.element, blocks.state.props)}
-          </>
-        ),
+        pane: Pane,
       }}
     >
       {({ setOpen }) => (

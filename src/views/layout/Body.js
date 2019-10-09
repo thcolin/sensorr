@@ -5,7 +5,7 @@ import Library from 'views/pages/Library'
 import Movie from 'views/pages/Movie'
 import Collection from 'views/pages/Collection'
 import Star from 'views/pages/Star'
-import Upcoming from 'views/pages/Upcoming'
+import Calendar from 'views/pages/Calendar'
 import Following from 'views/pages/Following'
 import Settings from 'views/pages/Settings'
 import Records from 'views/pages/Records'
@@ -28,8 +28,8 @@ const Body = ({ ...props }) => (
         <Route path="/" exact component={Trending} />
         <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
         <Route path="/movies/library" exact component={Library} />
-        <Route path="/movies/upcoming/:year/:month" exact component={Upcoming} />
-        <Route path="/movies/upcoming" exact component={() => <Redirect to={`/movies/upcoming/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
+        <Route path="/movies/calendar/:year/:month" exact component={Calendar} />
+        <Route path="/movies/calendar" exact component={() => <Redirect to={`/movies/calendar/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
         <Route path="/movies/records/:uuid?" exact component={Records} />
         <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
         <Route path="/stars/following" exact component={Following} />

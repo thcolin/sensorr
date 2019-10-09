@@ -120,7 +120,52 @@ const SCHEMAS = {
         type: 'array',
       }
     },
-  }
+  },
+  calendar: {
+    title: 'publication',
+    version: 0,
+    description: 'Describe a TMDB movie publication',
+    type: 'object',
+    required: ['id', 'release_date', 'title', 'poster_path'],
+    attachments: {},
+    properties: {
+      id: {
+        type: 'string',
+        primary: true,
+      },
+      release_date: {
+        type: 'string',
+        index: true,
+      },
+      imdb_id: {
+        type: 'string',
+      },
+      title: {
+        type: 'string',
+      },
+      original_title: {
+        type: 'string',
+      },
+      genres: {
+        type: 'array',
+      },
+      poster_path: {
+        type: 'string',
+      },
+      runtime: {
+        type: 'number',
+      },
+      popularity: {
+        type: 'number',
+      },
+      vote_average: {
+        type: 'number',
+      },
+      credits: {
+        type: 'array',
+      }
+    },
+  },
 }
 
 const MIGRATIONS = {

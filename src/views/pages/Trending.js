@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import List, { Label } from 'components/Layout/List'
 import Film from 'components/Entity/Film'
-import PersonaDefault from 'components/Entity/Persona'
+import Persona from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
 import theme from 'theme'
 
@@ -23,9 +23,11 @@ const styles = {
   },
 }
 
-const Persona = (props) => <PersonaDefault {...props} context="portrait" />
-
 export default class Trending extends PureComponent {
+  static Childs = {
+    Persona: (props) => <Persona {...props} context="portrait" />
+  }
+
   constructor(props) {
     super(props)
 
@@ -164,7 +166,7 @@ export default class Trending extends PureComponent {
             title="Trending stars"
             uri={['trending', 'person', 'week']}
             params={{ sort_by: 'popularity.desc' }}
-            child={Persona}
+            child={Trending.Childs.Persona}
           />
         </div>
       </Fragment>

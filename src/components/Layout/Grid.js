@@ -8,6 +8,7 @@ import Empty from 'components/Empty'
 import database from 'store/database'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
+import nanobounce from 'nanobounce'
 
 const styles = {
   element: {
@@ -20,6 +21,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: '25vh',
   },
   label: {
     padding: '0 2em',
@@ -68,8 +70,9 @@ export default class Grid extends PureComponent {
     spinner: PropTypes.object,
     limit: PropTypes.bool,
     strict: PropTypes.bool,
-    subscribe: PropTypes.bool,
+    debounce: PropTypes.bool,
     placeholder: PropTypes.bool,
+    ready: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -79,8 +82,9 @@ export default class Grid extends PureComponent {
     spinner: {},
     limit: false,
     strict: true,
-    subscribe: true,
+    debounce: false,
     placeholder: true,
+    ready: true,
   }
 
   constructor(props) {
@@ -89,7 +93,6 @@ export default class Grid extends PureComponent {
     this.state = {
       entities: [],
       loading: false,
-      buffer: [],
       err: null,
       max: 25,
       filter: () => true,
@@ -99,61 +102,61 @@ export default class Grid extends PureComponent {
 
     this.expand = this.expand.bind(this)
     this.validate = this.validate.bind(this)
+    this.debounce = nanobounce(500)
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     if (this.props.query) {
       this.setState({ loading: true })
-      const db = await database.get()
-      const query = this.props.query(db)
-      const entities = await query.exec()
-      this.setState({ loading: false, entities: (this.props.transform || ((entities) => entities.map(entity => entity.toJSON())))(entities) })
-
-      if (this.props.subscribe) {
-        this.subscription = query.$.subscribe(entities => this.setState({ buffer: entities.map(entity => entity.toJSON()) }))
-      }
+      this.fetchDatabase()
     } else if (this.props.uri) {
       this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(
-        res => this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] }),
-        err => {
-          this.setState({
-            loading: false,
-            err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
-          })
-        }
-      )
+      this.fetchTMDB()
     }
   }
 
   componentDidUpdate(props, state) {
     if (this.props.query) {
-      if (this.state.buffer.length && (props.filter !== this.props.filter)) {
-        this.setState({
-          entities: this.state.buffer,
-          buffer: [],
-          max: 25,
-        })
+      if (this.props.query !== props.query) {
+        this.setState({ loading: true })
+        if (this.props.debounce) {
+          this.debounce(() => this.fetchDatabase())
+        } else {
+          this.fetchDatabase()
+        }
       }
     } else if (this.props.uri) {
       if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
         this.setState({ loading: true })
-        tmdb.fetch(this.props.uri, this.props.params).then(
-          res => this.setState({ loading: false, entities: this.props.transform(res) }),
-          err => {
-            this.setState({
-              loading: false,
-              err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
-            })
-          }
-        )
+        if (this.props.debounce) {
+          this.debounce(() => this.fetchTMDB())
+        } else {
+          this.fetchTMDB()
+        }
       }
     }
   }
 
-  componentWillUnmount() {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
+  async fetchDatabase() {
+    const db = await database.get()
+    const query = this.props.query(db)
+    const entities = await query.exec()
+
+    this.setState({
+      loading: false,
+      entities: (this.props.transform || ((entities) => entities.map(entity => entity.toJSON())))(entities),
+    })
+  }
+
+  async fetchTMDB() {
+    try {
+      const res = await tmdb.fetch(this.props.uri, this.props.params)
+      this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] })
+    } catch(err) {
+      this.setState({
+        loading: false,
+        err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+      })
     }
   }
 
@@ -180,8 +183,9 @@ export default class Grid extends PureComponent {
       spinner,
       limit,
       strict,
-      subscribe,
+      debounce,
       placeholder,
+      ready,
       style,
       ...props
     } = this.props
@@ -210,11 +214,11 @@ export default class Grid extends PureComponent {
           {!!label && (
             <h1 css={styles.label} style={style || {}}>{label}</h1>
           )}
-          {(loading && !placeholder) ? (
+          {((loading || !ready) && !placeholder) ? (
             <div css={styles.placeholder}>
               <Spinner {...spinner} />
             </div>
-          ) : (!limited.length && !placeholder) ? (
+          ) : (!limited.length && !loading) ? (
             <div css={styles.placeholder}>
               <Empty
                 {...empty}

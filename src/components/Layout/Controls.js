@@ -79,7 +79,7 @@ const styles = {
       },
     }
   },
-  panel: {
+  pane: {
     overflow: 'hidden',
     backgroundColor: theme.colors.primary,
     color: 'white',
@@ -103,11 +103,8 @@ const styles = {
   range: {
     flex: 1,
   },
-  sort: {
-    display: 'flex',
-    '>*': {
-      flex: 1,
-    }
+  radio: {
+    flex: 1,
   },
 }
 
@@ -232,10 +229,41 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
               },
             }
           }
+        case 'radio':
+          return {
+            ...blocks,
+            [key]: {
+              element: Radio,
+              props: {
+                key: key,
+                css: styles.radio,
+                label: filter.label,
+                inputs: filter.inputs,
+                value: filtering[key] || filter.default,
+                onChange: (value) => setFiltering({ ...filtering, [key]: value }),
+                disabled: disabled,
+              },
+            }
+          }
         default:
           return blocks
       }
     }, {})
+
+  if (sortings) {
+    blocks.sorting = {
+      element: Radio,
+      props: {
+        key: 'sorting',
+        label: `Sort ${reverse ? '↓' : '↑'}`,
+        css: styles.radio,
+        inputs: Object.values(sortings),
+        onChange: value => value ? setSorting(sortings[value]) : setReverse(!reverse),
+        value: sorting.value,
+        disabled: disabled,
+      },
+    }
+  }
 
   return (
     <div css={styles.element}>
@@ -298,23 +326,12 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
           </div>
         </div>
       </div>
-      <AnimateHeight css={styles.panel} height={open ? 'auto' : 0} delay={open ? 250 : 0}>
+      <AnimateHeight css={styles.pane} height={open ? 'auto' : 0} delay={open ? 250 : 0}>
         <div {...(open ? {} : { style: { opacity: 0 } })}>
-          {render.filters ?
-            render.filters(blocks) :
+          {render.pane ?
+            render.pane(blocks) :
             Object.values(blocks).map(({ element, props }) => Emotion.jsx(element, props))
           }
-          {sortings && (
-            <div css={styles.sort}>
-              <Radio
-                label={`Sort ${reverse ? '↓' : '↑'}`}
-                inputs={Object.values(sortings)}
-                onChange={value => value ? setSorting(sortings[value]) : setReverse(!reverse)}
-                value={sorting.value}
-                disabled={disabled}
-              />
-            </div>
-          )}
         </div>
       </AnimateHeight>
     </div>

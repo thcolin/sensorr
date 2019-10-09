@@ -45,6 +45,20 @@ const styles = {
   },
 }
 
+const Pane = (blocks) => (
+  <>
+    {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
+    {Emotion.jsx(blocks.state.element, blocks.state.props)}
+    <div css={[theme.styles.row, theme.styles.spacings.row]}>
+      {Emotion.jsx(blocks.year.element, { ...blocks.year.props, display: 'column' })}
+      {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+      {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
+      {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
+    </div>
+    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+  </>
+)
+
 const Library = ({ ...props }) => (
   <Fragment>
     <Helmet>
@@ -72,18 +86,7 @@ const Library = ({ ...props }) => (
             reverse: false,
           },
           render: {
-            filters: (blocks) => (
-              <>
-                {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
-                {Emotion.jsx(blocks.state.element, blocks.state.props)}
-                <div css={[theme.styles.row, theme.styles.spacings.row]}>
-                  {Emotion.jsx(blocks.year.element, { ...blocks.year.props, display: 'column' })}
-                  {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
-                  {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
-                  {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
-                </div>
-              </>
-            ),
+            pane: Pane,
           }
         }}
         empty={{

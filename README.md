@@ -67,7 +67,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
       <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/upcoming.jpg?raw=true" width="100" />
       </td>
       <td>
-        <b>Stars / Upcoming</b>
+        <b>Stars / Calendar</b>
         <ul>
           <li>Track upcoming movies from <code>followed</code> stars !</li>
         </ul>
@@ -197,10 +197,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
-* Feature `Refactor`
-  * `Upcoming`
-    * Fix first load performance (create `calendar` or `upcoming` schema with keys on `month` & `year`)
-  * Responsive design / mobile UI-UX
 * Feature `Persona`
   * `Persona`
     * Replace `context` to `display` props
@@ -211,8 +207,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Refactor `List.sort` usage with `subtitle`
   * `Search`
     * Add `search/person` request
-  * `Upcoming`
-    * Polish integration (`Film.withHover` doesn't work well with current solution)
   * `Trending`
     * Polish integration
   * `Following`
@@ -255,12 +249,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
     * Grouped movies by "policy"
     * Same layout as `Trending` page
 * Feature `performance`
-  * `Upcoming`
-    * Filter `movie.release_dates` (only `Premiere`, `Theatrical (limited)`, `Theatrical`, `Digital` or `Physical` - see [/movie/{movie_id}/release_dates](https://developers.themoviedb.org/3/movies/get-movie-release-dates))
+  * Look at [`shipjs`](https://github.com/algolia/shipjs)
+  * `oleoo`
+    * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)
   * `Server`
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
+    * Fix RAM usage with `sessions` in `io`
   * `CLI`
     * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
+  * Responsive design / mobile UI-UX
 * Feature `Config`
   * Fix empty `config.json` on __Docker__ build
   * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
@@ -271,15 +268,15 @@ Tips: Sensorr will use your `config.js` and fallback on default
 * Feature `Notifications`
   * Notify `records` summary (email, sms, etc...)
 * Feature `UI/UX sugar`
+  * Translate (`fr`, `en`)
   * `Search`
     * Animate `height`
     * Add remove `suggestion` button
-  * `Upcoming`
-    * Add hidden `select` or `daypicker` (with only month + year) on "title"
   * `Trending`
     * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
   * `Controls`
+    * Save to `localStorage` ?
     * Improve `Documents.*.Filters`
       * `Movie`
         * `country` - `multiple` (use `original_language` ? - no)
@@ -289,7 +286,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
   * `Row`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
-  * Save `Controls` to `localStorage` ?
   * Summary command result
     * `record`:
       ```
@@ -299,20 +295,19 @@ Tips: Sensorr will use your `config.js` and fallback on default
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
   * `Loading` page waiting sync of `db` with progress ?
-  * Translate (`fr`, `en`)
-  * Dark mode
+  * Dark mode (`react-theme-provider`)
 * Feature `Custom Home`
   * `Trending`
     * `Row` with *upcoming* `movies` from *followed* `stars`
-      * Link to `Upcoming`
+      * Link to `Calendar`
     * Customize
       * Pinned sortable `Trending|Discover` `Rows`
-        * `type=[Popular|Top|Upcoming|Trending|Discover]`
+        * `type=[Popular|Top|Calendar|Trending|Discover]`
         * `uri={...}`
         * `params={...}`
 * Feature `Takecare`
-  * Replace `Plex` available releases by better if available, like `CouchPotato`
-    * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...)
+  * Replace `Plex` releases by better if available, like `CouchPotato`
+    * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and compute score
 * Feature `Onboarding`
   * Add `Onboarding` page
 * Feature `Browser Plugin`
