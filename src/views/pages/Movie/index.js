@@ -267,7 +267,18 @@ export default class Movie extends PureComponent {
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
       .sort((a, b) => a.type === 'Trailer' ? -1 : 1)
 
-    const more = state.more || ((details || {}).belongs_to_collection ? 'collection' : 'recommendations')
+    const more = state.more || (
+      (details || {}).belongs_to_collection ?
+      'collection' :
+      (details || { recommendations: { results: [] } }).recommendations.results.length ?
+      'recommendations' :
+      (details || { similar: { results: [] } }).similar.results.length ?
+      'similar' :
+      (details || { credits: { cast: [] } }).credits.cast.length ?
+      'cast' :
+      (details || { credits: { crew: [] } }).credits.crew.length ?
+      'crew' : null
+    )
 
     return (
       <Fragment>
@@ -412,32 +423,40 @@ export default class Movie extends PureComponent {
                           📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
                         </span>
                       )}
-                      <span
-                        style={{ opacity: more === 'recommendations' ? 1 : 0.25 }}
-                        onClick={() => this.setState({ more: 'recommendations' })}
-                      >
-                        💬 &nbsp;{`Recommendations`}
-                      </span>
-                      <span
-                        style={{ opacity: more === 'similar' ? 1 : 0.25 }}
-                        onClick={() => this.setState({ more: 'similar' })}
-                      >
-                        👯 &nbsp;{`Similar`}
-                      </span>
+                      {!!details.recommendations.results.length && (
+                        <span
+                          style={{ opacity: more === 'recommendations' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'recommendations' })}
+                        >
+                          💬 &nbsp;{`Recommendations`}
+                        </span>
+                      )}
+                      {!!details.similar.results.length && (
+                        <span
+                          style={{ opacity: more === 'similar' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'similar' })}
+                        >
+                          👯 &nbsp;{`Similar`}
+                        </span>
+                      )}
                     </div>
                     <div>
-                      <span
-                        style={{ opacity: more === 'casting' ? 1 : 0.25 }}
-                        onClick={() => this.setState({ more: 'casting' })}
-                      >
-                        👩‍🎤️ &nbsp;{`Casting`}
-                      </span>
-                      <span
-                        style={{ opacity: more === 'crew' ? 1 : 0.25 }}
-                        onClick={() => this.setState({ more: 'crew' })}
-                      >
-                        🎬 &nbsp;{`Crew`}
-                      </span>
+                      {!!details.credits.cast.length && (
+                        <span
+                          style={{ opacity: more === 'cast' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'cast' })}
+                        >
+                          👩‍🎤️ &nbsp;{`Casting`}
+                        </span>
+                      )}
+                      {!!details.credits.crew.length && (
+                        <span
+                          style={{ opacity: more === 'crew' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'crew' })}
+                        >
+                          🎬 &nbsp;{`Crew`}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <List
@@ -448,7 +467,7 @@ export default class Movie extends PureComponent {
                       items: {
                         recommendations: details.recommendations.results,
                         similar: details.similar.results,
-                        casting: details.credits.cast,
+                        cast: details.credits.cast,
                         crew: details.credits.crew,
                       }[more]
                     })}
@@ -458,7 +477,7 @@ export default class Movie extends PureComponent {
                       collection: Film,
                       recommendations: Film,
                       similar: Film,
-                      casting: Movie.Childs.Persona,
+                      cast: Movie.Childs.Persona,
                       crew: Movie.Childs.Persona,
                     }[more]}
                     empty={{ style: styles.empty }}

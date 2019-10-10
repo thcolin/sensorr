@@ -117,7 +117,7 @@ export const Navigation = withRouter(({ onClick, edges = true, location, history
         </a>
       </div>
       <div>
-        <a onClick={previous[0]} style={!edges || (month === 1 && year <= LIMITS[0]) ? { visibility: 'hidden' } : {}}>
+        <a onClick={previous[0]} style={(month === 1 && year <= LIMITS[0]) ? { visibility: 'hidden' } : {}}>
           <Left />
         </a>
         {onClick ? (
@@ -159,7 +159,7 @@ export const Navigation = withRouter(({ onClick, edges = true, location, history
             </label>
           </div>
         )}
-        <a onClick={next[0]} style={!edges || (month === 12 && year >= LIMITS[1]) ? { visibility: 'hidden' } : {}}>
+        <a onClick={next[0]} style={(month === 12 && year >= LIMITS[1]) ? { visibility: 'hidden' } : {}}>
           <Right />
         </a>
       </div>
