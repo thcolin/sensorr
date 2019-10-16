@@ -5,7 +5,7 @@ WORKDIR /app/sensorr
 VOLUME /app/sensorr/config
 VOLUME /app/sensorr/blackhole
 
-COPY .babelrc package.json package-lock.json ecosystem.config.js webpack.*.js ./
+COPY .babelrc package.json yarn.lock ecosystem.config.js webpack.*.js ./
 COPY config.docker.json config.default.json
 COPY bin ./bin
 COPY server ./server
