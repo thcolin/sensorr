@@ -1,107 +1,146 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
+import Color from 'color'
 import List from 'components/Layout/List'
-import Film, { State } from 'components/Entity/Film'
+import Film, { Poster } from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
-import tmdb from 'store/tmdb'
+import Documents from 'shared/Documents'
+import database from 'store/database'
+import palette from 'utils/palette'
 import { GENRES } from 'shared/services/TMDB'
+import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
   element: {
     position: 'relative',
     flex: 1,
+    minHeight: '100%',
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
   },
-  link: {
-    color: theme.colors.white,
+  container: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '0 0 2em 0',
+  },
+  background: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    transition: 'opacity 400ms ease-in-out',
+  },
+  shadow: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
+    transition: 'box-shadow 400ms ease-in-out',
+  },
+  head: {
+    position: 'relative',
+    minHeight: '25em',
+    transition: 'height 400ms ease-in-out',
+  },
+  about: {
+    position: 'relative',
+    background: 'white',
+    transition: 'transform 400ms ease-in-out',
+    margin: '0 0 7em',
+    '>div:first-of-type': {
+      display: 'flex',
+      padding: '2em 10%',
+    },
+  },
+  poster: {
+    fontSize: '1.5em',
+    margin: '-8em 0 1em 0',
+    transition: 'margin 400ms ease-in-out',
+  },
+  info: {
+    flex: 1,
+    padding: '0 0 0 2em',
+  },
+  title: {
+    fontSize: '2.5em',
+    lineHeight: '1.2em',
+    fontWeight: 800,
+    color: theme.colors.rangoon,
+    margin: '0 0 0.25em',
+  },
+  caption: {
+    fontSize: '1.25em',
+    margin: '0 0 0.75em',
+    color: theme.colors.rangoon,
+    '>span': {
+      '&:not(:last-child)': {
+        fontWeight: 600,
+      }
+    }
+  },
+  metadata: {
+    fontWeight: 600,
+    color: theme.colors.rangoon,
+    margin: '0 0 2em',
+    '>span': {
+      ':not(:last-child)': {
+        margin: '0 2em 0 0',
+      },
+    }
+  },
+  plot: {
+    lineHeight: '1.5em',
+    color: theme.colors.rangoon,
+    whiteSpace: 'pre-line',
+  },
+  list: {
+    margin: '0 0 -6.75em 0',
+    '>div': {
+      padding: 0,
+    }
+  },
+  subtitle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: '1em 3em',
+    fontSize: '0.6em',
+  },
+  tabs: {
+    display: 'flex',
+    flexDirection: 'row',
+    'alignItems': 'center',
+    justifyContent: 'space-between',
+    padding: '2em 1em 1em 1em',
+    '>div': {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      '>span': {
+        margin: '0 1em',
+        fontSize: '1.125em',
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: 'opacity 300ms ease-in-out',
+        '>small': {
+          fontWeight: 'normal',
+        }
+      },
+    },
   },
   loading: {
     flex: 1,
-    minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  details: {
-    flex: 1,
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    boxShadow: `inset 0 0 0 100em ${theme.colors.shadows.black}`,
-  },
-  metadata: {
-    position: 'absolute',
-    right: '2em',
-    top: '6em',
-    textAlign: 'right',
-  },
-  popularity: {
-    fontFamily: theme.fonts.secondary,
-    fontSize: '2em',
-    fontWeight: 800,
-    color: theme.colors.white,
-  },
-  preview: {
-    fontFamily: theme.fonts.secondary,
-    fontSize: '1em',
-    fontWeight: 600,
-    color: theme.colors.white,
-    padding: '1em 0 0',
-  },
-  informations: {
-    width: '100%',
-    display: 'flex',
-    padding: '8em 13em 2em 3em',
-  },
-  poster: {
-    maxWidth: '15em',
-    margin: '0 3em'
-  },
-  wrapper: {
-    flex: 1,
-  },
-  title: {
-    fontSize: '4em',
-    fontWeight: 800,
-    color: theme.colors.white,
-    padding: '0 0 0.25em',
-  },
-  subtitle: {
-    fontSize: '1.5em',
-    fontWeight: 600,
-    color: theme.colors.white,
-  },
-  genres: {
-    fontWeight: 600,
-    color: theme.colors.white,
-    padding: '1em 0 2em 0',
-  },
-  plot: {
-    maxWidth: '50em',
-    lineHeight: '1.5em',
-    color: theme.colors.white,
-    whiteSpace: 'pre-line',
-    padding: '0 1em 1em 0',
-  },
-  more: {
-    width: '100%',
-    fontSize: '0.75em',
-  },
-  row: {
-    color: theme.colors.white,
-  },
   empty: {
     color: theme.colors.white,
   },
-  link: {
-    textDecoration: 'none',
-  }
 }
 
 export default class Collection extends PureComponent {
@@ -111,10 +150,17 @@ export default class Collection extends PureComponent {
     this.state = {
       loading: true,
       details: null,
+      poster: null,
+      palette: {
+        backgroundColor: theme.colors.rangoon,
+        color: '#ffffff',
+        alternativeColor: '#ffffff',
+        negativeColor: '#ffffff',
+      },
+      count: 0,
+      strict: true,
       err: null,
     }
-
-    this.bootstrap = this.bootstrap.bind(this)
   }
 
   componentDidMount() {
@@ -127,7 +173,13 @@ export default class Collection extends PureComponent {
     }
   }
 
-  async bootstrap() {
+  bootstrap = async () => {
+    this.setState({
+      loading: true,
+      poster: null,
+      count: 0,
+    })
+
     try {
       const details = await tmdb.fetch(
         ['collection', this.props.match.params.id]
@@ -142,7 +194,22 @@ export default class Collection extends PureComponent {
         throw { status_code: -1, status_message: 'Adult content disabled' }
       }
 
-      this.setState({ loading: false, details })
+      this.setState({
+        loading: false,
+        err: null,
+        details: details,
+        strict: true,
+      })
+
+      this.fetchCount(details)
+
+      if (details.poster_path) {
+        this.fetchImg(
+          `https://image.tmdb.org/t/p/original${details.poster_path}`,
+          (poster) => this.setState({ poster }),
+          { palette: true }
+        )
+      }
     } catch(err) {
       if (err.status_code) {
         this.setState({
@@ -156,9 +223,41 @@ export default class Collection extends PureComponent {
     }
   }
 
+  fetchCount = async (details) => {
+    const db = await database.get()
+    const count = await db.movies.find().where('id').in(details.parts.map(r => r.id.toString())).exec()
+    this.setState({ count: count.length })
+  }
+
+  fetchImg = (src, cb, options = {}) => {
+    fetch(src, { cache: 'force-cache' })
+      .then(res => res.arrayBuffer())
+      .then(buffer => `data:image/jpeg;base64,${window.btoa([]
+        .slice
+        .call(new Uint8Array(buffer))
+        .reduce((binary, b) => `${binary}${String.fromCharCode(b)}`, '')
+      )}`)
+      .then(img => {
+        if (options.palette) {
+          const cache = sessionStorage.getItem(src)
+
+          if (cache) {
+            this.setState({ palette: JSON.parse(cache) })
+          } else {
+            palette(img, (palette) => {
+              try { sessionStorage.setItem(src, JSON.stringify(palette)) } catch (e) {}
+              this.setState({ palette })
+            })
+          }
+        }
+
+        cb(img)
+      })
+  }
+
   render() {
     const { match, ...props } = this.props
-    const { details, loading, err, ...state } = this.state
+    const { details, poster, palette, count, strict, loading, err, ...state } = this.state
 
     return (
       <Fragment>
@@ -169,51 +268,87 @@ export default class Collection extends PureComponent {
             <title>Sensorr - Collection ({match.params.id})</title>
           )}
         </Helmet>
-        <div id="collection" css={styles.element}>
+        <div css={styles.element}>
           {details ? (
-            <>
+            <div css={styles.container}>
               <div
-                key="details"
-                css={styles.details}
-                style={{ backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})` }}
-              >
-                <div css={styles.metadata}>
-                  <h3 css={styles.popularity}>
-                    <span>{details.vote_average.toFixed(1)}</span>
-                    <span> </span>
-                    <span>{details.vote_average === 0 ? '🤷' : details.vote_average < 5 ? '👎' : details.vote_average < 8 ? '👍' : '🙏'}</span>
-                  </h3>
-                </div>
-                <div css={styles.informations}>
-                  <div>
-                    <img src={`https://image.tmdb.org/t/p/original${details.poster_path}`} css={styles.poster} />
+                css={styles.background}
+                style={{
+                  backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})`,
+                  opacity: poster ? 1 : 0,
+                }}
+              ></div>
+              <div
+                css={styles.shadow}
+                style={{
+                  boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
+                }}
+              ></div>
+              <div css={styles.head} style={{ height: '50vh' }}>
+              </div>
+              <div css={styles.about}>
+                <div>
+                  <div css={styles.poster}>
+                    <Poster
+                      entity={details}
+                      title={null}
+                      img={poster}
+                      style={{
+                        backgroundColor: Color(palette.backgroundColor).rgb().string(),
+                      }}
+                    />
                   </div>
-                  <div css={styles.wrapper}>
-                    <h1 css={styles.title}>{details.name}</h1>
-                    <h2 css={styles.subtitle}>
+                  <div css={styles.info}>
+                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <h1 css={styles.title}>
+                        {details.name}
+                      </h1>
+                    </div>
+                    <h2 css={styles.caption}>
                       <span>
                         ({new Date(details.release_dates[0]).getFullYear()} - {new Date(details.release_dates[1]).getFullYear()})
                       </span>
                     </h2>
-                    <p css={styles.genres}>
-                      {[...new Set(
-                        details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
-                      ].map(id => GENRES[id]).join(', ')}
+                    <p css={styles.metadata}>
+                      <span>
+                        🎟️ &nbsp;{[
+                          ...new Set(details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
+                        ].map(id => GENRES[id]).join(', ')}
+                      </span>
+                      <span>
+                        {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
+                      </span>
                     </p>
                     <p css={styles.plot}>{details.overview}</p>
                   </div>
                 </div>
-                <div css={styles.more}>
+                <div css={styles.list}>
+                  <div css={styles.tabs}>
+                    <div>
+                      <span>
+                        📀 &nbsp;Parts
+                      </span>
+                    </div>
+                  </div>
                   <List
-                    label="Parts - 📀"
                     items={details.parts}
-                    style={styles.row}
+                    prettify={Infinity}
+                    placeholder={true}
                     child={Film}
+                    subtitle={(
+                      <div css={styles.subtitle} style={{ color: palette.color }}>
+                        {count ? (
+                          <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count}/{details.parts.length}</strong> movies from this collection in your library</span>
+                        ) : (
+                          <span>&nbsp;</span>
+                        )}
+                      </div>
+                    )}
                     empty={{ style: styles.empty }}
                   />
                 </div>
               </div>
-            </>
+            </div>
           ) : loading ? (
             <div css={styles.loading}>
               <Spinner />

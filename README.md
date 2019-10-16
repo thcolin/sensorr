@@ -197,9 +197,6 @@ Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
-* Feature `Refactor`
-  * `Collection`
-    * Refactor completely, see `Movie`
 * Feature `0.9.0`
   * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
   * Improve `README`

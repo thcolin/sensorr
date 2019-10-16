@@ -72,7 +72,7 @@ export default class Film extends PureComponent {
       about: {
         position: 'relative',
         flex: 1,
-        margin: '1.5em',
+        margin: '1.25em 1.5em',
         overflowY: 'auto',
         transition: 'opacity 400ms ease-in-out',
         '>h1': {
@@ -378,7 +378,9 @@ export const Poster = ({ entity, img, focus, link, display, placeholder, withSta
   const [hover, setHover] = useState(false)
 
   useEffect(() => {
-    setReady(false)
+    if (!img) {
+      setReady(false)
+    }
   }, [(entity || {}).poster_path, img])
 
   const Container = link && entity.id ? Link : 'span'

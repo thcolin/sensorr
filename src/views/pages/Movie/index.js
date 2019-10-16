@@ -93,7 +93,7 @@ const styles = {
   },
   poster: {
     fontSize: '1.5em',
-    margin: '-8em 0 0 0',
+    margin: '-8em 0 1em 0',
     transition: 'margin 400ms ease-in-out',
   },
   info: {
@@ -555,7 +555,8 @@ export default class Movie extends PureComponent {
                       similar: details.similar.results,
                       cast: details.credits.cast
                         .filter((foo, index) => !strict || index < 20),
-                      crew: details.credits.crew
+                      crew: [...details.credits.crew]
+                        .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
                         .map((credit, index, self) => ({
                           ...credit,
                           job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
@@ -630,10 +631,10 @@ export default class Movie extends PureComponent {
               subtitle={err ? err : null}
             />
           )}
-          {releases && (
-            <Releases key={releases} movie={details} />
-          )}
         </div>
+        {releases && (
+          <Releases key={releases} movie={details} />
+        )}
       </Fragment>
     )
   }

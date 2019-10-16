@@ -19,7 +19,7 @@ import theme from 'theme'
 const styles = {
   releases: {
     element: {
-
+      position: 'relative',
     },
     ongoing: {
       '>div': {

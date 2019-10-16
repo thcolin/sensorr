@@ -12,18 +12,31 @@ import theme from 'theme'
 
 const styles = {
   element: {
+    position: 'relative',
     flex: 1,
     minHeight: '100%',
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
   },
   container: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     padding: '0 0 2em 0',
+  },
+  background: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
     backgroundSize: 'cover',
     backgroundPosition: 'center center',
+    transition: 'opacity 400ms ease-in-out',
+  },
+  shadow: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
     transition: 'box-shadow 400ms ease-in-out',
   },
   head: {
@@ -32,6 +45,7 @@ const styles = {
     transition: 'height 400ms ease-in-out',
   },
   about: {
+    position: 'relative',
     background: 'white',
     transition: 'transform 400ms ease-in-out',
     margin: '0 0 6.75em',
@@ -42,7 +56,7 @@ const styles = {
   },
   poster: {
     fontSize: '1.5em',
-    margin: '-8em 0 0 0',
+    margin: '-8em 0 1em 0',
     transition: 'margin 400ms ease-in-out',
   },
   info: {
@@ -181,6 +195,7 @@ export default class Star extends PureComponent {
 
   bootstrap = async () => {
     this.setState({
+      loading: true,
       count: {
         cast: 0,
         crew: 0,
@@ -249,15 +264,22 @@ export default class Star extends PureComponent {
         </Helmet>
         <div css={styles.element}>
           {details ? (
-            <div
-              css={styles.container}
-              style={{
-                backgroundImage: `url(https://image.tmdb.org/t/p/original${
-                  (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
-                })`,
-                boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
-              }}
-            >
+            <div css={styles.container}>
+              <div
+                css={styles.background}
+                style={{
+                  backgroundImage: `url(https://image.tmdb.org/t/p/original${
+                    (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
+                  })`,
+                  opacity: !loading ? 1 : 0,
+                }}
+              ></div>
+              <div
+                css={styles.shadow}
+                style={{
+                  boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
+                }}
+              ></div>
               <div css={styles.head} style={{ height: '50vh' }}></div>
               <div css={styles.about}>
                 <div>
