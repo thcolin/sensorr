@@ -18,14 +18,14 @@ const styles = {
     textAlign: 'right',
     color: theme.colors.rangoon,
     padding: '1em 3em',
-    fontSize: '0.5em',
+    fontSize: '0.6em',
     opacity: 0.5,
   },
 }
 
 export default class Trending extends PureComponent {
   static Childs = {
-    Persona: (props) => <Persona {...props} context="portrait" />
+    Persona: (props) => <Persona {...props} display="portrait" />
   }
 
   constructor(props) {
@@ -167,6 +167,7 @@ export default class Trending extends PureComponent {
             uri={['trending', 'person', 'week']}
             params={{ sort_by: 'popularity.desc' }}
             child={Trending.Childs.Persona}
+            placeholder={true}
           />
         </div>
       </Fragment>

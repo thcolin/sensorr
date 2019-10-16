@@ -179,7 +179,7 @@ const styles = {
   placeholder: {
     animation: `${animations.placeholder} 2s linear infinite`,
     animationFillMode: 'forwards',
-    background: `linear-gradient(to right, transparent 20%, ${colors.gray} 50%, transparent 80%)`,
+    background: `linear-gradient(to right, ${colors.grey} 20%, ${colors.mercury} 50%, ${colors.grey} 80%)`,
     backgroundSize: '300%',
   },
 }

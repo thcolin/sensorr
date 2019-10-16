@@ -110,7 +110,7 @@ async function stalk({ log, sensorr, db }) {
                     return {
                       ...movie,
                       release_date: new Date(release_date).toISOString(),
-                      credits: [...entity.credits.cast, ...entity.credits.crew],
+                      credits: [...entity.credits.crew, ...entity.credits.cast],
                     }
                   }),
                   mergeMap(publication => from(db.calendar.upsert(publication.id, (doc) => ({ ...doc, ...publication }))).pipe(

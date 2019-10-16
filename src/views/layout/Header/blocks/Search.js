@@ -82,7 +82,7 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
 const Childs = {
   Movie: (props) => <Film {...props} display="card" />,
   Collection: (props) => <Film {...props} display="card"  withState={false} link={(entity) => `/collection/${entity.id}`} />,
-  Persona: (props) => <Persona context="portrait" {...props} />,
+  Persona: (props) => <Persona display="card" {...props} />,
 }
 
 export const Results = ({ children, ...props }) => {
@@ -123,13 +123,15 @@ export const Results = ({ children, ...props }) => {
     if (query) {
       fetchItems(['search', 'movie'], { query, sort_by: 'popularity.desc' })
       fetchItems(['search', 'collection'], { query, sort_by: 'popularity.desc' })
+      fetchItems(['search', 'person'], { query, sort_by: 'popularity.desc' })
     } else {
       dispatch(['movie', null])
       dispatch(['collection', null])
+      dispatch(['person', null])
     }
   }, [query])
 
-  const loading = Object.values(state).every(items => items === null)
+  const loading = Object.values(state).some(items => items === null)
   const empty = Object.values(state).every(items => Array.isArray(items) && !items.length)
   const open = active && !!suggestions.length
 
@@ -183,6 +185,17 @@ export const Results = ({ children, ...props }) => {
                 items={state.collection}
                 hide={true}
                 child={Childs.Collection}
+                css={Results.styles.label}
+                display="column"
+                space={0.5}
+              />
+            )}
+            {state.person && (
+              <List
+                label="⭐&nbsp; Stars"
+                items={state.person}
+                hide={true}
+                child={Childs.Persona}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}

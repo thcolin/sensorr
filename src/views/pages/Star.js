@@ -1,104 +1,127 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
+import Color from 'color'
+import List from 'components/Layout/List'
+import { Poster, State } from 'components/Entity/Persona'
+import Film from 'components/Entity/Film'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
-import List, { Label } from 'components/Layout/List'
-import { State } from 'components/Entity/Persona'
-import Film from 'components/Entity/Film'
+import database from 'store/database'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
 
 const styles = {
   element: {
     flex: 1,
+    minHeight: '100%',
     display: 'flex',
     flexDirection: 'column',
+  },
+  container: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '0 0 2em 0',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    transition: 'box-shadow 400ms ease-in-out',
+  },
+  head: {
+    position: 'relative',
+    minHeight: '25em',
+    transition: 'height 400ms ease-in-out',
+  },
+  about: {
+    background: 'white',
+    transition: 'transform 400ms ease-in-out',
+    margin: '0 0 6.75em',
+    '>div:first-of-type': {
+      display: 'flex',
+      padding: '2em 10%',
+    },
+  },
+  poster: {
+    fontSize: '1.5em',
+    margin: '-8em 0 0 0',
+    transition: 'margin 400ms ease-in-out',
+  },
+  info: {
+    flex: 1,
+    padding: '0 0 0 2em',
+  },
+  title: {
+    fontSize: '2.5em',
+    lineHeight: '1.2em',
+    fontWeight: 800,
+    color: theme.colors.rangoon,
+    margin: '0 0 0.5em',
+  },
+  metadata: {
+    fontWeight: 600,
+    color: theme.colors.rangoon,
+    margin: '0 0 2em',
+    '>span': {
+      ':not(:last-child)': {
+        margin: '0 2em 0 0',
+      },
+    }
+  },
+  biography: {
+    lineHeight: '1.5em',
+    color: theme.colors.rangoon,
+    whiteSpace: 'pre-line',
+  },
+  list: {
+    margin: '0 0 -6.75em 0',
+    '>div': {
+      padding: 0,
+    }
+  },
+  subtitle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: '1em 3em',
+    fontSize: '0.6em',
+    '>label': {
+      position: 'relative',
+      '>select': {
+        position: 'absolute',
+        opacity: 0,
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        appearance: 'none',
+        border: 'none',
+        cursor: 'pointer',
+      },
+    },
+  },
+  tabs: {
+    display: 'flex',
+    flexDirection: 'row',
+    'alignItems': 'center',
+    justifyContent: 'space-between',
+    padding: '2em 1em 1em 1em',
+    '>div': {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      '>span': {
+        margin: '0 1em',
+        fontSize: '1.125em',
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: 'opacity 300ms ease-in-out',
+      },
+    },
   },
   loading: {
     flex: 1,
-    minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  container: {
-    position: 'relative',
-    flex: 1,
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    boxShadow: `inset 0 0 0 100em ${theme.colors.shadows.black}`,
-  },
-  metadata: {
-    position: 'absolute',
-    right: '2em',
-    top: '5em',
-    textAlign: 'right',
-  },
-  badges: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    padding: '1em 0 0',
-    userSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
-  },
-  informations: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'start',
-    padding: '7em 3em 2em 3em',
-  },
-  poster: {
-    width: '15em',
-    height: '23em',
-    overflow: 'hidden',
-    margin: '0 3em',
-    background: `${theme.colors.grey} url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==) no-repeat center`,
-    backgroundSize: '50%',
-  },
-  wrapper: {
-    flex: 1,
-  },
-  title: {
-    fontSize: '4em',
-    fontWeight: 800,
-    color: theme.colors.white,
-    padding: '0 0 0.25em',
-  },
-  subtitle: {
-    fontSize: '1.5em',
-    fontWeight: 600,
-    color: theme.colors.white,
-  },
-  genres: {
-    fontWeight: 600,
-    color: theme.colors.white,
-    padding: '1em 0 0 0',
-  },
-  tagline: {
-    color: theme.colors.white,
-    fontWeight: 600,
-    padding: '2em 0 0 0',
-  },
-  biography: {
-    maxWidth: '50em',
-    lineHeight: '1.5em',
-    color: theme.colors.white,
-    whiteSpace: 'pre-line',
-    padding: '1em 1em 1em 0',
-  },
-  credits: {
-    width: '100%',
-    fontSize: '0.85em',
-  },
-  row: {
-    color: theme.colors.white,
-    cursor: 'pointer',
   },
   empty: {
     color: theme.colors.white,
@@ -110,35 +133,40 @@ export default class Star extends PureComponent {
     super(props)
 
     this.state = {
+      loading: true,
       details: null,
-      loading: false,
-      err: null,
-      job: '',
-      order: {
-        cast: 'vote_average',
-        crew: 'vote_average',
+      palette: {
+        backgroundColor: theme.colors.rangoon,
+        color: '#ffffff',
+        alternativeColor: '#ffffff',
+        negativeColor: '#ffffff',
       },
+      more: null,
+      count: {
+        cast: 0,
+        crew: 0,
+      },
+      err: null,
+      order: 'vote_average',
       sort: {
-        release_date: {
-          emoji: '📆',
-          title: 'currently sorted by release date',
-          apply: (a, b) => new Date(b.release_date || null) - new Date(a.release_date || null),
-        },
         vote_average: {
+          name: 'Vote Average',
           emoji: '💯',
-          title: 'currently sorted by vote average',
           apply: (a, b) => (b.vote_average - (500 / b.vote_count)) - (a.vote_average - (500 / a.vote_count)),
         },
+        release_date: {
+          name: 'Release Date',
+          emoji: '📆',
+          apply: (a, b) => new Date(b.release_date || null) - new Date(a.release_date || null),
+        },
         popularity: {
+          name: 'Popularity',
           emoji: '📣',
-          title: 'currently sorted by popularity',
           apply: (a, b) => b.popularity - a.popularity,
         },
       },
+      strict: true,
     }
-
-    this.bootstrap = this.bootstrap.bind(this)
-    this.handleSortChange = this.handleSortChange.bind(this)
   }
 
   componentDidMount() {
@@ -151,7 +179,14 @@ export default class Star extends PureComponent {
     }
   }
 
-  async bootstrap() {
+  bootstrap = async () => {
+    this.setState({
+      count: {
+        cast: 0,
+        crew: 0,
+      }
+    })
+
     try {
       const details = await tmdb.fetch(['person', this.props.match.params.id], { append_to_response: 'images,movie_credits' })
 
@@ -159,7 +194,9 @@ export default class Star extends PureComponent {
         throw { status_code: -1, status_message: 'Adult content disabled' }
       }
 
-      this.setState({ loading: false, details })
+      this.fetchCount(details)
+
+      this.setState({ loading: false, err: null, details, more: null, order: 'vote_average' })
     } catch(err) {
       if (err.status_code) {
         this.setState({
@@ -173,20 +210,33 @@ export default class Star extends PureComponent {
     }
   }
 
-  handleSortChange(key) {
-    const keys = Object.keys(this.state.sort)
+  fetchCount = async (details) => {
+    const db = await database.get()
+
+    const cast = await db.movies.find().where('id').in(details.movie_credits.cast.map(r => r.id.toString())).exec()
+    const crew = await db.movies.find().where('id').in(details.movie_credits.crew.map(r => r.id.toString())).exec()
 
     this.setState({
-      order: {
-        ...this.state.order,
-        [key]: keys[(keys.indexOf(this.state.order[key]) + 1) % keys.length],
+      count: {
+        cast: cast.length,
+        crew: crew.length,
       }
     })
   }
 
   render() {
     const { match, ...props } = this.props
-    const { details, loading, err, job, order, sort, ...state } = this.state
+    const { details, palette, count, loading, err, order, sort, strict, ...state } = this.state
+
+    const more = state.more || (
+      (details || { movie_credits: { crew: [] } }).movie_credits.crew.length && details.known_for_department !== 'Acting' ?
+      'crew' :
+      (details || { movie_credits: { cast: [] } }).movie_credits.cast.length ?
+      'cast' :
+      (details || { movie_credits: { crew: [] } }).movie_credits.crew.length ?
+      'crew' :
+      null
+    )
 
     return (
       <Fragment>
@@ -197,108 +247,148 @@ export default class Star extends PureComponent {
             <title>Sensorr - Star ({match.params.id})</title>
           )}
         </Helmet>
-        <div id="star" style={styles.element}>
+        <div css={styles.element}>
           {details ? (
-            <div style={{
-              ...styles.container,
-              ...(details.images.profiles.length ? {
+            <div
+              css={styles.container}
+              style={{
                 backgroundImage: `url(https://image.tmdb.org/t/p/original${
                   (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
                 })`,
-              } : {}),
-            }}>
-              <div style={styles.metadata}>
-                <div style={styles.badges}>
-                  <State entity={details} compact={false} />
-                </div>
-              </div>
-              <div style={styles.informations}>
-                <div style={styles.poster}>
-                  {details.profile_path && (
-                    <img src={`https://image.tmdb.org/t/p/original${details.profile_path}`} height="100%" />
-                  )}
-                </div>
-                <div style={styles.wrapper}>
-                  <h1 style={styles.title}>{details.name}</h1>
-                  <h2 style={styles.subtitle}>{details.place_of_birthday} ({new Date(details.birthday).getFullYear()})</h2>
-                  <p style={styles.biography}>{details.biography}</p>
-                </div>
-              </div>
-              {!!details.movie_credits.cast.length && (
-                <div style={styles.credits}>
-                  <List
-                    strict={false}
-                    label={(
-                      <Label
-                        id="star-cast"
-                        compact={true}
-                        actions={(
-                          <span
-                            style={{ cursor: 'pointer' }}
-                            title={`Sort (${sort[order.cast].title})`}
-                            onClick={() => this.handleSortChange('cast')}
-                          >
-                            {sort[order.cast].emoji}
-                          </span>
-                        )}
-                      >
-                        Casting
-                      </Label>
+                boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
+              }}
+            >
+              <div css={styles.head} style={{ height: '50vh' }}></div>
+              <div css={styles.about}>
+                <div>
+                  <div css={styles.poster}>
+                    <Poster
+                      entity={details}
+                      title={null}
+                      display="portrait"
+                      updatable={false}
+                      link={null}
+                      style={{
+                        backgroundColor: Color(palette.backgroundColor).rgb().string(),
+                      }}
+                    />
+                  </div>
+                  <div css={styles.info}>
+                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <h1 css={styles.title}>
+                        {details.name}
+                      </h1>
+                      <State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
+                    </div>
+                    <p css={styles.metadata}>
+                      {!!details.known_for_department && (
+                        <span>
+                          💼 &nbsp;<strong>{details.known_for_department}</strong>
+                        </span>
+                      )}
+                      {!!details.place_of_birth && (
+                        <span>
+                          🏡 &nbsp;<strong>{details.place_of_birth}</strong>
+                        </span>
+                      )}
+                      {!!details.birthday && (
+                        <span>
+                          🎂 &nbsp;<strong>{new Date(details.birthday).toLocaleDateString()}</strong>
+                          <span> &nbsp; </span>
+                          <small>{new Date().getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
+                        </span>
+                      )}
+                      {!!details.deathday && (
+                        <span>
+                          🥀 &nbsp;<strong>{new Date(details.deathday).toLocaleDateString()}</strong>
+                        </span>
+                      )}
+                    </p>
+                    {!!details.biography && (
+                      <p css={styles.biography}>{details.biography}</p>
                     )}
-                    items={details.movie_credits.cast
+                  </div>
+                </div>
+                <div css={styles.list}>
+                  <div css={styles.tabs}>
+                    {!!details.movie_credits.cast.length && (
+                      <div>
+                        <span
+                          style={{ opacity: more === 'cast' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'cast', order: 'vote_average' })}
+                        >
+                          👩‍🎤️ &nbsp;{`Casting`}
+                        </span>
+                      </div>
+                    )}
+                    {!!details.movie_credits.crew.length && (
+                      <div>
+                        <span
+                          style={{ opacity: more === 'crew' ? 1 : 0.25 }}
+                          onClick={() => this.setState({ more: 'crew', order: 'vote_average' })}
+                        >
+                          🎬 &nbsp;{`Crew`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <List
+                    items={details.movie_credits[more]
+                      .map((credit, index, self) => ({
+                        ...credit,
+                        ...(!credit.job ? {} : {
+                          job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
+                        }),
+                      }))
+                      .filter(credit => more !== 'crew' || (
+                        !strict ||
+                        credit.department === details.known_for_department ||
+                        details.known_for_department === 'Acting'
+                      ))
                       .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
-                      .sort(sort[order.cast].apply)
+                      .map(credit => ({ ...credit, credits: [{ ...credit, ...details }] }))
+                      .sort(sort[order].apply)
                     }
+                    prettify={5}
+                    placeholder={true}
                     child={Film}
-                    style={styles.row}
+                    childProps={{ withCredits: true }}
                     empty={{ style: styles.empty }}
+                    subtitle={(
+                      <div css={styles.subtitle} style={{ color: palette.color }}>
+                        {!!count[more] && ({
+                          cast: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.cast}/{details.movie_credits.cast.length}</strong> movies in your library &nbsp;</span>
+                          ),
+                          crew: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}/{details.movie_credits.crew.length}</strong> movies in your library &nbsp;</span>
+                          ),
+                        }[more])}
+                        <label htmlFor="star-order">
+                          <span>{sort[order].emoji}&nbsp; Currently sorted by <strong>{sort[order].name}</strong></span>
+                          <select id="star-order" value={order} onChange={e => this.setState({ order: e.target.value })}>
+                            {Object.keys(sort).map(key => (
+                              <option value={key} key={key}>{sort[key].emoji}&nbsp; Sort by {sort[key].name}</option>
+                            ))}
+                          </select>
+                          &nbsp;
+                        </label>
+                        {more === 'crew' && details.known_for_department !== 'Acting' && (
+                          <>
+                            <span> and </span>
+                            <button css={theme.resets.button} onClick={() => this.setState({ strict: !strict })}>
+                              showing 💼 <strong>{strict ? details.known_for_department : 'All'}</strong> departement(s) credits
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   />
                 </div>
-              )}
-              {!!details.movie_credits.crew.length && (
-                <div style={styles.credits}>
-                  <List
-                    strict={false}
-                    label={(
-                      <Label
-                        id="star-crew"
-                        title={`Filter movies by job`}
-                        compact={true}
-                        value={job}
-                        onChange={(value) => this.setState({ job: value })}
-                        options={[{ value: '', label: 'All' }]
-                          .concat(details.movie_credits.crew.map(credit => ({ value: credit.job, label: credit.job })))
-                          .filter((a, index, self) => index === self.findIndex(b => a.value === b.value))
-                        }
-                        actions={(
-                          <span
-                            style={{ cursor: 'pointer' }}
-                            title={`Sort (${sort[order.crew].title})`}
-                            onClick={() => this.handleSortChange('crew')}
-                          >
-                            {sort[order.crew].emoji}
-                          </span>
-                        )}
-                      >
-                        <span>Crew</span>
-                        <span> </span>
-                        <span style={{ fontSize: 'smaller' }}>({job || 'All'})</span>
-                      </Label>
-                    )}
-                    items={details.movie_credits.crew
-                      .filter(credit => !job || credit.job === job)
-                      .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
-                      .sort(sort[order.crew].apply)
-                    }
-                    child={Film}
-                    style={styles.row}
-                    empty={{ style: styles.empty }}
-                  />
-                </div>
-              )}
+              </div>
             </div>
           ) : loading ? (
-            <div style={styles.loading}>
+            <div css={styles.loading}>
               <Spinner />
             </div>
           ) : (

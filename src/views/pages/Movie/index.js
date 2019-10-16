@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import Color from 'color'
 import ReactPlayer from 'react-player'
-import List, { Label } from 'components/Layout/List'
+import List from 'components/Layout/List'
 import Button from 'components/Button'
 import Persona from 'components/Entity/Persona'
 import Film, { State, Poster } from 'components/Entity/Film'
@@ -12,6 +12,7 @@ import Play from 'icons/Play'
 import Badge from 'components/Badge'
 import Releases from './blocks/Releases'
 import Documents from 'shared/Documents'
+import database from 'store/database'
 import palette from 'utils/palette'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
@@ -19,18 +20,31 @@ import uuidv4 from 'uuid/v4'
 
 const styles = {
   element: {
+    position: 'relative',
     flex: 1,
     minHeight: '100%',
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
   },
   container: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     padding: '0 0 2em 0',
+  },
+  background: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
     backgroundSize: 'cover',
     backgroundPosition: 'center center',
+    transition: 'opacity 400ms ease-in-out',
+  },
+  shadow: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
     transition: 'box-shadow 400ms ease-in-out',
   },
   trailer: {
@@ -68,9 +82,10 @@ const styles = {
     },
   },
   about: {
+    position: 'relative',
     background: 'white',
     transition: 'transform 400ms ease-in-out',
-    margin: '0 0 5em',
+    margin: '0 0 7em',
     '>div:first-of-type': {
       display: 'flex',
       padding: '2em 10%',
@@ -92,7 +107,7 @@ const styles = {
     color: theme.colors.rangoon,
     margin: '0 0 0.25em',
   },
-  subtitle: {
+  caption: {
     fontSize: '1.25em',
     margin: '0 0 0.75em',
     color: theme.colors.rangoon,
@@ -123,10 +138,17 @@ const styles = {
     whiteSpace: 'pre-line',
   },
   list: {
-    margin: '0 0 -5em 0',
+    margin: '0 0 -6.75em 0',
     '>div': {
       padding: 0,
     }
+  },
+  subtitle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: '1em 3em',
+    fontSize: '0.6em',
   },
   tabs: {
     display: 'flex',
@@ -144,6 +166,9 @@ const styles = {
         fontWeight: 600,
         cursor: 'pointer',
         transition: 'opacity 300ms ease-in-out',
+        '>small': {
+          fontWeight: 'normal',
+        }
       },
     },
   },
@@ -160,7 +185,7 @@ const styles = {
 
 export default class Movie extends PureComponent {
   static Childs = {
-    Persona: (props) => <Persona {...props} context="portrait" />
+    Persona: (props) => <Persona {...props} display="portrait" />
   }
 
   constructor(props) {
@@ -176,8 +201,16 @@ export default class Movie extends PureComponent {
         alternativeColor: '#ffffff',
         negativeColor: '#ffffff',
       },
+      count: {
+        collection: 0,
+        recommendations: 0,
+        similar: 0,
+        cast: 0,
+        crew: 0,
+      },
       trailer: '',
       more: null,
+      strict: true,
       releases: false,
       err: null,
     }
@@ -194,6 +227,18 @@ export default class Movie extends PureComponent {
   }
 
   bootstrap = async () => {
+    this.setState({
+      loading: true,
+      poster: null,
+      count: {
+        collection: 0,
+        recommendations: 0,
+        similar: 0,
+        cast: 0,
+        crew: 0,
+      },
+    })
+
     try {
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
@@ -204,12 +249,28 @@ export default class Movie extends PureComponent {
         throw { status_code: -1, status_message: 'Adult content disabled' }
       }
 
-      this.setState({ loading: false, details, releases: false, more: null })
+      const collection = !details.belongs_to_collection ? null : await tmdb.fetch(['collection', details.belongs_to_collection.id])
+        .then(res => ({
+          ...res,
+          parts: [...res.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15)),
+        }))
+
+      this.setState({
+        loading: false,
+        err: null,
+        details: { ...details, belongs_to_collection: collection },
+        trailer: '',
+        strict: true,
+        releases: false,
+        more: null,
+      })
+
+      this.fetchCount({ ...details, belongs_to_collection: collection })
 
       if (details.poster_path) {
         this.fetchImg(
           `https://image.tmdb.org/t/p/original${details.poster_path}`,
-          (poster) => this.setState({ poster }),
+          (poster) => this.setState({ poster }),
           { palette: true }
         )
       }
@@ -226,6 +287,26 @@ export default class Movie extends PureComponent {
         this.props.history.push('/')
       }
     }
+  }
+
+  fetchCount = async (details) => {
+    const db = await database.get()
+
+    const collection = await db.movies.find().where('id').in((details.belongs_to_collection || { parts: [] }).parts.map(r => r.id.toString())).exec()
+    const recommendations = await db.movies.find().where('id').in(details.recommendations.results.map(r => r.id.toString())).exec()
+    const similar = await db.movies.find().where('id').in(details.similar.results.map(r => r.id.toString())).exec()
+    const cast = await db.stars.find().where('id').in(details.credits.cast.map(r => r.id.toString())).exec()
+    const crew = await db.stars.find().where('id').in(details.credits.crew.map(r => r.id.toString())).exec()
+
+    this.setState({
+      count: {
+        collection: collection.length,
+        recommendations: recommendations.length,
+        similar: similar.length,
+        cast: cast.length,
+        crew: crew.length,
+      }
+    })
   }
 
   fetchImg = (src, cb, options = {}) => {
@@ -255,49 +336,57 @@ export default class Movie extends PureComponent {
   }
 
   refreshReleases = () => {
-    this.setState({ releases: uuidv4() })
+    this.setState({ releases: uuidv4() })
     setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 200)
   }
 
   render() {
     const { match, ...props } = this.props
-    const { details, poster, palette, trailer, releases, loading, err, ...state } = this.state
+    const { details, poster, palette, count, trailer, strict, releases, loading, err, ...state } = this.state
 
-    const trailers = (details || { videos: { results: [] } }).videos.results
+    const trailers = (details || { videos: { results: [] } }).videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
       .sort((a, b) => a.type === 'Trailer' ? -1 : 1)
 
-    const more = state.more || (
-      (details || {}).belongs_to_collection ?
+    const more = state.more || (
+      (details || {}).belongs_to_collection ?
       'collection' :
-      (details || { recommendations: { results: [] } }).recommendations.results.length ?
+      (details || { recommendations: { results: [] } }).recommendations.results.length ?
       'recommendations' :
-      (details || { similar: { results: [] } }).similar.results.length ?
+      (details || { similar: { results: [] } }).similar.results.length ?
       'similar' :
-      (details || { credits: { cast: [] } }).credits.cast.length ?
+      (details || { credits: { cast: [] } }).credits.cast.length ?
       'cast' :
-      (details || { credits: { crew: [] } }).credits.crew.length ?
-      'crew' : null
+      (details || { credits: { crew: [] } }).credits.crew.length ?
+      'crew' :
+      null
     )
 
     return (
       <Fragment>
         <Helmet>
           {details ? (
-            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!match.params.releases && ` - 🔍`) || ''}</title>
+            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!match.params.releases && ` - 🔍`) || ''}</title>
           ) : (
             <title>Sensorr - Movie ({match.params.id})</title>
           )}
         </Helmet>
         <div css={styles.element}>
           {details ? (
-            <div
-              css={styles.container}
-              style={{
-                backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})`,
-                boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
-              }}
-            >
+            <div css={styles.container}>
+              <div
+                css={styles.background}
+                style={{
+                  backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})`,
+                  opacity: poster ? 1 : 0,
+                }}
+              ></div>
+              <div
+                css={styles.shadow}
+                style={{
+                  boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
+                }}
+              ></div>
               <div
                 css={styles.trailer}
                 style={{ height: trailer ? '80vh' : '50vh' }}
@@ -305,7 +394,7 @@ export default class Movie extends PureComponent {
                 {!!trailers.length && (
                   <>
                     {trailer ? (
-                      <button css={[theme.resets.button, styles.trailers]} onClick={() => this.setState({ trailer: null })}>
+                      <button css={[theme.resets.button, styles.trailers]} onClick={() => this.setState({ trailer: null })}>
                         <Badge emoji="❌" />
                       </button>
                     ) : (
@@ -370,13 +459,13 @@ export default class Movie extends PureComponent {
                     />
                   </div>
                   <div css={styles.info}>
-                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <h1 css={styles.title}>
                         {details.title}
                       </h1>
                       <State entity={details} compact={false} />
                     </div>
-                    <h2 css={styles.subtitle}>
+                    <h2 css={styles.caption}>
                       {details.title !== details.original_title && (
                         <span>{details.original_title}</span>
                       )}
@@ -420,7 +509,7 @@ export default class Movie extends PureComponent {
                           style={{ opacity: more === 'collection' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'collection' })}
                         >
-                          📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
+                          📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
                         </span>
                       )}
                       {!!details.recommendations.results.length && (
@@ -444,7 +533,7 @@ export default class Movie extends PureComponent {
                       {!!details.credits.cast.length && (
                         <span
                           style={{ opacity: more === 'cast' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'cast' })}
+                          onClick={() => this.setState({ more: 'cast', strict: true })}
                         >
                           👩‍🎤️ &nbsp;{`Casting`}
                         </span>
@@ -452,7 +541,7 @@ export default class Movie extends PureComponent {
                       {!!details.credits.crew.length && (
                         <span
                           style={{ opacity: more === 'crew' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'crew' })}
+                          onClick={() => this.setState({ more: 'crew', strict: true })}
                         >
                           🎬 &nbsp;{`Crew`}
                         </span>
@@ -460,17 +549,20 @@ export default class Movie extends PureComponent {
                     </div>
                   </div>
                   <List
-                    {...(more === 'collection' ? {
-                      uri: ['collection', details.belongs_to_collection.id],
-                      transform: (res) => [...res.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15)),
-                    } : {
-                      items: {
-                        recommendations: details.recommendations.results,
-                        similar: details.similar.results,
-                        cast: details.credits.cast,
-                        crew: details.credits.crew,
-                      }[more]
-                    })}
+                    items={{
+                      collection: (details.belongs_to_collection || { parts: [] }).parts,
+                      recommendations: details.recommendations.results,
+                      similar: details.similar.results,
+                      cast: details.credits.cast
+                        .filter((foo, index) => !strict || index < 20),
+                      crew: details.credits.crew
+                        .map((credit, index, self) => ({
+                          ...credit,
+                          job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
+                        }))
+                        .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
+                        .filter((foo, index) => !strict || index < 20),
+                    }[more]}
                     prettify={more === 'collection' ? Infinity : 5}
                     placeholder={true}
                     child={{
@@ -480,6 +572,33 @@ export default class Movie extends PureComponent {
                       cast: Movie.Childs.Persona,
                       crew: Movie.Childs.Persona,
                     }[more]}
+                    subtitle={(
+                      <div css={styles.subtitle} style={{ color: palette.color }}>
+                        {!!count[more] && ({
+                          collection: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.collection}/{(details.belongs_to_collection || { parts: [] }).parts.length}</strong> movies from this collection in your library</span>
+                          ),
+                          recommendations: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.recommendations}</strong> recommended movies in your library</span>
+                          ),
+                          similar: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.similar}</strong> similar movies in your library</span>
+                          ),
+                          crew: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}</strong> followed stars</span>
+                          ),
+                          crew: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}</strong> followed crew members</span>
+                          ),
+                        }[more])}
+                        <span>&nbsp;</span>
+                        {(['cast', 'crew'].includes(more) && details.credits[more].length > 20) && (
+                          <button css={theme.resets.button} onClick={() => this.setState({ strict: !strict })}>
+                            {{ true: '📗', false: '📚' }[strict]}&nbsp; Showing <strong>{{ true: '20 first', false: 'All' }[strict]}</strong> credits
+                          </button>
+                        )}
+                      </div>
+                    )}
                     empty={{ style: styles.empty }}
                   />
                 </div>
@@ -488,6 +607,7 @@ export default class Movie extends PureComponent {
                 look={1}
                 onClick={() => this.refreshReleases()}
                 style={{
+                  position: 'relative',
                   color: palette.color,
                   borderColor: palette.color,
                   textTransform: 'uppercase',

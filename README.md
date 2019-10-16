@@ -197,23 +197,9 @@ Tips: Sensorr will use your `config.js` and fallback on default
 ```
 
 # Roadmap
-* Feature `Persona`
-  * `Persona`
-    * Replace `context` to `display` props
-    * Implement `placeholder` props
-    * Try to keep same `height` as `Film`
-  * `Star`
+* Feature `Refactor`
+  * `Collection`
     * Refactor completely, see `Movie`
-    * Refactor `List.sort` usage with `subtitle`
-  * `Search`
-    * Add `search/person` request
-  * `Trending`
-    * Polish integration
-  * `Following`
-    * Polish integration
-  * `Movie`
-    * Polish integration
-    * Focus on followed `casting` (with metadata, like "how many stars i follow act in this movie ?")
 * Feature `0.9.0`
   * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
   * Improve `README`

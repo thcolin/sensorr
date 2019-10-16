@@ -39,7 +39,7 @@ const styles = {
   },
   entity: {
     width: '10em',
-    height: '16em',
+    height: '17em',
   },
   spinner: {
     display: 'flex',

@@ -71,6 +71,7 @@ export default class List extends PureComponent {
   static propTypes = {
     items: PropTypes.array,
     child: PropTypes.elementType.isRequired,
+    childProps: PropTypes.object,
     uri: PropTypes.array,
     params: PropTypes.object,
     transform: PropTypes.func,
@@ -89,6 +90,7 @@ export default class List extends PureComponent {
 
   static defaultProps = {
     items: [],
+    childProps: {},
     uri: [],
     params: {},
     transform: (res) => res.results,
@@ -174,6 +176,7 @@ export default class List extends PureComponent {
       uri,
       params,
       child,
+      childProps,
       transform,
       filter,
       label,
@@ -214,6 +217,7 @@ export default class List extends PureComponent {
                   entity: entity,
                   placeholder: placeholder,
                   ...(index < prettify ? { display: 'pretty' } : {}),
+                  ...(childProps),
                 })}
               </div>
             ))

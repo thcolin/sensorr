@@ -1,6 +1,5 @@
-import React, { PureComponent, useState } from 'react'
+import React, { PureComponent, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { usePrevious } from 'hooks'
 import { Link } from 'react-router-dom'
 import Color from 'color'
 import Persona from 'components/Entity/Persona'
@@ -65,6 +64,7 @@ export default class Film extends PureComponent {
         },
       },
       poster: {
+        position: 'relative',
         flexShrink: 0,
         margin: '-3em 0 0 0',
         padding: '0 0 2em 1.5em',
@@ -96,12 +96,18 @@ export default class Film extends PureComponent {
           },
         },
       },
+      credit: {
+        position: 'absolute',
+        top: '2em',
+        marginLeft: '-2em',
+        fontSize: '0.375em',
+      },
     },
     card: {
       element: {
         display: 'flex',
         alignItems: 'center',
-        width: '30em',
+        width: '25em',
       },
       poster: {
         fontSize: '0.4em',
@@ -130,6 +136,11 @@ export default class Film extends PureComponent {
             margin: '0 0 0.5em 0',
           },
         },
+      },
+      state: {
+        alignSelf: 'flex-start',
+        fontSize: '0.8em',
+        margin: '0 0 0 2em',
       },
     },
   }
@@ -215,7 +226,7 @@ export default class Film extends PureComponent {
   }
 
   render() {
-    const { entity, display, link, placeholder, ...props } = this.props
+    const { entity, display, link, placeholder, withCredits, ...props } = this.props
     const { poster, backdrop, palette, ...state } = this.state
 
     const title = entity.title || entity.original_title || entity.name || entity.original_name || ''
@@ -244,6 +255,7 @@ export default class Film extends PureComponent {
                 {...this.props}
                 img={poster}
                 withHover={false}
+                withCredits={false}
                 style={{
                   backgroundColor: palette.backgroundColor,
                   transition: 'background-color 400ms ease-in-out',
@@ -267,7 +279,11 @@ export default class Film extends PureComponent {
                       <small>
                         <span>📆  </span>
                         <span>
-                          {new Date(entity.release_date).toLocaleString(global.config.region, { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                          {new Date(entity.release_date).toLocaleString(global.config.region, {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })}
                         </span>
                       </small>
                     )}
@@ -291,12 +307,22 @@ export default class Film extends PureComponent {
                 )}
               </div>
             )}
+            {withCredits && (entity.credits || []).map((star, index) => (
+              <Persona
+                entity={star}
+                display="avatar"
+                updatable={false}
+                key={star.id}
+                css={Film.styles.pretty.credit}
+                style={{ right: `${index * 6}em` }}
+              />
+            ))}
           </div>
         )
       case 'card':
         return (
           <div css={Film.styles.card.element}>
-            <Poster {...this.props} withHover={false} css={Film.styles.card.poster} />
+            <Poster {...this.props} withHover={false} withState={false} css={Film.styles.card.poster} />
             {entity.id && (
               <Link to={link(entity)} css={Film.styles.card.container}>
                 <h1 {...(title.length > 45 ? { title } : {} )}>
@@ -308,7 +334,11 @@ export default class Film extends PureComponent {
                       <small>
                         <span>📆  </span>
                         <span>
-                          {new Date(entity.release_date).toLocaleString(global.config.region, { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                          {new Date(entity.release_date).toLocaleString(global.config.region, {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })}
                         </span>
                       </small>
                     )}
@@ -332,6 +362,9 @@ export default class Film extends PureComponent {
                 )}
               </Link>
             )}
+            {typeof entity.vote_average !== 'undefined' && (
+              <State entity={entity} css={Film.styles.card.state} />
+            )}
           </div>
         )
       default:
@@ -343,93 +376,114 @@ export default class Film extends PureComponent {
 export const Poster = ({ entity, img, focus, link, display, placeholder, withState, withHover, withCredits, ...props }) => {
   const [ready, setReady] = useState(false)
   const [hover, setHover] = useState(false)
-  const previous = usePrevious(entity)
 
-  if (previous && ready && previous.poster_path !== entity.poster_path) {
+  useEffect(() => {
     setReady(false)
-  }
+  }, [(entity || {}).poster_path, img])
 
   const Container = link && entity.id ? Link : 'span'
 
   return (
     <span
-      {...(withHover ? {} : {
-        title: `${
-          entity.title || entity.original_title || entity.name || entity.original_name || ''
-        }${
-          (entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''
-        }`,
-      })}
-      {...props}
-      css={[
-        Poster.styles.element,
-        !entity.poster_path && entity.poster_path !== false && Poster.styles.empty,
-        (!entity.id && placeholder) && display !== 'pretty' && {
-          ...theme.styles.placeholder,
-          background: `linear-gradient(to right, ${theme.colors.grey} 20%, ${theme.colors.mercury} 50%, ${theme.colors.grey} 80%)`,
-        },
-        props.css
-      ]}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <span css={Poster.styles.container}>
-        {withState && (
-          <State entity={entity} css={Poster.styles.state} style={{ opacity: ready ? 1 : 0, ...(!ready ? { transition: 'none' } : {}) }} />
-        )}
-        <Container {...(link ? { to: link(entity) } : {})} css={Poster.styles.link}>
-          {(withHover || focus) && (
-            <span css={Poster.styles.focus} style={{ opacity: (ready && (hover || focus)) ? 1 : 0 }}>
-              <Focus entity={entity} property={focus || 'vote_average'} />
-            </span>
-          )}
-          <img
-            src={img ? img : {
-              default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
-              pretty: img,
-              card: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
-            }[display]}
-            css={Poster.styles.img}
-            style={{
-              opacity: ready ? 1 : 0,
-              // ...(display === 'pretty' ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
-              ...(!ready ? { transition: 'none' } : {}),
-            }}
-            onLoad={() => setReady(true)}
-          />
-          {withHover && (
-            <span
-              css={Poster.styles.hover}
+      <span
+        {...(withHover ? {} : {
+          title: `${
+            entity.title || entity.original_title || entity.name || entity.original_name || ''
+          }${
+            (entity.year || entity.release_date) ? ` (${entity.year || new Date(entity.release_date).getFullYear()})` : ''
+          }`,
+        })}
+        {...props}
+        css={[
+          Poster.styles.element,
+          placeholder && !entity.id && display !== 'pretty' && theme.styles.placeholder,
+          !entity.poster_path && entity.id && Poster.styles.empty,
+          props.css
+        ]}
+      >
+        <span css={Poster.styles.container}>
+          {withState && (
+            <State
+              entity={entity}
+              css={Poster.styles.state}
               style={{
-                transform: `translateY(${(ready && hover) ? 0 : 100}%)`,
-                ...(withCredits ? { paddingBottom: '6em' } : {}),
+                opacity: (ready || (!entity.poster_path && entity.id)) ? 1 : 0,
+                ...(!ready ? { transition: 'none' } : {}),
               }}
-            >
-              <span>
-                <strong>{`${entity.title || entity.original_title || entity.name || entity.original_name || ''}`}</strong>
-                {(entity.year || entity.release_date) && (
-                  <span> ({entity.year || new Date(entity.release_date).getFullYear()})</span>
+            />
+          )}
+          <Container {...(link ? { to: link(entity) } : {})} css={Poster.styles.link}>
+            {(withHover || focus) && (
+              <span
+                css={Poster.styles.focus}
+                style={{
+                  opacity: ((ready || (!entity.poster_path && entity.id)) && (hover || focus)) ? 1 : 0,
+                  transitionDuration: focus ? '400ms' : '250ms',
+                  transitionDelay: focus ? '400ms' : '0ms',
+                }}>
+                <Focus entity={entity} property={focus || 'vote_average'} />
+              </span>
+            )}
+            <img
+              src={img ? img : {
+                default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
+                pretty: img,
+                card: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
+              }[display]}
+              css={Poster.styles.img}
+              style={{
+                opacity: ready ? 1 : 0,
+                // ...(display === 'pretty' ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
+                ...(!ready ? { transition: 'none' } : {}),
+              }}
+              onLoad={() => setReady(true)}
+            />
+            {withHover && (
+              <span
+                css={Poster.styles.hover}
+                style={{
+                  transform: `translateY(${((ready || (!entity.poster_path && entity.id)) && hover) ? 0 : 100}%)`,
+                  ...(withCredits ? { paddingBottom: '6em' } : {}),
+                }}
+              >
+                <span>
+                  <strong>{`${entity.title || entity.original_title || entity.name || entity.original_name || ''}`}</strong>
+                  {(entity.year || entity.release_date) && (
+                    <span> ({entity.year || new Date(entity.release_date).getFullYear()})</span>
+                  )}
+                </span>
+                {(Array.isArray(entity.genre_ids) || Array.isArray(entity.genres)) && (
+                  <span>
+                    <small>{(entity.genre_ids || entity.genres).map(id => GENRES[id]).join(', ')}</small>
+                  </span>
                 )}
               </span>
-              {(Array.isArray(entity.genre_ids) || Array.isArray(entity.genres)) && (
-                <span>
-                  <small>{(entity.genre_ids || entity.genres).map(id => GENRES[id]).join(', ')}</small>
-                </span>
-              )}
-            </span>
-          )}
-        </Container>
+            )}
+          </Container>
+        </span>
       </span>
-      {withCredits && (entity.credits || []).map((star, index) => (
-        <Persona
-          entity={star}
-          context="avatar"
-          updatable={false}
-          key={star.id}
-          css={Poster.styles.credit}
-          style={{ left: `${index * 6}em` }}
-        />
-      ))}
+      {withCredits && (
+        <span
+          css={Poster.styles.credits}
+          style={{
+            opacity: (ready || (!entity.poster_path && entity.id)) ? 1 : 0,
+            ...(!ready ? { transition: 'none' } : {}),
+          }}
+        >
+          {(entity.credits || []).map((star, index) => (
+            <Persona
+              entity={star}
+              display="avatar"
+              updatable={false}
+              key={star.id}
+              css={Poster.styles.credit}
+            />
+          ))}
+        </span>
+      )}
     </span>
   )
 }
@@ -469,7 +523,7 @@ Poster.styles = {
   focus: {
     position: 'absolute',
     top: 0,
-    transition: 'opacity 400ms ease-in-out 400ms',
+    transition: 'opacity 250ms ease-in-out',
   },
   img: {
     height: '100%',
@@ -492,14 +546,22 @@ Poster.styles = {
     transition: 'transform 250ms ease-in-out',
     '>span': {
       display: 'block',
+      '&:first-of-type': {
+        lineHeight: 1.25,
+      },
       '&:not(:last-child)': {
         margin: '0 0 0.5em 0',
       },
     },
   },
+  credits: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    margin: '-3.5em 0 0 -0.5em',
+    transition: 'opacity 400ms ease-in-out',
+  },
   credit: {
-    position: 'absolute',
-    bottom: '-5em',
     marginLeft: '-2em',
     fontSize: '0.375em',
   },

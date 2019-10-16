@@ -95,7 +95,7 @@ const Following = ({ ...props }) => {
 }
 
 Following.Childs = {
-  Persona: (props) => <Persona context="portrait" {...props} />,
+  Persona: (props) => <Persona display="portrait" {...props} />,
 }
 
 export default Following
