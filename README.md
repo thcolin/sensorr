@@ -2,8 +2,8 @@
 
 A simple movie release radar like CouchPotato, Radarr and Watcher3, written in Javascript with `React`
 
-# Warning
-🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett).
+<!-- # Warning
+🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett). -->
 
 # Features
 <table className="markdown-table">
@@ -138,7 +138,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
 
 # Scripts
   * `dev`: launch development server for `React` _frontend_
-  * `express`: launch Sensorr `web server` without serving _frontend_
+  * `server`: launch server services without serving _frontend_
   * `build`: build _frontend_ to `dist` folder
   * `prod`: run `pm2` apps, Sensorr (`web server`) and Sensorr (`record cron`)
   * `start`: launch `build` and `prod` scripts
@@ -176,10 +176,11 @@ Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.j
 Usage: sensorr [command] [options]
 
 Commands:
-  📰 stalk               Stalk stars and update movie credits
   📼 record              Try to "record" (aka download best release) every wished movies
+  📰 stalk               Stalk stars and update calendar with "recents" movies (+/- 8 years from now)
   🔗 sync                Consider all movies from your Plex server as "archived"
   🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
+  ♻️ refresh             Refresh movies collection data (vote_average, popularity, etc...)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -193,7 +194,7 @@ Options:
   -a, --auto             Automatically select first release according to --filter, --sort and --descending options
 
 
-Tips: Sensorr will use your `config.js` and fallback on default
+Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
