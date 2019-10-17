@@ -303,11 +303,13 @@ export class State extends PureComponent {
   }
 
   componentDidUpdate(props) {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-    }
+    if (props.entity.id !== this.props.entity.id) {
+      if (this.subscription) {
+        this.subscription.unsubscribe()
+      }
 
-    this.bootstrap()
+      this.bootstrap()
+    }
   }
 
   componentWillUnmount() {
