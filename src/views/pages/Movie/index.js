@@ -585,8 +585,8 @@ export default class Movie extends PureComponent {
                           similar: (
                             <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.similar}</strong> similar movies in your library</span>
                           ),
-                          crew: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}</strong> followed stars</span>
+                          cast: (
+                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.cast}</strong> followed stars</span>
                           ),
                           crew: (
                             <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}</strong> followed crew members</span>
