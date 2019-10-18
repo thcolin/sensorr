@@ -121,7 +121,7 @@ export const Navigation = withRouter(({ onClick, edges = true, location, history
           <Left />
         </a>
         {onClick ? (
-          <button css={theme.resets.button} onClick={onClick}>
+          <button css={theme.resets.button} onClick={onClick} data-test="controls-all">
             <code>{capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))}</code>
             <span>&nbsp;</span>
             <code><small style={theme.styles.semitransparent}>{year}</small></code>
@@ -242,16 +242,18 @@ class Calendar extends PureComponent {
                 $lt: new Date(`${month === 12 ? year + 1 : year}-${month === 12 ? 1 : month + 1}-01`).toISOString()
               },
             })}
-            transform={(entities) => entities.map(raw => {
-              const entity = raw.toJSON()
-              return {
-                ...entity,
-                credits: entity.credits
+            transform={(entities) => entities
+              .map(raw => {
+                const entity = raw.toJSON()
+                const credits = entity.credits
                   .filter(star => stars.includes(star.id.toString()))
                   .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
                   .filter((star, index) => index < 4)
-              }
-            })}
+
+                return { ...entity, credits }
+              })
+              .filter(entity => entity.credits.length)
+            }
             css={styles.grid}
             child={Calendar.Childs.Film}
             placeholder={false}
