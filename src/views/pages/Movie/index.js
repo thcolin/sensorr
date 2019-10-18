@@ -50,6 +50,7 @@ const styles = {
   trailer: {
     position: 'relative',
     minHeight: '25em',
+    maxHeight: '40vw',
     transition: 'height 400ms ease-in-out',
   },
   trailers: {
@@ -366,7 +367,7 @@ export default class Movie extends PureComponent {
       <Fragment>
         <Helmet>
           {details ? (
-            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!match.params.releases && ` - 🔍`) || ''}</title>
+            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!releases && ` - 🔍`) || ''}</title>
           ) : (
             <title>Sensorr - Movie ({match.params.id})</title>
           )}
@@ -389,7 +390,7 @@ export default class Movie extends PureComponent {
               ></div>
               <div
                 css={styles.trailer}
-                style={{ height: trailer ? '80vh' : '50vh' }}
+                style={{ height: trailer ? '100vh' : '50vh' }}
               >
                 {!!trailers.length && (
                   <>
@@ -616,6 +617,7 @@ export default class Movie extends PureComponent {
                   margin: '1em',
                   fontWeight: 800,
                 }}
+                data-test="movie-findReleases"
               >
                 {releases ? 'Retry' : 'Find Releases'}
               </Button>
