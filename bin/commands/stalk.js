@@ -76,10 +76,6 @@ async function stalk({ log, sensorr, db }) {
               mergeMap(credit => from(tmdb.fetch(['movie', credit.id], { append_to_response: 'credits,release_dates' })).pipe(
                 delay(2000)
               ), null, 1),
-              catchError((err) => {
-                log('🚨', { credit, err })
-                return EMPTY
-              }),
               mergeMap(entity => {
                 const result = [...entity.release_dates.results].sort((a, b) => (
                   ['GB', 'US', sensorr.config.region.split('-')[1]].indexOf(a.iso_3166_1) -
@@ -120,6 +116,10 @@ async function stalk({ log, sensorr, db }) {
               }),
             ), null, 1),
           )),
+          catchError((err) => {
+            log('🚨', { credit, err })
+            return EMPTY
+          }),
         ), null, 1)
       )),
     ).subscribe(
