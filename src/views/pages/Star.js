@@ -397,7 +397,7 @@ export default class Star extends PureComponent {
                         </label>
                         {more === 'crew' && details.known_for_department !== 'Acting' && (
                           <>
-                            <span> and </span>
+                            <span>&nbsp;and&nbsp;</span>
                             <button css={theme.resets.button} onClick={() => this.setState({ strict: !strict })}>
                               showing 💼 <strong>{strict ? details.known_for_department : 'All'}</strong> departement(s) credits
                             </button>
