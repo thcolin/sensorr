@@ -316,13 +316,15 @@ export default class Star extends PureComponent {
                       {!!details.birthday && (
                         <span>
                           🎂 &nbsp;<strong>{new Date(details.birthday).toLocaleDateString()}</strong>
-                          <span> &nbsp; </span>
-                          <small>{(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
+                          {!details.deathday && (
+                            <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
+                          )}
                         </span>
                       )}
                       {!!details.deathday && (
                         <span>
                           🥀 &nbsp;<strong>{new Date(details.deathday).toLocaleDateString()}</strong>
+                          <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
                         </span>
                       )}
                     </p>
