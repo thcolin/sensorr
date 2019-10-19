@@ -189,10 +189,6 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
-* Feature `0.9.0`
-  * Fix `Persona` `tooltip` **position** when no job or character (see calendar)
-  * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
-  * Improve `README`
 * Feature `Discover`
   * Add `Discover` page
     * `Grid` with location params driven `Controls`
@@ -225,14 +221,17 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Grouped movies by "policy"
     * Same layout as `Trending` page
 * Feature `performance`
-  * `Persona.State`, on `unfollow`, delete `calendar` entities with only `this` as followed credits
+  * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
+  * `Database`
+    * Remove `Star.credits` (?)
   * `oleoo`
     * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)
   * `Server`
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
     * Fix RAM usage with `sessions` in `io`
   * `CLI`
+    * When `stalk` star, `atomicUpsert` it
     * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
   * Responsive design / mobile UI-UX
 * Feature `Config`
@@ -246,6 +245,8 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Notify `records` summary (email, sms, etc...)
 * Feature `UI/UX sugar`
   * Translate (`fr`, `en`)
+  * `Persona`
+    * Fix `tooltip` **position** when no job or character (see calendar)
   * `Search`
     * Animate `height`
     * Add remove `suggestion` button
