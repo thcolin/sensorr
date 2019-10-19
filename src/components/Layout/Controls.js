@@ -296,7 +296,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
                   <Chevron.Down />
                 </button>
               )) : (
-                <button onClick={() => setOpen(true)}>
+                <button onClick={() => setOpen(true)} data-test="controls-all">
                   <span>All</span>
                   <Chevron.Down />
                 </button>

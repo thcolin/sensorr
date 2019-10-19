@@ -14,60 +14,62 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.png?raw=true" width="100" />
       </td>
       <td>
         <b>Trending</b>
         <ul>
           <li>Trending</li>
           <li>Discover (Popular)</li>
-          <li>Discover (Random year)</li>
-          <li>Discover (Random genre)</li>
+          <li>Discover (By year)</li>
+          <li>Discover (By genre)</li>
+          <li>Discover (By studio)</li>
+          <li>Trending (stars)</li>
         </ul>
       </td>
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/library.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Movies / Library</b>
+        <b>Library</b>
         <ul>
-          <li>Manage your movies <code>library</code> (<code>wished</code> and <code>archived</code>)</li>
+          <li>Manage your movies <code>library</code> (<code>wished</code>, <code>pinned</code> and <code>archived</code>)</li>
         </ul>
       </td>
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search-movie.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/movie.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Movies / Search</b>
+        <b>Movie</b>
         <ul>
-          <li>Search for a <code>movie</code> by it's title</li>
+          <li>Display <code>movie</code> details</li>
+          <li>Consider movie as, <code>🔕</code> <code>ignored</code>, <code>🍿</code> <code>wished</code>, <code>📍</code> <code>pinned</code> or <code>📼</code> <code>archived</code></li>
+          <li>Find <code>releases</code> on <code>sources</code> (<code>torznab</code> / <code>newznab</code>) - requested with <code>title</code> (localized) and <code>original_title</code></li>
+          <li>Grab a <code>release</code> (<code>manual</code> or <code>auto</code>)</li>
         </ul>
       </td>
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/movie.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Movies / Details</b>
+        <b>Star</b>
         <ul>
-          <li>See <code>movie</code> details</li>
-          <li>Consider movie as, <code>🔕</code> <code>ignored</code>, <code>🍿</code> <code>wished</code> or <code>📼</code> <code>archived</code></li>
-          <li>Look for <code>results</code> on <code>sources</code> (<code>torznab</code> / <code>newznab</code>) - requested with <code>title</code> (localized) and <code>original_title</code></li>
-          <li>Grab a <code>result</code></li>
+          <li>Display <code>collection</code> details</li>
         </ul>
       </td>
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/upcoming.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/calendar.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Stars / Calendar</b>
+        <b>Calendar</b>
         <ul>
           <li>Track upcoming movies from <code>followed</code> stars !</li>
         </ul>
@@ -75,10 +77,10 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/following.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/following.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Stars / Following</b>
+        <b>Following</b>
         <ul>
           <li>Manage stars you're <code>following</code></li>
         </ul>
@@ -86,30 +88,19 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/search-star.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Stars / Search</b>
+        <b>Star</b>
         <ul>
-          <li>Search for <code>stars</code></li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.jpg?raw=true" width="100" />
-      </td>
-      <td>
-        <b>Stars / Details</b>
-        <ul>
-          <li>See <code>star</code> details</li>
+          <li>Display <code>star</code> details</li>
           <li>Follow star <code>🔕</code> <code>ignored</code>, <code>🔔</code> <code>followed</code></li>
         </ul>
       </td>
     </tr>
-    <tr>
+    <!-- <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/configure.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/configure.png?raw=true" width="100" />
       </td>
       <td>
         <b>Configure</b>
@@ -120,10 +111,10 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
           <li>Plex synchronization, never inadvertently download a movie you already own !</li>
         </ul>
       </td>
-    </tr>
+    </tr> -->
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/logs.jpg?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/records.png?raw=true" width="100" />
       </td>
       <td>
         <b>Logs</b>
@@ -199,6 +190,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 
 # Roadmap
 * Feature `0.9.0`
+  * Fix `Persona` `tooltip` **position** when no job or character (see calendar)
   * Script screenshots with [capture-website-cli](https://github.com/sindresorhus/capture-website-cli)
   * Improve `README`
 * Feature `Discover`
@@ -233,6 +225,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Grouped movies by "policy"
     * Same layout as `Trending` page
 * Feature `performance`
+  * `Persona.State`, on `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
   * `oleoo`
     * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)

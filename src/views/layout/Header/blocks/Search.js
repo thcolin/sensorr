@@ -408,6 +408,7 @@ export const Input = ({ ...props }) => {
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setActive(true)}
         css={Input.styles.input}
+        data-test="search-input"
       />
       {!!input && (
         <button onClick={() => close(true)} css={Input.styles.clear}>
