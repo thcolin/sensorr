@@ -1,5 +1,4 @@
 const fs = require('fs')
-const inquirer = require('inquirer')
 const filenamify = require('filenamify')
 const { from, of, throwError, bindNodeCallback, EMPTY } = require('rxjs')
 const { map, mapTo, tap, filter, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
@@ -108,19 +107,8 @@ async function record({ argv, log, session, logger, sensorr, db }) {
           chalk.gray(`(${filesize.stringify(release.size)} - ${release.peers} ↓ / ${release.seeders} ↑)`),
         ].join(' '))
 
-        if (argv.a || argv.auto) {
-          choices.forEach(choice => log('*', choice))
-          return of(releases[0])
-        } else {
-          return inquirer.prompt([
-            {
-              type: 'list',
-              name: 'release',
-              message: 'Choose release :',
-              choices,
-            }
-          ]).then(answers => releases[choices.indexOf(answers.release)])
-        }
+        choices.forEach(choice => log('*', choice))
+        return of(releases[0])
       }),
       map(release => ({ movie, release }))
     )

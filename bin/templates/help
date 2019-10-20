@@ -16,7 +16,6 @@ Options:
   -f, --filter <regexp>  Filter releases returned by configured XZNAB
   -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
   -D, --descending       Sort releases in descending order
-  -a, --auto             Automatically select first release according to --filter, --sort and --descending options
 
 
 Tips: Sensorr will use your "config/config.js" and fallback on default
