@@ -35,7 +35,6 @@
     "express-basic-auth": "1.2.0",
     "express-pouchdb": "4.2.0",
     "filenamify": "4.1.0",
-    "leveldown": "5.4.0",
     "marksy": "8.0.0",
     "microtime": "3.0.0",
     "module-alias": "2.2.2",
@@ -112,6 +111,9 @@
     "webpack-cli": "3.3.9",
     "webpack-dev-server": "3.8.2",
     "webpack-merge": "4.2.2"
+  },
+  "resolutions": {
+    "leveldown": "5.4.0"
   },
   "_moduleAliases": {
     "@root": ".",

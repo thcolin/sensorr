@@ -2163,7 +2163,7 @@ abstract-leveldown@^6.0.0:
     level-concat-iterator "~2.0.0"
     xtend "~4.0.0"
 
-abstract-leveldown@~6.0.0, abstract-leveldown@~6.0.1, abstract-leveldown@~6.0.3:
+abstract-leveldown@~6.0.0, abstract-leveldown@~6.0.1:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/abstract-leveldown/-/abstract-leveldown-6.0.3.tgz#b4b6159343c74b0c5197b2817854782d8f748c4a"
   dependencies:
@@ -5243,10 +5243,6 @@ fast-deep-equal@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
 
-fast-future@~1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/fast-future/-/fast-future-1.0.2.tgz#8435a9aaa02d79248d17d704e76259301d99280a"
-
 fast-glob@^2.0.2, fast-glob@^2.2.6:
   version "2.2.7"
   resolved "https://registry.yarnpkg.com/fast-glob/-/fast-glob-2.2.7.tgz#6953857c3afa475fff92ee6015d52da70a4cd39d"
@@ -7174,16 +7170,7 @@ level@5.0.1:
     leveldown "^5.0.0"
     opencollective-postinstall "^2.0.0"
 
-leveldown@5.0.2, leveldown@5.1.0, leveldown@^5.0.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/leveldown/-/leveldown-5.1.0.tgz#89f8a4fd4eb51793988368fc7f91e6d4db5f6d53"
-  dependencies:
-    abstract-leveldown "~6.0.3"
-    fast-future "~1.0.2"
-    napi-macros "~1.8.1"
-    node-gyp-build "~4.1.0"
-
-leveldown@5.4.0:
+leveldown@5.0.2, leveldown@5.4.0, leveldown@^5.0.0:
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/leveldown/-/leveldown-5.4.0.tgz#fd6731af2c7fd717c878eb05c87c12036e986e93"
   integrity sha512-uKwfJT+jgXL3mdb3UR/bOaO13VX85R7yGaunK+WJNuGWSoxskp3JgYwFCKfPruulx/bVn2xI7XmyNHVQkVC/Ig==
@@ -7951,10 +7938,6 @@ napi-build-utils@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/napi-build-utils/-/napi-build-utils-1.0.1.tgz#1381a0f92c39d66bf19852e7873432fc2123e508"
   integrity sha512-boQj1WFgQH3v4clhu3mTNfP+vOBxorDlE8EKiMjUlLG3C4qAESnn9AxIOkFgTR2c9LtzNjPrjS60cT27ZKBhaA==
-
-napi-macros@~1.8.1:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/napi-macros/-/napi-macros-1.8.2.tgz#299265c1d8aa401351ad0675107d751228c03eda"
 
 napi-macros@~2.0.0:
   version "2.0.0"
