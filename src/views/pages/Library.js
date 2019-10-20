@@ -7,34 +7,6 @@ import { Movie } from 'shared/Documents'
 import theme from 'theme'
 
 const styles = {
-  filter: {
-    zIndex: 1,
-    position: 'sticky',
-    top: '-1px',
-    width: '100%',
-  },
-  input: {
-    width: '100%',
-    backgroundColor: theme.colors.grey,
-    border: 'none',
-    fontSize: '1.125em',
-    padding: '0.792em 1em',
-    margin: 0,
-    textAlign: 'center',
-    color: theme.colors.secondary,
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  state: {
-    position: 'absolute',
-    cursor: 'pointer',
-    right: '1em',
-    top: '0.375em',
-    fontSize: '2em',
-    userSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
-  },
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
