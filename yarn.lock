@@ -9865,9 +9865,13 @@ react-helmet@5.2.1:
     react-fast-compare "^2.0.2"
     react-side-effect "^1.1.0"
 
-react-hooks-lib@0.0.20:
-  version "0.0.20"
-  resolved "https://registry.yarnpkg.com/react-hooks-lib/-/react-hooks-lib-0.0.20.tgz#885938665dd342daa452a94465f66ab03fad7386"
+react-hooks-lib@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/react-hooks-lib/-/react-hooks-lib-0.1.0.tgz#8b3278a4a3ebc826743992475f85fb7a4dd8e103"
+  integrity sha512-3NPnGYhk8KqmzT9GsaUdkl4hXdi7cgn0aUL1t5ot8TMhB7iZS14AT/15mv8q8/5ZyHuTgD5XOZaEz8fI6Sc1ew==
+  dependencies:
+    lodash.isequal "^4.5.0"
+    shallowequal "^1.1.0"
 
 react-hot-loader@^4.8.4:
   version "4.12.12"
