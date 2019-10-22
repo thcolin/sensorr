@@ -2440,9 +2440,10 @@ array-map@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/array-map/-/array-map-0.0.0.tgz#88a2bab73d1cf7bcd5c1b118a003f66f665fa662"
 
-array-move@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/array-move/-/array-move-2.1.0.tgz#b4e9fc8d6a580bc97dcad408e0539c61b4b7ed7e"
+array-move@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/array-move/-/array-move-2.2.0.tgz#28f39b915df05ce8b00c43100d20b5a6385f7606"
+  integrity sha512-n9Wlbjl9tb9c7qoKjminaLwyUR5y4UV+DXcCu428yUSvBD7WWmfskEB98zdrgMPKFDUrzfZtdJuZ3Pzi3k5IbA==
 
 array-reduce@~0.0.0:
   version "0.0.0"

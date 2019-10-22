@@ -20,7 +20,7 @@
     "@studio/log": "2.0.0",
     "@studio/ndjson": "2.0.0",
     "archiver": "^3.1.1",
-    "array-move": "2.1.0",
+    "array-move": "2.2.0",
     "atob": "2.1.2",
     "body-parser": "1.19.0",
     "chalk": "2.4.2",
