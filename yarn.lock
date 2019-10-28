@@ -8981,25 +8981,27 @@ pouchdb-bulkdocs-wrapper@4.2.0:
   dependencies:
     pouchdb-promise "^6.4.1"
 
-pouchdb-changes-filter@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-changes-filter/-/pouchdb-changes-filter-7.0.0.tgz#05d2969da278b0c0d5b37ce3883b787b87f0c216"
+pouchdb-changes-filter@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/pouchdb-changes-filter/-/pouchdb-changes-filter-7.1.1.tgz#6a759ddc143946784ef6806bfeecdf6ff717888a"
+  integrity sha512-rMdnIbQhkTbfHpOkML3AUEood7N0xfpD3CIDavmqS0BQAScOjVbOvb43uGhsUY1J4FF7QsOK8q/j/E0ODzk/Wg==
   dependencies:
-    pouchdb-errors "7.0.0"
-    pouchdb-selector-core "7.0.0"
-    pouchdb-utils "7.0.0"
+    pouchdb-errors "7.1.1"
+    pouchdb-selector-core "7.1.1"
+    pouchdb-utils "7.1.1"
 
 pouchdb-changeslike-wrapper@4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/pouchdb-changeslike-wrapper/-/pouchdb-changeslike-wrapper-4.2.0.tgz#2660e14180672f9e396daffd7f2556a9bf4c71bf"
   integrity sha512-vsz3sTXH2YdWTd+dSBWEFOrdtIM07peQ9dSzROONyG7dqGlr9e2uSj+mXqTm8jBLDwUfcjZu16DTUg2AdWtWJg==
 
-pouchdb-checkpointer@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-checkpointer/-/pouchdb-checkpointer-7.0.0.tgz#e02b98f18c7a50fb01c31c865b735d0d9dc7be1d"
+pouchdb-checkpointer@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/pouchdb-checkpointer/-/pouchdb-checkpointer-7.1.1.tgz#27399997a8245e6e333aef9a5ebbe0f7c146247a"
+  integrity sha512-ckJ/Y5gI+sEDZ9w4A4wTt2aOcX39BeqQwfMU7HSUMVzmPfIOVTk1N/8PyeVibgL3WNJswYFDdH1Sa/xbdS/jQw==
   dependencies:
-    pouchdb-collate "7.0.0"
-    pouchdb-utils "7.0.0"
+    pouchdb-collate "7.1.1"
+    pouchdb-utils "7.1.1"
 
 pouchdb-collate@7.0.0:
   version "7.0.0"
@@ -9018,18 +9020,19 @@ pouchdb-collections@7.1.1, pouchdb-collections@^7.0.0:
   resolved "https://registry.yarnpkg.com/pouchdb-collections/-/pouchdb-collections-7.1.1.tgz#4f7704896e4055ba354241c0fd75bbb7446a809f"
   integrity sha512-Iwdv74+H8tSc9cM7co0X4eJQglaPp+uIX7qjzK5MIeZThUHNcJQxOC92qGK1qE3Z2feAD5LxhXEIYDia/lB8pw==
 
-pouchdb-core@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-core/-/pouchdb-core-7.0.0.tgz#d86c9938fe388693eab7e05c5171bfbbe0290768"
+pouchdb-core@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/pouchdb-core/-/pouchdb-core-7.1.1.tgz#5a0f1873cc34389a06c17882474437775d4ef11e"
+  integrity sha512-q0K7SRpqbNQ4f3cMNXVon8mQz3/mWFaywoyw8uMQ7cxtXaItXM8KBw6aZ8cCKNfqC9B1CxvVuo1V3H7+Y/bX+Q==
   dependencies:
     argsarray "0.0.1"
     inherits "2.0.3"
-    pouchdb-changes-filter "7.0.0"
-    pouchdb-collections "7.0.0"
-    pouchdb-errors "7.0.0"
-    pouchdb-fetch "7.0.0"
-    pouchdb-merge "7.0.0"
-    pouchdb-utils "7.0.0"
+    pouchdb-changes-filter "7.1.1"
+    pouchdb-collections "7.1.1"
+    pouchdb-errors "7.1.1"
+    pouchdb-fetch "7.1.1"
+    pouchdb-merge "7.1.1"
+    pouchdb-utils "7.1.1"
 
 pouchdb-errors@7.0.0:
   version "7.0.0"
@@ -9086,12 +9089,13 @@ pouchdb-find@7.1.1, pouchdb-find@^7.0.0:
     pouchdb-selector-core "7.1.1"
     pouchdb-utils "7.1.1"
 
-pouchdb-generate-replication-id@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-generate-replication-id/-/pouchdb-generate-replication-id-7.0.0.tgz#1d885e949a326623fabef747ecfdf6d492765274"
+pouchdb-generate-replication-id@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/pouchdb-generate-replication-id/-/pouchdb-generate-replication-id-7.1.1.tgz#143bca90489b3f4f48b76b74b33cde7293849640"
+  integrity sha512-tWxM/ybpjGNiHaZ8K99ts/ut6S+aDACu0pQ0VOfWIeolGeLSHZgj/m7fEJ0rhxukeitBtc42DUtblNC1X8EWXg==
   dependencies:
-    pouchdb-collate "7.0.0"
-    pouchdb-md5 "7.0.0"
+    pouchdb-collate "7.1.1"
+    pouchdb-md5 "7.1.1"
 
 pouchdb-json@7.1.1:
   version "7.1.1"
@@ -9144,10 +9148,6 @@ pouchdb-md5@7.1.1:
     pouchdb-binary-utils "7.1.1"
     spark-md5 "3.0.0"
 
-pouchdb-merge@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-merge/-/pouchdb-merge-7.0.0.tgz#9f476ce7e32aae56904ad770ae8a1dfe14b57547"
-
 pouchdb-merge@7.1.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/pouchdb-merge/-/pouchdb-merge-7.1.1.tgz#d05cd9b71faf4103107bc1b2771c9f508fa4ae1c"
@@ -9182,15 +9182,16 @@ pouchdb-replication-stream@^1.2.9:
     pouchdb-promise "^6.0.4"
     through2 "^2.0.0"
 
-pouchdb-replication@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/pouchdb-replication/-/pouchdb-replication-7.0.0.tgz#b71751183dfa9337127d31de588e11e12cde5d9a"
+pouchdb-replication@7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/pouchdb-replication/-/pouchdb-replication-7.1.1.tgz#4596bd8a0756674765608b92e05c279e19ccf3c0"
+  integrity sha512-caIraPaI0AYbr2L3heMWRtH/E3bgTIoGamcFYizjHMsAxvbNBPo4enhHiffGte3P80D7qEwpd3C6l4ZPpkZdwg==
   dependencies:
     inherits "2.0.3"
-    pouchdb-checkpointer "7.0.0"
-    pouchdb-errors "7.0.0"
-    pouchdb-generate-replication-id "7.0.0"
-    pouchdb-utils "7.0.0"
+    pouchdb-checkpointer "7.1.1"
+    pouchdb-errors "7.1.1"
+    pouchdb-generate-replication-id "7.1.1"
+    pouchdb-utils "7.1.1"
 
 pouchdb-replicator@4.2.0:
   version "4.2.0"
@@ -10548,10 +10549,10 @@ run-queue@^1.0.0, run-queue@^1.0.3:
   dependencies:
     aproba "^1.1.1"
 
-rxdb@8.7.1:
-  version "8.7.1"
-  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-8.7.1.tgz#55f293c87b4fc813e628c3b5eabbf652a657a3b4"
-  integrity sha512-XSHZ6wJ0ZjGuoWMpF1d4own0wROqGIXEDcvvVtUA5Q1KFaTzxjlzA/EhM4y8j8EdILdzrSA7+eitQBCb5cAwUQ==
+rxdb@8.7.2:
+  version "8.7.2"
+  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-8.7.2.tgz#2a922260f723d1f2ebf531ea103e7bd1b9a0c14a"
+  integrity sha512-FtZcfSZjQtM6mFv0UGxZsOddNHAF5vFNSDSUXApexbUPxhi2GjR+YkqiJbsm1hKEUmBpShgLOzEXM6T0tViM+w==
   dependencies:
     "@babel/runtime" "7.6.3"
     "@types/cors" "2.8.6"
@@ -10573,10 +10574,10 @@ rxdb@8.7.1:
     modifyjs "0.3.1"
     object-path "0.11.4"
     pouchdb-all-dbs "1.0.2"
-    pouchdb-core "7.0.0"
+    pouchdb-core "7.1.1"
     pouchdb-find "7.0.0"
-    pouchdb-replication "7.0.0"
-    pouchdb-selector-core "7.0.0"
+    pouchdb-replication "7.1.1"
+    pouchdb-selector-core "7.1.1"
     random-token "0.0.8"
     spark-md5 "^3.0.0"
     url "^0.11.0"
