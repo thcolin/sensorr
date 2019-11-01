@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import { withToastManager } from 'react-toast-notifications'
+import { NavLink } from 'react-router-dom'
 import { keyframes } from '@emotion/core'
 import sensorr from 'store/sensorr'
 import nanobounce from 'nanobounce'
@@ -25,6 +26,11 @@ const styles = {
   element: {
     position: 'relative',
     padding: '0.25em 0 0.25em 0.3125em',
+  },
+  link: {
+    ...theme.resets.a,
+    color: 'black',
+    opacity: 0.5,
   },
   button: {
     ...theme.resets.button,
@@ -115,14 +121,24 @@ class Recording extends PureComponent {
             ongoing ? styles.indicator.ongoing : loading ? styles.indicator.loading : styles.indicator.hidden,
           ]}
         ></span>
-        <button
-          css={styles.button}
-          title={`📹 Record${(ongoing || loading) ? 'ing' : ''} wished movies from collection`}
-          onClick={() => !ongoing && this.triggerJob('record')}
-          disabled={ongoing || loading}
-        >
-          📼
-        </button>
+        {ongoing ? (
+          <NavLink
+            css={styles.link}
+            title={`📹 Recording wished movies from collection`}
+            to="/movies/records"
+          >
+            📼
+          </NavLink>
+        ) : (
+          <button
+            css={styles.button}
+            title={`📹 Record${loading ? 'ing' : ''} wished movies from collection`}
+            onClick={() => this.triggerJob('record')}
+            disabled={loading}
+          >
+            📼
+          </button>
+        )}
       </div>
     )
   }
