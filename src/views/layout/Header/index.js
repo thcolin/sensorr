@@ -107,7 +107,7 @@ const Header = ({ ...props }) => (
         <div css={styles.navigator}>
           <button onClick={() => triggerScrollToTop()}>
             <Switch>
-              <Route path="/" exact={true} render={() => "Trending"} />
+              <Route path="/" exact={true} render={() => "Home"} />
               <Route path="/movies" render={() => "Movies"} />
               <Route path="/stars" render={() => "Stars"} />
               <Route path="/settings" render={() => "Settings"} />

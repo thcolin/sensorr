@@ -1,6 +1,6 @@
 import React from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
-import Trending from 'views/pages/Trending'
+import Home from 'views/pages/Home'
 import Library from 'views/pages/Library'
 import Movie from 'views/pages/Movie'
 import Collection from 'views/pages/Collection'
@@ -25,7 +25,7 @@ const Body = ({ ...props }) => (
   <>
     <div css={styles.element}>
       <Switch>
-        <Route path="/" exact component={Trending} />
+        <Route path="/" exact component={Home} />
         <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
         <Route path="/movies/library" exact component={Library} />
         <Route path="/movies/calendar/:year/:month" exact component={Calendar} />

@@ -17,7 +17,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
       <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Trending</b>
+        <b>Home</b>
         <ul>
           <li>Trending</li>
           <li>Discover (Popular)</li>
@@ -188,6 +188,12 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
+* Feature `Home`
+  * `Row` with *latest* `movies` recorded (with record `date`) - or *current* `movies` recording
+  * `Row` with *new* `movies` from `calendar`
+  * `Row` with *birthday* `stars` from `following`
+  * `Row` with *upcoming* `movies` from *followed* `stars`
+    * Link to `Calendar`
 * Feature `Discover`
   * Add `Discover` page
     * `Grid` with location params driven `Controls`
@@ -198,10 +204,10 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Add `keywords` (with `Link`)
   * Add `Studio` page (?) - no, use predefined `Discover` page
     * Referring
-      * `Trending` ? - yes, but refactor needed (currently use multiple values)
+      * `Home` ? - yes, but refactor needed (currently use multiple values)
       * Display *studio* in `Movie` ? - yes
       * Display *studio* `Search` ? - yes
-  * `Trending`
+  * `Home`
     * Link `Discover` `Row` to `Discover` page
 * Feature `Policies`
   * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
@@ -218,7 +224,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
       * Edit `policy` link
   * Add `List` page
     * Grouped movies by "policy"
-    * Same layout as `Trending` page
+    * Same layout as `Home` page
 * Feature `performance`
   * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
@@ -249,7 +255,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * `Search`
     * Animate `height`
     * Add remove `suggestion` button
-  * `Trending`
+  * `Home`
     * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
   * `Controls`
@@ -274,9 +280,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * `Loading` page waiting sync of `db` with progress ?
   * Dark mode (`react-theme-provider`)
 * Feature `Custom Home`
-  * `Trending`
-    * `Row` with *upcoming* `movies` from *followed* `stars`
-      * Link to `Calendar`
+  * `Home`
     * Customize
       * Pinned sortable `Trending|Discover` `Rows`
         * `type=[Popular|Top|Calendar|Trending|Discover]`

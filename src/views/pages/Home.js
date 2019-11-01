@@ -23,7 +23,7 @@ const styles = {
   },
 }
 
-export default class Trending extends PureComponent {
+export default class Home extends PureComponent {
   static Childs = {
     Persona: (props) => <Persona {...props} display="portrait" />
   }
@@ -58,7 +58,7 @@ export default class Trending extends PureComponent {
     return (
       <Fragment>
         <Helmet>
-          <title>Sensorr - Trending</title>
+          <title>Sensorr - Home</title>
         </Helmet>
         <div css={styles.element}>
           <List
@@ -166,7 +166,7 @@ export default class Trending extends PureComponent {
             title="Trending stars"
             uri={['trending', 'person', 'week']}
             params={{ sort_by: 'popularity.desc' }}
-            child={Trending.Childs.Persona}
+            child={Home.Childs.Persona}
             placeholder={true}
           />
         </div>
