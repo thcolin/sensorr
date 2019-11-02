@@ -1,6 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import List, { Label } from 'components/Layout/List'
+import ListRecords from './containers/ListRecords'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
@@ -64,12 +65,13 @@ export default class Home extends PureComponent {
           <List
             label="📣&nbsp; Trending"
             title="Trending movies"
-            uri={['trending', 'movie', 'week']}
+            uri={['trending', 'movie', 'day']}
             params={{ sort_by: 'popularity.desc' }}
             child={Film}
             prettify={5}
             placeholder={true}
           />
+          <ListRecords />
           <List
             label="👀&nbsp; Discover"
             title="Discover movies"
@@ -164,7 +166,7 @@ export default class Home extends PureComponent {
           <List
             label="👩‍🎤&nbsp; Trending"
             title="Trending stars"
-            uri={['trending', 'person', 'week']}
+            uri={['trending', 'person', 'day']}
             params={{ sort_by: 'popularity.desc' }}
             child={Home.Childs.Persona}
             placeholder={true}

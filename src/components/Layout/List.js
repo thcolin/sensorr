@@ -5,6 +5,7 @@ import { useHover } from 'react-hooks-lib'
 import Empty from 'components/Empty'
 import Spinner from 'components/Spinner'
 import tmdb from 'store/tmdb'
+import database from 'store/database'
 import nanobounce from 'nanobounce'
 import theme from 'theme'
 
@@ -70,10 +71,11 @@ const styles = {
 export default class List extends PureComponent {
   static propTypes = {
     items: PropTypes.array,
-    child: PropTypes.elementType.isRequired,
-    childProps: PropTypes.object,
+    query: PropTypes.func,
     uri: PropTypes.array,
     params: PropTypes.object,
+    child: PropTypes.elementType.isRequired,
+    childProps: PropTypes.object,
     transform: PropTypes.func,
     filter: PropTypes.func,
     label: PropTypes.node,
@@ -93,7 +95,6 @@ export default class List extends PureComponent {
     childProps: {},
     uri: [],
     params: {},
-    transform: (res) => res.results,
     filter: () => true,
     display: 'row',
     space: 2,
@@ -110,7 +111,7 @@ export default class List extends PureComponent {
 
     this.state = {
       entities: [],
-      loading: false,
+      loading: props.query || props.uri.length,
       err: null,
     }
 
@@ -121,44 +122,80 @@ export default class List extends PureComponent {
   }
 
   componentDidMount() {
-    if (this.props.uri.length) {
-      this.setState({ loading: true })
-      tmdb.fetch(this.props.uri, this.props.params).then(
-        res => this.debounce(() => {
-          this.setState({ loading: false, entities: this.props.transform(res) || [] })
-        }),
-        err => this.debounce(() => {
-          this.setState({
-            loading: false,
-            err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
-          })
-        })
-      )
+    if (this.props.query) {
+      this.debounce(async () => {
+        await this.fetchDatabase()
+        this.reference.current && this.reference.current.scroll(0, 0)
+      })
+    } else if (this.props.uri.length) {
+      this.debounce(async () => {
+        await this.fetchTMDB()
+        this.reference.current && this.reference.current.scroll(0, 0)
+      })
+    } else if (this.props.items.length) {
+      this.setState({ entities: [] })
+      this.reference.current && this.reference.current.scroll(0, 0)
     }
   }
 
   componentDidUpdate(props) {
-    if (this.props.uri.length) {
-      if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
-        this.setState({ loading: true, entities: [] })
-        tmdb.fetch(this.props.uri, this.props.params).then(
-          res => this.debounce(() => {
-            this.setState({ loading: false, entities: this.props.transform(res) })
-            this.reference.current && this.reference.current.scroll(0, 0)
-          }),
-          err => this.debounce(() => {
-            this.setState({
-              loading: false,
-              err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
-            })
-          })
-        )
+    if (this.props.query) {
+      if (this.props.query !== props.query) {
+        this.debounce(async () => {
+          await this.fetchDatabase()
+          this.reference.current && this.reference.current.scroll(0, 0)
+        })
+      }
+    } else if (this.props.uri.length) {
+      if (
+        this.props.uri.join('/') !== props.uri.join('/') ||
+        JSON.stringify(this.props.params) !== JSON.stringify(props.params)
+      ) {
+        this.debounce(async () => {
+          await this.fetchTMDB()
+          this.reference.current && this.reference.current.scroll(0, 0)
+        })
+      }
+    } else if (this.props.items.length) {
+      if ((this.props.items[0] || {}).id !== (props.items[0] || {}).id) {
+        this.setState({ entities: [] })
+        this.reference.current && this.reference.current.scroll(0, 0)
       }
     }
+  }
 
-    if (this.props.items.length && (this.props.items[0] || {}).id !== (props.items[0] || {}).id) {
-      this.setState({ entities: [] })
-      this.reference.current && this.reference.current.scroll(0, 0)
+  async fetchDatabase() {
+    if (!this.props.query) {
+      return
+    }
+
+    this.setState({ loading: true })
+
+    const db = await database.get()
+    const query = this.props.query(db)
+    const entities = await query.exec()
+
+    this.setState({
+      loading: false,
+      entities: (this.props.transform || ((entities) => entities.map(entity => entity.toJSON())))(entities),
+    })
+  }
+
+  async fetchTMDB() {
+    if (!this.props.uri.length) {
+      return
+    }
+
+    this.setState({ loading: true })
+
+    try {
+      const res = await tmdb.fetch(this.props.uri, this.props.params)
+      this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] })
+    } catch(err) {
+      this.setState({
+        loading: false,
+        err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+      })
     }
   }
 
@@ -173,6 +210,7 @@ export default class List extends PureComponent {
     const { entities, loading, err, ...state } = this.state
     const {
       items,
+      query,
       uri,
       params,
       child,
@@ -192,11 +230,11 @@ export default class List extends PureComponent {
       ...props
     } = this.props
 
-    const filtered = uri.length ? entities : items
+    const filtered = (uri.length || query) ? entities : items
       .filter(entity => this.validate(entity))
       .filter(filter)
 
-    return (!!filtered.length || !hide) && (
+    return (!!filtered.length || (loading && (uri.length || query)) || !hide) && (
       <div css={styles.list.element}>
         {!!label && (
           <h1 {...props} css={[styles.list.label, props.css]}>{label}</h1>
@@ -241,7 +279,7 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
 
   return (
     <span {...bind} css={styles.label.element} style={{ justifyContent: { true: 'flex-start', false: 'space-between' }[compact] }}>
-      <label htmlFor={id} {...(title ? { title } : {})}>
+      <label {...(!!options ? { htmlFor: id } : {})} {...(title ? { title } : {})}>
         {children}
         {!!(options || []).length && (
           <select
@@ -266,7 +304,7 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
 }
 
 Label.propTypes = {
-  id: PropTypes.string.isRequired,
+  id: PropTypes.string,
   title: PropTypes.string,
   compact: PropTypes.bool,
   actions: PropTypes.node,

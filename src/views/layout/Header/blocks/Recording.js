@@ -22,46 +22,56 @@ const blink = keyframes`
   }
 `
 
-const styles = {
+export const Indicator = ({ ongoing, loading, ...props }) => (
+  <span
+    css={[
+      Indicator.styles.element,
+      ongoing ? Indicator.styles.ongoing : loading ? Indicator.styles.loading : Indicator.styles.hidden,
+    ]}
+  />
+)
+
+Indicator.styles = {
   element: {
-    position: 'relative',
-    padding: '0.25em 0 0.25em 0.3125em',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '0.25em',
+    width: '0.25em',
+    borderRadius: '50%',
+    animation: `1.5s linear infinite ${blink}`,
   },
-  link: {
-    ...theme.resets.a,
-    color: 'black',
-    opacity: 0.5,
+  ongoing: {
+    backgroundColor: theme.colors.wrong,
   },
-  button: {
-    ...theme.resets.button,
-    color: 'black',
-    '&:disabled': {
-      opacity: 0.5,
-    }
+  loading: {
+    backgroundColor: theme.colors.gray,
   },
-  indicator: {
-    element: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      height: '0.25em',
-      width: '0.25em',
-      borderRadius: '50%',
-      animation: `1.5s linear infinite ${blink}`,
-    },
-    ongoing: {
-      backgroundColor: theme.colors.wrong,
-    },
-    loading: {
-      backgroundColor: theme.colors.gray,
-    },
-    hidden: {
-      display: 'none',
-    }
+  hidden: {
+    display: 'none',
   }
 }
 
 class Recording extends PureComponent {
+  static styles = {
+    element: {
+      position: 'relative',
+      padding: '0.25em 0 0.25em 0.3125em',
+    },
+    link: {
+      ...theme.resets.a,
+      color: 'black',
+      opacity: 0.5,
+    },
+    button: {
+      ...theme.resets.button,
+      color: 'black',
+      '&:disabled': {
+        opacity: 0.5,
+      }
+    },
+  }
+
   constructor(props) {
     super(props)
 
@@ -114,16 +124,11 @@ class Recording extends PureComponent {
     const { loading, ...state } = this.state
 
     return (
-      <div css={styles.element}>
-        <span
-          css={[
-            styles.indicator.element,
-            ongoing ? styles.indicator.ongoing : loading ? styles.indicator.loading : styles.indicator.hidden,
-          ]}
-        ></span>
+      <div css={Recording.styles.element}>
+        <Indicator ongoing={ongoing} loading={loading} />
         {ongoing ? (
           <NavLink
-            css={styles.link}
+            css={Recording.styles.link}
             title={`📹 Recording wished movies from collection`}
             to="/movies/records"
           >
@@ -131,7 +136,7 @@ class Recording extends PureComponent {
           </NavLink>
         ) : (
           <button
-            css={styles.button}
+            css={Recording.styles.button}
             title={`📹 Record${loading ? 'ing' : ''} wished movies from collection`}
             onClick={() => this.triggerJob('record')}
             disabled={loading}

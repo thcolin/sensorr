@@ -189,7 +189,6 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 
 # Roadmap
 * Feature `Home`
-  * `Row` with *latest* `movies` recorded (with record `date`) - or *current* `movies` recording
   * `Row` with *new* `movies` from `calendar`
   * `Row` with *birthday* `stars` from `following`
   * `Row` with *upcoming* `movies` from *followed* `stars`
@@ -226,6 +225,12 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Grouped movies by "policy"
     * Same layout as `Home` page
 * Feature `performance`
+  * Refactor `Grid` and `List`
+    * Allow 4 "sources" / behaviors
+      * `props.items` (array)
+      * `props.query` (db)
+      * `props.uri/props.params` (tmdb)
+      * `props.?` (socket)
   * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
   * `Database`

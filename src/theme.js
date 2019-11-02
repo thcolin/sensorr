@@ -26,6 +26,7 @@ const fonts = {
 
 const resets = {
   a: {
+    color: 'inherit',
     textDecoration: 'none',
     ':hover:not(:disabled)': {
       cursor: 'pointer',
