@@ -140,7 +140,7 @@ export default class List extends PureComponent {
 
   componentDidUpdate(props) {
     if (this.props.query) {
-      if (this.props.query !== props.query) {
+      if (!props.query) {
         this.debounce(async () => {
           await this.fetchDatabase()
           this.reference.current && this.reference.current.scroll(0, 0)
