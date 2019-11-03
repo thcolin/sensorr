@@ -98,7 +98,7 @@ Movie.Sortings = {
   vote_average: {
     value: 'vote_average',
     label: '⭐  Vote Average',
-    apply: (a, b, reverse) => (parseInt((reverse ? a : b).vote_average) || 0) - (parseInt((reverse ? b : a).vote_average) || 0),
+    apply: (a, b, reverse) => (parseFloat((reverse ? a : b).vote_average) || 0) - (parseFloat((reverse ? b : a).vote_average) || 0),
     labelize: (entity) => entity.vote_average,
   },
   runtime: {
@@ -198,9 +198,9 @@ Movie.Filters = {
     }
   },
   vote_average: (entities) => {
-    const compute = (vote_average = 0) => Math.min(9, Math.max(0, Math.floor(vote_average)))
     const min = 0
     const max = 10
+    const compute = (vote_average = 0) => Math.min(max, Math.max(min, Math.floor(vote_average)))
 
     return {
       label: 'Vote Average',
@@ -208,10 +208,13 @@ Movie.Filters = {
       default: [min, max],
       min: min,
       max: max,
-      apply: (entity, values) => compute(entity.vote_average) >= values[0] && compute(entity.vote_average) < values[1],
+      apply: (entity, values) => entity.vote_average >= values[0] && entity.vote_average <= values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
         [compute(entity.vote_average)]: (histogram[compute(entity.vote_average)] || 0) + 1,
+        ...(entity.vote_average % 1 ? {} : {
+          [compute(entity.vote_average - 0.1)]: (histogram[compute(entity.vote_average - 0.1)] || 0) + 1,
+        })
       }), Array(max - min).fill(true).reduce((acc, curr, index) => ({ ...acc, [index]: 0 }), {})),
     }
   },

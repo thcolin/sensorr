@@ -75,9 +75,9 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
     <div css={styles.input}>
       {!!Object.keys(data).length && (
         <div css={styles.histogram}>
-          {Object.keys(data).map((key, index) => (
+          {Object.keys(data).map((key, index, arr) => (
             <div
-              title={`${key} (${data[key]})`}
+              title={`${key}${arr[index + 1] ? `-${arr[index + 1]}` : '+'} (${data[key]})`}
               key={key}
               style={{
                 height: `${(100 * data[key]) / highest || 0}%`,
