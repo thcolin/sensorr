@@ -938,10 +938,10 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
-"@babel/runtime@7.6.3", "@babel/runtime@^7.0.0", "@babel/runtime@^7.1.2", "@babel/runtime@^7.2.0", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.0", "@babel/runtime@^7.4.2", "@babel/runtime@^7.4.4", "@babel/runtime@^7.4.5", "@babel/runtime@^7.5.5", "@babel/runtime@^7.6.2":
-  version "7.6.3"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.6.3.tgz#935122c74c73d2240cafd32ddb5fc2a6cd35cf1f"
-  integrity sha512-kq6anf9JGjW8Nt5rYfEuGRaEAaH1mkv3Bbu6rYvLOpPh/RusSJXuKPEAoZ7L7gybZkchE8+NV5g9vKF4AGAtsA==
+"@babel/runtime@7.7.2", "@babel/runtime@^7.0.0", "@babel/runtime@^7.1.2", "@babel/runtime@^7.2.0", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.0", "@babel/runtime@^7.4.2", "@babel/runtime@^7.4.4", "@babel/runtime@^7.4.5", "@babel/runtime@^7.5.5", "@babel/runtime@^7.6.2":
+  version "7.7.2"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.7.2.tgz#111a78002a5c25fc8e3361bedc9529c696b85a6a"
+  integrity sha512-JONRbXbTXc9WQE2mAZd1p0Z3DZ/6vaQIkgYMSTP3KjRCyd7rCZCcfhCyX+YjwcKxcZ82UrxbRD358bpExNgrjw==
   dependencies:
     regenerator-runtime "^0.13.2"
 
@@ -1731,10 +1731,10 @@
     "@types/node" "*"
     "@types/range-parser" "*"
 
-"@types/express@*", "@types/express@4.17.1":
-  version "4.17.1"
-  resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.1.tgz#4cf7849ae3b47125a567dfee18bfca4254b88c5c"
-  integrity sha512-VfH/XCP0QbQk5B5puLqTLEeFgR8lfCJHZJKkInZ9mkYd+u8byX0kztXEQxEk4wZXJs8HI+7km2ALXjn4YKcX9w==
+"@types/express@*", "@types/express@4.17.2":
+  version "4.17.2"
+  resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.2.tgz#a0fb7a23d8855bac31bc01d5a58cadd9b2173e6c"
+  integrity sha512-5mHFNyavtLoJmnusB8OKJ5bshSzw+qkMIBAobLrIM48HJvunFva9mOa6aBwh64lBFyNwBbs0xiEFuj4eU/NjCA==
   dependencies:
     "@types/body-parser" "*"
     "@types/express-serve-static-core" "*"
@@ -2834,10 +2834,10 @@ braces@~3.0.2:
   dependencies:
     fill-range "^7.0.1"
 
-broadcast-channel@2.3.2:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/broadcast-channel/-/broadcast-channel-2.3.2.tgz#eedff3dfbee65c562cce912b9b9e107ffd320152"
-  integrity sha512-01yaxRPuB1+GN6jTBplZ2GpXnqKdqWQEnD7FBEerj65kMRRzOAwLBtf9TzJ91725gPCdxMHvID8afiUcIEDbdQ==
+broadcast-channel@2.3.3:
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/broadcast-channel/-/broadcast-channel-2.3.3.tgz#6d048e3f67a4ffccf044aebfce308d0909f39952"
+  integrity sha512-4R5yfv//8hoTY7kMEXV/JKwoWybQ/MsaG8sjrqAS0yE7IRGUcOLP8MB5k/jwogTUGSusmxqmFQ64iuQj8IsvUw==
   dependencies:
     "@babel/runtime" "^7.6.2"
     detect-node "^2.0.4"
@@ -10419,19 +10419,19 @@ run-queue@^1.0.0, run-queue@^1.0.3:
   dependencies:
     aproba "^1.1.1"
 
-rxdb@8.7.2:
-  version "8.7.2"
-  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-8.7.2.tgz#2a922260f723d1f2ebf531ea103e7bd1b9a0c14a"
-  integrity sha512-FtZcfSZjQtM6mFv0UGxZsOddNHAF5vFNSDSUXApexbUPxhi2GjR+YkqiJbsm1hKEUmBpShgLOzEXM6T0tViM+w==
+rxdb@8.7.3:
+  version "8.7.3"
+  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-8.7.3.tgz#2fbfcb0979e088ff2bf8a91191c6fe64c9eed222"
+  integrity sha512-tBxaEe2AqLcOPdONafIxDa/GK60mv/3OWr4xv37eW9WR1mv2Y0BiIqyURreO+XG0qojboNZTihtTSrRGApg4uQ==
   dependencies:
-    "@babel/runtime" "7.6.3"
+    "@babel/runtime" "7.7.2"
     "@types/cors" "2.8.6"
-    "@types/express" "4.17.1"
+    "@types/express" "4.17.2"
     "@types/is-my-json-valid" "0.0.20"
     "@types/pouchdb-core" "7.0.4"
     "@types/pouchdb-find" "6.3.4"
     "@types/spark-md5" "3.0.1"
-    broadcast-channel "2.3.2"
+    broadcast-channel "2.3.3"
     clone "^2.1.1"
     cors "2.8.5"
     crypto-js "^3.1.8"
@@ -10452,7 +10452,7 @@ rxdb@8.7.2:
     spark-md5 "^3.0.0"
     url "^0.11.0"
     util "0.12.1"
-    z-schema "4.2.1"
+    z-schema "4.2.2"
 
 rxjs@6.5.3, rxjs@^6.4.0:
   version "6.5.3"
@@ -12814,10 +12814,10 @@ yeast@0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/yeast/-/yeast-0.1.2.tgz#008e06d8094320c372dbc2f8ed76a0ca6c8ac419"
 
-z-schema@4.2.1:
-  version "4.2.1"
-  resolved "https://registry.yarnpkg.com/z-schema/-/z-schema-4.2.1.tgz#3f6f644897eab9f66aad615b6910e4c86a19c8ce"
-  integrity sha512-UWhAk5QzeIhks51TjHa6d4WexEokzbbwT+Dzq9yOBOx9sNnALo4hpYz9CfJ6IUE2cmzB0vWW3KHePYOfw3L4gQ==
+z-schema@4.2.2:
+  version "4.2.2"
+  resolved "https://registry.yarnpkg.com/z-schema/-/z-schema-4.2.2.tgz#43fa2709ae5016885db50e1ce31b254b72c0886c"
+  integrity sha512-7bGR7LohxSdlK1EOdvA/OHksvKGE4jTLSjd8dBj9YKT0S43N9pdMZ0Z7GZt9mHrBFhbNTRh3Ky6Eu2MHsPJe8g==
   dependencies:
     lodash.get "^4.4.2"
     lodash.isequal "^4.5.0"
