@@ -114,7 +114,8 @@
     "webpack-merge": "4.2.2"
   },
   "resolutions": {
-    "leveldown": "5.4.0"
+    "leveldown": "5.4.0",
+    "sharp": "0.23.2"
   },
   "_moduleAliases": {
     "@root": ".",
