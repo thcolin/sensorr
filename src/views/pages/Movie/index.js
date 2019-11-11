@@ -1,5 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
+import { Link } from 'react-router-dom'
 import Color from 'color'
 import ReactPlayer from 'react-player'
 import List from 'components/Layout/List'
@@ -15,8 +16,9 @@ import Documents from 'shared/Documents'
 import database from 'store/database'
 import palette from 'utils/palette'
 import tmdb from 'store/tmdb'
-import theme from 'theme'
+import countryLanguage from 'country-language'
 import uuidv4 from 'uuid/v4'
+import theme from 'theme'
 
 const styles = {
   element: {
@@ -119,14 +121,32 @@ const styles = {
     }
   },
   metadata: {
+    display: 'flex',
+    flexWrap: 'wrap',
     fontWeight: 600,
     color: theme.colors.rangoon,
-    margin: '0 0 2em',
-    '>span': {
+    '>span,>button': {
+      lineHeight: '1.25em',
+      margin: '0 0 1em',
       ':not(:last-child)': {
-        margin: '0 2em 0 0',
+        marginRight: '2em',
       },
     }
+  },
+  subdata: {
+    margin: '0 0 1em',
+    '>div': {
+      margin: '0 0 1em',
+      '>span>a': {
+        lineHeight: '1.25em',
+        padding: '0 0.125em',
+        fontWeight: 'normal',
+        opacity: 0.6,
+        ':hover': {
+          opacity: 1,
+        },
+      },
+    },
   },
   tagline: {
     color: theme.colors.rangoon,
@@ -210,6 +230,7 @@ export default class Movie extends PureComponent {
         crew: 0,
       },
       trailer: '',
+      subdata: false,
       more: null,
       strict: true,
       releases: false,
@@ -231,6 +252,7 @@ export default class Movie extends PureComponent {
     this.setState({
       loading: true,
       poster: null,
+      backdrop: null,
       count: {
         collection: 0,
         recommendations: 0,
@@ -243,7 +265,7 @@ export default class Movie extends PureComponent {
     try {
       const details = await tmdb.fetch(
         ['movie', this.props.match.params.id],
-        { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates' }
+        { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates,keywords' }
       )
 
       if (details.adult && !tmdb.adult) {
@@ -270,9 +292,17 @@ export default class Movie extends PureComponent {
 
       if (details.poster_path) {
         this.fetchImg(
-          `https://image.tmdb.org/t/p/original${details.poster_path}`,
+          `https://image.tmdb.org/t/p/w500${details.poster_path}`,
           (poster) => this.setState({ poster }),
           { palette: true }
+        )
+      }
+
+      if (details.backdrop_path) {
+        this.fetchImg(
+          `https://image.tmdb.org/t/p/original${details.backdrop_path}`,
+          (backdrop) => this.setState({ backdrop }),
+          { palette: false }
         )
       }
     } catch(err) {
@@ -343,7 +373,7 @@ export default class Movie extends PureComponent {
 
   render() {
     const { match, ...props } = this.props
-    const { details, poster, palette, count, trailer, strict, releases, loading, err, ...state } = this.state
+    const { details, poster, backdrop, palette, count, trailer, subdata, strict, releases, loading, err, ...state } = this.state
 
     const trailers = (details || { videos: { results: [] } }).videos.results
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
@@ -378,7 +408,8 @@ export default class Movie extends PureComponent {
               <div
                 css={styles.background}
                 style={{
-                  backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})`,
+                  backgroundImage: `url(https://image.tmdb.org/t/p/w300${details.backdrop_path})`,
+                  filter: 'blur(5em)',
                   opacity: poster ? 1 : 0,
                 }}
               ></div>
@@ -392,6 +423,14 @@ export default class Movie extends PureComponent {
                 css={styles.trailer}
                 style={{ height: trailer ? '100vh' : '50vh' }}
               >
+                <div
+                  css={styles.background}
+                  style={{
+                    backgroundImage: `url(${backdrop})`,
+                    boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
+                    opacity: backdrop ? 1 : 0,
+                  }}
+                ></div>
                 {!!trailers.length && (
                   <>
                     {trailer ? (
@@ -460,45 +499,203 @@ export default class Movie extends PureComponent {
                     />
                   </div>
                   <div css={styles.info}>
-                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <h1 css={styles.title}>
-                        {details.title}
-                      </h1>
+                    <div css={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <div>
+                        <h1 css={styles.title}>
+                          {details.title}
+                        </h1>
+                        <h2 css={styles.caption}>
+                          {details.title !== details.original_title && (
+                            <span>{details.original_title}</span>
+                          )}
+                          {details.title !== details.original_title && details.release_date && (
+                            <span> </span>
+                          )}
+                          {details.release_date && (
+                            <Link
+                              title={new Date(details.release_date).toLocaleDateString()}
+                              to={{
+                                pathname: '/movies/discover',
+                                state: {
+                                  controls: {
+                                    filtering: {
+                                      release_date: [
+                                        new Date(details.release_date).getFullYear(),
+                                        new Date(details.release_date).getFullYear(),
+                                      ],
+                                    },
+                                  },
+                                },
+                              }}
+                              css={theme.resets.a}
+                            >
+                              ({new Date(details.release_date).getFullYear()})
+                            </Link>
+                          )}
+                        </h2>
+                        <div css={styles.metadata}>
+                          {!!details.runtime && (
+                            <span>
+                              <Link
+                                to={{
+                                  pathname: '/movies/discover',
+                                  state: {
+                                    controls: {
+                                      filtering: {
+                                        runtime: [
+                                          Math.floor(details.runtime / 60) * 60,
+                                          Math.ceil(details.runtime / 60) * 60,
+                                        ],
+                                      },
+                                    },
+                                  },
+                                }}
+                                css={theme.resets.a}
+                              >
+                                🕙 &nbsp;<strong>{new Documents.Movie(details).duration()}</strong>
+                              </Link>
+                            </span>
+                          )}
+                          {!!details.genres.length && (
+                            <span>
+                              🎟️ &nbsp;{details.genres.map((genre, index, arr) => (
+                                <span key={genre.id}>
+                                  <Link
+                                    to={{
+                                      pathname: '/movies/discover',
+                                      state: {
+                                        controls: {
+                                          filtering: {
+                                            with_genres: [{ value: genre.id, label: genre.name }],
+                                          },
+                                        },
+                                      },
+                                    }}
+                                    css={theme.resets.a}
+                                  >
+                                    {genre.name}
+                                  </Link>
+                                  {index === arr.length - 1 ? '' : ', '}
+                                </span>
+                              ))}
+                            </span>
+                          )}
+                          {typeof details.vote_average !== 'undefined' && (
+                            <span>
+                              <Link
+                                to={{
+                                  pathname: '/movies/discover',
+                                  state: {
+                                    controls: {
+                                      filtering: {
+                                        vote_average: [
+                                          details.vote_average.toFixed(0) - 1,
+                                          details.vote_average.toFixed(0),
+                                        ],
+                                      },
+                                    },
+                                  },
+                                }}
+                                css={theme.resets.a}
+                              >
+                                {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
+                              </Link>
+                            </span>
+                          )}
+                          {(details.production_companies.length || details.keywords.keywords.length) && (
+                            <button
+                              css={theme.resets.button}
+                              style={{ padding: '0 0.25em' }}
+                              onClick={() => this.setState(state => ({ subdata: !state.subdata }))}
+                            >
+                              <small>{subdata ? "▲" : "▼"}</small>
+                            </button>
+                          )}
+                        </div>
+                        <div css={styles.subdata} hidden={!subdata}>
+                          {!!details.original_language && (
+                            <div>
+                              💬 &nbsp;
+                              <span>
+                                <Link
+                                  to={{
+                                    pathname: '/movies/discover',
+                                    state: {
+                                      controls: {
+                                        filtering: {
+                                          with_original_language: [
+                                            {
+                                              value: details.original_language,
+                                              label: countryLanguage.getLanguage(details.original_language).name[0],
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  }}
+                                  css={theme.resets.a}
+                                >
+                                  {countryLanguage.getLanguage(details.original_language).name[0]}
+                                </Link>
+                              </span>
+                            </div>
+                          )}
+                          {!!details.production_companies.length && (
+                            <div>
+                              🏛️ &nbsp;{details.production_companies.map((company, index, arr) => (
+                                <span>
+                                  <Link
+                                    key={company.id}
+                                    to={{
+                                      pathname: '/movies/discover',
+                                      state: {
+                                        controls: {
+                                          filtering: {
+                                            with_companies: [{ value: company.id, label: company.name }],
+                                          },
+                                        },
+                                      },
+                                    }}
+                                    css={theme.resets.a}
+                                  >
+                                    {company.name}
+                                  </Link>
+                                  {index === arr.length - 1 ? '' : ', '}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {!!details.keywords.keywords.length && (
+                            <div>
+                              🔗 &nbsp;{details.keywords.keywords.map((keyword, index, arr) => (
+                                <span key={keyword.id}>
+                                  <Link
+                                    to={{
+                                      pathname: '/movies/discover',
+                                      state: {
+                                        controls: {
+                                          filtering: {
+                                            with_keywords: [{ value: keyword.id, label: keyword.name }],
+                                          },
+                                        },
+                                      },
+                                    }}
+                                    css={theme.resets.a}
+                                  >
+                                    {keyword.name}
+                                  </Link>
+                                  {index === arr.length - 1 ? '' : ', '}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!!details.tagline && (
+                          <h3 css={styles.tagline}>{details.tagline}</h3>
+                        )}
+                      </div>
                       <State entity={details} compact={false} />
                     </div>
-                    <h2 css={styles.caption}>
-                      {details.title !== details.original_title && (
-                        <span>{details.original_title}</span>
-                      )}
-                      {details.title !== details.original_title && details.release_date && (
-                        <span> </span>
-                      )}
-                      {details.release_date && (
-                        <span title={new Date(details.release_date).toLocaleDateString()}>
-                          ({new Date(details.release_date).getFullYear()})
-                        </span>
-                      )}
-                    </h2>
-                    <p css={styles.metadata}>
-                      {!!details.runtime && (
-                        <span>
-                          🕙 &nbsp;<strong>{new Documents.Movie(details).duration()}</strong>
-                        </span>
-                      )}
-                      {!!details.genres.length && (
-                        <span>
-                          🎟️ &nbsp;{details.genres.map(genre => genre.name).join(', ')}
-                        </span>
-                      )}
-                      {typeof details.vote_average !== 'undefined' && (
-                        <span>
-                          {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
-                        </span>
-                      )}
-                    </p>
-                    {!!details.tagline && (
-                      <h3 css={styles.tagline}>{details.tagline}</h3>
-                    )}
                     <p css={styles.plot}>{details.overview}</p>
                   </div>
                 </div>

@@ -202,7 +202,7 @@ const Controler = ({ sessions, session, records, fetched, onChange, ...props }) 
       return {
         label: 'Source',
         type: 'checkbox',
-        inputs: Object.keys(histogram(entities)).map(key => ({
+        options: Object.keys(histogram(entities)).map(key => ({
           label: key === 'false' ? 'none' : key,
           value: key,
         })),
@@ -229,7 +229,7 @@ const Controler = ({ sessions, session, records, fetched, onChange, ...props }) 
       return {
         label: 'State',
         type: 'checkbox',
-        inputs: [
+        options: [
           {
             label: '⌛  Ongoing',
             value: 'ongoing',

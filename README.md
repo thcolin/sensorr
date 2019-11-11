@@ -188,26 +188,13 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
+* Feature `status`
+  * Add `missing` status (when considered as `archived` but not found on `Plex`)
 * Feature `Home`
   * `Row` with *new* `movies` from `calendar`
   * `Row` with *birthday* `stars` from `following`
   * `Row` with *upcoming* `movies` from *followed* `stars`
     * Link to `Calendar`
-* Feature `Discover`
-  * Add `Discover` page
-    * `Grid` with location params driven `Controls`
-    * See [TMDB api/discover](https://www.themoviedb.org/documentation/api/discover)
-  * `Film`
-    * Add `Link` to `genre`
-  * `Movie`
-    * Add `keywords` (with `Link`)
-  * Add `Studio` page (?) - no, use predefined `Discover` page
-    * Referring
-      * `Home` ? - yes, but refactor needed (currently use multiple values)
-      * Display *studio* in `Movie` ? - yes
-      * Display *studio* `Search` ? - yes
-  * `Home`
-    * Link `Discover` `Row` to `Discover` page
 * Feature `Policies`
   * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
@@ -224,6 +211,11 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Add `List` page
     * Grouped movies by "policy"
     * Same layout as `Home` page
+* Feature `Fix (manual)`
+  * Allow to *fix* manually a `record` session
+    * Review each `record`, one by one
+    * Allow to post an `issue` on `thcolin/oleoo`
+    * Allow to search for `releases`
 * Feature `performance`
   * Refactor `Grid` and `List`
     * Allow 4 "sources" / behaviors
@@ -241,9 +233,11 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
     * Fix RAM usage with `sessions` in `io`
   * `CLI`
+    * Use [`cli-step`](https://github.com/poppinss/cli-step)
     * When `stalk` star, `atomicUpsert` it
     * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
   * Responsive design / mobile UI-UX
+    * Take `screenshots` in `small`, `medium` and `large` breakpoints
 * Feature `Config`
   * Fix empty `config.json` on __Docker__ build
   * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
@@ -255,6 +249,9 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Notify `records` summary (email, sms, etc...)
 * Feature `UI/UX sugar`
   * Translate (`fr`, `en`)
+  * `Discover`
+    * Add `status` in `controls` - how ?
+    * Add `Random` button
   * `Persona`
     * Fix `tooltip` **position** when no job or character (see calendar)
   * `Search`
@@ -264,13 +261,9 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
   * `Controls`
-    * Save to `localStorage` ?
-    * Improve `Documents.*.Filters`
-      * `Movie`
-        * `country` - `multiple` (use `original_language` ? - no)
-        * `studio` - `multiple`
-      * `Star`
-        * `active_years` - `range` - useful ?
+    * Improve `Documents.Movie.Filters`
+      * `country` - `select multi` (use `original_language` ? - no)
+      * `studio` - `select multi`
   * `Row`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
@@ -291,6 +284,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
         * `type=[Popular|Top|Calendar|Trending|Discover]`
         * `uri={...}`
         * `params={...}`
+      * Save from `Discover` "current" params
 * Feature `Takecare`
   * Replace `Plex` releases by better if available, like `CouchPotato`
     * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and compute score

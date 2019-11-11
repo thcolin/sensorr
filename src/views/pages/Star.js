@@ -71,12 +71,15 @@ const styles = {
     margin: '0 0 0.5em',
   },
   metadata: {
+    display: 'flex',
+    flexWrap: 'wrap',
     fontWeight: 600,
     color: theme.colors.rangoon,
     margin: '0 0 2em',
     '>span': {
+      margin: '0 0 1em',
       ':not(:last-child)': {
-        margin: '0 2em 0 0',
+        marginRight: '2em',
       },
     }
   },
@@ -268,9 +271,10 @@ export default class Star extends PureComponent {
               <div
                 css={styles.background}
                 style={{
-                  backgroundImage: `url(https://image.tmdb.org/t/p/original${
+                  backgroundImage: `url(https://image.tmdb.org/t/p/w300${
                     (details.images.profiles.sort((a, b) => a.width - b.width).slice(-1).pop() || {}).file_path
                   })`,
+                  filter: 'blur(5em)',
                   opacity: !loading ? 1 : 0,
                 }}
               ></div>
@@ -296,38 +300,40 @@ export default class Star extends PureComponent {
                     />
                   </div>
                   <div css={styles.info}>
-                    <div css={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <h1 css={styles.title}>
-                        {details.name}
-                      </h1>
+                    <div css={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <div>
+                        <h1 css={styles.title}>
+                          {details.name}
+                        </h1>
+                        <div css={styles.metadata}>
+                          {!!details.known_for_department && (
+                            <span>
+                              💼 &nbsp;<strong>{details.known_for_department}</strong>
+                            </span>
+                          )}
+                          {!!details.place_of_birth && (
+                            <span>
+                              🏡 &nbsp;<strong>{details.place_of_birth}</strong>
+                            </span>
+                          )}
+                          {!!details.birthday && (
+                            <span>
+                              🎂 &nbsp;<strong>{new Date(details.birthday).toLocaleDateString()}</strong>
+                              {!details.deathday && (
+                                <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
+                              )}
+                            </span>
+                          )}
+                          {!!details.deathday && (
+                            <span>
+                              🥀 &nbsp;<strong>{new Date(details.deathday).toLocaleDateString()}</strong>
+                              <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
                     </div>
-                    <p css={styles.metadata}>
-                      {!!details.known_for_department && (
-                        <span>
-                          💼 &nbsp;<strong>{details.known_for_department}</strong>
-                        </span>
-                      )}
-                      {!!details.place_of_birth && (
-                        <span>
-                          🏡 &nbsp;<strong>{details.place_of_birth}</strong>
-                        </span>
-                      )}
-                      {!!details.birthday && (
-                        <span>
-                          🎂 &nbsp;<strong>{new Date(details.birthday).toLocaleDateString()}</strong>
-                          {!details.deathday && (
-                            <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
-                          )}
-                        </span>
-                      )}
-                      {!!details.deathday && (
-                        <span>
-                          🥀 &nbsp;<strong>{new Date(details.deathday).toLocaleDateString()}</strong>
-                          <small> &nbsp; {(details.deathday ? new Date(details.deathday) : new Date()).getFullYear() - new Date(details.birthday).getFullYear()} years old</small>
-                        </span>
-                      )}
-                    </p>
                     {!!details.biography && (
                       <p css={styles.biography}>{details.biography}</p>
                     )}

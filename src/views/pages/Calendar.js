@@ -8,7 +8,7 @@ import Left from 'icons/Left'
 import Right from 'icons/Right'
 import { Movie } from 'shared/Documents'
 import database from 'store/database'
-import capitalize from 'utils/capitalize'
+import { capitalize } from 'shared/utils/string'
 import theme from 'theme'
 
 const LIMITS = [
@@ -189,7 +189,7 @@ class Calendar extends PureComponent {
     display: () => ({
       label: 'Display',
       type: 'radio',
-      inputs: [
+      options: [
         {
           value: 'strict',
           label: 'Strict',
@@ -224,7 +224,7 @@ class Calendar extends PureComponent {
   }
 
   render() {
-    const { match, ...props } = this.props
+    const { match, history, ...props } = this.props
     const { ready, stars, ...state } = this.state
     const year = Math.min(LIMITS[1], Math.max(LIMITS[0], parseInt(match.params.year)))
     const month = Math.min(12, Math.max(1, parseInt(match.params.month)))
@@ -296,14 +296,9 @@ class Calendar extends PureComponent {
                 vote_average: Movie.Sortings.vote_average,
               },
               defaults: {
-                filtering: {
-                  display: 'strict',
-                },
-                sorting: {
-                  ...Movie.Sortings.release_date,
-                  value: 'release_date_full',
-                },
-                reverse: true,
+                filtering: ((history.location.state || {}).controls || {}).filtering || { display: 'strict' },
+                sorting: ((history.location.state || {}).controls || {}).sorting || 'release_date_full',
+                reverse: ((history.location.state || {}).controls || {}).reverse || true,
               },
               render: {
                 menu: ({ setOpen }) => (
@@ -313,6 +308,7 @@ class Calendar extends PureComponent {
                 ),
                 pane: Pane,
               },
+              history: history,
             }}
           />
         </div>

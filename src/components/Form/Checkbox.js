@@ -41,19 +41,19 @@ const styles = {
   },
 }
 
-export const Input = ({ id, children, ...props }) => (
+export const Option = ({ id, children, ...props }) => (
   <label css={styles.input} style={!props.disabled ? { cursor: 'pointer' } : {}} key={id} htmlFor={id}>
     <input {...props} id={id} type="checkbox" />
     {children}
   </label>
 )
 
-const Checkbox = ({ label, inputs, values, onChange, disabled, display = 'grid', ...props }) => inputs.length > 0 && (
+const Checkbox = ({ label, options, values, onChange, disabled, display = 'grid', ...props }) => options.length > 0 && (
   <div css={[styles.element, styles[display]]} {...props}>
     <label onClick={() => !disabled && onChange([])} style={!disabled ? { cursor: 'pointer' } : {}}>{label}</label>
     <div>
-      {inputs.map(input => (
-        <Input
+      {options.map(input => (
+        <Option
           key={input.value}
           id={input.value}
           checked={values.includes(input.value)}
@@ -67,7 +67,7 @@ const Checkbox = ({ label, inputs, values, onChange, disabled, display = 'grid',
               <small><code>({input.count})</code></small>
             </>
           )}
-        </Input>
+        </Option>
       ))}
     </div>
   </div>

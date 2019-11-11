@@ -33,6 +33,14 @@ const styles = {
       justifyContent: 'space-between',
     },
   },
+  row: {
+    '>div': {
+      display: 'flex',
+      '>label': {
+        margin: '0 1em 0 0',
+      },
+    },
+  },
   column: {
     '>div': {
       display: 'flex',
@@ -41,19 +49,19 @@ const styles = {
   },
 }
 
-export const Input = ({ id, children, ...props }) => (
+export const Option = ({ id, children, ...props }) => (
   <label css={styles.input} style={!props.disabled ? { cursor: 'pointer' } : {}} key={id} htmlFor={id}>
     <input {...props} id={id} type="radio" />
     {children}
   </label>
 )
 
-const Radio = ({ label, inputs, value, onChange, disabled, display = 'grid', ...props }) => (
+const Radio = ({ label, options, value, onChange, disabled, display = 'grid', ...props }) => (
   <div {...props} css={[styles.element, styles[display], props.css]}>
     <label onClick={() => !disabled && onChange()} style={!disabled ? { cursor: 'pointer' } : {}}>{label}</label>
     <div>
-      {inputs.map(input => (
-        <Input
+      {options.map(input => (
+        <Option
           key={input.value}
           id={input.value}
           checked={value === input.value}
@@ -67,7 +75,7 @@ const Radio = ({ label, inputs, value, onChange, disabled, display = 'grid', ...
               <small><code>({input.count})</code></small>
             </>
           )}
-        </Input>
+        </Option>
       ))}
     </div>
   </div>

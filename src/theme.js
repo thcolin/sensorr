@@ -7,6 +7,7 @@ const colors = {
   wrong: '#E32626',
   white: '#FFFFFF',
   smoke: '#FBFBFB',
+  storm: '#F6F6F6',
   grey: '#EEEEEE',
   mercury: '#E4E4E4',
   gray: '#CCCCCC',

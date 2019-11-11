@@ -31,7 +31,7 @@ const Pane = (blocks) => (
   </>
 )
 
-const Library = ({ ...props }) => (
+const Library = ({ history, ...props }) => (
   <Fragment>
     <Helmet>
       <title>Sensorr - Library</title>
@@ -40,10 +40,14 @@ const Library = ({ ...props }) => (
       <Grid
         limit={true}
         strict={false}
-        query={(db) => db.movies.find().where('state').ne('ignored')}
+        query={Library.query}
         child={Film}
         css={styles.grid}
         placeholder={true}
+        history={history}
+        defaults={{
+          max: ((history.location.state || {}).grid || {}).max,
+        }}
         controls={{
           label: ({ total, reset }) => (
             <button css={theme.resets.button} onClick={() => reset()}>
@@ -53,13 +57,14 @@ const Library = ({ ...props }) => (
           filters: Movie.Filters,
           sortings: Movie.Sortings,
           defaults: {
-            filtering: {},
-            sorting: Movie.Sortings.time,
-            reverse: false,
+            filtering: ((history.location.state || {}).controls || {}).filtering || {},
+            sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
+            reverse: ((history.location.state || {}).controls || {}).reverse || false,
           },
           render: {
             pane: Pane,
-          }
+          },
+          history: history,
         }}
         empty={{
           emoji: '🍿',
@@ -74,5 +79,7 @@ const Library = ({ ...props }) => (
     </div>
   </Fragment>
 )
+
+Library.query = (db) => db.movies.find().where('state').ne('ignored')
 
 export default Library

@@ -1,5 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
+import { Link } from 'react-router-dom'
 import List, { Label } from 'components/Layout/List'
 import ListRecords from './containers/ListRecords'
 import Film from 'components/Entity/Film'
@@ -21,6 +22,20 @@ const styles = {
     padding: '1em 3em',
     fontSize: '0.6em',
     opacity: 0.5,
+    '>label': {
+      position: 'relative',
+      '>select': {
+        position: 'absolute',
+        opacity: 0,
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        appearance: 'none',
+        border: 'none',
+        cursor: 'pointer',
+      },
+    },
   },
 }
 
@@ -73,7 +88,13 @@ export default class Home extends PureComponent {
           />
           <ListRecords />
           <List
-            label="👀&nbsp; Discover"
+            label={(
+              <Label>
+                <Link to={{ pathname: '/movies/discover' }} css={theme.resets.a}>
+                  👀&nbsp; Discover
+                </Link>
+              </Label>
+            )}
             title="Discover movies"
             uri={['discover', 'movie']}
             child={Film}
@@ -86,7 +107,23 @@ export default class Home extends PureComponent {
                 id="discover-year"
                 title="Discover movies by random year"
               >
-                📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
+                <Link
+                  css={theme.resets.a}
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          release_date: [year, year],
+                        },
+                        sorting: 'popularity',
+                        reverse: false,
+                      },
+                    },
+                  }}
+                >
+                  📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
+                </Link>
               </Label>
             )}
             uri={['discover', 'movie']}
@@ -113,16 +150,30 @@ export default class Home extends PureComponent {
               <Label
                 id="discover-genre"
                 title="Discover movies by genre"
-                value={genre}
-                onChange={(value) => this.handleListClick('genre', value)}
-                options={Object.keys(GENRES).map(id => ({ value: id, label: GENRES[id] }))}
               >
-                🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
+                <Link
+                  css={theme.resets.a}
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_genres: [{ value: genre, label: GENRES[genre] }],
+                        },
+                        sorting: 'popularity',
+                        reverse: false,
+                      },
+                    },
+                  }}
+                >
+                  🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
+                </Link>
               </Label>
             )}
             uri={['discover', 'movie']}
             params={{
               with_genres: genre,
+              sort_by: 'popularity.desc'
             }}
             child={Film}
             prettify={5}
@@ -132,6 +183,16 @@ export default class Home extends PureComponent {
                 <button onClick={() => this.handleListClick('genre')} css={theme.resets.button}>
                   Let yourself be tempted by a random 🎰 genre
                 </button>
+                <span>, or</span>
+                <label htmlFor="home-genre">
+                  <span> choose directly 👌</span>
+                  <select id="home-genre" value={genre} onChange={e => this.handleListClick('genre', e.target.value)}>
+                    {Object.keys(GENRES).map(key => (
+                      <option value={key} key={key}>{GENRES[key]}</option>
+                    ))}
+                  </select>
+                  &nbsp;
+                </label>
               </div>
             )}
           />
@@ -140,11 +201,24 @@ export default class Home extends PureComponent {
               <Label
                 id="discover-studio"
                 title="Discover movies by famous studio"
-                value={studio}
-                onChange={(value) => this.handleListClick('studio', value)}
-                options={Object.keys(STUDIOS).map(studio => ({ value: studio, label: studio }))}
               >
-                🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
+                <Link
+                  css={theme.resets.a}
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_companies: STUDIOS[studio].map(studio => ({ value: studio.id, label: studio.name })),
+                        },
+                        sorting: 'popularity',
+                        reverse: false,
+                      },
+                    },
+                  }}
+                >
+                  🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
+                </Link>
               </Label>
             )}
             uri={['discover', 'movie']}
@@ -160,6 +234,16 @@ export default class Home extends PureComponent {
                 <button onClick={() => this.handleListClick('studio')} css={theme.resets.button}>
                   Let yourself be tempted by a random 🎰 studio
                 </button>
+                <span>, or</span>
+                <label htmlFor="home-studio">
+                  <span> choose directly 👌</span>
+                  <select id="home-studio" value={studio} onChange={e => this.handleListClick('studio', e.target.value)}>
+                    {Object.keys(STUDIOS).map(studio => (
+                      <option value={studio} key={studio}>{studio}</option>
+                    ))}
+                  </select>
+                  &nbsp;
+                </label>
               </div>
             )}
           />

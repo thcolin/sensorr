@@ -1,5 +1,5 @@
 const { GENRES } = require('./services/TMDB')
-const { clean } = require('./utils/string')
+const { clean, humanize } = require('./utils/string')
 
 class Movie {
   constructor(payload, region = 'en-US') {
@@ -26,11 +26,7 @@ class Movie {
   }
 
   duration() {
-    const { runtime = 0 } = this.payload
-    const hours = parseInt(runtime / 60)
-    const minutes = parseInt(runtime % 60)
-
-    return `${hours > 0 ? `${hours}h ` : ''}${minutes}m`
+    return humanize.time(this.payload.runtime || 0)
   }
 
   normalize() {
@@ -119,7 +115,7 @@ Movie.Filters = {
   genre: (entities) => ({
     label: 'Genre',
     type: 'checkbox',
-    inputs: Object.keys(GENRES).map(id => ({
+    options: Object.keys(GENRES).map(id => ({
       value: id,
       label: GENRES[id],
     })),
@@ -134,7 +130,7 @@ Movie.Filters = {
   state: (entities) => ({
     label: 'State',
     type: 'checkbox',
-    inputs: [
+    options: [
       {
         value: 'pinned',
         label: '📍  Pinned',
@@ -231,7 +227,7 @@ Movie.Filters = {
       min: min,
       max: max,
       step: step,
-      unit: 'mins',
+      labelize: (value) => humanize.time(value).replace(/ /, ''),
       apply: (entity, values) => compute(entity.runtime) >= values[0] && compute(entity.runtime) < values[1],
       histogram: (entities) => entities.reduce((histogram, entity) => ({
         ...histogram,
@@ -302,7 +298,7 @@ Star.Filters = {
     return {
       label: 'Department',
       type: 'checkbox',
-      inputs: Object.keys(departments).filter(f => f).map(department => ({
+      options: Object.keys(departments).filter(f => f).map(department => ({
         label: department,
         value: department,
       })),
@@ -318,7 +314,7 @@ Star.Filters = {
   gender: (entities) => ({
     label: 'Gender',
     type: 'checkbox',
-    inputs: [
+    options: [
       {
         value: 0,
         label: 'Not specified',

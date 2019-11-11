@@ -60,7 +60,7 @@ export default class Grid extends PureComponent {
       sortings: PropTypes.object,
       defaults: PropTypes.shape({
         filtering: PropTypes.object,
-        sorting: PropTypes.object,
+        sorting: PropTypes.string,
         reverse: PropTypes.bool,
       }),
     }),
@@ -77,6 +77,7 @@ export default class Grid extends PureComponent {
 
   static defaultProps = {
     items: [],
+    uri: [],
     params: {},
     empty: {},
     spinner: {},
@@ -91,10 +92,13 @@ export default class Grid extends PureComponent {
     super(props)
 
     this.state = {
-      entities: [],
       loading: false,
+      done: false,
+      total: 0,
+      params: {},
+      entities: [],
       err: null,
-      max: 25,
+      max: 20,
       filter: () => true,
       sort: () => 0,
       focus: null,
@@ -106,10 +110,15 @@ export default class Grid extends PureComponent {
   }
 
   componentDidMount() {
+    // controls will update state and so component
+    if (this.props.controls) {
+      return
+    }
+
     if (this.props.query) {
       this.setState({ loading: true })
       this.fetchDatabase()
-    } else if (this.props.uri) {
+    } else if (this.props.uri.length) {
       this.setState({ loading: true })
       this.fetchTMDB()
     }
@@ -125,13 +134,18 @@ export default class Grid extends PureComponent {
           this.fetchDatabase()
         }
       }
-    } else if (this.props.uri) {
-      if (this.props.uri.join('/') !== props.uri.join('/') || JSON.stringify(this.props.params) !== JSON.stringify(props.params)) {
+    } else if (this.props.uri.length) {
+      if (
+        this.props.uri.join('/') !== props.uri.join('/') ||
+        JSON.stringify(this.props.params) !== JSON.stringify(props.params) ||
+        JSON.stringify(this.state.params) !== JSON.stringify(state.params)
+      ) {
         this.setState({ loading: true })
+
         if (this.props.debounce) {
-          this.debounce(() => this.fetchTMDB())
+          this.debounce(() => this.fetchTMDB(!!this.state.params.page))
         } else {
-          this.fetchTMDB()
+          this.fetchTMDB(!!this.state.params.page)
         }
       }
     }
@@ -148,10 +162,18 @@ export default class Grid extends PureComponent {
     })
   }
 
-  async fetchTMDB() {
+  async fetchTMDB(merge = false) {
     try {
-      const res = await tmdb.fetch(this.props.uri, this.props.params)
-      this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] })
+      const res = await tmdb.fetch(this.props.uri, { ...this.props.params, ...this.state.params })
+      this.setState(state => ({
+        loading: false,
+        total: res.total_results,
+        done: (this.state.params.page || 1) >= res.total_pages,
+        entities: [
+          ...(merge ? state.entities : []),
+          ...((this.props.transform || ((res) => res.results))(res) || [])
+        ],
+      }))
     } catch(err) {
       this.setState({
         loading: false,
@@ -161,15 +183,19 @@ export default class Grid extends PureComponent {
   }
 
   validate(entity) {
-    return (!this.props.strict || entity.poster_path || entity.profile_path) && (!entity.adult || tmdb.adult)
+    return (!this.props.strict || (entity || {}).poster_path || (entity || {}).profile_path) && (!(entity || {}).adult || tmdb.adult)
   }
 
-  expand() {
-    this.setState(state => ({ max: state.max + 25 }))
+  async expand() {
+    if (this.props.uri.length) {
+      this.setState(state => ({ loading: true, params: { ...state.params, page: (state.params.page || 1) + 1 } }))
+    } else {
+      this.setState(state => ({ max: state.max + 20 }))
+    }
   }
 
   render() {
-    const { entities, loading, err, max, filter, sort, focus, ...state } = this.state
+    const { loading, done, total, entities, err, max, filter, sort, focus, ...state } = this.state
     const {
       items,
       query,
@@ -194,19 +220,32 @@ export default class Grid extends PureComponent {
     const filtered = approved.sort(sort).filter(filter)
     const limited = filtered.filter((a, index) => !limit || index <= max)
 
+    const filters = controls && Object.keys(controls.filters).reduce((acc, key) => ({
+      ...acc,
+      [key]: controls.filters[key](approved),
+    }), {})
+
     return (
       <>
         {controls && (
           <Controls
             key="controls"
             entities={approved}
+            total={total}
             {...controls}
-            filters={Object.keys(controls.filters).reduce((acc, key) => ({ ...acc, [key]: controls.filters[key](approved) }), {})}
-            onChange={({ filter, sort, sorting }) => this.setState({
+            filters={filters}
+            onChange={({ filtering, filter, sorting, reverse, sort }) => this.setState({
               filter,
               sort,
-              max: 25,
-              focus: sorting.value === 'time' ? null : sorting.value,
+              max: 20,
+              focus: (!sorting || sorting === 'time') ? null : sorting,
+              params: {
+                sort_by: `${sorting}.${reverse ? 'asc' : 'desc'}`,
+                ...Object.keys(filtering).reduce((acc, key) => ({
+                  ...acc,
+                  ...(filters[key].serialize ? filters[key].serialize(filtering[key]) : {}),
+                }), {})
+              },
             })}
           />
         )}
@@ -230,8 +269,9 @@ export default class Grid extends PureComponent {
           ) : (
             <InfiniteScroll
               pageStart={0}
-              hasMore={limit && (max < limited.length)}
+              hasMore={uri.length ? (!loading && !done) : (limit && (max < limited.length))}
               loadMore={this.expand}
+              initialLoad={false}
               loader={(
                 <div key="spinner" css={styles.spinner}>
                   <Spinner {...spinner} />
@@ -240,11 +280,16 @@ export default class Grid extends PureComponent {
               threshold={1000}
               css={styles.grid}
             >
-              {(limited.length ? limited : Array(25).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
+              {(limited.length ? limited : Array(max).fill({ poster_path: false, profile_path: false })).map((entity, index) => (
                 <div key={index} css={styles.entity}>
                   {Emotion.jsx(child, { entity, focus, placeholder })}
                 </div>
               ))}
+              {loading && (
+                <div key="spinner" css={styles.spinner}>
+                  <Spinner {...spinner} />
+                </div>
+              )}
             </InfiniteScroll>
           )}
         </div>

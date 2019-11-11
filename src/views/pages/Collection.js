@@ -83,12 +83,15 @@ const styles = {
     }
   },
   metadata: {
+    display: 'flex',
+    flexWrap: 'wrap',
     fontWeight: 600,
     color: theme.colors.rangoon,
     margin: '0 0 2em',
     '>span': {
+      margin: '0 0 1em',
       ':not(:last-child)': {
-        margin: '0 2em 0 0',
+        marginRight: '2em',
       },
     }
   },
@@ -205,7 +208,7 @@ export default class Collection extends PureComponent {
 
       if (details.poster_path) {
         this.fetchImg(
-          `https://image.tmdb.org/t/p/original${details.poster_path}`,
+          `https://image.tmdb.org/t/p/w500${details.poster_path}`,
           (poster) => this.setState({ poster }),
           { palette: true }
         )
@@ -274,7 +277,8 @@ export default class Collection extends PureComponent {
               <div
                 css={styles.background}
                 style={{
-                  backgroundImage: `url(https://image.tmdb.org/t/p/original${details.backdrop_path})`,
+                  backgroundImage: `url(https://image.tmdb.org/t/p/w300${details.backdrop_path})`,
+                  filter: 'blur(5em)',
                   opacity: poster ? 1 : 0,
                 }}
               ></div>
@@ -309,7 +313,7 @@ export default class Collection extends PureComponent {
                         ({new Date(details.release_dates[0]).getFullYear()} - {new Date(details.release_dates[1]).getFullYear()})
                       </span>
                     </h2>
-                    <p css={styles.metadata}>
+                    <div css={styles.metadata}>
                       <span>
                         🎟️ &nbsp;{[
                           ...new Set(details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
@@ -318,7 +322,7 @@ export default class Collection extends PureComponent {
                       <span>
                         {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
                       </span>
-                    </p>
+                    </div>
                     <p css={styles.plot}>{details.overview}</p>
                   </div>
                 </div>
@@ -331,7 +335,7 @@ export default class Collection extends PureComponent {
                     </div>
                   </div>
                   <List
-                    items={details.parts}
+                    items={[...details.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15))}
                     prettify={Infinity}
                     placeholder={true}
                     child={Film}

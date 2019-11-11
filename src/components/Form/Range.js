@@ -37,6 +37,9 @@ const styles = {
         },
       },
     },
+    mark: {
+      visibility: 'hidden',
+    },
     thumb: {
       '&:hover': {
         boxShadow: '0px 0px 0px 8px rgba(0, 0, 0, 0.1)',
@@ -62,7 +65,7 @@ const styles = {
 
 const Slider = withStyles(styles.slider, { name: 'SensorrRange' })(MaterialSlider)
 
-const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
+const Input = ({ values, onChange, min, max, step, labelize, data = {}, ...props }) => {
   const [state, setState] = useState(values)
   const previous = usePrevious(values)
   const highest = Math.max.apply(null, Object.values(data || {}))
@@ -77,11 +80,17 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
         <div css={styles.histogram}>
           {Object.keys(data).map((key, index, arr) => (
             <div
-              title={`${key}${arr[index + 1] ? `-${arr[index + 1]}` : '+'} (${data[key]})`}
+              title={`${labelize ? labelize(key) : key}${arr[index + 1] ? `-${labelize ? labelize(arr[index + 1]) : arr[index + 1]}` : '+'} (${data[key]})`}
               key={key}
               style={{
                 height: `${(100 * data[key]) / highest || 0}%`,
-                ...(parseInt(Object.keys(data)[index]) >= state[0] && parseInt(Object.keys(data)[index]) < state[1] ? {
+                ...(
+                  (
+                    parseInt(Object.keys(data)[index]) >= state[0] ||
+                    state[0] < parseInt(Object.keys(data)[index + 1])
+                  ) &&
+                  parseInt(Object.keys(data)[index]) < state[1] ?
+                {
                   backgroundColor: theme.colors.tertiary,
                 } : {
                   backgroundColor: theme.colors.tertiary,
@@ -101,26 +110,29 @@ const Input = ({ values, onChange, min, max, step, data = {}, ...props }) => {
         max={max}
         step={step}
         valueLabelDisplay="auto"
+        valueLabelFormat={labelize}
       />
     </div>
   )
 }
 
-const Range = ({ label, values, onChange, min, max, step = 1, disabled, unit, data = {}, ...props }) => (
+const Range = ({ label, labelize, values, onChange, min, max, marks, step, disabled, unit, data = {}, ...props }) => (
   <div css={styles.element} {...props}>
     <label onClick={() => !disabled && onChange([min, max])} style={!disabled ? { cursor: 'pointer' } : {}}>
       <span>{label}</span>
       <span>&nbsp;</span>
-      <small><code>({values.join('-')}{unit ? ` ${unit}` : ''})</code></small>
+      <small><code>({values.map(value => labelize ? labelize(value) : value).join('-')}{unit ? ` ${unit}` : ''})</code></small>
     </label>
     <Input
       values={values}
       onChange={onChange}
       min={min}
       max={max}
+      marks={marks}
       step={step}
-      data={data}
+      labelize={labelize}
       disabled={disabled}
+      data={data}
     />
   </div>
 )

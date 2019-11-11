@@ -300,7 +300,7 @@ class Releases extends PureComponent {
           onChange={({ filter, sort }) => this.setState({ filter, sort })}
           defaults={{
             filtering: {},
-            sorting: Releases.Sortings.score,
+            sorting: 'score',
             reverse: false,
           }}
           render={{
@@ -460,7 +460,7 @@ Releases.Filters = {
     return {
       label: 'Source',
       type: 'checkbox',
-      inputs: (Object.keys(sources).length ? Object.keys(sources) : Object.keys(rules.source).slice(0, 5)).map(source => ({
+      options: (Object.keys(sources).length ? Object.keys(sources) : Object.keys(rules.source).slice(0, 5)).map(source => ({
         label: source,
         value: source,
       })),
@@ -479,7 +479,7 @@ Releases.Filters = {
     return {
       label: 'Encoding',
       type: 'checkbox',
-      inputs: (Object.keys(encodings).length ? Object.keys(encodings) : Object.keys(rules.encoding)).map(encoding => ({
+      options: (Object.keys(encodings).length ? Object.keys(encodings) : Object.keys(rules.encoding)).map(encoding => ({
         label: encoding,
         value: encoding,
       })),
@@ -498,7 +498,7 @@ Releases.Filters = {
     return {
       label: 'Resolution',
       type: 'checkbox',
-      inputs: (Object.keys(resolutions).length ? Object.keys(resolutions) : Object.keys(rules.resolution)).map(resolution => ({
+      options: (Object.keys(resolutions).length ? Object.keys(resolutions) : Object.keys(rules.resolution)).map(resolution => ({
         label: resolution,
         value: resolution,
       })),
@@ -517,7 +517,7 @@ Releases.Filters = {
     return {
       label: 'Dub',
       type: 'checkbox',
-      inputs: (Object.keys(dubs).length ? Object.keys(dubs) : Object.keys(rules.dub)).map(dub => ({
+      options: (Object.keys(dubs).length ? Object.keys(dubs) : Object.keys(rules.dub)).map(dub => ({
         label: dub,
         value: dub,
       })),
@@ -536,7 +536,7 @@ Releases.Filters = {
     return {
       label: 'Language',
       type: 'checkbox',
-      inputs: (Object.keys(languages).length ? Object.keys(languages) : Object.keys(rules.language).slice(0, 5)).map(language => ({
+      options: (Object.keys(languages).length ? Object.keys(languages) : Object.keys(rules.language).slice(0, 5)).map(language => ({
         label: language,
         value: language,
       })),
@@ -557,7 +557,7 @@ Releases.Filters = {
     return {
       label: 'Flags',
       type: 'checkbox',
-      inputs: Object.keys(flags).map(flag => ({
+      options: Object.keys(flags).map(flag => ({
         label: flag,
         value: flag,
       })),
@@ -576,7 +576,7 @@ Releases.Filters = {
   terms: (entities, movie) => ({
     label: 'Term',
     type: 'checkbox',
-    inputs: movie.terms.titles.map(title => ({
+    options: movie.terms.titles.map(title => ({
       label: title,
       value: title,
     })),
@@ -594,7 +594,7 @@ Releases.Filters = {
     return {
       label: 'Website',
       type: 'checkbox',
-      inputs: (Object.keys(websites).length ? Object.keys(websites) : ['unknown']).map(website => ({
+      options: (Object.keys(websites).length ? Object.keys(websites) : ['unknown']).map(website => ({
         label: website,
         value: website,
       })),
@@ -614,7 +614,7 @@ Releases.Filters = {
     return {
       label: 'State',
       type: 'checkbox',
-      inputs: Object.keys(states).map(state => ({
+      options: Object.keys(states).map(state => ({
         label: `${{ valid: '👍', filtered: '👮', invalid: '🚫' }[state]}  ${state.charAt(0).toUpperCase()}${state.slice(1)}`,
         value: state,
       })),

@@ -10,6 +10,7 @@ import { Movie } from 'shared/Documents'
 import { GENRES } from 'shared/services/TMDB'
 import { truncate } from 'shared/utils/string'
 import palette from 'utils/palette'
+import { humanize } from 'shared/utils/string'
 import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
@@ -271,33 +272,87 @@ export default class Film extends PureComponent {
                 }}
               >
                 <h1 style={{ color: palette.color }} {...(title.length > 45 ? { title } : {})}>
-                  {title.length > 45 ? `${title.substring(0, 45)}...` : title}
+                  <Link to={link(entity)} css={theme.resets.a}>
+                    {title.length > 45 ? `${title.substring(0, 45)}...` : title}
+                  </Link>
                 </h1>
                 {!!(entity.release_date || entity.vote_average) && (
                   <div style={{ color: palette.negativeColor }} >
                     {!!entity.release_date && (
                       <small>
                         <span>📆  </span>
-                        <span>
+                        <Link
+                          to={{
+                            pathname: '/movies/discover',
+                            state: {
+                              controls: {
+                                filtering: {
+                                  release_date: [
+                                    new Date(entity.release_date).getFullYear(),
+                                    new Date(entity.release_date).getFullYear(),
+                                  ],
+                                },
+                              },
+                            },
+                          }}
+                          css={theme.resets.a}
+                        >
                           {new Date(entity.release_date).toLocaleString(global.config.region, {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                           })}
-                        </span>
+                        </Link>
                       </small>
                     )}
                     {typeof entity.vote_average !== 'undefined' && (
                       <small>
                         <span>{new Movie(entity).judge()}  </span>
-                        <strong>{entity.vote_average.toFixed(1)}</strong>
+                        <Link
+                          to={{
+                            pathname: '/movies/discover',
+                            state: {
+                              controls: {
+                                filtering: {
+                                  vote_average: [
+                                    entity.vote_average.toFixed(0) - 1,
+                                    entity.vote_average.toFixed(0),
+                                  ],
+                                },
+                              },
+                            },
+                          }}
+                          css={theme.resets.a}
+                        >
+                          <strong>{entity.vote_average.toFixed(1)}</strong>
+                        </Link>
                       </small>
                     )}
                   </div>
                 )}
                 {Array.isArray(entity.genre_ids) && (
                   <p style={{ color: palette.alternativeColor }}>
-                    <small><strong>{entity.genre_ids.map(id => GENRES[id]).join(', ')}</strong></small>
+                    {entity.genre_ids.map((id, index, arr) => (
+                      <span>
+                        <Link
+                          key={id}
+                          to={{
+                            pathname: '/movies/discover',
+                            state: {
+                              controls: {
+                                filtering: {
+                                  with_genres: [{ value: id, label: GENRES[id] }],
+                                },
+                              },
+                            },
+                          }}
+                          css={theme.resets.a}
+                        >
+                          <small><strong>{GENRES[id]}</strong></small>
+                        </Link>
+                        {index === arr.length - 1 ? '' : ', '}
+                      </span>
+                    ))}
                   </p>
                 )}
                 {!!entity.overview && (
@@ -739,22 +794,41 @@ export const Focus = ({ entity, property, ...props }) => {
     return null
   }
 
+  const badges = {
+    vote_average: {
+      emoji: new Movie(entity).judge(),
+      label: `${(entity.vote_average || 0).toFixed(1)}`,
+    },
+    release_date_full: {
+      emoji: '📅',
+      label: entity.release_date ? new Date(entity.release_date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) : 'Unknown',
+    },
+    release_date: {
+      emoji: '📅',
+      label: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
+    },
+    popularity: {
+      emoji: '📣',
+      label: `${humanize.bigint(entity.popularity)}`,
+    },
+    runtime: {
+      emoji: '🕙',
+      label: <span style={{ textTransform: 'none' }}>{new Movie(entity).duration() || 'Unknown'}</span>,
+    },
+    vote_count: {
+      emoji: '🗳',
+      label: `${humanize.bigint(entity.vote_count)}`,
+    },
+  }
+
+  if (!Object.keys(badges).includes(property)) {
+    return null
+  }
+
   return (
     <Badge
-      emoji={{
-        vote_average: new Movie(entity).judge(),
-        release_date_full: '📅',
-        release_date: '📅',
-        popularity: '📣',
-        runtime: '🕙',
-      }[property]}
-      label={{
-        vote_average: `${(entity.vote_average || 0).toFixed(1)}`,
-        release_date_full: entity.release_date ? new Date(entity.release_date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) : 'Unknown',
-        release_date: entity.release_date ? new Date(entity.release_date).getFullYear() : 'Unknown',
-        popularity: `${parseInt(entity.popularity || 0)}`,
-        runtime: <span style={{ textTransform: 'none' }}>{new Movie(entity).duration() || 'Unknown'}</span>,
-      }[property]}
+      emoji={badges[property].emoji}
+      label={badges[property].label}
       style={Focus.styles.element}
     />
   )

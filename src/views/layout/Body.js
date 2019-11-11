@@ -2,6 +2,7 @@ import React from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
 import Home from 'views/pages/Home'
 import Library from 'views/pages/Library'
+import Discover from 'views/pages/Discover'
 import Movie from 'views/pages/Movie'
 import Collection from 'views/pages/Collection'
 import Star from 'views/pages/Star'
@@ -28,6 +29,7 @@ const Body = ({ ...props }) => (
         <Route path="/" exact component={Home} />
         <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
         <Route path="/movies/library" exact component={Library} />
+        <Route path="/movies/discover" exact component={Discover} />
         <Route path="/movies/calendar/:year/:month" exact component={Calendar} />
         <Route path="/movies/calendar" exact component={() => <Redirect to={`/movies/calendar/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
         <Route path="/movies/records/:uuid?" exact component={Records} />

@@ -4,6 +4,7 @@ import AnimateHeight from 'react-animate-height'
 import Range from 'components/Form/Range'
 import Checkbox from 'components/Form/Checkbox'
 import Radio from 'components/Form/Radio'
+import Select from 'components/Form/Select'
 import Button from 'components/Button'
 import Chevron from 'icons/Chevron'
 import nanobounce from 'nanobounce'
@@ -14,7 +15,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   menu: {
     position: 'relative',
@@ -80,7 +81,7 @@ const styles = {
     }
   },
   pane: {
-    overflow: 'hidden',
+    // overflow: 'hidden',
     backgroundColor: theme.colors.primary,
     color: 'white',
     '>div>div': {
@@ -106,6 +107,9 @@ const styles = {
   radio: {
     flex: 1,
   },
+  select: {
+    flex: 1,
+  }
 }
 
 const Input = ({ onChange, ...props }) => {
@@ -136,12 +140,12 @@ const Input = ({ onChange, ...props }) => {
   )
 }
 
-const Controls = ({ label, entities, filters, sortings, defaults, onChange, render = {}, disabled, ...props }) => {
-  const [filtering, setFiltering] = useState(defaults.filtering)
-  const [sorting, setSorting] = useState(defaults.sorting)
-  const [reverse, setReverse] = useState(defaults.reverse)
+const Controls = ({ label, entities, filters, sortings, defaults, initial, total, onChange, render = {}, history, disabled, ...props }) => {
+  const [filtering, setFiltering] = useState((initial || defaults).filtering)
+  const [sorting, setSorting] = useState((initial || defaults).sorting)
+  const [reverse, setReverse] = useState((initial || defaults).reverse)
   const [query, setQuery] = useState('')
-  const [previous, setPrevious] = useState(defaults)
+  const [previous, setPrevious] = useState(initial || defaults)
   const [open, setOpen] = useState(false)
 
   const active = Object.keys(filtering)
@@ -149,7 +153,9 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
     .filter(key => !filters[key].default || JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default))
 
   const without = (keys) => entities
-    .filter((entity) => Object.keys(filtering).filter(key => !keys.includes(key)).every(key => filters[key].apply(entity, filtering[key])))
+    .filter((entity) => Object.keys(filtering)
+      .filter(key => !keys.includes(key)).every(key => filters[key].apply(entity, filtering[key]))
+    )
 
   const reset = () => {
     setFiltering(defaults.filtering)
@@ -170,13 +176,29 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
       setPrevious({ filtering, sorting, reverse })
     }
 
+    if (history) {
+      history.replace({
+         pathname: history.location.pathname,
+         search: history.location.search,
+         state: {
+           ...(history.location.state || {}),
+           controls: {
+             filtering,
+             sorting,
+             reverse,
+           },
+         },
+      })
+    }
+
     onChange({
-      sorting,
       filtering,
-      sort: (a, b) => sorting.apply(a, b, reverse),
       filter: (entity) =>
         Object.keys(filtering).every(key => filters[key].apply(entity, filtering[key])) &&
         (!filters.query || filters.query.apply(entity, query)),
+      sorting,
+      reverse,
+      sort: (a, b) => sortings[sorting].apply(a, b, reverse),
     })
   }
 
@@ -197,10 +219,11 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
             [key]: {
               element: Checkbox,
               props: {
+                ...(filter.props || {}),
                 key: key,
                 css: styles.checkbox,
                 label: filter.label,
-                inputs: filter.inputs
+                options: filter.options
                   .map(input => ({ ...input, count: histogram[input.value] }))
                   .sort((a, b) => filter.orderize ? b.count - a.count : 0),
                 onChange: values => setFiltering({ ...filtering, [key]: values }),
@@ -215,16 +238,36 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
             [key]: {
               element: Range,
               props: {
+                ...(filter.props || {}),
                 key: key,
                 css: styles.range,
                 label: filter.label,
+                labelize: filter.labelize,
                 values: filtering[key] || filter.default || [filter.min, filter.max],
                 onChange: (values) => setFiltering({ ...filtering, [key]: values }),
                 min: filter.min || 0,
                 max: filter.max || 100,
-                step: filter.step || 1,
+                marks: filter.marks,
+                step: typeof filter.step === 'undefined' ? 1 : filter.step,
                 unit: filter.unit || null,
                 data: histogram,
+                disabled: disabled,
+              },
+            }
+          }
+        case 'select':
+          return {
+            ...blocks,
+            [key]: {
+              element: Select,
+              props: {
+                ...(filter.props || {}),
+                key: key,
+                css: styles.select,
+                label: filter.label,
+                options: filter.options,
+                value: filtering[key] || filter.default,
+                onChange: (values) => setFiltering({ ...filtering, [key]: values }),
                 disabled: disabled,
               },
             }
@@ -235,10 +278,11 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
             [key]: {
               element: Radio,
               props: {
+                ...(filter.props || {}),
                 key: key,
                 css: styles.radio,
                 label: filter.label,
-                inputs: filter.inputs,
+                options: filter.options,
                 value: filtering[key] || filter.default,
                 onChange: (value) => setFiltering({ ...filtering, [key]: value }),
                 disabled: disabled,
@@ -257,9 +301,9 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
         key: 'sorting',
         label: `Sort ${reverse ? '↓' : '↑'}`,
         css: styles.radio,
-        inputs: Object.values(sortings),
-        onChange: value => value ? setSorting(sortings[value]) : setReverse(!reverse),
-        value: sorting.value,
+        options: Object.values(sortings),
+        onChange: value => value ? setSorting(value) : setReverse(!reverse),
+        value: sorting,
         disabled: disabled,
       },
     }
@@ -288,9 +332,9 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
                     range: () => filtering[key]
                       .join('-'),
                     checkbox: () => filtering[key]
-                      .map(value => filters[key].inputs.filter(filter => filter.value === value).pop().label)
+                      .map(value => filters[key].options.filter(filter => filter.value === value).pop().label)
                       .join(', '),
-                  }[filters[key].type])() || false}
+                  }[filters[key].type] || (() => null))()}
                 >
                   <span>{filters[key].label}</span>
                   <Chevron.Down />
@@ -302,7 +346,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
                 </button>
               )}
               {sorting && (
-                <button onClick={() => setOpen(true)} title={`Sorted by ${sorting.label} ${reverse ? '↓' : '↑'}`}>
+                <button onClick={() => setOpen(true)} title={`Sorted by ${sortings[sorting].label} ${reverse ? '↓' : '↑'}`}>
                   <span>Sort</span>
                   <Chevron.Down />
                 </button>
@@ -318,7 +362,7 @@ const Controls = ({ label, entities, filters, sortings, defaults, onChange, rend
           }}
         >
           <div {...(open ? {} : { style: { opacity: 0 } })}>
-            {Emotion.jsx(label, { total: without([]).length, reset })}
+            {Emotion.jsx(label, { total: total || without([]).length, reset })}
             <div>
               <Button look={1} onClick={() => cancel()}>Cancel</Button>
               <Button onClick={() => apply(query)}>Apply</Button>

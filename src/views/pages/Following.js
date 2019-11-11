@@ -49,7 +49,7 @@ const Pane = (blocks) => (
   </>
 )
 
-const Following = ({ ...props }) => {
+const Following = ({ history, ...props }) => {
   return (
     <Fragment>
       <Helmet>
@@ -71,13 +71,14 @@ const Following = ({ ...props }) => {
             filters: Star.Filters,
             sortings: Star.Sortings,
             defaults: {
-              filtering: {},
-              sorting: Star.Sortings.time,
-              reverse: false,
+              filtering: ((history.location.state || {}).controls || {}).filtering || {},
+              sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
+              reverse: ((history.location.state || {}).controls || {}).reverse || false,
             },
             render: {
               pane: Pane,
             },
+            history: history,
           }}
           empty={{
             emoji: '👩‍🎤',
