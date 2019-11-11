@@ -110,15 +110,10 @@ export default class Grid extends PureComponent {
   }
 
   componentDidMount() {
-    // controls will update state and so component
-    if (this.props.controls) {
-      return
-    }
-
     if (this.props.query) {
       this.setState({ loading: true })
       this.fetchDatabase()
-    } else if (this.props.uri.length) {
+    } else if (this.props.uri.length && !this.props.controls) {
       this.setState({ loading: true })
       this.fetchTMDB()
     }
