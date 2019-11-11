@@ -8,13 +8,13 @@ const log = loggers.default
 function proxy(req, res) {
   const url = atob(req.query.url)
 
-  if (Config.payload.xznabs.some(xznab => url.match(new RegExp(`^${escape(new URL(xznab.url).origin)}`)))) {
+  // if (Config.payload.xznabs.some(xznab => url.match(new RegExp(`^${escape(new URL(xznab.url).origin)}`)))) {
     log('proxy', { url })
     req.pipe(request(url)).pipe(res)
-  } else{
-    log('proxy', { url, query: req.query }, { err: true })
-    res.status(403).send({ message: 'Blacklisted URL' })
-  }
+  // } else{
+  //   log('proxy', { url, query: req.query }, { err: true })
+  //   res.status(403).send({ message: 'Blacklisted URL' })
+  // }
 }
 
 module.exports = proxy
