@@ -14,7 +14,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/trending.png?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/home.png?raw=true" width="100" />
       </td>
       <td>
         <b>Home</b>
@@ -36,6 +36,17 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
         <b>Library</b>
         <ul>
           <li>Manage your movies <code>library</code> (<code>wished</code>, <code>pinned</code> and <code>archived</code>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/discover.png?raw=true" width="100" />
+      </td>
+      <td>
+        <b>Discover</b>
+        <ul>
+          <li><code>Discover</code> movies with many options</li>
         </ul>
       </td>
     </tr>

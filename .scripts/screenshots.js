@@ -9,10 +9,11 @@ const VIEWPORT_HEIGHT = 800;
 const pages = [
   [
     'http://localhost:8000',
-    path.join(__dirname, '..', 'doc', 'screenshots', 'trending.png'),
+    path.join(__dirname, '..', 'doc', 'screenshots', 'home.png'),
     {
       fullPage: true,
       beforeScreenshot: async (page, browser) => {
+        await page.waitFor(10 * 1000)
         page.type('[data-test="search-input"]', 'John')
       },
     },
@@ -56,6 +57,19 @@ const pages = [
   [
     'http://localhost:8000/movies/library',
     path.join(__dirname, '..', 'doc', 'screenshots', 'library.png'),
+    {
+      beforeScreenshot: async (page, browser) => {
+        await page.click('[data-test="controls-all"]')
+      },
+      viewport: {
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT * 2,
+      },
+    },
+  ],
+  [
+    'http://localhost:8000/movies/discover',
+    path.join(__dirname, '..', 'doc', 'screenshots', 'discover.png'),
     {
       beforeScreenshot: async (page, browser) => {
         await page.click('[data-test="controls-all"]')
@@ -124,10 +138,16 @@ const pages = [
   console.log('')
 
   await page.reload()
+  await page.waitFor(30 * 1000)
+  await page.reload()
 
   for (let [url, path, options = {}] of pages) {
     console.log('💻', 'Loading', url)
-    await page.goto(url, { waitUntil: 'networkidle2' })
+
+    try {
+      await page.goto(url, { waitUntil: 'networkidle2' })
+    } catch (e) {}
+
     await page.waitFor(10 * 1000)
 
     if (options.beforeScreenshot) {
