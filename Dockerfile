@@ -14,7 +14,6 @@ COPY src ./src
 
 RUN mkdir -p config \
   && chmod 666 config \
-  && cp config.default.json config/config.json \
   && mkdir -p blackhole \
   && chmod 660 blackhole \
   && apk add -U python make g++ \
