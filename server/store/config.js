@@ -14,7 +14,7 @@ class Config {
     try {
       fs.accessSync(paths.file, fs.constants.R_OK)
     } catch(e) {
-      fs.writeFileSync(paths.file, JSON.stringify(paths.fallback, null, 2))
+      fs.writeFileSync(paths.file, JSON.stringify(require(paths.fallback), null, 2))
     }
 
     this.payload = require(paths.file)
