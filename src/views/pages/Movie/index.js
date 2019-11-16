@@ -643,7 +643,7 @@ export default class Movie extends PureComponent {
                           {!!details.production_companies.length && (
                             <div>
                               🏛️ &nbsp;{details.production_companies.map((company, index, arr) => (
-                                <span>
+                                <span key={company.id}>
                                   <Link
                                     key={company.id}
                                     to={{

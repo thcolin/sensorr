@@ -717,6 +717,10 @@ export class State extends PureComponent {
         emoji: '🔕',
         label: 'Ignored',
       },
+      missing: {
+        emoji: '💊',
+        label: 'Missing',
+      },
       pinned: {
         emoji: '📍',
         label: 'Pinned',
@@ -735,6 +739,8 @@ export class State extends PureComponent {
 
     if (doc === null || (doc && doc.state === 'ignored')) {
       current = 'ignored'
+    } else if (doc && doc.state === 'missing') {
+      current = 'missing'
     } else if (doc && doc.state === 'pinned') {
       current = 'pinned'
     } else if (doc && doc.state === 'wished') {
@@ -750,7 +756,7 @@ export class State extends PureComponent {
         <label htmlFor={id} css={State.styles.label}>
           {current !== 'loading' && (
             <select id={id} value={current} onChange={this.handleStateChange} css={State.styles.select}>
-              {Object.keys(options).filter(key => !['loading'].includes(key)).map(key => (
+              {Object.keys(options).filter(key => !['loading', 'missing'].includes(key)).map(key => (
                 <option key={key} value={key}>{options[key].emoji} - {options[key].label}</option>
               ))}
             </select>

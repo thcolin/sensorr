@@ -199,8 +199,8 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
-* Feature `status`
-  * Add `missing` status (when considered as `archived` but not found on `Plex`)
+* Feature database `doctor`
+  * Allow to `clean` browser `sensorr-*` databases
 * Feature `Home`
   * `Row` with *new* `movies` from `calendar`
   * `Row` with *birthday* `stars` from `following`

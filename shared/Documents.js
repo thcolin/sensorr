@@ -132,6 +132,10 @@ Movie.Filters = {
     type: 'checkbox',
     options: [
       {
+        value: 'missing',
+        label: '💊  Missing',
+      },
+      {
         value: 'pinned',
         label: '📍  Pinned',
       },
@@ -150,7 +154,7 @@ Movie.Filters = {
     histogram: (entities) => entities.reduce((histogram, entity) => ({
       ...histogram,
       [entity.state]: histogram[entity.state] + 1,
-    }), { pinned: 0, wished: 0, archived: 0 }),
+    }), { missing: 0, pinned: 0, wished: 0, archived: 0 }),
   }),
   year: (entities) => {
     const step = 1
