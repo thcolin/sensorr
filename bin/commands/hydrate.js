@@ -1,14 +1,14 @@
 const { from, of, EMPTY } = require('rxjs')
 const { map, mapTo, tap, mergeMap, delay, pluck, catchError } = require('rxjs/operators')
-const { Movie } = require('@shared/Documents')
+const { Movie, Star } = require('@shared/Documents')
 const TMDB = require('@shared/services/TMDB')
 const chalk = require('chalk')
 
-async function refresh({ log, sensorr, db }) {
+async function hydrate({ log, sensorr, db }) {
   const tmdb = new TMDB({ key: sensorr.config.tmdb, region: sensorr.config.region })
-  log('')
 
-  return await new Promise(resolve =>
+  log('')
+  await new Promise(resolve =>
     from(db.movies.allDocs({ include_docs: true })).pipe(
       pluck('rows'),
       map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
@@ -27,9 +27,41 @@ async function refresh({ log, sensorr, db }) {
       ), null, 1),
     ).subscribe(
       (movie) => log(
-        '♻️ ',
-        'Refreshing',
+        '💧 ',
+        'Hydrating',
         `movie data ${chalk.inverse(movie.title)} ${chalk.gray(`(${movie.year})`)}`,
+      ),
+      (err) => log('🚨', err),
+      () => {
+        log('')
+        resolve()
+      },
+    )
+  )
+
+  log('')
+  return await new Promise(resolve =>
+    from(db.stars.allDocs({ include_docs: true })).pipe(
+      pluck('rows'),
+      map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
+      tap(stars => stars.length ? '' : log('🧐', `Oh. It seems you're not stalking anyone.`)),
+      map(stars => stars.sort((a, b) => a.time - b.time)),
+      mergeMap(stars => from(stars)),
+      mergeMap(star => of(star).pipe(
+        mergeMap(star => tmdb.fetch(['person', star.id], { append_to_response: 'images,movie_credits' })),
+        map(details => new Star({ ...star, ...details }).normalize()),
+        mergeMap(star => from(db.stars.upsert(star.id, (doc) => ({ ...doc, ...star }))).pipe(mapTo(star))),
+        catchError(err => {
+          log('🚨', err.toString())
+          return EMPTY
+        }),
+        delay(2000),
+      ), null, 1),
+    ).subscribe(
+      (star) => log(
+        '💧 ',
+        'Hydrating',
+        `star data ${chalk.inverse(star.name)} - ${star.known_for_department} ${chalk.gray(`(${star.birthday})`)}`,
       ),
       (err) => log('🚨', err),
       () => {
@@ -40,4 +72,4 @@ async function refresh({ log, sensorr, db }) {
   )
 }
 
-module.exports = refresh
+module.exports = hydrate

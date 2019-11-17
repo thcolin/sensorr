@@ -178,11 +178,11 @@ Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.j
 Usage: sensorr [command] [options]
 
 Commands:
-  📼 record              Try to "record" (aka download best release) every wished movies
-  📰 stalk               Stalk stars and update calendar with "recents" movies (+/- 8 years from now)
-  🔗 sync                Consider all movies from your Plex server as "archived"
-  🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
-  ♻️ refresh             Refresh movies collection data (vote_average, popularity, etc...)
+  📼 record              Record wished movies from collection with best release
+  💧 hydrate             Hydrate data fro movies from collection and stalked stars
+  📅 schedule            Schedule calendar with recents movies from stalked stars (+/- 2 years from now)
+  🔗 pairwise            Pairwise Plex instance with Sensorr instance
+  🗑️  clean               Clean oldest log sessions (if directory space exceeds configured value)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -200,6 +200,10 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 
 # Roadmap
 * Feature `Discover`
+  * `Movie`
+    * Add link to `Collection`
+  * `Star`
+    * Add link to `Discover` with `with_credits=[actor]`
   * Improve `AND` + `OR` behavior
     * I want to see `Comédie` AND `Romance` movies
     * I want to see `Comédie` OR `Romance` movies
@@ -225,6 +229,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Allow to post an `issue` on `thcolin/oleoo`
     * Allow to search for `releases`
 * Feature `performance`
+  * Rename `XZNAB` to `XYZNAB`
   * Refactor `Grid` and `List`
     * Allow 4 "sources" / behaviors
       * `props.items` (array)

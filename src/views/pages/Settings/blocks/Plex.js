@@ -87,9 +87,16 @@ class Plex extends PureComponent {
       <div css={styles.section}>
         <h1 css={styles.title}>Plex</h1>
         <p css={styles.paragraph} style={{ flex: 1, }}>
-          <a href="https://www.plex.tv/" target="_blank" css={styles.link}>Plex</a> user ? You can connect your <strong>Sensorr</strong> instance to your <strong>Plex</strong> server and never inadvertently download a movie you already own !
+          <a href="https://www.plex.tv/" target="_blank" css={styles.link}>Plex</a> user ? You can pairwise your <strong>Sensorr</strong> instance to your <strong>Plex</strong> server and never inadvertently download a movie you already own !
           <br/>
-          All movies from your <strong>Plex</strong> server will be considered as <code css={styles.code}>📼 archived</code> on <strong>Sensorr</strong>.
+          <br/>
+          <strong>Plex</strong> will be the single source of truth for your movies <strong>library</strong> :
+          <br/>
+          <ul css={styles.list} style={{ padding: '0 0 0 0.5em' }}>
+            <li>All movies available on your <strong>Plex</strong> server will be considered as <code css={styles.code}>📼 archived</code></li>
+            <li>Movies considered as <code css={styles.code}>📼 archived</code> unavailbe on your <strong>Plex</strong> server will be considerd as <code css={styles.code}>💊 missing</code></li>
+          </ul>
+          <br/>
         </p>
         <div css={styles.column}>
           <span

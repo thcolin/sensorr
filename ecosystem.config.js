@@ -29,12 +29,12 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:refresh',
+      name: 'sensorr:hydrate',
       cron: '3 1 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
-      args: ['./bin/sensorr', 'refresh'],
+      args: ['./bin/sensorr', 'hydrate'],
       env: {
         NODE_ENV: 'development'
       },
@@ -43,12 +43,12 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:stalk',
+      name: 'sensorr:schedule',
       cron: '3 2 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
-      args: ['./bin/sensorr', 'stalk'],
+      args: ['./bin/sensorr', 'schedule'],
       env: {
         NODE_ENV: 'development'
       },
@@ -57,12 +57,12 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:sync',
+      name: 'sensorr:pairwise',
       cron: '3 3 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
-      args: ['./bin/sensorr', 'sync'],
+      args: ['./bin/sensorr', 'pairwise'],
       env: {
         NODE_ENV: 'development'
       },

@@ -1,11 +1,11 @@
-const { from, of } = require('rxjs')
+const { from, of, EMPTY } = require('rxjs')
 const { map, mapTo, tap, filter, mergeMap, delay, reduce } = require('rxjs/operators')
 const Documents = require('@shared/Documents')
 const TMDB = require('@shared/services/TMDB')
 const Plex = require('@shared/services/Plex')
 const chalk = require('chalk')
 
-async function sync({ log, sensorr, db }) {
+async function pairwise({ log, sensorr, db }) {
   log('')
 
   return await new Promise(resolve => {
@@ -39,11 +39,21 @@ async function sync({ log, sensorr, db }) {
                 tap(guid => log('📭', `Missing ${chalk.inverse({ 'com.plexapp.agents.imdb': 'IMDB', 'com.plexapp.agents.themoviedb': 'TMDB' }[guid.agent])} movie ${chalk.gray(guid.id)}`)),
                 mergeMap(guid => ({
                   'com.plexapp.agents.themoviedb': of(guid.id),
-                  'com.plexapp.agents.imdb': from(tmdb.fetch(['find', guid.id], { external_source: 'imdb_id' })).pipe(map(payload => payload.movie_results.pop().id)),
+                  'com.plexapp.agents.imdb': from(tmdb.fetch(['find', guid.id], { external_source: 'imdb_id' })).pipe(
+                    mergeMap(payload => {
+                      if (!payload.movie_results.length) {
+                        log('📭', `Sorry, no result for IMDB movie ${chalk.gray(guid.id)}`)
+                        return EMPTY
+                      }
+
+                      return of(payload.movie_results.pop().id)
+                    }),
+                  ),
                 }[guid.agent])),
                 mergeMap(id => tmdb.fetch(['movie', id], { append_to_response: 'alternative_titles,release_dates' })),
                 map(entity => new Documents.Movie({ ...entity, state: 'archived' }, sensorr.config.region).normalize()),
                 mergeMap(movie => from(db.movies.upsert(movie.id, (doc) => ({ ...doc, ...movie }))).pipe(mapTo(movie))),
+                delay(2000),
                 tap(movie => log('📼', `Movie ${chalk.inverse(movie.title)} which is available on Plex server, will now be ${chalk.gray('archived')} on Sensorr`)),
               ) : (doc.state === 'archived' ?
                 of(doc).pipe(
@@ -56,7 +66,7 @@ async function sync({ log, sensorr, db }) {
               )
             ),
           )),
-          delay(2000),
+          delay(200),
         ), null, 1),
         reduce((acc, movie) => [...acc, movie], []),
         mergeMap(movies => db.movies.find({
@@ -71,7 +81,7 @@ async function sync({ log, sensorr, db }) {
         mergeMap(movie => from(db.movies.upsert(movie._id, (doc) => ({ id: movie._id, ...movie, ...doc, time: Date.now(), state: 'missing' }))).pipe(
           mapTo(movie),
           tap(movie => log('💊', `Movie ${chalk.inverse(movie.title)} which is not available anymore on Plex server, will now be ${chalk.gray('missing')} on Sensorr`)),
-          delay(2000),
+          delay(200),
         ), null, 1),
       ).subscribe(
         () => {},
@@ -92,4 +102,4 @@ async function sync({ log, sensorr, db }) {
   })
 }
 
-module.exports = sync
+module.exports = pairwise

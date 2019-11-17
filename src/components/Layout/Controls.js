@@ -332,7 +332,8 @@ const Controls = ({ label, entities, filters, sortings, defaults, initial, total
                     range: () => filtering[key]
                       .join('-'),
                     checkbox: () => filtering[key]
-                      .map(value => filters[key].options.filter(filter => filter.value === value).pop().label)
+                      .map(value => (filters[key].options.filter(filter => filter.value === value).pop() || {}).label)
+                      .filter(label => label)
                       .join(', '),
                   }[filters[key].type] || (() => null))()}
                 >

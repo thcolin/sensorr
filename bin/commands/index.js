@@ -1,13 +1,13 @@
 const record = require('@bin/commands/record')
-const stalk = require('@bin/commands/stalk')
-const sync = require('@bin/commands/sync')
+const schedule = require('@bin/commands/schedule')
+const pairwise = require('@bin/commands/pairwise')
 const clean = require('@bin/commands/clean')
-const refresh = require('@bin/commands/refresh')
+const hydrate = require('@bin/commands/hydrate')
 
 module.exports = {
   record,
-  stalk,
-  sync,
+  schedule,
+  pairwise,
   clean,
-  refresh,
+  hydrate,
 }

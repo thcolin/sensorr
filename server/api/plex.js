@@ -43,8 +43,8 @@ function plex(req, res) {
             }),
             tap(() => payload.token = plex.token),
             mergeMap(() => Config.replace({ plex: payload })),
-            mergeMap(() => bindNodeCallback(pm2.restart.bind(pm2))('sensorr:sync').pipe(
-              tap(() => log('trigger', { event: 'success', job: 'sensorr:sync' })),
+            mergeMap(() => bindNodeCallback(pm2.restart.bind(pm2))('sensorr:pairwise').pipe(
+              tap(() => log('trigger', { event: 'success', job: 'sensorr:pairwise' })),
             )),
           )),
         )),

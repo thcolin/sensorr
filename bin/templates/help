@@ -1,11 +1,11 @@
 Usage: sensorr [command] [options]
 
 Commands:
-  📼 record              Try to "record" (aka download best release) every wished movies
-  📰 stalk               Stalk stars and update calendar with "recents" movies (+/- 8 years from now)
-  🔗 sync                Consider all movies from your Plex server as "archived"
-  🗑️ clean               Remove oldest log sessions if directory space exceeds configured value
-  ♻️ refresh             Refresh movies collection data (vote_average, popularity, etc...)
+  📼 record              Record wished movies from collection with best release
+  💧 hydrate             Hydrate data fro movies from collection and stalked stars
+  📅 schedule            Schedule calendar with recents movies from stalked stars (+/- 2 years from now)
+  🔗 pairwise            Pairwise Plex instance with Sensorr instance
+  🗑️  clean               Clean oldest log sessions (if directory space exceeds configured value)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]

@@ -135,7 +135,7 @@ export default class List extends PureComponent {
         this.reference.current && this.reference.current.scroll(0, 0)
       })
     } else if (this.props.items.length) {
-      this.setState({ entities: [] })
+      this.setState({ entities: [] })
       this.reference.current && this.reference.current.scroll(0, 0)
     }
   }
@@ -145,7 +145,8 @@ export default class List extends PureComponent {
       (this.props.uri.length && !props.uri.length) ||
       (this.props.query && !props.query)
     ) {
-      this.setState({ entities: [] })
+      this.setState({ loading: true })
+      this.setState({ entities: [] })
     }
 
     if (this.props.query) {
@@ -167,7 +168,7 @@ export default class List extends PureComponent {
       }
     } else if (this.props.items.length) {
       if ((this.props.items[0] || {}).id !== (props.items[0] || {}).id) {
-        this.setState({ entities: [] })
+        this.setState({ entities: [] })
         this.reference.current && this.reference.current.scroll(0, 0)
       }
     }
@@ -177,8 +178,6 @@ export default class List extends PureComponent {
     if (!this.props.query) {
       return
     }
-
-    this.setState({ loading: true })
 
     const db = await database.get()
     const query = this.props.query(db)
@@ -195,11 +194,9 @@ export default class List extends PureComponent {
       return
     }
 
-    this.setState({ loading: true })
-
     try {
       const res = await tmdb.fetch(this.props.uri, this.props.params)
-      this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] })
+      this.setState({ loading: false, entities: (this.props.transform || ((res) => res.results))(res) || [] })
     } catch(err) {
       this.setState({
         loading: false,
@@ -210,7 +207,7 @@ export default class List extends PureComponent {
 
   validate(entity) {
     return (
-      (!this.props.strict || (entity || {}).poster_path || (entity || {}).profile_path) &&
+      (!this.props.strict || (entity || {}).poster_path || (entity || {}).profile_path) &&
       (!entity.adult || tmdb.adult)
     )
   }
@@ -240,7 +237,7 @@ export default class List extends PureComponent {
       ...props
     } = this.props
 
-    const filtered = ((uri.length || query) ? entities : items)
+    const filtered = ((uri.length || query) ? entities : items)
       .filter(entity => this.validate(entity))
       .filter(filter)
       .slice(0, limit)
@@ -292,7 +289,7 @@ export const Label = ({ id, title, compact, actions, value, onChange, options, c
     <span {...bind} css={styles.label.element} style={{ justifyContent: { true: 'flex-start', false: 'space-between' }[compact] }}>
       <label {...(!!options ? { htmlFor: id } : {})} {...(title ? { title } : {})}>
         {children}
-        {!!(options || []).length && (
+        {!!(options || []).length && (
           <select
             id={id}
             value={value}

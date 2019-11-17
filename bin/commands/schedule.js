@@ -9,7 +9,7 @@ const count = {
   credits: 0,
 }
 
-async function stalk({ log, sensorr, db }) {
+async function schedule({ log, sensorr, db }) {
   const tmdb = new TMDB({ key: sensorr.config.tmdb, region: sensorr.config.region })
 
   const limits = [
@@ -17,8 +17,8 @@ async function stalk({ log, sensorr, db }) {
     new Date(),
   ]
 
-  limits[0].setFullYear(limits[0].getFullYear() - 8)
-  limits[1].setFullYear(limits[1].getFullYear() + 8)
+  limits[0].setFullYear(limits[0].getFullYear() - 2)
+  limits[1].setFullYear(limits[1].getFullYear() + 2)
 
   log('🗃 ', `Loading calendar cache...`)
   const result = await db.calendar.find({
@@ -117,7 +117,7 @@ async function stalk({ log, sensorr, db }) {
             ), null, 1),
           )),
           catchError((err) => {
-            log('🚨', { credit, err })
+            log('🚨', { star, err })
             return EMPTY
           }),
         ), null, 1)
@@ -135,4 +135,4 @@ async function stalk({ log, sensorr, db }) {
   )
 }
 
-module.exports = stalk
+module.exports = schedule

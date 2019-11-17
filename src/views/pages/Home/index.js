@@ -125,22 +125,25 @@ export default class Home extends PureComponent {
             )}
             title="Upcoming movies"
             strict={true}
-            hide={true}
-            query={Home.Queries.upcoming}
-            transform={(entities) => entities
-              .map(raw => {
-                const entity = raw.toJSON()
-                const credits = entity.credits
-                  .filter(star => stars.includes(star.id.toString()))
-                  .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
-                  .filter((star, index) => index < 4)
+            {...(ready ? {
+              hide: true,
+              query: Home.Queries.upcoming,
+              transform: (entities) => entities
+                .map(raw => {
+                  const entity = raw.toJSON()
+                  const credits = entity.credits
+                    .filter(star => stars.includes(star.id.toString()))
+                    .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
+                    .filter((star, index) => index < 4)
 
-                return { ...entity, credits }
-              })
-              .filter(entity => entity.credits.length)
-            }
+                  return { ...entity, credits }
+                })
+                .filter(entity => entity.credits.length),
+            } : {
+              items: Array(15).fill({ poster_path: false }),
+            })}
             child={Film}
-            childProps={{ withCredits: ready }}
+            childProps={{ withCredits: true }}
             placeholder={true}
           />
           <List
