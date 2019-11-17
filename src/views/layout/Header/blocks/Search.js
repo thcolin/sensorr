@@ -111,10 +111,10 @@ export const Results = ({ children, ...props }) => {
 
     try {
       const res = await tmdb.fetch(uri, params)
-      await new Promise(resolve => setTimeout(resolve, 700))
+      // await new Promise(resolve => setTimeout(resolve, 700))
       dispatch([uri[uri.length - 1], res.results])
     } catch (e) {
-      await new Promise(resolve => setTimeout(resolve, 700))
+      // await new Promise(resolve => setTimeout(resolve, 700))
       dispatch([uri[uri.length - 1], []])
     }
   }, [])

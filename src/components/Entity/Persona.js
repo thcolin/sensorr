@@ -151,7 +151,7 @@ export const Poster = ({ entity, display, updatable, placeholder, link, title, .
         >
           {title || (
             <>
-              <strong>{entity.name}</strong>
+              <strong>{entity.name || ' '}</strong>
               {entity.job && (
                 <span><br/>{entity.job}</span>
               )}
@@ -269,7 +269,7 @@ Poster.styles = {
     },
     tooltip: {
       position: 'absolute',
-      bottom: '-3em',
+      top: 'calc(100% - 0.5em)',
       fontSize: '2em',
       zIndex: 1,
     },

@@ -78,6 +78,7 @@ export default class List extends PureComponent {
     childProps: PropTypes.object,
     transform: PropTypes.func,
     filter: PropTypes.func,
+    limit: PropTypes.number,
     label: PropTypes.node,
     display: PropTypes.oneOf(['row', 'column']),
     space: PropTypes.number,
@@ -96,6 +97,7 @@ export default class List extends PureComponent {
     uri: [],
     params: {},
     filter: () => true,
+    limit: Infinity,
     display: 'row',
     space: 2,
     empty: {},
@@ -139,6 +141,13 @@ export default class List extends PureComponent {
   }
 
   componentDidUpdate(props) {
+    if (
+      (this.props.uri.length && !props.uri.length) ||
+      (this.props.query && !props.query)
+    ) {
+      this.setState({ entities: [] })
+    }
+
     if (this.props.query) {
       if (!props.query) {
         this.debounce(async () => {
@@ -201,7 +210,7 @@ export default class List extends PureComponent {
 
   validate(entity) {
     return (
-      (!this.props.strict || typeof entity.poster_path !== 'undefined' || typeof entity.profile_path !== 'undefined') &&
+      (!this.props.strict || (entity || {}).poster_path || (entity || {}).profile_path) &&
       (!entity.adult || tmdb.adult)
     )
   }
@@ -217,6 +226,7 @@ export default class List extends PureComponent {
       childProps,
       transform,
       filter,
+      limit,
       label,
       display,
       space,
@@ -230,9 +240,10 @@ export default class List extends PureComponent {
       ...props
     } = this.props
 
-    const filtered = (uri.length || query) ? entities : items
+    const filtered = ((uri.length || query) ? entities : items)
       .filter(entity => this.validate(entity))
       .filter(filter)
+      .slice(0, limit)
 
     return (!!filtered.length || (loading && (uri.length || query)) || !hide) && (
       <div css={styles.list.element}>

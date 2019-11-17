@@ -199,13 +199,10 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
-* Feature database `doctor`
-  * Allow to `clean` browser `sensorr-*` databases
-* Feature `Home`
-  * `Row` with *new* `movies` from `calendar`
-  * `Row` with *birthday* `stars` from `following`
-  * `Row` with *upcoming* `movies` from *followed* `stars`
-    * Link to `Calendar`
+* Feature `Discover`
+  * Improve `AND` + `OR` behavior
+    * I want to see `Comédie` AND `Romance` movies
+    * I want to see `Comédie` OR `Romance` movies
 * Feature `Policies`
   * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)
@@ -222,7 +219,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Add `List` page
     * Grouped movies by "policy"
     * Same layout as `Home` page
-* Feature `Fix (manual)`
+* Feature `Fix (manual)` or `Review`
   * Allow to *fix* manually a `record` session
     * Review each `record`, one by one
     * Allow to post an `issue` on `thcolin/oleoo`
@@ -250,7 +247,6 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Responsive design / mobile UI-UX
     * Take `screenshots` in `small`, `medium` and `large` breakpoints
 * Feature `Config`
-  * Fix empty `config.json` on __Docker__ build
   * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
 * Feature `1.0.0`
   * 🎉
@@ -263,18 +259,21 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * `Discover`
     * Add `status` in `controls` - how ?
     * Add `Random` button
-  * `Persona`
-    * Fix `tooltip` **position** when no job or character (see calendar)
   * `Search`
     * Animate `height`
     * Add remove `suggestion` button
   * `Home`
     * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
+  * `Settings`
+    * `Database`
+      * Allow to `clean` browser `sensorr-*` databases (`doctor`)
   * `Controls`
     * Improve `Documents.Movie.Filters`
       * `country` - `select multi` (use `original_language` ? - no)
       * `studio` - `select multi`
+  * `Grid`
+    * Select/Deselect all
   * `Row`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
@@ -296,13 +295,13 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
         * `uri={...}`
         * `params={...}`
       * Save from `Discover` "current" params
-* Feature `Takecare`
+* Feature `Doctor`
   * Replace `Plex` releases by better if available, like `CouchPotato`
     * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and compute score
 * Feature `Onboarding`
   * Add `Onboarding` page
 * Feature `Browser Plugin`
-  * `IMDB`, `TMDB` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
+  * `IMDB`, `TMDB`, `SensCritique` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
 * Feature `import/export`
   * Synchronize with `trakt.tv`
 * Feature `App` (TV/Mobile ?)

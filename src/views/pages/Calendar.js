@@ -191,12 +191,12 @@ class Calendar extends PureComponent {
       type: 'radio',
       options: [
         {
-          value: 'strict',
-          label: 'Strict',
+          value: 'permissive',
+          label: 'All',
         },
         {
-          value: 'permissive',
-          label: 'Permissive',
+          value: 'strict',
+          label: 'Strict',
         },
       ],
       default: 'strict',

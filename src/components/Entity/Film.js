@@ -333,9 +333,8 @@ export default class Film extends PureComponent {
                 {Array.isArray(entity.genre_ids) && (
                   <p style={{ color: palette.alternativeColor }}>
                     {entity.genre_ids.map((id, index, arr) => (
-                      <span>
+                      <span key={id}>
                         <Link
-                          key={id}
                           to={{
                             pathname: '/movies/discover',
                             state: {
