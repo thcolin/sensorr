@@ -179,10 +179,10 @@ Usage: sensorr [command] [options]
 
 Commands:
   📼 record              Record wished movies from collection with best release
-  💧 hydrate             Hydrate data fro movies from collection and stalked stars
+  💧 hydrate             Hydrate movies from collection and stalked stars data
   📅 schedule            Schedule calendar with recents movies from stalked stars (+/- 2 years from now)
   🔗 pairwise            Pairwise Plex instance with Sensorr instance
-  🗑️  clean               Clean oldest log sessions (if directory space exceeds configured value)
+  🗑️ clean               Clean oldest log sessions (if directory space exceeds configured value)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
@@ -223,8 +223,8 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Add `List` page
     * Grouped movies by "policy"
     * Same layout as `Home` page
-* Feature `Fix (manual)` or `Review`
-  * Allow to *fix* manually a `record` session
+* Feature `Review` (fix manual)
+  * Allow to *review* a `record` session
     * Review each `record`, one by one
     * Allow to post an `issue` on `thcolin/oleoo`
     * Allow to search for `releases`
@@ -238,8 +238,6 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
       * `props.?` (socket)
   * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
-  * `Database`
-    * Remove `Star.credits` (?)
   * `oleoo`
     * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)
   * `Server`
@@ -270,13 +268,10 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * `Home`
     * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
+    * Add "pre-configured" `List` like `Oscars` ?
   * `Settings`
     * `Database`
       * Allow to `clean` browser `sensorr-*` databases (`doctor`)
-  * `Controls`
-    * Improve `Documents.Movie.Filters`
-      * `country` - `select multi` (use `original_language` ? - no)
-      * `studio` - `select multi`
   * `Grid`
     * Select/Deselect all
   * `Row`
@@ -291,6 +286,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
           * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
       ```
   * `Loading` page waiting sync of `db` with progress ?
+    * Allow to `clean` database if waiting too much
   * Dark mode (`react-theme-provider`)
 * Feature `Custom Home`
   * `Home`
@@ -309,10 +305,9 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * `IMDB`, `TMDB`, `SensCritique` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
 * Feature `import/export`
   * Synchronize with `trakt.tv`
-* Feature `App` (TV/Mobile ?)
+* Feature `Mobile` app
   * Connect to server with QR code
   * Streaming from `Releases` (how to know which file read ? - ask user)
-  * PWA ?
 
 # Inspiration
 * CLI

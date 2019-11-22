@@ -602,7 +602,7 @@ export default class Movie extends PureComponent {
                               </Link>
                             </span>
                           )}
-                          {(details.production_companies.length || details.keywords.keywords.length) && (
+                          {!!(details.production_companies.length || details.keywords.keywords.length) && (
                             <button
                               css={theme.resets.button}
                               style={{ padding: '0 0.25em' }}

@@ -15,6 +15,20 @@ module.exports = {
       },
     },
     {
+      name: 'sensorr:clean',
+      cron: '3 16 * * *',
+      exec_mode: 'fork',
+      autorestart: false,
+      script: './bin/exec',
+      args: ['./bin/sensorr', 'clean'],
+      env: {
+        NODE_ENV: 'development'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+    },
+    {
       name: 'sensorr:record',
       cron: '0 17 * * *',
       exec_mode: 'fork',
@@ -29,22 +43,8 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:hydrate',
-      cron: '3 1 * * *',
-      exec_mode: 'fork',
-      autorestart: false,
-      script: './bin/exec',
-      args: ['./bin/sensorr', 'hydrate'],
-      env: {
-        NODE_ENV: 'development'
-      },
-      env_production: {
-        NODE_ENV: 'production'
-      },
-    },
-    {
       name: 'sensorr:schedule',
-      cron: '3 2 * * *',
+      cron: '3 1 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
@@ -71,12 +71,12 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:clean',
-      cron: '3 4 * * *',
+      name: 'sensorr:hydrate',
+      cron: '3 5 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
-      args: ['./bin/sensorr', 'clean'],
+      args: ['./bin/sensorr', 'hydrate'],
       env: {
         NODE_ENV: 'development'
       },
