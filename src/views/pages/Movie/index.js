@@ -281,7 +281,10 @@ export default class Movie extends PureComponent {
       this.setState({
         loading: false,
         err: null,
-        details: { ...details, belongs_to_collection: collection },
+        details: {
+          ...details,
+          belongs_to_collection: collection,
+        },
         trailer: '',
         strict: true,
         releases: false,
@@ -379,16 +382,32 @@ export default class Movie extends PureComponent {
       .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
       .sort((a, b) => a.type === 'Trailer' ? -1 : 1)
 
+    const mores = !details ? {} : {
+      collection: (details.belongs_to_collection || { parts: [] }).parts,
+      recommendations: details.recommendations.results,
+      similar: details.similar.results,
+      cast: details.credits.cast
+        .filter((credit, index) => credit.profile_path && (!strict || index < 20)),
+      crew: [...details.credits.crew]
+        .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
+        .map((credit, index, self) => ({
+          ...credit,
+          job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
+        }))
+        .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
+        .filter((credit, index) => credit.profile_path && (!strict || index < 20)),
+    }
+
     const more = state.more || (
-      (details || {}).belongs_to_collection ?
+      (mores.collection || []).length ?
       'collection' :
-      (details || { recommendations: { results: [] } }).recommendations.results.length ?
+      (mores.recommendations || []).length ?
       'recommendations' :
-      (details || { similar: { results: [] } }).similar.results.length ?
+      (mores.similar || []).length ?
       'similar' :
-      (details || { credits: { cast: [] } }).credits.cast.length ?
+      (mores.cast || []).length ?
       'cast' :
-      (details || { credits: { crew: [] } }).credits.crew.length ?
+      (mores.crew || []).length ?
       'crew' :
       null
     )
@@ -702,7 +721,7 @@ export default class Movie extends PureComponent {
                 <div css={styles.list}>
                   <div css={styles.tabs}>
                     <div>
-                      {!!details.belongs_to_collection && (
+                      {!!mores.collection.length && (
                         <span
                           style={{ opacity: more === 'collection' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'collection' })}
@@ -710,7 +729,7 @@ export default class Movie extends PureComponent {
                           📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
                         </span>
                       )}
-                      {!!details.recommendations.results.length && (
+                      {!!mores.recommendations.length && (
                         <span
                           style={{ opacity: more === 'recommendations' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'recommendations' })}
@@ -718,7 +737,7 @@ export default class Movie extends PureComponent {
                           💬 &nbsp;{`Recommendations`}
                         </span>
                       )}
-                      {!!details.similar.results.length && (
+                      {!!mores.similar.length && (
                         <span
                           style={{ opacity: more === 'similar' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'similar' })}
@@ -728,7 +747,7 @@ export default class Movie extends PureComponent {
                       )}
                     </div>
                     <div>
-                      {!!details.credits.cast.length && (
+                      {!!mores.cast.length && (
                         <span
                           style={{ opacity: more === 'cast' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'cast', strict: true })}
@@ -736,7 +755,7 @@ export default class Movie extends PureComponent {
                           👩‍🎤️ &nbsp;{`Casting`}
                         </span>
                       )}
-                      {!!details.credits.crew.length && (
+                      {!!mores.crew.length && (
                         <span
                           style={{ opacity: more === 'crew' ? 1 : 0.25 }}
                           onClick={() => this.setState({ more: 'crew', strict: true })}
@@ -747,21 +766,7 @@ export default class Movie extends PureComponent {
                     </div>
                   </div>
                   <List
-                    items={{
-                      collection: (details.belongs_to_collection || { parts: [] }).parts,
-                      recommendations: details.recommendations.results,
-                      similar: details.similar.results,
-                      cast: details.credits.cast
-                        .filter((foo, index) => !strict || index < 20),
-                      crew: [...details.credits.crew]
-                        .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
-                        .map((credit, index, self) => ({
-                          ...credit,
-                          job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
-                        }))
-                        .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
-                        .filter((foo, index) => !strict || index < 20),
-                    }[more]}
+                    items={mores[more]}
                     prettify={more === 'collection' ? Infinity : 5}
                     placeholder={true}
                     child={{

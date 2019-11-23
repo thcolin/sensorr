@@ -183,6 +183,7 @@ const styles = {
     animationFillMode: 'forwards',
     background: `linear-gradient(to right, ${colors.grey} 20%, ${colors.mercury} 50%, ${colors.grey} 80%)`,
     backgroundSize: '300%',
+    transform: 'translateZ(0)',
   },
 }
 
