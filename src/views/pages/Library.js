@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
-import Grid from 'components/Layout/Grid'
+import Items from 'components/Layout/Items'
 import Film from 'components/Entity/Film'
 import { Movie } from 'shared/Documents'
 import theme from 'theme'
@@ -11,9 +11,6 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-  },
-  grid: {
-    padding: '2em 0',
   },
 }
 
@@ -37,17 +34,13 @@ const Library = ({ history, ...props }) => (
       <title>Sensorr - Library</title>
     </Helmet>
     <div css={styles.wrapper}>
-      <Grid
-        limit={true}
-        strict={false}
-        query={Library.query}
+      <Items
+        display="grid"
+        source={Library.query}
         child={Film}
-        css={styles.grid}
+        strict={false}
         placeholder={true}
-        history={history}
-        defaults={{
-          max: ((history.location.state || {}).grid || {}).max,
-        }}
+        debounce={false}
         controls={{
           label: ({ total, reset }) => (
             <button css={theme.resets.button} onClick={() => reset()}>

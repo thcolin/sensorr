@@ -1,12 +1,10 @@
 import React, { Fragment } from 'react'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
-import Grid from 'components/Layout/Grid'
+import Items from 'components/Layout/Items'
 import Persona from 'components/Entity/Persona'
 import { Star } from 'shared/Documents'
 import theme from 'theme'
-
-const Context = React.createContext()
 
 const styles = {
   filter: {
@@ -32,9 +30,6 @@ const styles = {
     flexDirection: 'column',
     flex: 1,
   },
-  grid: {
-    padding: '2em 0',
-  },
 }
 
 const Pane = (blocks) => (
@@ -49,54 +44,50 @@ const Pane = (blocks) => (
   </>
 )
 
-const Following = ({ history, ...props }) => {
-  return (
-    <Fragment>
-      <Helmet>
-        <title>Sensorr - Following</title>
-      </Helmet>
-      <div css={styles.wrapper}>
-        <Grid
-          limit={true}
-          strict={false}
-          query={(db) => db.stars.find().where('state').ne('ignored')}
-          child={Following.Childs.Persona}
-          css={styles.grid}
-          controls={{
-            label: ({ total, reset }) => (
-              <button css={theme.resets.button} onClick={() => reset()}>
-                <span><strong>{total}</strong> Stars</span>
-              </button>
-            ),
-            filters: Star.Filters,
-            sortings: Star.Sortings,
-            defaults: {
-              filtering: ((history.location.state || {}).controls || {}).filtering || {},
-              sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
-              reverse: ((history.location.state || {}).controls || {}).reverse || false,
-            },
-            render: {
-              pane: Pane,
-            },
-            history: history,
-          }}
-          empty={{
-            emoji: '👩‍🎤',
-            title: "Oh no, you are not following anyone",
-            subtitle: (
-              <span>
-                You should try to search for stars and start following them !
-              </span>
-            ),
-          }}
-        />
-      </div>
-    </Fragment>
-  )
-}
-
-Following.Childs = {
-  Persona: (props) => <Persona display="portrait" {...props} />,
-}
+const Following = ({ history, ...props }) => (
+  <Fragment>
+    <Helmet>
+      <title>Sensorr - Following</title>
+    </Helmet>
+    <div css={styles.wrapper}>
+      <Items
+        display="grid"
+        source={(db) => db.stars.find().where('state').ne('ignored')}
+        child={Persona}
+        props={{ display: 'portrait' }}
+        strict={false}
+        placeholder={true}
+        debounce={false}
+        controls={{
+          label: ({ total, reset }) => (
+            <button css={theme.resets.button} onClick={() => reset()}>
+              <span><strong>{total}</strong> Stars</span>
+            </button>
+          ),
+          filters: Star.Filters,
+          sortings: Star.Sortings,
+          defaults: {
+            filtering: ((history.location.state || {}).controls || {}).filtering || {},
+            sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
+            reverse: ((history.location.state || {}).controls || {}).reverse || false,
+          },
+          render: {
+            pane: Pane,
+          },
+          history: history,
+        }}
+        empty={{
+          emoji: '👩‍🎤',
+          title: "Oh no, you are not following anyone",
+          subtitle: (
+            <span>
+              You should try to search for stars and start following them !
+            </span>
+          ),
+        }}
+      />
+    </div>
+  </Fragment>
+)
 
 export default Following

@@ -1,845 +1,544 @@
-import React, { PureComponent, Fragment } from 'react'
-import { Helmet } from 'react-helmet'
+import React, { PureComponent } from 'react'
 import { Link } from 'react-router-dom'
-import Color from 'color'
-import ReactPlayer from 'react-player'
-import List from 'components/Layout/List'
 import Button from 'components/Button'
-import Persona from 'components/Entity/Persona'
-import Film, { State, Poster } from 'components/Entity/Film'
-import Spinner from 'components/Spinner'
-import Empty from 'components/Empty'
-import Play from 'icons/Play'
-import Badge from 'components/Badge'
+import Details, { Tabs, withCount } from 'views/layout/Details'
 import Releases from './blocks/Releases'
+import Persona from 'components/Entity/Persona'
+import * as Film from 'components/Entity/Film'
 import Documents from 'shared/Documents'
-import database from 'store/database'
-import palette from 'utils/palette'
-import tmdb from 'store/tmdb'
 import countryLanguage from 'country-language'
 import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
-const styles = {
-  element: {
-    position: 'relative',
-    flex: 1,
-    minHeight: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  container: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '0 0 2em 0',
-  },
-  background: {
-    height: '100%',
-    width: '100%',
-    position: 'absolute',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    transition: 'opacity 400ms ease-in-out',
-  },
-  shadow: {
-    height: '100%',
-    width: '100%',
-    position: 'absolute',
-    transition: 'box-shadow 400ms ease-in-out',
-  },
-  trailer: {
-    position: 'relative',
-    minHeight: '25em',
-    maxHeight: '40vw',
-    transition: 'height 400ms ease-in-out',
-  },
-  trailers: {
-    position: 'absolute',
-    top: '1em',
-    right: '1em',
-    cursor: 'pointer',
-    zIndex: 2,
-    '>select': {
-      position: 'absolute',
-      opacity: 0,
-      top: 0,
-      left: 0,
-      height: '100%',
-      width: '100%',
-      appearance: 'none',
-      border: 'none',
-      cursor: 'pointer',
-    },
-  },
-  play: {
-    ...theme.resets.button,
-    position: 'absolute',
-    height: '100%',
-    width: '100%',
-    transition: 'color 400ms ease-in-out, opacity 400ms ease-in-out',
-    '>svg': {
-      height: '3em',
-      width: '3em',
-    },
-  },
-  about: {
-    position: 'relative',
-    background: 'white',
-    transition: 'transform 400ms ease-in-out',
-    margin: '0 0 7em',
-    '>div:first-of-type': {
-      display: 'flex',
-      padding: '2em 10%',
-    },
-  },
-  poster: {
-    fontSize: '1.5em',
-    margin: '-8em 0 1em 0',
-    transition: 'margin 400ms ease-in-out',
-  },
-  info: {
-    flex: 1,
-    padding: '0 0 0 2em',
-  },
-  title: {
-    fontSize: '2.5em',
-    lineHeight: '1.2em',
-    fontWeight: 800,
-    color: theme.colors.rangoon,
-    margin: '0 0 0.25em',
-  },
-  caption: {
-    fontSize: '1.25em',
-    margin: '0 0 0.75em',
-    color: theme.colors.rangoon,
-    '>span': {
-      '&:not(:last-child)': {
-        fontWeight: 600,
-      }
-    }
-  },
-  metadata: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    fontWeight: 600,
-    color: theme.colors.rangoon,
-    '>span,>button': {
-      lineHeight: '1.25em',
-      margin: '0 0 1em',
-      ':not(:last-child)': {
-        marginRight: '2em',
-      },
-    }
-  },
-  subdata: {
-    margin: '0 0 1em',
-    '>div': {
-      margin: '0 0 1em',
-      '>span>a': {
-        lineHeight: '1.25em',
-        padding: '0 0.125em',
-        fontWeight: 'normal',
-        opacity: 0.6,
-        ':hover': {
-          opacity: 1,
-        },
-      },
-    },
-  },
-  tagline: {
-    color: theme.colors.rangoon,
-    margin: '0 0 1em',
-    fontWeight: 600,
-  },
-  plot: {
-    lineHeight: '1.5em',
-    color: theme.colors.rangoon,
-    whiteSpace: 'pre-line',
-  },
-  list: {
-    margin: '0 0 -6.75em 0',
-    '>div': {
-      padding: 0,
-    }
-  },
-  subtitle: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '1em 3em',
-    fontSize: '0.6em',
-  },
-  tabs: {
-    display: 'flex',
-    flexDirection: 'row',
-    'alignItems': 'center',
-    justifyContent: 'space-between',
-    padding: '2em 1em 1em 1em',
-    '>div': {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      '>span': {
-        margin: '0 1em',
-        fontSize: '1.125em',
-        fontWeight: 600,
-        cursor: 'pointer',
-        transition: 'opacity 300ms ease-in-out',
-        '>small': {
-          fontWeight: 'normal',
-        }
-      },
-    },
-  },
-  loading: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  empty: {
-    color: theme.colors.white,
-  },
-}
-
 export default class Movie extends PureComponent {
-  static Childs = {
-    Persona: (props) => <Persona {...props} display="portrait" />
-  }
-
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-      details: null,
-      poster: null,
-      palette: {
-        backgroundColor: theme.colors.rangoon,
-        color: '#ffffff',
-        alternativeColor: '#ffffff',
-        negativeColor: '#ffffff',
+  static placeholder = {
+    adult: false,
+    backdrop_path: false,
+    belongs_to_collection: null,
+    budget: 159000000,
+    genres: [
+      {
+        id: 80,
+        name: 'Crime'
       },
-      count: {
-        collection: 0,
-        recommendations: 0,
-        similar: 0,
-        cast: 0,
-        crew: 0,
+      {
+        id: 36,
+        name: 'Histoire'
       },
-      trailer: '',
-      subdata: false,
-      more: null,
-      strict: true,
-      releases: false,
-      err: null,
-    }
-  }
-
-  componentDidMount() {
-    this.bootstrap()
-  }
-
-  componentDidUpdate(props) {
-    if (this.props.match.params.id !== props.match.params.id) {
-      this.bootstrap()
-    }
-  }
-
-  bootstrap = async () => {
-    this.setState({
-      loading: true,
-      poster: null,
-      backdrop: null,
-      count: {
-        collection: 0,
-        recommendations: 0,
-        similar: 0,
-        cast: 0,
-        crew: 0,
-      },
-    })
-
-    try {
-      const details = await tmdb.fetch(
-        ['movie', this.props.match.params.id],
-        { append_to_response: 'videos,credits,similar,recommendations,alternative_titles,release_dates,keywords' }
-      )
-
-      if (details.adult && !tmdb.adult) {
-        throw { status_code: -1, status_message: 'Adult content disabled' }
+      {
+        id: 18,
+        name: 'Drame'
       }
-
-      const collection = !details.belongs_to_collection ? null : await tmdb.fetch(['collection', details.belongs_to_collection.id])
-        .then(res => ({
-          ...res,
-          parts: [...res.parts].sort((a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15)),
-        }))
-
-      this.setState({
-        loading: false,
-        err: null,
-        details: {
-          ...details,
-          belongs_to_collection: collection,
-        },
-        trailer: '',
-        strict: true,
-        releases: false,
-        more: null,
-      })
-
-      this.fetchCount({ ...details, belongs_to_collection: collection })
-
-      if (details.poster_path) {
-        this.fetchImg(
-          `https://image.tmdb.org/t/p/w500${details.poster_path}`,
-          (poster) => this.setState({ poster }),
-          { palette: true }
-        )
-      }
-
-      if (details.backdrop_path) {
-        this.fetchImg(
-          `https://image.tmdb.org/t/p/original${details.backdrop_path}`,
-          (backdrop) => this.setState({ backdrop }),
-          { palette: false }
-        )
-      }
-    } catch(err) {
-      if (err.status_code) {
-        this.setState({
-          loading: false,
-          err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
-          releases: false,
-          more: null,
-        })
-      } else {
-        console.warn(err)
-        this.props.history.push('/')
-      }
-    }
-  }
-
-  fetchCount = async (details) => {
-    const db = await database.get()
-
-    const collection = await db.movies.find().where('id').in((details.belongs_to_collection || { parts: [] }).parts.map(r => r.id.toString())).exec()
-    const recommendations = await db.movies.find().where('id').in(details.recommendations.results.map(r => r.id.toString())).exec()
-    const similar = await db.movies.find().where('id').in(details.similar.results.map(r => r.id.toString())).exec()
-    const cast = await db.stars.find().where('id').in(details.credits.cast.map(r => r.id.toString())).exec()
-    const crew = await db.stars.find().where('id').in(details.credits.crew.map(r => r.id.toString())).exec()
-
-    this.setState({
-      count: {
-        collection: collection.length,
-        recommendations: recommendations.length,
-        similar: similar.length,
-        cast: cast.length,
-        crew: crew.length,
-      }
-    })
-  }
-
-  fetchImg = (src, cb, options = {}) => {
-    fetch(src, { cache: 'force-cache' })
-      .then(res => res.arrayBuffer())
-      .then(buffer => `data:image/jpeg;base64,${window.btoa([]
-        .slice
-        .call(new Uint8Array(buffer))
-        .reduce((binary, b) => `${binary}${String.fromCharCode(b)}`, '')
-      )}`)
-      .then(img => {
-        if (options.palette) {
-          const cache = sessionStorage.getItem(src)
-
-          if (cache) {
-            this.setState({ palette: JSON.parse(cache) })
-          } else {
-            palette(img, (palette) => {
-              try { sessionStorage.setItem(src, JSON.stringify(palette)) } catch (e) {}
-              this.setState({ palette })
-            })
-          }
+    ],
+    homepage: 'https://www.netflix.com/fr/title/80175798',
+    id: 398978,
+    imdb_id: 'tt1302006',
+    original_language: 'en',
+    original_title: 'The Irishman',
+    overview: 'Cette saga sur le crime organisé dans l\'Amérique de l\'après-guerre est racontée du point de vue de Frank Sheeran, un ancien soldat de la Seconde Guerre mondiale devenu escroc et tueur à gages ayant travaillé aux côtés de quelques-unes des plus grandes figures du 20e siècle. Couvrant plusieurs décennies, le film relate l\'un des mystères insondables de l\'histoire des États-Unis : la disparition du légendaire dirigeant syndicaliste Jimmy Hoffa. Il offre également une plongée monumentale dans les arcanes de la mafia en révélant ses rouages, ses luttes internes et ses liens avec le monde politique.',
+    popularity: 113.763,
+    poster_path: false,
+    production_companies: [],
+    production_countries: [],
+    release_date: '2019-11-01',
+    revenue: 607420,
+    runtime: 209,
+    spoken_languages: [],
+    status: 'Released',
+    tagline: 'Son histoire a changé l\'histoire.',
+    title: 'The Irishman',
+    video: false,
+    vote_average: 8.3,
+    vote_count: 455,
+    videos: {
+      results: [],
+    },
+    credits: {
+      cast: [],
+      crew: [],
+    },
+    similar: {
+      page: 1,
+      results: [],
+      total_pages: 13,
+      total_results: 253
+    },
+    recommendations: {
+      page: 1,
+      results: [],
+      total_pages: 2,
+      total_results: 40
+    },
+    alternative_titles: {
+      titles: [
+        {
+          iso_3166_1: 'US',
+          title: 'I Heard You Paint Houses',
+          type: 'Working title'
         }
-
-        cb(img)
-      })
+      ]
+    },
+    release_dates: {
+      results: [
+        {
+          iso_3166_1: 'SG',
+          release_dates: [
+            {
+              certification: 'M18',
+              iso_639_1: '',
+              note: 'Netflix',
+              release_date: '2019-11-27T00:00:00.000Z',
+              type: 4
+            }
+          ]
+        },
+      ]
+    },
+    keywords: {
+      keywords: [],
+    },
   }
 
-  refreshReleases = () => {
-    this.setState({ releases: uuidv4() })
-    setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 200)
+  static tabs = {
+    subtitles: {
+      collection: withCount(({ details, source, state, setState, count }) => (
+        <>
+          <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
+            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> movies from this collection in your library
+          </span>
+        </>
+      ), 'movies'),
+      recommendations: withCount(({ details, source, state, setState, count }) => (
+        <>
+          <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
+            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> recommended movies in your library
+          </span>
+        </>
+      ), 'movies'),
+      similar: withCount(({ details, source, state, setState, count }) => (
+        <>
+          <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
+            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> similar movies in your library
+          </span>
+        </>
+      ), 'movies'),
+      cast: withCount(({ details, source, state, setState, count }) => (
+        <>
+          <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
+            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> followed stars
+          </span>
+          <button css={theme.resets.button}
+            onClick={() => setState({
+              limit: !state.limit,
+              filter: state.limit ? () => true : (credit, index) => index < 20,
+            })}
+          >
+            {{ true: '📗', false: '📚' }[state.limit]}&nbsp; Showing <strong>{{ true: '20 first', false: 'All' }[state.limit]}</strong> credits
+          </button>
+        </>
+      ), 'stars'),
+      crew: withCount(({ details, source, state, setState, count }) => (
+        <>
+          <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
+            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> followed crew members
+          </span>
+          <button css={theme.resets.button}
+            onClick={() => setState({
+              limit: !state.limit,
+              filter: state.limit ? () => true : (credit, index) => index < 20,
+            })}
+          >
+            {{ true: '📗', false: '📚' }[state.limit]}&nbsp; Showing <strong>{{ true: '20 first', false: 'All' }[state.limit]}</strong> credits
+          </button>
+        </>
+      ), 'stars'),
+    }
+  }
+
+  static components = {
+    Title: ({ details }) => details.title || '',
+    Caption: ({ details }) => (
+      <>
+        {details.title !== details.original_title && (
+          <span>
+            {details.original_title}
+          </span>
+        )}
+        {details.title !== details.original_title && details.release_date && (
+          <span> </span>
+        )}
+        {details.release_date && (
+          <Link
+            title={new Date(details.release_date).toLocaleDateString()}
+            to={{
+              pathname: '/movies/discover',
+              state: {
+                controls: {
+                  filtering: {
+                    release_date: [
+                      new Date(details.release_date).getFullYear(),
+                      new Date(details.release_date).getFullYear(),
+                    ],
+                  },
+                },
+              },
+            }}
+            css={theme.resets.a}
+          >
+            ({new Date(details.release_date).getFullYear()})
+          </Link>
+        )}
+      </>
+    ),
+    Poster: ({ details, ...props }) => (
+      <Film.Poster
+        entity={details}
+        title={null}
+        withState={false}
+        link={null}
+        {...(Movie.generators.poster(details) ? {
+          img: Movie.generators.poster(details),
+        } : {})}
+        {...props}
+      />
+    ),
+    State: ({ details }) => (
+      <Film.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
+    ),
+    Metadata: ({ details }) => (
+      <>
+        {!!details.runtime && (
+          <span>
+            <Link
+              to={{
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      runtime: [
+                        Math.floor(details.runtime / 60) * 60,
+                        Math.ceil(details.runtime / 60) * 60,
+                      ],
+                    },
+                  },
+                },
+              }}
+              css={theme.resets.a}
+            >
+              🕙 &nbsp;<strong>{new Documents.Movie(details).duration()}</strong>
+            </Link>
+          </span>
+        )}
+        {!!details.genres.length && (
+          <span>
+            🎟️ &nbsp;{details.genres.map((genre, index, arr) => (
+              <span key={genre.id}>
+                <Link
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_genres: [{ value: genre.id, label: genre.name }],
+                        },
+                      },
+                    },
+                  }}
+                  css={theme.resets.a}
+                >
+                  {genre.name}
+                </Link>
+                {index === arr.length - 1 ? '' : ', '}
+              </span>
+            ))}
+          </span>
+        )}
+        {typeof details.vote_average !== 'undefined' && (
+          <span>
+            <Link
+              to={{
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      vote_average: [
+                        details.vote_average.toFixed(0) - 1,
+                        details.vote_average.toFixed(0),
+                      ],
+                    },
+                  },
+                },
+              }}
+              css={theme.resets.a}
+            >
+              {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
+            </Link>
+          </span>
+        )}
+      </>
+    ),
+    Subdata: ({ details }) => (
+      <>
+        {!!details.original_language && (
+          <div>
+            💬 &nbsp;
+            <span>
+              <Link
+                to={{
+                  pathname: '/movies/discover',
+                  state: {
+                    controls: {
+                      filtering: {
+                        with_original_language: [
+                          {
+                            value: details.original_language,
+                            label: countryLanguage.getLanguage(details.original_language).name[0],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }}
+                css={theme.resets.a}
+              >
+                {countryLanguage.getLanguage(details.original_language).name[0]}
+              </Link>
+            </span>
+          </div>
+        )}
+        {!!details.production_companies.length && (
+          <div>
+            🏛️ &nbsp;{details.production_companies.map((company, index, arr) => (
+              <span key={company.id}>
+                <Link
+                  key={company.id}
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_companies: [{ value: company.id, label: company.name }],
+                        },
+                      },
+                    },
+                  }}
+                  css={theme.resets.a}
+                >
+                  {company.name}
+                </Link>
+                {index === arr.length - 1 ? '' : ', '}
+              </span>
+            ))}
+          </div>
+        )}
+        {!!details.keywords.keywords.length && (
+          <div>
+            🔗 &nbsp;{details.keywords.keywords.map((keyword, index, arr) => (
+              <span key={keyword.id}>
+                <Link
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_keywords: [{ value: keyword.id, label: keyword.name }],
+                        },
+                      },
+                    },
+                  }}
+                  css={theme.resets.a}
+                >
+                  {keyword.name}
+                </Link>
+                {index === arr.length - 1 ? '' : ', '}
+              </span>
+            ))}
+          </div>
+        )}
+      </>
+    ),
+    Description: ({ details }) => details.overview || '',
+    Tabs: ({ details, ready, palette, ...props }) => (
+      <Tabs
+        {...props}
+        details={details}
+        ready={ready}
+        palette={palette}
+        initial={(
+          (!!(details.belongs_to_collection || { parts: [] }).parts.length && 'collection') ||
+          (!!details.recommendations.results.length && 'recommendations') ||
+          (!!details.similar.results.length && 'similar') ||
+          (!!details.credits.cast.length && 'cast') ||
+          (!!details.credits.crew.length && 'crew') ||
+          'collection'
+        )}
+        items={[
+          [
+            ...(!(details.belongs_to_collection || { parts: [] }).parts.length && ready ? [] : [
+              {
+                label: `📀  ${(details.belongs_to_collection || {}).name}`,
+                key: 'collection',
+                state: {},
+                props: {
+                  source: (details.belongs_to_collection || { parts: [] }).parts,
+                  child: Film.default,
+                  props: { display: 'pretty', palette },
+                  subtitle: Movie.tabs.subtitles.collection,
+                },
+              }
+            ]),
+            ...(!details.recommendations.results.length && ready ? [] : [
+              {
+                label: '💬  Recommendations',
+                key: 'recommendations',
+                state: {},
+                props: {
+                  source: details.recommendations.results,
+                  child: Film.default,
+                  props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
+                  subtitle: Movie.tabs.subtitles.recommendations,
+                },
+              }
+            ]),
+            ...(!details.similar.results.length && ready ? [] : [
+              {
+                label: '👯  Similar',
+                key: 'similar',
+                state: {},
+                props: {
+                  source: details.similar.results,
+                  child: Film.default,
+                  props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
+                  subtitle: Movie.tabs.subtitles.similar,
+                },
+              }
+            ]),
+          ],
+          [
+            ...(!details.credits.cast.length && ready ? [] : [
+              {
+                label: '👩‍🎤️  Casting',
+                key: 'cast',
+                state: {
+                  limit: true,
+                  filter: (credit, index) => index < 20,
+                },
+                props: {
+                  source: details.credits.cast,
+                  child: Persona,
+                  props: { display: 'portrait', palette },
+                  subtitle: Movie.tabs.subtitles.cast,
+                },
+              }
+            ]),
+            ...(!details.credits.crew.length && ready ? [] : [
+              {
+                label: '🎬  Crew',
+                key: 'crew',
+                state: {
+                  limit: true,
+                  filter: (credit, index) => index < 20,
+                },
+                props: {
+                  source: [...details.credits.crew]
+                    .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
+                    .map((credit, index, self) => ({
+                      ...credit,
+                      job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
+                    }))
+                    .filter((a, index, self) => index === self.findIndex(b => a.id === b.id)),
+                  child: Persona,
+                  props: { display: 'portrait', palette },
+                  subtitle: Movie.tabs.subtitles.crew,
+                },
+              }
+            ]),
+          ]
+        ]}
+      />
+    ),
+    Button: ({ state, setState, palette }) => (
+      <Button
+        look={1}
+        onClick={() => {
+          setState({ releases: uuidv4() })
+          setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 200)
+        }}
+        style={{
+          position: 'relative',
+          color: palette.color,
+          borderColor: palette.color,
+          textTransform: 'uppercase',
+          borderWidth: '0.3em',
+          margin: '1em',
+          fontWeight: 800,
+        }}
+        data-test="movie-findReleases"
+      >
+        {state.releases ? 'Retry' : 'Find Releases'}
+      </Button>
+    ),
+    Children: ({ details, state }) => state.releases ? (
+      <Releases key={state.releases} movie={details} />
+    ) : null
+  }
+
+  static generators = {
+    title: (details, state) => `Sensorr - ${[
+      details.title,
+      (details.release_date && `(${new Date(details.release_date).getFullYear()})`),
+      (!!state.releases && `- 🔍`),
+    ].filter(string => string).join(' ')}`,
+    subdata: (details) => !!(details.original_language || details.production_companies.length || details.keywords.keywords.length),
+    poster: (details, context = 'default') => {
+      if (!details.poster_path) {
+        return null
+      }
+
+      return `https://image.tmdb.org/t/p/${{
+        palette: 'w92',
+      }[context] || 'w500'}${details.poster_path}`
+    },
+    background: (details, context = 'default') => {
+      if (!details.backdrop_path) {
+        return null
+      }
+
+      return `https://image.tmdb.org/t/p/${{
+      }[context] || 'original'}${{
+        background: (details.images.backdrops
+          .filter(backdrop => backdrop.file_path !== details.backdrop_path)
+          .sort((a, b) => a.vote_average - b.vote_average)
+          .pop() || {}).file_path,
+      }[context] || details.backdrop_path}`
+    },
+  }
+
+  static palette = {
+    backgroundColor: theme.colors.rangoon,
+    color: '#ffffff',
+    alternativeColor: '#ffffff',
+    negativeColor: '#ffffff',
   }
 
   render() {
-    const { match, ...props } = this.props
-    const { details, poster, backdrop, palette, count, trailer, subdata, strict, releases, loading, err, ...state } = this.state
-
-    const trailers = (details || { videos: { results: [] } }).videos.results
-      .filter(video => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
-      .sort((a, b) => a.type === 'Trailer' ? -1 : 1)
-
-    const mores = !details ? {} : {
-      collection: (details.belongs_to_collection || { parts: [] }).parts,
-      recommendations: details.recommendations.results,
-      similar: details.similar.results,
-      cast: details.credits.cast
-        .filter((credit, index) => credit.profile_path && (!strict || index < 20)),
-      crew: [...details.credits.crew]
-        .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
-        .map((credit, index, self) => ({
-          ...credit,
-          job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
-        }))
-        .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
-        .filter((credit, index) => credit.profile_path && (!strict || index < 20)),
-    }
-
-    const more = state.more || (
-      (mores.collection || []).length ?
-      'collection' :
-      (mores.recommendations || []).length ?
-      'recommendations' :
-      (mores.similar || []).length ?
-      'similar' :
-      (mores.cast || []).length ?
-      'cast' :
-      (mores.crew || []).length ?
-      'crew' :
-      null
-    )
+    const { match } = this.props
 
     return (
-      <Fragment>
-        <Helmet>
-          {details ? (
-            <title>Sensorr - {details.title}{(details.release_date && ` (${new Date(details.release_date).getFullYear()})`) || ''}{(!!releases && ` - 🔍`) || ''}</title>
-          ) : (
-            <title>Sensorr - Movie ({match.params.id})</title>
-          )}
-        </Helmet>
-        <div css={styles.element}>
-          {details ? (
-            <div css={styles.container}>
-              <div
-                css={styles.background}
-                style={{
-                  backgroundImage: `url(https://image.tmdb.org/t/p/w300${details.backdrop_path})`,
-                  filter: 'blur(5em)',
-                  opacity: poster ? 1 : 0,
-                }}
-              ></div>
-              <div
-                css={styles.shadow}
-                style={{
-                  boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
-                }}
-              ></div>
-              <div
-                css={styles.trailer}
-                style={{ height: trailer ? '100vh' : '50vh' }}
-              >
-                <div
-                  css={styles.background}
-                  style={{
-                    backgroundImage: `url(${backdrop})`,
-                    boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}`,
-                    opacity: backdrop ? 1 : 0,
-                  }}
-                ></div>
-                {!!trailers.length && (
-                  <>
-                    {trailer ? (
-                      <button css={[theme.resets.button, styles.trailers]} onClick={() => this.setState({ trailer: null })}>
-                        <Badge emoji="❌" />
-                      </button>
-                    ) : (
-                      <label htmlFor="trailer" css={styles.trailers}>
-                        <select id="trailer" value={trailer} onChange={(e) => this.setState({ trailer: e.target.value })}>
-                          {trailers.filter((video) => video.type === 'Trailer').length && (
-                            <optgroup label="Trailer">
-                              {trailers.filter((video) => video.type === 'Trailer').map(video => (
-                                <option key={video.key} value={video.key}>{video.name}</option>
-                              ))}
-                            </optgroup>
-                          )}
-                          {trailers.filter((video) => video.type === 'Teaser').length && (
-                            <optgroup label="Teaser">
-                              {trailers.filter((video) => video.type === 'Teaser').map(video => (
-                                <option key={video.key} value={video.key}>{video.name}</option>
-                              ))}
-                            </optgroup>
-                          )}
-                        </select>
-                        <Badge emoji="🎞️" />
-                      </label>
-                    )}
-                    {!!trailer && (
-                      <div css={[styles.loading, { position: 'absolute', width: '100%', height: '100%' }]}>
-                        <Spinner color="white" />
-                      </div>
-                    )}
-                    <button
-                      css={styles.play}
-                      onClick={() => this.setState({ trailer: trailers[0].key })}
-                      style={{ color: palette.color, opacity: trailer ? 0 : 1, zIndex: trailer ? 0 : 1 }}
-                    >
-                      <Play />
-                    </button>
-                    <ReactPlayer
-                      url={`https://www.youtube.com/watch?v=${trailer}`}
-                      controls={true}
-                      playing={true}
-                      height="100%"
-                      width="100%"
-                      style={{
-                        position: 'absolute',
-                        opacity: trailer ? 1 : 0,
-                        transition: `opacity 400ms ease-in-out ${trailer ? '500ms' : '0ms'}`,
-                        zIndex: trailer ? 1 : 0,
-                      }}
-                    />
-                  </>
-                )}
-              </div>
-              <div css={styles.about}>
-                <div>
-                  <div css={styles.poster} style={trailer ? { margin: 0 } : {}}>
-                    <Poster
-                      entity={details}
-                      title={null}
-                      img={poster}
-                      style={{
-                        backgroundColor: Color(palette.backgroundColor).rgb().string(),
-                      }}
-                    />
-                  </div>
-                  <div css={styles.info}>
-                    <div css={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                      <div>
-                        <h1 css={styles.title}>
-                          {details.title}
-                        </h1>
-                        <h2 css={styles.caption}>
-                          {details.title !== details.original_title && (
-                            <span>{details.original_title}</span>
-                          )}
-                          {details.title !== details.original_title && details.release_date && (
-                            <span> </span>
-                          )}
-                          {details.release_date && (
-                            <Link
-                              title={new Date(details.release_date).toLocaleDateString()}
-                              to={{
-                                pathname: '/movies/discover',
-                                state: {
-                                  controls: {
-                                    filtering: {
-                                      release_date: [
-                                        new Date(details.release_date).getFullYear(),
-                                        new Date(details.release_date).getFullYear(),
-                                      ],
-                                    },
-                                  },
-                                },
-                              }}
-                              css={theme.resets.a}
-                            >
-                              ({new Date(details.release_date).getFullYear()})
-                            </Link>
-                          )}
-                        </h2>
-                        <div css={styles.metadata}>
-                          {!!details.runtime && (
-                            <span>
-                              <Link
-                                to={{
-                                  pathname: '/movies/discover',
-                                  state: {
-                                    controls: {
-                                      filtering: {
-                                        runtime: [
-                                          Math.floor(details.runtime / 60) * 60,
-                                          Math.ceil(details.runtime / 60) * 60,
-                                        ],
-                                      },
-                                    },
-                                  },
-                                }}
-                                css={theme.resets.a}
-                              >
-                                🕙 &nbsp;<strong>{new Documents.Movie(details).duration()}</strong>
-                              </Link>
-                            </span>
-                          )}
-                          {!!details.genres.length && (
-                            <span>
-                              🎟️ &nbsp;{details.genres.map((genre, index, arr) => (
-                                <span key={genre.id}>
-                                  <Link
-                                    to={{
-                                      pathname: '/movies/discover',
-                                      state: {
-                                        controls: {
-                                          filtering: {
-                                            with_genres: [{ value: genre.id, label: genre.name }],
-                                          },
-                                        },
-                                      },
-                                    }}
-                                    css={theme.resets.a}
-                                  >
-                                    {genre.name}
-                                  </Link>
-                                  {index === arr.length - 1 ? '' : ', '}
-                                </span>
-                              ))}
-                            </span>
-                          )}
-                          {typeof details.vote_average !== 'undefined' && (
-                            <span>
-                              <Link
-                                to={{
-                                  pathname: '/movies/discover',
-                                  state: {
-                                    controls: {
-                                      filtering: {
-                                        vote_average: [
-                                          details.vote_average.toFixed(0) - 1,
-                                          details.vote_average.toFixed(0),
-                                        ],
-                                      },
-                                    },
-                                  },
-                                }}
-                                css={theme.resets.a}
-                              >
-                                {new Documents.Movie(details).judge()} &nbsp;<strong>{details.vote_average.toFixed(1)}</strong>
-                              </Link>
-                            </span>
-                          )}
-                          {!!(details.production_companies.length || details.keywords.keywords.length) && (
-                            <button
-                              css={theme.resets.button}
-                              style={{ padding: '0 0.25em' }}
-                              onClick={() => this.setState(state => ({ subdata: !state.subdata }))}
-                            >
-                              <small>{subdata ? "▲" : "▼"}</small>
-                            </button>
-                          )}
-                        </div>
-                        <div css={styles.subdata} hidden={!subdata}>
-                          {!!details.original_language && (
-                            <div>
-                              💬 &nbsp;
-                              <span>
-                                <Link
-                                  to={{
-                                    pathname: '/movies/discover',
-                                    state: {
-                                      controls: {
-                                        filtering: {
-                                          with_original_language: [
-                                            {
-                                              value: details.original_language,
-                                              label: countryLanguage.getLanguage(details.original_language).name[0],
-                                            },
-                                          ],
-                                        },
-                                      },
-                                    },
-                                  }}
-                                  css={theme.resets.a}
-                                >
-                                  {countryLanguage.getLanguage(details.original_language).name[0]}
-                                </Link>
-                              </span>
-                            </div>
-                          )}
-                          {!!details.production_companies.length && (
-                            <div>
-                              🏛️ &nbsp;{details.production_companies.map((company, index, arr) => (
-                                <span key={company.id}>
-                                  <Link
-                                    key={company.id}
-                                    to={{
-                                      pathname: '/movies/discover',
-                                      state: {
-                                        controls: {
-                                          filtering: {
-                                            with_companies: [{ value: company.id, label: company.name }],
-                                          },
-                                        },
-                                      },
-                                    }}
-                                    css={theme.resets.a}
-                                  >
-                                    {company.name}
-                                  </Link>
-                                  {index === arr.length - 1 ? '' : ', '}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          {!!details.keywords.keywords.length && (
-                            <div>
-                              🔗 &nbsp;{details.keywords.keywords.map((keyword, index, arr) => (
-                                <span key={keyword.id}>
-                                  <Link
-                                    to={{
-                                      pathname: '/movies/discover',
-                                      state: {
-                                        controls: {
-                                          filtering: {
-                                            with_keywords: [{ value: keyword.id, label: keyword.name }],
-                                          },
-                                        },
-                                      },
-                                    }}
-                                    css={theme.resets.a}
-                                  >
-                                    {keyword.name}
-                                  </Link>
-                                  {index === arr.length - 1 ? '' : ', '}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {!!details.tagline && (
-                          <h3 css={styles.tagline}>{details.tagline}</h3>
-                        )}
-                      </div>
-                      <State entity={details} compact={false} />
-                    </div>
-                    <p css={styles.plot}>{details.overview}</p>
-                  </div>
-                </div>
-                <div css={styles.list}>
-                  <div css={styles.tabs}>
-                    <div>
-                      {!!mores.collection.length && (
-                        <span
-                          style={{ opacity: more === 'collection' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'collection' })}
-                        >
-                          📀 &nbsp;{`${(details.belongs_to_collection || {}).name}`}
-                        </span>
-                      )}
-                      {!!mores.recommendations.length && (
-                        <span
-                          style={{ opacity: more === 'recommendations' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'recommendations' })}
-                        >
-                          💬 &nbsp;{`Recommendations`}
-                        </span>
-                      )}
-                      {!!mores.similar.length && (
-                        <span
-                          style={{ opacity: more === 'similar' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'similar' })}
-                        >
-                          👯 &nbsp;{`Similar`}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      {!!mores.cast.length && (
-                        <span
-                          style={{ opacity: more === 'cast' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'cast', strict: true })}
-                        >
-                          👩‍🎤️ &nbsp;{`Casting`}
-                        </span>
-                      )}
-                      {!!mores.crew.length && (
-                        <span
-                          style={{ opacity: more === 'crew' ? 1 : 0.25 }}
-                          onClick={() => this.setState({ more: 'crew', strict: true })}
-                        >
-                          🎬 &nbsp;{`Crew`}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <List
-                    items={mores[more]}
-                    prettify={more === 'collection' ? Infinity : 5}
-                    placeholder={true}
-                    child={{
-                      collection: Film,
-                      recommendations: Film,
-                      similar: Film,
-                      cast: Movie.Childs.Persona,
-                      crew: Movie.Childs.Persona,
-                    }[more]}
-                    subtitle={(
-                      <div css={styles.subtitle} style={{ color: palette.color }}>
-                        {!!count[more] && ({
-                          collection: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.collection}/{(details.belongs_to_collection || { parts: [] }).parts.length}</strong> movies from this collection in your library</span>
-                          ),
-                          recommendations: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.recommendations}</strong> recommended movies in your library</span>
-                          ),
-                          similar: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.similar}</strong> similar movies in your library</span>
-                          ),
-                          cast: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.cast}</strong> followed stars</span>
-                          ),
-                          crew: (
-                            <span style={{ flex: 1 }}>🎉&nbsp; Nice ! <strong>{count.crew}</strong> followed crew members</span>
-                          ),
-                        }[more])}
-                        <span>&nbsp;</span>
-                        {(['cast', 'crew'].includes(more) && details.credits[more].length > 20) && (
-                          <button css={theme.resets.button} onClick={() => this.setState({ strict: !strict })}>
-                            {{ true: '📗', false: '📚' }[strict]}&nbsp; Showing <strong>{{ true: '20 first', false: 'All' }[strict]}</strong> credits
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    empty={{ style: styles.empty }}
-                  />
-                </div>
-              </div>
-              <Button
-                look={1}
-                onClick={() => this.refreshReleases()}
-                style={{
-                  position: 'relative',
-                  color: palette.color,
-                  borderColor: palette.color,
-                  textTransform: 'uppercase',
-                  borderWidth: '0.3em',
-                  margin: '1em',
-                  fontWeight: 800,
-                }}
-                data-test="movie-findReleases"
-              >
-                {releases ? 'Retry' : 'Find Releases'}
-              </Button>
-            </div>
-          ) : loading ? (
-            <div css={styles.loading}>
-              <Spinner />
-            </div>
-          ) : (
-            <Empty
-              title={err ? 'Oh ! You came across a bug...' : null}
-              emoji={err ? '🐛' : null}
-              subtitle={err ? err : null}
-            />
-          )}
-        </div>
-        {releases && (
-          <Releases key={releases} movie={details} />
-        )}
-      </Fragment>
+      <>
+        <Details
+          uri={['movie', match.params.id]}
+          params={{
+            append_to_response: 'images,videos,credits,similar,recommendations,alternative_titles,release_dates,keywords',
+            include_image_language: 'en,null',
+          }}
+          placeholder={Movie.placeholder}
+          components={Movie.components}
+          generators={Movie.generators}
+          palette={Movie.palette}
+          usePalette={true}
+        />
+      </>
     )
   }
 }

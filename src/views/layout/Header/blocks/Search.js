@@ -1,6 +1,6 @@
 import React, { useRef, useState, useContext, useMemo, useCallback, useEffect, useReducer } from 'react'
 import { withRouter } from 'react-router-dom'
-import List from 'components/Layout/List'
+import Items from 'components/Layout/Items'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import Spinner from 'components/Spinner'
@@ -37,12 +37,14 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
 
   const handleClick = (e) => {
     if (!reference.current.contains(e.target)) {
+      setExpandedState(false)
       setActive(false)
     }
   }
 
   const handleEsc = (e) => {
     if (e.key === 'Escape') {
+      setExpandedState(false)
       setActive(false)
       setQuery('')
     }
@@ -59,6 +61,7 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   }, [])
 
   useEffect(() => {
+    setExpandedState(false)
     setActive(false)
     setQuery('')
   }, [location.pathname])
@@ -79,32 +82,27 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   )
 })
 
-const Childs = {
-  Movie: (props) => <Film {...props} display="card" />,
-  Collection: (props) => <Film {...props} display="card"  withState={false} link={(entity) => `/collection/${entity.id}`} />,
-  Persona: (props) => <Persona display="card" {...props} />,
-}
-
 export const Results = ({ children, ...props }) => {
   const { active, expanded, setExpanded, query, setQuery } = useContext(Context)
   const [state, dispatch] = useReducer(Results.reducer, Results.initialState)
 
-  const suggestions = useMemo(() => {
-    const next = Object.values({
-      ...JSON.parse(localStorage.getItem('sensorr-search-suggestions') || '[]')
-        .reduce((acc, query) => ({ ...acc, [query[0]]: [query[0], new Date(query[1])] }), {}),
-      ...(!!query && !Object.values(state).every(value => Array.isArray(value) && !value.length) ?
-        { [query]: [query, new Date(Date.now() + (5 * 24 * 60 * 60 * 1000))] } : {} // 5 days timeout
-      ),
-    })
-    .filter(query => query[1] > new Date())
-    .sort((a, b) => (b[1] - a[1]))
-    .slice(0, 10)
-
-    localStorage.setItem('sensorr-search-suggestions', JSON.stringify(next))
-
-    return next.map(query => query[0])
-  }, [query, state])
+  const suggestions = []
+  // const suggestions = useMemo(() => {
+  //   const next = Object.values({
+  //     ...JSON.parse(localStorage.getItem('sensorr-search-suggestions') || '[]')
+  //       .reduce((acc, query) => ({ ...acc, [query[0]]: [query[0], new Date(query[1])] }), {}),
+  //     ...(!!query && !Object.values(state).every(value => Array.isArray(value) && !value.length) ?
+  //       { [query]: [query, new Date(Date.now() + (5 * 24 * 60 * 60 * 1000))] } : {} // 5 days timeout
+  //     ),
+  //   })
+  //   .filter(query => query[1] > new Date())
+  //   .sort((a, b) => (b[1] - a[1]))
+  //   .slice(0, 10)
+  //
+  //   localStorage.setItem('sensorr-search-suggestions', JSON.stringify(next))
+  //
+  //   return next.map(query => query[0])
+  // }, [query, state])
 
   const fetchItems = useCallback(async (uri, params) => {
     dispatch([uri[uri.length - 1], null])
@@ -133,9 +131,9 @@ export const Results = ({ children, ...props }) => {
 
   const loading = Object.values(state).some(items => items === null)
   const empty = Object.values(state).every(items => Array.isArray(items) && !items.length)
-  const open = active && !!suggestions.length
+  const open = active
 
-  return (
+  return !query ? null : (
     <div
       css={Results.styles.element}
       style={{
@@ -145,57 +143,43 @@ export const Results = ({ children, ...props }) => {
     >
       <hr css={Results.styles.separator} />
       <div css={Results.styles.scroller} style={{ opacity: open ? 1 : 0 }}>
-        {!query ? (
-          <div css={[Results.styles.container, Results.styles.suggestions]}>
-            <List
-              key="suggestions"
-              items={suggestions.map(suggestion => ({ id: suggestion }))}
-              strict={false}
-              child={({ entity }) => (
-                <button onClick={() => setQuery(entity.id)} css={Results.styles.suggestion}>
-                  <small><code>{entity.id}</code></small>
-                </button>
-              )}
-              display="column"
-              space={0}
-            />
-          </div>
-        ) : (!loading && !empty) ? (
+        {(!loading && !empty) ? (
           <div css={Results.styles.container}>
             {state.movie && (
-              <List
+              <Items
                 label="🎞️&nbsp; Movies"
-                items={state.movie}
+                source={state.movie}
                 hide={true}
-                child={Childs.Movie}
+                child={Film}
+                props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}
               />
             )}
-            {/* <List
-              label="⭐&nbsp; Stars"
-              uri={['search', 'person']}
-              params={{ query, sort_by: 'popularity.desc' }}
-              child={Childs.Persona}
-            /> */}
             {state.collection && (
-              <List
+              <Items
                 label="📚&nbsp; Collections"
-                items={state.collection}
+                source={state.collection}
                 hide={true}
-                child={Childs.Collection}
+                child={Film}
+                props={{
+                  display: 'card',
+                  withState: false,
+                  link: (entity) => `/collection/${entity.id}`,
+                }}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}
               />
             )}
             {state.person && (
-              <List
+              <Items
                 label="⭐&nbsp; Stars"
-                items={state.person}
+                source={state.person}
                 hide={true}
-                child={Childs.Persona}
+                child={Persona}
+                props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"
                 space={0.5}
@@ -260,6 +244,8 @@ Results.initialState = {
 Results.styles = {
   element: {
     position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
     overflow: 'hidden',
     margin: '0 0 -1px 0',
   },

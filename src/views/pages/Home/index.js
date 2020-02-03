@@ -1,8 +1,8 @@
 import React, { PureComponent, Fragment } from 'react'
 import { Helmet } from 'react-helmet'
 import { Link } from 'react-router-dom'
-import List, { Label } from 'components/Layout/List'
-import ListRecords from './containers/ListRecords'
+import Items from 'components/Layout/Items'
+import Records from './containers/Records'
 import Film from 'components/Entity/Film'
 import Persona from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
@@ -46,10 +46,6 @@ const styles = {
 }
 
 export default class Home extends PureComponent {
-  static Childs = {
-    Persona: (props) => <Persona {...props} display="portrait" />
-  }
-
   static Queries = {
     upcoming: (db) => db.calendar
       .find()
@@ -57,7 +53,16 @@ export default class Home extends PureComponent {
       .where('release_date')
       .gte(new Date(new Date().setDate(new Date().getDate() - 7)).toISOString())
       .limit(20),
-    birthday: (db) => db.stars.find(),
+    birthday: (db) => {
+      const today = new Date()
+
+      return db.stars
+        .find({
+          birthday: {
+            $regex: `\\d{4}-${`${(today.getMonth() + 1)}`.padStart(2, '0')}-${`${(today.getDate())}`.padStart(2, '0')}`,
+          },
+        })
+    },
   }
 
   constructor(props) {
@@ -90,10 +95,19 @@ export default class Home extends PureComponent {
     this.setState({ ready: true, stars: stars.map(star => star.id) })
   }
 
-  handleListClick(key, value) {
+  handleListClick = (key, value) => {
     this.setState({
       [key]: value || this.randomize[key](),
     })
+  }
+
+  handleRowClick = (key, value) => {
+    this.setState(state => ({
+      rows: {
+        ...state.rows,
+        [key]: value,
+      }
+    }))
   }
 
   render() {
@@ -105,29 +119,33 @@ export default class Home extends PureComponent {
           <title>Sensorr - Home</title>
         </Helmet>
         <div css={styles.element}>
-          <List
+          <Items
             label="📣&nbsp; Trending"
             title="Trending movies"
-            uri={['trending', 'movie', 'day']}
-            params={{ sort_by: 'popularity.desc' }}
+            display="row"
+            source={{
+              uri: ['trending', 'movie', 'day'],
+              params: { sort_by: 'popularity.desc' },
+            }}
             child={Film}
-            prettify={5}
+            props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             placeholder={true}
           />
-          <ListRecords />
-          <List
+          <Records />
+          <Items
             label={(
-              <Label>
-                <Link to={{ pathname: '/movies/calendar' }} css={theme.resets.a}>
-                  📆&nbsp; Upcoming
-                </Link>
-              </Label>
+              <Link to={{ pathname: '/movies/calendar' }} css={theme.resets.a}>
+                📆&nbsp; Upcoming
+              </Link>
             )}
             title="Upcoming movies"
+            child={Film}
+            props={{ withCredits: true }}
             strict={true}
+            placeholder={true}
             {...(ready ? {
               hide: true,
-              query: Home.Queries.upcoming,
+              source: Home.Queries.upcoming,
               transform: (entities) => entities
                 .map(raw => {
                   const entity = raw.toJSON()
@@ -140,37 +158,31 @@ export default class Home extends PureComponent {
                 })
                 .filter(entity => entity.credits.length),
             } : {
-              items: Array(15).fill({ poster_path: false }),
+              source: Array(20).fill({ poster_path: false }),
             })}
-            child={Film}
-            childProps={{ withCredits: true }}
-            placeholder={true}
           />
-          <List
+          <Items
             label={(
-              <Label>
-                <Link to={{ pathname: '/movies/discover' }} css={theme.resets.a}>
-                  👀&nbsp; Discover
-                </Link>
-              </Label>
+              <Link to={{ pathname: '/movies/discover' }} css={theme.resets.a}>
+                👀&nbsp; Discover
+              </Link>
             )}
             title="Discover movies"
-            uri={['discover', 'movie']}
+            source={{
+              uri: ['discover', 'movie'],
+            }}
             child={Film}
-            prettify={5}
+            props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             placeholder={true}
           />
-          <List
-            child={Film}
-            prettify={5}
-            placeholder={true}
+          <Items
             label={(
-              <Label>
-                {rows.random === 'year' ? (
-                  <Link
-                    css={[theme.resets.a, styles.label]}
-                    style={rows.random === 'year' ? { opacity: 1 } : {}}
-                    to={{
+              <span>
+                <Link
+                  css={[theme.resets.a, styles.label]}
+                  {...(rows.random === 'year' ? {
+                    style: { opacity: 1 },
+                    to: {
                       pathname: '/movies/discover',
                       state: {
                         controls: {
@@ -181,24 +193,19 @@ export default class Home extends PureComponent {
                           reverse: false,
                         },
                       },
-                    }}
-                  >
-                    📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
-                  </Link>
-                ) : (
-                  <button
-                    title="Discover movies by random year"
-                    css={[theme.resets.button, styles.label]}
-                    onClick={() => this.setState({ rows: { ...rows, random: 'year' } })}
-                  >
-                    📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
-                  </button>
-                )}
-                {rows.random === 'genre' ? (
-                  <Link
-                    css={[theme.resets.a, styles.label]}
-                    style={rows.random === 'genre' ? { opacity: 1 } : {}}
-                    to={{
+                    },
+                  } : {
+                    title: "Discover movies by random year",
+                    onClick: () => this.handleRowClick('random', 'year'),
+                  })}
+                >
+                  📅&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({year})</span>
+                </Link>
+                <Link
+                  css={[theme.resets.a, styles.label]}
+                  {...(rows.random === 'genre' ? {
+                    style: { opacity: 1 },
+                    to: {
                       pathname: '/movies/discover',
                       state: {
                         controls: {
@@ -209,24 +216,19 @@ export default class Home extends PureComponent {
                           reverse: false,
                         },
                       },
-                    }}
-                  >
-                    🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
-                  </Link>
-                ) : (
-                  <button
-                    title="Discover movies by genre"
-                    css={[theme.resets.button, styles.label]}
-                    onClick={() => this.setState({ rows: { ...rows, random: 'genre' } })}
-                  >
-                    🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
-                  </button>
-                )}
-                {rows.random === 'studio' ? (
-                  <Link
-                    css={[theme.resets.a, styles.label]}
-                    style={rows.random === 'studio' ? { opacity: 1 } : {}}
-                    to={{
+                    },
+                  } : {
+                    title: "Discover movies by genre",
+                    onClick: () => this.handleRowClick('random', 'genre'),
+                  })}
+                >
+                  🎞️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({GENRES[genre]})</span>
+                </Link>
+                <Link
+                  css={[theme.resets.a, styles.label]}
+                  {...(rows.random === 'studio' ? {
+                    style: { opacity: 1 },
+                    to: {
                       pathname: '/movies/discover',
                       state: {
                         controls: {
@@ -237,27 +239,28 @@ export default class Home extends PureComponent {
                           reverse: false,
                         },
                       },
-                    }}
-                  >
-                    🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
-                  </Link>
-                ) : (
-                  <button
-                    title="Discover movies by famous studio"
-                    css={[theme.resets.button, styles.label]}
-                    onClick={() => this.setState({ rows: { ...rows, random: 'studio' } })}
-                  >
-                    🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
-                  </button>
-                )}
-              </Label>
+                    },
+                  } : {
+                    title: "Discover movies by famous studio",
+                    onClick: () => this.handleRowClick('random', 'studio'),
+                  })}
+                >
+                  🏛️&nbsp; Discover <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}>({studio})</span>
+                </Link>
+              </span>
             )}
+            display="row"
+            child={Film}
+            props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
+            placeholder={true}
             {...({
               year: {
-                uri: ['discover', 'movie'],
-                params: {
-                  primary_release_year: year,
-                  sort_by: 'popularity.desc'
+                source: {
+                  uri: ['discover', 'movie'],
+                  params: {
+                    primary_release_year: year,
+                    sort_by: 'popularity.desc'
+                  },
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -271,10 +274,12 @@ export default class Home extends PureComponent {
                 ),
               },
               genre: {
-                uri: ['discover', 'movie'],
-                params: {
-                  with_genres: genre,
-                  sort_by: 'popularity.desc'
+                source: {
+                  uri: ['discover', 'movie'],
+                  params: {
+                    with_genres: genre,
+                    sort_by: 'popularity.desc'
+                  },
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -295,10 +300,12 @@ export default class Home extends PureComponent {
                 ),
               },
               studio: {
-                uri: ['discover', 'movie'],
-                params: {
-                  with_companies: STUDIOS[studio].map(company => company.id).join('|'),
-                  sort_by: 'popularity.desc'
+                source: {
+                  uri: ['discover', 'movie'],
+                  params: {
+                    with_companies: STUDIOS[studio].map(company => company.id).join('|'),
+                    sort_by: 'popularity.desc'
+                  },
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -320,12 +327,13 @@ export default class Home extends PureComponent {
               },
             }[rows.random])}
           />
-          <List
-            child={Home.Childs.Persona}
+          <Items
+            child={Persona}
+            props={{ display: 'portrait' }}
             placeholder={true}
             limit={20}
             label={(
-              <Label
+              <span
                 title={{
                   trending: 'Trending stars',
                   birthday: 'Birthday stars',
@@ -333,37 +341,29 @@ export default class Home extends PureComponent {
               >
                 <button
                   css={[theme.resets.button, styles.label]}
-                  onClick={() => this.setState({ rows: { ...rows, stars: 'trending' } })}
+                  onClick={() => this.handleRowClick('stars', 'trending')}
                   style={rows.stars === 'trending' ? { opacity: 1 } : {}}
                 >
                   👩‍🎤️&nbsp; Trending
                 </button>
                 <button
                   css={[theme.resets.button, styles.label]}
-                  onClick={() => this.setState({ rows: { ...rows, stars: 'birthday' } })}
+                  onClick={() => this.handleRowClick('stars', 'birthday')}
                   style={rows.stars === 'birthday' ? { opacity: 1 } : {}}
                 >
                   🎂️&nbsp; Birthday
                 </button>
-              </Label>
+              </span>
             )}
             {...({
               trending: {
-                uri: ['trending', 'person', 'day'],
-                params: { sort_by: 'popularity.desc' },
+                source: {
+                  uri: ['trending', 'person', 'day'],
+                  params: { sort_by: 'popularity.desc' },
+                },
               },
               birthday: {
-                query: Home.Queries.birthday,
-                filter: (entity) => {
-                  if (!entity.birthday) {
-                    return false
-                  }
-
-                  const today = new Date()
-                  const birthday = new Date(entity.birthday)
-
-                  return today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()
-                },
+                source: Home.Queries.birthday,
               }
             }[rows.stars])}
           />

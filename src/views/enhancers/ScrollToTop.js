@@ -1,11 +1,18 @@
 import { useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
+import nanobounce from 'nanobounce'
 
-export const triggerScrollToTop = () => window.scrollTo(0, 0)
+if (window && window.history && window.history.scrollRestoration) {
+  window.history.scrollRestoration = 'manual';
+}
+
+const debounce = nanobounce(200)
+
+export const triggerScrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
 const ScrollToTop = ({ children, location: { pathname } }) => {
   useEffect(() => {
-    triggerScrollToTop()
+    debounce(() => triggerScrollToTop())
   }, [pathname])
 
   return children || null

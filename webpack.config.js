@@ -63,6 +63,8 @@ module.exports = {
     }
   },
   plugins: [
-    new worker(),
+    new worker({
+      filename: '[name].worker.js',
+    }),
   ],
 }

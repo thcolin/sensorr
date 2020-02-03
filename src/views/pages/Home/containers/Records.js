@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
-import List, { Label } from 'components/Layout/List'
+import Items from 'components/Layout/Items'
 import { NavLink } from 'react-router-dom'
 import { Indicator } from 'views/layout/Header/blocks/Recording'
 import Film from 'components/Entity/Film'
@@ -8,7 +8,11 @@ import { socketize } from 'store/socket'
 import nanobounce from 'nanobounce'
 import theme from 'theme'
 
-class ListRecords extends PureComponent {
+class Records extends PureComponent {
+  static Queries = {
+    library: (db) => db.movies.find().where('state').eq('archived').sort({ time: -1 }).limit(20),
+  }
+
   constructor(props) {
     super(props)
 
@@ -82,11 +86,9 @@ class ListRecords extends PureComponent {
     const { ongoing, session, ...props } = this.props
 
     return (
-      <List
+      <Items
         label={(
-          <Label
-            title={ongoing ? 'Current recording movies' : 'Last recorded movies'}
-          >
+          <span title={ongoing ? 'Current recording movies' : 'Last recorded movies'}>
             <NavLink to={ongoing ? '/movies/records' : '/movies/library'} css={theme.resets.a}>
               <span style={{ position: 'relative', padding: '0.25em 0 0.25em 0.3125em', }}>
                 <Indicator ongoing={ongoing} />
@@ -98,15 +100,15 @@ class ListRecords extends PureComponent {
                 <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}> ({fetched})</span>
               )}
             </NavLink>
-          </Label>
+          </span>
         )}
         child={Film}
         placeholder={true}
         {...(ongoing ? {
-          items: records.map(record => record.movie).filter((movie, index) => index <= 20),
+          source: records.map(record => record.movie).filter((movie, index) => index <= 20),
           hide: !loading && !records.length,
         } : {
-          query: (db) => db.movies.find().where('state').eq('archived').sort({ time: -1 }).limit(20),
+          source: Records.Queries.library,
           hide: true,
         })}
       />
@@ -120,4 +122,4 @@ export default connect(
     session: Object.values(state.sessions.entities).sort((a, b) => new Date(a.time) - new Date(b.time)).slice(-1).pop(),
   }),
   () => ({}),
-)(ListRecords)
+)(Records)

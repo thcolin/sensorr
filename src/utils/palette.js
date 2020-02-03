@@ -178,6 +178,7 @@ export default function getImagePalette (src, cb) {
 
   const image = new Image()
 
+  image.crossOrigin = 'anonymous'
   image.src = src
   image.onload = () => {
     const canvas = new CanvasImage(image)
@@ -186,7 +187,8 @@ export default function getImagePalette (src, cb) {
     const pixelCount = canvas.getPixelCount()
 
     const worker = new Worker('./palette.worker.js', {
-      type: 'module'
+      name: 'palette',
+      type: 'module',
     })
 
     worker.onmessage = e => {

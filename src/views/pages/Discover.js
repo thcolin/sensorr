@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
-import Grid from 'components/Layout/Grid'
+import Items from 'components/Layout/Items'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
 import { CERTIFICATIONS, GENRES } from 'shared/services/TMDB'
@@ -15,9 +15,6 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-  },
-  grid: {
-    padding: '2em 0',
   },
 }
 
@@ -58,13 +55,16 @@ const Discover = ({ history, ...props }) => (
       <title>Sensorr - Discover</title>
     </Helmet>
     <div css={styles.wrapper}>
-      <Grid
-        strict={false}
-        uri={['discover', 'movie']}
-        params={{ include_video: false }}
+      <Items
+        display="grid"
+        source={{
+          uri: ['discover', 'movie'],
+          params: { include_video: false },
+        }}
         child={Film}
-        css={styles.grid}
+        strict={true}
         placeholder={true}
+        debounce={false}
         controls={{
           label: ({ total, reset }) => (
             <button css={theme.resets.button} onClick={() => reset()}>

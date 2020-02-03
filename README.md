@@ -69,7 +69,7 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
       <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/collection.png?raw=true" width="100" />
       </td>
       <td>
-        <b>Star</b>
+        <b>Collection</b>
         <ul>
           <li>Display <code>collection</code> details</li>
         </ul>
@@ -199,6 +199,11 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
+* Remove *query* `Input` on `Discover` page (useless)
+* Refactor `Items`
+  * Extract `database` and `TMDB` behaviors to `withDatabase` and `withTMDB` HOC
+<!-- * Fix `palette` missing complete sometimes on `Film` in Firefox -->
+* Record **Missing** `movies` too
 * Feature `Discover`
   * `Movie`
     * Add link to `Collection`
@@ -228,14 +233,9 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Review each `record`, one by one
     * Allow to post an `issue` on `thcolin/oleoo`
     * Allow to search for `releases`
+    * Allow to **ban** `releases` (like a `release` with hardcoded `subtitles` downloaded that i don't want)
 * Feature `performance`
   * Rename `XZNAB` to `XYZNAB`
-  * Refactor `Grid` and `List`
-    * Allow 4 "sources" / behaviors
-      * `props.items` (array)
-      * `props.query` (db)
-      * `props.uri/props.params` (tmdb)
-      * `props.?` (socket)
   * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
   * `oleoo`
@@ -264,9 +264,8 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
     * Add `Random` button
   * `Search`
     * Animate `height`
-    * Add remove `suggestion` button
+    * Remove `suggestions`
   * `Home`
-    * Polish *discover* row, load 2 page and filter with *trending* ones
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
     * Add "pre-configured" `List` like `Oscars` ?
   * `Settings`

@@ -12,7 +12,7 @@ export default class Persona extends PureComponent {
     entity: PropTypes.object.isRequired,
     display: PropTypes.oneOf(['portrait', 'avatar', 'card']),
     link: PropTypes.func,
-    updatable: PropTypes.bool,
+    withState: PropTypes.bool,
     placeholder: PropTypes.bool,
     title: PropTypes.string,
   }
@@ -20,9 +20,15 @@ export default class Persona extends PureComponent {
   static defaultProps = {
     display: 'avatar',
     link: (entity) => `/star/${entity.id}`,
-    updatable: true,
+    withState: true,
     placeholder: false,
   }
+
+  static placeholder = ({ ...props }) => ({
+    profile_path: false,
+  })
+
+  static validate = (entity) => !!(entity || {}).profile_path
 
   static styles = {
     card: {
@@ -54,21 +60,78 @@ export default class Persona extends PureComponent {
     },
   }
 
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      entity: props.entity,
+      ready: {
+        entity: true,
+        poster: !props.entity.poster_path,
+      },
+    }
+  }
+
+  componentDidUpdate(props) {
+    const { entity, display, palette } = this.props
+    const { ready, ...state } = this.state
+
+    if (entity.id !== props.entity.id) {
+      this.setState({
+        ready: {
+          entity: false,
+          poster: state.entity.id === entity.id || !entity.profile_path,
+        },
+      })
+    } else if (
+      !ready.entity &&
+      !!entity.id &&
+      (
+        entity.id !== this.state.entity.id ||
+        Object.keys(ready).filter(key => !['entity'].includes(key)).every(key => ready[key])
+      )
+    ) {
+      this.setState(state => ({
+        entity: entity,
+        ready: {
+          ...state.ready,
+          entity: true,
+        }
+      }))
+    }
+  }
+
   render() {
-    const { entity, display, link, ...props } = this.props
+    const { display, link, ...props } = this.props
+    const { entity, ...state } = this.state
 
     const name = entity.name || entity.original_name || ''
+    const ready = !!entity.id && Object.values(state.ready).every(bool => bool)
 
     switch (display) {
       case 'portrait':
       case 'avatar':
         return (
-          <Poster {...this.props} />
+          <Poster
+            {...this.props}
+            entity={entity}
+            onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
+            ready={ready}
+          />
         )
       case 'card':
         return (
           <div css={Persona.styles.card.element}>
-            <Poster {...this.props} display="portrait" title={null} updatable={false} css={Persona.styles.card.poster} />
+            <Poster
+              {...this.props}
+              entity={entity}
+              onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
+              display="portrait"
+              title={null}
+              withState={false}
+              ready={ready}
+              css={Persona.styles.card.poster}
+            />
             {entity.id && (
               <Link to={link(entity)} css={Persona.styles.card.container}>
                 <h1 {...(name.length > 45 ? { name } : {} )}>
@@ -86,15 +149,19 @@ export default class Persona extends PureComponent {
   }
 }
 
-export const Poster = ({ entity, display, updatable, placeholder, link, title, ...props }) => {
-  const [ready, setReady] = useState(false)
+export const Poster = ({ entity, img, palette = {}, link, display, withState, placeholder, title, onLoad, onError, ready = true, ...props }) => {
+  const [loaded, setLoaded] = useState(false)
   const [tooltip, setTooltip] = useState(false)
 
   useEffect(() => {
-    setReady(false)
-  }, [(entity || {}).profile_path])
+    if (entity.id && !img && !entity.profile_path) {
+      setLoaded(true)
+    }
 
-  const Container = link && entity.id ? Link : 'span'
+    else {
+      setLoaded(false)
+    }
+  }, [(entity || {}).profile_path, img])
 
   return (
     <span
@@ -104,40 +171,72 @@ export const Poster = ({ entity, display, updatable, placeholder, link, title, .
       onMouseLeave={() => setTooltip(false)}
     >
       <span css={[Poster.styles.wrapper,Poster.styles[display].wrapper]}>
-        {!(!updatable || (display !== 'portrait' && !tooltip)) && (
+        {!(!withState || (display !== 'portrait' && !tooltip)) && (
           <State
             entity={entity}
             css={Poster.styles[display].state}
             style={{
-              opacity: (ready || (!entity.profile_path && entity.id)) ? 1 : 0,
-              ...(!ready ? { transition: 'none' } : {}),
+              opacity: (loaded && ready && entity.id) ? 1 : 0,
+              transition: 'opacity 400ms ease-in-out',
+              transitionDuration: (loaded && ready) ? '400ms' : '0ms',
+              transitionDelay: (loaded && ready) ? '800ms' : '0ms',
             }}
           />
         )}
-        <Container {...(link ? { to: link(entity) } : {})} css={Poster.styles.link}>
+        <Link
+          to={(link && entity.id) ? link(entity) : ''}
+          css={[Poster.styles.link, (!link || !entity.id) && { pointerEvents: 'none' }]}
+        >
           <span css={[Poster.styles.element, Poster.styles[display].element]}>
             <span
               css={[
                 Poster.styles.poster,
                 Poster.styles[display].poster,
-                (placeholder && !entity.id) && theme.styles.placeholder,
-                (!entity.profile_path && entity.id) && Poster.styles.empty,
               ]}
               style={{
-                opacity: (ready || !entity.profile_path) ? 1 : 0,
-                ...(!ready ? { transition: 'none' } : {}),
+                backgroundColor: palette.backgroundColor || theme.colors.grey,
+                transition: 'background 400ms ease-in-out',
               }}
             >
-              {entity.profile_path && (
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${entity.profile_path}`}
-                  onLoad={() => setReady(true)}
-                  css={[Poster.styles.img, Poster.styles[display].img]}
-                />
-              )}
+              <span
+                css={Poster.styles.empty}
+                style={{
+                  backgroundColor: palette.color,
+                  opacity: (loaded && ready && entity.id && !(img || entity.profile_path)) ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                  transitionDuration: (loaded && ready) ? '400ms' : '250ms',
+                  transitionDelay: (loaded && ready) ? '400ms' : '0ms',
+                }}
+              />
+              <img
+                css={[Poster.styles.img, Poster.styles[display].img]}
+                style={{
+                  opacity: (loaded && ready && (img || entity.profile_path)) ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                  transitionDuration: (loaded && ready) ? '400ms' : '250ms',
+                  transitionDelay: (loaded && ready) ? '400ms' : '0ms',
+                }}
+                onLoad={() => {
+                  setLoaded(true)
+
+                  if (typeof onLoad === 'function') {
+                    onLoad()
+                  }
+                }}
+                onError={() => {
+                  setLoaded(true)
+
+                  if (typeof onError === 'function') {
+                    onError()
+                  }
+                }}
+                {...((img || entity.profile_path) ? {
+                  src: img || `https://image.tmdb.org/t/p/w300${entity.profile_path}`,
+                } : {})}
+              />
             </span>
           </span>
-        </Container>
+        </Link>
       </span>
       {title !== null && (
         <h5
@@ -145,18 +244,19 @@ export const Poster = ({ entity, display, updatable, placeholder, link, title, .
           title={title || `${entity.name}${entity.job ? ` (${entity.job})` : ''}${entity.character ? ` (${entity.character})` : ''}`}
           hidden={display !== 'portrait' && !tooltip}
           style={{
-            opacity: (ready || (!entity.profile_path && entity.id)) ? 1 : 0,
-            ...(!ready ? { transition: 'none' } : {}),
+            opacity: (loaded && ready) ? 1 : 0,
+            transition: 'opacity 400ms ease-in-out',
+            transitionDelay: (loaded && ready) ? '800ms' : '0ms',
           }}
         >
           {title || (
             <>
-              <strong>{entity.name || ' '}</strong>
+              <strong css={Poster.styles.ellipsis}>{entity.name || ' '}</strong>
               {entity.job && (
-                <span><br/>{entity.job}</span>
+                <span css={Poster.styles.ellipsis}>{entity.job}</span>
               )}
               {entity.character && (
-                <span><br/>{entity.character}</span>
+                <span css={Poster.styles.ellipsis}>{entity.character}</span>
               )}
             </>
           )}
@@ -191,10 +291,15 @@ Poster.styles = {
     transition: 'opacity 400ms ease-in-out',
   },
   empty: {
-    backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==)',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    backgroundSize: '50%',
+    position: 'absolute',
+    display: 'block',
+    height: '100%',
+    width: '100%',
+    backgroundColor: theme.colors.gray,
+    maskImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==)',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    maskSize: '50%',
   },
   img: {
     height: '100%',
@@ -202,15 +307,30 @@ Poster.styles = {
     objectFit: 'cover',
   },
   tooltip: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    minHeight: '3.5em',
     backgroundColor: theme.colors.shadows.black,
     borderRadius: '0.25em',
     color: theme.colors.white,
     textAlign: 'center',
     whiteSpace: 'nowrap',
     padding: '0.25em 0.5em',
+    fontSize: '0.75em',
     lineHeight: 1.25,
     margin: 0,
     transition: 'opacity 400ms ease-in-out',
+    '>span': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
+  ellipsis: {
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    width: '100%',
   },
   portrait: {
     container: {
@@ -229,7 +349,7 @@ Poster.styles = {
     },
     img: {},
     tooltip: {
-      margin: '0.5em 0 0 0',
+      margin: '1.1667em 0 0 0',
       width: '100%',
       overflow: 'hidden',
       textOverflow: 'ellipsis',

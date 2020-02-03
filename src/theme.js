@@ -128,12 +128,12 @@ const resets = {
 const animations = {
   placeholder: keyframes`
     0%{
-      background-position: 100% 0
+      transform: translate3d(-80%, 0, 0);
     }
     100%{
-      background-position: -50% 0
+      transform: translate3d(0%, 0, 0);
     }
-  `
+  `,
 }
 
 const styles = {
@@ -144,6 +144,11 @@ const styles = {
   column: {
     display: 'flex',
     flexDirection: 'column',
+  },
+  centered: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   spacings: {
     row: {
@@ -179,12 +184,48 @@ const styles = {
     opacity: 0.5,
   },
   placeholder: {
-    animation: `${animations.placeholder} 2s linear infinite`,
-    animationFillMode: 'forwards',
-    background: `linear-gradient(to right, ${colors.grey} 20%, ${colors.mercury} 50%, ${colors.grey} 80%)`,
-    backgroundSize: '300%',
-    transform: 'translateZ(0)',
+    element: {
+      position: 'relative',
+      overflow: 'hidden',
+      ':after': {
+        content: '""',
+        top: 0,
+        left: 0,
+        position: 'absolute',
+        display: 'block',
+        height: '100%',
+        width: '500%',
+        opacity: 0,
+        background: `linear-gradient(
+          to right,
+          ${colors.grey} 35%,
+          ${colors.mercury} 50%,
+          ${colors.grey} 65%
+        )`,
+        transition: 'background 400ms ease-in-out, opacity 400ms ease-in-out, z-index 0ms linear 400ms',
+        zIndex: -1,
+      }
+    },
+    on: {
+      ':after': {
+        opacity: 1,
+        zIndex: 1,
+        transition: 'background 400ms ease-in-out, opacity 400ms ease-in-out',
+      },
+    },
+    animated: {
+      ':after': {
+        opacity: 1,
+        zIndex: 1,
+        transition: 'background 400ms ease-in-out, opacity 400ms ease-in-out',
+        animation: `${animations.placeholder} 2s linear infinite`,
+      },
+    }
   },
+}
+
+const images = {
+  transparent: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=`
 }
 
 export default {
@@ -193,4 +234,5 @@ export default {
   resets,
   animations,
   styles,
+  images,
 }

@@ -2,7 +2,7 @@ import React, { PureComponent, Fragment } from 'react'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import { withRouter } from 'react-router'
-import Grid from 'components/Layout/Grid'
+import Items from 'components/Layout/Items'
 import Film from 'components/Entity/Film'
 import Left from 'icons/Left'
 import Right from 'icons/Right'
@@ -21,9 +21,6 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-  },
-  grid: {
-    padding: '2em 0',
   },
   controls: {
     width: '120%',
@@ -204,10 +201,6 @@ class Calendar extends PureComponent {
     }),
   }
 
-  static Childs = {
-    Film: (props) => <Film {...props} withCredits={true} />
-  }
-
   constructor(props) {
     super(props)
 
@@ -235,8 +228,9 @@ class Calendar extends PureComponent {
           <title>{`Sensorr - Calendar (${capitalize(new Date(year, month - 1).toLocaleString(global.config.region, { month: 'long' }))} ${year})`}</title>
         </Helmet>
         <div style={styles.wrapper}>
-          <Grid
-            query={(db) => db.calendar.find({
+          <Items
+            display="grid"
+            source={(db) => db.calendar.find({
               release_date: {
                 $gte: new Date(`${year}-${month}-01`).toISOString(),
                 $lt: new Date(`${month === 12 ? year + 1 : year}-${month === 12 ? 1 : month + 1}-01`).toISOString()
@@ -254,9 +248,9 @@ class Calendar extends PureComponent {
               })
               .filter(entity => entity.credits.length)
             }
-            css={styles.grid}
-            child={Calendar.Childs.Film}
-            placeholder={false}
+            child={Film}
+            props={{ withCredits: true }}
+            placeholder={true}
             debounce={true}
             strict={false}
             ready={ready}

@@ -1,8 +1,9 @@
 import React, { PureComponent, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import { from } from 'rxjs'
 import { Link } from 'react-router-dom'
-import Color from 'color'
 import Persona from 'components/Entity/Persona'
+import Backdrop from 'components/UI/Backdrop'
 import Badge from 'components/Badge'
 import tmdb from 'store/tmdb'
 import database from 'store/database'
@@ -20,6 +21,7 @@ export default class Film extends PureComponent {
     link: PropTypes.func,
     focus: PropTypes.oneOf(['vote_average', 'release_date', 'release_date_full', 'popularity', 'runtime']),
     display: PropTypes.oneOf(['default', 'pretty', 'card']),
+    palette: PropTypes.object,
     placeholder: PropTypes.bool,
     withState: PropTypes.bool,
     withHover: PropTypes.bool,
@@ -30,11 +32,24 @@ export default class Film extends PureComponent {
     link: (entity) => `/movie/${entity.id}`,
     focus: null,
     display: 'default',
+    palette: {},
     placeholder: false,
     withState: true,
     withHover: true,
     withCredits: false,
   }
+
+  static placeholder = ({ withCredits, ...props }) => ({
+    poster_path: false,
+    ...(withCredits ? {
+      credits: [
+        { profile_path: false },
+        { profile_path: false },
+      ]
+    } : {}),
+  })
+
+  static validate = (entity) => !!(entity || {}).poster_path
 
   static styles = {
     pretty: {
@@ -50,19 +65,6 @@ export default class Film extends PureComponent {
         height: 'calc(100% - 3em)',
         width: '100%',
         overflow: 'hidden',
-        '>*': {
-          position: 'absolute',
-          height: '100%',
-          width: '100%',
-        },
-        '>div': {
-          transition: 'box-shadow 400ms ease-in-out',
-        },
-        '>img': {
-          objectFit: 'cover',
-          objectPosition: 'center center',
-          transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
-        },
       },
       poster: {
         position: 'relative',
@@ -75,12 +77,10 @@ export default class Film extends PureComponent {
         flex: 1,
         margin: '1.25em 1.5em',
         overflowY: 'auto',
-        transition: 'opacity 400ms ease-in-out',
         '>h1': {
           fontSize: '1.5em',
           fontWeight: 'bold',
           margin: '0 0 0.5em 0',
-          transition: 'color 400ms ease-in-out',
         },
         '>div': {
           display: 'flex',
@@ -88,10 +88,8 @@ export default class Film extends PureComponent {
           justifyContent: 'space-between',
           margin: '0 0 0.5em 0',
           fontFamily: theme.fonts.secondary,
-          transition: 'color 400ms ease-in-out',
         },
         '>p': {
-          transition: 'color 400ms ease-in-out',
           '&:not(:last-of-type)': {
             margin: '0 0 1em 0',
           },
@@ -119,7 +117,6 @@ export default class Film extends PureComponent {
         padding: '0 0 0 1em',
         fontSize: '0.75em',
         color: theme.colors.rangoon,
-        transition: 'opacity 400ms ease-in-out',
         '>h1': {
           fontSize: '1em',
           fontWeight: 'bold',
@@ -150,125 +147,160 @@ export default class Film extends PureComponent {
     super(props)
 
     this.state = {
-      poster: null,
-      backdrop: null,
+      entity: props.entity,
+      ready: {
+        entity: true,
+        poster: !props.entity.poster_path,
+        background: !props.entity.backdrop_path || props.display !== 'pretty',
+        palette: !props.entity.poster_path || props.display !== 'pretty',
+      },
       palette: {
-        backgroundColor: theme.colors[{ default: 'gray', pretty: 'rangoon', card: 'gray'}[props.display]],
-        color: '#ffffff',
-        alternativeColor: '#ffffff',
-        negativeColor: '#ffffff',
+        backgroundColor: theme.colors.gray,
+        color: theme.colors.rangoon,
+        alternativeColor: theme.colors.rangoon,
+        negativeColor: theme.colors.rangoon,
+        ...(props.palette || {}),
       },
     }
+
+    this.processing = null
   }
 
   componentDidMount() {
-    if (this.props.display === 'pretty') {
-      const { poster_path, backdrop_path } = this.props.entity
+    const { entity, display } = this.props
 
-      if (poster_path) {
-        this.fetchImg(`https://image.tmdb.org/t/p/w342${poster_path}`, (value) => this.setState({ poster: value }), { palette: true })
-      }
-
-      if (backdrop_path) {
-        this.fetchImg(`https://image.tmdb.org/t/p/w780${backdrop_path}`, (value) => this.setState({ backdrop: value }))
-      }
+    if (display === 'pretty' && entity.poster_path) {
+      this.processing = from(
+        this.fetchPalette(`https://image.tmdb.org/t/p/w92${entity.poster_path}`)
+      ).subscribe(
+        palette => this.setState(state => ({ palette, ready: { ...state.ready, palette: true } })),
+      )
     }
   }
 
   componentDidUpdate(props) {
-    if (this.props.display === 'pretty' && props.entity.id !== this.props.entity.id) {
-      const { poster_path, backdrop_path } = this.props.entity
+    const { entity, display, palette } = this.props
+    const { ready, ...state } = this.state
 
-      this.setState(state => ({
-        poster: null,
-        backdrop: null,
-        palette: {
-          backgroundColor: state.palette.backgroundColor,
-          color: Color(state.palette.backgroundColor).isDark() ? '#ffffff' : '#000000',
-          alternativeColor: Color(state.palette.backgroundColor).isDark() ? '#ffffff' : '#000000',
-          negativeColor: Color(state.palette.backgroundColor).isDark() ? '#ffffff' : '#000000'
+    if (entity.id !== props.entity.id) {
+      this.setState({
+        ready: {
+          entity: false,
+          poster: state.entity.id === entity.id || !entity.poster_path,
+          background: state.entity.id === entity.id || !entity.backdrop_path || display !== 'pretty',
+          palette: !entity.poster_path || display !== 'pretty',
         },
+        ...(!entity.poster_path && entity.id ? {
+          palette: {
+            backgroundColor: theme.colors.gray,
+            color: theme.colors.rangoon,
+            alternativeColor: theme.colors.rangoon,
+            negativeColor: theme.colors.rangoon,
+            // ...(palette || {}),
+          },
+        } : {})
+      })
+
+      if (display === 'pretty' && entity.poster_path) {
+        if (this.processing) {
+          this.processing.unsubscribe()
+        }
+
+        this.processing = from(
+          this.fetchPalette(`https://image.tmdb.org/t/p/w92${entity.poster_path}`)
+        ).subscribe(
+          palette => this.setState(state => ({ palette, ready: { ...state.ready, palette: true } })),
+        )
+      }
+    } else if (
+      !ready.entity &&
+      !!entity.id &&
+      (
+        entity.id !== this.state.entity.id ||
+        Object.keys(ready).filter(key => !['entity'].includes(key)).every(key => ready[key])
+      )
+    ) {
+      this.setState(state => ({
+        entity: entity,
+        ready: {
+          ...state.ready,
+          entity: true,
+        }
       }))
-
-      if (poster_path) {
-        this.fetchImg(`https://image.tmdb.org/t/p/w342${poster_path}`, (value) => this.setState({ poster: value }), { palette: true })
-      }
-
-      if (backdrop_path) {
-        this.fetchImg(`https://image.tmdb.org/t/p/w780${backdrop_path}`, (value) => this.setState({ backdrop: value }))
-      }
     }
   }
 
-  fetchImg = (src, cb, options = {}) => {
-    fetch(src, { cache: 'force-cache' })
-      .then(res => res.arrayBuffer())
-      .then(buffer => `data:image/jpeg;base64,${window.btoa([]
-        .slice
-        .call(new Uint8Array(buffer))
-        .reduce((binary, b) => `${binary}${String.fromCharCode(b)}`, '')
-      )}`)
-      .then(img => {
-        if (options.palette) {
-          const cache = sessionStorage.getItem(src)
-
-          if (cache) {
-            this.setState({ palette: JSON.parse(cache) })
-          } else {
-            palette(img, (palette) => {
-              try { sessionStorage.setItem(src, JSON.stringify(palette)) } catch (e) {}
-              this.setState({ palette })
-            })
-          }
-        }
-
-        cb(img)
-      })
+  componentWillUnmount() {
+    if (this.processing) {
+      this.processing.unsubscribe()
+    }
   }
 
+  fetchPalette = async (src) => new Promise(resolve => {
+    const cache = sessionStorage.getItem(src)
+
+    if (cache) {
+      resolve(JSON.parse(cache))
+    } else {
+      palette(src, (palette) => {
+        try {
+          sessionStorage.setItem(src, JSON.stringify(palette))
+        } catch (e) {} finally {
+          resolve(palette)
+        }
+      })
+    }
+  })
+
   render() {
-    const { entity, display, link, placeholder, withCredits, ...props } = this.props
-    const { poster, backdrop, palette, ...state } = this.state
+    const { display, link, placeholder, withCredits, ...props } = this.props
+    const { entity, palette, ...state } = this.state
 
     const title = entity.title || entity.original_title || entity.name || entity.original_name || ''
+    const ready = !!entity.id && Object.values(state.ready).every(bool => bool)
 
     switch (display) {
       case 'default':
         return (
-          <Poster {...this.props} />
+          <Poster
+            {...this.props}
+            entity={entity}
+            onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
+            ready={ready}
+          />
         )
       case 'pretty':
         return (
           <div css={Film.styles.pretty.element}>
-            <div css={[Film.styles.pretty.backdrop, (!entity.id && placeholder) && theme.styles.placeholder]}>
-              <img
-                src={backdrop}
-                style={{
-                  opacity: backdrop ? 1 : 0,
-                  // filter: `blur(${backdrop ? '0.125rem' : '3rem'})`,
-                  ...(!backdrop ? { transition: 'none' } : {}),
-                }}
+            <div css={Film.styles.pretty.backdrop}>
+              <Backdrop
+                src={entity.backdrop_path}
+                ready={ready}
+                palette={palette}
+                width={780}
+                fade={0.2}
+                onReady={() => this.setState(state => ({ ready: { ...state.ready, background: true } }))}
               />
-              <div style={{ boxShadow: `inset 0 0 0 100em ${Color(palette.backgroundColor).fade(0.3).rgb().string()}` }} />
             </div>
             <div css={Film.styles.pretty.poster}>
               <Poster
                 {...this.props}
-                img={poster}
+                entity={entity}
+                img={entity.poster_path && `https://image.tmdb.org/t/p/w300${entity.poster_path}`}
+                onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
+                palette={palette}
+                ready={ready}
                 withHover={false}
                 withCredits={false}
-                style={{
-                  backgroundColor: palette.backgroundColor,
-                  transition: 'background-color 400ms ease-in-out',
-                }}
               />
             </div>
             {entity.id && (
               <div
                 css={Film.styles.pretty.about}
                 style={{
-                  opacity: (backdrop || entity.backdrop_path === null) ? 1 : 0,
-                  ...((!backdrop && entity.backdrop_path !== null) ? { transition: 'none' } : {}),
+                  opacity: ready ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                  transitionDelay: ready ? '400ms' : '0ms',
                 }}
               >
                 <h1 style={{ color: palette.color }} {...(title.length > 45 ? { title } : {})}>
@@ -361,22 +393,40 @@ export default class Film extends PureComponent {
                 )}
               </div>
             )}
-            {withCredits && (entity.credits || []).map((star, index) => (
-              <Persona
-                entity={star}
-                display="avatar"
-                updatable={false}
-                key={star.id}
-                css={Film.styles.pretty.credit}
-                style={{ right: `${index * 6}em` }}
-              />
-            ))}
+            {withCredits && (
+              <span
+                style={{
+                  opacity: ready ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                  transitionDelay: ready ? '800ms' : '0ms',
+                }}
+              >
+                {(entity.credits || []).map((star, index) => (
+                  <Persona
+                    entity={star}
+                    display="avatar"
+                    withState={false}
+                    key={index}
+                    css={Film.styles.pretty.credit}
+                    style={{ right: `${index * 6}em` }}
+                  />
+                ))}
+              </span>
+            )}
           </div>
         )
       case 'card':
         return (
           <div css={Film.styles.card.element}>
-            <Poster {...this.props} withHover={false} withState={false} css={Film.styles.card.poster} />
+            <Poster
+              {...this.props}
+              entity={entity}
+              withHover={false}
+              withState={false}
+              onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
+              ready={ready}
+              css={Film.styles.card.poster}
+            />
             {entity.id && (
               <Link to={link(entity)} css={Film.styles.card.container}>
                 <h1 {...(title.length > 45 ? { title } : {} )}>
@@ -427,23 +477,22 @@ export default class Film extends PureComponent {
   }
 }
 
-export const Poster = ({ entity, img, focus, link, display, placeholder, withState, withHover, withCredits, ...props }) => {
-  const [ready, setReady] = useState(false)
+export const Poster = ({ entity, img, palette = {}, focus, link, display, placeholder, withState, withHover, withCredits, onLoad, onError, ready = true, ...props }) => {
+  const [loaded, setLoaded] = useState(false)
   const [hover, setHover] = useState(false)
 
   useEffect(() => {
-    if (!img) {
-      setReady(false)
+    if (entity.id && !img && !entity.poster_path) {
+      setLoaded(true)
+    }
+
+    else {
+      setLoaded(false)
     }
   }, [(entity || {}).poster_path, img])
 
-  const Container = link && entity.id ? Link : 'span'
-
   return (
-    <span
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
+    <span onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <span
         {...(withHover ? {} : {
           title: `${
@@ -455,10 +504,14 @@ export const Poster = ({ entity, img, focus, link, display, placeholder, withSta
         {...props}
         css={[
           Poster.styles.element,
-          placeholder && !entity.id && display !== 'pretty' && theme.styles.placeholder,
-          !entity.poster_path && entity.id && Poster.styles.empty,
+          placeholder && !entity.id && display !== 'pretty' && theme.styles.placeholder.animated,
+          !(img || entity.poster_path) && entity.id && ready && Poster.styles.empty,
           props.css
         ]}
+        style={{
+          backgroundColor: palette.backgroundColor || theme.colors.grey,
+          transition: 'background-color 400ms ease-in-out, background-image 400ms ease-in-out',
+        }}
       >
         <span css={Poster.styles.container}>
           {withState && (
@@ -466,42 +519,61 @@ export const Poster = ({ entity, img, focus, link, display, placeholder, withSta
               entity={entity}
               css={Poster.styles.state}
               style={{
-                opacity: (ready || (!entity.poster_path && entity.id)) ? 1 : 0,
-                ...(!ready ? { transition: 'none' } : {}),
+                opacity: (loaded && ready) ? 1 : 0,
+                transition: 'opacity 400ms ease-in-out',
+                transitionDuration: (loaded && ready) ? '400ms' : '0ms',
+                transitionDelay: (loaded && ready) ? '800ms' : '0ms',
               }}
             />
           )}
-          <Container {...(link ? { to: link(entity) } : {})} css={Poster.styles.link}>
+          <Link
+            to={(link && entity.id) ? link(entity) : ''}
+            css={[Poster.styles.link, (!link || !entity.id) && { pointerEvents: 'none' }]}
+          >
             {(withHover || focus) && (
-              <span
+              <Focus
+                entity={entity}
+                property={(!hover && focus) || 'vote_average'}
                 css={Poster.styles.focus}
                 style={{
-                  opacity: ((ready || (!entity.poster_path && entity.id)) && (hover || focus)) ? 1 : 0,
-                  transitionDuration: focus ? '400ms' : '250ms',
-                  transitionDelay: focus ? '400ms' : '0ms',
-                }}>
-                <Focus entity={entity} property={focus || 'vote_average'} />
-              </span>
+                  opacity: (loaded && ready && (hover || focus)) ? 1 : 0,
+                  transition: 'opacity 250ms ease-in-out',
+                  transitionDuration: (loaded && ready && focus) ? '400ms' : '250ms',
+                  transitionDelay: (loaded && ready && focus) ? '800ms' : '0ms',
+                }}
+              />
             )}
             <img
-              src={img ? img : {
-                default: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
-                pretty: img,
-                card: `https://image.tmdb.org/t/p/w300${entity.poster_path}`,
-              }[display]}
               css={Poster.styles.img}
               style={{
-                opacity: ready ? 1 : 0,
-                // ...(display === 'pretty' ? { filter: `blur(${ready ? 0 : '3rem'})` } : {}),
-                ...(!ready ? { transition: 'none' } : {}),
+                opacity: (loaded && ready && (img || entity.poster_path)) ? 1 : 0,
+                transition: 'opacity 400ms ease-in-out',
+                transitionDuration: ((loaded && ready) || display === 'pretty') ? '400ms' : '250ms',
+                transitionDelay: (loaded && ready) ? '400ms' : '0ms',
               }}
-              onLoad={() => setReady(true)}
+              onLoad={() => {
+                setLoaded(true)
+
+                if (typeof onLoad === 'function') {
+                  onLoad()
+                }
+              }}
+              onError={() => {
+                setLoaded(true)
+
+                if (typeof onError === 'function') {
+                  onError()
+                }
+              }}
+              {...((img || entity.poster_path) ? {
+                src: img || (entity.poster_path && `https://image.tmdb.org/t/p/w300${entity.poster_path}`),
+              } : {})}
             />
             {withHover && (
               <span
                 css={Poster.styles.hover}
                 style={{
-                  transform: `translateY(${((ready || (!entity.poster_path && entity.id)) && hover) ? 0 : 100}%)`,
+                  transform: `translateY(${(loaded && ready && hover) ? '0%' : 'calc(100% + 1px)'})`,
                   ...(withCredits ? { paddingBottom: '6em' } : {}),
                 }}
               >
@@ -518,25 +590,28 @@ export const Poster = ({ entity, img, focus, link, display, placeholder, withSta
                 )}
               </span>
             )}
-          </Container>
+          </Link>
         </span>
       </span>
       {withCredits && (
         <span
           css={Poster.styles.credits}
           style={{
-            opacity: (ready || (!entity.poster_path && entity.id)) ? 1 : 0,
-            ...(!ready ? { transition: 'none' } : {}),
+            opacity: (loaded && ready) ? 1 : 0,
+            transition: 'opacity 400ms ease-in-out',
+            transitionDelay: (loaded && ready) ? '800ms' : '0ms',
           }}
         >
           {(entity.credits || []).map((star, index) => (
-            <Persona
-              entity={star}
-              display="avatar"
-              updatable={false}
-              key={star.id}
-              css={Poster.styles.credit}
-            />
+            <span key={star.id || index}>
+              <Persona
+                entity={star}
+                display="avatar"
+                withState={false}
+                key={star.id}
+                css={Poster.styles.credit}
+              />
+            </span>
           ))}
         </span>
       )}
@@ -550,7 +625,6 @@ Poster.styles = {
     display: 'block',
     height: '15em',
     width: '10em',
-    backgroundColor: theme.colors.grey,
     zIndex: 0,
   },
   container: {
@@ -570,7 +644,6 @@ Poster.styles = {
     position: 'absolute',
     right: '0.5em',
     top: '0.5em',
-    transition: 'opacity 400ms ease-in-out 400ms',
   },
   link: {
     display: 'block',
@@ -579,14 +652,14 @@ Poster.styles = {
   focus: {
     position: 'absolute',
     top: 0,
-    transition: 'opacity 250ms ease-in-out',
+    zIndex: 1,
   },
   img: {
+    position: 'relative',
     height: '100%',
     width: '100%',
     objectFit: 'cover',
     objectPosition: 'center center',
-    transition: 'opacity 400ms ease-in-out, filter 400ms ease-in-out 400ms',
   },
   hover: {
     position: 'absolute',
@@ -615,7 +688,6 @@ Poster.styles = {
     alignItems: 'center',
     justifyContent: 'flex-start',
     margin: '-3.5em 0 0 -0.5em',
-    transition: 'opacity 400ms ease-in-out',
   },
   credit: {
     marginLeft: '-2em',
@@ -751,7 +823,7 @@ export class State extends PureComponent {
     }
 
     return (
-      <div {...props} css={[State.styles.element, props.css]}>
+      <span {...props} css={[State.styles.element, props.css]}>
         <label htmlFor={id} css={State.styles.label}>
           {current !== 'loading' && (
             <select id={id} value={current} onChange={this.handleStateChange} css={State.styles.select}>
@@ -768,7 +840,7 @@ export class State extends PureComponent {
             {...(current !== 'loading' ? { onClick: this.handleStateChange } : {})}
           />
         </label>
-      </div>
+      </span>
     )
   }
 }
@@ -831,11 +903,13 @@ export const Focus = ({ entity, property, ...props }) => {
   }
 
   return (
-    <Badge
-      emoji={badges[property].emoji}
-      label={badges[property].label}
-      style={Focus.styles.element}
-    />
+    <span {...props}>
+      <Badge
+        emoji={badges[property].emoji}
+        label={badges[property].label}
+        style={Focus.styles.element}
+      />
+    </span>
   )
 }
 
