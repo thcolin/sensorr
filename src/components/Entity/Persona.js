@@ -346,6 +346,7 @@ Poster.styles = {
       right: '0.75em',
       top: '0.75em',
       transition: 'opacity 400ms ease-in-out 400ms',
+      zIndex: 1,
     },
     img: {},
     tooltip: {
@@ -383,6 +384,7 @@ Poster.styles = {
       padding: '0 0.5em 0 0',
       fontSize: '2em',
       transition: 'opacity 400ms ease-in-out 400ms',
+      zIndex: 1,
     },
     img: {
       objectPosition: 'center 0%',
