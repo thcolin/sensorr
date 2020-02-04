@@ -61,6 +61,7 @@ export default class Items extends PureComponent {
     spinner: PropTypes.object,
     empty: PropTypes.object,
 
+    stack: PropTypes.bool,
     hide: PropTypes.bool,
     space: PropTypes.number, // used in `Search`
   }
@@ -82,6 +83,7 @@ export default class Items extends PureComponent {
     spinner: {},
     empty: {},
 
+    stack: false,
     hide: false,
     space: 2, // used in `Search`
   }
@@ -271,7 +273,7 @@ export default class Items extends PureComponent {
           this.state.operations.filter(entity) &&
           (this.props.limit === Infinity || (index < this.props.limit && index <= 20))
         )).length,
-      ...(!this.state.params.page ? { entities: [] } : {}),
+      ...(!this.state.params.page && !this.props.stack ? { entities: [] } : {}),
       ...(origin !== 'tmdb' ? { params: {} } : {}),
       ...(!this.state.params.page ? { max: 20 } : {}),
     })
@@ -417,6 +419,7 @@ export default class Items extends PureComponent {
       spinner,
       empty,
 
+      stack,
       hide,
       space,
       ...crumbs
@@ -427,8 +430,9 @@ export default class Items extends PureComponent {
     const approved = entities.filter(entity => this.validate(entity))
     const filtered = approved.sort(operations.sort).filter(operations.filter)
     const limited = filtered.filter((foo, index) => (limit === Infinity || index < limit) && (display !== 'grid' || index < max))
-    const childs = (limited.length && (!loading || params.page > 1)) ? limited : !placeholder ? [] : Array(Math.min(total, 20) || 20).fill({})
-      .map((foo, index) => child.placeholder(propsify({ index })))
+    const childs = (limited.length && (!loading || params.page > 1 || stack)) ?
+      limited :
+      !placeholder ? [] : Array(Math.min(total, 20) || 20).fill({}).map((foo, index) => child.placeholder(propsify({ index })))
 
     const styles = Items.styles[display]
 
@@ -436,7 +440,6 @@ export default class Items extends PureComponent {
       ...acc,
       [key]: controls.filters[key](approved),
     }), {})
-
 
     return (!!childs.length || (loading && ['db', 'tmdb'].includes(origin)) || !hide) && (
       <>
@@ -513,7 +516,7 @@ export default class Items extends PureComponent {
                 <Spinner {...spinner} />
               ) : childs.length ? childs.map((entity, index) => (
                 <div
-                  key={index} // (entity.id || index) - with incrementable option only ? else loose transition
+                  key={stack ? (entity.id || index) : index}
                   css={styles.entity}
                   style={{
                     padding: { row: `0 ${space}em`, column: `${space}em 0` }[display],

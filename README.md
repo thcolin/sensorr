@@ -199,6 +199,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
 ```
 
 # Roadmap
+* Fix `/discover` links on `Details` page (first results doesn't care about `initial` or something)
 * Remove *query* `Input` on `Discover` page (useless)
 * Refactor `Items`
   * Extract `database` and `TMDB` behaviors to `withDatabase` and `withTMDB` HOC

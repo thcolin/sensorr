@@ -103,6 +103,7 @@ class Records extends PureComponent {
           </span>
         )}
         child={Film}
+        stack={ongoing}
         placeholder={true}
         {...(ongoing ? {
           source: records.map(record => record.movie).filter((movie, index) => index <= 20),
