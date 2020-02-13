@@ -1,11 +1,9 @@
-# 🍿📼 Sensorr
-
-A simple movie release radar like CouchPotato, Radarr and Watcher3, written in Javascript with `React`
+![Sensorr](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/banner.png?raw=true)
 
 <!-- # Warning
 🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett). -->
 
-# Features
+# ✨ Features
 <table className="markdown-table">
   <tbody>
     <tr>
@@ -138,16 +136,11 @@ A simple movie release radar like CouchPotato, Radarr and Watcher3, written in J
   </tbody>
 </table>
 
-# Scripts
-  * `dev`: launch development server for `React` _frontend_
-  * `server`: launch server services without serving _frontend_
-  * `build`: build _frontend_ to `dist` folder
-  * `prod`: run `pm2` apps, Sensorr (`web server`) and Sensorr (`record cron`)
-  * `start`: launch `build` and `prod` scripts
-  * `doc`: launch `docz` documentation server
+# 🏎️ Quick Start
+Best way to get a **Sensorr** fresh install is with the Docker image, you just need a terminal with [`docker`](https://www.docker.com/get-starteds) installed !
 
-# Docker
-Checkout Sensorr [Docker image](https://hub.docker.com/r/thcolin/sensorr/), it let you skip every complex environment configuration and just run a clean installation, just open a terminal with `docker` installed and run:
+## 🐳 Docker
+Checkout Sensorr Docker image at [thcolin/sensorr/](https://hub.docker.com/r/thcolin/sensorr/)
 
 ```
 # `/home/user/.sensorr` will be your config path
@@ -155,55 +148,30 @@ Checkout Sensorr [Docker image](https://hub.docker.com/r/thcolin/sensorr/), it l
 docker run -p 5070:5070 -v /home/user/.sensorr:/app/sensorr/config -v /home/user/downloads:/app/sensorr/blackhole --name="sensorr" thcolin/sensorr
 ```
 
-Tips: Docker image is based on `alpine`, so you can add `TZ` env variable with `-e TZ=Europe/Paris`
+_Tips_: Docker image is based on `alpine`, so you can add `TZ` env variable with `-e TZ=Europe/Paris`
 
-# Configure
-* Edit default configuration in `config/config.json` or `http://localhost:5070/settings`
+## 🎚 Configure
+* Edit default configuration at `http://localhost:5070/settings` (or `config/config.json`)
 
-# CLI
-Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js` which launch `./bin/sensorr record -a` everyday at `17:00 / 5:00PM` and `./bin/sensorr stalk` everyday at `00:00`
+## ⏰ Jobs
+Some necessary cron jobs will be launched in background every day:
+* _16:03_ `sensorr:clean`: Clean oldest log sessions (if directory space exceeds configured value)
+* _17:00_ `sensorr:record`: Record wished movies from collection with best release
+* _01:03_ `sensorr:schedule`: Schedule calendar with recents movies from stalked stars (+/- 2 years from today)
+* _03:03_ `sensorr:pairwise`: Pairwise Plex instance with Sensorr instance (if configured)
+* _05:03_ `sensorr:hydrate`: Hydrate -or refresh- collected movies and stalked stars data
 
-**🚨 Warning:** CLI tool need to communicate with Sensorr web server at `http://localhost:5070` to sync databases ! Be sure Sensorr web server is launched before launching `record` command.
-
-```
-
-     _________  __________  ___  ___
-    / __/ __/ |/ / __/ __ \/ _ \/ _ \
-   _\ \/ _//    /\ \/ /_/ / , _/ , _/
-  /___/___/_/|_/___/\____/_/|_/_/|_|
-
-
-🍿 📼 - Movie release radar (CouchPotato, Radarr and Watcher3 alternative)
-
-Usage: sensorr [command] [options]
-
-Commands:
-  📼 record              Record wished movies from collection with best release
-  💧 hydrate             Hydrate movies from collection and stalked stars data
-  📅 schedule            Schedule calendar with recents movies from stalked stars (+/- 2 years from now)
-  🔗 pairwise            Pairwise Plex instance with Sensorr instance
-  🗑️ clean               Clean oldest log sessions (if directory space exceeds configured value)
-
-Options:
-  -p, --port             Specify localhost <port> [default: 5070]
-  -h, --help             Output usage information
-  -v, --version          Output the version number
-  # record
-  -b, --blackhole <dir>  Download releases .torrent and .nzb to <dir> [default: /tmp]
-  -f, --filter <regexp>  Filter releases returned by configured XZNAB
-  -s, --sort <key>       Sort releases by <key> (among: seeders, peers or size) [default: seeders]
-  -D, --descending       Sort releases in descending order
-
-
-Tips: Sensorr will use your "config/config.js" and fallback on default
-```
-
-# Roadmap
+# 🗺️ Roadmap
+* Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
+* Add `XZNAB` tester
+* Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
+* Explain `score` on `Releases`
+* Fix selected `Tab` change on `Find Releases` click
+* Fix `/star/7487` **crew** (it display `character` and not `job`)
 * Fix `/discover` links on `Details` page (first results doesn't care about `initial` or something)
 * Remove *query* `Input` on `Discover` page (useless)
 * Refactor `Items`
   * Extract `database` and `TMDB` behaviors to `withDatabase` and `withTMDB` HOC
-<!-- * Fix `palette` missing complete sometimes on `Film` in Firefox -->
 * Record **Missing** `movies` too
 * Feature `Discover`
   * `Movie`
@@ -233,7 +201,8 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Allow to *review* a `record` session
     * Review each `record`, one by one
     * Allow to post an `issue` on `thcolin/oleoo`
-    * Allow to search for `releases`
+    * Allow to search for `releases` manualy
+      * Allow to search custom titles - like `The.92nd.Annual.Academy.Awards.2020.FRENCH.1080p.HDTV.H264-SH0W` - out of `releases` scope
     * Allow to **ban** `releases` (like a `release` with hardcoded `subtitles` downloaded that i don't want)
 * Feature `performance`
   * Rename `XZNAB` to `XYZNAB`
@@ -309,7 +278,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * Connect to server with QR code
   * Streaming from `Releases` (how to know which file read ? - ask user)
 
-# Inspiration
+# 🎨 Inspiration
 * CLI
   * [minimist](https://github.com/substack/minimist)
   * [Inquirer.js](https://github.com/SBoudrias/Inquirer.js)
@@ -317,7 +286,7 @@ Tips: Sensorr will use your "config/config.js" and fallback on default
   * [oclif](https://github.com/oclif/oclif)
   * [ink](https://github.com/vadimdemedes/ink)
 
-# Family
+# 👋 Alternatives
 * [CouchPotato](https://github.com/CouchPotato/CouchPotatoServer)
 * [Radarr](https://github.com/Radarr/Radarr)
 * [Watcher3](https://github.com/nosmokingbandit/Watcher3)
