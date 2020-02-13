@@ -32,13 +32,13 @@ class Movie {
   normalize() {
     return {
       id: this.payload.id.toString(),
-      imdb_id: this.payload.imdb_id,
+      imdb_id: this.payload.imdb_id || '',
       title: this.payload.title,
       original_title: this.payload.original_title,
       release_date: (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getTime(),
       genres: (this.payload.genres || []).map(genre => typeof genre === 'object' ? genre.id : genre),
       year: this.payload.year ? this.payload.year : (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
-      poster_path: this.payload.poster_path,
+      poster_path: this.payload.poster_path || '',
       state: this.payload.state || 'wished',
       time: this.payload.time || Date.now(),
       popularity: this.payload.popularity || 0,
@@ -46,26 +46,24 @@ class Movie {
       runtime: this.payload.runtime || 0,
       terms: {
         titles: [
-          ...new Set([this.payload.title, this.payload.original_title].concat(
-            this.payload.titles ?
-              this.payload.titles :
-              ((this.payload.alternative_titles || {}).titles || [])
-                .filter(title => this.countries.includes(title.iso_3166_1))
-                .map(title => title.title)
+          ...new Set([this.payload.title, this.payload.original_title].concat(this.payload.titles ?
+            this.payload.titles :
+            ((this.payload.alternative_titles || {}).titles || [])
+              .filter(title => this.countries.includes(title.iso_3166_1))
+              .map(title => title.title)
           ).map(title => clean(title)).filter(title => title)),
         ],
         years: [
-          ...new Set(
-            this.payload.years ?
-              this.payload.years :
-              ((this.payload.release_dates || {}).results || [])
-                .filter(date => this.countries.includes(date.iso_3166_1))
-                .reduce((years, payload) => [
-                  ...years,
-                  ...payload.release_dates.map(date => new Date(date.release_date).getFullYear())
-                ], [
-                  (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
-                ])
+          ...new Set(this.payload.years ?
+            this.payload.years :
+            ((this.payload.release_dates || {}).results || [])
+              .filter(date => this.countries.includes(date.iso_3166_1))
+              .reduce((years, payload) => [
+                ...years,
+                ...payload.release_dates.map(date => new Date(date.release_date).getFullYear())
+              ], [
+                (this.payload.release_date ? new Date(this.payload.release_date) : new Date()).getFullYear(),
+              ])
           )
         ],
       }
