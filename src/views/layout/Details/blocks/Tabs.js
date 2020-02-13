@@ -12,14 +12,15 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
   }), {})
 
   const [key, setKey] = useState(initial)
-  const [state, setState] = useState((items[key] || { state: {} }).state)
+  const item = items[key] || items[initial] || { state: {}, props: {} }
+  const [state, setState] = useState(item.state)
 
   useEffect(() => {
     setKey(initial)
     setState((items[initial] || { state: {} }).state)
-  }, [(details || {}).id, rows, initial])
+  }, [details, rows, initial])
 
-  const props = (items[key] || { props: {} }).props
+  const props = item.props
   const source = (props.source || [])
     .filter(state.filter || (() => true))
     .sort(state.sort || (() => 0))
