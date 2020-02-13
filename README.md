@@ -158,7 +158,7 @@ docker run -p 5070:5070 -v /home/user/.sensorr:/app/sensorr/config -v /home/user
 Tips: Docker image is based on `alpine`, so you can add `TZ` env variable with `-e TZ=Europe/Paris`
 
 # Configure
-* Edit default configuration in `config/config.json` or `http://localhost:5070/configure`
+* Edit default configuration in `config/config.json` or `http://localhost:5070/settings`
 
 # CLI
 Currently CLI tool is mainly designed to work with `pm2` and `ecosystem.config.js` which launch `./bin/sensorr record -a` everyday at `17:00 / 5:00PM` and `./bin/sensorr stalk` everyday at `00:00`
