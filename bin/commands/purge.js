@@ -5,7 +5,7 @@ const { concatAll, map, filter, mergeMap, reduce, pluck, tap } = require('rxjs/o
 const { paths } = require('@shared/utils/constants')
 const chalk = require('chalk')
 
-async function clean({ log, sensorr }) {
+async function purge({ log, sensorr }) {
   log('')
 
   return await new Promise(resolve => bindNodeCallback(fs.readdir)(paths.sessions)
@@ -29,7 +29,7 @@ async function clean({ log, sensorr }) {
         }), { total: 0, sessions: [] })
       ),
       pluck('sessions'),
-      tap(sessions => sessions.length || log('👏', `Congratulations, your sessions directory is clean !`)),
+      tap(sessions => sessions.length || log('👏', `Congratulations, your sessions directory is now clean !`)),
       concatAll(),
       mergeMap(session => bindNodeCallback(fs.unlink)(path.join(paths.sessions, session.file)).pipe(
         map(() => session),
@@ -46,4 +46,4 @@ async function clean({ log, sensorr }) {
   )
 }
 
-module.exports = clean
+module.exports = purge

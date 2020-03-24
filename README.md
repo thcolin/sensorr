@@ -155,19 +155,21 @@ _Tips_: Docker image is based on `alpine`, so you can add `TZ` env variable with
 
 ## ⏰ Jobs
 Some necessary cron jobs will be launched in background every day:
-* _16:03_ `sensorr:clean`: Clean oldest log sessions (if directory space exceeds configured value)
+* _16:03_ `sensorr:purge`: Clean oldest log sessions (if directory space exceeds configured value)
 * _17:00_ `sensorr:record`: Record wished movies from collection with best release
 * _01:03_ `sensorr:schedule`: Schedule calendar with recents movies from stalked stars (+/- 2 years from today)
 * _03:03_ `sensorr:pairwise`: Pairwise Plex instance with Sensorr instance (if configured)
 * _05:03_ `sensorr:hydrate`: Hydrate -or refresh- collected movies and stalked stars data
 
 # 🗺️ Roadmap
+* Pause `button`
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
 * Explain `score` on `Releases`
 * Fix selected `Tab` change on `Find Releases` click
 * Fix `/star/7487` **crew** (it display `character` and not `job`)
+* Fix `/star/1546658` **crew** (it display `character` and not `job`)
 * Fix `/discover` links on `Details` page (first results doesn't care about `initial` or something)
 * Remove *query* `Input` on `Discover` page (useless)
 * Refactor `Items`
@@ -221,6 +223,8 @@ Some necessary cron jobs will be launched in background every day:
     * Take `screenshots` in `small`, `medium` and `large` breakpoints
 * Feature `Config`
   * Refactor `config` to `settings` using [mozilla/node-convict](https://github.com/mozilla/node-convict)
+  * Refactor with [nrwl/nx](https://github.com/nrwl/nx)
+  * Look at `Prisma` for database
 * Feature `1.0.0`
   * 🎉
   * Fix `docz`

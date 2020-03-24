@@ -8,7 +8,7 @@ const Records = ({ values, handleChange, ...props }) => (
     <p style={styles.paragraph}>
       Movies records create log files that can reach a considerable size, to avoid filling your disk space, you can specify here the maximum space (in <code style={styles.code}>MB</code>) allowed.
       <br/>
-      A <code style={styles.code}>clean</code> job will remove oldest log sessions if directory space exceeds configured value.
+      A <code style={styles.code}>purge</code> job will remove oldest log sessions if directory space exceeds configured value.
     </p>
     <div style={styles.column}>
       <input

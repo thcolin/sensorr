@@ -15,12 +15,12 @@ module.exports = {
       },
     },
     {
-      name: 'sensorr:clean',
+      name: 'sensorr:purge',
       cron: '3 16 * * *',
       exec_mode: 'fork',
       autorestart: false,
       script: './bin/exec',
-      args: ['./bin/sensorr', 'clean'],
+      args: ['./bin/sensorr', 'purge'],
       env: {
         NODE_ENV: 'development'
       },

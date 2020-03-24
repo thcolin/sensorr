@@ -5,7 +5,7 @@ Commands:
   💧 hydrate             Hydrate movies from collection and stalked stars data
   📅 schedule            Schedule calendar with recents movies from stalked stars (+/- 2 years from today)
   🔗 pairwise            Pairwise Plex instance with Sensorr instance
-  🗑️  clean               Clean oldest log sessions (if directory space exceeds configured value)
+  🗑️  purge               Clean oldest log sessions (if directory space exceeds configured value)
 
 Options:
   -p, --port             Specify localhost <port> [default: 5070]
