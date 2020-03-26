@@ -9778,10 +9778,10 @@ react-perfect-scrollbar@^1.5.0:
     perfect-scrollbar "^1.4.0"
     prop-types "^15.6.1"
 
-react-player@^1.14.0:
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/react-player/-/react-player-1.14.0.tgz#22ffce326bd2e88217579278b16cc62146e42d73"
-  integrity sha512-qqpMxFQgW1ZK9zhQawwRwXOEziiK2F+63dIC2cVOU5lghGN9anMlxHqij89twOITZK/Wl+5+LssQVBLeqfvlPg==
+react-player@^1.15.3:
+  version "1.15.3"
+  resolved "https://registry.yarnpkg.com/react-player/-/react-player-1.15.3.tgz#d00cf145f9c86184cb0a071a1fbf8ecb7b68987f"
+  integrity sha512-8fc0R1AipFIy7l4lKgnIg+gMU2IY32ZMxxBlINjXAq/YnN3HUP3hOaE+aQ0lQv+a1/MMZgbekWD86ZGDO7kB8g==
   dependencies:
     deepmerge "^4.0.0"
     load-script "^1.0.0"
