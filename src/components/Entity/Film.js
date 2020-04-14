@@ -505,7 +505,7 @@ export const Poster = ({ entity, img, palette = {}, focus, link, display, placeh
         css={[
           Poster.styles.element,
           placeholder && !entity.id && display !== 'pretty' && theme.styles.placeholder.animated,
-          !(img || entity.poster_path) && entity.id && ready && Poster.styles.empty,
+          (!img || !entity.poster_path) && entity.id && ready && Poster.styles.empty,
           props.css
         ]}
         style={{
