@@ -73,7 +73,7 @@ export default class Persona extends PureComponent {
   }
 
   componentDidUpdate(props) {
-    const { entity, display, palette } = this.props
+    const { entity } = this.props
     const { ready, ...state } = this.state
 
     if (entity.id !== props.entity.id) {
@@ -84,7 +84,11 @@ export default class Persona extends PureComponent {
         },
       })
     } else if (
-      !ready.entity &&
+      (
+        !ready.entity ||
+        entity.character !== this.state.entity.character ||
+        entity.job !== this.state.entity.job
+      ) &&
       !!entity.id &&
       (
         entity.id !== this.state.entity.id ||
