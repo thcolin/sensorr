@@ -7,7 +7,7 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
     ...acc,
     ...(!Array.isArray(row) ?
       { [row.key]: row } :
-      row.reduce((cca, item) => ({ ...cca, [item.key]: item }), {})
+      row.reduce((acc, item) => ({ ...acc, [item.key]: item }), {})
     ),
   }), {})
 
@@ -74,6 +74,7 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
           </div>
         )}
         source={!(ready && props.source) ? [] : source}
+        ready={ready}
         strict={false}
         placeholder={true}
         empty={{ style: Tabs.styles.empty }}
@@ -134,7 +135,7 @@ Tabs.styles = {
     },
   },
   empty: {
-    color: theme.colors.white,
+    color: theme.colors.rangoon,
   },
 }
 

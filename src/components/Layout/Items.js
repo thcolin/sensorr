@@ -430,9 +430,10 @@ export default class Items extends PureComponent {
     const approved = entities.filter(entity => this.validate(entity))
     const filtered = approved.sort(operations.sort).filter(operations.filter)
     const limited = filtered.filter((foo, index) => (limit === Infinity || index < limit) && (display !== 'grid' || index < max))
-    const childs = (limited.length && (!loading || params.page > 1 || stack)) ?
-      limited :
-      !placeholder ? [] : Array(Math.min(total, 20) || 20).fill({}).map((foo, index) => child.placeholder(propsify({ index })))
+    const childs = (ready && (!loading || params.page > 1 || stack)) ? limited : (!placeholder ? [] : Array(Math.min(total, 20) || 20)
+      .fill({})
+      .map((foo, index) => child.placeholder(propsify({ index })))
+    )
 
     const styles = Items.styles[display]
 
