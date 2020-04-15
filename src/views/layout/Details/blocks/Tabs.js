@@ -18,7 +18,7 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
   useEffect(() => {
     setKey(initial)
     setState((items[initial] || { state: {} }).state)
-  }, [details, rows, initial])
+  }, [details, JSON.stringify(Object.keys(items)), initial])
 
   const props = item.props
   const source = (props.source || [])

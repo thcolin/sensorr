@@ -525,20 +525,18 @@ export default class Movie extends PureComponent {
     const { match } = this.props
 
     return (
-      <>
-        <Details
-          uri={['movie', match.params.id]}
-          params={{
-            append_to_response: 'images,videos,credits,similar,recommendations,alternative_titles,release_dates,keywords',
-            include_image_language: 'en,null',
-          }}
-          placeholder={Movie.placeholder}
-          components={Movie.components}
-          generators={Movie.generators}
-          palette={Movie.palette}
-          usePalette={true}
-        />
-      </>
+      <Details
+        uri={['movie', match.params.id]}
+        params={{
+          append_to_response: 'images,videos,credits,similar,recommendations,alternative_titles,release_dates,keywords',
+          include_image_language: 'en,null',
+        }}
+        placeholder={Movie.placeholder}
+        components={Movie.components}
+        generators={Movie.generators}
+        palette={Movie.palette}
+        usePalette={true}
+      />
     )
   }
 }

@@ -167,8 +167,6 @@ Some necessary cron jobs will be launched in background every day:
 * Add `XZNAB` tester
 * Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
 * Explain `score` on `Releases`
-* Fix selected `Tab` change on `Find Releases` click
-* Fix `/star/1546658` **crew** (it display `character` and not `job`)
 * Fix `/discover` links on `Details` page (first results doesn't care about `initial` or something)
 * Remove *query* `Input` on `Discover` page (useless)
 * Refactor `Items`
