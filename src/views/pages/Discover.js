@@ -74,9 +74,9 @@ const Discover = ({ history, ...props }) => (
           filters: Discover.Filters,
           sortings: Discover.Sortings,
           initial: {
-            filtering: ((history.location.state || {}).controls || {}).filtering || {},
-            sorting: ((history.location.state || {}).controls || {}).sorting || 'popularity',
-            reverse: ((history.location.state || {}).controls || {}).reverse || false,
+            filtering: history.location.state?.controls?.filtering || {},
+            sorting: history.location.state?.controls?.sorting || 'popularity',
+            reverse: history.location.state?.controls?.reverse || false,
           },
           defaults: {
             filtering: {},
@@ -105,7 +105,7 @@ const Discover = ({ history, ...props }) => (
 Discover.Filters = {
   with_original_language: () => {
     const options = countryLanguage.getLanguages()
-      .filter(language => language.iso639_1 && (language.name || []).length)
+      .filter(language => language.iso639_1 && language.name?.length)
       .map(language => ({
         value: language.iso639_1,
         label: language.name[0],

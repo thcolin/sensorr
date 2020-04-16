@@ -183,7 +183,15 @@ export default class Items extends PureComponent {
     this.state = {
       entities: origin === 'items' ? props.source : [],
 
-      params: {},
+      params: {
+        ...((props.controls?.initial?.sorting && typeof props.controls?.initial?.reverse !== 'undefined') ? {
+          sort_by: `${props.controls.initial.sorting}.${props.controls.initial.reverse ? 'asc' : 'desc'}`,
+        } : {}),
+        ...(props.controls?.initial?.filtering ? Object.keys(props.controls.initial.filtering).reduce((acc, key) => ({
+          ...acc,
+          ...(props.controls.filters[key]().serialize ? props.controls.filters[key]().serialize(props.controls.initial.filtering[key]) : {}),
+        }), {}) : {}),
+      },
       loading: ['db', 'tmdb'].includes(origin),
       done: origin !== 'tmdb',
       total: origin === 'items' ? props.source.length : 0,
@@ -457,7 +465,7 @@ export default class Items extends PureComponent {
                 ...Object.keys(filtering).reduce((acc, key) => ({
                   ...acc,
                   ...(filters[key].serialize ? filters[key].serialize(filtering[key]) : {}),
-                }), {})
+                }), {}),
               },
               operations: { filter, sort },
               focus: (!sorting || sorting === 'time') ? null : sorting,
