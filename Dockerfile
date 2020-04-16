@@ -17,7 +17,6 @@ RUN mkdir -p config \
   && mkdir -p blackhole \
   && chmod 660 blackhole \
   && apk add -U python make g++ \
-  && npm i -g yarn \
   && yarn install \
   && yarn run build \
   && apk del python make g++ \
