@@ -53,7 +53,7 @@
     "pouchdb-upsert": "2.2.0",
     "prop-types": "15.7.2",
     "puppeteer": "^1.20.0",
-    "query-string": "6.8.3",
+    "query-string": "6.12.1",
     "react": "16.13.1",
     "react-animate-height": "2.0.20",
     "react-countup": "^4.3.3",
