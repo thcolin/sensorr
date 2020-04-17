@@ -46,7 +46,7 @@
     "pm2": "4.1.2",
     "pouchdb": "7.1.1",
     "pouchdb-adapter-http": "7.1.1",
-    "pouchdb-adapter-idb": "7.1.1",
+    "pouchdb-adapter-idb": "7.2.1",
     "pouchdb-adapter-leveldb": "7.1.1",
     "pouchdb-find": "7.1.1",
     "pouchdb-replication-stream": "^1.2.9",
