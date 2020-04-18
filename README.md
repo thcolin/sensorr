@@ -1,4 +1,4 @@
-![Sensorr](https://raw.githubusercontent.com/thcolin/sensorr/master/doc/banner.png?raw=true)
+<img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/banner.png?raw=true" width="100%" />
 
 <!-- # Warning
 🚨 This is early experimental, currently will only support [`Cardigann`](https://github.com/cardigann/cardigann) and [`Jackett`](https://github.com/Jackett/Jackett). -->
