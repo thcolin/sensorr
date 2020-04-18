@@ -215,6 +215,7 @@ export default class Collection extends PureComponent {
     Tabs: ({ details, ready, palette, ...props }) => (
       <Tabs
         {...props}
+        id="collection-tabs"
         details={details}
         ready={ready}
         palette={palette}

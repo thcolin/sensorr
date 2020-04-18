@@ -1,5 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import PropTypes from 'prop-types'
+import { withRouter } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import Backdrop from 'components/UI/Backdrop'
 import Empty from 'components/Empty'
@@ -98,9 +99,16 @@ const styles = {
     fontWeight: 600,
   },
   state: {
-    width: '15em',
+    width: '10em',
     display: 'flex',
     justifyContent: 'flex-end',
+    flexShrink: 0,
+    '>span': {
+      width: '100%',
+      '>label>span': {
+        width: '100%',
+      },
+    },
   },
   description: {
     margin: '1em 0 1em',
@@ -116,7 +124,7 @@ const styles = {
   },
 }
 
-export default class Details extends PureComponent {
+class Details extends PureComponent {
   static propTypes = {
     uri: PropTypes.array.isRequired,
     params: PropTypes.object,
@@ -162,7 +170,7 @@ export default class Details extends PureComponent {
       loading: true,
       err: null,
       playing: false,
-      subdata: false,
+      subdata: props.history.location.state?.subdata || false,
       children: {},
       ready: {
         data: false,
@@ -193,7 +201,7 @@ export default class Details extends PureComponent {
       loading: true,
       err: null,
       playing: false,
-      subdata: false,
+      subdata: this.props.history.location.state?.subdata || false,
       children: {},
       ready: {
         data: false,
@@ -258,6 +266,20 @@ export default class Details extends PureComponent {
         }
       })
     }
+  }
+
+  handleSubdataChange = () => {
+    const next = !this.state.subdata
+
+    this.setState({ subdata: next })
+    this.props.history.replace({
+      pathname: this.props.history.location.pathname,
+      search: this.props.history.location.search,
+      state: {
+        ...(this.props.history.location.state || {}),
+        subdata: next,
+      },
+    })
   }
 
   render() {
@@ -334,14 +356,14 @@ export default class Details extends PureComponent {
                             <button
                               css={theme.resets.button}
                               style={{ padding: '0 0.25em' }}
-                              onClick={() => this.setState(state => ({ subdata: !state.subdata }))}
+                              onClick={this.handleSubdataChange}
                             >
                               <small>{subdata ? "▲" : "▼"}</small>
                             </button>
                           )}
                         </div>
                         {components.Subdata && (
-                          <div css={styles.subdata} hidden={!state.ready.data || !subdata}>
+                          <div css={[styles.subdata, ...placeholder]} hidden={!state.ready.data || !subdata}>
                             <components.Subdata details={details} />
                           </div>
                         )}
@@ -404,3 +426,4 @@ export { default as Trailer } from './blocks/Trailer'
 export { default as Poster } from './blocks/Poster'
 export { default as Tabs } from './blocks/Tabs'
 export { default as withCount } from './blocks/withCount'
+export default withRouter(Details)

@@ -256,7 +256,7 @@ Some necessary cron jobs will be launched in background every day:
       ```
   * `Loading` page waiting sync of `db` with progress ?
     * Allow to `clean` database if waiting too much
-  * Dark mode (`react-theme-provider`)
+  * Dark mode (`theme-ui`)
 * Feature `Custom Home`
   * `Home`
     * Customize
@@ -270,6 +270,7 @@ Some necessary cron jobs will be launched in background every day:
     * `Plex` manage all `medias`, so we can get `release` (`source`, `language`, `resolution`, ...) and compute score
 * Feature `Onboarding`
   * Add `Onboarding` page
+* Add demo on a server
 * Feature `Browser Plugin`
   * `IMDB`, `TMDB`, `SensCritique` or `AlloCiné` browser plugin "bookmark" (update state of current movie website tab on `Sensorr` instance)
 * Feature `import/export`

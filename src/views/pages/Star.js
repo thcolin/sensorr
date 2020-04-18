@@ -163,6 +163,7 @@ export default class Star extends PureComponent {
     Tabs: ({ details, ready, palette, ...props }) => (
       <Tabs
         {...props}
+        id="star-tabs"
         details={details}
         ready={ready}
         palette={palette}

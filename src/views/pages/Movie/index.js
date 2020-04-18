@@ -361,6 +361,7 @@ export default class Movie extends PureComponent {
     Tabs: ({ details, ready, palette, ...props }) => (
       <Tabs
         {...props}
+        id="movie-tabs"
         details={details}
         ready={ready}
         palette={palette}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import Items from 'components/Layout/Items'
+import { withRouter } from 'react-router-dom'
 import theme from 'theme'
 
-const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) => {
+const Tabs = ({ id, details, items: rows, initial: init, placeholder, palette, ready, history }) => {
+  const initial = (!!id && !!history.location.state && history.location.state[id]) || init
   const items = rows.reduce((acc, row) => ({
     ...acc,
     ...(!Array.isArray(row) ?
@@ -14,6 +16,22 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
   const [key, setKey] = useState(initial)
   const item = items[key] || items[initial] || { state: {}, props: {} }
   const [state, setState] = useState(item.state)
+
+  const handleItemChange = (item) => {
+    setKey(item.key)
+    setState(item.state)
+    
+    if (!!id) {
+      history.replace({
+         pathname: history.location.pathname,
+         search: history.location.search,
+         state: {
+           ...(history.location.state || {}),
+           [id]: item.key,
+         },
+      })
+    }
+  }
 
   useEffect(() => {
     setKey(initial)
@@ -34,10 +52,7 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
               {row.map(item => (
                 <span
                   key={item.key}
-                  onClick={() => {
-                    setKey(item.key)
-                    setState(item.state)
-                  }}
+                  onClick={() => handleItemChange(item)}
                   css={placeholder}
                   style={{ opacity: !ready || item.key === key ? 1 : 0.25 }}
                 >
@@ -48,10 +63,7 @@ const Tabs = ({ details, items: rows, initial, placeholder, palette, ready }) =>
           ) : (
             <span
               key={row.key}
-              onClick={() => {
-                setKey(row.key)
-                setState(item.state)
-              }}
+              onClick={() => handleItemChange(item)}
               css={placeholder}
               style={{ opacity: !ready || row.key === key ? 1 : 0.25 }}
             >
@@ -139,4 +151,4 @@ Tabs.styles = {
   },
 }
 
-export default Tabs
+export default withRouter(Tabs)
