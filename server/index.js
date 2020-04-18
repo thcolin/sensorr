@@ -22,7 +22,7 @@ app.use(busboy())
 app.use(cors())
 app.use(compression())
 app.use(bauth({
-  realm: 'Sensorr - Movie release radar',
+  realm: 'Sensorr - A Friendly Digital Video Recorder',
   challenge: true,
   authorizer: (username, password) => (
     (!Config.payload.username & !Config.payload.password) ||
