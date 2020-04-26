@@ -17,6 +17,7 @@ RUN mkdir -p config \
   && mkdir -p blackhole \
   && chmod 660 blackhole \
   && apk add -U python make g++ \
+  && yarn config set network-timeout 300000 \
   && yarn install \
   && yarn run build \
   && apk del python make g++ \
