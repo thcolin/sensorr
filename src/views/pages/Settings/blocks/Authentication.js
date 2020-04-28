@@ -21,7 +21,7 @@ const Authentication = ({ values, handleChange, ...props }) => (
         onChange={e => handleChange('auth', { ...values.auth, username: e.target.value })}
       />
       <input
-        type="text"
+        type="password"
         placeholder={'Password'}
         css={styles.input}
         style={{ marginLeft: '1em', }}
