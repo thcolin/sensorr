@@ -6,7 +6,7 @@ async function header({ log }) {
   text.pipe(process.stderr)
   await new Promise(resolve => text.on('end', resolve))
   log('')
-  log('🍿 📼', ' - ', `${chalk.bold('A Friendly Digital Video Recorder')} (CouchPotato, Radarr and Watcher3 alternative)`)
+  log('🍿 📼', ' - ', `${chalk.bold('Your Friendly Digital Video Recorder')} (CouchPotato, Radarr and Watcher3 alternative)`)
   log('')
 }
 

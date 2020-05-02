@@ -1,7 +1,7 @@
 {
   "name": "sensorr",
   "version": "0.9.0",
-  "description": "🍿📼 Sensorr - A Friendly Digital Video Recorder (CouchPotato, Radarr and Watcher3 alternative)",
+  "description": "🍿📼 Sensorr - Your Friendly Digital Video Recorder (CouchPotato, Radarr and Watcher3 alternative)",
   "main": "index.js",
   "scripts": {
     "start": "yarn run build && yarn run prod",
@@ -35,6 +35,7 @@
     "express-basic-auth": "1.2.0",
     "express-pouchdb": "4.2.0",
     "filenamify": "4.1.0",
+    "history": "^4.10.1",
     "marksy": "8.0.0",
     "microtime": "3.0.0",
     "module-alias": "2.2.2",
