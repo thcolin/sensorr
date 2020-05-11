@@ -162,14 +162,13 @@ Some necessary cron jobs will be launched in background every day:
 * _05:03_ `sensorr:hydrate`: Hydrate -or refresh- collected movies and stalked stars data
 
 # 🗺️ Roadmap
+* Search, load more page (useful when you search simple terms with many results)
 * Pause `button`
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
 * Explain `score` on `Releases`
 * Remove *query* `Input` on `Discover` page (useless)
-* Refactor `Items`
-  * Extract `database` and `TMDB` behaviors to `withDatabase` and `withTMDB` HOC
 * Record **Missing** `movies` too
 * Feature `Discover`
   * `Movie`
@@ -196,12 +195,39 @@ Some necessary cron jobs will be launched in background every day:
     * Grouped movies by "policy"
     * Same layout as `Home` page
 * Feature `Review` (fix manual)
-  * Allow to *review* a `record` session
-    * Review each `record`, one by one
-    * Allow to post an `issue` on `thcolin/oleoo`
-    * Allow to search for `releases` manualy
-      * Allow to search custom titles - like `The.92nd.Annual.Academy.Awards.2020.FRENCH.1080p.HDTV.H264-SH0W` - out of `releases` scope
-    * Allow to **ban** `releases` (like a `release` with hardcoded `subtitles` downloaded that i don't want)
+  * Summary command result
+    * `record`:
+      ```
+        From ${wished} wished 🍿 movies, ${found} where recorded 📼 to ${sensorr.config.blackhole} !
+          * ${movie.title} (${movie.year}) with release ${release.generated}
+        ${filtered} were filtered 🚫 according to your policies
+          * ${movie.title} (${movie.year})
+            * ${release} (${reason})
+        But ${missing} still missing 📭 (with no releases found)
+          * ${movie.title} (${movie.year}) 
+        You should look at these ${error} errors 🚨
+          * ${movie.title} (${movie.year}) : ${err}
+      ```
+  * Refactor `Logs`
+    * Left panel with `session` list with summary
+    * `Records`
+      * Summary
+        * 🍿 Wished
+        * 📼 Recorded
+        * 🚫 Filtered (reviewable)
+        * 📭 Missing (reviewable)
+        * 🚨 Error (reviewable)
+      * Review
+        * Review each `record`, one by one, autoscroll on validation
+      * Record
+        * Allow to post an `issue` on `thcolin/oleoo`
+          * With data : { movie, records: records.map(record => record.meta ) }
+        * Allow to search for `releases` manualy
+          * Allow to search custom titles - like `The.92nd.Annual.Academy.Awards.2020.FRENCH.1080p.HDTV.H264-SH0W` - out of `releases` scope
+        * Allow to **ban** `releases` (like a `release` with hardcoded `subtitles` downloaded that i don't want)
+    * `Purge`
+    * `Pairwise`
+    * `Hydrate`
 * Feature `performance`
   * Rename `XZNAB` to `XYZNAB`
   * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
@@ -210,11 +236,13 @@ Some necessary cron jobs will be launched in background every day:
     * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)
   * `Server`
     * Look at [`WatermelonDB`](https://github.com/Nozbe/WatermelonDB)
+      * Or only use **remote** `PouchDB` server with `rxdb`
     * Fix RAM usage with `sessions` in `io`
   * `CLI`
     * Use [`cli-step`](https://github.com/poppinss/cli-step)
     * When `stalk` star, `atomicUpsert` it
     * Fix `record` command, filter movies with release date < +3 months (useless to search for movies still in production - make configurable)
+    * Compile binary (reduce Docker image size by removing useless dependecies)
   * Responsive design / mobile UI-UX
     * Take `screenshots` in `small`, `medium` and `large` breakpoints
 * Feature `Config`
@@ -246,14 +274,6 @@ Some necessary cron jobs will be launched in background every day:
   * `Row`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
-  * Summary command result
-    * `record`:
-      ```
-        ${found} Movies archived to ${sensorr.config.blackhole} ! 🎉
-          * ${movie.title} (${movie.year}) with release ${release.generated}
-        But ${notfound} still not found.. 😶
-          * ${movie.title} (${movie.year}) : 0 releases found including 0 filtered
-      ```
   * `Loading` page waiting sync of `db` with progress ?
     * Allow to `clean` database if waiting too much
   * Dark mode (`theme-ui`)

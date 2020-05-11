@@ -7,12 +7,12 @@ const withCount = (WrappedComponent, table) => ({ ...props }) => {
   useEffect(() => {
     async function fetchCount() {
       const db = await database.get()
-      const result = await db[table].find().where('id').in(props.source.map(r => r.id.toString())).exec()
+      const result = await db[table].find().where('id').in(props.entities.map(r => r.id.toString())).exec()
       setCount(result.length)
     }
 
     fetchCount()
-  }, [props.source])
+  }, [props.entities])
 
   return (
     <WrappedComponent

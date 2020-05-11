@@ -101,31 +101,31 @@ export default class Movie extends PureComponent {
 
   static tabs = {
     subtitles: {
-      collection: withCount(({ details, source, state, setState, count }) => (
+      collection: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> movies from this collection in your library
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> movies from <Link to={`/collection/${details.belongs_to_collection?.id}`} style={{ color: 'inherit' }}>"{details.belongs_to_collection?.name}"</Link> in your library
           </span>
         </>
       ), 'movies'),
-      recommendations: withCount(({ details, source, state, setState, count }) => (
+      recommendations: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> recommended movies in your library
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> recommended movies in your library
           </span>
         </>
       ), 'movies'),
-      similar: withCount(({ details, source, state, setState, count }) => (
+      similar: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> similar movies in your library
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> similar movies in your library
           </span>
         </>
       ), 'movies'),
-      cast: withCount(({ details, source, state, setState, count }) => (
+      cast: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> followed stars
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> followed stars
           </span>
           <button css={theme.resets.button}
             onClick={() => setState({
@@ -137,10 +137,10 @@ export default class Movie extends PureComponent {
           </button>
         </>
       ), 'stars'),
-      crew: withCount(({ details, source, state, setState, count }) => (
+      crew: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> followed crew members
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> followed crew members
           </span>
           <button css={theme.resets.button}
             onClick={() => setState({
@@ -203,7 +203,7 @@ export default class Movie extends PureComponent {
       />
     ),
     State: ({ details }) => (
-      <Film.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
+      <Film.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: '0 0 0 1rem' }} />
     ),
     Metadata: ({ details }) => (
       <>
@@ -381,7 +381,7 @@ export default class Movie extends PureComponent {
                 key: 'collection',
                 state: {},
                 props: {
-                  source: (details.belongs_to_collection || { parts: [] }).parts,
+                  entities: (details.belongs_to_collection || { parts: [] }).parts,
                   child: Film.default,
                   props: { display: 'pretty', palette },
                   subtitle: Movie.tabs.subtitles.collection,
@@ -394,7 +394,7 @@ export default class Movie extends PureComponent {
                 key: 'recommendations',
                 state: {},
                 props: {
-                  source: details.recommendations.results,
+                  entities: details.recommendations.results,
                   child: Film.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.recommendations,
@@ -407,7 +407,7 @@ export default class Movie extends PureComponent {
                 key: 'similar',
                 state: {},
                 props: {
-                  source: details.similar.results,
+                  entities: details.similar.results,
                   child: Film.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.similar,
@@ -425,7 +425,7 @@ export default class Movie extends PureComponent {
                   filter: (credit, index) => index < 20,
                 },
                 props: {
-                  source: details.credits.cast,
+                  entities: details.credits.cast,
                   child: Persona,
                   props: { display: 'portrait', palette },
                   subtitle: Movie.tabs.subtitles.cast,
@@ -441,7 +441,7 @@ export default class Movie extends PureComponent {
                   filter: (credit, index) => index < 20,
                 },
                 props: {
-                  source: [...details.credits.crew]
+                  entities: [...details.credits.crew]
                     .sort((a, b) => ({ Director: 2, Writor: 1 }[b.job] || 0) - ({ Director: 2, Writor: 1 }[a.job] || 0))
                     .map((credit, index, self) => ({
                       ...credit,

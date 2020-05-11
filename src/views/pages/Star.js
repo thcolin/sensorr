@@ -46,10 +46,10 @@ export default class Star extends PureComponent {
       },
     },
     subtitles: {
-      cast: withCount(({ details, source, state, setState, count }) => (
+      cast: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> movies in your library &nbsp;
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> movies in your library &nbsp;
           </span>
           <label htmlFor="subtitles.cast">
             <span>
@@ -69,10 +69,10 @@ export default class Star extends PureComponent {
           </label>
         </>
       ), 'movies'),
-      crew: withCount(({ details, source, state, setState, count }) => (
+      crew: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> movies in your library &nbsp;
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> movies in your library &nbsp;
           </span>
           <label htmlFor="subtitles.crew">
             <span>
@@ -179,7 +179,7 @@ export default class Star extends PureComponent {
                   sort: Star.tabs.sorts.vote_average.sort,
                 },
                 props: {
-                  source: details.movie_credits.cast
+                  entities: details.movie_credits.cast
                     .map((credit, index, self) => ({
                       ...credit,
                       ...(!credit.job ? {} : {
@@ -203,14 +203,13 @@ export default class Star extends PureComponent {
                 state: {
                   order: 'vote_average',
                   sort: Star.tabs.sorts.vote_average.sort,
-                  strict: true,
                   filter: (credit) => (
                     credit.department === details.known_for_department ||
                     details.known_for_department === 'Acting'
                   ),
                 },
                 props: {
-                  source: details.movie_credits.crew
+                  entities: details.movie_credits.crew
                     .map((credit, index, self) => ({
                       ...credit,
                       ...(!credit.job ? {} : {

@@ -3,7 +3,7 @@ import { Switch, NavLink, Route } from 'react-router-dom'
 import Navbar from './blocks/Navbar'
 import Recording from './blocks/Recording'
 import Search from './blocks/Search'
-import { triggerScrollToTop } from 'views/enhancers/ScrollToTop'
+import { triggerScrollToTop } from 'views/enhancers/ScrollRestoration'
 import theme from 'theme'
 
 const styles = {

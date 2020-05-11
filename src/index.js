@@ -3,10 +3,11 @@ import React from 'react'
 import { render } from 'react-dom'
 import { Provider as ReduxProvider } from 'react-redux'
 import { ToastProvider } from 'react-toast-notifications'
-import { BrowserRouter as RouterProvider } from 'react-router-dom'
+import { Router } from 'react-router-dom'
 import { Toast, ToastContainer } from 'views/layout/Toasts'
-import ScrollToTop from 'views/enhancers/ScrollToTop'
+import ScrollRestoration from 'views/enhancers/ScrollRestoration'
 import App from 'views/App'
+import history from 'utils/history'
 import store from 'store'
 import 'styles'
 
@@ -14,11 +15,11 @@ render(
   (
     <ReduxProvider store={store}>
       <ToastProvider components={{ Toast, ToastContainer }}>
-        <RouterProvider>
-          <ScrollToTop>
+        <Router history={history}>
+          <ScrollRestoration>
             <App />
-          </ScrollToTop>
-        </RouterProvider>
+          </ScrollRestoration>
+        </Router>
       </ToastProvider>
     </ReduxProvider>
   ),

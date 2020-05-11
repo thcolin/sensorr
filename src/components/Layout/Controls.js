@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import * as Emotion from '@emotion/core'
+import { setHistoryState } from 'utils/history'
 import AnimateHeight from 'react-animate-height'
 import Range from 'components/Form/Range'
 import Checkbox from 'components/Form/Checkbox'
@@ -140,10 +141,26 @@ const Input = ({ onChange, ...props }) => {
   )
 }
 
-const Controls = ({ label, entities, filters, sortings, defaults, initial, total, onChange, render = {}, history, disabled, ...props }) => {
+const Controls = ({
+  label,
+  entities,
+  filters,
+  sortings,
+  defaults: _defaults,
+  initial: _initial,
+  total,
+  onChange,
+  render = {},
+  disabled,
+  ...props
+}) => {
+  const defaults = useMemo(() => typeof _defaults === 'function' ? _defaults() : _defaults, [_defaults])
+  const initial = useMemo(() => typeof _initial === 'function' ? _initial() : _initial, [_initial])
+
   const [filtering, setFiltering] = useState((initial || defaults).filtering)
   const [sorting, setSorting] = useState((initial || defaults).sorting)
   const [reverse, setReverse] = useState((initial || defaults).reverse)
+  const [state, setState] = useState((initial || defaults).state)
   const [query, setQuery] = useState('')
   const [previous, setPrevious] = useState(initial || defaults)
   const [open, setOpen] = useState(false)
@@ -170,28 +187,22 @@ const Controls = ({ label, entities, filters, sortings, defaults, initial, total
     setReverse(previous.reverse)
   }
 
-  const apply = (query = '', effects = true) => {
+  const apply = ({ query = '', ...diff } = {}, effects = true) => {
     if (effects) {
       setOpen(false)
       setPrevious({ filtering, sorting, reverse })
     }
 
-    if (history) {
-      history.replace({
-         pathname: history.location.pathname,
-         search: history.location.search,
-         state: {
-           ...(history.location.state || {}),
-           controls: {
-             filtering,
-             sorting,
-             reverse,
-           },
-         },
-      })
-    }
+    setHistoryState({
+      controls: {
+        filtering,
+        sorting,
+        reverse,
+      },
+    })
 
     onChange({
+      state,
       filtering,
       filter: (entity) =>
         Object.keys(filtering).every(key => filters[key].apply(entity, filtering[key])) &&
@@ -199,12 +210,13 @@ const Controls = ({ label, entities, filters, sortings, defaults, initial, total
       sorting,
       reverse,
       sort: (a, b) => sortings[sorting].apply(a, b, reverse),
+      ...diff,
     })
   }
 
   // Apply default sort/filter on componentDidMount
   useEffect(() => {
-    apply(query, false)
+    apply({ query }, false)
   }, [])
 
   const blocks = Object.keys(filters)
@@ -313,14 +325,21 @@ const Controls = ({ label, entities, filters, sortings, defaults, initial, total
     <div css={styles.element}>
       <div css={styles.menu}>
         {render.menu ? (
-          render.menu({ setOpen })
+          render.menu({
+            setOpen,
+            state,
+            setState: (state) => {
+              setState(state)
+              apply({ state })
+            },
+          })
         ) : (
           <>
             <Input
               key="query"
               onChange={query => {
                 setQuery(query)
-                apply(query, false)
+                apply({ query }, false)
               }}
             />
             <div key="summary" css={styles.summary}>
@@ -363,10 +382,18 @@ const Controls = ({ label, entities, filters, sortings, defaults, initial, total
           }}
         >
           <div {...(open ? {} : { style: { opacity: 0 } })}>
-            {Emotion.jsx(label, { total: total || without([]).length, reset })}
+            {Emotion.jsx(label, {
+              total: total || without([]).length,
+              reset,
+              state,
+              setState: (state) => {
+                setState(state)
+                apply({ state })
+              }
+            })}
             <div>
               <Button look={1} onClick={() => cancel()}>Cancel</Button>
-              <Button onClick={() => apply(query)}>Apply</Button>
+              <Button onClick={() => apply({ query })}>Apply</Button>
             </div>
           </div>
         </div>

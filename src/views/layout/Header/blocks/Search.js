@@ -148,19 +148,19 @@ export const Results = ({ children, ...props }) => {
             {state.movie && (
               <Items
                 label="🎞️&nbsp; Movies"
-                source={state.movie}
+                entities={state.movie}
                 hide={true}
                 child={Film}
                 props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"
-                space={0.5}
+                options={{ space: 0.5 }}
               />
             )}
             {state.collection && (
               <Items
                 label="📚&nbsp; Collections"
-                source={state.collection}
+                entities={state.collection}
                 hide={true}
                 child={Film}
                 props={{
@@ -170,19 +170,19 @@ export const Results = ({ children, ...props }) => {
                 }}
                 css={Results.styles.label}
                 display="column"
-                space={0.5}
+                options={{ space: 0.5 }}
               />
             )}
             {state.person && (
               <Items
                 label="⭐&nbsp; Stars"
-                source={state.person}
+                entities={state.person}
                 hide={true}
                 child={Persona}
                 props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"
-                space={0.5}
+                options={{ space: 0.5 }}
               />
             )}
             {/*

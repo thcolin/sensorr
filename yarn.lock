@@ -8818,7 +8818,7 @@ nano-time@1.0.0:
   dependencies:
     big-integer "^1.6.16"
 
-nanobounce@1.0.1:
+nanobounce@1.0.1, nanobounce@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/nanobounce/-/nanobounce-1.0.1.tgz#33845ad2728b787f9795eaff2ea0a410743674c6"
 
@@ -10872,6 +10872,13 @@ react-redux@7.2.0:
     prop-types "^15.7.2"
     react-is "^16.9.0"
 
+react-responsive-virtual-grid@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/react-responsive-virtual-grid/-/react-responsive-virtual-grid-0.0.3.tgz#1eca941c56bb82ff7a2f16152a47786e537ed5f2"
+  integrity sha512-QW0rugFlu9eZDCx7ICVClDGMaqwkA+UmvVyt+6mljftIGTaz3EBX6KLsPH/nHDqjpfMWPG4PsPAV/8CUm13RhA==
+  dependencies:
+    nanobounce "^1.0.1"
+
 react-router-dom@5.1.2:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-5.1.2.tgz#06701b834352f44d37fbb6311f870f84c76b9c18"
@@ -12527,6 +12534,13 @@ svgo@^1.2.2:
     stable "^0.1.8"
     unquote "~1.1.1"
     util.promisify "~1.0.0"
+
+swimmer@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/swimmer/-/swimmer-1.4.0.tgz#cf2ffc13c6f0af483fbc91eb35ffd318556407fd"
+  integrity sha512-r6e+3pUnXgHQnzEN0tcIGmaTs76HbZEoM9NSdmAoNqSS4BPyoUFYeQtyGUm56SXoe62LS6BIrXc8q9yp9TuZgQ==
+  dependencies:
+    babel-runtime "^6.26.0"
 
 symbol-observable@^1.2.0:
   version "1.2.0"

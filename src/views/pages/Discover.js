@@ -1,13 +1,17 @@
 import React, { Fragment } from 'react'
+import { compose } from 'redux'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
+import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
+import withControls from 'components/Layout/Items/withControls'
 import Film from 'components/Entity/Film'
 import tmdb from 'store/tmdb'
 import { CERTIFICATIONS, GENRES } from 'shared/services/TMDB'
 import countryLanguage from 'country-language'
 import countryEmoji from 'country-emoji'
-import { humanize, capitalize } from 'shared/utils/string'
+import { humanize } from 'shared/utils/string'
+import { setHistoryState } from 'utils/history'
 import theme from 'theme'
 
 const styles = {
@@ -18,91 +22,7 @@ const styles = {
   },
 }
 
-const Pane = (blocks) => (
-  <>
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.with_people.element, blocks.with_people.props)}
-      {Emotion.jsx(blocks.with_crew.element, blocks.with_crew.props)}
-      {Emotion.jsx(blocks.with_cast.element, blocks.with_cast.props)}
-    </div>
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.with_genres.element, blocks.with_genres.props)}
-      {Emotion.jsx(blocks.without_genres.element, blocks.without_genres.props)}
-    </div>
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.with_companies.element, blocks.with_companies.props)}
-      {Emotion.jsx(blocks.with_keywords.element, blocks.with_keywords.props)}
-      {Emotion.jsx(blocks.without_keywords.element, blocks.without_keywords.props)}
-    </div>
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.release_date.element, { ...blocks.release_date.props, display: 'column' })}
-      {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
-      {Emotion.jsx(blocks.vote_count.element, { ...blocks.vote_count.props, display: 'column' })}
-      {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
-    </div>
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.with_original_language.element, blocks.with_original_language.props)}
-      {Emotion.jsx(blocks.with_release_type.element, blocks.with_release_type.props)}
-      {Emotion.jsx(blocks.certification.element, blocks.certification.props)}
-    </div>
-    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
-  </>
-)
-
-const Discover = ({ history, ...props }) => (
-  <Fragment>
-    <Helmet>
-      <title>Sensorr - Discover</title>
-    </Helmet>
-    <div css={styles.wrapper}>
-      <Items
-        display="grid"
-        source={{
-          uri: ['discover', 'movie'],
-          params: { include_video: false },
-        }}
-        child={Film}
-        strict={true}
-        placeholder={true}
-        debounce={false}
-        controls={{
-          label: ({ total, reset }) => (
-            <button css={theme.resets.button} onClick={() => reset()}>
-              <span><strong>{total === 10000 ? '∞' : total}</strong> Discovered Movies</span>
-            </button>
-          ),
-          filters: Discover.Filters,
-          sortings: Discover.Sortings,
-          initial: {
-            filtering: history.location.state?.controls?.filtering || {},
-            sorting: history.location.state?.controls?.sorting || 'popularity',
-            reverse: history.location.state?.controls?.reverse || false,
-          },
-          defaults: {
-            filtering: {},
-            sorting: 'popularity',
-            reverse: false,
-          },
-          render: {
-            pane: Pane,
-          },
-          history: history,
-        }}
-        empty={{
-          emoji: '🍿',
-          title: "Oh no, your request didn't return results",
-          subtitle: (
-            <span>
-              Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
-            </span>
-          ),
-        }}
-      />
-    </div>
-  </Fragment>
-)
-
-Discover.Filters = {
+const Filters = {
   with_original_language: () => {
     const options = countryLanguage.getLanguages()
       .filter(language => language.iso639_1 && language.name?.length)
@@ -535,7 +455,7 @@ Discover.Filters = {
   },
 }
 
-Discover.Sortings = {
+const Sortings = {
   popularity: {
     value: 'popularity',
     label: '📣  Popularity',
@@ -587,5 +507,89 @@ Discover.Sortings = {
     // apply: (a, b, reverse) => (parseInt((reverse ? a : b).vote_count) || 0) - (parseInt((reverse ? b : a).vote_count) || 0),
   },
 }
+
+const DiscoverItems = compose(
+  withTMDBQuery({
+    uri: ['discover', 'movie'],
+    params: { include_video: false },
+  }, null, true),
+  withControls({
+    label: ({ total, reset }) => (
+      <button css={theme.resets.button} onClick={() => reset()}>
+        <span><strong>{total === 10000 ? '∞' : total}</strong> Discovered Movies</span>
+      </button>
+    ),
+    filters: Filters,
+    sortings: Sortings,
+    initial: () => ({
+      filtering: window?.history?.state?.state?.controls?.filtering || {},
+      sorting: window?.history?.state?.state?.controls?.sorting || 'popularity',
+      reverse: window?.history?.state?.state?.controls?.reverse || false,
+    }),
+    defaults: {
+      filtering: {},
+      sorting: 'popularity',
+      reverse: false,
+    },
+    render: {
+      pane: (blocks) => (
+        <>
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.with_people.element, blocks.with_people.props)}
+            {Emotion.jsx(blocks.with_crew.element, blocks.with_crew.props)}
+            {Emotion.jsx(blocks.with_cast.element, blocks.with_cast.props)}
+          </div>
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.with_genres.element, blocks.with_genres.props)}
+            {Emotion.jsx(blocks.without_genres.element, blocks.without_genres.props)}
+          </div>
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.with_companies.element, blocks.with_companies.props)}
+            {Emotion.jsx(blocks.with_keywords.element, blocks.with_keywords.props)}
+            {Emotion.jsx(blocks.without_keywords.element, blocks.without_keywords.props)}
+          </div>
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.release_date.element, { ...blocks.release_date.props, display: 'column' })}
+            {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
+            {Emotion.jsx(blocks.vote_count.element, { ...blocks.vote_count.props, display: 'column' })}
+            {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
+          </div>
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.with_original_language.element, blocks.with_original_language.props)}
+            {Emotion.jsx(blocks.with_release_type.element, blocks.with_release_type.props)}
+            {Emotion.jsx(blocks.certification.element, blocks.certification.props)}
+          </div>
+          {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+        </>
+      ),
+    },
+    history: history,
+  }),
+)(Items)
+
+const Discover = ({ history, ...props }) => (
+  <Fragment>
+    <Helmet>
+      <title>Sensorr - Discover</title>
+    </Helmet>
+    <div css={styles.wrapper}>
+      <DiscoverItems
+        display="virtual-grid"
+        child={Film}
+        placeholders={history.location.state?.items?.total || null}
+        onFetched={({ total }) => setHistoryState({ items: { total } })}
+        empty={{
+          emoji: '🍿',
+          title: "Oh no, your request didn't return results",
+          subtitle: (
+            <span>
+              Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+            </span>
+          ),
+        }}
+      />
+    </div>
+  </Fragment>
+)
 
 export default Discover

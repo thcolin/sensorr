@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { setHistoryState } from 'utils/history'
 import Items from 'components/Layout/Items'
 import { withRouter } from 'react-router-dom'
+import nanobounce from 'nanobounce'
 import theme from 'theme'
 
 const Tabs = ({ id, details, items: rows, initial: init, placeholder, palette, ready, history }) => {
@@ -16,20 +18,17 @@ const Tabs = ({ id, details, items: rows, initial: init, placeholder, palette, r
   const [key, setKey] = useState(initial)
   const item = items[key] || items[initial] || { state: {}, props: {} }
   const [state, setState] = useState(item.state)
+  const [debounced, setDebounced] = useState(true)
+  const debounce = useMemo(() => nanobounce(400), [])
 
   const handleItemChange = (item) => {
+    setDebounced(false)
     setKey(item.key)
     setState(item.state)
+    debounce(() => setDebounced(true))
     
     if (!!id) {
-      history.replace({
-         pathname: history.location.pathname,
-         search: history.location.search,
-         state: {
-           ...(history.location.state || {}),
-           [id]: item.key,
-         },
-      })
+      setHistoryState({ [id]: item.key })
     }
   }
 
@@ -39,7 +38,7 @@ const Tabs = ({ id, details, items: rows, initial: init, placeholder, palette, r
   }, [details, JSON.stringify(Object.keys(items)), initial])
 
   const props = item.props
-  const source = (props.source || [])
+  const entities = (props.entities || [])
     .filter(state.filter || (() => true))
     .sort(state.sort || (() => 0))
 
@@ -79,16 +78,14 @@ const Tabs = ({ id, details, items: rows, initial: init, placeholder, palette, r
           <div css={Tabs.styles.subtitle} style={{ color: palette.color }}>
             <props.subtitle
               details={details}
-              source={source}
+              entities={entities}
               state={state}
               setState={setState}
             />
           </div>
         )}
-        source={!(ready && props.source) ? [] : source}
-        ready={ready}
-        strict={false}
-        placeholder={true}
+        entities={!(ready && props.entities) ? [] : entities}
+        ready={ready && debounced}
         empty={{ style: Tabs.styles.empty }}
       />
     </div>

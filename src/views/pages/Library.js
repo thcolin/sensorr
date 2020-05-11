@@ -1,9 +1,13 @@
 import React, { Fragment } from 'react'
+import { compose } from 'redux'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
+import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
+import withControls from 'components/Layout/Items/withControls'
 import Film from 'components/Entity/Film'
 import { Movie } from 'shared/Documents'
+import { setHistoryState } from 'utils/history'
 import theme from 'theme'
 
 const styles = {
@@ -14,19 +18,44 @@ const styles = {
   },
 }
 
-const Pane = (blocks) => (
-  <>
-    {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
-    {Emotion.jsx(blocks.state.element, blocks.state.props)}
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.year.element, { ...blocks.year.props, display: 'column' })}
-      {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
-      {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
-      {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
-    </div>
-    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
-  </>
-)
+const LibraryItems = compose(
+  withDatabaseQuery((db) => db.movies.find().where('state').ne('ignored'), true),
+  withControls({
+    label: ({ total, reset }) => (
+      <button css={theme.resets.button} onClick={() => reset()}>
+        <span><strong>{total}</strong> Movies</span>
+      </button>
+    ),
+    filters: Movie.Filters,
+    sortings: Movie.Sortings,
+    initial: () => ({
+      filtering: window?.history?.state?.state?.controls?.filtering || {},
+      sorting: window?.history?.state?.state?.controls?.sorting || 'time',
+      reverse: window?.history?.state?.state?.controls?.reverse || false,
+    }),
+    defaults: {
+      filtering: {},
+      sorting: 'time',
+      reverse: false,
+    },
+    render: {
+      pane: (blocks) => (
+        <>
+          {Emotion.jsx(blocks.genre.element, blocks.genre.props)}
+          {Emotion.jsx(blocks.state.element, blocks.state.props)}
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.year.element, { ...blocks.year.props, display: 'column' })}
+            {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+            {Emotion.jsx(blocks.vote_average.element, { ...blocks.vote_average.props, display: 'column' })}
+            {Emotion.jsx(blocks.runtime.element, { ...blocks.runtime.props, display: 'column' })}
+          </div>
+          {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+        </>
+      ),
+    },
+    history: history,
+  }),
+)(Items)
 
 const Library = ({ history, ...props }) => (
   <Fragment>
@@ -34,31 +63,11 @@ const Library = ({ history, ...props }) => (
       <title>Sensorr - Library</title>
     </Helmet>
     <div css={styles.wrapper}>
-      <Items
-        display="grid"
-        source={Library.query}
+      <LibraryItems
+        display="virtual-grid"
         child={Film}
-        strict={false}
-        placeholder={true}
-        debounce={false}
-        controls={{
-          label: ({ total, reset }) => (
-            <button css={theme.resets.button} onClick={() => reset()}>
-              <span><strong>{total}</strong> Movies</span>
-            </button>
-          ),
-          filters: Movie.Filters,
-          sortings: Movie.Sortings,
-          defaults: {
-            filtering: ((history.location.state || {}).controls || {}).filtering || {},
-            sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
-            reverse: ((history.location.state || {}).controls || {}).reverse || false,
-          },
-          render: {
-            pane: Pane,
-          },
-          history: history,
-        }}
+        placeholders={history.location.state?.items?.total || null}
+        onFetched={({ total }) => setHistoryState({ items: { total } })}
         empty={{
           emoji: '🍿',
           title: "Oh no, your collection is empty",
@@ -72,7 +81,5 @@ const Library = ({ history, ...props }) => (
     </div>
   </Fragment>
 )
-
-Library.query = (db) => db.movies.find().where('state').ne('ignored')
 
 export default Library

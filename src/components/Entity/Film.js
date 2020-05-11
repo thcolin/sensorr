@@ -19,7 +19,7 @@ export default class Film extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     link: PropTypes.func,
-    focus: PropTypes.oneOf(['vote_average', 'release_date', 'release_date_full', 'popularity', 'runtime']),
+    focus: PropTypes.oneOf(['vote_average', 'vote_count', 'release_date', 'release_date_full', 'popularity', 'runtime']),
     display: PropTypes.oneOf(['default', 'pretty', 'card']),
     palette: PropTypes.object,
     placeholder: PropTypes.bool,
@@ -33,7 +33,7 @@ export default class Film extends PureComponent {
     focus: null,
     display: 'default',
     palette: {},
-    placeholder: false,
+    placeholder: true,
     withState: true,
     withHover: true,
     withCredits: false,

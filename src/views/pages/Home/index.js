@@ -1,10 +1,14 @@
 import React, { PureComponent, Fragment } from 'react'
+import { compose } from 'redux'
 import { Helmet } from 'react-helmet'
 import { Link } from 'react-router-dom'
 import Items from 'components/Layout/Items'
-import Records from './containers/Records'
+import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
+import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
+import withControls from 'components/Layout/Items/withControls'
+import RecordsItems from './containers/RecordsItems'
+import StarsItems from './containers/StarsItems'
 import Film from 'components/Entity/Film'
-import Persona from 'components/Entity/Persona'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
 import database from 'store/database'
 import theme from 'theme'
@@ -45,26 +49,41 @@ const styles = {
   },
 }
 
+const TrendingItems = compose(
+  withTMDBQuery({
+    uri: ['trending', 'movie', 'day'],
+    params: { sort_by: 'popularity.desc' },
+  }, 1),
+  withControls(),
+)(Items)
+
+const UpcomingItems = compose(
+  withDatabaseQuery((db) => (
+    db.calendar
+    .find()
+    .sort({ release_date: 1 })
+    .where('release_date')
+    .gte(new Date(new Date().setDate(new Date().getDate() - 7)).toISOString())
+    .limit(20)
+  )),
+  withControls(),
+)(Items)
+
+const DiscoverItems = compose(
+  withTMDBQuery({
+    uri: ['discover', 'movie'],
+  }, 1),
+  withControls(),
+)(Items)
+
+const DiscoverItemsSelectable = compose(
+  withTMDBQuery({
+    uri: ['discover', 'movie'],
+  }, 1),
+  withControls(),
+)(Items)
+
 export default class Home extends PureComponent {
-  static Queries = {
-    upcoming: (db) => db.calendar
-      .find()
-      .sort({ release_date: 1 })
-      .where('release_date')
-      .gte(new Date(new Date().setDate(new Date().getDate() - 7)).toISOString())
-      .limit(20),
-    birthday: (db) => {
-      const today = new Date()
-
-      return db.stars
-        .find({
-          birthday: {
-            $regex: `\\d{4}-${`${(today.getMonth() + 1)}`.padStart(2, '0')}-${`${(today.getDate())}`.padStart(2, '0')}`,
-          },
-        })
-    },
-  }
-
   constructor(props) {
     super(props)
 
@@ -119,20 +138,16 @@ export default class Home extends PureComponent {
           <title>Sensorr - Home</title>
         </Helmet>
         <div css={styles.element}>
-          <Items
+          <TrendingItems
             label="📣&nbsp; Trending"
             title="Trending movies"
             display="row"
-            source={{
-              uri: ['trending', 'movie', 'day'],
-              params: { sort_by: 'popularity.desc' },
-            }}
             child={Film}
+            limit={20}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
-            placeholder={true}
           />
-          <Records />
-          <Items
+          <RecordsItems />
+          <UpcomingItems
             label={(
               <Link to={{ pathname: '/movies/calendar' }} css={theme.resets.a}>
                 📆&nbsp; Upcoming
@@ -141,41 +156,32 @@ export default class Home extends PureComponent {
             title="Upcoming movies"
             child={Film}
             props={{ withCredits: true }}
-            strict={true}
-            placeholder={true}
-            {...(ready ? {
-              hide: true,
-              source: Home.Queries.upcoming,
-              transform: (entities) => entities
-                .map(raw => {
-                  const entity = raw.toJSON()
-                  const credits = entity.credits
-                    .filter(star => stars.includes(star.id.toString()))
-                    .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
-                    .filter((star, index) => index < 4)
+            hide={ready}
+            transform={(entities) => entities
+              .map(raw => {
+                const entity = raw.toJSON()
+                const credits = entity.credits
+                  .filter(star => stars.includes(star.id.toString()))
+                  .filter((star, index, array) => array.map(obj => obj.id).indexOf(star.id) === index)
+                  .filter((star, index) => index < 4)
 
-                  return { ...entity, credits }
-                })
-                .filter(entity => entity.credits.length),
-            } : {
-              source: Array(20).fill({ poster_path: false }),
-            })}
+                return { ...entity, credits }
+              })
+              .filter(entity => entity.credits.length)
+            }
           />
-          <Items
+          <DiscoverItems
             label={(
               <Link to={{ pathname: '/movies/discover' }} css={theme.resets.a}>
                 👀&nbsp; Discover
               </Link>
             )}
             title="Discover movies"
-            source={{
-              uri: ['discover', 'movie'],
-            }}
             child={Film}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
-            placeholder={true}
+            limit={20}
           />
-          <Items
+          <DiscoverItemsSelectable
             label={(
               <span>
                 <Link
@@ -252,15 +258,12 @@ export default class Home extends PureComponent {
             display="row"
             child={Film}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
-            placeholder={true}
+            limit={20}
             {...({
               year: {
-                source: {
-                  uri: ['discover', 'movie'],
-                  params: {
-                    primary_release_year: year,
-                    sort_by: 'popularity.desc'
-                  },
+                params: {
+                  primary_release_year: year,
+                  sort_by: 'popularity.desc'
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -274,12 +277,9 @@ export default class Home extends PureComponent {
                 ),
               },
               genre: {
-                source: {
-                  uri: ['discover', 'movie'],
-                  params: {
-                    with_genres: genre,
-                    sort_by: 'popularity.desc'
-                  },
+                params: {
+                  with_genres: genre,
+                  sort_by: 'popularity.desc'
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -300,12 +300,9 @@ export default class Home extends PureComponent {
                 ),
               },
               studio: {
-                source: {
-                  uri: ['discover', 'movie'],
-                  params: {
-                    with_companies: STUDIOS[studio].map(company => company.id).join('|'),
-                    sort_by: 'popularity.desc'
-                  },
+                params: {
+                  with_companies: STUDIOS[studio].map(company => company.id).join('|'),
+                  sort_by: 'popularity.desc'
                 },
                 subtitle: (
                   <div css={styles.subtitle}>
@@ -327,46 +324,7 @@ export default class Home extends PureComponent {
               },
             }[rows.random])}
           />
-          <Items
-            child={Persona}
-            props={{ display: 'portrait' }}
-            placeholder={true}
-            limit={20}
-            label={(
-              <span
-                title={{
-                  trending: 'Trending stars',
-                  birthday: 'Birthday stars',
-                }[rows.stars]}
-              >
-                <button
-                  css={[theme.resets.button, styles.label]}
-                  onClick={() => this.handleRowClick('stars', 'trending')}
-                  style={rows.stars === 'trending' ? { opacity: 1 } : {}}
-                >
-                  👩‍🎤️&nbsp; Trending
-                </button>
-                <button
-                  css={[theme.resets.button, styles.label]}
-                  onClick={() => this.handleRowClick('stars', 'birthday')}
-                  style={rows.stars === 'birthday' ? { opacity: 1 } : {}}
-                >
-                  🎂️&nbsp; Birthday
-                </button>
-              </span>
-            )}
-            {...({
-              trending: {
-                source: {
-                  uri: ['trending', 'person', 'day'],
-                  params: { sort_by: 'popularity.desc' },
-                },
-              },
-              birthday: {
-                source: Home.Queries.birthday,
-              }
-            }[rows.stars])}
-          />
+          <StarsItems />
         </div>
       </Fragment>
     )

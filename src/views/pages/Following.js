@@ -1,9 +1,13 @@
 import React, { Fragment } from 'react'
+import { compose } from 'redux'
 import * as Emotion from '@emotion/core'
 import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
+import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
+import withControls from 'components/Layout/Items/withControls'
 import Persona from 'components/Entity/Persona'
 import { Star } from 'shared/Documents'
+import { setHistoryState } from 'utils/history'
 import theme from 'theme'
 
 const styles = {
@@ -32,17 +36,41 @@ const styles = {
   },
 }
 
-const Pane = (blocks) => (
-  <>
-    {Emotion.jsx(blocks.known_for_department.element, blocks.known_for_department.props)}
-    {Emotion.jsx(blocks.gender.element, blocks.gender.props)}
-    <div css={[theme.styles.row, theme.styles.spacings.row]}>
-      {Emotion.jsx(blocks.birth.element, { ...blocks.birth.props, display: 'column' })}
-      {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
-    </div>
-    {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
-  </>
-)
+const FollowingItems = compose(
+  withDatabaseQuery((db) => db.stars.find().where('state').ne('ignored'), true),
+  withControls({
+    label: ({ total, reset }) => (
+      <button css={theme.resets.button} onClick={() => reset()}>
+        <span><strong>{total}</strong> Stars</span>
+      </button>
+    ),
+    filters: Star.Filters,
+    sortings: Star.Sortings,
+    initial: () => ({
+      filtering: window?.history?.state?.state?.controls?.filtering || {},
+      sorting: window?.history?.state?.state?.controls?.sorting || 'time',
+      reverse: window?.history?.state?.state?.controls?.reverse || false,
+    }),
+    defaults: {
+      filtering: {},
+      sorting: 'time',
+      reverse: false,
+    },
+    render: {
+      pane: (blocks) => (
+        <>
+          {Emotion.jsx(blocks.known_for_department.element, blocks.known_for_department.props)}
+          {Emotion.jsx(blocks.gender.element, blocks.gender.props)}
+          <div css={[theme.styles.row, theme.styles.spacings.row]}>
+            {Emotion.jsx(blocks.birth.element, { ...blocks.birth.props, display: 'column' })}
+            {Emotion.jsx(blocks.popularity.element, { ...blocks.popularity.props, display: 'column' })}
+          </div>
+          {Emotion.jsx(blocks.sorting.element, blocks.sorting.props)}
+        </>
+      ),
+    },
+  }),
+)(Items)
 
 const Following = ({ history, ...props }) => (
   <Fragment>
@@ -50,32 +78,12 @@ const Following = ({ history, ...props }) => (
       <title>Sensorr - Following</title>
     </Helmet>
     <div css={styles.wrapper}>
-      <Items
-        display="grid"
-        source={(db) => db.stars.find().where('state').ne('ignored')}
+      <FollowingItems
+        display="virtual-grid"
         child={Persona}
         props={{ display: 'portrait' }}
-        strict={false}
-        placeholder={true}
-        debounce={false}
-        controls={{
-          label: ({ total, reset }) => (
-            <button css={theme.resets.button} onClick={() => reset()}>
-              <span><strong>{total}</strong> Stars</span>
-            </button>
-          ),
-          filters: Star.Filters,
-          sortings: Star.Sortings,
-          defaults: {
-            filtering: ((history.location.state || {}).controls || {}).filtering || {},
-            sorting: ((history.location.state || {}).controls || {}).sorting || 'time',
-            reverse: ((history.location.state || {}).controls || {}).reverse || false,
-          },
-          render: {
-            pane: Pane,
-          },
-          history: history,
-        }}
+        placeholders={history.location.state?.items?.total || null}
+        onFetched={({ total }) => setHistoryState({ items: { total } })}
         empty={{
           emoji: '👩‍🎤',
           title: "Oh no, you are not following anyone",

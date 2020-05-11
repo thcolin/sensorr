@@ -1,6 +1,7 @@
 import React, { PureComponent, Fragment } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
+import { setHistoryState } from 'utils/history'
 import { Helmet } from 'react-helmet'
 import Backdrop from 'components/UI/Backdrop'
 import Empty from 'components/Empty'
@@ -272,14 +273,7 @@ class Details extends PureComponent {
     const next = !this.state.subdata
 
     this.setState({ subdata: next })
-    this.props.history.replace({
-      pathname: this.props.history.location.pathname,
-      search: this.props.history.location.search,
-      state: {
-        ...(this.props.history.location.state || {}),
-        subdata: next,
-      },
-    })
+    setHistoryState({ subdata: next })
   }
 
   render() {

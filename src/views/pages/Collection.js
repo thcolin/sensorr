@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import { Link } from 'react-router-dom'
 import Details, { Tabs, withCount } from 'views/layout/Details'
 import * as Film from 'components/Entity/Film'
 import Documents from 'shared/Documents'
@@ -165,10 +166,10 @@ export default class Collection extends PureComponent {
 
   static tabs = {
     subtitles: {
-      parts: withCount(({ details, source, state, setState, count }) => (
+      parts: withCount(({ details, entities, state, setState, count }) => (
         <>
           <span style={{ flex: 1, opacity: count ? 1 : 0, transition: '400ms opacity ease-in-out' }}>
-            🎉&nbsp; Nice ! <strong>{count}/{source.length}</strong> movies from this collection in your library
+            🎉&nbsp; Nice ! <strong>{count}/{entities.length}</strong> movies from <Link to={`/collection/${details.id}`} style={{ color: 'inherit' }}>"{details.name}"</Link> in your library
           </span>
         </>
       ), 'movies'),
@@ -197,16 +198,55 @@ export default class Collection extends PureComponent {
     ),
     Metadata: ({ details }) => {
       const vote_average = details.parts.reduce((vote_average, part) => vote_average + part.vote_average, 0) / details.parts.filter(part => part.vote_average).length
+      const genres = [
+        ...new Set(details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
+      ]
 
       return (
         <>
+          {!!genres.length && (
+            <span>
+              🎟️ &nbsp;{genres.map((id, index, arr) => (
+                <span key={id}>
+                  <Link
+                    to={{
+                      pathname: '/movies/discover',
+                      state: {
+                        controls: {
+                          filtering: {
+                            with_genres: [{ value: id, label: GENRES[id] }],
+                          },
+                        },
+                      },
+                    }}
+                    css={theme.resets.a}
+                  >
+                    {GENRES[id]}
+                  </Link>
+                  {index === arr.length - 1 ? '' : ', '}
+                </span>
+              ))}
+            </span>
+          )}
           <span>
-            🎟️ &nbsp;{[
-              ...new Set(details.parts.map(part => part.genre_ids).reduce((acc, genres) => [...acc, ...genres], []))
-            ].map(id => GENRES[id]).join(', ')}
-          </span>
-          <span>
-            {new Documents.Movie({ vote_average }).judge()} &nbsp;<strong>{vote_average.toFixed(1)}</strong>
+            <Link
+              to={{
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      vote_average: [
+                        vote_average.toFixed(0) - 1,
+                        vote_average.toFixed(0),
+                      ],
+                    },
+                  },
+                },
+              }}
+              css={theme.resets.a}
+            >
+              {new Documents.Movie({ vote_average }).judge()} &nbsp;<strong>{vote_average.toFixed(1)}</strong>
+            </Link>
           </span>
         </>
       )
@@ -230,7 +270,7 @@ export default class Collection extends PureComponent {
                   sort: (a, b) => new Date(a.release_date || 1e15) - new Date(b.release_date || 1e15),
                 },
                 props: {
-                  source: details.parts,
+                  entities: details.parts,
                   child: Film.default,
                   props: { display: 'pretty', palette },
                   subtitle: Collection.tabs.subtitles.parts,

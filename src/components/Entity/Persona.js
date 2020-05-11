@@ -21,7 +21,7 @@ export default class Persona extends PureComponent {
     display: 'avatar',
     link: (entity) => `/star/${entity.id}`,
     withState: true,
-    placeholder: false,
+    placeholder: true,
   }
 
   static placeholder = ({ ...props }) => ({
