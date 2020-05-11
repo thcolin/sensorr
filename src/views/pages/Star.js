@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import { Link } from 'react-router-dom'
 import Details, { Tabs, withCount } from 'views/layout/Details'
 import * as Persona from 'components/Entity/Persona'
 import Film from 'components/Entity/Film'
@@ -114,7 +115,25 @@ export default class Star extends PureComponent {
   }
 
   static components = {
-    Title: ({ details }) => details.name || '',
+    Title: ({ details }) => (
+      <Link
+        to={{
+          pathname: '/movies/discover',
+          state: {
+            controls: {
+              filtering: {
+                with_people: [
+                  { value: details.id, label: details.name },
+                ],
+              },
+            },
+          },
+        }}
+        css={theme.resets.a}
+      >
+        {details.name || ''}
+      </Link>
+    ),
     Poster: ({ details, ...props }) => (
       <Persona.Poster
         entity={details}
@@ -135,7 +154,23 @@ export default class Star extends PureComponent {
       <>
         {!!details.known_for_department && (
           <span key="known_for_department">
-            💼 &nbsp;<strong>{details.known_for_department}</strong>
+            <Link
+              to={{
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      [details.known_for_department === 'Acting' ? 'with_cast' : 'with_crew']: [
+                        { value: details.id, label: details.name },
+                      ],
+                    },
+                  },
+                },
+              }}
+              css={theme.resets.a}
+            >
+              💼 &nbsp;<strong>{details.known_for_department}</strong>
+            </Link>
           </span>
         )}
         {!!details.place_of_birth && (

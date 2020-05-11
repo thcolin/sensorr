@@ -163,14 +163,13 @@ Some necessary cron jobs will be launched in background every day:
 
 # 🗺️ Roadmap
 * Search, load more page (useful when you search simple terms with many results)
+* Add `Director(s)` on `Details` with `Discover` links
 * Pause `button`
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Explain `score` on `Releases`
 * Record **Missing** `movies` too
 * Feature `Discover`
-  * `Star`
-    * Add link to `Discover` with `with_credits=[star]` or `with_crew=[star]`
   * Improve `AND` + `OR` behavior
     * I want to see `Comédie` AND `Romance` movies
     * I want to see `Comédie` OR `Romance` movies
