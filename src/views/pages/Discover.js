@@ -514,6 +514,7 @@ const DiscoverItems = compose(
     params: { include_video: false },
   }, null, true),
   withControls({
+    hideQuery: true,
     label: ({ total, reset }) => (
       <button css={theme.resets.button} onClick={() => reset()}>
         <span><strong>{total === 10000 ? '∞' : total}</strong> Discovered Movies</span>

@@ -22,6 +22,7 @@ const styles = {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     padding: '0 10%',
     backgroundColor: theme.colors.primary,
   },
@@ -120,6 +121,7 @@ const Input = ({ onChange, ...props }) => {
 
   return (
     <input
+      {...props}
       ref={input}
       type="text"
       value={value}
@@ -151,6 +153,7 @@ const Controls = ({
   total,
   onChange,
   render = {},
+  hideQuery = false,
   disabled,
   ...props
 }) => {
@@ -337,6 +340,7 @@ const Controls = ({
           <>
             <Input
               key="query"
+              style={{ visibility: hideQuery ? 'hidden' : 'visible' }}
               onChange={query => {
                 setQuery(query)
                 apply({ query }, false)
@@ -377,7 +381,7 @@ const Controls = ({
         <div
           css={[styles.menu, styles.secondary]}
           style={{
-            transform: `translateX(${open ? '-10%' : '-110%'})`,
+            transform: `translateX(${open ? '10%' : '-90%'})`,
             transitionDelay: open ? '0ms' : '250ms',
           }}
         >

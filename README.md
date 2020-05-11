@@ -167,7 +167,6 @@ Some necessary cron jobs will be launched in background every day:
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Explain `score` on `Releases`
-* Remove *query* `Input` on `Discover` page (useless)
 * Record **Missing** `movies` too
 * Feature `Discover`
   * `Star`
