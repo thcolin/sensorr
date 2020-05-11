@@ -259,6 +259,8 @@ export default class Home extends PureComponent {
             child={Film}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             limit={20}
+            stack={true}
+            debounce={true}
             {...({
               year: {
                 params: {

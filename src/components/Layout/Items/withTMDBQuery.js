@@ -1,17 +1,20 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { createPool } from 'swimmer'
+import nanobounce from 'nanobounce'
 import tmdb from 'store/tmdb'
 
 const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false) => (WrappedComponent) => {
   class WithTMDBQuery extends Component {
     static propTypes = {
+      debounce: PropTypes.bool,
       params: PropTypes.object,
       transform: PropTypes.func,
       onFetched: PropTypes.func,
     }
 
     static defaultProps = {
+      debounce: false,
       params: {},
       transform: (res) => res.results,
     }
@@ -29,6 +32,10 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
 
       this.processed = []
       this.pool = createPool({ concurrency: 8 })
+      this.debounce = {
+        sync: nanobounce(0),
+        async: nanobounce(400),
+      }
     }
 
     async componentDidMount() {
@@ -43,21 +50,34 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
       }
     }
 
-    async componentDidUpdate(props, state) {
+    componentDidUpdate(props, state) {
+      const debounce = this.debounce[this.props.debounce ? 'async' : 'sync']
+
       if ((
         JSON.stringify(this.props.params) !== JSON.stringify(props.params) ||
         JSON.stringify(this.state.params) !== JSON.stringify(state.params)
       )) {
-        this.setState({ pages: {}, total: null, error: null })
-        try {
+        this.setState({
+          loading: true,
+          total: null,
+          error: null,
+          ...(!this.props.stack ? { pages: {} } : {}),
+        })
+
+        if (!this.props.stack) {
           this.processed = []
           this.pool.clear()
-          const { entities, total } = await this.fetchTMDB(1)
-          this.setState(state => ({ ...state, loading: false, total, pages: { ...state.pages, [1]: entities } }))
-        } catch (error) {
-          console.warn(error)
-          this.setState({ error, loading: false })
         }
+
+        debounce(async () => {
+          try {
+            const { entities, total } = await this.fetchTMDB(1)
+            this.setState(state => ({ ...state, loading: false, total, pages: { ...state.pages, [1]: entities } }))
+          } catch (error) {
+            console.warn(error)
+            this.setState({ error, loading: false })
+          }
+        })
       }
     }
 
@@ -120,7 +140,7 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
     }
     
     render() {
-      const { params, transform, onFetched, ...props } = this.props
+      const { debounce, params, transform, onFetched, ...props } = this.props
       const entities = Object.values(this.state.pages).reduce((acc, cur) => [...acc, ...cur], [])
 
       return (

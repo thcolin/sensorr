@@ -51,16 +51,17 @@ const withDatabaseQuery = (queryGetter, controlsLinkedQuery = false) => (Wrapped
         return
       }
 
-      try {
-        this.setState({ loading: true })
-        const debounce = this.debounce[this.props.debounce ? 'async' : 'sync']
-        debounce(async () => {
+      const debounce = this.debounce[this.props.debounce ? 'async' : 'sync']
+      this.setState({ loading: true })
+
+      debounce(async () => {
+        try {
           const { entities } = await this.fetchDatabase()
           this.setState({ entities, loading: false })
-        })
-      } catch (error) {
-        this.setState({ loading: false, error })
-      }
+        } catch (error) {
+          this.setState({ loading: false, error })
+        }
+      })
     }
 
     fetchDatabase = async () => {

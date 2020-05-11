@@ -167,14 +167,13 @@ Some necessary cron jobs will be launched in background every day:
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
+  * Because it's loading all movies ?
 * Explain `score` on `Releases`
 * Remove *query* `Input` on `Discover` page (useless)
 * Record **Missing** `movies` too
 * Feature `Discover`
-  * `Movie`
-    * Add link to `Collection`
   * `Star`
-    * Add link to `Discover` with `with_credits=[actor]`
+    * Add link to `Discover` with `with_credits=[star]` or `with_crew=[star]`
   * Improve `AND` + `OR` behavior
     * I want to see `Comédie` AND `Romance` movies
     * I want to see `Comédie` OR `Romance` movies
@@ -262,15 +261,16 @@ Some necessary cron jobs will be launched in background every day:
     * Add `Random` button
   * `Search`
     * Animate `height`
-    * Remove `suggestions`
   * `Home`
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
+      * Weekly selected movies (?)
     * Add "pre-configured" `List` like `Oscars` ?
   * `Settings`
     * `Database`
       * Allow to `clean` browser `sensorr-*` databases (`doctor`)
   * `Grid`
     * Select/Deselect all
+    * Actions on selection
   * `Row`
     * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
       * Better, display `Grid` when scroll end + `entities.length > 10`
