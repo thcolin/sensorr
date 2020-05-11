@@ -124,7 +124,7 @@ const Input = ({ onChange, ...props }) => {
       type="text"
       value={value}
       onChange={(e) => {
-        const value = e.target.value || ''
+        const value = e.target.value || ''
         setValue(value)
         debounce(() => onChange(value))
       }}
@@ -167,7 +167,7 @@ const Controls = ({
 
   const active = Object.keys(filtering)
     .filter(key => !['query'].includes(key))
-    .filter(key => !filters[key].default || JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default))
+    .filter(key => !filters[key].default || (!!filtering[key] && JSON.stringify(filtering[key]) !== JSON.stringify(filters[key].default)))
 
   const without = (keys) => entities
     .filter((entity) => Object.keys(filtering)
@@ -231,7 +231,7 @@ const Controls = ({
             [key]: {
               element: Checkbox,
               props: {
-                ...(filter.props || {}),
+                ...(filter.props || {}),
                 key: key,
                 css: styles.checkbox,
                 label: filter.label,
@@ -250,7 +250,7 @@ const Controls = ({
             [key]: {
               element: Range,
               props: {
-                ...(filter.props || {}),
+                ...(filter.props || {}),
                 key: key,
                 css: styles.range,
                 label: filter.label,
@@ -273,7 +273,7 @@ const Controls = ({
             [key]: {
               element: Select,
               props: {
-                ...(filter.props || {}),
+                ...(filter.props || {}),
                 key: key,
                 css: styles.select,
                 label: filter.label,
@@ -290,7 +290,7 @@ const Controls = ({
             [key]: {
               element: Radio,
               props: {
-                ...(filter.props || {}),
+                ...(filter.props || {}),
                 key: key,
                 css: styles.radio,
                 label: filter.label,
@@ -383,7 +383,7 @@ const Controls = ({
         >
           <div {...(open ? {} : { style: { opacity: 0 } })}>
             {Emotion.jsx(label, {
-              total: total || without([]).length,
+              total: total || without([]).length,
               reset,
               state,
               setState: (state) => {

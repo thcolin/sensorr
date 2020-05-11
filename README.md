@@ -166,8 +166,6 @@ Some necessary cron jobs will be launched in background every day:
 * Pause `button`
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
-* Fix `palette` never **ready** sometimes on `Film` (switch `Casting` / `Crew` on `/star/123` page to test)
-  * Because it's loading all movies ?
 * Explain `score` on `Releases`
 * Remove *query* `Input` on `Discover` page (useless)
 * Record **Missing** `movies` too
