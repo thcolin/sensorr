@@ -6,8 +6,6 @@ import Persona from 'components/Entity/Persona'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import Clear from 'icons/Clear'
-import Expand from 'icons/Expand'
-import Reduce from 'icons/Reduce'
 import tmdb from 'store/tmdb'
 import nanobounce from 'nanobounce'
 import theme from 'theme'
@@ -17,7 +15,6 @@ export const Context = React.createContext()
 export const Provider = withRouter(({ location, history, match, staticContext, children, ...props }) => {
   const reference = useRef()
   const [active, setActiveState] = useState(false)
-  const [expanded, setExpandedState] = useState(false)
   const [query, setQuery] = useState('')
 
   const trapScroll = (enable) => {
@@ -25,26 +22,19 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
     document.body.style['overflow'] = enable ? 'hidden' : 'initial'
   }
 
-  const setExpanded = (value) => {
-    trapScroll(value)
-    setExpandedState(value)
-  }
-
   const setActive = (value) => {
-    trapScroll(expanded && value)
-    setActiveState(value)
+    trapScroll(!!value)
+    setActiveState(!!value)
   }
 
   const handleClick = (e) => {
     if (!reference.current.contains(e.target)) {
-      setExpandedState(false)
       setActive(false)
     }
   }
 
   const handleEsc = (e) => {
     if (e.key === 'Escape') {
-      setExpandedState(false)
       setActive(false)
       setQuery('')
     }
@@ -61,21 +51,19 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
   }, [])
 
   useEffect(() => {
-    setExpandedState(false)
     setActive(false)
     setQuery('')
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!query) {
+      setActive(false)
+    }
+  }, [query])
+
   return (
-    <Context.Provider {...props} value={{ active, setActive, expanded, setExpanded, query, setQuery }}>
-      <div
-        {...props}
-        ref={reference}
-        style={{
-          ...(props.style || {}),
-          ...((active && expanded) ? { height: '100vh' } : {}),
-        }}
-      >
+    <Context.Provider {...props} value={{ active, setActive, query, setQuery }}>
+      <div {...props} ref={reference}>
         {children}
       </div>
     </Context.Provider>
@@ -83,33 +71,16 @@ export const Provider = withRouter(({ location, history, match, staticContext, c
 })
 
 export const Results = ({ children, ...props }) => {
-  const { active, expanded, setExpanded, query, setQuery } = useContext(Context)
+  const debounce = useMemo(() => nanobounce(400))
+  const { active, query } = useContext(Context)
   const [state, dispatch] = useReducer(Results.reducer, Results.initialState)
-
-  const suggestions = []
-  // const suggestions = useMemo(() => {
-  //   const next = Object.values({
-  //     ...JSON.parse(localStorage.getItem('sensorr-search-suggestions') || '[]')
-  //       .reduce((acc, query) => ({ ...acc, [query[0]]: [query[0], new Date(query[1])] }), {}),
-  //     ...(!!query && !Object.values(state).every(value => Array.isArray(value) && !value.length) ?
-  //       { [query]: [query, new Date(Date.now() + (5 * 24 * 60 * 60 * 1000))] } : {} // 5 days timeout
-  //     ),
-  //   })
-  //   .filter(query => query[1] > new Date())
-  //   .sort((a, b) => (b[1] - a[1]))
-  //   .slice(0, 10)
-  //
-  //   localStorage.setItem('sensorr-search-suggestions', JSON.stringify(next))
-  //
-  //   return next.map(query => query[0])
-  // }, [query, state])
 
   const fetchItems = useCallback(async (uri, params) => {
     dispatch([uri[uri.length - 1], null])
 
     try {
+      await new Promise(resolve => setTimeout(resolve, 400))
       const res = await tmdb.fetch(uri, params)
-      // await new Promise(resolve => setTimeout(resolve, 700))
       dispatch([uri[uri.length - 1], res.results])
     } catch (e) {
       // await new Promise(resolve => setTimeout(resolve, 700))
@@ -123,26 +94,21 @@ export const Results = ({ children, ...props }) => {
       fetchItems(['search', 'collection'], { query, sort_by: 'popularity.desc' })
       fetchItems(['search', 'person'], { query, sort_by: 'popularity.desc' })
     } else {
-      dispatch(['movie', null])
-      dispatch(['collection', null])
-      dispatch(['person', null])
+      debounce(() => {
+        dispatch(['movie', null])
+        dispatch(['collection', null])
+        dispatch(['person', null])
+      })
     }
   }, [query])
 
   const loading = Object.values(state).some(items => items === null)
   const empty = Object.values(state).every(items => Array.isArray(items) && !items.length)
-  const open = active
 
-  return !query ? null : (
-    <div
-      css={Results.styles.element}
-      style={{
-        height: !open ? 0 : (expanded && query) ? '100%' : (!query || (!loading && !empty)) ? 'auto' : '50vh',
-        maxHeight: expanded ? '100%' : '50vh',
-      }}
-    >
+  return (
+    <div css={Results.styles.element} style={{ height: active && !!query ? 'calc(100vh - 4rem)' : 0 }}>
       <hr css={Results.styles.separator} />
-      <div css={Results.styles.scroller} style={{ opacity: open ? 1 : 0 }}>
+      <div css={Results.styles.scroller}>
         {(!loading && !empty) ? (
           <div css={Results.styles.container}>
             {state.movie && (
@@ -221,11 +187,6 @@ export const Results = ({ children, ...props }) => {
           </div>
         )}
       </div>
-      {(!!query || expanded) && (
-        <button onClick={() => setExpanded(!expanded)} css={Results.styles.resize}>
-          {expanded ? <Reduce /> : <Expand />}
-        </button>
-      )}
       <hr css={Results.styles.hr} />
     </div>
   )
@@ -243,36 +204,22 @@ Results.initialState = {
 
 Results.styles = {
   element: {
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
+    position: 'absolute',
+    top: '4rem',
+    width: '100%',
+    transition: 'height 400ms ease-in-out',
+    background: 'white',
     overflow: 'hidden',
-    margin: '0 0 -1px 0',
   },
   separator: {
     border: 'none',
     margin: '0 calc(15% + 5em) 0 calc(15% + 10em)',
     borderBottom: `1px solid ${theme.colors.mercury}`,
   },
-  resize: {
-    ...theme.resets.button,
-    color: theme.colors.gray,
-    display: 'flex',
-    padding: '0.5em',
-    height: '2em',
-    width: '2em',
-    position: 'absolute',
-    top: '1em',
-    right: '1em',
-    ':hover': {
-      color: theme.colors.rangoon,
-    }
-  },
   scroller: {
     background: 'white',
     height: '100%',
     overflowY: 'auto',
-    transition: 'opacity 600ms ease-in-out',
   },
   container: {
     display: 'flex',
@@ -291,25 +238,9 @@ Results.styles = {
   empty: {
     fontSize: '0.75em',
   },
-  suggestions: {
-    minHeight: '1em',
-    '>div': {
-      width: '100%',
-      padding: '1em 0',
-      textAlign: 'center',
-    },
-  },
   label: {
     padding: '0 0 1em 0',
     fontSize: '1em',
-  },
-  suggestion: {
-    ...theme.resets.button,
-    width: '100%',
-    padding: '0.5em 0',
-    ':hover,:focus': {
-      color: theme.colors.primary,
-    },
   },
   hr: {
     position: 'absolute',

@@ -256,8 +256,6 @@ Some necessary cron jobs will be launched in background every day:
   * `Discover`
     * Add `status` in `controls` - how ?
     * Add `Random` button
-  * `Search`
-    * Animate `height`
   * `Home`
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
       * Weekly selected movies (?)

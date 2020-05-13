@@ -92,7 +92,6 @@ const styles = {
   results: {
     active: {
       borderBottom: `1px solid ${theme.colors.grey}`,
-      marginBottom: '-1px',
     },
   },
 }
@@ -128,7 +127,7 @@ const Header = ({ ...props }) => (
       <hr css={styles.separator} />
       <Navbar />
     </div>
-    <hr css={[styles.hr, styles.sticky]} style={{ top: 'calc(4em - 1px)', zIndex: 9 }} />
+    <hr css={[styles.hr, styles.sticky]} style={{ top: '4rem', zIndex: 9 }} />
   </>
 )
 
