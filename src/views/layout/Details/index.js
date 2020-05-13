@@ -80,7 +80,6 @@ const styles = {
     }
   },
   subdata: {
-    margin: '0 0 1em',
     '>div': {
       margin: '0 0 1em',
       '>span>a': {
@@ -100,12 +99,13 @@ const styles = {
     fontWeight: 600,
   },
   state: {
-    width: '10em',
+    width: '12em',
     display: 'flex',
     justifyContent: 'flex-end',
     flexShrink: 0,
     '>span': {
       width: '100%',
+      margin: '0 0 0 2rem',
       '>label>span': {
         width: '100%',
       },
@@ -169,7 +169,7 @@ class Details extends PureComponent {
     this.state = {
       details: props.placeholder,
       loading: true,
-      err: null,
+      error: null,
       playing: false,
       subdata: props.history.location.state?.subdata || false,
       children: {},
@@ -200,7 +200,7 @@ class Details extends PureComponent {
   bootstrap = async () => {
     this.setState({
       loading: true,
-      err: null,
+      error: null,
       playing: false,
       subdata: this.props.history.location.state?.subdata || false,
       children: {},
@@ -241,14 +241,14 @@ class Details extends PureComponent {
       if (this.props.usePalette && this.props.generators.poster(details)) {
         this.fetchPalette(this.props.generators.poster(details, 'palette'))
       }
-    } catch(err) {
-      if (err.status_code) {
+    } catch(error) {
+      if (error.status_code) {
         this.setState({
           loading: false,
-          err: (err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message),
+          error: (error.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : error.status_message),
         })
       } else {
-        console.warn(err)
+        console.warn(error)
       }
     }
   }
@@ -278,7 +278,7 @@ class Details extends PureComponent {
 
   render() {
     const { components, generators, ...props } = this.props
-    const { details, palette, playing, subdata, children, loading, err, ...state } = this.state
+    const { details, palette, playing, subdata, children, loading, error, ...state } = this.state
     const ready = Object.values(state.ready).every(bool => bool)
 
     const placeholder = [
@@ -332,18 +332,18 @@ class Details extends PureComponent {
                     palette={palette}
                   />
                 </Poster>
-                {!err ? (
+                {!error ? (
                   <div css={styles.info}>
                     <div>
                       <div>
                         <h1 css={[styles.title, ...placeholder]}>
                           <components.Title details={details} />
                         </h1>
-                        {components.Caption && (
-                          <h2 css={[styles.caption, ...placeholder]}>
+                        <h2 css={[styles.caption, ...placeholder]}>
+                          {components.Caption && (
                             <components.Caption details={details} />
-                          </h2>
-                        )}
+                          )}
+                        </h2>
                         <div css={[styles.metadata, ...placeholder]}>
                           <components.Metadata details={details} />
                           {components.Subdata && generators.subdata(details) && state.ready.data && (
@@ -356,20 +356,20 @@ class Details extends PureComponent {
                             </button>
                           )}
                         </div>
-                        {components.Subdata && (
-                          <div css={[styles.subdata, ...placeholder]} hidden={!state.ready.data || !subdata}>
+                        <div css={[styles.subdata, ...placeholder]}>
+                          {state.ready.data && subdata && components.Subdata && (
                             <components.Subdata details={details} />
-                          </div>
-                        )}
+                          )}
+                        </div>
                         {components.Tagline && (
                           <components.Tagline details={details} />
                         )}
                       </div>
-                      {components.State && (
-                        <div css={styles.state}>
+                      <div css={styles.state}>
+                        {components.State && (
                           <components.State details={details} />
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                     <p css={[styles.description, ...placeholder]}>
                       <components.Description details={details} />
@@ -377,13 +377,13 @@ class Details extends PureComponent {
                   </div>
                 ) : (
                   <Empty
-                    title={err ? 'Oh ! You came across a bug...' : null}
-                    emoji={err ? '🐛' : null}
-                    subtitle={err ? err : null}
+                    title={error ? 'Oh ! You came across a bug...' : null}
+                    emoji={error ? '🐛' : null}
+                    subtitle={error ? error : null}
                   />
                 )}
               </div>
-              {!err && components.Tabs && (
+              {!error && components.Tabs && (
                 <components.Tabs
                   details={details}
                   placeholder={placeholder}
@@ -393,7 +393,7 @@ class Details extends PureComponent {
               )}
             </div>
           </div>
-          {!err && components.Button && (
+          {!error && components.Button && (
             <components.Button
               details={details}
               state={this.state}
@@ -403,7 +403,7 @@ class Details extends PureComponent {
             />
           )}
         </div>
-        {!err && components.Children && (
+        {!error && components.Children && (
           <components.Children
             details={details}
             state={children}
