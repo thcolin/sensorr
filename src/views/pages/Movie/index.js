@@ -207,6 +207,30 @@ export default class Movie extends PureComponent {
     ),
     Metadata: ({ details }) => (
       <>
+        {!!details.credits.crew.filter(star => star.job === 'Director').length && (
+          <span>
+            🎥 &nbsp;{details.credits.crew.filter(star => star.job === 'Director').map((star, index, arr) => (
+              <span key={star.id}>
+                <Link
+                  to={{
+                    pathname: '/movies/discover',
+                    state: {
+                      controls: {
+                        filtering: {
+                          with_crew: [{ value: star.id, label: star.name }],
+                        },
+                      },
+                    },
+                  }}
+                  css={theme.resets.a}
+                >
+                  {star.name}
+                </Link>
+                {index === arr.length - 1 ? '' : ', '}
+              </span>
+            ))}
+          </span>
+        )}
         {!!details.runtime && (
           <span>
             <Link
@@ -357,6 +381,7 @@ export default class Movie extends PureComponent {
         )}
       </>
     ),
+    Tagline: ({ details }) => details.tagline || '',
     Description: ({ details }) => details.overview || '',
     Tabs: ({ details, ready, palette, ...props }) => (
       <Tabs
@@ -491,6 +516,7 @@ export default class Movie extends PureComponent {
       (!!state.releases && `- 🔍`),
     ].filter(string => string).join(' ')}`,
     subdata: (details) => !!(details.original_language || details.production_companies.length || details.keywords.keywords.length),
+    tagline: (details) => !!details.tagline,
     poster: (details, context = 'default') => {
       if (!details.poster_path) {
         return null

@@ -80,6 +80,8 @@ const styles = {
     }
   },
   subdata: {
+    display: 'flex',
+    flexDirection: 'column',
     '>div': {
       margin: '0 0 1em',
       '>span>a': {
@@ -94,9 +96,11 @@ const styles = {
     },
   },
   tagline: {
-    color: theme.colors.rangoon,
-    margin: '1em 0 0',
-    fontWeight: 600,
+    '>h3': {
+      color: theme.colors.rangoon,
+      fontWeight: 600,
+      margin: '1em 0 0',
+    },
   },
   state: {
     width: '12em',
@@ -344,32 +348,34 @@ class Details extends PureComponent {
                             <components.Caption details={details} />
                           )}
                         </h2>
-                        <div css={[styles.metadata, ...placeholder]}>
-                          <components.Metadata details={details} />
-                          {components.Subdata && generators.subdata(details) && state.ready.data && (
-                            <button
-                              css={theme.resets.button}
-                              style={{ padding: '0 0.25em' }}
-                              onClick={this.handleSubdataChange}
-                            >
-                              <small>{subdata ? "▲" : "▼"}</small>
-                            </button>
-                          )}
-                        </div>
-                        <div css={[styles.subdata, ...placeholder]}>
-                          {state.ready.data && subdata && components.Subdata && (
-                            <components.Subdata details={details} />
-                          )}
-                        </div>
-                        {components.Tagline && (
-                          <components.Tagline details={details} />
-                        )}
                       </div>
                       <div css={styles.state}>
                         {components.State && (
                           <components.State details={details} />
                         )}
                       </div>
+                    </div>
+                    <div css={[styles.metadata, ...placeholder]}>
+                      <components.Metadata details={details} />
+                      {components.Subdata && generators.subdata(details) && state.ready.data && (
+                        <button
+                          css={theme.resets.button}
+                          style={{ padding: '0 0.25em' }}
+                          onClick={this.handleSubdataChange}
+                        >
+                          <small>{subdata ? "▲" : "▼"}</small>
+                        </button>
+                      )}
+                    </div>
+                    <div css={[styles.subdata, ...placeholder]}>
+                      {components.Subdata && !!state.ready.data && !!subdata && (
+                        <components.Subdata details={details} />
+                      )}
+                    </div>
+                    <div css={[styles.tagline, ...placeholder]}>
+                      {components.Tagline && generators.tagline(details) && (
+                        <h3><components.Tagline details={details} /></h3>
+                      )}
                     </div>
                     <p css={[styles.description, ...placeholder]}>
                       <components.Description details={details} />

@@ -163,8 +163,9 @@ Some necessary cron jobs will be launched in background every day:
 
 # 🗺️ Roadmap
 * Search, load more page (useful when you search simple terms with many results)
-* Add `Director(s)` on `Details` with `Discover` links
 * Pause `button`
+  * Disable `pm2.crons` ?
+  * Store `disabled` key on `config.js` ?
 * Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
 * Add `XZNAB` tester
 * Explain `score` on `Releases`
