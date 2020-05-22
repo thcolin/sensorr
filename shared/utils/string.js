@@ -20,7 +20,7 @@ module.exports = {
       0,
     ))
 
-    return position === str.length ? str : `${str.substring(0, position - 1).trimEnd()}${position > 1 ? options.ellipsis : ''}`
+    return position === (str.length + 1) ? str : `${str.substring(0, position - 1).trimEnd()}${position > 1 ? options.ellipsis : ''}`
   },
   capitalize: (str, forceLowerCase = false) => `${str.charAt(0).toUpperCase()}${str.substring(1)[forceLowerCase ? 'toLowerCase' : 'toString']()}`,
   humanize: {

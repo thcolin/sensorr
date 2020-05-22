@@ -10,6 +10,7 @@ import Calendar from 'views/pages/Calendar'
 import Following from 'views/pages/Following'
 import Settings from 'views/pages/Settings'
 import Records from 'views/pages/Records'
+import Search from 'views/pages/Search'
 import Blank from 'views/pages/Blank'
 import theme from 'theme'
 
@@ -27,6 +28,7 @@ const Body = ({ ...props }) => (
     <div css={styles.element}>
       <Switch>
         <Route path="/" exact component={Home} />
+        <Route path="/search/:subject(movie|collection|person)/:query?" exact component={Search} />
         <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
         <Route path="/movies/library" exact component={Library} />
         <Route path="/movies/discover" exact component={Discover} />
@@ -35,6 +37,8 @@ const Body = ({ ...props }) => (
         <Route path="/movies/records/:uuid?" exact component={Records} />
         <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
         <Route path="/stars/following" exact component={Following} />
+        {/* <Route path="/movie/:id/recommendations" exact component={Recommendations} /> */}
+        {/* <Route path="/movie/:id/similar" exact component={Similar} /> */}
         <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
         <Route path="/collection/:id" exact component={Collection} />
         <Route path="/star/:id" exact component={Star} />

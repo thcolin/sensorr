@@ -163,10 +163,25 @@ Some necessary cron jobs will be launched in background every day:
 
 # 🗺️ Roadmap
 * Search, load more page (useful when you search simple terms with many results)
+  * Add `Show More` button `<Items />` end redirect to `/search?query=[string]&model=[movie|people|collection]`
+  * Add `/search?query=[string]&model=[movie|people|collection]` page
+    * With model select as emoji (🎞️, 📚, ⭐) and query from Controls
+* `Row`
+  * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
+    * Better, display `Grid` when scroll end + `entities.length > 10`
+* Refactor `Persona` to `Person`, be consistent with **TMDB**
+* Refactor `Star` to `Person`, be consistent with **TMDB**
+* Refactor `Film` to `Movie`, be consistent with **TMDB**
+* Fix `Calendar` go back, use solution on `Search` page (`useMemo()` on `<*Items />`)
+* Fix `Home` rows issues
+  * `transition` between `Discover (x)`
+  * `Upcoming` / `Records` empty
+* Fix `Movie` page `State` is wrong sometimes
 * Pause `button`
-  * Disable `pm2.crons` ?
-  * Store `disabled` key on `config.js` ?
-* Display other `Persona` behind each `Movie` on `Details` page (`:hover` only ?)
+  * Store `disabled` key on `config.js`
+  * return early on `/bin/exec` or `/bin/sensorr`
+* Display other `Persona` behind each `Movie` on `Details` page (`:hover` only)
+  * Load every followed stars from database on component mount
 * Add `XZNAB` tester
 * Explain `score` on `Releases`
 * Record **Missing** `movies` too
@@ -266,9 +281,6 @@ Some necessary cron jobs will be launched in background every day:
   * `Grid`
     * Select/Deselect all
     * Actions on selection
-  * `Row`
-    * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
-      * Better, display `Grid` when scroll end + `entities.length > 10`
   * `Loading` page waiting sync of `db` with progress ?
     * Allow to `clean` database if waiting too much
   * Dark mode (`theme-ui`)

@@ -23,20 +23,33 @@ const Items = ({
   error = null,
   options = {},
   empty = {},
+  more = null,
   onMore = () => {},
   ...title
 }) => {
   const props = useMemo(() => typeof _props === 'function' ? _props : () => _props, [_props])
-  const total = useMemo(() => Math.min(limit, (ready && !loading) ? 
+  const total = useMemo(() => Math.min((more ? 1 : 0) + limit, (more ? 1 : 0) + ((ready && !loading) ? 
     (typeof _total === 'number' ? _total : entities.length) :
     ((typeof _placeholders === 'number' ? _placeholders : entities.length) || 20)
-  ), [limit, ready, loading, _total, _placeholders, entities.length])
+  )), [more, limit, ready, loading, _total, _placeholders, entities.length])
 
   const renderChild = useCallback((index) => {
+    const isMore = more && index === (total - 1)
+    const placeholder = child.placeholder(props({ index }))
     const raw = findEntity(index, entities)
-    const entity = (ready && !loading && raw?.id) ? raw : child.placeholder(props({ index }))
-    return Emotion.jsx(child, { entity, ...props({ entity, index }) })
-  }, [findEntity, entities, child, ready, loading])
+    const entity = (ready && !loading && !isMore && raw?.id) ? raw : placeholder
+    return Emotion.jsx(child, isMore ? {
+      ...props({ index }),
+      entity: child.more(props({ index })),
+      link: () => more,
+      withHover: false,
+      withState: false,
+      withMore: true,
+    } : {
+      ...props({ entity, index }),
+      entity,
+    })
+  }, [more, findEntity, entities, child, ready, loading])
 
   const override = useMemo(() => (!total || !!error) ? (
     <Empty

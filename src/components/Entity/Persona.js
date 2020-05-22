@@ -13,6 +13,7 @@ export default class Persona extends PureComponent {
     display: PropTypes.oneOf(['portrait', 'avatar', 'card']),
     link: PropTypes.func,
     withState: PropTypes.bool,
+    withMore: PropTypes.bool,
     placeholder: PropTypes.bool,
     title: PropTypes.string,
   }
@@ -21,11 +22,18 @@ export default class Persona extends PureComponent {
     display: 'avatar',
     link: (entity) => `/star/${entity.id}`,
     withState: true,
+    withMore: false,
     placeholder: true,
   }
 
   static placeholder = ({ ...props }) => ({
     profile_path: false,
+  })
+
+  static more = () => ({
+    id: -1,
+    name: 'More',
+    known_for_department: 'See more results as grid',
   })
 
   static validate = (entity) => !!(entity || {}).profile_path
@@ -142,18 +150,20 @@ export default class Persona extends PureComponent {
                   {name.length > 45 ? `${name.substring(0, 45)}...` : name}
                 </h1>
                 <span>
-                  💼 &nbsp; {entity.known_for_department}
+                  {props.withMore ? entity.known_for_department : `💼  ${entity.known_for_department}`}
                 </span>
               </Link>
             )}
-            <State entity={entity} css={Persona.styles.card.state} />
+            {props.withState && (
+              <State entity={entity} css={Persona.styles.card.state} />
+            )}
           </div>
         )
     }
   }
 }
 
-export const Poster = ({ entity, img, palette = {}, link, display, withState, placeholder, title, onLoad, onError, ready = true, ...props }) => {
+export const Poster = ({ entity, img, palette = {}, link, display, withState, withMore, placeholder, title, onLoad, onError, ready = true, ...props }) => {
   const [loaded, setLoaded] = useState(false)
   const [tooltip, setTooltip] = useState(false)
 
@@ -207,6 +217,16 @@ export const Poster = ({ entity, img, palette = {}, link, display, withState, pl
                 style={{
                   backgroundColor: palette.color,
                   opacity: (loaded && ready && entity.id && !(img || entity.profile_path)) ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                  transitionDuration: (loaded && ready) ? '400ms' : '250ms',
+                  transitionDelay: (loaded && ready) ? '400ms' : '0ms',
+                }}
+              />
+              <span
+                css={Poster.styles.more}
+                style={{
+                  backgroundColor: palette.color,
+                  opacity: withMore ? 1 : 0,
                   transition: 'opacity 400ms ease-in-out',
                   transitionDuration: (loaded && ready) ? '400ms' : '250ms',
                   transitionDelay: (loaded && ready) ? '400ms' : '0ms',
@@ -301,6 +321,17 @@ Poster.styles = {
     width: '100%',
     backgroundColor: theme.colors.gray,
     maskImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAwIDI0MDAiPiAgPHBhdGggZmlsbD0iI2NjYyIgZD0iTTg4IDIyMTljLTI0LjcgMC00NS41LTguNS02Mi41LTI1LjVTMCAyMTU2IDAgMjEzMlYzMDdjMC0yNC43IDguNS00NS41IDI1LjUtNjIuNVM2My4zIDIxOSA4OCAyMTloMjIyNGMyNC43IDAgNDUuNSA4LjUgNjIuNSAyNS41czI1LjUgMzcuOCAyNS41IDYyLjV2MTgyNWMwIDI0LTguNSA0NC41LTI1LjUgNjEuNXMtMzcuOCAyNS41LTYyLjUgMjUuNUg4OHptMTEyLTMwMGw2MDYtNDAwYzI0LjcgMTAgNTYuNyAyMy4yIDk2IDM5LjVzMTA0LjUgNDYuMiAxOTUuNSA4OS41IDE2NC4yIDgyLjMgMjE5LjUgMTE3YzIyLjcgMTQuNyAzOS43IDIyIDUxIDIyIDEwIDAgMTUtNiAxNS0xOCAwLTIyLjctMTUtNTguMy00NS0xMDdzLTY4LTk3LjMtMTE0LTE0Ni04Ny43LTgxLTEyNS05N2MyOS4zLTI5LjMgNzQuMy03Ny4zIDEzNS0xNDRzMTEzLjctMTI2IDE1OS0xNzhsNjktNzggNS41LTUuNSAxNS41LTE0IDI0LTIwIDMwLTIxIDM2LTIwIDM5LTE0IDQxLTUuNWMxOCAwIDM3IDMuNSA1NyAxMC41czM3LjggMTUuMyA1My41IDI1IDMwIDE5LjMgNDMgMjkgMjMuMiAxOC4yIDMwLjUgMjUuNWwxMCAxMCAzNTMgMzU4VjQxOUgyMDB2MTUwMHptNDAwLTg4MWMtNjAgMC0xMTEuNS0yMS41LTE1NC41LTY0LjVTMzgxIDg3OSAzODEgODE5czIxLjUtMTExLjUgNjQuNS0xNTQuNVM1NDAgNjAwIDYwMCA2MDBjMzkuMyAwIDc1LjggOS44IDEwOS41IDI5LjVzNjAuMyA0Ni4zIDgwIDgwUzgxOSA3NzkuNyA4MTkgODE5YzAgNjAtMjEuNSAxMTEuNS02NC41IDE1NC41UzY2MCAxMDM4IDYwMCAxMDM4eiIvPjwvc3ZnPg==)',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    maskSize: '50%',
+  },
+  more: {
+    position: 'absolute',
+    display: 'block',
+    height: '100%',
+    width: '100%',
+    backgroundColor: theme.colors.gray,
+    maskImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBmaWxsPSIjY2NjIiBkPSJNMzA0IDI1NmMwIDI2LjUtMjEuNSA0OC00OCA0OHMtNDgtMjEuNS00OC00OCAyMS41LTQ4IDQ4LTQ4IDQ4IDIxLjUgNDggNDh6bTEyMC00OGMtMjYuNSAwLTQ4IDIxLjUtNDggNDhzMjEuNSA0OCA0OCA0OCA0OC0yMS41IDQ4LTQ4LTIxLjUtNDgtNDgtNDh6bS0zMzYgMGMtMjYuNSAwLTQ4IDIxLjUtNDggNDhzMjEuNSA0OCA0OCA0OCA0OC0yMS41IDQ4LTQ4LTIxLjUtNDgtNDgtNDh6Ii8+PC9zdmc+)',
     maskRepeat: 'no-repeat',
     maskPosition: 'center',
     maskSize: '50%',

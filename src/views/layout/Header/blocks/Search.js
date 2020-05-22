@@ -121,6 +121,9 @@ export const Results = ({ children, ...props }) => {
                 css={Results.styles.label}
                 display="column"
                 options={{ space: 0.5 }}
+                more={{
+                  pathname: `/search/movie/${query}`,
+                }}
               />
             )}
             {state.collection && (
@@ -137,6 +140,9 @@ export const Results = ({ children, ...props }) => {
                 css={Results.styles.label}
                 display="column"
                 options={{ space: 0.5 }}
+                more={{
+                  pathname: `/search/collection/${query}`,
+                }}
               />
             )}
             {state.person && (
@@ -149,6 +155,9 @@ export const Results = ({ children, ...props }) => {
                 css={Results.styles.label}
                 display="column"
                 options={{ space: 0.5 }}
+                more={{
+                  pathname: `/search/person/${query}`,
+                }}
               />
             )}
             {/*
@@ -176,7 +185,7 @@ export const Results = ({ children, ...props }) => {
               title="Sorry, no results"
               subtitle={(
                 <span>
-                  Try something more familiar, like "Pulp Fiction" ?
+                  Try something more familiar, like <em>Pulp Fiction</em> ?
                 </span>
               )}
             />

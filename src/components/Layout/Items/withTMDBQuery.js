@@ -98,7 +98,16 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
         }
       } catch(err) {
         this.processed = this.processed.filter(p => p !== page)
-        throw new Error(err.status_code === 7 ? 'Invalid TMDB API key, check your configuration.' : err.status_message)
+
+        if (err.status_code === 7) {
+          throw new Error('Invalid TMDB API key, check your configuration.')
+        }
+
+        if ((err.errors || []).length) {
+          throw new Error(err.errors.join(', '))
+        }
+
+        throw new Error(err.status_message)
       }
     }
 
@@ -127,7 +136,13 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
       return (this.state.pages[page] || [])[i] || null
     }
 
-    handleControls = ({ filtering, filters, sorting, reverse }) => {
+    handleControls = (controls) => {
+      const { filtering, filters, sorting, reverse } = controls
+
+      if (typeof this.props.onControls === 'function') {
+        this.props.onControls(controls)
+      }
+
       this.setState({
         params: {
           sort_by: `${sorting}.${reverse ? 'asc' : 'desc'}`,
@@ -140,7 +155,7 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
     }
     
     render() {
-      const { debounce, params, transform, onFetched, ...props } = this.props
+      const { debounce, params, transform, onFetched, onControls, ...props } = this.props
       const entities = Object.values(this.state.pages).reduce((acc, cur) => [...acc, ...cur], [])
 
       return (

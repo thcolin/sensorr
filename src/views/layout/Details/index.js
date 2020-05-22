@@ -45,7 +45,10 @@ const styles = {
     '>div': {
       display: 'flex',
       alignItems: 'flex-start',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
+      '&:first-child': {
+        justifyContent: 'space-between',
+      },
     },
   },
   title: {

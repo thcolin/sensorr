@@ -27,6 +27,11 @@ module.exports = class TMDB {
             res.json().then(body => {
               if (res.ok) {
                 resolve(body)
+              } else if (
+                ((body.errors || []).length === 1 && body.errors[0] === 'query must be provided') ||
+                uri.join('/') === 'search/collection' && body.status_code === 34
+              ) {
+                resolve({ ...body, results: [], total_results: 0 })
               } else {
                 reject(body)
               }

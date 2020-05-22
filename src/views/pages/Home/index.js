@@ -157,6 +157,9 @@ export default class Home extends PureComponent {
             child={Film}
             props={{ withCredits: true }}
             hide={ready}
+            more={{
+              pathname: '/movies/calendar',
+            }}
             transform={(entities) => entities
               .map(raw => {
                 const entity = raw.toJSON()
@@ -180,6 +183,9 @@ export default class Home extends PureComponent {
             child={Film}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             limit={20}
+            more={{
+              pathname: '/movies/discover',
+            }}
           />
           <DiscoverItemsSelectable
             label={(
@@ -261,6 +267,44 @@ export default class Home extends PureComponent {
             limit={20}
             stack={true}
             debounce={true}
+            more={{
+              year: {
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      release_date: [year, year],
+                    },
+                    sorting: 'popularity',
+                    reverse: false,
+                  },
+                },
+              },
+              genre: {
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      with_genres: [{ value: genre, label: GENRES[genre] }],
+                    },
+                    sorting: 'popularity',
+                    reverse: false,
+                  },
+                },
+              },
+              studio: {
+                pathname: '/movies/discover',
+                state: {
+                  controls: {
+                    filtering: {
+                      with_companies: STUDIOS[studio].map(studio => ({ value: studio.id, label: studio.name })),
+                    },
+                    sorting: 'popularity',
+                    reverse: false,
+                  },
+                },
+              },
+            }[rows.random]}
             {...({
               year: {
                 params: {

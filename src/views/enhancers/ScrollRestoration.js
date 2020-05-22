@@ -1,5 +1,8 @@
 import { useEffect } from 'react'
 import { useLocation, useHistory } from 'react-router-dom'
+import nanobounce from 'nanobounce'
+
+const debounce = nanobounce(200)
 
 export const triggerScrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -11,7 +14,7 @@ const ScrollRestoration = ({ children }) => {
 
   useEffect(() => {
     if (['PUSH'].includes(action)) {
-      triggerScrollToTop()
+      debounce(() => triggerScrollToTop())
     }
   }, [pathname])
 

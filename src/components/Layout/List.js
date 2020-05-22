@@ -45,7 +45,7 @@ List.styles = {
       left: 0,
       display: 'flex',
       flexWrap: 'nowrap',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',

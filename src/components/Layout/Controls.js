@@ -114,9 +114,9 @@ const styles = {
   }
 }
 
-const Input = ({ onChange, ...props }) => {
+export const Input = ({ value: defaultValue = '', onChange, ...props }) => {
   const input = useRef(null)
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(defaultValue)
   const debounce = useMemo(() => nanobounce(500), [])
 
   return (
@@ -138,7 +138,7 @@ const Input = ({ onChange, ...props }) => {
         }
       }}
       css={styles.input}
-      placeholder="Filter"
+      placeholder="Query"
     />
   )
 }
@@ -164,7 +164,7 @@ const Controls = ({
   const [sorting, setSorting] = useState((initial || defaults).sorting)
   const [reverse, setReverse] = useState((initial || defaults).reverse)
   const [state, setState] = useState((initial || defaults).state)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState((initial || defaults).query || '')
   const [previous, setPrevious] = useState(initial || defaults)
   const [open, setOpen] = useState(false)
 
@@ -206,13 +206,16 @@ const Controls = ({
 
     onChange({
       state,
-      filtering,
+      filtering: {
+        ...filtering,
+        ...(filters.query ? { query } : {}),
+      },
       filter: (entity) =>
         Object.keys(filtering).every(key => filters[key].apply(entity, filtering[key])) &&
         (!filters.query || filters.query.apply(entity, query)),
       sorting,
       reverse,
-      sort: (a, b) => sortings[sorting].apply(a, b, reverse),
+      ...(sorting ? { sort: (a, b) => sortings[sorting].apply(a, b, reverse) } : {}),
       ...diff,
     })
   }
@@ -329,11 +332,18 @@ const Controls = ({
       <div css={styles.menu}>
         {render.menu ? (
           render.menu({
+            filters,
+            filtering,
             setOpen,
             state,
             setState: (state) => {
               setState(state)
               apply({ state })
+            },
+            query,
+            setQuery: (query) => {
+              setQuery(query)
+              apply({ query }, false)
             },
           })
         ) : (
@@ -341,41 +351,44 @@ const Controls = ({
             <Input
               key="query"
               style={{ visibility: hideQuery ? 'hidden' : 'visible' }}
+              value={query}
               onChange={query => {
                 setQuery(query)
                 apply({ query }, false)
               }}
             />
-            <div key="summary" css={styles.summary}>
-              {active.length ? active.map(key => (
-                <button
-                  key={key}
-                  onClick={() => setOpen(true)}
-                  title={({
-                    range: () => filtering[key]
-                      .join('-'),
-                    checkbox: () => filtering[key]
-                      .map(value => (filters[key].options.filter(filter => filter.value === value).pop() || {}).label)
-                      .filter(label => label)
-                      .join(', '),
-                  }[filters[key].type] || (() => null))()}
-                >
-                  <span>{filters[key].label}</span>
-                  <Chevron.Down />
-                </button>
-              )) : (
-                <button onClick={() => setOpen(true)} data-test="controls-all">
-                  <span>All</span>
-                  <Chevron.Down />
-                </button>
-              )}
-              {sorting && (
-                <button onClick={() => setOpen(true)} title={`Sorted by ${sortings[sorting].label} ${reverse ? '↓' : '↑'}`}>
-                  <span>Sort</span>
-                  <Chevron.Down />
-                </button>
-              )}
-            </div>
+            {!!Object.keys(filters).filter(key => !['query'].includes(key)).length && (
+              <div key="summary" css={styles.summary}>
+                {active.length ? active.map(key => (
+                  <button
+                    key={key}
+                    onClick={() => setOpen(true)}
+                    title={({
+                      range: () => filtering[key]
+                        .join('-'),
+                      checkbox: () => filtering[key]
+                        .map(value => (filters[key].options.filter(filter => filter.value === value).pop() || {}).label)
+                        .filter(label => label)
+                        .join(', '),
+                    }[filters[key].type] || (() => null))()}
+                  >
+                    <span>{filters[key].label}</span>
+                    <Chevron.Down />
+                  </button>
+                )) : (
+                  <button onClick={() => setOpen(true)} data-test="controls-all">
+                    <span>All</span>
+                    <Chevron.Down />
+                  </button>
+                )}
+                {sorting && (
+                  <button onClick={() => setOpen(true)} title={`Sorted by ${sortings[sorting].label} ${reverse ? '↓' : '↑'}`}>
+                    <span>Sort</span>
+                    <Chevron.Down />
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
         <div

@@ -508,6 +508,24 @@ const Sortings = {
   },
 }
 
+const Labels = {
+  with_original_language: 'Languages',
+  with_release_type: 'Released',
+  certification: 'Certification',
+  with_genres: 'Genres',
+  without_genres: 'Without genre',
+  with_companies: 'Companies',
+  with_keywords: 'Keywords',
+  without_keywords: 'Without keyword',
+  with_people: 'Peoples',
+  with_crew: 'Crew',
+  with_cast: 'Cast',
+  release_date: 'Year',
+  vote_average: 'Vote Average',
+  vote_count: 'Vote Count',
+  runtime: 'Duration',
+}
+
 const DiscoverItems = compose(
   withTMDBQuery({
     uri: ['discover', 'movie'],
@@ -564,14 +582,24 @@ const DiscoverItems = compose(
         </>
       ),
     },
-    history: history,
   }),
 )(Items)
 
 const Discover = ({ history, ...props }) => (
   <Fragment>
     <Helmet>
-      <title>Sensorr - Discover</title>
+      <title>Sensorr - Discover {
+        Object.keys(window?.history?.state?.state?.controls?.filtering || {}).length ?
+        `(${
+          Object.keys(window?.history?.state?.state?.controls?.filtering)
+            .filter(key => Object.keys(Labels).includes(key) && Array.isArray(window?.history?.state?.state?.controls?.filtering[key]))
+            .map(key => `${Labels[key]}: ${window?.history?.state?.state?.controls?.filtering[key]
+              .map(value => value?.label || value)
+              .join(typeof value === 'Object' ? ', ' : '-')}`
+            )
+            .join(' / ')
+        })` : ''}
+      </title>
     </Helmet>
     <div css={styles.wrapper}>
       <DiscoverItems
