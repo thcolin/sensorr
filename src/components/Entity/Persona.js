@@ -216,7 +216,7 @@ export const Poster = ({ entity, img, palette = {}, link, display, withState, wi
                 css={Poster.styles.empty}
                 style={{
                   backgroundColor: palette.color,
-                  opacity: (loaded && ready && entity.id && !(img || entity.profile_path)) ? 1 : 0,
+                  opacity: !withMore && (loaded && ready && entity.id && !(img || entity.profile_path)) ? 1 : 0,
                   transition: 'opacity 400ms ease-in-out',
                   transitionDuration: (loaded && ready) ? '400ms' : '250ms',
                   transitionDelay: (loaded && ready) ? '400ms' : '0ms',

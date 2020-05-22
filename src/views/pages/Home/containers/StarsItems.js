@@ -72,6 +72,9 @@ const StarsItems = ({ ...props }) => {
           props={{ display: 'portrait' }}
           limit={20}
           label={label}
+          more={{
+            pathname: '/trending/person',
+          }}
         />
       )
     case 'birthday':

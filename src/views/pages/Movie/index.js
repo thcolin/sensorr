@@ -410,6 +410,9 @@ export default class Movie extends PureComponent {
                   child: Film.default,
                   props: { display: 'pretty', palette },
                   subtitle: Movie.tabs.subtitles.collection,
+                  more: {
+                    pathname: `/collection/${details.belongs_to_collection?.id}`,
+                  },
                 },
               }
             ]),
@@ -423,6 +426,9 @@ export default class Movie extends PureComponent {
                   child: Film.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.recommendations,
+                  more: {
+                    pathname: `/movie/${details.id}/recommendations`,
+                  },
                 },
               }
             ]),
@@ -436,6 +442,9 @@ export default class Movie extends PureComponent {
                   child: Film.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.similar,
+                  more: {
+                    pathname: `/movie/${details.id}/similar`,
+                  },
                 },
               }
             ]),

@@ -5,7 +5,6 @@ import Items from 'components/Layout/Items'
 import withSessionListener from 'components/Layout/Items/withSessionListener'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
-import { NavLink } from 'react-router-dom'
 import { Indicator } from 'views/layout/Header/blocks/Recording'
 import Film from 'components/Entity/Film'
 import theme from 'theme'
@@ -18,15 +17,13 @@ const RecordingItems = compose(
 RecordingItems.components = {
   label: ({ fetched }) => (
     <span title="Current recording movies">
-      <NavLink to="/movies/records" css={theme.resets.a}>
-        <span style={{ position: 'relative', padding: '0.25em 0 0.25em 0.3125em', }}>
-          <Indicator ongoing={true} />
-          <span>📼</span>
-        </span>
-        <span>&nbsp;&nbsp;</span>
-        <span>Recording</span>
-        <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}> ({fetched})</span>
-      </NavLink>
+      <span style={{ position: 'relative', padding: '0.25em 0 0.25em 0.3125em', }}>
+        <Indicator ongoing={true} />
+        <span>📼</span>
+      </span>
+      <span>&nbsp;&nbsp;</span>
+      <span>Recording</span>
+      <span style={{ fontSize: 'smaller', fontWeight: 'normal' }}> ({fetched})</span>
     </span>
   ),
 }
@@ -45,23 +42,27 @@ class Records extends PureComponent {
         label={RecordingItems.components.label}
         child={Film}
         placeholders={20}
+        more={{
+          pathname: '/movie/records'
+        }}
       />
     ) :(
       <RecordedItems
         label={(
           <span title="Last recorded movies">
-            <NavLink to="/movies/library" css={theme.resets.a}>
-              <span style={{ position: 'relative', padding: '0.25em 0 0.25em 0.3125em', }}>
-                <Indicator ongoing={false} />
-                <span>📼</span>
-              </span>
-              <span>&nbsp;&nbsp;</span>
-              <span>Records</span>
-            </NavLink>
+            <span style={{ position: 'relative', padding: '0.25em 0 0.25em 0.3125em', }}>
+              <Indicator ongoing={false} />
+              <span>📼</span>
+            </span>
+            <span>&nbsp;&nbsp;</span>
+            <span>Records</span>
           </span>
         )}
         child={Film}
         hide={true}
+        more={{
+          pathname: '/movie/library'
+        }}
       />
     )
   }

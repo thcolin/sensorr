@@ -145,14 +145,13 @@ export default class Home extends PureComponent {
             child={Film}
             limit={20}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
+            more={{
+              pathname: '/trending/movie',
+            }}
           />
           <RecordsItems />
           <UpcomingItems
-            label={(
-              <Link to={{ pathname: '/movies/calendar' }} css={theme.resets.a}>
-                📆&nbsp; Upcoming
-              </Link>
-            )}
+            label="📆&nbsp; Upcoming"
             title="Upcoming movies"
             child={Film}
             props={{ withCredits: true }}
@@ -174,11 +173,7 @@ export default class Home extends PureComponent {
             }
           />
           <DiscoverItems
-            label={(
-              <Link to={{ pathname: '/movies/discover' }} css={theme.resets.a}>
-                👀&nbsp; Discover
-              </Link>
-            )}
+            label="👀&nbsp; Discover"
             title="Discover movies"
             child={Film}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
@@ -194,18 +189,7 @@ export default class Home extends PureComponent {
                   css={[theme.resets.a, styles.label]}
                   {...(rows.random === 'year' ? {
                     style: { opacity: 1 },
-                    to: {
-                      pathname: '/movies/discover',
-                      state: {
-                        controls: {
-                          filtering: {
-                            release_date: [year, year],
-                          },
-                          sorting: 'popularity',
-                          reverse: false,
-                        },
-                      },
-                    },
+                    disabled: true,
                   } : {
                     title: "Discover movies by random year",
                     onClick: () => this.handleRowClick('random', 'year'),
@@ -217,18 +201,7 @@ export default class Home extends PureComponent {
                   css={[theme.resets.a, styles.label]}
                   {...(rows.random === 'genre' ? {
                     style: { opacity: 1 },
-                    to: {
-                      pathname: '/movies/discover',
-                      state: {
-                        controls: {
-                          filtering: {
-                            with_genres: [{ value: genre, label: GENRES[genre] }],
-                          },
-                          sorting: 'popularity',
-                          reverse: false,
-                        },
-                      },
-                    },
+                    disabled: true,
                   } : {
                     title: "Discover movies by genre",
                     onClick: () => this.handleRowClick('random', 'genre'),
@@ -240,18 +213,7 @@ export default class Home extends PureComponent {
                   css={[theme.resets.a, styles.label]}
                   {...(rows.random === 'studio' ? {
                     style: { opacity: 1 },
-                    to: {
-                      pathname: '/movies/discover',
-                      state: {
-                        controls: {
-                          filtering: {
-                            with_companies: STUDIOS[studio].map(studio => ({ value: studio.id, label: studio.name })),
-                          },
-                          sorting: 'popularity',
-                          reverse: false,
-                        },
-                      },
-                    },
+                    disabled: true,
                   } : {
                     title: "Discover movies by famous studio",
                     onClick: () => this.handleRowClick('random', 'studio'),

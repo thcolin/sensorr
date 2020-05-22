@@ -162,17 +162,10 @@ Some necessary cron jobs will be launched in background every day:
 * _05:03_ `sensorr:hydrate`: Hydrate -or refresh- collected movies and stalked stars data
 
 # 🗺️ Roadmap
-* Search, load more page (useful when you search simple terms with many results)
-  * Add `Show More` button `<Items />` end redirect to `/search?query=[string]&model=[movie|people|collection]`
-  * Add `/search?query=[string]&model=[movie|people|collection]` page
-    * With model select as emoji (🎞️, 📚, ⭐) and query from Controls
-* `Row`
-  * Load next page when scroll end on `Row` with `uri` props (like `Grid` but horizontal)
-    * Better, display `Grid` when scroll end + `entities.length > 10`
 * Refactor `Persona` to `Person`, be consistent with **TMDB**
 * Refactor `Star` to `Person`, be consistent with **TMDB**
 * Refactor `Film` to `Movie`, be consistent with **TMDB**
-* Fix `Calendar` go back, use solution on `Search` page (`useMemo()` on `<*Items />`)
+* Fix `Calendar` history.back, use solution on `Search` page (`useMemo()` on `<*Items />`)
 * Fix `Home` rows issues
   * `transition` between `Discover (x)`
   * `Upcoming` / `Records` empty

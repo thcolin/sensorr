@@ -1,6 +1,9 @@
 import React from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
+import Film from 'components/Entity/Film'
+import Persona from 'components/Entity/Persona'
 import Home from 'views/pages/Home'
+import Medias from 'views/pages/Medias'
 import Library from 'views/pages/Library'
 import Discover from 'views/pages/Discover'
 import Movie from 'views/pages/Movie'
@@ -23,12 +26,39 @@ const styles = {
   },
 }
 
+const Recommendations = ({ ...props }) => (
+  <Medias
+    {...props}
+    title={`Recommendations (${props.match.params.id})`}
+    uri={['movie', props.match.params.id, 'recommendations'].join('/')}
+  />
+)
+
+const Similar = ({ ...props }) => (
+  <Medias
+    {...props}
+    title={`Similar (${props.match.params.id})`}
+    uri={['movie', props.match.params.id, 'recommendations'].join('/')}
+  />
+)
+
+const Trending = ({ ...props }) => (
+  <Medias
+    {...props}
+    title={`Trending ${props.match.params.subject}s of the day`}
+    uri={['trending', props.match.params.subject, 'day'].join('/')}
+    child={{ movie: Film, person: Persona }[props.match.params.subject]}
+    props={{ display: { movie: 'default', person: 'portrait' }[props.match.params.subject] }}
+  />
+)
+
 const Body = ({ ...props }) => (
   <>
     <div css={styles.element}>
       <Switch>
         <Route path="/" exact component={Home} />
         <Route path="/search/:subject(movie|collection|person)/:query?" exact component={Search} />
+        <Route path="/trending/:subject(movie|person)" exact component={Trending} />
         <Route path="/movies" exact component={() => <Redirect to="/movies/library" />} />
         <Route path="/movies/library" exact component={Library} />
         <Route path="/movies/discover" exact component={Discover} />
@@ -37,8 +67,8 @@ const Body = ({ ...props }) => (
         <Route path="/movies/records/:uuid?" exact component={Records} />
         <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
         <Route path="/stars/following" exact component={Following} />
-        {/* <Route path="/movie/:id/recommendations" exact component={Recommendations} /> */}
-        {/* <Route path="/movie/:id/similar" exact component={Similar} /> */}
+        <Route path="/movie/:id/recommendations" exact component={Recommendations} />
+        <Route path="/movie/:id/similar" exact component={Similar} />
         <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
         <Route path="/collection/:id" exact component={Collection} />
         <Route path="/star/:id" exact component={Star} />
