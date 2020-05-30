@@ -276,7 +276,7 @@ const CalendarItems = compose(
   })
 )(Items)
 
-const Calendar = ({match, history, ...props }) => {
+const Calendar = ({ match, history, ...props }) => {
   const [ready, setReady] = useState(false)
   const [stars, setStars] = useState([])
   const year = Math.min(LIMITS[1], Math.max(LIMITS[0], parseInt(match.params.year)))

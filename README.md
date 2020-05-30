@@ -165,7 +165,6 @@ Some necessary cron jobs will be launched in background every day:
 * Refactor `Persona` to `Person`, be consistent with **TMDB**
 * Refactor `Star` to `Person`, be consistent with **TMDB**
 * Refactor `Film` to `Movie`, be consistent with **TMDB**
-* Fix `Calendar` history.back, use solution on `Search` page (`useMemo()` on `<*Items />`)
 * Fix `Home` rows issues
   * `transition` between `Discover (x)`
   * `Upcoming` / `Records` empty

@@ -28,10 +28,14 @@ const Items = ({
   ...title
 }) => {
   const props = useMemo(() => typeof _props === 'function' ? _props : () => _props, [_props])
-  const total = useMemo(() => Math.min((more ? 1 : 0) + limit, (more ? 1 : 0) + ((ready && !loading) ? 
-    (typeof _total === 'number' ? _total : entities.length) :
-    ((typeof _placeholders === 'number' ? _placeholders : entities.length) || 20)
-  )), [more, limit, ready, loading, _total, _placeholders, entities.length])
+  const total = useMemo(() => {
+    const length = ((!ready || loading) ?
+      ((typeof _placeholders === 'number' ? _placeholders : entities.length) || 20) :
+      (typeof _total === 'number' ? _total : entities.length)
+    )
+
+    return Math.min(length + (more && length ? 1 : 0), limit)
+  }, [more, limit, ready, loading, _total, _placeholders, entities.length])
 
   const renderChild = useCallback((index) => {
     const isMore = more && index === (total - 1)
