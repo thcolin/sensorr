@@ -24,6 +24,7 @@ class Config {
     const payload = { ...this.payload, ...partial }
 
     this.payload = {
+      disabled: !!payload.disabled,
       tmdb: (payload.tmdb || '').toString(),
       blackhole: (payload.blackhole || '').toString(),
       xznabs: (Array.isArray(payload.xznabs) ? payload.xznabs : []).map(xznab => ({

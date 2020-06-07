@@ -12,6 +12,12 @@ async function record({ argv, log, session, logger, sensorr, db }) {
   const tmdb = new TMDB({ key: sensorr.config.tmdb, region: sensorr.config.region })
   logger.init()
 
+  if (sensorr.config.disabled) {
+    log('⛔', 'Record job disabled by user !')
+    log('')
+    return
+  }
+
   return await new Promise(resolve =>
     from(db.movies.allDocs({ include_docs: true })).pipe(
       pluck('rows'),

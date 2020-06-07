@@ -137,9 +137,9 @@ class Recording extends PureComponent {
         ) : (
           <button
             css={Recording.styles.button}
-            title={`📹 Record${loading ? 'ing' : ''} wished movies from collection`}
+            title={sensorr.config.disabled ? `⛔ Record disabled, check settings to enable` : `📹 Record${loading ? 'ing' : ''} wished movies from collection`}
             onClick={() => this.triggerJob('record')}
-            disabled={loading}
+            disabled={loading || sensorr.config.disabled}
           >
             📼
           </button>

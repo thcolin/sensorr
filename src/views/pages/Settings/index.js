@@ -196,7 +196,7 @@ class Settings extends PureComponent {
               exact={true}
               render={() => (
                 <>
-                  <About />
+                  <About values={values} handleChange={this.handleChange} />
                   <Authentication values={values} handleChange={this.handleChange} />
                   <TMDB values={values} handleChange={this.handleChange} />
                   <Region values={values} handleChange={this.handleChange} />

@@ -165,9 +165,6 @@ Some necessary cron jobs will be launched in background every day:
 * Fix `Home` rows issues
   * `Upcoming` / `Records` empty
 * Fix `Movie` page `State` is wrong sometimes
-* Pause `button`
-  * Store `disabled` key on `config.js`
-  * return early on `/bin/exec` or `/bin/sensorr`
 * Display other `Person` behind each `Movie` on `Details` page (`:hover` only)
   * Load every followed stars from database on component mount
 * Add `XZNAB` tester
