@@ -168,11 +168,10 @@ Some necessary cron jobs will be launched in background every day:
 * Pause `button`
   * Store `disabled` key on `config.js`
   * return early on `/bin/exec` or `/bin/sensorr`
-* Display other `Persona` behind each `Movie` on `Details` page (`:hover` only)
+* Display other `Person` behind each `Movie` on `Details` page (`:hover` only)
   * Load every followed stars from database on component mount
 * Add `XZNAB` tester
 * Explain `score` on `Releases`
-* Record **Missing** `movies` too
 * Feature `Discover`
   * Improve `AND` + `OR` behavior
     * I want to see `Comédie` AND `Romance` movies
@@ -229,7 +228,7 @@ Some necessary cron jobs will be launched in background every day:
     * `Hydrate`
 * Feature `performance`
   * Rename `XZNAB` to `XYZNAB`
-  * On `Persona.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
+  * On `Person.State` `unfollow`, delete `calendar` entities with only `this` as followed credits
   * Look at [`shipjs`](https://github.com/algolia/shipjs)
   * `oleoo`
     * Refactor algorithm, split `title` and `metadata` with `year|language|resolution|source` (`[0]`/`[1]`)
@@ -260,7 +259,7 @@ Some necessary cron jobs will be launched in background every day:
     * Add `status` in `controls` - how ?
     * Add `Random` button
   * `Home`
-    * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
+    * Add `Head` `Movie` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
       * Add "pre-configured" `List` like `Oscars` ?
       * Weekly movies selection (?)
         * Allow user to send PR with own movies selection

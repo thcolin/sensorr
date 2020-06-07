@@ -16,10 +16,10 @@ async function record({ argv, log, session, logger, sensorr, db }) {
     from(db.movies.allDocs({ include_docs: true })).pipe(
       pluck('rows'),
       map(entities => entities.map(entity => ({ id: entity.id, ...entity.doc }))),
-      tap(movies => movies.filter(movie => movie.state === 'wished').length ? '' : log('👏', 'Up to date, no more wished movies !')),
+      tap(movies => movies.filter(movie => ['wished', 'missing'].includes(movie.state)).length ? '' : log('👏', 'Up to date, no more wished movies !')),
       map(movies => movies.sort((a, b) => a.time - b.time)),
       mergeMap(movies => from(movies)),
-      filter(movie => movie.state === 'wished'),
+      filter(movie => ['wished', 'missing'].includes(movie.state)),
       mergeMap(movie => {
         const record = uuidv4()
         const context = { session, record }
