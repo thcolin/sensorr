@@ -1,14 +1,14 @@
 import React from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
-import Film from 'components/Entity/Film'
-import Persona from 'components/Entity/Persona'
+import Movie from 'components/Entity/Movie'
+import Person from 'components/Entity/Person'
 import Home from 'views/pages/Home'
 import Medias from 'views/pages/Medias'
 import Library from 'views/pages/Library'
 import Discover from 'views/pages/Discover'
-import Movie from 'views/pages/Movie'
+import MoviePage from 'views/pages/Movie'
 import Collection from 'views/pages/Collection'
-import Star from 'views/pages/Star'
+import PersonPage from 'views/pages/Person'
 import Calendar from 'views/pages/Calendar'
 import Following from 'views/pages/Following'
 import Settings from 'views/pages/Settings'
@@ -47,7 +47,7 @@ const Trending = ({ ...props }) => (
     {...props}
     title={`Trending ${props.match.params.subject}s of the day`}
     uri={['trending', props.match.params.subject, 'day'].join('/')}
-    child={{ movie: Film, person: Persona }[props.match.params.subject]}
+    child={{ movie: Movie, person: Person }[props.match.params.subject]}
     props={{ display: { movie: 'default', person: 'portrait' }[props.match.params.subject] }}
   />
 )
@@ -65,13 +65,16 @@ const Body = ({ ...props }) => (
         <Route path="/movies/calendar/:year/:month" exact component={Calendar} />
         <Route path="/movies/calendar" exact component={() => <Redirect to={`/movies/calendar/${(new Date()).getFullYear()}/${(new Date()).getMonth() + 1}`} />} />
         <Route path="/movies/records/:uuid?" exact component={Records} />
-        <Route path="/stars" exact component={() => <Redirect to="/stars/following" />} />
-        <Route path="/stars/following" exact component={Following} />
-        <Route path="/movie/:id/recommendations" exact component={Recommendations} />
-        <Route path="/movie/:id/similar" exact component={Similar} />
-        <Route path="/movie/:id/:releases(releases)?" exact component={Movie} />
+        <Route path="/stars" exact component={() => <Redirect to="/persons/following" />} />
+        <Route path="/persons" exact component={() => <Redirect to="/persons/following" />} />
+        <Route path="/stars/following" exact component={() => <Redirect to="/persons/following" />} />
+        <Route path="/persons/following" exact component={Following} />
+        <Route path="/movie/:id(\d+):slug(.*)?/recommendations" exact component={Recommendations} />
+        <Route path="/movie/:id(\d+):slug(.*)?/similar" exact component={Similar} />
+        <Route path="/movie/:id(\d+):slug(.*)?/:releases(releases)?" exact component={MoviePage} />
         <Route path="/collection/:id" exact component={Collection} />
-        <Route path="/star/:id" exact component={Star} />
+        <Route path="/star/:id" exact component={({ match: { params: { id } } }) => <Redirect to={`/person/${id}`} />} />
+        <Route path="/person/:id(\d+):slug(.*)?" exact component={PersonPage} />
         <Route path="/settings/(plex|downloads|database)?" exact component={Settings} />
         <Route component={Blank} />
       </Switch>

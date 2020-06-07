@@ -6,10 +6,10 @@ import { withRouter } from 'react-router'
 import Items from 'components/Layout/Items'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import Left from 'icons/Left'
 import Right from 'icons/Right'
-import { Movie } from 'shared/Documents'
+import * as Documents from 'shared/Documents'
 import database from 'store/database'
 import { capitalize } from 'shared/utils/string'
 import { setHistoryState } from 'utils/history'
@@ -232,19 +232,19 @@ const CalendarItems = compose(
       </span>
     ),
     filters: {
-      query: Movie.Filters.query,
-      genre: Movie.Filters.genre,
-      popularity: Movie.Filters.popularity,
-      vote_average: Movie.Filters.vote_average,
+      query: Documents.Movie.Filters.query,
+      genre: Documents.Movie.Filters.genre,
+      popularity: Documents.Movie.Filters.popularity,
+      vote_average: Documents.Movie.Filters.vote_average,
       display: Filters.display,
     },
     sortings: {
       release_date_full: {
-        ...Movie.Sortings.release_date,
+        ...Documents.Movie.Sortings.release_date,
         value: 'release_date_full',
       },
-      popularity: Movie.Sortings.popularity,
-      vote_average: Movie.Sortings.vote_average,
+      popularity: Documents.Movie.Sortings.popularity,
+      vote_average: Documents.Movie.Sortings.vote_average,
     },
     initial: () => ({
       filtering: window?.history?.state?.state?.controls?.filtering || { display: 'strict' },
@@ -311,7 +311,7 @@ const Calendar = ({ match, history, ...props }) => {
             })
             .filter(entity => entity.credits.length)
           }
-          child={Film}
+          child={Movie}
           props={{ withCredits: true }}
           placeholders={history.location.state?.items?.total || null}
           onFetched={({ total }) => setHistoryState({ items: { total } })}

@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Persona from 'components/Entity/Persona'
+import Person from 'components/Entity/Person'
 import { Star } from 'shared/Documents'
 import { setHistoryState } from 'utils/history'
 import theme from 'theme'
@@ -80,7 +80,7 @@ const Following = ({ history, ...props }) => (
     <div css={styles.wrapper}>
       <FollowingItems
         display="virtual-grid"
-        child={Persona}
+        child={Person}
         props={{ display: 'portrait' }}
         placeholders={history.location.state?.items?.total || null}
         onFetched={({ total }) => setHistoryState({ items: { total } })}

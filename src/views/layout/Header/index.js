@@ -109,8 +109,8 @@ const Header = ({ ...props }) => (
               <Route path="/" exact={true} render={() => "Home"} />
               <Route path="/movies" render={() => "Movies"} />
               <Route path="/movie/:id" render={() => "Movies"} />
-              <Route path="/stars" render={() => "Stars"} />
-              <Route path="/star/:id" render={() => "Stars"} />
+              <Route path="/persons" render={() => "Stars"} />
+              <Route path="/person/:id" render={() => "Stars"} />
               <Route path="/search/:query" render={() => "Search"} />
               <Route path="/settings" render={() => "Settings"} />
               <Route render={() => "Navigation"} />

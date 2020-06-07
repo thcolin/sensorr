@@ -1,8 +1,8 @@
 import React, { useRef, useState, useContext, useMemo, useCallback, useEffect, useReducer } from 'react'
 import { withRouter } from 'react-router-dom'
 import Items from 'components/Layout/Items'
-import Film from 'components/Entity/Film'
-import Persona from 'components/Entity/Persona'
+import Movie from 'components/Entity/Movie'
+import Person from 'components/Entity/Person'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import Clear from 'icons/Clear'
@@ -116,7 +116,7 @@ export const Results = ({ children, ...props }) => {
                 label="🎞️&nbsp; Movies"
                 entities={state.movie}
                 hide={true}
-                child={Film}
+                child={Movie}
                 props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"
@@ -131,7 +131,7 @@ export const Results = ({ children, ...props }) => {
                 label="📚&nbsp; Collections"
                 entities={state.collection}
                 hide={true}
-                child={Film}
+                child={Movie}
                 props={{
                   display: 'card',
                   withState: false,
@@ -150,7 +150,7 @@ export const Results = ({ children, ...props }) => {
                 label="⭐&nbsp; Stars"
                 entities={state.person}
                 hide={true}
-                child={Persona}
+                child={Person}
                 props={{ display: 'card' }}
                 css={Results.styles.label}
                 display="column"

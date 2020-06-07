@@ -7,7 +7,7 @@ import database from 'store/database'
 import tmdb from 'store/tmdb'
 import theme from 'theme'
 
-export default class Persona extends PureComponent {
+export default class Person extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     display: PropTypes.oneOf(['portrait', 'avatar', 'card']),
@@ -20,7 +20,7 @@ export default class Persona extends PureComponent {
 
   static defaultProps = {
     display: 'avatar',
-    link: (entity) => `/star/${entity.id}`,
+    link: (entity) => `/person/${entity.id}`,
     withState: true,
     withMore: false,
     placeholder: true,
@@ -133,7 +133,7 @@ export default class Persona extends PureComponent {
         )
       case 'card':
         return (
-          <div css={Persona.styles.card.element}>
+          <div css={Person.styles.card.element}>
             <Poster
               {...this.props}
               entity={entity}
@@ -142,10 +142,10 @@ export default class Persona extends PureComponent {
               title={null}
               withState={false}
               ready={ready}
-              css={Persona.styles.card.poster}
+              css={Person.styles.card.poster}
             />
             {entity.id && (
-              <Link to={link(entity)} css={Persona.styles.card.container}>
+              <Link to={link(entity)} css={Person.styles.card.container}>
                 <h1 {...(name.length > 45 ? { name } : {} )}>
                   {name.length > 45 ? `${name.substring(0, 45)}...` : name}
                 </h1>
@@ -155,7 +155,7 @@ export default class Persona extends PureComponent {
               </Link>
             )}
             {props.withState && (
-              <State entity={entity} css={Persona.styles.card.state} />
+              <State entity={entity} css={Person.styles.card.state} />
             )}
           </div>
         )

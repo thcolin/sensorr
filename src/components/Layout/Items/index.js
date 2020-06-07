@@ -34,11 +34,11 @@ const Items = ({
       (typeof _total === 'number' ? _total : entities.length)
     )
 
-    return Math.min(length + (more && length ? 1 : 0), limit)
+    return Math.min(length + (more && (length >= 20) ? 1 : 0), limit)
   }, [more, limit, ready, loading, _total, _placeholders, entities.length])
 
   const renderChild = useCallback((index) => {
-    const isMore = more && index === (total - 1)
+    const isMore = more && total >= 20 && index === (total - 1)
     const placeholder = child.placeholder(props({ index }))
     const raw = findEntity(index, entities)
     const entity = (ready && !loading && !isMore && raw?.id) ? raw : placeholder
@@ -53,7 +53,7 @@ const Items = ({
       ...props({ entity, index }),
       entity,
     })
-  }, [more, findEntity, entities, child, ready, loading])
+  }, [more, total, findEntity, entities, child, ready, loading])
 
   const override = useMemo(() => (!total || !!error) ? (
     <Empty

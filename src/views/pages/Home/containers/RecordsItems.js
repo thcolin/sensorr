@@ -6,7 +6,7 @@ import withSessionListener from 'components/Layout/Items/withSessionListener'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
 import { Indicator } from 'views/layout/Header/blocks/Recording'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import theme from 'theme'
 
 const RecordingItems = compose(
@@ -40,7 +40,7 @@ class Records extends PureComponent {
     return ongoing ? (
       <RecordingItems
         label={RecordingItems.components.label}
-        child={Film}
+        child={Movie}
         placeholders={20}
         more={{
           pathname: '/movie/records'
@@ -58,7 +58,7 @@ class Records extends PureComponent {
             <span>Records</span>
           </span>
         )}
-        child={Film}
+        child={Movie}
         hide={true}
         more={{
           pathname: '/movie/library'

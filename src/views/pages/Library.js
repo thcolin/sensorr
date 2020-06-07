@@ -5,8 +5,8 @@ import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Film from 'components/Entity/Film'
-import { Movie } from 'shared/Documents'
+import Movie from 'components/Entity/Movie'
+import * as Documents from 'shared/Documents'
 import { setHistoryState } from 'utils/history'
 import theme from 'theme'
 
@@ -26,8 +26,8 @@ const LibraryItems = compose(
         <span><strong>{total}</strong> Movies</span>
       </button>
     ),
-    filters: Movie.Filters,
-    sortings: Movie.Sortings,
+    filters: Documents.Movie.Filters,
+    sortings: Documents.Movie.Sortings,
     initial: () => ({
       filtering: window?.history?.state?.state?.controls?.filtering || {},
       sorting: window?.history?.state?.state?.controls?.sorting || 'time',
@@ -65,7 +65,7 @@ const Library = ({ history, ...props }) => (
     <div css={styles.wrapper}>
       <LibraryItems
         display="virtual-grid"
-        child={Film}
+        child={Movie}
         placeholders={history.location.state?.items?.total || null}
         onFetched={({ total }) => setHistoryState({ items: { total } })}
         empty={{

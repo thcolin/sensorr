@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import Button from 'components/Button'
 import Details, { Tabs, withCount } from 'views/layout/Details'
 import Releases from './blocks/Releases'
-import Persona from 'components/Entity/Persona'
-import * as Film from 'components/Entity/Film'
+import Person from 'components/Entity/Person'
+import * as MovieEntity from 'components/Entity/Movie'
 import Documents from 'shared/Documents'
 import countryLanguage from 'country-language'
 import uuidv4 from 'uuid/v4'
@@ -191,7 +191,7 @@ export default class Movie extends PureComponent {
       </>
     ),
     Poster: ({ details, ...props }) => (
-      <Film.Poster
+      <MovieEntity.Poster
         entity={details}
         title={null}
         withState={false}
@@ -203,7 +203,7 @@ export default class Movie extends PureComponent {
       />
     ),
     State: ({ details }) => (
-      <Film.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: '0 0 0 1rem' }} />
+      <MovieEntity.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: '0 0 0 1rem' }} />
     ),
     Metadata: ({ details }) => (
       <>
@@ -407,7 +407,7 @@ export default class Movie extends PureComponent {
                 state: {},
                 props: {
                   entities: (details.belongs_to_collection || { parts: [] }).parts,
-                  child: Film.default,
+                  child: MovieEntity.default,
                   props: { display: 'pretty', palette },
                   subtitle: Movie.tabs.subtitles.collection,
                   more: {
@@ -423,7 +423,7 @@ export default class Movie extends PureComponent {
                 state: {},
                 props: {
                   entities: details.recommendations.results,
-                  child: Film.default,
+                  child: MovieEntity.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.recommendations,
                   more: {
@@ -439,7 +439,7 @@ export default class Movie extends PureComponent {
                 state: {},
                 props: {
                   entities: details.similar.results,
-                  child: Film.default,
+                  child: MovieEntity.default,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette }),
                   subtitle: Movie.tabs.subtitles.similar,
                   more: {
@@ -460,7 +460,7 @@ export default class Movie extends PureComponent {
                 },
                 props: {
                   entities: details.credits.cast,
-                  child: Persona,
+                  child: Person,
                   props: { display: 'portrait', palette },
                   subtitle: Movie.tabs.subtitles.cast,
                 },
@@ -482,7 +482,7 @@ export default class Movie extends PureComponent {
                       job: self.filter(c => c.id === credit.id).map(c => c.job).join(', '),
                     }))
                     .filter((a, index, self) => index === self.findIndex(b => a.id === b.id)),
-                  child: Persona,
+                  child: Person,
                   props: { display: 'portrait', palette },
                   subtitle: Movie.tabs.subtitles.crew,
                 },

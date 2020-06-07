@@ -3,7 +3,7 @@ import { compose } from 'redux'
 import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
 import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import { setHistoryState } from 'utils/history'
 
 const styles = {
@@ -32,7 +32,7 @@ const Medias = ({ title, uri, child, history, match, location, ...props }) => {
         <MediaItems
           {...props}
           display="virtual-grid"
-          child={child || Film}
+          child={child || Movie}
           placeholders={history.location.state?.items?.total || null}
           onFetched={({ total }) => setHistoryState({ items: { total } })}
           empty={{

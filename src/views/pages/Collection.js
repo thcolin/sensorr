@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import { Link } from 'react-router-dom'
 import Details, { Tabs, withCount } from 'views/layout/Details'
-import * as Film from 'components/Entity/Film'
+import * as Movie from 'components/Entity/Movie'
 import Documents from 'shared/Documents'
 import { GENRES } from 'shared/services/TMDB'
 import theme from 'theme'
@@ -185,7 +185,7 @@ export default class Collection extends PureComponent {
       return `(${new Date(release_dates[0]).getFullYear()} - ${new Date(release_dates[1]).getFullYear()})`
     },
     Poster: ({ details, ...props }) => (
-      <Film.Poster
+      <Movie.Poster
         entity={details}
         title={null}
         withState={false}
@@ -271,7 +271,7 @@ export default class Collection extends PureComponent {
                 },
                 props: {
                   entities: details.parts,
-                  child: Film.default,
+                  child: Movie.default,
                   props: { display: 'pretty', palette },
                   subtitle: Collection.tabs.subtitles.parts,
                 },

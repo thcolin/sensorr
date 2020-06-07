@@ -48,8 +48,8 @@ const pages = [
     },
   ],
   [
-    'http://localhost:8000/star/6384',
-    path.join(__dirname, '..', 'doc', 'screenshots', 'star.png'),
+    'http://localhost:8000/person/6384',
+    path.join(__dirname, '..', 'doc', 'screenshots', 'person.png'),
     {
       fullPage: true,
     },
@@ -104,7 +104,7 @@ const pages = [
     },
   ],
   [
-    'http://localhost:8000/stars/following',
+    'http://localhost:8000/persons/following',
     path.join(__dirname, '..', 'doc', 'screenshots', 'following.png'),
     {
       beforeScreenshot: async (page, browser) => {

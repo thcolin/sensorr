@@ -6,8 +6,8 @@ import Items from 'components/Layout/Items'
 import { Input } from 'components/Layout/Controls'
 import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Film from 'components/Entity/Film'
-import Persona from 'components/Entity/Persona'
+import Movie from 'components/Entity/Movie'
+import Person from 'components/Entity/Person'
 import { setHistoryState } from 'utils/history'
 
 const styles = {
@@ -134,9 +134,9 @@ const Search = ({ history, match, ...props }) => {
         <SearchItems
           display="virtual-grid"
           child={{
-            movie: Film,
-            collection: Film,
-            person: Persona,
+            movie: Movie,
+            collection: Movie,
+            person: Person,
           }[subject]}
           props={{
             movie: {},

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react'
 import { Link } from 'react-router-dom'
 import Details, { Tabs, withCount } from 'views/layout/Details'
-import * as Persona from 'components/Entity/Persona'
-import Film from 'components/Entity/Film'
+import * as Person from 'components/Entity/Person'
+import Movie from 'components/Entity/Movie'
 import theme from 'theme'
 
 export default class Star extends PureComponent {
@@ -135,7 +135,7 @@ export default class Star extends PureComponent {
       </Link>
     ),
     Poster: ({ details, ...props }) => (
-      <Persona.Poster
+      <Person.Poster
         entity={details}
         title={null}
         display="portrait"
@@ -148,7 +148,7 @@ export default class Star extends PureComponent {
       />
     ),
     State: ({ details }) => (
-      <Persona.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
+      <Person.State entity={details} compact={false} css={{ alignSelf: 'flex-start', margin: 0 }} />
     ),
     Metadata: ({ details }) => (
       <>
@@ -223,7 +223,7 @@ export default class Star extends PureComponent {
                     }))
                     .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
                     .map(credit => ({ ...credit, credits: [{ ...credit, ...details }] })),
-                  child: Film,
+                  child: Movie,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette, withCredits: true }),
                   subtitle: Star.tabs.subtitles.cast,
                 },
@@ -253,7 +253,7 @@ export default class Star extends PureComponent {
                     }))
                     .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
                     .map(credit => ({ ...credit, credits: [{ ...credit, ...details }] })),
-                  child: Film,
+                  child: Movie,
                   props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'default', palette, withCredits: true }),
                   subtitle: Star.tabs.subtitles.crew,
                 },

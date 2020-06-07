@@ -2,12 +2,12 @@ import React, { PureComponent, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { from } from 'rxjs'
 import { Link } from 'react-router-dom'
-import Persona from 'components/Entity/Persona'
+import Person from 'components/Entity/Person'
 import Backdrop from 'components/UI/Backdrop'
 import Badge from 'components/Badge'
 import tmdb from 'store/tmdb'
 import database from 'store/database'
-import { Movie } from 'shared/Documents'
+import * as Documents from 'shared/Documents'
 import { GENRES } from 'shared/services/TMDB'
 import { truncate } from 'shared/utils/string'
 import palette from 'utils/palette'
@@ -15,7 +15,7 @@ import { humanize } from 'shared/utils/string'
 import uuidv4 from 'uuid/v4'
 import theme from 'theme'
 
-export default class Film extends PureComponent {
+export default class Movie extends PureComponent {
   static propTypes = {
     entity: PropTypes.object.isRequired,
     link: PropTypes.func,
@@ -279,8 +279,8 @@ export default class Film extends PureComponent {
         )
       case 'pretty':
         return (
-          <div css={Film.styles.pretty.element}>
-            <div css={Film.styles.pretty.backdrop}>
+          <div css={Movie.styles.pretty.element}>
+            <div css={Movie.styles.pretty.backdrop}>
               <Backdrop
                 src={entity.backdrop_path}
                 ready={ready}
@@ -290,7 +290,7 @@ export default class Film extends PureComponent {
                 onReady={() => this.setState(state => ({ ready: { ...state.ready, background: true } }))}
               />
             </div>
-            <div css={Film.styles.pretty.poster}>
+            <div css={Movie.styles.pretty.poster}>
               <Poster
                 {...this.props}
                 entity={entity}
@@ -304,7 +304,7 @@ export default class Film extends PureComponent {
             </div>
             {entity.id && (
               <div
-                css={Film.styles.pretty.about}
+                css={Movie.styles.pretty.about}
                 style={{
                   opacity: ready ? 1 : 0,
                   transition: 'opacity 400ms ease-in-out',
@@ -347,7 +347,7 @@ export default class Film extends PureComponent {
                     )}
                     {typeof entity.vote_average !== 'undefined' && (
                       <small>
-                        <span>{new Movie(entity).judge()}  </span>
+                        <span>{new Documents.Movie(entity).judge()}  </span>
                         <Link
                           to={{
                             pathname: '/movies/discover',
@@ -410,12 +410,12 @@ export default class Film extends PureComponent {
                 }}
               >
                 {(entity.credits || []).map((star, index) => (
-                  <Persona
+                  <Person
                     entity={star}
                     display="avatar"
                     withState={false}
                     key={index}
-                    css={Film.styles.pretty.credit}
+                    css={Movie.styles.pretty.credit}
                     style={{ right: `${index * 6}em` }}
                   />
                 ))}
@@ -425,7 +425,7 @@ export default class Film extends PureComponent {
         )
       case 'card':
         return (
-          <div css={Film.styles.card.element}>
+          <div css={Movie.styles.card.element}>
             <Poster
               {...this.props}
               entity={entity}
@@ -433,10 +433,10 @@ export default class Film extends PureComponent {
               withState={false}
               onLoad={() => this.setState(state => ({ ready: { ...state.ready, poster: true } }))}
               ready={ready}
-              css={Film.styles.card.poster}
+              css={Movie.styles.card.poster}
             />
             {entity.id && (
-              <Link to={link(entity)} css={Film.styles.card.container}>
+              <Link to={link(entity)} css={Movie.styles.card.container}>
                 <h1 {...(title.length > 45 ? { title } : {} )}>
                   {title.length > 45 ? `${title.substring(0, 45)}...` : title}
                 </h1>
@@ -456,7 +456,7 @@ export default class Film extends PureComponent {
                     )}
                     {typeof entity.vote_average !== 'undefined' && (
                       <small>
-                        <span>{new Movie(entity).judge()}  </span>
+                        <span>{new Documents.Movie(entity).judge()}  </span>
                         <strong>{entity.vote_average.toFixed(1)}</strong>
                       </small>
                     )}
@@ -475,7 +475,7 @@ export default class Film extends PureComponent {
               </Link>
             )}
             {typeof entity.vote_average !== 'undefined' && (
-              <State entity={entity} css={Film.styles.card.state} />
+              <State entity={entity} css={Movie.styles.card.state} />
             )}
           </div>
         )
@@ -613,7 +613,7 @@ export const Poster = ({ entity, img, palette = {}, focus, link, display, placeh
         >
           {(entity.credits || []).map((star, index) => (
             <span key={star.id || index}>
-              <Persona
+              <Person
                 entity={star}
                 display="avatar"
                 withState={false}
@@ -785,7 +785,7 @@ export class State extends PureComponent {
       return
     }
 
-    const movie = new Movie({ ...entity, state: value }, global.config.region || localStorage.getItem('region')).normalize()
+    const movie = new Documents.Movie({ ...entity, state: value }, global.config.region || localStorage.getItem('region')).normalize()
     const doc = await db.movies.atomicUpsert(movie)
     this.setState({ doc: doc.toJSON(), entity })
   }
@@ -888,7 +888,7 @@ export const Focus = ({ entity, property, ...props }) => {
 
   const badges = {
     vote_average: {
-      emoji: new Movie(entity).judge(),
+      emoji: new Documents.Movie(entity).judge(),
       label: `${(entity.vote_average || 0).toFixed(1)}`,
     },
     release_date_full: {
@@ -905,7 +905,7 @@ export const Focus = ({ entity, property, ...props }) => {
     },
     runtime: {
       emoji: '🕙',
-      label: <span style={{ textTransform: 'none' }}>{new Movie(entity).duration() || 'Unknown'}</span>,
+      label: <span style={{ textTransform: 'none' }}>{new Documents.Movie(entity).duration() || 'Unknown'}</span>,
     },
     vote_count: {
       emoji: '🗳',

@@ -5,3 +5,4 @@ dist
 log.txt
 config/config.json
 .docz
+src/components/Layout/Grid.js

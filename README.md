@@ -97,7 +97,7 @@
     </tr>
     <tr>
       <td>
-      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/star.png?raw=true" width="100" />
+      <img src="https://raw.githubusercontent.com/thcolin/sensorr/master/doc/screenshots/person.png?raw=true" width="100" />
       </td>
       <td>
         <b>Star</b>
@@ -162,9 +162,6 @@ Some necessary cron jobs will be launched in background every day:
 * _05:03_ `sensorr:hydrate`: Hydrate -or refresh- collected movies and stalked stars data
 
 # 🗺️ Roadmap
-* Refactor `Persona` to `Person`, be consistent with **TMDB**
-* Refactor `Star` to `Person`, be consistent with **TMDB**
-* Refactor `Film` to `Movie`, be consistent with **TMDB**
 * Fix `Home` rows issues
   * `Upcoming` / `Records` empty
 * Fix `Movie` page `State` is wrong sometimes
@@ -264,8 +261,13 @@ Some necessary cron jobs will be launched in background every day:
     * Add `Random` button
   * `Home`
     * Add `Head` `Film` ? (see [inspiration](https://dribbble.com/shots/2813716-BookMyShow-Movies-Concept))
-      * Weekly selected movies (?)
-    * Add "pre-configured" `List` like `Oscars` ?
+      * Add "pre-configured" `List` like `Oscars` ?
+      * Weekly movies selection (?)
+        * Allow user to send PR with own movies selection
+      * Make sensorr a social network (?)
+        * Look at `Mastodon` example and `ActivityPub` spec
+        * Make it private by default, if public will only show non-user related informations (home, discover, calendar (?), following (?))
+        * Multi user (?)
   * `Settings`
     * `Database`
       * Allow to `clean` browser `sensorr-*` databases (`doctor`)

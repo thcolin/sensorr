@@ -9,7 +9,7 @@ import InfiniteScroll from 'react-infinite-scroller'
 import Left from 'icons/Left'
 import Right from 'icons/Right'
 import Controls from 'components/Layout/Controls'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import Spinner from 'components/Spinner'
 import Empty from 'components/Empty'
 import markdown from 'utils/markdown'
@@ -99,7 +99,7 @@ const styles = {
     display: 'flex',
     padding: '1em',
   },
-  film: {
+  movie: {
     flexShrink: 0,
   },
   scroller: {
@@ -446,8 +446,8 @@ class Records extends PureComponent {
               {filtered.map(record => (
                 <div css={styles.record} key={record.record}>
                   {record.movie && (
-                    <div css={styles.film}>
-                      <Film entity={record.movie} />
+                    <div css={styles.movie}>
+                      <Movie entity={record.movie} />
                     </div>
                   )}
                   <div css={styles.scroller}>

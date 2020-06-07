@@ -4,7 +4,7 @@ import Items from 'components/Layout/Items'
 import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
 import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Persona from 'components/Entity/Persona'
+import Person from 'components/Entity/Person'
 import theme from 'theme'
 
 const TrendingItems = compose(
@@ -68,7 +68,7 @@ const StarsItems = ({ ...props }) => {
     case 'trending':
       return (
         <TrendingItems
-          child={Persona}
+          child={Person}
           props={{ display: 'portrait' }}
           limit={20}
           label={label}
@@ -80,7 +80,7 @@ const StarsItems = ({ ...props }) => {
     case 'birthday':
       return (
         <BirthdayItems
-          child={Persona}
+          child={Person}
           props={{ display: 'portrait' }}
           limit={20}
           label={label}

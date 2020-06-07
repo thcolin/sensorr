@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet'
 import Items from 'components/Layout/Items'
 import withTMDBQuery from 'components/Layout/Items/withTMDBQuery'
 import withControls from 'components/Layout/Items/withControls'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import tmdb from 'store/tmdb'
 import { CERTIFICATIONS, GENRES } from 'shared/services/TMDB'
 import countryLanguage from 'country-language'
@@ -604,7 +604,7 @@ const Discover = ({ history, ...props }) => (
     <div css={styles.wrapper}>
       <DiscoverItems
         display="virtual-grid"
-        child={Film}
+        child={Movie}
         placeholders={history.location.state?.items?.total || null}
         onFetched={({ total }) => setHistoryState({ items: { total } })}
         empty={{

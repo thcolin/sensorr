@@ -8,7 +8,7 @@ import withDatabaseQuery from 'components/Layout/Items/withDatabaseQuery'
 import withControls from 'components/Layout/Items/withControls'
 import RecordsItems from './containers/RecordsItems'
 import StarsItems from './containers/StarsItems'
-import Film from 'components/Entity/Film'
+import Movie from 'components/Entity/Movie'
 import { GENRES, STUDIOS } from 'shared/services/TMDB'
 import database from 'store/database'
 import theme from 'theme'
@@ -142,7 +142,7 @@ export default class Home extends PureComponent {
             label="📣&nbsp; Trending"
             title="Trending movies"
             display="row"
-            child={Film}
+            child={Movie}
             limit={20}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             more={{
@@ -153,7 +153,7 @@ export default class Home extends PureComponent {
           <UpcomingItems
             label="📆&nbsp; Upcoming"
             title="Upcoming movies"
-            child={Film}
+            child={Movie}
             props={{ withCredits: true }}
             hide={ready}
             more={{
@@ -175,7 +175,7 @@ export default class Home extends PureComponent {
           <DiscoverItems
             label="👀&nbsp; Discover"
             title="Discover movies"
-            child={Film}
+            child={Movie}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             limit={20}
             more={{
@@ -224,7 +224,7 @@ export default class Home extends PureComponent {
               </span>
             )}
             display="row"
-            child={Film}
+            child={Movie}
             props={({ index }) => ({ display: index < 5 ? 'pretty' : 'default' })}
             limit={20}
             debounce={true}
