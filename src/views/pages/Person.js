@@ -10,7 +10,7 @@ export default class Star extends PureComponent {
     birthday: '1963-03-27',
     known_for_department: 'Directing',
     deathday: null,
-    id: 138,
+    id: 0,
     name: 'Quentin Tarantino',
     also_known_as: [],
     images: { profiles: [] },

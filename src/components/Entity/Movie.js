@@ -733,11 +733,13 @@ export class State extends PureComponent {
   }
 
   componentDidMount() {
-    this.bootstrap()
+    if (this.props.entity.id) {
+      this.bootstrap()
+    }
   }
 
   componentDidUpdate(props) {
-    if (props.entity.id !== this.props.entity.id) {
+    if (props.entity.id !== this.props.entity.id && this.props.entity.id) {
       if (this.subscription) {
         this.subscription.unsubscribe()
       }
@@ -821,7 +823,7 @@ export class State extends PureComponent {
       },
     }
 
-    let current = 'loading'
+    let current
 
     if (doc === null || (doc && doc.state === 'ignored')) {
       current = 'ignored'

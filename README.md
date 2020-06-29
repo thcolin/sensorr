@@ -164,7 +164,6 @@ Some necessary cron jobs will be launched in background every day:
 # 🗺️ Roadmap
 * Fix `Home` rows issues
   * `Upcoming` / `Records` empty
-* Fix `Movie` page `State` is wrong sometimes
 * Display other `Person` behind each `Movie` on `Details` page (`:hover` only)
   * Load every followed stars from database on component mount
 * Add `XZNAB` tester

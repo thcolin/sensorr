@@ -8,7 +8,7 @@ import theme from 'theme'
 
 export default class Collection extends PureComponent {
   static placeholder = {
-    id: 10,
+    id: 0,
     name: 'Star Wars - La Saga Skywalker',
     overview: 'Luke Skywalker, la Princesse Leia, Dark Vador, C3PO, R2D2 et de nombreux autres personnages du film sont désormais des noms familiers de l\'un des projets cinématographiques les plus réussis de tous les temps.',
     poster_path: '/dXYuoRx7o7OxssIhznx3AJbgKHe.jpg',
