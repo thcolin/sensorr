@@ -36,9 +36,10 @@ const Filters = {
       type: 'select',
       options,
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        with_original_language: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        with_original_language: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'with_original_language',
@@ -65,9 +66,10 @@ const Filters = {
       type: 'select',
       options,
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        with_release_type: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        with_release_type: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'with_release_type',
@@ -121,9 +123,10 @@ const Filters = {
       type: 'select',
       options,
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        with_genres: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        with_genres: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'with_genres',
@@ -146,9 +149,10 @@ const Filters = {
       type: 'select',
       options,
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        without_genres: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        without_genres: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'without_genres',
@@ -165,9 +169,10 @@ const Filters = {
       label: 'Companies',
       type: 'select',
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        with_companies: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        with_companies: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'with_companies',
@@ -196,9 +201,10 @@ const Filters = {
       label: 'Keywords',
       type: 'select',
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        with_keywords: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        with_keywords: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'with_keywords',
@@ -227,9 +233,10 @@ const Filters = {
       label: <span>Keywords <small>(without)</small></span>,
       type: 'select',
       default: [],
+      behavior: 'OR',
       apply: () => true,
-      serialize: (options) => ({
-        without_keywords: (options || []).map(option => option.value).join('|'),
+      serialize: (options, behavior) => ({
+        without_keywords: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || '|'),
       }),
       props: {
         name: 'without_keywords',
@@ -258,9 +265,10 @@ const Filters = {
       label: 'Peoples',
       type: 'select',
       default: [],
+      behavior: 'AND',
       apply: () => true,
-      serialize: (options) => ({
-        with_people: (options || []).map(option => option.value).join(','),
+      serialize: (options, behavior) => ({
+        with_people: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || ','),
       }),
       props: {
         name: 'with_people',
@@ -289,9 +297,10 @@ const Filters = {
       label: 'Crew',
       type: 'select',
       default: [],
+      behavior: 'AND',
       apply: () => true,
-      serialize: (options) => ({
-        with_crew: (options || []).map(option => option.value).join(','),
+      serialize: (options, behavior) => ({
+        with_crew: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || ','),
       }),
       props: {
         name: 'with_crew',
@@ -320,9 +329,10 @@ const Filters = {
       label: 'Cast',
       type: 'select',
       default: [],
+      behavior: 'AND',
       apply: () => true,
-      serialize: (options) => ({
-        with_cast: (options || []).map(option => option.value).join(','),
+      serialize: (options, behavior) => ({
+        with_cast: (options || []).map(option => option.value).join({ AND: ',', OR: '|' }[behavior] || ','),
       }),
       props: {
         name: 'with_cast',
@@ -542,11 +552,13 @@ const DiscoverItems = compose(
     sortings: Sortings,
     initial: () => ({
       filtering: window?.history?.state?.state?.controls?.filtering || {},
+      behaviors: window?.history?.state?.state?.controls?.behaviors || {},
       sorting: window?.history?.state?.state?.controls?.sorting || 'popularity',
       reverse: window?.history?.state?.state?.controls?.reverse || false,
     }),
     defaults: {
       filtering: {},
+      behaviors: {},
       sorting: 'popularity',
       reverse: false,
     },

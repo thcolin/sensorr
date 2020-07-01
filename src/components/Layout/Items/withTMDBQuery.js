@@ -137,7 +137,7 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
     }
 
     handleControls = (controls) => {
-      const { filtering, filters, sorting, reverse } = controls
+      const { filtering, behaviors = {}, filters, sorting, reverse } = controls
 
       if (typeof this.props.onControls === 'function') {
         this.props.onControls(controls)
@@ -148,7 +148,7 @@ const withTMDBQuery = ({ uri, params }, initialPage, controlsLinkedQuery = false
           sort_by: `${sorting}.${reverse ? 'asc' : 'desc'}`,
           ...Object.keys(filtering).reduce((acc, key) => ({
             ...acc,
-            ...(filters[key].serialize ? filters[key].serialize(filtering[key]) : {}),
+            ...(filters[key].serialize ? filters[key].serialize(filtering[key], behaviors[key]) : {}),
           }), {}),
         },
       })

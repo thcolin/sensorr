@@ -25,6 +25,7 @@ const VirtualGrid = ({
       cell={cell}
       onRender={onMore}
       render={render}
+      viewportRowOffset={8}
     />
   )
 }

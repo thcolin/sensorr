@@ -9,9 +9,22 @@ const styles = {
     flexDirection: 'column',
     width: '100%',
     '>label': {
+      display: 'inline-flex',
       padding: '0 0 1em 0',
       fontWeight: 600,
+      '>span:first-child': {
+        flex: 1,
+      },
     },
+  },
+  badge: {
+    backgroundColor: theme.colors.white,
+    padding: '0.25em 0.375em 0.125em 0.375em',
+    borderRadius: '0.25em',
+    fontFamily: theme.fonts.monospace,
+    fontSize: '0.75em',
+    fontWeight: 600,
+    color: theme.colors.primary,
   },
   select: {
     control: (style) => ({
@@ -121,7 +134,7 @@ const styles = {
   }
 }
 
-const Select = ({ label, value, onChange, options = [], loadOptions, disabled, isMulti, data = {}, ...props }) => {
+const Select = ({ label, value, onChange, behavior, onBehavior, options = [], loadOptions, disabled, isMulti, data = {}, ...props }) => {
   const debounce = useMemo(() => nanobounce(500), [])
   const [isLoading, setIsLoading] = useState(false)
   const [options_, setOptions_] = useState([])
@@ -144,8 +157,22 @@ const Select = ({ label, value, onChange, options = [], loadOptions, disabled, i
 
   return (
     <div css={styles.element}>
-      <label onClick={() => !disabled && onChange(isMulti ? [] : '')} style={!disabled ? { cursor: 'pointer' } : {}}>
-        {label}
+      <label>
+        <span
+          onClick={() => !disabled && onChange(isMulti ? [] : '')}
+          style={!disabled ? { cursor: 'pointer' } : {}}
+        >
+          {label}
+        </span>
+        {!!behavior && (
+          <span
+            css={styles.badge}
+            onClick={onBehavior}
+            style={!disabled ? { cursor: 'pointer' } : {}}
+          >
+            {behavior}
+          </span>
+        )}
       </label>
       <ReactSelect
         isLoading={isLoading}

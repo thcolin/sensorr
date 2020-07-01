@@ -161,6 +161,7 @@ const Controls = ({
   const initial = useMemo(() => typeof _initial === 'function' ? _initial() : _initial, [_initial])
 
   const [filtering, setFiltering] = useState((initial || defaults).filtering)
+  const [behaviors, setBehaviors] = useState((initial || defaults).behaviors)
   const [sorting, setSorting] = useState((initial || defaults).sorting)
   const [reverse, setReverse] = useState((initial || defaults).reverse)
   const [state, setState] = useState((initial || defaults).state)
@@ -179,6 +180,7 @@ const Controls = ({
 
   const reset = () => {
     setFiltering(defaults.filtering)
+    setBehaviors(defaults.behaviors)
     setSorting(defaults.sorting)
     setReverse(defaults.reverse)
   }
@@ -186,6 +188,7 @@ const Controls = ({
   const cancel = () => {
     setOpen(false)
     setFiltering(previous.filtering)
+    setBehaviors(previous.behaviors)
     setSorting(previous.sorting)
     setReverse(previous.reverse)
   }
@@ -193,12 +196,13 @@ const Controls = ({
   const apply = ({ query = '', ...diff } = {}, effects = true) => {
     if (effects) {
       setOpen(false)
-      setPrevious({ filtering, sorting, reverse })
+      setPrevious({ filtering, behaviors, sorting, reverse })
     }
 
     setHistoryState({
       controls: {
         filtering,
+        behaviors,
         sorting,
         reverse,
       },
@@ -210,6 +214,7 @@ const Controls = ({
         ...filtering,
         ...(filters.query ? { query } : {}),
       },
+      behaviors,
       filter: (entity) =>
         Object.keys(filtering).every(key => filters[key].apply(entity, filtering[key])) &&
         (!filters.query || filters.query.apply(entity, query)),
@@ -287,6 +292,10 @@ const Controls = ({
                 value: filtering[key] || filter.default,
                 onChange: (values) => setFiltering({ ...filtering, [key]: values }),
                 disabled: disabled,
+                ...(filter.behavior ? {
+                  behavior: behaviors[key] || filter.behavior,
+                  onBehavior: () => setBehaviors({ ...behaviors, [key]: { AND: 'OR', OR: 'AND' }[behaviors[key] || filter.behavior] }),
+                } : {}),
               },
             }
           }
