@@ -83,14 +83,10 @@ module.exports = class XZNAB {
               category: Array.isArray(item) ? item.category.map(category => parseInt(category)) : parseInt(item.category),
             }))
 
-          return { items }
+          return { ...(body.rss || {}), items }
         }
       }),
       map(payload => camelize(payload)),
-      catchError((e) => {
-        console.warn('XZNAB Search error :', e)
-        return of({ items: [] })
-      }),
     )
   }
 }
