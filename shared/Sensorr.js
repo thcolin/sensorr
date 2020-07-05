@@ -34,21 +34,28 @@ class Sensorr {
     this.xznabs = (this.config.xznabs || []).filter(xznab => !xznab.disabled).map(xznab => new XZNAB(xznab, options))
   }
 
-  score(release) {
-    return release.score + Object.keys(this.config.policy.prefer || {})
-      .map(tag => this.config.policy.prefer[tag]
-        .map((keyword, index, arr) => {
-          const score = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
-          const test = (tag === 'custom' ?
-            (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
-            (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
-          )
+  score(release, details = false) {
+    const score = Object.keys(config.policy.prefer || {})
+      .reduce((acc, tag) => ({
+        ...acc,
+        [tag]: config.policy.prefer[tag]
+          .reduce((acc, keyword, index, arr) => {
+            const base = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
+            const test = (tag === 'custom' ?
+              (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
+              (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
+            )
 
-          return test(keyword) ? score : 0
-        })
-        .reduce((score, value) => score += parseInt(value * 100), 0)
-      )
-      .reduce((score, value) => score += value, 0)
+            return {
+              ...acc,
+              [keyword]: test(keyword) ? parseInt(base * 100) : 0,
+            }
+          }, {})
+      }), {})
+
+    return details ?
+      score :
+      release.score + Object.keys(score).reduce((sum, key, index, arr) => sum += Object.values(score[key]).reduce((s, v) => s + v, 0), 0)
   }
 
   filter(release) {

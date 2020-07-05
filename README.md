@@ -166,10 +166,6 @@ Some necessary cron jobs will be launched in background every day:
   * `Upcoming` / `Records` empty
 * Display other `Person` behind each `Movie` on `Details` page (`:hover` only)
   * Load every followed stars from database on component mount
-* Add `XZNAB` tester
-  * Search empty query and check empty (?) result
-* Explain `score` on `Releases`
-  * How ?
 * Feature `Policies`
   * Add "groups" `Policy` with "default" === current (groups like `default` or `blockbuster` for example)
     * Add configurable `avoid` terms on `Movie` (like `/movie/515195` which got a `0.73` similarity score with `/movie/582607`)

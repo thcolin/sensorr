@@ -1,9 +1,0 @@
-@font-face {
-  font-family: 'Maison Mono';
-  font-style: normal;
-  font-weight: 400;
-  src:
-    local('Maison Mono '),
-    local('Maison-Mono'),
-    url('../../ressources/fonts/maison-latin-400.woff') format('woff');
-}

@@ -22,7 +22,7 @@ const colors = {
 const fonts = {
   primary: '"Raleway", sans-serif',
   secondary: '"Open Sans", sans-serif',
-  monospace: '"Maison Mono", monospace',
+  monospace: '"Fira Code", monospace',
 }
 
 const resets = {
