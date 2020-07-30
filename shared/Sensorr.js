@@ -35,10 +35,10 @@ class Sensorr {
   }
 
   score(release, details = false) {
-    const score = Object.keys(config.policy.prefer || {})
+    const score = Object.keys(this.config.policy.prefer || {})
       .reduce((acc, tag) => ({
         ...acc,
-        [tag]: config.policy.prefer[tag]
+        [tag]: this.config.policy.prefer[tag]
           .reduce((acc, keyword, index, arr) => {
             const base = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
             const test = (tag === 'custom' ?
