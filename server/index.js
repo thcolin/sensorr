@@ -25,8 +25,8 @@ app.use(bauth({
   realm: 'Sensorr - Your Friendly Digital Video Recorder',
   challenge: true,
   authorizer: (username, password) => (
-    (!Config.payload.username & !Config.payload.password) ||
-    (bauth.safeCompare(username, Config.payload.username) & bauth.safeCompare(password, Config.payload.password))
+    (!Config.payload.auth || !Config.payload.auth.username & !Config.payload.auth.password) ||
+    (bauth.safeCompare(username, Config.payload.auth.username) & bauth.safeCompare(password, Config.payload.auth.password))
   ),
 }))
 
