@@ -1,0 +1,42 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: systeminformation
+    versions:
+    - 4.34.11
+    - 4.34.12
+    - 4.34.13
+    - 4.34.14
+    - 4.34.15
+    - 4.34.16
+    - 4.34.19
+    - 4.34.9
+  - dependency-name: query-string
+    versions:
+    - 6.13.8
+    - 6.14.0
+    - 6.14.1
+  - dependency-name: puppeteer
+    versions:
+    - 5.5.0
+    - 6.0.0
+    - 7.0.0
+    - 7.0.1
+    - 7.0.4
+    - 7.1.0
+    - 8.0.0
+  - dependency-name: "@material-ui/core"
+    versions:
+    - 4.11.3
+  - dependency-name: elliptic
+    versions:
+    - 6.5.3
+  - dependency-name: chalk
+    versions:
+    - 4.1.0
