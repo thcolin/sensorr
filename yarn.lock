@@ -12547,9 +12547,9 @@ symbol-observable@^1.2.0:
   resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-1.2.0.tgz#c22688aed4eab3cdc2dfeacbb561660560a00804"
 
 systeminformation@^4.14.11:
-  version "4.14.16"
-  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-4.14.16.tgz#f0405a34e1cdbef1062333bdbc841cce567feaf5"
-  integrity sha512-h/54auwXeOXJWL5ms/iHSi9YdKhpHcuuFTozXp9NILIjUsWK9EasYlFKZ+1hnL/W2xr2UHYfw5QWOlLouKghGQ==
+  version "4.34.21"
+  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-4.34.21.tgz#c02d0ae3544b0443fc65a4b2c5e4b1a254b765d5"
+  integrity sha512-u60HBdwojZeDADJEj061tU0GVtl1x+JMo82yxcrI9vOLiiR2mD0uxCbabmh/fYncImwI9NlAfFyubxjTvhf3jQ==
 
 tail@2.0.3:
   version "2.0.3"
