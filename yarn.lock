@@ -4354,8 +4354,9 @@ code-point-at@^1.0.0:
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
 
 codemirror@^5.46.0:
-  version "5.48.4"
-  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.48.4.tgz#4210fbe92be79a88f0eea348fab3ae78da85ce47"
+  version "5.62.0"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.62.0.tgz#e9ecd012e6f9eaf2e05ff4a449ff750f51619e22"
+  integrity sha512-Xnl3304iCc8nyVZuRkzDVVwc794uc9QNX0UcPGeNic1fbzkSrO4l4GVXho9tRNKBgPYZXgocUqXyfIv3BILhCQ==
 
 codesandboxer-fs@^1.0.1:
   version "1.0.3"
