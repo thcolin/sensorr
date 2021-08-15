@@ -40,7 +40,7 @@
     "microtime": "3.0.0",
     "module-alias": "2.2.2",
     "nanobounce": "1.0.1",
-    "node-fetch": "2.6.0",
+    "node-fetch": "2.6.1",
     "oleoo": "^1.0.8",
     "plex-api": "5.2.5",
     "plex-api-pinauth": "0.1.0",
