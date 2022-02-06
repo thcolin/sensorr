@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sensorr</title>
+    <base href="/" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="icon_180x180.png" />
+    <meta name="theme-color" content="#01D277" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <div id="root-loading">
+      <div>
+        <div style="flex: 1; background-color: rgb(235, 235, 235)"></div>
+        <div style="flex: 1; background-color: rgb(235, 235, 16)"></div>
+        <div style="flex: 1; background-color: rgb(16, 235, 235)"></div>
+        <div style="flex: 1; background-color: rgb(16, 235, 16)"></div>
+        <div style="flex: 1; background-color: rgb(235, 16, 235)"></div>
+        <div style="flex: 1; background-color: rgb(235, 16, 16)"></div>
+        <div style="flex: 1; background-color: rgb(16, 16, 235)"></div>
+      </div>
+      <span>🍿📼</span>
+      <h2>sensorr</h2>
+      <small>Your Friendly Digital Video Recorder</small>
+      <p>⌛</p>
+    </div>
+    <div id="root"></div>
+    <style type="text/css">
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background-color: black;
+          --text-color: #fbfbfb;
+          --subtext-color: #333333;
+        }
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --background-color: white;
+          --text-color: #1a1a1a;
+          --subtext-color: #cccccc;
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate3d(0, 0, 1, 0deg);
+        }
+
+        10% {
+          transform: rotate3d(0, 0, 1, 0deg);
+        }
+
+        40% {
+          transform: rotate3d(0, 0, 1, 180deg);
+        }
+
+        60% {
+          transform: rotate3d(0, 0, 1, 180deg);
+        }
+
+        90% {
+          transform: rotate3d(0, 0, 1, 360deg);
+        }
+
+        100% {
+          transform: rotate3d(0, 0, 1, 360deg);
+        }
+      }
+
+      html {
+        box-sizing: border-box;
+        background-color: #01d277;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: 'Open Sans', 'Segoe UI', Candara, 'Bitstream Vera Sans', 'DejaVu Sans', 'Bitstream Vera Sans', 'Trebuchet MS', Verdana, 'Verdana Ref', sans-serif;
+        line-height: 1.2;
+        font-weight: 400;
+        scroll-behavior: smooth;
+        position: relative;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: inherit;
+      }
+
+      small {
+        font-size: 0.75em;
+      }
+
+      #root {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      #root-loading {
+        position: fixed;
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--background-color);
+        z-index: 999;
+        transition: opacity 800ms ease-in-out;
+        transform: translateZ(0);
+      }
+
+      #root-loading > div {
+        position: absolute;
+        top: 0;
+        display: flex;
+        height: 2px;
+        width: 100%;
+      }
+
+      #root-loading > span {
+        font-size: 4rem;
+      }
+
+      #root-loading > h2 {
+        margin: 0.5rem 0;
+        color: var(--text-color);
+        font-family: 'Raleway', Arial, sans-serif;
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.125;
+      }
+
+      #root-loading > small {
+        color: var(--subtext-color);
+      }
+
+      #root-loading > p {
+        font-size: 2rem;
+        margin: 4rem 0 0 0;
+        animation: spin 2s infinite;
+        line-height: 1.2;
+      }
+    </style>
+  </body>
+</html>

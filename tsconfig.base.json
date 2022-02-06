@@ -1,0 +1,30 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["esnext", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sensorr/config": ["libs/config/src/index.js"],
+      "@sensorr/i18n": ["libs/i18n/src/index.ts"],
+      "@sensorr/palette": ["libs/palette/src/index.js"],
+      "@sensorr/sensorr": ["libs/sensorr/src/index.ts"],
+      "@sensorr/services": ["libs/services/src/index.ts"],
+      "@sensorr/theme": ["libs/theme/src/index.ts"],
+      "@sensorr/tmdb": ["libs/tmdb/src/index.ts"],
+      "@sensorr/ui": ["libs/ui/src/index.ts"],
+      "@sensorr/utils": ["libs/utils/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

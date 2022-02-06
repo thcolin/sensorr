@@ -1,0 +1,64 @@
+{
+  "name": "@sensorr/cli",
+  "version": "0.10.0",
+  "license": "MIT",
+  "author": "thcolin @thcolin",
+  "repository": "thcolin/sensorr",
+  "homepage": "https://github.com/thcolin/sensorr",
+  "bugs": "https://github.com/thcolin/sensorr/issues",
+  "keywords": [
+    "oclif"
+  ],
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "test": "echo NO TESTS",
+    "version": "oclif-dev readme && git add README.md"
+  },
+  "main": "lib/index.js",
+  "bin": {
+    "sensorr": "./bin/run"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/lib",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "oclif": {
+    "commands": "./lib/commands",
+    "bin": "sensorr",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "@oclif/command": "^1",
+    "@oclif/config": "^1",
+    "@oclif/plugin-help": "^3",
+    "chalk": "^4.1.2",
+    "dotenv": "^10.0.0",
+    "ink": "^3.0.9",
+    "ink-spinner": "^4.0.3",
+    "ink-use-stdout-dimensions": "^1.0.5",
+    "node-fetch": "2",
+    "oleoo": "^1.0.8",
+    "react": "^17.0.2",
+    "tslib": "^1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1",
+    "@types/node": "^10",
+    "globby": "^10",
+    "ts-node": "^8",
+    "typescript": "^3.3"
+  },
+  "resolutions": {
+    "log-update": "^4.0.0"
+  }
+}

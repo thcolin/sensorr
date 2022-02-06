@@ -1,0 +1,18 @@
+{
+  "disabled": false,
+  "tmdb": "tmdb-api-key",
+  "blackhole": "/tmp",
+  "znabs": [],
+  "policies": [],
+  "sort": "seeders",
+  "descending": true,
+  "region": "fr-FR",
+  "adult": false,
+  "auth": {
+    "username": "sensorr",
+    "password": "sensorr"
+  },
+  "logs": {
+    "limit": 6597069766656
+  }
+}
