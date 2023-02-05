@@ -12,14 +12,20 @@ export class PersonsController {
   }
 
   @Get()
-  async getPersons(@Query('page') page = 1): Promise<{}> {
-    return this.personsService.getPersons(page)
+  async getPersons(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('sort_by') sort_by = 'updated_at.desc',
+    @Query() query,
+  ): Promise<{}> {
+    return this.personsService.getPersons({ ...query, sort_by }, page, limit)
   }
 
   @Get('metadata')
-  async getMetadata(): Promise<{}> {
-    const res = await this.personsService.getMetadata()
-    return res.reduce((acc, curr) => ({ ...acc, [curr._id]: { state: curr.state } }), {})
+  async getMetadata(
+    @Query('page') page = 1,
+  ): Promise<{}> {
+    return this.personsService.getMetadata(page)
   }
 
   @Get('statistics')

@@ -1,7 +1,6 @@
-import { memo, useMemo, useState, useEffect } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
-import { useHover } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
@@ -12,23 +11,23 @@ export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
 const UIPretty = ({
   link,
   details,
-  onHover,
   relations: [Relations, relations] = [],
+  guests: [Guests, guests] = [],
+  onMouseEnter,
   ...props
 }: PrettyProps) => {
   const { theme } = useThemeUI()
-  const [isHover, hoverProps] = useHover({ mouseEnterDelayMS: 0, mouseLeaveDelayMS: 0 }, { ...onHover, reverse: true })
 
   const [poster, setPoster] = useState(details?.poster === null)
   const [background, setBackground] = useState(details?.billboard === null)
 
-  const posterProps = useMemo(() => ({ onReady: () => setPoster(true), onError: () => setPoster(true) }), [])
-  const billboardProps = useMemo(() => ({ onReady: () => setBackground(true), onError: () => setBackground(true) }), [])
+  const onPosterReady = useCallback(() => setPoster(true), [])
+  const onBillboardReady = useCallback(() => setBackground(true), [])
 
   const palette = usePalette(
     !!details?.poster && `https://image.tmdb.org/t/p/w92${details?.poster}`,
     (props as any).palette || {
-      backgroundColor: theme.rawColors.gray2,
+      backgroundColor: theme.rawColors.grayLight,
       color: theme.rawColors.text,
       alternativeColor: theme.rawColors.text,
       negativeColor: theme.rawColors.text,
@@ -36,33 +35,52 @@ const UIPretty = ({
     details?.poster,
   )
 
-  const ready = useMemo(() => !palette.loading && background && poster && props.overrides?.ready !== false, [palette.loading, background, poster, props.overrides])
+  const ready = !palette.loading && background && poster && props.overrides?.ready !== false
   const overrides = useMemo(() => ({ ...(props.overrides || {}), ready, hover: false }), [ready, props.overrides])
 
+  const styles = useMemo(() => ({
+    ...UIPretty.styles,
+    element: {
+      ...UIPretty.styles.element,
+      '>div:nth-child(4)': {
+        opacity: 0,
+      },
+      '&:hover': {
+        '>div:nth-child(4)': {
+          opacity: ready ? 1 : 0,
+        },
+      },
+    },
+    guests: {
+      ...UIPretty.styles.guests,
+      opacity: ready ? 1 : 0,
+      transitionDelay: ready ? '1200ms' : '0ms',
+    },
+  }), [ready])
+
   return (
-    <PrettyWrapper {...onHover}>
-      <div sx={UIPretty.styles.billboard}>
+    <div sx={styles.element} onMouseEnter={onMouseEnter}>
+      <div sx={styles.billboard}>
         <Billboard
-          {...billboardProps}
           path={details?.billboard}
           palette={palette.palette}
           ready={ready}
           size='w780'
           fade={0.125}
+          onReady={onBillboardReady}
         />
       </div>
-      <div sx={UIPretty.styles.poster}>
+      <div sx={styles.poster}>
         <Poster
           {...props}
-          {...posterProps}
           details={details}
           link={link}
           palette={palette.palette}
           overrides={overrides}
-          onHover={hoverProps}
+          onReady={onPosterReady}
         />
       </div>
-      <div sx={UIPretty.styles.about}>
+      <div sx={styles.about}>
         <About
           title={details?.title}
           overview={details?.overview}
@@ -70,15 +88,24 @@ const UIPretty = ({
           link={link}
           palette={palette.palette}
           ready={ready}
-          pad={!!Relations}
         />
       </div>
-      {!!Relations && <div sx={UIPretty.styles.relations}>{<Relations {...relations} />}</div>}
-    </PrettyWrapper>
+      <div sx={styles.relations}>{Relations && <Relations {...relations} />}</div>
+      <div sx={styles.guests}>{Guests && <Guests {...guests} />}</div>
+    </div>
   )
 }
 
 UIPretty.styles = {
+  element: {
+    position: 'relative',
+    display: 'flex',
+    flexShrink: 0,
+    height: '16.5em',
+    width: '35em',
+    maxWidth: '100vw',
+    minWidth: '25em',
+  },
   billboard: {
     position: 'absolute',
     height: 'calc(100% - 2em)',
@@ -102,32 +129,22 @@ UIPretty.styles = {
   relations: {
     position: 'absolute',
     bottom: '0em',
+    left: '0em',
+    zIndex: 1,
+    transition: 'opacity 400ms ease-in-out',
+  },
+  guests: {
+    position: 'absolute',
+    bottom: '0em',
     right: '0em',
     zIndex: 1,
+    transition: 'opacity 400ms ease-in-out',
   },
 }
 
 export const Pretty = memo(UIPretty)
 
-const UIPrettyWrapper = ({ ...props }) => (
-  <div {...props} sx={UIPrettyWrapper.styles.element} />
-)
-
-UIPrettyWrapper.styles = {
-  element: {
-    position: 'relative',
-    display: 'flex',
-    flexShrink: 0,
-    height: '16.5em',
-    width: '35em',
-    maxWidth: '100vw',
-    minWidth: '25em',
-  },
-}
-
-const PrettyWrapper = memo(UIPrettyWrapper)
-
-const UIAbout = ({ title, meaningful, overview, palette, ready, link, pad, ...props }) => {
+const UIAbout = ({ title, meaningful, overview, palette, ready, link, pad = false, ...props }) => {
   const { t } = useTranslation()
   const styles = useMemo(() => ({
     ...UIAbout.styles,
@@ -159,7 +176,7 @@ const UIAbout = ({ title, meaningful, overview, palette, ready, link, pad, ...pr
   return (
     <div sx={styles.element}>
       <h2 sx={styles.title} title={title}>
-        <Link to={link}>{title}</Link>
+        <Link to={link?.to} state={link?.state}>{title}</Link>
       </h2>
       <div sx={styles.negative}>
         <span>{

@@ -1,16 +1,17 @@
 import { useEffect } from 'react'
-import { useHistory } from 'react-router'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const withHistoryState = (initial = 20) => (WrappedComponent) => {
   const withHistoryState = (props) => {
-    const { replace, location: { pathname, state } } = useHistory() as any
+    const navigate = useNavigate()
+    const { pathname, state } = useLocation()
 
     useEffect(() => {
       if (!props.length) {
         return
       }
 
-      replace(pathname, { ...state, total: props.length })
+      navigate(pathname, { replace: true, state: { ...state, total: props.length } })
     }, [props.length, JSON.stringify(state)])
 
     return (

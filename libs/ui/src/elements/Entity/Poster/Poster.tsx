@@ -1,114 +1,147 @@
-import { memo, useMemo, useState } from 'react'
-import { useHover, useTouchable } from '@sensorr/utils'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { LinkProps } from 'react-router-dom'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
 import { MovieDetails } from '../../../components/Movie/Movie'
 import { PersonDetails } from '../../../components/Person/Person'
 
-export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onLoad' | 'onError'> {
+export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: MovieDetails | PersonDetails
-  link?: string
-  focus?: [React.FC, any] | []
+  link?: LinkProps
   state?: [React.FC, any] | []
-  actions?: React.FC
+  focus?: [React.FC, any] | []
+  action?: [React.FC, any] | []
   relations?: [React.FC, any] | []
+  guests?: [React.FC, any, string] | []
   overrides?: { focus?: [React.FC, any] | [], ready?: boolean, hover?: boolean }
   onReady?: () => void
-  onHover?: {
-    onMouseEnter?: (event?: React.SyntheticEvent<HTMLSpanElement, Event>) => void
-    onMouseLeave?: (event?: React.SyntheticEvent<HTMLSpanElement, Event>) => void
-  }
 }
 
 const UIPoster = ({
   details,
-  link = '',
+  link = null,
   focus: [Focus, focus] = [],
   state: [State, state] = [],
-  actions: Actions,
+  action: [Action, action] = [],
   relations: [Relations, relations] = [],
+  guests: [Guests, guests, guestsDisplay] = [],
   overrides: { focus: [FocusOverride, focusOverride] = [], ...overrides } = {},
   onReady,
-  onHover,
   ...props
 }: PosterProps) => {
-  const [hover, hoverProps] = useHover({ mouseEnterDelayMS: 0, mouseLeaveDelayMS: 0 }, onHover)
-  const isTouchable = useTouchable()
-  const isHover = !isTouchable && hover
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
   const ready = useMemo(() => loaded && overrides?.ready !== false, [loaded, overrides?.ready])
-  // TODO: Refacto, create custom util to call n fn?
-  const loadProps = useMemo(() => {
-    const cb = () => {
-      setLoaded(true)
+  const onPosterReady = useCallback(() => {
+    setLoaded(true)
 
-      if (typeof onReady === 'function') {
-        onReady()
-      }
+    if (typeof onReady === 'function') {
+      onReady()
     }
+  }, [onReady])
 
-    return ({ onLoad: cb, onError: cb })
-  }, [])
-
-  const styles = useMemo(
-    () => ({
-      ...UIPoster.styles,
-      focus: {
-        ...UIPoster.styles.focus,
-        opacity: ready && loaded && (isHover || FocusOverride) ? 1 : 0,
-        transitionDelay: FocusOverride && ready ? '800ms' : '0ms',
+  const styles = useMemo(() => ({
+    ...UIPoster.styles,
+    element: {
+      ...UIPoster.styles.element,
+      '>div:nth-child(2)': {
+        opacity: 0,
+        transitionDuration: '0ms',
       },
-      badges: {
-        ...UIPoster.styles.badges,
-        opacity: ready && loaded ? 1 : 0,
-        transitionDelay: ready ? '800ms' : '0ms',
+      '>div:nth-child(3)': {
+        opacity: ready && guestsDisplay === 'always' ? 1 : 0,
+        transitionDuration: '0ms',
       },
-      actions: {
-        ...UIPoster.styles.actions,
-        opacity: ready && loaded && isHover ? 1 : 0,
+      '&:hover': {
+        '>div:nth-child(2)': {
+          opacity: ready ? 1 : 0,
+          transitionDuration: ready ? '400ms' : '0ms',
+        },
+        '>div:nth-child(3)': {
+          opacity: ready && guestsDisplay !== 'never' ? 1 : 0,
+          transitionDuration: ready ? '400ms' : '0ms',
+        },
       },
-      relations: {
-        ...UIPoster.styles.relations,
-        opacity: ready && loaded && isHover ? 1 : 0,
-        transitionDuration: ready && loaded && isHover ? '400ms' : '0ms',
+    },
+    wrapper: {
+      ...UIPoster.styles.wrapper,
+      '>div:nth-child(1)': {
+        opacity: ready && FocusOverride ? 1 : 0,
       },
-    }),
-    [ready, loaded, isHover],
-  )
+      '>div:nth-child(2)': {
+        opacity: 0,
+      },
+      '>div:nth-child(3)>div:nth-child(2)': {
+        opacity: 0,
+      },
+      '>a >div': {
+        zIndex: -1,
+        transform: `translate3d(0, 100%, 0)`,
+        transition: 'transform 250ms ease-in-out, z-index 0ms linear 250ms',
+      },
+      '&:hover': {
+        '>div:nth-child(1)': {
+          opacity: 0,
+        },
+        '>div:nth-child(2)': {
+          opacity: ready ? 1 : 0,
+        },
+        '>div:nth-child(3)>div:nth-child(2)': {
+          opacity: ready ? 1 : 0,
+        },
+        '>a >div': {
+          zIndex: ready ? 0 : -1,
+          transform: (ready && overrides.hover !== false) ? `translate3d(0, 0%, 0)` : `translate3d(0, 100%, 0)`,
+          transition: 'transform 250ms ease-in-out, z-index 0ms linear',
+        },
+      },
+    },
+    badges: {
+      ...UIPoster.styles.badges,
+      opacity: ready ? 1 : 0,
+      transitionDelay: ready ? '800ms' : '0ms',
+    },
+  }), [ready, FocusOverride, guestsDisplay])
 
   return (
-    <PosterWrapper {...hoverProps}>
-      <div sx={styles.element}>
-        <div sx={styles.focus}>{!isHover && FocusOverride ? <FocusOverride {...focusOverride} /> : (Focus && <Focus {...focus} />)}</div>
+    <div sx={styles.element}>
+      <div sx={styles.wrapper}>
+        <div sx={styles.focus}>{FocusOverride && <FocusOverride {...focusOverride} />}</div>
+        <div sx={styles.focus}>{Focus && <Focus {...focus} />}</div>
         <div sx={styles.badges}>
           {State && <State {...state} />}
-          {!!Actions && <div sx={styles.actions}>{<Actions />}</div>}
+          {Action && <Action {...action} />}
         </div>
-        <Link to={link} sx={styles.link} disabled={!link}>
+        <Link to={link?.to} state={link?.state} sx={styles.link} disabled={!link?.to}>
           <Picture
             {...props}
-            {...loadProps}
-            path={details?.poster}
             ready={ready}
+            path={details?.poster}
+            onReady={onPosterReady}
           />
-          {ready && overrides?.hover !== false && (
-            <Hover
-              title={details?.title}
-              subtitle={details?.caption}
-              year={details?.year}
-              open={isHover}
-              pad={!!Relations}
-            />
-          )}
+          <Hover
+            title={details?.title}
+            subtitle={details?.caption}
+            year={details?.year}
+            pad={!!Relations}
+          />
         </Link>
       </div>
       <div sx={styles.relations}>{Relations && <Relations {...relations} />}</div>
-    </PosterWrapper>
+      <div sx={styles.guests}>{Guests && <Guests {...guests} />}</div>
+    </div>
   )
 }
 
 UIPoster.styles = {
   element: {
+    position: 'relative',
+    display: 'flex',
+    height: '15em',
+    maxHeight: '100%',
+    width: '10em',
+    maxWidth: '100%',
+  },
+  wrapper: {
     position: 'relative',
     overflow: 'hidden',
     height: '100%',
@@ -122,18 +155,17 @@ UIPoster.styles = {
     transition: 'opacity 250ms ease-in-out',
   },
   badges: {
-    position: 'absolute',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    position: 'absolute',
     top: '0.5em',
     right: '0.5em',
     zIndex: 1,
     transition: 'opacity 250ms ease-in-out',
-  },
-  actions: {
-    marginTop: 8,
-    transition: 'opacity 250ms ease-in-out',
+    '>*': {
+      marginTop: 10,
+    },
   },
   link: {
     display: 'flex',
@@ -146,49 +178,42 @@ UIPoster.styles = {
     left: '0em',
     zIndex: 1,
     transition: 'opacity 400ms ease-in-out',
+    '&:hover': {
+      zIndex: 2,
+    },
+  },
+  guests: {
+    position: 'absolute',
+    bottom: '0em',
+    right: '0em',
+    zIndex: 1,
+    transition: 'opacity 400ms ease-in-out',
+    '&:hover': {
+      zIndex: 2,
+    },
   },
 }
 
 export const Poster = memo(UIPoster)
 
-const UIPosterWrapper = ({ ...props }) => (
-  <div {...props} sx={UIPosterWrapper.styles.element} />
-)
-
-UIPosterWrapper.styles = {
-  element: {
-    position: 'relative',
-    display: 'flex',
-    height: '15em',
-    maxHeight: '100%',
-    width: '10em',
-    maxWidth: '100%',
-  },
-}
-
-const PosterWrapper = memo(UIPosterWrapper)
-
 const UIHover = ({
   title,
   subtitle = null,
   year = null,
-  open = false,
   pad = false,
   ...props
 }: {
   title: string
   subtitle?: string
   year?: number
-  open: boolean
   pad?: boolean
 }) => {
   const styles = useMemo(() => ({
     element: {
       ...UIHover.styles.element,
-      transform: `translate3d(0, ${open ? '0%' : '100%'}, 0)`,
       ...(pad ? { paddingBottom: '4.25em' } : {}),
     }
-  }), [open, pad])
+  }), [pad])
 
   return (
     <div {...props} sx={styles.element}>
@@ -210,10 +235,9 @@ UIHover.styles = {
     justifyContent: 'space-between',
     width: '100%',
     backgroundColor: 'blackShadow',
-    color: 'shadowText',
+    color: 'textShadow',
     padding: 4,
     fontSize: 6,
-    transition: 'transform 250ms ease-in-out',
     '>span': {
       display: 'block',
       margin: '0 0 0.5em 0',

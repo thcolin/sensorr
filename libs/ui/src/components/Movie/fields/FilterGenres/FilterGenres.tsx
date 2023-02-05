@@ -65,6 +65,10 @@ const UIFilterGenres = ({ statistics, tmdb, display, ...props }: FilterGenresPro
           {...props as any}
           label={t('ui.filters.genres')}
           options={options}
+          value={props.value.values}
+          onChange={values => props.onChange({ ...props.value, values })}
+          behavior={props.value.behavior}
+          onBehavior={behavior => props.onChange({ ...props.value, behavior })}
         />
       )
   }

@@ -10,11 +10,11 @@ const SearchIcon = ({ ...props }) => (
   </svg>
 )
 
-const ClearIcon = ({ ...props }) => (
+const ClearIcon = ({ active = false, ...props }) => (
   <svg {...props} sx={ClearIcon.styles.element} xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'>
     <path
       fill='currentColor'
-      opacity={0.2}
+      opacity={active ? 1 : 0.2}
       d='M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm5.66 14.24l-1.41 1.41L10 11.41l-4.24 4.25-1.42-1.42L8.59 10 4.34 5.76l1.42-1.42L10 8.59l4.24-4.24 1.41 1.41L11.41 10z'
     />
   </svg>
@@ -26,10 +26,10 @@ ClearIcon.styles = {
   },
 }
 
-const SpinnerIcon = ({ ...props }) => (
+const SpinnerIcon = ({ color: backgroundColor = 'text', ...props }) => (
   <div {...props} sx={SpinnerIcon.styles.element}>
-    <div sx={SpinnerIcon.styles.circle}></div>
-    <div sx={SpinnerIcon.styles.second}></div>
+    <div sx={{ ...SpinnerIcon.styles.circle, backgroundColor }}></div>
+    <div sx={{ ...SpinnerIcon.styles.second, backgroundColor }}></div>
   </div>
 )
 
@@ -46,7 +46,6 @@ SpinnerIcon.styles = {
     borderRadius: '50%',
     opacity: 0.6,
     position: 'absolute',
-    backgroundColor: 'text',
     top: 12,
     left: 12,
     animation: `${animations.bounce} 2.0s infinite ease-in-out`,
@@ -57,7 +56,6 @@ SpinnerIcon.styles = {
     borderRadius: '50%',
     opacity: 0.6,
     position: 'absolute',
-    backgroundColor: 'text',
     top: 12,
     left: 12,
     animation: `${animations.bounce} 2.0s infinite ease-in-out`,
@@ -126,8 +124,14 @@ LiveIcon.styles = {
   }
 }
 
+const PlexIcon = ({ ...props }) => (
+  <span {...props} sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
+    ❯
+  </span>
+)
+
 export interface IconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
-  value: 'search' | 'clear' | 'spinner' | 'more' | 'filters' | 'check' | 'sort' | 'refresh' | 'play' | 'chevron' | 'live'
+  value: 'search' | 'clear' | 'spinner' | 'more' | 'filters' | 'check' | 'sort' | 'refresh' | 'play' | 'chevron' | 'live' | 'plex'
   [key: string]: any
 }
 
@@ -144,6 +148,7 @@ const UiIcon = ({ value, ...props }: IconProps) =>
     play: <PlayIcon {...props} />,
     chevron: <ChevronIcon {...props as any} />,
     live: <LiveIcon {...props as any} />,
+    plex: <PlexIcon {...props as any} />,
   }[value] || null)
 
 export const Icon = memo(UiIcon)

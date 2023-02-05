@@ -22,7 +22,7 @@ const UIOverview = ({ children, ...props }) => {
           ...!expanded && {
             overflow: 'hidden',
             textOveflow: 'ellipsis',
-            WebkitLineClamp: '3',
+            WebkitLineClamp: '8',
           },
         }}
       >

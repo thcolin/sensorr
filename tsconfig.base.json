@@ -18,6 +18,7 @@
       "@sensorr/config": ["libs/config/src/index.js"],
       "@sensorr/i18n": ["libs/i18n/src/index.ts"],
       "@sensorr/palette": ["libs/palette/src/index.js"],
+      "@sensorr/plex": ["libs/plex/src/index.ts"],
       "@sensorr/sensorr": ["libs/sensorr/src/index.ts"],
       "@sensorr/services": ["libs/services/src/index.ts"],
       "@sensorr/theme": ["libs/theme/src/index.ts"],

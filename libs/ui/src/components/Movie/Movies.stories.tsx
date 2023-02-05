@@ -78,11 +78,6 @@ Movie.argTypes = {
       options: credits,
     },
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
 }
 
 export const MoviePosterLoading = (args: any) => (

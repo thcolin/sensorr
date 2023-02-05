@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
-import MovieComponent from '../../components/Movie/Movie'
+import { MovieWithCredits } from '../../components/Movie/Movie'
 
 const Collection = ({ ...props }) => {
   const { id } = useParams() as any
@@ -24,18 +24,22 @@ const Collection = ({ ...props }) => {
   const ready = !ongoing && !loading
 
   const tabs = useMemo(() => {
-    const saga = {
-      label: t('items.movies.belongs_to_collection.label', { collection: details.title || 'Saga' }),
-      entities: details.parts,
-      child: MovieComponent,
-      props: () => ({ display: 'pretty' }),
-      ready: ready,
-    }
-
-    return {
-      collections: { saga },
-    }
-  }, [ready, details])
+    return [
+      {
+        id: 'collection',
+        tabs: {
+          saga: {
+            id: `saga-${id}`,
+            label: t('items.movies.belongs_to_collection.label', { collection: details.title || 'Saga' }),
+            entities: details.parts,
+            child: MovieWithCredits,
+            props: () => ({ display: 'pretty' }),
+            ready: ready,
+          },
+        },
+      },
+    ]
+  }, [ready, id, details])
 
 
   if (error) {

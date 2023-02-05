@@ -1,40 +1,42 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import Tippy from '@tippyjs/react'
 
-const UIProgress = ({ progress: { id = null, tasks = [] } = {}, style, ...props }) => (
+const UIProgress = ({ progress: { id = null, tasks = [] } = {}, style = {}, ...props }) => (
   <div sx={UIProgress.styles.element} style={style}>
-    {!!tasks.length && (
-      <div sx={UIProgress.styles.steps}>
-        {tasks.map((task, index) => (
-          <Task key={`${id}-${index}`} {...task} />
-        ))}
-      </div>
-    )}
+    <div sx={UIProgress.styles.steps}>
+      {tasks.map((task, index) => (
+        <Task key={`${id}-${index}`} {...task} />
+      ))}
+    </div>
   </div>
 )
 
 UIProgress.styles = {
   element: {
     display: 'flex',
-    flex: 1,
     overflow: 'hidden',
+    fontSize: 6,
   },
   steps: {
     display: 'flex',
     flex: 1,
     overflowX: 'auto',
+    backgroundColor: 'primaryDarkest',
     borderRight: '1px solid',
     borderLeft: '1px solid',
-    borderColor: 'dark',
+    borderColor: 'primaryDarkest',
+    minHeight: '3em',
   },
   step: {
     flex: 1,
     position: 'relative',
     display: 'flex',
-    backgroundColor: 'highlight',
+    backgroundColor: 'primaryDarkest',
+    borderTop: '1px solid',
+    borderColor: 'accentDarkest',
     '&:not(:last-child)': {
       borderRight: '1px solid',
-      borderColor: 'dark',
+      borderColor: 'accentDarkest',
     },
     '&:before': {
       content: '""',
@@ -42,17 +44,22 @@ UIProgress.styles = {
       top: '0px',
       left: '0px',
       height: '100%',
-      backgroundColor: 'accent',
+      backgroundColor: 'primaryDarker',
     },
     '>div': {
       position: 'relative',
       flex: 1,
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      whiteSpace: 'nowrap',
       paddingX: 2,
+      paddingY: 10,
       transition: 'opacity 200ms ease-in-out',
+      '>*': {
+        paddingX: 10,
+      },
       '>code': {
         display: 'block',
         fontSize: 5,
@@ -74,8 +81,8 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
   const results = {
     total: releases?.length || 0,
     matches: releases?.filter(release => release.valid && !release.warning).length || 0,
-    dropped: releases?.filter(release => !release.valid && release.warning <= 10).length || 0,
-    mismatch: releases?.filter(release => !release.valid && release.warning > 10).length || 0,
+    withdrawn: releases?.filter(release => !release.valid && release.warning <= 10).length || 0,
+    ignored: releases?.filter(release => !release.valid && release.warning > 10).length || 0,
   }
 
   useEffect(() => {
@@ -99,22 +106,22 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
         }}
       >
         <div sx={{ opacity: (ongoing || done) ? 1 : 0.25 }}>
-          <code><strong>{znab.name}</strong></code>
-          <code>“{term}”</code>
-          <span>
+          <span style={{ display: 'flex', justifyContent: 'flex-end', width: '4em' }}>
             {ongoing ? (
               <TaskTime />
             ) : done ? (
-              <span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>
                 {(
-                  !!results.matches ? '🎉' :
-                  (results.dropped && !results.mismatch) ? '🚨' :
-                  (results.mismatch && !results.dropped) ? '💩' :
+                  !!results.matches ? '⭐' :
+                  (results.withdrawn && !results.ignored) ? '🚨' :
+                  (results.ignored && !results.withdrawn) ? '🗑️ ' :
                   '📭'
                 )} &nbsp; <code sx={{ fontSize: 6 }}>({results.matches ? results.matches : results.total})</code>
               </span>
             ) : '-'}
           </span>
+          <code><strong>{znab.name}</strong></code>
+          <code>“{term}”</code>
         </div>
       </div>
     </Tippy>
@@ -137,16 +144,16 @@ const TaskTime = ({ ...props }) => {
 
 const TaskDetails = ({ results, ...props }) => {
   const errors = [
-    ...(results.dropped ? [<code key='dropped'>🚨 <span><strong>{results.dropped}</strong> Releases dropped by policy</span></code>] : []),
-    ...(results.mismatch ? [<code key='mismatch'>💩 <span><strong>{results.mismatch}</strong> Releases mismatch</span></code>] : []),
+    ...(results.withdrawn ? [<code key='withdrawn'>🚨 <span><strong>{results.withdrawn}</strong> Releases withdrawn by policy</span></code>] : []),
+    ...(results.ignored ? [<code key='ignored'>🗑️ <span><strong>{results.ignored}</strong> Releases ignored</span></code>] : []),
   ]
 
   return (
     <span sx={{ display: 'block', withSpace: 'nowrap', margin: 10 }}>
       {(!!results.matches && !errors.length) ? (
-        <code>🎉 <strong>{results.total}</strong> <em>matching</em> Releases found !</code>
+        <code>⭐ <strong>{results.total}</strong> <em>matching</em> Releases found !</code>
       ) : (!!results.matches && errors.length) ? (
-        <code>🎉 <strong>{results.total}</strong> Releases found :</code>
+        <code>🏁 <strong>{results.total}</strong> Releases found :</code>
       ) : (!results.matches && errors.length === 1) ? (
         errors[0]
       ) : (!results.matches && errors.length) ? (
@@ -156,7 +163,7 @@ const TaskDetails = ({ results, ...props }) => {
       )}
       {((!!results.matches && errors.length) || errors.length > 1) && (
         <ul sx={{ margin: 8, marginBottom: 12, padding: 12, paddingLeft: 2, '>li': { margin: 12, padding: 12, '>span': { fontSize: 5 } } }}>
-          {!!results.matches && <li><code>👍 <span><strong>{results.matches}</strong> Releases matches </span></code></li>}
+          {!!results.matches && <li><code>⭐ <span><strong>{results.matches}</strong> Releases matches </span></code></li>}
           {errors.map((error, index) => <li key={index}>{error}</li>)}
         </ul>
       )}

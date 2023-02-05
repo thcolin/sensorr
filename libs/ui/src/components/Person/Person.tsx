@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { LinkProps } from 'react-router-dom'
 import i18n from '@sensorr/i18n'
 import { emojize } from '@sensorr/utils'
 import { Person as PersonInterface, Crew as CrewInterface, Cast as CastInterface } from '@sensorr/tmdb'
@@ -18,12 +19,13 @@ export interface PersonProps extends Omit<
 > {
   entity: PersonInterface | CastInterface | CrewInterface
   display?: 'poster' | 'card' | 'avatar' | 'pretty'
-  link?: ((PersonInterface) => string)
+  link?: ((PersonInterface) => LinkProps)
   focus?: 'popularity'
   placeholder?: boolean
   state?: 'loading' | 'ignored' | 'followed'
   setState?: (state: string) => any
   ready?: boolean
+  compact?: boolean
 }
 
 const UIPerson = ({
@@ -38,7 +40,7 @@ const UIPerson = ({
   // data
   const entity = useMemo(() => data || { profile_path: false, id: null }, [data, placeholder]) as PersonInterface
   const details = useMemo(() => transformPersonDetails(entity), [entity])
-  const link = useMemo(() => (props.link || ((entity) => !!entity?.id && `/person/${entity.id}`))(entity), [entity, props.link])
+  const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to: `/person/${entity.id}` }))(entity), [entity, props.link])
 
   // components
   const focus = useMemo(() => entity.id === null || !props.focus ? [] : [
@@ -121,25 +123,24 @@ export interface PersonDetails extends Details {
 }
 
 export const transformPersonDetails = (entity: PersonInterface | CrewInterface | CastInterface): PersonDetails => ({
+  id: entity.id,
   title: entity.name,
   year: null,
   caption: (entity as any).override || (entity as CrewInterface).job || (entity as CastInterface).character || (entity as PersonInterface).known_for_department || '',
   tagline: null,
-  overview: (entity as PersonInterface).biography || '',
+  overview: (entity as PersonInterface).biography || ((entity as any)?.translations?.translations || []).find(translation => translation.iso_639_1 === 'en')?.data?.biography || '',
   poster: entity.profile_path,
   billboard: null,
   meaningful: {
     known_for_department: !!(entity as PersonInterface).known_for_department ? () => (
       <Link
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              [(entity as PersonInterface).known_for_department === 'Acting' ? 'with_cast' : 'with_crew']: {
-                behavior: 'and',
-                values: [{ value: entity.id, label: entity.name }],
-              },
+        to='/movie/discover'
+        state={{
+          controls: {
+            [(entity as PersonInterface).known_for_department === 'Acting' ? 'with_cast' : 'with_crew']: {
+              behavior: 'and',
+              values: [{ value: entity.id, label: entity.name }],
             },
           },
         }}

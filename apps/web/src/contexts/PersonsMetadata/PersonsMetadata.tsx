@@ -1,38 +1,62 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import api from '../../store/api'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useAuthContext } from '../Auth/Auth'
+import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 
 const personsMetadataContext = createContext({})
 
 export const Provider = ({ ...props }) => {
+  const api = useAPI()
   const tmdb = useTMDB()
+  const { authenticated } = useAuthContext()
+  const refreshTime = useRef() as any
   const [loading, setLoading] = useState(true)
   const [metadata, setMetadata] = useState({})
 
   useEffect(() => {
-    const controller = new AbortController()
+    if (!authenticated) {
+      return
+    }
+
     const cb = async () => {
-      const { uri, params, init } = api.query.persons.getMetadata({ init: { signal: controller.signal } })
       try {
-        const body = await api.fetch(uri, params, init)
-        setMetadata(body)
+        let total_pages = null
+        let page = 0
+
+        do {
+          const { uri, params, init } = api.query.persons.getMetadata({ params: { page: page++ } })
+          const raw = await api.fetch(uri, params, init)
+          total_pages = raw.total_pages
+          setMetadata(metadata => ({ ...metadata, ...raw.results }))
+        } while (!total_pages || page <= total_pages)
       } catch (e) {
         console.warn(e)
-      } finally {
-        setLoading(false)
       }
+
+      setLoading(false)
     }
 
     cb()
-    return () => controller.abort()
-  }, [])
+
+    // Refresh if page was at sleep for 10s
+    setInterval(() => {
+      const currentTime = (new Date()).getTime()
+
+      if (currentTime > (refreshTime.current + 10000)) {
+        cb()
+      }
+
+      refreshTime.current = currentTime
+    }, 2000)
+  }, [authenticated])
 
   const setPersonState = useCallback(async (
     id: number,
     state: 'ignored' | 'followed'
   ) => {
     setMetadata(metadata => state === 'ignored' ?
-      Object.keys(metadata).filter(_id => parseInt(_id) !== id).reduce((acc, curr) => ({ ...acc, [curr]: metadata[curr] }), {}) :
+      Object.keys(metadata).filter(_id => Number(_id) !== id).reduce((acc, curr) => ({ ...acc, [curr]: metadata[curr] }), {}) :
       ({ ...metadata, [id]: { state } })
     )
 
@@ -40,9 +64,10 @@ export const Provider = ({ ...props }) => {
       const person = await tmdb.fetch(`person/${id}`)
       const { uri, params, init } = api.query.persons.postPerson({ body: { ...person, state, updated_at: new Date().getTime() } })
       await api.fetch(uri, params, init)
-    } catch (e) {
-      setMetadata(metadata => Object.keys(metadata).filter(_id => parseInt(_id) !== id).reduce((acc, curr) => ({ ...acc, [curr]: metadata[curr] }), {}))
-      console.warn(e)
+    } catch (err) {
+      setMetadata(metadata => Object.keys(metadata).filter(_id => Number(_id) !== id).reduce((acc, curr) => ({ ...acc, [curr]: metadata[curr] }), {}))
+      console.warn(err)
+      toast.error('Error while updating person metadata')
     }
   }, [setMetadata])
 

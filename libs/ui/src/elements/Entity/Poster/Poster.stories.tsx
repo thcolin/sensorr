@@ -97,11 +97,6 @@ Poster.argTypes = {
       options: overrides,
     }
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
   palette: {
     control: {
       type: null,
@@ -116,7 +111,6 @@ Poster.argTypes = {
 
 export const Loading = (args: any) => (
   <UIPoster {...args}
-    hover={null}
     link={''}
     focus={null}
     state={null}

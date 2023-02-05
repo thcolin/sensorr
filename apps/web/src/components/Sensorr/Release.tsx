@@ -1,126 +1,212 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { useThemeUI } from 'theme-ui'
-import { filesize } from '@sensorr/utils'
+import * as oleoo from 'oleoo'
+import { emojize, filesize } from '@sensorr/utils'
+import { Badge, Icon, Link } from '@sensorr/ui'
 import Tippy from '@tippyjs/react'
 
-const UIRelease = ({ entity, statistics }) => {
+const UIRelease = ({ entity, compact = false, downloadable = false, proceed = null, remove = null, statistics = null }) => {
   const { theme } = useThemeUI()
-  const link = new URL(entity.link)
-  link.searchParams.set('file', entity.meta.generated.normalize('NFD').replace(/[^\x00-\x7F]/g, ''))
+  const meta = useMemo(() => entity?.meta || oleoo.parse(entity.title, { strict: false, flagged: true }), [entity?.meta])
 
   return (
-    <div
-      key={entity.link}
-      sx={UIRelease.styles.element}
-    >
-      <div>
-        {entity.valid ? (
-          <Tippy maxWidth='80vw' content={<code>🎉 Matching Release according to policy</code>}>
-            <span sx={{ fontSize: 2, padding: 6, paddingRight: 4, cursor: 'default' }}>👍</span>
-          </Tippy>
-        ) : entity.warning <= 10 ? (
-          <Tippy maxWidth='80vw' content={<code>{entity.reason}</code>}>
-            <span sx={{ fontSize: 2, padding: 6, paddingRight: 4, cursor: 'default' }}>🚨</span>
-          </Tippy>
-        ) : (
-          <Tippy maxWidth='80vw' content={<code>{entity.reason}</code>}>
-            <span sx={{ fontSize: 2, padding: 6, paddingRight: 4, cursor: 'default' }}>💩</span>
-          </Tippy>
-        )}
-        <div>
-          <button
-            // onClick={() => this.handleGrabClick(release)}
-            title={`🍿 Download "${entity.meta.generated}" to blackhole`}
-          >
-            <code>
-              {entity.meta.generated}
-            </code>
-          </button>
-          <span>&nbsp;&nbsp;</span>
-          <a href={entity.link} target='_blank' rel='norefer noopener'>
-            <code><small>({entity.znab})</small></code>
-          </a>
-        </div>
-        <div>
-          <div sx={UIRelease.styles.tags}>
-            {!!entity.meta.source && (
-              <span title={`${entity.meta.source}${(entity.account?.source || {})[entity.meta.source] ? ` (+${(entity.account?.source || {})[entity.meta.source]})` : ''}`}>
-                {logos.source[entity.meta.source] || <code>{entity.meta.source}</code>}
-              </span>
-            )}
-            {!!entity.meta.encoding && (
-              <span title={`${entity.meta.encoding}${(entity.account?.encoding || {})[entity.meta.encoding] ? ` (+${(entity.account?.encoding || {})[entity.meta.encoding]})` : ''}`}>
-                {logos.encoding[entity.meta.encoding] || <code>{entity.meta.encoding}</code>}
-              </span>
-            )}
-            {!!entity.meta.resolution && (
-              <span title={`${entity.meta.resolution}${(entity.account?.resolution || {})[entity.meta.resolution] ? ` (+${(entity.account?.resolution || {})[entity.meta.resolution]})` : ''}`}>
-                {logos.resolution[entity.meta.resolution] || <code>{entity.meta.resolution}</code>}
-              </span>
-            )}
-            {!!entity.meta.dub && (
-              <span title={`${entity.meta.dub}${(entity.account?.dub || {})[entity.meta.dub] ? ` (+${(entity.account?.dub || {})[entity.meta.dub]})` : ''}`}>
-                {logos.dub[entity.meta.dub] || <code>{entity.meta.dub}</code>}
-              </span>
-            )}
-            {!!entity.meta.language && (
-              <span title={`${entity.meta.language}${(entity.account?.language || {})[entity.meta.language] ? ` (+${(entity.account?.language || {})[entity.meta.language]})` : ''}`}>
-                {logos.language[entity.meta.language] || <code>{entity.meta.language}</code>}
-              </span>
-            )}
-            {(entity.meta.flags || []).map(flag => <span key={flag} title={`${flag}${(entity.account?.flags || {})[flag] ? ` (+${(entity.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
-          </div>
-          {entity.valid && (
-            <div sx={UIRelease.styles.statistics}>
-              <div title={`Score (${entity.score})`}>
-                <span>💯</span>
-                <span
-                  style={{
-                    background: `linear-gradient(
-                      90deg,
-                      ${theme.rawColors.primary} 0%,
-                      ${theme.rawColors.primary} ${(Math.max(1, entity.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                      ${theme.rawColors.gray3} ${(Math.max(1, entity.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                      ${theme.rawColors.gray3} 100%
-                    )`,
-                  }}
-                />
-                <small style={{ opacity: 0.5 }}><code>{entity.score}</code></small>
-              </div>
-              <div title={`Peers (${entity.seeders}/${entity.peers})`}>
-                <span>🌍</span>
-                <span
-                  sx={{
-                    background: `linear-gradient(
-                      90deg,
-                      ${theme.rawColors.primary} 0%,
-                      ${theme.rawColors.primary} ${(Math.max(1, entity.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                      ${theme.rawColors.gray3} ${(Math.max(1, entity.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                      ${theme.rawColors.gray3} 100%
-                    )`,
-                  }}
-                />
-                <small style={{ opacity: 0.5 }}><code>{entity.peers}</code></small>
-              </div>
-              <div title={`Size (${filesize.stringify(entity.size)})`}>
-                <span>📦</span>
-                <span
-                  sx={{
-                    background: `linear-gradient(
-                      90deg,
-                      ${theme.rawColors.primary} 0%,
-                      ${theme.rawColors.primary} ${Math.max(0.01, 1 - ((entity.size - statistics.lowest.size) / Math.max(1, statistics.highest.size - statistics.lowest.size))) * 100}%,
-                      ${theme.rawColors.gray3} ${Math.max(0.01, 1 - ((entity.size - statistics.lowest.size) / Math.max(1, statistics.highest.size - statistics.lowest.size))) * 100}%,
-                      ${theme.rawColors.gray3} 100%
-                    )`,
-                  }}
-                />
-                <small style={{ opacity: 0.5 }}><code>{filesize.stringify(entity.size)}</code></small>
-              </div>
+    <div>
+      <div key={entity.link} sx={UIRelease.styles.element} data-disabled={!downloadable}>
+        <div sx={{ paddingY: compact ? 12 : 4 }}>
+          {entity.valid !== false && remove && !entity.proposal && ['record', 'doctor'].includes(entity.from) && (
+            <div sx={UIRelease.styles.remove}>
+              <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
+                <Icon value='clear' width='1em' height='1em' />
+              </button>
             </div>
           )}
+          {(
+            entity.from === 'sync' ? (
+              <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity.job}</strong></code>}>
+                <span sx={{ fontSize: 2, paddingLeft: 4, cursor: 'default' }}><Icon value='plex' /></span>
+              </Tippy>
+            ) : !entity.valid && entity.warning <= 5 ? (
+              <Tippy maxWidth='80vw' content={<code>🥈 Does not overcome existing releases</code>}>
+                <span sx={{ fontSize: 2, paddingLeft: 4, cursor: 'default' }}>🥈</span>
+              </Tippy>
+            ) : !entity.valid && entity.warning <= 10 ? (
+              <Tippy maxWidth='80vw' content={<code>{entity.reason}</code>} disabled={!entity.reason}>
+                <span sx={{ fontSize: 2, paddingLeft: 4, cursor: 'default' }}>🚨</span>
+              </Tippy>
+            ) : !entity.valid && entity.warning > 10 ? (
+              <Tippy maxWidth='80vw' content={<code>{entity.reason}</code>} disabled={!entity.reason}>
+                <span sx={{ fontSize: 2, paddingLeft: 4, cursor: 'default' }}>🗑️</span>
+              </Tippy>
+            ) : (entity.proposal && typeof entity.choice !== 'boolean') ? (
+              <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity.from}#{entity.job}</strong></code>}>
+                <span><Link to={`/jobs/${entity.job}`} sx={{ fontSize: 2, paddingLeft: 4 }}>🛎️</Link></span>
+              </Tippy>
+            ) : (entity.proposal && entity.choice === false) ? (
+              <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity.from}#{entity.job}</strong></code>}>
+                <span><Link to={`/jobs/${entity.job}`} sx={{ fontSize: 2, paddingLeft: 4 }}>❌</Link></span>
+              </Tippy>
+            ) : (entity.proposal && entity.choice === true) ? (
+              <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity.from}#{entity.job}</strong></code>}>
+                <span><Link to={`/jobs/${entity.job}`} sx={{ fontSize: 2, paddingLeft: 4 }}>📼</Link></span>
+              </Tippy>
+            ) : ['record', 'doctor'].includes(entity.from) ? (
+              <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity.from}#{entity.job}</strong></code>}>
+                <span><Link to={`/jobs/${entity.job}`} sx={{ fontSize: 2, paddingLeft: 4 }}>📼</Link></span>
+              </Tippy>
+            ) : (
+              <Tippy maxWidth='80vw' content={<code>⭐ Matching Release according to policy (score={entity.score})</code>}>
+                <span sx={{ fontSize: 2, paddingLeft: 4, cursor: 'default' }}>⭐</span>
+              </Tippy>
+            )
+          )}
+          <div sx={UIRelease.styles.head}>
+            <Tippy maxWidth='80vw' content={<code><small>{entity.original}</small></code>}>
+              <span sx={UIRelease.styles.title}>
+                <button
+                  {...(downloadable ? { title: 'Download release to Sensorr blackhole' } : {})}
+                  onClick={() => proceed(entity, true)}
+                  disabled={!downloadable}
+                >
+                  <code title={entity.title}>{entity.title}</code>
+                </button>
+              </span>
+            </Tippy>
+            {!!entity.znab && (
+              <span sx={UIRelease.styles.subtitle}>
+                <span>&nbsp;&nbsp;&nbsp;</span>
+                <a href={entity.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({entity.znab})</small></code></a>
+                <span>&nbsp;&nbsp;&nbsp;</span>
+                <a href={entity.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+              </span>
+            )}
+          </div>
+          <div sx={UIRelease.styles.metadata}>
+            <div sx={UIRelease.styles.tags}>
+              {downloadable ? (
+                <>
+                  {!!meta.source && (
+                    <span title={`Source: ${meta.source}${(entity.account?.source || {})[meta.source] ? ` (+${(entity.account?.source || {})[meta.source]})` : ''}`}>
+                      {logos.source[meta.source] || <code>{meta.source}</code>}
+                    </span>
+                  )}
+                  {!!meta.encoding && (
+                    <span title={`Encoding: ${meta.encoding}${(entity.account?.encoding || {})[meta.encoding] ? ` (+${(entity.account?.encoding || {})[meta.encoding]})` : ''}`}>
+                      {logos.encoding[meta.encoding] || <code>{meta.encoding}</code>}
+                    </span>
+                  )}
+                  {!!meta.resolution && (
+                    <span title={`Resolution: ${meta.resolution}${(entity.account?.resolution || {})[meta.resolution] ? ` (+${(entity.account?.resolution || {})[meta.resolution]})` : ''}`}>
+                      {logos.resolution[meta.resolution] || <code>{meta.resolution}</code>}
+                    </span>
+                  )}
+                  {!!meta.dub && (
+                    <span title={`Dub: ${meta.dub}${(entity.account?.dub || {})[meta.dub] ? ` (+${(entity.account?.dub || {})[meta.dub]})` : ''}`}>
+                      {logos.dub[meta.dub] || <code>{meta.dub}</code>}
+                    </span>
+                  )}
+                  {!!meta.language && (
+                    <span title={`Language: ${meta.language}${(entity.account?.language || {})[meta.language] ? ` (+${(entity.account?.language || {})[meta.language]})` : ''}`}>
+                      {logos.language[meta.language] || <code>{meta.language}</code>}
+                    </span>
+                  )}
+                  {(meta.flags || []).map(flag => <span key={flag} title={`Flag: ${flag}${(entity.account?.flags || {})[flag] ? ` (+${(entity.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
+                </>
+              ) : (
+                <>
+                  {typeof entity.peers !== 'undefined' && (
+                    <span title={`Peers (${entity.seeders}/${entity.peers})`}>
+                      <code>{emojize('🌍 ', entity.peers)}</code>
+                    </span>
+                  )}
+                  <span title={`Size (${filesize.stringify(entity.size)})`}>
+                    <code>{emojize('📦 ', filesize.stringify(entity.size))}</code>
+                  </span>
+                  <span title={`Score (${entity.score})`}>
+                    <code>{emojize('💯 ', entity.score)}</code>
+                  </span>
+                </>
+              )}
+            </div>
+            {downloadable && (
+              <div sx={UIRelease.styles.statistics}>
+                {typeof statistics.lowest.score !== 'undefined' && (
+                  <div title={`Score (${entity.score})`}>
+                    <span>💯</span>
+                    <span
+                      style={{
+                        background: `linear-gradient(
+                          90deg,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
+                          ${theme.rawColors.gray} ${(Math.max(1, entity.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
+                          ${theme.rawColors.gray} 100%
+                        )`,
+                      }}
+                    />
+                    <small style={{ opacity: 0.5 }}><code>{entity.score}</code></small>
+                  </div>
+                )}
+                {typeof statistics.lowest.peers !== 'undefined' && (
+                  <div title={`Peers (${entity.seeders}/${entity.peers})`}>
+                    <span>🌍</span>
+                    <span
+                      sx={{
+                        background: `linear-gradient(
+                          90deg,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
+                          ${theme.rawColors.gray} ${(Math.max(1, entity.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
+                          ${theme.rawColors.gray} 100%
+                        )`,
+                      }}
+                    />
+                    <small style={{ opacity: 0.5 }}><code>{entity.peers}</code></small>
+                  </div>
+                )}
+                {typeof statistics.lowest.size !== 'undefined' && (
+                  <div title={`Size (${filesize.stringify(entity.size)})`}>
+                    <span>📦</span>
+                    <span
+                      sx={{
+                        background: `linear-gradient(
+                          90deg,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                          ${entity.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${Math.min(1, Math.max(0.01, (entity.size / statistics.highest.size))) * 100}%,
+                          ${theme.rawColors.gray} ${Math.min(1, Math.max(0.01, (entity.size / statistics.highest.size))) * 100}%,
+                          ${theme.rawColors.gray} 100%
+                        )`,
+                      }}
+                    />
+                    <small style={{ opacity: 0.5 }}><code>{filesize.stringify(entity.size)}</code></small>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      {entity.proposal && entity.valid !== false && typeof entity.choice !== 'boolean' && (
+        <div sx={UIRelease.styles.proposal}>
+          <button sx={{ variant: 'button.reset' }} onClick={() => proceed(entity, true)}>
+            <Badge
+              emoji={<Icon value='check' width='1em' height='1em' />}
+              label='Accept'
+              compact={false}
+              size='normal'
+              color='theme'
+            />
+          </button>
+          <button sx={{ variant: 'button.reset' }} onClick={() => proceed(entity, false)}>
+            <Badge
+              emoji={<Icon value='clear' width='1em' height='1em' />}
+              label='Refuse'
+              compact={false}
+              size='normal'
+              color='theme'
+            />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -130,53 +216,63 @@ UIRelease.styles = {
     position: 'relative',
     fontSize: 6,
     paddingRight: 0,
-    paddingLeft: 4,
+    paddingLeft: 2,
     overflow: 'hidden',
     '>div': {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingY: 4,
       backgroundColor: 'transparent',
       borderBottom: `0.075em solid`,
-      borderColor: 'gray3',
-      '>div:first-of-type': {
-        display: 'flex',
-        flex: 1,
-        flexShrink: 0,
-        marginRight: 0,
-        whiteSpace: 'nowrap',
-        overflowY: 'hidden',
-        '>button': {
-          variant: 'button.reset',
-          opacity: 0.8,
-          overflowY: 'auto',
-      },
-        '>a': {
-          zIndex: 1,
-          color: 'primary',
-          opacity: 0.8,
-          ':hover': {
-            opacity: 1,
-          },
-        },
-      },
-      '>div:last-of-type': {
-        display: 'flex',
-        alignItems: 'center',
-        '>span': {
-          fontSize: 1,
-          marginRight: 4,
-        },
+      borderColor: 'gray',
+    },
+    ':hover:not([data-disabled="true"])': {
+      '>div': {
+        backgroundColor: 'grayLightest',
       },
     },
-    ':hover': {
-      '>div': {
-        backgroundColor: 'white',
-        '>div>button': {
-          opacity: 1,
-        },
+  },
+  head: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    marginLeft: 4,
+    marginRight: 0,
+    overflowY: 'hidden',
+  },
+  title: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    overflowY: 'hidden',
+    '>button': {
+      variant: 'button.reset',
+      overflow: 'hidden',
+      paddingY: 4,
+      '>code': {
+        display: 'block',
+        lineHeight: 1.2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       },
+    },
+  },
+  subtitle: {
+    display: 'flex',
+    alignItems: 'center',
+    'a': {
+      zIndex: 1,
+      opacity: 0.8,
+      ':hover': {
+        opacity: 1,
+      },
+    },
+  },
+  metadata: {
+    display: 'flex',
+    alignItems: 'center',
+    '>span': {
+      fontSize: 1,
+      marginRight: 4,
     },
   },
   invalid: {
@@ -189,12 +285,11 @@ UIRelease.styles = {
     '>span': {
       marginRight: 6,
       '>code': {
-        paddingTop: 10,
-        paddingX: 8,
-        paddingBottom: 11,
-        backgroundColor: 'text',
+        paddingX: 4,
+        paddingY: 8,
+        backgroundColor: 'gray',
         borderRadius: '0.25em',
-        color: 'white',
+        color: 'text',
         fontWeight: 600,
         fontSize: 5,
       },
@@ -217,11 +312,28 @@ UIRelease.styles = {
       '>span:nth-of-type(2)': {
         display: 'block',
         height: '0.125em',
-        width: '8em',
+        width: '6em',
         marginX: 4,
       },
       '>small': {
         width: '6em',
+      },
+    },
+  },
+  remove: {
+    marginLeft: '-12px',
+  },
+  proposal: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 2,
+    '>button': {
+      marginX: 4,
+      opacity: 0.75,
+      transition: 'opacity 200ms ease',
+      '&:hover': {
+        opacity: 1,
       },
     },
   },

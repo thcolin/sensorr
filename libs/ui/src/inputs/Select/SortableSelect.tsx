@@ -51,10 +51,10 @@ export const SortableSelect = ({ value, onChange, ...props }) => {
       position: 'relative',
       flexShrink: 0,
       margin: '0.25em',
-      backgroundColor: { prefer: theme.rawColors.highlight, avoid: theme.rawColors.wrong }[group] || 'transparent',
+      backgroundColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || 'transparent',
       color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
       border: `1px solid`,
-      borderColor: { prefer: theme.rawColors.highlight, avoid: theme.rawColors.wrong }[group] || '#FFF',
+      borderColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || '#FFF',
       zIndex: 6,
     } : separator ? {
       position: 'relative',

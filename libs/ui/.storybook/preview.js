@@ -1,5 +1,5 @@
 import { addDecorator } from '@storybook/react'
-import { ThemeProvider } from 'theme-ui'
+import { ThemeUIProvider } from 'theme-ui'
 import { Router, Route } from 'react-router-dom'
 import { createMemoryHistory } from 'history'
 import { Global, theme } from '../../theme/src'
@@ -18,12 +18,12 @@ const styles = {
 
 addDecorator((story) => (
   <Router history={createMemoryHistory({ initialEntries: ['/'] })}>
-    <ThemeProvider theme={theme}>
+    <ThemeUIProvider theme={theme}>
       <Global />
       <div style={styles.container}>
         <Route path='/' component={() => story()} />
       </div>
-    </ThemeProvider>
+    </ThemeUIProvider>
   </Router>
 ))
 
@@ -42,11 +42,11 @@ export const parameters = {
       },
       {
         name: 'light',
-        value: theme.rawColors.gray0,
+        value: theme.rawColors.grayLightest,
       },
       {
         name: 'dark',
-        value: theme.rawColors.modes.dark.gray0,
+        value: theme.rawColors.modes.dark.grayLightest,
       },
     ],
   },

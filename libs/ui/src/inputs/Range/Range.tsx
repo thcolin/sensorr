@@ -98,7 +98,13 @@ UIInput.styles = {
 const Input = memo(UIInput)
 
 const UIHistogram = ({ value, data, labelize, max, ...props }) => {
+  const { theme } = useThemeUI()
   const highest = useMemo(() => Math.max.apply(null, Object.values(data || {})), [data])
+  const keys = useMemo(() => {
+    const _max = max || Math.max.apply(null, Object.keys(data || {}))
+    const _min = Math.min.apply(null, Object.keys(data || {}))
+    return { min: _min, max: _max, width: _max - _min }
+  }, [max, data])
   const styles = useMemo(() => ({
     ...UIHistogram.styles,
     element: {
@@ -108,41 +114,39 @@ const UIHistogram = ({ value, data, labelize, max, ...props }) => {
   }), [data])
 
   return (
-    <div sx={styles.element}>
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox={`0 0 ${keys.width} 100`} preserveAspectRatio="none" sx={styles.element}>
       {Object.keys(data || {}).map((key, index, arr) => (
-        <div
-          title={`${labelize ? labelize(key) : key}${arr[index + 1] ? `-${labelize ? labelize(arr[index + 1]) : arr[index + 1]}` : '+'} (${data[key]})`}
+        <rect
+          x={Number(key) - keys.min}
+          y={0}
+          width={Number(arr[index + 1] || max) - Number(key)}
+          height={(100 * data[key]) / highest || 0}
           key={key}
-          sx={{
-            height: `${(100 * data[key]) / highest || 0}%`,
-            width: `${((parseInt(arr[index + 1] || max) - parseInt(key)) / arr.length) * 100}%`,
-            ...(
-              (
-                parseInt(Object.keys(data)[index]) >= value[0] ||
-                value[0] < parseInt(Object.keys(data)[index + 1])
-              ) &&
-              parseInt(Object.keys(data)[index]) < value[1] ?
-            {
-              backgroundColor: 'accent',
-            } : {
-              backgroundColor: 'accent',
-              opacity: 0.5,
-            }),
-          }}
-        />
+          fill={theme.rawColors.accent as string}
+          sx={!(
+            (
+              Number(Object.keys(data)[index]) >= value[0] ||
+              value[0] < Number(Object.keys(data)[index + 1])
+            ) &&
+            Number(Object.keys(data)[index]) < value[1]
+          ) ? { opacity: 0.5 } : {}}
+        >
+          <title>{`${labelize ? labelize(key) : key}${arr[index + 1] ? `-${labelize ? labelize(arr[index + 1]) : arr[index + 1]}` : '+'} (${data[key]})`}</title>
+        </rect>
       ))}
-    </div>
+    </svg>
   )
 }
 
 UIHistogram.styles = {
   element: {
-    display: 'flex',
-    alignItems: 'flex-end',
     height: '3em',
-    '>div': {
+    width: '100%',
+    transform: 'scale(1, -1)',
+    marginBottom: '-3px',
+    '>rect': {
       display: 'block',
-    },
+    }
   },
 }
 

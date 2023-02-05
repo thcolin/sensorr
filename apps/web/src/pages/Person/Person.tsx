@@ -9,7 +9,7 @@ import Details from '../Details/Details'
 import { withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import withProps from '../../components/enhancers/withProps'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
-import Movie from '../../components/Movie/Movie'
+import { MovieWithCredits } from '../../components/Movie/Movie'
 
 const PersonDetails = compose(
   withPersonsMetadataContext(),
@@ -22,7 +22,7 @@ const Person = ({ ...props }) => {
   const { ongoing } = useAnimationContext() as any
 
   const { loading, error, data, details } = useTMDBRequest(`/person/${id}`, {
-    append_to_response: 'images,tagged_images,movie_credits',
+    append_to_response: 'images,tagged_images,movie_credits,translations',
     include_image_language: 'en,null',
   }, { transform: transformPersonDetails })
 
@@ -30,6 +30,7 @@ const Person = ({ ...props }) => {
 
   const tabs = useMemo(() => {
     const known = {
+      id: `known-${id}`,
       label: t('items.persons.known_for.label'),
       entities: data.known_for_department === 'Acting'
         ? utils.sortCredits(data?.movie_credits || { cast: [], crew: [] }, [], ['cast'])
@@ -38,7 +39,7 @@ const Person = ({ ...props }) => {
         : utils.sortCredits(data?.movie_credits || { cast: [], crew: [] }, [], ['crew'])
           .filter(c => c.vote_count >= 500 && c.department.includes(data.known_for_department))
           .sort((a, b) => b.vote_count - a.vote_count),
-      child: Movie,
+      child: MovieWithCredits,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',
@@ -63,10 +64,11 @@ const Person = ({ ...props }) => {
     }
 
     const cast = {
+      id: `cast-${id}`,
       label: t('items.persons.cast.label'),
       entities: utils.sortCredits(data?.movie_credits || { cast: [] }, [], ['cast'])
-        .sort((a, b) => b.popularity - a.popularity),
-      child: Movie,
+        .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
+      child: MovieWithCredits,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',
@@ -89,10 +91,11 @@ const Person = ({ ...props }) => {
     }
 
     const crew = {
+      id: `crew-${id}`,
       label: t('items.persons.crew.label'),
       entities: utils.sortCredits(data?.movie_credits || { crew: [] }, [], ['crew'])
-        .sort((a, b) => b.popularity - a.popularity),
-      child: Movie,
+        .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
+      child: MovieWithCredits,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',
@@ -114,19 +117,19 @@ const Person = ({ ...props }) => {
     }
 
     if (data.known_for_department === 'Acting') {
-      return {
-        ...((!ready || known.entities?.length) &&  { known: { known } }),
-        ...((!ready || cast.entities?.length) &&  { cast: { cast } }),
-        ...((!ready || crew.entities?.length) &&  { crew: { crew } }),
-      }
+      return [
+        ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
+        ...((!ready || cast.entities?.length) ? [{ id: 'cast', tabs: [cast] }] : []),
+        ...((!ready || crew.entities?.length) ? [{ id: 'crew', tabs: [crew] }] : []),
+      ]
     }
 
-    return {
-      ...((!ready || known.entities?.length) &&  { known: { known } }),
-      ...((!ready || crew.entities?.length) &&  { crew: { crew } }),
-      ...((!ready || cast.entities?.length) &&  { cast: { cast } }),
-    }
-  }, [ready, data])
+    return [
+      ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
+      ...((!ready || crew.entities?.length) ? [{ id: 'crew', tabs: [crew] }] : []),
+      ...((!ready || cast.entities?.length) ? [{ id: 'cast', tabs: [cast] }] : []),
+    ]
+  }, [ready, id, data])
 
   if (error) {
     return (

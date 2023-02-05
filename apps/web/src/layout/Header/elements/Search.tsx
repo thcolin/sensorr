@@ -4,6 +4,7 @@ import { useSearchContext } from '../../../contexts/Search/Search'
 import Movie from '../../../components/Movie/Movie'
 import Person from '../../../components/Person/Person'
 import nanobounce from 'nanobounce'
+import { useResponsiveValue } from '@theme-ui/match-media'
 
 export const Input = ({ ...props }) => {
   const input = useRef<HTMLInputElement>()
@@ -77,7 +78,7 @@ export const Input = ({ ...props }) => {
       />
       {!!value && (
         <button sx={Input.styles.clear} type='button' onClick={onClear}>
-          <Icon value='clear' />
+          <Icon value='clear' active={false} />
         </button>
       )}
     </form>
@@ -118,6 +119,7 @@ Input.styles = {
 
 export const Results = ({ ...props }) => {
   const { query, results, loading } = useSearchContext() as any
+  const allowPretty = useResponsiveValue([false, false, true], { defaultIndex: 1 })
   const extanded = results !== null || loading
 
   return (
@@ -143,59 +145,59 @@ export const Results = ({ ...props }) => {
           <div sx={Results.styles.container}>
             {!!results.movies?.results?.length && (
               <Entities
+                id="search-movies"
                 label="🎞️ Movies"
                 entities={results.movies.results}
                 hide={true}
                 child={Movie}
-                props={() => ({ display: 'card' })}
-                display="column"
+                props={() => ({ display: allowPretty ? 'card' : 'poster' })}
+                display={allowPretty ? 'column' : 'row'}
+                // {...(allowPretty ? {} : { stack: true })}
                 more={{
                   title: `More results for ${query}`,
-                  to: {
-                    pathname: `/movie/search`,
-                    // TODO: Fix
-                    state: { query },
-                  },
+                  // TODO: Fix
+                  to: `/movie/search`,
+                  state: { query },
                 }}
               />
             )}
             {!!results.collections?.results?.length && (
               <Entities
+                id="search-collections"
                 label="📚 Collections"
                 entities={results.collections.results}
                 hide={true}
                 child={AbstractEntity}
                 props={() => ({
-                  display: 'card',
+                  display: allowPretty ? 'card' : 'poster',
                   transformDetails: transformCollectionDetails,
-                  link: (entity) => `/collection/${entity.id}`,
+                  link: (entity) => ({ to: `/collection/${entity.id}` }),
                 })}
-                display="column"
+                display={allowPretty ? 'column' : 'row'}
+                // {...(allowPretty ? {} : { stack: true })}
                 more={{
                   title: `More results for ${query}`,
                   // TODO: Fix
-                  to: {
-                    pathname: `/collection/search`,
-                    state: { query },
-                  },
+                  to: `/collection/search`,
+                  state: { query },
                 }}
               />
             )}
             {!!results.persons?.results?.length && (
               <Entities
+                id="search-stars"
                 label="⭐ Stars"
                 entities={results.persons.results}
                 hide={true}
                 child={Person}
-                props={() => ({ display: 'card' })}
-                display="column"
+                props={() => ({ display: allowPretty ? 'card' : 'poster' })}
+                display={allowPretty ? 'column' : 'row'}
+                // {...(allowPretty ? {} : { stack: true })}
                 // TODO: Fix
                 more={{
                   title: `More results for ${query}`,
-                  to: {
-                    pathname: `/person/search`,
-                    state: { query },
-                  },
+                  to: `/person/search`,
+                  state: { query },
                 }}
               />
             )}
@@ -203,6 +205,7 @@ export const Results = ({ ...props }) => {
           <div sx={Results.styles.tags}>
             {!!results.companies?.results?.length && (
               <Entities
+                id="search-companies"
                 label="🏛️ Companies"
                 entities={results.companies.results}
                 hide={true}
@@ -211,7 +214,7 @@ export const Results = ({ ...props }) => {
                   display: 'tag',
                   transformDetails: transformCompanyDetails,
                   link: (entity) => ({
-                    pathname: '/movie/discover',
+                    to: '/movie/discover',
                     state: {
                       controls: {
                         with_companies: {
@@ -232,6 +235,7 @@ export const Results = ({ ...props }) => {
             )}
             {!!results.keywords?.results?.length && (
               <Entities
+                id="search-keywords"
                 label="🔗 Keywords"
                 entities={results.keywords.results}
                 hide={true}
@@ -240,7 +244,7 @@ export const Results = ({ ...props }) => {
                   display: 'tag',
                   transformDetails: transformKeywordDetails,
                   link: (entity) => ({
-                    pathname: '/movie/discover',
+                    to: '/movie/discover',
                     state: {
                       controls: {
                         with_keywords: {
@@ -271,7 +275,7 @@ Results.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'flex-start',
     alignSelf: 'center',
     width: '100vw',
@@ -281,27 +285,24 @@ Results.styles = {
     overflowY: 'auto',
   },
   container: {
+    flex: 1,
     display: 'flex',
     flexDirection: ['column', 'column', 'row'],
-    alignItems: ['center', 'center', 'flex-start'],
-    justifyContent: ['flex-start', 'flex-start', 'center'],
+    justifyContent: ['stretch', 'stretch', 'center'],
     width: '100%',
     '>*': {
-      maxWidth: '100%',
-      overflowX: 'hidden',
       paddingX: 4,
+      maxWidth: ['none', 'none', '35em'],
     }
   },
   tags: {
     display: 'flex',
     flexDirection: ['column', 'row', 'row'],
-    alignItems: ['center', 'flex-start', 'flex-start'],
-    justifyContent: ['flex-start', 'center', 'center'],
+    justifyContent: ['stretch', 'stretch', 'center'],
     width: '100%',
     '>*': {
-      maxWidth: '100%',
-      overflowX: 'hidden',
       paddingX: 4,
+      maxWidth: ['none', 'none', '35em'],
     }
   },
   placeholder: {

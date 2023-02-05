@@ -20,6 +20,11 @@ export const QuerySelect = ({ onChange, ...props }) => {
   }, [onChange])
 
   const styles = useMemo(() => ({
+    container: (style) => ({
+      ...style,
+      flex: 1,
+      overflow: 'hidden',
+    }),
     control: (style) => ({
       ...style,
       backgroundColor: 'transparent',
@@ -48,13 +53,18 @@ export const QuerySelect = ({ onChange, ...props }) => {
         fontFamily: (theme.fonts as any).monospace,
       },
     }),
+    valueContainer: (style) => ({
+      ...style,
+      overflowX: 'auto',
+      flexWrap: { row: 'nowrap', column: 'wrap' }[props.direction] || 'wrap',
+    }),
     multiValue: (style, { data: { pinned, disabled } }) => ({
       ...style,
       position: 'relative',
       flexShrink: 0,
       backgroundColor: pinned ? disabled ? 'transparent' : theme.rawColors.accent : '#FFF',
-      color: pinned ? disabled ? theme.rawColors.highlight : '#FFF' : theme.rawColors.modes.__default.text,
-      border: pinned ? `1px solid ${disabled ? theme.rawColors.highlight : theme.rawColors.accent}` : 'none',
+      color: pinned ? disabled ? theme.rawColors.primaryDarker : '#FFF' : theme.rawColors.primaryDark,
+      border: pinned ? `1px solid ${disabled ? theme.rawColors.primaryDarker : theme.rawColors.accent}` : 'none',
       marginRight: '0.25em',
       opacity: disabled ? 0.75 : 1,
       ':hover': {
@@ -63,7 +73,7 @@ export const QuerySelect = ({ onChange, ...props }) => {
     }),
     multiValueLabel: (style, { data: { pinned, disabled } }) => ({
       ...style,
-      color: pinned ? disabled ? theme.rawColors.highlight : '#FFF' : theme.rawColors.modes.__default.text,
+      color: pinned ? disabled ? theme.rawColors.primaryDarker : '#FFF' : theme.rawColors.primaryDark,
       fontSize: '0.75em',
       fontFamily: (theme.fonts as any).monospace,
       fontWeight: 600,
@@ -86,7 +96,7 @@ export const QuerySelect = ({ onChange, ...props }) => {
       cursor: 'pointer',
       ':hover': {
         backgroundColor: '#FFF',
-        color: theme.rawColors.modes.__default.text,
+        color: theme.rawColors.primaryDark,
       },
     }),
     indicatorSeparator: (style) => ({

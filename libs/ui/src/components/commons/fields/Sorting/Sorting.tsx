@@ -81,7 +81,7 @@ UISorting.styles = {
     '>div': {
       position: 'relative',
       '>span': {
-        color: 'shadowText',
+        color: 'textShadow',
         fontSize: 4,
         fontWeight: 'semibold',
       },

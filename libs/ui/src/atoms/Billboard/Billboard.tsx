@@ -17,10 +17,7 @@ const UIBillboard = ({ path, palette, onReady, ready = true, size = 'w780', fade
       path={path}
       size={size}
       ready={ready}
-      {...(onReady ? {
-        onLoad: onReady,
-        onError: onReady,
-      } : {})}
+      onReady={onReady}
     />
     <Shadow palette={palette} fade={fade} />
   </div>

@@ -5,7 +5,7 @@ import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, Calenda
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
-import { MovieWithCredits, MovieWithCreditsDelayed } from '../../components/Movie/Movie'
+import { MovieWithCredits } from '../../components/Movie/Movie'
 
 const Home = ({ ...props }) => {
   const { t } = useTranslation()
@@ -17,10 +17,11 @@ const Home = ({ ...props }) => {
   return (
     <>
       <TrendingMovies
+        id='trending_movies'
         label={t('items.movies.trending.label')}
         // title={t('items.movies.trending.title')}
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         props={pretty}
         more={{
@@ -34,18 +35,21 @@ const Home = ({ ...props }) => {
         }}
       />
       <ArchivedMovies
+        id='archived'
         label={t('items.movies.archived.label')}
         // title={t('items.movies.archived.title')}
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         hide={true}
         more={{
           title: t('items.movies.archived.more'),
-          to: '/movie/calendar',
+          to: '/movie/library',
+          state: { controls: { state: ['archived'] } },
         }}
       />
       <CalendarMovies
+        id='calendar'
         label={t('items.movies.calendar.label')}
         // title={t('items.movies.calendar.title')}
         display='row'
@@ -61,10 +65,11 @@ const Home = ({ ...props }) => {
         }}
       />
       <DiscoverMovies
+        id='discover'
         label={t('items.movies.discover.label')}
         // title={t('items.movies.discover.title')}
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         props={pretty}
         more={{
@@ -78,10 +83,11 @@ const Home = ({ ...props }) => {
         }}
       />
       <TheatresMovies
+        id='theatres'
         label={t('items.movies.theatres.label')}
         // title={t('items.movies.theatres.title')}
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         hide={true}
         props={() => ({
@@ -90,13 +96,15 @@ const Home = ({ ...props }) => {
         more={{
           title: t('items.movies.theatres.more'),
           to: '/movie/theatres',
+          state: { controls: { uri: 'movie/now_playing' } },
         }}
       />
       <UpcomingMovies
+        id='upcoming'
         label={t('items.movies.upcoming.label')}
         // title={t('items.movies.upcoming.title')}
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         hide={true}
         props={() => ({
@@ -104,16 +112,19 @@ const Home = ({ ...props }) => {
         })}
         more={{
           title: t('items.movies.upcoming.more'),
-          to: '/movie/upcoming',
+          to: '/movie/theatres',
+          state: { controls: { uri: 'movie/upcoming' } },
         }}
       />
       <DiscoverMoviesSelectable
+        id='discover_selectable'
         display='row'
-        child={MovieWithCreditsDelayed}
+        child={MovieWithCredits}
         limit={20}
         props={pretty}
       />
       <TrendingPersons
+        id='trending_persons'
         label={t('items.persons.trending.label')}
         // title={t('items.persons.trending.title')}
         display='row'

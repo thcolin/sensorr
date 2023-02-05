@@ -9,7 +9,7 @@ import { Warning, WarningProps } from '../../atoms/Warning/Warning'
 
 const withEntity = (context) => (WrappedComponent) => {
   const withEntity = ({ index, placeholder = false, props, ready, ...rest }) => {
-    const { findEntity } = useContext(context)
+    const { findEntity } = useContext(context) as any
     const entity = findEntity(index)
 
     return (
@@ -44,7 +44,7 @@ interface CommonProps extends
   placeholders?: number
   ready?: boolean
   error?: Error
-  label?: React.ReactNode
+  label?: React.ReactNode | string
   subtitle?: React.ReactNode
 }
 
@@ -59,6 +59,7 @@ export type EntitiesProps = CommonProps & (
 )
 
 const UIEntities = ({
+  id,
   child: Child,
   props,
   length,
@@ -121,6 +122,7 @@ const UIEntities = ({
         ) : (
           <List
             {...rest}
+            id={id}
             length={total}
             child={WrappedChild}
             childProps={{ props, ready }}

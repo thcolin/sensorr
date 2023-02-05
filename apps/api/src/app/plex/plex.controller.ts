@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, HttpException, Param, Post, Sse } from '@nestjs/common'
+import { Body, Controller, Delete, HttpException, Logger, Param, Post, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { PlexService } from './plex.service'
 
 @Controller('plex')
 export class PlexController {
+  private readonly logger = new Logger(PlexController.name)
+
   constructor(private readonly plexService: PlexService) {}
 
   @Post()
@@ -16,8 +18,9 @@ export class PlexController {
     try {
       await this.plexService.reset()
       return { success: true }
-    } catch (e) {
-      throw new HttpException(e, 500)
+    } catch (err) {
+      this.logger.error(err)
+      throw new HttpException(err, 500)
     }
   }
 

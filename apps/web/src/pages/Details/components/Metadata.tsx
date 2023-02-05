@@ -2,34 +2,35 @@ import { memo, useCallback, useMemo } from 'react'
 import { Policy } from '@sensorr/sensorr'
 import { emojize } from '@sensorr/utils'
 import { Controls, Select, QuerySelect, Warning } from '@sensorr/ui'
-import { useSensorr, SENSORR_POLICIES } from '../../../store/sensorr'
+import { useSensorr } from '../../../store/sensorr'
 import withProps from '../../../components/enhancers/withProps'
 
 const UIMetadata = ({ entity, metadata, onChange, button = null, loading = false, ...props }) => {
-  const policy = new Policy(metadata.policy, SENSORR_POLICIES)
   const sensorr = useSensorr()
-  const [query, defaultQuery] = sensorr.useQuery(entity, metadata.query)
+  // const policy = new Policy(metadata.policy, sensorr.policies)
+  const query = sensorr.getQuery(entity, metadata.query)
 
   const values = useMemo(() => ({
-    policy: { value: policy.name, label: policy.name },
+    // policy: { value: policy.name, label: policy.name },
     terms: [
-      ...defaultQuery?.terms?.map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
-      ...query?.terms?.filter(term => !defaultQuery?.terms?.includes(term)).map(term => ({ value: term, label: term })),
+      ...(query?._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
+      ...(query?.titles || []).filter(title => !(query?._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query?.terms || []).includes(title) })),
+      ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
     ],
     years: [
-      ...defaultQuery?.years?.map(term => ({ value: term, label: term, pinned: true, disabled: !query?.years?.includes(term) })),
-      ...query?.years?.filter(term => !defaultQuery?.years?.includes(term)).map(term => ({ value: term, label: term })),
+      ...(query?._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.years?.includes(term) })),
+      ...(query?.years || []).filter(term => !query?._defaults?.years?.includes(term)).map(term => ({ value: term, label: term })),
     ],
-  }), [policy, defaultQuery, query])
+  }), [query?._defaults, query?.titles, query])
 
-  const handleChange = useCallback(({ policy, terms, years }) => {
-    onChange('policy', policy.value)
+  const handleChange = useCallback(({ terms, years }) => {
+    // onChange('policy', policy.value)
     onChange('query', {
-      ...defaultQuery,
+      ...query?._defaults,
       terms: terms.filter(({ disabled }) => !disabled).map(({ value }) => value),
       years: years.filter(({ disabled }) => !disabled).map(({ value }) => value),
     })
-  }, [defaultQuery])
+  }, [query?._defaults, query?.titles])
 
   return (
     <ControlsMetadata
@@ -53,12 +54,11 @@ const ControlsMetadata = withProps({
     aside: {
       position: 'right',
       display: 'grid',
-      gridTemplateColumns: '1fr',
+      gridTemplateColumns: 'minmax(0, 1fr)',
       gridTemplateRows: 'auto',
       gap: '2em',
       gridTemplateAreas: `
         "head"
-        "policy"
         "terms"
         "years"
       `,
@@ -70,40 +70,23 @@ const ControlsMetadata = withProps({
       component: () => (
         <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
           <Warning
-            emoji="🎟"
-            title="Sensorr movie preferences"
+            emoji="💬"
+            title="Sensorr movie query"
             subtitle={(
               <span>
-                You can make changes to Sensorr query <strong>search terms</strong>, <strong>years filtering</strong> and <strong>policy</strong> to refine releases results
+                You can make changes to Sensorr default query <strong>search terms</strong>, <strong>years filtering</strong> and <strong>policy</strong> to refine releases results
                 <br/>
-                <small><em>Sensorr use your preferences in daily record jobs</em></small>
+                <small><em>Sensorr will use your preferences in daily record jobs</em></small>
               </span>
             )}
           />
         </div>
       ),
     },
-    policy: {
-      initial: null,
-      component: withProps({
-        label: emojize('🚨', 'Policy'),
-        menuPlacement: 'auto',
-        options: SENSORR_POLICIES.map(policy => ({ value: policy.name, label: policy.name })),
-        closeMenuOnSelect: true,
-        isSearchable: false,
-        isClearable: false,
-        defaultOptions: true,
-        resetable: false,
-        sx: {
-          fontFamily: 'monospace',
-          fontWeight: 'semibold',
-        },
-      })(Select),
-    },
     terms: {
       initial: [],
       component: withProps({
-        label: emojize('✏️', 'Terms'),
+        label: emojize('🔍', 'Terms'),
         options: [],
         isClearable: false,
         defaultOptions: true,
@@ -120,6 +103,23 @@ const ControlsMetadata = withProps({
         resetable: false,
       })(QuerySelect),
     },
+    // policy: {
+    //   initial: null,
+    //   component: withProps({
+    //     label: emojize('🚨', 'Policy'),
+    //     menuPlacement: 'top',
+    //     options: SENSORR_POLICIES.map(policy => ({ value: policy.name, label: policy.name })),
+    //     closeMenuOnSelect: true,
+    //     isSearchable: false,
+    //     isClearable: false,
+    //     defaultOptions: true,
+    //     resetable: false,
+    //     sx: {
+    //       fontFamily: 'monospace',
+    //       fontWeight: 'semibold',
+    //     },
+    //   })(Select),
+    // },
   }
 })(Controls)
 

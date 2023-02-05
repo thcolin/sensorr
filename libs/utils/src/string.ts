@@ -18,9 +18,9 @@ export const truncate = (
 }
 
 export const humanize = {
-  time: (value: string) => {
-    const hours = Math.floor(parseInt(value) / 60)
-    const minutes = Math.floor(parseInt(value) % 60)
+  time: (value: string|number) => {
+    const hours = Math.floor(Number((value || 0) as string) / 60)
+    const minutes = Math.floor(Number((value || 0) as string) % 60)
 
     return [
       (hours > 0 ? `${hours}h` : ''),
@@ -36,7 +36,7 @@ const units = ['B', 'KB', 'MB', 'GB', 'TB']
 export const filesize = {
   parse: (string) => {
     const unit = (string.match(new RegExp([...units].reverse().join('|'))) || ['B'])[0]
-    return units.includes(unit) ? parseInt(string) * Math.pow(1024, units.indexOf(unit)) : 0
+    return units.includes(unit) ? Number(string) * Math.pow(1024, units.indexOf(unit)) : 0
   },
   stringify: (bytes, unit = true) => {
     const exponent = bytes == 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1024))

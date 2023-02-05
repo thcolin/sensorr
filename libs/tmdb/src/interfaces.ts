@@ -51,6 +51,7 @@ export interface Movie {
   homepage: string | null
   id: number
   imdb_id: string | null
+  plex_url: string | null
   original_language: string
   original_title: string | null
   overview: string | null
@@ -58,6 +59,25 @@ export interface Movie {
   poster_path: string | null
   production_companies: Company[]
   production_countries: Country[]
+  release: {
+    title: string | null,
+    link: string | null,
+    publishDate: string | null,
+    enclosure: string | null,
+    size: number | null,
+    peers: number | null,
+    seeders: number | null,
+    leechers: number | null,
+    grabs: number | null,
+    similarity: number | null,
+    score: number | null,
+    valid: boolean,
+    reason: string | null,
+    warning: number | null,
+    meta: {
+      [key: string]: any
+    },
+  } | null
   release_date: string
   release_dates?: {
     results: {

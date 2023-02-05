@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControlsState, Warning } from '@sensorr/ui'
 import { Policy } from '@sensorr/sensorr'
-import { useSensorrRequest, useSensorr, SENSORR_POLICIES } from '../../store/sensorr'
+import { useSensorrRequest } from '../../store/sensorr'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
-  const withSensorrRequest = ({ entity, metadata, ready, ...props }) => {
-    const current = useRef(null)
-    const sensorr = useSensorr()
-    const [query] = useMemo(() => sensorr.useQuery(entity, metadata.query), [entity, JSON.stringify(metadata.query)])
-    const [policy, controlsState] = useControlsState(createUseControlsValues(metadata.policy), parsePolicy)
+  const withSensorrRequest = ({ entity, metadata, onChange, ready, ...props }) => {
+    const [serialized, state] = useSensorrControlsState(metadata)
     const { call, reset, id, loading, done, tasks, releases } = useSensorrRequest() as any
+    const request = useRef(null)
 
-    const entities = useMemo(() => (policy?.apply && policy.apply(releases || [], query)) || (releases || []), [releases, query, policy])
+    const entities = useMemo(
+      () => (serialized.policy?.apply && serialized.policy.apply(releases || [], { ...serialized.query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases })) || (releases || []),
+      [releases, serialized.query, serialized.policy, metadata.banned_releases, metadata.query?.titles]
+    )
 
     const progress = useMemo(() => ({
       id,
@@ -20,36 +21,42 @@ export const withSensorrRequest = () => (WrappedComponent) => {
       ongoing: tasks.find(({ releases, ...task }) => task.ongoing),
       tasks: tasks.map(task => ({
         ...task,
-        releases: policy.apply(task.releases || [], query),
+        releases: serialized.policy.apply(task.releases || [], { ...serialized.query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases }),
       })),
-    }), [id, loading, done, tasks, query, policy])
+    }), [id, loading, done, tasks, serialized.query, serialized.policy, metadata.banned_releases, metadata.query?.titles])
 
     const controls = useMemo(() => ({
-      ...controlsState,
+      ...state,
       props: {
-        progress,
-        refresh: () => call(query),
+        ongoing: progress?.loading,
+        refresh: () => call(serialized.query),
       },
-    }), [controlsState, progress, call, query])
+    }), [state, progress?.loading, call, serialized.query])
 
     useEffect(() => {
-      if (ready && query !== current.current) {
-        current.current = query
-        call(query)
+      if (!serialized.query?.terms?.length) {
         return
       }
 
-      if (query !== current.current) {
+      if (ready && serialized.query !== request.current) {
+        request.current = serialized.query
+        call(serialized.query)
+        return
+      }
+
+      if (serialized.query !== request.current) {
         reset()
       }
-    }, [ready, query])
+    }, [ready, JSON.stringify(serialized.query)])
 
     return (
       <WrappedComponent
         {...props as any}
+        movie={entity}
         entities={entities}
         length={entities.length}
         controls={controls}
+        progress={progress}
         override={!ready ? (
           <div sx={styles.empty}>
             <Warning
@@ -98,43 +105,85 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    color: 'text',
   },
 }
 
-const createUseControlsValues = (policy) => {
-  const [values, setValues] = useState(null)
+const useSensorrControlsState = ({ query, policy } = {} as any) => {
+  const [values, setValues] = useState({
+    terms: [
+      ...(query._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !(query.terms || []).includes(term) })),
+      ...(query.titles || []).filter(title => !(query._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query.terms || []).includes(title) })),
+      ...(query.terms || []).filter(term => !(query._defaults?.terms || []).includes(term) && !(query.titles || []).includes(term)).map(term => ({ value: term, label: term })),
+    ],
+    years: [
+      ...(query._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !(query.years || []).includes(term) })),
+      ...(query.years || []).filter(term => !(query._defaults?.years || []).includes(term)).map(term => ({ value: term, label: term })),
+    ],
+    policy: { value: policy.name, label: policy.name },
+    sorting: {
+      value: policy.sorting,
+      sort: policy.descending,
+    },
+    ...Object.keys(policy.prefer).reduce((acc, key) => ({
+      ...acc,
+      [key]: [
+        ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+        ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+      ],
+    }), {}),
+    ...Object.keys(policy.avoid).reduce((acc, key) => ({
+      ...acc,
+      [key]: [
+        ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+        ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+      ],
+    }), {}),
+  })
 
   useEffect(() => {
-    setValues(serializePolicy(new Policy(policy, SENSORR_POLICIES)))
-  }, [policy])
+    setValues({
+      terms: [
+        ...(query._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !(query.terms || []).includes(term) })),
+        ...(query.titles || []).filter(title => !(query._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query.terms || []).includes(title) })),
+        ...(query.terms || []).filter(term => !(query._defaults?.terms || []).includes(term) && !(query.titles || []).includes(term)).map(term => ({ value: term, label: term })),
+        ],
+      years: [
+        ...(query._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !(query.years || []).includes(term) })),
+        ...(query.years || []).filter(term => !(query._defaults?.years || []).includes(term)).map(term => ({ value: term, label: term })),
+      ],
+      policy: { value: policy.name, label: policy.name },
+      sorting: {
+        value: policy.sorting,
+        sort: policy.descending,
+      },
+      ...Object.keys(policy.prefer).reduce((acc, key) => ({
+        ...acc,
+        [key]: [
+          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+          ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+        ],
+      }), {}),
+      ...Object.keys(policy.avoid).reduce((acc, key) => ({
+        ...acc,
+        [key]: [
+          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+          ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+        ],
+      }), {}),
+    })
+  }, [JSON.stringify(query), JSON.stringify(policy)])
 
-  return () => [values, setValues]
+  return useControlsState(
+    () => [values, setValues],
+    ({ terms, years, policy, sorting, descending, ...values }) => ({
+      query: { terms, years },
+      policy: new Policy({
+        sorting,
+        descending,
+        prefer: Object.keys(values).reduce((prefer, key) => ({ ...prefer, [key]: values[key].filter(v => v.group === 'prefer').map(({ value }) => value), }), {}),
+        avoid: Object.keys(values).reduce((avoid, key) => ({ ...avoid, [key]: values[key].filter(v => v.group === 'avoid').map(({ value }) => value), }), {}),
+      }),
+    })
+  )
 }
-
-const serializePolicy = (policy) => ({
-  sorting: {
-    value: policy.sorting,
-    sort: policy.descending,
-  },
-  ...Object.keys(policy.prefer).reduce((acc, key) => ({
-    ...acc,
-    [key]: [
-      ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
-      ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
-    ],
-  }), {}),
-  ...Object.keys(policy.avoid).reduce((acc, key) => ({
-    ...acc,
-    [key]: [
-      ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
-      ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
-    ],
-  }), {}),
-})
-
-const parsePolicy = ({ sorting, descending, ...values }) => new Policy({
-  sorting,
-  descending,
-  prefer: Object.keys(values).reduce((prefer, key) => ({ ...prefer, [key]: values[key].filter(v => v.group === 'prefer').map(({ value }) => value), }), {}),
-  avoid: Object.keys(values).reduce((avoid, key) => ({ ...avoid, [key]: values[key].filter(v => v.group === 'avoid').map(({ value }) => value), }), {}),
-})

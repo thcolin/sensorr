@@ -15,8 +15,8 @@ convict.addFormat({
 })
 
 const config = convict({
-  disabled: {
-    doc: 'Disable daily records',
+  docker: {
+    doc: 'Is Sensorr App running in Docker env ?',
     format: 'Boolean',
     default: false,
   },
@@ -41,23 +41,64 @@ const config = convict({
     format: 'Boolean',
     default: false,
   },
-  auth: {
-    username: {
-      doc: 'Authentication username for Sensorr',
-      format: 'String',
-      default: 'sensorr',
+  jobs: {
+    record: {
+      cron: {
+        doc: 'Record job cron',
+        format: 'String',
+        default: '0 17 * * *',
+      },
+      paused: {
+        doc: 'Pause Record job',
+        format: 'Boolean',
+        default: false,
+      },
+      proposalOnly: {
+        doc: "Record job will only submit proposal and don't download any release",
+        format: 'Boolean',
+        default: false,
+      },
     },
-    password: {
-      doc: 'Authentication password for Sensorr',
-      format: 'String',
-      default: 'sensorr',
+    refresh: {
+      cron: {
+        doc: 'Refresh job cron',
+        format: 'String',
+        default: '0 4 * * *',
+      },
+      paused: {
+        doc: 'Pause Refresh job',
+        format: 'Boolean',
+        default: false,
+      },
     },
-  },
-  logs: {
-    ttl: {
-      doc: 'Jobs logs TTL in seconds',
-      format: 'Number',
-      default: 604800,
+    sync: {
+      cron: {
+        doc: 'Sync job cron',
+        format: 'String',
+        default: '0 3 * * 0',
+      },
+      paused: {
+        doc: 'Pause Sync job',
+        format: 'Boolean',
+        default: false,
+      },
+    },
+    doctor: {
+      cron: {
+        doc: 'Doctor job cron',
+        format: 'String',
+        default: '0 5 * * 0',
+      },
+      paused: {
+        doc: 'Pause Doctor job',
+        format: 'Boolean',
+        default: false,
+      },
+      proposalOnly: {
+        doc: "Doctor job will only submit proposal and don't download any release",
+        format: 'Boolean',
+        default: true,
+      },
     },
   },
   plex: {
@@ -82,11 +123,6 @@ const config = convict({
       code: 'Plex token (auto filled with plex-bind cli command)',
       format: 'String',
       default: '',
-    },
-    doctor: {
-      code: 'Enable Sensorr Plex doctor (will try to find better releases for archived movies and replace previous)',
-      format: 'Boolean',
-      default: false,
     },
   },
   znabs: {

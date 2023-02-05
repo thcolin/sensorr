@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from 'react'
+import { memo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation, Trans } from 'react-i18next'
 import { Icon } from '../../../atoms/Icon/Icon'
@@ -18,7 +18,7 @@ const UINav = ({ layout, fields, defaultValues, onChange, statistics, ...props }
 
   useEffect(() => {
     reset(defaultValues)
-  }, [defaultValues, reset])
+  }, [JSON.stringify(defaultValues), reset])
 
   useEffect(() => {
     onChange(Object.keys(next)
@@ -45,7 +45,7 @@ UINav.styles = {
   container: {
     display: 'flex',
     height: '4.75rem',
-    backgroundColor: 'accent',
+    backgroundColor: 'primary',
     paddingX: 0,
     fontSize: 5,
     color: 'white !important',
@@ -68,7 +68,7 @@ export const Results = ({ value, onChange, loading, total, ...props }) => {
   return (
     <div {...props} sx={Results.styles.element}>
       {loading && (
-        <Icon value='spinner' />
+        <Icon value='spinner' color='gray-100' />
       )}
       {(!loading && typeof total === 'number') && (
         <span>

@@ -73,21 +73,28 @@ function normalize(raw, baseUrl) {
         }), {})),
         ...item,
       }))
-      .map(({ downloadvolumefactor, minimumratio, minimumseedtime, pubDate, uploadvolumefactor, ...item }) => ({
-        ...item,
-        link: [baseUrl.split('://').shift(), '://', unescape(item.enclosure?.url).split('://').pop()].join(''),
-        grabs: parseInt(item.grabs),
-        size: parseInt(item.size),
-        downloadVolumeFactor: parseInt(downloadvolumefactor),
-        minimumRatio: parseInt(minimumratio),
-        minimumSeedTime: parseInt(minimumseedtime),
-        peers: parseInt(item.peers),
-        publishDate: new Date(pubDate),
-        seeders: parseInt(item.seeders),
-        site: item.link.split(`${body.rss.channel.atom.href}dl/`).pop().split('/').shift(),
-        uploadVolumeFactor: parseInt(uploadvolumefactor),
-        category: Array.isArray(item) ? (item as any).category.map(category => parseInt(category)) : parseInt(item.category),
-      }))
+      .map(({ downloadvolumefactor, minimumratio, minimumseedtime, pubDate, uploadvolumefactor, ...item }) => {
+        const enclosure = new URL(unescape(item.enclosure?.url))
+        enclosure.protocol = (new URL(baseUrl)).protocol
+        enclosure.host = (new URL(baseUrl)).host
+
+        return ({
+          ...item,
+          link: decodeURIComponent(item.comments),
+          enclosure: enclosure.href,
+          grabs: Number(item.grabs),
+          size: Number(item.size),
+          downloadVolumeFactor: Number(downloadvolumefactor),
+          minimumRatio: Number(minimumratio),
+          minimumSeedTime: Number(minimumseedtime),
+          peers: Number(item.peers),
+          publishDate: new Date(pubDate),
+          seeders: Number(item.seeders),
+          site: item.link.split(`${body.rss.channel.atom.href}dl/`).pop().split('/').shift(),
+          uploadVolumeFactor: Number(uploadvolumefactor),
+          category: Array.isArray(item) ? (item as any).category.map(category => Number(category)) : Number(item.category),
+        })
+      })
 
     return camelize({ ...(body.rss || {}), items })
   }
@@ -119,24 +126,8 @@ function camelize(obj) {
 
 function transform(items, init) {
   return Object.values(items
-      .map(item => ({
-      ...init,
-      title: item.title,
-      link: decodeURIComponent(item.comments),
-      publishDate: item.publishDate,
-      enclosure: item.enclosure.url,
-      size: item.size,
-      peers: item.peers,
-      seeders: item.seeders,
-      leechers: item.peers - item.seeders,
-      grabs: item.grabs,
-      similarity: 0,
-      score: 0,
-      valid: true,
-      reason: null,
-      warning: 0,
-      meta: {
-        ...oleoo.parse(item.title, {
+      .map(item => {
+        const meta = oleoo.parse(item.title, {
           strict: false,
           flagged: true,
           defaults: {
@@ -144,10 +135,32 @@ function transform(items, init) {
             resolution: 'SD',
             year: 0,
           },
-        }),
-        ...init,
-      },
-    }))
+        })
+
+        return ({
+          ...init,
+          id: item.guid,
+          title: meta.generated,
+          original: item.title,
+          link: item.link,
+          publishDate: item.publishDate,
+          enclosure: item.enclosure,
+          size: item.size,
+          peers: item.peers,
+          seeders: item.seeders,
+          leechers: item.peers - item.seeders,
+          grabs: item.grabs,
+          similarity: 0,
+          score: 0,
+          valid: true,
+          reason: null,
+          warning: 0,
+          meta: {
+            ...meta,
+            ...init,
+          },
+        })
+      })
     .reduce((acc, item) => ({ ...acc, [item.link]: item }), {})
   )
 }

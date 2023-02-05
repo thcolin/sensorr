@@ -1,34 +1,79 @@
 version: '3.4'
 
 volumes:
-  mongodb-keys:
+  sensorr-db-setup:
 
 services:
-  mongodb-keys:
-    image: depop/openssl-bats
-    volumes:
-      - mongodb-keys:/mongo-conf
-    command: 'bash -c "openssl rand -base64 741 > /mongo-conf/mongodb-keyfile; chmod 600 /mongo-conf/mongodb-keyfile; chown 999 /mongo-conf/mongodb-keyfile"'
-
-  mongodb:
-    image: mongo:latest
-    hostname: mongodb
-    container_name: sensorr-database
-    environment:
-      - MONGO_INITDB_DATABASE=${NX_MONGO_DATABASE}
-      - MONGO_INITDB_ROOT_USERNAME=${NX_MONGO_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${NX_MONGO_PASSWORD}
-      - MONGO_REPLICA_SET_NAME=rs0
+  sensorr-web:
+    image: sensorr/sensorr-web
+    container_name: sensorr-web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
     ports:
-      - 27017:${NX_MONGO_PORT}
+      - 5070:80
+      - 5071:443
+    environment:
+      - CADDY_TLS_MODE=${CADDY_TLS_MODE:-internal}
+      - CADDY_DEBUG=${CADDY_DEBUG:-}
     volumes:
-      - mongodb-keys:/opt/keyfile
-      - ./docker/mongodb:/docker-entrypoint-initdb.d:ro
-      - ./data/db:/data/db
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+      - ${SENSORR_SSL_KEY:-./caddy/certs/sensorr.key}:/certs/sensorr.key
+      - ${SENSORR_SSL_CERT:-./caddy/certs/sensorr.cert}:/certs/sensorr.cert
+
+  sensorr-api:
+    image: sensorr/sensorr-api
+    container_name: sensorr-api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NX_API_HOST=localhost
+      - NX_API_PORT=4300
+      - NX_API_DOCKER_ENV=true
+      - NX_MONGO_HOST=sensorr-db
+      - NX_MONGO_PORT=27017
+      - NX_MONGO_USERNAME=${SENSORR_DATABASE_USERNAME:-sensorr}
+      - NX_MONGO_PASSWORD=${SENSORR_DATABASE_PASSWORD:-sensorr}
+      - NX_SENSORR_BIN=/app/bin/sensorr
+      - NX_SENSORR_AUTH_SECRET=${SENSORR_AUTH_SECRET:-youshouldchangethisvaluetoanythingelse}
+      - NX_SENSORR_USERNAME=${SENSORR_USERNAME:-sensorr}
+      - NX_SENSORR_PASSWORD=${SENSORR_PASSWORD:-sensorr}
+    volumes:
+      - ./config.json:/app/config.json
+      - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
+
+  sensorr-db-setup:
+    image: depop/openssl-bats
+    container_name: sensorr-db-setup
+    restart: "no"
+    volumes:
+      - sensorr-db-setup:/mongo-setup
+    command: 'bash -c "openssl rand -base64 741 > /mongo-setup/mongodb-keyfile; chmod 600 /mongo-setup/mongodb-keyfile; chown 999 /mongo-setup/mongodb-keyfile"'
+
+  sensorr-db:
+    image: mongo:6.0.6
+    container_name: sensorr-db
+    hostname: sensorr-db
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=sensorr
+      - MONGO_INITDB_ROOT_USERNAME=${SENSORR_DATABASE_USERNAME:-sensorr}
+      - MONGO_INITDB_ROOT_PASSWORD=${SENSORR_DATABASE_PASSWORD:-sensorr}
+      - MONGO_REPLICA_SET_NAME=rs0
+    volumes:
+      - sensorr-db-setup:/opt/keyfile
+      - ./docker/sensorr-db:/docker-entrypoint-initdb.d:ro
+      - ./db:/data/db
     depends_on:
-        - mongodb-keys
+        - sensorr-db-setup
     healthcheck:
-      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
-      interval: 60s
-      start_period: 30s
+      test: |
+        test $$(mongosh --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'sensorr-db' }] }).ok } catch (_) { rs.status().ok }") -eq 1
+      interval: 30s
     command: ['--replSet', 'rs0', '--bind_ip_all', '--keyFile', '/opt/keyfile/mongodb-keyfile']

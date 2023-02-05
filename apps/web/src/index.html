@@ -4,10 +4,14 @@
     <meta charset="utf-8" />
     <title>Sensorr</title>
     <base href="/" />
+    <link rel="icon" href="/assets/favicon.png" sizes="any" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="icon_180x180.png" />
+    <link rel="apple-touch-icon" href="/icon_180x180.png" />
     <meta name="theme-color" content="#01D277" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Open+Sans:wght@400;600;700;800&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root-loading">
@@ -26,23 +30,14 @@
       <p>⌛</p>
     </div>
     <div id="root"></div>
+    <script>
+      var mode = localStorage.getItem('theme-ui-color-mode') || 'dark'
+      document.head.insertAdjacentHTML(
+        'beforeend',
+        `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode]}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode]}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode]}; }</style>`,
+      )
+    </script>
     <style type="text/css">
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --background-color: black;
-          --text-color: #fbfbfb;
-          --subtext-color: #333333;
-        }
-      }
-
-      @media (prefers-color-scheme: light) {
-        :root {
-          --background-color: white;
-          --text-color: #1a1a1a;
-          --subtext-color: #cccccc;
-        }
-      }
-
       @keyframes spin {
         0% {
           transform: rotate3d(0, 0, 1, 0deg);
@@ -108,7 +103,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background-color: var(--background-color);
+        background-color: var(--preflight-background-color);
         z-index: 999;
         transition: opacity 800ms ease-in-out;
         transform: translateZ(0);
@@ -128,7 +123,7 @@
 
       #root-loading > h2 {
         margin: 0.5rem 0;
-        color: var(--text-color);
+        color: var(--preflight-text-color);
         font-family: 'Raleway', Arial, sans-serif;
         font-size: 3rem;
         font-weight: 800;
@@ -136,7 +131,7 @@
       }
 
       #root-loading > small {
-        color: var(--subtext-color);
+        color: var(--preflight-subtext-color);
       }
 
       #root-loading > p {

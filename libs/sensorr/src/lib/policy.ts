@@ -1,4 +1,5 @@
 import { compareTwoStrings as similarity } from 'string-similarity'
+import * as oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
 
@@ -55,8 +56,8 @@ export class Policy {
   constructor(raw: string | PolicyInterface, policies = []) {
     const policy = ((raw as any)?.prefer && (raw as any)?.avoid) ? raw : (policies.find(p => p.name === raw) || policies[0] || SENSORR_POLICY_FALLBACK)
     this.name = policy.name || 'none'
-    this.sorting = policy.sorting || 'seeders'
-    this.descending = policy.descending || true
+    this.sorting = policy.sorting || 'size'
+    this.descending = policy.descending
     this.prefer = {
       znab: policy.prefer.znab || [],
       source: policy.prefer.source || [],
@@ -79,16 +80,25 @@ export class Policy {
 
   apply(
     releases: any[],
-    query: { years: number[], titles: string[], terms: string[] },
+    query: {
+      terms: string[],
+      years: number[],
+      titles: string[],
+      banned_releases: string[]
+    } = null,
     strict = false
   ) {
+    const ignore = !query
+
     return releases
-      .map(release => Policy.normalizers.releasePublishDate(release, query.years))
-      .map(release => Policy.normalizers.movieReleaseYears(release, query.years))
-      .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...query.titles, ...query.terms])]))
+      .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
+      .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
+      .map(release => Policy.normalizers.releasePublishDate(release, query?.years, ignore))
+      .map(release => Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
+      .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
       .map(release => Policy.normalizers.releasePolicy(release, this))
-      .map(release => Policy.normalizers.releaseNoSeeders(release))
-      .map(release => Policy.normalizers.releaseScore(release, this))
+      .map(release => Policy.normalizers.releaseNoSeeders(release, ignore))
+      .map(release => Policy.normalizers.releaseScore(release, this, ignore))
       .filter(release => !strict || release.valid)
       .sort((a: any, b: any) => {
         if (a.score === b.score) {
@@ -108,12 +118,26 @@ export class Policy {
   }
 
   static normalizers = {
-    releasePublishDate: (release, years) => {
-      if (!release.valid) {
+    bannedReleases: (release, banned, ignore = false) => {
+      if (!release.valid || ignore) {
         return release
       }
 
-      const valid = years.some(year => new Date(release.publishDate).getFullYear() >= parseInt(year))
+      const valid = !(banned || []).some(banned => banned === release.original)
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : `🚫 Release banned`,
+        warning: valid ? 0 : 60,
+      }
+    },
+    releasePublishDate: (release, years, ignore = false) => {
+      if (!release.valid || ignore) {
+        return release
+      }
+
+      const valid = years.some(year => new Date(release.publishDate).getFullYear() >= Number(year))
 
       return {
         ...release,
@@ -122,24 +146,24 @@ export class Policy {
         warning: valid ? 0 : 50,
       }
     },
-    movieReleaseYears: (release, years) => {
-      if (!release.valid) {
+    movieReleaseYears: (release, years, ignore = false) => {
+      if (!release.valid || ignore) {
         return release
       }
 
-      const valid = (parseInt(release.meta.year) === 0 || years.some(year => parseInt(release.meta.year) === parseInt(year)))
+      const valid = (Number(release.meta.year) === 0 || years.some(year => Number(release.meta.year) === Number(year)))
 
       return {
         ...release,
         valid,
         reason: valid ? null : `📅 Release year (${release.meta.year}) ${
-          parseInt(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${years.join(', ')})`
+          Number(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${years.join(', ')})`
         }`,
         warning: valid ? 0 : 40,
       }
     },
-    releaseNoSeeders: (release) => {
-      if (!release.valid) {
+    releaseNoSeeders: (release, ignore = false) => {
+      if (!release.valid || ignore) {
         return release
       }
 
@@ -152,23 +176,24 @@ export class Policy {
         warning: valid ? 0 : 30,
       }
     },
-    releaseTitlesSimilarity: (release, titles) => {
+    releaseTitlesSimilarity: (release, titles, ignore = false) => {
       if (!release.valid) {
         return release
       }
 
-      const current = titles
+      const current = (titles
         .map(title => similarity(title, clean(release.meta.title)))
         .sort((a, b) => b - a)
         .shift()
+      ) || 0
 
-      const valid = current >= MINIMUM_SIMILARITY
+      const valid = ignore || current >= MINIMUM_SIMILARITY
 
       return ({
         ...release,
         similarity: current,
-        score: valid ? release.score + 1000 : release.score,
         valid,
+        score: valid ? 1000 : 0,
         reason: valid ? null : `🎯 Similarity too low: ${current.toFixed(2)} ("${clean(release.meta.title)}" doesn't match enough with any "${titles.join('", "')}")`,
         warning: valid ? 0 : 20,
       })
@@ -184,14 +209,14 @@ export class Policy {
           valid: Object.keys(policy.avoid || {})
             .map(tag => {
               const test = (tag === 'custom' ?
-                (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
+                (keyword) => (new RegExp(keyword, 'ig').test(release.original) || new RegExp(keyword, 'ig').test(release.title)) :
                 (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
               )
 
               const intersection = policy.avoid[tag].filter(test)
 
               if (intersection.length) {
-                throw new Error(`🚨 Dropped by policy (${tag}=${intersection.join(', ')})`)
+                throw new Error(`🚨 Withdrawn by policy (${tag}=${intersection.join(', ')})`)
               }
 
               return true
@@ -209,15 +234,16 @@ export class Policy {
         })
       }
     },
-    releaseScore: (release, policy) => {
+    releaseScore: (release, policy, ignore = false) => {
       const account = Object.keys(policy.prefer || {})
+        .filter(tag => !ignore || !['znab'].includes(tag))
         .reduce((acc, tag) => ({
           ...acc,
           [tag]: policy.prefer[tag]
             .reduce((acc, keyword, index, arr) => {
               const base = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
               const test = (tag === 'custom' ?
-                (keyword) => (new RegExp(keyword, 'ig').test(release.meta.original) || new RegExp(keyword, 'ig').test(release.meta.generated)) :
+                (keyword) => (new RegExp(keyword, 'ig').test(release.original) || new RegExp(keyword, 'ig').test(release.title)) :
                 (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
               )
 
@@ -230,7 +256,7 @@ export class Policy {
 
       return {
         ...release,
-        score: release.score + (release.valid ? 1000 : 0) + Object.keys(account).reduce((sum, key) => sum += Object.values(account[key]).reduce((s: number, v: number) => s + v, 0) as number, 0),
+        score: (release.score || 0) + (release.valid ? 1000 : 0) + Object.keys(account).reduce((sum, key) => sum += Object.values(account[key]).reduce((s: number, v: number) => s + v, 0) as number, 0),
       }
     },
   }

@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
 
-@Schema()
+@Schema({ collection: 'movies' })
 export class Movie extends Document {
   @Prop()
   _id: number
@@ -40,6 +40,12 @@ export class Movie extends Document {
 
   @Prop()
   imdb_id: string
+
+  @Prop()
+  plex_guid: string
+
+  @Prop()
+  plex_url: string
 
   @Prop()
   original_language: string
@@ -117,6 +123,9 @@ export class Movie extends Document {
   @Prop()
   policy: string
 
+  @Prop({ default: true })
+  cared: boolean
+
   @Prop(raw({
     titles: [String],
     terms: [String],
@@ -135,6 +144,9 @@ export class Movie extends Document {
 
   @Prop()
   updated_at: number
+
+  @Prop()
+  cared_at: number
 
   @Prop(raw({
     titles: [
@@ -165,44 +177,27 @@ export class Movie extends Document {
   }))
   release_dates: Record<any, any>
 
-  @Prop(raw({
-    title: String,
-    term: String,
-    link: String,
-    enclosure: String,
-    publishDate: Date,
-    size: Number,
-    seeders: Number,
-    peers: Number,
-    grabs: Number,
-    similarity: Number,
-    score: Number,
-    valid: Boolean,
-    reason: String,
-    warning: Number,
-    znab: String,
-    meta: {
-      original: String,
-      term: String,
-      znab: String,
-      language: String,
-      source: String,
-      encoding: String,
-      resolution: String,
-      dub: String,
-      year: String,
-      flags: [String] || null,
-      season: Number || null,
-      episode: Number || null,
-      episodes: [Number],
-      type : { type: String },
-      group: String || null,
+  @Prop(raw([String]))
+  banned_releases: Record<any, any>
+
+  @Prop(raw([String]))
+  requested_by: Record<any, any>
+
+  @Prop(raw([
+    {
+      id: String,
       title: String,
-      generated: String,
-      score: Number,
-    },
-  }))
-  release: Record<any, any>
+      original: String,
+      from: String,
+      job: String,
+      proposal: Boolean,
+      znab: String,
+      link: String,
+      enclosure: String,
+      size: Number,
+    }
+  ]))
+  releases: Record<any, any>
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie)

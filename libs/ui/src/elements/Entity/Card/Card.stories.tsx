@@ -58,11 +58,6 @@ Card.argTypes = {
       options: overrides,
     }
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
   palette: {
     control: {
       type: null,
@@ -77,7 +72,6 @@ Card.argTypes = {
 
 export const Loading = (args: any) => (
   <UICard {...args}
-    hover={null}
     link={''}
     state={null}
     overrides={overrides.loading}

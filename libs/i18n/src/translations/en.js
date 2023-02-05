@@ -15,6 +15,8 @@ export default {
     followed: 'Followed',
     missing: 'Missing',
     pinned: 'Pinned',
+    requested: 'Requested',
+    proposal: 'Proposal',
     wished: 'Wished',
     archived: 'Archived',
   },
@@ -53,6 +55,7 @@ export default {
       state: '📚 State',
       genres: emojize('🎞️', 'Genres'),
       release_date: emojize('📅', 'Year'),
+      birthday: emojize('🎂', 'Birthday'),
       popularity: emojize('📣', 'Popularity'),
       vote_average: emojize('💯', 'Vote Average'),
       vote_count: emojize('🗳', 'Vote Count'),
@@ -65,11 +68,15 @@ export default {
       languages: emojize('🌐', 'Languages'),
       release_type: emojize('📼', 'Released'),
       certification: emojize('🔞', 'Certification'),
+      known_for_department: emojize('💼', 'Known For Department'),
+      gender: emojize('⚧️', 'Gender'),
+      requested_by: emojize('🤖', 'Requested by'),
     },
     sorting: 'Sort by',
     sortings: {
       updated_at: emojize('📚️', 'Last Update'),
       popularity: emojize('📣', 'Popularity'),
+      birthday: emojize('🎂', 'Birthday'),
       primary_release_date: emojize('📅', 'Release Date'),
       revenue: emojize('💰', 'Revenue'),
       vote_average: emojize('💯', 'Vote Average'),
@@ -190,11 +197,31 @@ export default {
     library: {
       title: 'Library',
     },
+    requests: {
+      title: 'Requests',
+    },
+    followed: {
+      title: 'Followed',
+    },
     discover: {
       title: 'Discover',
     },
     calendar: {
       title: 'Calendar',
+    },
+    recommendations: {
+      title: 'Recommendations',
+    },
+    similar: {
+      title: 'Similar',
+    },
+    trending: {
+      movies: {
+        title: 'Trending',
+      },
+      persons: {
+        title: 'Trending',
+      },
     },
     theatres: {
       title: 'Theatres',

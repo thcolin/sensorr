@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { Switch, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Link } from '@sensorr/ui'
 import { scrollToTop } from '@sensorr/utils'
+import { LoadingBar } from '../LoadingBar'
 import { useSearchContext } from '../../contexts/Search/Search'
-import { useLoadingContext } from '../../contexts/Loading/Loading'
 import { Input as SearchInput, Results as SearchResults } from './elements/Search'
 import Navigation from './elements/Navigation'
 
@@ -21,21 +21,24 @@ Logo.styles = {
   },
 }
 
-const PWD = ({ ...props }) => (
-  <button sx={PWD.styles.element} onClick={() => scrollToTop()}>
-    <Switch>
-      <Route path='/' exact={true} render={() => 'Home'} />
-      <Route path='/movie' render={() => 'Movies'} />
-      <Route path='/movie/:id' render={() => 'Movies'} />
-      <Route path='/person' render={() => 'Stars'} />
-      <Route path='/person/:id' render={() => 'Stars'} />
-      <Route path='/search/:query' render={() => 'Search'} />
-      <Route path='/jobs' render={() => 'Jobs'} />
-      <Route path='/settings' render={() => 'Settings'} />
-      <Route render={() => 'Navigation'} />
-    </Switch>
-  </button>
-)
+const PWD = ({ ...props }) => {
+  const location = useLocation()
+
+  return (
+    <button sx={PWD.styles.element} onClick={() => scrollToTop()}>
+      {(
+        location.pathname === '/' ? 'Home' :
+        location.pathname.startsWith('/movie') ? 'Movies' :
+        location.pathname.startsWith('/collection') ? 'Collections' :
+        location.pathname.startsWith('/person') ? 'Stars' :
+        location.pathname.startsWith('/search') ? 'Search' :
+        location.pathname.startsWith('/jobs') ? 'Jobs' :
+        location.pathname.startsWith('/settings') ? 'Settings' :
+        'Navigation'
+      )}
+    </button>
+  )
+}
 
 PWD.styles = {
   element: {
@@ -54,7 +57,7 @@ const Hr = ({ ...props }) => <hr sx={Hr.styles.element} {...props} />
 
 Hr.styles = {
   element: {
-    variant: 'hr.reset',
+    variant: 'hr.default',
   },
 }
 
@@ -63,62 +66,8 @@ const Seperator = ({ ...props }) => <div sx={Seperator.styles.element}></div>
 Seperator.styles = {
   element: {
     borderLeft: '1px solid',
-    borderColor: 'gray3',
+    borderColor: 'gray',
     height: '1em',
-  },
-}
-
-const LoadingBar = ({ ...props }) => {
-  const ready = useRef(false)
-  const { timeout, loading } = useLoadingContext() as any
-  const [width, setWidth] = useState(loading ? '100%' : '0%')
-
-  useEffect(() => {
-    if (!ready.current) {
-      ready.current = true
-      return
-    }
-
-    if (loading) {
-      setWidth('95%')
-    } else {
-      setWidth('101%')
-      const timeout = setTimeout(() => setWidth('0%'), 400)
-      return () => clearTimeout(timeout)
-    }
-  }, [loading])
-
-  return (
-    <div sx={LoadingBar.styles.element}>
-      <div sx={{ backgroundColor: 'rgb(235, 235, 235)' }} />
-      <div sx={{ backgroundColor: 'rgb(235, 235, 16)' }} />
-      <div sx={{ backgroundColor: 'rgb(16, 235, 235)' }} />
-      <div sx={{ backgroundColor: 'rgb(16, 235, 16)' }} />
-      <div sx={{ backgroundColor: 'rgb(235, 16, 235)' }} />
-      <div sx={{ backgroundColor: 'rgb(235, 16, 16)' }} />
-      <div sx={{ backgroundColor: 'rgb(16, 16, 235)' }} />
-      <div
-        sx={{
-          position: 'absolute',
-          height: '100%',
-          width,
-          transition: loading ? `width ${timeout}ms cubic-bezier(0, 0, 0, 1)` : 'width 200ms ease-in-out',
-          backgroundColor: 'primary',
-        }}
-      />
-    </div>
-  )
-}
-
-LoadingBar.styles = {
-  element: {
-    position: 'relative',
-    display: 'flex',
-    height: '2px',
-    width: '100%',
-    '>*': {
-      flex: 1,
-    }
   },
 }
 
@@ -175,7 +124,7 @@ Toolbar.styles = {
     maxWidth: '40rem',
     marginBottom: '-1px',
     borderBottom: '1px solid',
-    borderColor: 'gray2',
+    borderColor: 'grayLight',
     marginX: '10em',
   },
 }

@@ -1,0 +1,34 @@
+{
+  # Debug
+  {$CADDY_DEBUG}
+}
+
+https:// {
+  encode gzip
+
+  import /srv/sslmode/caddy_tls_{$CADDY_TLS_MODE}
+
+  handle /api/* {
+    reverse_proxy sensorr-api:4300
+  }
+
+  handle {
+    root * /srv
+    try_files {path} /index.html
+    file_server
+  }
+}
+
+http:// {
+  encode gzip
+
+  handle /api/* {
+    reverse_proxy sensorr-api:4300
+  }
+
+  handle {
+    root * /srv
+    try_files {path} /index.html
+    file_server
+  }
+}

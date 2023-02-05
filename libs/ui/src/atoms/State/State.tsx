@@ -23,7 +23,7 @@ function UIState({
   }
 
   return (
-    <label sx={UIState.styles.element}>
+    <label sx={UIState.styles.element} {...(props.title ? { title: props.title } : {})}>
       <select value={option.value} onChange={handleChange} disabled={option.value === 'loading'}>
         {options
           .filter((option) => !option.hide)

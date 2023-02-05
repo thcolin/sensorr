@@ -79,6 +79,21 @@ export const genres = [
   },
 ]
 
+export const departments = [
+  'Acting',
+  'Directing',
+  'Writing',
+  'Crew',
+  'Art',
+  'Sound',
+  'Lighting',
+  'Editing',
+  'Production',
+  'Visual Effects',
+  'Camera',
+  'Costume & Make-Up',
+]
+
 export const movie = {
   adult: false,
   backdrop_path: '/ByDf0zjLSumz1MP1cDEo2JWVtU.jpg',
@@ -102,12 +117,14 @@ export const movie = {
   homepage: 'http://www.warnerbros.com/matrix',
   id: 603,
   imdb_id: 'tt0133093',
+  plex_url: null,
   original_language: 'en',
   original_title: 'The Matrix',
   overview:
     "Programmeur anonyme dans un service administratif le jour, Thomas Anderson devient Neo la nuit venue. Sous ce pseudonyme, il est l'un des pirates les plus recherchés du cyber-espace. À cheval entre deux mondes, Neo est assailli par d'étranges songes et des messages cryptés provenant d'un certain Morpheus. Celui-ci l'exhorte à aller au-delà des apparences et à trouver la réponse à la question qui hante constamment ses pensées : qu'est-ce que la Matrice ? Nul ne le sait, et aucun homme n'est encore parvenu à en percer les défenses. Mais Morpheus est persuadé que Neo est l’Élu, le libérateur mythique de l'humanité annoncé selon la prophétie. Ensemble, ils se lancent dans une lutte sans retour contre la Matrice et ses terribles agents...",
   popularity: 50.433,
   poster_path: '/pEoqbqtLc4CcwDUDqxmEDSWpWTZ.jpg',
+  release: null,
   production_companies: [
     {
       id: 79,
@@ -1247,6 +1264,7 @@ export const cast = {
 
 export default {
   genres,
+  departments,
   movie,
   person,
   crew,

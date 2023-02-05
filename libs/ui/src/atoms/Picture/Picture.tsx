@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, cloneElement, useEffect, useRef } from 'react'
+import { memo, useState, useMemo, useEffect, useRef } from 'react'
 import { Palette } from '@sensorr/palette'
 
 export const Empty = {
@@ -28,12 +28,13 @@ export const Empty = {
   )),
 }
 
-export interface PictureProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface PictureProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'onLoad'> {
   path: string
   size?: 'w45' | 'w92' | 'w154' | 'w185' | 'w300' | 'w342' | 'w500' | 'w780' | 'h632' | 'original'
   ready?: boolean
   palette?: Palette
   empty?: React.FC<any>
+  onReady?: (event: any, error: boolean) => void
 }
 
 export interface MoviePictureProps extends PictureProps {
@@ -50,34 +51,32 @@ function UIPicture({
   ready = true,
   palette = null,
   empty: Empty,
-  onLoad,
-  onError,
+  onReady,
   ...props
 }: PictureProps) {
   const ref = useRef(null)
   const [error, setError] = useState(false)
   const [loaded, setLoaded] = useState(false)
-  const src = path ? `https://image.tmdb.org/t/p/${size}${path}` : null
+  const src = path ? (path.startsWith('data:image/') || path.startsWith('http')) ? path : `https://image.tmdb.org/t/p/${size}${path}` : null
 
-  // TODO: Refacto, create custom util to call n fn?
   const onLoadProps = useMemo(() => ({
     onLoad: (e) => {
       setLoaded(true)
       setError(false)
 
-      if (typeof onLoad === 'function') {
-        onLoad(e)
+      if (typeof onReady === 'function') {
+        onReady(e, false)
       }
     },
     onError: (e) => {
       setLoaded(true)
       setError(true)
 
-      if (typeof onError === 'function') {
-        onError(e)
+      if (typeof onReady === 'function') {
+        onReady(e, true)
       }
     }
-  }), [onLoad, onError])
+  }), [onReady])
 
   const styles = {
     element: {
@@ -89,6 +88,7 @@ function UIPicture({
     image: {
       opacity: loaded && ready && src && !error ? 1 : 0,
       transitionDelay: loaded && ready ? '400ms' : '0ms',
+      // transitionDuration: loaded && ready ? '400ms' : '0ms',
     },
   }
 
@@ -96,26 +96,26 @@ function UIPicture({
     setLoaded(false)
     setError(false)
 
-    if (!path) {
+    if (!path || path.startsWith('data:image/')) {
       onLoadProps.onLoad(null)
     }
   }, [path, size])
 
-  // useEffect(() => {
-  //   if (!loaded && ref.current?.complete) {
-  //     setLoaded(true)
-  //     setError(false)
+  useEffect(() => {
+    if (!loaded && ref.current?.complete) {
+      setLoaded(true)
+      setError(false)
 
-  //     if (typeof onLoad === 'function') {
-  //       onLoad(null)
-  //     }
-  //   }
-  // })
+      if (typeof onReady === 'function') {
+        onReady(null, false)
+      }
+    }
+  })
 
   return (
     <span {...props} sx={UIPicture.styles.element} style={styles.element}>
       {!!Empty && <Empty style={styles.empty} sx={UIPicture.styles.empty} />}
-      <img ref={ref} {...onLoadProps} src={src} sx={UIPicture.styles.image} style={styles.image as any} loading='lazy' />
+      <img ref={ref} {...onLoadProps} src={src} sx={UIPicture.styles.image} style={styles.image as any} loading='lazy' decoding='async' />
     </span>
   )
 }
@@ -129,8 +129,8 @@ UIPicture.styles = {
     height: '100%',
     width: '100%',
     minHeight: '4em',
-    backgroundColor: 'gray2',
-    color: 'gray4',
+    backgroundColor: 'grayLight',
+    color: 'grayDark',
     transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
   },
   empty: {

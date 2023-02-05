@@ -21,6 +21,7 @@ export interface SelectProps {
   noOptionsMessage?: (foo: { inputValue: string }) => string
   styles?: { [key: string]: any },
   components?: { [key: string]: any },
+  direction?: 'row' | 'column'
   [key: string]: any
 }
 
@@ -35,6 +36,7 @@ const UISelect = ({
   disabled,
   resetable = true,
   multi,
+  direction = 'column',
   ...props
 }: SelectProps) => {
   const { t } = useTranslation()
@@ -45,6 +47,10 @@ const UISelect = ({
   const [isLoading, setIsLoading] = useState(false)
   const [options, setOptions] = useState([])
   const styles = useMemo(() => ({
+    container: (style) => ({
+      ...style,
+      flex: 1,
+    }),
     control: (style) => ({
       ...style,
       backgroundColor: 'transparent',
@@ -175,8 +181,8 @@ const UISelect = ({
   }
 
   return (
-    <div sx={UISelect.styles.element}>
-      <label sx={UISelect.styles.label}>
+    <div sx={UISelect.styles.element} style={{ flexDirection: direction }}>
+      <label sx={UISelect.styles.label} style={{ row: { paddingRight: '1em' }, column: { paddingBottom: '1em' } }[direction]}>
         <span
           onClick={() => !disabled && resetable && onChange(multi ? [] : null)}
           style={!disabled && resetable ? { cursor: 'pointer' } : {}}
@@ -217,12 +223,11 @@ const UISelect = ({
 UISelect.styles = {
   element: {
     display: 'flex',
-    flexDirection: 'column',
     width: '100%',
   },
   label: {
     display: 'inline-flex',
-    paddingBottom: 4,
+    alignItems: 'center',
     fontWeight: 'semibold',
     '>*:first-of-type': {
       flex: 1,

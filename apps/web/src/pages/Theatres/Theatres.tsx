@@ -2,8 +2,8 @@ import { Entities, withControls } from '@sensorr/ui'
 import { compose, emojize, regions, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCreditsDelayed } from '../../components/Movie/Movie'
-import tmdb from '../../store/tmdb'
+import { MovieWithCredits } from '../../components/Movie/Movie'
+import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withHistoryState from '../../components/enhancers/withHistoryState'
@@ -11,8 +11,9 @@ import { useEffect, useState } from 'react'
 
 export const Theatres = compose(
   withProps({
+    id: 'theatres',
     display: 'grid',
-    child: MovieWithCreditsDelayed,
+    child: MovieWithCredits,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -26,7 +27,7 @@ export const Theatres = compose(
       focus: 'release_date_full',
     }),
   }),
-  withFetchQuery({}, 1, tmdb, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({}, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t('pages.theatres.title'),
     useStatistics,
@@ -36,10 +37,16 @@ export const Theatres = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: '1fr 0fr 0fr 0fr',
         gridTemplateRows: 'auto',
         gap: '2em',
-        gridTemplateAreas: `"title results uri region"`,
+        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+        gridTemplateAreas: [
+          `"results uri region"`,
+          `"title results uri region"`,
+        ],
+        '>h4': {
+          display: ['none', 'block'],
+        },
       },
     },
     fields: {
@@ -55,7 +62,7 @@ export const Theatres = compose(
               alignItems: 'center',
               '>label': {
                 marginRight: 6,
-                color: 'shadowText',
+                color: 'textShadow',
                 fontSize: 4,
                 fontWeight: 'semibold',
               },
@@ -100,7 +107,7 @@ export const Theatres = compose(
                 display: 'flex',
                 alignItems: 'center',
                 '>label': {
-                  color: 'shadowText',
+                  color: 'textShadow',
                   marginRight: 6,
                   fontSize: 4,
                   fontWeight: 'semibold',

@@ -7,12 +7,18 @@ import { Checkbox, CheckboxProps } from '../../../../inputs/Checkbox/Checkbox'
 export interface FilterStatesProps extends Omit<CheckboxProps, 'label' | 'options'> {
   type: 'movie' | 'person'
   statistics: { _id: any, count: number }[]
+  ignoreOptions: string[]
+  additionalOptions: { emoji: string, label: string, value: string }[]
 }
 
-const UIFilterStates = ({ type, statistics, ...props }: FilterStatesProps) => {
+const UIFilterStates = ({ type, statistics, additionalOptions = [], ignoreOptions = ['loading', 'ignored'], ...props }: FilterStatesProps) => {
   const { t } = useTranslation()
-  const options = useMemo(() => ({ movie: MovieStateOptions, person: PersonStateOptions }[type]
-    .filter(option => !['loading', 'ignored'].includes(option.value))
+  const options = useMemo(() => (
+    [
+      ...{ movie: MovieStateOptions, person: PersonStateOptions }[type],
+      ...additionalOptions,
+    ]
+    .filter(option => !ignoreOptions.includes(option.value))
     .map(option => ({
       ...option,
       label: t(`state.${option.value}`),

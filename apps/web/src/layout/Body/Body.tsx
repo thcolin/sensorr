@@ -1,9 +1,5 @@
-import Pages from '../../pages'
-
 const Body = ({ ...props }) => (
-  <div sx={Body.styles.element}>
-    <Pages />
-  </div>
+  <div {...props} sx={Body.styles.element}></div>
 )
 
 Body.styles = {
@@ -12,7 +8,7 @@ Body.styles = {
     flexDirection: 'column',
     justifyContent: 'center',
     flex: 1,
-    backgroundColor: 'gray0',
+    backgroundColor: 'grayLightest',
   },
 }
 

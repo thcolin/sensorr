@@ -1,0 +1,29 @@
+{
+  "tmdb": "tmdb-api-key",
+  "region": "en-US",
+  "adult": false,
+  "blackhole": "/blackhole",
+  "jobs": {
+    "record": {
+      "cron": "0 17 * * *",
+      "paused": false,
+      "proposalOnly": true
+    },
+    "refresh": {
+      "cron": "0 4 * * *",
+      "paused": false
+    },
+    "sync": {
+      "cron": "0 3 * * 0",
+      "paused": false
+    },
+    "doctor": {
+      "cron": "0 5 * * 0",
+      "paused": false,
+      "proposalOnly": true
+    }
+  },
+  "plex": {},
+  "znabs": [],
+  "policies": []
+}

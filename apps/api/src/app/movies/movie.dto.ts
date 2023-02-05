@@ -1,3 +1,5 @@
+import { ReleaseDTO } from './release.dto'
+
 export class MovieDTO {
   _id: number
 
@@ -19,6 +21,8 @@ export class MovieDTO {
   readonly homepage: string
   readonly id: number
   readonly imdb_id: string
+  readonly plex_guid: string
+  readonly plex_url: string
   readonly original_language: string
   readonly original_title: string
   readonly overview: string
@@ -52,6 +56,7 @@ export class MovieDTO {
   readonly title: string
   readonly state: string
   readonly policy: string
+  readonly cared: boolean
   readonly query: {
     titles: string[],
     terms: string[],
@@ -61,6 +66,7 @@ export class MovieDTO {
   readonly vote_average: number
   readonly vote_count: number
   readonly updated_at: number
+  readonly cared_at: number
   readonly alternative_titles: {
     titles: [
       {
@@ -86,41 +92,7 @@ export class MovieDTO {
       },
     ]
   }
-  readonly release: {
-    title: string
-    term: string
-    link: string
-    enclosure: string
-    publishDate: Date
-    size: number
-    seeders: number
-    peers: number
-    grabs: number
-    similarity: number
-    score: number
-    valid: boolean
-    reason: string
-    warning: number
-    znab: string
-    meta: {
-      original: string
-      term: string
-      znab: string
-      language: string
-      source: string
-      encoding: string
-      resolution: string
-      dub: string
-      year: string
-      flags: string[] | null
-      season: number | null
-      episode: number | null
-      episodes: number[]
-      type: string
-      group: string | null
-      title: string
-      generated: string
-      score: number
-    },
-  }
+  readonly banned_releases: string[]
+  readonly requested_by: string[]
+  readonly releases: ReleaseDTO[]
 }

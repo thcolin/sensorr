@@ -19,11 +19,6 @@ Person.argTypes = {
       type: null,
     },
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
 }
 
 export const PersonPosterLoading = (args: any) => <Person {...args} />

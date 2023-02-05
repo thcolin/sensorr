@@ -7,6 +7,7 @@ import { Link, LinkProps } from '../../atoms/Link/Link'
 import nanobounce from 'nanobounce'
 
 export interface ListProps {
+  id: string
   length: number
   child: React.FC<any>
   childProps?: any
@@ -16,9 +17,11 @@ export interface ListProps {
   stack?: boolean
   compact?: boolean
   more?: Omit<MoreProps, 'rotate'>
+  space?: number
 }
 
 const UIList = ({
+  id,
   length,
   child: Child,
   childProps = {},
@@ -28,14 +31,24 @@ const UIList = ({
   stack = false,
   compact = false,
   more = null,
+  space = 4,
 }: ListProps) => {
   const ref = useRef<HTMLDivElement>()
   const scrollDebouncer = useMemo(() => nanobounce(100), [])
   const resetDebouncer = useMemo(() => nanobounce(500), [])
   const resetScroll = useCallback(([x, y]) => ref.current && ref.current.scroll(x, y), [ref.current])
-  // TODO: Should pass an id as props
-  const signature = useMemo(() => Object.values(entities || []).map((e) => e.id).join('.'), [entities])
-  const [scroll, setScroll] = useHistoryState(`list-scroll-${signature}`, [0, 0])
+  const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0])
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    scrollDebouncer(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
+  }, [id])
+
+  useEffect(() => {
+    if (!stack) {
+      resetDebouncer(() => resetScroll(scroll))
+    }
+  }, [id])
+
   const styles = useMemo(() => ({
     ...UIList.styles[display],
     container: {
@@ -47,21 +60,11 @@ const UIList = ({
       ...(compact ? {
         padding: '0em',
         ':not(:last-of-type)': {
-          marginRight: '-4em',
+          marginRight: `-${space}em`,
         },
       } : {}),
     },
   }), [display, compact])
-
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    scrollDebouncer(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
-  }, [signature])
-
-  useEffect(() => {
-    if (!stack) {
-      resetDebouncer(() => resetScroll(scroll))
-    }
-  }, [signature])
 
   return (
     <div ref={ref} sx={styles.container} onScroll={handleScroll}>
@@ -73,7 +76,7 @@ const UIList = ({
           </div>
         ))
       )}
-      {!!more && length >= 20 && (
+      {!!more && ( //  && length >= 20
         <div sx={styles.more}>
           <More {...more} rotate={{ column: true, row: false }[display]} />
         </div>
@@ -145,17 +148,17 @@ UIList.styles = {
 
 export const List = memo(UIList)
 
-export interface MoreProps extends Omit<BadgeProps, 'emoji' | 'label'>, Pick<LinkProps, 'to'> {
+export interface MoreProps extends Omit<BadgeProps, 'emoji' | 'label'>, Pick<LinkProps, 'to'>, Pick<LinkProps, 'state'> {
   rotate?: boolean
 }
 
-const UIMore = ({ to, title = '', rotate, ...props }: MoreProps) => {
+const UIMore = ({ to, state, title = '', rotate, ...props }: MoreProps) => {
   const emoji = useMemo(() => (
     <Icon value='more' sx={UIMore.styles.icon} style={{ transform: `rotate(${rotate ? 90 : 0}deg)` }} />
   ), [rotate])
 
   return (
-    <Link sx={UIMore.styles.link} to={to} {...(title ? { title } : {})}>
+    <Link sx={UIMore.styles.link} to={to} state={state} {...(title ? { title } : {})}>
       <Badge {...props} emoji={emoji} label='' color='auto' />
     </Link>
   )
@@ -173,7 +176,7 @@ UIMore.styles = {
   icon: {
     display: 'flex',
     alignItems: 'center',
-    color: 'muted',
+    color: 'gray',
     height: '3.5em',
     padding: 8,
   },

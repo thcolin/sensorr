@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { SortableSelect } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
-import { SENSORR_POLICIES, useSensorr } from '../../../store/sensorr'
+import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
 const RuleSortableSelect = ({ onChange, ...props }) => {
@@ -11,8 +11,8 @@ const RuleSortableSelect = ({ onChange, ...props }) => {
     const ignore = props.options.filter(option => !props.value.find(v => v.value === option.value && v.group)).map((option) => ({ ...option, group: null }))
 
     return [
-      ...(prefer.length ? [{ label: '👍' }, ...prefer, { separator: true }] : []),
-      ...(avoid.length ? [{ label: '🚨' }, ...avoid, { separator: true }] : []),
+      ...(prefer.length ? [{ label: '⭐' }, ...prefer, { separator: true }] : []),
+      ...(avoid.length ? [{ label: '⛔' }, ...avoid, { separator: true }] : []),
       ...(ignore.length ? [{ label: '🔕' }, ...ignore, { separator: true }] : []),
     ]
   }, [props.value, props.options])

@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Youtube from 'react-youtube'
 import { Icon } from '@sensorr/ui'
-import tmdb from '../../../store/tmdb'
+import { useTMDB } from '../../../store/tmdb'
 import { useExpandContext } from '../contexts/Expand'
 
 const UIPlayer = ({ entity, ready, ...props }) => {
+  const tmdb = useTMDB()
   const target = useRef(null)
   const { expanded, setExpanded } = useExpandContext() as any
   const [loading, setLoading] = useState(true)
@@ -20,18 +21,22 @@ const UIPlayer = ({ entity, ready, ...props }) => {
       return
     }
 
-    target.current.stopVideo()
-    target.current.cuePlaylist({ listType: 'playlist', playlist: playlist.map((video) => video.key).join(',') })
+    try {
+      target.current.stopVideo()
+      target.current.cuePlaylist({ listType: 'playlist', playlist: playlist.map((video) => video.key).join(',') })
 
-    const timeout = setTimeout(() => setBlacklist(blacklist => [...blacklist, playlist[0].key]), 5000)
-    const onPlayerStateChange = ({ data }) => {
-      if (data === 5) {
-        clearTimeout(timeout)
-        target.current.removeEventListener('onStateChange', onPlayerStateChange)
+      const timeout = setTimeout(() => setBlacklist(blacklist => [...blacklist, playlist[0].key]), 5000)
+      const onPlayerStateChange = ({ data }) => {
+        if (data === 5) {
+          clearTimeout(timeout)
+          target.current.removeEventListener('onStateChange', onPlayerStateChange)
+        }
       }
-    }
 
-    target.current.addEventListener('onStateChange', onPlayerStateChange)
+      target.current.addEventListener('onStateChange', onPlayerStateChange)
+    } catch (e) {
+      console.warn(e)
+    }
   }, [playlist])
 
   const youtube = useMemo(

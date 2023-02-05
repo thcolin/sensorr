@@ -3,7 +3,7 @@
 # compiled output
 /dist
 /tmp
-/data
+/db
 /out-tsc
 
 # dependencies
@@ -39,7 +39,8 @@ testem.log
 # env
 .local.env
 mongodb.key
-/config/local.json
+/config.json
+sensorr-dump.zip
 
 # System Files
 .DS_Store

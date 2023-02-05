@@ -54,6 +54,7 @@ UIInputs.styles = {
   element: {
     '>*': {
       whiteSpace: 'nowrap',
+      // overflow: 'hidden',
     },
   }
 }

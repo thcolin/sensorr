@@ -1,3 +1,4 @@
+export * from './avatar'
 export * from './string'
 export * from './regions'
 export * from './compose'

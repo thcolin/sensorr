@@ -41,11 +41,6 @@ Avatar.argTypes = {
       options: overrides,
     },
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
   palette: {
     control: {
       type: null,
@@ -60,7 +55,6 @@ Avatar.argTypes = {
 
 export const Loading = (args: any) => (
   <UIAvatar {...args}
-    hover={null}
     link={''}
     highlight={false}
     overrides={overrides.loading}

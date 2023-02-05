@@ -5,12 +5,14 @@ import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
 import { PersonDetails } from '../../../components/Person/Person'
 import { MovieDetails } from '../../../components/Movie/Movie'
+import { LinkProps } from 'react-router-dom'
 
-interface AvatarProps extends Omit<PictureProps, 'path' | 'ready' | 'onLoad' | 'onError'> {
+interface AvatarProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: PersonDetails | MovieDetails
-  link?: string
-  overrides?: { focus?: React.ReactNode, ready?: boolean, hover?: boolean }
+  link?: LinkProps
+  overrides?: { focus?: React.ReactNode, ready?: boolean }
   highlight?: boolean
+  compact?: boolean
 }
 
 const UIAvatar = ({
@@ -18,6 +20,7 @@ const UIAvatar = ({
   overrides,
   link,
   highlight,
+  compact,
   ...props
 }: AvatarProps) => {
   const tooltip = useMemo(() => <Tooltip title={details?.title} subtitle={details?.caption} />, [details])
@@ -25,14 +28,15 @@ const UIAvatar = ({
     ...UIAvatar.styles,
     element: {
       ...UIAvatar.styles.element,
+      ...(!!compact ? { height: '6em', width: '6em', borderWidth: '0.25em' } : {}),
       ...(!!highlight ? { borderColor: 'primary' } : {}),
     },
-  }), [highlight])
+  }), [highlight, compact])
 
   return (
     <Tippy placement='bottom' disabled={overrides?.ready === false} content={tooltip}>
       <div tabIndex={0} sx={styles.element}>
-        <Link to={link} disabled={overrides?.ready === false}>
+        <Link to={link?.to} state={link?.state} disabled={!link?.to || overrides?.ready === false}>
           <Picture {...props} path={details?.poster} ready={overrides?.ready !== false} />
         </Link>
       </div>

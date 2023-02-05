@@ -1,14 +1,14 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose'
+import mongoose from 'mongoose'
 import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
 
 @Schema({ collection: 'log' })
 export class Log extends Document {
-  @Prop()
-  _id: string
+  _id: mongoose.Types.ObjectId
 
   @Prop()
-  birthday: Date
+  timestamp: Date
 
   @Prop()
   level: string
@@ -22,3 +22,4 @@ export class Log extends Document {
 
 export const LogSchema = SchemaFactory.createForClass(Log)
 LogSchema.plugin(pagination as any)
+LogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 1209600 }) // 2 weeks logs expiration

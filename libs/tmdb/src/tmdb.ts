@@ -21,12 +21,14 @@ export class TMDB {
     region,
     events,
   }: {
-    key: string
+    key?: string
     adult?: boolean
     region?: string
     events?: { fetchStart?: (uri: string, params: {}) => void; fetchEnd?: (uri: string, params: {}) => void }
   }) {
-    this.key = key
+    if (key) {
+      this.key = key
+    }
 
     if (region) {
       this.region = region
@@ -39,8 +41,6 @@ export class TMDB {
     if (typeof adult !== 'undefined') {
       this.adult = adult
     }
-
-    this.init()
   }
 
   async init() {
@@ -75,7 +75,7 @@ export class TMDB {
       case 'search/movie':
         return {
           ...body,
-          results: body.results.map(({ genre_ids, ...result }) => ({
+          results: body.results.map(({ genre_ids = [], ...result }) => ({
             ...result,
             genres: genre_ids.map((id) => this.genres[id]),
           })),
@@ -89,7 +89,7 @@ export class TMDB {
           ...(body.recommendations && {
             recommendations: {
               ...body.recommendations,
-              results: body.recommendations.results.map(({ genre_ids, ...result }) => ({
+              results: body.recommendations.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
                 genres: genre_ids.map((id) => this.genres[id]),
               })),
@@ -98,11 +98,27 @@ export class TMDB {
           ...(body.similar && {
             similar: {
               ...body.similar,
-              results: body.similar.results.map(({ genre_ids, ...result }) => ({
+              results: body.similar.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
                 genres: genre_ids.map((id) => this.genres[id]),
               })),
             },
+          }),
+        }
+      case (uri.match(/person\/\d+\/movie_credits/) || {}).input:
+        return {
+          ...body,
+          ...(body.cast && {
+            cast: body.cast.map(({ genre_ids = [], ...movie }) => ({
+              ...movie,
+              genres: genre_ids.map((id) => this.genres[id]),
+            })),
+          }),
+          ...(body.crew && {
+            crew: body.crew.map(({ genre_ids = [], ...movie }) => ({
+              ...movie,
+              genres: genre_ids.map((id) => this.genres[id]),
+            })),
           }),
         }
       case (uri.match(/person\/\d+/) || {}).input:
@@ -111,12 +127,12 @@ export class TMDB {
           ...(body.movie_credits && {
             movie_credits: {
               ...body.movie_credits,
-              cast: body.movie_credits.cast.map(({ genre_ids, ...cast }) => ({
-                ...cast,
+              cast: body.movie_credits.cast.map(({ genre_ids = [], ...movie }) => ({
+                ...movie,
                 genres: genre_ids.map((id) => this.genres[id]),
               })),
-              crew: body.movie_credits.crew.map(({ genre_ids, ...crew }) => ({
-                ...crew,
+              crew: body.movie_credits.crew.map(({ genre_ids = [], ...movie }) => ({
+                ...movie,
                 genres: genre_ids.map((id) => this.genres[id]),
               })),
             },
@@ -125,7 +141,7 @@ export class TMDB {
       case (uri.match(/collection\/\d+/) || {}).input:
         return {
           ...body,
-          parts: body.parts.map(({ genre_ids, ...result }) => ({
+          parts: body.parts.map(({ genre_ids = [], ...result }) => ({
             ...result,
             genres: genre_ids.map((id) => this.genres[id]),
           })),

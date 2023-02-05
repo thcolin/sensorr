@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Movie } from './interfaces'
 
 const commarize = (input) => {
-  const value = parseInt(input) || 0
+  const value = Number(input) || 0
 
   // Alter numbers larger than 1k
   if (value >= 1e3) {
@@ -95,6 +95,12 @@ export const fields = {
     statistics: statisticians.boundaries('release_date', (value) => new Date(value).getFullYear()),
     serialize: (key, raw) => Array.isArray(raw) ? { [`${key}.gte`]: raw[0].toISOString(), [`${key}.lte`]: raw[1].toISOString() } : {},
   },
+  birthday: {
+    initial: [new Date('1800-01-01T00:00:00'), new Date(`${(new Date()).getFullYear()}-01-01T00:00:00`)],
+    boundaries: Array((new Date()).getFullYear() - 1800).fill(0).map((foo, i) => 1800 + i), // 1800-1801-1802...20XX
+    statistics: statisticians.boundaries('birthday', (value) => new Date(value).getFullYear()),
+    serialize: (key, raw) => Array.isArray(raw) ? { [`${key}.gte`]: raw[0].toISOString(), [`${key}.lte`]: raw[1].toISOString() } : {},
+  },
   popularity: {
     initial: [0, 1000],
     boundaries: [ // 0-10-20...100-200-300..1000
@@ -133,6 +139,16 @@ export const fields = {
       return [hours > 0 ? `${hours}h` : '', !hours || minutes ? `${minutes}m` : ''].join(' ')
     },
   },
+  known_for_department: {
+    initial: { values: [], behavior: 'or' },
+    serialize: serializers.select('multi'),
+    statistics: statisticians.array('known_for_department', true),
+  },
+  gender: {
+    initial: { values: [], behavior: 'or' },
+    serialize: serializers.select('multi'),
+    statistics: statisticians.array('gender', true),
+  },
 }
 
 export const useFieldsComputedStatistics = (entities, fields) => {
@@ -159,17 +175,29 @@ export const useFieldComputedRangeProps = (key, statistics) => {
   const min = field.boundaries.slice(0, 1).pop()
   const max = field.boundaries.slice(-1).pop()
   const marks = useMemo(() => field.boundaries.map(value => ({ value })), [])
-  const data = useMemo(() => !statistics ? null : field.boundaries.reduce((acc, value, index, arr) => ([arr.length - 1, arr.length - 2].includes(index)) ? {
-    ...acc,
-    [arr[arr.length - 2]]: (
-      (statistics?.find((obj) => obj._id === -1)?.count || 0) +
-      (statistics?.find((obj) => obj._id === arr[arr.length - 2])?.count || 0) +
-      (statistics?.find((obj) => obj._id === arr[arr.length - 1])?.count || 0)
-    )
-  } : {
-    ...acc,
-    [value]: (statistics?.find((obj) => obj._id === value)?.count || 0),
-  }, {}), [statistics])
+  const data = useMemo(() => {
+    if (!statistics) {
+      return null
+    }
+
+    return field.boundaries.reduce((acc, value, index, arr) => {
+      if ([arr.length - 1, arr.length - 2].includes(index)) {
+        return {
+          ...acc,
+          [arr[arr.length - 2]]: (
+            (statistics?.find((obj) => obj._id === -1)?.count || 0) +
+            (statistics?.find((obj) => obj._id === arr[arr.length - 2])?.count || 0) +
+            (statistics?.find((obj) => obj._id === arr[arr.length - 1])?.count || 0)
+          )
+        }
+      } else {
+        return {
+          ...acc,
+          [value]: (statistics?.find((obj) => obj._id === value)?.count || 0),
+        }
+      }
+    }, {})
+  }, [statistics])
 
   return { min, max, marks, data }
 }

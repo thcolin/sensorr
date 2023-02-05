@@ -39,14 +39,12 @@ UIWarning.styles = {
   title: {
     paddingY: 8,
     margin: 12,
-    color: 'text',
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
   subtitle: {
     padding: 12,
     margin: 12,
-    color: 'text',
     lineHeight: 'body',
   }
 }

@@ -1,36 +1,38 @@
-import { memo, useCallback, useEffect, useMemo, useReducer, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useReducer } from 'react'
 import { useThemeUI } from '@theme-ui/core'
-import { Badge, PersonState, MovieState } from '@sensorr/ui'
+// import { Badge, PersonState, MovieState, Icon } from '@sensorr/ui'
 import { createHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
-import { Metadata } from './components/Metadata'
+// import { Metadata } from './components/Metadata'
 import { Overview } from './components/Overview'
 import { Skeleton } from './components/Skeleton'
-import { Sensorr } from '../../components/Sensorr'
-import { Tabs } from './components/Tabs'
+import { Tabs } from '../../components/Entities/Tabs'
+import { Actions } from './components/Actions'
+// import { Sensorr } from '../../components/Sensorr'
+// import { Release } from '../../components/Sensorr/Release'
 
-const useToggledState = createHistoryState('toggled', false)
-const useViewState = createHistoryState('view', 'features')
+// const useActionsState = createHistoryState('actions', false)
+const useMeaningfulState = createHistoryState('meaningful', false)
+// const useViewState = createHistoryState('view', 'features')
 const pendingReducer = createPendingReducer({
   entity: true,
   poster: true,
   billboard: true,
 })
 
-const UIDetails = ({ entity, loading, details, behavior, state, setState, metadata, setMetadata, tabs, ...props }) => {
+const UIDetails = ({ entity, loading, details, behavior, state, setState, metadata, setMetadata, proceedRelease, removeRelease, tabs, ...props }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
-  const [view, setView] = useViewState() as [any, any]
-  const [toggled, setToggled] = useToggledState() as [any, any]
+  const [meaningfulState, setMeaningfulState] = useMeaningfulState() as [any, any]
 
   const { expanded } = useExpandContext() as any
   const { theme } = useThemeUI() as any
   const { palette } = usePalette(
     !!poster && `https://image.tmdb.org/t/p/w92${poster}`,
     {
-      backgroundColor: theme.rawColors.gray2,
+      backgroundColor: theme.rawColors.grayLight,
       color: theme.rawColors.text,
       alternativeColor: theme.rawColors.text,
       negativeColor: theme.rawColors.text,
@@ -38,10 +40,10 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
     poster,
   )
 
-  const handleDetailsToggle = useCallback((e) => setToggled(e.target.open), [])
+  const handleMeaningfulToggle = useCallback((e) => setMeaningfulState(e.target.open), [])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
-  const ready = props.ready !== false && state !== 'loading' && Object.values(pending).every(pending => !pending)
+  const ready = props.ready !== false && Object.values(pending).every(pending => !pending)
   const onReady = useMemo(() => ({
     poster: () => mutatePending({ poster: false }),
     billboard: () => mutatePending({ billboard: false }),
@@ -58,16 +60,19 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
       <Head billboard={billboard} palette={palette} entity={entity} ready={ready} onReady={onReady.billboard} />
       <div sx={UIDetails.styles.body}>
         <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh' }[behavior], '-25vh'] }}>
-          <Poster path={poster} palette={palette} behavior={{ person: 'person', collection: 'movie', movie: 'movie' }[behavior]} ready={ready} onReady={onReady.poster} />
+          <Poster path={poster} palette={palette} behavior={{ person: 'person', collection: 'movie', movie: 'movie' }[behavior]} ready={ready} onReady={onReady.poster} requested_by={metadata?.requested_by} />
+          <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
+            Contribute to TheMovieDB
+          </a>
         </div>
         <div sx={UIDetails.styles.wrapper}>
-          <div sx={UIDetails.styles.metadata}>
-            <div sx={{ flex: 1 }}>
+          <div sx={UIDetails.styles.container}>
+            <div sx={UIDetails.styles.content}>
               <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 10 }}>
                 <h1 sx={UIDetails.styles.title}>{title}</h1>
               </Skeleton>
               {behavior === 'movie' && (
-                <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 2 }}>
+                <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 4 }}>
                   <h4 sx={UIDetails.styles.subtitle}>
                     {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
                     {!!entity.original_title && !!meaningful.year && (<span> </span>)}
@@ -75,8 +80,21 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
                   </h4>
                 </Skeleton>
               )}
+              <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 4 }}>
+                <Actions
+                  behavior={behavior}
+                  ready={ready}
+                  entity={entity}
+                  state={state}
+                  setState={setState}
+                  metadata={metadata}
+                  setMetadata={setMetadata}
+                  proceedRelease={proceedRelease}
+                  removeRelease={removeRelease}
+                />
+              </Skeleton>
               <Skeleton palette={palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
-                <details sx={UIDetails.styles.details} onToggle={handleDetailsToggle} open={toggled}>
+                <details sx={UIDetails.styles.details} onToggle={handleMeaningfulToggle} open={meaningfulState}>
                   <summary>
                     <span />
                     {
@@ -125,64 +143,23 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
                 </details>
               </Skeleton>
             </div>
-            <div sx={UIDetails.styles.actions}>
-              {behavior === 'movie' && (
-                <MovieState value={ready ? state : 'loading'} onChange={setState} compact={false} size='normal' />
-              )}
-              {behavior === 'person' && (
-                <PersonState value={ready ? state : 'loading'} onChange={setState} compact={false} size='normal' />
-              )}
-              {['movie'].includes(behavior) && ( // TODO: Should add 'collection' behavior
-                <Metadata
-                  entity={ready ? entity : {}}
-                  loading={!ready || state === 'loading'}
-                  metadata={metadata}
-                  onChange={setMetadata}
-                  button={(
-                    <Badge emoji='🎟' label='Sensorr' compact={false} />
-                  )}
-                />
-              )}
-              <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
-                Edit this page
-              </a>
-            </div>
-          </div>
-          <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 6 }} hide={!tagline}>
-            <p sx={UIDetails.styles.tagline}>
-              {tagline}
-            </p>
-          </Skeleton>
-          <Skeleton palette={palette} ready={ready} placeholder={false}>
-            <Overview children={overview} />
-          </Skeleton>
-          {['movie', 'collection'].includes(behavior) && (
-            <Skeleton palette={palette} ready={ready} placeholder={false}>
-              <div sx={UIDetails.styles.choices}>
-                <label>
-                  <input type='radio' name='details-view' checked={view === 'features'} onChange={() => setView('features')} />
-                  <span>Features</span>
-                </label>
-                <label>
-                  <input type='radio' name='details-view' checked={view === 'releases'} onChange={() => setView('releases')} />
-                  <span>Releases</span>
-                </label>
-              </div>
+            <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 6 }} hide={!tagline}>
+              <p sx={UIDetails.styles.tagline}>
+                {tagline}
+              </p>
             </Skeleton>
-          )}
+            <Skeleton palette={palette} ready={ready} placeholder={false}>
+              <Overview children={overview} />
+            </Skeleton>
+          </div>
         </div>
       </div>
       <div>
-        <div hidden={view !== 'features'} sx={UIDetails.styles.tabs}>
-          {Object.entries(tabs).map(([key, tabs]) => (
-            <Tabs key={key} id={key} tabs={tabs} palette={palette} />
+        <div sx={UIDetails.styles.tabs}>
+          {(tabs || []).map(({ id, component: Component = Tabs, tabs }) => (
+            <Component key={id} id={id} tabs={tabs} props={() => ({ palette })} />
           ))}
         </div>
-        {['movie'].includes(behavior) && ( // TODO: Should add 'collection' behavior
-          <div hidden={view !== 'releases'}>
-            <Sensorr metadata={metadata} entity={entity} ready={state !== 'loading' && entity.id && view === 'releases'} />
-          </div>
-        )}
       </div>
     </div>
   )
@@ -205,20 +182,41 @@ UIDetails.styles = {
   },
   poster: {
     display: 'flex',
-    justifyContent: ['center', 'flex-start'],
+    flexDirection: 'column',
+    alignItems: ['center', 'flex-start'],
     paddingRight: ['0em', '3em'],
     marginBottom: [2, '0em'],
     transition: 'margin 400ms ease-in-out',
+    '>a': {
+      color: 'grayDark',
+      marginY: 8,
+      textAlign: 'right',
+      textDecoration: 'none',
+      opacity: 0.625,
+      fontSize: 6,
+      transition: 'opacity ease 300ms',
+      '&:hover': {
+        opacity: 1,
+      },
+    },
   },
   wrapper: {
     flex: 1,
-    textAlign: ['center', 'left'],
-  },
-  metadata: {
     display: 'flex',
-    flexDirection: ['column', 'row'],
-    alignItems: ['stretch', 'flex-start'],
+    flexDirection: 'column',
     justifyContent: 'space-between',
+    textAlign: ['center', 'left'],
+    overflow: 'hidden',
+  },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  content: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     marginBottom: 4,
   },
   title: {
@@ -265,7 +263,7 @@ UIDetails.styles = {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginY: 2,
+    paddingY: 2,
     '>label': {
       marginX: 4,
       cursor: 'pointer',
@@ -293,30 +291,6 @@ UIDetails.styles = {
           color: 'white !important',
           backgroundColor: 'primary',
         },
-      },
-    },
-  },
-  actions: {
-    display: 'flex',
-    flexDirection: ['row', 'column'],
-    width: ['100%', '11em'],
-    marginLeft: ['0em', 2],
-    marginY: [6, '0em'],
-    '>label, >button': {
-      width: '100%',
-      marginY: ['0em', 8],
-      marginX: [8, '0em'],
-    },
-    '>a': {
-      color: 'gray3',
-      marginX: 4,
-      marginY: 8,
-      textAlign: 'right',
-      textDecoration: 'none',
-      opacity: 0.75,
-      transition: 'opacity ease 300ms',
-      '&:hover': {
-        opacity: 1,
       },
     },
   },

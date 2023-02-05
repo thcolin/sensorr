@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TMDB } from '@sensorr/tmdb'
-import config from './config'
-import { useAnimationContext } from '../contexts/Animation/Animation'
 
-const tmdb = new TMDB({
-  key: config.get('tmdb'),
-  region: config.get('region') || localStorage.getItem('region') || 'en-US',
-  adult: config.get('adult'),
-})
-
-export default tmdb
+const tmdb = new TMDB({})
 
 export const useTMDB = () => tmdb
 
@@ -30,7 +22,6 @@ export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { t
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState({} as any)
   const [error, setError] = useState(null)
-  const { ongoing } = useAnimationContext() as any
 
   const details = useMemo(() => transform(data as any), [data])
 
@@ -38,7 +29,7 @@ export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { t
     setLoading(true)
     setError(null)
 
-    if (ready === false || ongoing) {
+    if (ready === false) {
       return
     }
 
@@ -47,6 +38,10 @@ export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { t
       try {
         setData(await tmdb.fetch(uri, params, { signal: controller.signal }))
       } catch (error) {
+        if (controller.signal.aborted) {
+          return
+        }
+
         setError(error)
       } finally {
         setLoading(false)
@@ -54,8 +49,11 @@ export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { t
     }
 
     cb()
-    return () => controller.abort()
-  }, [uri, JSON.stringify(params), ready, ongoing])
+    return () => {
+      controller.abort()
+      setError(new DOMException('Request aborted.'))
+    }
+  }, [uri, JSON.stringify(params), ready])
 
   return { loading, error, data, details }
 }

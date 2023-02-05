@@ -1,5 +1,6 @@
 import { Fragment, memo, useMemo } from 'react'
-import { emojize, useHover } from '@sensorr/utils'
+import { LinkProps } from 'react-router-dom'
+import { emojize } from '@sensorr/utils'
 import { utils as tmdb } from '@sensorr/tmdb'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Link } from '../../atoms/Link/Link'
@@ -16,7 +17,7 @@ export interface AbstractEntityProps extends Omit<
   entity: any
   transformDetails: (any) => any
   display?: 'poster' | 'card' | 'avatar' | 'pretty' | 'tag'
-  link: (any) => string
+  link: (any) => LinkProps
   placeholder?: boolean
   ready?: boolean
 }
@@ -26,12 +27,9 @@ const UIAbstractEntity = ({
   transformDetails,
   display = 'poster',
   placeholder,
-  onHover,
   ready = true,
   ...props
 }: AbstractEntityProps, ref) => {
-  const [isHover, hoverProps] = useHover({ mouseEnterDelayMS: 0, mouseLeaveDelayMS: 0 }, onHover)
-
   // informations
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder]) as any
   const details = useMemo(() => transformDetails(entity), [entity])
@@ -71,7 +69,6 @@ const UIAbstractEntity = ({
           link={link}
           overrides={overrides}
           empty={Empty.movie}
-          onHover={hoverProps}
         />
       )
     case 'tag':
@@ -86,7 +83,6 @@ const UIAbstractEntity = ({
           link={link}
           overrides={overrides}
           empty={Empty.movie}
-          onHover={hoverProps}
         />
       )
   }
@@ -105,6 +101,7 @@ export const transformCollectionDetails = (entity) => {
   const release_dates_range = entity.parts?.filter(part => part.release_date).map(part => new Date(part.release_date).getFullYear())
 
   return ({
+    id: entity.id,
     title: entity.name,
     year: null,
     caption: entity.original_name || '',
@@ -122,15 +119,13 @@ export const transformCollectionDetails = (entity) => {
         <Link
           title={`Discover more movies from ${release_dates_range.slice(0, 1).pop()}-${release_dates_range.slice(-1).pop()}`}
           sx={{ whiteSpace: 'nowrap' }}
-          to={{
-            pathname: '/movie/discover',
-            state: {
-              controls: {
-                primary_release_date: [
-                  new Date(`01-01-${release_dates_range.slice(0, 1).pop()}`),
-                  new Date(`31-12-${release_dates_range.slice(-1).pop()}`),
-                ],
-              },
+          to='/movie/discover'
+          state={{
+            controls: {
+              primary_release_date: [
+                new Date(`01-01-${release_dates_range.slice(0, 1).pop()}`),
+                new Date(`31-12-${release_dates_range.slice(-1).pop()}`),
+              ],
             },
           }}
         >
@@ -141,12 +136,10 @@ export const transformCollectionDetails = (entity) => {
         <Link
           title={`Discover more "${tmdb.judge(entity)}" movies`}
           sx={{ whiteSpace: 'nowrap' }}
-          to={{
-            pathname: '/movie/discover',
-            state: {
-              controls: {
-                vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
-              },
+          to='/movie/discover'
+          state={{
+            controls: {
+              vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
             },
           }}
         >
@@ -157,15 +150,13 @@ export const transformCollectionDetails = (entity) => {
         <Link
           title={`Discover more movies with "~${entity.vote_count}" vote count`}
           sx={{ whiteSpace: 'nowrap' }}
-          to={{
-            pathname: '/movie/discover',
-            state: {
-              controls: {
-                vote_count: [
-                  Math.ceil((entity.vote_count - (entity.vote_count / 4)) / 100) * 100,
-                  Math.ceil((entity.vote_count + (entity.vote_count / 4)) / 100) * 100,
-                ],
-              },
+          to='/movie/discover'
+          state={{
+            controls: {
+              vote_count: [
+                Math.ceil((entity.vote_count - (entity.vote_count / 4)) / 100) * 100,
+                Math.ceil((entity.vote_count + (entity.vote_count / 4)) / 100) * 100,
+              ],
             },
           }}
         >
@@ -178,14 +169,12 @@ export const transformCollectionDetails = (entity) => {
             <Fragment key={genre.id}>
               <Link
                 title={`Discover more "${genre.name}" movies`}
-                to={{
-                  pathname: '/movie/discover',
-                  state: {
-                    controls: {
-                      with_genres: {
-                        behavior: 'or',
-                        values: [{ value: genre.id, label: genre.name }],
-                      },
+                to='/movie/discover'
+                state={{
+                  controls: {
+                    with_genres: {
+                      behavior: 'or',
+                      values: [{ value: genre.id, label: genre.name }],
                     },
                   },
                 }}
@@ -202,6 +191,7 @@ export const transformCollectionDetails = (entity) => {
 }
 
 export const transformCompanyDetails = (entity) => ({
+  id: entity.id,
   title: entity.name,
   year: null,
   caption: null,
@@ -212,6 +202,7 @@ export const transformCompanyDetails = (entity) => ({
 })
 
 export const transformKeywordDetails = (entity) => ({
+  id: entity.id,
   title: entity.name,
   year: null,
   caption: null,

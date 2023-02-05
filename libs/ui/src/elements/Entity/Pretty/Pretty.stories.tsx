@@ -97,11 +97,6 @@ Pretty.argTypes = {
       options: overrides,
     }
   },
-  onHover: {
-    control: {
-      type: null,
-    },
-  },
   empty: {
     control: {
       type: null,
@@ -111,7 +106,6 @@ Pretty.argTypes = {
 
 export const Loading = (args: any) => (
   <UIPretty {...args}
-    hover={null}
     link={''}
     focus={null}
     state={null}

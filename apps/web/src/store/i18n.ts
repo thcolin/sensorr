@@ -1,6 +1,11 @@
-import i18n from '@sensorr/i18n'
-import config from './config'
+declare const SENSORR_DEFAULTS: { [key: string]: any }
 
-i18n.changeLanguage(config.get('region') || localStorage.getItem('region') || 'en-US')
+import i18n from '@sensorr/i18n'
+
+try {
+  i18n.changeLanguage(SENSORR_DEFAULTS.region || localStorage.getItem('region') || 'en-US')
+} catch (err) {
+  console.warn(err)
+}
 
 export default i18n

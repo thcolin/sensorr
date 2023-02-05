@@ -5,10 +5,14 @@ import { breakpoints } from './breakpoints'
 import { borders } from './borders'
 import { global } from './global'
 import * as variants from './variants'
+import './modules.css'
 
 export const theme = {
+  config: {
+    initialColorModeName: 'light',
+    useColorSchemeMediaQuery: false,
+  },
   ...variants,
-  useColorSchemeMediaQuery: true,
   space: sizes,
   radii,
   borders,
@@ -19,7 +23,9 @@ export const theme = {
   colors,
   shadows,
   breakpoints,
-  global,
+  styles: {
+    root: global,
+  },
 }
 
 export default theme

@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { Link } from 'react-router-dom'
 
 const UITag = ({ details, link, ...props }) => (
-  <Link to={link} sx={UITag.styles.element}>{details.title}</Link>
+  <Link to={link?.to} state={link?.state} sx={UITag.styles.element}>{details.title}</Link>
 )
 
 UITag.styles = {

@@ -5,7 +5,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   label?: React.ReactNode
   compact?: boolean
   size?: 'small' | 'normal'
-  color?: 'auto' | 'dark' | 'light'
+  color?: 'auto' | 'dark' | 'theme' | 'light'
 }
 
 const UIBadge = ({
@@ -24,16 +24,17 @@ const UIBadge = ({
       ...UIBadge.styles.sizes[size],
     backgroundColor: {
       auto: 'shadow',
-      dark: 'darkShadow',
-      light: 'lightShadow',
+      dark: 'grayShadow',
+      theme: 'shadowTheme',
+      light: 'whiteShadow',
     }[color],
   }
   }), [compact, label, size, color])
 
   return (
     <span {...props} sx={styles.element}>
-      <span sx={UIBadge.styles.emoji}>{emoji}</span>
-      {!!label && <label sx={UIBadge.styles.label}>{label}</label>}
+      {!!emoji && <span sx={UIBadge.styles.emoji}>{emoji}</span>}
+      {!!label && <label sx={{ ...UIBadge.styles.label, marginLeft: !!emoji ? 4 : 12 }}>{label}</label>}
     </span>
   )
 }
@@ -44,18 +45,18 @@ UIBadge.styles = {
     justifyContent: 'center',
     alignItems: 'center',
     userSelect: 'none',
-    borderRadius: 0,
-    padding: 5,
-    paddingX: 3,
+    borderRadius: '2em',
+    paddingX: 2,
+    paddingY: 6,
   },
   emoji: {
     lineHeight: 'reset',
   },
   label: {
-    marginLeft: 6,
-    fontWeight: 800,
-    color: 'shadowText',
-    textTransform: 'uppercase',
+    fontFamily: 'monospace',
+    fontSize: 5,
+    color: 'textShadow',
+    textTransform: 'capitalize',
     lineHeight: 'reset',
     cursor: 'inherit',
   },

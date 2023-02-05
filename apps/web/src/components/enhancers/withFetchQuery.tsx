@@ -1,30 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import nanobounce from 'nanobounce'
+import toast from 'react-hot-toast'
 import { useControlsState } from '@sensorr/ui'
-import api from '../../store/api'
-import tmdb from '../../store/tmdb'
+import { API } from '@sensorr/services'
+import { TMDB } from '@sensorr/tmdb'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
 
 interface withFetchQueryProps {
   debounce?: boolean
   uri?: string
   query?: { uri: string, params: { [key: string]: string } },
-  transform?: (res) => any[]
+  transform?: (res) => { entities: any[], total: number }
 }
 
 const withFetchQuery = (
   defaultQuery: { uri?: string; params?: {}, init?: {} },
   initPage: number = null,
-  service: typeof api | typeof tmdb,
+  useService: (() => API) | (() => TMDB),
   useControlsValues?: () => [({ uri: string, params: { [key: string]: string }}), (query: { uri: string, params: { [key: string]: string} }) => void],
   steps: number = 20,
 ) => <TProps,>(WrappedComponent: React.JSXElementConstructor<TProps>) => {
   const withFetchQuery = ({
     debounce = false,
     query: propsQuery = { uri: defaultQuery.uri, params: defaultQuery.params },
-    transform = (res) => res.results,
+    transform = (res) => ({ entities: res.results, total: res.total_results }),
     ...props
   }: withFetchQueryProps & Omit<TProps, 'length' | 'entities' | 'onMore'>) => {
+    const service = useService()
     // Wait for first controlsQuery hydration by serializing initial state
     const [ready, setReady] = useState(!!useControlsValues)
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
@@ -56,33 +58,30 @@ const withFetchQuery = (
       try {
         processed.current.push(params.page)
         const res = await service.fetch(uri, params, defaultQuery.init)
-        const entities = transform(res)
-
-        return {
-          entities,
-          total: res.total_results,
-        }
+        return transform(res)
       } catch (error) {
         processed.current = processed.current.filter((p) => p !== params.page)
         throw error
       }
-    }, [])
+    }, [transform])
 
     const fetchEntities = useCallback((entities) => (
       Object.keys(entities.reduce((acc, { index }) => ({ ...acc, [Math.ceil(index / steps)]: true }), {}))
-        .map((page) => parseInt(page))
+        .map((page) => Number(page))
         .filter((page) => !!page && !processed.current.includes(page))
         .forEach(async (page) => {
           try {
             const { entities, total } = await fetcher(query.uri, { ...query.params, page })
             setTotal(total)
             setPages((pages) => ({ ...pages, [page]: entities }))
-            setLoading(false)
           } catch (err) {
             console.warn(err)
+            toast.error('Error while fetching entities')
+          } finally {
+            setLoading(false)
           }
         })
-    ), [query])
+    ), [fetcher, query])
 
     useEffect(() => {
       if ((props as any).error) {

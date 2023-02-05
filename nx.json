@@ -26,6 +26,9 @@
     "api": {
       "tags": []
     },
+    "cli": {
+      "tags": []
+    },
     "config": {
       "tags": []
     },
@@ -33,6 +36,9 @@
       "tags": []
     },
     "palette": {
+      "tags": []
+    },
+    "plex": {
       "tags": []
     },
     "sensorr": {

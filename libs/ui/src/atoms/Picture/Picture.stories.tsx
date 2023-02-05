@@ -61,12 +61,7 @@ Picture.argTypes = {
       options: empty,
     },
   },
-  onLoad: {
-    control: {
-      type: null,
-    },
-  },
-  onError: {
+  onReady: {
     control: {
       type: null,
     },

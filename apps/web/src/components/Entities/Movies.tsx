@@ -1,18 +1,18 @@
 import { useMemo } from 'react'
 import { compose } from '@sensorr/utils'
-import { EntitiesProps, Entities } from '@sensorr/ui'
+import { Entities, EntitiesProps } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import withFetchQuery from '../enhancers/withFetchQuery'
-import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
-import tmdb from '../../store/tmdb'
-import api from '../../store/api'
+import { useTMDB } from '../../store/tmdb'
+import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../enhancers/withProps'
+import withFetchCalendarQuery from '../../pages/Calendar/withFetchCalendarQuery'
 
 export const TrendingMovies = compose(
   withFetchQuery({
     uri: 'trending/movie/day',
     params: { sort_by: 'popularity.desc' },
-  }, 1, tmdb),
+  }, 1, useTMDB),
   withProps({
     empty: {
       emoji: '🍿',
@@ -32,7 +32,7 @@ export const TheatresMovies = compose(
     params: {
       region: i18n.language.slice(-2),
     },
-  }, null, tmdb),
+  }, null, useTMDB),
   withProps({
     empty: {
       emoji: '🍿',
@@ -52,7 +52,7 @@ export const UpcomingMovies = compose(
     params: {
       region: i18n.language.slice(-2),
     },
-  }, null, tmdb),
+  }, null, useTMDB),
   withProps({
     empty: {
       emoji: '🍿',
@@ -67,6 +67,9 @@ export const UpcomingMovies = compose(
 )(Entities)
 
 export const DiscoverMovies = compose(
+  withFetchQuery({
+    uri: 'discover/movie',
+  }, 1, useTMDB),
   withProps({
     empty: {
       emoji: '🍿',
@@ -78,16 +81,11 @@ export const DiscoverMovies = compose(
       ),
     },
   }),
-  withFetchQuery({
-    uri: 'discover/movie',
-  }, 1, tmdb),
 )(Entities)
 
 export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit<EntitiesProps, 'empty'> & { dateMin?: Date, dateMax?: Date }) => {
-  const { metadata: persons, loading: loadingPersons } = usePersonsMetadataContext() as any
   const CalendarEntities = useMemo(() => compose(
-    withFetchQuery({
-      uri: 'discover/movie',
+    withFetchCalendarQuery({
       params: {
         include_video: false,
         with_release_type: '3|2|1',
@@ -96,7 +94,7 @@ export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit
         ...(dateMax ? { 'primary_release_date.lte': dateMax.toISOString().substring(0, 10) } : {}),
         sort_by: 'primary_release_date.asc',
       },
-    }, 1, tmdb),
+    }),
     withProps({
       empty: {
         emoji: '🍿',
@@ -110,23 +108,13 @@ export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit
     })
   )(Entities), [])
 
-  return (!loadingPersons && !Object.keys(persons).length) ? null : (
-    <CalendarEntities
-      {...props}
-      ready={!loadingPersons && props.ready !== false}
-      {...(loadingPersons ? {} : {
-        query: {
-          params: {
-            with_people: Object.keys(persons).join('|'),
-          },
-        },
-      })}
-    />
+  return (
+    <CalendarEntities {...props} />
   )
 }
 
 export const LibraryMovies = compose(
-  withFetchQuery(api.query.movies.getMovies({}), 1, api),
+  withFetchQuery(APIQuery.movies.getMovies({}), 1, useAPI),
   withProps({
     empty: {
       emoji: '🍿',
@@ -141,7 +129,7 @@ export const LibraryMovies = compose(
 )(Entities)
 
 export const ArchivedMovies = compose(
-  withFetchQuery(api.query.movies.getMovies({ params: { state: 'archived' } }), 1, api),
+  withFetchQuery(APIQuery.movies.getMovies({ params: { state: 'archived' } }), 1, useAPI),
   withProps({
     empty: {
       emoji: '🍿',

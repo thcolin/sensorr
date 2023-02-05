@@ -1,7 +1,8 @@
 import { Fragment, memo, useMemo } from 'react'
+import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
 import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb } from '@sensorr/tmdb'
-import { emojize, humanize, useHover } from '@sensorr/utils'
+import { emojize, humanize } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Link } from '../../atoms/Link/Link'
@@ -12,14 +13,16 @@ import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Pretty } from '../../elements/Entity/Pretty/Pretty'
 import { MovieState } from './State/State'
 import { Credits } from './Credits/Credits'
+import { Guests } from './Guests/Guests'
+import { Proposal } from './Proposal/Proposal'
 
 export interface MovieProps extends Omit<
   PosterProps,
-  'link' | 'state' | 'focus' | 'placeholder' | 'actions' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty'
+  'link' | 'state' | 'focus' | 'placeholder' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty'
 > {
   entity: MovieInterface
   display?: 'poster' | 'card' | 'avatar' | 'pretty'
-  link?: ((MovieInterface) => string)
+  link?: ((MovieInterface) => LinkProps)
   focus?: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count'
   credits?: { entity: (PersonInterface | CastInterface | CrewInterface), state?: 'loading' | 'ignored' | 'followed' }[]
   placeholder?: boolean
@@ -27,7 +30,10 @@ export interface MovieProps extends Omit<
   setState?: (state: string) => any
   metadata?: any
   setMetadata?: (key: string, value: any) => any
+  proceedRelease?: (id: number, release: any, choice?: boolean) => void
+  removeRelease?: (release: any) => void
   ready?: boolean
+  guestsDisplay?: 'never' | 'hover' | 'always'
 }
 
 const UIMovie = ({
@@ -39,16 +45,16 @@ const UIMovie = ({
   setState,
   metadata,
   setMetadata,
-  onHover,
+  proceedRelease,
+  removeRelease,
   ready = true,
+  guestsDisplay = 'hover',
   ...props
 }: MovieProps) => {
-  const [isHover, hoverProps] = useHover({ mouseEnterDelayMS: 0, mouseLeaveDelayMS: 0 }, onHover)
-
   // data
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder]) as MovieInterface
   const details = useMemo(() => transformMovieDetails(entity), [entity])
-  const link = useMemo(() => (props.link || ((entity) => !!entity?.id && `/movie/${entity.id}`))(entity), [entity, props.link])
+  const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/movie/${entity.id}` }))(entity), [entity, props.link])
 
   // components
   const focus = useMemo(() => entity.id === null ? [] : [
@@ -61,10 +67,23 @@ const UIMovie = ({
     { value: state, onChange: setState, compact: true },
   ], [entity, state, setState]) as [React.FC, any]
 
-  const relations = useMemo(() => !['pretty', 'poster'].includes(display) || !credits?.length ? [] : [
-    Credits,
-    { credits, display, hidden: !isHover },
-  ], [credits, display, isHover]) as [React.FC, any]
+  const action = useMemo(() => {
+    const props = {
+      releases: metadata?.releases?.filter(release => !release.proposal),
+      proposals: metadata?.releases?.filter(release => release.proposal),
+      proceed: proceedRelease,
+    }
+
+    return (entity.id === null || !props.proposals?.length) ? [] : [Proposal, props]
+  }, [entity?.id, metadata]) as [React.FC, any]
+
+  const guests = useMemo(() => (['pretty', 'poster'].includes(display) && metadata?.requested_by?.length && guestsDisplay === 'always' || (guestsDisplay !== 'never' && state === 'ignored')) ? [Guests, {
+    guests: (metadata?.requested_by || []).reduce((guests, guest) => [
+      ...guests,
+      { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } },
+    ], []),
+  }, guestsDisplay] : [], [guestsDisplay, display, state, metadata?.requested_by]) as [React.FC, any, string]
+  const relations = useMemo(() => (['pretty', 'poster'].includes(display) && credits?.length) ? [Credits, { display, length: display === 'poster' && guests[1]?.guests?.length && 2, credits }] : [], [credits, display, guests]) as [React.FC, any]
 
   // stuff
   const overrides = useMemo(() => ({
@@ -103,10 +122,11 @@ const UIMovie = ({
           link={link}
           state={badge}
           focus={focus}
+          action={action}
           overrides={overrides}
           empty={Empty.movie}
           relations={relations}
-          onHover={hoverProps}
+          guests={guests}
         />
       )
     default:
@@ -117,10 +137,11 @@ const UIMovie = ({
           link={link}
           state={badge}
           focus={focus}
+          action={action}
           overrides={overrides}
           empty={Empty.movie}
           relations={relations}
-          onHover={hoverProps}
+          guests={guests}
         />
       )
   }
@@ -147,6 +168,7 @@ export interface MovieDetails extends Details {
 }
 
 export const transformMovieDetails = (entity: MovieInterface): MovieDetails => ({
+  id: entity.id || null,
   title: entity.title || entity.original_title || '',
   year: !!entity.release_date && new Date(entity.release_date).getFullYear(),
   caption: Array.isArray(entity.genres) && !!entity.genres.length && entity.genres.map((genre) => genre.name).join(', '),
@@ -171,15 +193,13 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <Link
         title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              primary_release_date: [
-                new Date(entity.release_date),
-                new Date(entity.release_date),
-              ],
-            },
+        to='/movie/discover'
+        state={{
+          controls: {
+            primary_release_date: [
+              new Date(entity.release_date),
+              new Date(entity.release_date),
+            ],
           },
         }}
       >
@@ -190,15 +210,13 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <Link
         title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              primary_release_date: [
-                new Date(entity.release_date),
-                new Date(entity.release_date),
-              ],
-            },
+        to='/movie/discover'
+        state={{
+          controls: {
+            primary_release_date: [
+              new Date(entity.release_date),
+              new Date(entity.release_date),
+            ],
           },
         }}
       >
@@ -213,12 +231,10 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <Link
         title={`Discover more "${tmdb.judge(entity)}" movies`}
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
-            },
+        to='/movie/discover'
+        state={{
+          controls: {
+            vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
           },
         }}
       >
@@ -229,15 +245,13 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <Link
         title={`Discover more movies with "~${entity.vote_count}" vote count`}
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              vote_count: [
-                Math.ceil((entity.vote_count - (entity.vote_count / 4)) / 100) * 100,
-                Math.ceil((entity.vote_count + (entity.vote_count / 4)) / 100) * 100,
-              ],
-            },
+        to='/movie/discover'
+        state={{
+          controls: {
+            vote_count: [
+              Math.ceil((entity.vote_count - (entity.vote_count / 4)) / 100) * 100,
+              Math.ceil((entity.vote_count + (entity.vote_count / 4)) / 100) * 100,
+            ],
           },
         }}
       >
@@ -255,14 +269,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           <Fragment key={genre.id}>
             <Link
               title={`Discover more "${genre.name}" movies`}
-              to={{
-                pathname: '/movie/discover',
-                state: {
-                  controls: {
-                    with_genres: {
-                      behavior: 'or',
-                      values: [{ value: genre.id, label: genre.name }],
-                    },
+              to='/movie/discover'
+              state={{
+                controls: {
+                  with_genres: {
+                    behavior: 'or',
+                    values: [{ value: genre.id, label: genre.name }],
                   },
                 },
               }}
@@ -278,15 +290,13 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <Link
         title={`Discover more movies with similar runtime`}
         sx={{ whiteSpace: 'nowrap' }}
-        to={{
-          pathname: '/movie/discover',
-          state: {
-            controls: {
-              with_runtime: [
-                Math.floor(entity.runtime / 60) * 60,
-                Math.ceil(entity.runtime / 60) * 60,
-              ],
-            },
+        to='/movie/discover'
+        state={{
+          controls: {
+            with_runtime: [
+              Math.floor(entity.runtime / 60) * 60,
+              Math.ceil(entity.runtime / 60) * 60,
+            ],
           },
         }}
       >
@@ -300,19 +310,17 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         <Link
           title={`Discover more movies with "${language.name[0]}" as original language`}
           sx={{ whiteSpace: 'nowrap' }}
-          to={{
-            pathname: '/movie/discover',
-            state: {
-              controls: {
-                with_original_language: {
-                  behavior: 'or',
-                  values: [
-                    {
-                      value: entity.original_language,
-                      label: language.name[0],
-                    },
-                  ],
-                },
+          to='/movie/discover'
+          state={{
+            controls: {
+              with_original_language: {
+                behavior: 'or',
+                values: [
+                  {
+                    value: entity.original_language,
+                    label: language.name[0],
+                  },
+                ],
               },
             },
           }}
@@ -337,14 +345,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           <Fragment key={company.id}>
             <Link
               title={`Discover more movies from "${company.name}" production company`}
-              to={{
-                pathname: '/movie/discover',
-                state: {
-                  controls: {
-                    with_companies: {
-                      behavior: 'or',
-                      values: [{ value: company.id, label: company.name }],
-                    },
+              to='/movie/discover'
+              state={{
+                controls: {
+                  with_companies: {
+                    behavior: 'or',
+                    values: [{ value: company.id, label: company.name }],
                   },
                 },
               }}
@@ -362,14 +368,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           <Fragment key={keyword.id}>
             <Link
               title={`Discover more movies associated to "${keyword.name}" keyword`}
-              to={{
-                pathname: '/movie/discover',
-                state: {
-                  controls: {
-                    with_keywords: {
-                      behavior: 'or',
-                      values: [{ value: keyword.id, label: keyword.name }],
-                    },
+              to='/movie/discover'
+              state={{
+                controls: {
+                  with_keywords: {
+                    behavior: 'or',
+                    values: [{ value: keyword.id, label: keyword.name }],
                   },
                 },
               }}

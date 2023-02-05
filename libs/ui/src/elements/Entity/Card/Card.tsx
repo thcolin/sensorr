@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Poster, PosterProps } from '../Poster/Poster'
 
-export interface CardProps extends Omit<PosterProps, 'focus' | 'actions' | 'relations' | 'overrides' | 'onReady' | 'onHover' | 'palette'> {
+export interface CardProps extends Omit<PosterProps, 'focus' | 'actions' | 'relations' | 'overrides' | 'onReady' | 'palette'> {
   overrides?: { ready?: boolean }
 }
 
@@ -17,7 +17,7 @@ const UICard = ({
 
   return (
     <CardWrapper>
-      <Link to={link} disabled={overrides.ready === false} sx={UICard.styles.link}>
+      <Link to={link?.to} state={link?.state} disabled={overrides.ready === false} sx={UICard.styles.link}>
         <span sx={UICard.styles.poster}>
           <Poster
             {...props}

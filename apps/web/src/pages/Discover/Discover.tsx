@@ -20,8 +20,8 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCreditsDelayed } from '../../components/Movie/Movie'
-import tmdb, { withTMDB } from '../../store/tmdb'
+import { MovieWithCredits } from '../../components/Movie/Movie'
+import { useTMDB, withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withHistoryState from '../../components/enhancers/withHistoryState'
@@ -29,7 +29,7 @@ import withHistoryState from '../../components/enhancers/withHistoryState'
 export const Discover = compose(
   withProps({
     display: 'grid',
-    child: MovieWithCreditsDelayed, // TODO: Should improve
+    child: MovieWithCredits,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -42,7 +42,7 @@ export const Discover = compose(
   }),
   withFetchQuery({
     uri: 'discover/movie',
-  }, 1, tmdb, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t('pages.discover.title'),
     useStatistics,
@@ -52,13 +52,16 @@ export const Discover = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: ['1fr 0fr 0fr', '1fr 0fr 0fr 0fr'],
+        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
         gap: '3em',
         gridTemplateAreas: [
           `"results toggle sort_by"`,
           `"title results toggle sort_by"`,
         ],
+        '>h4': {
+          display: ['none', 'block'],
+        },
       },
       aside: {
         display: 'grid',
@@ -165,6 +168,7 @@ export const Discover = compose(
       },
       vote_count: {
         ...fields.vote_count,
+        initial: [0, 15000],
         component: FilterVoteCount,
       },
       with_runtime: {

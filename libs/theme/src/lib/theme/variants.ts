@@ -1,19 +1,11 @@
 import { icons } from './icons'
 
-// TODO: Should replace css rules
-export const layout = {
-  row: {
-    display: 'flex',
-    flexDirection: 'row',
-  },
-  column: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  center: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+export const heading = {
+  default: {
+    color: 'text',
+    fontFamily: 'heading',
+    lineHeight: 'body',
+    fontWeight: 'heading',
   },
 }
 
@@ -23,6 +15,12 @@ export const link = {
     textDecoration: 'none',
     ':hover:not(:disabled)': {
       cursor: 'pointer',
+    },
+  },
+  default: {
+    color: 'primary',
+    ':hover': {
+      color: 'accent',
     },
   },
 }
@@ -44,8 +42,8 @@ export const button = {
   },
   default: {
     variant: 'button.reset',
-    paddingY: 4,
-    paddingX: 2,
+    paddingY: 6,
+    paddingX: 4,
     fontWeight: 'semibold',
     border: '0.125em solid',
     borderColor: 'inherit',
@@ -66,6 +64,33 @@ export const select = {
       cursor: 'pointer',
     },
   },
+  default: {
+    appearance: 'none',
+    position: 'relative',
+    marginY: 12,
+    paddingX: 4,
+    paddingY: 8,
+    background: 'none',
+    fontSize: 5,
+    fontFamily: 'body',
+    lineHeight: 'body',
+    width: '100%',
+    outline: 'none',
+    color: 'text',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25rem',
+    transition: 'border-color 100ms ease-in-out',
+    ':hover': {
+      borderColor: 'grayDarker',
+    },
+    ':focus,:active': {
+      borderColor: 'grayDarkest'
+    },
+    ':not(:disabled)': {
+      cursor: 'pointer',
+    },
+  },
 }
 
 export const input = {
@@ -81,6 +106,29 @@ export const input = {
     width: '100%',
     outline: 'none',
     color: 'inherit',
+  },
+  default: {
+    appearance: 'none',
+    marginY: 12,
+    paddingX: 4,
+    paddingY: 8,
+    background: 'none',
+    fontSize: 5,
+    fontFamily: 'body',
+    lineHeight: 'body',
+    width: '100%',
+    outline: 'none',
+    color: 'text',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25rem',
+    transition: 'border-color 100ms ease-in-out',
+    ':hover': {
+      borderColor: 'grayDarker',
+    },
+    ':focus,:active': {
+      borderColor: 'grayDarkest'
+    },
   },
 }
 
@@ -115,10 +163,10 @@ export const radio = {
 }
 
 export const hr = {
-  reset: {
+  default: {
     border: 'none',
     borderBottom: '1px solid',
-    borderColor: 'gray2',
+    borderColor: 'grayLight',
     margin: 12,
   },
 }
@@ -129,8 +177,28 @@ export const code = {
   },
   tag: {
     borderRadius: '0.25em',
-    backgroundColor: 'darkShadow',
+    backgroundColor: 'gray',
     padding: '0.25em 0.5em',
     fontSize: '0.875em',
+  }
+}
+
+export const textarea = {
+  default: {
+    backgroundColor: 'grayLight',
+    color: 'text',
+    paddingX: 6,
+    paddingY: 8,
+    borderColor: 'grayDark',
+    borderWidth: '1px',
+    borderRadius: '0.25em',
+    outline: 'none',
+    transition: 'border-color 100ms ease-in-out',
+    ':hover': {
+      borderColor: 'grayDarker',
+    },
+    ':focus,:active': {
+      borderColor: 'grayDarkest'
+    },
   }
 }

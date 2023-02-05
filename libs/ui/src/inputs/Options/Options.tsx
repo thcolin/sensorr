@@ -14,19 +14,21 @@ export interface OptionsProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   options: InputInterface[]
   value: any
   onChange: (e: React.ChangeEvent<HTMLInputElement>, input: InputInterface, value: any) => void
+  behavior?: 'or' | 'and'
+  onBehavior?: (value: 'or' | 'and') => void
   testChecked: (input: InputInterface, value: any) => boolean
   onReset?: () => void
   disabled?: boolean
   display?: 'grid' | 'column'
 }
 
-const UIOptions = ({ type, label, options, value, onChange, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
+const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
   const styles = useMemo(() => ({
     ...UIOptions.styles,
     option: {
       grid: {
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, 12em)',
+        gridTemplateColumns: 'repeat(auto-fill, 22em)',
         justifyContent: 'space-between',
       },
       column: {
@@ -42,8 +44,22 @@ const UIOptions = ({ type, label, options, value, onChange, testChecked, onReset
 
   return (
     <div sx={styles.element} {...props}>
-      <label sx={styles.label} onClick={!disabled ? onReset : undefined} style={(!disabled && onReset) ? { cursor: 'pointer' } : {}}>
-        {label}
+      <label sx={UIOptions.styles.label}>
+        <span
+          onClick={() => !disabled && onReset && onReset()}
+          style={!disabled && onReset ? { cursor: 'pointer' } : {}}
+        >
+          {label}
+        </span>
+        {!!(behavior && onBehavior) && (
+          <span
+            sx={UIOptions.styles.badge}
+            onClick={() => onBehavior({ and: 'or', or: 'and' }[behavior] as any)}
+            style={!disabled ? { cursor: 'pointer' } : {}}
+          >
+            {behavior}
+          </span>
+        )}
       </label>
       <div sx={styles.option}>
         {options.map((input) => (
@@ -75,8 +91,26 @@ UIOptions.styles = {
     flexDirection: 'column',
   },
   label: {
+    display: 'inline-flex',
     paddingBottom: 4,
+    alignItems: 'center',
     fontWeight: 'semibold',
+    '>*:first-of-type': {
+      flex: 1,
+    },
+  },
+  badge: {
+    padding: '0.25em 0.375em 0.125em 0.375em',
+    paddingY: 10,
+    paddingX: 9,
+    border: '1px solid',
+    borderColor: 'inherit',
+    borderRadius: '0.25em',
+    fontFamily: 'monospace',
+    fontSize: 6,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    color: 'inherit',
   },
   emoji: {
     marginRight: 8,

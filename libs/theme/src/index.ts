@@ -1,5 +1,4 @@
 import './sx-prop'
-export * from './lib/Global/Global'
 export * from './lib/theme'
 import { animations as _animations } from './lib/theme/animations'
 export const animations = _animations

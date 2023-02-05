@@ -1,12 +1,12 @@
 const webpack = require('webpack')
 const worker = require('worker-plugin')
 const workbox = require('workbox-webpack-plugin')
-const terser = require('terser-webpack-plugin')
+// const terser = require('terser-webpack-plugin')
 const pwaManifest = require('webpack-pwa-manifest')
 const nrwlConfig = require('@nrwl/react/plugins/webpack.js')
 
 const manifest = require('./manifest.js')
-const local = require('../../config/local.json')
+// const local = require('../../config.json')
 
 module.exports = (config, context) => {
   nrwlConfig(config)
@@ -33,7 +33,7 @@ module.exports = (config, context) => {
     },
     // optimization: {
     //   ...(config.optimization || {}),
-    //   // TODO: Only intended for dev purposes, comment for production
+    //   // Only intended for debug purposes, comment for production
     //   minimize: true,
     //   minimizer: [
     //     new terser({
@@ -47,7 +47,9 @@ module.exports = (config, context) => {
     plugins: [
       ...(config.plugins || []),
       new webpack.DefinePlugin({
-        SENSORR: JSON.stringify({ config: local }),
+        SENSORR_DEFAULTS: {
+          region: 'en', // local.region,
+        },
       }),
       new webpack.NormalModuleReplacementPlugin(
         /^yargs-parser$/,

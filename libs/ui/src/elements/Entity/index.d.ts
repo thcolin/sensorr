@@ -1,4 +1,5 @@
 export interface Details {
+  id: number,
   title: string,
   year?: number,
   caption?: string,

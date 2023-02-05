@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Query, Post, Sse, HttpException, HttpStatus } from '@nestjs/common'
+import { Body, Controller, Get, Query, Post, Sse, Delete } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { MoviesService } from './movies.service'
 import { MovieDTO } from './movie.dto'
@@ -12,6 +12,11 @@ export class MoviesController {
     return this.moviesService.upsertMovie(movie)
   }
 
+  @Delete()
+  async deleteMovie(@Body() movie: MovieDTO) {
+    return this.moviesService.deleteMovie(movie)
+  }
+
   @Get()
   async getMovies(
     @Query('page') page = 1,
@@ -23,13 +28,17 @@ export class MoviesController {
   }
 
   @Get('metadata')
-  async getMetadata(): Promise<{}> {
-    return this.moviesService.getMetadata()
+  async getMetadata(
+    @Query('page') page = 1,
+  ): Promise<{}> {
+    return this.moviesService.getMetadata(page)
   }
 
   @Get('statistics')
-  async getStatistics(): Promise<{}> {
-    return this.moviesService.getStatistics()
+  async getStatistics(
+    @Query() query,
+  ): Promise<{}> {
+    return this.moviesService.getStatistics(query)
   }
 
   @Sse('changes')

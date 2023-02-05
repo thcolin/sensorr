@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useTMDB } from '../../store/tmdb'
 
 const searchContext = createContext({})
@@ -34,9 +35,10 @@ export const Provider = ({ ...props }) => {
           tmdb.fetch('search/company', { query }, { signal: controller.signal }),
         ])
         setResults({ movies, persons, collections, keywords, companies })
-      } catch (e) {
+      } catch (err) {
         setResults(null)
-        console.warn(e)
+        console.warn(err)
+        toast.error('Error while fetching results')
       } finally {
         setLoading(false)
       }

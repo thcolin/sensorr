@@ -4,27 +4,33 @@ import { Znab } from './znab'
 
 export class Sensorr {
   znabs: ZnabInterface[] = []
+  policies: any[]
   region: string
   options?: {
     proxify?: boolean,
+    access_token?: string,
   }
 
   constructor({
-    znabs,
-    region,
+    znabs = [],
+    policies = [],
+    region = 'en-US',
   }: {
-    znabs: ZnabInterface[],
-    region: string,
+    znabs?: ZnabInterface[],
+    policies?: any[],
+    region?: string,
   }, options: {
     proxify?: boolean,
+    access_token?: string,
   } = {}) {
     this.znabs = znabs
+    this.policies = policies
     this.region = region
-    this.options = options
+    this.options = options || {}
   }
 
-  useQuery(movie, query = null) {
-    const defaultQuery = {
+  getQuery(movie, query = null, banned_releases = []) {
+    const _defaults = movie?.query?._defaults ? movie?.query?._defaults : {
       titles: [...new Set(
         [
           movie?.title,
@@ -32,7 +38,7 @@ export class Sensorr {
           ...(movie?.alternative_titles?.titles || [])
             .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', this.region.slice(-2)].includes(iso_3166_1))
             .map(({ title }) => title),
-        ].filter(v => v).map(title => clean(title))
+        ].filter(v => v).map(title => clean(title)).filter(v => v)
       )],
       terms: [...new Set(
         [
@@ -41,14 +47,14 @@ export class Sensorr {
           ...(movie?.alternative_titles?.titles || [])
             .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', this.region.slice(-2)].includes(iso_3166_1))
             .map(({ title }) => title),
-        ].filter(v => v).map(title => clean(title))
+        ].filter(v => v).map(title => clean(title)).filter(v => v)
       )]
       .reduce((acc, value, index, array) => [
         ...acc,
         ...(array.filter((v, i) => i !== index).every(v => !value.includes(v)) ? [value] : []),
       ], []),
       years: [...new Set([
-        `${new Date(movie.release_date).getFullYear()}`,
+        movie?.release_date && `${new Date(movie.release_date).getFullYear()}`,
         ...(movie?.release_dates?.results || []).reduce((acc, curr) => [
           ...acc,
           ...(curr.release_dates || [])
@@ -58,13 +64,18 @@ export class Sensorr {
       ].filter(v => v))],
     }
 
-    return [(query?.titles?.length && query?.terms?.length && query?.years?.length) ? query : defaultQuery, defaultQuery]
+    return {
+      _defaults,
+      banned_releases,
+      ...((query?.titles?.length && query?.terms?.length && query?.years?.length) ? query : _defaults),
+    }
   }
 
   async *call(
     query: { terms: string[], [key: string]: any },
     onTasksChange: ({}: any) => void,
-    signal?: any
+    signal?: any,
+    silent?: boolean,
   ) {
     const id = nanoid()
     const handleTasksChange = (tasks) => signal?.aborted !== true && onTasksChange([...tasks.map(task => ({ ...task }))])
@@ -80,13 +91,16 @@ export class Sensorr {
 
     for (const [index, task] of tasks.entries()) {
       try {
-        signal?.throwIfAborted()
+        signal?.throwIfAborted?.()
         tasks[index].ongoing = true
         handleTasksChange(tasks)
-        tasks[index].releases = await new Znab(task.znab, this.options).search(task.term, { signal })
+        tasks[index].releases = await new Znab(task.znab, this.options).search(task.term, {
+          ...(this.options.access_token ? { headers: { Authorization: `Bearer ${this.options.access_token}` } } : {}),
+          signal,
+        })
         tasks[index].ongoing = false
         tasks[index].done = true
-        signal?.throwIfAborted()
+        signal?.throwIfAborted?.()
         yield {
           id,
           znab: task.znab,
@@ -98,7 +112,10 @@ export class Sensorr {
           throw e
         }
 
-        console.warn(e)
+        if (!silent) {
+          console.warn(e)
+        }
+
         tasks[index].ongoing = false
         tasks[index].done = true
         tasks[index].error = e

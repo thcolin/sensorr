@@ -52,6 +52,58 @@
         }
       }
     },
+    "cli": {
+      "root": "apps/cli",
+      "sourceRoot": "apps/cli/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/cli",
+            "main": "apps/cli/src/main.js",
+            "tsConfig": "apps/cli/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/cli/src/environments/environment.js",
+                  "with": "apps/cli/src/environments/environment.prod.js"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "cli:build",
+            "inspect": false,
+            "watch": false
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/cli/**/*.js"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/cli"],
+          "options": {
+            "jestConfig": "apps/cli/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "config": {
       "root": "libs/config",
       "sourceRoot": "libs/config/src",
@@ -121,6 +173,38 @@
           "outputs": ["coverage/libs/palette"],
           "options": {
             "jestConfig": "libs/palette/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "plex": {
+      "root": "libs/plex",
+      "sourceRoot": "libs/plex/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/plex",
+            "tsConfig": "libs/plex/tsconfig.lib.json",
+            "packageJson": "libs/plex/package.json",
+            "main": "libs/plex/src/index.ts",
+            "assets": ["libs/plex/*.md"]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/plex/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/plex"],
+          "options": {
+            "jestConfig": "libs/plex/jest.config.js",
             "passWithNoTests": true
           }
         }

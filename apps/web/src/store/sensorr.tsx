@@ -1,16 +1,19 @@
 import { useCallback, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Sensorr } from '@sensorr/sensorr'
 import { useAbortController } from '@sensorr/utils'
-import config from './config'
 
-const sensorr = new Sensorr({ znabs: config.get('znabs'), region: config.get('region') }, { proxify: true })
+const sensorr = new Sensorr({}, {
+  proxify: true,
+  access_token: localStorage.getItem('sensorr_access_token'),
+})
+
 export default sensorr
-
-export const SENSORR_POLICIES = config.get('policies')
 
 export const useSensorr = () => sensorr
 
 export const useSensorrRequest = () => {
+  const sensorr = useSensorr()
   const { abort } = useAbortController()
   const [id, setID] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -50,12 +53,14 @@ export const useSensorrRequest = () => {
 
       setDone(true)
       setLoading(false)
-    } catch (e) {
-      console.warn(e)
+    } catch (err) {
+      console.warn(err)
 
-      if (e.name !== 'AbortError') {
+      if (err.name !== 'AbortError') {
         setDone(true)
         setLoading(false)
+
+        toast.error('Error while fetching releases from Znabs')
       }
     }
   }, [])

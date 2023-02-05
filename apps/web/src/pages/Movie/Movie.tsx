@@ -1,20 +1,27 @@
 import { useMemo } from 'react'
-import { transformMovieDetails, transformCollectionDetails, Warning, Link } from '@sensorr/ui'
+import { transformMovieDetails, transformCollectionDetails, Warning, Link, Entities } from '@sensorr/ui'
 import { utils } from '@sensorr/tmdb'
-import { compose } from '@sensorr/utils'
+import { compose, emojize } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useTMDBRequest } from '../../store/tmdb'
+import { useTMDB, useTMDBRequest } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import Details from '../Details/Details'
+import { withTabsBehavior } from '../../components/Entities/Tabs'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
+import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withProps from '../../components/enhancers/withProps'
-import MovieComponent from '../../components/Movie/Movie'
+import { MovieWithCredits } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
 
+const TMDBTabs = compose(
+  withTabsBehavior(),
+  withFetchQuery({}, 0, useTMDB),
+)(Entities)
+
 const MovieDetails = compose(
-  withMovieMetadataContext(),
+  withMovieMetadataContext({ enhanced: true }),
   withProps({ behavior: 'movie' }),
 )(Details)
 
@@ -37,35 +44,44 @@ const Movie = ({ ...props }) => {
   const ready = !ongoing && !movie.loading && (!movie?.data?.belongs_to_collection || !collection.loading)
 
   const tabs = useMemo(() => {
+    const saga = {
+      id: `saga-${id}`,
+      label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
+      entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
+      child: MovieWithCredits,
+      props: ({ index }) => ({ display: (ready || index < 5) ? 'pretty' : 'poster' }),
+      ready: ready,
+      more: {
+        to: `/collection/${movie.data?.belongs_to_collection?.id}`,
+      },
+    }
+
     const recommendations = {
+      id: `recommendations-${id}`,
       label: t('items.movies.recommendations.label'),
       entities: movie.data?.recommendations?.results || [],
-      child: MovieComponent,
+      child: MovieWithCredits,
       ready: ready,
       props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
+      more: {
+        to: `/movie/${id}/recommendations`,
+      },
     }
 
     const similar = {
+      id: `similar-${id}`,
       label: t('items.movies.similar.label'),
       entities: movie.data?.similar?.results || [],
-      child: MovieComponent,
+      child: MovieWithCredits,
       ready: ready,
       props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
-    }
-
-    const saga = {
-      label: (
-        <Link to={`/collection/${movie.data?.belongs_to_collection?.id}`}>
-          {t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' })}
-        </Link>
-      ),
-      entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
-      child: MovieComponent,
-      props: ({ index }) => ({ display: (ready || index < 5) ? 'pretty' : 'poster' }),
-      ready: ready,
+      more: {
+        to: `/movie/${id}/similar`,
+      },
     }
 
     const cast = {
+      id: `cast-${id}`,
       label: t('items.persons.cast.label'),
       entities: utils.sortCredits(movie.data?.credits, Object.keys(persons), ['cast']),
       child: Person,
@@ -73,14 +89,19 @@ const Movie = ({ ...props }) => {
     }
 
     const crew = {
+      id: `crew-${id}`,
       label: t('items.persons.crew.label'),
       entities: utils.sortCredits(movie.data?.credits, Object.keys(persons), ['crew']),
       child: Person,
       ready: ready,
     }
 
-    const movies = ((!ready || (recommendations.entities?.length || similar.entities?.length)) && {
-      movies: {
+    const related = ((!ready || (saga.entities?.length || recommendations.entities?.length || similar.entities?.length)) && {
+      id: 'related',
+      tabs: {
+        ...((!ready || saga.entities?.length) && {
+          saga,
+        }),
         ...((!ready || recommendations?.entities?.length) && {
           recommendations,
         }),
@@ -91,7 +112,8 @@ const Movie = ({ ...props }) => {
     })
 
     const credits = ((!ready || (cast.entities?.length || crew.entities?.length)) && {
-      credits: {
+      id: 'credits',
+      tabs: {
         ...((!ready || cast.entities?.length) && {
           cast,
         }),
@@ -101,19 +123,112 @@ const Movie = ({ ...props }) => {
       },
     })
 
-    if (saga.entities?.length) {
-      return ({
-        collections: { saga },
-        ...credits,
-        ...movies,
-      })
-    }
+    const directors = movie.data?.credits?.crew?.filter(credit => credit.job === 'Director') || [{ id: null }]
+    const headliners = movie.data?.credits?.cast?.filter(cast => cast.order <= 2) || [{ id: null }, { id: null }, { id: null }]
 
-    return ({
-      ...movies,
-      ...credits,
+    const linked = ((!ready || (directors.length || headliners.length)) && {
+      id: 'linked',
+      component: TMDBTabs,
+      tabs: {
+        ...((!ready || directors?.length) && (directors || []).reduce((acc, curr, index) => ({
+          ...acc,
+          [`directors-${index}`]: {
+            id: `linked-${id}-${curr.id || index}`,
+            label: emojize('🎬', curr.name),
+            child: MovieWithCredits,
+            ready: ready,
+            query: { uri: `person/${curr.id}/movie_credits` },
+            transform: (res) => {
+              const entities = utils.sortCredits(res || { cast: [], crew: [] }, [], ['crew']).sort((a, b) => b.vote_count - a.vote_count).filter(credit => credit.job === 'Director').slice(0, 20)
+              return { entities, total: Math.min(entities.length, 20) }
+            },
+            props: ({ index, entity }) => ({
+              display: index < 5 ? 'pretty' : 'poster',
+              credits: [
+                {
+                  entity: {
+                    cast_id: null,
+                    character: entity.character,
+                    credit_id: entity.credit_id,
+                    override: entity.override,
+                    gender: entity.gender,
+                    id: curr?.id,
+                    name: curr?.name,
+                    order: entity.order,
+                    profile_path: curr?.profile_path,
+                  },
+                },
+              ],
+            }),
+            more: {
+              to: '/movie/discover',
+              state: {
+                controls: {
+                  with_crew: {
+                    behavior: 'or',
+                    values: [{ value: curr?.id, label: curr?.name }],
+                  },
+                  sorting: 'popularity',
+                  reverse: false,
+                },
+              },
+            },
+          }
+        }), {})),
+        ...((!ready || headliners?.length) && (headliners || []).reduce((acc, curr, index) => ({
+          ...acc,
+          [`headliners-${index}`]: {
+            id: `linked-${id}-${curr.id || index}`,
+            label: emojize('🧑‍🎤', curr.name),
+            child: MovieWithCredits,
+            ready: ready,
+            query: { uri: `person/${curr.id}/movie_credits` },
+            transform: (res) => {
+              const entities = utils.sortCredits(res || { cast: [], crew: [] }, [], ['cast']).sort((a, b) => (b.vote_count / ((b.order + 1) / 5)) - (a.vote_count / ((a.order + 1) / 5))).slice(0, 20)
+              return { entities, total: Math.min(entities.length, 20) }
+            },
+            props: ({ index, entity }) => ({
+              display: index < 5 ? 'pretty' : 'poster',
+              credits: [
+                {
+                  entity: {
+                    cast_id: null,
+                    character: entity.character,
+                    credit_id: entity.credit_id,
+                    override: entity.override,
+                    gender: entity.gender,
+                    id: curr?.id,
+                    name: curr?.name,
+                    order: entity.order,
+                    profile_path: curr?.profile_path,
+                  },
+                },
+              ],
+            }),
+            more: {
+              to: '/movie/discover',
+              state: {
+                controls: {
+                  with_cast: {
+                    behavior: 'or',
+                    values: [{ value: curr?.id, label: curr?.name }],
+                  },
+                  sorting: 'popularity',
+                  reverse: false,
+                },
+              },
+            },
+          }
+        }), {})),
+      }
     })
-  }, [ready, persons, movie.data, collection.details])
+
+    return [
+      ...(related ? [related] : []),
+      ...(credits ? [credits] : []),
+      ...(linked ? [linked] : []),
+    ]
+  }, [ready, id, persons, movie.data, collection.details])
 
   if (movie.error) {
     return (
