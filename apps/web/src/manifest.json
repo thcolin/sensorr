@@ -1,0 +1,46 @@
+{
+  "short_name": "Sensorr",
+  "name": "Sensorr",
+  "description": "Your Friendly Digital Video Recorder 🍿📼",
+  "background_color": "#1a1a1a",
+  "orientation": "portrait",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "assets/favicon-alt-full.png",
+      "sizes": ["120", "152", "167", "192"],
+      "ios": true
+    },
+    {
+      "src": "assets/favicon-alt.png",
+      "sizes": ["96", "128", "192"]
+    },
+    {
+      "src": "assets/favicon-alt-full.png",
+      "size": "180x180",
+      "ios": true
+    },
+    {
+      "src": "assets/favicon-alt.png",
+      "size": "256x256"
+    },
+    {
+      "src": "assets/favicon-alt.png",
+      "size": "384x384"
+    },
+    {
+      "src": "assets/favicon-alt.png",
+      "size": "512x512"
+    },
+    {
+      "src": "assets/favicon-alt-full.png",
+      "size": "1024x1024",
+      "ios": true
+    },
+    {
+      "src": "assets/favicon-alt.png",
+      "size": "1024x1024",
+      "purpose": "maskable"
+    }
+  ]
+}

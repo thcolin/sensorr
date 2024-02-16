@@ -1,78 +1,53 @@
 {
-  "npmScope": "sensorr",
   "affected": {
     "defaultBase": "master"
   },
-  "implicitDependencies": {
-    "workspace.json": "*",
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
-    "tsconfig.base.json": "*",
-    "tslint.json": "*",
-    ".eslintrc.json": "*",
-    "nx.json": "*"
-  },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/workspace/tasks-runners/default",
-      "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e", "build-storybook"]
+  "generators": {
+    "@nx/react": {
+      "application": {
+        "style": "none",
+        "linter": "eslint",
+        "babel": true
+      },
+      "component": {
+        "style": "none"
+      },
+      "library": {
+        "style": "none",
+        "linter": "eslint"
       }
     }
   },
-  "projects": {
-    "api": {
-      "tags": []
+  "defaultProject": "web",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true
     },
-    "cli": {
-      "tags": []
+    "lint": {
+      "cache": true
     },
-    "config": {
-      "tags": []
+    "test": {
+      "cache": true
     },
-    "i18n": {
-      "tags": []
+    "e2e": {
+      "cache": true
     },
-    "palette": {
-      "tags": []
-    },
-    "plex": {
-      "tags": []
-    },
-    "sensorr": {
-      "tags": []
-    },
-    "services": {
-      "tags": []
-    },
-    "theme": {
-      "tags": []
-    },
-    "tmdb": {
-      "tags": []
-    },
-    "ui": {
-      "tags": []
-    },
-    "utils": {
-      "tags": []
-    },
-    "web": {
-      "tags": []
-    },
-    "web-e2e": {
-      "tags": [],
-      "implicitDependencies": ["web"]
+    "build-storybook": {
+      "cache": true
     }
   },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "projects": "dependencies"
-      }
-    ]
-  }
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [
+      "{workspaceRoot}/workspace.json",
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tslint.json",
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/babel.config.json"
+    ],
+    "production": ["default"]
+  },
+  "parallel": 1
 }

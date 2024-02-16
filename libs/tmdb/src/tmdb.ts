@@ -1,4 +1,4 @@
-import * as qs from 'query-string'
+import qs from 'query-string'
 import { certifications } from './certifications'
 import { studios } from './studios'
 import { Genre } from './interfaces'
@@ -170,9 +170,9 @@ export class TMDB {
     }
 
     const res = await fetch(this.build(uri, params), init)
-    const body = await res.json().catch(() => {
+    const body = (await res.json().catch(() => {
       throw new Error(`[TMDB] ${res.url} ${res.status}: ${res.statusText}`)
-    })
+    })) as any
 
     if (
       ((body.errors || []).length === 1 && body.errors[0] === 'query must be provided') ||

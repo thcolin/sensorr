@@ -1,8 +1,8 @@
-const { customAlphabet } = require('nanoid')
+import { customAlphabet } from 'nanoid'
 
 export const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 7)
 
-export const clean = (string, alphabetical = false) => string
+export const clean = (string, alphabetical = false) => (string || '')
   .toLowerCase()
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '')

@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Route, Navigate, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import withSecurity from '../layout/withSecurity'
 import withConfigLoaded from '../layout/withConfigLoaded'
 import withLayout from '../layout/withLayout'
+import { Provider as AnimationProvider } from '../contexts/Animation/Animation'
 
 // import { withSuspenseFallback } from '../components/enhancers/withSuspenseFallback'
 
@@ -49,6 +50,38 @@ const TrendingPersons = Trending('persons')
 
 const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet, 'Container')))
 
+const router = createBrowserRouter(createRoutesFromElements(
+  <Route element={<AnimationProvider />}>
+    <Route path='/login' element={<Login />} />
+    <Route path='/keep-in-touch' element={<KeepInTouch />} />
+    <Route path='/' element={<LayoutConfigSecurityContainer />}>
+      <Route path='' element={<Home />} />
+      <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />
+      <Route path='movie/discover' element={<Discover />} />
+      <Route path='movie/trending' element={<TrendingMovies />} />
+      <Route path='movie/library' element={<Library />} />
+      <Route path='movie/calendar' element={<Calendar />} />
+      <Route path='movie/theatres' element={<Theatres />} />
+      <Route path='movie/requests' element={<Requests />} />
+      <Route path='movie/:id' element={<Movie />} />
+      <Route path='movie/:id/recommendations' element={<Recommendations />} />
+      <Route path='movie/:id/similar' element={<Similar />} />
+      <Route path='person/followed' element={<Followed />} />
+      <Route path='person/trending' element={<TrendingPersons />} />
+      <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
+      <Route path='person/:id' element={<Person />} />
+      <Route path='collection/:id' element={<Collection />} />
+      <Route path='jobs' element={<Jobs />} />
+      <Route path='jobs/:job' element={<Jobs />} />
+      <Route path='settings' element={<GeneralSettings />} />
+      <Route path='settings/downloads' element={<DownloadsSettings />} />
+      <Route path='settings/friends' element={<FriendsSettings />} />
+      <Route path='settings/plex' element={<PlexSettings />} />
+      <Route path='settings/pwa' element={<ProgressiveWebAppSettings />} />
+    </Route>
+  </Route>
+))
+
 const App = ({ ...props }) => {
   const { ready } = useTranslation()
 
@@ -71,35 +104,7 @@ const App = ({ ...props }) => {
   }, [ready])
 
   return (
-    <Routes>
-      <Route path='/login' element={<Login />} />
-      <Route path='/keep-in-touch' element={<KeepInTouch />} />
-      <Route path='/' element={<LayoutConfigSecurityContainer />}>
-        <Route path='' element={<Home />} />
-        <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />
-        <Route path='movie/discover' element={<Discover />} />
-        <Route path='movie/trending' element={<TrendingMovies />} />
-        <Route path='movie/library' element={<Library />} />
-        <Route path='movie/calendar' element={<Calendar />} />
-        <Route path='movie/theatres' element={<Theatres />} />
-        <Route path='movie/requests' element={<Requests />} />
-        <Route path='movie/:id' element={<Movie />} />
-        <Route path='movie/:id/recommendations' element={<Recommendations />} />
-        <Route path='movie/:id/similar' element={<Similar />} />
-        <Route path='person/followed' element={<Followed />} />
-        <Route path='person/trending' element={<TrendingPersons />} />
-        <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
-        <Route path='person/:id' element={<Person />} />
-        <Route path='collection/:id' element={<Collection />} />
-        <Route path='jobs' element={<Jobs />} />
-        <Route path='jobs/:job' element={<Jobs />} />
-        <Route path='settings' element={<GeneralSettings />} />
-        <Route path='settings/downloads' element={<DownloadsSettings />} />
-        <Route path='settings/friends' element={<FriendsSettings />} />
-        <Route path='settings/plex' element={<PlexSettings />} />
-        <Route path='settings/pwa' element={<ProgressiveWebAppSettings />} />
-      </Route>
-    </Routes>
+    <RouterProvider router={router} />
   )
 }
 

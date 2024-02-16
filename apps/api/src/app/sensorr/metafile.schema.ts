@@ -4,7 +4,7 @@ import { Document } from 'mongoose'
 @Schema({ collection: 'blackhole' })
 export class Metafile extends Document {
   @Prop()
-  _id: string
+  declare _id: string
 
   @Prop()
   buffer: Buffer

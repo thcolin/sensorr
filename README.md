@@ -10,7 +10,7 @@ mkdir ~/.sensorr && cd ~/.sensorr
 curl -o docker-compose.yml https://raw.githubusercontent.com/thcolin/sensorr/dev/docker-compose.yml
 curl -o config.json https://raw.githubusercontent.com/thcolin/sensorr/dev/config.default.json
 
-# Configure Sensorr
+# Set your own Sensorr secrets, username and password
 echo "SENSORR_AUTH_SECRET=youshouldchangethisvaluetoanythingelse" >> .env
 echo "SENSORR_USERNAME=username" >> .env
 echo "SENSORR_PASSWORD=password" >> .env
@@ -21,6 +21,11 @@ echo "SENSORR_BLACKHOLE=/home/user/downloads" >> .env
 
 # Set your own TimeZone, see ["TZ identifier"](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)
 echo "TZ=Europe/Paris" >> .env
+
+# Create your own keyfile for sensorr database, see ["Generate a Key File - MongoDB Manual"](https://www.mongodb.com/docs/v2.4/tutorial/generate-key-file/)
+openssl rand -base64 756 > ./database-keyfile
+chmod 400 ./database-keyfile
+chown 999:999 ./database-keyfile
 
 # Launch the stack
 docker compose up -d
@@ -43,7 +48,7 @@ echo "SENSORR_SSL_CERT=/path/to/domain.cert" >> .env
 
 ## Configuration
 
-When you edit manually your `config.json`, you need to restart `sensorr-sensorr-api-1` container to apply your changes
+When you edit manually your `config.json`, you need to restart `sensorr-api` container to apply your changes
 
 ```sh
 docker container restart sensorr-api
@@ -51,7 +56,7 @@ docker container restart sensorr-api
 
 # Update
 
-To update Sensorr you need to take down the stack, pull updated images and start the stack back
+To update Sensorr you need to update Sensorr Docker images. You can either use a tool to automatically update images, like [`watchtower`](https://github.com/containrrr/watchtower) or manually take down the stack, pull updated images and start the stack back
 
 ```sh
 cd ~/.sensorr

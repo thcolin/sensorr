@@ -1,0 +1,34 @@
+{
+  "name": "sensorr",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/sensorr/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/sensorr",
+        "tsConfig": "libs/sensorr/tsconfig.lib.json",
+        "packageJson": "libs/sensorr/package.json",
+        "main": "libs/sensorr/src/index.ts",
+        "assets": ["libs/sensorr/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/sensorr/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/sensorr"],
+      "options": {
+        "jestConfig": "libs/sensorr/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

@@ -76,7 +76,7 @@ const UIList = ({
           </div>
         ))
       )}
-      {!!more && ( //  && length >= 20
+      {!override && !!more && ( //  && length >= 20
         <div sx={styles.more}>
           <More {...more} rotate={{ column: true, row: false }[display]} />
         </div>

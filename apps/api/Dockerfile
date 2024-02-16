@@ -6,15 +6,15 @@ RUN npm install yarn -g --force
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node . .
-RUN yarn install --ignore-optional
+RUN yarn install
 
 ENV NODE_ENV=production
+ENV NX_REJECT_UNKNOWN_LOCAL_CACHE=0
 RUN find . -type f -name '*.spec.ts' -delete
-RUN yarn build api --prod --generatePackageJson
+RUN yarn build api --prod
 RUN yarn --cwd ./dist/apps/api install
-RUN yarn build cli --prod --generatePackageJson
+RUN yarn build cli --prod
 RUN yarn --cwd ./dist/apps/cli install
-RUN yarn --cwd ./dist/apps/cli add tslib@^2.0.0
 
 USER node
 

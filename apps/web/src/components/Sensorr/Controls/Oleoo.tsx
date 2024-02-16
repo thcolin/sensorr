@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import oleoo from 'oleoo'
 import { SortableSelect } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { useSensorr } from '../../../store/sensorr'
@@ -17,7 +18,7 @@ const RuleSortableSelect = ({ onChange, ...props }) => {
     ]
   }, [props.value, props.options])
 
-  const handleChange = useCallback((values, { action, removedValue } = {}) => {
+  const handleChange = useCallback((values, { action, removedValue } = { action: null, removedValue: null }) => {
     switch (action) {
       case 'remove-value':
       case 'pop-value':
@@ -34,15 +35,13 @@ const RuleSortableSelect = ({ onChange, ...props }) => {
   )
 }
 
-const rules = require('oleoo/src/rules.json')
-
-const standards = {
-  source: Object.keys(rules.source),
-  encoding: Object.keys(rules.encoding),
-  resolution: Object.keys(rules.resolution),
-  language: Object.keys(rules.language),
-  dub: Object.keys(rules.dub),
-  flags: Object.keys(rules.flags),
+const rules = {
+  source: Object.keys(oleoo.rules.source),
+  encoding: Object.keys(oleoo.rules.encoding),
+  resolution: Object.keys(oleoo.rules.resolution),
+  language: Object.keys(oleoo.rules.language),
+  dub: Object.keys(oleoo.rules.dub),
+  flags: Object.keys(oleoo.rules.flags),
 }
 
 export const ZNABFilter = ({ ...props }) => {
@@ -62,7 +61,7 @@ export const ZNABFilter = ({ ...props }) => {
 
 export const EncodingFilter = withProps({
   label: emojize('🎥', 'Encoding'),
-  options: standards.encoding.map(source => ({ label: source, value: source })),
+  options: rules.encoding.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,
@@ -70,7 +69,7 @@ export const EncodingFilter = withProps({
 
 export const ResolutionFilter = withProps({
   label: emojize('🎞️', 'Resolution'),
-  options: standards.resolution.map(source => ({ label: source, value: source })),
+  options: rules.resolution.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,
@@ -78,7 +77,7 @@ export const ResolutionFilter = withProps({
 
 export const SourceFilter = withProps({
   label: emojize('📀', 'Source'),
-  options: standards.source.map(source => ({ label: source, value: source })),
+  options: rules.source.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,
@@ -86,7 +85,7 @@ export const SourceFilter = withProps({
 
 export const DubFilter = withProps({
   label: emojize('🔈', 'Dub'),
-  options: standards.dub.map(source => ({ label: source, value: source })),
+  options: rules.dub.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,
@@ -94,7 +93,7 @@ export const DubFilter = withProps({
 
 export const LanguageFilter = withProps({
   label: emojize('🇺🇳', 'Language'),
-  options: standards.language.map(source => ({ label: source, value: source })),
+  options: rules.language.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,
@@ -102,7 +101,7 @@ export const LanguageFilter = withProps({
 
 export const FlagsFilter = withProps({
   label: emojize('🚩', 'Flags'),
-  options: standards.flags.map(source => ({ label: source, value: source })),
+  options: rules.flags.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
   resetable: false,

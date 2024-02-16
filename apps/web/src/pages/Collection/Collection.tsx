@@ -21,12 +21,13 @@ const Collection = ({ ...props }) => {
   // TODO: Get all details from collection movies
   // TODO: Get all credits and display them in 'credits' tab
 
-  const ready = !ongoing && !loading
+  const ready = !ongoing && !loading && data?.id || error
 
   const tabs = useMemo(() => {
     return [
       {
         id: 'collection',
+        ready,
         tabs: {
           saga: {
             id: `saga-${id}`,

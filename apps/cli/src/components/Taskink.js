@@ -1,12 +1,13 @@
 import React, { useState, useCallback, createContext, useContext, useEffect } from 'react'
 import { useInput, Box, Text, useApp } from 'ink'
 import Spinner from 'ink-spinner'
-
-const EventEmitter = require('events')
+import EventEmitter from 'events'
 
 export class StdinMock extends EventEmitter {
   isTTY = true
 
+  ref = () => {}
+  unref = () => {}
   write = () => {}
   setEncoding() {}
   setRawMode() {}

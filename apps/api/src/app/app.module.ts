@@ -14,18 +14,16 @@ import { SensorrModule } from './sensorr/sensorr.module'
 @Module({
   imports: [
     MongooseModule.forRoot(`mongodb://${process.env.NX_MONGO_USERNAME}:${process.env.NX_MONGO_PASSWORD}@${process.env.NX_MONGO_HOST}:${process.env.NX_MONGO_PORT}/sensorr?authSource=admin&directConnection=true`),
-    ScheduleModule.forRoot(),
     ProxyModule.forRoot({
       config: {},
       services: [
-        // TODO: Should be populated with ZNAB from config
-        // {
-          //   id: 'ZNAB_XXX',
-          //   url: `https://xxx.xxx`,
-          //   config: {}
-          // }
-        ]
+        {
+          id: 'SENSORR_ZNABS',
+          url: '',
+        },
+      ]
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     MoviesModule,
     PersonsModule,

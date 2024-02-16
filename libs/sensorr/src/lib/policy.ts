@@ -1,5 +1,5 @@
 import { compareTwoStrings as similarity } from 'string-similarity'
-import * as oleoo from 'oleoo'
+import oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
 

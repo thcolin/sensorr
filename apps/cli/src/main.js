@@ -3,6 +3,7 @@ import { hideBin } from 'yargs/helpers'
 import { nanoid } from '@sensorr/sensorr'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import chalk from 'chalk'
+import nodeFetch from 'node-fetch'
 
 import logger from './store/logger'
 import record from './commands/record'
@@ -12,7 +13,7 @@ import doctor from './commands/doctor'
 import keepInTouch from './commands/keep-in-touch'
 import migrate from './commands/migrate'
 
-globalThis.fetch = require('node-fetch')
+globalThis.fetch = nodeFetch
 
 // Disable React "Warning: Can't perform a React state update on an unmounted component."
 // See [Remove the warning for setState on unmounted components #22114](https://github.com/facebook/react/pull/22114)
@@ -57,7 +58,9 @@ const main = async () => {
     },
   }
 
-  parser.current = yargs(hideBin(process.argv))
+  const instance = yargs(hideBin(process.argv))
+  parser.current = instance
+    .wrap(instance.terminalWidth())
     .command(record(job, handlers))
     .command(refresh(job, handlers))
     .command(sync(job, handlers))

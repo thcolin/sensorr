@@ -4,7 +4,7 @@ import pagination from 'mongoose-paginate-v2'
 
 @Schema({ collection: 'guests' })
 export class Guest extends Document {
-  _id: mongoose.Types.ObjectId
+  declare _id: mongoose.Types.ObjectId
 
   @Prop({ required: true, unique: true })
   email: string

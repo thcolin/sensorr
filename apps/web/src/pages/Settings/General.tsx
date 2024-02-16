@@ -130,18 +130,22 @@ const TMDBSettings = ({ control, ...props }) => {
 const JobsSettings = ({ control, watch, ...props }) => {
   const api = useAPI()
   const { process } = useJobsContext() as any
+  const [ongoing, setOngoing] = useState([])
 
   const runJob = useCallback(async (command) => {
+    setOngoing(ongoing => [...ongoing, command])
     const { uri, params, init } = api.query.jobs.runJob({ body: { command } })
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
       loading: `Running new Job "${command}", please wait...`,
       success: (data) => {
+        setOngoing(ongoing => ongoing.filter(c => c !== command))
         return `Job "${command}" successfully run (${data.job})`
       },
       error: (err) => {
         console.warn(err)
+        setOngoing(ongoing => ongoing.filter(c => c !== command))
         return `Error during Job "${command}" run`
       },
     })
@@ -214,6 +218,7 @@ const JobsSettings = ({ control, watch, ...props }) => {
         <JobSettings
           {...value}
           running={Object.values(process).find((p: any) => p.command === value.command)}
+          disabled={ongoing.includes(value.command)}
           runJob={runJob}
           stopJob={stopJob}
           control={control}
@@ -227,7 +232,7 @@ const JobsSettings = ({ control, watch, ...props }) => {
   )
 }
 
-const JobSettings = ({ command, emoji, description, warning = null, options, running, runJob, stopJob, control, watch, ...props }) => {
+const JobSettings = ({ command, emoji, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
   const cronValue = watch(`jobs.${command}.cron`)
   const paused = watch(`jobs.${command}.paused`)
 
@@ -256,6 +261,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
             type="button"
             sx={JobSettings.styles.run}
             onClick={() => running ? stopJob(command, running.job) : runJob(command)}
+            disabled={disabled}
           >
             <Icon value={running ? 'live' : 'play'} height='1em' width='1em' />
           </button>
@@ -398,8 +404,11 @@ JobSettings.styles = {
     lineHeight: 1.5,
     borderTopRightRadius: '0.25rem',
     borderBottomRightRadius: '0.25rem',
-    ':hover': {
+    ':hover:not(:disabled)': {
       backgroundColor: 'gray',
+    },
+    ':disabled': {
+      opacity: 0.5,
     },
   },
   options: {

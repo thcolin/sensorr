@@ -1,8 +1,5 @@
 version: '3.4'
 
-volumes:
-  sensorr-db-setup:
-
 services:
   sensorr-web:
     image: sensorr/sensorr-web
@@ -48,14 +45,6 @@ services:
       - ./config.json:/app/config.json
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
 
-  sensorr-db-setup:
-    image: depop/openssl-bats
-    container_name: sensorr-db-setup
-    restart: "no"
-    volumes:
-      - sensorr-db-setup:/mongo-setup
-    command: 'bash -c "openssl rand -base64 741 > /mongo-setup/mongodb-keyfile; chmod 600 /mongo-setup/mongodb-keyfile; chown 999 /mongo-setup/mongodb-keyfile"'
-
   sensorr-db:
     image: mongo:6.0.6
     container_name: sensorr-db
@@ -67,11 +56,9 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${SENSORR_DATABASE_PASSWORD:-sensorr}
       - MONGO_REPLICA_SET_NAME=rs0
     volumes:
-      - sensorr-db-setup:/opt/keyfile
+      - ./database-keyfile:/opt/keyfile/mongodb-keyfile
       - ./docker/sensorr-db:/docker-entrypoint-initdb.d:ro
       - ./db:/data/db
-    depends_on:
-        - sensorr-db-setup
     healthcheck:
       test: |
         test $$(mongosh --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'sensorr-db' }] }).ok } catch (_) { rs.status().ok }") -eq 1

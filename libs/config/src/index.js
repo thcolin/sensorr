@@ -1,5 +1,5 @@
-const convict = require('convict')
-const standards = require('oleoo/src/rules.json')
+import convict from 'convict'
+import oleoo from 'oleoo'
 
 convict.addFormat({
   name: 'source-array',
@@ -191,8 +191,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.source).join(', ')}`,
-            format: Object.keys(standards.source),
+            doc: `Any from ${Object.keys(oleoo.rules.source).join(', ')}`,
+            format: Object.keys(oleoo.rules.source),
             default: null,
           },
         },
@@ -201,8 +201,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.encoding).join(', ')}`,
-            format: Object.keys(standards.encoding),
+            doc: `Any from ${Object.keys(oleoo.rules.encoding).join(', ')}`,
+            format: Object.keys(oleoo.rules.encoding),
             default: null,
           },
         },
@@ -211,8 +211,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.resolution).join(', ')}`,
-            format: Object.keys(standards.resolution),
+            doc: `Any from ${Object.keys(oleoo.rules.resolution).join(', ')}`,
+            format: Object.keys(oleoo.rules.resolution),
             default: null,
           },
         },
@@ -221,8 +221,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.language).join(', ')}`,
-            format: Object.keys(standards.language),
+            doc: `Any from ${Object.keys(oleoo.rules.language).join(', ')}`,
+            format: Object.keys(oleoo.rules.language),
             default: null,
           },
         },
@@ -231,8 +231,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.dub).join(', ')}`,
-            format: Object.keys(standards.dub),
+            doc: `Any from ${Object.keys(oleoo.rules.dub).join(', ')}`,
+            format: Object.keys(oleoo.rules.dub),
             default: null,
           },
         },
@@ -241,8 +241,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.flags).join(', ')}`,
-            format: Object.keys(standards.flags),
+            doc: `Any from ${Object.keys(oleoo.rules.flags).join(', ')}`,
+            format: Object.keys(oleoo.rules.flags),
             default: null,
           },
         },
@@ -253,8 +253,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.source).join(', ')}`,
-            format: Object.keys(standards.source),
+            doc: `Any from ${Object.keys(oleoo.rules.source).join(', ')}`,
+            format: Object.keys(oleoo.rules.source),
             default: null,
           },
         },
@@ -263,8 +263,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.encoding).join(', ')}`,
-            format: Object.keys(standards.encoding),
+            doc: `Any from ${Object.keys(oleoo.rules.encoding).join(', ')}`,
+            format: Object.keys(oleoo.rules.encoding),
             default: null,
           },
         },
@@ -273,8 +273,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.resolution).join(', ')}`,
-            format: Object.keys(standards.resolution),
+            doc: `Any from ${Object.keys(oleoo.rules.resolution).join(', ')}`,
+            format: Object.keys(oleoo.rules.resolution),
             default: null,
           },
         },
@@ -283,8 +283,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.language).join(', ')}`,
-            format: Object.keys(standards.language),
+            doc: `Any from ${Object.keys(oleoo.rules.language).join(', ')}`,
+            format: Object.keys(oleoo.rules.language),
             default: null,
           },
         },
@@ -293,8 +293,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.dub).join(', ')}`,
-            format: Object.keys(standards.dub),
+            doc: `Any from ${Object.keys(oleoo.rules.dub).join(', ')}`,
+            format: Object.keys(oleoo.rules.dub),
             default: null,
           },
         },
@@ -303,8 +303,8 @@ const config = convict({
           format: 'source-array',
           default: [],
           children: {
-            doc: `Any from ${Object.keys(standards.flags).join(', ')}`,
-            format: Object.keys(standards.flags),
+            doc: `Any from ${Object.keys(oleoo.rules.flags).join(', ')}`,
+            format: Object.keys(oleoo.rules.flags),
             default: null,
           },
         },

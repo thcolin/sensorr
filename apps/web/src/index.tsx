@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import { ThemeUIProvider } from 'theme-ui'
 import { CacheProvider } from '@emotion/react'
 import createCache from '@emotion/cache'
@@ -13,7 +12,6 @@ import { Provider as PersonsMetadataProvider } from './contexts/PersonsMetadata/
 import { Provider as SearchProvider } from './contexts/Search/Search'
 import { Provider as JobsProvider } from './contexts/Jobs/Jobs'
 import { Provider as GuestsProvider } from './contexts/Guests/Guests'
-import { Provider as AnimationProvider } from './contexts/Animation/Animation'
 import { Toasts } from './contexts/Toasts/Toasts'
 import App from './pages/App'
 import 'tippy.js/dist/tippy.css'
@@ -27,32 +25,28 @@ const root = createRoot(container)
 
 root.render(
   <StrictMode>
-    <BrowserRouter>
-      <CacheProvider value={cache as any}>
-        <ThemeUIProvider theme={theme as any}>
-          <LoadingProvider>
-            <AuthProvider>
-              <ConfigProvider>
-                <MoviesMetadataProvider>
-                  <PersonsMetadataProvider>
-                    <SearchProvider>
-                      <JobsProvider>
-                        <GuestsProvider>
-                          <AnimationProvider>
-                            <Toasts />
-                            <App />
-                          </AnimationProvider>
-                        </GuestsProvider>
-                      </JobsProvider>
-                    </SearchProvider>
-                  </PersonsMetadataProvider>
-                </MoviesMetadataProvider>
-              </ConfigProvider>
-            </AuthProvider>
-          </LoadingProvider>
-        </ThemeUIProvider>
-      </CacheProvider>
-    </BrowserRouter>
+    <CacheProvider value={cache as any}>
+      <ThemeUIProvider theme={theme as any}>
+        <LoadingProvider>
+          <AuthProvider>
+            <ConfigProvider>
+              <MoviesMetadataProvider>
+                <PersonsMetadataProvider>
+                  <SearchProvider>
+                    <JobsProvider>
+                      <GuestsProvider>
+                        <Toasts />
+                        <App />
+                      </GuestsProvider>
+                    </JobsProvider>
+                  </SearchProvider>
+                </PersonsMetadataProvider>
+              </MoviesMetadataProvider>
+            </ConfigProvider>
+          </AuthProvider>
+        </LoadingProvider>
+      </ThemeUIProvider>
+    </CacheProvider>
   </StrictMode>
 )
 
