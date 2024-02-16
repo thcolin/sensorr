@@ -1,0 +1,34 @@
+{
+  "name": "plex",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plex/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/plex",
+        "tsConfig": "libs/plex/tsconfig.lib.json",
+        "packageJson": "libs/plex/package.json",
+        "main": "libs/plex/src/index.ts",
+        "assets": ["libs/plex/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/plex/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/plex"],
+      "options": {
+        "jestConfig": "libs/plex/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

@@ -26,7 +26,7 @@ const Person = ({ ...props }) => {
     include_image_language: 'en,null',
   }, { transform: transformPersonDetails })
 
-  const ready = !ongoing && !loading
+  const ready = !ongoing && !loading && (data?.id || error)
 
   const tabs = useMemo(() => {
     const known = {

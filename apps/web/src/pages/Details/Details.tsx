@@ -43,7 +43,7 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
   const handleMeaningfulToggle = useCallback((e) => setMeaningfulState(e.target.open), [])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
-  const ready = props.ready !== false && Object.values(pending).every(pending => !pending)
+  const ready = props.ready !== false && Object.values(pending).every(pending => !pending) && !!entity?.id
   const onReady = useMemo(() => ({
     poster: () => mutatePending({ poster: false }),
     billboard: () => mutatePending({ billboard: false }),

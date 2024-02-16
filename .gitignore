@@ -38,10 +38,12 @@ testem.log
 
 # env
 .local.env
-mongodb.key
+database-keyfile
 /config.json
 sensorr-dump.zip
 
 # System Files
 .DS_Store
 Thumbs.db
+
+.nx/cache

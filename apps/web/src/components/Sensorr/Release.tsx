@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 import { useThemeUI } from 'theme-ui'
-import * as oleoo from 'oleoo'
+import oleoo from 'oleoo'
 import { emojize, filesize } from '@sensorr/utils'
 import { Badge, Icon, Link } from '@sensorr/ui'
 import Tippy from '@tippyjs/react'

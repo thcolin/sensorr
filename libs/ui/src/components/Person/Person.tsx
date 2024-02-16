@@ -112,13 +112,13 @@ export const Person = memo(UIPerson)
 
 export interface PersonDetails extends Details {
   meaningful: {
-    known_for_department?: React.ReactNode,
-    job?: React.ReactNode,
-    character?: React.ReactNode,
-    place_of_birth?: React.ReactNode,
-    age?: React.ReactNode,
-    birthday?: React.ReactNode,
-    deathday?: React.ReactNode,
+    known_for_department?: React.FunctionComponent,
+    job?: React.FunctionComponent,
+    character?: React.FunctionComponent,
+    place_of_birth?: React.FunctionComponent,
+    age?: React.FunctionComponent,
+    birthday?: React.FunctionComponent,
+    deathday?: React.FunctionComponent,
   },
 }
 

@@ -10,22 +10,13 @@ import { JobsModule } from './jobs/jobs.module'
 import { PlexModule } from './plex/plex.module'
 import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
+import { ProxyConfigService } from './proxy/proxy.service'
 
 @Module({
   imports: [
     MongooseModule.forRoot(`mongodb://${process.env.NX_MONGO_USERNAME}:${process.env.NX_MONGO_PASSWORD}@${process.env.NX_MONGO_HOST}:${process.env.NX_MONGO_PORT}/sensorr?authSource=admin&directConnection=true`),
+    ProxyModule.forRootAsync({ useClass: ProxyConfigService }),
     ScheduleModule.forRoot(),
-    ProxyModule.forRoot({
-      config: {},
-      services: [
-        // TODO: Should be populated with ZNAB from config
-        // {
-          //   id: 'ZNAB_XXX',
-          //   url: `https://xxx.xxx`,
-          //   config: {}
-          // }
-        ]
-    }),
     AuthModule,
     MoviesModule,
     PersonsModule,

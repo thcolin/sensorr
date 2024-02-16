@@ -1,8 +1,8 @@
-import QRCode from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react'
 
 const ProgressiveWebApp = ({ ...props }) => (
   <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <QRCode
+    <QRCodeSVG
       value={window?.location?.origin}
       fgColor="#121212"
       size={256}
@@ -11,6 +11,8 @@ const ProgressiveWebApp = ({ ...props }) => (
       imageSettings={{
         src: require('../../assets/favicon.png').default,
         excavate: true,
+        height: 48,
+        width: 48,
       }}
     />
   </div>

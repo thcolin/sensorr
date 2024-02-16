@@ -1,5 +1,5 @@
-const PlexAPI = require('plex-api')
-const PlexPinAuth = require('plex-api-pinauth')
+import PlexAPI from 'plex-api'
+import PlexPinAuth from 'plex-api-pinauth'
 
 export const Plex = ({ url, token = null, fallbackPort = 32400 }, { name, version, plex }) => {
   const urlObj = new URL(url)

@@ -18,7 +18,7 @@ export class PersonsService {
 
     switch (person.state) {
       case 'ignored':
-        const res = await this.personModel.findByIdAndDelete(person.id)
+        const res = await this.personModel.findByIdAndDelete(person.id) as any
         res.state = 'ignored'
         return res
       default:

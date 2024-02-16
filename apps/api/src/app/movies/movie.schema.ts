@@ -5,7 +5,7 @@ import pagination from 'mongoose-paginate-v2'
 @Schema({ collection: 'movies' })
 export class Movie extends Document {
   @Prop()
-  _id: number
+  declare _id: number
 
   @Prop()
   adult: boolean
@@ -36,7 +36,7 @@ export class Movie extends Document {
   homepage: string
 
   @Prop()
-  id: number
+  declare id: number
 
   @Prop()
   imdb_id: string

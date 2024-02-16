@@ -11,7 +11,7 @@ const UIToasts = ({ ...props }) => {
       reverseOrder={false}
       gutter={8}
       toastOptions={{
-        duration: 4000,
+        // duration: 4000,
         success: { duration: 4000 },
         error: { duration: 6000 },
       }}

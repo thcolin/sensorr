@@ -41,7 +41,7 @@ const Movie = ({ ...props }) => {
     transform: transformCollectionDetails,
   })
 
-  const ready = !ongoing && !movie.loading && (!movie?.data?.belongs_to_collection || !collection.loading)
+  const ready = !ongoing && !movie.loading && (movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
 
   const tabs = useMemo(() => {
     const saga = {
@@ -98,6 +98,7 @@ const Movie = ({ ...props }) => {
 
     const related = ((!ready || (saga.entities?.length || recommendations.entities?.length || similar.entities?.length)) && {
       id: 'related',
+      ready,
       tabs: {
         ...((!ready || saga.entities?.length) && {
           saga,
@@ -113,6 +114,7 @@ const Movie = ({ ...props }) => {
 
     const credits = ((!ready || (cast.entities?.length || crew.entities?.length)) && {
       id: 'credits',
+      ready,
       tabs: {
         ...((!ready || cast.entities?.length) && {
           cast,
@@ -129,6 +131,7 @@ const Movie = ({ ...props }) => {
     const linked = ((!ready || (directors.length || headliners.length)) && {
       id: 'linked',
       component: TMDBTabs,
+      ready,
       tabs: {
         ...((!ready || directors?.length) && (directors || []).reduce((acc, curr, index) => ({
           ...acc,

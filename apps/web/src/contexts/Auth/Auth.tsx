@@ -15,7 +15,7 @@ try {
 
 const authContext = createContext({})
 
-export const Provider = ({ children, ...props }) => {
+export const Provider = ({ children = null, ...props }) => {
   const api = useAPI()
   const sensorr = useSensorr()
   const [authenticated, setAuthenticated] = useState(AUTHENTICATED)

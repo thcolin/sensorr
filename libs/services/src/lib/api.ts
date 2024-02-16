@@ -1,4 +1,4 @@
-import * as qs from 'query-string'
+import qs from 'query-string'
 
 export class API {
   private base: string = `/api/`
@@ -405,7 +405,7 @@ export class API {
 
   async login(username, password) {
     const { uri, params, init } = this.query.auth({ body: { username, password } })
-    const { access_token } = await this.fetch(uri, params, init)
+    const { access_token } = (await this.fetch(uri, params, init)) as any
     this.access_token = access_token
     return this.access_token
   }

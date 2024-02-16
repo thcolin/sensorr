@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import fs from 'node:fs/promises'
 import { render, Text } from 'ink'
 import { TMDB } from '@sensorr/tmdb'
 import { Plex } from '@sensorr/plex'
@@ -6,8 +7,6 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import { lighten } from '../store/logger'
 import command from '../utils/command'
-
-const app = require('../../../../package.json')
 
 const meta = {
   command: 'keep-in-touch',
@@ -25,9 +24,10 @@ export default (job, handlers) => ({
     })
 
     await tmdb.init()
+    const app = JSON.parse(await fs.readFile(new URL('../../../../package.json', import.meta.url)))
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job }, logger, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job }, logger, tmdb, app }}>
         <FetchSensorrMoviesTask />
         <FetchGuestsTask />
         <FetchGuestsRequestsFromPlexWatchlistTask />
@@ -128,12 +128,12 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
       for (let guest of state.guests) {
         try {
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex account</Text> }))
-          const account = await Plex({ url: 'https://plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, app).query(`/api/v2/user`)
+          const account = await Plex({ url: 'https://plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app).query(`/api/v2/user`)
           const { uri, params, init } = api.query.guests.postGuest({ body: { email: account.email, avatar: account.thumb, name: account.title || account.username } })
           await api.fetch(uri, params, init)
 
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
-          const plex = Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, app)
+          const plex = Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app)
           let total_results = 0
           results[guest.email] = []
 
@@ -198,7 +198,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
       const processed = []
       const plex = state.guests.reduce((acc, guest) => ({
         ...acc,
-        [guest.email]: Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, app),
+        [guest.email]: Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app),
       }), {})
 
       for (let [plex_guid, requested_by] of Object.entries(state.requests)) {

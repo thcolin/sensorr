@@ -5,7 +5,7 @@ import pagination from 'mongoose-paginate-v2'
 
 @Schema({ collection: 'log' })
 export class Log extends Document {
-  _id: mongoose.Types.ObjectId
+  declare _id: mongoose.Types.ObjectId
 
   @Prop()
   timestamp: Date

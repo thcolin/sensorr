@@ -80,7 +80,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 <Summary error={job.meta.error} meta={summary(job.meta.summary)} />
               </span>
               <span sx={UIKeepInTouchJob.styles.summary}>
-                {Object.entries(guests).map(([g, count]) => (
+                {Object.entries(guests).map(([g, count]: [string, any]) => (
                   <span key={g} onClick={() => setGuest(guest => guest === g ? null : g)} sx={UIKeepInTouchJob.styles.link} style={{ opacity: !guest || guest === g ? 1 : 0.5 }}>{g} ({count})</span>
                 ))}
               </span>

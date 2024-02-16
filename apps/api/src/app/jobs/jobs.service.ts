@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { SchedulerRegistry } from '@nestjs/schedule'
-import { CronJob } from 'cron';
-import { ConfigService } from '../config/config.service';
-import { SensorrService } from '../sensorr/sensorr.service';
+import { CronJob } from 'cron'
+import { ConfigService } from '../config/config.service'
+import { SensorrService } from '../sensorr/sensorr.service'
 
 @Injectable()
 export class JobsService {
@@ -25,7 +25,9 @@ export class JobsService {
       throw new Error(`Unknown job "${name}"`)
     }
 
-    const job = new CronJob(cron, () => this.sensorrService.runProcess(name, cron))
+    const job = new CronJob(cron, () => {
+      this.sensorrService.runProcess(name, cron)
+    })
     this.schedulerRegistry.addCronJob(name, job)
     job.start()
     this.logger.log(`SetupCron "${name}" at "${cron}"`)

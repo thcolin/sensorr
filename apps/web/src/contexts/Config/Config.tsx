@@ -8,7 +8,7 @@ import i18n from '../../store/i18n'
 
 const configContext = createContext({})
 
-export const Provider = ({ children, ...props }) => {
+export const Provider = ({ children = null, ...props }) => {
   const api = useAPI()
   const tmdb = useTMDB()
   const sensorr = useSensorr()

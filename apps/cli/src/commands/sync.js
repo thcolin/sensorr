@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react'
+import fs from 'node:fs/promises'
 import { render, Text } from 'ink'
+import oleoo from 'oleoo'
 import { TMDB } from '@sensorr/tmdb'
 import { Plex } from '@sensorr/plex'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-
-const app = require('../../../../package.json')
-const oleoo = require('oleoo')
 
 const meta = {
   command: 'sync',
@@ -23,6 +22,7 @@ export default (job, handlers) => ({
       throw new Error('You need to register a Plex server with Sensorr settings page before sync to it !')
     }
 
+    const app = JSON.parse(await fs.readFile(new URL('../../../../package.json', import.meta.url)))
     const plex = Plex(config.get('plex'), app)
     const tmdb = new TMDB({
       key: config.get('tmdb'),

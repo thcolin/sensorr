@@ -1,12 +1,15 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { Injectable, Logger } from '@nestjs/common'
 import config from '@sensorr/config'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 @Injectable()
 export class ConfigService {
   private readonly logger = new Logger(ConfigService.name)
-  private readonly file = path.resolve(`${__dirname}/../../../config.json`)
+  private readonly file = path.resolve(`${__dirname}/../../../../../config.json`)
   config: any = config
 
   constructor() {

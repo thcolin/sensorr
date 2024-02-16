@@ -28,8 +28,7 @@ const withFetchQuery = (
   }: withFetchQueryProps & Omit<TProps, 'length' | 'entities' | 'onMore'>) => {
     const service = useService()
     // Wait for first controlsQuery hydration by serializing initial state
-    const [ready, setReady] = useState(!!useControlsValues)
-    const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
+    const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ ready: true, uri, params }))
 
     const query = useMemo(() => ({
       uri: controlsQuery.uri || propsQuery.uri || defaultQuery.uri,
@@ -93,7 +92,7 @@ const withFetchQuery = (
       setLoading(true)
       setError(null)
 
-      if (ready === false || (props as any).ready === false || (props as any).loading === true || ongoing) {
+      if ((useControlsValues && !controlsQuery?.ready) || (props as any).ready === false || (props as any).loading === true || ongoing) {
         return
       }
 
@@ -112,12 +111,7 @@ const withFetchQuery = (
           setLoading(false)
         }
       })
-    }, [ready, query, (props as any).ready, (props as any).loading, (props as any).error, ongoing])
-
-    useEffect(() => {
-      // First controlsQuery hydration by serializing initial state is now complete
-      setReady(true)
-    }, [])
+    }, [controlsQuery?.ready, query, (props as any).ready, (props as any).loading, (props as any).error, ongoing])
 
     const entities = useMemo(() => Object.entries(pages).reduce((acc, [page, entities]: any) => ({
       ...acc,
@@ -129,7 +123,7 @@ const withFetchQuery = (
         {...props as any}
         entities={entities}
         length={total}
-        ready={(props as any).ready !== false && ready !== false && !loading}
+        ready={(props as any).ready !== false && !loading}
         error={error || (props as any).error}
         onMore={fetchEntities}
         controls={controls}

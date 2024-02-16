@@ -15,10 +15,6 @@ export const withTabsBehavior = () => (WrappedComponent) => {
     const [ready, setReady] = useState(true)
 
     useEffect(() => {
-      if (optimistic && tabs[optimistic]) {
-        return
-      }
-
       setOptimistic(current || Object.keys(tabs)[0])
     }, [tabs, current])
 

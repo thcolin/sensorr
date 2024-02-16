@@ -36,7 +36,7 @@ CanvasImage.prototype.removeCanvas = function () {
 
 export function getImagePalette(src) {
   return new Promise(resolve => {
-    const worker = new Worker('./palette.worker.js', { type: 'module' })
+    const worker = new Worker(new URL('./palette.worker.js', import.meta.url))
     worker.onmessage = e => resolve(e.data)
     const image = new Image()
 

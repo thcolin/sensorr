@@ -3,6 +3,8 @@ import sanitizeFilename from 'sanitize-filename'
 import fs from 'fs/promises'
 import path from 'path'
 import cp from 'child_process'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
@@ -11,7 +13,8 @@ import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
 
-const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../bin/sensorr`)
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../../../bin/sensorr`)
 
 @Injectable()
 export class SensorrService {

@@ -2,10 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "module": "esnext",
     "outDir": "../../dist/out-tsc",
-    "types": ["node"],
     "emitDecoratorMetadata": true,
-    "target": "es2015",
+    "target": "esnext",
     "resolveJsonModule": true
   },
   "exclude": ["**/*.spec.ts"],

@@ -151,19 +151,19 @@ export const Movie = memo(UIMovie)
 
 export interface MovieDetails extends Details {
   meaningful: {
-    directors?: React.ReactNode,
-    year?: React.ReactNode,
-    release_date?: React.ReactNode,
-    vote_average?: React.ReactNode,
-    vote_count?: React.ReactNode,
-    popularity?: React.ReactNode,
-    genres?: React.ReactNode,
-    runtime?: React.ReactNode,
-    original_language?: React.ReactNode,
-    budget?: React.ReactNode,
-    revenue?: React.ReactNode,
-    production_companies?: React.ReactNode,
-    keywords?: React.ReactNode,
+    directors?: React.FunctionComponent,
+    year?: React.FunctionComponent,
+    release_date?: React.FunctionComponent,
+    vote_average?: React.FunctionComponent,
+    vote_count?: React.FunctionComponent,
+    popularity?: React.FunctionComponent,
+    genres?: React.FunctionComponent,
+    runtime?: React.FunctionComponent,
+    original_language?: React.FunctionComponent,
+    budget?: React.FunctionComponent,
+    revenue?: React.FunctionComponent,
+    production_companies?: React.FunctionComponent,
+    keywords?: React.FunctionComponent,
   },
 }
 

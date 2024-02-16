@@ -5,7 +5,7 @@ import pagination from 'mongoose-paginate-v2'
 @Schema({ collection: 'persons' })
 export class Person extends Document {
   @Prop()
-  _id: number
+  declare _id: number
 
   @Prop()
   birthday: Date
@@ -17,7 +17,7 @@ export class Person extends Document {
   deathday: Date
 
   @Prop()
-  id: number
+  declare id: number
 
   @Prop()
   name: string

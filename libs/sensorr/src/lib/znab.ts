@@ -1,5 +1,5 @@
 import { xml2json } from 'xml2json-light'
-import * as oleoo from 'oleoo'
+import oleoo from 'oleoo'
 import { Znab as ZnabInterface } from './interfaces'
 
 export class Znab {
@@ -26,12 +26,12 @@ export class Znab {
     params.format = 'json'
     params.apikey = this.key
 
-    const target = `${this.url}?${Object.entries(params).map(([key, param]) => `${key}=${encodeURIComponent(param as string)}`).join('&')}`
+    const target = `?${Object.entries(params).map(([key, param]) => `${key}=${encodeURIComponent(param as string)}`).join('&')}`
 
     if (this.options.proxify) {
-      return [`/api/proxy?target=${encodeURIComponent(target)}`]
+      return [`/api/proxy?serviceId=${this.name}&target=${encodeURIComponent(target)}`]
     } else {
-      return [target]
+      return [`${this.url}${target}`]
     }
   }
 
@@ -43,7 +43,7 @@ export class Znab {
       cat: '2000,2010,2020,2030,2040,2050,2060',
     }) as [string, RequestInit]
 
-    const res = await fetch(resource, { ...initial, ...init })
+    const res = await fetch(resource, { ...initial, ...init } as any)
 
     if (!res.ok) {
       throw new Error(`[ZNAB][${this.name}] ${res.url} ${res.status}: ${res.statusText}`)
