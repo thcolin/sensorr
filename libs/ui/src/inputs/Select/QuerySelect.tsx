@@ -1,9 +1,9 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, forwardRef } from 'react'
 import CreatableSelect from 'react-select/creatable'
 import { useThemeUI } from 'theme-ui'
 import { Select } from './Select'
 
-export const QuerySelect = ({ onChange, ...props }) => {
+export const QuerySelect = forwardRef(({ onChange, ...props }: any, ref) => {
   const { theme } = useThemeUI()
 
   const handleChange = useCallback((values, { action, removedValue }) => {
@@ -94,6 +94,7 @@ export const QuerySelect = ({ onChange, ...props }) => {
       borderLeft: `1px solid ${theme.rawColors.primary}`,
       marginLeft: '0.25em',
       cursor: 'pointer',
+      fontSize: '0.75em',
       ':hover': {
         backgroundColor: '#FFF',
         color: theme.rawColors.primaryDark,
@@ -112,11 +113,13 @@ export const QuerySelect = ({ onChange, ...props }) => {
     menu: () => ({
       display: 'none',
     }),
-  }), [theme])
+    ...props.styles,
+  }), [theme, props.styles])
 
   return (
     <Select
       {...props as any}
+      ref={ref}
       onChange={handleChange}
       closeMenuOnSelect={false}
       multi={true}
@@ -126,4 +129,4 @@ export const QuerySelect = ({ onChange, ...props }) => {
       }}
     />
   )
-}
+})

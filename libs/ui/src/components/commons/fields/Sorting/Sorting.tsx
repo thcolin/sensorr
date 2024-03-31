@@ -68,18 +68,41 @@ UISorting.styles = {
     display: 'flex',
     alignItems: 'center',
     minWidth: '17em',
+    marginY: 4,
+    borderRadius: '0.25em',
+    ':hover': {
+      backgroundColor: 'accent',
+    },
     '>label': {
-      marginRight: 6,
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      marginLeft: 4,
+      marginRight: 8,
     },
     '>button': {
       variant: 'button.reset',
-      marginRight: 4,
+      height: '100%',
+      paddingX: 6,
+      ':hover': {
+        backgroundColor: 'accentDark',
+      },
       '>svg': {
         height: '1em',
       },
     },
     '>div': {
       position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      flex: 1,
+      paddingX: 4,
+      borderTopRightRadius: '0.25em',
+      borderBottomRightRadius: '0.25em',
+      ':hover': {
+        backgroundColor: 'accentDark',
+      },
       '>span': {
         color: 'textShadow',
         fontSize: 4,

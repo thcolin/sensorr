@@ -2,7 +2,7 @@ import { Entities, withControls } from '@sensorr/ui'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
@@ -13,7 +13,7 @@ export const Trending = (resource) => compose(
   withProps({
     id: 'trending',
     display: 'grid',
-    child: { movies: MovieWithCredits, persons: Person }[resource],
+    child: { movies: MovieWithCreditsAndReviews, persons: Person }[resource],
     empty: {
       movies: {
         emoji: '🍿',

@@ -57,8 +57,13 @@ UIWheel.styles = {
       flexDirection: 'column',
       position: 'absolute',
       paddingX: 4,
+      paddingY: 8,
       fontSize: 6,
-      transition: 'all 200ms ease-in-out',
+      transition: 'left 200ms ease-in-out, width 200ms ease-in-out',
+      borderRadius: '0.25em',
+      ':hover:not(:disabled)': {
+        backgroundColor: 'accent',
+      },
       '>span': {
         display: 'block',
         marginY: '0.125rem',

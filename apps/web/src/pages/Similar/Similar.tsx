@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -14,7 +14,7 @@ export const Similar = (id) => compose(
   withProps({
     id: 'similar',
     display: 'grid',
-    child: MovieWithCredits,
+    child: MovieWithCreditsAndReviews,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",

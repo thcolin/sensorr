@@ -6,14 +6,33 @@ const searchContext = createContext({})
 
 export const Provider = ({ ...props }) => {
   const tmdb = useTMDB()
+  const [input, setInput] = useState('')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
+  const [history, setHistory] = useState(null)
+  const [historyDisplay, setHistoryDisplay] = useState(false)
+
+  const addHistoryQuery = useCallback((query) => setHistory(history => {
+    const next = [...new Set([query, ...history])].slice(0, 5)
+    localStorage.setItem('sensorr-search-history', JSON.stringify(next))
+    return next
+  }), [setHistory])
+
+  const removeHistoryQuery = useCallback((query) => setHistory(history => {
+    const next = history.filter(q => q !== query)
+    localStorage.setItem('sensorr-search-history', JSON.stringify(next))
+    return next
+  }), [setHistory])
 
   const clear = useCallback(() => {
     setResults(null)
     setQuery('')
     setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    setHistory(JSON.parse(localStorage.getItem('sensorr-search-history') || '[]'))
   }, [])
 
   useEffect(() => {
@@ -35,6 +54,16 @@ export const Provider = ({ ...props }) => {
           tmdb.fetch('search/company', { query }, { signal: controller.signal }),
         ])
         setResults({ movies, persons, collections, keywords, companies })
+
+        if (
+          !!movies?.results?.length ||
+          !!collections?.results?.length ||
+          !!persons?.results?.length ||
+          !!companies?.results?.length ||
+          !!keywords?.results?.length
+        ) {
+          addHistoryQuery(query)
+        }
       } catch (err) {
         setResults(null)
         console.warn(err)
@@ -52,11 +81,17 @@ export const Provider = ({ ...props }) => {
     <searchContext.Provider
       {...props}
       value={{
+        input,
+        setInput,
         query,
         setQuery,
         loading,
         results,
         clear,
+        history,
+        removeHistoryQuery,
+        historyDisplay,
+        setHistoryDisplay,
       }}
     />
   )

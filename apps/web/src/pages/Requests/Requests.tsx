@@ -10,12 +10,13 @@ import {
   FilterRuntime,
   Sorting,
   Warning,
-  FilterStates,
+  Option,
+  ControlsToggleButton,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
@@ -23,7 +24,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withHistoryState from '../../components/enhancers/withHistoryState'
 
 const Movie = ({ ...props }) => (
-  <MovieWithCredits {...props as any} guestsDisplay='always' />
+  <MovieWithCreditsAndReviews {...props as any} guestsDisplay='always' />
 )
 
 const Requests = compose(
@@ -50,12 +51,12 @@ const Requests = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+        gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
+        gap: '2em',
         gridTemplateAreas: [
-          `"results toggle sort_by"`,
-          `"title results toggle sort_by"`,
+          `"results state toggle sort_by"`,
+          `"title results state toggle sort_by"`,
         ],
         '>h4': {
           display: ['none', 'block'],
@@ -69,7 +70,6 @@ const Requests = compose(
         gridTemplateAreas: `
           "head"
           "requested_by"
-          "state"
           "genres"
           "release_date"
           "popularity"
@@ -77,6 +77,11 @@ const Requests = compose(
           "runtime"
         `,
       },
+    },
+    components: {
+      toggle: withProps({
+        translateKey: 'ui.controls.more',
+      })(ControlsToggleButton),
     },
     fields: {
       head: {
@@ -117,12 +122,19 @@ const Requests = compose(
         })(Sorting)
       },
       state: {
-        ...fields.state,
-        initial: ['ignored'],
-        component: withProps({
-          type: 'movie',
-          ignoreOptions: ['loading'],
-        })(FilterStates),
+        initial: 'pinned|missing|ignored',
+        hideFromFiltersCount: true,
+        serialize: (key, raw) => ({ [key]: raw }),
+        component: ({ ...props }) => (
+          <Option
+            id='unfulfilled'
+            type='checkbox'
+            checked={props.value === 'pinned|missing|ignored'}
+            onChange={(e: any) => props.onChange(e.target.checked ? 'pinned|missing|ignored' : 'archived|wished|pinned|missing|ignored')}
+          >
+            Unfulfilled
+          </Option>
+        ),
       },
       requested_by: {
         initial: { values: [], behavior: 'and' },

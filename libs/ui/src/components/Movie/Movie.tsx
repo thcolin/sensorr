@@ -1,11 +1,12 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb } from '@sensorr/tmdb'
+import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb, fields, utils } from '@sensorr/tmdb'
 import { emojize, humanize } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Link } from '../../atoms/Link/Link'
+import { Icon } from '../../atoms/Icon/Icon'
 import { Details } from '../../elements/Entity'
 import { Avatar } from '../../elements/Entity/Avatar/Avatar'
 import { Card } from '../../elements/Entity/Card/Card'
@@ -25,6 +26,7 @@ export interface MovieProps extends Omit<
   link?: ((MovieInterface) => LinkProps)
   focus?: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count'
   credits?: { entity: (PersonInterface | CastInterface | CrewInterface), state?: 'loading' | 'ignored' | 'followed' }[]
+  reviews?: { source: string, score: string, date: string, count: string }[],
   placeholder?: boolean
   state?: 'loading' | 'ignored' | 'missing' | 'pinned' | 'wished' | 'archived'
   setState?: (state: string) => any
@@ -40,6 +42,7 @@ const UIMovie = ({
   entity: data,
   display = 'poster',
   placeholder,
+  reviews,
   credits,
   state,
   setState,
@@ -57,10 +60,47 @@ const UIMovie = ({
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/movie/${entity.id}` }))(entity), [entity, props.link])
 
   // components
-  const focus = useMemo(() => entity.id === null ? [] : [
-    Focus,
-    { entity, property: display === 'pretty' ? 'vote_count' : 'vote_average', compact: true, size: 'small' }
-  ], [entity, display]) as [React.FC, any]
+  const focus = useMemo(() => {
+    if (entity.id === null || display !== 'poster') {
+      return []
+    }
+
+    const vote_average = Math.round((Number([
+      (entity.vote_average / 10),
+      ...(reviews || [])?.map(review => review.score),
+    ].reduce((acc, curr) => Number(acc) + Number(curr), 0)) / Math.max(1, (reviews?.length || 0) + (entity.vote_average ? 1 : 0))) * 100)
+
+    return [
+      Focus,
+      {
+        entity,
+        property: 'vote_average',
+        compact: true,
+        size: 'small',
+        emoji: utils.judge({ vote_average: vote_average / 10 } as any),
+        label: `${vote_average} %`,
+        tippy: (
+          <span sx={{ display: 'flex', alignItems: 'center', '>span:not(:last-of-type)': { marginRight: 6 } }}>
+            <span>
+              <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
+              {Math.round(entity.vote_average * 10)}%
+            </span>
+            {(reviews || [])?.map((review: any) => (
+              <span sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}>
+                <Icon
+                  value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
+                  height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                  width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                  sx={{ marginRight: 8 }}
+                />
+                <span>{Math.round(review.score * 100)}%</span>
+              </span>
+            ))}
+          </span>
+        ),
+      }
+    ]
+  }, [entity, reviews, display]) as [React.FC, any]
 
   const badge = useMemo(() => entity.id === null ? [] : [
     MovieState,
@@ -119,6 +159,7 @@ const UIMovie = ({
         <Pretty
           {...props}
           details={details}
+          reviews={reviews}
           link={link}
           state={badge}
           focus={focus}
@@ -134,6 +175,7 @@ const UIMovie = ({
         <Poster
           {...props}
           details={details}
+          reviews={reviews}
           link={link}
           state={badge}
           focus={focus}
@@ -197,8 +239,8 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         state={{
           controls: {
             primary_release_date: [
-              new Date(entity.release_date),
-              new Date(entity.release_date),
+              new Date(`${new Date(entity.release_date).getFullYear()}-01-01`),
+              new Date(`${new Date(entity.release_date).getFullYear()}-12-31`),
             ],
           },
         }}
@@ -214,8 +256,8 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         state={{
           controls: {
             primary_release_date: [
-              new Date(entity.release_date),
-              new Date(entity.release_date),
+              new Date(`${new Date(entity.release_date).getFullYear()}-01-01`),
+              new Date(`${new Date(entity.release_date).getFullYear()}-12-31`),
             ],
           },
         }}
@@ -227,10 +269,10 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         }))}
       </Link>
     ) : null,
-    vote_average: !!entity.vote_average ? () => (
+    vote_average: typeof entity.vote_average !== 'undefined' ? () => (
       <Link
-        title={`Discover more "${tmdb.judge(entity)}" movies`}
-        sx={{ whiteSpace: 'nowrap' }}
+        title={`Discover more "${tmdb.judge(entity)}" movies${!!entity?.vote_count ? ` (${fields.vote_count.humanize(entity as any)} users rating)` : ''}`}
+        sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
           controls: {
@@ -238,7 +280,8 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           },
         }}
       >
-        {emojize(tmdb.judge(entity), entity.vote_average.toFixed(1).toLocaleString())}
+        <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
+        {Math.round(entity.vote_average * 10)}%
       </Link>
     ) : null,
     vote_count: !!entity.vote_count ? () => (

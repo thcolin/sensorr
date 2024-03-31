@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import usePortal from 'react-useportal'
 import { InputsProps } from './commons/Inputs'
-import { Nav, Results, Title, ToggleButton } from './commons/Nav'
+import { Nav, Results, Title } from './commons/Nav'
+import { ControlsToggleButton } from './commons/ControlsToggleButton'
 import { Aside } from './commons/Aside'
 import { useLayoutFields } from './commons/useLayoutFields'
 
@@ -18,6 +19,7 @@ export interface ControlsProps {
       initial: any
       statistics?: any
       serialize?: (key: string, value: any) => { [key: string]: any }
+      hideFromFiltersCount?: boolean,
       props?: {
         [key: string]: any
       }
@@ -90,7 +92,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
       toggle: {
         initial: null,
         serialize: () => ({}),
-        component: components?.toggle || ToggleButton,
+        component: components?.toggle || ControlsToggleButton,
         props: { toggleOpen: togglePortal, fields, values, ...props },
       },
     } : {}),

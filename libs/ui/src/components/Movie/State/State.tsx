@@ -43,7 +43,7 @@ export const MovieStateOptions = [
 const UIMovieState = ({
   ...props
 }: MovieStateProps) => (
-  <UIState {...props} options={MovieStateOptions} />
+  <UIState {...props as any} options={MovieStateOptions} />
 )
 
 export const MovieState = memo(UIMovieState)

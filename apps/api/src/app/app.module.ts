@@ -7,6 +7,7 @@ import { MoviesModule } from './movies/movies.module'
 import { PersonsModule } from './persons/persons.module'
 import { GuestsModule } from './guests/guests.module'
 import { JobsModule } from './jobs/jobs.module'
+import { NotificationsModule } from './notifications/notifications.module'
 import { PlexModule } from './plex/plex.module'
 import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
@@ -29,6 +30,7 @@ import { SensorrModule } from './sensorr/sensorr.module'
     PersonsModule,
     GuestsModule,
     JobsModule,
+    NotificationsModule,
     PlexModule,
     ConfigModule,
     SensorrModule,

@@ -48,16 +48,6 @@ const Navigation = ({ ...props }) => {
         )}
         <NavLink onClick={scrollTo} to="/jobs" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Jobs</NavLink>
         <NavLink onClick={scrollTo} to="/settings" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Settings</NavLink>
-        {location.pathname.startsWith('/settings') && (
-          <div sx={Navigation.styles.secondary}>
-            <Chevron />
-            <NavLink onClick={scrollTo} to="/settings" end style={({ isActive }) => isActive ? Navigation.styles.active : {}}>General</NavLink>
-            <NavLink onClick={scrollTo} to="/settings/downloads" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Downloads</NavLink>
-            <NavLink onClick={scrollTo} to="/settings/plex" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Plex</NavLink>
-            <NavLink onClick={scrollTo} to="/settings/friends" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Friends</NavLink>
-            <NavLink onClick={scrollTo} to="/settings/pwa" style={({ isActive }) => isActive ? Navigation.styles.active : {}}>Mobile</NavLink>
-          </div>
-        )}
       </div>
     </div>
   )

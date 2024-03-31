@@ -93,7 +93,7 @@ const withFetchCalendarQuery = (
 
     const fetchEntities = useCallback((entities) => (Object.entries(totals.current)
       .reduce((acc, [page, total]) => [...acc, ...(new Array(total).fill(Number(page)))], [])
-      .filter((page, index) => index >= entities[0].index && index <= entities[entities.length - 1].index)
+      .filter((page, index) => entities[0].index && index >= entities[0].index && index <= entities[entities.length - 1].index)
       .reduce((acc, page) => acc.includes(page) ? acc : [...acc, page], [])
       .filter((page) => !processed.current.includes(page))
       .forEach(async (page) => {

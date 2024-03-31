@@ -37,7 +37,7 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
             right: '0em',
             left: '0em',
             transform: `translate3d(${open ? '0px, 0px, 0px' : '0px, -100%, 0px'})`,
-            zIndex: 5 + level,
+            zIndex: 6 + level,
           },
           right: {
             height: '100vh',
@@ -46,7 +46,7 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
             right: '0em',
             bottom: '0em',
             transform: `translate3d(${open ? '0px, 0px, 0px' : '100%, 0px, 0px'})`,
-            zIndex: 5 + level,
+            zIndex: 6 + level,
           },
           bottom: {
             height: '75vh',
@@ -55,7 +55,7 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
             bottom: '0em',
             left: '0em',
             transform: `translate3d(${open ? '0px, 0px, 0px' : '0px, 100%, 0px'})`,
-            zIndex: 5 + level,
+            zIndex: 6 + level,
           },
           left: {
             height: '100vh',
@@ -64,11 +64,11 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
             bottom: '0em',
             left: '0em',
             transform: `translate3d(${open ? '0px, 0px, 0px' : '-100%, 0px, 0px'})`,
-            zIndex: 5 + level,
+            zIndex: 6 + level,
           },
         }[position]}
       >
-        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 5 + level }}>
+        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 6 + level }}>
           {ready && children}
         </div>
         <div sx={UIPane.styles.spinner} style={{ visibility: ready ? 'hidden' : 'visible' }}>
@@ -80,7 +80,7 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
         sx={UIPane.styles.shadow}
         onClick={toggleOpen}
         style={{
-          zIndex: open ? (4 + level) : -1,
+          zIndex: open ? (5 + level) : -1,
           transition: `opacity 400ms ease, z-index ${open ? '0ms' : '400ms'} linear`,
           opacity: open ? 1 : 0,
         }}

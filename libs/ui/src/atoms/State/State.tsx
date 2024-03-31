@@ -1,10 +1,14 @@
 import { memo, useCallback } from 'react'
 import { Badge, BadgeProps } from '../Badge/Badge'
 
+type ChildProps = { emoji: string, label: React.ReactNode }
+
 export interface StateProps extends Omit<BadgeProps, 'emoji' | 'label' | 'onChange'> {
   value: string
   onChange: (e?: string) => void
   options: { emoji: string; label: string; value: string; hide?: boolean; }[]
+  component: React.FunctionComponent<ChildProps>
+  [prop: string]: any
 }
 
 function UIState({
@@ -12,6 +16,7 @@ function UIState({
   onChange,
   options,
   compact = false,
+  component: Component = Badge,
   ...props
 }: StateProps) {
   const handleChange = useCallback((e) => onChange(e.target.value), [onChange])
@@ -24,6 +29,7 @@ function UIState({
 
   return (
     <label sx={UIState.styles.element} {...(props.title ? { title: props.title } : {})}>
+      <Component {...props} emoji={option.emoji} label={!compact && option.label} />
       <select value={option.value} onChange={handleChange} disabled={option.value === 'loading'}>
         {options
           .filter((option) => !option.hide)
@@ -33,7 +39,6 @@ function UIState({
             </option>
           ))}
       </select>
-      <Badge {...props} emoji={option.emoji} label={!compact && option.label} />
     </label>
   )
 }

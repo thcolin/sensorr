@@ -81,10 +81,10 @@ export const select = {
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
     transition: 'border-color 100ms ease-in-out',
-    ':hover': {
+    ':hover:not(:disabled):not(:focus):not(:active)': {
       borderColor: 'grayDarker',
     },
-    ':focus,:active': {
+    ':focus,:active:not(:disabled)': {
       borderColor: 'grayDarkest'
     },
     ':not(:disabled)': {
@@ -123,11 +123,15 @@ export const input = {
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
     transition: 'border-color 100ms ease-in-out',
-    ':hover': {
+    ':hover:not(:disabled):not(:focus):not(:active)': {
       borderColor: 'grayDarker',
     },
-    ':focus,:active': {
+    ':focus,:active:not(:disabled)': {
       borderColor: 'grayDarkest'
+    },
+    ':disabled': {
+      borderColor: 'gray',
+      color: 'grayDarkest',
     },
   },
 }
@@ -180,6 +184,7 @@ export const code = {
     backgroundColor: 'gray',
     padding: '0.25em 0.5em',
     fontSize: '0.875em',
+    whiteSpace: 'nowrap',
   }
 }
 
@@ -194,10 +199,10 @@ export const textarea = {
     borderRadius: '0.25em',
     outline: 'none',
     transition: 'border-color 100ms ease-in-out',
-    ':hover': {
+    ':hover:not(:disabled):not(:focus):not(:active)': {
       borderColor: 'grayDarker',
     },
-    ':focus,:active': {
+    ':focus,:active:not(:disabled)': {
       borderColor: 'grayDarkest'
     },
   }

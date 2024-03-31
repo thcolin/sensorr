@@ -7,9 +7,9 @@ const judge = ({ vote_average = 0 }: Movie) => {
     return '👎'
   } else if (vote_average < 7) {
     return '👍'
-  } else if (vote_average < 7.5) {
-    return '👏'
   } else if (vote_average < 8) {
+    return '👏'
+  } else if (vote_average < 9) {
     return '🙌'
   } else {
     return '🙏'

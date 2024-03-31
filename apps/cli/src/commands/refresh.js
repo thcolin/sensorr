@@ -24,7 +24,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job }, logger, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb }}>
         <FetchTMDBChangesTask />
         <ComputeSensorrAffectedChangesTask />
         <ApplyChangesTask type='movie' />

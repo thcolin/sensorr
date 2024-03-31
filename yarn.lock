@@ -15905,10 +15905,10 @@ react-reconciler@^0.29.0:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
 
-react-responsive-virtual-grid@^0.0.23:
-  version "0.0.23"
-  resolved "https://registry.yarnpkg.com/react-responsive-virtual-grid/-/react-responsive-virtual-grid-0.0.23.tgz#d8471a46b74c5f2d8707baec5dd9accc45f52c60"
-  integrity sha512-odO/siq+G4sOEe7I1UrAfnU2famwslagu0slQNtWP4/EODtDm0hFeDM1qhzw41WhHHQdgPh268UkOLC5sSGI4g==
+react-responsive-virtual-grid@^0.0.24:
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/react-responsive-virtual-grid/-/react-responsive-virtual-grid-0.0.24.tgz#d7fc65e86e6702b0b28b1b7e7af49272ac151de5"
+  integrity sha512-nRIv815LpUgRLyUR0adg3TaBYhWoeiDfMeGrl52fOMse7VkXhvPG+1o1Dnrlq+jAhCIMy7QWzUU66rfxeCWnlg==
   dependencies:
     "@juggle/resize-observer" "^3.3.1"
     nanobounce "^1.1.0"

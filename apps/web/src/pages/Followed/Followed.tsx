@@ -43,7 +43,7 @@ const FollowedPersons = compose(
         display: 'grid',
         gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
+        gap: '2em',
         gridTemplateAreas: [
           `"results toggle sort_by"`,
           `"title results toggle sort_by"`,

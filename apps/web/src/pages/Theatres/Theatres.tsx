@@ -2,7 +2,7 @@ import { Entities, withControls } from '@sensorr/ui'
 import { compose, emojize, regions, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -13,7 +13,7 @@ export const Theatres = compose(
   withProps({
     id: 'theatres',
     display: 'grid',
-    child: MovieWithCredits,
+    child: MovieWithCreditsAndReviews,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -60,8 +60,16 @@ export const Theatres = compose(
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
+              marginY: 4,
+              paddingX: 2,
+              borderRadius: '0.25em',
+              ':hover': {
+                backgroundColor: 'accent',
+              },
               '>label': {
-                marginRight: 6,
+                display: 'flex',
+                alignItems: 'center',
+                height: '100%',
                 color: 'textShadow',
                 fontSize: 4,
                 fontWeight: 'semibold',
@@ -69,6 +77,7 @@ export const Theatres = compose(
               '>select': {
                 variant: 'select.reset',
                 position: 'absolute',
+                height: '100%',
                 width: '100%',
                 right: '0px',
                 opacity: 0,
@@ -106,15 +115,24 @@ export const Theatres = compose(
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
+                marginY: 4,
+                paddingX: 2,
+                borderRadius: '0.25em',
+                ':hover': {
+                  backgroundColor: 'accent',
+                },
                 '>label': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '100%',
                   color: 'textShadow',
-                  marginRight: 6,
                   fontSize: 4,
                   fontWeight: 'semibold',
                 },
                 '>select': {
                   variant: 'select.reset',
                   position: 'absolute',
+                  height: '100%',
                   width: '100%',
                   right: '0px',
                   opacity: 0,
@@ -127,8 +145,6 @@ export const Theatres = compose(
               }}
             >
               <label htmlFor='region'>
-                {i18n.t('pages.theatres.controls.region.label')}
-                &nbsp;&nbsp;
                 {options[value] && emojize(options[value].emoji, options[value].name)}
               </label>
               <select id='region' value={value} onChange={e => onChange(e.target.value)}>

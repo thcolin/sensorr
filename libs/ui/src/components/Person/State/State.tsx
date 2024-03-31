@@ -27,7 +27,7 @@ export const PersonStateOptions = [
 const UIPersonState = ({
   ...props
 }: PersonStateProps) => (
-  <UIState {...props} options={PersonStateOptions} />
+  <UIState {...props as any} options={PersonStateOptions} />
 )
 
 export const PersonState = memo(UIPersonState)

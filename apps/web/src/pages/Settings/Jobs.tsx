@@ -1,17 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Option, Label, Icon, Button } from '@sensorr/ui'
+import React, { useCallback, useState } from 'react'
+import { Option, Icon, Button } from '@sensorr/ui'
 import toast from 'react-hot-toast'
 import { Controller, useForm } from 'react-hook-form'
-import { countries, flag, name } from 'country-emoji'
 import cronParser from 'cron-parser'
-import cl from 'country-language'
 import cronstrue from 'cronstrue'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { emojize } from '@sensorr/utils'
 
-const General = ({ ...props }) => {
+const Jobs = ({ ...props }) => {
   const { config } = useConfigContext()
   const form = useForm({ defaultValues: config.getProperties() })
 
@@ -22,14 +20,13 @@ const General = ({ ...props }) => {
   }, [])
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} sx={General.styles.element}>
-      <TMDBSettings control={form.control} />
+    <form onSubmit={form.handleSubmit(onSubmit)} sx={Jobs.styles.element}>
       <JobsSettings control={form.control} watch={form.watch} />
     </form>
   )
 }
 
-General.styles = {
+Jobs.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
@@ -42,6 +39,7 @@ General.styles = {
     },
     p: {
       marginY: 8,
+      lineHeight: 'body',
     },
     h3: {
       marginY: 8,
@@ -63,69 +61,7 @@ General.styles = {
   },
 }
 
-export default General
-
-const TMDBSettings = ({ control, ...props }) => {
-  const [regions, setRegions] = useState([])
-
-  useEffect(() => {
-    (async () => {
-      const regions = (await Promise.all(
-        Object.keys(countries).map(country => new Promise(resolve => cl.getCountryLanguages(country, (err, languages) => {
-          if (!err && languages && languages.length && languages[0].iso639_1) {
-            resolve({ country, language: languages[0].iso639_1, emoji: flag(country), name: name(country) })
-          } else {
-            resolve(null)
-          }
-        })))
-      )).filter(region => region)
-
-      setRegions(regions)
-    })()
-  }, [])
-
-  return (
-    <section>
-      <h2>TMDB</h2>
-      <p>Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, to works properly, you will need to configure a few settings,</p>
-      <div sx={{ display: 'flex', flexDirection: 'column' }}>
-        <Controller
-          name='tmdb'
-          control={control}
-          rules={{ required: true }}
-          render={({ field: { ref, ...field } }) => (
-            <Label label='API Key'>
-              <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
-            </Label>
-          )}
-        />
-        <small sx={{ disply: 'block', marginTop: 6 }}><a href='https://www.themoviedb.org/signup' target='_blank' rel='noopener noreferrer'>Sign up</a> and fill <a href='https://www.themoviedb.org/settings/api' target='_blank' rel='noopener noreferrer'>your own <code>API Key</code> (v3 auth)</a></small>
-      </div>
-      <div sx={{ display: 'flex', flexDirection: 'column' }}>
-        <Controller
-          name='region'
-          rules={{ required: true }}
-          control={control}
-          render={({ field: { ref, ...field } }) => (
-            <Label label='Region'>
-              <select {...field} sx={{ variant: 'select.default' }}>
-                {regions.sort((a, b) => a.name.localeCompare(b.name)).map(region => (
-                  <option key={region.country} value={`${region.language}-${region.country}`}>
-                    {region.name} {region.emoji}
-                  </option>
-                ))}
-              </select>
-            </Label>
-          )}
-        />
-        <small sx={{ disply: 'block', marginTop: 6 }}>Region will be used to show <a href='https://developer.themoviedb.org/docs/languages' target='_blank' rel='noopener noreferrer'>localized data and metadata</a> from TMDB</small>
-      </div>
-      <div sx={{ display: 'flex', marginTop: 4 }}>
-        <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
-      </div>
-    </section>
-  )
-}
+export default Jobs
 
 const JobsSettings = ({ control, watch, ...props }) => {
   const api = useAPI()
@@ -138,15 +74,15 @@ const JobsSettings = ({ control, watch, ...props }) => {
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
-      loading: `Running new Job "${command}", please wait...`,
+      loading: `Running new Job **${command}**, please wait...`,
       success: (data) => {
         setOngoing(ongoing => ongoing.filter(c => c !== command))
-        return `Job "${command}" successfully run (${data.job})`
+        return `Job **${command}** successfully run (${data.job})`
       },
       error: (err) => {
         console.warn(err)
         setOngoing(ongoing => ongoing.filter(c => c !== command))
-        return `Error during Job "${command}" run`
+        return `Error during Job **${command}** run`
       },
     })
   }, [])
@@ -176,7 +112,7 @@ const JobsSettings = ({ control, watch, ...props }) => {
     <section>
       <h2>Jobs</h2>
       <p>
-        Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency; use the "play" button to trigger a job manually
+        Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
       </p>
       {[
         {
@@ -268,7 +204,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
         </div>
       </div>
       {!!warning && (
-        <div sx={{ ...JobSettings.styles.options, borderBottomLeftRadius: '0rem', borderBottomRightRadius: '0rem', backgroundColor: '#FFE9A4', color: '#664D06', paddingX: 4, paddingY: 8 }}>
+        <div data-disabled='true' sx={{ ...JobSettings.styles.options, borderBottomLeftRadius: '0rem', borderBottomRightRadius: '0rem', backgroundColor: '#FFE9A4', color: '#664D06', paddingX: 4, paddingY: 8 }}>
           {warning}
         </div>
       )}
@@ -425,6 +361,9 @@ JobSettings.styles = {
     borderTopLeftRadius: '0rem',
     borderTopRightRadius: '0rem',
     lineHeight: 'body',
+    ':not([data-disabled]):hover': {
+      backgroundColor: 'grayLight',
+    },
     '>label': {
       flex: 1,
     },

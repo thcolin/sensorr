@@ -12,10 +12,10 @@ const Friends = ({ ...props }) => {
   )
 
   return (
-    <div sx={Friends.styles.element}>
-      <section>
+    <section>
+      <article>
         <h2>Friends</h2>
-        <p sx={{ lineHeight: 'body' }}>
+        <p>
           Fullfill your friends movie <Link to='/movie/requests'>requests</Link> on Sensorr by following their <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener'>Plex "Watchlist"</a>.
           Invite them as Sensorr guest, they will be asked to "link" their Plex account to the Sensorr server in order to keep a token for each of them to follow their Plex "Watchlist" regulary through <code>keep-in-touch</code> jobs.
           <small>
@@ -87,40 +87,12 @@ const Friends = ({ ...props }) => {
             Copy Invitation to Clipboard
           </Button>
         </div>
-      </section>
-    </div>
+      </article>
+    </section>
   )
 }
 
 Friends.styles = {
-  element: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    alignItems: 'center',
-    paddingX: 2,
-    paddingBottom: 0,
-    code: {
-      variant: 'code.tag',
-    },
-    p: {
-      marginY: 8,
-    },
-    h3: {
-      marginY: 8,
-    },
-    a: {
-      color: 'primary',
-      ':hover': {
-        color: 'accent',
-      },
-    },
-    section: {
-      width: '100%',
-      paddingX: 4,
-      maxWidth: '96rem',
-    },
-  },
   guests: {
     marginBottom: 2,
     '>div': {

@@ -9,7 +9,7 @@ import Details from '../Details/Details'
 import { withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import withProps from '../../components/enhancers/withProps'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const PersonDetails = compose(
   withPersonsMetadataContext(),
@@ -39,7 +39,7 @@ const Person = ({ ...props }) => {
         : utils.sortCredits(data?.movie_credits || { cast: [], crew: [] }, [], ['crew'])
           .filter(c => c.vote_count >= 500 && c.department.includes(data.known_for_department))
           .sort((a, b) => b.vote_count - a.vote_count),
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',
@@ -68,7 +68,7 @@ const Person = ({ ...props }) => {
       label: t('items.persons.cast.label'),
       entities: utils.sortCredits(data?.movie_credits || { cast: [] }, [], ['cast'])
         .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',
@@ -95,7 +95,7 @@ const Person = ({ ...props }) => {
       label: t('items.persons.crew.label'),
       entities: utils.sortCredits(data?.movie_credits || { crew: [] }, [], ['crew'])
         .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
         display: index < 5 ? 'pretty' : 'poster',

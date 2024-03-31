@@ -1,8 +1,8 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'contain' | 'outline'
-  color?: 'primary' | 'accent' | 'black' | 'white' | 'error'
+  color?: 'primary' | 'accent' | 'black' | 'white' | 'error' | 'gray',
 }
 
 const UIButton = ({
@@ -16,7 +16,7 @@ const UIButton = ({
 UIButton.styles = {
   contain: ({ color, ...props }) => ({
     variant: 'button.default',
-    transition: 'background-color 200ms ease',
+    transition: 'color 200ms ease-in-out, background-color 200ms ease-in-out, border-color 200ms ease-in-out',
     ...{
       primary: {
         borderColor: 'primary',
@@ -31,6 +31,7 @@ UIButton.styles = {
           backgroundColor: 'primaryDarker',
         },
         ':disabled': {
+          color: 'hsl(0, 0%, 80%)',
           borderColor: 'primaryDarkest',
           backgroundColor: 'primaryDarkest',
         },
@@ -48,6 +49,7 @@ UIButton.styles = {
           backgroundColor: 'accentDarker',
         },
         ':disabled': {
+          color: 'hsl(0, 0%, 80%)',
           borderColor: 'accentDarkest',
           backgroundColor: 'accentDarkest',
         },
@@ -65,6 +67,7 @@ UIButton.styles = {
           backgroundColor: 'errorDarkest',
         },
         ':disabled': {
+          color: 'hsl(0, 0%, 80%)',
           borderColor: 'accentDarkest',
           backgroundColor: 'accentDarkest',
         },
@@ -82,6 +85,7 @@ UIButton.styles = {
           backgroundColor: 'hsl(0, 0%, 0%)',
         },
         ':disabled': {
+          color: 'hsl(0, 0%, 80%)',
           borderColor: 'hsl(0, 0%, 20%)',
           backgroundColor: 'hsl(0, 0%, 20%)',
         },
@@ -99,8 +103,26 @@ UIButton.styles = {
           backgroundColor: 'hsl(0, 0%, 90%)',
         },
         ':disabled': {
+          color: 'primaryDarker',
           borderColor: 'hsl(0, 0%, 80%)',
           backgroundColor: 'hsl(0, 0%, 80%)',
+        },
+      },
+      gray: {
+        borderColor: 'grayLight',
+        backgroundColor: 'grayLight',
+        color: 'text',
+        ':hover': {
+          borderColor: 'gray',
+          backgroundColor: 'gray',
+        },
+        ':active': {
+          borderColor: 'grayDark',
+          backgroundColor: 'grayDark',
+        },
+        ':disabled': {
+          borderColor: 'grayDarker',
+          backgroundColor: 'grayDarker',
         },
       },
     }[color],
@@ -162,16 +184,16 @@ UIButton.styles = {
         borderColor: 'hsl(0, 0%, 10%)',
         color: 'hsl(0, 0%, 10%)',
         ':hover': {
-          borderColor: 'hsl(0, 0%, 5%)',
-          color: 'hsl(0, 0%, 5%)',
+          borderColor: 'hsl(0, 0%, 7%)',
+          color: 'hsl(0, 0%, 7%)',
         },
         ':active': {
-          borderColor: 'hsl(0, 0%, 0%)',
-          color: 'hsl(0, 0%, 0%)',
+          borderColor: 'hsl(0, 0%, 4%)',
+          color: 'hsl(0, 0%, 4%)',
         },
         ':disabled': {
-          borderColor: 'hsl(0, 0%, 20%)',
-          color: 'hsl(0, 0%, 20%)',
+          borderColor: 'hsl(0, 0%, 15%)',
+          color: 'hsl(0, 0%, 15%)',
         },
       },
       white: {
@@ -188,6 +210,22 @@ UIButton.styles = {
         ':disabled': {
           borderColor: 'hsl(0, 0%, 80%)',
           color: 'hsl(0, 0%, 80%)',
+        },
+      },
+      gray: {
+        borderColor: 'grayLight',
+        color: 'grayLight',
+        ':hover': {
+          borderColor: 'gray',
+          color: 'gray',
+        },
+        ':active': {
+          borderColor: 'grayDark',
+          color: 'grayDark',
+        },
+        ':disabled': {
+          borderColor: 'grayDarker',
+          color: 'grayDarker',
         },
       },
     }[color],

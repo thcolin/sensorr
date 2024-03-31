@@ -19,7 +19,7 @@ import { compose, scrollToTop } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { Trans, useTranslation } from 'react-i18next'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withHistoryState from '../../components/enhancers/withHistoryState'
@@ -28,7 +28,7 @@ import withFetchCalendarQuery from './withFetchCalendarQuery'
 export const Calendar = compose(
   withProps({
     display: 'grid',
-    child: MovieWithCredits,
+    child: MovieWithCreditsAndReviews,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -50,7 +50,7 @@ export const Calendar = compose(
         display: 'grid',
         gridTemplateColumns: ['1fr min-content min-content', 'min-content 1fr min-content min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
+        gap: '2em',
         gridTemplateAreas: [
           `"primary_release_date results toggle sort_by"`,
           `"title primary_release_date results toggle sort_by"`,
@@ -94,6 +94,15 @@ export const Calendar = compose(
               variant: 'button.reset',
               display: 'flex',
               alignItems: 'center',
+              marginY: 4,
+              paddingX: 2,
+              borderRadius: '0.25em',
+              ':hover': {
+                backgroundColor: 'accent',
+              },
+              ':active': {
+                backgroundColor: 'accentDark',
+              },
               '>svg': {
                 height: '1em',
                 marginLeft: 6,

@@ -39,8 +39,8 @@ const UINav = ({ layout, fields, defaultValues, onChange, statistics, ...props }
 UINav.styles = {
   element: {
     position: 'sticky',
-    top: 'calc(4em + 1px)',
-    zIndex: 2,
+    top: '66px',
+    zIndex: 5,
   },
   container: {
     display: 'flex',
@@ -99,32 +99,6 @@ Results.styles = {
         fontWeight: 'semibold',
         marginRight: 8,
       },
-    },
-  },
-}
-
-export const ToggleButton = ({ toggleOpen, fields, values, ...props }) => {
-  const { t } = useTranslation()
-  const active = Object.keys(values)
-    .filter(key => !['sort_by'].includes(key))
-    .reduce((acc, key) => acc + (values[key] && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
-
-  return (
-    <button {...props} sx={ToggleButton.styles.element} type='button' onClick={toggleOpen}>
-      <Trans t={t} i18nKey='ui.controls.toggle' values={{ active }} components={[<span style={{ whiteSpace: 'pre' }} />, <strong />]} />
-      <Icon value='filters' />
-    </button>
-  )
-}
-
-ToggleButton.styles = {
-  element: {
-    variant: 'button.reset',
-    display: 'flex',
-    alignItems: 'center',
-    '>svg': {
-      height: '1em',
-      marginLeft: 6,
     },
   },
 }

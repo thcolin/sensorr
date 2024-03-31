@@ -1,10 +1,14 @@
-import { memo, useMemo } from 'react'
+import { ReactNode, memo, useMemo } from 'react'
 import { Cast, Crew, Movie, Person, fields, utils } from '@sensorr/tmdb'
 import { Badge, BadgeProps } from '../Badge/Badge'
+import Tippy from '@tippyjs/react'
 
 export interface FocusProps extends Omit<BadgeProps, 'emoji' | 'label'> {
   entity: Movie | Person | Cast | Crew
   property: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count'
+  label?: ReactNode
+  emoji?: ReactNode
+  tippy?: ReactNode
 }
 
 const emojis = {
@@ -28,13 +32,24 @@ const labels = {
 const UIFocus = ({
   entity,
   property,
+  tippy,
   ...props
 }: FocusProps) => {
-  const emoji = useMemo(() => emojis[property](entity), [entity, property])
-  const label = useMemo(() => labels[property](entity), [entity, property])
+  const emoji = useMemo(() => props.emoji || emojis[property](entity), [entity, property, props.emoji])
+  const label = useMemo(() => props.label || labels[property](entity), [entity, property, props.label])
 
   if (!entity) {
     return null
+  }
+
+  if (tippy) {
+    return (
+      <Tippy maxWidth='80vw' content={tippy}>
+        <span>
+          <Badge {...props} emoji={emoji} label={label} />
+        </span>
+      </Tippy>
+    )
   }
 
   return (

@@ -11,6 +11,7 @@ import { Provider as MoviesMetadataProvider } from './contexts/MoviesMetadata/Mo
 import { Provider as PersonsMetadataProvider } from './contexts/PersonsMetadata/PersonsMetadata'
 import { Provider as SearchProvider } from './contexts/Search/Search'
 import { Provider as JobsProvider } from './contexts/Jobs/Jobs'
+import { Provider as NotificationsProvider } from './contexts/Notifications/Notifications'
 import { Provider as GuestsProvider } from './contexts/Guests/Guests'
 import { Toasts } from './contexts/Toasts/Toasts'
 import App from './pages/App'
@@ -34,10 +35,12 @@ root.render(
                 <PersonsMetadataProvider>
                   <SearchProvider>
                     <JobsProvider>
-                      <GuestsProvider>
-                        <Toasts />
-                        <App />
-                      </GuestsProvider>
+                      <NotificationsProvider>
+                        <GuestsProvider>
+                          <Toasts />
+                          <App />
+                        </GuestsProvider>
+                      </NotificationsProvider>
                     </JobsProvider>
                   </SearchProvider>
                 </PersonsMetadataProvider>

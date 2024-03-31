@@ -1,35 +1,49 @@
-import { memo, useCallback, useEffect, useMemo, useReducer } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { useThemeUI } from '@theme-ui/core'
-// import { Badge, PersonState, MovieState, Icon } from '@sensorr/ui'
+import { Icon } from '@sensorr/ui'
 import { createHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
-// import { Metadata } from './components/Metadata'
 import { Overview } from './components/Overview'
 import { Skeleton } from './components/Skeleton'
 import { Tabs } from '../../components/Entities/Tabs'
-import { Actions } from './components/Actions'
-// import { Sensorr } from '../../components/Sensorr'
-// import { Release } from '../../components/Sensorr/Release'
+import { MovieActions } from './components/Actions'
+import { Releases } from './components/Releases'
+import { Sensorr } from '../../components/Sensorr'
 
-// const useActionsState = createHistoryState('actions', false)
 const useMeaningfulState = createHistoryState('meaningful', false)
-// const useViewState = createHistoryState('view', 'features')
+
 const pendingReducer = createPendingReducer({
   entity: true,
   poster: true,
   billboard: true,
 })
 
-const UIDetails = ({ entity, loading, details, behavior, state, setState, metadata, setMetadata, proceedRelease, removeRelease, tabs, ...props }) => {
+const UIDetails = ({
+  entity,
+  additional,
+  loading,
+  details,
+  behavior,
+  state,
+  setState,
+  metadata,
+  setMetadata,
+  proceedRelease,
+  removeRelease,
+  tabs,
+  ...props
+}) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
   const [meaningfulState, setMeaningfulState] = useMeaningfulState() as [any, any]
 
+  const toggleSensorr = useRef() as any
+
   const { expanded } = useExpandContext() as any
   const { theme } = useThemeUI() as any
-  const { palette } = usePalette(
+  const palette = usePalette(
     !!poster && `https://image.tmdb.org/t/p/w92${poster}`,
     {
       backgroundColor: theme.rawColors.grayLight,
@@ -57,43 +71,136 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
 
   return (
     <div sx={UIDetails.styles.element}>
-      <Head billboard={billboard} palette={palette} entity={entity} ready={ready} onReady={onReady.billboard} />
+      <Head billboard={billboard} palette={palette.palette} entity={entity} ready={ready} onReady={onReady.billboard} />
       <div sx={UIDetails.styles.body}>
         <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh' }[behavior], '-25vh'] }}>
-          <Poster path={poster} palette={palette} behavior={{ person: 'person', collection: 'movie', movie: 'movie' }[behavior]} ready={ready} onReady={onReady.poster} requested_by={metadata?.requested_by} />
+          <Poster
+            path={poster}
+            palette={palette.palette}
+            behavior={{ person: 'person', collection: 'movie', movie: 'movie' }[behavior]}
+            ready={ready}
+            onReady={onReady.poster}
+            requested_by={metadata?.requested_by}
+            state={state}
+            setState={setState}
+          />
           <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
             Contribute to TheMovieDB
           </a>
+          {behavior === 'movie' && (
+            <div sx={{ width: '100%', marginTop: '4em', marginBottom: '2em' }}>
+              <MovieActions
+                palette={!palette.loading && !palette.initial ? palette.palette : null}
+                ready={ready && state !== 'loading'}
+                entity={entity}
+                metadata={metadata}
+                setMetadata={setMetadata}
+                toggleSensorr={(e) => toggleSensorr.current(e)}
+              />
+              <Sensorr
+                entity={entity || {}}
+                loading={!ready || state === 'loading'}
+                metadata={metadata}
+                setPortalToggle={(toggleOpen) => toggleSensorr.current = (e) => toggleOpen(e)}
+              />
+            </div>
+          )}
         </div>
         <div sx={UIDetails.styles.wrapper}>
           <div sx={UIDetails.styles.container}>
             <div sx={UIDetails.styles.content}>
-              <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 10 }}>
+              <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
                 <h1 sx={UIDetails.styles.title}>{title}</h1>
               </Skeleton>
               {behavior === 'movie' && (
-                <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 4 }}>
-                  <h4 sx={UIDetails.styles.subtitle}>
-                    {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
-                    {!!entity.original_title && !!meaningful.year && (<span> </span>)}
-                    {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
-                  </h4>
-                </Skeleton>
+                <React.Fragment>
+                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+                    <h4 sx={UIDetails.styles.subtitle}>
+                      {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
+                      {!!entity.original_title && !!meaningful.year && (<span> </span>)}
+                      {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+                    </h4>
+                  </Skeleton>
+                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+                    <div sx={UIDetails.styles.externals}>
+                      <div>
+                        {meaningful?.vote_average && <meaningful.vote_average />}
+                        {(additional?.reviews || [])?.map(review => (
+                          <a
+                            href={review.external}
+                            target='_blank'
+                            rel='norefer noopener'
+                            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+                            title={{
+                              'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
+                              'Metacritic': `Metascrore based on ${review.count} critic reviews`,
+                            }[review.source]}
+                          >
+                            <Icon
+                              value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
+                              height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                              width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                              sx={{ marginRight: 8 }}
+                            />
+                            {Math.round(review.score * 100)}%
+                          </a>
+                        ))}
+                      </div>
+                      {(!!metadata?.plex_url || !!((entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.flatrate || [])?.length) && (
+                        <div>
+                          {!!metadata?.plex_url && (
+                            <a
+                              href={metadata?.plex_url}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+                              title={`Available on your own Plex server`}
+                            >
+                              <span {...props} sx={{ display: 'flex', justifyContent: 'center', fontSize: '1.7em', width: '0.75em', color: 'plex' }}>
+                                ❯
+                              </span>
+                            </a>
+                          )}
+                          {((entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.flatrate || []).map(provider => (
+                            <a
+                              href={(entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.link}
+                              target='_blank'
+                              rel='norefer noopener'
+                              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+                              title={`Available for streaming on "${provider.provider_name}" (source JustWatch)`}
+                            >
+                              <img src={`https://image.tmdb.org/t/p/w92/${provider.logo_path}`} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      {!!Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).length && (
+                        <div>
+                          {Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).map(external => (
+                            <a
+                              href={additional?.externals[external]}
+                              target='_blank'
+                              rel='norefer noopener'
+                              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+                              title={{
+                                letterbox: 'Letterboxd',
+                                senscritique: 'SensCritique',
+                                allocine: 'AlloCiné',
+                                imdb: 'IMDb',
+                                mubi: 'Mubi',
+                                plex: 'Plex',
+                              }[external]}
+                            >
+                              <Icon value={external as any} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Skeleton>
+                </React.Fragment>
               )}
-              <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 4 }}>
-                <Actions
-                  behavior={behavior}
-                  ready={ready}
-                  entity={entity}
-                  state={state}
-                  setState={setState}
-                  metadata={metadata}
-                  setMetadata={setMetadata}
-                  proceedRelease={proceedRelease}
-                  removeRelease={removeRelease}
-                />
-              </Skeleton>
-              <Skeleton palette={palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
+              <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
                 <details sx={UIDetails.styles.details} onToggle={handleMeaningfulToggle} open={meaningfulState}>
                   <summary>
                     <span />
@@ -107,7 +214,6 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
                       (meaningful.age && <meaningful.age />)
                     }
                     {(meaningful.genres && <meaningful.genres />)}
-                    {(meaningful.vote_average && <meaningful.vote_average />)}
                   </summary>
                   <div>
                     {(
@@ -143,21 +249,29 @@ const UIDetails = ({ entity, loading, details, behavior, state, setState, metada
                 </details>
               </Skeleton>
             </div>
-            <Skeleton palette={palette} ready={ready} sx={{ marginBottom: 6 }} hide={!tagline}>
-              <p sx={UIDetails.styles.tagline}>
-                {tagline}
-              </p>
-            </Skeleton>
-            <Skeleton palette={palette} ready={ready} placeholder={false}>
-              <Overview children={overview} />
+            <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+              <div>
+                {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
+                <Overview children={overview} />
+              </div>
             </Skeleton>
           </div>
         </div>
       </div>
+      {behavior === 'movie' && (
+        <Releases
+          movie={entity}
+          metadata={metadata}
+          proceedRelease={proceedRelease}
+          removeRelease={removeRelease}
+          entities={metadata?.releases || []}
+          ready={ready}
+        />
+      )}
       <div>
         <div sx={UIDetails.styles.tabs}>
           {(tabs || []).map(({ id, component: Component = Tabs, tabs }) => (
-            <Component key={id} id={id} tabs={tabs} props={() => ({ palette })} />
+            <Component key={id} id={id} tabs={tabs} props={() => ({ palette: palette.palette })} />
           ))}
         </div>
       </div>
@@ -187,6 +301,7 @@ UIDetails.styles = {
     paddingRight: ['0em', '3em'],
     marginBottom: [2, '0em'],
     transition: 'margin 400ms ease-in-out',
+    maxWidth: '19em',
     '>a': {
       color: 'grayDark',
       marginY: 8,
@@ -222,6 +337,18 @@ UIDetails.styles = {
   title: {
     margin: '0em',
     fontSize: '2.5em',
+  },
+  externals: {
+    display: 'flex',
+    alignItems: 'center',
+    '>div': {
+      display: 'flex',
+      alignItems: 'center',
+      marginRight: 0,
+      '>a': {
+        marginRight: 6,
+      },
+    },
   },
   subtitle: {
     margin: '0em',
@@ -297,6 +424,7 @@ UIDetails.styles = {
   tagline: {
     margin: '0em',
     fontWeight: 'semibold',
+    marginBottom: 6,
   },
   tabs: {
   },

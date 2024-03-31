@@ -1,16 +1,18 @@
-import { memo, useCallback, useMemo, useState } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import { usePalette } from '@sensorr/palette'
 import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { Link } from '../../../atoms/Link/Link'
+import { Icon } from '../../../atoms/Icon/Icon'
 
 export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
 
 const UIPretty = ({
-  link,
   details,
+  reviews = [],
+  link = null,
   relations: [Relations, relations] = [],
   guests: [Guests, guests] = [],
   onMouseEnter,
@@ -85,6 +87,7 @@ const UIPretty = ({
           title={details?.title}
           overview={details?.overview}
           meaningful={details?.meaningful}
+          reviews={reviews}
           link={link}
           palette={palette.palette}
           ready={ready}
@@ -144,7 +147,7 @@ UIPretty.styles = {
 
 export const Pretty = memo(UIPretty)
 
-const UIAbout = ({ title, meaningful, overview, palette, ready, link, pad = false, ...props }) => {
+const UIAbout = ({ title, meaningful, overview, palette, ready, link, reviews = [], pad = false, ...props }) => {
   const { t } = useTranslation()
   const styles = useMemo(() => ({
     ...UIAbout.styles,
@@ -185,8 +188,32 @@ const UIAbout = ({ title, meaningful, overview, palette, ready, link, pad = fals
           (meaningful?.character && <meaningful.character />) ||
           (meaningful?.known_for_department && <meaningful.known_for_department />)
         }</span>
-        <strong>{
-          (meaningful?.vote_average && <meaningful.vote_average />) ||
+        <strong sx={{ display: 'flex', '>a': { marginRight: 6 } }}>{
+          (meaningful?.vote_average && (
+            <React.Fragment>
+              <meaningful.vote_average />
+              {(reviews || [])?.map(review => (
+                <a
+                  href={review.external}
+                  target='_blank'
+                  rel='norefer noopener'
+                  sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+                  title={{
+                    'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
+                    'Metacritic': `Metascrore based on ${review.count} critic reviews`,
+                  }[review.source]}
+                >
+                  <Icon
+                    value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
+                    height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                    width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                    sx={{ marginRight: 8 }}
+                  />
+                  {Math.round(review.score * 100)}%
+                </a>
+              ))}
+            </React.Fragment>
+          )) ||
           (meaningful?.age && <meaningful.age />)
         }</strong>
       </div>
@@ -230,6 +257,7 @@ UIAbout.styles = {
     whiteSpace: 'nowrap',
     '>strong': {
       fontSize: 5,
+      fontWeight: 'strong',
     },
     '>*:not(strong)': {
       lineHeight: 'space',

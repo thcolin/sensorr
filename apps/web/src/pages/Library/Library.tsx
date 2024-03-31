@@ -14,7 +14,7 @@ import {
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
@@ -25,7 +25,7 @@ const Library = compose(
   withProps({
     id: 'library',
     display: 'grid',
-    child: MovieWithCredits,
+    child: MovieWithCreditsAndReviews,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -47,7 +47,7 @@ const Library = compose(
         display: 'grid',
         gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
+        gap: '2em',
         gridTemplateAreas: [
           `"results toggle sort_by"`,
           `"title results toggle sort_by"`,

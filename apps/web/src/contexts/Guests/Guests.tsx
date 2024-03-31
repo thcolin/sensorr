@@ -44,7 +44,6 @@ export const Provider = ({ ...props }) => {
         setGuests(results.reduce((guests, guest) => ({ ...guests, [guest.email]: guest }), {}))
       } catch (err) {
         console.warn(err)
-        toast.error('Error while fetching guests')
       } finally {
         setLoading(false)
       }

@@ -33,7 +33,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job }, logger, plex, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, tmdb }}>
         <FetchSensorrMoviesTask />
         <FetchPlexMoviesTask />
         <CheckSensorrMoviesTask />

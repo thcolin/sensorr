@@ -5,7 +5,7 @@ import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, Calenda
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const Home = ({ ...props }) => {
   const { t } = useTranslation()
@@ -21,7 +21,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.trending.label')}
         // title={t('items.movies.trending.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         props={pretty}
         more={{
@@ -39,7 +39,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.archived.label')}
         // title={t('items.movies.archived.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         hide={true}
         more={{
@@ -53,7 +53,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.calendar.label')}
         // title={t('items.movies.calendar.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         hide={true}
         props={() => ({
@@ -69,7 +69,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.discover.label')}
         // title={t('items.movies.discover.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         props={pretty}
         more={{
@@ -87,7 +87,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.theatres.label')}
         // title={t('items.movies.theatres.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         hide={true}
         props={() => ({
@@ -104,7 +104,7 @@ const Home = ({ ...props }) => {
         label={t('items.movies.upcoming.label')}
         // title={t('items.movies.upcoming.title')}
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         hide={true}
         props={() => ({
@@ -119,7 +119,7 @@ const Home = ({ ...props }) => {
       <DiscoverMoviesSelectable
         id='discover_selectable'
         display='row'
-        child={MovieWithCredits}
+        child={MovieWithCreditsAndReviews}
         limit={20}
         props={pretty}
       />

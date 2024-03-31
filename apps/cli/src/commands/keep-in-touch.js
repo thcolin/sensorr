@@ -27,7 +27,7 @@ export default (job, handlers) => ({
     const app = JSON.parse(await fs.readFile(new URL('../../../../package.json', import.meta.url)))
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job }, logger, tmdb, app }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb, app }}>
         <FetchSensorrMoviesTask />
         <FetchGuestsTask />
         <FetchGuestsRequestsFromPlexWatchlistTask />

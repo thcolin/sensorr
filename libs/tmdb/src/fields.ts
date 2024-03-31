@@ -109,7 +109,7 @@ export const fields = {
     ],
     serialize: serializers.range(1000),
     statistics: statisticians.boundaries('popularity'),
-    humanize: ({ popularity = 0 }: Movie) => commarize(popularity),
+    humanize: ({ popularity = 0 }: Movie) => commarize(Math.round(popularity)),
   },
   vote_average: {
     initial: [0, 10],

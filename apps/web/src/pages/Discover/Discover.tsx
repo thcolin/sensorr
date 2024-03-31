@@ -20,7 +20,7 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -29,7 +29,7 @@ import withHistoryState from '../../components/enhancers/withHistoryState'
 export const Discover = compose(
   withProps({
     display: 'grid',
-    child: MovieWithCredits,
+    child: MovieWithCreditsAndReviews,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -54,7 +54,7 @@ export const Discover = compose(
         display: 'grid',
         gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
+        gap: '2em',
         gridTemplateAreas: [
           `"results toggle sort_by"`,
           `"title results toggle sort_by"`,

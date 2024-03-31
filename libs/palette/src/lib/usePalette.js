@@ -1,12 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getImagePalette } from './palette'
+import { useThemeUI } from 'theme-ui'
 
 export function usePalette(url, initial, id) {
-  const [palette, setPalette] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const colorMode = 'default'
+  const { colorMode } = useThemeUI()
+  const cache = useMemo(() => {
+    const raw = JSON.parse(sessionStorage.getItem(`${colorMode}-${id || url}`) || '{}')
+    return raw.backgroundColor ? raw : null
+  }, [url, id])
+
+  const [palette, setPalette] = useState(cache || null)
+  const [loading, setLoading] = useState(!cache || true)
 
   useEffect(() => {
+    setLoading(true)
+
     if (!url) {
       setPalette(null)
       setLoading(false)
@@ -31,11 +39,15 @@ export function usePalette(url, initial, id) {
       setLoading(false)
     })
 
-    return () => controller.abort()
-  }, [url])
+    return () => {
+      controller.abort()
+      setLoading(false)
+    }
+  }, [url, id])
 
   return {
     palette: palette || initial,
-    loading
+    loading,
+    initial: !palette && !!initial,
   }
 }

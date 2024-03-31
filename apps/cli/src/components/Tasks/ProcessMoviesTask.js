@@ -297,7 +297,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           await api.fetch(postMovie.uri, postMovie.params, postMovie.init)
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposalOnly ? 'cache' : 'fs' } })
           await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
-          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposalOnly]} (${release.znab})`, metadata: { ...state.metadata, important: true, group: movie.id, release: { ...release, proposal: true }, results } })
+          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposalOnly]} (${release.znab})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), release: { ...release, proposal: true }, results } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('done')
         } else if (release.warning <= 5) {

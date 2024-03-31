@@ -425,7 +425,7 @@ export class API {
       if (options?.rawError) {
         throw res
       } else {
-        throw new Error(`[API] "${res.url}": ${res.status} (${res.statusText})`)
+        throw new Error(`[API] ${res.status} (${res.statusText}): ${res.url}`)
       }
     }
 

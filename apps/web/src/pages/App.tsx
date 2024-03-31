@@ -18,10 +18,10 @@ import { Provider as AnimationProvider } from '../contexts/Animation/Animation'
 // const Person = lazy(() => import('./Person/Person'))
 // const Collection = lazy(() => import('./Collection/Collection'))
 // const Jobs = lazy(() => import('./Jobs/Jobs'))
-// const GeneralSettings = lazy(() => import('./Settings/General'))
+// const TMDBSettings = lazy(() => import('./Settings/TMDB'))
 // const DownloadsSettings = lazy(() => import('./Settings/Downloads'))
 // const PlexSettings = lazy(() => import('./Settings/Plex'))
-// const ProgressiveWebAppSettings = lazy(() => import('./Settings/ProgressiveWebApp'))
+// const MobileSettings = lazy(() => import('./Settings/ProgressiveWebApp'))
 
 import Login from './Login/Login'
 import KeepInTouch from './KeepInTouch/KeepInTouch'
@@ -39,11 +39,16 @@ import Person from './Person/Person'
 import Collection from './Collection/Collection'
 import Trending from './Trending/Trending'
 import Jobs from './Jobs/Jobs'
-import GeneralSettings from './Settings/General'
-import DownloadsSettings from './Settings/Downloads'
+import Settings from './Settings/Settings'
+import TMDBSettings from './Settings/TMDB'
+import JobsSettings from './Settings/Jobs'
+import BlackholeSettings from './Settings/Blackhole'
+import ZnabsSettings from './Settings/Znabs'
+import PoliciesSettings from './Settings/Policies'
 import FriendsSettings from './Settings/Friends'
 import PlexSettings from './Settings/Plex'
-import ProgressiveWebAppSettings from './Settings/ProgressiveWebApp'
+import MobileSettings from './Settings/Mobile'
+import UpdateSettings from './Settings/Update'
 
 const TrendingMovies = Trending('movies')
 const TrendingPersons = Trending('persons')
@@ -73,11 +78,18 @@ const router = createBrowserRouter(createRoutesFromElements(
       <Route path='collection/:id' element={<Collection />} />
       <Route path='jobs' element={<Jobs />} />
       <Route path='jobs/:job' element={<Jobs />} />
-      <Route path='settings' element={<GeneralSettings />} />
-      <Route path='settings/downloads' element={<DownloadsSettings />} />
-      <Route path='settings/friends' element={<FriendsSettings />} />
-      <Route path='settings/plex' element={<PlexSettings />} />
-      <Route path='settings/pwa' element={<ProgressiveWebAppSettings />} />
+      <Route path='settings' element={<Settings />}>
+        <Route path='' element={<Navigate replace={true} to='tmdb' />} />
+        <Route path='tmdb' element={<TMDBSettings />} />
+        <Route path='jobs' element={<JobsSettings />} />
+        <Route path='blackhole' element={<BlackholeSettings />} />
+        <Route path='indexers' element={<ZnabsSettings />} />
+        <Route path='policies' element={<PoliciesSettings />} />
+        <Route path='friends' element={<FriendsSettings />} />
+        <Route path='plex' element={<PlexSettings />} />
+        <Route path='mobile' element={<MobileSettings />} />
+        <Route path='update' element={<UpdateSettings />} />
+      </Route>
     </Route>
   </Route>
 ))

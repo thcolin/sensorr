@@ -50,6 +50,7 @@ export default {
       cancel: 'Cancel',
       results: 'Results',
       toggle: '<0>Show </0>{active, plural, =0 {Filters} other {<1># Filters</1>}}',
+      more: '<0>More </0>{active, plural, =0 {Filters} other {<1># Filters</1>}}',
     },
     filters: {
       state: '📚 State',

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const Collection = ({ ...props }) => {
   const { id } = useParams() as any
@@ -33,7 +33,7 @@ const Collection = ({ ...props }) => {
             id: `saga-${id}`,
             label: t('items.movies.belongs_to_collection.label', { collection: details.title || 'Saga' }),
             entities: details.parts,
-            child: MovieWithCredits,
+            child: MovieWithCreditsAndReviews,
             props: () => ({ display: 'pretty' }),
             ready: ready,
           },

@@ -4,6 +4,7 @@ import { utils } from '@sensorr/tmdb'
 import { compose, emojize } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { query as wikidataQuery, useWikiDataRequest } from '../../store/wikidata'
 import { useTMDB, useTMDBRequest } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import Details from '../Details/Details'
@@ -11,7 +12,7 @@ import { withTabsBehavior } from '../../components/Entities/Tabs'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withProps from '../../components/enhancers/withProps'
-import { MovieWithCredits } from '../../components/Movie/Movie'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
 
@@ -32,7 +33,7 @@ const Movie = ({ ...props }) => {
   const { ongoing } = useAnimationContext() as any
 
   const movie = useTMDBRequest(`/movie/${id}`, {
-    append_to_response: 'images,recommendations,similar,credits,videos,alternative_titles,release_dates,keywords',
+    append_to_response: 'images,recommendations,similar,credits,videos,alternative_titles,release_dates,keywords,watch/providers',
     include_image_language: 'en,null',
   }, { transform: transformMovieDetails })
 
@@ -41,6 +42,12 @@ const Movie = ({ ...props }) => {
     transform: transformCollectionDetails,
   })
 
+  const additional = useWikiDataRequest(
+    wikidataQuery.movies.getMovieAdditionalData.query(id),
+    wikidataQuery.movies.getMovieAdditionalData.transform,
+    { ready: true }
+  )
+
   const ready = !ongoing && !movie.loading && (movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
 
   const tabs = useMemo(() => {
@@ -48,7 +55,7 @@ const Movie = ({ ...props }) => {
       id: `saga-${id}`,
       label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
       entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       props: ({ index }) => ({ display: (ready || index < 5) ? 'pretty' : 'poster' }),
       ready: ready,
       more: {
@@ -60,7 +67,7 @@ const Movie = ({ ...props }) => {
       id: `recommendations-${id}`,
       label: t('items.movies.recommendations.label'),
       entities: movie.data?.recommendations?.results || [],
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
       more: {
@@ -72,7 +79,7 @@ const Movie = ({ ...props }) => {
       id: `similar-${id}`,
       label: t('items.movies.similar.label'),
       entities: movie.data?.similar?.results || [],
-      child: MovieWithCredits,
+      child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
       more: {
@@ -138,7 +145,7 @@ const Movie = ({ ...props }) => {
           [`directors-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
             label: emojize('🎬', curr.name),
-            child: MovieWithCredits,
+            child: MovieWithCreditsAndReviews,
             ready: ready,
             query: { uri: `person/${curr.id}/movie_credits` },
             transform: (res) => {
@@ -183,7 +190,7 @@ const Movie = ({ ...props }) => {
           [`headliners-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
             label: emojize('🧑‍🎤', curr.name),
-            child: MovieWithCredits,
+            child: MovieWithCreditsAndReviews,
             ready: ready,
             query: { uri: `person/${curr.id}/movie_credits` },
             transform: (res) => {
@@ -247,6 +254,7 @@ const Movie = ({ ...props }) => {
     <MovieDetails
       details={movie.details}
       entity={movie.data}
+      additional={additional.data}
       tabs={tabs}
       loading={movie.loading}
       ready={ready}

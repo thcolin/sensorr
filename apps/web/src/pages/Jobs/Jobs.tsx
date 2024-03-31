@@ -186,8 +186,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
 UISidebar.styles = {
   element: {
     position: 'sticky',
-    top: '66px',
-    height: 'calc(100vh - 66px)',
+    top: '124px',
+    height: 'calc(100vh - 124px)',
     minWidth: '21em',
     maxWidth: '21em',
     display: 'flex',
@@ -203,6 +203,7 @@ UISidebar.styles = {
     paddingY: 3,
     '>h4': {
       margin: '0px',
+      color: 'whitePure',
     },
   },
   placeholder: {

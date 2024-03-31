@@ -68,7 +68,4 @@ export const global = {
     fontWeight: 'normal',
     fontSize: 'inherit',
   },
-  '*[hidden]': {
-    display: 'none !important',
-  },
 }

@@ -4,7 +4,7 @@ import { Link } from '@sensorr/ui'
 import { scrollToTop } from '@sensorr/utils'
 import { LoadingBar } from '../LoadingBar'
 import { useSearchContext } from '../../contexts/Search/Search'
-import { Input as SearchInput, Results as SearchResults } from './elements/Search'
+import { Input as SearchInput, Results as SearchResults, History as SearchHistory } from './elements/Search'
 import Navigation from './elements/Navigation'
 
 const Logo = ({ ...props }) => (
@@ -53,14 +53,6 @@ PWD.styles = {
   },
 }
 
-const Hr = ({ ...props }) => <hr sx={Hr.styles.element} {...props} />
-
-Hr.styles = {
-  element: {
-    variant: 'hr.default',
-  },
-}
-
 const Seperator = ({ ...props }) => <div sx={Seperator.styles.element}></div>
 
 Seperator.styles = {
@@ -90,6 +82,7 @@ const Toolbar = ({ ...props }) => (
 
 Toolbar.styles = {
   element: {
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
     height: '4em',
@@ -122,7 +115,7 @@ Toolbar.styles = {
     justifyContent: 'center',
     height: '100%',
     maxWidth: '40rem',
-    marginBottom: '-1px',
+    marginBottom: '-2px',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
     marginX: '10em',
@@ -131,7 +124,7 @@ Toolbar.styles = {
 
 const Header = ({ ...props }) => {
   const location = useLocation()
-  const { results, loading, clear } = useSearchContext() as any
+  const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
 
   useEffect(() => {
@@ -151,14 +144,17 @@ const Header = ({ ...props }) => {
   }, [extanded])
 
   return (
-    <>
-      <div sx={{ ...Header.styles.element, height: extanded ? '100vh' : 'initial' }}>
+    <div sx={Header.styles.element} style={{ zIndex: (historyDisplay && !!history.length) ? 6 : 5 }}>
+      <div sx={{ ...Header.styles.container, height: extanded ? '100vh' : 'initial' }}>
         <Toolbar />
+        <div sx={Header.styles.history}>
+          <SearchHistory />
+        </div>
         <SearchResults />
       </div>
       <Navigation />
-      <Hr sx={Header.styles.line} />
-    </>
+      <hr sx={{ variant: 'hr.default' }} {...props} />
+    </div>
   )
 }
 
@@ -166,16 +162,20 @@ Header.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
     position: 'sticky',
     top: '0px',
     backgroundColor: 'white',
-    zIndex: 3,
   },
-  line: {
-    position: 'sticky',
-    top: '4em',
-    zIndex: 2,
+  container: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  history: {
+    position: 'absolute',
+    top: '100%',
+    zIndex: 1
   },
 }
 

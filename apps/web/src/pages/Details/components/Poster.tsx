@@ -1,9 +1,9 @@
 import { memo, useMemo } from 'react'
-import { Picture, Empty, Guests } from '@sensorr/ui'
+import { Picture, Empty, Guests, MovieState, PersonState } from '@sensorr/ui'
 import { avatar } from '@sensorr/utils'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
-const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', requested_by = [], ...props }) => {
+const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], ...props }) => {
   const guestsContext = useGuestsContext() as any
   const guests = useMemo(() => guestsContext.loading ? [] : (requested_by || []).reduce((guests, email) => [
     ...guests,
@@ -20,6 +20,24 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', requested
         onReady={onReady}
         empty={Empty[behavior]}
       />
+      {behavior === 'movie' && (
+        <div sx={UIPoster.styles.state}>
+          <MovieState
+            value={ready ? state : 'loading'}
+            onChange={setState}
+            compact={true}
+          />
+        </div>
+      )}
+      {behavior === 'person' && (
+        <div sx={UIPoster.styles.state}>
+          <PersonState
+            value={ready ? state : 'loading'}
+            onChange={setState}
+            compact={true}
+          />
+        </div>
+      )}
       <div sx={UIPoster.styles.guests}>
         {!!requested_by?.length && (
           <Guests guests={guests} display='poster' compact={false} />
@@ -39,6 +57,13 @@ UIPoster.styles = {
     position: 'absolute',
     bottom: '0em',
     right: '0em',
+    zIndex: 1,
+  },
+  state: {
+    position: 'absolute',
+    top: '0.75em',
+    right: '0.75em',
+    fontSize: 3,
     zIndex: 1,
   },
 }

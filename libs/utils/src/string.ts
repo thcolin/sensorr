@@ -29,7 +29,7 @@ export const humanize = {
   },
 }
 
-export const emojize = (emoji: string, label?: string|number) => `${emoji}${' '}${label || ''}`
+export const emojize = (emoji: string, label?: string|number) => `${emoji}${' '}${(typeof label !== 'undefined' && label !== null) ? label : ''}`
 
 const units = ['B', 'KB', 'MB', 'GB', 'TB']
 

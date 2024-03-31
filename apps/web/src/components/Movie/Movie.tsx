@@ -3,6 +3,7 @@ import { Movie as UIMovie } from '@sensorr/ui'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { withMovieGuestsContext } from '../../contexts/Guests/Guests'
 import withLoadableCredits from '../../components/enhancers/withLoadableCredits'
+import withLoadableReviews from '../enhancers/withLoadableReviews'
 
 const Movie = compose(
   withMovieMetadataContext(),
@@ -11,6 +12,7 @@ const Movie = compose(
 
 export default Movie
 
-export const MovieWithCredits = compose(
+export const MovieWithCreditsAndReviews = compose(
   withLoadableCredits(['cast', 'crew']),
+  withLoadableReviews(),
 )(Movie) as typeof UIMovie

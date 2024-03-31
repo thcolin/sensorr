@@ -1,6 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react'
 
-const ProgressiveWebApp = ({ ...props }) => (
+const Mobile = ({ ...props }) => (
   <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <QRCodeSVG
       value={window?.location?.origin}
@@ -18,4 +18,4 @@ const ProgressiveWebApp = ({ ...props }) => (
   </div>
 )
 
-export default ProgressiveWebApp
+export default Mobile

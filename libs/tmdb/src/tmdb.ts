@@ -171,7 +171,7 @@ export class TMDB {
 
     const res = await fetch(this.build(uri, params), init)
     const body = (await res.json().catch(() => {
-      throw new Error(`[TMDB] ${res.url} ${res.status}: ${res.statusText}`)
+      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url}`)
     })) as any
 
     if (
@@ -194,7 +194,7 @@ export class TMDB {
     }
 
     if (!res.ok) {
-      throw new Error(`[TMDB] ${res.url} ${res.status}: ${res.statusText}`)
+      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url}`)
     }
 
     if (typeof this.events.fetchEnd === 'function') {

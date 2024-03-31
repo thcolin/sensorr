@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from 'react'
+import { memo, useState, useMemo, forwardRef } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import ReactSelect from 'react-select'
@@ -25,7 +25,7 @@ export interface SelectProps {
   [key: string]: any
 }
 
-const UISelect = ({
+const UISelect = forwardRef(({
   label,
   loadOptions,
   value,
@@ -38,7 +38,7 @@ const UISelect = ({
   multi,
   direction = 'column',
   ...props
-}: SelectProps) => {
+}: SelectProps, ref) => {
   const { t } = useTranslation()
   const SelectElement = Element || ReactSelect
   const { theme } = useThemeUI()
@@ -182,24 +182,27 @@ const UISelect = ({
 
   return (
     <div sx={UISelect.styles.element} style={{ flexDirection: direction }}>
-      <label sx={UISelect.styles.label} style={{ row: { paddingRight: '1em' }, column: { paddingBottom: '1em' } }[direction]}>
-        <span
-          onClick={() => !disabled && resetable && onChange(multi ? [] : null)}
-          style={!disabled && resetable ? { cursor: 'pointer' } : {}}
-        >
-          {label}
-        </span>
-        {!!(behavior && onBehavior) && (
+      {!!label && (
+        <label sx={UISelect.styles.label} style={{ row: { paddingRight: '1em' }, column: { paddingBottom: '1em' } }[direction]}>
           <span
-            sx={UISelect.styles.badge}
-            onClick={() => onBehavior({ and: 'or', or: 'and' }[behavior] as any)}
-            style={!disabled ? { cursor: 'pointer' } : {}}
+            onClick={() => !disabled && resetable && onChange(multi ? [] : null)}
+            style={!disabled && resetable ? { cursor: 'pointer' } : {}}
           >
-            {behavior}
+            {label}
           </span>
-        )}
-      </label>
+          {!!(behavior && onBehavior) && (
+            <span
+              sx={UISelect.styles.badge}
+              onClick={() => onBehavior({ and: 'or', or: 'and' }[behavior] as any)}
+              style={!disabled ? { cursor: 'pointer' } : {}}
+            >
+              {behavior}
+            </span>
+          )}
+        </label>
+      )}
       <SelectElement
+        ref={ref}
         placeholder={loadOptions ? t('ui.select.placeholder_search') : t('ui.select.placeholder_select')}
         loadingMessage={() => t('ui.select.loading', { query })}
         noOptionsMessage={({ inputValue }) => loadOptions && !inputValue ? t('ui.select.option') : t('ui.select.empty')}
@@ -218,7 +221,7 @@ const UISelect = ({
       />
     </div>
   )
-}
+}) as any
 
 UISelect.styles = {
   element: {

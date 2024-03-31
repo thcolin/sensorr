@@ -57,7 +57,13 @@ const withLoadableCredits = (
         {...props}
         entity={entity}
         credits={value}
-        onMouseEnter={loadCredits}
+        onMouseEnter={(e) => {
+          if (typeof props.onMouseEnter === 'function') {
+            props.onMouseEnter(e)
+          }
+
+          loadCredits()
+        }}
       />
     )
   }

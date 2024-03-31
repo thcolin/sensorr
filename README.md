@@ -16,13 +16,13 @@ echo "SENSORR_USERNAME=username" >> .env
 echo "SENSORR_PASSWORD=password" >> .env
 echo "SENSORR_DATABASE_PASSWORD=anotherpassword" >> .env
 
-# Define your "blackhole" path where .torrent files will be downloaded
+# Define your "blackhole" directory where .torrent files will be downloaded
 echo "SENSORR_BLACKHOLE=/home/user/downloads" >> .env
 
 # Set your own TimeZone, see ["TZ identifier"](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)
 echo "TZ=Europe/Paris" >> .env
 
-# Create your own keyfile for sensorr database, see ["Generate a Key File - MongoDB Manual"](https://www.mongodb.com/docs/v2.4/tutorial/generate-key-file/)
+# Create your own keyfile for Sensorr database, see ["Generate a Key File - MongoDB Manual"](https://www.mongodb.com/docs/v2.4/tutorial/generate-key-file/)
 openssl rand -base64 756 > ./database-keyfile
 chmod 400 ./database-keyfile
 chown 999:999 ./database-keyfile

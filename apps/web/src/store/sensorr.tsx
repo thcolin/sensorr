@@ -60,7 +60,7 @@ export const useSensorrRequest = () => {
         setDone(true)
         setLoading(false)
 
-        toast.error('Error while fetching releases from Znabs')
+        toast.error('Error while fetching releases from indexers')
       }
     }
   }, [])

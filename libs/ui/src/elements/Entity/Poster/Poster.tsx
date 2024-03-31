@@ -7,6 +7,7 @@ import { PersonDetails } from '../../../components/Person/Person'
 
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: MovieDetails | PersonDetails
+  reviews?: { source: string, score: string, date: string, count: string }[],
   link?: LinkProps
   state?: [React.FC, any] | []
   focus?: [React.FC, any] | []
@@ -19,6 +20,7 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
 
 const UIPoster = ({
   details,
+  reviews = [],
   link = null,
   focus: [Focus, focus] = [],
   state: [State, state] = [],
