@@ -211,12 +211,13 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
 
           try {
             const { MediaContainer: { Metadata: [{ Guid }] } } = await plex[requested_by[0]].query(plex_guid.replace('plex://movie/', '/library/metadata/'))
-            const tmdb_id = Number((Guid || []).find(guid => guid.id.startsWith('tmdb://')).id.replace('tmdb://', ''))
+            const tmdb_id = Number((Guid || []).find(guid => guid.id.startsWith('tmdb://'))?.id?.replace('tmdb://', ''))
             movie = state.library.find(m => m.id === tmdb_id)
 
             if (!tmdb_id) {
               setTask((task) => ({ ...task, output: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} don't have TMDB id` }))
               state.logger.warn({ message: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} don't have TMDB id`, metadata: { ...state.metadata, plex_guid, requested_by } })
+              continue
             } else if (!movie) {
               setTask((task) => ({ ...task, output: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} unknown from library, look up for his TMDB data with TMDB id "${tmdb_id}"...` }))
               const body = await state.tmdb.fetch(`movie/${tmdb_id}`, {

@@ -10,7 +10,7 @@ export class GuestsController {
 
   @Public()
   @Get('/register')
-  register(): Promise<{ done: boolean, code: string, id: string }> {
+  async register(): Promise<{ done: boolean, code: string, id: string }> {
     return this.guestsService.register()
   }
 

@@ -47,7 +47,7 @@ const UIGuests = ({ guests, compact = true, hidden = false, ...props }) => (
       id='guests'
       length={Math.min(4 || 0, guests?.length)}
       child={compact ? CompactGuest : Guest}
-      childProps={{ entities: guests }}
+      childProps={{ ...props?.childProps, entities: guests }}
       entities={guests}
       compact={true}
       space={2}

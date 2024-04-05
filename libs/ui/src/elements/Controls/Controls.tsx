@@ -54,7 +54,7 @@ export interface ControlsProps {
 }
 
 const UIControls = ({ title, components, fields, values, onChange, layout, statistics, loading, total, level, watch, props }: ControlsProps) => {
-  const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
+  const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const handleChange = useCallback((next, close = true) => {
     if (close) {
       closePortal(false)

@@ -20,6 +20,11 @@ const config = convict({
     format: 'Boolean',
     default: false,
   },
+  vapidPublicKey: {
+    doc: 'VAPID Public Key for web push notifications',
+    format: 'String',
+    default: null,
+  },
   tmdb: {
     doc: 'TMDB API Key',
     format: 'String',

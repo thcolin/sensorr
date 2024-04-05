@@ -121,8 +121,9 @@ UIButton.styles = {
           backgroundColor: 'grayDark',
         },
         ':disabled': {
-          borderColor: 'grayDarker',
-          backgroundColor: 'grayDarker',
+          borderColor: 'gray',
+          backgroundColor: 'gray',
+          color: 'grayDarker',
         },
       },
     }[color],
@@ -224,8 +225,8 @@ UIButton.styles = {
           color: 'grayDark',
         },
         ':disabled': {
-          borderColor: 'grayDarker',
-          color: 'grayDarker',
+          borderColor: 'gray',
+          color: 'gray',
         },
       },
     }[color],

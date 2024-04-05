@@ -5,13 +5,16 @@ import { Icon } from '../Icon/Icon'
 
 export interface PaneProps {
   position: 'top' | 'right' | 'bottom' | 'left'
+  height?: string
+  width?: string
+  background?: string
   open: boolean
   toggleOpen: () => void
   level?: number
   children: React.ReactNode
 }
 
-const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: PaneProps) => {
+const UIPane = ({ position, height = '75vh', width = '25em', background: backgroundColor = 'primary', open, toggleOpen, children, level = 0, ...props }: PaneProps) => {
   const { theme } = useThemeUI()
   const [ready, setReady] = useState(open)
 
@@ -28,10 +31,11 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
   return (
     <>
       <aside
-        sx={UIPane.styles.element}
+        sx={{ ...UIPane.styles.element, backgroundColor }}
         style={{
           top: {
-            height: '75vh',
+            height: height,
+            maxHeight: '100vh',
             width: '100vw',
             top: '0em',
             right: '0em',
@@ -41,7 +45,8 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
           },
           right: {
             height: '100vh',
-            width: '25em',
+            width: width,
+            maxWidth: '100vw',
             top: '0em',
             right: '0em',
             bottom: '0em',
@@ -49,7 +54,8 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
             zIndex: 6 + level,
           },
           bottom: {
-            height: '75vh',
+            height: height,
+            maxHeight: '100vh',
             width: '100vw',
             right: '0em',
             bottom: '0em',
@@ -59,7 +65,8 @@ const UIPane = ({ position, open, toggleOpen, children, level = 0, ...props }: P
           },
           left: {
             height: '100vh',
-            width: '25em',
+            width: width,
+            maxWidth: '100vw',
             top: '0em',
             bottom: '0em',
             left: '0em',
@@ -95,7 +102,6 @@ UIPane.styles = {
   element: {
     position: 'fixed',
     display: 'flex',
-    backgroundColor: 'primary',
     color: '#FFF',
     transition: 'transform 400ms ease',
     transform: 'translateZ(0)',

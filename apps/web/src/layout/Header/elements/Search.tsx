@@ -190,7 +190,8 @@ History.styles = {
       fontWeight: 'semibold',
       color: 'grayDark',
       fontSize: 4,
-      width: '30rem',
+      width: '100%',
+      maxWidth: '30rem',
     },
     '>ul': {
       flex: 1,

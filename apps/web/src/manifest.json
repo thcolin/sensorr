@@ -2,6 +2,7 @@
   "short_name": "Sensorr",
   "name": "Sensorr",
   "description": "Your Friendly Digital Video Recorder 🍿📼",
+  "start_url": "/login",
   "background_color": "#1a1a1a",
   "orientation": "portrait",
   "display": "standalone",

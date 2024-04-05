@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { JobsController } from './jobs.controller'
 import { JobsService } from './jobs.service'
 import { SensorrService } from '../sensorr/sensorr.service'
-import { LogsService } from '../logs/log.service'
 import { ConfigService } from '../config/config.service'
 import { Log, LogSchema } from '../logs/log.schema'
 import { Metafile, MetafileSchema } from '../sensorr/metafile.schema'
@@ -15,7 +14,6 @@ import { Metafile, MetafileSchema } from '../sensorr/metafile.schema'
   ],
   controllers: [JobsController],
   providers: [
-    LogsService,
     JobsService,
     SensorrService,
     ConfigService,

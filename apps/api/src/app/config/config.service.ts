@@ -15,6 +15,7 @@ export class ConfigService {
   constructor() {
     this.config.loadFile(this.file)
     this.config.set('docker', process.env.NX_API_DOCKER_ENV === 'true')
+    this.config.set('vapidPublicKey', process.env.NX_SENSORR_VAPID_PUBLIC_KEY)
   }
 
   async get() {

@@ -39,11 +39,12 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
       group: log.meta.group,
       timestamp: groups[log.meta.group]?.timestamp || log.timestamp,
       movie: groups[log.meta.group]?.movie || log.meta.movie,
-      release: groups[log.meta.group]?.release || log.meta.release,
+      release: groups[log.meta.group]?.release || (log.meta.release ? { log: log._id, ...log.meta.release } : undefined),
       treated: typeof groups[log.meta.group]?.treated === 'boolean' ? groups[log.meta.group]?.treated : log.meta.treated,
       choice: typeof groups[log.meta.group]?.choice === 'boolean' ? groups[log.meta.group]?.choice : log.meta.choice,
       warning: groups[log.meta.group]?.warning || log.meta.warning,
       logs: [...(log.message ? [log] : []), ...(groups[log.meta.group]?.logs || [])].sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+      completed: groups[log.meta.group]?.completed || Array.isArray(log.meta.results),
     },
   }, {})).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [logs])
 
@@ -228,7 +229,7 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, metadata, setMovieMetadata, proceedMovieRelease, toggleMetadata, toggleSensorr, done, error, ...props }) => {
+const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, metadata, setMovieMetadata, proceedMovieRelease, toggleMetadata, toggleSensorr, completed, done, error, ...props }) => {
   // const sensorr = useSensorr()
   // const query = useMemo(() => sensorr.getQuery(movie, metadata.query), [movie?.id, metadata.query])
 
@@ -248,7 +249,7 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
     setOptimistic({ treated: true, choice })
-    proceedMovieRelease(movie?.id, release, choice, 'cache')
+    proceedMovieRelease(movie?.id, release, choice, release.log)
   }, [movie?.id, proceedMovieRelease])
 
   useEffect(() => {
@@ -351,26 +352,30 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
             metadata={metadata}
             setMovieMetadata={setMovieMetadata}
           />
-          {command === 'doctor' && (
+          {completed && (
             <>
-              {[
-                ...(movie?.releases?.filter(release => release.from === 'sync') || []),
-                ...(movie?.releases?.filter(release => release.from !== 'sync') || []),
-              ].map(release => (
-                <div sx={UIRecord.styles.release} key={release.id}>
-                  <Release entity={release} display='column' compact={true} />
+              {command === 'doctor' && (
+                <>
+                  {[
+                    ...(movie?.releases?.filter(release => release.from === 'sync') || []),
+                    ...(movie?.releases?.filter(release => release.from !== 'sync') || []),
+                  ].map(release => (
+                    <div sx={UIRecord.styles.release} key={release.id}>
+                      <Release entity={release} display='column' compact={true} />
+                    </div>
+                  ))}
+                </>
+              )}
+              {(release && !release?.hide) ? (
+                <div sx={UIRecord.styles.release}>
+                  <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
                 </div>
-              ))}
+              ) : (
+                <div sx={UIRecord.styles.release}>
+                  <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
+                </div>
+              )}
             </>
-          )}
-          {(release && !release?.hide) ? (
-            <div sx={UIRecord.styles.release}>
-              <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
-            </div>
-          ) : (
-            <div sx={UIRecord.styles.release}>
-              <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
-            </div>
           )}
         </div>
       </div>

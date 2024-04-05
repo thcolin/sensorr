@@ -53,16 +53,8 @@ root.render(
   </StrictMode>
 )
 
-// TODO: Enable it on production
-// if ('serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//     navigator.serviceWorker
-//       .register('/service-worker.js')
-//       .then((registration) => {
-//         console.log('SW registered: ', registration)
-//       })
-//       .catch((registrationError) => {
-//         console.log('SW registration failed: ', registrationError)
-//       })
-//   })
-// }
+if (process.env['NODE_ENV'] === 'production' && ('serviceWorker' in navigator)) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then((registration) => console.log('ServiceWorker registered: ', registration))
+    .catch((err) => console.log('ServiceWorker registration failed: ', err))
+}

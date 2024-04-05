@@ -5,6 +5,7 @@ import { scrollToTop } from '@sensorr/utils'
 import { LoadingBar } from '../LoadingBar'
 import { useSearchContext } from '../../contexts/Search/Search'
 import { Input as SearchInput, Results as SearchResults, History as SearchHistory } from './elements/Search'
+import { Notifications } from './elements/Notifications'
 import Navigation from './elements/Navigation'
 
 const Logo = ({ ...props }) => (
@@ -75,7 +76,9 @@ const Toolbar = ({ ...props }) => (
       <div sx={Toolbar.styles.center}>
         <SearchInput />
       </div>
-      <div></div>
+      <div sx={Toolbar.styles.right}>
+        <Notifications />
+      </div>
     </div>
   </div>
 )
@@ -86,6 +89,7 @@ Toolbar.styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '4em',
+    overflow: 'hidden',
   },
   wrapper: {
     flex: 1,
@@ -118,7 +122,10 @@ Toolbar.styles = {
     marginBottom: '-2px',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
-    marginX: '10em',
+    marginX: [12, '10em'],
+  },
+  right: {
+
   },
 }
 

@@ -1,20 +1,23 @@
 import { Body, Controller, Post, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
-import { LogsService } from '../logs/log.service'
+import { NotificationsService } from './notifications.service'
+import { SubscriptionDTO } from './subscription.dto'
 
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    private readonly logsService: LogsService,
-  ) {}
+    private readonly notificationsService: NotificationsService,
+  ) {
+    this.notificationsService.dispatchWebPushNotifications()
+  }
 
   @Sse()
   listenNotifications(): Observable<MessageEvent> {
-    return this.logsService.listenNotifications()
+    return this.notificationsService.listenNotifications()
   }
 
-  @Post('/seen')
-  async seenNotifications(@Body() body) {
-    await this.logsService.markNotificationsAsSeen(body)
+  @Post('/subscribe')
+  async subscribeNotifications(@Body() subscription: SubscriptionDTO) {
+    return this.notificationsService.subscribeNotifications(subscription)
   }
 }

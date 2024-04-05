@@ -3,5 +3,6 @@ db.createCollection('movies')
 db.createCollection('persons')
 db.createCollection('guests')
 db.createCollection('blackhole')
+db.createCollection('subscriptions')
 db.createCollection('log')
 db.log.createIndex({ timestamp: 1 }, { expireAfterSeconds: 1209600 }) // 2 weeks log expiration

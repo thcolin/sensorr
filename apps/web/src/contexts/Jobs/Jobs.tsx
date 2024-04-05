@@ -60,6 +60,7 @@ export const Provider = ({ ...props }) => {
       value={{
         loading: Object.values(loading).reduce((acc, curr) => acc || curr, false),
         jobs: sorted,
+        setJobs,
         process,
       }}
     />

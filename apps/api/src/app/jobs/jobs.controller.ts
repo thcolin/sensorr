@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { JobsService } from './jobs.service'
-import { LogsService } from '../logs/log.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 
 @Controller('jobs')
@@ -9,7 +8,6 @@ export class JobsController implements OnApplicationBootstrap {
   private readonly logger = new Logger(JobsController.name)
 
   constructor(
-    private readonly logsService: LogsService,
     private readonly jobsService: JobsService,
     private readonly sensorrService: SensorrService
   ) {}
@@ -20,7 +18,7 @@ export class JobsController implements OnApplicationBootstrap {
 
   @Sse()
   listenJobs(): Observable<MessageEvent> {
-    return this.logsService.listenJobs()
+    return this.jobsService.listenJobs()
   }
 
   @Sse('/status')
@@ -45,17 +43,12 @@ export class JobsController implements OnApplicationBootstrap {
 
   @Sse(':job')
   listenJob(@Param() params): Observable<MessageEvent> {
-    return this.logsService.listenJob(params.job)
+    return this.jobsService.listenJob(params.job)
   }
 
   @Delete('/:job')
   stopJob(@Param() params) {
     this.sensorrService.stopProcess(params.job)
     return { success: true }
-  }
-
-  @Post('/:job/logs')
-  async logJob(@Body() body) {
-    return await this.logsService.logJob(body)
   }
 }

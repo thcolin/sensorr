@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react'
 import { Picture, Empty, Guests, MovieState, PersonState } from '@sensorr/ui'
-import { avatar } from '@sensorr/utils'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
 const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], ...props }) => {

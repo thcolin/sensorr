@@ -7,6 +7,7 @@ import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
 import { useConfigContext } from '../Config/Config'
+import { useJobsContext } from '../Jobs/Jobs'
 
 const moviesMetadataContext = createContext({})
 
@@ -16,6 +17,7 @@ export const Provider = ({ ...props }) => {
   const { config } = useConfigContext()
   const sensorr = useSensorr()
   const { authenticated } = useAuthContext()
+  const { setJobs } = useJobsContext() as any
   const ref = useRef() as any
   const refreshTime = useRef() as any
   const [loading, setLoading] = useState(true)
@@ -111,7 +113,7 @@ export const Provider = ({ ...props }) => {
     policy: new Policy(metadata?.policy, config.get('policies')),
   }), [config])
 
-  const proceedMovieRelease = useCallback(async (id: number, release: any, choice: boolean = true, source: 'cache' | 'enclosure' = 'enclosure') => {
+  const proceedMovieRelease = useCallback(async (id: number, release: any, choice: boolean = true, log: string) => {
     const initial = ref.current[id] || {}
     const changes = {
       ...(choice === true ? { state: 'archived' } : {}),
@@ -127,7 +129,7 @@ export const Provider = ({ ...props }) => {
 
     try {
       if (choice) {
-        const { uri, params, init } = api.query.sensorr.downloadRelease({ body: release, params: { source, destination: 'fs' } })
+        const { uri, params, init } = api.query.sensorr.downloadRelease({ body: release, params: { source: log ? 'cache' : 'enclosure', destination: 'fs' } })
         await api.fetch(uri, params, init)
       } else {
         const { uri, params, init } = api.query.sensorr.removeRelease({ body: release })
@@ -146,18 +148,31 @@ export const Provider = ({ ...props }) => {
       const { uri, params, init } = api.query.movies.postMovie({ body: { id, ...movie, ...changes, updated_at: new Date().getTime() } })
       await api.fetch(uri, params, init)
 
-      if (release.job && release.from) {
+      if (log) {
         try {
-          const { uri, params, init } = api.query.jobs.postJobLog({
-            body: {
-              level: 'info',
-              message: '',
-              meta: { job: release.job, command: release.from, group: id, treated: true, choice, summary: { treated: 1 } },
-            },
-            params: { job: release.job },
+          const { uri, params, init } = api.query.logs.ammendLog({
+            body: { 'meta.treated': true, 'meta.choice': choice, 'meta.summary': { treated: 1 } },
+            params: { log },
           })
 
           await api.fetch(uri, params, init)
+
+          setJobs(jobs => {
+            if (!jobs[release.job]) {
+              return jobs
+            }
+
+            return ({
+              ...jobs,
+              [release.job]: {
+                ...jobs[release.job],
+                summary: {
+                  ...jobs[release.job].summary,
+                  treated: (jobs[release.job]?.summary?.treated || 0) + 1,
+                }
+              }
+            })
+          })
         } catch (e) {
           console.warn(e)
         }

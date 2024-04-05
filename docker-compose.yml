@@ -41,6 +41,9 @@ services:
       - NX_SENSORR_AUTH_SECRET=${SENSORR_AUTH_SECRET:-youshouldchangethisvaluetoanythingelse}
       - NX_SENSORR_USERNAME=${SENSORR_USERNAME:-sensorr}
       - NX_SENSORR_PASSWORD=${SENSORR_PASSWORD:-sensorr}
+      - NX_SENSORR_VAPID_SUBJECT=${SENSORR_VAPID_SUBJECT}
+      - NX_SENSORR_VAPID_PUBLIC_KEY=${SENSORR_VAPID_PUBLIC_KEY}
+      - NX_SENSORR_VAPID_PRIVATE_KEY=${SENSORR_VAPID_PRIVATE_KEY}
     volumes:
       - ./config.json:/app/config.json
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole

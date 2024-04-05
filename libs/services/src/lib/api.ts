@@ -20,6 +20,24 @@ export class API {
         body: JSON.stringify(body)
       }
     }),
+    notifications: {
+      postSubscription: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'notifications/subscribe',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+    },
     movies: {
       postMovie: (
         { body, init = {} }: { body: any, init?: any }
@@ -291,6 +309,24 @@ export class API {
         }
       }),
     },
+    logs: {
+      ammendLog: (
+        { body, init = {}, params: { log } }: { body: any, init?: any, params: { log: string } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `logs/${log}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        },
+      }),
+    },
     jobs: {
       statusProcess: (
         { init = {} }: { init?: any }
@@ -337,22 +373,6 @@ export class API {
             'Content-Type': 'application/json',
           },
         }
-      }),
-      postJobLog: (
-        { body, init = {}, params: { job } }: { body: any, init?: any, params: { job: string } }
-      ): { uri: string, params: {}, init: {} } => ({
-        uri: `jobs/${job}/logs`,
-        params: {},
-        init: {
-          ...init,
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer __ACCESS_TOKEN__`,
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body)
-        },
       }),
     },
     sensorr: {
