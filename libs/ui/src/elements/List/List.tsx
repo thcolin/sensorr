@@ -95,12 +95,12 @@ UIList.styles = {
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',
-      paddingBottom: 0,
+      paddingBottom: [4, 0],
       scrollBehavior: 'smooth',
     },
     entity: {
       flex: '0 0 auto',
-      padding: '0 2em',
+      paddingX: [8, 0],
     },
     more: {
       flex: '0 0 auto',

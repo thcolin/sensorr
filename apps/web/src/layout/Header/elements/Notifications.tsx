@@ -87,6 +87,7 @@ UINotifications.styles = {
       padding: 2,
       '>h2': {
         variant: 'heading.default',
+        color: 'whitePure',
         padding: 12,
         margin: 12,
       },
@@ -94,6 +95,9 @@ UINotifications.styles = {
         variant: 'button.reset',
         display: ['flex', 'none'],
         padding: 8,
+        '>svg': {
+          color: 'whitePure',
+        },
       },
     },
     '>button': {
@@ -143,7 +147,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   }, [meta?.choice, meta?.command, loading, metadata.state])
 
   return (
-    <div sx={{ paddingX: 4, overflow: 'hidden', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : seenNotification(_id)}>
+    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : seenNotification(_id)}>
       <div sx={{ position: 'relative', display: 'flex', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
         {!meta?.seen && (
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
@@ -182,11 +186,11 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
               </Link>
             </span>
           </div>
-          <div sx={{ display: 'flex', alignItems: 'center', paddingBottom: 10 }}>
+          <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
             <span sx={{ fontSize: 6, marginRight: 6 }}>
               <MovieState
                 value={(loading ? 'loading' : metadata.state) || 'ignored'}
-                onChange={state => setMovieMetadata(meta?.movie?.id, state)}
+                onChange={state => setMovieMetadata(meta?.movie?.id, 'state', state)}
                 compact={true}
               />
             </span>
@@ -223,6 +227,9 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
+                    alignSelf: 'start',
+                    maxWidth: '100%',
+                    overflowX: 'auto',
                     marginBottom: [10, 12],
                     '>span': {
                       ':not(:last-of-type)': {
@@ -291,7 +298,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     {(choice === null || choice === true) && (
                       <Button
                         variant='contain'
-                        color={choice === null ? 'primary' : 'gray'}
+                        color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
                           proceedMovieRelease(meta?.movie?.id, meta?.release, true, _id)
@@ -304,7 +311,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     {(choice === null || choice === false) && (
                       <Button
                         variant={choice === null ? 'outline' : 'contain'}
-                        color={choice === null ? 'primary' : 'gray'}
+                        color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
                           proceedMovieRelease(meta?.movie?.id, meta?.release, false, _id)
@@ -329,7 +336,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
               {(choice === null || choice === true) && (
                 <Button
                   variant='contain'
-                  color={choice === null ? 'primary' : 'gray'}
+                  color={(loading || choice !== null) ? 'gray' : 'primary'}
                   disabled={loading || choice !== null}
                   onClick={() => {
                     setMovieMetadata(meta?.movie?.id, 'state', 'wished')
@@ -342,7 +349,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
               {(choice === null || choice === false) && (
                 <Button
                   variant={choice === null ? 'outline' : 'contain'}
-                  color={choice === null ? 'primary' : 'gray'}
+                  color={(loading || choice !== null) ? 'gray' : 'primary'}
                   disabled={loading || choice !== null}
                   onClick={() => answerNotification(_id, false)}
                 >
@@ -365,20 +372,20 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 {(choice === null || choice === true) && (
                   <Button
                     variant='contain'
-                    color={choice === null ? 'primary' : 'gray'}
+                    color={(loading || choice !== null) ? 'gray' : 'primary'}
                     disabled={loading || choice !== null}
                     onClick={() => {
                       setMovieMetadata(meta?.movie?.id, 'state', 'wished')
                       answerNotification(_id, true)
                     }}
                   >
-                    {choice === null ? '"Wish" it' : { archived: 'Archived', wished: 'Wished' }[metadata.state]}
+                    {choice === null ? '"Wish" it' : ({ archived: 'Archived', wished: 'Wished' }[metadata.state] || 'Loading')}
                   </Button>
                 )}
                 {(choice === null || choice === false) && (
                   <Button
                     variant={choice === null ? 'outline' : 'contain'}
-                    color={choice === null ? 'primary' : 'gray'}
+                    color={(loading || choice !== null) ? 'gray' : 'primary'}
                     disabled={loading || choice !== null}
                     onClick={() => answerNotification(_id, false)}
                   >

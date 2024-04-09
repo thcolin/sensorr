@@ -15,6 +15,7 @@ import withProps from '../../components/enhancers/withProps'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
+import { useDeviceContext } from '../../contexts/Device/Device'
 
 const TMDBTabs = compose(
   withTabsBehavior(),
@@ -29,6 +30,7 @@ const MovieDetails = compose(
 const Movie = ({ ...props }) => {
   const { id } = useParams() as any
   const { t } = useTranslation()
+  const { device } = useDeviceContext()
   const { metadata: persons } = usePersonsMetadataContext() as any
   const { ongoing } = useAnimationContext() as any
 
@@ -56,7 +58,7 @@ const Movie = ({ ...props }) => {
       label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
       entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
       child: MovieWithCreditsAndReviews,
-      props: ({ index }) => ({ display: (ready || index < 5) ? 'pretty' : 'poster' }),
+      props: ({ index }) => ({ display: (ready || (index < 5 && device !== 'mobile')) ? 'pretty' : 'poster' }),
       ready: ready,
       more: {
         to: `/collection/${movie.data?.belongs_to_collection?.id}`,
@@ -69,7 +71,7 @@ const Movie = ({ ...props }) => {
       entities: movie.data?.recommendations?.results || [],
       child: MovieWithCreditsAndReviews,
       ready: ready,
-      props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
+      props: ({ index }) => ({ display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster' }),
       more: {
         to: `/movie/${id}/recommendations`,
       },
@@ -81,7 +83,7 @@ const Movie = ({ ...props }) => {
       entities: movie.data?.similar?.results || [],
       child: MovieWithCreditsAndReviews,
       ready: ready,
-      props: ({ index }) => ({ display: index < 5 ? 'pretty' : 'poster' }),
+      props: ({ index }) => ({ display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster' }),
       more: {
         to: `/movie/${id}/similar`,
       },
@@ -153,7 +155,7 @@ const Movie = ({ ...props }) => {
               return { entities, total: Math.min(entities.length, 20) }
             },
             props: ({ index, entity }) => ({
-              display: index < 5 ? 'pretty' : 'poster',
+              display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
               credits: [
                 {
                   entity: {
@@ -198,7 +200,7 @@ const Movie = ({ ...props }) => {
               return { entities, total: Math.min(entities.length, 20) }
             },
             props: ({ index, entity }) => ({
-              display: index < 5 ? 'pretty' : 'poster',
+              display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
               credits: [
                 {
                   entity: {

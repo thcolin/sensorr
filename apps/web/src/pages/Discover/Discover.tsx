@@ -65,7 +65,7 @@ export const Discover = compose(
       },
       aside: {
         display: 'grid',
-        gridTemplateColumns: '1fr',
+        gridTemplateColumns: 'minmax(0, 1fr)',
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: `

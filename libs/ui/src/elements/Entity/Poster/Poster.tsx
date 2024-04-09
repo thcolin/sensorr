@@ -138,9 +138,9 @@ UIPoster.styles = {
   element: {
     position: 'relative',
     display: 'flex',
-    height: '15em',
+    height: ['12em', '15em'],
     maxHeight: '100%',
-    width: '10em',
+    width: ['8em', '10em'],
     maxWidth: '100%',
   },
   wrapper: {

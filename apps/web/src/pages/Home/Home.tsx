@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useResponsiveValue } from '@theme-ui/match-media'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies } from '../../components/Entities/Movies'
+import { useDeviceContext } from '../../contexts/Device/Device'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
@@ -9,10 +9,10 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const Home = ({ ...props }) => {
   const { t } = useTranslation()
-  const allowPretty = useResponsiveValue([false, true], { defaultIndex: 1 })
+  const { device } = useDeviceContext()
   const pretty = useCallback(({ index }) => ({
-    display: ((allowPretty && index < 5) ? 'pretty' : 'poster') as 'pretty' | 'poster',
-  }), [allowPretty])
+    display: (((device !== 'mobile') && index < 5) ? 'pretty' : 'poster') as 'pretty' | 'poster',
+  }), [device])
 
   return (
     <>

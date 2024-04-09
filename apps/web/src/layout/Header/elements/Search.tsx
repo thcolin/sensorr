@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Entities, AbstractEntity, transformCollectionDetails, transformCompanyDetails, transformKeywordDetails, Warning, Icon } from '@sensorr/ui'
 import { useSearchContext } from '../../../contexts/Search/Search'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 import Movie from '../../../components/Movie/Movie'
 import Person from '../../../components/Person/Person'
 import nanobounce from 'nanobounce'
-import { useResponsiveValue } from '@theme-ui/match-media'
 
 export const Input = ({ ...props }) => {
   const ref = useRef<HTMLInputElement>()
@@ -247,7 +247,7 @@ History.styles = {
 
 export const Results = ({ ...props }) => {
   const { query, results, loading } = useSearchContext() as any
-  const allowPretty = useResponsiveValue([false, false, true], { defaultIndex: 1 })
+  const { device } = useDeviceContext()
   const extanded = results !== null || loading
 
   return (
@@ -280,9 +280,9 @@ export const Results = ({ ...props }) => {
                   entities={results.movies.results}
                   hide={true}
                   child={Movie}
-                  props={() => ({ display: allowPretty ? 'card' : 'poster' })}
-                  display={allowPretty ? 'column' : 'row'}
-                  // {...(allowPretty ? {} : { stack: true })}
+                  props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
+                  display={device !== 'mobile' ? 'column' : 'row'}
+                  // {...(device !== 'mobile' ? {} : { stack: true })}
                   more={{
                     title: `More results for ${query}`,
                     // TODO: Fix
@@ -299,12 +299,12 @@ export const Results = ({ ...props }) => {
                   hide={true}
                   child={AbstractEntity}
                   props={() => ({
-                    display: allowPretty ? 'card' : 'poster',
+                    display: device !== 'mobile' ? 'card' : 'poster',
                     transformDetails: transformCollectionDetails,
                     link: (entity) => ({ to: `/collection/${entity.id}` }),
                   })}
-                  display={allowPretty ? 'column' : 'row'}
-                  // {...(allowPretty ? {} : { stack: true })}
+                  display={device !== 'mobile' ? 'column' : 'row'}
+                  // {...(device !== 'mobile' ? {} : { stack: true })}
                   more={{
                     title: `More results for ${query}`,
                     // TODO: Fix
@@ -320,9 +320,9 @@ export const Results = ({ ...props }) => {
                   entities={results.persons.results}
                   hide={true}
                   child={Person}
-                  props={() => ({ display: allowPretty ? 'card' : 'poster' })}
-                  display={allowPretty ? 'column' : 'row'}
-                  // {...(allowPretty ? {} : { stack: true })}
+                  props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
+                  display={device !== 'mobile' ? 'column' : 'row'}
+                  // {...(device !== 'mobile' ? {} : { stack: true })}
                   // TODO: Fix
                   more={{
                     title: `More results for ${query}`,

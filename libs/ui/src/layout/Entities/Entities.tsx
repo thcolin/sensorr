@@ -144,13 +144,16 @@ UIEntities.styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    paddingY: 0,
+    paddingY: [4, 0],
   },
   label: {
+    display: 'flex',
+    alignItems: 'center',
     paddingX: 4,
+    marginBottom: [4, 0],
     fontFamily: 'heading',
     fontWeight: 'strong',
-    paddingBottom: 0,
+    overflowX: 'auto',
   },
   subtitle: {
     paddingX: 4,

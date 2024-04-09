@@ -5,11 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
+import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const Collection = ({ ...props }) => {
   const { id } = useParams() as any
   const { t } = useTranslation()
+  const { device } = useDeviceContext()
   const { ongoing } = useAnimationContext() as any
   const { loading, error, data, details } = useTMDBRequest(`/collection/${id}`, {
     append_to_response: 'images',
@@ -34,7 +36,7 @@ const Collection = ({ ...props }) => {
             label: t('items.movies.belongs_to_collection.label', { collection: details.title || 'Saga' }),
             entities: details.parts,
             child: MovieWithCreditsAndReviews,
-            props: () => ({ display: 'pretty' }),
+            props: () => ({ display: device !== 'mobile' ? 'pretty' : 'poster' }),
             ready: ready,
           },
         },

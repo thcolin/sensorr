@@ -2,6 +2,7 @@
   "short_name": "Sensorr",
   "name": "Sensorr",
   "description": "Your Friendly Digital Video Recorder 🍿📼",
+  "scope": "/",
   "start_url": "/login",
   "background_color": "#1a1a1a",
   "orientation": "portrait",
@@ -9,12 +10,12 @@
   "icons": [
     {
       "src": "assets/favicon-alt-full.png",
-      "sizes": ["120", "152", "167", "192"],
+      "sizes": ["120x120", "152x152", "167x167", "192x192"],
       "ios": true
     },
     {
       "src": "assets/favicon-alt.png",
-      "sizes": ["96", "128", "192"]
+      "sizes": ["96x96", "128x128", "192x192"]
     },
     {
       "src": "assets/favicon-alt-full.png",

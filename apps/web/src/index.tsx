@@ -13,6 +13,7 @@ import { Provider as SearchProvider } from './contexts/Search/Search'
 import { Provider as JobsProvider } from './contexts/Jobs/Jobs'
 import { Provider as NotificationsProvider } from './contexts/Notifications/Notifications'
 import { Provider as GuestsProvider } from './contexts/Guests/Guests'
+import { Provider as DeviceProvider } from './contexts/Device/Device'
 import { Toasts } from './contexts/Toasts/Toasts'
 import App from './pages/App'
 import 'tippy.js/dist/tippy.css'
@@ -37,8 +38,10 @@ root.render(
                     <JobsProvider>
                       <NotificationsProvider>
                         <GuestsProvider>
-                          <Toasts />
-                          <App />
+                          <DeviceProvider>
+                            <Toasts />
+                            <App />
+                          </DeviceProvider>
                         </GuestsProvider>
                       </NotificationsProvider>
                     </JobsProvider>

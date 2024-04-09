@@ -9,6 +9,7 @@ import Details from '../Details/Details'
 import { withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import withProps from '../../components/enhancers/withProps'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
+import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const PersonDetails = compose(
@@ -19,6 +20,7 @@ const PersonDetails = compose(
 const Person = ({ ...props }) => {
   const { id } = useParams() as any
   const { t } = useTranslation()
+  const { device } = useDeviceContext()
   const { ongoing } = useAnimationContext() as any
 
   const { loading, error, data, details } = useTMDBRequest(`/person/${id}`, {
@@ -42,7 +44,7 @@ const Person = ({ ...props }) => {
       child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
-        display: index < 5 ? 'pretty' : 'poster',
+        display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
         credits: data ? [
           {
             entity: {
@@ -71,7 +73,7 @@ const Person = ({ ...props }) => {
       child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
-        display: index < 5 ? 'pretty' : 'poster',
+        display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
         credits: data ? [
           {
             entity: {
@@ -98,7 +100,7 @@ const Person = ({ ...props }) => {
       child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
-        display: index < 5 ? 'pretty' : 'poster',
+        display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
         credits: data ? [
           {
             entity: {

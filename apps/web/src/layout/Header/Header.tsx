@@ -119,7 +119,7 @@ Toolbar.styles = {
     justifyContent: 'center',
     height: '100%',
     maxWidth: '40rem',
-    marginBottom: '-2px',
+    marginBottom: '-1px',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
     marginX: [12, '10em'],

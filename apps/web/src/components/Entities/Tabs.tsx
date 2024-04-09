@@ -31,17 +31,19 @@ export const withTabsBehavior = () => (WrappedComponent) => {
         props={(obj) => ({ ...(props.props && props.props(obj)), ...(tab.props && tab.props(obj)) })}
         ready={ready && tab?.ready !== false}
         label={(
-          <div>
+          <>
             {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: t('tabs.loading') }]]) as [string, any]).map(([key, { label: children }]) => (
               <button
                 key={key}
                 sx={{
                   variant: 'button.reset',
                   transition: 'opacity 400ms ease-in-out',
+                  paddingY: 8,
                   marginX: 4,
                   fontFamily: 'heading',
                   fontWeight: 'strong',
                   ...(key !== optimistic && { opacity: 0.5 }),
+                  whiteSpace: 'nowrap',
                   ':first-of-type': {
                     marginLeft: 12,
                   },
@@ -59,7 +61,7 @@ export const withTabsBehavior = () => (WrappedComponent) => {
                 {children}
               </button>
             ))}
-          </div>
+          </>
         )}
       />
     )

@@ -88,7 +88,7 @@ const UIDetails = ({
             Contribute to TheMovieDB
           </a>
           {behavior === 'movie' && (
-            <div sx={{ width: '100%', marginTop: '4em', marginBottom: '2em' }}>
+            <div sx={{ width: '100%', maxWidth: ['17em', 'unset'], marginTop: ['2em', '4em'], marginBottom: ['1em', '2em'] }}>
               <MovieActions
                 palette={!palette.loading && !palette.initial ? palette.palette : null}
                 ready={ready && state !== 'loading'}
@@ -301,7 +301,7 @@ UIDetails.styles = {
     paddingRight: ['0em', '3em'],
     marginBottom: [2, '0em'],
     transition: 'margin 400ms ease-in-out',
-    maxWidth: '19em',
+    maxWidth: ['unset', '19em'],
     '>a': {
       color: 'grayDark',
       marginY: 8,
@@ -341,10 +341,14 @@ UIDetails.styles = {
   externals: {
     display: 'flex',
     alignItems: 'center',
+    flexDirection: ['column', 'row'],
     '>div': {
       display: 'flex',
       alignItems: 'center',
-      marginRight: 0,
+      ':not(:last-of-type)': {
+        marginRight: [12, 0],
+        marginBottom: [4, 12],
+      },
       '>a': {
         marginRight: 6,
       },

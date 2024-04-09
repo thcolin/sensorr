@@ -41,6 +41,7 @@ UIWarning.styles = {
     margin: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+    color: 'inherit',
   },
   subtitle: {
     padding: 12,
