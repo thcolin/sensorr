@@ -32,7 +32,7 @@ export const summary = ({
   }] : []),
   ...(persons?.success > 0 ? [{
     key: 'persons',
-    emoji: '🎭',
+    emoji: '⭐️',
     title: <span><strong>{persons?.success}</strong> Persons migrated from dump</span>,
     length: persons?.success,
   }] : []),
@@ -125,7 +125,7 @@ const UIMigrateJob = ({ job, logs }) => {
               id={`migrate-persons-${job.id}`}
               entities={entities?.persons}
               length={entities?.persons?.length}
-              label={emojize('🎭', 'Persons')}
+              label={emojize('⭐️', 'Persons')}
               display='grid'
               hide={true}
               child={Person}

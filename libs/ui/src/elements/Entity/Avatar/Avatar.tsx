@@ -10,15 +10,15 @@ import { LinkProps } from 'react-router-dom'
 interface AvatarProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: PersonDetails | MovieDetails
   link?: LinkProps
-  overrides?: { focus?: React.ReactNode, ready?: boolean }
+  ready?: boolean
   highlight?: boolean
   compact?: boolean
 }
 
 const UIAvatar = ({
   details,
-  overrides,
   link,
+  ready,
   highlight,
   compact,
   ...props
@@ -34,10 +34,10 @@ const UIAvatar = ({
   }), [highlight, compact])
 
   return (
-    <Tippy placement='bottom' disabled={overrides?.ready === false} content={tooltip}>
+    <Tippy placement='bottom' disabled={ready === false} content={tooltip}>
       <div tabIndex={0} sx={styles.element}>
-        <Link to={link?.to} state={link?.state} disabled={!link?.to || overrides?.ready === false}>
-          <Picture {...props} path={details?.poster} ready={overrides?.ready !== false} />
+        <Link to={link?.to} state={link?.state} disabled={!link?.to || ready === false}>
+          <Picture {...props} path={details?.poster} ready={ready !== false} />
         </Link>
       </div>
     </Tippy>

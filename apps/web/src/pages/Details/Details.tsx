@@ -77,7 +77,7 @@ const UIDetails = ({
           <Poster
             path={poster}
             palette={palette.palette}
-            behavior={{ person: 'person', collection: 'movie', movie: 'movie' }[behavior]}
+            behavior={behavior}
             ready={ready}
             onReady={onReady.poster}
             requested_by={metadata?.requested_by}
@@ -431,6 +431,7 @@ UIDetails.styles = {
     marginBottom: 6,
   },
   tabs: {
+    marginBottom: 4,
   },
 }
 

@@ -282,12 +282,11 @@ export const Results = ({ ...props }) => {
                   child={Movie}
                   props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
                   display={device !== 'mobile' ? 'column' : 'row'}
-                  // {...(device !== 'mobile' ? {} : { stack: true })}
+                  stack={true}
                   more={{
                     title: `More results for ${query}`,
-                    // TODO: Fix
                     to: `/movie/search`,
-                    state: { query },
+                    state: { controls: { query } },
                   }}
                 />
               )}
@@ -304,13 +303,7 @@ export const Results = ({ ...props }) => {
                     link: (entity) => ({ to: `/collection/${entity.id}` }),
                   })}
                   display={device !== 'mobile' ? 'column' : 'row'}
-                  // {...(device !== 'mobile' ? {} : { stack: true })}
-                  more={{
-                    title: `More results for ${query}`,
-                    // TODO: Fix
-                    to: `/collection/search`,
-                    state: { query },
-                  }}
+                  stack={true}
                 />
               )}
               {!!results.persons?.results?.length && (
@@ -322,12 +315,11 @@ export const Results = ({ ...props }) => {
                   child={Person}
                   props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
                   display={device !== 'mobile' ? 'column' : 'row'}
-                  // {...(device !== 'mobile' ? {} : { stack: true })}
-                  // TODO: Fix
+                  stack={true}
                   more={{
                     title: `More results for ${query}`,
                     to: `/person/search`,
-                    state: { query },
+                    state: { controls: { query } },
                   }}
                 />
               )}
@@ -419,7 +411,8 @@ Results.styles = {
     alignSelf: 'center',
     width: '100%',
     maxWidth: '96rem',
-    paddingX: 4,
+    paddingX: [12, 4],
+    paddingTop: 4,
     paddingBottom: 0,
   },
   container: {
@@ -429,7 +422,7 @@ Results.styles = {
     justifyContent: ['stretch', 'stretch', 'center'],
     width: '100%',
     '>*': {
-      paddingX: 4,
+      paddingX: [12, 4],
       maxWidth: ['none', 'none', '35em'],
     }
   },

@@ -36,13 +36,7 @@ const withLoadableReviews = () => (WrappedComponent) => {
         {...props}
         entity={entity}
         reviews={reviews}
-        onMouseEnter={(e) => {
-          if (typeof props.onMouseEnter === 'function') {
-            props.onMouseEnter(e)
-          }
-
-          loadReviews()
-        }}
+        loadReviews={loadReviews}
       />
     )
   }

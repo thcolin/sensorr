@@ -13,7 +13,7 @@ const Collection = ({ ...props }) => {
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { ongoing } = useAnimationContext() as any
-  const { loading, error, data, details } = useTMDBRequest(`/collection/${id}`, {
+  const { loading, error, data, details } = useTMDBRequest(`collection/${id}`, {
     append_to_response: 'images',
     include_image_language: 'en,null',
   }, { transform: transformCollectionDetails })

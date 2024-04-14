@@ -1,53 +1,58 @@
 import { Fragment, memo } from 'react'
 import Tippy from '@tippyjs/react'
+import { useResponsiveValue } from '@theme-ui/match-media'
 import { emojize, filesize } from '@sensorr/utils'
 import { Icon } from '../../../atoms/Icon/Icon'
 import { Badge } from '../../../atoms/Badge/Badge'
 
-const UIProposal = ({ proposals, releases, proceed, ...props }) => (
-  <Tippy
-    maxWidth='80vw'
-    interactive={true}
-    trigger='click'
-    placement='bottom'
-    appendTo={document.body}
-    content={(
-      <div sx={UIProposal.styles.content}>
-        {releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
-        {!!releases.length && <hr/>}
-        {proposals.map(proposal => (
-          <Fragment key={proposal.id}>
-            <small><code>{emojize('🛎', `${proposal.title} (${filesize.stringify(proposal.size)}) - ${proposal.znab}`)}</code></small>
-            <div sx={UIProposal.styles.buttons}>
-              <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, true)}>
-                <Badge
-                  emoji={<Icon value='check' width='1em' height='1em' />}
-                  label='Accept'
-                  compact={false}
-                  size='small'
-                  color='theme'
-                />
-              </button>
-              <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, false)}>
-                <Badge
-                  emoji={<Icon value='clear' width='1em' height='1em' />}
-                  label='Refuse'
-                  compact={false}
-                  size='small'
-                  color='theme'
-                />
-              </button>
-            </div>
-          </Fragment>
-        ))}
-      </div>
-    )}
-  >
-    <button sx={{ variant: 'button.reset' }}>
-      <Badge emoji='🛎' compact={true} size='small' />
-    </button>
-  </Tippy>
-)
+const UIProposal = ({ proposals, releases, proceed, ...props }) => {
+  const maxWidth = useResponsiveValue(['100vw', '80vw'])
+
+  return (
+    <Tippy
+      maxWidth={maxWidth}
+      interactive={true}
+      trigger='click'
+      placement='bottom'
+      appendTo={document.body}
+      content={(
+        <div sx={UIProposal.styles.content}>
+          {releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
+          {!!releases.length && <hr/>}
+          {proposals.map(proposal => (
+            <Fragment key={proposal.id}>
+              <small><code>{emojize('🛎', `${proposal.title} (${filesize.stringify(proposal.size)}) - ${proposal.znab}`)}</code></small>
+              <div sx={UIProposal.styles.buttons}>
+                <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, true)}>
+                  <Badge
+                    emoji={<Icon value='check' width='1em' height='1em' />}
+                    label='Accept'
+                    compact={false}
+                    size='small'
+                    color='theme'
+                  />
+                </button>
+                <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, false)}>
+                  <Badge
+                    emoji={<Icon value='clear' width='1em' height='1em' />}
+                    label='Refuse'
+                    compact={false}
+                    size='small'
+                    color='theme'
+                  />
+                </button>
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      )}
+    >
+      <button sx={{ variant: 'button.reset' }}>
+        <Badge emoji='🛎' compact={true} size='small' />
+      </button>
+    </Tippy>
+  )
+}
 
 UIProposal.styles = {
   content: {

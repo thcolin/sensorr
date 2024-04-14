@@ -23,7 +23,7 @@ const FollowedPersons = compose(
     display: 'grid',
     child: Person,
     empty: {
-      emoji: '🧑‍🎤️',
+      emoji: '⭐️',
       title: "Oh no, your request didn't return results",
       subtitle: (
         <span>
@@ -72,7 +72,7 @@ const FollowedPersons = compose(
         component: ({ ...props }) => (
           <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
             <Warning
-              emoji="🎭"
+              emoji="⭐️"
               title="Followed"
               subtitle={(
                 <span>

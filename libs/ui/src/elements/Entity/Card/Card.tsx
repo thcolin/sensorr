@@ -1,47 +1,41 @@
 import { Link } from 'libs/ui/src/atoms/Link/Link'
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Poster, PosterProps } from '../Poster/Poster'
 
-export interface CardProps extends Omit<PosterProps, 'focus' | 'actions' | 'relations' | 'overrides' | 'onReady' | 'palette'> {
-  overrides?: { ready?: boolean }
-}
+export interface CardProps extends PosterProps {}
 
 const UICard = ({
   details,
   link,
-  state: [State, state] = [],
+  ready,
+  actions,
   ...props
-}: CardProps) => {
-  const overrides = useMemo(() => ({ ...(props.overrides || {}), hover: false }), [props.overrides])
-
-  return (
-    <CardWrapper>
-      <Link to={link?.to} state={link?.state} disabled={overrides.ready === false} sx={UICard.styles.link}>
-        <span sx={UICard.styles.poster}>
-          <Poster
-            {...props}
-            overrides={overrides}
-            details={details}
-          />
-        </span>
-        <span sx={UICard.styles.about}>
-          <About
-            title={details?.title}
-            overview={details?.overview}
-            meaningful={details?.meaningful}
-            ready={overrides.ready}
-          />
-        </span>
-      </Link>
-      <div sx={UICard.styles.state}>
-        {State && <State {...state} />}
-      </div>
-    </CardWrapper>
-  )
-}
+}: CardProps) => (
+  <div sx={UICard.styles.element}>
+    <div sx={UICard.styles.poster}>
+      <Poster {...props} details={details} link={link} ready={ready} meaningful={false} />
+    </div>
+    <div sx={UICard.styles.about}>
+      <About details={details} link={link} ready={ready} />
+    </div>
+    <div sx={UICard.styles.actions}>
+      {actions?.state?.component && <actions.state.component {...actions?.state?.props} />}
+    </div>
+  </div>
+)
 
 UICard.styles = {
+  element: {
+    position: 'relative',
+    alignItems: 'center',
+    display: 'flex',
+    flexShrink: 0,
+    height: '7.5em',
+    width: '100%',
+    maxWidth: '35em',
+    contain: 'strict',
+  },
   link: {
     flex: 1,
     display: 'flex',
@@ -60,7 +54,7 @@ UICard.styles = {
     paddingX: 4,
     overflow: 'hidden',
   },
-  state: {
+  actions: {
     alignSelf: 'flex-start',
     paddingLeft: 4,
     fontSize: 6,
@@ -70,48 +64,31 @@ UICard.styles = {
 
 export const Card = memo(UICard)
 
-const UICardWrapper = ({ ...props }) => (
-  <div {...props} sx={UICardWrapper.styles.element} />
-)
-
-UICardWrapper.styles = {
-  element: {
-    position: 'relative',
-    alignItems: 'center',
-    display: 'flex',
-    flexShrink: 0,
-    height: '7.5em',
-    // minWidth: '20em',
-    width: '100%',
-    maxWidth: '35em',
-    contain: 'strict',
-  },
-}
-
-const CardWrapper = memo(UICardWrapper)
-
-const UIAbout = ({ title, meaningful, overview, ready, ...props }) => {
+const UIAbout = ({ details, link, ready, ...props }) => {
   const { t } = useTranslation()
 
   return (
     <span sx={UIAbout.styles.element}>
-      <strong sx={UIAbout.styles.title} title={title}>
-        {title}
+      <strong sx={UIAbout.styles.title} title={details.title}>
+        <Link to={link?.to} state={link?.state} disabled={ready === false} sx={UICard.styles.link}>
+          {details.title}
+        </Link>
       </strong>
-      <span sx={UIAbout.styles.meaningful}>
-        <span>{
-          (meaningful?.release_date && <meaningful.release_date />) ||
-          (meaningful?.job && <meaningful.job />) ||
-          (meaningful?.character && <meaningful.character />) ||
-          (meaningful?.known_for_department && <meaningful.known_for_department />)
-        }</span>
-        <strong>{(meaningful?.vote_average && <meaningful.vote_average />)}</strong>
-      </span>
-      <span sx={UIAbout.styles.meaningful}>
-        <b>{(meaningful?.genres && <meaningful.genres />)}</b>
+      <span sx={UIAbout.styles.subtitle}>
+        {!!details?.meaningful?.year && (
+          <span>
+            <details.meaningful.year />
+            {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
+          </span>
+        )}
+        {(!!details?.meaningful?.genres || !!details?.caption) && (
+          <small title={details?.caption}>
+            {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+          </small>
+        )}
       </span>
       <span sx={UIAbout.styles.overview}>
-        <small>{overview || <em>{t(ready ? 'noOverview' : 'loading')}</em>}</small>
+        <small>{details.overview || <em>{ready ? '' : t('loading')}</em>}</small>
       </span>
     </span>
   )
@@ -127,34 +104,33 @@ UIAbout.styles = {
   },
   title: {
     margin: 12,
-    marginBottom: 10,
     fontSize: 4,
-    fontWeight: 'bold',
+    fontWeight: 'strong',
     lineHeight: 'body',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
   },
-  meaningful: {
+  subtitle: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    fontSize: 6,
-    textOverflow: 'ellipsis',
+    paddingBottom: 8,
+    paddingTop: 10,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    pointerEvents: 'none',
-    '>strong': {
-      fontSize: 5,
-    },
-    '>*:not(strong)': {
-      lineHeight: 'space',
+    '>span': {
       fontSize: 6,
+      fontWeight: 'semibold',
+    },
+    '>small': {
+      fontSize: 6,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      opacity: 0.75,
     },
   },
   overview: {
     flex: 1,
-    marginTop: 8,
     fontSize: 6,
     fontFamily: 'heading',
     lineHeight: 'heading',

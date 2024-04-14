@@ -177,7 +177,7 @@ const FetchSensorrMetadataTask = ({ onError, ...props }) => {
 const MigrateDocumentsDumpTask = ({ type = 'movies', dependencies = [], ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { state } } = useTask({
     id: `migrate-${type}-dump`,
-    title: `${{ movies: '🎞️ ', persons: '🎭' }[type]} Migrate ${type} dump...`,
+    title: `${{ movies: '🎞️ ', persons: '⭐️' }[type]} Migrate ${type} dump...`,
   }, { dependencies: ['extract-dump-task', 'fetch-sensorr-metadata', ...dependencies] })
 
   useEffect(() => {
@@ -236,7 +236,7 @@ const MigrateDocumentsDumpTask = ({ type = 'movies', dependencies = [], ...props
         }
       }
 
-      state.logger.info({ message: `${{ movies: '🎞️ ', persons: '🎭' }[type]} Migrated ${success} documents from dump`, metadata: { ...state.metadata, summary: { [type]: { success, warning } } } })
+      state.logger.info({ message: `${{ movies: '🎞️ ', persons: '⭐️' }[type]} Migrated ${success} documents from dump`, metadata: { ...state.metadata, summary: { [type]: { success, warning } } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{success}</Text> {type} documents migrated</Text> }))
       setStatus('done')

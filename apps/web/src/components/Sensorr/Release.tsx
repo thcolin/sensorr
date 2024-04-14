@@ -329,6 +329,7 @@ UIRelease.styles = {
         color: 'text',
         fontWeight: 600,
         fontSize: 5,
+        whiteSpace: 'nowrap',
       },
       '>abbr': {
         fontSize: 0,
@@ -346,6 +347,7 @@ UIRelease.styles = {
     '>div': {
       display: 'flex',
       alignItems: 'center',
+      whiteSpace: 'nowrap',
       '>span:nth-of-type(2)': {
         display: 'block',
         height: '0.125em',

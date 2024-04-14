@@ -1,23 +1,21 @@
-import React, { memo, useCallback, useMemo, useState } from 'react'
+import React, { memo, useCallback, useRef, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import { usePalette } from '@sensorr/palette'
 import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { Link } from '../../../atoms/Link/Link'
-import { Icon } from '../../../atoms/Icon/Icon'
 
 export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
 
 const UIPretty = ({
   details,
-  reviews = [],
   link = null,
-  relations: [Relations, relations] = [],
-  guests: [Guests, guests] = [],
-  onMouseEnter,
+  actions = {},
+  badges = [],
   ...props
 }: PrettyProps) => {
+  const ref = useRef()
   const { theme } = useThemeUI()
 
   const [poster, setPoster] = useState(details?.poster === null)
@@ -37,32 +35,11 @@ const UIPretty = ({
     details?.poster,
   )
 
-  const ready = !palette.loading && background && poster && props.overrides?.ready !== false
-  const overrides = useMemo(() => ({ ...(props.overrides || {}), ready, hover: false }), [ready, props.overrides])
-
-  const styles = useMemo(() => ({
-    ...UIPretty.styles,
-    element: {
-      ...UIPretty.styles.element,
-      '>div:nth-child(4)': {
-        opacity: 0,
-      },
-      '&:hover': {
-        '>div:nth-child(4)': {
-          opacity: ready ? 1 : 0,
-        },
-      },
-    },
-    guests: {
-      ...UIPretty.styles.guests,
-      opacity: ready ? 1 : 0,
-      transitionDelay: ready ? '1200ms' : '0ms',
-    },
-  }), [ready])
+  const ready = !palette.loading && background && poster && props.ready !== false
 
   return (
-    <div sx={styles.element} onMouseEnter={onMouseEnter}>
-      <div sx={styles.billboard}>
+    <div sx={UIPretty.styles.element} ref={ref}>
+      <div sx={UIPretty.styles.billboard}>
         <Billboard
           path={details?.billboard}
           palette={palette.palette}
@@ -72,29 +49,28 @@ const UIPretty = ({
           onReady={onBillboardReady}
         />
       </div>
-      <div sx={styles.poster}>
+      <div sx={UIPretty.styles.poster}>
         <Poster
           {...props}
           details={details}
           link={link}
+          actions={actions}
+          ready={ready}
+          meaningful={false}
           palette={palette.palette}
-          overrides={overrides}
           onReady={onPosterReady}
         />
       </div>
-      <div sx={styles.about}>
+      <div sx={UIPretty.styles.about}>
         <About
-          title={details?.title}
-          overview={details?.overview}
-          meaningful={details?.meaningful}
-          reviews={reviews}
+          details={details}
           link={link}
-          palette={palette.palette}
+          badges={badges}
           ready={ready}
+          palette={palette.palette}
+          parent={ref}
         />
       </div>
-      <div sx={styles.relations}>{Relations && <Relations {...relations} />}</div>
-      <div sx={styles.guests}>{Guests && <Guests {...guests} />}</div>
     </div>
   )
 }
@@ -108,6 +84,9 @@ UIPretty.styles = {
     width: '35em',
     maxWidth: '100vw',
     minWidth: '25em',
+    marginTop: '2.5em',
+    marginBottom: '5.375em',
+    marginX: 4,
   },
   billboard: {
     position: 'absolute',
@@ -118,14 +97,13 @@ UIPretty.styles = {
   },
   poster: {
     flexShrink: 0,
-    paddingBottom: 2,
-    paddingLeft: 2,
+    marginTop: '-0.25em',
   },
   about: {
     display: 'flex',
     flex: 1,
     marginTop: 0,
-    paddingX: 2,
+    paddingRight: 2,
     paddingY: 2,
     overflow: 'hidden',
   },
@@ -147,85 +125,39 @@ UIPretty.styles = {
 
 export const Pretty = memo(UIPretty)
 
-const UIAbout = ({ title, meaningful, overview, palette, ready, link, reviews = [], pad = false, ...props }) => {
+const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) => {
   const { t } = useTranslation()
-  const styles = useMemo(() => ({
-    ...UIAbout.styles,
-    element: {
-      ...UIAbout.styles.element,
-      opacity: ready ? 1 : 0,
-      transition: 'opacity 400ms ease-in-out',
-      transitionDelay: ready ? '800ms' : '0ms',
-    },
-    title: {
-      ...UIAbout.styles.title,
-      color: palette.color
-    },
-    negative: {
-      ...UIAbout.styles.meaningful,
-      color: palette.negativeColor,
-    },
-    alternative: {
-      ...UIAbout.styles.meaningful,
-      color: palette.alternativeColor,
-    },
-    overview: {
-      ...UIAbout.styles.overview,
-      color: palette.negativeColor,
-      ...(pad ? { marginBottom: 4 } : {}),
-    },
-  }), [ready, palette, pad])
 
   return (
-    <div sx={styles.element}>
-      <h2 sx={styles.title} title={title}>
-        <Link to={link?.to} state={link?.state}>{title}</Link>
+    <div
+      sx={{
+        ...UIAbout.styles.element,
+        opacity: ready ? 1 : 0,
+        transition: 'opacity 400ms ease-in-out',
+        transitionDelay: ready ? '800ms' : '0ms',
+      }}
+    >
+      <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
+        <Link to={link?.to} state={link?.state}>{details.title}</Link>
       </h2>
-      <div sx={styles.negative}>
-        <span>{
-          (meaningful?.release_date && <meaningful.release_date />) ||
-          (meaningful?.job && <meaningful.job />) ||
-          (meaningful?.character && <meaningful.character />) ||
-          (meaningful?.known_for_department && <meaningful.known_for_department />)
-        }</span>
-        <strong sx={{ display: 'flex', '>a': { marginRight: 6 } }}>{
-          (meaningful?.vote_average && (
-            <React.Fragment>
-              <meaningful.vote_average />
-              {(reviews || [])?.map(review => (
-                <a
-                  href={review.external}
-                  target='_blank'
-                  rel='norefer noopener'
-                  sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-                  title={{
-                    'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
-                    'Metacritic': `Metascrore based on ${review.count} critic reviews`,
-                  }[review.source]}
-                >
-                  <Icon
-                    value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
-                    height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-                    width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-                    sx={{ marginRight: 8 }}
-                  />
-                  {Math.round(review.score * 100)}%
-                </a>
-              ))}
-            </React.Fragment>
-          )) ||
-          (meaningful?.age && <meaningful.age />)
-        }</strong>
+      <div sx={UIAbout.styles.subtitle} style={{ color: palette.alternativeColor }}>
+        {!!details?.meaningful?.year && (
+          <span>
+            <details.meaningful.year />
+            {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
+          </span>
+        )}
+        {(!!details?.meaningful?.genres || !!details?.caption) && (
+          <small title={details?.caption}>
+            {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+          </small>
+        )}
       </div>
-      <div sx={styles.alternative}>
-        <b>{
-          (meaningful?.genres && <meaningful.genres />) ||
-          (meaningful?.place_of_birth && <meaningful.place_of_birth />)
-        }</b>
-        <b>{(meaningful?.birthday && <meaningful.birthday />)}</b>
+      <div sx={UIAbout.styles.badges}>
+        {badges.map(({ component: Component, props }) => <Component {...props} palette={palette} parent={parent} />)}
       </div>
-      <div sx={styles.overview}>
-        <small>{overview || <em>{t('noOverview')}</em>}</small>
+      <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
+        <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </div>
     </div>
   )
@@ -242,26 +174,39 @@ UIAbout.styles = {
   title: {
     margin: 12,
     fontSize: 2,
-    fontWeight: 'bold',
+    fontWeight: 'strong',
     lineHeight: 'body',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
     whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
-  meaningful: {
+  subtitle: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    textOverflow: 'ellipsis',
+    paddingBottom: 8,
+    paddingTop: 10,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    '>strong': {
-      fontSize: 5,
+    '>span': {
+      fontSize: 6,
       fontWeight: 'strong',
     },
-    '>*:not(strong)': {
-      lineHeight: 'space',
+    '>small': {
       fontSize: 6,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      fontWeight: 'semibold',
+      opacity: 0.75,
+    },
+  },
+  badges: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    overflowX: 'auto',
+    whiteSpace: 'nowrap',
+    fontWeight: 'semibold',
+    '>*:not(:last-child)': {
+      marginRight: 8
     },
   },
   overview: {

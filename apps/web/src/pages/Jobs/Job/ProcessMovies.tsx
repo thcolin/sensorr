@@ -149,7 +149,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
               <VirtualGrid
                 total={filtered.length}
                 viewportRowOffset={8}
-                cell={{ height: 400 }}
+                cell={{ height: 480 }}
                 child={RecordData}
                 useChildProps={(key) => ({
                   key: (filtered[key.split('-').shift()] as any).movie?.id,
@@ -388,8 +388,8 @@ UIRecord.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minHeight: '25em',
-    maxHeight: '25em',
+    minHeight: '30em',
+    maxHeight: '30em',
     paddingY: 4,
   },
   record: {
@@ -407,7 +407,9 @@ UIRecord.styles = {
   },
   buttons: {
     display: 'flex',
-    marginY: 4,
+    marginX: 4,
+    marginTop: '-2.5em',
+    zIndex: 1,
   },
   // input: {
   //   display: 'flex',

@@ -72,7 +72,7 @@ export const light = {
 
   background: raw.primary,
   muted: raw['gray-200'],
-  hightlight: raw.primaryDarker,
+  highlight: raw.primaryDarker,
   darken: raw.accentDarkest,
 
   textLightest: raw['gray-600'],
@@ -88,8 +88,8 @@ export const light = {
   grayLight: raw.whiteDarkest,
   gray: raw['gray-200'],
   grayDark: raw['gray-300'],
-  grayDarker: raw['gray-500'],
-  grayDarkest: raw['gray-600'],
+  grayDarker: raw['gray-400'],
+  grayDarkest: raw['gray-500'],
 
   shadow: raw.shadowDark,
   shadowTheme: raw.shadowDarker,
@@ -100,7 +100,7 @@ export const dark = {
 
   background: raw.primary,
   muted: raw['gray-900'],
-  hightlight: raw.primaryDarker,
+  highlight: raw.primaryDarker,
   darken: raw.accentDarkest,
 
   textLightest: raw.whiteDark,

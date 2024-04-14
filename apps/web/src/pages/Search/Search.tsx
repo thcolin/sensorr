@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import nanobounce from 'nanobounce'
 import { Entities, withControls } from '@sensorr/ui'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
@@ -9,9 +11,9 @@ import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withHistoryState from '../../components/enhancers/withHistoryState'
 
-export const Trending = (resource) => compose(
+export const Search = (resource) => compose(
   withProps({
-    id: 'trending',
+    id: 'search',
     display: 'grid',
     child: { movies: MovieWithCreditsAndReviews, persons: Person }[resource],
     empty: {
@@ -34,11 +36,10 @@ export const Trending = (resource) => compose(
         ),
       },
     }[resource],
-    props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }) }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
-    title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource]),
+    title: i18n.t('pages.search.title'),
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),
@@ -48,19 +49,57 @@ export const Trending = (resource) => compose(
         display: 'grid',
         gridTemplateRows: 'auto',
         gap: '2em',
-        gridTemplateColumns: ['1fr', '1fr min-content'],
+        gridTemplateColumns: ['1fr min-content', 'min-content 1fr min-content'],
         gridTemplateAreas: [
-          `"results"`,
-          `"title results"`,
+          `"query results"`,
+          `"title query results"`,
         ],
         '>h4': {
           display: ['none', 'block'],
         },
       },
     },
-    fields: {},
+    fields: {
+      query: {
+        initial: '',
+        serialize: (key, raw) => ({ [key]: raw }),
+        component: ({ value = '', onChange, style, ...props }) => {
+          const debounce = useMemo(() => nanobounce(400), [])
+          const [temp, setTemp] = useState(value)
+
+          useEffect(() => {
+            setTemp(value)
+          }, [value])
+
+          return (
+            <div sx={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <input
+                type='text'
+                value={temp}
+                onChange={(e) => {
+                  const value = e.target.value
+
+                  setTemp(value)
+                  debounce(() => onChange(value))
+                }}
+                sx={{
+                  variant: 'input.reset',
+                  marginX: [12, 4],
+                  maxWidth: '30rem',
+                  paddingX: 8,
+                  paddingBottom: 10,
+                  fontSize: 3,
+                  borderBottom: '1px solid',
+                  borderColor: 'whitePure',
+                }}
+              />
+            </div>
+          )
+        },
+      },
+    },
   }),
   withHistoryState(),
 )(Entities)
 
-export default Trending
+export default Search

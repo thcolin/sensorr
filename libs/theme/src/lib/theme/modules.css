@@ -4,9 +4,16 @@
 }
 
 .tippy-box {
-  background-color: #080808 !important;
-  border: 1px solid #999999 !important;
-  color: #e6e6e6 !important;
+  background-color: var(--theme-ui-colors-grayLighter) !important;
+  border: 1px solid !important;
+  border-color: var(--theme-ui-colors-grayDark) !important;
+  color: var(--theme-ui-colors-textLight) !important;
+}
+
+.tippy-box[data-theme="transparent"] {
+  background-color: transparent !important;
+  border: unset !important;
+  color: var(--theme-ui-colors-textLight) !important;
 }
 
 .tippy-arrow {

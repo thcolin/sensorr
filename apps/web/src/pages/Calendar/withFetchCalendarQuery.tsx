@@ -25,7 +25,6 @@ const withFetchCalendarQuery = (
       params: {
         ...defaultQuery?.params,
         ...controlsQuery?.params,
-        include_video: false,
       },
     }), [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
 
@@ -180,7 +179,7 @@ const withFetchCalendarQuery = (
         onMore={fetchEntities}
         controls={controls}
         error={(!persons.loading && !Object.keys(persons.metadata).length) ? {
-          emoji: '🧑‍🎤',
+          emoji: '⭐️',
           title: "Try to follow some people first",
           subtitle: "Calendar is based on people you follow, check trending stars or look at casting from your favorite movies",
         } : error || (props as any).error}

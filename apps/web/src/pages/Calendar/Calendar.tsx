@@ -190,7 +190,7 @@ export const Calendar = compose(
       },
       without_genres: {
         ...fields.genres,
-        initial: { values: [{ value: 99, label: 'Documentary' }], behavior: 'or' }, // Documentary -- sorry
+        initial: { values: [{ value: 99, label: 'Documentary' }, { value: 10770, label: 'TV Movie' }], behavior: 'or' }, // Documentary -- sorry
         statistics: null,
         component: compose(
           withProps({

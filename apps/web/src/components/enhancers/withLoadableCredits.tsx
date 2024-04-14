@@ -46,7 +46,7 @@ const withLoadableCredits = (
     }, [entity?.id])
 
     const value = useMemo(() => (
-      [
+      credits === null ? null : [
         ...(props.credits ? props.credits : []),
         ...((personsLoading || !entity?.id) ? placeholders : credits ? credits : loading ? placeholders : empty)
       ].filter((a, index, self) => index === self.findIndex(b => a.entity.id === b.entity.id))
@@ -57,13 +57,7 @@ const withLoadableCredits = (
         {...props}
         entity={entity}
         credits={value}
-        onMouseEnter={(e) => {
-          if (typeof props.onMouseEnter === 'function') {
-            props.onMouseEnter(e)
-          }
-
-          loadCredits()
-        }}
+        loadCredits={loadCredits}
       />
     )
   }

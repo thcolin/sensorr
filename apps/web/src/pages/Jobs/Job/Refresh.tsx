@@ -22,7 +22,7 @@ export const summary = ({ changes = 0, movie, person }, extended = true) => [
   },
   {
     key: 'person',
-    emoji: '🎭',
+    emoji: '⭐️',
     title: <span><strong>{person?.success || 0}</strong> Applied person changes</span>,
     length: person?.success || 0,
   },
@@ -101,7 +101,7 @@ const UIRefreshJob = ({ job, logs }) => {
               id={`refresh-persons-${job.id}`}
               entities={entities?.person}
               length={entities?.person?.length}
-              label={emojize('🎭', 'Persons')}
+              label={emojize('⭐️', 'Persons')}
               display='grid'
               hide={true}
               child={Person}

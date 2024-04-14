@@ -58,7 +58,8 @@ UIAside.styles = {
     flex: 1,
     paddingX: 2,
     paddingY: 0,
-    overflow: 'auto',
+    overflowY: 'auto',
+    overflowX: 'hidden',
   },
   buttons: {
     display: 'flex',

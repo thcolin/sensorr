@@ -30,15 +30,9 @@ const UIAbstractEntity = ({
   ready = true,
   ...props
 }: AbstractEntityProps, ref) => {
-  // informations
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder]) as any
   const details = useMemo(() => transformDetails(entity), [entity])
   const link = useMemo(() => props.link(entity), [entity, props.link])
-
-  // stuff
-  const overrides = useMemo(() => ({
-    ready: typeof entity.id === 'number' && !placeholder && ready,
-  }), [ready, placeholder, entity])
 
   switch (display) {
     case 'avatar':
@@ -47,7 +41,7 @@ const UIAbstractEntity = ({
           {...props}
           details={details}
           link={link}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
         />
       )
@@ -57,7 +51,7 @@ const UIAbstractEntity = ({
           {...props}
           details={details}
           link={link}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
         />
       )
@@ -67,7 +61,7 @@ const UIAbstractEntity = ({
           {...props}
           details={details}
           link={link}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
         />
       )
@@ -81,7 +75,7 @@ const UIAbstractEntity = ({
           {...props}
           details={details}
           link={link}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
         />
       )
@@ -110,12 +104,12 @@ export const transformCollectionDetails = (entity) => {
     billboard: entity.backdrop_path,
     parts: entity.parts,
     meaningful: {
-      popularity: () => (
+      popularity: !!entity.popularity ? () => (
         <span title={`Popularity`} sx={{ whiteSpace: 'nowrap' }}>
           {emojize('📣', entity.popularity.toLocaleString())}
         </span>
-      ),
-      release_dates_range: () => (
+      ) : null,
+      release_dates_range: !!entity.parts.length ? () => (
         <Link
           title={`Discover more movies from ${release_dates_range.slice(0, 1).pop()}-${release_dates_range.slice(-1).pop()}`}
           sx={{ whiteSpace: 'nowrap' }}
@@ -131,8 +125,8 @@ export const transformCollectionDetails = (entity) => {
         >
           {emojize('📆', `${release_dates_range.slice(0, 1).pop()} - ${release_dates_range.slice(-1).pop()}`)}
         </Link>
-      ),
-      vote_average: () => (
+      ) : null,
+      vote_average: !!entity.vote_average ? () => (
         <Link
           title={`Discover more "${tmdb.judge(entity)}" movies`}
           sx={{ whiteSpace: 'nowrap' }}
@@ -145,7 +139,7 @@ export const transformCollectionDetails = (entity) => {
         >
           {emojize(tmdb.judge(entity), entity.vote_average.toLocaleString())}
         </Link>
-      ),
+      ) : null,
       vote_count: !!entity.vote_count ? () => (
         <Link
           title={`Discover more movies with "~${entity.vote_count}" vote count`}
@@ -163,7 +157,7 @@ export const transformCollectionDetails = (entity) => {
           {emojize('🗳️', entity.vote_count.toLocaleString())}
         </Link>
       ) : null,
-      genres: () => (
+      genres: !!entity.genres.length ? () => (
         <span>
           {emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>
@@ -185,7 +179,7 @@ export const transformCollectionDetails = (entity) => {
             </Fragment>
           ))}
         </span>
-      ),
+      ) : null,
     },
   })
 }

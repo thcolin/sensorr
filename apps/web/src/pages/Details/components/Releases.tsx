@@ -1,8 +1,10 @@
 import { memo, useMemo } from 'react'
 import { Policy } from '@sensorr/sensorr'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Release } from '../../../components/Sensorr/Release'
 
 const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, ready, ...props }) => {
+  const { device } = useDeviceContext()
   const policy = useMemo(() => metadata?.policy && new Policy({ ...metadata.policy, sorting: 'size', descending: false }), [metadata?.policy])
   const releases = useMemo(() => {
     if (!policy) {
@@ -35,6 +37,7 @@ const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, 
               proceed={proceedRelease}
               remove={removeRelease}
               compact={!release.proposal}
+              display={device === 'mobile' ? 'column' : 'row'}
             />
           ))}
         </div>
@@ -55,7 +58,7 @@ UIReleases.styles = {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'grayLighter',
-      paddingX: '4em',
+      paddingX: [8, '4em'],
       paddingY: '1.5em',
       marginBottom: '1em',
       overflow: 'hidden',

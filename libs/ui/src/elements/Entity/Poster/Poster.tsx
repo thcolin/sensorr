@@ -1,38 +1,32 @@
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { LinkProps } from 'react-router-dom'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
-import { MovieDetails } from '../../../components/Movie/Movie'
-import { PersonDetails } from '../../../components/Person/Person'
+// import { MovieDetails } from '../../../components/Movie/Movie'
+// import { PersonDetails } from '../../../components/Person/Person'
 
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
-  details: MovieDetails | PersonDetails
-  reviews?: { source: string, score: string, date: string, count: string }[],
+  details: any // MovieDetails | PersonDetails
   link?: LinkProps
-  state?: [React.FC, any] | []
-  focus?: [React.FC, any] | []
-  action?: [React.FC, any] | []
-  relations?: [React.FC, any] | []
-  guests?: [React.FC, any, string] | []
-  overrides?: { focus?: [React.FC, any] | [], ready?: boolean, hover?: boolean }
+  ready?: boolean
+  meaningful?: boolean
+  actions?: { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
+  badges?: { component: React.FC, props: any }[]
   onReady?: () => void
 }
 
 const UIPoster = ({
   details,
-  reviews = [],
   link = null,
-  focus: [Focus, focus] = [],
-  state: [State, state] = [],
-  action: [Action, action] = [],
-  relations: [Relations, relations] = [],
-  guests: [Guests, guests, guestsDisplay] = [],
-  overrides: { focus: [FocusOverride, focusOverride] = [], ...overrides } = {},
+  meaningful = true,
+  actions = {},
+  badges = [],
   onReady,
   ...props
 }: PosterProps) => {
+  const ref = useRef()
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
-  const ready = useMemo(() => loaded && overrides?.ready !== false, [loaded, overrides?.ready])
+  const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
   const onPosterReady = useCallback(() => {
     setLoaded(true)
 
@@ -41,95 +35,62 @@ const UIPoster = ({
     }
   }, [onReady])
 
-  const styles = useMemo(() => ({
-    ...UIPoster.styles,
-    element: {
-      ...UIPoster.styles.element,
-      '>div:nth-child(2)': {
-        opacity: 0,
-        transitionDuration: '0ms',
-      },
-      '>div:nth-child(3)': {
-        opacity: ready && guestsDisplay === 'always' ? 1 : 0,
-        transitionDuration: '0ms',
-      },
-      '&:hover': {
-        '>div:nth-child(2)': {
-          opacity: ready ? 1 : 0,
-          transitionDuration: ready ? '400ms' : '0ms',
-        },
-        '>div:nth-child(3)': {
-          opacity: ready && guestsDisplay !== 'never' ? 1 : 0,
-          transitionDuration: ready ? '400ms' : '0ms',
-        },
-      },
-    },
-    wrapper: {
-      ...UIPoster.styles.wrapper,
-      '>div:nth-child(1)': {
-        opacity: ready && FocusOverride ? 1 : 0,
-      },
-      '>div:nth-child(2)': {
-        opacity: 0,
-      },
-      '>div:nth-child(3)>div:nth-child(2)': {
-        opacity: 0,
-      },
-      '>a >div': {
-        zIndex: -1,
-        transform: `translate3d(0, 100%, 0)`,
-        transition: 'transform 250ms ease-in-out, z-index 0ms linear 250ms',
-      },
-      '&:hover': {
-        '>div:nth-child(1)': {
-          opacity: 0,
-        },
-        '>div:nth-child(2)': {
-          opacity: ready ? 1 : 0,
-        },
-        '>div:nth-child(3)>div:nth-child(2)': {
-          opacity: ready ? 1 : 0,
-        },
-        '>a >div': {
-          zIndex: ready ? 0 : -1,
-          transform: (ready && overrides.hover !== false) ? `translate3d(0, 0%, 0)` : `translate3d(0, 100%, 0)`,
-          transition: 'transform 250ms ease-in-out, z-index 0ms linear',
-        },
-      },
-    },
-    badges: {
-      ...UIPoster.styles.badges,
-      opacity: ready ? 1 : 0,
-      transitionDelay: ready ? '800ms' : '0ms',
-    },
-  }), [ready, FocusOverride, guestsDisplay])
-
   return (
-    <div sx={styles.element}>
-      <div sx={styles.wrapper}>
-        <div sx={styles.focus}>{FocusOverride && <FocusOverride {...focusOverride} />}</div>
-        <div sx={styles.focus}>{Focus && <Focus {...focus} />}</div>
-        <div sx={styles.badges}>
-          {State && <State {...state} />}
-          {Action && <Action {...action} />}
+    <div sx={UIPoster.styles.element} ref={ref}>
+      <div sx={UIPoster.styles.wrapper}>
+        <div
+          sx={{
+            ...UIPoster.styles.actions,
+            opacity: ready ? 1 : 0,
+            transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+          }}
+        >
+          {actions?.state?.component && <div sx={UIPoster.styles.state}><actions.state.component {...actions?.state?.props} /></div>}
+          {actions?.proposal?.component && <div sx={UIPoster.styles.proposal}><actions.proposal.component {...actions?.proposal?.props} /></div>}
         </div>
-        <Link to={link?.to} state={link?.state} sx={styles.link} disabled={!link?.to}>
+        <Link to={link?.to} state={link?.state} sx={UIPoster.styles.link} disabled={!link?.to}>
           <Picture
             {...props}
             ready={ready}
             path={details?.poster}
             onReady={onPosterReady}
           />
-          <Hover
-            title={details?.title}
-            subtitle={details?.caption}
-            year={details?.year}
-            pad={!!Relations}
-          />
         </Link>
       </div>
-      <div sx={styles.relations}>{Relations && <Relations {...relations} />}</div>
-      <div sx={styles.guests}>{Guests && <Guests {...guests} />}</div>
+      {meaningful && (
+        <div sx={UIPoster.styles.meaningful}>
+          <div
+            sx={{
+              ...UIPoster.styles.skeleton,
+              backgroundColor: props.palette?.backgroundColor || 'grayLight',
+              opacity: ready ? 0 : 1,
+              transition: ready ? 'opacity 400ms ease-in-out 400ms, z-index 0ms ease 600ms' : 'opacity 400ms ease-in-out, z-index 0ms ease',
+              zIndex: ready ? -1 : 0,
+            }}
+          ></div>
+          <strong sx={UIPoster.styles.title} title={details?.title}>
+            <Link to={link?.to} state={link?.state} disabled={!link?.to}>
+              {details?.title}
+            </Link>
+          </strong>
+          <div sx={UIPoster.styles.subtitle}>
+            {!!details?.meaningful?.year && (
+              <span>
+                <details.meaningful.year />
+                {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
+              </span>
+            )}
+            {(!!details?.meaningful?.genres || !!details?.caption) && (
+              <small title={details?.caption}>
+                {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+              </small>
+            )}
+          </div>
+          <div sx={UIPoster.styles.badges}>
+            {badges.map(({ component: Component, props }) => <Component {...props} parent={ref} />)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -138,121 +99,98 @@ UIPoster.styles = {
   element: {
     position: 'relative',
     display: 'flex',
-    height: ['12em', '15em'],
+    flexDirection: 'column',
     maxHeight: '100%',
-    width: ['8em', '10em'],
+    width: ['6em', '10em'],
     maxWidth: '100%',
+    marginRight: [4, 2],
+    marginLeft: [8, 4],
   },
   wrapper: {
     position: 'relative',
-    overflow: 'hidden',
-    height: '100%',
     width: '100%',
+    marginTop: 5,
   },
-  focus: {
+  actions: {
     position: 'absolute',
-    top: '0.75em',
-    left: '0.5em',
-    zIndex: 1,
-    transition: 'opacity 250ms ease-in-out',
-  },
-  badges: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    position: 'absolute',
-    top: '0.5em',
-    right: '0.5em',
-    zIndex: 1,
-    transition: 'opacity 250ms ease-in-out',
-    '>*': {
-      marginTop: 10,
-    },
+    top: '-0.875em',
+    right: '-0.875em',
+    zIndex: 2,
+  },
+  state: {
+    backgroundColor: 'grayLightest',
+    padding: 10,
+    borderRadius: '50%',
+  },
+  proposal: {
+    backgroundColor: 'grayLightest',
+    padding: 10,
+    marginTop: '-0.75em',
+    marginRight: ['-0.125em', '-0.5em'],
+    borderRadius: '50%',
   },
   link: {
     display: 'flex',
-    height: '100%',
+    height: ['9em', '15em'],
+    maxHeight: '100%',
     width: '100%',
   },
-  relations: {
+  meaningful: {
+    position: 'relative',
+    minHeight: ['4.5em', '5.5em'],
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: '100%',
+    marginTop: 8,
+    marginBottom: '2.5em',
+    overflow: 'hidden',
+  },
+  skeleton: {
     position: 'absolute',
-    bottom: '0em',
-    left: '0em',
-    zIndex: 1,
-    transition: 'opacity 400ms ease-in-out',
-    '&:hover': {
-      zIndex: 2,
+    height: '4.25em',
+    width: '100%',
+  },
+  title: {
+    fontSize: [6, 5],
+    fontFamily: 'heading',
+    fontWeight: 'semibold',
+    color: 'text',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  },
+  subtitle: {
+    display: 'flex',
+    alignItems: 'center',
+    paddingBottom: 8,
+    paddingTop: 10,
+    color: 'grayDarker',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    '>span': {
+      fontSize: 7,
+      fontWeight: 'semibold',
+      color: 'grayDarkest',
+    },
+    '>small': {
+      fontSize: [8, 7],
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
   },
-  guests: {
-    position: 'absolute',
-    bottom: '0em',
-    right: '0em',
-    zIndex: 1,
-    transition: 'opacity 400ms ease-in-out',
-    '&:hover': {
-      zIndex: 2,
+  badges: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    minHeight: ['1.75em', '2.75em'],
+    overflowX: 'auto',
+    whiteSpace: 'nowrap',
+    '>*:not(:last-child)': {
+      marginRight: 8
     },
   },
 }
 
 export const Poster = memo(UIPoster)
-
-const UIHover = ({
-  title,
-  subtitle = null,
-  year = null,
-  pad = false,
-  ...props
-}: {
-  title: string
-  subtitle?: string
-  year?: number
-  pad?: boolean
-}) => {
-  const styles = useMemo(() => ({
-    element: {
-      ...UIHover.styles.element,
-      ...(pad ? { paddingBottom: '4.25em' } : {}),
-    }
-  }), [pad])
-
-  return (
-    <div {...props} sx={styles.element}>
-      <span>
-        <strong>{title}</strong>
-        {!!year && <span> ({year})</span>}
-      </span>
-      {!!subtitle && <small>{subtitle}</small>}
-    </div>
-  )
-}
-
-UIHover.styles = {
-  element: {
-    position: 'absolute',
-    bottom: '0em',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: 'blackShadow',
-    color: 'textShadow',
-    padding: 4,
-    fontSize: 6,
-    '>span': {
-      display: 'block',
-      margin: '0 0 0.5em 0',
-      '>strong': {
-        fontWeight: 'bold',
-      },
-    },
-    '>small': {
-      display: 'block',
-      margin: '0 0 0.5em 0',
-      lineHeight: 'body',
-    },
-  },
-}
-
-const Hover = memo(UIHover)

@@ -130,7 +130,7 @@ const ComputeSensorrAffectedChangesTask = ({ ...props }) => {
 const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { state } } = useTask({
     id: `apply-${type}-changes`,
-    title: `${{ movie: '🎞️ ', person: '🎭' }[type]} Apply ${type} changes on Sensorr...`,
+    title: `${{ movie: '🎞️ ', person: '⭐️' }[type]} Apply ${type} changes on Sensorr...`,
   }, { dependencies: [`compute-sensorr-affected-changes`, ...dependencies] })
 
   useEffect(() => {
@@ -148,7 +148,7 @@ const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
             ...task,
             title: (
               <Text>
-                {{ movie: '🎞️ ', person: '🎭' }[type]} Apply {type} changes on Sensorr {(
+                {{ movie: '🎞️ ', person: '⭐️' }[type]} Apply {type} changes on Sensorr {(
                   <Text color='grey'>({state?.[type]?.changes.findIndex((c) => c === change) + 1}/{state?.[type]?.changes.length})</Text>
                 )}
               </Text>
@@ -189,7 +189,7 @@ const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
         }
       }
 
-      state.logger.info({ message: `${{ movie: '🎞️ ', person: '🎭' }[type]} Applied ${success} changes on Sensorr`, metadata: { ...state.metadata, summary: { [type]: { success, warning } } } })
+      state.logger.info({ message: `${{ movie: '🎞️ ', person: '⭐️' }[type]} Applied ${success} changes on Sensorr`, metadata: { ...state.metadata, summary: { [type]: { success, warning } } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{success}</Text> {type} changes applied</Text> }))
       setStatus('done')

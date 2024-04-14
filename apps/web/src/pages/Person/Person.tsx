@@ -2,11 +2,11 @@ import { useMemo } from 'react'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { utils } from '@sensorr/tmdb'
-import { transformPersonDetails, Warning } from '@sensorr/ui'
-import { compose } from '@sensorr/utils'
+import { transformMovieDetails, transformPersonDetails, Warning } from '@sensorr/ui'
+import { compose, emojize } from '@sensorr/utils'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
-import { withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
+import { usePersonsMetadataContext, withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import withProps from '../../components/enhancers/withProps'
 import { useAnimationContext } from '../../contexts/Animation/Animation'
 import { useDeviceContext } from '../../contexts/Device/Device'
@@ -22,11 +22,20 @@ const Person = ({ ...props }) => {
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { ongoing } = useAnimationContext() as any
+  const { metadata: { [id]: metadata } } = usePersonsMetadataContext() as any
 
-  const { loading, error, data, details } = useTMDBRequest(`/person/${id}`, {
+  const { loading, error, data, details } = useTMDBRequest(`person/${id}`, {
     append_to_response: 'images,tagged_images,movie_credits,translations',
     include_image_language: 'en,null',
   }, { transform: transformPersonDetails })
+
+  const cast = useTMDBRequest('discover/movie', {
+    with_cast: id,
+    with_release_type: '3|2|1',
+    without_genres: '99|10770', // Documentary -- sorry
+    'with_runtime.gte': 20,
+    sort_by: 'primary_release_date.desc',
+  }, { transform: transformMovieDetails })
 
   const ready = !ongoing && !loading && (data?.id || error)
 
@@ -60,16 +69,57 @@ const Person = ({ ...props }) => {
               name: data?.name,
               profile_path: data?.profile_path,
             },
+            state: metadata?.state || 'ignored',
           },
         ] : [],
       }),
     }
 
-    const cast = {
+    const relevantCast = {
       id: `cast-${id}`,
       label: t('items.persons.cast.label'),
+      entities: cast?.data?.results || [],
+      child: MovieWithCreditsAndReviews,
+      ready: ready,
+      props: ({ index }) => ({
+        display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
+      }),
+      more: {
+        to: `/movie/discover`,
+        state: {
+          controls: {
+            with_release_type: {
+              behavior: 'or',
+              values: [
+                { value: 1, label: 'Premiere' },
+                { value: 2, label: 'Theatrical' },
+                { value: 3, label: 'Digital' },
+              ],
+            },
+            with_runtime: [20, 6000],
+            sort_by: { sort: true, value: 'primary_release_date' },
+            with_cast: {
+              behavior: 'or',
+              values: [{ value: id, label: details.title }],
+            },
+            without_genres: {
+              behavior: 'or',
+              values: [
+                { value: 99, label: 'Docuemntary' },
+                { value: 10770, label: 'TV Movie' },
+              ],
+            },
+          },
+        },
+      },
+    }
+
+    const fullCast = {
+      id: `fullcast-${id}`,
+      label: !relevantCast.entities.length ? t('items.persons.cast.label') : t('items.persons.fullcast.label'),
       entities: utils.sortCredits(data?.movie_credits || { cast: [] }, [], ['cast'])
-        .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
+        .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime())
+        .slice(0, 20),
       child: MovieWithCreditsAndReviews,
       ready: ready,
       props: ({ index, entity }) => ({
@@ -87,15 +137,30 @@ const Person = ({ ...props }) => {
               order: entity.order,
               profile_path: data?.profile_path,
             },
+            state: metadata?.state || 'ignored',
           },
         ] : [],
       }),
+      more: {
+        to: `/movie/discover`,
+        state: {
+          controls: {
+            sort_by: { sort: true, value: 'primary_release_date' },
+            with_cast: {
+              behavior: 'or',
+              values: [{ value: id, label: details.title }],
+            },
+          },
+        },
+      },
     }
 
-    const crew = {
+    const relevantCrew = {
       id: `crew-${id}`,
-      label: t('items.persons.crew.label'),
+      label: data.known_for_department === 'Acting' ? t('items.persons.crew.label') : emojize('🎬', data.known_for_department),
       entities: utils.sortCredits(data?.movie_credits || { crew: [] }, [], ['crew'])
+        .filter(c => !c.video && !c.genres.find(g => [99, 10770].includes(g.id)) && !(c.department.includes('Production') && c.department.length === 1) && c.job !== 'Thanks')
+        .filter(c => (!data.known_for_department || data.known_for_department === 'Acting') || c.department.includes(data.known_for_department))
         .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime()),
       child: MovieWithCreditsAndReviews,
       ready: ready,
@@ -113,25 +178,94 @@ const Person = ({ ...props }) => {
               name: data?.name,
               profile_path: data?.profile_path,
             },
+            state: metadata?.state || 'ignored',
           },
         ] : [],
       }),
+      more: {
+        to: `/movie/discover`,
+        state: {
+          controls: {
+            with_release_type: {
+              behavior: 'or',
+              values: [
+                { value: 1, label: 'Premiere' },
+                { value: 2, label: 'Theatrical' },
+                { value: 3, label: 'Digital' },
+              ],
+            },
+            with_runtime: [20, 6000],
+            sort_by: { sort: true, value: 'primary_release_date' },
+            with_crew: {
+              behavior: 'or',
+              values: [{ value: id, label: details.title }],
+            },
+            without_genres: {
+              behavior: 'or',
+              values: [
+                { value: 99, label: 'Docuemntary' },
+                { value: 10770, label: 'TV Movie' },
+              ],
+            },
+          },
+        },
+      },
+    }
+
+    const fullCrew = {
+      id: `fullcrew-${id}`,
+      label: !relevantCrew.entities.length ? t('items.persons.crew.label') : t('items.persons.fullcrew.label'),
+      entities: utils.sortCredits(data?.movie_credits || { crew: [] }, [], ['crew'])
+        .sort((a, b) => new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime())
+        .slice(0, 20),
+      child: MovieWithCreditsAndReviews,
+      ready: ready,
+      props: ({ index, entity }) => ({
+        display: (index < 5 && device !== 'mobile') ? 'pretty' : 'poster',
+        credits: data ? [
+          {
+            entity: {
+              credit_id: entity.credit_id,
+              department: entity.department,
+              gender: data?.gender,
+              override: entity.override,
+              id: data?.id,
+              job: entity.job,
+              name: data?.name,
+              profile_path: data?.profile_path,
+            },
+            state: metadata?.state || 'ignored',
+          },
+        ] : [],
+      }),
+      more: {
+        to: `/movie/discover`,
+        state: {
+          controls: {
+            sort_by: { sort: true, value: 'primary_release_date' },
+            with_crew: {
+              behavior: 'or',
+              values: [{ value: id, label: details.title }],
+            },
+          },
+        },
+      },
     }
 
     if (data.known_for_department === 'Acting') {
       return [
         ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
-        ...((!ready || cast.entities?.length) ? [{ id: 'cast', tabs: [cast] }] : []),
-        ...((!ready || crew.entities?.length) ? [{ id: 'crew', tabs: [crew] }] : []),
+        ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
+        ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
       ]
     }
 
     return [
       ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
-      ...((!ready || crew.entities?.length) ? [{ id: 'crew', tabs: [crew] }] : []),
-      ...((!ready || cast.entities?.length) ? [{ id: 'cast', tabs: [cast] }] : []),
+      ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
+      ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
     ]
-  }, [ready, id, data])
+  }, [ready, id, data, metadata])
 
   if (error) {
     return (

@@ -38,9 +38,9 @@ export default {
       loading: emojize('⌛', 'Searching for "{query}"...'),
       empty: emojize('💢', 'No results'),
       custom: {
-        people: emojize('🎭', 'Search for people, like "Bill Murray"'),
+        people: emojize('⭐️', 'Search for people, like "Bill Murray"'),
         crew: emojize('🎬', 'Search for crew, like "Christopher Nolan"'),
-        cast: emojize('🧑‍🎤', 'Search for cast, like "James Stewart"'),
+        cast: emojize('🤵', 'Search for cast, like "James Stewart"'),
         companies: emojize('🏛️', 'Search for companies, like "Walt Disney Pictures"'),
         keywords: emojize('🔗️', 'Search for keywords, like "Zombie"'),
       },
@@ -61,9 +61,9 @@ export default {
       vote_average: emojize('💯', 'Vote Average'),
       vote_count: emojize('🗳', 'Vote Count'),
       runtime: emojize('🕒', 'Duration'),
-      people: emojize('🎭', 'People'),
+      people: emojize('⭐️', 'People'),
       crew: emojize('🎬', 'Crew'),
-      cast: emojize('🧑‍🎤', 'Cast'),
+      cast: emojize('🤵', 'Cast'),
       companies: emojize('🏛️', 'Companies'),
       keywords: emojize('🔗️', 'Keywords'),
       languages: emojize('🌐', 'Languages'),
@@ -169,8 +169,8 @@ export default {
     },
     persons: {
       trending: {
-        emoji: '🎭',
-        label: emojize('🎭', 'Trending'),
+        emoji: '⭐️',
+        label: emojize('⭐️', 'Trending'),
         title: 'Trending persons from themoviedb.org',
         more: 'More trending persons from themoviedb.org',
       },
@@ -180,15 +180,27 @@ export default {
         // title: 'All your archived movies',
         // more: 'More of your archived movies',
       },
-      cast: {
-        emoji: '🧑‍🎤',
-        label: emojize('🧑‍🎤', 'Casting'),
-        // title: 'All your archived movies',
-        // more: 'More of your archived movies',
-      },
       crew: {
         emoji: '🎬',
         label: emojize('🎬', 'Crew'),
+        // title: 'All your archived movies',
+        // more: 'More of your archived movies',
+      },
+      fullcrew: {
+        emoji: '📇',
+        label: emojize('📇', 'All'),
+        // title: 'All your archived movies',
+        // more: 'More of your archived movies',
+      },
+      cast: {
+        emoji: '🤵',
+        label: emojize('🤵', 'Casting'),
+        // title: 'All your archived movies',
+        // more: 'More of your archived movies',
+      },
+      fullcast: {
+        emoji: '📇',
+        label: emojize('📇', 'All'),
         // title: 'All your archived movies',
         // more: 'More of your archived movies',
       },
@@ -238,6 +250,9 @@ export default {
           label: 'in',
         },
       },
+    },
+    search: {
+      title: 'Search',
     },
   },
 }

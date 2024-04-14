@@ -13,9 +13,10 @@ import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Pretty } from '../../elements/Entity/Pretty/Pretty'
 import { MovieState } from './State/State'
-import { Credits } from './Credits/Credits'
-import { Guests } from './Guests/Guests'
 import { Proposal } from './Proposal/Proposal'
+import { ReviewsBadge } from './Badges/ReviewsBadge'
+import { CreditsBadge } from './Badges/CreditsBadge'
+import { GuestsBadge } from './Badges/GuestsBadge'
 
 export interface MovieProps extends Omit<
   PosterProps,
@@ -25,8 +26,11 @@ export interface MovieProps extends Omit<
   display?: 'poster' | 'card' | 'avatar' | 'pretty'
   link?: ((MovieInterface) => LinkProps)
   focus?: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count'
+  guestsVisible?: boolean
   credits?: { entity: (PersonInterface | CastInterface | CrewInterface), state?: 'loading' | 'ignored' | 'followed' }[]
+  loadCredits?: () => void
   reviews?: { source: string, score: string, date: string, count: string }[],
+  loadReviews?: () => void
   placeholder?: boolean
   state?: 'loading' | 'ignored' | 'missing' | 'pinned' | 'wished' | 'archived'
   setState?: (state: string) => any
@@ -35,15 +39,17 @@ export interface MovieProps extends Omit<
   proceedRelease?: (id: number, release: any, choice?: boolean) => void
   removeRelease?: (release: any) => void
   ready?: boolean
-  guestsDisplay?: 'never' | 'hover' | 'always'
 }
 
 const UIMovie = ({
   entity: data,
   display = 'poster',
   placeholder,
-  reviews,
+  guestsVisible,
   credits,
+  loadCredits,
+  reviews,
+  loadReviews,
   state,
   setState,
   metadata,
@@ -51,85 +57,58 @@ const UIMovie = ({
   proceedRelease,
   removeRelease,
   ready = true,
-  guestsDisplay = 'hover',
   ...props
 }: MovieProps) => {
-  // data
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder]) as MovieInterface
   const details = useMemo(() => transformMovieDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/movie/${entity.id}` }))(entity), [entity, props.link])
 
-  // components
-  const focus = useMemo(() => {
-    if (entity.id === null || display !== 'poster') {
-      return []
+  const actions = useMemo(() => {
+    if (entity?.id === null) {
+      return {}
     }
 
-    const vote_average = Math.round((Number([
-      (entity.vote_average / 10),
-      ...(reviews || [])?.map(review => review.score),
-    ].reduce((acc, curr) => Number(acc) + Number(curr), 0)) / Math.max(1, (reviews?.length || 0) + (entity.vote_average ? 1 : 0))) * 100)
-
-    return [
-      Focus,
-      {
-        entity,
-        property: 'vote_average',
-        compact: true,
-        size: 'small',
-        emoji: utils.judge({ vote_average: vote_average / 10 } as any),
-        label: `${vote_average} %`,
-        tippy: (
-          <span sx={{ display: 'flex', alignItems: 'center', '>span:not(:last-of-type)': { marginRight: 6 } }}>
-            <span>
-              <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
-              {Math.round(entity.vote_average * 10)}%
-            </span>
-            {(reviews || [])?.map((review: any) => (
-              <span sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}>
-                <Icon
-                  value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
-                  height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-                  width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-                  sx={{ marginRight: 8 }}
-                />
-                <span>{Math.round(review.score * 100)}%</span>
-              </span>
-            ))}
-          </span>
-        ),
-      }
-    ]
-  }, [entity, reviews, display]) as [React.FC, any]
-
-  const badge = useMemo(() => entity.id === null ? [] : [
-    MovieState,
-    { value: state, onChange: setState, compact: true },
-  ], [entity, state, setState]) as [React.FC, any]
-
-  const action = useMemo(() => {
-    const props = {
+    const proposal = {
       releases: metadata?.releases?.filter(release => !release.proposal),
       proposals: metadata?.releases?.filter(release => release.proposal),
       proceed: proceedRelease,
     }
 
-    return (entity.id === null || !props.proposals?.length) ? [] : [Proposal, props]
-  }, [entity?.id, metadata]) as [React.FC, any]
+    return {
+      state: { component: MovieState, props: { value: state, onChange: setState, compact: true } },
+      ...(!proposal.proposals?.length ? {} : { proposal: { component: Proposal, props: proposal } }),
+    }
+  }, [
+    entity?.id,
+    state,
+    setState,
+    metadata?.releases
+  ]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
 
-  const guests = useMemo(() => (['pretty', 'poster'].includes(display) && metadata?.requested_by?.length && guestsDisplay === 'always' || (guestsDisplay !== 'never' && state === 'ignored')) ? [Guests, {
-    guests: (metadata?.requested_by || []).reduce((guests, guest) => [
-      ...guests,
-      { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } },
-    ], []),
-  }, guestsDisplay] : [], [guestsDisplay, display, state, metadata?.requested_by]) as [React.FC, any, string]
-  const relations = useMemo(() => (['pretty', 'poster'].includes(display) && credits?.length) ? [Credits, { display, length: display === 'poster' && guests[1]?.guests?.length && 2, credits }] : [], [credits, display, guests]) as [React.FC, any]
+  const badges = useMemo(() => {
+    if (entity?.id === null) {
+      return []
+    }
 
-  // stuff
-  const overrides = useMemo(() => ({
-    focus: !props.focus ? [] : [Focus, { entity, property: props.focus, compact: true, size: 'small' }],
-    ready: typeof entity.id === 'number' && !placeholder && ready,
-  }), [props.focus, ready, placeholder, entity]) as { focus: [React.FC, any], ready: boolean }
+    return [
+      ...(metadata?.requested_by?.length ? [{ component: GuestsBadge, props: { entity, display, visible: (typeof entity?.id === 'number' && !placeholder && ready) && guestsVisible, guests: (metadata?.requested_by || []).reduce((guests, guest) => [...guests, { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } }], []) } }] : []),
+      ...(props?.focus ? [{ component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } }] : []),
+      { component: ReviewsBadge, props: { entity, reviews, loadReviews } },
+      ...(loadCredits ? [{ component: CreditsBadge, props: { entity, display, credits, loadCredits } }] : []),
+    ]
+  }, [
+    entity?.id,
+    ready,
+    placeholder,
+    display,
+    guestsVisible,
+    props.focus,
+    reviews,
+    loadReviews,
+    credits,
+    loadCredits,
+    metadata?.requested_by
+  ]) as { component: React.FC, props: any }[]
 
   switch (display) {
     case 'avatar':
@@ -139,7 +118,7 @@ const UIMovie = ({
           details={details}
           link={link}
           highlight={['pinned', 'wished', 'archived'].includes(state)}
-          overrides={overrides}
+          ready={typeof entity?.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
         />
       )
@@ -149,9 +128,9 @@ const UIMovie = ({
           {...props}
           details={details}
           link={link}
-          state={badge}
-          overrides={overrides}
+          ready={typeof entity?.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
+          actions={actions}
         />
       )
     case 'pretty':
@@ -159,15 +138,11 @@ const UIMovie = ({
         <Pretty
           {...props}
           details={details}
-          reviews={reviews}
           link={link}
-          state={badge}
-          focus={focus}
-          action={action}
-          overrides={overrides}
+          ready={typeof entity?.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
-          relations={relations}
-          guests={guests}
+          actions={actions}
+          badges={badges}
         />
       )
     default:
@@ -175,15 +150,11 @@ const UIMovie = ({
         <Poster
           {...props}
           details={details}
-          reviews={reviews}
           link={link}
-          state={badge}
-          focus={focus}
-          action={action}
-          overrides={overrides}
+          ready={typeof entity?.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
-          relations={relations}
-          guests={guests}
+          actions={actions}
+          badges={badges}
         />
       )
   }
@@ -199,7 +170,7 @@ export interface MovieDetails extends Details {
     vote_average?: React.FunctionComponent,
     vote_count?: React.FunctionComponent,
     popularity?: React.FunctionComponent,
-    genres?: React.FunctionComponent,
+    genres?: React.FunctionComponent<any>,
     runtime?: React.FunctionComponent,
     original_language?: React.FunctionComponent,
     budget?: React.FunctionComponent,
@@ -221,7 +192,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
   meaningful: {
     directors: (entity as any)?.credits?.crew?.filter(credit => credit.job === 'Director')?.length ? () => (
       <span>
-        {emojize('🎥')}{(entity as any)?.credits?.crew?.filter(credit => credit.job === 'Director').map((credit, index, arr) => (
+        {emojize('🎬')}{(entity as any)?.credits?.crew?.filter(credit => credit.job === 'Director').map((credit, index, arr) => (
           <Fragment key={credit.id}>
             <Link title={`Discover more movies from "${credit.name}"`} to={`/person/${credit.id}`}>
               {credit.name}
@@ -306,9 +277,9 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('📣', entity.popularity.toLocaleString())}
       </span>
     ) : null,
-    genres: !!entity.genres?.length ? () => (
+    genres: !!entity.genres?.length ? ({ emoji = true }) => (
       <span>
-        {emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
+        {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
           <Fragment key={genre.id}>
             <Link
               title={`Discover more "${genre.name}" movies`}

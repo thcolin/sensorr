@@ -40,7 +40,9 @@ const UIList = ({
   const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0])
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    scrollDebouncer(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
+    if (!stack) {
+      scrollDebouncer(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
+    }
   }, [id])
 
   useEffect(() => {
@@ -95,12 +97,12 @@ UIList.styles = {
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',
-      paddingBottom: [4, 0],
+      // paddingBottom: [4, 0],
       scrollBehavior: 'smooth',
     },
     entity: {
       flex: '0 0 auto',
-      paddingX: [8, 0],
+      paddingX: 8,
     },
     more: {
       flex: '0 0 auto',
@@ -116,10 +118,12 @@ UIList.styles = {
       flexDirection: 'column',
       overflowX: 'hidden',
       overflowY: 'auto',
-      paddingY: 2,
+      paddingBottom: 2,
       scrollBehavior: 'smooth',
     },
     entity: {
+      display: 'flex',
+      justifyContent: 'center',
       flex: '0 0 auto',
       padding: '1em 0',
     },
@@ -137,6 +141,7 @@ UIList.styles = {
       flexWrap: 'wrap',
       flexDirection: 'row',
       paddingY: 0,
+      overflow: 'hidden',
     },
     entity: {
       flex: '0 0 auto',
@@ -158,8 +163,8 @@ const UIMore = ({ to, state, title = '', rotate, ...props }: MoreProps) => {
   ), [rotate])
 
   return (
-    <Link sx={UIMore.styles.link} to={to} state={state} {...(title ? { title } : {})}>
-      <Badge {...props} emoji={emoji} label='' color='auto' />
+    <Link sx={{ ...UIMore.styles.link, '>span': { padding: rotate ? '2em' : '2em 1.875em 2em 2.125em' } }} to={to} state={state} {...(title ? { title } : {})}>
+      <Badge {...props} emoji={emoji} />
     </Link>
   )
 }
@@ -176,7 +181,6 @@ UIMore.styles = {
   icon: {
     display: 'flex',
     alignItems: 'center',
-    color: 'gray',
     height: '3.5em',
     padding: 8,
   },

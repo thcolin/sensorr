@@ -36,23 +36,15 @@ const CompactGuest = ({ index, entities, ...props }) => (
 )
 
 const UIGuests = ({ guests, compact = true, hidden = false, ...props }) => (
-  <div
-    sx={{
-      fontSize: 9,
-      margin: '0 -2em -3em 0',
-      transition: 'opacity 400ms ease-in-out',
-    }}
-  >
-    <List
-      id='guests'
-      length={Math.min(4 || 0, guests?.length)}
-      child={compact ? CompactGuest : Guest}
-      childProps={{ ...props?.childProps, entities: guests }}
-      entities={guests}
-      compact={true}
-      space={2}
-    />
-  </div>
+  <List
+    id='guests'
+    length={Math.min(5, guests?.length)}
+    child={compact ? CompactGuest : Guest}
+    childProps={{ ...props?.childProps, entities: guests }}
+    entities={guests}
+    compact={true}
+    space={2}
+  />
 )
 
 export const Guests = memo(UIGuests)

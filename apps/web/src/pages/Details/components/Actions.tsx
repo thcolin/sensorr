@@ -238,7 +238,7 @@ const UITicket = ({
 UITicket.styles = {
   element: {
     width: '100%',
-    zIndex: 3,
+    zIndex: 4,
     filter: `drop-shadow(-1px 1px 4px rgba(0, 0, 0, 0.2))`,
   },
   wrapper: {
@@ -456,7 +456,7 @@ UIPreferences.styles = {
     position: 'absolute',
     display: 'flex',
     width: '100%',
-    zIndex: 2,
+    zIndex: 3,
     filter: `drop-shadow(-1px 1px 4px rgba(0, 0, 0, 0.2))`,
   },
   wrapper: {

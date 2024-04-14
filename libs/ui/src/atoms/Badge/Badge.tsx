@@ -6,6 +6,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   compact?: boolean
   size?: 'small' | 'normal'
   color?: 'auto' | 'dark' | 'theme' | 'light'
+  palette?: any
 }
 
 const UIBadge = ({
@@ -14,27 +15,31 @@ const UIBadge = ({
   compact = false,
   size = 'normal',
   color = 'dark',
+  palette,
   ...props
 }: BadgeProps) => {
+  const hasLabel = (typeof label !== 'undefined' && label !== null && label !== false)
   const styles = useMemo(() => ({
     element: {
       ...UIBadge.styles.element,
       ...(compact ? UIBadge.styles.compact : {}),
-      ...(!label ? UIBadge.styles.noLabel : {}),
+      ...(!hasLabel ? UIBadge.styles.noLabel : {}),
       ...UIBadge.styles.sizes[size],
-    backgroundColor: {
-      auto: 'shadow',
-      dark: 'grayShadow',
-      theme: 'shadowTheme',
-      light: 'whiteShadow',
-    }[color],
+    backgroundColor: palette?.color || 'gray',
+    color: palette?.backgroundColor || 'text',
+    // backgroundColor: {
+    //   auto: 'shadow',
+    //   dark: 'grayShadow',
+    //   theme: 'shadowTheme',
+    //   light: 'whiteShadow',
+    // }[color],
   }
-  }), [compact, label, size, color])
+  }), [compact, hasLabel, size, palette])
 
   return (
     <span {...props} sx={styles.element}>
       {!!emoji && <span sx={UIBadge.styles.emoji}>{emoji}</span>}
-      {!!label && <label sx={{ ...UIBadge.styles.label, marginLeft: !!emoji ? 4 : 12 }}>{label}</label>}
+      {hasLabel && <label sx={{ ...UIBadge.styles.label, marginLeft: !!emoji ? 4 : 12 }}>{label}</label>}
     </span>
   )
 }
@@ -44,10 +49,11 @@ UIBadge.styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    height: '2em',
     userSelect: 'none',
     borderRadius: '2em',
-    paddingX: 2,
-    paddingY: 6,
+    // paddingX: 2,
+    // paddingY: 6,
   },
   emoji: {
     lineHeight: 'reset',
@@ -55,7 +61,7 @@ UIBadge.styles = {
   label: {
     fontFamily: 'monospace',
     fontSize: 5,
-    color: 'textShadow',
+    // color: 'text',
     textTransform: 'capitalize',
     lineHeight: 'reset',
     cursor: 'inherit',
@@ -65,9 +71,10 @@ UIBadge.styles = {
     paddingY: 7,
   },
   noLabel: {
+    width: '2em',
     borderRadius: '50%',
-    paddingX: 7,
-    paddingY: 7,
+    // paddingX: 7,
+    // paddingY: 7,
   },
   sizes: {
     small: {

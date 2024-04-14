@@ -87,9 +87,8 @@ export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit
   const CalendarEntities = useMemo(() => compose(
     withFetchCalendarQuery({
       params: {
-        include_video: false,
         with_release_type: '3|2|1',
-        without_genres: '99', // Documentary -- sorry
+        without_genres: '99|10770', // Documentary & TV Movie -- sorry
         'primary_release_date.gte': dateMin.toISOString().substring(0, 10),
         ...(dateMax ? { 'primary_release_date.lte': dateMax.toISOString().substring(0, 10) } : {}),
         sort_by: 'primary_release_date.asc',

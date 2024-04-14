@@ -24,7 +24,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withHistoryState from '../../components/enhancers/withHistoryState'
 
 const Movie = ({ ...props }) => (
-  <MovieWithCreditsAndReviews {...props as any} guestsDisplay='always' />
+  <MovieWithCreditsAndReviews {...props as any} guestsVisible={true} />
 )
 
 const Requests = compose(

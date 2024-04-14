@@ -37,26 +37,29 @@ const UIPerson = ({
   ready = true,
   ...props
 }: PersonProps) => {
-  // data
   const entity = useMemo(() => data || { profile_path: false, id: null }, [data, placeholder]) as PersonInterface
   const details = useMemo(() => transformPersonDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to: `/person/${entity.id}` }))(entity), [entity, props.link])
 
-  // components
-  const focus = useMemo(() => entity.id === null || !props.focus ? [] : [
-    Focus,
-    { entity, property: props.focus, compact: true, size: 'small' }
-  ], [entity, props.focus]) as [React.FC, any]
+  const badges = useMemo(() => {
+    if (entity.id === null || !props.focus) {
+      return []
+    }
 
-  const badge = useMemo(() => entity.id === null ? [] : [
-    PersonState,
-    { value: state, onChange: setState, compact: true }
-  ], [entity, state, setState]) as [React.FC, any]
+    return [
+      { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } },
+    ]
+  }, [entity?.id, props.focus]) as { component: React.FC, props: any }[]
 
-  // stuff
-  const overrides = useMemo(() => ({
-    ready: typeof entity.id === 'number' && !placeholder && ready,
-  }), [props.focus, placeholder, entity, ready])
+  const actions = useMemo(() => {
+    if (entity.id === null) {
+      return {}
+    }
+
+    return {
+      state: { component: PersonState, props: { value: state, onChange: setState, compact: true } },
+    }
+  }, [entity?.id, state, setState]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
 
   switch (display) {
     case 'avatar':
@@ -66,7 +69,7 @@ const UIPerson = ({
           details={details}
           link={link}
           highlight={['followed'].includes(state)}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
         />
       )
@@ -76,9 +79,9 @@ const UIPerson = ({
           {...props}
           details={details}
           link={link}
-          state={badge}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
+          actions={actions}
         />
       )
     case 'pretty':
@@ -87,10 +90,10 @@ const UIPerson = ({
           {...props}
           details={details}
           link={link}
-          state={badge}
-          focus={focus}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
+          actions={actions}
+          badges={badges}
         />
       )
     default:
@@ -99,10 +102,10 @@ const UIPerson = ({
           {...props}
           details={details}
           link={link}
-          state={badge}
-          focus={focus}
-          overrides={overrides}
+          ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
+          actions={actions}
+          badges={badges}
         />
       )
   }

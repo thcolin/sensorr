@@ -113,7 +113,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 child={Movie}
                 props={({ entity }) => ({
                   display: 'poster',
-                  guestsDisplay: 'always',
+                  guestsVisible: true,
                   metadata: {
                     requested_by: (entity as any).requested_by,
                   },

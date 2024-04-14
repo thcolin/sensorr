@@ -76,7 +76,7 @@ export const ResolutionFilter = withProps({
 })(RuleSortableSelect)
 
 export const SourceFilter = withProps({
-  label: emojize('📀', 'Source'),
+  label: emojize('💽', 'Source'),
   options: rules.source.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,

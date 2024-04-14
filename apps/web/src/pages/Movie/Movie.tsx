@@ -34,7 +34,7 @@ const Movie = ({ ...props }) => {
   const { metadata: persons } = usePersonsMetadataContext() as any
   const { ongoing } = useAnimationContext() as any
 
-  const movie = useTMDBRequest(`/movie/${id}`, {
+  const movie = useTMDBRequest(`movie/${id}`, {
     append_to_response: 'images,recommendations,similar,credits,videos,alternative_titles,release_dates,keywords,watch/providers',
     include_image_language: 'en,null',
   }, { transform: transformMovieDetails })
@@ -58,7 +58,7 @@ const Movie = ({ ...props }) => {
       label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
       entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
       child: MovieWithCreditsAndReviews,
-      props: ({ index }) => ({ display: (ready || (index < 5 && device !== 'mobile')) ? 'pretty' : 'poster' }),
+      props: ({ index }) => ({ display: ((ready || (index < 5)) && device !== 'mobile') ? 'pretty' : 'poster' }),
       ready: ready,
       more: {
         to: `/collection/${movie.data?.belongs_to_collection?.id}`,
@@ -191,7 +191,7 @@ const Movie = ({ ...props }) => {
           ...acc,
           [`headliners-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
-            label: emojize('🧑‍🎤', curr.name),
+            label: emojize('🤵', curr.name),
             child: MovieWithCreditsAndReviews,
             ready: ready,
             query: { uri: `person/${curr.id}/movie_credits` },
