@@ -41,12 +41,23 @@ services:
       - NX_SENSORR_AUTH_SECRET=${SENSORR_AUTH_SECRET:-youshouldchangethisvaluetoanythingelse}
       - NX_SENSORR_USERNAME=${SENSORR_USERNAME:-sensorr}
       - NX_SENSORR_PASSWORD=${SENSORR_PASSWORD:-sensorr}
-      - NX_SENSORR_VAPID_SUBJECT=${SENSORR_VAPID_SUBJECT}
-      - NX_SENSORR_VAPID_PUBLIC_KEY=${SENSORR_VAPID_PUBLIC_KEY}
-      - NX_SENSORR_VAPID_PRIVATE_KEY=${SENSORR_VAPID_PRIVATE_KEY}
+      - NX_SENSORR_VAPID_SUBJECT=${SENSORR_VAPID_SUBJECT:-mailto:mail@example.com}
     volumes:
       - ./config.json:/app/config.json
+      - ./.secrets:/app/.secrets
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ ! -f /app/.secrets/vapid ]; then
+          npx web-push generate-vapid-keys --json > /app/.secrets/vapid
+          chmod 400 /app/.secrets/vapid
+          chown node:node /app/.secrets/vapid
+          echo "Generate VAPID keys for web-push feature"
+        fi
+
+        node dist/apps/api/main.js
 
   sensorr-db:
     image: mongo:6.0.6
@@ -59,11 +70,22 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${SENSORR_DATABASE_PASSWORD:-sensorr}
       - MONGO_REPLICA_SET_NAME=rs0
     volumes:
-      - ./database-keyfile:/opt/keyfile/mongodb-keyfile
       - ./docker/sensorr-db:/docker-entrypoint-initdb.d:ro
+      - ./.secrets:/opt/keyfile
       - ./db:/data/db
     healthcheck:
       test: |
         test $$(mongosh --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'sensorr-db' }] }).ok } catch (_) { rs.status().ok }") -eq 1
       interval: 30s
-    command: ['--replSet', 'rs0', '--bind_ip_all', '--keyFile', '/opt/keyfile/mongodb-keyfile']
+    entrypoint:
+      - bash
+      - -c
+      - |
+        if [ ! -f /opt/keyfile/mongodb-keyfile ]; then
+          openssl rand -base64 756 > /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown 999:999 /opt/keyfile/mongodb-keyfile
+          echo "Generate mongodb keyfile for replica set usage"
+        fi
+
+        exec docker-entrypoint.sh --replSet rs0 --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile

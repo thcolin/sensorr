@@ -145,7 +145,6 @@ UIEntities.styles = {
     flexDirection: 'column',
     flex: 1,
     paddingTop: 4,
-    // paddingY: 4,
   },
   label: {
     display: 'flex',
@@ -155,6 +154,7 @@ UIEntities.styles = {
     fontFamily: 'heading',
     fontWeight: 'strong',
     overflowX: 'auto',
+    overflowY: 'hidden',
   },
   subtitle: {
     paddingX: 4,

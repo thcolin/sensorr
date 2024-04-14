@@ -19,13 +19,11 @@ echo "SENSORR_DATABASE_PASSWORD=anotherpassword" >> .env
 # Define your "blackhole" directory where .torrent files will be downloaded
 echo "SENSORR_BLACKHOLE=/home/user/downloads" >> .env
 
+# Define your "server contact information" (either a `mailto:` or `https` link) required if you want to enable web push notifications, see ["What is VAPID and why is it useful?"](https://stackoverflow.com/questions/40392257/what-is-vapid-and-why-is-it-useful)
+echo "SENSORR_VAPID_SUBJECT=mailto:admin@example.com" >> .env
+
 # Set your own TimeZone, see ["TZ identifier"](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)
 echo "TZ=Europe/Paris" >> .env
-
-# Create your own keyfile for Sensorr database, see ["Generate a Key File - MongoDB Manual"](https://www.mongodb.com/docs/v2.4/tutorial/generate-key-file/)
-openssl rand -base64 756 > ./database-keyfile
-chmod 400 ./database-keyfile
-chown 999:999 ./database-keyfile
 
 # Launch the stack
 docker compose up -d

@@ -69,7 +69,17 @@ export class NotificationsService {
   }
 
   async dispatchWebPushNotifications() {
-    webpush.setVapidDetails(process.env.NX_SENSORR_VAPID_SUBJECT, process.env.NX_SENSORR_VAPID_PUBLIC_KEY, process.env.NX_SENSORR_VAPID_PRIVATE_KEY)
+    if (!process.env.NX_SENSORR_VAPID_PUBLIC_KEY) {
+      this.logger.log(`DispatchWebPushNotifications (disabled)`)
+      return
+    }
+
+    this.logger.log(`DispatchWebPushNotifications (enabled)`)
+    webpush.setVapidDetails(
+      process.env.NX_SENSORR_VAPID_SUBJECT,
+      process.env.NX_SENSORR_VAPID_PUBLIC_KEY,
+      process.env.NX_SENSORR_VAPID_PRIVATE_KEY
+    )
 
     this.listenNotifications(false)
       .pipe(

@@ -102,7 +102,7 @@ UIList.styles = {
     },
     entity: {
       flex: '0 0 auto',
-      paddingX: 8,
+      paddingX: [11, 8],
     },
     more: {
       flex: '0 0 auto',

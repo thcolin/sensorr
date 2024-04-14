@@ -62,6 +62,7 @@ UINotifications.styles = {
     alignItems: 'flex-start',
     position: 'relative',
     fontSize: 2,
+    color: 'whitePure',
     padding: 8,
     '>span': {
       marginTop: '-0.25em',
