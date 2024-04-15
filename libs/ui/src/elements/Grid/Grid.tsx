@@ -31,8 +31,8 @@ const UIGrid = ({
   ...props
 }: GridProps) => {
   const cell = useResponsiveValue([
-    { height: 274, width: 120 },
-    { height: 396, width: 204 },
+    { height: 240, width: 120 },
+    { height: 346, width: 204 },
   ])
 
   const WrappedChild = useMemo(() => withGridItemContainer()(Child), [Child])

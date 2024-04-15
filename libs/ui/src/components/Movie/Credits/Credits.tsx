@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useDevice } from '@sensorr/utils'
 import { List } from '../../../elements/List/List'
 import { Person } from '../../Person/Person'
 
@@ -14,15 +15,20 @@ const Credit = ({ index, entities, ...props }) => (
   </div>
 )
 
-const UICredits = ({ credits, length = 0, hidden = false, ...props }) => (
-  <List
-    id='credits'
-    length={Math.min(length || 5, credits?.length)}
-    child={Credit}
-    childProps={{ entities: credits }}
-    entities={credits}
-    compact={true}
-  />
-)
+const UICredits = ({ credits, length = 0, hidden = false, ...props }) => {
+  const device = useDevice()
+
+  return (
+    <List
+      id='credits'
+      length={Math.min(length || 5, credits?.length)}
+      child={Credit}
+      childProps={{ entities: credits }}
+      entities={credits}
+      compact={true}
+      space={device === 'mobile' ? 3 : 4}
+    />
+  )
+}
 
 export const Credits = memo(UICredits)

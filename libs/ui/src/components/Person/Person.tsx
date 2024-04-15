@@ -42,24 +42,20 @@ const UIPerson = ({
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to: `/person/${entity.id}` }))(entity), [entity, props.link])
 
   const badges = useMemo(() => {
-    if (entity.id === null || !props.focus) {
-      return []
-    }
-
-    return [
-      { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } },
-    ]
-  }, [entity?.id, props.focus]) as { component: React.FC, props: any }[]
-
-  const actions = useMemo(() => {
     if (entity.id === null) {
       return {}
     }
 
     return {
       state: { component: PersonState, props: { value: state, onChange: setState, compact: true } },
+      ...(props.focus ? { focus: { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } } } : {}),
     }
-  }, [entity?.id, state, setState]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
+  }, [
+    entity?.id,
+    state,
+    setState,
+    props?.focus,
+  ]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
 
   switch (display) {
     case 'avatar':
@@ -81,7 +77,7 @@ const UIPerson = ({
           link={link}
           ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
-          actions={actions}
+          badges={badges}
         />
       )
     case 'pretty':
@@ -92,7 +88,6 @@ const UIPerson = ({
           link={link}
           ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
-          actions={actions}
           badges={badges}
         />
       )
@@ -104,7 +99,6 @@ const UIPerson = ({
           link={link}
           ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
-          actions={actions}
           badges={badges}
         />
       )

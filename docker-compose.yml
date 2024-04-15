@@ -4,10 +4,11 @@ services:
   sensorr-web:
     image: sensorr/sensorr-web
     container_name: sensorr-web
+    hostname: sensorr-web
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    restart: unless-stopped
     ports:
       - 5070:80
       - 5071:443
@@ -23,10 +24,11 @@ services:
   sensorr-api:
     image: sensorr/sensorr-api
     container_name: sensorr-api
+    hostname: sensorr-api
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -46,24 +48,15 @@ services:
       - ./config.json:/app/config.json
       - ./.secrets:/app/.secrets
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
-    entrypoint:
-      - sh
-      - -c
-      - |
-        if [ ! -f /app/.secrets/vapid ]; then
-          npx web-push generate-vapid-keys --json > /app/.secrets/vapid
-          chmod 400 /app/.secrets/vapid
-          chown node:node /app/.secrets/vapid
-          echo "Generate VAPID keys for web-push feature"
-        fi
-
-        node dist/apps/api/main.js
 
   sensorr-db:
-    image: mongo:6.0.6
+    image: sensorr/sensorr-db
     container_name: sensorr-db
     hostname: sensorr-db
     restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/db/Dockerfile
     environment:
       - MONGO_INITDB_DATABASE=sensorr
       - MONGO_INITDB_ROOT_USERNAME=${SENSORR_DATABASE_USERNAME:-sensorr}
@@ -77,15 +70,3 @@ services:
       test: |
         test $$(mongosh --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'sensorr-db' }] }).ok } catch (_) { rs.status().ok }") -eq 1
       interval: 30s
-    entrypoint:
-      - bash
-      - -c
-      - |
-        if [ ! -f /opt/keyfile/mongodb-keyfile ]; then
-          openssl rand -base64 756 > /opt/keyfile/mongodb-keyfile
-          chmod 400 /opt/keyfile/mongodb-keyfile
-          chown 999:999 /opt/keyfile/mongodb-keyfile
-          echo "Generate mongodb keyfile for replica set usage"
-        fi
-
-        exec docker-entrypoint.sh --replSet rs0 --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile

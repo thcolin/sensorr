@@ -1,17 +1,16 @@
-import { useBreakpointIndex } from '@theme-ui/match-media'
+import { useDevice } from '@sensorr/utils'
 import { createContext, useContext } from 'react'
 
 const deviceContext = createContext({})
 
 export const Provider = ({ ...props }) => {
-  const breakpoint = useBreakpointIndex()
-  const device = ['mobile', 'tablet', 'desktop'][breakpoint]
+  const device = useDevice()
   const ios = (/iPad|iPhone|iPod/.test(navigator.platform) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
     !(window as any).MSStream
 
   return (
-    <deviceContext.Provider {...props} value={{ device }} />
+    <deviceContext.Provider {...props} value={{ device, ios }} />
   )
 }
 

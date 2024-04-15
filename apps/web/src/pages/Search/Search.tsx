@@ -88,7 +88,7 @@ export const Search = (resource) => compose(
                   maxWidth: '30rem',
                   paddingX: 8,
                   paddingBottom: 10,
-                  fontSize: 3,
+                  fontSize: 4,
                   borderBottom: '1px solid',
                   borderColor: 'whitePure',
                 }}

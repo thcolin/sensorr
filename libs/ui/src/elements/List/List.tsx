@@ -66,7 +66,7 @@ const UIList = ({
         },
       } : {}),
     },
-  }), [display, compact])
+  }), [display, compact, space])
 
   return (
     <div ref={ref} sx={styles.container} onScroll={handleScroll}>

@@ -1,18 +1,19 @@
-import React, { memo, useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import { usePalette } from '@sensorr/palette'
 import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { Link } from '../../../atoms/Link/Link'
+import { Credits } from '../../../components/Movie/Credits/Credits'
 
 export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
 
 const UIPretty = ({
   details,
   link = null,
-  actions = {},
-  badges = [],
+  badges = {},
+  credits,
   ...props
 }: PrettyProps) => {
   const ref = useRef()
@@ -38,7 +39,7 @@ const UIPretty = ({
   const ready = !palette.loading && background && poster && props.ready !== false
 
   return (
-    <div sx={UIPretty.styles.element} ref={ref}>
+    <div sx={UIPretty.styles.element} ref={ref} onMouseEnter={props.onMouseEnter}>
       <div sx={UIPretty.styles.billboard}>
         <Billboard
           path={details?.billboard}
@@ -54,7 +55,10 @@ const UIPretty = ({
           {...props}
           details={details}
           link={link}
-          actions={actions}
+          badges={{
+            ...(badges?.state ? { state: badges?.state } : {}),
+            ...(badges?.proposal ? { proposal: badges?.proposal } : {}),
+          }}
           ready={ready}
           meaningful={false}
           palette={palette.palette}
@@ -66,11 +70,17 @@ const UIPretty = ({
           details={details}
           link={link}
           badges={badges}
+          credits={credits}
           ready={ready}
           palette={palette.palette}
           parent={ref}
         />
       </div>
+      {!!credits && (
+        <div sx={UIPretty.styles.credits}>
+          <Credits credits={credits} />
+        </div>
+      )}
     </div>
   )
 }
@@ -84,9 +94,12 @@ UIPretty.styles = {
     width: '35em',
     maxWidth: '100vw',
     minWidth: '25em',
-    marginTop: '2.5em',
-    marginBottom: '5.375em',
+    marginTop: '0.5em',
+    marginBottom: '3.625em',
     marginX: 4,
+    ':hover >div:nth-child(4)': {
+      opacity: 1,
+    },
   },
   billboard: {
     position: 'absolute',
@@ -107,18 +120,12 @@ UIPretty.styles = {
     paddingY: 2,
     overflow: 'hidden',
   },
-  relations: {
+  credits: {
     position: 'absolute',
-    bottom: '0em',
-    left: '0em',
-    zIndex: 1,
-    transition: 'opacity 400ms ease-in-out',
-  },
-  guests: {
-    position: 'absolute',
-    bottom: '0em',
-    right: '0em',
-    zIndex: 1,
+    fontSize: 9,
+    bottom: '-2.5rem',
+    left: '-1rem',
+    opacity: 0,
     transition: 'opacity 400ms ease-in-out',
   },
 }
@@ -154,7 +161,12 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
         )}
       </div>
       <div sx={UIAbout.styles.badges}>
-        {badges.map(({ component: Component, props }) => <Component {...props} palette={palette} parent={parent} />)}
+        {badges?.reviews?.component && <badges.reviews.component {...badges?.reviews?.props} palette={palette} />}
+        {badges?.guests?.component && (
+          <div sx={UIAbout.styles.guests}>
+            <badges.guests.component {...badges?.guests?.props} />
+          </div>
+        )}
       </div>
       <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
@@ -201,13 +213,18 @@ UIAbout.styles = {
   },
   badges: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    minHeight: '2.25em',
     overflowX: 'auto',
     whiteSpace: 'nowrap',
     fontWeight: 'semibold',
     '>*:not(:last-child)': {
       marginRight: 8
     },
+  },
+  guests: {
+    fontSize: 9,
+    marginLeft: 6,
   },
   overview: {
     flex: 1,

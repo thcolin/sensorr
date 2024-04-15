@@ -9,7 +9,7 @@ const UICard = ({
   details,
   link,
   ready,
-  actions,
+  badges,
   ...props
 }: CardProps) => (
   <div sx={UICard.styles.element}>
@@ -20,7 +20,7 @@ const UICard = ({
       <About details={details} link={link} ready={ready} />
     </div>
     <div sx={UICard.styles.actions}>
-      {actions?.state?.component && <actions.state.component {...actions?.state?.props} />}
+      {badges?.state?.component && <badges.state.component {...badges?.state?.props} />}
     </div>
   </div>
 )

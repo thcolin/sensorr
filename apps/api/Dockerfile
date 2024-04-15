@@ -22,8 +22,9 @@ FROM node:16-alpine As production
 
 WORKDIR /app
 
-RUN yarn global add web-push
+COPY --chown=node:node ./apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/bin ./bin
+RUN yarn global add web-push
 
-CMD ["node", "dist/apps/api/main.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

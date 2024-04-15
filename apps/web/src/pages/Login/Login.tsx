@@ -104,6 +104,7 @@ Login.styles = {
     marginBottom: '-1em',
     backgroundColor: 'error',
     fontFamily: 'body',
+    color: 'whitePure',
     paddingY: 6,
     paddingX: 4,
     border: '0.125em solid',
