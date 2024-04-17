@@ -361,7 +361,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
           )}
           {meta?.command === 'keep-in-touch' && (
             <div sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8 }}>
-              <div sx={{ marginRight: 4, marginBottom: 3 }}>
+              <div sx={{ marginRight: 4, marginBottom: 3, fontSize: 9 }}>
                 <Guests
                   childProps={{ onClick: () => closePortal() }}
                   guests={meta?.requested_by.map(guest => ({

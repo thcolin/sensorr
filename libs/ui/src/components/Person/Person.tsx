@@ -89,6 +89,7 @@ const UIPerson = ({
           ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
           badges={badges}
+          credits={false}
         />
       )
     default:
@@ -100,6 +101,7 @@ const UIPerson = ({
           ready={typeof entity.id === 'number' && !placeholder && ready}
           empty={Empty.person}
           badges={badges}
+          credits={false}
         />
       )
   }

@@ -68,7 +68,7 @@
     "nanoid": "~4",
     "new-github-issue-url": "^1.0.0",
     "node-fetch": "^3.3.2",
-    "oleoo": "^1.0.13",
+    "oleoo": "^1.1.1",
     "plex-api": "^5.3.2",
     "plex-api-pinauth": "^0.1.0",
     "qrcode.react": "^3.1.0",

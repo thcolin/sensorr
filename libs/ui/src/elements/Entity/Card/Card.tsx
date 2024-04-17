@@ -110,6 +110,9 @@ UIAbout.styles = {
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
+    '>a': {
+      display: 'inline',
+    },
   },
   subtitle: {
     display: 'flex',

@@ -93,7 +93,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         initial: null,
         serialize: () => ({}),
         component: components?.toggle || ControlsToggleButton,
-        props: { toggleOpen: togglePortal, fields, values, ...props },
+        props: { toggleOpen: togglePortal, fields, values, handleChange, ...props },
       },
     } : {}),
   })

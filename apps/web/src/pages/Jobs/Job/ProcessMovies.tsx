@@ -408,7 +408,7 @@ UIRecord.styles = {
   buttons: {
     display: 'flex',
     marginX: 4,
-    marginTop: '-2.5em',
+    marginTop: '-0.5em',
     zIndex: 1,
   },
   // input: {

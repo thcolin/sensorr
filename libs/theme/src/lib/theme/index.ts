@@ -9,7 +9,7 @@ import './modules.css'
 
 export const theme = {
   config: {
-    initialColorModeName: 'light',
+    initialColorModeName: 'dark',
     useColorSchemeMediaQuery: false,
   },
   ...variants,

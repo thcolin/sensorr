@@ -50,7 +50,7 @@ export const ZNABFilter = ({ ...props }) => {
   return (
     <RuleSortableSelect
       {...props as any}
-      label={emojize('☠️', 'ZNAB')}
+      label={emojize('☠️', 'Indexer')}
       options={sensorr.znabs.map(({ name }) => ({ label: name, value: name }))}
       isClearable={false}
       defaultOptions={true}

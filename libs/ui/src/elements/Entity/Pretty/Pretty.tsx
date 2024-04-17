@@ -78,7 +78,7 @@ const UIPretty = ({
       </div>
       {!!credits && (
         <div sx={UIPretty.styles.credits}>
-          <Credits credits={credits} />
+          <Credits credits={credits} space={4} />
         </div>
       )}
     </div>
@@ -117,7 +117,8 @@ UIPretty.styles = {
     flex: 1,
     marginTop: 0,
     paddingRight: 2,
-    paddingY: 2,
+    paddingTop: 6,
+    paddingBottom: 2,
     overflow: 'hidden',
   },
   credits: {

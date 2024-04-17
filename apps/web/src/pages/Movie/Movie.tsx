@@ -146,9 +146,9 @@ const Movie = ({ ...props }) => {
           ...acc,
           [`directors-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
-            label: emojize('🎬', curr.name),
+            label: emojize('🎬', curr.name || 'Loading'),
             child: MovieWithCreditsAndReviews,
-            ready: ready,
+            ready: ready && curr.id,
             query: { uri: `person/${curr.id}/movie_credits` },
             transform: (res) => {
               const entities = utils.sortCredits(res || { cast: [], crew: [] }, [], ['crew']).sort((a, b) => b.vote_count - a.vote_count).filter(credit => credit.job === 'Director').slice(0, 20)
@@ -191,9 +191,9 @@ const Movie = ({ ...props }) => {
           ...acc,
           [`headliners-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
-            label: emojize('🤵', curr.name),
+            label: emojize('🤵', curr.name || 'Loading'),
             child: MovieWithCreditsAndReviews,
-            ready: ready,
+            ready: ready && curr.id,
             query: { uri: `person/${curr.id}/movie_credits` },
             transform: (res) => {
               const entities = utils.sortCredits(res || { cast: [], crew: [] }, [], ['cast']).sort((a, b) => (b.vote_count / ((b.order + 1) / 5)) - (a.vote_count / ((a.order + 1) / 5))).slice(0, 20)

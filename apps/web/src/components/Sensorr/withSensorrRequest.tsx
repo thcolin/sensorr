@@ -81,7 +81,7 @@ export const withSensorrRequest = () => (WrappedComponent) => {
           <div sx={styles.empty}>
             <Warning
               emoji="📭"
-              title="No releases found for movie"
+              title="No releases found"
               subtitle={(
                 <span>
                   Sorry, no releases found on <strong>{[...new Set(progress.tasks.map(({ znab }) => znab.name))].join(', ')}</strong> with "{[...new Set(progress.tasks.map(({ term }) => term))].join('", "')}" terms

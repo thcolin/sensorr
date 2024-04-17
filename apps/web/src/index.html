@@ -7,8 +7,9 @@
     <link rel="icon" href="/assets/favicon.png" sizes="any" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon_180x180.png" />
-    <meta name="theme-color" content="#01D277" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="theme-color" content="#fafafa">
+    <meta name="background-color" content="#ededed">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Open+Sans:wght@400;600;700;800&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,11 +32,16 @@
     </div>
     <div id="root"></div>
     <script>
-      var mode = localStorage.getItem('theme-ui-color-mode') || 'dark'
+      var mode = localStorage.getItem('theme-ui-color-mode')
       document.head.insertAdjacentHTML(
         'beforeend',
-        `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode]}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode]}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode]}; }</style>`,
+        `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode || 'dark']}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode || 'dark']}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode || 'dark']}; }</style>`,
       )
+
+      if (mode) {
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', { dark: '#050505', light: '#fafafa' }[mode || 'dark'])
+        document.querySelector('meta[name="background-color"]').setAttribute('content', { dark: '#121212', light: '#ededed' }[mode || 'dark'])
+      }
     </script>
     <style type="text/css">
       @keyframes spin {
@@ -66,15 +72,13 @@
 
       html {
         box-sizing: border-box;
-        background-color: #01d277;
-        scroll-behavior: smooth;
+        background-color: var(--theme-ui-colors-grayLightest);
       }
 
       body {
         font-family: 'Open Sans', 'Segoe UI', Candara, 'Bitstream Vera Sans', 'DejaVu Sans', 'Bitstream Vera Sans', 'Trebuchet MS', Verdana, 'Verdana Ref', sans-serif;
         line-height: 1.2;
         font-weight: 400;
-        scroll-behavior: smooth;
         position: relative;
         margin: 0;
       }

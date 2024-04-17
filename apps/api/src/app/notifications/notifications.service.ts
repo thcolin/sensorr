@@ -86,8 +86,8 @@ export class NotificationsService {
         map(({ data: { meta } }) => ({
           title: `${meta?.movie?.title}${meta?.movie?.release_date ? ` (${(new Date(meta?.movie?.release_date)).getFullYear()})` : ''}`,
           body: {
-            'record': meta?.release?.proposal ? `📹 Record proposal (${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers)\n${meta?.release?.title}` : `📹 Recorded (${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers)\n${meta?.release?.title}`,
-            'doctor': meta?.release?.proposal ? `🚑 Keep up to date proposal (${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers)\n${meta?.release?.title}` : `🚑 Keeped up to date (${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers)\n${meta?.release?.title}`,
+            'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+            'doctor': `🚑 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
             'sync': `💊 Missing from your Plex Server`,
             'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
           }[meta?.command],

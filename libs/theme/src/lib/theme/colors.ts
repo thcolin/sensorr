@@ -134,9 +134,9 @@ export const dark = {
 }
 
 export const colors = {
-  // `light` is default
-  ...light,
-  modes: { dark },
+  // `dark` is default
+  ...dark,
+  modes: { light },
 }
 
 export const shadows = {

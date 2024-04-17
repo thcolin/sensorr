@@ -1,55 +1,38 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useRef } from 'react'
+import { useBreakpointIndex } from '@theme-ui/match-media'
 import { compose, emojize } from '@sensorr/utils'
 import { Icon, Sorting, Warning, Pane, withControls, Select, QuerySelect } from '@sensorr/ui'
-import { Policy } from '@sensorr/sensorr'
+import { Policy, SENSORR_POLICY_FALLBACK } from '@sensorr/sensorr'
+import { useThemeUI } from 'theme-ui'
 import toast from 'react-hot-toast'
 import usePortal from 'react-useportal'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import withProps from '../enhancers/withProps'
+import sensorr from '../../store/sensorr'
 import { withSensorrRequest } from './withSensorrRequest'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from './Controls/Oleoo'
 import { Progress } from './Controls/Progress'
 import { Release } from './Release'
-import sensorr from '../../store/sensorr'
 
 const UISensorr = compose(
   withSensorrRequest(),
   withControls({
-    title: 'Releases',
     level: 1,
     useStatistics: () => ({}),
-    watch: [['policy'], (next, onChange) => {
-      const policy = new Policy(next.policy.value, sensorr.policies)
-
-      onChange({
-        ...next,
-        sorting: {
-          value: policy.sorting,
-          sort: policy.descending,
-        },
-        ...Object.keys(policy.prefer).reduce((acc, key) => ({
-          ...acc,
-          [key]: [
-            ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
-            ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
-          ],
-        }), {}),
-        ...Object.keys(policy.avoid).reduce((acc, key) => ({
-          ...acc,
-          [key]: [
-            ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
-            ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
-          ],
-        }), {}),
-      }, false)
-    }],
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: '1fr minmax(0, 2fr) minmax(0, 1fr) min-content min-content',
+        gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 4fr) minmax(0, 1fr) min-content'],
         gridTemplateRows: 'auto',
-        gap: '3em',
-        gridTemplateAreas: `"title terms years refresh toggle"`,
+        gap: '0em',
+        gridTemplateAreas: [
+          `
+            "terms"
+            "years"
+            "toggle"
+          `,
+          `"terms years toggle"`
+        ],
       },
       aside: {
         display: 'grid',
@@ -58,7 +41,6 @@ const UISensorr = compose(
         gap: '2em',
         gridTemplateAreas: `
           "head"
-          "policy"
           "sorting"
           "znab"
           "encoding"
@@ -72,48 +54,113 @@ const UISensorr = compose(
     },
     components: {
       results: () => null,
-      refresh: ({ ongoing, refresh, style, ...props }) => (
-        <button sx={{ variant: 'button.reset', minWidth: '3em' }} style={style} onClick={refresh} disabled={ongoing}>
-          <Icon value={ongoing ? 'spinner' : 'refresh'} color='gray-100' sx={ongoing ? { height: '1.5em', width: '1.5em' } : { height: '1em', width: '1em' }} />
-        </button>
-      ),
-      toggle: ({ toggleOpen, fields, values, refresh, ongoing, ...props }) => (
-        <button
-          {...props}
-          type='button'
-          onClick={toggleOpen}
-          sx={{
-            variant: 'button.reset',
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: '8em',
-            '>svg': {
-              height: '1em',
-              width: '1em',
-              marginRight: 6,
-            },
-          }}
-        >
-          <Icon value='filters' />
-          <span sx={{ textTransform: 'capitalize' }}>{values.policy?.label ? `"${values.policy?.label}" Policy` : 'Customize Policy'}</span>
-        </button>
-      ),
+      toggle: ({ toggleOpen, fields, values, handleChange, ongoing, ...props }) => {
+        return (
+          <div
+            sx={{
+              gridArea: 'toggle',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '10em',
+              '>div': {
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                '>strong': {
+                  fontSize: 5,
+                  fontWeight: 'strong',
+                  marginTop: 6,
+                  marginLeft: 3,
+                },
+                '>label': {
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingX: 3,
+                  paddingY: 4,
+                  '>select': {
+                    variant: 'select.reset',
+                    color: 'whitePure',
+                    fontWeight: 'semibold',
+                    textAlign: 'center',
+                    textTransform: 'capitalize',
+                    fontSize: 5,
+                    paddingY: '3px',
+                    paddingX: '6px',
+                    backgroundColor: 'accentDarkest',
+                    borderRadius: '2px',
+                    '>option': {
+                      textTransform: 'capitalize',
+                    },
+                  },
+                },
+              },
+              '>button': {
+                variant: 'button.reset',
+                height: '100%',
+                backgroundColor: 'accentDark',
+                paddingX: 4,
+              },
+            }}
+          >
+            <div title="Sensorr will apply selected policy to sort and filter releases">
+              <strong>Policy</strong>
+              <label>
+                <select
+                  value={values.policy?.value}
+                  onChange={e => {
+                    const policy = new Policy(!e.target.value ? SENSORR_POLICY_FALLBACK : e.target.value, sensorr.policies)
+
+                    handleChange({
+                      policy: { label: e.target.value, value: e.target.value },
+                      sorting: {
+                        value: policy.sorting,
+                        sort: policy.descending,
+                      },
+                      ...Object.keys(policy.prefer).reduce((acc, key) => ({
+                        ...acc,
+                        [key]: [
+                          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+                          ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+                        ],
+                      }), {}),
+                      ...Object.keys(policy.avoid).reduce((acc, key) => ({
+                        ...acc,
+                        [key]: [
+                          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+                          ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
+                        ],
+                      }), {}),
+                    }, false)
+                  }}
+                >
+                  <option value=''>Custom</option>
+                  <hr/>
+                  {sensorr.policies.map(policy => (
+                    <option value={policy.name}>{policy.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {!values.policy?.value && (
+              <button onClick={toggleOpen}>
+                <Icon value='filters' height='1em' width='1em' />
+              </button>
+            )}
+          </div>
+        )
+      },
     },
     fields: {
       terms: {
         initial: [],
         serialize: (key, values) => ({ [key]: values.filter(({ disabled }) => !disabled).map(({ value }) => value) }),
         component: ({ style, ...props }) => (
-          <div style={{ display: 'flex', alignItems: 'center', ...style }}>
-            <QuerySelect
-              label='🔍'
-              options={[]}
-              isClearable={false}
-              defaultOptions={true}
-              resetable={false}
-              direction='row'
-              {...props}
-             />
+          <div title="Sensorr will search for all selected terms on configured indexers" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
+            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>Terms</strong>
+            <div sx={{ flex: 1, marginBottom: 8 }}><QueryInput direction='row' {...props} /></div>
           </div>
         ),
       },
@@ -121,41 +168,16 @@ const UISensorr = compose(
         initial: [],
         serialize: (key, values) => ({ [key]: values.filter(({ disabled }) => !disabled).map(({ value }) => value) }),
         component: ({ style, ...props }) => (
-          <div style={{ display: 'flex', alignItems: 'center', ...style }}>
-            <QuerySelect
-              label='📅'
-              options={[]}
-              isClearable={false}
-              defaultOptions={true}
-              resetable={false}
-              direction='row'
-              {...props}
-             />
+          <div title="Sensorr will filter releases with selected years" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
+            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>Years</strong>
+            <div sx={{ flex: 1, marginBottom: 8 }}><QueryInput direction='row' {...props} /></div>
           </div>
         ),
       },
       policy: {
         initial: null,
         serialize: (key, { value }) => ({ [key]: value }),
-        component: ({ style, ...props }) => (
-          <div style={style}>
-            <Select
-              label={emojize('🚨', 'Default Policy')}
-              menuPlacement={'auto'}
-              options={sensorr.policies.map(policy => ({ value: policy.name, label: policy.name }))}
-              closeMenuOnSelect={true}
-              isSearchable={false}
-              isClearable={false}
-              defaultOptions={true}
-              resetable={false}
-              sx={{
-                fontFamily: 'monospace',
-                fontWeight: 'semibold',
-              }}
-              {...props}
-             />
-          </div>
-        ),
+        component: () => null,
       },
       head: {
         initial: null,
@@ -166,9 +188,7 @@ const UISensorr = compose(
               title="Custom Policy"
               subtitle={(
                 <span>
-                  Narrow your releases search with <strong>temporary</strong> policy,
-                  <br/>
-                  <span style={{ textDecoration: 'underline' }}>define</span> and <span style={{ textDecoration: 'underline' }}>order</span> each rule tag by your preferences
+                  Narrow your releases search with custom policy, <span style={{ textDecoration: 'underline' }}>define</span> and <span style={{ textDecoration: 'underline' }}>order</span> each rule tag according to your preferences
                   <br/>
                   <span sx={{ display: 'inline-block', marginTop: 4, marginBottom: 8 }}>
                     <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'primaryDarkest', borderRadius: '2px', marginX: 8 }}>⭐ PREFER</code>
@@ -286,8 +306,11 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, button = null, lo
         </button>
       )}
       <Portal>
-        <Pane position='bottom' toggleOpen={togglePortal} open={open}>
+        <Pane position='bottom' toggleOpen={togglePortal} open={open} height='85vh'>
           <div sx={UISensorrWrapper.styles.container}>
+            <div sx={UISensorrWrapper.styles.head}>
+              <h4>Releases</h4>
+            </div>
             <UISensorr
               metadata={metadata}
               onChange={onChange}
@@ -307,10 +330,143 @@ UISensorrWrapper.styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    minHeight: '60vh',
+    minHeight: '85vh',
     width: '100%',
     backgroundColor: 'white',
+    '>nav >div': {
+      backgroundColor: 'accent',
+      paddingX: 12,
+      height: ['auto', '4.75rem'],
+    },
+  },
+  head: {
+    display: 'flex',
+    width: '100%',
+    backgroundColor: 'primary',
+    paddingX: 0,
+    paddingY: 2,
+    '>h4': {
+      variant: 'heading.default',
+      color: 'whitePure',
+      margin: 12,
+    },
   },
 }
 
 export const Sensorr = memo(UISensorrWrapper)
+
+const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
+  const { theme } = useThemeUI()
+  const breakpoint = useBreakpointIndex()
+
+  const ref = useRef()
+  const styles = useMemo(() => ({
+    container: (style) => ({
+      ...style,
+      flex: 1,
+      overflow: 'hidden',
+      margin: '0px',
+    }),
+    control: (style) => ({
+      ...style,
+      height: '100%',
+      backgroundColor: 'transparent',
+      border: 'none',
+      boxShadow: 'none',
+      cursor: 'text',
+      minHeight: 'unset',
+      '>div:first-of-type': {
+        display: 'flex',
+        padding: '0px 0.25em',
+      }
+    }),
+    input: (style) => ({
+      ...style,
+      flex: 1,
+      color: 'inherit',
+      fontSize: '1em',
+      textAlign: 'left',
+      marginLeft: '0.25em',
+      '>div>input': {
+        fontSize: '0.875em !important',
+        fontFamily: (theme.fonts as any).body,
+      },
+    }),
+    valueContainer: (style) => ({
+      ...style,
+      height: '100%',
+      padding: ['0.75em 0em 0.25em !important', '0em !important'][breakpoint],
+      flexWrap: { row: 'nowrap', column: 'wrap' }[direction] || 'wrap',
+      ...({
+        row: {
+          overflowX: 'auto',
+        },
+        column: {
+          overflow: 'auto',
+          maxHeight: '8em',
+        },
+      }[direction]),
+    }),
+    multiValue: (style, { data: { pinned, disabled } }) => ({
+      ...style,
+      position: 'relative',
+      flexShrink: 0,
+      backgroundColor: pinned ? disabled ? theme.rawColors['gray-300'] : theme.rawColors.accentDarkest : theme.rawColors.accentDark,
+      color: theme.rawColors.whitePure,
+      border: pinned ? `1px solid ${disabled ? theme.rawColors['gray-300'] : theme.rawColors.accentDarkest}` : 'none',
+      marginRight: '0.25em',
+    }),
+    multiValueLabel: (style, { data: { pinned, disabled } }) => ({
+      ...style,
+      color: theme.rawColors.whitePure,
+      fontSize: '0.875em',
+      fontFamily: (theme.fonts as any).body,
+      fontWeight: 600,
+      paddingRight: pinned ? '6px' : '0px',
+    }),
+    multiValueRemove: (style, { data: { pinned } }) => (pinned ? {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      cursor: 'pointer',
+      opacity: 0,
+    } : {
+      ...style,
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderLeft: `1px solid ${theme.rawColors.accent}`,
+      marginLeft: '0.25em',
+      cursor: 'pointer',
+      ':hover': {
+        backgroundColor: theme.rawColors.accentDarker,
+      },
+    }),
+  }), [theme.rawColors, theme.fonts, breakpoint])
+
+  return (
+    <div
+      sx={{
+        display: 'flex',
+        flexDirection: direction,
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <QuerySelect
+        ref={ref}
+        options={[]}
+        isClearable={false}
+        defaultOptions={true}
+        resetable={false}
+        direction='column'
+        value={value}
+        onChange={onChange}
+        styles={styles}
+      />
+    </div>
+  )
+}
+
+const QueryInput = memo(UIQueryInput)

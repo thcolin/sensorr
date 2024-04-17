@@ -15,7 +15,7 @@ const Credit = ({ index, entities, ...props }) => (
   </div>
 )
 
-const UICredits = ({ credits, length = 0, hidden = false, ...props }) => {
+const UICredits = ({ credits, length = 0, hidden = false, space = null, ...props }) => {
   const device = useDevice()
 
   return (
@@ -26,7 +26,7 @@ const UICredits = ({ credits, length = 0, hidden = false, ...props }) => {
       childProps={{ entities: credits }}
       entities={credits}
       compact={true}
-      space={device === 'mobile' ? 3 : 4}
+      space={space || (device === 'mobile' ? 3 : 4)}
     />
   )
 }

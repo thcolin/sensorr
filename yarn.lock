@@ -14407,10 +14407,10 @@ obuf@^1.0.0, obuf@^1.1.2:
   resolved "https://registry.yarnpkg.com/obuf/-/obuf-1.1.2.tgz#09bea3343d41859ebd446292d11c9d4db619084e"
   integrity sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==
 
-oleoo@^1.0.13:
-  version "1.0.13"
-  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.0.13.tgz#2aa003c13374c0ff9e6d1303c73058f32deb4e66"
-  integrity sha512-daPpssoVDcDtX5y85OXDCEkBZ5VJZM/fvnAXhf2f34ZjNZAkjT1NyBODbxaxOupn4cp81PGrtrAanCV5VjABDQ==
+oleoo@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.1.1.tgz#c5e000a1bf93a1b362cf65cf617062c0a2d71648"
+  integrity sha512-LEUu2rDHAMBqzHlVavV9kU+5uiGuMpXGnPaRK7hvsFtVyUSkIbJSOlfGWqCLLJfpJeU/iimDukCsZrga6k9Q4g==
 
 omggif@^1.0.10, omggif@^1.0.9:
   version "1.0.10"

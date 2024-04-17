@@ -97,8 +97,9 @@ UIList.styles = {
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',
-      // paddingBottom: [4, 0],
-      scrollBehavior: 'smooth',
+      paddingY: 4,
+      paddingX: 8,
+      scrollBehavior: ['auto', 'auto', 'smooth'],
     },
     entity: {
       flex: '0 0 auto',
@@ -119,7 +120,7 @@ UIList.styles = {
       overflowX: 'hidden',
       overflowY: 'auto',
       paddingBottom: 2,
-      scrollBehavior: 'smooth',
+      scrollBehavior: ['auto', 'auto', 'smooth'],
     },
     entity: {
       display: 'flex',

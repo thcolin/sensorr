@@ -1,4 +1,5 @@
 import Header from './Header/Header'
+import Navigation from './Header/elements/Navigation'
 import Body from './Body/Body'
 
 export const withLayout = (Page, name = '') => {
@@ -8,6 +9,7 @@ export const withLayout = (Page, name = '') => {
       <Body>
         <Page {...props} />
       </Body>
+      <Navigation display='app' />
     </>
   )
 

@@ -105,6 +105,7 @@ UIPane.styles = {
     color: '#FFF',
     transition: 'transform 400ms ease',
     transform: 'translateZ(0)',
+    paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5em)',
   },
   wrapper: {
     position: 'relative',

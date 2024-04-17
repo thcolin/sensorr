@@ -21,30 +21,30 @@ UIProgress.styles = {
     display: 'flex',
     flex: 1,
     overflowX: 'auto',
-    backgroundColor: 'primaryDarkest',
-    borderRight: '1px solid',
-    borderLeft: '1px solid',
-    borderColor: 'primaryDarkest',
+    backgroundColor: 'accentDark',
+    // borderRight: '1px solid',
+    // borderLeft: '1px solid',
+    // borderColor: 'primaryDarkest',
     minHeight: '3em',
   },
   step: {
     flex: 1,
     position: 'relative',
     display: 'flex',
-    backgroundColor: 'primaryDarkest',
-    borderTop: '1px solid',
-    borderColor: 'accentDarkest',
-    '&:not(:last-child)': {
-      borderRight: '1px solid',
-      borderColor: 'accentDarkest',
-    },
+    backgroundColor: 'accentDark',
+    // borderTop: '1px solid',
+    // borderColor: 'accentDarkest',
+    // '&:not(:last-child)': {
+    //   borderRight: '1px solid',
+    //   borderColor: 'accentDarkest',
+    // },
     '&:before': {
       content: '""',
       position: 'absolute',
       top: '0px',
-      left: '0px',
+      left: '2px',
       height: '100%',
-      backgroundColor: 'primaryDarker',
+      backgroundColor: 'accentDarker',
     },
     '>div': {
       position: 'relative',
@@ -100,7 +100,7 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
           cursor: done ? 'context-menu' : ongoing ? 'progress' : 'default',
           '&:before': {
             ...UIProgress.styles.step['&:before'],
-            width: done ? '100%' : ongoing ? '99%' : '0%',
+            width: done ? 'calc(100% - 2px)' : ongoing ? 'calc(99% - 2px)' : '0%',
             transition: `width ${done ? '200ms' : '60000ms'} ${done ? 'linear' : 'cubic-bezier(0.000, 1.000, 0.000, 1.000)'} ${ongoing ? '200ms' : '0ms'}`,
           }
         }}

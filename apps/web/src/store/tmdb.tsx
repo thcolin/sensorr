@@ -36,14 +36,15 @@ export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { t
     const controller = new AbortController()
     const cb = async () => {
       try {
-        setData(await tmdb.fetch(uri, params, { signal: controller.signal }))
+        const data = await tmdb.fetch(uri, params, { signal: controller.signal })
+        setData(data)
+        setLoading(false)
       } catch (error) {
         if (controller.signal.aborted) {
           return
         }
 
         setError(error)
-      } finally {
         setLoading(false)
       }
     }

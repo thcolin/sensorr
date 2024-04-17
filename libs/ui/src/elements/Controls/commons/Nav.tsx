@@ -39,7 +39,7 @@ const UINav = ({ layout, fields, defaultValues, onChange, statistics, ...props }
 UINav.styles = {
   element: {
     position: 'sticky',
-    top: '66px',
+    top: '65px',
     zIndex: 5,
   },
   container: {

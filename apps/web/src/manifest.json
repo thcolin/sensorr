@@ -4,7 +4,8 @@
   "description": "Your Friendly Digital Video Recorder 🍿📼",
   "scope": "/",
   "start_url": "/login",
-  "background_color": "#1a1a1a",
+  "theme_color": "#050505",
+  "background_color": "#121212",
   "orientation": "portrait",
   "display": "standalone",
   "icons": [

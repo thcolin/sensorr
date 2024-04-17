@@ -14,5 +14,5 @@ export const scrollToTop = (callback = null) => {
 
   window.addEventListener('scroll', onScroll)
   onScroll()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  window.scrollTo({ top: 0, behavior: (window as any).SENSORR_SCROLL_BEHAVIOR || 'smooth' })
 }

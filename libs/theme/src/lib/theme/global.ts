@@ -1,7 +1,4 @@
 export const global = {
-  html: {
-    boxSizing: 'border-box',
-  },
   '*, *:before, *:after': {
     boxSizing: 'inherit',
   },
@@ -10,7 +7,7 @@ export const global = {
     lineHeight: 'normal',
     fontWeight: 'normal',
     color: 'text',
-    scrollBehavior: 'smooth',
+    scrollBehavior: ['auto', 'auto', 'smooth'],
     position: 'relative',
     margin: '0px',
   },

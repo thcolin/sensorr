@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Icon, Link } from '@sensorr/ui'
 import { scrollToTop } from '@sensorr/utils'
 import { LoadingBar } from '../LoadingBar'
@@ -11,7 +11,7 @@ import Navigation from './elements/Navigation'
 
 const Logo = ({ ...props }) => {
   const [historyLength, setHistoryLength] = useState(0)
-  const { ios } = useDeviceContext()
+  const { device, historyResetIndex } = useDeviceContext()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -19,12 +19,12 @@ const Logo = ({ ...props }) => {
     setHistoryLength(window.history.state.idx)
   }, [location.key])
 
-  return (ios && historyLength) ? (
+  return (device === 'mobile' && (historyLength - historyResetIndex)) ? (
     <button sx={{ variant: 'button.reset', fontSize: 3, paddingX: '0.7em', paddingY: 6, '>svg': { transform: 'rotate(-90deg)' } }} onClick={() => navigate(-1)}>
       <Icon value='chevron' direction={true} width='1em' height='1em' />
     </button>
   ) : (
-    <Link {...props} to='/' sx={{ variant: 'link.reset', fontSize: 2, paddingX: 8 }} title='Sensorr' disabled={ios}>
+    <Link {...props} to='/' sx={{ variant: 'link.reset', fontSize: 2, paddingX: 8 }} title='Sensorr' disabled={device === 'mobile'}>
       🍿
     </Link>
   )
@@ -138,6 +138,7 @@ Toolbar.styles = {
 }
 
 const Header = ({ ...props }) => {
+  const { pwa } = useDeviceContext()
   const location = useLocation()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
@@ -159,7 +160,7 @@ const Header = ({ ...props }) => {
   }, [extanded])
 
   return (
-    <div sx={Header.styles.element} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
+    <div sx={Header.styles.element} style={{ position: pwa ? 'fixed' : 'sticky', zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
       <div sx={{ ...Header.styles.container, height: extanded ? '100vh' : 'initial' }}>
         <Toolbar />
         <div sx={Header.styles.history}>
@@ -167,7 +168,7 @@ const Header = ({ ...props }) => {
         </div>
         <SearchResults />
       </div>
-      <Navigation />
+      <Navigation display='web' />
       <hr sx={{ variant: 'hr.default' }} {...props} />
     </div>
   )
@@ -177,8 +178,8 @@ Header.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
-    position: 'sticky',
     top: '0px',
+    width: '100%',
     backgroundColor: 'white',
   },
   container: {

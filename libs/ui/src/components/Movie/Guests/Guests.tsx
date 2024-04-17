@@ -1,15 +1,7 @@
 import { memo } from 'react'
+import { useDevice } from '@sensorr/utils'
 import { List } from '../../../elements/List/List'
 import { Person } from '../../Person/Person'
-
-const guestLink = (entity) => ({
-  to: '/movie/requests',
-  state: {
-    controls: {
-      requested_by: { values: [entity.email], behavior: 'and' },
-    },
-  },
-})
 
 const Guest = ({ index, entities, ...props }) => (
   <div sx={{ position: 'relative', zIndex: 0, '&:hover': { zIndex: 1 } }}>
@@ -18,7 +10,15 @@ const Guest = ({ index, entities, ...props }) => (
       display='avatar'
       entity={entities[index]?.entity}
       compact={false}
-      link={guestLink}
+      link={() => ({
+        to: '/movie/requests',
+        state: {
+          controls: {
+            state: 'archived|wished|pinned|missing|ignored',
+            requested_by: { values: [entities[index]?.entity.override], behavior: 'and' },
+          },
+        },
+      })}
     />
   </div>
 )
@@ -30,21 +30,33 @@ const CompactGuest = ({ index, entities, ...props }) => (
       display='avatar'
       entity={entities[index]?.entity}
       compact={true}
-      link={guestLink}
+      link={() => ({
+        to: '/movie/requests',
+        state: {
+          controls: {
+            state: 'archived|wished|pinned|missing|ignored',
+            requested_by: { values: [entities[index]?.entity.override], behavior: 'and' },
+          },
+        },
+      })}
     />
   </div>
 )
 
-const UIGuests = ({ guests, compact = true, hidden = false, ...props }) => (
-  <List
-    id='guests'
-    length={Math.min(5, guests?.length)}
-    child={compact ? CompactGuest : Guest}
-    childProps={{ ...props?.childProps, entities: guests }}
-    entities={guests}
-    compact={true}
-    space={2}
-  />
-)
+const UIGuests = ({ guests, compact = true, hidden = false, space = null, ...props }) => {
+  const device = useDevice()
+
+  return (
+    <List
+      id='guests'
+      length={Math.min(5, guests?.length)}
+      child={compact ? CompactGuest : Guest}
+      childProps={{ ...props?.childProps, entities: guests }}
+      entities={guests}
+      compact={true}
+      space={space || (device === 'mobile' ? 2 : 3)}
+    />
+  )
+}
 
 export const Guests = memo(UIGuests)

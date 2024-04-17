@@ -321,6 +321,7 @@ UITicket.styles = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: '1.5em',
     borderLeft: '2px solid',
     transition: 'color 400ms ease-in-out, border-color 400ms ease-in-out',
     paddingRight: 8,

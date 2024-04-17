@@ -88,7 +88,7 @@ const UIDetails = ({
             Contribute to TheMovieDB
           </a>
           {behavior === 'movie' && (
-            <div sx={{ width: '100%', maxWidth: ['17em', 'unset'], marginTop: ['2em', '4em'], marginBottom: ['1em', '2em'] }}>
+            <div sx={{ width: '100%', maxWidth: ['17em', 'unset'], marginTop: ['2em', '4em'], marginBottom: ['1em', '2em'], marginRight: ['-1em', '0em'] }}>
               <MovieActions
                 palette={!palette.loading && !palette.initial ? palette.palette : null}
                 ready={ready && state !== 'loading'}

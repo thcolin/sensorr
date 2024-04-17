@@ -6,6 +6,8 @@ import { AbstractEntity, AbstractEntityProps } from '../../components/AbstractEn
 import { Grid, GridProps } from '../../elements/Grid/Grid'
 import { List, ListProps } from '../../elements/List/List'
 import { Warning, WarningProps } from '../../atoms/Warning/Warning'
+import { NavLink } from 'react-router-dom'
+import { Icon } from '@sensorr/ui'
 
 const withEntity = (context) => (WrappedComponent) => {
   const withEntity = ({ index, placeholder = false, props, ready, ...rest }) => {
@@ -109,7 +111,16 @@ const UIEntities = ({
   return (!!total || !ready || !hide) && (
     <EntitiesContextProvider entities={entities}>
       <div sx={UIEntities.styles.element}>
-        {label && <div sx={UIEntities.styles.label}>{label}</div>}
+        {label && (
+          <div sx={UIEntities.styles.label}>
+            {(typeof label === 'string' && more) ? (
+              <NavLink to={more.to} state={more.state}>
+                {label}
+                <Icon value='chevron' direction={false} />
+              </NavLink>
+            ) : label}
+          </div>
+        )}
         {display === 'grid' ? (
           <Grid
             {...rest}
@@ -144,17 +155,36 @@ UIEntities.styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    paddingTop: 4,
+    paddingY: 4,
   },
   label: {
     display: 'flex',
     alignItems: 'center',
     paddingX: 4,
-    marginBottom: 4,
+    marginBottom: [12, 4],
+    marginTop: [4, 12],
     fontFamily: 'heading',
     fontWeight: 'strong',
     overflowX: 'auto',
     overflowY: 'hidden',
+    '>a': {
+      variant: 'link.reset',
+      display: 'flex',
+      alignItems: 'center',
+      '>svg': {
+        display: ['block', 'none'],
+        height: '1.5em',
+        width: '1.5em',
+        marginLeft: 6,
+        paddingTop: 8,
+        paddingRight: 9,
+        paddingBottom: 9,
+        paddingLeft: 9,
+        backgroundColor: 'gray',
+        borderRadius: '1.5em',
+        transform: 'rotate(-90deg)',
+      },
+    },
   },
   subtitle: {
     paddingX: 4,
