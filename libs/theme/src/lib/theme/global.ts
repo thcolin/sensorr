@@ -7,7 +7,7 @@ export const global = {
     lineHeight: 'normal',
     fontWeight: 'normal',
     color: 'text',
-    scrollBehavior: ['auto', 'auto', 'smooth'],
+    scrollBehavior: 'auto', // ['auto', 'auto', 'smooth'],
     position: 'relative',
     margin: '0px',
   },

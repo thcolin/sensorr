@@ -150,8 +150,8 @@ export const History = ({ ...props }) => {
     <div ref={ref} sx={History.styles.element} style={(historyDisplay && !!history.length) ? {} : { display: 'none' }}>
       <h4>Recent searches</h4>
       <ul>
-        {history.map(query => (
-          <li>
+        {history.map((query, i) => (
+          <li key={i}>
             <span
               onClick={() => {
                 setInput(query)

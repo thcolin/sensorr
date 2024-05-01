@@ -21,7 +21,7 @@ import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
-import withHistoryState from '../../components/enhancers/withHistoryState'
+import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 
 const Movie = ({ ...props }) => (
   <MovieWithCreditsAndReviews {...props as any} />
@@ -186,7 +186,7 @@ const Requests = compose(
       return statistics
     },
   }),
-  withHistoryState(),
+  withPlacehodersHistoryState(),
 )(Entities)
 
 export default Requests

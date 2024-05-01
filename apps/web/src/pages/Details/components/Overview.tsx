@@ -1,12 +1,10 @@
 import { memo, useRef, useEffect, useState } from 'react'
-import { createHistoryState } from '@sensorr/utils'
+import { useHistoryState } from '@sensorr/utils'
 import { Icon } from '@sensorr/ui'
-
-const useHistoryState = createHistoryState('overview', false)
 
 const UIOverview = ({ children, ...props }) => {
   const ref = useRef(null)
-  const [expanded, setExpanded] = useHistoryState() as [any, any]
+  const [expanded, setExpanded] = useHistoryState('overview', false)
   const [clamp, setClamp] = useState(false)
 
   useEffect(() => {

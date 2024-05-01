@@ -24,7 +24,7 @@ const Login = () => {
         const body = await err.json()
         setError(body.message)
       } catch (e) {
-        setError('Unknown error, contact administrator')
+        setError('Unknown error, check Docker containers logs')
       }
     }
 

@@ -35,7 +35,7 @@ const UIPane = ({ position, height = '75vh', width = '25em', background: backgro
         style={{
           top: {
             height: height,
-            maxHeight: '100vh',
+            maxHeight: '100dvh',
             width: '100vw',
             top: '0em',
             right: '0em',
@@ -44,7 +44,7 @@ const UIPane = ({ position, height = '75vh', width = '25em', background: backgro
             zIndex: 6 + level,
           },
           right: {
-            height: '100vh',
+            height: '100dvh',
             width: width,
             maxWidth: '100vw',
             top: '0em',
@@ -55,7 +55,7 @@ const UIPane = ({ position, height = '75vh', width = '25em', background: backgro
           },
           bottom: {
             height: height,
-            maxHeight: '100vh',
+            maxHeight: '100dvh',
             width: '100vw',
             right: '0em',
             bottom: '0em',
@@ -64,7 +64,7 @@ const UIPane = ({ position, height = '75vh', width = '25em', background: backgro
             zIndex: 6 + level,
           },
           left: {
-            height: '100vh',
+            height: '100dvh',
             width: width,
             maxWidth: '100vw',
             top: '0em',
@@ -105,7 +105,6 @@ UIPane.styles = {
     color: '#FFF',
     transition: 'transform 400ms ease',
     transform: 'translateZ(0)',
-    paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5em)',
   },
   wrapper: {
     position: 'relative',

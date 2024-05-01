@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { utils } from '@sensorr/tmdb'
@@ -8,9 +8,9 @@ import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { usePersonsMetadataContext, withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import withProps from '../../components/enhancers/withProps'
-import { useAnimationContext } from '../../contexts/Animation/Animation'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 
 const PersonDetails = compose(
   withPersonsMetadataContext(),
@@ -18,10 +18,10 @@ const PersonDetails = compose(
 )(Details)
 
 const Person = ({ ...props }) => {
+  const { restoreScrollPosition } = useScrollPositionContext()
   const { id } = useParams() as any
   const { t } = useTranslation()
   const { device } = useDeviceContext()
-  const { ongoing } = useAnimationContext() as any
   const { metadata: { [id]: metadata } } = usePersonsMetadataContext() as any
 
   const { loading, error, data, details } = useTMDBRequest(`person/${id}`, {
@@ -37,7 +37,13 @@ const Person = ({ ...props }) => {
     sort_by: 'primary_release_date.desc',
   }, { transform: transformMovieDetails })
 
-  const ready = !ongoing && !loading && (data?.id || error)
+  const ready = !loading && !!(data?.id || error)
+
+  useEffect(() => {
+    if (ready) {
+      restoreScrollPosition()
+    }
+  }, [ready])
 
   const tabs = useMemo(() => {
     const known = {

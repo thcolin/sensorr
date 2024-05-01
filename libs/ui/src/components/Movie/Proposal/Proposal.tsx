@@ -1,6 +1,6 @@
 import { Fragment, memo } from 'react'
 import Tippy from '@tippyjs/react'
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 import { emojize, filesize } from '@sensorr/utils'
 import { Icon } from '../../../atoms/Icon/Icon'
 import { Badge } from '../../../atoms/Badge/Badge'

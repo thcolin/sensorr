@@ -1,7 +1,7 @@
-import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
 import { Icon } from '@sensorr/ui'
-import { createHistoryState, createPendingReducer } from '@sensorr/utils'
+import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
@@ -12,8 +12,6 @@ import { Tabs } from '../../components/Entities/Tabs'
 import { MovieActions } from './components/Actions'
 import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
-
-const useMeaningfulState = createHistoryState('meaningful', false)
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -37,7 +35,7 @@ const UIDetails = ({
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
-  const [meaningfulState, setMeaningfulState] = useMeaningfulState() as [any, any]
+  const [meaningfulState, setMeaningfulState] = useHistoryState('meaningful', false)
 
   const toggleSensorr = useRef() as any
 
@@ -53,8 +51,6 @@ const UIDetails = ({
     },
     poster,
   )
-
-  const handleMeaningfulToggle = useCallback((e) => setMeaningfulState(e.target.open), [])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
   const ready = props.ready !== false && Object.values(pending).every(pending => !pending) && !!entity?.id
@@ -201,7 +197,7 @@ const UIDetails = ({
                 </React.Fragment>
               )}
               <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
-                <details sx={UIDetails.styles.details} onToggle={handleMeaningfulToggle} open={meaningfulState}>
+                <details sx={UIDetails.styles.details} onToggle={(e: any) => setMeaningfulState(e.target.open)} open={meaningfulState}>
                   <summary>
                     <span />
                     {

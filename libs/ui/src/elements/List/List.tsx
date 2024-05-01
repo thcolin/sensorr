@@ -1,10 +1,22 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Cast, Collection, Crew, Movie, Person } from '@sensorr/tmdb'
-import { useHistoryState } from '@sensorr/utils'
+import { useHistoryState, useResponsiveValue } from '@sensorr/utils'
+import nanobounce from 'nanobounce'
+import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { Badge, BadgeProps } from '../../atoms/Badge/Badge'
 import { Icon } from '../../atoms/Icon/Icon'
 import { Link, LinkProps } from '../../atoms/Link/Link'
-import nanobounce from 'nanobounce'
+
+const withGridItemContainer = () => (WrappedComponent) => {
+  const withGridItemContainer = ({ style, index, readyInViewport, scrolling, ...props }) => (
+    <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
+      <WrappedComponent {...props} index={index} placeholder={!readyInViewport} />
+    </div>
+  )
+
+  withGridItemContainer.displayName = `withGridItemContainer(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return withGridItemContainer
+}
 
 export interface ListProps {
   id: string
@@ -16,7 +28,9 @@ export interface ListProps {
   display?: 'row' | 'column' | 'wrap'
   stack?: boolean
   compact?: boolean
+  virtual?: boolean
   more?: Omit<MoreProps, 'rotate'>
+  onMore?: () => void
   space?: number
 }
 
@@ -30,24 +44,27 @@ const UIList = ({
   display = 'row',
   stack = false,
   compact = false,
+  virtual = true,
   more = null,
+  onMore = null,
   space = 4,
 }: ListProps) => {
+  const mobile = useResponsiveValue([true, false])
   const ref = useRef<HTMLDivElement>()
-  const scrollDebouncer = useMemo(() => nanobounce(100), [])
-  const resetDebouncer = useMemo(() => nanobounce(500), [])
-  const resetScroll = useCallback(([x, y]) => ref.current && ref.current.scroll(x, y), [ref.current])
-  const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0])
+  const debounce = useMemo(() => nanobounce(100), [])
+  const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0], { enabled: !stack })
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     if (!stack) {
-      scrollDebouncer(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
+      debounce(() => setScroll([ref.current?.scrollLeft || 0, ref.current?.scrollTop || 0]))
     }
   }, [id])
 
+  const WrappedChild = useMemo(() => withGridItemContainer()(Child), [Child])
+
   useEffect(() => {
     if (!stack) {
-      resetDebouncer(() => resetScroll(scroll))
+      ref.current.scroll(...scroll)
     }
   }, [id])
 
@@ -56,6 +73,7 @@ const UIList = ({
     container: {
       ...UIList.styles[display].container,
       ...(compact ? { paddingY: 12 } : {}),
+      ...((mobile && virtual && display === 'row') ? { display: 'block' } : {}),
     },
     entity: {
       ...UIList.styles[display].entity,
@@ -66,19 +84,32 @@ const UIList = ({
         },
       } : {}),
     },
-  }), [display, compact, space])
+  }), [display, compact, space, mobile, virtual])
 
   return (
     <div ref={ref} sx={styles.container} onScroll={handleScroll}>
-      {override || (Array(length)
-        .fill(null)
-        .map((foo, index) => (
-          <div key={stack ? (entities || [])[index]?.id || index : index} sx={styles.entity}>
-            <Child {...childProps} index={index} />
-          </div>
-        ))
+      {override || (
+        (mobile && virtual && display === 'row') ? (
+          <ResponsiveVirtualGrid
+            total={length}
+            cell={{ height: 240, width: 120 }}
+            onRender={onMore || null}
+            child={WrappedChild}
+            childProps={childProps}
+            viewportOffset={2}
+            scrollContainer={ref.current}
+            scrollDirection={'horizontal'}
+          />
+        ) : (Array(length)
+          .fill(null)
+          .map((foo, index) => (
+            <div key={stack ? (entities || [])[index]?.id || index : index} sx={styles.entity}>
+              <Child {...childProps} index={index} />
+            </div>
+          ))
+        )
       )}
-      {!override && !!more && ( //  && length >= 20
+      {!override && !(mobile && virtual && display === 'row') && !!more && ( //  && length >= 20
         <div sx={styles.more}>
           <More {...more} rotate={{ column: true, row: false }[display]} />
         </div>
@@ -99,7 +130,7 @@ UIList.styles = {
       overflowY: 'hidden',
       paddingY: 4,
       paddingX: 8,
-      scrollBehavior: ['auto', 'auto', 'smooth'],
+      scrollBehavior: 'auto', // ['auto', 'auto', 'smooth'],
     },
     entity: {
       flex: '0 0 auto',
@@ -120,7 +151,7 @@ UIList.styles = {
       overflowX: 'hidden',
       overflowY: 'auto',
       paddingBottom: 2,
-      scrollBehavior: ['auto', 'auto', 'smooth'],
+      scrollBehavior: 'auto', // ['auto', 'auto', 'smooth'],
     },
     entity: {
       display: 'flex',

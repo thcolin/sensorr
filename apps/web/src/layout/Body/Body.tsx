@@ -1,19 +1,20 @@
-import { useDeviceContext } from '../../contexts/Device/Device'
+import { useEffect, useState } from 'react'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 
 const Body = ({ ...props }) => {
-  const { pwa } = useDeviceContext()
+  const { ref, restoreScrollPosition } = useScrollPositionContext()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (!ready) {
+      setReady(true)
+    }
+
+    restoreScrollPosition()
+  }, [ready])
 
   return (
-    <div
-      {...props}
-      sx={{
-        ...Body.styles.element,
-        ...(pwa ? {
-          marginTop: ['4em', 12],
-          marginBottom: ['calc(max(1em, env(safe-area-inset-bottom)) + 2.625em)', 12],
-        } : {}),
-      }}
-    ></div>
+    <div id='body' ref={ref} {...props} sx={Body.styles.element}></div>
   )
 }
 
@@ -21,9 +22,11 @@ Body.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     flex: 1,
     backgroundColor: 'grayLightest',
+    overflowY: 'auto',
+    overflowAnchor: 'none',
   },
 }
 

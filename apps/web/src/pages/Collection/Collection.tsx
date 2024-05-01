@@ -1,18 +1,18 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { transformCollectionDetails, Warning } from '@sensorr/ui'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
-import { useAnimationContext } from '../../contexts/Animation/Animation'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 
 const Collection = ({ ...props }) => {
+  const { restoreScrollPosition } = useScrollPositionContext()
   const { id } = useParams() as any
   const { t } = useTranslation()
   const { device } = useDeviceContext()
-  const { ongoing } = useAnimationContext() as any
   const { loading, error, data, details } = useTMDBRequest(`collection/${id}`, {
     append_to_response: 'images',
     include_image_language: 'en,null',
@@ -23,7 +23,13 @@ const Collection = ({ ...props }) => {
   // TODO: Get all details from collection movies
   // TODO: Get all credits and display them in 'credits' tab
 
-  const ready = !ongoing && !loading && data?.id || error
+  const ready = !loading && !!(data?.id || error)
+
+  useEffect(() => {
+    if (ready) {
+      restoreScrollPosition()
+    }
+  }, [ready])
 
   const tabs = useMemo(() => {
     return [

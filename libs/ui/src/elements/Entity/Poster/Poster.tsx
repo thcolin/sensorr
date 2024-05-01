@@ -73,6 +73,7 @@ const UIPoster = ({
             ready={ready}
             path={details?.poster}
             onReady={onPosterReady}
+            // sx={{ ':hover': { viewTransitionName: `poster` } }}
           />
         </Link>
         <div

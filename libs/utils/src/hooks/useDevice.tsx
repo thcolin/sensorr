@@ -1,4 +1,4 @@
-import { useBreakpointIndex } from '@theme-ui/match-media'
+import { useBreakpointIndex } from '@sensorr/utils'
 
 export const useDevice = () => {
   const breakpoint = useBreakpointIndex()

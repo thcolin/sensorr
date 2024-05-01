@@ -14407,10 +14407,10 @@ obuf@^1.0.0, obuf@^1.1.2:
   resolved "https://registry.yarnpkg.com/obuf/-/obuf-1.1.2.tgz#09bea3343d41859ebd446292d11c9d4db619084e"
   integrity sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==
 
-oleoo@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.1.1.tgz#c5e000a1bf93a1b362cf65cf617062c0a2d71648"
-  integrity sha512-LEUu2rDHAMBqzHlVavV9kU+5uiGuMpXGnPaRK7hvsFtVyUSkIbJSOlfGWqCLLJfpJeU/iimDukCsZrga6k9Q4g==
+oleoo@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/oleoo/-/oleoo-1.1.5.tgz#40ac737f17aa7662b08055ab83df6df0eee80ef5"
+  integrity sha512-6gsu1Zx1mr5VhipL+x+uX6/L851K8AGGq05aMDnG4tyseBE4jDYlW72EGzGe0Led/4gqHDE/RDFZnwR9x6oQYg==
 
 omggif@^1.0.10, omggif@^1.0.9:
   version "1.0.10"
@@ -15942,10 +15942,10 @@ react-reconciler@^0.29.0:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
 
-react-responsive-virtual-grid@^0.0.24:
-  version "0.0.24"
-  resolved "https://registry.yarnpkg.com/react-responsive-virtual-grid/-/react-responsive-virtual-grid-0.0.24.tgz#d7fc65e86e6702b0b28b1b7e7af49272ac151de5"
-  integrity sha512-nRIv815LpUgRLyUR0adg3TaBYhWoeiDfMeGrl52fOMse7VkXhvPG+1o1Dnrlq+jAhCIMy7QWzUU66rfxeCWnlg==
+react-responsive-virtual-grid@^0.0.26:
+  version "0.0.26"
+  resolved "https://registry.yarnpkg.com/react-responsive-virtual-grid/-/react-responsive-virtual-grid-0.0.26.tgz#e88b7732d9c847158a7649a28d0b21e9891e8a7b"
+  integrity sha512-TW3QxX4EDGij6tWhxifjXbR+M4Pn/0FG1tA/7h4KiuIz2bSnG9CdOAzi8y27wuNrgsLi3X5btn6YjjB2DQVmfA==
   dependencies:
     "@juggle/resize-observer" "^3.3.1"
     nanobounce "^1.1.0"
@@ -18877,6 +18877,11 @@ use-code-input@0.0.2:
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/use-code-input/-/use-code-input-0.0.2.tgz#e330bcd0840916849c0f3daaf24b59ba7b0b4187"
   integrity sha512-lDIUiRca0K8sF+c/KZ9cz5g6oPqlFiTmaDgwGzg0wlNSnFAvROtweKy0XpihEWJwo2tjETtgAxIh82RVGaBFHQ==
+
+use-ripple-hook@^1.0.24:
+  version "1.0.24"
+  resolved "https://registry.yarnpkg.com/use-ripple-hook/-/use-ripple-hook-1.0.24.tgz#61296a08026003e5916534f4a1f8936d07b99274"
+  integrity sha512-K4/Xhf9mP4pwMiI/wvBR9Je9KH0qWzLVLDgaW61yM6YOXLSgYRkF5DUXl7Nq7ltk1GUHikxKhxT1Ic7GZcO6OA==
 
 use-ssr@^1.0.25:
   version "1.0.25"

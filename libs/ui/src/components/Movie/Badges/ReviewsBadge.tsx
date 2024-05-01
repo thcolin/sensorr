@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 import Tippy from '@tippyjs/react'
 import { utils } from '@sensorr/tmdb'
 import { Badge } from '../../../atoms/Badge/Badge'
@@ -33,7 +33,7 @@ export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews, palette, 
       content={(
         <span sx={{ display: 'flex', alignItems: 'center', '>span:not(:last-of-type)': { marginRight: 6 } }}>
           {(reviews || [])?.map((review: any) => (
-            <span sx={{ display: 'inline-flex', alignItems: 'center' }}>
+            <span key={review.source} sx={{ display: 'inline-flex', alignItems: 'center' }}>
               <Icon
                 value={{ 'TMDB': 'tmdb', 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
                 height={{ 'TMDB': '1em', 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}

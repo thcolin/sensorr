@@ -4,7 +4,6 @@ import toast from 'react-hot-toast'
 import { useControlsState } from '@sensorr/ui'
 import { API } from '@sensorr/services'
 import { TMDB } from '@sensorr/tmdb'
-import { useAnimationContext } from '../../contexts/Animation/Animation'
 
 interface withFetchQueryProps {
   debounce?: boolean
@@ -51,7 +50,6 @@ const withFetchQuery = (
     const [error, setError] = useState(null)
 
     const debouncers = useMemo(() => ({ sync: nanobounce(0), async: nanobounce(800) }), [])
-    const { ongoing } = useAnimationContext() as any
 
     const fetcher = useCallback(async (uri, params) => {
       try {
@@ -92,7 +90,7 @@ const withFetchQuery = (
       setLoading(true)
       setError(null)
 
-      if ((useControlsValues && !controlsQuery?.ready) || (props as any).ready === false || (props as any).loading === true || ongoing) {
+      if ((useControlsValues && !controlsQuery?.ready) || (props as any).ready === false || (props as any).loading === true) {
         return
       }
 
@@ -111,7 +109,7 @@ const withFetchQuery = (
           setLoading(false)
         }
       })
-    }, [controlsQuery?.ready, query, (props as any).ready, (props as any).loading, (props as any).error, ongoing])
+    }, [controlsQuery?.ready, query, (props as any).ready, (props as any).loading, (props as any).error])
 
     const entities = useMemo(() => Object.entries(pages).reduce((acc, [page, entities]: any) => ({
       ...acc,

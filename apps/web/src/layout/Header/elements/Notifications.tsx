@@ -1,14 +1,18 @@
 import { memo, useEffect, useMemo } from 'react'
 import { Button, Guests, Icon, Link, MovieState, Pane, Picture, Warning } from '@sensorr/ui'
+import { emojize, filesize } from '@sensorr/utils'
+import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
-import { emojize, filesize } from '@sensorr/utils'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 
 const UINotifications = ({ ...props }) => {
+  const { pwa } = useDeviceContext()
+  const [ref, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const { notifications, loading, subscribable, subscribed, subscribeNotifications } = useNotificationsContext() as any
   const count = useMemo(() => notifications.filter(notification => !notification.meta?.seen).length, [notifications])
@@ -21,7 +25,7 @@ const UINotifications = ({ ...props }) => {
 
   return (
     <>
-      <button onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
+      <button {...(pwa ? { ref, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
         {!!count && <span>{count}</span>}
         🔔
       </button>
@@ -42,7 +46,7 @@ const UINotifications = ({ ...props }) => {
             <div>
               {notifications.length ? (
                 <div>
-                  {notifications.map(notification => <Notification {...notification} closePortal={closePortal} />)}
+                  {notifications.map(notification => <Notification key={notification._id} {...notification} closePortal={closePortal} />)}
                 </div>
               ) : (
                 <Warning emoji='🔔' title="Up to date" subtitle="Not notifications yet" />
@@ -58,12 +62,14 @@ const UINotifications = ({ ...props }) => {
 UINotifications.styles = {
   button: {
     variant: 'button.reset',
-    display: 'flex',
-    alignItems: 'flex-start',
+    flex: 1,
     position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '4rem',
     fontSize: 2,
     color: 'whitePure',
-    padding: 8,
     '>span': {
       marginTop: '-0.25em',
       paddingX: 8,

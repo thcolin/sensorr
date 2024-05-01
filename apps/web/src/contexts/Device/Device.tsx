@@ -5,7 +5,7 @@ const deviceContext = createContext({})
 
 export const Provider = ({ ...props }) => {
   const device = useDevice()
-  const [historyResetIndex, setHistoryResetIndex] = useState(0)
+  const [historyIndex, setHistoryIndex] = useState(0)
   const pwa = window.matchMedia('(display-mode: standalone)').matches
   const ios = (
     (/iPad|iPhone|iPod/.test(navigator.platform) ||
@@ -18,8 +18,8 @@ export const Provider = ({ ...props }) => {
   }, [device])
 
   return (
-    <deviceContext.Provider {...props} value={{ device, ios, pwa, historyResetIndex, setHistoryResetIndex }} />
+    <deviceContext.Provider {...props} value={{ device, ios, pwa, historyIndex, setHistoryIndex }} />
   )
 }
 
-export const useDeviceContext = () => useContext(deviceContext) as ({ device: 'mobile' | 'tablet' | 'desktop', ios: boolean, pwa: boolean, historyResetIndex: number, setHistoryResetIndex: any })
+export const useDeviceContext = () => useContext(deviceContext) as ({ device: 'mobile' | 'tablet' | 'desktop', ios: boolean, pwa: boolean, historyIndex: number, setHistoryIndex: any })

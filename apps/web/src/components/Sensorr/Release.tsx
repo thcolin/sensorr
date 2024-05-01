@@ -434,6 +434,12 @@ const logos = {
         <span style={{ position: 'absolute', top: '0.375em', left: '0.375em' }}>🇫🇷</span>
       </abbr>
     ),
+    'MULTi-VFQ': (
+      <abbr style={{ position: 'relative', paddingRight: '0.375em' }}>
+        <span>🇺🇳</span>
+        <span style={{ position: 'absolute', top: '0.375em', left: '0.375em' }}>🇨🇦</span>
+      </abbr>
+    ),
     FRENCH: <abbr>🇫🇷</abbr>,
     VFQ: <abbr>🇨🇦</abbr>,
     VOSTFR: (

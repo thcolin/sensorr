@@ -27,6 +27,8 @@ const UICredits = ({ credits, length = 0, hidden = false, space = null, ...props
       entities={credits}
       compact={true}
       space={space || (device === 'mobile' ? 3 : 4)}
+      virtual={false}
+      stack={true}
     />
   )
 }

@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 
 const withGridItemContainer = () => (WrappedComponent) => {
@@ -49,6 +49,7 @@ const UIGrid = ({
       child={WrappedChild}
       childProps={childProps}
       viewportRowOffset={6}
+      scrollContainer={document.getElementById('body')}
     />
   )
 }

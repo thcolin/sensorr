@@ -55,6 +55,8 @@ const UIGuests = ({ guests, compact = true, hidden = false, space = null, ...pro
       entities={guests}
       compact={true}
       space={space || (device === 'mobile' ? 2 : 3)}
+      virtual={false}
+      stack={true}
     />
   )
 }

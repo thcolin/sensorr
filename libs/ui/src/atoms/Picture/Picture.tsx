@@ -43,6 +43,7 @@ export interface PictureProps extends Omit<React.HTMLAttributes<HTMLSpanElement>
   palette?: Palette
   empty?: React.FC<any>
   onReady?: (event: any, error: boolean) => void
+  lazy?: boolean
 }
 
 export interface MoviePictureProps extends PictureProps {
@@ -57,6 +58,7 @@ function UIPicture({
   path,
   size = 'w300',
   ready = true,
+  lazy = true,
   palette = null,
   empty: Empty,
   onReady,
@@ -123,7 +125,7 @@ function UIPicture({
   return (
     <span {...props} sx={UIPicture.styles.element} style={styles.element}>
       {!!Empty && <Empty style={styles.empty} sx={UIPicture.styles.empty} />}
-      <img ref={ref} {...onLoadProps} src={src} sx={UIPicture.styles.image} style={styles.image as any} loading='lazy' decoding='async' />
+      <img ref={ref} {...onLoadProps} src={src} sx={UIPicture.styles.image} style={styles.image as any} loading={lazy ? 'lazy' : 'eager'} decoding='async' />
     </span>
   )
 }

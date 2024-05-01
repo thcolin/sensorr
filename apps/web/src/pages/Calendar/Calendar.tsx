@@ -22,7 +22,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
-import withHistoryState from '../../components/enhancers/withHistoryState'
+import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import withFetchCalendarQuery from './withFetchCalendarQuery'
 
 export const Calendar = compose(
@@ -241,7 +241,7 @@ export const Calendar = compose(
       },
     },
   }),
-  withHistoryState(),
+  withPlacehodersHistoryState(),
 )(Entities)
 
 export default Calendar

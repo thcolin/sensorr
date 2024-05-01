@@ -73,6 +73,7 @@
       html {
         box-sizing: border-box;
         background-color: var(--theme-ui-colors-grayLightest);
+        overscroll-behavior: none;
       }
 
       body {
@@ -94,14 +95,13 @@
       #root {
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        min-height: 100vh;
+        height: 100dvh;
         overflow: hidden;
       }
 
       #root-loading {
         position: fixed;
-        height: 100vh;
+        height: 100dvh;
         width: 100vw;
         display: flex;
         flex-direction: column;

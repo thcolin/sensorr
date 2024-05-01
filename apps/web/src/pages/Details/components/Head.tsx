@@ -13,7 +13,7 @@ const UIHead = ({ billboard, palette, entity, ready, onReady, ...props }) => {
   return (
     <div>
       <div sx={UIHead.styles.container} style={{ height: expanded ? '40vw' : '25vw' }}>
-        <Billboard path={billboard} palette={palette} ready={ready} onReady={onReady} size='original' fade={0.25} />
+        <Billboard path={billboard} palette={palette} ready={ready} onReady={onReady} lazy={false} size='original' fade={0.25} />
         <div sx={UIHead.styles.player} style={{ color: palette.color }}>
           <Player entity={entity} ready={ready} />
         </div>
@@ -30,7 +30,7 @@ UIHead.styles = {
     position: 'relative',
     width: '100%',
     minHeight: '40vh',
-    maxHeight: '100vh',
+    maxHeight: '100dvh',
     overflow: 'hidden',
     transition: 'height 400ms ease-in-out',
   },

@@ -6,6 +6,6 @@ if [ ! -f /app/.secrets/vapid ]; then
 fi
 
 chmod 400 /app/.secrets/vapid
-# chown node:node /app/.secrets/vapid
+chown node:node /app/.secrets/vapid
 
 node /app/dist/apps/api/main.js

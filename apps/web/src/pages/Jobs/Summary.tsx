@@ -18,9 +18,12 @@ Summary.styles = {
   element: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
     '>span': {
       backgroundColor: 'grayLight',
       marginRight: 8,
+      marginBottom: 8,
       color: 'text',
       fontWeight: 'bold',
       fontFamily: 'monospace',

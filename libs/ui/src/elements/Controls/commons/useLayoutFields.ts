@@ -1,4 +1,4 @@
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 
 export const useLayoutFields = (layout, fields, custom = {}) => {
   if (!layout?.gridTemplateAreas) {

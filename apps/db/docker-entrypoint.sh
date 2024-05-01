@@ -6,6 +6,6 @@ if [ ! -f /opt/keyfile/mongodb-keyfile ]; then
 fi
 
 chmod 444 /opt/keyfile/mongodb-keyfile
-# chown 999:999 /opt/keyfile/mongodb-keyfile
+chown 999:999 /opt/keyfile/mongodb-keyfile
 
 exec /usr/local/bin/docker-entrypoint.sh --replSet rs0 --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile

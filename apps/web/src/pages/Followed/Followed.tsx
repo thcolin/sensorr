@@ -14,7 +14,7 @@ import { fields } from '@sensorr/tmdb'
 import Person from '../../components/Person/Person'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
-import withHistoryState from '../../components/enhancers/withHistoryState'
+import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { useAPI, query as APIQuery } from '../../store/api'
 import i18n from '../../store/i18n'
 
@@ -144,7 +144,7 @@ const FollowedPersons = compose(
       return statistics
     },
   }),
-  withHistoryState(),
+  withPlacehodersHistoryState(),
 )(Entities)
 
 const Followed = ({ ...props }) => {

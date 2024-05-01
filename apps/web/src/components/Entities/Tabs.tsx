@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Entities } from '@sensorr/ui'
-import { createHistoryState, useGlobalHistoryState } from '@sensorr/utils'
+import { useHistoryState } from '@sensorr/utils'
 import { useTranslation } from 'react-i18next'
 import nanobounce from 'nanobounce'
 
 export const withTabsBehavior = () => (WrappedComponent) => {
   const withTabsBehavior = ({ id, tabs, ...props }) => {
     const { t } = useTranslation()
-    const [, setHistoryState] = useGlobalHistoryState()
-    const useCurrentHistoryState = useMemo(() => createHistoryState(`${id}-tab`, null), [id])
-    const [current, setCurrent] = useCurrentHistoryState()
+    const [current, setCurrent] = useHistoryState(`${id}-tab`, null)
     const [optimistic, setOptimistic] = useState(null)
     const debounce = useMemo(() => nanobounce(400), [])
     const [ready, setReady] = useState(true)
@@ -23,6 +21,7 @@ export const withTabsBehavior = () => (WrappedComponent) => {
     }
 
     const tab = tabs[current] || tabs[Object.keys(tabs)[0]]
+    const [, setScroll] = useHistoryState(`${tab?.id}-scroll`, [0, 0])
 
     return (
       <WrappedComponent
@@ -49,7 +48,7 @@ export const withTabsBehavior = () => (WrappedComponent) => {
                   },
                 }}
                 onClick={() => {
-                  setHistoryState(historyState => ({ ...historyState, [`${tab.id}-scroll`]: [0, 0] }))
+                  setScroll([0, 0])
                   setReady(false)
                   setOptimistic(key)
                   debounce(() => {

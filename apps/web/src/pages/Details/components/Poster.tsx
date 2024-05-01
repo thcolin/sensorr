@@ -18,6 +18,8 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         ready={ready}
         onReady={onReady}
         empty={Empty[behavior]}
+        lazy={false}
+        // sx={{ viewTransitionName: 'poster' }}
       />
       {behavior === 'movie' && (
         <div sx={UIPoster.styles.state}>

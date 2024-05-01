@@ -132,7 +132,7 @@ function transform(items, init) {
           strict: false,
           flagged: true,
           defaults: {
-            language: 'ENGLISH',
+            language: 'VO',
             resolution: 'SD',
             year: 0,
           },

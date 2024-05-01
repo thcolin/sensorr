@@ -114,7 +114,7 @@ const UIEntities = ({
         {label && (
           <div sx={UIEntities.styles.label}>
             {(typeof label === 'string' && more) ? (
-              <NavLink to={more.to} state={more.state}>
+              <NavLink to={more.to} state={more.state} unstable_viewTransition>
                 {label}
                 <Icon value='chevron' direction={false} />
               </NavLink>
@@ -141,6 +141,7 @@ const UIEntities = ({
             override={override}
             display={display}
             more={more}
+            onMore={ready && onMore}
           />
         )}
         {subtitle && <div sx={UIEntities.styles.subtitle}>{subtitle}</div>}

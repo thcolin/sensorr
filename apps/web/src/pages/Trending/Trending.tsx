@@ -7,7 +7,7 @@ import Person from '../../components/Person/Person'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
-import withHistoryState from '../../components/enhancers/withHistoryState'
+import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 
 export const Trending = (resource) => compose(
   withProps({
@@ -60,7 +60,7 @@ export const Trending = (resource) => compose(
     },
     fields: {},
   }),
-  withHistoryState(),
+  withPlacehodersHistoryState(),
 )(Entities)
 
 export default Trending

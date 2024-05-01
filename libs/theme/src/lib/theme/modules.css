@@ -19,3 +19,86 @@
 .tippy-arrow {
   display: none !important;
 }
+
+:host {
+  view-transition-name: forward;
+}
+
+@keyframes view-transition-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0;}
+}
+
+@keyframes view-transition-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes view-transition-forward-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-100%); }
+}
+
+@keyframes view-transition-forward-in {
+  0% { opacity: 0; transform: translateX(100%); }
+  100% { opacity: 1; }
+}
+
+@keyframes view-transition-backward-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
+@keyframes view-transition-backward-in {
+  0% { opacity: 0; transform: translateX(-100%); }
+  100% { opacity: 1; }
+}
+
+@keyframes view-transition-top-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes view-transition-top-in {
+  0% { opacity: 0; transform: translateY(10%); }
+  100% { opacity: 1; }
+}
+
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(fade) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-fade-out;
+}
+
+::view-transition-new(fade) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-fade-in;
+}
+
+::view-transition-old(top) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-top-out;
+}
+
+::view-transition-new(top) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-top-in;
+}
+
+::view-transition-old(forward) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-forward-out;
+}
+
+::view-transition-new(forward) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-forward-in;
+}
+
+::view-transition-old(backward) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-backward-out;
+}
+
+::view-transition-new(backward) {
+  animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-backward-in;
+}

@@ -19,6 +19,10 @@ import App from './pages/App'
 import 'tippy.js/dist/tippy.css'
 import './store/i18n'
 
+declare global {
+  interface Window { SENSORR_BODY_VIEW_TRANSITION_NAME: string }
+}
+
 const cache = createCache({ key: 'sensorr' })
 cache.compat = true
 

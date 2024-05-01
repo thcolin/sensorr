@@ -1,7 +1,7 @@
 import { Fragment, memo, useCallback, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb, fields, utils } from '@sensorr/tmdb'
+import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb, fields } from '@sensorr/tmdb'
 import { emojize, humanize } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Focus } from '../../atoms/Focus/Focus'
@@ -15,7 +15,7 @@ import { Pretty } from '../../elements/Entity/Pretty/Pretty'
 import { MovieState } from './State/State'
 import { Proposal } from './Proposal/Proposal'
 import { ReviewsBadge } from './Badges/ReviewsBadge'
-import { CreditsBadge } from './Badges/CreditsBadge'
+// import { CreditsBadge } from './Badges/CreditsBadge'
 import { Guests } from './Guests/Guests'
 // import { GuestsBadge } from './Badges/GuestsBadge'
 
@@ -79,7 +79,6 @@ const UIMovie = ({
       ...(!proposal.proposals?.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).reduce((guests, guest) => [...guests, { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } }], []) } } } : {}),
       ...(props?.focus ? { focus: { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } } } : {}),
-      // ...(loadCredits ? { credits: { component: CreditsBadge, props: { entity, display, credits, loadCredits } } } : {}),
     }
   }, [
     entity?.id,
@@ -92,8 +91,6 @@ const UIMovie = ({
     props.focus,
     reviews,
     loadReviews,
-    // credits,
-    // loadCredits,
     metadata?.requested_by
   ]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
 

@@ -1,18 +1,17 @@
 import { Fragment, createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Icon, Warning } from '@sensorr/ui'
 import { filesize } from '@sensorr/utils'
-import VirtualGrid from 'react-responsive-virtual-grid'
+import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import oleoo from 'oleoo'
 import report from 'new-github-issue-url'
-import { useSensorr } from '../../../store/sensorr'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 import Movie from '../../../components/Movie/Movie'
 import { Sensorr } from '../../../components/Sensorr'
 import { Release } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary } from '../Summary'
-import { KeepUpToDateInput, PolicyInput, QueryInput } from '../../Details/components/Actions'
 
 const RecordsContext = createContext([])
 
@@ -27,6 +26,8 @@ const RecordData = ({ style, index, readyInViewport, scrolling, sensorr, ...prop
 }
 
 const UIProcessMoviesJob = ({ job, logs, summary }) => {
+  const ref = useRef()
+  const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
   const toggleMetadata = useRef() as any
@@ -70,13 +71,14 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   }, [job.job])
 
   useEffect(() => {
-    if (window.pageYOffset > 400) {
-      window.scrollTo({ top: window.pageYOffset + 400, behavior: 'instant' })
+    console.log((ref.current as any).scrollTop)
+    if ((ref.current as any).scrollTop > 400) {
+      (ref.current as any).scrollTo({ top: (ref.current as any).scrollTop + 480, behavior: 'instant' })
     }
   }, [records.length])
 
   return (
-    <div sx={UIProcessMoviesJob.styles.element}>
+    <div ref={ref} sx={UIProcessMoviesJob.styles.element}>
       <div>
         <Warning
           emoji={{ doctor: '🚑', record: '📹' }[job.meta.command]}
@@ -146,10 +148,11 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
             <div sx={UIProcessMoviesJob.styles.records}>
               <MetadataSingleton setToggle={fn => toggleMetadata.current = fn} />
               <SensorrSingleton setToggle={fn => toggleSensorr.current = fn} />
-              <VirtualGrid
+              <ResponsiveVirtualGrid
+                scrollContainer={ref.current}
                 total={filtered.length}
                 viewportRowOffset={8}
-                cell={{ height: 480 }}
+                cell={{ height: device === 'mobile' ? 688 : 480 }}
                 child={RecordData}
                 useChildProps={(key) => ({
                   key: (filtered[key.split('-').shift()] as any).movie?.id,
@@ -388,21 +391,23 @@ UIRecord.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minHeight: '30em',
-    maxHeight: '30em',
+    minHeight: ['43em', '30em'],
+    maxHeight: ['43em', '30em'],
     paddingY: 4,
   },
   record: {
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: ['column', 'row'],
+    alignItems: ['center', 'unset'],
     paddingY: 4,
-    paddingX: 0,
+    paddingX: [4, 0],
     backgroundColor: 'grayLighter',
     overflow: 'hidden',
   },
   movie: {
     display: 'flex',
     flexDirection: 'column',
+    alignItems: ['center', 'unset'],
     marginRight: 4,
   },
   buttons: {
@@ -432,6 +437,8 @@ UIRecord.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
+    maxWidth: '100%',
+    marginTop: [2, 12],
     overflow: 'hidden',
   },
   empty: {
@@ -806,7 +813,7 @@ const reportOleoo = ({ generated = '', original = '' }) => report({
         strict: false,
         flagged: true,
         defaults: {
-          language: 'ENGLISH',
+          language: 'VO',
           resolution: 'SD',
           year: 0,
         },
@@ -818,7 +825,7 @@ const reportOleoo = ({ generated = '', original = '' }) => report({
         strict: false,
         flagged: true,
         defaults: {
-          language: 'ENGLISH',
+          language: 'VO',
           resolution: 'SD',
           year: 0,
         },

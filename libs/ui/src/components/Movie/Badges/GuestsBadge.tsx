@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 import Tippy from '@tippyjs/react'
 import { Badge } from '../../../atoms/Badge/Badge'
 import { Guests } from '../Guests/Guests'

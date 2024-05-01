@@ -1,6 +1,6 @@
 import { ReactNode, memo, useMemo } from 'react'
 import Tippy from '@tippyjs/react'
-import { useResponsiveValue } from '@theme-ui/match-media'
+import { useResponsiveValue } from '@sensorr/utils'
 import { Cast, Crew, Movie, Person, fields, utils } from '@sensorr/tmdb'
 import { Badge, BadgeProps } from '../Badge/Badge'
 

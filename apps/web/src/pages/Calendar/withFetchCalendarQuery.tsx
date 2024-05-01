@@ -5,7 +5,6 @@ import { useControlsState } from '@sensorr/ui'
 import { useHistoryState } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
-import { useAnimationContext } from '../../contexts/Animation/Animation'
 
 const withFetchCalendarQuery = (
   defaultQuery?: { params?: {} },
@@ -13,7 +12,6 @@ const withFetchCalendarQuery = (
   const withFetchCalendarQuery = ({ ...props }) => {
     const tmdb = useTMDB()
     const persons = usePersonsMetadataContext() as any
-    const { ongoing } = useAnimationContext() as any
     const debouncer = useMemo(() => nanobounce(0), [])
 
     // Wait for first controlsQuery hydration by serializing initial state
@@ -92,7 +90,7 @@ const withFetchCalendarQuery = (
 
     const fetchEntities = useCallback((entities) => (Object.entries(totals.current)
       .reduce((acc, [page, total]) => [...acc, ...(new Array(total).fill(Number(page)))], [])
-      .filter((page, index) => entities[0].index && index >= entities[0].index && index <= entities[entities.length - 1].index)
+      .filter((page, index) => entities[0]?.index && index >= entities[0]?.index && index <= entities[entities.length - 1]?.index)
       .reduce((acc, page) => acc.includes(page) ? acc : [...acc, page], [])
       .filter((page) => !processed.current.includes(page))
       .forEach(async (page) => {
@@ -119,7 +117,7 @@ const withFetchCalendarQuery = (
       setLoading(true)
       setError(null)
 
-      if ((props as any).ready === false || (props as any).loading === true || ongoing || persons.loading) {
+      if ((props as any).ready === false || (props as any).loading === true || persons.loading) {
         return
       }
 
@@ -140,7 +138,7 @@ const withFetchCalendarQuery = (
           setLoading(false)
         }
       })
-    }, [query, (props as any).ready, (props as any).loading, (props as any).error, ongoing, persons.loading])
+    }, [query, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
 
     const entities = useMemo(() => {
       const sorted = (Object.keys(totals.current).length !== Object.keys(pages).length ? [] : Object.values(pages)

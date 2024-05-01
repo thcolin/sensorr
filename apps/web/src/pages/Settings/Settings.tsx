@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useOutlet } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useThemeUI } from 'theme-ui'
 import semver from 'semver'
+import { useDeviceContext } from '../../contexts/Device/Device'
 import localApp from '../../../../../package.json'
 
 const Settings = ({ ...props }) => {
   const { theme } = useThemeUI()
+  const { device } = useDeviceContext()
+  const location = useLocation()
   const [remoteApp, setRemoteApp] = useState(null)
   const [updateAvailable, setUpdateAvailable] = useState(null)
 
@@ -36,18 +39,18 @@ const Settings = ({ ...props }) => {
 
   return (
     <section sx={Settings.styles.element}>
-      <aside sx={Settings.styles.sidebar}>
+      <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
         <h1>Settings</h1>
         <nav>
-          <NavLink to="tmdb">TMDB</NavLink>
-          <NavLink to="blackhole">Blackhole</NavLink>
-          <NavLink to="indexers">Indexers</NavLink>
-          <NavLink to="policies">Policies</NavLink>
-          <NavLink to="jobs">Jobs</NavLink>
-          <NavLink to="friends">Friends</NavLink>
-          <NavLink to="plex">Plex</NavLink>
-          <NavLink to="mobile">Mobile</NavLink>
-          <NavLink to="update">Update</NavLink>
+          <NavLink to='tmdb' unstable_viewTransition={device === 'mobile'}>TMDB</NavLink>
+          <NavLink to='blackhole' unstable_viewTransition={device === 'mobile'}>Blackhole</NavLink>
+          <NavLink to='indexers' unstable_viewTransition={device === 'mobile'}>Indexers</NavLink>
+          <NavLink to='policies' unstable_viewTransition={device === 'mobile'}>Policies</NavLink>
+          <NavLink to='jobs' unstable_viewTransition={device === 'mobile'}>Jobs</NavLink>
+          <NavLink to='friends' unstable_viewTransition={device === 'mobile'}>Friends</NavLink>
+          <NavLink to='plex' unstable_viewTransition={device === 'mobile'}>Plex</NavLink>
+          <NavLink to='mobile' unstable_viewTransition={device === 'mobile'}>Mobile</NavLink>
+          <NavLink to='update' unstable_viewTransition={device === 'mobile'}>Update</NavLink>
         </nav>
         <footer>
           <span>🍿📼</span>
@@ -63,7 +66,7 @@ const Settings = ({ ...props }) => {
           </div>
         </footer>
       </aside>
-      <div sx={Settings.styles.container}>
+      <div sx={Settings.styles.container} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'none' : 'block' } : {}}>
         <Outlet context={{ onSave, updateAvailable, remoteApp }} />
       </div>
     </section>
@@ -74,33 +77,41 @@ Settings.styles = {
   element: {
     display: 'flex',
     flex: '1 1 0%',
+    overflow: ['unset', 'hidden'],
   },
   sidebar: {
-    position: 'sticky',
-    top: '124px',
-    height: 'calc(-124px + 100vh)',
     display: 'flex',
-    flexDirection: 'column',
-    minWidth: '21em',
-    maxWidth: '21em',
+    flexDirection: ['column-reverse', 'column'],
+    minWidth: ['100%', '21em'],
+    maxWidth: ['100%', '21em'],
+    paddingBottom: [0, 12],
     backgroundColor: 'grayLighter',
     '>h1': {
+      display: ['none', 'block'],
       paddingX: 4,
       paddingY: 4,
       margin: 12,
     },
     '>nav': {
-      flex: 1,
+      flex: ['none', 1],
       display: 'flex',
       flexDirection: 'column',
-      overflowY: 'auto',
+      overflowY: ['unset', 'auto'],
+      backgroundColor: ['grayLight', 'unset'],
+      marginX: [2, 12],
+      borderRadius: '0.25em',
       'a': {
         fontFamily: 'heading',
         color: 'text',
-        paddingX: 0,
-        paddingY: 9,
-        fontSize: 3,
+        paddingX: [4, 0],
+        paddingY: [4, 9],
+        fontSize: [4, 3],
+        fontWeight: ['semibold', 'normal'],
         textDecoration: 'none',
+        '&:not(:last-of-type)': {
+          borderBottom: ['1px solid', 'none'],
+          borderColor: 'gray',
+        },
         '&:hover': {
           backgroundColor: 'grayLight',
         },
@@ -112,7 +123,7 @@ Settings.styles = {
     },
     '>footer': {
       paddingX: 4,
-      paddingY: 4,
+      paddingY: [0, 4],
       textAlign: 'center',
       '>span': {
         fontSize: 1,
@@ -162,13 +173,13 @@ Settings.styles = {
   },
   container: {
     flex: 1,
-    overflow: 'hidden',
+    overflow: 'auto',
     '>section': {
       display: 'flex',
       flexDirection: 'column',
       flex: 1,
       alignItems: 'center',
-      paddingX: 2,
+      paddingX: [8, 2],
       paddingBottom: 0,
       'code': {
         variant: 'code.tag',

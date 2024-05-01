@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { transformMovieDetails, transformCollectionDetails, Warning, Link, Entities } from '@sensorr/ui'
 import { utils } from '@sensorr/tmdb'
 import { compose, emojize } from '@sensorr/utils'
@@ -14,8 +14,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withProps from '../../components/enhancers/withProps'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
-import { useAnimationContext } from '../../contexts/Animation/Animation'
 import { useDeviceContext } from '../../contexts/Device/Device'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 
 const TMDBTabs = compose(
   withTabsBehavior(),
@@ -28,11 +28,11 @@ const MovieDetails = compose(
 )(Details)
 
 const Movie = ({ ...props }) => {
+  const { restoreScrollPosition } = useScrollPositionContext()
   const { id } = useParams() as any
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { metadata: persons } = usePersonsMetadataContext() as any
-  const { ongoing } = useAnimationContext() as any
 
   const movie = useTMDBRequest(`movie/${id}`, {
     append_to_response: 'images,recommendations,similar,credits,videos,alternative_titles,release_dates,keywords,watch/providers',
@@ -50,7 +50,13 @@ const Movie = ({ ...props }) => {
     { ready: true }
   )
 
-  const ready = !ongoing && !movie.loading && (movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
+  const ready = !movie.loading && !!(movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
+
+  useEffect(() => {
+    if (ready) {
+      restoreScrollPosition()
+    }
+  }, [ready])
 
   const tabs = useMemo(() => {
     const saga = {

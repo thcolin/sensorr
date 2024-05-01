@@ -1,18 +1,23 @@
 import { memo } from 'react'
-import { Toaster, CheckmarkIcon, ErrorIcon, LoaderIcon } from 'react-hot-toast'
+import toast, { Toaster, CheckmarkIcon, ErrorIcon, LoaderIcon } from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import { useThemeUI } from 'theme-ui'
+import { Icon } from '@sensorr/ui'
+import { useDeviceContext } from '../Device/Device'
 
 const UIToasts = ({ ...props }) => {
+  const { device } = useDeviceContext()
   const { theme } = useThemeUI()
 
   return (
     <Toaster
-      position='bottom-right'
+      position={device === 'mobile' ? 'top-center' : 'bottom-right'}
       reverseOrder={false}
       gutter={8}
+      containerStyle={device === 'mobile' ? { marginTop: '4em' } : {}}
       toastOptions={{
         // duration: 4000,
+        blank: { duration: 4000 },
         success: { duration: 4000 },
         error: { duration: 6000 },
       }}
@@ -40,7 +45,7 @@ const UIToasts = ({ ...props }) => {
               }}
             >
             </div>
-            <div sx={{ padding: 4 }} >
+            <div sx={{ flex: 1, padding: 4 }} >
               <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, fontFamily: 'heading', textTransform: 'capitalize' }}>
                 <span sx={{ marginRight: 8 }}>
                   {t.icon || (
@@ -54,6 +59,11 @@ const UIToasts = ({ ...props }) => {
               </strong>
               <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
               {t.type === 'error' && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
+            </div>
+            <div>
+              <button onClick={() => toast.dismiss(t.id)} sx={{ variant: 'button.reset', padding: 6 }}>
+                <Icon value="clear" height="1em" width="1em" />
+              </button>
             </div>
           </div>
         )

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Icon, Link } from '@sensorr/ui'
+import useRipple from 'use-ripple-hook'
+import { Link } from '@sensorr/ui'
 import { scrollToTop } from '@sensorr/utils'
 import { LoadingBar } from '../LoadingBar'
 import { useDeviceContext } from '../../contexts/Device/Device'
@@ -8,27 +9,6 @@ import { useSearchContext } from '../../contexts/Search/Search'
 import { Input as SearchInput, Results as SearchResults, History as SearchHistory } from './elements/Search'
 import { Notifications } from './elements/Notifications'
 import Navigation from './elements/Navigation'
-
-const Logo = ({ ...props }) => {
-  const [historyLength, setHistoryLength] = useState(0)
-  const { device, historyResetIndex } = useDeviceContext()
-  const location = useLocation()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    setHistoryLength(window.history.state.idx)
-  }, [location.key])
-
-  return (device === 'mobile' && (historyLength - historyResetIndex)) ? (
-    <button sx={{ variant: 'button.reset', fontSize: 3, paddingX: '0.7em', paddingY: 6, '>svg': { transform: 'rotate(-90deg)' } }} onClick={() => navigate(-1)}>
-      <Icon value='chevron' direction={true} width='1em' height='1em' />
-    </button>
-  ) : (
-    <Link {...props} to='/' sx={{ variant: 'link.reset', fontSize: 2, paddingX: 8 }} title='Sensorr' disabled={device === 'mobile'}>
-      🍿
-    </Link>
-  )
-}
 
 const PWD = ({ ...props }) => {
   const location = useLocation()
@@ -71,14 +51,69 @@ Seperator.styles = {
   },
 }
 
+const Logo = ({ ...props }) => {
+  const [ref, onPointerDown] = useRipple()
+  const { pwa, historyIndex } = useDeviceContext()
+  const navigate = useNavigate()
+
+  return pwa ? (
+    <button
+      ref={ref}
+      onPointerDown={onPointerDown}
+      onClick={() => navigate(-1)}
+      disabled={!historyIndex}
+      sx={{
+        variant: 'button.reset',
+        flex: 1,
+        width: '4em',
+        paddingLeft: 8,
+        paddingRight: 4,
+        transition: 'all 400ms ease-in-out 200ms',
+        ':disabled': {
+          opacity: 0,
+          width: 0,
+          paddingX: 12,
+        },
+        '>svg': {
+          transform: 'rotate(180deg)'
+        },
+      }}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" height='1em' width='1em' viewBox="0 0 320 512">
+        <path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/>
+      </svg>
+    </button>
+  ) : (
+    <div
+      sx={{
+        flex: 1,
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingRight: 4,
+        paddingLeft: [8, 4],
+        '>*:not(:first-child)': {
+          display: ['none', 'none', 'block'],
+        },
+      }}
+    >
+      <Link {...props} to='/' sx={{ variant: 'link.reset', fontSize: 2, paddingX: 8 }} title='Sensorr' onClick={() => scrollToTop()}>
+        🍿
+      </Link>
+      <Seperator />
+      <PWD />
+    </div>
+  )
+}
+
 const Toolbar = ({ ...props }) => (
   <div sx={Toolbar.styles.element}>
     <LoadingBar />
     <div sx={Toolbar.styles.wrapper}>
       <div sx={Toolbar.styles.left}>
         <Logo />
-        <Seperator />
-        <PWD />
       </div>
       <div sx={Toolbar.styles.center}>
         <SearchInput />
@@ -102,20 +137,12 @@ Toolbar.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-between',
   },
   left: {
-    position: 'relative',
     display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingRight: 4,
-    paddingLeft: [8, 4],
-    '>*:not(:first-child)': {
-      display: ['none', 'block'],
-    },
+    flexDirection: 'column',
   },
   center: {
     flex: 1,
@@ -132,13 +159,12 @@ Toolbar.styles = {
     paddingLeft: 4,
   },
   right: {
-    paddingRight: [8, 4],
-    paddingLeft: 4,
+    display: 'flex',
+    flexDirection: 'column',
   },
 }
 
 const Header = ({ ...props }) => {
-  const { pwa } = useDeviceContext()
   const location = useLocation()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
@@ -149,19 +175,9 @@ const Header = ({ ...props }) => {
     }
   }, [location])
 
-  useEffect(() => {
-    if (extanded) {
-      document.body.style['max-height'] = '100vh'
-      document.body.style['overflow'] = 'hidden'
-    } else {
-      document.body.style['max-height'] = 'initial'
-      document.body.style['overflow'] = 'initial'
-    }
-  }, [extanded])
-
   return (
-    <div sx={Header.styles.element} style={{ position: pwa ? 'fixed' : 'sticky', zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
-      <div sx={{ ...Header.styles.container, height: extanded ? '100vh' : 'initial' }}>
+    <div sx={Header.styles.element} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
+      <div sx={{ ...Header.styles.container, height: extanded ? '100dvh' : 'initial' }}>
         <Toolbar />
         <div sx={Header.styles.history}>
           <SearchHistory />

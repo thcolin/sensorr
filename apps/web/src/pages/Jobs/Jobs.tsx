@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import { throttle } from 'throttle-debounce'
 import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
+import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
@@ -101,9 +102,11 @@ const UIJobs = ({ controls = null, ...props }) => {
 
 UIJobs.styles = {
   element: {
+    position: 'relative',
     flex: 1,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: ['column', 'row'],
+    overflow: 'hidden',
   },
   placeholder: {
     flex: 1,
@@ -123,6 +126,9 @@ const Jobs = memo(UIJobs)
 export default Jobs
 
 const UISidebar = ({ loading, jobs, job, ...props }) => {
+  const [ref, onPointerDown] = useRipple()
+  const location = useLocation()
+  const [expanded, setExpanded] = useState(false)
   const groups = useMemo(() => jobs.reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
@@ -136,17 +142,52 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
     }
   }, {}), [jobs])
 
+  useEffect(() => {
+    setExpanded(false)
+  }, [location.key])
+
+  const active = jobs.find(j => j.job === job)
+
   return (
     <aside sx={UISidebar.styles.element}>
       <div sx={UISidebar.styles.head}>
         <h4>Jobs</h4>
+        <div>
+          <div>
+            <span>
+              {{
+                'sync': '🔗',
+                'refresh': '🔌',
+                'record': '📹',
+                'doctor': '🚑',
+                'keep-in-touch': '🍻',
+                'migrate': '🚚',
+              }[active?.meta?.command] || '⌛'}
+            </span>
+            <div>
+              <div sx={{ display: 'flex', alignItems: 'center' }}>
+                <div sx={{ marginRight: 7, lineHeight: 'reset' }}><Icon value={active?.meta?.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></div>
+                <h5>{active?.meta?.command || 'Loading'}</h5>
+                {active?.meta?.done && (
+                  <span>
+                    {formatDuration(intervalToDuration({ start: new Date(active?.start), end: new Date(active?.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}
+                  </span>
+                )}
+              </div>
+              <span><strong>{job}</strong> - {(new Date(active?.start || Date.now())).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(active?.start || Date.now())).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+            </div>
+          </div>
+          <button ref={ref} onPointerDown={onPointerDown} sx={{ variant: 'button.reset', color: 'whitePure' }} onClick={() => setExpanded(e => !e)}>
+            <Icon value="chevron" direction={expanded} height="1em" width="1em" />
+          </button>
+        </div>
       </div>
       {loading ? (
         <div sx={UISidebar.styles.placeholder}>
           <Icon value='spinner' />
         </div>
       ) : (
-        <nav sx={UISidebar.styles.nav}>
+        <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
           {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
             <Fragment key={distance}>
               <h6>{distance}</h6>
@@ -185,11 +226,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
 
 UISidebar.styles = {
   element: {
-    position: 'sticky',
-    top: '124px',
-    height: 'calc(100vh - 124px)',
-    minWidth: '21em',
-    maxWidth: '21em',
+    minWidth: ['100%', '21em'],
+    maxWidth: ['100%', '21em'],
     display: 'flex',
     flexDirection: 'column',
     borderRight: '1px solid',
@@ -197,22 +235,95 @@ UISidebar.styles = {
     overflow: 'hidden',
   },
   head: {
+    display: 'flex',
     backgroundColor: 'primary',
     color: 'whitePure',
-    paddingX: 3,
-    paddingY: 3,
+    paddingX: [12, 3],
+    paddingY: [12, 3],
     '>h4': {
+      display: ['none', 'block'],
       margin: '0px',
       color: 'whitePure',
+    },
+    '>div': {
+      flex: 1,
+      display: ['flex', 'none'],
+      flexDirection: 'row',
+      overflow: 'hidden',
+      '>div': {
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: 'accentDark',
+        borderRadius: '0.25em',
+        margin: 4,
+        marginRight: 12,
+        paddingX: 6,
+        paddingY: 8,
+        overflow: 'hidden',
+        '>span': {
+          flexShrink: 0,
+          height: '2.5em',
+          width: '2.5em',
+          backgroundColor: 'accentDarkest',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        '>div': {
+          display: 'flex',
+          flexDirection: 'column',
+          marginX: 4,
+          marginTop: 10,
+          overflow: 'hidden',
+          '>div': {
+            '>h5': {
+              variant: 'heading.reset',
+              margin: 12,
+              lineHeight: 'reset',
+              fontSize: 4,
+              fontWeight: 'bold',
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            },
+            '>span': {
+              alignSelf: 'flex-end',
+              marginLeft: 4,
+              fontSize: 7,
+              color: 'whitePure',
+              fontFamily: 'monospace',
+            },
+          },
+          '>span': {
+            marginY: 8,
+            fontSize: 7,
+            color: 'whitePure',
+            fontFamily: 'monospace',
+            opacity: 0.75,
+          },
+        },
+      },
+      '>button': {
+        paddingX: 0,
+      },
     },
   },
   placeholder: {
     flex: 1,
-    display: 'flex',
+    display: ['none', 'flex'],
     alignItems: 'center',
     justifyContent: 'center',
   },
   nav: {
+    position: ['absolute', 'relative'],
+    transition: 'height 400ms ease-in-out',
+    top: ['90px', 'unset'],
+    width: ['100%', 'unset'],
+    zIndex: [1, 'unset'],
+    backgroundColor: 'grayLightest',
     overflow: 'scroll',
     '>h6': {
       position: 'sticky',
@@ -244,7 +355,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
   // }, [selected])
 
   return (
-    <Link to={`/jobs/${job}`} sx={UIJob.styles.element}>
+    <Link to={`/jobs/${job}`} sx={UIJob.styles.element} unstable_viewTransition={false}>
       <span ref={ref} sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
         <span sx={UIJob.styles.head}>
           <span sx={UIJob.styles.icon}>

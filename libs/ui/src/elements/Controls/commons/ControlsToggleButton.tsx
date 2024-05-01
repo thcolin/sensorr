@@ -1,7 +1,7 @@
 import { useTranslation, Trans } from 'react-i18next'
 import { Icon } from '../../../atoms/Icon/Icon'
 
-export const ControlsToggleButton = ({ toggleOpen, fields, values, ...props }) => {
+export const ControlsToggleButton = ({ toggleOpen, fields, values, handleChange, ...props }) => {
   const { t } = useTranslation()
   const active = Object.keys(values)
     .filter(key => !['sort_by'].includes(key) && !fields[key].hideFromFiltersCount)

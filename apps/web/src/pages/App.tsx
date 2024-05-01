@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import withSecurity from '../layout/withSecurity'
 import withConfigLoaded from '../layout/withConfigLoaded'
 import withLayout from '../layout/withLayout'
-import { Provider as AnimationProvider } from '../contexts/Animation/Animation'
 
 // import { withSuspenseFallback } from '../components/enhancers/withSuspenseFallback'
 
@@ -50,6 +49,10 @@ import FriendsSettings from './Settings/Friends'
 import PlexSettings from './Settings/Plex'
 import MobileSettings from './Settings/Mobile'
 import UpdateSettings from './Settings/Update'
+import { useDeviceContext } from '../contexts/Device/Device'
+import { Provider as ScrollPositionProvider } from '../contexts/ScrollPosition/ScrollPosition'
+
+const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet)))
 
 const TrendingMovies = Trending('movies')
 const TrendingPersons = Trending('persons')
@@ -57,10 +60,20 @@ const TrendingPersons = Trending('persons')
 const SearchMovies = Search('movies')
 const SearchPersons = Search('persons')
 
-const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet, 'Container')))
+const SettingsRedirector = ({ ...props }) => {
+  const { device } = useDeviceContext()
+
+  if (device === 'mobile') {
+    return null
+  }
+
+  return (
+    <Navigate replace={true} to='tmdb' />
+  )
+}
 
 const router = createBrowserRouter(createRoutesFromElements(
-  <Route element={<AnimationProvider />}>
+  <Route element={<ScrollPositionProvider children={<Outlet />} />}>
     <Route path='/login' element={<Login />} />
     <Route path='/keep-in-touch' element={<KeepInTouch />} />
     <Route path='/' element={<LayoutConfigSecurityContainer />}>
@@ -85,7 +98,7 @@ const router = createBrowserRouter(createRoutesFromElements(
       <Route path='jobs' element={<Jobs />} />
       <Route path='jobs/:job' element={<Jobs />} />
       <Route path='settings' element={<Settings />}>
-        <Route path='' element={<Navigate replace={true} to='tmdb' />} />
+        <Route path='' element={<SettingsRedirector />} />
         <Route path='tmdb' element={<TMDBSettings />} />
         <Route path='jobs' element={<JobsSettings />} />
         <Route path='blackhole' element={<BlackholeSettings />} />
@@ -110,8 +123,6 @@ const App = ({ ...props }) => {
 
     const timeout = setTimeout(() => {
       (document.querySelector('#root-loading') as HTMLElement).style.setProperty('opacity', '0');
-      (document.querySelector('#root') as HTMLElement).style.setProperty('height', 'unset');
-      (document.querySelector('#root') as HTMLElement).style.setProperty('overflow', 'unset');
       document.querySelector('#root-loading').addEventListener('transitionend', () => {
         (document.querySelector('#root-loading') as HTMLElement).style.setProperty('z-index', '-1');
         (document.querySelector('#root-loading') as HTMLElement).remove();

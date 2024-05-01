@@ -62,8 +62,13 @@ const UIPlayer = ({ entity, ready, ...props }) => {
         const key = (e.target.getPlaylist() || [])[index]
         setBlacklist(blacklist => [...blacklist, key])
         setTimeout(() => {
-          e.target.stopVideo()
-          e.target.playVideo()
+          if (e.target.stopVideo) {
+            e.target.stopVideo()
+          }
+
+          if (e.target.playVideo) {
+            e.target.playVideo()
+          }
         }, 600)
         target.current = e.target
       },

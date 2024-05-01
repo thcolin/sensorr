@@ -45,3 +45,5 @@ config.json
 Thumbs.db
 
 .nx/cache
+.secrets
+caddy
