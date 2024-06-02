@@ -1,96 +1,60 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Youtube from 'react-youtube'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '@sensorr/ui'
 import { useTMDB } from '../../../store/tmdb'
 import { useExpandContext } from '../contexts/Expand'
 
 const UIPlayer = ({ entity, ready, ...props }) => {
   const tmdb = useTMDB()
-  const target = useRef(null)
-  const { expanded, setExpanded } = useExpandContext() as any
-  const [loading, setLoading] = useState(true)
-  const [paused, setPaused] = useState(false)
-  const [fallback, setFallback] = useState(null)
-  const [blacklist, setBlacklist] = useState([])
-  const playlist = useMemo(() => ([...(entity.videos?.results || []), ...(fallback || [])]
-    .filter((video) => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type) && !blacklist.includes(video.key))
-  ), [entity.id, fallback, blacklist])
 
-  const reset = useCallback(() => {
-    if (!target.current?.i || !playlist.length) {
+  const node = useRef(null)
+  const player = useRef(null)
+
+  const { expanded, setExpanded } = useExpandContext() as any
+
+  const [sdkReady, setSDKReady] = useState(false)
+  const [playerReady, setPlayerReady] = useState(false)
+  const [playlistReady, setPlaylistReady] = useState(false)
+
+  const [fallback, setFallback] = useState(null)
+  const playlist = useMemo(() => ([...(entity.videos?.results || []), ...(fallback || [])]
+    .filter((video) => video.site === 'YouTube' && ['Trailer', 'Teaser'].includes(video.type))
+  ), [entity.id, fallback])
+
+  useEffect(() => {
+    if ((window as any).YT?.Player) {
+      setSDKReady(true)
+    } else {
+      (window as any).onYouTubeIframeAPIReady = () => setSDKReady(true)
+    }
+
+    return () => (window as any).onYouTubeIframeAPIReady = null
+  }, [])
+
+  useEffect(() => {
+    if (!sdkReady) {
       return
     }
 
-    try {
-      target.current.stopVideo()
-      target.current.cuePlaylist({ listType: 'playlist', playlist: playlist.map((video) => video.key).join(',') })
-
-      const timeout = setTimeout(() => setBlacklist(blacklist => [...blacklist, playlist[0].key]), 5000)
-      const onPlayerStateChange = ({ data }) => {
-        if (data === 5) {
-          clearTimeout(timeout)
-          target.current.removeEventListener('onStateChange', onPlayerStateChange)
-        }
-      }
-
-      target.current.addEventListener('onStateChange', onPlayerStateChange)
-    } catch (e) {
-      console.warn(e)
-    }
-  }, [playlist])
-
-  const youtube = useMemo(
-    () => ({
-      opts: {
-        height: '100%',
-        width: '100%',
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          showinfo: 0,
-          rel: 0,
-          iv_load_policy: 3,
-          modestbranding: 1,
-        } as any,
+    player.current = new (window as any).YT.Player(node.current, {
+      width: '100%',
+      height: '100%',
+      listType: 'playlist',
+      playerVars: {
+        autoplay: 0,
+        controls: 1,
+        showinfo: 0,
+        rel: 0,
+        // loop: 0,
+        cc_load_policy: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        autohide: 0,
       },
-      onReady: (e) => {
-        target.current = e.target
-        reset()
+      events: {
+        onReady: () => setPlayerReady(true),
       },
-      onError: (e) => {
-        const index = e.target.getPlaylistIndex()
-        const key = (e.target.getPlaylist() || [])[index]
-        setBlacklist(blacklist => [...blacklist, key])
-        setTimeout(() => {
-          if (e.target.stopVideo) {
-            e.target.stopVideo()
-          }
-
-          if (e.target.playVideo) {
-            e.target.playVideo()
-          }
-        }, 600)
-        target.current = e.target
-      },
-      onStateChange: ({ data }) => {
-        switch (data) {
-          case 1: // playing
-            setPaused(false)
-            setExpanded(true)
-            return
-          case 2: // paused
-            setPaused(true)
-            setExpanded(true)
-            return
-          case 5: // cued
-            setLoading(false)
-            setPaused(false)
-            return
-        }
-      },
-    }),
-    [reset],
-  )
+    })
+  }, [sdkReady])
 
   useEffect(() => {
     if (!entity.id || !entity.title || tmdb.region === 'en-US') {
@@ -101,8 +65,8 @@ const UIPlayer = ({ entity, ready, ...props }) => {
 
     const cb = async () => {
       try {
-        setBlacklist([])
         setFallback(null)
+        setPlaylistReady(false)
         const fallback = await tmdb.fetch(`movie/${entity.id}/videos`, { language: 'en-US' }, { signal: controller.signal })
         setFallback(fallback.results)
       } catch (e) {
@@ -116,22 +80,42 @@ const UIPlayer = ({ entity, ready, ...props }) => {
   }, [entity.id])
 
   useEffect(() => {
-    if (!entity.videos?.results?.length && !fallback?.length) {
+    if (!playerReady || !fallback || !playlist.length) {
       return
     }
 
-    reset()
-  }, [reset])
+    const cb = async () => {
+      const available = []
+
+      for (const video of playlist) {
+        try {
+          await new Promise((resolve, reject) => {
+            player.current.addEventListener('onError', () => reject())
+            player.current.addEventListener('onStateChange', (e) => {
+              if (e.data == 5) {
+                resolve(e.data)
+              }
+            })
+
+            player.current.cueVideoById(video.key)
+          })
+
+          available.push(video.key)
+        } catch (e) {}
+      }
+
+      player.current.cuePlaylist({ listType: 'playlist', playlist: available.join(',') })
+      setPlaylistReady(true)
+    }
+
+    cb()
+  }, [playerReady, fallback])
 
   useEffect(() => {
-    if (!expanded && target.current) {
-      setTimeout(() => target.current.stopVideo(), 600)
+    if (!expanded && player.current) {
+      setTimeout(() => player.current.stopVideo(), 600)
     }
   }, [expanded])
-
-  if (fallback === null || (!playlist.length)) {
-    return null
-  }
 
   return (
     <div sx={UIPlayer.styles.element} style={{ opacity: ready ? 1 : 0, transition: `opacity 400ms ease-in-out ${ready ? '800ms' : '0ms'}` }}>
@@ -155,13 +139,13 @@ const UIPlayer = ({ entity, ready, ...props }) => {
           },
         }}
       >
-        <Youtube {...youtube} />
+        <div ref={node}></div>
       </div>
       <button
-        disabled={loading || !ready}
+        disabled={!playlistReady || !ready}
         onClick={() => {
           setExpanded(true)
-          setTimeout(() => target.current.playVideo(), 600)
+          setTimeout(() => player.current.playVideo(), 600)
         }}
         sx={{
           variant: 'button.reset',
@@ -172,15 +156,15 @@ const UIPlayer = ({ entity, ready, ...props }) => {
             height: '2rem',
             width: '2rem',
           },
-          opacity: ready && !expanded ? 1 : 0,
-          visibility: expanded || !ready ? 'hidden' : 'visible',
+          opacity: ready && !expanded && !!playlist.length ? 1 : 0,
+          visibility: expanded || !ready || !playlist.length ? 'hidden' : 'visible',
           transition: `
             opacity 400ms ease-in-out ${ready && !expanded ? '800ms' : '0ms'},
             visibility 0ms ease ${expanded ? '800ms' : '0ms'}
           `,
         }}
       >
-        <Icon value={!loading ? 'play' : 'spinner'} />
+        <Icon value={playlistReady ? 'play' : 'spinner'} />
       </button>
     </div>
   )

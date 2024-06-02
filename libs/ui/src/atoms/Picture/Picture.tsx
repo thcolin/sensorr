@@ -44,6 +44,7 @@ export interface PictureProps extends Omit<React.HTMLAttributes<HTMLSpanElement>
   empty?: React.FC<any>
   onReady?: (event: any, error: boolean) => void
   lazy?: boolean
+  blur?: boolean | number
 }
 
 export interface MoviePictureProps extends PictureProps {
@@ -59,6 +60,7 @@ function UIPicture({
   size = 'w300',
   ready = true,
   lazy = true,
+  blur = false,
   palette = null,
   empty: Empty,
   onReady,
@@ -91,6 +93,7 @@ function UIPicture({
   const styles = {
     element: {
       ...(palette ? { backgroundColor: palette.backgroundColor, color: palette.color } : {}),
+      ...(blur ? { filter: `blur(${typeof blur === 'number' ? blur : 2}px)` } : {}),
     },
     empty: {
       opacity: (ready && !src) || error ? 1 : 0,

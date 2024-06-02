@@ -11,9 +11,9 @@ const UIHead = ({ billboard, palette, entity, ready, onReady, ...props }) => {
   }, [entity.id])
 
   return (
-    <div>
+    <div sx={UIHead.styles.element}>
       <div sx={UIHead.styles.container} style={{ height: expanded ? '40vw' : '25vw' }}>
-        <Billboard path={billboard} palette={palette} ready={ready} onReady={onReady} lazy={false} size='original' fade={0.25} />
+        <Billboard path={billboard} palette={palette} ready={ready} onReady={onReady} lazy={false} size='original' fade={0.25} blur={4} />
         <div sx={UIHead.styles.player} style={{ color: palette.color }}>
           <Player entity={entity} ready={ready} />
         </div>
@@ -26,6 +26,10 @@ const UIHead = ({ billboard, palette, entity, ready, onReady, ...props }) => {
 }
 
 UIHead.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
   container: {
     position: 'relative',
     width: '100%',
@@ -42,10 +46,19 @@ UIHead.styles = {
   },
   reduce: {
     variant: 'button.reset',
-    width: '100%',
-    padding: 6,
+    flex: 1,
+    marginLeft: 4,
+    marginRight: 4,
+    marginTop: 6,
+    marginBottom: 6,
+    backgroundColor: 'whiteDarker',
+    paddingTop: 6,
+    paddingBottom: 8,
     color: 'text',
-    transition: 'opacity 400ms ease-in-out',
+    transition: 'opacity 400ms ease-in-out, background-color 200ms ease-in-out',
+    ':hover': {
+      backgroundColor: 'whiteDarkest',
+    }
   }
 }
 

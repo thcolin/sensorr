@@ -123,7 +123,7 @@ export class Policy {
         return release
       }
 
-      const valid = !(banned || []).some(banned => banned === release.original)
+      const valid = !(banned || []).some(banned => banned === release.original || banned === release.title)
 
       return {
         ...release,

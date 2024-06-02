@@ -20,8 +20,8 @@ const UIRelease = ({
   return (
     <div>
       <div key={entity?.link} sx={UIRelease.styles.element} data-disabled={!downloadable}>
-        <div sx={{ flexDirection: display, paddingY: compact ? 12 : 8 }}>
-          <div sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+        <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
+          <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
             {entity?.valid !== false && remove && !entity?.proposal && ['record', 'doctor'].includes(entity?.from) && (
               <div sx={UIRelease.styles.remove}>
                 <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
@@ -93,7 +93,7 @@ const UIRelease = ({
                 )}
               </div>
               {(display !== 'column' && !entity?.valid && !!entity?.reason) && (
-                <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
                   <code title={entity?.reason}>{entity?.reason}</code>
                 </div>
               )}
@@ -135,9 +135,9 @@ const UIRelease = ({
                 {(meta.flags || []).map(flag => <span key={flag} title={`Flag: ${flag}${(entity?.account?.flags || {})[flag] ? ` (+${(entity?.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
               </div>
               {!downloadable ? (
-                <div sx={{ ...UIRelease.styles.tags, marginLeft: 0 }}>
+                <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
                   {typeof entity?.peers !== 'undefined' && (
-                    <span title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: 4}}>
+                    <span title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
                       <code>{emojize('🌍 ', entity?.peers || 0)}</code>
                     </span>
                   )}
@@ -217,7 +217,7 @@ const UIRelease = ({
             <Badge
               emoji={<Icon value='check' width='1em' height='1em' />}
               label='Accept'
-              compact={false}
+              compact={true}
               size='normal'
               color='theme'
             />
@@ -226,7 +226,7 @@ const UIRelease = ({
             <Badge
               emoji={<Icon value='clear' width='1em' height='1em' />}
               label='Refuse'
-              compact={false}
+              compact={true}
               size='normal'
               color='theme'
             />
@@ -241,9 +241,9 @@ UIRelease.styles = {
   element: {
     position: 'relative',
     fontSize: 6,
-    paddingRight: 0,
-    paddingLeft: 2,
-    overflow: 'hidden',
+    paddingRight: [12, 0],
+    paddingLeft: [12, 2],
+    overflow: ['scroll', 'hidden'],
     '>div': {
       display: 'flex',
       alignItems: 'center',
@@ -264,6 +264,7 @@ UIRelease.styles = {
     flexDirection: 'column',
     marginRight: 0,
     overflowY: 'hidden',
+    overflowX: ['scroll', 'hidden'],
   },
   title: {
     display: 'flex',
@@ -273,7 +274,7 @@ UIRelease.styles = {
     display: 'flex',
     flexDirection: 'column',
     whiteSpace: 'nowrap',
-    overflowY: 'hidden',
+    overflowY: ['visible', 'hidden'],
     '>button': {
       variant: 'button.reset',
       overflow: 'hidden',
@@ -281,7 +282,7 @@ UIRelease.styles = {
       '>code': {
         display: 'block',
         lineHeight: 1.2,
-        overflow: 'hidden',
+        overflow: ['visible', 'hidden'],
         textOverflow: 'ellipsis',
       },
     },
@@ -299,14 +300,19 @@ UIRelease.styles = {
   },
   reason: {
     color: 'grayDarker',
+    maxWidth: '100%',
+    overflow: 'scroll',
     '>code': {
       fontSize: 5,
+      whiteSpace: 'nowrap',
     },
   },
   metadata: {
     display: 'flex',
+    flexDirection: ['column', 'row'],
     alignItems: 'center',
-    paddingY: 8,
+    paddingTop: [6, 8],
+    paddingBottom: [4, 8],
     '>span': {
       fontSize: 1,
       marginRight: 4,
@@ -318,7 +324,8 @@ UIRelease.styles = {
   tags: {
     display: 'flex',
     alignItems: 'center',
-    marginX: 4,
+    marginX: [12, 4],
+    marginBottom: [4, 12],
     '>span': {
       marginRight: 6,
       '>code': {

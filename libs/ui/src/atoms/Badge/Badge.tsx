@@ -52,6 +52,7 @@ UIBadge.styles = {
     height: '2em',
     userSelect: 'none',
     borderRadius: '2em',
+    whiteSpace: 'nowrap',
     // paddingX: 2,
     // paddingY: 6,
   },

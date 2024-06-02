@@ -41,7 +41,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
       )}
       <div sx={UIPoster.styles.guests}>
         {!!requested_by?.length && (
-          <Guests guests={guests} display='poster' compact={false} space={4} />
+          <Guests guests={guests} display='poster' compact={false} />
         )}
       </div>
     </div>
@@ -53,6 +53,7 @@ UIPoster.styles = {
     position: 'relative',
     height: ['18em', '24em'],
     width: ['12em', '16em'],
+    fontSize: '1rem',
   },
   guests: {
     position: 'absolute',

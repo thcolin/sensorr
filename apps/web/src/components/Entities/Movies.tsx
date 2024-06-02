@@ -141,3 +141,18 @@ export const ArchivedMovies = compose(
     },
   })
 )(Entities)
+
+export const RequestedMovies = compose(
+  withFetchQuery(APIQuery.movies.getMovies({ params: { state: 'pinned|missing|ignored', 'requested_by.gte': 1, sort_by: 'updated_at.desc' } }), 1, useAPI),
+  withProps({
+    empty: {
+      emoji: '🍿',
+      title: "Oh no, your request didn't return results",
+      subtitle: (
+        <span>
+          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+        </span>
+      ),
+    },
+  })
+)(Entities)

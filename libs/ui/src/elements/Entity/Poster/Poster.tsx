@@ -1,7 +1,7 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LinkProps } from 'react-router-dom'
-import Tippy from '@tippyjs/react'
 import { useDevice } from '@sensorr/utils'
+import { usePalette } from '@sensorr/palette'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
 import { Credits } from '../../../components/Movie/Credits/Credits'
@@ -11,6 +11,8 @@ import { Credits } from '../../../components/Movie/Credits/Credits'
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: any // MovieDetails | PersonDetails
   link?: LinkProps
+  interactive?: boolean
+  onLongPress?: (data: any) => void
   ready?: boolean
   meaningful?: boolean
   badges?: {
@@ -21,16 +23,19 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
   }
   credits?: { entity: any, state?: 'loading' | 'ignored' | 'followed' }[] | false
   onReady?: () => void
+  loadExternals?: () => void
 }
 
 const UIPoster = ({
   details,
   link = null,
+  interactive = false,
+  onLongPress = null,
   meaningful = true,
   badges = {},
   onReady,
   credits = false,
-  onMouseEnter,
+  loadExternals,
   ...props
 }: PosterProps) => {
   const ref = useRef()
@@ -45,8 +50,14 @@ const UIPoster = ({
     }
   }, [onReady])
 
+  const { palette } = usePalette(
+    interactive && !!details?.poster && `https://image.tmdb.org/t/p/w92${details?.poster}`,
+    { colorfulColor: null, backgroundColor: null, color: null, alternativeColor: null, negativeColor: null },
+    details?.poster,
+  )
+
   return (
-    <div sx={UIPoster.styles.element} ref={ref} onMouseEnter={onMouseEnter}>
+    <div sx={UIPoster.styles.element} ref={ref} onMouseEnter={loadExternals}>
       <div sx={UIPoster.styles.wrapper}>
         <div
           sx={{
@@ -67,15 +78,6 @@ const UIPoster = ({
           {badges?.state?.component && <div sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
           {badges?.proposal?.component && <div sx={UIPoster.styles.proposal}><badges.proposal.component {...badges?.proposal?.props} /></div>}
         </div>
-        <Link to={link?.to} state={link?.state} sx={UIPoster.styles.link} disabled={!link?.to}>
-          <Picture
-            {...props}
-            ready={ready}
-            path={details?.poster}
-            onReady={onPosterReady}
-            // sx={{ ':hover': { viewTransitionName: `poster` } }}
-          />
-        </Link>
         <div
           sx={{
             ...UIPoster.styles.guests,
@@ -84,6 +86,66 @@ const UIPoster = ({
           }}
         >
           {badges?.guests?.component && <badges.guests.component {...badges?.guests?.props} />}
+        </div>
+        <div
+          sx={{
+            '>a': UIPoster.styles.link,
+            ':hover >div': {
+              opacity: 1,
+              visibility: 'visible',
+              transition: 'opacity 400ms ease-in-out, visibility 0ms ease',
+            },
+          }}
+        >
+          <InteractiveLongPressLink
+            to={link?.to}
+            state={link?.state}
+            disabled={!link?.to}
+            interactive={interactive}
+            onTouchStart={loadExternals}
+            onLongPress={() => onLongPress({ details, link, palette })}
+            palette={palette}
+          >
+            <Picture
+              {...props}
+              ready={ready}
+              path={details?.poster}
+              onReady={onPosterReady}
+              sx={{
+                transition: `background-color 800ms ease-in-out, color 800ms ease-in-out, mask 100ms ease-in-out ${ready ? '400ms' : '200ms'}`,
+                maskPosition: 'center center',
+                maskSize: ready ? '100%' : '150%',
+                maskRepeat: 'no-repeat',
+                maskImage: !badges?.state?.component ? 'unset' : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 480"><path d="${(
+                  (device === 'mobile') ? (
+                    (badges?.reviews?.component) ? (
+                      (badges?.proposal?.component) ? 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V106.7c0,0-29.3-14.1-23.2-57.1 c0,0-24.8-12.5-23.3-49.6' : 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V58.5c0,0-46.8-5.2-46.4-58.5'
+                    ) : (
+                      (badges?.proposal?.component) ? 'M0,0v480h320V106.7c0,0-29.3-14.1-23.2-57.1c0,0-24.8-12.5-23.3-49.6H0z' : 'M0,0v480h320V60c0,0-49.3-9.5-46.4-60H0z'
+                    )
+                  ) : (
+                    (badges?.reviews?.component) ? (
+                      (badges?.proposal?.component) ? 'M0 32.1h97.2s27-2.2 28.9-32.1H281s-6.9 27.9 17.9 42c0 0-13.2 34.4 21.1 45v393H0V32.1z' : 'M0,32.1h97.2c0,0,27-2.2,28.9-32.1H281c0,0-7.5,44.1,39,48v432H0V32.1z'
+                    ) : (
+                      (badges?.proposal?.component) ? 'M0,0c0,0,69.2,0,126.1,0S281,0,281,0s-6.9,27.9,17.9,42c0,0-13.2,34.4,21.1,45v393H0V0z' : 'M0,0h281c0,0-7.5,44.1,39,48v432H0V0z'
+                    )
+                  )
+                )}"></path></svg>')`,
+              }}
+            />
+          </InteractiveLongPressLink>
+          {(!interactive && credits !== false) && (
+            <div
+              sx={{
+                ...UIPoster.styles.credits,
+                opacity: 0,
+                visibility: 'hidden',
+                transition: 'opacity 400ms ease-in-out, visibility 0ms ease 400ms',
+              }}
+              >
+              <Credits credits={credits || []} length={device === 'mobile' ? 4 : 5} />
+            </div>
+          )}
         </div>
       </div>
       {meaningful && (
@@ -99,10 +161,13 @@ const UIPoster = ({
           ></div>
           <strong sx={UIPoster.styles.title} title={details?.title}>
             <Link to={link?.to} state={link?.state} disabled={!link?.to}>
-              {details?.title}
+              {details?.title || 'Loading'}
             </Link>
           </strong>
           <div sx={UIPoster.styles.subtitle}>
+            {!ready && (
+              <span>Loading</span>
+            )}
             {!!details?.meaningful?.year && (
               <span>
                 <details.meaningful.year disabled={device === 'mobile'} />
@@ -115,24 +180,6 @@ const UIPoster = ({
               </small>
             )}
           </div>
-          {credits !== false && (
-            <Tippy
-              theme='transparent'
-              placement='top'
-              interactive={true}
-              hideOnClick={true}
-              popperOptions={{ modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', enabled: false }] }}
-              content={<div sx={{ marginBottom: ['-0.375rem', '-0.5rem'], marginLeft: ['-0.125rem', '0.5rem'], fontSize: [10, 9] }}><Credits credits={credits || []} length={device === 'mobile' ? 4 : 5} /></div>}
-            >
-              <button sx={UIPoster.styles.credits}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" height='1em' width='1em'>
-                  <path fill="currentColor" d="M5273.1 2397.6v-2c0-2.8-5-4-9.7-4s-9.7 1.3-9.7 4v2c0 1.8.7 3.6 2 4.9l5 4.9c.3.3.4.6.4 1v6.4c0 .4.2.7.6.8l2.9.9c.5.1 1-.2 1-.8v-7.2c0-.4.2-.7.4-1l5.1-5c1.3-1.3 2-3.1 2-4.9zm-9.7-.1c-4.8 0-7.4-1.3-7.5-1.8.1-.5 2.7-1.8 7.5-1.8s7.3 1.3 7.5 1.8c-.2.5-2.7 1.8-7.5 1.8z"/>
-                  <path fill="currentColor" d="M5268.4 2407.8c-.6 0-1 .4-1 1s.4 1 1 1h4.3c.6 0 1-.4 1-1s-.4-1-1-1h-4.3zM5272.7 2411.2h-4.3c-.6 0-1 .4-1 1s.4 1 1 1h4.3c.6 0 1-.4 1-1s-.4-1-1-1zM5272.7 2414.5h-4.3c-.6 0-1 .4-1 1s.4 1 1 1h4.3c.6 0 1-.4 1-1 0-.5-.4-1-1-1zM96 40.5c-11.1-4.6-23-7.4-35-7.9.4 4 .2 8-.6 11.9-.1.7-.4 1.3-.5 2 .7-.2 1.5-.2 2.2-.1 2.6.5 4.6 2.6 5.4 5.8.1.5 0 1-.4 1.3-.3.4-.8.5-1.3.4l-8.3-1.4c-3 5.5-7.6 10-13.2 12.6.1 1.5.3 2.9.6 4.4 2 9.7 9.6 17.1 19.4 18.8 9.8 1.7 19.4-2.6 24.7-11 2.3-3.7 3.8-7.7 4.6-12l3.9-22.1c.1-1.1-.4-2.2-1.5-2.7zM75.9 74.6 58 71.5c-1-.2-1.7-1.2-1.3-2.2 1.8-4.8 6.8-7.9 12.1-6.9 5.3.9 9 5.5 9 10.7.1.9-.8 1.7-1.9 1.5zm9.8-17.8c-.3.4-.8.5-1.3.4l-9.7-1.7c-.5-.1-.9-.4-1.1-.8-.2-.4-.2-1 .1-1.4 1.7-2.7 4.4-4.1 7-3.6s4.6 2.6 5.4 5.8c0 .4-.1.9-.4 1.3z"/>
-                  <path fill="currentColor" d="M55.1 43.4c.9-4.2 1-8.6.2-12.8L51.4 8.4c-.2-1.1-1.1-1.9-2.2-2-15.4-.8-31 2-45.2 8-1 .4-1.6 1.5-1.4 2.6l3.9 22.2c.8 4.3 2.3 8.3 4.6 12 5.2 8.4 14.9 12.8 24.7 11 9.7-1.7 17.3-9.1 19.3-18.8zM15.7 31.1c-.5.1-1-.1-1.3-.4-.3-.4-.5-.8-.4-1.3.7-3.1 2.7-5.3 5.3-5.8s5.2.9 7 3.6c.3.4.3.9.1 1.4-.2.5-.6.8-1.1.9l-9.6 1.6zm17.7 18.2c-5.3.9-10.3-2.1-12.1-6.9-.4-1 .3-2 1.3-2.2l17.9-3.1c1-.2 2 .6 2 1.6-.1 5.1-3.8 9.6-9.1 10.6zM45 25.2c-.2.4-.6.8-1.1.9l-9.7 1.7c-.5.1-1-.1-1.3-.4-.3-.4-.5-.8-.4-1.3.7-3.1 2.7-5.3 5.3-5.8s5.2.9 7 3.6c.3.4.3.9.2 1.3z"/>
-                </svg>
-              </button>
-            </Tippy>
-          )}
         </div>
       )}
     </div>
@@ -149,7 +196,7 @@ UIPoster.styles = {
     maxWidth: '100%',
     paddingRight: [4, 2],
     paddingLeft: [8, 4],
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   wrapper: {
     position: 'relative',
@@ -162,9 +209,12 @@ UIPoster.styles = {
     flexDirection: 'column',
     alignItems: 'flex-end',
     top: '-1em',
-    left: ['-0.5em', '-0.875em'],
+    right: ['2.75em', '6em'],
     fontSize: [5, 4],
     zIndex: 2,
+    '>div>span>span': {
+      minWidth: ['6.5em', '6em'],
+    },
   },
   right: {
     position: 'absolute',
@@ -181,23 +231,27 @@ UIPoster.styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    bottom: ['-4px', '-4px'],
+    bottom: ['-6px', '-6px'],
     left: ['-8px', '-16px'],
-    fontSize: ['4px', '6px'],
+    fontSize: ['4px', '5px'],
+    zIndex: 2,
+  },
+  credits: {
+    position: 'absolute',
+    bottom: '-1.5em',
+    left: '-4em',
+    fontSize: ['4px', '5px'],
     zIndex: 2,
   },
   reviews: {
-    backgroundColor: 'grayLightest',
     padding: 10,
     borderRadius: '2em',
   },
   state: {
-    backgroundColor: 'grayLightest',
     padding: 10,
     borderRadius: '50%',
   },
   proposal: {
-    backgroundColor: 'grayLightest',
     padding: 10,
     marginTop: '-0.75em',
     borderRadius: '50%',
@@ -210,19 +264,20 @@ UIPoster.styles = {
   },
   meaningful: {
     position: 'relative',
-    minHeight: ['4em', '4.25em'],
     display: 'flex',
     flexDirection: 'column',
     maxWidth: '100%',
     marginTop: 8,
+    paddingY: 10,
   },
   skeleton: {
     position: 'absolute',
-    height: '4.25em',
+    height: '100%',
     width: '100%',
   },
   title: {
     fontSize: [6, 5],
+    lineHeight: 'reset',
     fontFamily: 'heading',
     fontWeight: 'semibold',
     color: 'text',
@@ -233,8 +288,7 @@ UIPoster.styles = {
   subtitle: {
     display: 'flex',
     alignItems: 'center',
-    marginBottom: 6,
-    marginTop: 10,
+    marginTop: 8,
     color: 'grayDarker',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
@@ -249,17 +303,136 @@ UIPoster.styles = {
       textOverflow: 'ellipsis',
     },
   },
-  credits: {
-    variant: 'button.reset',
-    color: 'gray',
-    borderRadius: '0.25em',
-    transition: 'all 200ms ease-in-out',
-    paddingTop: 11,
-    ':hover': {
-      color: 'grayDark',
-      backgroundColor: 'grayLight'
-    },
-  },
 }
 
 export const Poster = memo(UIPoster)
+
+const InteractiveLongPressLink = ({
+  children,
+  palette,
+  interactive,
+  onTouchStart,
+  onLongPress,
+  ...props
+}: any) => {
+  const ref = useRef<any>()
+  const triggerTimer = useRef<any>()
+  const longpressTimer = useRef<any>()
+  const canceled = useRef<boolean>(false)
+  const longpress = useRef<boolean>(false)
+  const trigger = useRef<boolean>(false)
+  const [action, setAction] = useState(null)
+  const [, setTriggered] = useState(false)
+
+  const startPressTimer = () => {
+    longpress.current = false
+    trigger.current = false
+    canceled.current = false
+
+    if (!interactive) {
+      return
+    }
+
+    longpressTimer.current = setTimeout(() => {
+      longpress.current = true
+      setAction('longpress')
+    }, 200)
+
+    triggerTimer.current = setTimeout(() => {
+      trigger.current = true
+      setTriggered(true)
+    }, 400)
+  }
+
+  const handleOnClick = (e) => {
+    if (longpress.current) {
+      e.preventDefault()
+      return false
+    }
+
+    setAction('click')
+  }
+
+  const handleOnTouchStart = () => {
+    startPressTimer()
+
+    if (typeof onTouchStart === 'function') {
+      onTouchStart()
+    }
+  }
+
+  const handleOnTouchMove = (e) => {
+    canceled.current = true
+    setAction(null)
+    setTriggered(false)
+    clearTimeout(longpressTimer.current)
+    clearTimeout(triggerTimer.current)
+  }
+
+  const handleOnTouchEnd = (e) => {
+    if (longpress.current) {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      setAction(null)
+      setTriggered(false)
+
+      if (!canceled.current && trigger.current && typeof onLongPress === 'function') {
+        onLongPress()
+      }
+
+      return
+    }
+
+    clearTimeout(longpressTimer.current)
+    clearTimeout(triggerTimer.current)
+  }
+
+  useEffect(() => {
+    if (!ref || !ref.current) {
+      return
+    }
+
+    ref.current.addEventListener('webkitmouseforcewillbegin', (e) => e.preventDefault())
+  }, [ref])
+
+  return (
+    <Link
+      ref={ref}
+      {...props}
+      onClick={handleOnClick}
+      onTouchStart={handleOnTouchStart}
+      onTouchMove={handleOnTouchMove}
+      onTouchEnd={handleOnTouchEnd}
+      sx={{
+        position: 'relative',
+        display: 'block',
+        transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
+        transform: `scale(${action === 'longpress' ? '1.05, 1.05' : '1, 1'})`,
+        userSelect: 'none',
+        // WebkitTapHighlightColor: 'transparent',
+        WebkitTouchCallout: 'none',
+        WebkitUserDrag: 'none',
+        '::after': {
+          content: '""',
+          position: 'absolute',
+          top: '0px',
+          left: '0px',
+          width: '100%',
+          height: '100%',
+          boxShadow: (theme) => `0px 3px 30px ${palette?.colorfulColor || theme.colors.primary}`,
+          opacity: action === 'longpress' ? 1 : 0,
+          transition: 'opacity 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
+        },
+        ...(action === 'longpress' ? {
+          '>span': {
+            maskSize: '110% !important'
+          },
+        } : {}),
+      }}
+    >
+      {children}
+    </Link>
+  )
+}

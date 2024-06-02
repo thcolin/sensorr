@@ -9,10 +9,11 @@ export interface BillboardProps extends React.HTMLAttributes<HTMLDivElement>, Pi
   onReady?: () => void
   ready?: boolean
   lazy?: boolean
+  blur?: boolean | number
   fade?: number
 }
 
-const UIBillboard = ({ path, palette, onReady, ready = true, lazy = true, size = 'w780', fade = 0.05, ...props }: BillboardProps) => (
+const UIBillboard = ({ path, palette, onReady, ready = true, lazy = true, blur = 2, size = 'w780', fade = 0.05, ...props }: BillboardProps) => (
   <div {...props} sx={UIBillboard.styles.element}>
     <Picture
       path={path}
@@ -20,6 +21,7 @@ const UIBillboard = ({ path, palette, onReady, ready = true, lazy = true, size =
       ready={ready}
       onReady={onReady}
       lazy={lazy}
+      blur={blur}
     />
     <Shadow palette={palette} fade={fade} />
   </div>

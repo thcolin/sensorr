@@ -18,7 +18,7 @@ Summary.styles = {
   element: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: ['center', 'flex-start'],
     flexWrap: 'wrap',
     '>span': {
       backgroundColor: 'grayLight',

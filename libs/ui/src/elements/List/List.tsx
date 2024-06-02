@@ -10,7 +10,7 @@ import { Link, LinkProps } from '../../atoms/Link/Link'
 const withGridItemContainer = () => (WrappedComponent) => {
   const withGridItemContainer = ({ style, index, readyInViewport, scrolling, ...props }) => (
     <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
-      <WrappedComponent {...props} index={index} placeholder={!readyInViewport} />
+      <WrappedComponent {...props} index={index} />
     </div>
   )
 
@@ -64,7 +64,7 @@ const UIList = ({
 
   useEffect(() => {
     if (!stack) {
-      ref.current.scroll(...scroll)
+      ref.current.scroll(...(scroll || [0, 0]))
     }
   }, [id])
 
@@ -80,7 +80,7 @@ const UIList = ({
       ...(compact ? {
         padding: '0em',
         ':not(:last-of-type)': {
-          marginRight: `-${space}em`,
+          marginRight: `${-space}em`,
         },
       } : {}),
     },
@@ -92,7 +92,7 @@ const UIList = ({
         (mobile && virtual && display === 'row') ? (
           <ResponsiveVirtualGrid
             total={length}
-            cell={{ height: 240, width: 120 }}
+            cell={{ height: 210, width: 120 }}
             onRender={onMore || null}
             child={WrappedChild}
             childProps={childProps}

@@ -31,7 +31,7 @@ const UIGrid = ({
   ...props
 }: GridProps) => {
   const cell = useResponsiveValue([
-    { height: 240, width: 120 },
+    { height: 225, width: 120 },
     { height: 346, width: 204 },
   ])
 

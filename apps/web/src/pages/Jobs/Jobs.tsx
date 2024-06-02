@@ -435,6 +435,7 @@ UIJob.styles = {
   summary: {
     fontSize: 6,
     overflowX: 'auto',
+    paddingLeft: [12, '4em'],
   },
 }
 

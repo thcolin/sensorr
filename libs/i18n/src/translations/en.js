@@ -136,6 +136,12 @@ export default {
         title: 'Upcoming movies from your followed stars',
         more: 'More upcoming movies from your followed stars',
       },
+      requests: {
+        emoji: '🍻',
+        label: emojize('🍻', 'Requests'),
+        title: 'Requested movies from your friends',
+        more: 'More requested movies from your friends',
+      },
       library: {
         emoji: '📚',
         label: emojize('📚', 'Your Library'),

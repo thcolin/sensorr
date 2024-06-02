@@ -19,7 +19,7 @@ const RecordData = ({ style, index, readyInViewport, scrolling, sensorr, ...prop
   const record = useContext(RecordsContext as any)[index]
 
   return (
-    <div style={style}>
+    <div style={{ ...style, width: '100%' }}>
       <Record {...record} {...props} sensorr={sensorr === record.movie?.id} />
     </div>
   )
@@ -413,7 +413,8 @@ UIRecord.styles = {
   buttons: {
     display: 'flex',
     marginX: 4,
-    marginTop: '-0.5em',
+    marginTop: 4,
+    marginBottom: [12, 4],
     zIndex: 1,
   },
   // input: {
@@ -521,14 +522,14 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                             {(log.meta?.stats?.matches || []).map(({ release, original, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(original) ? 'Unban release' : 'Ban release'}
-                                  sx={(metadata?.banned_releases || []).includes(original) ? { opacity: '1 !important' } : {}}
+                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => setMovieMetadata(
                                     movie?.id,
                                     'banned_releases',
-                                    (metadata?.banned_releases || []).includes(original) ?
-                                      [...(metadata?.banned_releases || [])].filter(release => release !== original) :
-                                      [...(metadata?.banned_releases || []), original]
+                                    (metadata?.banned_releases || []).includes(release) ?
+                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
+                                      [...(metadata?.banned_releases || []), release]
                                   )}
                                 >
                                   ⊘
@@ -550,14 +551,14 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                             {(log.meta?.stats?.withdrawn || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(original) ? 'Unban release' : 'Ban release'}
-                                  sx={(metadata?.banned_releases || []).includes(original) ? { opacity: '1 !important' } : {}}
+                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => setMovieMetadata(
                                     movie?.id,
                                     'banned_releases',
-                                    (metadata?.banned_releases || []).includes(original) ?
-                                      [...(metadata?.banned_releases || [])].filter(release => release !== original) :
-                                      [...(metadata?.banned_releases || []), original]
+                                    (metadata?.banned_releases || []).includes(release) ?
+                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
+                                      [...(metadata?.banned_releases || []), release]
                                   )}
                                 >
                                   ⊘
@@ -579,14 +580,14 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                             {(log.meta?.stats?.ignored || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(original) ? 'Unban release' : 'Ban release'}
-                                  sx={(metadata?.banned_releases || []).includes(original) ? { opacity: '1 !important' } : {}}
+                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => setMovieMetadata(
                                     movie?.id,
                                     'banned_releases',
-                                    (metadata?.banned_releases || []).includes(original) ?
-                                      [...(metadata?.banned_releases || [])].filter(release => release !== original) :
-                                      [...(metadata?.banned_releases || []), original]
+                                    (metadata?.banned_releases || []).includes(release) ?
+                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
+                                      [...(metadata?.banned_releases || []), release]
                                   )}
                                 >
                                   ⊘

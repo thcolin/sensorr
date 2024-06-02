@@ -47,6 +47,7 @@ LoadingBar.styles = {
   element: {
     position: 'relative',
     display: 'flex',
+    flexShrink: 0,
     height: '2px',
     width: '100%',
     '>*': {

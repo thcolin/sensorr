@@ -78,6 +78,7 @@ export const QuerySelect = forwardRef(({ onChange, ...props }: any, ref) => {
       fontFamily: (theme.fonts as any).monospace,
       fontWeight: 600,
       paddingRight: pinned ? '6px' : '0px',
+      userSelect: 'none',
     }),
     multiValueRemove: (style, { data: { pinned } }) => (pinned ? {
       position: 'absolute',

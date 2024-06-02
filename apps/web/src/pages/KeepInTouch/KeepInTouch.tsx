@@ -52,9 +52,9 @@ const KeepInTouch = () => {
       <div sx={KeepInTouch.styles.wrapper}>
         <div sx={KeepInTouch.styles.splash}>
           <div sx={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-            <span>
-              <Icon value='plex' sx={{ fontSize: '5em', height: '' }} />
-              <span sx={{ display: 'block', marginLeft: 4, fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>Plex</span>
+            <span sx={{ marginRight: 5 }}>
+              <Icon value='plex' sx={{ height: '4em' }} />
+              <span sx={{ position: 'absolute', display: 'block', marginLeft: 4, marginTop: 8, fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>Plex</span>
             </span>
             <span sx={{ fontSize: '2em', paddingLeft: 8, paddingRight: 4, fontFamily: 'monospace' }}>
               +
@@ -71,7 +71,7 @@ const KeepInTouch = () => {
           </div>
         </div>
         <div sx={KeepInTouch.styles.register}>
-          <div sx={{ maxWidth: '40em' }}>
+          <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
             <Warning
               emoji='🍻'
               title='Keep In Touch'
@@ -125,7 +125,7 @@ const KeepInTouch = () => {
                       <span>And enter below code to link your Plex account with Sensorr server :</span>
                       <br/>
                       <code sx={{ fontSize: '4em', fontWeight: 'bold', color: 'black' }}>{pin.code}</code>
-                      <p sx={{ fontSize: 6, marginTop: '2rem', textAlign: 'left' }}>
+                      <p sx={{ fontSize: 6, marginTop: '2rem', textAlign: 'left', color: 'grayDark' }}>
                         Linking your Plex account with Sensorr server will allow administrator to follow movies from your <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex "Watchlist"</a> and consider adding them to his library.
                         <br/><br/>
                         Sensorr server will be listed as an <a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>authorized device</a> on your <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex account</a> where you can manage it.
@@ -152,14 +152,17 @@ KeepInTouch.styles = {
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: 'grayLightest',
+    overflow: 'hidden',
   },
   wrapper: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: ['column-reverse', 'row'],
+    overflow: ['scroll', 'hidden'],
   },
   splash: {
     flex: 1,
+    minHeight: '20em',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

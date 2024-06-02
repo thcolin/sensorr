@@ -1,3 +1,7 @@
+const pool = []
+const worker = new Worker(new URL('./palette.worker.js', import.meta.url))
+worker.onmessage = (e) => pool[e.data.key](e.data.colors)
+
 const CanvasImage = function (image) {
   this.canvas = document.createElement('canvas')
   document.body.appendChild(this.canvas)
@@ -35,11 +39,10 @@ CanvasImage.prototype.removeCanvas = function () {
 }
 
 export function getImagePalette(src) {
-  return new Promise(resolve => {
-    const worker = new Worker(new URL('./palette.worker.js', import.meta.url))
-    worker.onmessage = e => resolve(e.data)
+  return new Promise((resolve) => {
+    const key = pool.length
+    pool.push(resolve)
     const image = new Image()
-
     image.crossOrigin = 'anonymous'
     image.src = src
     image.onload = () => {
@@ -48,7 +51,7 @@ export function getImagePalette(src) {
       const pixels = imageData.data
       const pixelCount = canvas.getPixelCount()
       canvas.removeCanvas()
-      worker.postMessage({ pixels, pixelCount })
+      worker.postMessage({ key, pixels, pixelCount })
     }
   })
 }

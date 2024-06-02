@@ -1,9 +1,10 @@
-import { memo, useEffect, useMemo } from 'react'
+import { memo, useEffect, useMemo, useRef } from 'react'
 import { Button, Guests, Icon, Link, MovieState, Pane, Picture, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
+import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
@@ -12,7 +13,8 @@ import { useDeviceContext } from '../../../contexts/Device/Device'
 
 const UINotifications = ({ ...props }) => {
   const { pwa } = useDeviceContext()
-  const [ref, onPointerDown] = useRipple()
+  const ref = useRef()
+  const [pointerRef, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const { notifications, loading, subscribable, subscribed, subscribeNotifications } = useNotificationsContext() as any
   const count = useMemo(() => notifications.filter(notification => !notification.meta?.seen).length, [notifications])
@@ -25,7 +27,7 @@ const UINotifications = ({ ...props }) => {
 
   return (
     <>
-      <button {...(pwa ? { ref, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
+      <button {...(pwa ? { ref: pointerRef, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
         {!!count && <span>{count}</span>}
         🔔
       </button>
@@ -43,10 +45,22 @@ const UINotifications = ({ ...props }) => {
                 Enable System Notifications
               </button>
             )}
-            <div>
+            <div ref={ref}>
               {notifications.length ? (
                 <div>
-                  {notifications.map(notification => <Notification key={notification._id} {...notification} closePortal={closePortal} />)}
+                  <ResponsiveVirtualGrid
+                    total={notifications.length}
+                    cell={{ height: 240 }}
+                    child={Notification}
+                    childProps={{ closePortal }}
+                    viewportOffset={10}
+                    scrollContainer={ref.current}
+                    scrollDirection={'vertical'}
+                    useChildProps={(key) => ({
+                      key: notifications[key.split('-').shift()]?._id,
+                      ...notifications[key.split('-').shift()],
+                    })}
+                  />
                 </div>
               ) : (
                 <Warning emoji='🔔' title="Up to date" subtitle="Not notifications yet" />
@@ -154,8 +168,8 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   }, [meta?.choice, meta?.command, loading, metadata.state])
 
   return (
-    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : seenNotification(_id)}>
-      <div sx={{ position: 'relative', display: 'flex', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
+    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : seenNotification(_id)} style={{ ...props.style, width: '100%' }}>
+      <div sx={{ position: 'relative', display: 'flex', height: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
         {!meta?.seen && (
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
         )}
@@ -201,7 +215,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 compact={true}
               />
             </span>
-            <span sx={{ fontFamily: 'heading', fontWeight: 'bold' }}>{meta?.movie?.title}</span>
+            <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
           </div>
           <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
             <span sx={{ fontSize: 6 }}>
@@ -366,8 +380,8 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
             </div>
           )}
           {meta?.command === 'keep-in-touch' && (
-            <div sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8 }}>
-              <div sx={{ marginRight: 4, marginBottom: 3, fontSize: 9 }}>
+            <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8, fontSize: '1rem' }}>
+              <div sx={{ flex: 1, marginRight: 4, marginBottom: 3, fontSize: 9 }}>
                 <Guests
                   childProps={{ onClick: () => closePortal() }}
                   guests={meta?.requested_by.map(guest => ({
@@ -375,7 +389,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                   }))}
                 />
               </div>
-              <div sx={{ flex: 1, display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+              <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
                 {(choice === null || choice === true) && (
                   <Button
                     variant='contain'

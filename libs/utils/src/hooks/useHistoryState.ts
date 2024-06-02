@@ -42,10 +42,10 @@ export const useHistoryState = (key, defaultValue, {
     }
   }
 
-  // Ugly af, but needed to re-render on setState()
+  // Ugly af, but needed to force re-render on setState()
   const [, setLocalState] = useState(getHistoryState.current)
 
-  // save state to sessionStorage
+  // save state to sessionStorage and force re-render
   const setState = useCallback((stateOrFn) => {
     let value = stateOrFn
 

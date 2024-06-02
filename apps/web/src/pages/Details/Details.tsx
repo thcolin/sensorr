@@ -102,7 +102,7 @@ const UIDetails = ({
             </div>
           )}
         </div>
-        <div sx={UIDetails.styles.wrapper}>
+        <div sx={{ ...UIDetails.styles.wrapper, marginTop: ['0em', expanded ? '1em' : '-2em'] }}>
           <div sx={UIDetails.styles.container}>
             <div sx={UIDetails.styles.content}>
               <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
@@ -126,6 +126,7 @@ const UIDetails = ({
                             href={review.external}
                             target='_blank'
                             rel='norefer noopener'
+                            key={review.source}
                             sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
                             title={{
                               'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
@@ -177,6 +178,7 @@ const UIDetails = ({
                               href={additional?.externals[external]}
                               target='_blank'
                               rel='norefer noopener'
+                              key={external}
                               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
                               title={{
                                 letterbox: 'Letterboxd',
@@ -318,6 +320,7 @@ UIDetails.styles = {
     justifyContent: 'space-between',
     textAlign: ['center', 'left'],
     overflow: 'hidden',
+    transition: 'margin 400ms ease-in-out',
   },
   container: {
     display: 'flex',

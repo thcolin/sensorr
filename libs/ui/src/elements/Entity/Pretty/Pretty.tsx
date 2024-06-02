@@ -39,7 +39,7 @@ const UIPretty = ({
   const ready = !palette.loading && background && poster && props.ready !== false
 
   return (
-    <div sx={UIPretty.styles.element} ref={ref} onMouseEnter={props.onMouseEnter}>
+    <div sx={UIPretty.styles.element} ref={ref} onMouseEnter={props.loadExternals}>
       <div sx={UIPretty.styles.billboard}>
         <Billboard
           path={details?.billboard}
@@ -70,7 +70,6 @@ const UIPretty = ({
           details={details}
           link={link}
           badges={badges}
-          credits={credits}
           ready={ready}
           palette={palette.palette}
           parent={ref}
@@ -78,7 +77,7 @@ const UIPretty = ({
       </div>
       {!!credits && (
         <div sx={UIPretty.styles.credits}>
-          <Credits credits={credits} space={4} />
+          <Credits credits={credits} />
         </div>
       )}
     </div>
@@ -94,8 +93,7 @@ UIPretty.styles = {
     width: '35em',
     maxWidth: '100vw',
     minWidth: '25em',
-    marginTop: '0.5em',
-    marginBottom: '3.625em',
+    marginBottom: '2.5em',
     marginX: 4,
     ':hover >div:nth-child(4)': {
       opacity: 1,
@@ -106,26 +104,25 @@ UIPretty.styles = {
     height: 'calc(100% - 2em)',
     width: '100%',
     overflow: 'hidden',
-    marginTop: 0,
+    marginTop: '3em',
   },
   poster: {
     flexShrink: 0,
-    marginTop: '-0.25em',
   },
   about: {
     display: 'flex',
     flex: 1,
-    marginTop: 0,
+    marginTop: '3em',
     paddingRight: 2,
     paddingTop: 6,
-    paddingBottom: 2,
+    paddingBottom: 8,
     overflow: 'hidden',
   },
   credits: {
     position: 'absolute',
     fontSize: 9,
     bottom: '-2.5rem',
-    left: '-1rem',
+    left: '-2rem',
     opacity: 0,
     transition: 'opacity 400ms ease-in-out',
   },

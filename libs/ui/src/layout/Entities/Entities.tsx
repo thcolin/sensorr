@@ -110,7 +110,7 @@ const UIEntities = ({
 
   return (!!total || !ready || !hide) && (
     <EntitiesContextProvider entities={entities}>
-      <div sx={UIEntities.styles.element}>
+      <div sx={{ ...UIEntities.styles.element, ...UIEntities.styles[display] }}>
         {label && (
           <div sx={UIEntities.styles.label}>
             {(typeof label === 'string' && more) ? (
@@ -156,13 +156,25 @@ UIEntities.styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+  },
+  row: {
+    paddingTop: 4,
+    paddingBottom: [12, 2],
+  },
+  column: {
+    paddingY: 4,
+  },
+  wrap: {
+    paddingY: 4,
+  },
+  grid: {
     paddingY: 4,
   },
   label: {
     display: 'flex',
     alignItems: 'center',
     paddingX: 4,
-    marginBottom: [12, 4],
+    marginBottom: [12, 8],
     marginTop: [4, 12],
     fontFamily: 'heading',
     fontWeight: 'strong',

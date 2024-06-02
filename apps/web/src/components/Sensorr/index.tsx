@@ -1,6 +1,6 @@
 import { memo, useMemo, useRef } from 'react'
 import { compose, emojize } from '@sensorr/utils'
-import { Icon, Sorting, Warning, Pane, withControls, QuerySelect } from '@sensorr/ui'
+import { Icon, Sorting, Warning, Drawer, withControls, QuerySelect } from '@sensorr/ui'
 import { Policy, SENSORR_POLICY_FALLBACK } from '@sensorr/sensorr'
 import { useBreakpointIndex } from '@sensorr/utils'
 import { useThemeUI } from 'theme-ui'
@@ -263,7 +263,7 @@ const UISensorr = compose(
   }), [entities])
 
   return (
-    <div sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+    <div sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: ['visible', 'hidden'] }}>
       <Progress progress={progress} />
       {override || (
         <div sx={{ flexGrow: 1, flexShrink: 1, height: '100%', overflowX: 'hidden', overflowY: 'auto', color: 'text' }}>
@@ -292,7 +292,7 @@ const UISensorr = compose(
 })
 
 const UISensorrWrapper = ({ entity, metadata, onChange = null, button = null, loading = false, portal = null, ...props }) => {
-  const { Portal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
+  const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
     props.setPortalToggle(togglePortal)
@@ -301,12 +301,12 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, button = null, lo
   return (
     <>
       {!!button && (
-        <button onClick={togglePortal} sx={{ variant: 'button.reset' }} disabled={!entity?.id || loading}>
+        <button onClick={closePortal} sx={{ variant: 'button.reset' }} disabled={!entity?.id || loading}>
           {button}
         </button>
       )}
       <Portal>
-        <Pane position='bottom' toggleOpen={togglePortal} open={open} height='85vh'>
+        <Drawer close={closePortal} open={open} height='85vh'>
           <div sx={UISensorrWrapper.styles.container}>
             <div sx={UISensorrWrapper.styles.head}>
               <h4>Releases</h4>
@@ -319,7 +319,7 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, button = null, lo
               toggle={togglePortal}
             />
           </div>
-        </Pane>
+        </Drawer>
       </Portal>
     </>
   )
@@ -333,6 +333,7 @@ UISensorrWrapper.styles = {
     minHeight: '85vh',
     width: '100%',
     backgroundColor: 'white',
+    overflow: ['scroll', 'unset'],
     '>nav >div': {
       backgroundColor: 'accent',
       paddingX: 12,
@@ -341,6 +342,9 @@ UISensorrWrapper.styles = {
   },
   head: {
     display: 'flex',
+    position: ['sticky', 'relative'],
+    top: ['0px', 'unset'],
+    zIndex: [5, 'unset'],
     width: '100%',
     backgroundColor: 'primary',
     paddingX: 0,

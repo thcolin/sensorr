@@ -2,7 +2,7 @@ import { Fragment, memo, useCallback, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
 import { Movie as MovieInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface, utils as tmdb, fields } from '@sensorr/tmdb'
-import { emojize, humanize } from '@sensorr/utils'
+import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Link } from '../../atoms/Link/Link'
@@ -58,6 +58,7 @@ const UIMovie = ({
   ready = true,
   ...props
 }: MovieProps) => {
+  const device = useDevice()
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder]) as MovieInterface
   const details = useMemo(() => transformMovieDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/movie/${entity.id}` }))(entity), [entity, props.link])
@@ -94,7 +95,7 @@ const UIMovie = ({
     metadata?.requested_by
   ]) as { state?: { component: React.FC, props: any }, proposal?: { component: React.FC, props: any } }
 
-  const onMouseEnter = useCallback(() => {
+  const loadExternals = useCallback(() => {
     if (typeof loadCredits === 'function') {
       loadCredits()
     }
@@ -137,7 +138,7 @@ const UIMovie = ({
           empty={Empty.movie}
           badges={badges}
           credits={credits}
-          onMouseEnter={onMouseEnter}
+          loadExternals={loadExternals}
         />
       )
     default:
@@ -146,11 +147,12 @@ const UIMovie = ({
           {...props}
           details={details}
           link={link}
+          interactive={device === 'mobile'}
           ready={typeof entity?.id === 'number' && !placeholder && ready}
           empty={Empty.movie}
           badges={badges}
           credits={credits}
-          onMouseEnter={onMouseEnter}
+          loadExternals={loadExternals}
         />
       )
   }
@@ -198,7 +200,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         ))}
       </span>
     ) : null,
-    year: !!entity.release_date ? ({ disabled }) => (
+    year: !!entity.release_date ? ({ disabled } = {}) => (
       <Link
         title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
         sx={{ whiteSpace: 'nowrap' }}
@@ -274,7 +276,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('📣', entity.popularity.toLocaleString())}
       </span>
     ) : null,
-    genres: !!entity.genres?.length ? ({ emoji = true, disabled }) => (
+    genres: !!entity.genres?.length ? ({ emoji = true, disabled } = {}) => (
       <span>
         {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
           <Fragment key={genre.id}>

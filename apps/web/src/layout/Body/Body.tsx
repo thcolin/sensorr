@@ -26,6 +26,7 @@ Body.styles = {
     flex: 1,
     backgroundColor: 'grayLightest',
     overflowY: 'auto',
+    overflowX: 'hidden',
     overflowAnchor: 'none',
   },
 }

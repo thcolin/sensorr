@@ -117,6 +117,7 @@ export const Provider = ({ ...props }) => {
     const initial = ref.current[id] || {}
     const changes = {
       ...(choice === true ? { state: 'archived' } : {}),
+      ...(choice === false && confirm(`Do you want to ban release "${release?.title}" from results ?`) ? { banned_releases: [...(initial?.banned_releases || []), release?.title] } : {}),
       releases: !choice ?
         (initial.releases || []).filter(r => r.id !== release.id) :
         [...(initial.releases || []), release]

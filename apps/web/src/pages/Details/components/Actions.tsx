@@ -161,7 +161,7 @@ const UITicket = ({
             }}
           >
             <span>
-              {ready ? String(entity?.id).padStart(8, '0') : 'Loading'}
+              {(ready && entity?.id) ? String(entity?.id).padStart(8, '0') : 'Loading'}
             </span>
           </span>
           <span sx={UITicket.styles.center}>
@@ -264,6 +264,7 @@ UITicket.styles = {
     alignItems: 'center',
     borderRight: '2px solid',
     transition: 'color 400ms ease-in-out, border-color 400ms ease-in-out',
+    minWidth: '2em',
     padding: 10,
     fontSize: 7,
     fontWeight: 'strong',

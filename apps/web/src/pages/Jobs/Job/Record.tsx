@@ -17,8 +17,8 @@ export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, tre
   ...(config?.proposalOnly ? [{
     key: 'proposal',
     emoji: '🛎️ ',
-    title: <span><strong>{(proposal - treated)}</strong> Release proposals</span>,
-    length: (proposal - treated),
+    title: <span><strong>{Math.max(0, proposal - treated)}</strong> Release proposals</span>,
+    length: Math.max(0, proposal - treated),
   }] : []),
   ...(config?.proposalOnly && (treated > 0) ? [{
     key: 'treated',

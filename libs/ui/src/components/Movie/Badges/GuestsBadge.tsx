@@ -22,8 +22,10 @@ export const GuestsBadge = ({ entity, display = 'poster', guests, parent, palett
       popperOptions={{ modifiers: [{ name: 'flip', enabled: false }, { name: 'preventOverflow', enabled: false }] }}
       zIndex={3}
       content={(
-        <div sx={{ fontSize: [9, 8], margin: { poster: ['-3.25rem 0 0 -1rem', '-4.25rem 0 0 -0.5rem'], pretty: '-2.5rem 0 0 -1.5rem' }[display] }}>
-          <Guests guests={guests || []} />
+        <div sx={{ fontSize: '1rem' }}>
+          <div sx={{ fontSize: [9, 8], margin: { poster: ['-3.25rem 0 0 -1rem', '-4.25rem 0 0 -0.5rem'], pretty: '-2.5rem 0 0 -1.5rem' }[display] }}>
+            <Guests guests={guests || []} />
+          </div>
         </div>
       )}
     >

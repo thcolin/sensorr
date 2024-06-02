@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies } from '../../components/Entities/Movies'
+import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
@@ -62,6 +62,22 @@ const Home = ({ ...props }) => {
         more={{
           title: t('items.movies.calendar.more'),
           to: '/movie/calendar',
+        }}
+      />
+      <RequestedMovies
+        id='requests'
+        label={t('items.movies.requests.label')}
+        // title={t('items.movies.requests.title')}
+        display='row'
+        child={MovieWithCreditsAndReviews}
+        limit={20}
+        hide={true}
+        // props={() => ({
+        //   focus: 'release_date_full',
+        // })}
+        more={{
+          title: t('items.movies.requests.more'),
+          to: '/movie/requests',
         }}
       />
       <DiscoverMovies

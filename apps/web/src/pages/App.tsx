@@ -50,7 +50,9 @@ import PlexSettings from './Settings/Plex'
 import MobileSettings from './Settings/Mobile'
 import UpdateSettings from './Settings/Update'
 import { useDeviceContext } from '../contexts/Device/Device'
+
 import { Provider as ScrollPositionProvider } from '../contexts/ScrollPosition/ScrollPosition'
+import { Provider as DetailsDrawerProvider } from '../contexts/DetailsDrawer/DetailsDrawer'
 
 const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet)))
 
@@ -73,41 +75,43 @@ const SettingsRedirector = ({ ...props }) => {
 }
 
 const router = createBrowserRouter(createRoutesFromElements(
-  <Route element={<ScrollPositionProvider children={<Outlet />} />}>
-    <Route path='/login' element={<Login />} />
-    <Route path='/keep-in-touch' element={<KeepInTouch />} />
-    <Route path='/' element={<LayoutConfigSecurityContainer />}>
-      <Route path='' element={<Home />} />
-      <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />
-      <Route path='movie/discover' element={<Discover />} />
-      <Route path='movie/trending' element={<TrendingMovies />} />
-      <Route path='movie/library' element={<Library />} />
-      <Route path='movie/calendar' element={<Calendar />} />
-      <Route path='movie/theatres' element={<Theatres />} />
-      <Route path='movie/requests' element={<Requests />} />
-      <Route path='movie/search' element={<SearchMovies />} />
-      <Route path='movie/:id' element={<Movie />} />
-      <Route path='movie/:id/recommendations' element={<Recommendations />} />
-      <Route path='movie/:id/similar' element={<Similar />} />
-      <Route path='person/followed' element={<Followed />} />
-      <Route path='person/trending' element={<TrendingPersons />} />
-      <Route path='person/search' element={<SearchPersons />} />
-      <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
-      <Route path='person/:id' element={<Person />} />
-      <Route path='collection/:id' element={<Collection />} />
-      <Route path='jobs' element={<Jobs />} />
-      <Route path='jobs/:job' element={<Jobs />} />
-      <Route path='settings' element={<Settings />}>
-        <Route path='' element={<SettingsRedirector />} />
-        <Route path='tmdb' element={<TMDBSettings />} />
-        <Route path='jobs' element={<JobsSettings />} />
-        <Route path='blackhole' element={<BlackholeSettings />} />
-        <Route path='indexers' element={<ZnabsSettings />} />
-        <Route path='policies' element={<PoliciesSettings />} />
-        <Route path='friends' element={<FriendsSettings />} />
-        <Route path='plex' element={<PlexSettings />} />
-        <Route path='mobile' element={<MobileSettings />} />
-        <Route path='update' element={<UpdateSettings />} />
+  <Route element={<DetailsDrawerProvider children={<Outlet />} />}>
+    <Route element={<ScrollPositionProvider children={<Outlet />} />}>
+      <Route path='/login' element={<Login />} />
+      <Route path='/keep-in-touch' element={<KeepInTouch />} />
+      <Route path='/' element={<LayoutConfigSecurityContainer />}>
+        <Route path='' element={<Home />} />
+        <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />
+        <Route path='movie/discover' element={<Discover />} />
+        <Route path='movie/trending' element={<TrendingMovies />} />
+        <Route path='movie/library' element={<Library />} />
+        <Route path='movie/calendar' element={<Calendar />} />
+        <Route path='movie/theatres' element={<Theatres />} />
+        <Route path='movie/requests' element={<Requests />} />
+        <Route path='movie/search' element={<SearchMovies />} />
+        <Route path='movie/:id' element={<Movie />} />
+        <Route path='movie/:id/recommendations' element={<Recommendations />} />
+        <Route path='movie/:id/similar' element={<Similar />} />
+        <Route path='person/followed' element={<Followed />} />
+        <Route path='person/trending' element={<TrendingPersons />} />
+        <Route path='person/search' element={<SearchPersons />} />
+        <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
+        <Route path='person/:id' element={<Person />} />
+        <Route path='collection/:id' element={<Collection />} />
+        <Route path='jobs' element={<Jobs />} />
+        <Route path='jobs/:job' element={<Jobs />} />
+        <Route path='settings' element={<Settings />}>
+          <Route path='' element={<SettingsRedirector />} />
+          <Route path='tmdb' element={<TMDBSettings />} />
+          <Route path='jobs' element={<JobsSettings />} />
+          <Route path='blackhole' element={<BlackholeSettings />} />
+          <Route path='indexers' element={<ZnabsSettings />} />
+          <Route path='policies' element={<PoliciesSettings />} />
+          <Route path='friends' element={<FriendsSettings />} />
+          <Route path='plex' element={<PlexSettings />} />
+          <Route path='mobile' element={<MobileSettings />} />
+          <Route path='update' element={<UpdateSettings />} />
+        </Route>
       </Route>
     </Route>
   </Route>

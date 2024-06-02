@@ -1,12 +1,14 @@
 import { MutableRefObject, createContext, useCallback, useContext, useEffect, useRef } from 'react'
 import { useBlocker, useLocation, useNavigationType } from 'react-router-dom'
 import { useDeviceContext } from '../Device/Device'
+import { useDetailsDrawerContext } from '../DetailsDrawer/DetailsDrawer'
 
 const scrollPositionContext = createContext({})
 
 export const Provider = ({ ...props }) => {
   const ref = useRef()
   const { pwa, setHistoryIndex } = useDeviceContext()
+  const detailsDrawer = useDetailsDrawerContext()
   const location = useLocation()
   const navigationType = useNavigationType()
 
@@ -15,6 +17,8 @@ export const Provider = ({ ...props }) => {
     if (!ref.current) {
       return
     }
+
+    detailsDrawer.close()
 
     sessionStorage.setItem(`${location.key}-scroll`, (ref.current as any).scrollTop)
     setHistoryIndex(curr => ({ POP: curr - 1, PUSH: curr + 1, REPLACE: curr }[historyAction]))
@@ -51,8 +55,12 @@ export const Provider = ({ ...props }) => {
 
     if (navigationType === 'PUSH') {
       (ref.current as any).scroll(0, 0)
+      // Ugly af, but it need a time before scroll() to effectivly scroll when a <VirtualGrid /> is used
+      const timeout = setTimeout(() => (ref.current as any).scroll(0, 0), 0)
+      return () => clearTimeout(timeout)
     } else if (navigationType === 'POP') {
-      // Ugly af, but it need a time before scroll() to effectivly scroll
+      (ref.current as any).scroll(0, sessionStorage.getItem(`${location.key}-scroll`) || 0)
+      // Ugly af, but it need a time before scroll() to effectivly scroll when a <VirtualGrid /> is used
       const timeout = setTimeout(() => (ref.current as any).scroll(0, sessionStorage.getItem(`${location.key}-scroll`) || 0), 0)
       return () => clearTimeout(timeout)
     } else if (navigationType === 'REPLACE') {

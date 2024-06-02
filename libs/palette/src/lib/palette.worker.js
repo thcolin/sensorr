@@ -97,7 +97,7 @@ function getMostDominantPrimaryColor(WCAGCompliantColorPairs) {
   return mostDominantColor
 }
 
-addEventListener('message', ({ data: { pixels, pixelCount } }) => {
+addEventListener('message', ({ data: { key, pixels, pixelCount } }) => {
   totalPixelCount = 0
   RGBToPixelCountMap = {}
 
@@ -157,11 +157,7 @@ addEventListener('message', ({ data: { pixels, pixelCount } }) => {
           }
         }
         const score = contrast + range
-        pairs.push({
-          color,
-          score,
-          contrast,
-        })
+        pairs.push({ color, score, contrast })
       }
     })
   })
@@ -179,13 +175,33 @@ addEventListener('message', ({ data: { pixels, pixelCount } }) => {
   }
 
   postMessage({
-    backgroundColor,
-    color: color.color.hex(),
-    alternativeColor: alternativeColor.color.hex(),
-    accentColor: accentColor.color.hex(),
-    negativeColor: Color(backgroundColor)
-      [Color(backgroundColor).isLight() ? 'lighten' : 'darken'](0.8)
-      .negate()
-      .hex(),
+    key,
+    colors: {
+      backgroundColor,
+      color: color.color.hex(),
+      alternativeColor: alternativeColor.color.hex(),
+      accentColor: accentColor.color.hex(),
+      colorfulColor: [Color(backgroundColor), color.color, alternativeColor.color, accentColor.color]
+        .reduce((acc, curr) => {
+          if (!acc) {
+            return curr
+          }
+
+          try {
+            if ((curr?.chroma() + (curr?.lightness() / 5)) > (acc?.chroma() + (acc?.lightness() / 5))) {
+              return curr
+            } else {
+              return acc
+            }
+          } catch (e) {
+            return acc
+          }
+        }, null)
+        .hex(),
+      negativeColor: Color(backgroundColor)
+        [Color(backgroundColor).isLight() ? 'lighten' : 'darken'](0.8)
+        .negate()
+        .hex(),
+    },
   })
 })
