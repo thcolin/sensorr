@@ -5,7 +5,7 @@ export interface LinkProps extends RRLinkProps {
   disabled?: boolean
 }
 
-const UILink = forwardRef(({ disabled = false, to, unstable_viewTransition = true, ...props }: LinkProps, ref: any) => {
+const UILink = forwardRef(({ disabled = false, to, viewTransition = true, ...props }: LinkProps, ref: any) => {
   const style = useMemo(() => ({
     ...(props.style || {}),
     ...(disabled ? { pointerEvents: 'none' } : {}),
@@ -18,7 +18,7 @@ const UILink = forwardRef(({ disabled = false, to, unstable_viewTransition = tru
       {...props}
       to={to || ''}
       style={style}
-      unstable_viewTransition={unstable_viewTransition}
+      viewTransition={viewTransition}
     />
   )
 })

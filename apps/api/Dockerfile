@@ -1,4 +1,4 @@
-FROM node:16-alpine As builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN yarn --cwd ./dist/apps/cli install
 
 USER node
 
-FROM node:16-alpine As production
+FROM node:18-alpine As production
 
 WORKDIR /app
 

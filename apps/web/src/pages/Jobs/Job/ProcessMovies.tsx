@@ -816,7 +816,7 @@ const reportOleoo = ({ generated = '', original = '' }) => report({
         defaults: {
           language: 'VO',
           resolution: 'SD',
-          year: 0,
+          year: '0',
         },
       }),
       null, 2
@@ -828,7 +828,7 @@ const reportOleoo = ({ generated = '', original = '' }) => report({
         defaults: {
           language: 'VO',
           resolution: 'SD',
-          year: 0,
+          year: '0',
         },
       }),
       null, 2

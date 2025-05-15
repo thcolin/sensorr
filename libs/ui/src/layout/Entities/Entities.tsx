@@ -114,7 +114,7 @@ const UIEntities = ({
         {label && (
           <div sx={UIEntities.styles.label}>
             {(typeof label === 'string' && more) ? (
-              <NavLink to={more.to} state={more.state} unstable_viewTransition>
+              <NavLink to={more.to} state={more.state} viewTransition>
                 {label}
                 <Icon value='chevron' direction={false} />
               </NavLink>

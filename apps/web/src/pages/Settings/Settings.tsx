@@ -42,15 +42,15 @@ const Settings = ({ ...props }) => {
       <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
         <h1>Settings</h1>
         <nav>
-          <NavLink to='tmdb' unstable_viewTransition={device === 'mobile'}>TMDB</NavLink>
-          <NavLink to='blackhole' unstable_viewTransition={device === 'mobile'}>Blackhole</NavLink>
-          <NavLink to='indexers' unstable_viewTransition={device === 'mobile'}>Indexers</NavLink>
-          <NavLink to='policies' unstable_viewTransition={device === 'mobile'}>Policies</NavLink>
-          <NavLink to='jobs' unstable_viewTransition={device === 'mobile'}>Jobs</NavLink>
-          <NavLink to='friends' unstable_viewTransition={device === 'mobile'}>Friends</NavLink>
-          <NavLink to='plex' unstable_viewTransition={device === 'mobile'}>Plex</NavLink>
-          <NavLink to='mobile' unstable_viewTransition={device === 'mobile'}>Mobile</NavLink>
-          <NavLink to='update' unstable_viewTransition={device === 'mobile'}>Update</NavLink>
+          <NavLink to='tmdb' viewTransition={device === 'mobile'}>TMDB</NavLink>
+          <NavLink to='blackhole' viewTransition={device === 'mobile'}>Blackhole</NavLink>
+          <NavLink to='indexers' viewTransition={device === 'mobile'}>Indexers</NavLink>
+          <NavLink to='policies' viewTransition={device === 'mobile'}>Policies</NavLink>
+          <NavLink to='jobs' viewTransition={device === 'mobile'}>Jobs</NavLink>
+          <NavLink to='friends' viewTransition={device === 'mobile'}>Friends</NavLink>
+          <NavLink to='plex' viewTransition={device === 'mobile'}>Plex</NavLink>
+          <NavLink to='mobile' viewTransition={device === 'mobile'}>Mobile</NavLink>
+          <NavLink to='update' viewTransition={device === 'mobile'}>Update</NavLink>
         </nav>
         <footer>
           <span>🍿📼</span>

@@ -30,7 +30,8 @@ export class Znab {
     const target = `?${Object.entries(params).map(([key, param]) => `${key}=${encodeURIComponent(param as string)}`).join('&')}`
 
     if (this.options.proxify) {
-      return [`/api/proxy?serviceId=SENSORR_ZNABS&target=${encodeURIComponent(`${this.url}${target}`)}`]
+      // TODO: Should secure proxy with a secret key or something
+      return [`/api/proxy?target=${encodeURIComponent(`${this.url}${target}`)}`]
     } else {
       return [`${this.url}${target}`]
     }
@@ -134,7 +135,7 @@ function transform(items, init) {
           defaults: {
             language: 'VO',
             resolution: 'SD',
-            year: 0,
+            year: '0',
           },
         })
 

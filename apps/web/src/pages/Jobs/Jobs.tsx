@@ -355,7 +355,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
   // }, [selected])
 
   return (
-    <Link to={`/jobs/${job}`} sx={UIJob.styles.element} unstable_viewTransition={false}>
+    <Link to={`/jobs/${job}`} sx={UIJob.styles.element} viewTransition={false}>
       <span ref={ref} sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
         <span sx={UIJob.styles.head}>
           <span sx={UIJob.styles.icon}>

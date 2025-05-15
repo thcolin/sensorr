@@ -93,6 +93,7 @@ export class Policy {
     return releases
       .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
       .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
+      .map(release => Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
       .map(release => Policy.normalizers.releasePublishDate(release, query?.years, ignore))
       .map(release => Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
       .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
@@ -129,6 +130,20 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `🚫 Release banned`,
+        warning: valid ? 0 : 70,
+      }
+    },
+    collectionReleases: (release, banned, ignore = false) => {
+      if (!release.valid || ignore) {
+        return release
+      }
+
+      const valid = !release.meta.flags.includes('COLLECTION')
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : `📚 COLLECTION release`,
         warning: valid ? 0 : 60,
       }
     },

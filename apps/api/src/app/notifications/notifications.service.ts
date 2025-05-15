@@ -76,7 +76,7 @@ export class NotificationsService {
 
     this.logger.log(`DispatchWebPushNotifications (enabled)`)
     webpush.setVapidDetails(
-      process.env.NX_SENSORR_VAPID_SUBJECT,
+      process.env.NX_SENSORR_VAPID_SUBJECT || 'mailto:noreply@sensorr.dev',
       process.env.NX_SENSORR_VAPID_PUBLIC_KEY,
       process.env.NX_SENSORR_VAPID_PRIVATE_KEY
     )
