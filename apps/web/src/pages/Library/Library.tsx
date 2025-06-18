@@ -3,17 +3,21 @@ import {
   Entities,
   withControls,
   FilterGenres,
+  FilterStatistics,
   FilterStates,
   FilterReleaseDate,
   FilterPopularity,
   FilterVoteAverage,
+  FilterVoteCount,
   FilterRuntime,
   Sorting,
   Warning,
+  FilterBudget,
+  FilterProposal,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, languages, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
@@ -64,10 +68,17 @@ const Library = compose(
         gridTemplateAreas: `
           "head"
           "state"
+          "proposal"
+          "requested_by"
           "genres"
+          "original_languages"
+          "spoken_languages"
+          "production_companies"
           "release_date"
           "popularity"
           "vote_average"
+          "vote_count"
+          "budget"
           "runtime"
         `,
       },
@@ -107,22 +118,24 @@ const Library = compose(
             { label: i18n.t('ui.sortings.revenue'), value: 'revenue' },
             { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
             { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+            { label: i18n.t('ui.sortings.budget'), value: 'budget' },
           ]
         })(Sorting)
       },
       state: {
         ...fields.state,
-        serialize: (key, raw) => raw?.length ? { [key]: raw.filter(value => !['proposal'].includes(value)).join('|'), ...(raw.includes('proposal') ? { 'releases.proposal': true } : {}) } : {},
-        component: withProps({
-          type: 'movie',
-          additionalOptions: [
-            {
-              emoji: '🛎️',
-              label: 'Proposal',
-              value: 'proposal',
-            },
-          ],
-        })(FilterStates),
+        serialize: (key, raw) => raw?.length ? { [key]: raw.filter(value => !['proposal'].includes(value)).join('|') } : {},
+        component: withProps({ type: 'movie' })(FilterStates),
+      },
+      proposal: {
+        initial: { values: [true, false] },
+        serialize: (key, raw) => (!raw?.values?.length || raw?.values?.length === 2) ? {} : { 'releases.proposal': raw?.values[0] },
+        component: FilterProposal,
+      },
+      requested_by: {
+        initial: { values: [], behavior: 'or' },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+        component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
       },
       genres: {
         ...fields.genres,
@@ -130,6 +143,21 @@ const Library = compose(
         serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
         component: compose(withProps({ display: 'checkbox' }), withTMDB())(FilterGenres),
       },
+      original_languages: {
+        ...fields.original_languages,
+        initial: { values: [], behavior: 'or' },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+        component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+      },
+      spoken_languages: {
+        ...fields.spoken_languages,
+        component: withProps({ label: 'ui.filters.spoken_languages', display: 'select', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+      },
+      production_companies: {
+        ...fields.production_companies,
+        component: withProps({ label: 'ui.filters.companies', display: 'select' })(FilterStatistics),
+      },
+      // release.xxx
       release_date: {
         ...fields.release_date,
         component: FilterReleaseDate,
@@ -141,6 +169,14 @@ const Library = compose(
       vote_average: {
         ...fields.vote_average,
         component: FilterVoteAverage,
+      },
+      vote_count: {
+        ...fields.vote_count,
+        component: FilterVoteCount,
+      },
+      budget: {
+        ...fields.budget,
+        component: FilterBudget,
       },
       runtime: {
         ...fields.runtime,

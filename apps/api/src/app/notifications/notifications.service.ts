@@ -35,7 +35,8 @@ export class NotificationsService {
         from(this.logModel.find({
           $or: [
             { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "doctor", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+            { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+            { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
           ]
@@ -53,7 +54,8 @@ export class NotificationsService {
       ).pipe(
         filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && (
           (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'doctor' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
+          (change.fullDocument?.meta?.command === 'refine' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
+          (change.fullDocument?.meta?.command === 'shrink' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'sync' && change.fullDocument?.meta?.group === 'missings' && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id)
         )),
@@ -87,7 +89,8 @@ export class NotificationsService {
           title: `${meta?.movie?.title}${meta?.movie?.release_date ? ` (${(new Date(meta?.movie?.release_date)).getFullYear()})` : ''}`,
           body: {
             'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
-            'doctor': `🚑 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+            'refine': `✨ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+            'shrink': `✂️ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
             'sync': `💊 Missing from your Plex Server`,
             'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
           }[meta?.command],
@@ -97,7 +100,11 @@ export class NotificationsService {
               { action: 'accept', title: 'Accept' },
               { action: 'refuse', title: 'Refuse' },
             ],
-            'doctor': [
+            'refine': [
+              { action: 'accept', title: 'Accept' },
+              { action: 'refuse', title: 'Refuse' },
+            ],
+            'shrink': [
               { action: 'accept', title: 'Accept' },
               { action: 'refuse', title: 'Refuse' },
             ],
@@ -114,7 +121,8 @@ export class NotificationsService {
         mergeMap(notification => from(this.logModel.find({
           $or: [
             { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "doctor", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
           ]

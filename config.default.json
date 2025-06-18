@@ -4,20 +4,29 @@
   "adult": false,
   "blackhole": "/blackhole",
   "jobs": {
+    "keep-in-touch": {
+      "cron": "0 16 * * *",
+      "paused": false
+    },
     "record": {
       "cron": "0 17 * * *",
       "paused": false,
       "proposalOnly": true
     },
-    "refresh": {
-      "cron": "0 4 * * *",
+    "sync": {
+      "cron": "0 1 * * *",
       "paused": false
     },
-    "sync": {
+    "refresh": {
       "cron": "0 3 * * 0",
       "paused": false
     },
-    "doctor": {
+    "refine": {
+      "cron": "0 23 1 * *",
+      "paused": false,
+      "proposalOnly": true
+    },
+    "shrink": {
       "cron": "0 5 * * 0",
       "paused": false,
       "proposalOnly": true

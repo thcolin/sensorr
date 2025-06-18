@@ -32,7 +32,27 @@ const UIFilterGenres = ({ statistics, tmdb, display, ...props }: FilterGenresPro
   const options = useMemo(() => (genres
     .map(genre => ({
       value: genre.id,
-      label: genre.name,
+      label: `${{
+        28: '💥', // 🔥
+        12: '🧭', // 🏔️, 🗺️
+        16: '🎨',
+        35: '🤡', // 😂
+        80: '🚓', // 🕵️
+        99: '🍃', // 🌍
+        18: '🎭',
+        10751: '🧸', // 👨‍👩‍👧‍👦
+        14: '🧙', // 🏰, 🐉
+        36: '📜',
+        27: '🧟', // 👻, 🔪
+        10402: '🎵', // 🎸, 🎹, 🎤
+        9648: '🧩', // ❓, 🔎
+        10749: '🌹', // 💑, 💌
+        878: '🚀', // 🪐, 👽, 🤖
+        10770: '📺', // 🛋️
+        53: '😬',
+        10752: '🪖', // 🎖️
+        37: '🌵', // 🤠, 🐎
+      }[genre.id || '🐎']}  ${genre.name}`,
       count: statistics?.find(obj => obj._id === genre.id)?.count || 0,
     }))
     .sort((a, b) => b.count - a.count)

@@ -176,7 +176,8 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
         <span sx={{ display: ['none', 'flex'], alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray', width: '2em', height: '2em', padding: 8, borderRadius: '1em', fontSize: 3, marginRight: 6 }}>
           {{
             'record': '📹',
-            'doctor': '🚑',
+            'refine': '✨',
+            'shrink': '✂️',
             'sync': '💊',
             'keep-in-touch': '🍺',
           }[meta?.command]}
@@ -193,7 +194,8 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
             <span sx={{ fontSize: 6, fontWeight: 'semibold' }}>
               {{
                 'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
-                'doctor': meta?.release?.proposal ? `Movie keep up to date proposal` : `Movie keeped up to date`,
+                'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
+                'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
                 'sync': `Movie missing from your Plex Server`,
                 'keep-in-touch': `Movie request`,
               }[meta?.command]}
@@ -221,13 +223,14 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
             <span sx={{ fontSize: 6 }}>
               {{
                 'record': meta?.release?.proposal ? `Release proposal` : `Release`,
-                'doctor': meta?.release?.proposal ? `Release proposal` : `Release`,
+                'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
+                'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
                 'sync': `Do you want to fix it ?`,
                 'keep-in-touch': `Requested by`,
               }[meta?.command]}
             </span>
           </div>
-          {meta?.command === 'record' && (
+          {['record', 'refine', 'shrink'].includes(meta?.command) && (
             <div sx={{ marginTop: 8 }}>
               <Tippy maxWidth='80vw' disabled={!meta?.release?.original} content={<code><small>{meta?.release?.original}</small></code>}>
                 <code
@@ -349,7 +352,10 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
               </div>
             </div>
           )}
-          {/* {meta?.command === 'doctor' && (
+          {/* {meta?.command === 'refine' && (
+            <Release entity={meta?.release} display='column' proceed={() => {}} />
+          )} */}
+          {/* {meta?.command === 'shrink' && (
             <Release entity={meta?.release} display='column' proceed={() => {}} />
           )} */}
           {meta?.command === 'sync' && (

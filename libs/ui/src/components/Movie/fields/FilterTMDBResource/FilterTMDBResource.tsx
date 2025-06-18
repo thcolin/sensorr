@@ -1,9 +1,9 @@
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TMDB, certifications } from '@sensorr/tmdb'
-import clanguages from 'country-language'
 import cemoji from 'country-emoji'
 import { Select, SelectProps } from '../../../../inputs/Select/Select'
+import { languages } from '@sensorr/utils'
 
 export interface FilterTMDBResourceCommonsProps extends Omit<SelectProps, 'value' | 'onChange' | 'options' | 'loadOptions'> {
   value: { values: [], behavior: 'or' | 'and' }
@@ -117,10 +117,7 @@ export const FilterLanguages = memo(({ value, onChange, ...props }: any) => {
       label={t('ui.filters.languages')}
       menuPlacement='auto'
       {...props as any}
-      options={clanguages.getLanguages()
-        .filter(language => language.iso639_1 && language.name?.length)
-        .map(language => ({ value: language.iso639_1, label: language.name[0] }))
-      }
+      options={Object.keys(languages).map(value => ({ value, label: `${languages[value].emoji}  ${languages[value].name}` }))}
       value={value.values}
       onChange={values => onChange({ ...value, values })}
       behavior={value.behavior}

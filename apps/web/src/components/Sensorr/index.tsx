@@ -277,7 +277,7 @@ const UISensorr = compose(
                 toggle()
 
                 try {
-                  await proceedMovieRelease(movie.id, release, choice)
+                  await proceedMovieRelease(movie.id, { ...release, from: 'record', job: 'manual' }, choice)
                 } catch (err) {
                   console.warn(err)
                   toast.error('Error while processing release')

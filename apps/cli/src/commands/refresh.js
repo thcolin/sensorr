@@ -8,7 +8,7 @@ import command from '../utils/command'
 
 const meta = {
   command: 'refresh',
-  desc: '🔌 Refresh Sensorr data with TMDB changes',
+  desc: '🔌 Refresh Sensorr entities with TMDB latest changes',
   builder: {},
 }
 
@@ -25,10 +25,9 @@ export default (job, handlers) => ({
 
     const { waitUntilExit } = render((
       <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb }}>
-        <FetchTMDBChangesTask />
-        <ComputeSensorrAffectedChangesTask />
-        <ApplyChangesTask type='movie' />
-        <ApplyChangesTask type='person' dependencies={['apply-movie-changes']} />
+        <FetchAPIEntitiesTask />
+        <FetchTMDBChangesTask type='movie' />
+        <FetchTMDBChangesTask type='person' dependencies={['fetch-movie-changes']} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 
@@ -36,57 +35,13 @@ export default (job, handlers) => ({
   }),
 })
 
-const FetchTMDBChangesTask = ({ ...props }) => {
-  const { ready, task, setTask, status, setStatus, context: { state, setState, handleError } } = useTask({
-    id: `fetch-tmdb-changes`,
-    title: `📡 Fetch TMDB latest changes...`,
-  }, { dependencies: [] })
+const FetchAPIEntitiesTask = ({ ...props }) => {
+  const { task, setTask, status, setStatus, context: { state, setState, handleError } } = useTask({
+    id: 'fetch-api-entities',
+    title: '🗄️ Fetch entities from API...',
+  })
 
   useEffect(() => {
-    if (!ready) {
-      return
-    }
-
-    const cb = async () => {
-      let length = 0
-
-      for (const type of ['movie', 'person']) {
-        try {
-          setStatus('loading')
-          const { results } = await state.tmdb.fetch(`${type}/changes`, {})
-          setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{results.length}</Text> {type} changes available</Text>) }))
-          length += results.length
-          setState((state) =>  ({ ...state, [type]: { results } }))
-        } catch (error) {
-          setStatus('error')
-          setTask((task) => ({ ...task, error: error.message || error }))
-          handleError(error)
-        }
-      }
-
-      setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{length}</Text> total changes available</Text>) }))
-      setStatus('done')
-    }
-
-    cb()
-  }, [ready])
-
-  return (
-    <Task {...props} {...task} status={status} />
-  )
-}
-
-const ComputeSensorrAffectedChangesTask = ({ ...props }) => {
-  const { ready, task, setTask, status, setStatus, context: { state, setState, handleError } } = useTask({
-    id: `compute-sensorr-affected-changes`,
-    title: `🗄️  Compute Sensorr affected changes...`,
-  }, { dependencies: ['fetch-tmdb-changes'] })
-
-  useEffect(() => {
-    if (!ready) {
-      return
-    }
-
     const cb = async () => {
       let length = 0
 
@@ -102,10 +57,9 @@ const ComputeSensorrAffectedChangesTask = ({ ...props }) => {
             total_pages = raw.total_pages
             metadata = { ...metadata, ...raw.results }
           } while (!total_pages || page <= total_pages)
-          const changes = (state?.[type]?.results || []).filter((result) => Object.keys(metadata).includes(`${result.id}`))
-          setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{changes.length}</Text> {type}s affected changes</Text>) }))
-          length += changes.length
-          setState((state) => ({ ...state, [type]: { ...state?.[type], changes } }))
+          setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{Object.keys(metadata).length}</Text> {type}s</Text>) }))
+          length += Object.keys(metadata).length
+          setState((state) => ({ ...state, [type]: { ...state?.[type], entities: Object.keys(metadata) } }))
         } catch (error) {
           setStatus('error')
           setTask((task) => ({ ...task, error: error.message || error }))
@@ -113,25 +67,25 @@ const ComputeSensorrAffectedChangesTask = ({ ...props }) => {
         }
       }
 
-      state.logger.info({ message: `🗄️ ${length} affected changes`, metadata: { ...state.metadata, summary: { changes: length } } })
+      state.logger.info({ message: `🗄️ ${length} entities`, metadata: { ...state.metadata, summary: { entities: length } } })
       await new Promise(resolve => setTimeout(resolve, 600))
-      setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{length}</Text> total affected changes</Text>) }))
+      setTask((task) => ({ ...task, output: (<Text><Text bold={true}>{length}</Text> total entities</Text>) }))
       setStatus('done')
     }
 
     cb()
-  }, [ready])
+  }, [])
 
   return (
-    <Task {...props} {...task} status={status} />
+    <Task {...task} status={status} />
   )
 }
 
-const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
+const FetchTMDBChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { state } } = useTask({
-    id: `apply-${type}-changes`,
-    title: `${{ movie: '🎞️ ', person: '⭐️' }[type]} Apply ${type} changes on Sensorr...`,
-  }, { dependencies: [`compute-sensorr-affected-changes`, ...dependencies] })
+    id: `fetch-${type}-changes`,
+    title: `${{ movie: '🎞️', person: '⭐️' }[type]} Fetch ${type} changes on Sensorr...`,
+  }, { dependencies: [`fetch-api-entities`, ...dependencies] })
 
   useEffect(() => {
     if (!ready) {
@@ -142,21 +96,21 @@ const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
       let success = 0, warning = 0
       setStatus('loading')
 
-      for (let change of (state?.[type]?.changes || [])) {
+      for (let id of (state?.[type]?.entities || [])) {
         try {
           setTask((task) => ({
             ...task,
             title: (
               <Text>
-                {{ movie: '🎞️ ', person: '⭐️' }[type]} Apply {type} changes on Sensorr {(
-                  <Text color='grey'>({state?.[type]?.changes.findIndex((c) => c === change) + 1}/{state?.[type]?.changes.length})</Text>
+                {{ movie: '🎞️ ', person: '⭐️' }[type]} Fetch {type} changes on Sensorr {(
+                  <Text color='grey'>({state?.[type]?.entities.findIndex((c) => c === id) + 1}/{state?.[type]?.entities.length})</Text>
                 )}
               </Text>
             ),
-            output: `Fetch TMDB ${type} #${change.id} data...`,
+            output: `Fetch TMDB ${type} #${id} data...`,
           }))
 
-          const entity = await state.tmdb.fetch(`${type}/${change.id}`, {
+          const entity = await state.tmdb.fetch(`${type}/${id}`, {
             movie: {
               append_to_response: 'alternative_titles,release_dates',
             },
@@ -184,7 +138,7 @@ const ApplyChangesTask = ({ type = 'movie', dependencies = [], ...props }) => {
           success++
         } catch (error) {
           setTask((task) => ({ ...task, output: `⚠️  ${error.message || error}` }))
-          state.logger.warn({ message: `⚠️ "${type}" "${change.id}", error during refresh: "${error?.message || error}"`, metadata: { ...state.metadata, type, entity: change.id, warning: error } })
+          state.logger.warn({ message: `⚠️ Error during ${type} "${id}" refresh from TMDB: "${error?.message || error}"`, metadata: { ...state.metadata, type, entity: id, warning: error } })
           warning++
         }
       }

@@ -1,12 +1,12 @@
 import { memo } from 'react'
 import { ProcessMoviesJob } from './ProcessMovies'
 
-export const summary = ({ cared = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning }, extended = true, config = {} as any) => [
+export const summary = ({ shrinked = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning }, extended = true, config = {} as any) => [
   ...(extended ? [{
-    key: 'cared',
-    emoji: '💊',
-    title: <span><strong>{cared}</strong> Cared movies</span>,
-    length: cared,
+    key: 'shrinked',
+    emoji: '💎',
+    title: <span><strong>{shrinked}</strong> Shrinked movies</span>,
+    length: shrinked,
   }]: []),
   ...(extended && (processed > 0) ? [{
     key: 'processed',
@@ -58,8 +58,8 @@ export const summary = ({ cared = 0, processed, recorded = 0, proposal = 0, trea
   }] : []),
 ]
 
-const UIDoctorJob = ({ job, logs }) => (
+const UIShrinkJob = ({ job, logs }) => (
   <ProcessMoviesJob job={job} logs={logs} summary={summary} />
 )
 
-export const DoctorJob = memo(UIDoctorJob)
+export const ShrinkJob = memo(UIShrinkJob)

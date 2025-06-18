@@ -8,23 +8,19 @@ export interface FilterStatesProps extends Omit<CheckboxProps, 'label' | 'option
   type: 'movie' | 'person'
   statistics: { _id: any, count: number }[]
   ignoreOptions: string[]
-  additionalOptions: { emoji: string, label: string, value: string }[]
 }
 
-const UIFilterStates = ({ type, statistics, additionalOptions = [], ignoreOptions = ['loading', 'ignored'], ...props }: FilterStatesProps) => {
+const UIFilterStates = ({ type, statistics, ignoreOptions = ['loading', 'ignored'], ...props }: FilterStatesProps) => {
   const { t } = useTranslation()
   const options = useMemo(() => (
-    [
-      ...{ movie: MovieStateOptions, person: PersonStateOptions }[type],
-      ...additionalOptions,
-    ]
-    .filter(option => !ignoreOptions.includes(option.value))
-    .map(option => ({
-      ...option,
-      label: t(`state.${option.value}`),
-      count: statistics?.find(obj => obj._id === option.value)?.count || 0,
-    }))
-    .reverse()
+    ({ movie: MovieStateOptions, person: PersonStateOptions }[type])
+      .filter(option => !ignoreOptions.includes(option.value))
+      .map(option => ({
+        ...option,
+        label: t(`state.${option.value}`),
+        count: statistics?.find(obj => obj._id === option.value)?.count || 0,
+      }))
+      .reverse()
   ), [statistics])
 
   return (

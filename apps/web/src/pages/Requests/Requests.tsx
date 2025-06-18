@@ -3,7 +3,7 @@ import {
   Entities,
   withControls,
   FilterGenres,
-  FilterRequestedBy,
+  FilterStatistics,
   FilterReleaseDate,
   FilterPopularity,
   FilterVoteAverage,
@@ -137,9 +137,9 @@ const Requests = compose(
         ),
       },
       requested_by: {
-        initial: { values: [], behavior: 'and' },
+        initial: { values: [], behavior: 'or' },
         serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : { [`${key}.gte`]: 1 },
-        component: FilterRequestedBy,
+        component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
       },
       genres: {
         ...fields.genres,

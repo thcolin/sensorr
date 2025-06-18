@@ -437,13 +437,26 @@ const UIPreferences = ({
             <small>Sensorr will apply selected policy to sort and select the best release</small>
           </div>
           <div sx={UIPreferences.styles.block}>
-            <span>Keep up to date</span>
-            <KeepUpToDateInput
+            <span>Refine for better release</span>
+            <OptionInput
               id={entity?.id}
-              value={metadata?.cared}
+              children="Sensorr will regularly search for better release than the current archived one"
+              value={metadata?.refine}
               onChange={value => {
-                console.log('KeepUpToDateInput', { value })
-                setMetadata('cared', value)
+                console.log('OptionInput', 'refine', { value })
+                setMetadata('refine', value)
+              }}
+            />
+          </div>
+          <div sx={UIPreferences.styles.block}>
+            <span>Shrink for smaller release</span>
+            <OptionInput
+              id={entity?.id}
+              children="Sensorr will regularly search for smaller release than the current archived one"
+              value={metadata?.shink}
+              onChange={value => {
+                console.log('OptionInput', 'shink', { value })
+                setMetadata('shink', value)
               }}
             />
           </div>
@@ -765,7 +778,7 @@ UIPolicyInput.styles = {
 
 export const PolicyInput = memo(UIPolicyInput)
 
-const UIKeepUpToDateInput = ({ id, value, onChange, ...props }) => {
+const UIOptionInput = ({ id, value, onChange, children, ...props }) => {
   const styles = useMemo(() => ({
     element: {
       display: 'flex',
@@ -791,9 +804,9 @@ const UIKeepUpToDateInput = ({ id, value, onChange, ...props }) => {
         checked={value}
         onChange={(e: any) => onChange(!!e.target.checked)}
       />
-      <small>Sensorr will regularly search for better releases than the current archived one</small>
+      <small>{children}</small>
     </div>
   )
 }
 
-export const KeepUpToDateInput = memo(UIKeepUpToDateInput)
+export const OptionInput = memo(UIOptionInput)

@@ -10,8 +10,9 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) =
     {
       id: 'process-movies',
       title: {
-        record: `📹 Record movies`,
-        doctor: `🚑 Care for movies`,
+        record: `📹 Record wished movies`,
+        refine: `✨ Refine archived movies`,
+        shrink: `✂️ Shrink archived movies`,
       }[command],
       status: 'waiting',
     },
@@ -48,8 +49,9 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) =
       setTask((task) => ({ ...task, title: (
         <Text>
           {{
-            record: `📹 Record movies`,
-            doctor: `🚑 Care for movies`,
+            record: `📹 Record wished movies`,
+            refine: `✨ Refine archived movies`,
+            shrink: `✂️ Shrink archived movies`,
           }[command]} {!!subtasks.length && (
             <Text color='grey'>({subtasks.filter(([id, status]) => ['done', 'warning', 'error'].includes(status)).length}/{subtasks.length})</Text>
           )}
@@ -207,9 +209,19 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
       return
     }
 
-    const policy = new Policy(movie.policy, state.policies)
-    const doctor = new Policy({ ...policy, sorting: 'size', descending: false })
     const releases = []
+
+    const options = {
+      refine: { refined_at: new Date().getTime() },
+      shrink: { shrinked_at: new Date().getTime() },
+      record: {},
+    }[state.metadata.command]
+
+    const policy = new Policy({
+      ...state.policies.find(p => p.name === movie.policy),
+      ...(state.metadata.command === 'shrink'? { sorting: 'size', descending: false } : {}),
+    }, state.policies)
+
     const cb = async () => {
       try {
         let done = false
@@ -220,8 +232,11 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           case 'record':
             state.logger.info({ message: `📹 Record "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query } } })
             break;
-            case 'doctor':
-            state.logger.info({ message: `🚑  Care for "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query, releases: doctor.apply(movie.releases, null) } } })
+            case 'refine':
+            state.logger.info({ message: `✨ Refine "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query, releases: policy.apply(movie.releases, null) } } })
+            break;
+            case 'shrink':
+            state.logger.info({ message: `✂️ Shrink "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query, releases: policy.apply(movie.releases, null) } } })
             break;
         }
 
@@ -263,20 +278,19 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
         } while (!done)
 
         const results = policy.apply(releases, query)
-        const scoreboard = doctor.apply([...(results.length ? [results[0]] : []), ...movie.releases], null)
 
-        if (state.metadata.command === 'doctor' && results.length) {
-          const { score } = scoreboard.find(r => r.id === results[0].id)
-          results[0].score = score
-
-          if (scoreboard.findIndex(r => r.id === results[0].id) > 0) {
-            results[0].valid = false
-            results[0].warning = 5
-          }
+        if (!results.length) {
+          setTask((task) => ({ ...task, output: '📭 No releases found' }))
+          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
+          await api.fetch(uri, params, init)
+          state.logger.info({ message: `📭 No releases found`, metadata: { ...state.metadata, important: true, group: movie.id, results } })
+          await new Promise(resolve => setTimeout(resolve, 600))
+          setStatus('error')
+          return
         }
 
-        const release = results[0] || {}
-        const raw = release.id ? {
+        const release = results[0]
+        const raw = {
           id: release.id,
           title: release.title,
           original: release.original,
@@ -287,45 +301,78 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           link: release.link,
           enclosure: release.enclosure,
           size: release.size,
-        } : {}
+        }
 
         setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, release: { ...release, ...raw }, results } } }))
 
+        if (state.metadata.command === 'refine') {
+          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: r.original })), null)
+
+          const current = {
+            score: Math.max(...scoreboard.map(({ score }) => score)),
+            size: Math.min(...scoreboard.map(({ size }) => size)),
+          }
+
+          if (release.score <= current.score) {
+            release.valid = false
+            release.warning = 5
+            release.reason = `🥈 Release ${release.title} doesn't overcome existing releases`
+
+            setTask((task) => ({ ...task, output: `🥈 Doesn't overcome existing releases: ${release.title}` }))
+            const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
+            await api.fetch(uri, params, init)
+            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
+            await new Promise(resolve => setTimeout(resolve, 600))
+            setStatus('warning')
+            return
+          }
+        } else if (state.metadata.command === 'shrink') {
+          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: r.original })), null)
+
+          const current = {
+            score: Math.max(...scoreboard.map(({ score }) => score)),
+            size: Math.min(...scoreboard.map(({ size }) => size)),
+          }
+
+          if (
+            release.score <= current.score ||
+            Math.round(release.size / 10000000) >= Math.round(current.size / 10000000)
+          ) {
+            release.valid = false
+            release.warning = 5
+            release.reason = `🧱 Release ${release.title} heavier than existing releases`
+
+            setTask((task) => ({ ...task, output: `🧱 Heavier than existing releases: ${release.title}` }))
+            const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
+            await api.fetch(uri, params, init)
+            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
+            await new Promise(resolve => setTimeout(resolve, 600))
+            setStatus('warning')
+            return
+          }
+        }
+
         if (release.valid) {
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} ${release.title}` }))
-          const postMovie = api.query.movies.postMovie({ body: { ...movie, query, ...(proposalOnly ? {} : { state: 'archived' }), releases: [...(movie.releases || []), raw], updated_at: new Date().getTime(), ...(state.metadata.command === 'doctor' ? { cared_at: new Date().getTime() } : {}) } })
+          const postMovie = api.query.movies.postMovie({ body: { ...movie, query, ...(proposalOnly ? {} : { state: 'archived' }), releases: [...(movie.releases || []), raw], updated_at: new Date().getTime(), ...options } })
           await api.fetch(postMovie.uri, postMovie.params, postMovie.init)
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposalOnly ? 'cache' : 'fs' } })
           await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
           state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposalOnly]} (${release.znab})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), release: { ...release, proposal: true }, results } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('done')
-        } else if (release.warning <= 5) {
-          setTask((task) => ({ ...task, output: `🥈 Does not overcome existing releases: ${release.title}` }))
-          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...(state.metadata.command === 'doctor' ? { cared_at: new Date().getTime() } : {}) } })
-          await api.fetch(uri, params, init)
-          state.logger.info({ message: `🥈 Release ${release.title} does not overcome existing releases`, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
-          await new Promise(resolve => setTimeout(resolve, 600))
-          setStatus('warning')
-        } else if (release.warning <= 10) {
+        } else if (release.warning) {
           setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
-          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...(state.metadata.command === 'doctor' ? { cared_at: new Date().getTime() } : {}) } })
+          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
           await api.fetch(uri, params, init)
           state.logger.info({ message: `🚨 Release ${release.title} withdrawn`, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('warning')
         } else if (release.title) {
           setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
-          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...(state.metadata.command === 'doctor' ? { cared_at: new Date().getTime() } : {}) } })
+          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
           await api.fetch(uri, params, init)
           state.logger.info({ message: `🗑️  No matching releases found`, metadata: { ...state.metadata, important: true, group: movie.id, release: { ...release, hide: true }, results } })
-          await new Promise(resolve => setTimeout(resolve, 600))
-          setStatus('error')
-        } else {
-          setTask((task) => ({ ...task, output: '📭 No releases found' }))
-          const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...(state.metadata.command === 'doctor' ? { cared_at: new Date().getTime() } : {}) } })
-          await api.fetch(uri, params, init)
-          state.logger.info({ message: `📭 No releases found`, metadata: { ...state.metadata, important: true, group: movie.id, results } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('error')
         }

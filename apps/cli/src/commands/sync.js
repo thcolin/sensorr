@@ -158,7 +158,10 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
             state: 'archived',
             plex_url: `https://app.plex.tv/desktop/#!/server/${state.server}/details?key=${encodeURIComponent(payload.key)}`,
             releases: [
-              ...(movie?.releases || []).filter(release => !(release.id || '').startsWith('plex://')),
+              ...(movie?.releases || []).filter(release => !(release.id || '').startsWith('plex://')).map(release => ({
+                ...release,
+                title: oleoo.parse(release.original, { strict: false, flagged: true }).generated,
+              })),
               ...Media.map(media => {
                 const fallback = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
 
@@ -176,11 +179,12 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
                     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' '),
                   year: payload.year,
-                  language: media.Part[0].Stream
+                  language: (fallback.language && fallback.language !== 'VO') ? fallback.language : media.Part[0].Stream
                     .reduce((acc, curr, index, arr) => {
                       const audios = arr.filter(stream => stream.streamType === 2)
+
                       if (audios.length > 1) {
-                        return 'MULTI'
+                        return 'MULTi'
                       }
 
                       const subtitles = arr.filter(stream => stream.streamType === 3).sort((a, b) => a.languageTag === 'en' ? 1 : -1)
@@ -281,7 +285,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const reason = (
             movie?.state !== body?.state ? `Plex movie state unknown from Sensorr library (${movie?.state || 'unknown'})` :
             movie?.plex_url !== body?.plex_url ? `Plex movie link unknown from Sensorr library` :
-            JSON.stringify((movie?.releases || []).map(({ id }) => id).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ id }) => id).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` : null
+            JSON.stringify((movie?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` : null
           )
 
           if (!reason) {

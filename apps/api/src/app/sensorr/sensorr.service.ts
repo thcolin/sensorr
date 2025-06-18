@@ -19,7 +19,7 @@ const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../
 @Injectable()
 export class SensorrService {
   private readonly logger = new Logger(SensorrService.name)
-  public readonly ALLOWED_COMMANDS = ['record', 'sync', 'keep-in-touch', 'refresh', 'doctor']
+  public readonly ALLOWED_COMMANDS = ['record', 'sync', 'keep-in-touch', 'refresh', 'refine', 'shrink']
   public process = {}
   public processObservable = new Subject<MessageEvent>()
 

@@ -122,9 +122,15 @@ const JobsSettings = ({ control, watch, ...props }) => {
           options: ['cron', 'proposalOnly'],
         },
         {
-          command: 'doctor',
-          emoji: '🚑',
-          description: 'Doctor care for archived movies by looking for better releases',
+          command: 'refine',
+          emoji: '✨',
+          description: 'Refine archived movies with better fitting release',
+          options: ['cron', 'proposalOnly'],
+        },
+        {
+          command: 'shrink',
+          emoji: '✂️',
+          description: 'Shrink refined movies with smallest release available',
           options: ['cron', 'proposalOnly'],
         },
         {

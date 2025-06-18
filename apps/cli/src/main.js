@@ -9,7 +9,8 @@ import logger from './store/logger'
 import record from './commands/record'
 import refresh from './commands/refresh'
 import sync from './commands/sync'
-import doctor from './commands/doctor'
+import refine from './commands/refine'
+import shrink from './commands/shrink'
 import keepInTouch from './commands/keep-in-touch'
 import migrate from './commands/migrate'
 
@@ -64,7 +65,8 @@ const main = async () => {
     .command(record(job, handlers))
     .command(refresh(job, handlers))
     .command(sync(job, handlers))
-    .command(doctor(job, handlers))
+    .command(refine(job, handlers))
+    .command(shrink(job, handlers))
     .command(keepInTouch(job, handlers))
     .command(migrate(job, handlers))
     .scriptName('sensorr')

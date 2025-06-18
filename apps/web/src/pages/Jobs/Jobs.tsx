@@ -12,7 +12,8 @@ import { RecordJob, summary as summaryRecord } from './Job/Record'
 import { RefreshJob, summary as summaryRefresh } from './Job/Refresh'
 import { SyncJob, summary as summarySync } from './Job/Sync'
 import { MigrateJob, summary as summaryMigrate } from './Job/Migrate'
-import { DoctorJob, summary as summaryDoctor } from './Job/Doctor'
+import { ShrinkJob, summary as summaryShrink } from './Job/Shrink'
+import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
 
@@ -74,8 +75,10 @@ const UIJobs = ({ controls = null, ...props }) => {
               </div>
             ) : jobs.find(j => j.job === job)?.meta?.command === 'record' ? (
               <RecordJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'doctor' ? (
-              <DoctorJob job={jobs.find(j => j.job === job)} logs={logs} />
+            ) : jobs.find(j => j.job === job)?.meta?.command === 'refine' ? (
+              <RefineJob job={jobs.find(j => j.job === job)} logs={logs} />
+            ) : jobs.find(j => j.job === job)?.meta?.command === 'shrink' ? (
+              <ShrinkJob job={jobs.find(j => j.job === job)} logs={logs} />
             ) : jobs.find(j => j.job === job)?.meta?.command === 'refresh' ? (
               <RefreshJob job={jobs.find(j => j.job === job)} logs={logs} />
             ) : jobs.find(j => j.job === job)?.meta?.command === 'sync' ? (
@@ -159,7 +162,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                 'sync': '🔗',
                 'refresh': '🔌',
                 'record': '📹',
-                'doctor': '🚑',
+                'refine': '✨',
+                'shrink': '✂️',
                 'keep-in-touch': '🍻',
                 'migrate': '🚚',
               }[active?.meta?.command] || '⌛'}
@@ -199,7 +203,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                       'sync': '🔗',
                       'refresh': '🔌',
                       'record': '📹',
-                      'doctor': '🚑',
+                      'refine': '✨',
+                      'shrink': '✂️',
                       'keep-in-touch': '🍻',
                       'migrate': '🚚',
                     }[j.meta.command]}
@@ -209,7 +214,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                       'sync': summarySync,
                       'refresh': summaryRefresh,
                       'record': summaryRecord,
-                      'doctor': summaryDoctor,
+                      'refine': summaryRefine,
+                      'shrink': summaryShrink,
                       'keep-in-touch': summaryKeepInTouch,
                       'migrate': summaryMigrate,
                     }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}

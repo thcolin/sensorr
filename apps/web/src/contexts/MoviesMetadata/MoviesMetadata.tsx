@@ -74,7 +74,7 @@ export const Provider = ({ ...props }) => {
 
   const setMovieMetadata = useCallback(async (
     id: number,
-    key: 'state' | 'query' | 'policy' | 'cared' | 'releases' | 'banned_releases' | null,
+    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'releases' | 'banned_releases' | null,
     value: any
   ) => {
     const initial = ref.current[id] || {}

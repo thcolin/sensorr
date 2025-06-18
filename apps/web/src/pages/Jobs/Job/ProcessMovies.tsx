@@ -39,7 +39,10 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     [log.meta.group]: {
       group: log.meta.group,
       timestamp: groups[log.meta.group]?.timestamp || log.timestamp,
-      movie: groups[log.meta.group]?.movie || log.meta.movie,
+      movie: {
+        ...groups[log.meta.group]?.movie,
+        ...log.meta.movie,
+      },
       release: groups[log.meta.group]?.release || (log.meta.release ? { log: log._id, ...log.meta.release } : undefined),
       treated: typeof groups[log.meta.group]?.treated === 'boolean' ? groups[log.meta.group]?.treated : log.meta.treated,
       choice: typeof groups[log.meta.group]?.choice === 'boolean' ? groups[log.meta.group]?.choice : log.meta.choice,
@@ -56,7 +59,8 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
 
   const filtered = useMemo(() => records.filter((record: any) => ((!filter && (!znab || (record.release?.valid && record.release?.znab === znab))) || {
     wished: (!znab || (record.release?.valid && record.release?.znab === znab)),
-    cared: (!znab || (record.release?.valid && record.release?.znab === znab)),
+    refined: (!znab || (record.release?.valid && record.release?.znab === znab)),
+    shrinked: (!znab || (record.release?.valid && record.release?.znab === znab)),
     recorded: record.release?.valid && (!record.release?.proposal || record.treated) && (!znab || (record.release?.valid && record.release?.znab === znab)),
     treated: record.release?.valid && record.release?.proposal && record.treated && (!znab || (record.release?.valid && record.release?.znab === znab)),
     proposal: record.release?.valid && record.release?.proposal && !record.treated && (!znab || (record.release?.valid && record.release?.znab === znab)),
@@ -81,7 +85,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     <div ref={ref} sx={UIProcessMoviesJob.styles.element}>
       <div>
         <Warning
-          emoji={{ doctor: '🚑', record: '📹' }[job.meta.command]}
+          emoji={{ record: '📹', refine: '✨', shrink: '✂️' }[job.meta.command]}
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
@@ -108,7 +112,8 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                     ...job.meta.summary,
                     ...(job.meta.done ? {} : { processed: records.length }),
                     treated: records.filter((record: any) => record.treated).length,
-                    cared: (!job.meta.done && job.meta.summary.cared) ? `${records.length}/${job.meta.summary.cared}` : job.meta.summary.cared,
+                    refined: (!job.meta.done && job.meta.summary.refined) ? `${records.length}/${job.meta.summary.refined}` : job.meta.summary.refined,
+                    shrinked: (!job.meta.done && job.meta.summary.shrinked) ? `${records.length}/${job.meta.summary.shrinked}` : job.meta.summary.shrinked,
                   }, true, job.meta.config).map(meta => ({
                     ...meta,
                     props: {
@@ -117,7 +122,8 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                         opacity: !filter || filter === meta.key ? 1 : 0.5
                       },
                       onClick: {
-                        cared: () => setFilter(null),
+                        refined: () => setFilter(null),
+                        shrinked: () => setFilter(null),
                       }[meta.key] || (() => setFilter(filter => filter === meta.key ? null : meta.key)),
                     },
                   }))}
@@ -355,30 +361,21 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
             metadata={metadata}
             setMovieMetadata={setMovieMetadata}
           />
+          {['refine', 'shrink'].includes(command) && movie?.releases?.map(release => (
+            <div sx={UIRecord.styles.release} key={release.id}>
+              <Release entity={release} display='column' compact={true} />
+            </div>
+          ))}
           {completed && (
-            <>
-              {command === 'doctor' && (
-                <>
-                  {[
-                    ...(movie?.releases?.filter(release => release.from === 'sync') || []),
-                    ...(movie?.releases?.filter(release => release.from !== 'sync') || []),
-                  ].map(release => (
-                    <div sx={UIRecord.styles.release} key={release.id}>
-                      <Release entity={release} display='column' compact={true} />
-                    </div>
-                  ))}
-                </>
-              )}
-              {(release && !release?.hide) ? (
-                <div sx={UIRecord.styles.release}>
-                  <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
-                </div>
-              ) : (
-                <div sx={UIRecord.styles.release}>
-                  <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
-                </div>
-              )}
-            </>
+            (release && !release?.hide) ? (
+              <div sx={UIRecord.styles.release}>
+                <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
+              </div>
+            ) : (
+              <div sx={UIRecord.styles.release}>
+                <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
+              </div>
+            )
           )}
         </div>
       </div>
@@ -484,17 +481,19 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                 line={index + 1}
                 expandable={(
                   (command === 'record' && !!log.meta?.movie?.query?.terms?.length) ||
-                  (command === 'doctor' && !!log.meta?.movie?.releases?.length) ||
+                  (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
+                  (command === 'shrink' && !!log.meta?.movie?.releases?.length) ||
                   !!log.meta?.stats?.total ||
                   (!!log.meta?.release && (release?.valid || !release?.hide))
                 )}
                 forceOpen={(
-                  (command === 'doctor' && !!log.meta?.movie?.releases?.length) ||
+                  (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
+                  (command === 'shrink' && !!log.meta?.movie?.releases?.length) ||
                   (!!log.meta?.release && (release?.valid || !release?.hide))
                 )}
                 children={() => (
                   <Fragment>
-                    {command === 'doctor' && !!log.meta?.movie?.releases?.length && (log.meta?.movie?.releases || []).map((release, index) => (
+                    {['refine', 'shrink'].includes(command) && !!log.meta?.movie?.releases?.length && (log.meta?.movie?.releases || []).map((release, index) => (
                       <code key={index}>
                         <i></i>
                         <i>➤</i>

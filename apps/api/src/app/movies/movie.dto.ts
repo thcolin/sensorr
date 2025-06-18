@@ -56,7 +56,9 @@ export class MovieDTO {
   readonly title: string
   readonly state: string
   readonly policy: string
-  readonly cared: boolean
+  readonly refine: boolean
+  readonly shrink: boolean
+  // readonly cared: boolean
   readonly query: {
     titles: string[],
     terms: string[],
@@ -66,7 +68,9 @@ export class MovieDTO {
   readonly vote_average: number
   readonly vote_count: number
   readonly updated_at: number
-  readonly cared_at: number
+  readonly refined_at: number
+  readonly shrinked_at: number
+  // readonly cared_at: number
   readonly alternative_titles: {
     titles: [
       {

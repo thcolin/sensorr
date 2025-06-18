@@ -124,7 +124,13 @@ export class Movie extends Document {
   policy: string
 
   @Prop({ default: true })
-  cared: boolean
+  refine: boolean
+
+  @Prop({ default: true })
+  shrink: boolean
+
+  // @Prop({ default: true })
+  // cared: boolean
 
   @Prop(raw({
     titles: [String],
@@ -146,7 +152,13 @@ export class Movie extends Document {
   updated_at: number
 
   @Prop()
-  cared_at: number
+  refined_at: number
+
+  @Prop()
+  shrinked_at: number
+
+  // @Prop()
+  // cared_at: number
 
   @Prop(raw({
     titles: [

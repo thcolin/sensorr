@@ -7,7 +7,7 @@ import { MovieDTO } from './movie.dto'
 import { Movie as MovieDocument } from './movie.schema'
 import { Observable, fromEventPattern } from 'rxjs'
 
-const METADATA_FIELDS = ['state', 'policy', 'cared', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
 
 @Injectable()
 export class MoviesService {
@@ -38,14 +38,35 @@ export class MoviesService {
       ...(params.state ? {
         state: { $in: params.state.split('|') }
       } : {}),
-      ...(typeof params.cared === 'boolean' ? {
-        cared: params.cared ? { $ne: false } : { $eq: false },
+      ...(typeof params.refine === 'boolean' ? {
+        refine: params.refine ? { $ne: false } : { $eq: false },
+      } : {}),
+      ...(typeof params.shrink === 'boolean' ? {
+        shrink: params.shrink ? { $ne: false } : { $eq: false },
       } : {}),
       ...((params.genres && !/\,/.test(params.genres)) ? {
         'genres.id': { $in: params.genres.split('|').map(Number) }
       } : {}),
       ...((params.genres && /\,/.test(params.genres)) ? {
         'genres.id': { $all: params.genres.split(',').map(Number) }
+      } : {}),
+      ...((params.original_languages && !/\,/.test(params.original_languages)) ? {
+        'original_language': { $in: params.original_languages.split('|') }
+      } : {}),
+      ...((params.original_languages && /\,/.test(params.original_languages)) ? {
+        'original_language': { $all: params.original_languages.split(',') }
+      } : {}),
+      ...((params.spoken_languages && !/\,/.test(params.spoken_languages)) ? {
+        'spoken_languages.iso_639_1': { $in: params.spoken_languages.split('|') }
+      } : {}),
+      ...((params.spoken_languages && /\,/.test(params.spoken_languages)) ? {
+        'spoken_languages.iso_639_1': { $all: params.spoken_languages.split(',') }
+      } : {}),
+      ...((params.production_companies && !/\,/.test(params.production_companies)) ? {
+        'production_companies.name': { $in: params.production_companies.split('|') }
+      } : {}),
+      ...((params.production_companies && /\,/.test(params.production_companies)) ? {
+        'production_companies.name': { $all: params.spoken_languages.split(',') }
       } : {}),
       ...(params.requested_by ? {
         requested_by: {
@@ -64,12 +85,24 @@ export class MoviesService {
         true: { 'releases': { $elemMatch: { 'proposal': true } } },
         false: { 'releases': { $not: { $elemMatch: { 'proposal': true } } } },
       })[params['releases.proposal']] || {} : {}),
-      ...((params['cared_at.lte'] || params['cared_at.gte']) ? {
-        cared_at: {
-          ...(params['cared_at.lte'] ? { $not: { $gte: params['cared_at.lte'] }  } : {}),
-          ...(params['cared_at.gte'] ? { $not: { $lte: params['cared_at.gte'] }  } : {}),
+      ...((params['refined_at.lte'] || params['refined_at.gte']) ? {
+        refined_at: {
+          ...(params['refined_at.lte'] ? { $not: { $gte: params['refined_at.lte'] }  } : {}),
+          ...(params['refined_at.gte'] ? { $not: { $lte: params['refined_at.gte'] }  } : {}),
         },
       } : {}),
+      ...((params['shrinked_at.lte'] || params['shrinked_at.gte']) ? {
+        shrinked_at: {
+          ...(params['shrinked_at.lte'] ? { $not: { $gte: params['shrinked_at.lte'] }  } : {}),
+          ...(params['shrinked_at.gte'] ? { $not: { $lte: params['shrinked_at.gte'] }  } : {}),
+        },
+      } : {}),
+      // ...((params['cared_at.lte'] || params['cared_at.gte']) ? {
+      //   cared_at: {
+      //     ...(params['cared_at.lte'] ? { $not: { $gte: params['cared_at.lte'] }  } : {}),
+      //     ...(params['cared_at.gte'] ? { $not: { $lte: params['cared_at.gte'] }  } : {}),
+      //   },
+      // } : {}),
       ...((params['release_date.lte'] || params['release_date.gte']) ? {
         release_date: {
           ...(params['release_date.lte'] ? { $lte: new Date(params['release_date.lte']) } : {}),
@@ -86,6 +119,18 @@ export class MoviesService {
         vote_average: {
           ...(params['vote_average.lte'] ? { $lte: Number(params['vote_average.lte']) } : {}),
           ...(params['vote_average.gte'] ? { $gte: Number(params['vote_average.gte']) } : {}),
+        },
+      } : {}),
+      ...((params['vote_count.lte'] || params['vote_count.gte']) ? {
+        vote_count: {
+          ...(params['vote_count.lte'] ? { $lte: Number(params['vote_count.lte']) } : {}),
+          ...(params['vote_count.gte'] ? { $gte: Number(params['vote_count.gte']) } : {}),
+        },
+      } : {}),
+      ...((params['budget.lte'] || params['budget.gte']) ? {
+        budget: {
+          ...(params['budget.lte'] ? { $lte: Number(params['budget.lte']) * 1000000 } : {}),
+          ...(params['budget.gte'] ? { $gte: Number(params['budget.gte']) * 1000000 } : {}),
         },
       } : {}),
       ...((params['runtime.lte'] || params['runtime.gte']) ? {
@@ -165,6 +210,30 @@ export class MoviesService {
               }
             },
           ],
+          original_languages: [{
+            $group: {
+              _id: "$original_language",
+              count: { $sum: 1 }
+            },
+          }],
+          spoken_languages: [
+            { $unwind: "$spoken_languages" },
+            {
+              $group: {
+                _id: "$spoken_languages.iso_639_1",
+                count: { $sum: 1 },
+              }
+            },
+          ],
+          production_companies: [
+            { $unwind: "$production_companies" },
+            {
+              $group: {
+                _id: "$production_companies.name",
+                count: { $sum: 1 },
+              }
+            },
+          ],
           requested_by: [
             { $unwind: "$requested_by" },
             {
@@ -231,11 +300,29 @@ export class MoviesService {
               },
             },
           }],
+          budget: [
+            {
+              // On ajoute ce stage pour créer le nouveau champ
+              $addFields: {
+                budgetInMillions: { $divide: ["$budget", 1000000] }
+              }
+            },
+            {
+              $bucket: {
+                groupBy: "$budgetInMillions",
+                boundaries: fields.budget.boundaries,
+                default: -1,
+                output: {
+                  count: { $sum: 1 }
+                },
+              },
+            },
+          ],
         }
       }
     ])
 
-    raw[0].state.push({ _id: 'proposal', count: raw[0].proposal[0].count })
+    raw[0].state.push({ _id: 'proposal', count: raw[0].proposal[0]?.count || 0 })
     delete raw[0].proposal
 
     return raw[0]

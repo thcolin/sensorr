@@ -22,7 +22,7 @@ const UIRelease = ({
       <div key={entity?.link} sx={UIRelease.styles.element} data-disabled={!downloadable}>
         <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
           <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
-            {entity?.valid !== false && remove && !entity?.proposal && ['record', 'doctor'].includes(entity?.from) && (
+            {entity?.valid !== false && remove && !entity?.proposal && ['record', 'refine', 'shrink'].includes(entity?.from) && (
               <div sx={UIRelease.styles.remove}>
                 <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
                   <Icon value='clear' width='1em' height='1em' />
@@ -42,10 +42,6 @@ const UIRelease = ({
                     </span>
                   </span>
                 </Tippy>
-              ) : !entity?.valid && entity?.warning <= 5 ? (
-                <Tippy maxWidth='80vw' content={<code>🥈 Does not overcome existing releases</code>}>
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🥈</span>
-                </Tippy>
               ) : !entity?.valid && entity?.warning <= 10 ? (
                 <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
               ) : !entity?.valid && entity?.warning > 10 ? (
@@ -62,7 +58,7 @@ const UIRelease = ({
                 <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
                   <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
                 </Tippy>
-              ) : ['record', 'doctor'].includes(entity?.from) ? (
+              ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
                 <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
                   <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
                 </Tippy>

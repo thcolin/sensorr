@@ -10,6 +10,15 @@ export const SENSORR_POLICY_FALLBACK = {
   value: 'none',
   sorting: 'seeders',
   descending: true,
+  require: {
+    znab: [],
+    source: [],
+    encoding: [],
+    resolution: [],
+    language: [],
+    dub: [],
+    flags: []
+  },
   prefer: {
     znab: [],
     source: [],
@@ -34,6 +43,15 @@ export class Policy {
   name: string
   sorting: string
   descending: boolean
+  require: {
+    znab: string[],
+    source: string[],
+    encoding: string[],
+    resolution: string[],
+    language: string[],
+    dub: string[],
+    flags: string[],
+  }
   prefer: {
     znab: string[],
     source: string[],
@@ -58,6 +76,15 @@ export class Policy {
     this.name = policy.name || 'none'
     this.sorting = policy.sorting || 'size'
     this.descending = policy.descending
+    this.require = {
+      znab: policy.require?.znab || [],
+      source: policy.require?.source || [],
+      encoding: policy.require?.encoding || [],
+      resolution: policy.require?.resolution || [],
+      language: policy.require?.language || [],
+      dub: policy.require?.dub || [],
+      flags: policy.require?.flags || []
+    }
     this.prefer = {
       znab: policy.prefer.znab || [],
       source: policy.prefer.source || [],
@@ -98,9 +125,9 @@ export class Policy {
       .map(release => Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
       .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
       .map(release => Policy.normalizers.releasePolicy(release, this))
+      .map(release => Policy.normalizers.releaseRequirePolicy(release, this, strict))
       .map(release => Policy.normalizers.releaseNoSeeders(release, ignore))
-      .map(release => Policy.normalizers.releaseScore(release, this, ignore))
-      .filter(release => !strict || release.valid)
+      .map(release => Policy.normalizers.releaseScore(release, this, (strict || ignore || !release.znab)))
       .sort((a: any, b: any) => {
         if (a.score === b.score) {
           if (this.descending) {
@@ -249,12 +276,48 @@ export class Policy {
         })
       }
     },
+    releaseRequirePolicy: (release, policy, enabled = false) => {
+      if (!release.valid || !enabled) {
+        return release
+      }
+
+      try {
+        return ({
+          ...release,
+          valid: Object.keys(policy.require || {})
+            .filter(tag => policy.require[tag].length)
+            .map(tag => {
+              const test = (tag === 'custom' ?
+                (keyword) => (new RegExp(keyword, 'ig').test(release.original) || new RegExp(keyword, 'ig').test(release.title)) :
+                (keyword) => (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).includes(keyword)
+              )
+
+              const intersection = policy.require[tag].filter(test)
+
+              if (!intersection.length) {
+                throw new Error(`🚨 Withdrawn by require policy (${tag}=${(Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).join(', ')} allowed ${policy.require[tag].join(', ')})`)
+              }
+
+              return true
+            })
+            .every(bool => bool),
+          reason: null,
+          warning: 0,
+        })
+      } catch (e) {
+        return ({
+          ...release,
+          valid: false,
+          reason: e.message,
+          warning: 10,
+        })
+      }
+    },
     releaseScore: (release, policy, ignore = false) => {
       const account = Object.keys(policy.prefer || {})
-        .filter(tag => !ignore || !['znab'].includes(tag))
         .reduce((acc, tag) => ({
           ...acc,
-          [tag]: policy.prefer[tag]
+          [tag]: (tag === 'znab' && ignore) ? { recorded: 100 } : policy.prefer[tag]
             .reduce((acc, keyword, index, arr) => {
               const base = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
               const test = (tag === 'custom' ?

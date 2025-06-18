@@ -88,19 +88,36 @@ const config = convict({
         default: false,
       },
     },
-    doctor: {
+    refine: {
       cron: {
-        doc: 'Doctor job cron',
+        doc: 'Refine job cron',
         format: 'String',
         default: '0 5 * * 0',
       },
       paused: {
-        doc: 'Pause Doctor job',
+        doc: 'Pause Refine job',
         format: 'Boolean',
         default: false,
       },
       proposalOnly: {
-        doc: "Doctor job will only submit proposal and don't download any release",
+        doc: "Refine job will only submit proposal and don't download any release",
+        format: 'Boolean',
+        default: true,
+      },
+    },
+    shrink: {
+      cron: {
+        doc: 'Shrink job cron',
+        format: 'String',
+        default: '0 5 * * 0',
+      },
+      paused: {
+        doc: 'Pause Shrink job',
+        format: 'Boolean',
+        default: false,
+      },
+      proposalOnly: {
+        doc: "Shrink job will only submit proposal and don't download any release",
         format: 'Boolean',
         default: true,
       },
@@ -178,6 +195,79 @@ const config = convict({
         format: 'Boolean',
         default: true,
         arg: 'descending',
+      },
+      require: {
+        znab: {
+          doc: 'Required ZNABs',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from your defined ZNABs`,
+            format: 'source-array',
+            default: null,
+            children: 'String',
+          },
+        },
+        source: {
+          doc: 'Required sources',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.source).join(', ')}`,
+            format: Object.keys(oleoo.rules.source),
+            default: null,
+          },
+        },
+        encoding: {
+          doc: 'Required encodings',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.encoding).join(', ')}`,
+            format: Object.keys(oleoo.rules.encoding),
+            default: null,
+          },
+        },
+        resolution: {
+          doc: 'Required resolutions',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.resolution).join(', ')}`,
+            format: Object.keys(oleoo.rules.resolution),
+            default: null,
+          },
+        },
+        language: {
+          doc: 'Required languages',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.language).join(', ')}`,
+            format: Object.keys(oleoo.rules.language),
+            default: null,
+          },
+        },
+        dub: {
+          doc: 'Required dubs',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.dub).join(', ')}`,
+            format: Object.keys(oleoo.rules.dub),
+            default: null,
+          },
+        },
+        flags: {
+          doc: 'Required flags',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: `Any from ${Object.keys(oleoo.rules.flags).join(', ')}`,
+            format: Object.keys(oleoo.rules.flags),
+            default: null,
+          },
+        },
       },
       prefer: {
         znab: {
