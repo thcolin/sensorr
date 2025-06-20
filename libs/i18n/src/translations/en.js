@@ -75,6 +75,8 @@ export default {
       known_for_department: emojize('💼', 'Known For Department'),
       gender: emojize('⚧️', 'Gender'),
       requested_by: emojize('🤖', 'Requested by'),
+      size: emojize('📦', 'Size'),
+      job: emojize('🏗️', 'Source Job'),
     },
     sorting: 'Sort by',
     sortings: {

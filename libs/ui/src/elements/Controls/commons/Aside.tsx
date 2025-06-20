@@ -8,9 +8,10 @@ import { Pane } from 'libs/ui/src/atoms/Pane/Pane'
 export interface AsideProps extends Omit<InputsProps, 'control'> {
   toggleOpen: () => void
   level?: number
+  shadow?: boolean
 }
 
-const UIAside = ({ layout: { position = 'left', ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, watch: watcher, ...props }) => {
+const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, controls = true, watch: watcher, ...props }) => {
   const { t } = useTranslation()
   const { control, reset, watch, handleSubmit } = useForm({ defaultValues })
   const watching = !!(watcher || [])[0] && watch(watcher[0]).reduce((acc, curr, i) => ({ ...acc, [watcher[i]]: curr }), {})
@@ -32,15 +33,25 @@ const UIAside = ({ layout: { position = 'left', ...layout }, fields, defaultValu
   }, [JSON.stringify(watching)])
 
   return (
-    <Pane position={position as any} open={open} toggleOpen={toggle} level={level}>
-      <form sx={UIAside.styles.form} onSubmit={handleSubmit(onChange)} onKeyPress={e => e.key === 'Enter' && e.preventDefault()}>
+    <Pane
+      position={position as any}
+      background={backgroundColor}
+      open={open}
+      toggleOpen={toggle}
+      level={level}
+      order={order}
+      shadow={shadow}
+    >
+      <form sx={{ ...UIAside.styles.form, backgroundColor }} onSubmit={handleSubmit(onChange)} onKeyPress={e => e.key === 'Enter' && e.preventDefault()}>
         <div sx={UIAside.styles.container}>
           <Inputs layout={layout as any} fields={fields} statistics={statistics} control={control} />
         </div>
-        <div sx={UIAside.styles.buttons}>
-          <Button type='button' variant='outline' onClick={toggle}>{t('ui.controls.cancel')}</Button>
-          <Button type='submit'>{t('ui.controls.apply')}</Button>
-        </div>
+        {controls && (
+          <div sx={UIAside.styles.buttons}>
+            <Button type='button' variant='outline' onClick={toggle}>{t('ui.controls.cancel')}</Button>
+            <Button type='submit'>{t('ui.controls.apply')}</Button>
+          </div>
+        )}
       </form>
     </Pane>
   )
@@ -51,7 +62,6 @@ UIAside.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: 'primary',
     overflow: 'hidden',
   },
   container: {

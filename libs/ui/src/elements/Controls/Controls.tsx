@@ -45,7 +45,14 @@ export interface ControlsProps {
       gridTemplateColumns?: string
       gridTemplateRows?: string
       gap?: string
-    },
+    } | {
+      [key: string]: string
+      display: 'grid'
+      gridTemplateAreas: string
+      gridTemplateColumns?: string
+      gridTemplateRows?: string
+      gap?: string
+    }[],
   }
   statistics: Pick<InputsProps, 'statistics'>
   loading: boolean
@@ -54,18 +61,42 @@ export interface ControlsProps {
 }
 
 const UIControls = ({ title, components, fields, values, onChange, layout, statistics, loading, total, level, watch, props }: ControlsProps) => {
-  const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
-  const handleChange = useCallback((next, close = true) => {
+  const { Portal, togglePortal: _togglePortal, closePortal: _closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
+
+  const [subAsides, setSubAsides] = useState(Array(Math.max(0, (Array.isArray(layout.aside) ? layout.aside : [layout.aside]).length - 1)).fill(false))
+
+  const togglePortal = useCallback((value) => {
+    setSubAsides(subAsides => subAsides.map(() => false))
+    _togglePortal(value)
+  }, [_togglePortal])
+
+  const closePortal = useCallback((value) => {
+    setSubAsides(subAsides => subAsides.map(() => false))
+    _closePortal(value)
+  }, [_closePortal])
+
+  const handleChange = useCallback((next, close) => {
     if (close) {
-      closePortal(false)
+      close()
     }
 
     onChange({ ...values, ...next })
   }, [values, onChange, closePortal])
 
-  const aside = useLayoutFields(layout.aside, fields)
+  const asides = (Array.isArray(layout.aside) ? layout.aside : [layout.aside]).map((aside, index) => useLayoutFields(aside, fields, index ? {} : {
+    ...(subAsides.reduce((acc, subAside, i) => ({ ...acc, [`toggle_sub_asides_${i}`]: {
+        initial: null,
+        serialize: () => ({}),
+        component: components?.[`toggle_sub_asides_${i}`] || ControlsToggleButton,
+        props: {
+          toggleOpen: () => setSubAsides(subAsides => subAsides.map((subAside, j) => j === i ? !subAside : subAside)),
+          ...props,
+        },
+    } }), {}))
+  }))
+
   const nav = useLayoutFields(layout.nav, fields, {
-    ...Object.keys(components || {}).reduce((acc, key) => ({
+    ...Object.keys(components || {}).filter(component => new RegExp(component).test(layout.nav?.gridTemplateAreas)).reduce((acc, key) => ({
       ...acc,
       [key]: {
         initial: null,
@@ -93,7 +124,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         initial: null,
         serialize: () => ({}),
         component: components?.toggle || ControlsToggleButton,
-        props: { toggleOpen: togglePortal, fields, values, handleChange, ...props },
+        props: { toggleOpen: togglePortal, fields, values, handleChange: (next) => handleChange(next, () => closePortal(false)), ...props },
       },
     } : {}),
   })
@@ -105,13 +136,13 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         .filter(key => Object.keys(nav).includes(key))
         .reduce((acc, key) => ({ ...acc, [key]: values[key] }), {})
     },
-    aside: {
+    asides: asides.map(aside => ({
       fields: aside,
       defaultValues: Object.keys(values)
         .filter(key => Object.keys(aside).includes(key))
         .reduce((acc, key) => ({ ...acc, [key]: values[key] }), {})
-    },
-  }), [nav, aside, values])
+    })),
+  }), [nav, asides, values])
 
   return (
     <>
@@ -119,7 +150,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         <Nav
           {...group.nav}
           layout={layout.nav}
-          onChange={handleChange}
+          onChange={(next) => handleChange(next, () => closePortal(false))}
           statistics={statistics}
         />
       ) : components.toggle ? (
@@ -127,16 +158,31 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
       ) : null}
       {layout.aside && (
         <Portal>
-          <Aside
-            {...group.aside}
-            layout={layout.aside}
-            onChange={handleChange}
-            statistics={statistics}
-            open={open}
-            level={level}
-            watch={watch}
-            toggleOpen={togglePortal}
-          />
+          <div>
+            {(Array.isArray(layout.aside) ? layout.aside : [layout.aside]).map((aside, index, arr) => (
+              <Aside
+                {...group.asides[index]}
+                layout={aside}
+                statistics={statistics}
+                order={index}
+                watch={watch}
+                {...((Array.isArray(layout.aside) ? layout.aside : [layout.aside]).length > 1 ? {
+                  level: index === 0 ? (level || 0) + (subAsides.findLastIndex(v => v) >= index ? 0 : 2) : (level || 0) + 1,
+                } : {
+                  level,
+                })}
+                {...(index === 0 ? {
+                  open,
+                  toggleOpen: togglePortal,
+                  onChange: (next) => handleChange(next, () => closePortal(false)),
+                } : {
+                  open: subAsides[index - 1],
+                  toggleOpen: () => setSubAsides(subAsides => subAsides.map((subAside, i) => i === (index - 1) ? !subAside : subAside)),
+                  onChange: (next) => handleChange(next, () => setSubAsides(subAsides => subAsides.map((subAside, i) => i === (index - 1) ? !subAside : subAside))),
+                })}
+              />
+            ))}
+          </div>
         </Portal>
       )}
     </>

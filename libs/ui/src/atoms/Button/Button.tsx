@@ -36,6 +36,24 @@ UIButton.styles = {
           backgroundColor: 'primaryDarkest',
         },
       },
+      primaryDark: {
+        borderColor: 'primaryDark',
+        backgroundColor: 'primaryDark',
+        color: 'hsl(0, 0%, 100%)',
+        ':hover': {
+          borderColor: 'primaryDarker',
+          backgroundColor: 'primaryDarker',
+        },
+        ':active': {
+          borderColor: 'primaryDarkest',
+          backgroundColor: 'primaryDarkest',
+        },
+        ':disabled': {
+          color: 'hsl(0, 0%, 80%)',
+          borderColor: 'primaryDarkest',
+          backgroundColor: 'primaryDarkest',
+        },
+      },
       accent: {
         borderColor: 'accent',
         backgroundColor: 'accent',
@@ -143,6 +161,22 @@ UIButton.styles = {
         ':active': {
           borderColor: 'primaryDarker',
           color: 'primaryDarker',
+        },
+        ':disabled': {
+          borderColor: 'primaryDarkest',
+          color: 'primaryDarkest',
+        },
+      },
+      primaryDark: {
+        borderColor: 'primaryDark',
+        color: 'primaryDark',
+        ':hover': {
+          borderColor: 'primaryDarker',
+          color: 'primaryDarker',
+        },
+        ':active': {
+          borderColor: 'primaryDarkest',
+          color: 'primaryDarkest',
         },
         ':disabled': {
           borderColor: 'primaryDarkest',

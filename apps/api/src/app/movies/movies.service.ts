@@ -81,10 +81,6 @@ export class MoviesService {
       ...(params['requested_by.gte'] ? {
         [`requested_by.${Number(params['requested_by.gte']) - 1}`]: { $exists: true },
       } : {}),
-      ...(params['releases.proposal'] ? ({
-        true: { 'releases': { $elemMatch: { 'proposal': true } } },
-        false: { 'releases': { $not: { $elemMatch: { 'proposal': true } } } },
-      })[params['releases.proposal']] || {} : {}),
       ...((params['refined_at.lte'] || params['refined_at.gte']) ? {
         refined_at: {
           ...(params['refined_at.lte'] ? { $not: { $gte: params['refined_at.lte'] }  } : {}),
@@ -139,6 +135,63 @@ export class MoviesService {
           ...(params['runtime.gte'] ? { $gte: Number(params['runtime.gte']) } : {}),
         },
       } : {}),
+      $and: [
+        ...(params['releases.proposal'] ? ({
+          true: [{ 'releases': { $elemMatch: { 'proposal': true } } }],
+          false: [{ 'releases': { $not: { $elemMatch: { 'proposal': true } } } }],
+        })[params['releases.proposal']] || [] : []),
+        ...(params['release_znab.prefer'] ? [{
+          'releases': { $elemMatch: { znab: { $in: params['release_znab.prefer'].split('|') } }}
+        }] : []),
+        ...(params['release_znab.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } }} }
+        }] : []),
+        ...(params['release_encoding.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_encoding.prefer'] } }}
+        }] : []),
+        ...(params['release_encoding.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_encoding.avoid'] } }} }
+        }] : []),
+        ...(params['release_resolution.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_resolution.prefer'] } }}
+        }] : []),
+        ...(params['release_resolution.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_resolution.avoid'] } }} }
+        }] : []),
+        ...(params['release_source.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_source.prefer'] } }}
+        }] : []),
+        ...(params['release_source.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_source.avoid'] } }} }
+        }] : []),
+        ...(params['release_dub.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_dub.prefer'] } }}
+        }] : []),
+        ...(params['release_dub.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_dub.avoid'] } }} }
+        }] : []),
+        ...(params['release_language.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_language.prefer'] } }}
+        }] : []),
+        ...(params['release_language.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_language.avoid'] } }} }
+        }] : []),
+        ...(params['release_flags.prefer'] ? [{
+          'releases': { $elemMatch: { title: { $regex: params['release_flags.prefer'] } }}
+        }] : []),
+        ...(params['release_flags.avoid'] ? [{
+          'releases': { $not: { $elemMatch: { title: { $regex: params['release_flags.avoid'] } }} }
+        }] : []),
+        ...(params['release_from'] ? [{
+          'releases': { $elemMatch: { from: { $in: params['release_from'].split('|') } } }
+        }] : []),
+        ...(params['release_size.lte'] ? [{
+          'releases': { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } }
+        }] : []),
+        ...(params['release_size.gte'] ? [{
+          'releases': { $elemMatch: { size: { $gte: params['release_size.gte'] * Math.pow(1024, 3) } } }
+        }] : []),
+      ],
     }, {
       page,
       lean: true,

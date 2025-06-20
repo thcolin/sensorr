@@ -39,7 +39,7 @@ const rules = {
   source: Object.keys(oleoo.rules.source),
   encoding: Object.keys(oleoo.rules.encoding),
   resolution: Object.keys(oleoo.rules.resolution),
-  language: Object.keys(oleoo.rules.language),
+  language: ['MULTi-VF2', 'MULTi-VFF', 'MULTI-VFQ', ...Object.keys(oleoo.rules.language)],
   dub: Object.keys(oleoo.rules.dub),
   flags: Object.keys(oleoo.rules.flags),
 }

@@ -10,10 +10,12 @@ export interface PaneProps {
   open: boolean
   toggleOpen: () => void
   level?: number
+  order?: number
+  shadow?: boolean
   children: React.ReactNode
 }
 
-const UIPane = ({ position, width = '25em', background: backgroundColor = 'primary', open, toggleOpen, children, level = 0, ...props }: PaneProps) => {
+const UIPane = ({ position, width = '25em', background: backgroundColor = 'primary', open, toggleOpen, children, level = 0, order = 0, shadow = true, ...props }: PaneProps) => {
   const { theme } = useThemeUI()
   const [ready, setReady] = useState(open)
 
@@ -39,7 +41,7 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
             top: '0em',
             right: '0em',
             bottom: '0em',
-            transform: `translate3d(${open ? '0px, 0px, 0px' : '100%, 0px, 0px'})`,
+            transform: `translate3d(${open ? `-${order * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
             zIndex: 6 + level,
           },
           left: {
@@ -49,7 +51,7 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
             top: '0em',
             bottom: '0em',
             left: '0em',
-            transform: `translate3d(${open ? '0px, 0px, 0px' : '-100%, 0px, 0px'})`,
+            transform: `translate3d(${open ? `${order * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
             zIndex: 6 + level,
           },
         }[position]}
@@ -61,18 +63,20 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
           <Icon value='spinner' color='gray-100' />
         </div>
       </aside>
-      <button
-        key='shadow'
-        sx={UIPane.styles.shadow}
-        onClick={toggleOpen}
-        style={{
-          zIndex: open ? (5 + level) : -1,
-          transition: `opacity 400ms ease, z-index ${open ? '0ms' : '400ms'} linear`,
-          opacity: open ? 1 : 0,
-        }}
-      >
-        <Shadow palette={{ backgroundColor: theme.rawColors.gray }} fade={0.1} />
-      </button>
+      {shadow && (
+        <button
+          key='shadow'
+          sx={UIPane.styles.shadow}
+          onClick={toggleOpen}
+          style={{
+            zIndex: open ? (5 + level) : -1,
+            transition: `opacity 400ms ease, z-index ${open ? '0ms' : '400ms'} linear`,
+            opacity: open ? 1 : 0,
+          }}
+        >
+          <Shadow palette={{ backgroundColor: theme.rawColors.gray }} fade={0.1} />
+        </button>
+      )}
     </>
   )
 }
