@@ -310,6 +310,18 @@ export class API {
       }),
     },
     logs: {
+      getJobGroupLogs: ({ init = {}, params: { job, group } = { job: null, group: null } }: { init?: any, params: { job: string, group: string } }): { uri: string, params: {}, init: {} } => ({
+        uri: `jobs/${job}/${group}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
       ammendLog: (
         { body, init = {}, params: { log } }: { body: any, init?: any, params: { log: string } }
       ): { uri: string, params: {}, init: {} } => ({

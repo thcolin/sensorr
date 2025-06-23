@@ -56,12 +56,18 @@ export class JobsService {
     )
   }
 
-  listenJob(job: string): Observable<MessageEvent> {
-    this.logger.log(`ListenJob "${job}"`)
-    const stream = this.logModel.watch({ $match: { 'meta.job': { $eq: job } } } as any)
+  getJob(job: string, additional: null | { match: any, test: (doc: any) => boolean }): Promise<LogDocument[]> {
+    this.logger.log(`getJob "${job}"${additional ? ` ${JSON.stringify(additional.match)}` : ''}`)
+
+    return this.logModel.find({ 'meta.job': { $eq: job }, ...(additional ? additional.match : {}) }).sort({ timestamp: 1 }).lean().exec()
+  }
+
+  listenJob(job: string, additional: null | { match: any, test: (doc: any) => boolean }): Observable<MessageEvent> {
+    this.logger.log(`ListenJob "${job}"${additional ? ` ${JSON.stringify(additional.match)}` : ''}`)
+    const stream = this.logModel.watch({ $match: { 'meta.job': { $eq: job }, ...(additional ? additional.match : {}) } } as any)
 
     return merge(
-      from(this.logModel.find({ 'meta.job': { $eq: job } }).sort({ timestamp: -1 }).lean().exec()).pipe(
+      from(this.logModel.find({ 'meta.job': { $eq: job }, ...(additional ? additional.match : {}) }).sort({ timestamp: -1 }).lean().exec()).pipe(
         map(data => ({ data } as MessageEvent)),
       ),
       fromEventPattern(
@@ -72,7 +78,7 @@ export class JobsService {
           stream.close()
         },
       ).pipe(
-        filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && change.fullDocument?.meta?.job === job),
+        filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && change.fullDocument?.meta?.job === job && (!additional || additional.test(change.fullDocument))),
         map(({ fullDocument: data }) => ({ data } as MessageEvent)),
         tap(() => this.logger.log(`ListenJob "${job}", message=""`)),
       )

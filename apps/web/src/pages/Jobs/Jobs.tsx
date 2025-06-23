@@ -35,21 +35,28 @@ const UIJobs = ({ controls = null, ...props }) => {
   }, [jobs, job, loading])
 
   useEffect(() => {
-    if (!job) {
+    if (!job || !jobs.length) {
       return
     }
 
     store.current = null
     setLogs(null)
-    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}`)
+    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
     eventSource.onmessage = ({ data }) => {
       const raw = JSON.parse(data)
-      store.current = Array.isArray(raw) ? raw : [raw, ...(store.current || [])]
+
+      if (Array.isArray(raw)) {
+        store.current = raw
+        setLogs(raw)
+        return
+      }
+
+      store.current = [raw, ...(store.current || [])]
       drainLogs()
     }
 
     return () => eventSource.close()
-  }, [job])
+  }, [job, jobs])
 
   return (
     <section sx={UIJobs.styles.element}>

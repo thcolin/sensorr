@@ -2,11 +2,13 @@ import { Fragment, createContext, memo, useCallback, useContext, useEffect, useM
 import { Button, Icon, Warning } from '@sensorr/ui'
 import { filesize } from '@sensorr/utils'
 import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
+import ReconnectingEventSource from 'reconnecting-eventsource'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import oleoo from 'oleoo'
 import report from 'new-github-issue-url'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useDeviceContext } from '../../../contexts/Device/Device'
+import { useAPI } from '../../../store/api'
 import Movie from '../../../components/Movie/Movie'
 import { Sensorr } from '../../../components/Sensorr'
 import { Release } from '../../../components/Sensorr/Release'
@@ -46,11 +48,11 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
       release: groups[log.meta.group]?.release || (log.meta.release ? { log: log._id, ...log.meta.release } : undefined),
       treated: typeof groups[log.meta.group]?.treated === 'boolean' ? groups[log.meta.group]?.treated : log.meta.treated,
       choice: typeof groups[log.meta.group]?.choice === 'boolean' ? groups[log.meta.group]?.choice : log.meta.choice,
-      warning: groups[log.meta.group]?.warning || log.meta.warning,
+      warning: groups[log.meta.group]?.warning || log.meta?.release?.reason,
       logs: [...(log.message ? [log] : []), ...(groups[log.meta.group]?.logs || [])].sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-      completed: groups[log.meta.group]?.completed || Array.isArray(log.meta.results),
+      done: !!job.meta.done || (typeof groups[log.meta.group]?.done === 'boolean' ? groups[log.meta.group]?.done : log.meta.done),
     },
-  }, {})).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [logs])
+  }, {})).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [logs, job.meta.done])
 
   const znabs = useMemo(() => records.reduce((acc: any, curr: any) => curr?.release?.valid ? ({
     ...acc,
@@ -75,7 +77,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   }, [job.job])
 
   useEffect(() => {
-    console.log((ref.current as any).scrollTop)
+    // console.log((ref.current as any).scrollTop)
     if ((ref.current as any).scrollTop > 400) {
       (ref.current as any).scrollTo({ top: (ref.current as any).scrollTop + 480, behavior: 'instant' })
     }
@@ -167,7 +169,6 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                 childProps={{
                   job: job.job,
                   command: job.meta.command,
-                  done: job.meta.done,
                   setMovieMetadata,
                   proceedMovieRelease,
                   toggleMetadata: (e, movie) => toggleMetadata.current(e, movie),
@@ -238,7 +239,7 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, metadata, setMovieMetadata, proceedMovieRelease, toggleMetadata, toggleSensorr, completed, done, error, ...props }) => {
+const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, proceedMovieRelease, toggleMetadata, toggleSensorr, done, error, ...props }) => {
   // const sensorr = useSensorr()
   // const query = useMemo(() => sensorr.getQuery(movie, metadata.query), [movie?.id, metadata.query])
 
@@ -254,6 +255,9 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
   //   ],
   // }), [query?._defaults, query?.titles, query])
 
+  const api = useAPI()
+  const [logs, setLogs] = useState(null)
+
   const [optimistic, setOptimistic] = useState({ treated, choice })
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
@@ -264,6 +268,49 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
   useEffect(() => {
     setOptimistic({ treated, choice })
   }, [treated])
+
+  useEffect(() => {
+    setLogs(null)
+
+    if (job === 'anonymous') {
+      return
+    }
+
+    if (!done) {
+      const eventSource = new ReconnectingEventSource(`/api/jobs/${job}/${group}?authorization=Bearer%20${api.access_token}`)
+
+      eventSource.onmessage = ({ data }) => {
+        const raw = JSON.parse(data)
+
+        if (Array.isArray(raw)) {
+          setLogs(raw)
+          return
+        }
+
+        setLogs(logs => [raw, ...(logs || [])])
+      }
+
+      return () => eventSource.close()
+    }
+
+    const controller = new AbortController()
+
+    const cb = async () => {
+      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { controller }, params: { job, group } })
+
+      try {
+        setLogs(await api.fetch(uri, params, init))
+        // if not done should listen to eventSource and close when done
+      } catch (e) {
+        console.warn(e)
+        setLogs([])
+      }
+    }
+
+    cb()
+
+    return () => controller.abort()
+  }, [job, group, done])
 
   return (
     <div sx={UIRecord.styles.element}>
@@ -353,29 +400,37 @@ const UIRecord = ({ command, job, group, movie, logs, release, treated, choice, 
           </div> */}
         </div>
         <div sx={UIRecord.styles.results}>
-          <RecordLogs
-            logs={logs}
-            command={command}
-            movie={movie}
-            release={release}
-            metadata={metadata}
-            setMovieMetadata={setMovieMetadata}
-          />
-          {['refine', 'shrink'].includes(command) && movie?.releases?.map(release => (
-            <div sx={UIRecord.styles.release} key={release.id}>
-              <Release entity={release} display='column' compact={true} />
+          {logs === null ? (
+            <div sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon value='spinner' />
             </div>
-          ))}
-          {completed && (
-            (release && !release?.hide) ? (
-              <div sx={UIRecord.styles.release}>
-                <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
-              </div>
-            ) : (
-              <div sx={UIRecord.styles.release}>
-                <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
-              </div>
-            )
+          ) : (
+            <>
+              <RecordLogs
+                logs={logs || summaryLogs}
+                command={command}
+                movie={movie}
+                release={release}
+                metadata={metadata}
+                setMovieMetadata={setMovieMetadata}
+              />
+              {['refine', 'shrink'].includes(command) && movie?.releases?.map(release => (
+                <div sx={UIRecord.styles.release} key={release.id}>
+                  <Release entity={release} display='column' compact={true} />
+                </div>
+              ))}
+              {done && (
+                (release && !release?.hide) ? (
+                  <div sx={UIRecord.styles.release}>
+                    <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
+                  </div>
+                ) : (
+                  <div sx={UIRecord.styles.release}>
+                    <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
+                  </div>
+                )
+              )}
+            </>
           )}
         </div>
       </div>

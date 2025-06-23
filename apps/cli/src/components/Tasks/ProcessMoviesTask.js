@@ -283,7 +283,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           setTask((task) => ({ ...task, output: '📭 No releases found' }))
           const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
           await api.fetch(uri, params, init)
-          state.logger.info({ message: `📭 No releases found`, metadata: { ...state.metadata, important: true, group: movie.id, results } })
+          state.logger.info({ message: `📭 No releases found`, metadata: { ...state.metadata, important: true, group: movie.id, done: true } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('error')
           return
@@ -321,7 +321,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             setTask((task) => ({ ...task, output: `🥈 Doesn't overcome existing releases: ${release.title}` }))
             const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
             await api.fetch(uri, params, init)
-            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
+            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, done: true } })
             await new Promise(resolve => setTimeout(resolve, 600))
             setStatus('warning')
             return
@@ -345,7 +345,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             setTask((task) => ({ ...task, output: `🧱 Heavier than existing releases: ${release.title}` }))
             const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
             await api.fetch(uri, params, init)
-            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
+            state.logger.info({ message: release.reason, metadata: { ...state.metadata, important: true, group: movie.id, release, done: true } })
             await new Promise(resolve => setTimeout(resolve, 600))
             setStatus('warning')
             return
@@ -358,27 +358,27 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           await api.fetch(postMovie.uri, postMovie.params, postMovie.init)
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposalOnly ? 'cache' : 'fs' } })
           await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
-          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposalOnly]} (${release.znab})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), release: { ...release, proposal: true }, results } })
+          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposalOnly]} (${release.znab})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), release: { ...release, proposal: true }, done: true } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('done')
         } else if (release.warning) {
           setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
           const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
           await api.fetch(uri, params, init)
-          state.logger.info({ message: `🚨 Release ${release.title} withdrawn`, metadata: { ...state.metadata, important: true, group: movie.id, release, results } })
+          state.logger.info({ message: `🚨 Release ${release.title} withdrawn`, metadata: { ...state.metadata, important: true, group: movie.id, release, done: true } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('warning')
         } else if (release.title) {
           setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
           const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
           await api.fetch(uri, params, init)
-          state.logger.info({ message: `🗑️  No matching releases found`, metadata: { ...state.metadata, important: true, group: movie.id, release: { ...release, hide: true }, results } })
+          state.logger.info({ message: `🗑️  No matching releases found`, metadata: { ...state.metadata, important: true, group: movie.id, release: { ...release, hide: true }, done: true } })
           await new Promise(resolve => setTimeout(resolve, 600))
           setStatus('error')
         }
       } catch (error) {
         setTask((task) => ({ ...task, output: `⚠️  ${error.message || error}` }))
-        state.logger.warn({ message: `⚠️ Error during record: "${error?.message || error}"`, metadata: { ...state.metadata, important: true, group: movie.id, warning: error } })
+        state.logger.warn({ message: `⚠️ Error during record: "${error?.message || error}"`, metadata: { ...state.metadata, important: true, group: movie.id, warning: error, done: true } })
         await new Promise(resolve => setTimeout(resolve, 600))
         setStatus('error')
         setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, warning: error } } }))

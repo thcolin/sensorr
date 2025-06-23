@@ -36,7 +36,7 @@ export const lighten = {
     poster_path,
     // release_date,
     title,
-    // vote_average,
+    vote_average,
     // vote_count,
   }),
   person: ({
@@ -55,7 +55,7 @@ export const lighten = {
     id,
     // biography,
     // popularity,
-    // profile_path,
+    profile_path,
     // birthday,
     // deathday,
     name,

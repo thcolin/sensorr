@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Sse } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Query, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { JobsService } from './jobs.service'
+import { Log as LogDocument } from '../logs/log.schema'
 import { SensorrService } from '../sensorr/sensorr.service'
 
 @Controller('jobs')
@@ -42,8 +43,27 @@ export class JobsController implements OnApplicationBootstrap {
   }
 
   @Sse(':job')
-  listenJob(@Param() params): Observable<MessageEvent> {
-    return this.jobsService.listenJob(params.job)
+  listenJob(@Param() params, @Query('summarize') summarize): Observable<MessageEvent> {
+    return this.jobsService.listenJob(params.job, summarize ? {
+      match: { 'meta.important': true },
+      test: (doc) => !!doc?.meta?.movie,
+    } : null)
+  }
+
+  @Get(':job/:group')
+  getJobDetails(@Param() params): Promise<LogDocument[]> {
+    return this.jobsService.getJob(params.job, {
+      match: { 'meta.group': Number(params.group) },
+      test: (doc) => Number(doc?.meta?.group) === Number(params.group),
+    })
+  }
+
+  @Sse(':job/:group')
+  listenJobDetails(@Param() params): Observable<MessageEvent> {
+    return this.jobsService.listenJob(params.job, {
+      match: { 'meta.group': Number(params.group) },
+      test: (doc) => Number(doc?.meta?.group) === Number(params.group),
+    })
   }
 
   @Delete('/:job')
