@@ -55,10 +55,42 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      postMovies: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'movies/bulk',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       deleteMovie: (
         { body, init = {} }: { body: any, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
         uri: 'movies',
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      deleteMovies: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'movies/bulk',
         params: {},
         init: {
           ...init,

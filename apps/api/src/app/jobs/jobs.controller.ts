@@ -46,7 +46,7 @@ export class JobsController implements OnApplicationBootstrap {
   listenJob(@Param() params, @Query('summarize') summarize): Observable<MessageEvent> {
     return this.jobsService.listenJob(params.job, summarize ? {
       match: { 'meta.important': true },
-      test: (doc) => !!doc?.meta?.movie,
+      test: (doc) => !!doc?.meta?.movie || doc?.meta?.done,
     } : null)
   }
 

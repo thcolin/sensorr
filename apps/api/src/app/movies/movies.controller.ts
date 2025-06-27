@@ -12,9 +12,19 @@ export class MoviesController {
     return this.moviesService.upsertMovie(movie)
   }
 
+  @Post('bulk')
+  async upsertMovies(@Body() changes: { [key: string]: MovieDTO }) {
+    return this.moviesService.upsertMovies(changes)
+  }
+
   @Delete()
   async deleteMovie(@Body() movie: MovieDTO) {
     return this.moviesService.deleteMovie(movie)
+  }
+
+  @Delete('bulk')
+  async deleteMovies(@Body() changes: { [key: string]: MovieDTO }) {
+    return this.moviesService.deleteMovies(changes)
   }
 
   @Get()
@@ -36,9 +46,9 @@ export class MoviesController {
 
   @Get('statistics')
   async getStatistics(
-    @Query() query,
+    @Query() { context = 'library', ...query },
   ): Promise<{}> {
-    return this.moviesService.getStatistics(query)
+    return this.moviesService.getStatistics(query, context as 'library' | 'requests')
   }
 
   @Sse('changes')

@@ -9,11 +9,11 @@ export class LogsService {
 
   constructor(@InjectModel(LogDocument.name) private readonly logModel: Model<LogDocument>) {}
 
-  async ammendLog(_id: string, body: any) {
-    this.logger.log(`AmmendLog "${_id}"`)
+  async ammendLog(match: string | { [key: string]: any }, body: any) {
+    this.logger.log(`AmmendLog "${JSON.stringify(match)}"`)
 
     try {
-      await this.logModel.findByIdAndUpdate(_id, body).lean()
+      await this.logModel.findOneAndUpdate(typeof match === 'string' ? { _id: match } : match, body).lean()
     } catch (e) {
       return {}
     }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Entities,
   Sorting,
@@ -16,15 +17,34 @@ import {
   FilterVoteCount,
   withControls,
   Warning,
+  Option,
 } from '@sensorr/ui'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
+import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
+
+const EntitiesHideable = ({ controls, child: Child, ...props }) => {
+  const HideableChild = useMemo(() => (props) => {
+    const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMoviesMetadataContext() as any
+
+    return (
+      <Child
+        {...props}
+        opacity={(!loading && controls.values.hide_library && metadata && metadata?.state !== 'ignored') ? 0.125 : 1}
+      />
+    )
+  }, [controls.values.hide_library, Child])
+
+  return (
+    <Entities {...props as any} child={HideableChild} />
+  )
+}
 
 export const Discover = compose(
   withProps({
@@ -42,7 +62,10 @@ export const Discover = compose(
   }),
   withFetchQuery({
     uri: 'discover/movie',
-  }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  }, 1, useTMDB, () => [
+    ...useHistoryState('controls', { uri: '', params: {} }),
+    ['hide_library']
+  ] as any),
   withControls({
     title: i18n.t('pages.discover.title'),
     useStatistics,
@@ -56,8 +79,8 @@ export const Discover = compose(
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: [
-          `"results toggle sort_by"`,
-          `"title results toggle sort_by"`,
+          `"results hide_library toggle sort_by"`,
+          `"title results hide_library toggle sort_by"`,
         ],
         '>h4': {
           display: ['none', 'block'],
@@ -89,9 +112,23 @@ export const Discover = compose(
       },
     },
     fields: {
-      // hide_library: {
-      //   // TODO: entity.state will not exist atm, how to handle it ?
-      // },
+      hide_library: {
+        initial: false,
+        hideFromFiltersCount: true,
+        serialize: (key, raw) => ({ [key]: raw }),
+        component: ({ value, onChange, ...props }) => (
+          <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+            <Option
+              id='hide_library'
+              type='checkbox'
+              checked={value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+            >
+              Hide Library
+            </Option>
+          </div>
+        ),
+      },
       head: {
         initial: null,
         component: ({ ...props }) => (
@@ -209,6 +246,6 @@ export const Discover = compose(
     },
   }),
   withPlacehodersHistoryState(),
-)(Entities)
+)(EntitiesHideable)
 
 export default Discover

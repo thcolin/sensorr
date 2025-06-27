@@ -19,192 +19,194 @@ const UIRelease = ({
 
   return (
     <div>
-      <div key={entity?.link} sx={UIRelease.styles.element} data-disabled={!downloadable}>
-        <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
-          <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
-            {entity?.valid !== false && remove && !entity?.proposal && ['record', 'refine', 'shrink'].includes(entity?.from) && (
-              <div sx={UIRelease.styles.remove}>
-                <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
-                  <Icon value='clear' width='1em' height='1em' />
-                </button>
-              </div>
-            )}
-            {(
-              (!entity?.title) ? (
-                <Tippy maxWidth='80vw' disabled={true}>
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
-                </Tippy>
-              ) : entity?.from === 'sync' ? (
-                <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-                    <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
-                      ❯
-                    </span>
-                  </span>
-                </Tippy>
-              ) : !entity?.valid && entity?.warning <= 10 ? (
-                <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
-              ) : !entity?.valid && entity?.warning > 10 ? (
-                <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
-              ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
-                <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                  <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
-                </Tippy>
-              ) : (entity?.proposal && entity?.choice === false) ? (
-                <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                  <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
-                </Tippy>
-              ) : (entity?.proposal && entity?.choice === true) ? (
-                <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                  <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                </Tippy>
-              ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
-                <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                  <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                </Tippy>
-              ) : (
-                <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
-              )
-            )}
-            <div sx={UIRelease.styles.head}>
-              <div sx={UIRelease.styles.title}>
-                <Tippy maxWidth='80vw' disabled={!entity?.original} content={<code><small>{entity?.original}</small></code>}>
-                  <span sx={UIRelease.styles.name}>
-                    <button
-                      {...(downloadable ? { title: 'Download release to Sensorr blackhole' } : {})}
-                      onClick={() => proceed(entity, true)}
-                      disabled={!downloadable}
-                    >
-                      <code title={entity?.title}>{entity?.title || 'No releases found during this job'}</code>
-                    </button>
-                  </span>
-                </Tippy>
-                {!!entity?.znab && (
-                  <span sx={UIRelease.styles.subtitle}>
-                    <span>&nbsp;&nbsp;&nbsp;</span>
-                    <a href={entity?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
-                    <span>&nbsp;&nbsp;&nbsp;</span>
-                    <a href={entity?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
-                  </span>
-                )}
-              </div>
-              {(display !== 'column' && !entity?.valid && !!entity?.reason) && (
-                <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
-                  <code title={entity?.reason}>{entity?.reason}</code>
-                </div>
-              )}
-            </div>
+      <div sx={UIRelease.styles.element}>
+        {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink'].includes(entity?.from) && (
+          <div sx={UIRelease.styles.remove}>
+            <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
+              <Icon value='clear' width='1em' height='1em' />
+            </button>
           </div>
-          {(display === 'column' && !entity?.valid && !!entity?.reason) && (
-            <div sx={{ ...UIRelease.styles.reason, paddingY: 8 }}>
-              <code>{entity?.reason}</code>
-            </div>
-          )}
-          {!!entity?.title && (
-            <div sx={UIRelease.styles.metadata}>
-              <div sx={UIRelease.styles.tags}>
-                {!!meta.source && (
-                  <span title={`Source: ${meta.source}${(entity?.account?.source || {})[meta.source] ? ` (+${(entity?.account?.source || {})[meta.source]})` : ''}`}>
-                    {logos.source[meta.source] || <code>{meta.source}</code>}
-                  </span>
-                )}
-                {!!meta.encoding && (
-                  <span title={`Encoding: ${meta.encoding}${(entity?.account?.encoding || {})[meta.encoding] ? ` (+${(entity?.account?.encoding || {})[meta.encoding]})` : ''}`}>
-                    {logos.encoding[meta.encoding] || <code>{meta.encoding}</code>}
-                  </span>
-                )}
-                {!!meta.resolution && (
-                  <span title={`Resolution: ${meta.resolution}${(entity?.account?.resolution || {})[meta.resolution] ? ` (+${(entity?.account?.resolution || {})[meta.resolution]})` : ''}`}>
-                    {logos.resolution[meta.resolution] || <code>{meta.resolution}</code>}
-                  </span>
-                )}
-                {!!meta.dub && (
-                  <span title={`Dub: ${meta.dub}${(entity?.account?.dub || {})[meta.dub] ? ` (+${(entity?.account?.dub || {})[meta.dub]})` : ''}`}>
-                    {logos.dub[meta.dub] || <code>{meta.dub}</code>}
-                  </span>
-                )}
-                {!!meta.language && (
-                  <span title={`Language: ${meta.language}${(entity?.account?.language || {})[meta.language] ? ` (+${(entity?.account?.language || {})[meta.language]})` : ''}`}>
-                    {logos.language[meta.language] || <code>{meta.language}</code>}
-                  </span>
-                )}
-                {(meta.flags || []).map(flag => <span key={flag} title={`Flag: ${flag}${(entity?.account?.flags || {})[flag] ? ` (+${(entity?.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
-              </div>
-              {!downloadable ? (
-                <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
-                  {typeof entity?.peers !== 'undefined' && (
-                    <span title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
-                      <code>{emojize('🌍 ', entity?.peers || 0)}</code>
+        )}
+        <div key={entity?.link} sx={UIRelease.styles.wrapper} data-disabled={!downloadable}>
+          <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
+            <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
+              {(
+                (!entity?.title) ? (
+                  <Tippy maxWidth='80vw' disabled={true}>
+                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
+                  </Tippy>
+                ) : entity?.from === 'sync' ? (
+                  <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
+                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
+                      <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
+                        ❯
+                      </span>
                     </span>
-                  )}
-                  {typeof entity?.size !== 'undefined' && (
-                    <span title={`Size (${filesize.stringify(entity?.size)})`}>
-                      <code>{emojize('📦 ', filesize.stringify(entity?.size || 0))}</code>
-                    </span>
-                  )}
-                  {typeof entity?.score !== 'undefined' && (
-                    <span title={`Score (${entity?.score})`}>
-                      <code>{emojize('💯 ', entity?.score || 0)}</code>
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div sx={UIRelease.styles.statistics}>
-                  {typeof statistics.lowest.score !== 'undefined' && (
-                    <div title={`Score (${entity?.score})`}>
-                      <span>💯</span>
-                      <span
-                        style={{
-                          background: `linear-gradient(
-                            90deg,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                            ${theme.rawColors.gray} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                            ${theme.rawColors.gray} 100%
-                          )`,
-                        }}
-                      />
-                      <small style={{ opacity: 0.5 }}><code>{entity?.score}</code></small>
-                    </div>
-                  )}
-                  {typeof statistics.lowest.peers !== 'undefined' && (
-                    <div title={`Peers (${entity?.seeders}/${entity?.peers})`}>
-                      <span>🌍</span>
-                      <span
-                        sx={{
-                          background: `linear-gradient(
-                            90deg,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                            ${theme.rawColors.gray} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                            ${theme.rawColors.gray} 100%
-                          )`,
-                        }}
-                      />
-                      <small style={{ opacity: 0.5 }}><code>{entity?.peers}</code></small>
-                    </div>
-                  )}
-                  {typeof statistics.lowest.size !== 'undefined' && (
-                    <div title={`Size (${filesize.stringify(entity?.size)})`}>
-                      <span>📦</span>
-                      <span
-                        sx={{
-                          background: `linear-gradient(
-                            90deg,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                            ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
-                            ${theme.rawColors.gray} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
-                            ${theme.rawColors.gray} 100%
-                          )`,
-                        }}
-                      />
-                      <small style={{ opacity: 0.5 }}><code>{filesize.stringify(entity?.size)}</code></small>
-                    </div>
-                  )}
-                </div>
+                  </Tippy>
+                ) : !entity?.valid && entity?.warning <= 10 ? (
+                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
+                ) : !entity?.valid && entity?.warning > 10 ? (
+                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
+                ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
+                  <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
+                  </Tippy>
+                ) : (entity?.proposal && entity?.choice === false) ? (
+                  <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
+                  </Tippy>
+                ) : (entity?.proposal && entity?.choice === true) ? (
+                  <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+                  </Tippy>
+                ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
+                  <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+                  </Tippy>
+                ) : (
+                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
+                )
               )}
+              <div sx={UIRelease.styles.head}>
+                <div sx={UIRelease.styles.title}>
+                  <Tippy maxWidth='80vw' disabled={!entity?.original} content={<code><small>{entity?.original}</small></code>}>
+                    <span sx={UIRelease.styles.name}>
+                      <button
+                        {...(downloadable ? { title: 'Download release to Sensorr blackhole' } : {})}
+                        onClick={() => proceed(entity, true)}
+                        disabled={!downloadable}
+                      >
+                        <code title={entity?.title}>{entity?.title || 'No releases found during this job'}</code>
+                      </button>
+                    </span>
+                  </Tippy>
+                  {!!entity?.znab && (
+                    <span sx={UIRelease.styles.subtitle}>
+                      <span>&nbsp;&nbsp;&nbsp;</span>
+                      <a href={entity?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
+                      <span>&nbsp;&nbsp;&nbsp;</span>
+                      <a href={entity?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+                    </span>
+                  )}
+                </div>
+                {(display !== 'column' && !entity?.valid && !!entity?.reason) && (
+                  <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
+                    <code title={entity?.reason}>{entity?.reason}</code>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+            {(display === 'column' && !entity?.valid && !!entity?.reason) && (
+              <div sx={{ ...UIRelease.styles.reason, paddingY: 8 }}>
+                <code>{entity?.reason}</code>
+              </div>
+            )}
+            {!!entity?.title && (
+              <div sx={UIRelease.styles.metadata}>
+                <div sx={UIRelease.styles.tags}>
+                  {!!meta.source && (
+                    <span title={`Source: ${meta.source}${(entity?.account?.source || {})[meta.source] ? ` (+${(entity?.account?.source || {})[meta.source]})` : ''}`}>
+                      {logos.source[meta.source] || <code>{meta.source}</code>}
+                    </span>
+                  )}
+                  {!!meta.encoding && (
+                    <span title={`Encoding: ${meta.encoding}${(entity?.account?.encoding || {})[meta.encoding] ? ` (+${(entity?.account?.encoding || {})[meta.encoding]})` : ''}`}>
+                      {logos.encoding[meta.encoding] || <code>{meta.encoding}</code>}
+                    </span>
+                  )}
+                  {!!meta.resolution && (
+                    <span title={`Resolution: ${meta.resolution}${(entity?.account?.resolution || {})[meta.resolution] ? ` (+${(entity?.account?.resolution || {})[meta.resolution]})` : ''}`}>
+                      {logos.resolution[meta.resolution] || <code>{meta.resolution}</code>}
+                    </span>
+                  )}
+                  {!!meta.dub && (
+                    <span title={`Dub: ${meta.dub}${(entity?.account?.dub || {})[meta.dub] ? ` (+${(entity?.account?.dub || {})[meta.dub]})` : ''}`}>
+                      {logos.dub[meta.dub] || <code>{meta.dub}</code>}
+                    </span>
+                  )}
+                  {!!meta.language && (
+                    <span title={`Language: ${meta.language}${(entity?.account?.language || {})[meta.language] ? ` (+${(entity?.account?.language || {})[meta.language]})` : ''}`}>
+                      {logos.language[meta.language] || <code>{meta.language}</code>}
+                    </span>
+                  )}
+                  {(meta.flags || []).map(flag => <span key={flag} title={`Flag: ${flag}${(entity?.account?.flags || {})[flag] ? ` (+${(entity?.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
+                </div>
+                {!downloadable ? (
+                  <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
+                    {typeof entity?.peers !== 'undefined' && (
+                      <span title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
+                        <code>{emojize('🌍 ', entity?.peers || 0)}</code>
+                      </span>
+                    )}
+                    {typeof entity?.size !== 'undefined' && (
+                      <span title={`Size (${filesize.stringify(entity?.size)})`}>
+                        <code>{emojize('📦 ', filesize.stringify(entity?.size || 0))}</code>
+                      </span>
+                    )}
+                    {typeof entity?.score !== 'undefined' && (
+                      <span title={`Score (${entity?.score})`}>
+                        <code>{emojize('💯 ', entity?.score || 0)}</code>
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div sx={UIRelease.styles.statistics}>
+                    {typeof statistics.lowest.score !== 'undefined' && (
+                      <div title={`Score (${entity?.score})`}>
+                        <span>💯</span>
+                        <span
+                          style={{
+                            background: `linear-gradient(
+                              90deg,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
+                              ${theme.rawColors.gray} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
+                              ${theme.rawColors.gray} 100%
+                            )`,
+                          }}
+                        />
+                        <small style={{ opacity: 0.5 }}><code>{entity?.score}</code></small>
+                      </div>
+                    )}
+                    {typeof statistics.lowest.peers !== 'undefined' && (
+                      <div title={`Peers (${entity?.seeders}/${entity?.peers})`}>
+                        <span>🌍</span>
+                        <span
+                          sx={{
+                            background: `linear-gradient(
+                              90deg,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
+                              ${theme.rawColors.gray} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
+                              ${theme.rawColors.gray} 100%
+                            )`,
+                          }}
+                        />
+                        <small style={{ opacity: 0.5 }}><code>{entity?.peers}</code></small>
+                      </div>
+                    )}
+                    {typeof statistics.lowest.size !== 'undefined' && (
+                      <div title={`Size (${filesize.stringify(entity?.size)})`}>
+                        <span>📦</span>
+                        <span
+                          sx={{
+                            background: `linear-gradient(
+                              90deg,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
+                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
+                              ${theme.rawColors.gray} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
+                              ${theme.rawColors.gray} 100%
+                            )`,
+                          }}
+                        />
+                        <small style={{ opacity: 0.5 }}><code>{filesize.stringify(entity?.size)}</code></small>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       {entity?.proposal && entity?.valid !== false && typeof entity?.choice !== 'boolean' && (
@@ -235,6 +237,11 @@ const UIRelease = ({
 
 UIRelease.styles = {
   element: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  wrapper: {
+    flex: 1,
     position: 'relative',
     fontSize: 6,
     paddingRight: [12, 0],
@@ -363,7 +370,8 @@ UIRelease.styles = {
     },
   },
   remove: {
-    marginLeft: '-12px',
+    marginLeft: '-14px',
+    fontSize: 5,
   },
   proposal: {
     display: 'flex',

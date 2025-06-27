@@ -5,24 +5,50 @@ import { emojize } from '@sensorr/utils'
 import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
-const RuleSortableSelect = ({ onChange, ...props }) => {
+const RuleSortableSelect = ({ onChange, options, requirable = false, ...props }) => {
   const value = useMemo(() => {
     const prefer = props.value.filter(v => v.group === 'prefer')
     const avoid = props.value.filter(v => v.group === 'avoid')
-    const ignore = props.options.filter(option => !props.value.find(v => v.value === option.value && v.group)).map((option) => ({ ...option, group: null }))
+    const ignore = [
+      ...props.value.filter(v => !v.group && v.required),
+      ...options
+        .filter(option => !props.value.find(v => v.value === option.value && (v.group || v.required)))
+        .map((option) => ({ ...option, group: null })),
+    ]
 
     return [
       ...(prefer.length ? [{ label: '⭐' }, ...prefer, { separator: true }] : []),
       ...(avoid.length ? [{ label: '⛔' }, ...avoid, { separator: true }] : []),
       ...(ignore.length ? [{ label: '🔕' }, ...ignore, { separator: true }] : []),
     ]
-  }, [props.value, props.options])
+  }, [props.value, options])
 
   const handleChange = useCallback((values, { action, removedValue } = { action: null, removedValue: null }) => {
     switch (action) {
+      case 'toggle-require-value':
+        onChange(values)
+        return
       case 'remove-value':
       case 'pop-value':
-        onChange([...values.filter(v => v.value), { ...removedValue, group: { [null as any]: 'prefer', prefer: 'avoid', avoid: null }[removedValue.group] }])
+        onChange([
+          ...values.filter(v => v.value),
+          {
+            ...removedValue,
+            ...({
+              [null as any]: {
+                group: 'prefer',
+              },
+              prefer: {
+                group: 'avoid',
+                required: false,
+              },
+              avoid: {
+                group: null,
+                required: false,
+              },
+            }[removedValue.group]),
+          }
+        ])
         return
       default:
         onChange(values.filter(v => v.value))
@@ -31,7 +57,7 @@ const RuleSortableSelect = ({ onChange, ...props }) => {
   }, [onChange])
 
   return (
-    <SortableSelect {...props} value={value} onChange={handleChange} />
+    <SortableSelect {...props} requirable={requirable} value={value} onChange={handleChange} />
   )
 }
 
@@ -39,7 +65,7 @@ const rules = {
   source: Object.keys(oleoo.rules.source),
   encoding: Object.keys(oleoo.rules.encoding),
   resolution: Object.keys(oleoo.rules.resolution),
-  language: ['MULTi-VF2', 'MULTi-VFF', 'MULTI-VFQ', ...Object.keys(oleoo.rules.language)],
+  language: ['MULTi-VF2', 'MULTi-VFF', 'MULTi-VFQ', ...Object.keys(oleoo.rules.language)],
   dub: Object.keys(oleoo.rules.dub),
   flags: Object.keys(oleoo.rules.flags),
 }

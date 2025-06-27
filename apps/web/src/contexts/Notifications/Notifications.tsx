@@ -76,12 +76,12 @@ export const Provider = ({ ...props }) => {
       id === notification._id ? { ...notification, meta: { ...(notification.meta || {}), choice } } : notification)
     ))
 
-    try {
-      const { uri, params, init } = api.query.logs.ammendLog({ params: { log: id }, body: { 'meta.choice': choice } })
-      await api.fetch(uri, params, init)
-    } catch (err) {
-      console.warn(err)
-    }
+    // try {
+    //   const { uri, params, init } = api.query.logs.ammendLog({ params: { log: id }, body: { 'meta.choice': choice } })
+    //   await api.fetch(uri, params, init)
+    // } catch (err) {
+    //   console.warn(err)
+    // }
   }, [])
 
   const seenNotification = useCallback(async (id) => {

@@ -19,28 +19,34 @@ export const Provider = ({ ...props }) => {
       return
     }
 
+    const controller = new AbortController()
+
     const cb = async () => {
       try {
         let total_pages = null
         let page = 0
 
         do {
-          const { uri, params, init } = api.query.persons.getMetadata({ params: { page: page++ } })
+          const { uri, params, init } = api.query.persons.getMetadata({ params: { page: page++ }, init: { signal: controller.signal } })
           const raw = await api.fetch(uri, params, init)
           total_pages = raw.total_pages
           setMetadata(metadata => ({ ...metadata, ...raw.results }))
         } while (!total_pages || page <= total_pages)
+
+        setLoading(false)
       } catch (e) {
         console.warn(e)
-      }
 
-      setLoading(false)
+        if (e.name !== 'AbortError') {
+          setLoading(false)
+        }
+      }
     }
 
     cb()
 
     // Refresh if page was at sleep for 10s
-    setInterval(() => {
+    const interval = setInterval(() => {
       const currentTime = (new Date()).getTime()
 
       if (currentTime > (refreshTime.current + 10000)) {
@@ -49,6 +55,11 @@ export const Provider = ({ ...props }) => {
 
       refreshTime.current = currentTime
     }, 2000)
+
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
   }, [authenticated])
 
   const setPersonState = useCallback(async (

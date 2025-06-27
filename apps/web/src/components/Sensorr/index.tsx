@@ -248,7 +248,7 @@ const UISensorr = compose(
     },
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, ...props }) => {
-  const { proceedMovieRelease } = useMoviesMetadataContext() as any
+  const { setMovieMetadata } = useMoviesMetadataContext() as any
   const statistics = useMemo(() => ({
     lowest: {
       score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,
@@ -277,7 +277,7 @@ const UISensorr = compose(
                 toggle()
 
                 try {
-                  await proceedMovieRelease(movie.id, { ...release, from: 'record', job: 'manual' }, choice)
+                  await setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true })
                 } catch (err) {
                   console.warn(err)
                   toast.error('Error while processing release')

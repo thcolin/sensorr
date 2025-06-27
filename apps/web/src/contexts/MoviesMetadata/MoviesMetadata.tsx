@@ -3,11 +3,10 @@ import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
 import { Policy } from '@sensorr/sensorr'
 import { useAuthContext } from '../Auth/Auth'
+import { useConfigContext } from '../Config/Config'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
-import { useConfigContext } from '../Config/Config'
-import { useJobsContext } from '../Jobs/Jobs'
 
 const moviesMetadataContext = createContext({})
 
@@ -17,7 +16,6 @@ export const Provider = ({ ...props }) => {
   const { config } = useConfigContext()
   const sensorr = useSensorr()
   const { authenticated } = useAuthContext()
-  const { setJobs } = useJobsContext() as any
   const ref = useRef() as any
   const refreshTime = useRef() as any
   const [loading, setLoading] = useState(true)
@@ -73,38 +71,79 @@ export const Provider = ({ ...props }) => {
   }, [metadata])
 
   const setMovieMetadata = useCallback(async (
-    id: number,
-    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'releases' | 'banned_releases' | null,
+    id: number | number[],
+    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | 'banned_releases' | null,
     value: any
   ) => {
-    const initial = ref.current[id] || {}
-    const changes = {
-      ...(key ? { [key]: typeof value === 'function' ? value(initial) : value } : typeof value === 'function' ? value(initial) : value),
-      ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) ? { releases: (initial?.releases || []).filter(({ proposal }) => !proposal) } : {}),
+    const ids = Array.isArray(id) ? id : [id]
+    const initial = Object.keys(ref.current).filter(i => ids.includes(Number(i))).reduce((acc, i) => ({ ...acc, [i]: ref.current[i] }), {})
+    const changes = ids.reduce((acc, i) => ({
+      ...acc,
+      [i]: {
+        id: i,
+        updated_at: new Date().getTime(),
+        ...(
+          ['state', 'query', 'policy', 'refine', 'shrink', 'releases', 'banned_releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}) : value }
+          : typeof value === 'function' ? value(initial[i] || {}) : {}
+        ),
+        ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) && initial[i]?.releases ? { releases: (initial[i]?.releases || []).filter(({ proposal }) => !proposal) } : {}),
+        ...(key === 'proposal' && initial[i]?.releases ? { ...(value ? { state: 'archived' } : {}), releases: (initial[i]?.releases || []).map(r => ({ ...r, ...(r.proposal ? { choice: value } : {}) })) } : {}),
+        ...(key === 'release' ? { state: 'archived', releases: [...(initial[i]?.releases || []), value] } : {}),
+      }
+    }), {})
+
+    const promise = new Promise(async (resolve, reject) => {
+      setMetadata(metadata => ({
+        ...metadata,
+        ...Object.keys(changes).reduce((acc, i) => ({
+          ...acc,
+          [i]: key === 'state' && value === 'ignored' ? {} : { ...(metadata[i] || {}), ...changes[i] },
+        }), {}),
+      }))
+
+      try {
+        if (Object.keys(changes).length === 1) {
+          const movie = await tmdb.fetch(`movie/${Object.keys(changes)[0]}`, {
+            append_to_response: 'alternative_titles,release_dates',
+          })
+
+          // Lighten object for database by reducing releases_dates, only Theatrical (type === 3) and merge same year releases
+          movie.release_dates.results = movie.release_dates.results
+            .filter(({ type }) => type === 3)
+            .reduce((acc, raw) => acc.map(({ release_date }) => new Date(release_date).getFullYear()).includes(new Date(raw.release_date).getFullYear()) ? acc : [...acc, raw], [])
+
+          changes[Object.keys(changes)[0]] = {
+            ...movie,
+            ...changes[Object.keys(changes)[0]],
+          }
+        }
+
+        const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovies' : 'postMovies')]({ body: changes })
+        await api.fetch(uri, params, init)
+        resolve(true)
+      } catch (err) {
+        setMetadata(metadata => ({
+          ...metadata,
+          ...Object.keys(changes).reduce((acc, i) => ({
+            ...acc,
+            [i]: { ...(metadata[i] || {}), ...initial[i] },
+          }), {}),
+        }))
+
+        console.warn(err)
+        reject(new Error())
+      }
+    })
+
+    if (ids.length === 1) {
+      return promise
     }
 
-    setMetadata(metadata => ({
-      ...metadata,
-      [id]: key === 'state' && value === 'ignored' ? {} : { ...(metadata[id] || {}), ...changes },
-    }))
-
-    try {
-      const movie = await tmdb.fetch(`movie/${id}`, {
-        append_to_response: 'alternative_titles,release_dates',
-      })
-
-      // Lighten object for database by reducing releases_dates, only Theatrical (type === 3) and merge same year releases
-      movie.release_dates.results = movie.release_dates.results
-        .filter(({ type }) => type === 3)
-        .reduce((acc, raw) => acc.map(({ release_date }) => new Date(release_date).getFullYear()).includes(new Date(raw.release_date).getFullYear()) ? acc : [...acc, raw], [])
-
-      const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovie' : 'postMovie')]({ body: { id, ...movie, ...changes, updated_at: new Date().getTime() } })
-      await api.fetch(uri, params, init)
-    } catch (err) {
-      setMetadata(metadata => ({ ...metadata, [id]: { ...(metadata[id] || {}), ...initial } }))
-      console.warn(err)
-      toast.error('Error while updating movie metadata')
-    }
+    await toast.promise(promise, {
+      loading: `Updating **${ids.length}** movies metadata...`,
+      success: () => `Updated **${ids.length}** movies metadata`,
+      error: () => `Error while updating **${ids.length}** movies metadata`,
+    })
   }, [setMetadata])
 
   const enhanceMovieMetadata = useCallback((entity, metadata) => ({
@@ -112,77 +151,6 @@ export const Provider = ({ ...props }) => {
     query: sensorr.getQuery(entity, metadata?.query),
     policy: new Policy(metadata?.policy, config.get('policies')),
   }), [config])
-
-  const proceedMovieRelease = useCallback(async (id: number, release: any, choice: boolean = true, log: string) => {
-    const initial = ref.current[id] || {}
-    const changes = {
-      ...(choice === true ? { state: 'archived' } : {}),
-      ...(choice === false && confirm(`Do you want to ban release "${release?.title}" from results ?`) ? { banned_releases: [...(initial?.banned_releases || []), release?.title] } : {}),
-      releases: !choice ?
-        (initial.releases || []).filter(r => r.id !== release.id) :
-        [...(initial.releases || []), release]
-          .filter((a, index, arr) => arr.findIndex(b => a.id === b.id) === index)
-          .map(({ proposal, ...r }) => r.id === release.id ? r : { ...r, proposal })
-          .filter(({ proposal }) => !proposal)
-    }
-
-    setMetadata(metadata => ({ ...metadata, [id]: { ...(metadata[id] || {}), ...changes } }))
-
-    try {
-      if (choice) {
-        const { uri, params, init } = api.query.sensorr.downloadRelease({ body: release, params: { source: log ? 'cache' : 'enclosure', destination: 'fs' } })
-        await api.fetch(uri, params, init)
-      } else {
-        const { uri, params, init } = api.query.sensorr.removeRelease({ body: release })
-        await api.fetch(uri, params, init)
-      }
-
-      const movie = await tmdb.fetch(`movie/${id}`, {
-        append_to_response: 'alternative_titles,release_dates',
-      })
-
-      // Lighten object for database by reducing releases_dates, only Theatrical (type === 3) and merge same year releases
-      movie.release_dates.results = movie.release_dates.results
-        .filter(({ type }) => type === 3)
-        .reduce((acc, raw) => acc.map(({ release_date }) => new Date(release_date).getFullYear()).includes(new Date(raw.release_date).getFullYear()) ? acc : [...acc, raw], [])
-
-      const { uri, params, init } = api.query.movies.postMovie({ body: { id, ...movie, ...changes, updated_at: new Date().getTime() } })
-      await api.fetch(uri, params, init)
-
-      if (log) {
-        try {
-          const { uri, params, init } = api.query.logs.ammendLog({
-            body: { 'meta.treated': true, 'meta.choice': choice, 'meta.summary': { treated: 1 } },
-            params: { log },
-          })
-
-          await api.fetch(uri, params, init)
-
-          setJobs(jobs => {
-            if (!jobs[release.job]) {
-              return jobs
-            }
-
-            return ({
-              ...jobs,
-              [release.job]: {
-                ...jobs[release.job],
-                summary: {
-                  ...jobs[release.job].summary,
-                  treated: (jobs[release.job]?.summary?.treated || 0) + 1,
-                }
-              }
-            })
-          })
-        } catch (e) {
-          console.warn(e)
-        }
-      }
-    } catch (e) {
-      setMetadata(metadata => ({ ...metadata, [id]: { ...(metadata[id] || {}), ...initial } }))
-      throw e
-    }
-  }, [])
 
   const removeMovieRelease = useCallback((id: number, release: any) => setMovieMetadata(id, 'releases',
     (metadata) => (metadata?.releases || []).filter(r => r.id !== release.id)
@@ -196,7 +164,6 @@ export const Provider = ({ ...props }) => {
         metadata,
         setMovieMetadata,
         enhanceMovieMetadata,
-        proceedMovieRelease,
         removeMovieRelease,
       }}
     />
@@ -208,9 +175,9 @@ export const useMoviesMetadataContext = () => useContext(moviesMetadataContext)
 export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedComponent) => {
   const withMovieMetadataContext = ({ entity, ...props }) => {
     const sensorr = useSensorr()
-    const { loading, metadata: { [entity.id]: _metadata = {} }, setMovieMetadata, proceedMovieRelease, removeMovieRelease } = useMoviesMetadataContext() as any
+    const { loading, metadata: { [entity.id]: _metadata = {} }, setMovieMetadata, removeMovieRelease } = useMoviesMetadataContext() as any
     const setMetadata = useCallback((key, value) => setMovieMetadata(entity.id, key, value), [entity?.id])
-    const proceedRelease = useCallback((release, choice) => proceedMovieRelease(entity.id, release, choice), [entity?.id])
+    const proceedRelease = useCallback((release, choice) => setMovieMetadata(entity.id, 'proposal', choice), [entity?.id])
     const removeRelease = useCallback((release) => removeMovieRelease(entity.id, release), [entity?.id])
     const setState = useCallback(state => setMetadata('state', state), [setMetadata])
 

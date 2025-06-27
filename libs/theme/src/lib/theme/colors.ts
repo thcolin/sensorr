@@ -9,6 +9,7 @@
  */
 
 const raw = {
+  primaryLightest: 'hsla(154, 99%, 95%, 1)',
   primary: 'hsla(154, 99%, 41%, 1)',
   primaryDark: 'hsla(154, 98%, 38%, 1)',
   primaryDarker: 'hsla(154, 97%, 35%, 1)',

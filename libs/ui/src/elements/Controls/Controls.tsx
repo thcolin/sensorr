@@ -192,7 +192,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
 export const Controls = memo(UIControls)
 
 export interface withControlsArgs extends Omit<ControlsProps, 'values' | 'onChange' | 'statistics' | 'loading' | 'total'> {
-  useStatistics: (entities: any[], fields: any) => { [key: string]: any }
+  useStatistics: (entities: any[], fields: any, state: { [key:string]: any }) => { [key: string]: any }
   level?: number
   hooks?: {
     onChange?: (values: { [key: string]: any }, serialized: { [key:string]: any }) => any,
@@ -201,15 +201,13 @@ export interface withControlsArgs extends Omit<ControlsProps, 'values' | 'onChan
 
 export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields }: withControlsArgs) => (WrappedComponent) => {
   const withControls = ({ controls, ...props }: any) => {
-    const statistics = useStatistics(props.entities, fields)
-
     const state = useMemo(() => ({
       props: controls?.props,
       values: Object.keys(fields).reduce((acc, key) => ({
         ...acc,
         ...(
           (controls?.values || {})[key] ? { [key]: controls?.values[key] } :
-          fields[key].initial ? { [key]: fields[key].initial } :
+          typeof fields[key].initial !== 'undefined' ? { [key]: fields[key].initial } :
           {}
         ),
       }), {}),
@@ -224,6 +222,15 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
       controls?.onChange && controls?.onChange(values, serialized)
       hooks?.onChange && hooks?.onChange(values, serialized)
     }, [fields, controls?.onChange])
+
+    const statistics = useStatistics(
+      props.entities,
+      fields,
+      Object.keys(state?.values || {}).reduce((acc, key) => ({
+        ...acc,
+        ...(fields[key]?.serialize && fields[key].serialize(key, (state?.values || {})[key])),
+      }), {})
+    )
 
     useEffect(() => {
       if (state) {

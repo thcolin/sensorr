@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
+// import toast from 'react-hot-toast'
 import nanobounce from 'nanobounce'
 import { useControlsState } from '@sensorr/ui'
 import { useHistoryState } from '@sensorr/utils'
@@ -17,6 +17,9 @@ const withFetchCalendarQuery = (
     // Wait for first controlsQuery hydration by serializing initial state
     const useControlsValues = useCallback(() => useHistoryState('controls', { uri: '', params: {} }), [])
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
+    controlsQuery.params = Object.keys(controlsQuery.params || {})
+      .filter(key => !['hide_library'].includes(key))
+      .reduce((acc, key) => ({ ...acc, [key]: controlsQuery.params[key] }), {})
 
     const query = useMemo(() => ({
       uri: 'discover/movie',
@@ -88,25 +91,6 @@ const withFetchCalendarQuery = (
       }
     }, [persons.metadata])
 
-    const fetchEntities = useCallback((entities) => (Object.entries(totals.current)
-      .reduce((acc, [page, total]) => [...acc, ...(new Array(total).fill(Number(page)))], [])
-      .filter((page, index) => entities[0]?.index && index >= entities[0]?.index && index <= entities[entities.length - 1]?.index)
-      .reduce((acc, page) => acc.includes(page) ? acc : [...acc, page], [])
-      .filter((page) => !processed.current.includes(page))
-      .forEach(async (page) => {
-        try {
-          const { entities, total } = await fetcher(query.uri, { ...query.params, page })
-          setTotal(total)
-          setPages((pages) => ({ ...pages, [page]: entities }))
-        } catch (err) {
-          console.warn(err)
-          toast.error('Error while fetching entities')
-        } finally {
-          setLoading(false)
-        }
-      })
-    ), [query, fetcher])
-
     useEffect(() => {
       if ((props as any).error) {
         setLoading(false)
@@ -127,9 +111,21 @@ const withFetchCalendarQuery = (
         totals.current = {}
 
         try {
-          const { entities, total } = await fetcher(query.uri, { ...query.params, page: 1 })
+          let page = 1
+          let done = false
+          let total = 0
+          let pages = {}
+
+          do {
+            const res = await fetcher(query.uri, { ...query.params, page: page })
+            total = Number(res.total)
+            pages = { ...pages, [page]: res.entities }
+            done = !res.entities.length
+            page++
+          } while (!done)
+
           setTotal(total)
-          setPages({ 1: entities })
+          setPages(pages)
         } catch (error) {
           setTotal(null)
           setPages({})
@@ -174,7 +170,6 @@ const withFetchCalendarQuery = (
         entities={entities}
         length={total}
         ready={(props as any).ready !== false && !loading}
-        onMore={fetchEntities}
         controls={controls}
         error={(!persons.loading && !Object.keys(persons.metadata).length) ? {
           emoji: '⭐️',

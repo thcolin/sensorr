@@ -170,7 +170,7 @@ const Requests = compose(
 
       useEffect(() => {
         const cb = async () => {
-          const { uri, params, init } = APIQuery.movies.getStatistics({ params: { 'requested_by.gte': 1, state: 'archived|wished|proposal|pinned|missing|ignored' } })
+          const { uri, params, init } = APIQuery.movies.getStatistics({ params: { context: 'requests' } })
 
           try {
             setStatistics(await api.fetch(uri, params, init))

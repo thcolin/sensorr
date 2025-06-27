@@ -439,25 +439,19 @@ const UIPreferences = ({
           <div sx={UIPreferences.styles.block}>
             <span>Refine for better release</span>
             <OptionInput
-              id={entity?.id}
+              id={`refine-${entity?.id}`}
               children="Sensorr will regularly search for better release than the current archived one"
               value={metadata?.refine}
-              onChange={value => {
-                console.log('OptionInput', 'refine', { value })
-                setMetadata('refine', value)
-              }}
+              onChange={value => setMetadata('refine', value)}
             />
           </div>
           <div sx={UIPreferences.styles.block}>
             <span>Shrink for smaller release</span>
             <OptionInput
-              id={entity?.id}
+              id={`shrink-${entity?.id}`}
               children="Sensorr will regularly search for smaller release than the current archived one"
-              value={metadata?.shink}
-              onChange={value => {
-                console.log('OptionInput', 'shink', { value })
-                setMetadata('shink', value)
-              }}
+              value={metadata?.shrink}
+              onChange={value => setMetadata('shrink', value)}
             />
           </div>
         </div>

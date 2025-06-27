@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Entities,
   withControls,
@@ -17,23 +17,48 @@ import {
   Range,
   Button,
   Checkbox,
+  Option,
+  Select,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
 import { compose, emojize, languages, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import { useThemeUI } from 'theme-ui'
+import { useLocation } from 'react-router-dom'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
+import { useSensorr } from '../../store/sensorr'
+import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
+import { useBulkContext } from '../../contexts/Bulk/Bulk'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 
+const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
+  const { selection, setSelection } = useBulkContext()
+  const location = useLocation()
+
+  return (
+    <MovieWithCreditsAndReviews
+      {...props as any}
+      entity={entity}
+      selected={!!selection[location.key]?.includes(entity?.id)}
+      selectedVisible={selection[location.key]?.length > 0}
+      onSelectedChange={(id) => setSelection(selection => ({
+        ...selection,
+        [location.key]: selection[location.key]?.includes(id) ? selection[location.key]?.filter(v => v !== id) : [...(selection[location.key] || []), id],
+      }))}
+    />
+  )
+}
+
 const Library = compose(
   withProps({
     id: 'library',
     display: 'grid',
-    child: MovieWithCreditsAndReviews,
+    child: MovieWithCreditsAndReviewsAndBulk,
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -58,7 +83,7 @@ const Library = compose(
         gap: '2em',
         gridTemplateAreas: [
           `"results toggle sort_by"`,
-          `"title results toggle sort_by"`,
+          `"title results bulk toggle sort_by"`,
         ],
         '>h4': {
           display: ['none', 'block'],
@@ -74,6 +99,7 @@ const Library = compose(
             "head_main"
             "state"
             "proposal"
+            "policy"
             "toggle_sub_asides_0"
             "requested_by"
             "genres"
@@ -181,6 +207,190 @@ const Library = compose(
           </div>
         ),
       },
+      // TODO: enhance, don't use a specific context, use fields system and give Child correct props (will save values inside route state)
+      bulk: {
+        initial: null,
+        component: ({ total, statistics, ...props }) => {
+          const { theme } = useThemeUI()
+          const { setMovieMetadata } = useMoviesMetadataContext() as any
+          const { selection, setSelection } = useBulkContext()
+          const sensorr = useSensorr()
+          const location = useLocation()
+
+          const handleCallback = useCallback(({ value, label }) => {
+            switch (value) {
+              case 'state-ignored':
+                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "ignored" ?`)) {
+                  setMovieMetadata(selection[location.key], 'state', 'ignored')
+                }
+              break;
+              case 'state-wished':
+                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "wished" ?`)) {
+                  setMovieMetadata(selection[location.key], 'state', 'wished')
+                }
+              break;
+              case 'state-pinned':
+                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "pinned" ?`)) {
+                  setMovieMetadata(selection[location.key], 'state', 'pinned')
+                }
+              break;
+              case 'state-archived':
+                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "archived" ?`)) {
+                  setMovieMetadata(selection[location.key], 'state', 'archived')
+                }
+              break;
+              case 'proposal-accept':
+                if (confirm(`Do you want to accept all ${selection[location.key]?.length || 0} movies proposal ?`)) {
+                  setMovieMetadata(selection[location.key], 'proposal', true)
+                }
+              break;
+              case 'proposal-refuse':
+                if (confirm(`Do you want to refuse all ${selection[location.key]?.length || 0} movies proposal ?`)) {
+                  setMovieMetadata(selection[location.key], 'proposal', false)
+                }
+              break;
+              case 'policy':
+                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies policies to ${label} ?`)) {
+                  setMovieMetadata(selection[location.key], 'policy', label)
+                }
+              break;
+              case 'refine-enable':
+                if (confirm(`Do you want to enable refine job for ${selection[location.key]?.length || 0} movies ?`)) {
+                  setMovieMetadata(selection[location.key], 'refine', true)
+                }
+              break;
+              case 'refine-disable':
+                if (confirm(`Do you want to disable refine job for ${selection[location.key]?.length || 0} movies ?`)) {
+                  setMovieMetadata(selection[location.key], 'refine', false)
+                }
+              break;
+              case 'shrink-enable':
+                if (confirm(`Do you want to enable shrink job for ${selection[location.key]?.length || 0} movies ?`)) {
+                  setMovieMetadata(selection[location.key], 'shrink', true)
+                }
+              break;
+              case 'shrink-disable':
+                if (confirm(`Do you want to disable shrink job for ${selection[location.key]?.length || 0} movies ?`)) {
+                  setMovieMetadata(selection[location.key], 'shrink', false)
+                }
+              break;
+            }
+          }, [selection[location.key]])
+
+          return (
+            <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+              <Option
+                id='movies'
+                type='checkbox'
+                checked={(selection[location.key]?.length || 0) !== 0}
+                onChange={() => {
+                  if ((selection[location.key]?.length || 0) === 0) {
+                    setSelection(selection => ({ ...selection, [location.key]: (statistics[0]?.entities || []) }))
+                  } else {
+                    setSelection(selection => ({ ...selection, [location.key]: [] }))
+                  }
+                }}
+              >
+                {(selection[location.key]?.length || 0) === 0 ? 'Select All' : (selection[location.key]?.length || 0) === (statistics[0]?.entities || [])?.length ? 'Unselect All' : `${selection[location.key]?.length || 0} Selected`}
+              </Option>
+              {!!(selection[location.key]?.length || 0) && (
+                <Select
+                  options={[
+                    {
+                      label: emojize('📚', 'Change states'),
+                      options: [
+                        { value: 'state-ignored', label: emojize('🔕', `Ignored`) },
+                        { value: 'state-wished', label: emojize('🍿', `Wished`) },
+                        { value: 'state-pinned', label: emojize('📍', `Pinned`) },
+                        { value: 'state-archived', label: emojize('📼', `Archived`) },
+                      ],
+                    },
+                    {
+                      label: emojize('🛎️', 'Handle proposal'),
+                      options: [
+                        { value: 'proposal-accept', label: `Accept` },
+                        { value: 'proposal-refuse', label: `Refuse` },
+                      ],
+                    },
+                    {
+                      label: emojize('🚨', 'Change policies'),
+                      options: sensorr.policies.map(policy => ({ value: `policy`, label: policy.name })),
+                    },
+                    {
+                      label: emojize('✨', 'Refine'),
+                      options: [
+                        { value: 'refine-enable', label: `Enable` },
+                        { value: 'refine-disable', label: `Disable` },
+                      ],
+                    },
+                    {
+                      label: emojize('✂️', 'Shrink'),
+                      options: [
+                        { value: 'shrink-enable', label: `Enable` },
+                        { value: 'shrink-disable', label: `Disable` },
+                      ],
+                    },
+                  ]}
+                  value={null}
+                  onChange={handleCallback}
+                  multi={false}
+                  closeMenuOnSelect={true}
+                  isSearchable={false}
+                  isClearable={false}
+                  defaultOptions={false}
+                  menuPlacement='bottom'
+                  menuPosition='fixed'
+                  styles={{
+                    control: (style) => ({
+                      ...style,
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      boxShadow: 'none',
+                      cursor: 'pointer',
+                      '>div:first-of-type': {
+                        display: 'flex',
+                        padding: '0em',
+                        '>input': {
+                          left: 0,
+                          margin: '2px',
+                          padding: '2px 0',
+                          transform: 'unset',
+                        },
+                      }
+                    }),
+                    menu: (style) => ({
+                      ...style,
+                      color: theme.colors.primary,
+                      width: '15em',
+                    }),
+                    groupHeading: (style) => ({
+                      ...style,
+                      fontFamily: (theme.fonts as any).heading,
+                      fontWeight: (theme.fontWeights as any).semibold,
+                      textTransform: 'capitalize',
+                      fontSize: '1em',
+                      paddingTop: '0.5em',
+                      paddingBottom: '0.5em',
+                      backgroundColor: theme.colors.primary,
+                      color: 'white',
+                    }),
+                    option: (style, props) => ({
+                      ...style,
+                      backgroundColor: props.isFocused ? theme.colors.primaryLightest : props.isSelected ? theme.colors.accent : 'white',
+                      color: props.isSelected ? 'white' : theme.colors.primary,
+                      fontSize: '0.875em',
+                      cursor: 'pointer',
+                      ':active': {
+                        backgroundColor: theme.colors.primaryLightest,
+                      },
+                    }),
+                  }}
+                />
+              )}
+            </div>
+          )
+        }
+      },
       sort_by: {
         initial: {
           value: 'updated_at',
@@ -204,6 +414,11 @@ const Library = compose(
         ...fields.state,
         serialize: (key, raw) => raw?.length ? { [key]: raw.filter(value => !['proposal'].includes(value)).join('|') } : {},
         component: withProps({ type: 'movie' })(FilterStates),
+      },
+      policy: {
+        initial: { values: [] },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
+        component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
       },
       proposal: {
         initial: { values: [] },
@@ -369,13 +584,13 @@ const Library = compose(
         }),
       },
     },
-    useStatistics: () => {
+    useStatistics: (entities, fields, state) => {
       const api = useAPI()
       const [statistics, setStatistics] = useState({})
 
       useEffect(() => {
         const cb = async () => {
-          const { uri, params, init } = APIQuery.movies.getStatistics({})
+          const { uri, params, init } = APIQuery.movies.getStatistics({ params: state })
 
           try {
             setStatistics(await api.fetch(uri, params, init))
@@ -386,7 +601,7 @@ const Library = compose(
         }
 
         cb()
-      }, [])
+      }, [JSON.stringify(state)])
 
       return statistics
     },

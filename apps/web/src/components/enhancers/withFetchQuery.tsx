@@ -16,7 +16,11 @@ const withFetchQuery = (
   defaultQuery: { uri?: string; params?: {}, init?: {} },
   initPage: number = null,
   useService: (() => API) | (() => TMDB),
-  useControlsValues?: () => [({ uri: string, params: { [key: string]: string }}), (query: { uri: string, params: { [key: string]: string} }) => void],
+  useControlsValues?: () => [
+    ({ uri: string, params: { [key: string]: string }}),
+    (query: { uri: string, params: { [key: string]: string} }) => void,
+    string[]?
+  ],
   steps: number = 20,
 ) => <TProps,>(WrappedComponent: React.JSXElementConstructor<TProps>) => {
   const withFetchQuery = ({
@@ -27,7 +31,11 @@ const withFetchQuery = (
   }: withFetchQueryProps & Omit<TProps, 'length' | 'entities' | 'onMore'>) => {
     const service = useService()
     // Wait for first controlsQuery hydration by serializing initial state
-    const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ ready: true, uri, params }))
+    const [controlsValues, setControlsValues, ignoreControlsValues] = (useControlsValues || (() => [{}, () => null, []]))()
+    const [controlsQuery, controls] = useControlsState(() => [controlsValues, setControlsValues], ({ uri, ...params }) => ({ ready: true, uri, params }))
+    controlsQuery.params = Object.keys(controlsQuery.params || {})
+      .filter(key => !(ignoreControlsValues || []).includes(key))
+      .reduce((acc, key) => ({ ...acc, [key]: controlsQuery.params[key] }), {})
 
     const query = useMemo(() => ({
       uri: controlsQuery.uri || propsQuery.uri || defaultQuery.uri,

@@ -141,7 +141,7 @@ export const Notifications = memo(UINotifications)
 
 const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { seenNotification, answerNotification } = useNotificationsContext() as any
-  const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata, proceedMovieRelease } = useMoviesMetadataContext() as any
+  const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
 
   const choice = useMemo(() => {
@@ -325,7 +325,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                         color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
-                          proceedMovieRelease(meta?.movie?.id, meta?.release, true, _id)
+                          setMovieMetadata(meta?.movie?.id, 'proposal', true)
                           answerNotification(_id, true)
                         }}
                       >
@@ -338,7 +338,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                         color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
-                          proceedMovieRelease(meta?.movie?.id, meta?.release, false, _id)
+                          setMovieMetadata(meta?.movie?.id, 'proposal', false)
                           answerNotification(_id, false)
                         }}
                       >

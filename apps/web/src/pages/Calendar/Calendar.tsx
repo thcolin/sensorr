@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Entities,
   Sorting,
@@ -14,16 +15,35 @@ import {
   withControls,
   Warning,
   Icon,
+  Option,
 } from '@sensorr/ui'
 import { compose, scrollToTop } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { Trans, useTranslation } from 'react-i18next'
+import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import withFetchCalendarQuery from './withFetchCalendarQuery'
+
+const EntitiesHideable = ({ controls, child: Child, ...props }) => {
+  const HideableChild = useMemo(() => (props) => {
+    const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMoviesMetadataContext() as any
+
+    return (
+      <Child
+        {...props}
+        opacity={(!loading && controls.values.hide_library && metadata && metadata?.state !== 'ignored') ? 0.125 : 1}
+      />
+    )
+  }, [controls.values.hide_library, Child])
+
+  return (
+    <Entities {...props as any} child={HideableChild} />
+  )
+}
 
 export const Calendar = compose(
   withProps({
@@ -52,8 +72,8 @@ export const Calendar = compose(
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: [
-          `"primary_release_date results toggle sort_by"`,
-          `"title primary_release_date results toggle sort_by"`,
+          `"primary_release_date results hide_library toggle sort_by"`,
+          `"title primary_release_date results hide_library toggle sort_by"`,
         ],
         '>h4': {
           display: ['none', 'block'],
@@ -84,7 +104,7 @@ export const Calendar = compose(
       toggle: ({ toggleOpen, fields, values, ...props }) => {
         const { t } = useTranslation()
         const active = Object.keys(values)
-          .filter(key => !['sort_by', 'primary_release_date', 'with_release_type'].includes(key))
+          .filter(key => !['sort_by', 'primary_release_date', 'with_release_type', 'hide_library'].includes(key))
           .reduce((acc, key) => acc + (values[key] && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
 
         return (
@@ -119,6 +139,23 @@ export const Calendar = compose(
     },
     fields: {
       // TODO: Should hide entity.popularity === 0
+      hide_library: {
+        initial: false,
+        hideFromFiltersCount: true,
+        serialize: (key, raw) => ({ [key]: raw }),
+        component: ({ value, onChange, ...props }) => (
+          <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+            <Option
+              id='hide_library'
+              type='checkbox'
+              checked={value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+            >
+              Hide Library
+            </Option>
+          </div>
+        ),
+      },
       sort_by: {
         initial: {
           value: 'primary_release_date',
@@ -242,6 +279,6 @@ export const Calendar = compose(
     },
   }),
   withPlacehodersHistoryState(),
-)(Entities)
+)(EntitiesHideable)
 
 export default Calendar

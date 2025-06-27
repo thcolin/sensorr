@@ -24,20 +24,30 @@ export const useHistoryState = (key, defaultValue, {
 
   const getHistoryState = useRef(null)
   getHistoryState.current = () => {
-    // hydrateFromLocationState
-    if (hydrateFromLocationState && typeof (location.state || {})[key] !== 'undefined') {
-      return (location.state || {})[key]
-    }
-
+    const hydratableFromLocationState = hydrateFromLocationState && typeof (location.state || {})[key] !== 'undefined'
     const value = sessionStorage.getItem(`${location.key}-${key}`)
 
     if (value === null) {
+      if (hydratableFromLocationState) {
+        return (location.state || {})[key]
+      }
+
       return defaultValue
     }
 
     try {
-      return JSON.parse(value, reviver)
+      const parsed = JSON.parse(value, reviver)
+
+      if (hydratableFromLocationState) {
+        return { ...(location.state || {})[key], ...parsed }
+      }
+
+      return parsed
     } catch (e) {
+      if (hydratableFromLocationState) {
+        return (location.state || {})[key]
+      }
+
       return value
     }
   }

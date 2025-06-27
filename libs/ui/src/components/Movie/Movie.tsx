@@ -39,6 +39,9 @@ export interface MovieProps extends Omit<
   proceedRelease?: (id: number, release: any, choice?: boolean) => void
   removeRelease?: (release: any) => void
   ready?: boolean
+  selected?: boolean | null
+  selectedVisible?: boolean
+  onSelectedChange?: (id: string) => void
 }
 
 const UIMovie = ({
@@ -56,6 +59,9 @@ const UIMovie = ({
   proceedRelease,
   removeRelease,
   ready = true,
+  selected = null,
+  selectedVisible = false,
+  onSelectedChange,
   ...props
 }: MovieProps) => {
   const device = useDevice()
@@ -153,6 +159,9 @@ const UIMovie = ({
           badges={badges}
           credits={credits}
           loadExternals={loadExternals}
+          selected={selected}
+          selectedVisible={selectedVisible}
+          onSelectedChange={onSelectedChange}
         />
       )
   }

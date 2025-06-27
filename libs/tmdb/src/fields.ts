@@ -42,7 +42,7 @@ const statisticians = {
   boundaries: (key, parse?) => (entities, field) => entities
     .reduce((acc, entity) => acc.map(({ _id, count }) => ({
       _id,
-      count: (parse ? parse(entity[key]) : nearest(field.boundaries, entity[key])) === _id ? count + 1 : count,
+      count: (parse ? parse(entity?.[key]) : nearest(field.boundaries, entity?.[key])) === _id ? count + 1 : count,
     })), field.boundaries.map(_id => ({ _id, count: 0 }))),
 }
 

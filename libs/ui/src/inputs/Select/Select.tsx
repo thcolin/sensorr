@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, forwardRef } from 'react'
+import { memo, useState, useMemo, forwardRef, ForwardRefExoticComponent, RefAttributes } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import ReactSelect from 'react-select'
@@ -221,7 +221,7 @@ const UISelect = forwardRef(({
       />
     </div>
   )
-}) as any
+}) as ForwardRefExoticComponent<Omit<SelectProps, "ref"> & RefAttributes<unknown>> & { styles: { [key: string]: any }}
 
 UISelect.styles = {
   element: {

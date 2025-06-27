@@ -5,6 +5,7 @@ import { usePalette } from '@sensorr/palette'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
 import { Credits } from '../../../components/Movie/Credits/Credits'
+import { Option } from '../../../inputs/Option/Option'
 // import { MovieDetails } from '../../../components/Movie/Movie'
 // import { PersonDetails } from '../../../components/Person/Person'
 
@@ -14,16 +15,21 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
   interactive?: boolean
   onLongPress?: (data: any) => void
   ready?: boolean
+  selected?: boolean | null
+  selectedVisible?: boolean
+  onSelectedChange?: (id: string) => void
   meaningful?: boolean
   badges?: {
     state?: { component: React.FC, props: any },
     proposal?: { component: React.FC, props: any },
+    focus?: { component: React.FC, props: any },
     reviews?: { component: React.FC, props: any },
     guests?: { component: React.FC, props: any },
   }
   credits?: { entity: any, state?: 'loading' | 'ignored' | 'followed' }[] | false
   onReady?: () => void
   loadExternals?: () => void
+  opacity?: number
 }
 
 const UIPoster = ({
@@ -35,7 +41,11 @@ const UIPoster = ({
   badges = {},
   onReady,
   credits = false,
+  selected = null,
+  selectedVisible = false,
+  onSelectedChange,
   loadExternals,
+  opacity = 1,
   ...props
 }: PosterProps) => {
   const ref = useRef()
@@ -57,16 +67,94 @@ const UIPoster = ({
   )
 
   return (
-    <div sx={UIPoster.styles.element} ref={ref} onMouseEnter={loadExternals}>
+    <div
+      ref={ref}
+      onMouseEnter={loadExternals}
+      sx={{
+        ...UIPoster.styles.element,
+        ...(selected !== null ? {
+          ':hover': {
+            '>div:first-of-type': {
+              '>div:first-of-type': {
+              right: ['2.75em', '3.875em !important'],
+              },
+            },
+          },
+        } : {}),
+        opacity: ready ? opacity : 1,
+      }}
+    >
       <div sx={UIPoster.styles.wrapper}>
         <div
           sx={{
             ...UIPoster.styles.left,
+            right: ['2.75em', (selected || selectedVisible) ? '3.875em' : '6em'],
             opacity: ready ? 1 : 0,
-            transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+            transition: [
+              ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+              'right 150ms ease-in-out',
+            ].join(', '),
+            ...(!badges?.focus?.component ? {
+              '>div>span>span': {
+                minWidth: ['6.5em', '6em'],
+              },
+            } : {}),
           }}
         >
-          {badges?.reviews?.component && <div sx={UIPoster.styles.reviews}><badges.reviews.component {...badges?.reviews?.props} /></div>}
+          {selected !== null && (
+            <div
+              sx={{
+                position: 'fixed',
+                left: '1em',
+                zIndex: 1,
+                backgroundColor: selected ? 'primary' : 'gray',
+                width: '1.5em',
+                height: '1.5em',
+                borderRadius: '2em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0.25em',
+              }}
+            >
+              <Option
+                id={`select-${details?.id}`}
+                type='checkbox'
+                behavior='radio'
+                borderless={true}
+                checked={selected}
+                onChange={() => onSelectedChange(details?.id)}
+              />
+            </div>
+          )}
+          {(badges?.focus?.component || badges?.reviews?.component) && (
+            <div
+              sx={{
+                ...UIPoster.styles.focus,
+                zIndex: 2,
+                ...(selected !== null ? {} : {}),
+                ...(badges?.focus?.component ? {
+                  ':hover': {
+                    '>span:first-of-type': {
+                      visibility: 'visible'
+                    },
+                    '>span:last-of-type': {
+                      visibility: 'hidden',
+                    },
+                  },
+                } : {}),
+              }}
+            >
+              <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
+                <badges.reviews.component {...badges?.reviews?.props} />
+              </span>
+              {badges?.focus?.component && (
+                <span sx={{ display: 'block', marginTop: '-1.5em' }}>
+                  <badges.focus.component {...badges?.focus?.props} />
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div
           sx={{
@@ -196,6 +284,7 @@ UIPoster.styles = {
     maxWidth: '100%',
     paddingRight: [4, 2],
     paddingLeft: [8, 4],
+    transition: 'opacity 400ms ease-in-out',
     // overflow: 'hidden',
   },
   wrapper: {
@@ -206,15 +295,11 @@ UIPoster.styles = {
   left: {
     position: 'absolute',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'flex-end',
     top: '-1em',
-    right: ['2.75em', '6em'],
     fontSize: [5, 4],
     zIndex: 2,
-    '>div>span>span': {
-      minWidth: ['6.5em', '6em'],
-    },
   },
   right: {
     position: 'absolute',
@@ -243,9 +328,12 @@ UIPoster.styles = {
     fontSize: ['4px', '5px'],
     zIndex: 2,
   },
-  reviews: {
-    padding: 10,
+  focus: {
+    position: 'relative',
     borderRadius: '2em',
+    borderStyle: 'solid',
+    borderWidth: '0.25em',
+    borderColor: 'grayLightest',
   },
   state: {
     padding: 10,

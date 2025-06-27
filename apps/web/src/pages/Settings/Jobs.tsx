@@ -110,6 +110,17 @@ const JobsSettings = ({ control, watch, ...props }) => {
 
   return (
     <section>
+      <h2>Lifecycle Logic</h2>
+      <p sx={{ paddingBottom: 4 }}>
+        The <code>📹 Record</code> job acts upon <code>🍿 Wished</code> movies, finding and downloading the best-scored version to change their status to <code>📼 Archived</code>.
+      </p>
+      <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
+        An <code>📼 Archived</code> release failing to meet <code>* Required</code> policy rules is considered as <code>🪨 Unrefined</code> and will be treated by <code>✨ Refine</code> job which will seek a <code>💎 Refined</code> version for this release with a better score.
+        Subsequently, the <code>✂️ Shrink</code> job will optimize <code>💎 Refined</code> releases by finding smaller <code>💍 Shrinked</code> ones.
+      </p>
+      <p sx={{ paddingBottom: 4 }}>
+        If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
+      </p>
       <h2>Jobs</h2>
       <p>
         Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
@@ -286,7 +297,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
                 <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
                   <strong>{emojize('🛎', 'Proposal only')}</strong>
                   <br/>
-                  <small>Won't archive movies with best release, will only propose it, up to you to decide whether to accept or refuse it later</small>
+                  <small>Won't download best release, will only <strong>propose</strong> it, up to you to decide whether to accept or refuse it later</small>
                 </div>
               </Option>
             )}

@@ -34,7 +34,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const [znab, setZnab] = useState(null)
   const toggleMetadata = useRef() as any
   const toggleSensorr = useRef() as any
-  const { metadata: moviesMetadataContext, setMovieMetadata, proceedMovieRelease } = useMoviesMetadataContext() as any
+  const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => !log.meta.group ? groups : {
     ...groups,
@@ -50,7 +50,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
       choice: typeof groups[log.meta.group]?.choice === 'boolean' ? groups[log.meta.group]?.choice : log.meta.choice,
       warning: groups[log.meta.group]?.warning || log.meta?.release?.reason,
       logs: [...(log.message ? [log] : []), ...(groups[log.meta.group]?.logs || [])].sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-      done: !!job.meta.done || (typeof groups[log.meta.group]?.done === 'boolean' ? groups[log.meta.group]?.done : log.meta.done),
+      done: !!job.meta.done || groups[log.meta.group]?.done || log.meta.done,
     },
   }, {})).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [logs, job.meta.done])
 
@@ -170,7 +170,6 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                   job: job.job,
                   command: job.meta.command,
                   setMovieMetadata,
-                  proceedMovieRelease,
                   toggleMetadata: (e, movie) => toggleMetadata.current(e, movie),
                   toggleSensorr: (e, movie) => toggleSensorr.current(e, movie),
                 }}
@@ -239,7 +238,7 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, proceedMovieRelease, toggleMetadata, toggleSensorr, done, error, ...props }) => {
+const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleMetadata, toggleSensorr, done, error, ...props }) => {
   // const sensorr = useSensorr()
   // const query = useMemo(() => sensorr.getQuery(movie, metadata.query), [movie?.id, metadata.query])
 
@@ -262,8 +261,8 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
     setOptimistic({ treated: true, choice })
-    proceedMovieRelease(movie?.id, release, choice, release.log)
-  }, [movie?.id, proceedMovieRelease])
+    setMovieMetadata(movie?.id, 'proposal', choice)
+  }, [movie?.id, setMovieMetadata])
 
   useEffect(() => {
     setOptimistic({ treated, choice })
@@ -272,25 +271,8 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   useEffect(() => {
     setLogs(null)
 
-    if (job === 'anonymous') {
+    if (job === 'anonymous' || !done) {
       return
-    }
-
-    if (!done) {
-      const eventSource = new ReconnectingEventSource(`/api/jobs/${job}/${group}?authorization=Bearer%20${api.access_token}`)
-
-      eventSource.onmessage = ({ data }) => {
-        const raw = JSON.parse(data)
-
-        if (Array.isArray(raw)) {
-          setLogs(raw)
-          return
-        }
-
-        setLogs(logs => [raw, ...(logs || [])])
-      }
-
-      return () => eventSource.close()
     }
 
     const controller = new AbortController()

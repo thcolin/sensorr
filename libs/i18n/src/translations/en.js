@@ -75,6 +75,7 @@ export default {
       known_for_department: emojize('💼', 'Known For Department'),
       gender: emojize('⚧️', 'Gender'),
       requested_by: emojize('🤖', 'Requested by'),
+      policy: emojize('🚨', 'Policies'),
       size: emojize('📦', 'Size'),
       job: emojize('🏗️', 'Source Job'),
     },

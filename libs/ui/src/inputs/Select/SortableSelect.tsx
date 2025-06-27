@@ -5,26 +5,70 @@ import { useThemeUI } from 'theme-ui'
 import { Select } from './Select'
 
 const SortableSelectContainer = SortableContainer(Select) as any
-const SortableComponents = {
-  MultiValueRemove: SortableHandle((props) => <components.MultiValueRemove {...props} />),
-  MultiValue: SortableElement((props) => {
-    // prevents menu from being opened/closed when the user clicks on a value to begin dragging it.
-    const onMouseDown = (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-    }
 
-    return (
-      <components.MultiValue
-        {...props}
-        innerProps={{ ...props.innerProps, onMouseDown }}
-      />
-    )
-  }),
-}
-
-export const SortableSelect = ({ value, onChange, ...props }) => {
+export const SortableSelect = ({ value, onChange, requirable = false, ...props }) => {
   const { theme } = useThemeUI()
+
+  const SortableComponents = useMemo(() => ({
+    MultiValueRemove: SortableHandle((props) => <components.MultiValueRemove {...props} />),
+    MultiValue: SortableElement((props) => {
+      const { theme } = useThemeUI()
+
+      // prevents menu from being opened/closed when the user clicks on a value to begin dragging it.
+      const onMouseDown = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+
+      if (typeof props.data.value === 'undefined') {
+        return (
+          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown }} />
+        )
+      }
+
+      return (
+        <div
+          sx={{
+            display: 'flex',
+            alignItems: 'stretch',
+            margin: '0.25em',
+            border: `1px solid`,
+            borderColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[props.data.group] || '#FFF',
+            borderRadius: 2,
+          }}
+        >
+          {requirable && ['prefer', null].includes(props.data.group) && (
+            <div
+              title={props.data.required ? `Required` : `Non Required`}
+              onClick={() => {
+                console.log(
+                  props.selectProps,
+                  props.selectProps.value.map(data => ({ ...data, ...(data.value === props.data.value ? { required: !data.required } : {}) })),
+                )
+
+                props.selectProps.onChange(
+                  props.selectProps.value.map(data => ({ ...data, ...(data.value === props.data.value ? { required: !data.required } : {}) })),
+                  { action: 'toggle-require-value', removedValue: { ...props.data, required: !props.data.required } }
+                )
+              }}
+              sx={{
+                backgroundColor: { prefer: theme.rawColors.accentDark }[props.data.group] || '#FFF',
+                paddingX: 10,
+                color: props.data.required ? ({ prefer: '#FFF' }[props.data.group] || theme.rawColors.primaryDarker) : ({ prefer: theme.rawColors.accentDarkest }[props.data.group] || theme.rawColors.textDarkest),
+                cursor: 'pointer',
+                ':hover': {
+                  backgroundColor: { prefer: theme.rawColors.accentDarker }[props.data.group] || theme.rawColors.textDark,
+                },
+              }}
+            >
+              ＊
+            </div>
+          )}
+          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown }} />
+        </div>
+      )
+    }),
+  }), [requirable])
 
   const onSortEnd = useCallback(({ oldIndex: from, newIndex: to }) => {
     const next = value.slice()
@@ -50,12 +94,11 @@ export const SortableSelect = ({ value, onChange, ...props }) => {
       ...style,
       position: 'relative',
       flexShrink: 0,
-      margin: '0.25em',
       backgroundColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || 'transparent',
       color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
-      border: `1px solid`,
-      borderColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || '#FFF',
-      zIndex: 6,
+      margin: '0px',
+      zIndex: 5,
+      borderRadius: '0px',
     } : separator ? {
       position: 'relative',
       flex: 1,

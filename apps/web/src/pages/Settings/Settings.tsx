@@ -202,6 +202,9 @@ Settings.styles = {
         paddingX: 4,
         maxWidth: '96rem',
       },
+      'ul>li': {
+        lineHeight: 'space',
+      },
     },
   },
 }
