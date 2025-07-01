@@ -722,9 +722,6 @@ UIPolicyInput.styles = {
       left: '0em',
       height: '100%',
       width: '100%',
-      '>option': {
-        textTransform: 'capitalize',
-      },
     },
   },
   container: {

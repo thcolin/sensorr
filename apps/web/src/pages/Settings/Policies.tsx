@@ -1,7 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Button, Icon, Option } from '@sensorr/ui'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { Button, Icon } from '@sensorr/ui'
 import { useOutletContext } from 'react-router-dom'
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
+import { SortableContainer, SortableElement } from 'react-sortable-hoc'
+import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 import { emojize } from '@sensorr/utils'
@@ -9,7 +11,14 @@ import { emojize } from '@sensorr/utils'
 const Policies = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
-  const form = useForm({ defaultValues: config.getProperties() })
+
+  const form = useForm({
+    defaultValues: {
+      ...config.getProperties(),
+      policies: (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false })),
+    }
+  })
+
   const policies = useFieldArray({ name: 'policies', control: form.control })
   const policy = useForm({ defaultValues: { name: '', sorting: 'size', descending: false, require: {}, prefer: {}, avoid: {} } })
 
@@ -49,11 +58,18 @@ const Policies = ({ ...props }) => {
         </form>
         <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
         <form onSubmit={form.handleSubmit(onSave)}>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
-            {policies.fields.map((policy: any, index) => (
-              <PolicySettings key={policy.id} form={form} prefix={`policies[${index}]`} index={index} remove={policies.remove} />
-            ))}
-          </div>
+          <SortablePolicies
+            policies={policies}
+            form={form}
+            onSortEnd={({ oldIndex: from, newIndex: to }) => {
+              if (from === 0 || to === 0) {
+                toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
+              }
+
+              policies.swap(from, to)
+            }}
+            distance={4}
+          />
           <div sx={{ display: 'flex', marginTop: 4 }}>
             <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
           </div>
@@ -63,27 +79,108 @@ const Policies = ({ ...props }) => {
   )
 }
 
-const PolicySettings = ({ form, prefix = undefined, index = null, behavior = 'default', remove = null, ...props }) => {
-  // const values = form.watch(prefix)
+const SortablePolicies = SortableContainer<{ policies: UseFieldArrayReturn<any, 'policies', 'id'>, form: UseFormReturn<any, any, any> }>(({ policies, form }) => {
+  return (
+    <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
+      {policies.fields.filter((policy) => !policy.removed).map((policy: any, index) => (
+        <SortablePolicySettings key={policy.id} form={form} policies={policies} prefix={`policies[${index}]`} i={index} remove={true} isDefault={index === 0} />
+      ))}
+    </div>
+  )
+})
+
+const PolicySettings = ({ form, policies = null, prefix = undefined, i: index = null, behavior = 'default', remove = null, isDefault = false, ...props }) => {
   const [open, setOpen] = useState(false)
 
   return (
     <div sx={PolicySettings.styles.element}>
       <div sx={PolicySettings.styles.container}>
+        {remove && (
+          <div
+            sx={{
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid',
+              borderColor: 'grayDark',
+              borderRight: 'none',
+              paddingX: 8,
+              fontFamily: 'monospace',
+            }}
+          >
+            ⁝
+          </div>
+        )}
         <Controller
           name={`${prefix ? `${prefix}.` : ''}name`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <input type='text' {...field} sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }} placeholder='Name' required={true} />
+            <input
+              type='text'
+              {...field}
+              sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
+              placeholder='Name'
+              required={true}
+            />
           )}
         />
+        {isDefault && (
+          <div
+            title='Default policy will be applied to releases without policy specified'
+            sx={{
+              cursor: 'default',
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid',
+              borderColor: 'grayDark',
+              borderLeft: 'none',
+              paddingX: 4,
+              fontSize: 6,
+              fontFamily: 'monospace',
+              color: 'warning',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span sx={{ display: ['none', 'inline'], marginRight: 6 }}>default</span>
+            <span>✓</span>
+          </div>
+        )}
         <Controller
           name={`${prefix ? `${prefix}.` : ''}descending`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <div sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', border: '1px solid', borderColor: 'grayDark', borderRight: 'none', borderLeft: 'none', whiteSpace: 'nowrap' }}>
-              <label sx={{ display: 'flex', alignItems: 'center', height: '100%', fontSize: 5, fontWeight: 'semibold', paddingX: 4, borderRight: '1px solid', borderColor: 'grayDark' }}>Sort by</label>
-              <Icon value='sort' direction={field.value} sx={{ height: '2em', width: '3em', paddingX: 4, paddingY: 8 }} onClick={() => field.onChange(!field.value)} />
+            <div
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                border: '1px solid',
+                borderColor: 'grayDark',
+                borderRight: 'none',
+                borderLeft: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <label
+                sx={{
+                  display: ['none', 'flex'],
+                  alignItems: 'center',
+                  height: '100%',
+                  fontSize: 5,
+                  fontWeight: 'semibold',
+                  paddingX: 4,
+                  borderRight: '1px solid',
+                  borderColor: 'grayDark',
+                }}
+              >
+                Sort by
+              </label>
+              <Icon
+                value='sort'
+                direction={field.value}
+                sx={{ height: '2em', width: '3em', paddingX: 4, paddingY: 8 }}
+                onClick={() => field.onChange(!field.value)}
+              />
             </div>
           )}
         />
@@ -91,7 +188,10 @@ const PolicySettings = ({ form, prefix = undefined, index = null, behavior = 'de
           name={`${prefix ? `${prefix}.` : ''}sorting`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <select {...field} sx={{ variant: 'select.default', width: 'auto', borderRadius: '0px', paddingX: 4, fontSize: 5, fontFamily: 'monospace' }}>
+            <select
+              {...field}
+              sx={{ variant: 'select.default', width: 'auto', borderRadius: '0px', paddingX: 4, fontSize: 6, fontFamily: 'monospace' }}
+            >
               <option value='size'>{emojize('📦', 'size')}</option>
               <option value='seeders'>{emojize('📡', 'seeders')}</option>
               <option value='peers'>{emojize('🌍', 'peers')}</option>
@@ -99,78 +199,51 @@ const PolicySettings = ({ form, prefix = undefined, index = null, behavior = 'de
           )}
         />
         {behavior === 'default' && (
-          <button
-            type='button'
-            sx={{ ...PolicySettings.styles.button, ...PolicySettings.styles.remove }}
-            onClick={() => remove(index)}
-            title="Remove indexer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ transform: 'rotate(45deg)' }}>
-              <path fill="currentColor" d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/>
-            </svg>
-          </button>
+          <Controller
+            name={`${prefix ? `${prefix}.` : ''}removed`}
+            control={form.control}
+            render={({ field: { value, ...field } }) => (
+              <button
+                type='button'
+                sx={{ ...PolicySettings.styles.button, ...PolicySettings.styles.remove }}
+                onClick={() => {
+                  if (confirm('Do you really want to remove this policy ? Movies with deleted policy defined will fallback to "default" policy')) {
+                    policies.update(index, { ...policies.fields[index], removed: true })
+                  }
+                }}
+                title={value ? 'LOL' : 'Remove policy'}
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }}>
+                  <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
+                </svg>
+              </button>
+            )}
+          />
         )}
         {behavior === 'create' && (
-          <button
-            type='submit'
-            sx={{ ...PolicySettings.styles.button, ...PolicySettings.styles.add }}
-            title="Add indexer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/>
+          <button type='submit' sx={{ ...PolicySettings.styles.button, ...PolicySettings.styles.add }} title='Add policy'>
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+              <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
           </button>
         )}
       </div>
       <div sx={PolicySettings.styles.options}>
-        <details open={open} onToggle={() => setOpen(open => !open)}>
+        <details open={open} onToggle={() => setOpen((open) => !open)}>
           <summary>
             <span>Rules</span>
           </summary>
-          <div>
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='znab'
-              Component={ZNABFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='encoding'
-              Component={EncodingFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='resolution'
-              Component={ResolutionFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='source'
-              Component={SourceFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='dub'
-              Component={DubFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='language'
-              Component={LanguageFilter}
-            />
-            <ControlledPolicyFilter
-              form={form}
-              prefix={prefix}
-              name='flags'
-              Component={FlagsFilter}
-            />
-          </div>
+          {open && (
+            <div>
+              <ControlledPolicyFilter form={form} prefix={prefix} name='znab' Component={ZNABFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='encoding' Component={EncodingFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='resolution' Component={ResolutionFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='source' Component={SourceFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='dub' Component={DubFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='language' Component={LanguageFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='flags' Component={FlagsFilter} />
+            </div>
+          )}
         </details>
       </div>
     </div>
@@ -296,6 +369,8 @@ PolicySettings.styles = {
     },
   },
 }
+
+const SortablePolicySettings = SortableElement<any>(({ ...props }) => <PolicySettings {...props as any} />)
 
 const ControlledPolicyFilter = ({ form, prefix, name, Component, ...props }) => {
   const requireValues = form.watch(`${prefix}.require.${name}`) || []

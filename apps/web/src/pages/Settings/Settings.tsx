@@ -3,10 +3,14 @@ import { NavLink, Outlet, useLocation, useOutlet } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useThemeUI } from 'theme-ui'
 import semver from 'semver'
+import { useAPI } from '../../store/api'
+import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import localApp from '../../../../../package.json'
 
 const Settings = ({ ...props }) => {
+  const api = useAPI()
+  const { config } = useConfigContext()
   const { theme } = useThemeUI()
   const { device } = useDeviceContext()
   const location = useLocation()
@@ -15,6 +19,22 @@ const Settings = ({ ...props }) => {
 
   const onSave = useCallback((data) => {
     console.log('onSave', data)
+    toast.promise(new Promise(async (resolve, reject) => {
+      const { uri, params, init } = api.query.config.postConfig({ body: data })
+
+      try {
+        const raw = await api.fetch(uri, params, init)
+        config.load(raw)
+        resolve(true)
+      } catch (err) {
+        console.warn(err)
+        reject(err)
+      }
+    }), {
+      loading: `Updating **config**...`,
+      success: () => `Config **updated** !`,
+      error: () => `Error while updating **config**`,
+    })
   }, [])
 
   useEffect(() => {
@@ -202,8 +222,11 @@ Settings.styles = {
         paddingX: 4,
         maxWidth: '96rem',
       },
-      'ul>li': {
-        lineHeight: 'space',
+      'ul': {
+        paddingLeft: 2,
+        '>li': {
+          lineHeight: 'space',
+        },
       },
     },
   },

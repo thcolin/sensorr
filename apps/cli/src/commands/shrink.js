@@ -19,8 +19,8 @@ export default (job, handlers) => ({
 
     const { waitUntilExit } = render((
       <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, sensorr, policies: config.get('policies') }}>
-        <FetchAPIMoviesTask />
-        <ProcessMoviesTask command='shrink' proposalOnly={config.get('jobs.record.proposalOnly')} />
+        <FetchAPIMoviesTask threshold={config.get('jobs.shrink.threshold')} />
+        <ProcessMoviesTask command='shrink' proposalOnly={config.get('jobs.shrink.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 
@@ -28,7 +28,7 @@ export default (job, handlers) => ({
   }),
 })
 
-const FetchAPIMoviesTask = ({ ...props }) => {
+const FetchAPIMoviesTask = ({ threshold = 0, ...props }) => {
   const { task, setTask, status, setStatus, context: { state, setState, handleError } } = useTask({
     id: 'fetch-api-movies',
     title: '💎 Fetch refined movies ready for shrinking from API...',
@@ -40,14 +40,14 @@ const FetchAPIMoviesTask = ({ ...props }) => {
       const { uri, params, init } = api.query.movies.getMovies({
         params: {
           state: 'archived',
-          // shrink: true,
+          shrink: true,
           'releases.proposal': false,
-          'shrinked_at.lte': new Date(
-            new Date().getFullYear(),
-            new Date().getMonth() - 1,
-            new Date().getDate()
-          ).getTime(),
-          sort_by: 'updated_at.desc',
+          ...(threshold ? { 'releases.size': threshold * Math.pow(1024, 3) } : {}),
+          // 'shrinked_at.lte': new Date(
+          //   new Date().getFullYear(),
+          //   new Date().getMonth() - 1,
+          //   new Date().getDate()
+          // ).getTime(),
           sort_by: 'shrinked_at.desc',
         },
       })

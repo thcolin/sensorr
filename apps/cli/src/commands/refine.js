@@ -20,7 +20,7 @@ export default (job, handlers) => ({
     const { waitUntilExit } = render((
       <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, sensorr, policies: config.get('policies') }}>
         <FetchAPIMoviesTask />
-        <ProcessMoviesTask command='refine' proposalOnly={config.get('jobs.record.proposalOnly')} />
+        <ProcessMoviesTask command='refine' proposalOnly={config.get('jobs.refine.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 
@@ -40,13 +40,13 @@ const FetchAPIMoviesTask = ({ ...props }) => {
       const { uri, params, init } = api.query.movies.getMovies({
         params: {
           state: 'archived',
-          // refine: true,
+          refine: true,
           'releases.proposal': false,
-          'refined_at.lte': new Date(
-            new Date().getFullYear(),
-            new Date().getMonth() - 1,
-            new Date().getDate()
-          ).getTime(),
+          // 'refined_at.lte': new Date(
+          //   new Date().getFullYear(),
+          //   new Date().getMonth() - 1,
+          //   new Date().getDate()
+          // ).getTime(),
           sort_by: 'refined_at.desc',
         },
       })

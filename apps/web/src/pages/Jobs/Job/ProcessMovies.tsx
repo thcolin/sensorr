@@ -2,16 +2,13 @@ import { Fragment, createContext, memo, useCallback, useContext, useEffect, useM
 import { Button, Icon, Warning } from '@sensorr/ui'
 import { filesize } from '@sensorr/utils'
 import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
-import ReconnectingEventSource from 'reconnecting-eventsource'
 import { formatDuration, intervalToDuration } from 'date-fns'
-import oleoo from 'oleoo'
-import report from 'new-github-issue-url'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useAPI } from '../../../store/api'
 import Movie from '../../../components/Movie/Movie'
 import { Sensorr } from '../../../components/Sensorr'
-import { Release } from '../../../components/Sensorr/Release'
+import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary } from '../Summary'
 
@@ -404,11 +401,34 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
               {done && (
                 (release && !release?.hide) ? (
                   <div sx={UIRecord.styles.release}>
-                    <Release entity={{ from: command, job, ...release, ...optimistic }} display='column' proceed={proceed} />
+                    <Release
+                      entity={{ from: command, job, ...release, ...optimistic }}
+                      display='column'
+                      proceed={proceed}
+                      banned={(metadata?.banned_releases || []).includes(release?.title)}
+                      ban={() => setMovieMetadata(
+                        movie?.id,
+                        'banned_releases',
+                        (metadata?.banned_releases || []).includes(release?.title) ?
+                          [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
+                          [...(metadata?.banned_releases || []), release?.title]
+                      )}
+                    />
                   </div>
                 ) : (
                   <div sx={UIRecord.styles.release}>
-                    <Release entity={{ ...(release || {}), ...optimistic }} display='column' />
+                    <Release
+                      entity={{ ...(release || {}), ...optimistic }}
+                      display='column'
+                      banned={(metadata?.banned_releases || []).includes(release?.title)}
+                      ban={() => setMovieMetadata(
+                        movie?.id,
+                        'banned_releases',
+                        (metadata?.banned_releases || []).includes(release?.title) ?
+                          [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
+                          [...(metadata?.banned_releases || []), release?.title]
+                      )}
+                    />
                   </div>
                 )
               )}
@@ -834,40 +854,3 @@ RecordLog.styles = {
     },
   },
 }
-
-const reportOleoo = ({ generated = '', original = '' }) => report({
-  user: 'thcolin',
-  repo: 'oleoo',
-  labels: ['sensorr'],
-  title: `Sensorr release parsing issue`,
-  body: (
-    'Sensorr release parsing issue:' + '\n\n' +
-    '<!-- Please fill /* Expected */ section -->' + '\n\n' +
-    'Original: `' + original + '`' + '\n' +
-    'Generated: `' + generated + '`' + '\n\n' +
-    '```\n/* Parsed */\n' + JSON.stringify(
-      oleoo.parse(original, {
-        strict: false,
-        flagged: true,
-        defaults: {
-          language: 'VO',
-          resolution: 'SD',
-          year: '0',
-        },
-      }),
-      null, 2
-    ) + '\n```' + '\n\n' +
-    '```\n/* Expected */\n' + JSON.stringify(
-      oleoo.parse(original, {
-        strict: false,
-        flagged: true,
-        defaults: {
-          language: 'VO',
-          resolution: 'SD',
-          year: '0',
-        },
-      }),
-      null, 2
-    ) + '\n```'
-  ),
-})

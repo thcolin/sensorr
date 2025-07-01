@@ -5,9 +5,9 @@ export const summary = ({ refined = 0, processed, recorded = 0, proposal = 0, tr
   ...(extended ? [{
     key: 'refined',
     emoji: '🪨',
-    title: <span><strong>{refined}</strong> Refined movies</span>,
+    title: <span><strong>{refined}</strong> Refinable movies</span>,
     length: refined,
-  }]: []),
+  }] : []),
   ...(extended && (processed > 0) ? [{
     key: 'processed',
     emoji: '🎟 ',
@@ -17,24 +17,23 @@ export const summary = ({ refined = 0, processed, recorded = 0, proposal = 0, tr
   ...(config?.proposalOnly ? [{
     key: 'proposal',
     emoji: '🛎️ ',
-    title: <span><strong>{(proposal - treated)}</strong> Release proposals</span>,
-    length: (proposal - treated),
+    title: <span><strong>{Math.max(0, proposal - treated)}</strong> Release proposals</span>,
+    length: Math.max(0, proposal - treated),
   }] : []),
   ...(config?.proposalOnly && (treated > 0) ? [{
     key: 'treated',
-    emoji: '☑️',
-    title: <span><strong>{treated}</strong> Treated proposals</span>,
+    emoji: '💎',
+    title: <span><strong>{treated}</strong> Refined movies</span>,
     length: treated,
-  }] : []),
-  ...(config?.proposalOnly ? [{
+  }] : [{
     key: 'recorded',
-    emoji: '📼',
-    title: <span><strong>{recorded}</strong> Recorded movies</span>,
+    emoji: '💎',
+    title: <span><strong>{recorded}</strong> Refined movies</span>,
     length: recorded,
-  }] : []),
+  }]),
   ...(extended && (withdrawn > 0) ? [{
     key: 'withdrawn',
-    emoji: '⛔ ',
+    emoji: '🥈 ',
     title: <span><strong>{withdrawn}</strong> Withdrawn movies releases</span>,
     length: withdrawn,
   }] : []),
@@ -46,7 +45,7 @@ export const summary = ({ refined = 0, processed, recorded = 0, proposal = 0, tr
   }] : []),
   ...(extended && (missing > 0) ? [{
     key: 'missing',
-    emoji: '📭',
+    emoji: '📭 ',
     title: <span><strong>{missing}</strong> Movies with no releases found</span>,
     length: missing,
   }] : []),

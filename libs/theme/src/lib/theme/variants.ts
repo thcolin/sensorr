@@ -96,6 +96,7 @@ export const select = {
 export const input = {
   reset: {
     appearance: 'none',
+    flexShrink: 0,
     margin: 12,
     padding: 12,
     background: 'none',
@@ -109,6 +110,7 @@ export const input = {
   },
   default: {
     appearance: 'none',
+    flexShrink: 0,
     marginY: 12,
     paddingX: 4,
     paddingY: 8,

@@ -27,7 +27,7 @@ const UIProposal = ({ proposals, releases, proceed, ...props }) => {
                   <Badge
                     emoji={<Icon value='check' width='1em' height='1em' />}
                     label='Accept'
-                    compact={false}
+                    compact={true}
                     size='small'
                     color='theme'
                   />
@@ -36,7 +36,7 @@ const UIProposal = ({ proposals, releases, proceed, ...props }) => {
                   <Badge
                     emoji={<Icon value='clear' width='1em' height='1em' />}
                     label='Refuse'
-                    compact={false}
+                    compact={true}
                     size='small'
                     color='theme'
                   />

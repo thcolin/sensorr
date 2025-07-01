@@ -88,6 +88,18 @@ const config = convict({
         default: false,
       },
     },
+    'keep-in-touch': {
+      cron: {
+        doc: 'Keep-in-touch job cron',
+        format: 'String',
+        default: '0 3 * * 0',
+      },
+      paused: {
+        doc: 'Pause Keep-in-touch job',
+        format: 'Boolean',
+        default: false,
+      },
+    },
     refine: {
       cron: {
         doc: 'Refine job cron',
@@ -119,6 +131,11 @@ const config = convict({
       proposalOnly: {
         doc: "Shrink job will only submit proposal and don't download any release",
         format: 'Boolean',
+        default: true,
+      },
+      threshold: {
+        doc: "Shrink job will only consider movies with releases above this threshold (Gb)",
+        format: 'Number',
         default: true,
       },
     },

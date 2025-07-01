@@ -29,9 +29,9 @@ export const withSensorrRequest = () => (WrappedComponent) => {
       ...state,
       props: {
         ongoing: progress?.loading,
-        refresh: () => call(serialized.query),
+        refresh: () => call(serialized.query, serialized.policy?.avoid?.znab || []),
       },
-    }), [state, progress?.loading, call, serialized.query])
+    }), [state, progress?.loading, call, serialized.query, JSON.stringify(serialized.policy?.avoid?.znab)])
 
     useEffect(() => {
       if (!serialized.query?.terms?.length) {
@@ -40,14 +40,14 @@ export const withSensorrRequest = () => (WrappedComponent) => {
 
       if (ready && serialized.query !== request.current) {
         request.current = serialized.query
-        call(serialized.query)
+        call(serialized.query, serialized.policy?.avoid?.znab || [])
         return
       }
 
       if (serialized.query !== request.current) {
         reset()
       }
-    }, [ready, JSON.stringify(serialized.query)])
+    }, [ready, JSON.stringify(serialized.query), JSON.stringify(serialized.policy?.avoid?.znab)])
 
     return (
       <WrappedComponent

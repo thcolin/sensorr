@@ -16,6 +16,7 @@ import { ShrinkJob, summary as summaryShrink } from './Job/Shrink'
 import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
+import { emojize } from '@sensorr/utils'
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -139,7 +140,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const [ref, onPointerDown] = useRipple()
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
-  const groups = useMemo(() => jobs.reduce((groups, job) => {
+  const [filters, setFilters] = useState(['sync', 'refresh', 'record', 'refine', 'shrink', 'keep-in-touch', 'migrate'])
+  const groups = useMemo(() => jobs.filter(job => filters.includes(job.meta.command)).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 
@@ -150,7 +152,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         job,
       ].sort((a, b) => b.start - a.start),
     }
-  }, {}), [jobs])
+  }, {}), [jobs, filters])
 
   useEffect(() => {
     setExpanded(false)
@@ -162,7 +164,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
     <aside sx={UISidebar.styles.element}>
       <div sx={UISidebar.styles.head}>
         <h4>Jobs</h4>
-        <div>
+        <div sx={UISidebar.styles.selector}>
           <div>
             <span>
               {{
@@ -199,10 +201,40 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
+          <div sx={UISidebar.styles.filters}>
+            <div sx={{ opacity: filters.includes('sync') ? 1 : 0.5, marginLeft: '1em !important' }} onClick={() => setFilters(filters => filters.includes('sync') ? filters.filter(f => f !== 'sync') : [...filters, 'sync'])}>
+              <span>🔗</span>
+              <code>sync</code>
+            </div>
+            <div sx={{ opacity: filters.includes('refresh') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refresh') ? filters.filter(f => f !== 'refresh') : [...filters, 'refresh'])}>
+              <span>🔌</span>
+              <code>refresh</code>
+            </div>
+            <div sx={{ opacity: filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
+              <span>📹</span>
+              <code>record</code>
+            </div>
+            <div sx={{ opacity: filters.includes('refine') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refine') ? filters.filter(f => f !== 'refine') : [...filters, 'refine'])}>
+              <span>✨</span>
+              <code>refine</code>
+            </div>
+            <div sx={{ opacity: filters.includes('shrink') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('shrink') ? filters.filter(f => f !== 'shrink') : [...filters, 'shrink'])}>
+              <span>✂️</span>
+              <code>shrink</code>
+            </div>
+            <div sx={{ opacity: filters.includes('keep-in-touch') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('keep-in-touch') ? filters.filter(f => f !== 'keep-in-touch') : [...filters, 'keep-in-touch'])}>
+              <span>🍻</span>
+              <code>keep-in-touch</code>
+            </div>
+            <div sx={{ opacity: filters.includes('migrate') ? 1 : 0.5, marginRight: '1em !important' }} onClick={() => setFilters(filters => filters.includes('migrate') ? filters.filter(f => f !== 'migrate') : [...filters, 'migrate'])}>
+              <span>🚚</span>
+              <code>migrate</code>
+            </div>
+          </div>
           {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
             <Fragment key={distance}>
               <h6>{distance}</h6>
-              <div>
+              <div sx={{ paddingX: 2 }}>
                 {jobs.map(j => (
                   <Job
                     key={j.job}
@@ -258,69 +290,96 @@ UISidebar.styles = {
       margin: '0px',
       color: 'whitePure',
     },
+  },
+  selector: {
+    flex: 1,
+    display: ['flex', 'none'],
+    flexDirection: 'row',
+    overflow: 'hidden',
     '>div': {
       flex: 1,
-      display: ['flex', 'none'],
-      flexDirection: 'row',
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: 'accentDark',
+      borderRadius: '0.25em',
+      margin: 4,
+      marginRight: 12,
+      paddingX: 6,
+      paddingY: 8,
       overflow: 'hidden',
-      '>div': {
-        flex: 1,
+      '>span': {
+        flexShrink: 0,
+        height: '2.5em',
+        width: '2.5em',
+        backgroundColor: 'accentDarkest',
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
-        backgroundColor: 'accentDark',
-        borderRadius: '0.25em',
-        margin: 4,
-        marginRight: 12,
-        paddingX: 6,
-        paddingY: 8,
+        justifyContent: 'center',
+      },
+      '>div': {
+        display: 'flex',
+        flexDirection: 'column',
+        marginX: 4,
+        marginTop: 10,
         overflow: 'hidden',
-        '>span': {
-          flexShrink: 0,
-          height: '2.5em',
-          width: '2.5em',
-          backgroundColor: 'accentDarkest',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
         '>div': {
-          display: 'flex',
-          flexDirection: 'column',
-          marginX: 4,
-          marginTop: 10,
-          overflow: 'hidden',
-          '>div': {
-            '>h5': {
-              variant: 'heading.reset',
-              margin: 12,
-              lineHeight: 'reset',
-              fontSize: 4,
-              fontWeight: 'bold',
-              fontFamily: 'monospace',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            },
-            '>span': {
-              alignSelf: 'flex-end',
-              marginLeft: 4,
-              fontSize: 7,
-              color: 'whitePure',
-              fontFamily: 'monospace',
-            },
+          '>h5': {
+            variant: 'heading.reset',
+            margin: 12,
+            lineHeight: 'reset',
+            fontSize: 4,
+            fontWeight: 'bold',
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           },
           '>span': {
-            marginY: 8,
+            alignSelf: 'flex-end',
+            marginLeft: 4,
             fontSize: 7,
             color: 'whitePure',
             fontFamily: 'monospace',
-            opacity: 0.75,
           },
         },
+        '>span': {
+          marginY: 8,
+          fontSize: 7,
+          color: 'whitePure',
+          fontFamily: 'monospace',
+          opacity: 0.75,
+        },
       },
-      '>button': {
-        paddingX: 0,
+    },
+    '>button': {
+      paddingX: 0,
+    }
+  },
+  filters: {
+    display: 'flex',
+    backgroundColor: 'primaryDarker',
+    overflow: 'auto',
+    '>div': {
+      display: 'flex',
+      flexShrink: 0,
+      backgroundColor: 'accentDark',
+      marginX: 9,
+      marginY: 4,
+      paddingX: 5,
+      paddingY: 10,
+      borderRadius: '1em',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      ':hover': {
+      backgroundColor: 'accentDarker',
+      },
+      '>span': {
+        marginRight: 6,
+      },
+      '>code': {
+        fontSize: 5,
       },
     },
   },
@@ -350,9 +409,6 @@ UISidebar.styles = {
       textTransform: 'capitalize',
       zIndex: 1,
     },
-    '>div': {
-      paddingX: 2,
-    }
   },
 }
 

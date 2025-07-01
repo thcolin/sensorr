@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, Logger, Put } from '@nestjs/common'
+import { Body, Controller, Get, HttpException, Logger, Post, Put } from '@nestjs/common'
 import { ConfigService } from './config.service'
 
 @Controller('config')
@@ -10,6 +10,16 @@ export class ConfigController {
   @Get()
   get(): {} {
     return this.configService.get()
+  }
+
+  @Post()
+  async update(@Body() raw): Promise<{}> {
+    try {
+      return this.configService.update(raw)
+    } catch (err) {
+      this.logger.error(err)
+      throw new HttpException(err, 500)
+    }
   }
 
   @Put()

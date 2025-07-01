@@ -110,9 +110,9 @@ const UIDrawer = ({
         <div sx={UIDrawer.styles.wrapper} style={{ opacity: !hidden ? 1 : 0 }}>
           {!hidden && children}
         </div>
-        <div sx={UIDrawer.styles.spinner} style={{ visibility: !hidden ? 'hidden' : 'visible' }}>
+        {/* <div sx={UIDrawer.styles.spinner} style={{ visibility: !hidden ? 'hidden' : 'visible' }}>
           <Icon value='spinner' color='gray-100' />
-        </div>
+        </div> */}
       </motion.div>
     </motion.div>
   )

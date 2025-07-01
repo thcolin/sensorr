@@ -78,22 +78,19 @@ const UISensorr = compose(
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
-                  paddingX: 3,
+                  paddingLeft: 3,
+                  paddingRight: 0,
                   paddingY: 4,
                   '>select': {
                     variant: 'select.reset',
                     color: 'whitePure',
                     fontWeight: 'semibold',
                     textAlign: 'center',
-                    textTransform: 'capitalize',
                     fontSize: 5,
                     paddingY: '3px',
                     paddingX: '6px',
                     backgroundColor: 'accentDarkest',
                     borderRadius: '2px',
-                    '>option': {
-                      textTransform: 'capitalize',
-                    },
                   },
                 },
               },
@@ -134,9 +131,13 @@ const UISensorr = compose(
                         ],
                       }), {}),
                     }, false)
+
+                    if (!e.target.value) {
+                      toggleOpen(e)
+                    }
                   }}
                 >
-                  <option value=''>Custom</option>
+                  <option value=''>(blank)</option>
                   <hr/>
                   {sensorr.policies.map(policy => (
                     <option value={policy.name}>{policy.name}</option>
@@ -144,11 +145,9 @@ const UISensorr = compose(
                 </select>
               </label>
             </div>
-            {!values.policy?.value && (
-              <button onClick={toggleOpen}>
-                <Icon value='filters' height='1em' width='1em' />
-              </button>
-            )}
+            <button onClick={toggleOpen}>
+              <Icon value='filters' height='1em' width='1em' />
+            </button>
           </div>
         )
       },
@@ -185,7 +184,7 @@ const UISensorr = compose(
           <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
             <Warning
               emoji="🚨"
-              title="Custom Policy"
+              title="Policy"
               subtitle={(
                 <span>
                   Narrow your releases search with custom policy, <span style={{ textDecoration: 'underline' }}>define</span> and <span style={{ textDecoration: 'underline' }}>order</span> each rule tag according to your preferences
@@ -248,7 +247,8 @@ const UISensorr = compose(
     },
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, ...props }) => {
-  const { setMovieMetadata } = useMoviesMetadataContext() as any
+  const { setMovieMetadata, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
+  console.log(metadata)
   const statistics = useMemo(() => ({
     lowest: {
       score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,
@@ -283,6 +283,14 @@ const UISensorr = compose(
                   toast.error('Error while processing release')
                 }
               }}
+              banned={(metadata?.banned_releases || []).includes(release?.title)}
+              ban={() => setMovieMetadata(
+                movie?.id,
+                'banned_releases',
+                (metadata?.banned_releases || []).includes(release?.title) ?
+                  [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
+                  [...(metadata?.banned_releases || []), release?.title]
+              )}
             />
           ))}
         </div>

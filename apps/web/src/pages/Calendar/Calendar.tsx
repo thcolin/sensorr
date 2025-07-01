@@ -68,7 +68,7 @@ export const Calendar = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', 'min-content 1fr min-content min-content'],
+        gridTemplateColumns: ['1fr min-content min-content min-content', 'min-content 1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: [
@@ -179,7 +179,7 @@ export const Calendar = compose(
           [`${key}.lte`]: new Date(raw.getFullYear(), raw.getMonth() + 1, 1).toISOString().substring(0, 10),
         }),
         component: withProps({
-          display: 'wheel',
+          display: 'datePicker',
           getOptions: (value) => [
             new Date(value.getFullYear(), value.getMonth() - 2, 2),
             new Date(value.getFullYear(), value.getMonth() - 1, 2),
@@ -187,7 +187,11 @@ export const Calendar = compose(
             new Date(value.getFullYear(), value.getMonth() + 1, 2),
             new Date(value.getFullYear(), value.getMonth() + 2, 2),
           ],
-        })(FilterReleaseDate)
+        })(({ ...props }) => (
+          <div sx={{ display: 'flex', marginLeft: ['-2em', '3em'], marginRight: ['0em', '3em'], '>*': { flex: 1 } }}>
+            <FilterReleaseDate {...props as any} />
+          </div>
+        ))
       },
       with_release_type: {
         ...fields.release_type,

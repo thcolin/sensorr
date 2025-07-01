@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, fromEventPattern } from 'rxjs'
@@ -23,6 +24,24 @@ export class MoviesService {
     private sensorrService: SensorrService,
     private logsService: LogsService,
   ) {}
+
+  @OnEvent('guest.delete')
+  async handleGuestDelete({ email }: { email: string }) {
+    this.logger.log(`Handling guest.delete event: ${email}`)
+    await this.movieModel.updateMany({}, { '$pull': { requested_by: email } })
+  }
+
+  @OnEvent('policy.rename')
+  async handlePolicyRename({ oldName, newName }: { oldName: string, newName: string }) {
+    this.logger.log(`Handling policy.rename event: ${JSON.stringify({ oldName, newName })}`)
+    await this.movieModel.updateMany({ policy: oldName }, { policy: newName })
+  }
+
+  @OnEvent('plex.reset')
+  async handlePlexReset() {
+    this.logger.log(`Handling plex.reset event`)
+    await this.movieModel.updateMany({}, { '$pull': { 'releases': { from: 'sync' } } })
+  }
 
   async upsertMovie(movie: MovieDTO): Promise<any> {
     this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
@@ -85,10 +104,6 @@ export class MoviesService {
     this.logger.log(`DeleteMovies "${Object.keys(changes)}"`)
     const { deletedCount } = await this.movieModel.deleteMany({ id: { $in: Object.keys(changes).map(Number)} })
     return { deleted: deletedCount }
-  }
-
-  async removeMoviesGuestRequests(email: string): Promise<any> {
-    return this.movieModel.updateMany({}, { '$pull': { requested_by: email } })
   }
 
   async getMovies(params = {} as any, page: number = 1, limit: number = 20): Promise<PaginateResult<MovieDocument>> {

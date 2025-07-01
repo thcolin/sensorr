@@ -73,6 +73,7 @@ export class Sensorr {
 
   async *call(
     query: { terms: string[], [key: string]: any },
+    excludedZnabs: string[] = [],
     onTasksChange: ({}: any) => void,
     signal?: any,
     silent?: boolean,
@@ -80,7 +81,7 @@ export class Sensorr {
     const id = nanoid()
     const handleTasksChange = (tasks) => signal?.aborted !== true && onTasksChange([...tasks.map(task => ({ ...task }))])
     const tasks = this.znabs
-      .filter(znab => !znab.disabled)
+      .filter(znab => !znab.disabled && !excludedZnabs.includes(znab.name))
       .reduce((tasks, znab) => [
         ...tasks,
         ...query.terms.map(term => ({ id, znab, term, releases: null, ongoing: false, done: false })),

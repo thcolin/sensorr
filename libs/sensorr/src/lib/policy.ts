@@ -224,7 +224,20 @@ export class Policy {
       }
 
       const current = (titles
-        .map(title => similarity(title, clean(release.meta.title)))
+        .map(title => {
+          const similarityTitle = similarity(title, clean(release.meta.title))
+          const similarityAlternativeTitle = release.meta.alternativeTitle ? similarity(title, clean(release.meta.alternativeTitle)) : -Infinity
+
+          if (similarityAlternativeTitle > similarityTitle) {
+            const originalTitle = release.meta.alternativeTitle
+            release.meta.alternativeTitle = release.meta.title
+            release.meta.title = originalTitle
+            release.meta.generated = oleoo.stringify(release.meta, { flagged: true })
+            return similarityAlternativeTitle
+          }
+
+          return similarityTitle
+        })
         .sort((a, b) => b - a)
         .shift()
       ) || 0
@@ -233,6 +246,7 @@ export class Policy {
 
       return ({
         ...release,
+        title: release.meta.generated,
         similarity: current,
         valid,
         score: valid ? 1000 : 0,

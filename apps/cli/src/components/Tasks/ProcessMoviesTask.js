@@ -244,7 +244,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           throw new Error('No query term')
         }
 
-        const res = state.sensorr.call(query, (tasks) => {
+        const res = state.sensorr.call(query, policy?.avoid?.znab || [], (tasks) => {
           const ongoing = tasks.findIndex(({ releases, ...task }) => task.ongoing)
 
           if (ongoing >= 0) {
@@ -303,8 +303,6 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           size: release.size,
         }
 
-        setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, release: { ...release, ...raw }, results } } }))
-
         if (state.metadata.command === 'refine') {
           const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: r.original })), null)
 
@@ -318,6 +316,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             release.warning = 5
             release.reason = `🥈 Release ${release.title} doesn't overcome existing releases`
 
+            setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, release: { ...release, ...raw }, results } } }))
             setTask((task) => ({ ...task, output: `🥈 Doesn't overcome existing releases: ${release.title}` }))
             const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
             await api.fetch(uri, params, init)
@@ -342,6 +341,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             release.warning = 5
             release.reason = `🧱 Release ${release.title} heavier than existing releases`
 
+            setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, release: { ...release, ...raw }, results } } }))
             setTask((task) => ({ ...task, output: `🧱 Heavier than existing releases: ${release.title}` }))
             const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, query, ...options } })
             await api.fetch(uri, params, init)
@@ -351,6 +351,8 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             return
           }
         }
+
+        setState((state) => ({ ...state, movies: { ...state.movies, [movie.id]: { ...movie, release: { ...release, ...raw }, results } } }))
 
         if (release.valid) {
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposalOnly]} ${release.title}` }))

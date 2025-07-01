@@ -29,11 +29,11 @@ export const useSensorrRequest = () => {
     setReleases([])
   }, [])
 
-  const call = useCallback(async (query) => {
+  const call = useCallback(async (query, ignoredZnabs = []) => {
     try {
       const controller = abort()
       reset()
-      const res = sensorr.call(query, (tasks) => {
+      const res = sensorr.call(query, ignoredZnabs, (tasks) => {
         setTasks(tasks)
         setID(tasks[0]?.id)
       }, controller.signal)

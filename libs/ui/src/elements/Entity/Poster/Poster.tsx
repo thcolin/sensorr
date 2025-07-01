@@ -330,6 +330,7 @@ UIPoster.styles = {
   },
   focus: {
     position: 'relative',
+    minWidth: ['4.5em', 'auto'],
     borderRadius: '2em',
     borderStyle: 'solid',
     borderWidth: '0.25em',

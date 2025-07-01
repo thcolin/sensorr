@@ -22,16 +22,15 @@ export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, tre
   }] : []),
   ...(config?.proposalOnly && (treated > 0) ? [{
     key: 'treated',
-    emoji: '☑️ ',
-    title: <span><strong>{treated}</strong> Treated proposals</span>,
+    emoji: '📼 ',
+    title: <span><strong>{treated}</strong> Recorded movies</span>,
     length: treated,
-  }] : []),
-  ...(!config?.proposalOnly ? [{
+  }] : [{
     key: 'recorded',
     emoji: '📼',
     title: <span><strong>{recorded}</strong> Recorded movies</span>,
     length: recorded,
-  }] : []),
+  }]),
   ...(extended && (withdrawn > 0) ? [{
     key: 'withdrawn',
     emoji: '⛔ ',

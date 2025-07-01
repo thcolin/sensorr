@@ -2,10 +2,10 @@ import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFieldComputedRangeProps } from '@sensorr/tmdb'
 import { Range, RangeProps } from '../../../../inputs/Range/Range'
-import { Wheel, WheelProps } from '../../../../inputs/Wheel/Wheel'
+import { DatePicker, DatePickerProps } from '../../../../inputs/DatePicker/DatePicker'
 
-export interface FilterReleaseDateProps extends Omit<RangeProps, 'label' | 'data'>, Omit<WheelProps, 'value' | 'onChange'> {
-  display?: 'range' | 'wheel'
+export interface FilterReleaseDateProps extends Omit<RangeProps, 'label' | 'data'>, Omit<DatePickerProps, 'value' | 'onChange'> {
+  display?: 'range' | 'datePicker'
   statistics?: { _id: any, count: number }[]
 }
 
@@ -17,9 +17,9 @@ const UIFilterReleaseDate = ({ display = 'range', statistics, ...props }) => {
   const field = useFieldComputedRangeProps('release_date', statistics)
 
   switch (display) {
-    case 'wheel':
+    case 'datePicker':
       return (
-        <Wheel
+        <DatePicker
           {...props as any}
           {...field}
           label={t('ui.filters.release_date')}

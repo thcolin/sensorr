@@ -2,13 +2,17 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Plex } from '@sensorr/plex'
 import { EMPTY, from, interval, Observable, of } from 'rxjs'
 import { map, mergeMap, takeWhile, tap } from 'rxjs/operators'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { ConfigService } from '../config/config.service'
 import app from './../../../../../package.json'
 
 @Injectable()
 export class PlexService {
   private readonly logger = new Logger(PlexService.name)
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async register(url) {
     this.logger.log(`Register, url="${url}"`)
@@ -26,6 +30,7 @@ export class PlexService {
     this.configService.config.set('plex.pin.code', '')
     this.configService.config.set('plex.token', '')
     await this.configService.write()
+    this.eventEmitter.emit('plex.reset')
   }
 
   listenStatus(id): Observable<MessageEvent> {

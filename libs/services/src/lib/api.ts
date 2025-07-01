@@ -340,6 +340,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      postConfig: (
+        { body, init = {} }: { body: { key: string, value: any }, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'config',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
     },
     logs: {
       getJobGroupLogs: ({ init = {}, params: { job, group } = { job: null, group: null } }: { init?: any, params: { job: string, group: string } }): { uri: string, params: {}, init: {} } => ({

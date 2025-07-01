@@ -1,6 +1,6 @@
 import { Meta } from '@storybook/react'
 import { ColorModeWrapper } from '../../../.storybook/helpers'
-import { Wheel as UIWheel } from './Wheel'
+import { DatePicker as UIDatePicker } from './DatePicker'
 
 const data = {
   '0': 37,
@@ -15,11 +15,11 @@ const data = {
   '9': 51,
 }
 
-export default { component: UIWheel, title: 'Inputs / Wheel' } as Meta
+export default { component: UIDatePicker, title: 'Inputs / DatePicker' } as Meta
 
-export const Wheel = (args: any) => <UIWheel {...args} />
+export const DatePicker = (args: any) => <UIDatePicker {...args} />
 
-Wheel.args = {
+DatePicker.args = {
   label: 'Vote Average',
   value: [4, 5],
   data,
@@ -27,7 +27,7 @@ Wheel.args = {
   max: 10,
 }
 
-Wheel.argTypes = {
+DatePicker.argTypes = {
   value: {
     control: null,
   },
@@ -52,20 +52,20 @@ Wheel.argTypes = {
   },
 }
 
-export const LightWheel = (args: any) => (
+export const LightDatePicker = (args: any) => (
   <ColorModeWrapper value='light'>
-    <Wheel {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
+    <DatePicker {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
   </ColorModeWrapper>
 )
 
-export const DarkWheel = (args: any) => (
+export const DarkDatePicker = (args: any) => (
   <ColorModeWrapper value='dark'>
-    <Wheel {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
+    <DatePicker {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
   </ColorModeWrapper>
 )
 
-export const PrimaryWheel = (args: any) => (
+export const PrimaryDatePicker = (args: any) => (
   <ColorModeWrapper value='primary'>
-    <Wheel {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
+    <DatePicker {...args} label='Vote Average' value={[4, 5]} min={0} max={10} data={data} />
   </ColorModeWrapper>
 )

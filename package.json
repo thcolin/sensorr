@@ -39,6 +39,7 @@
     "@material-ui/core": "^4.12.4",
     "@nestjs/common": "^10.3.3",
     "@nestjs/core": "^10.3.3",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mongoose": "^10.0.4",
     "@nestjs/platform-express": "^10.3.3",

@@ -316,7 +316,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                   <a href={meta?.release?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
                 </div>
               </div>
-              <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+              <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
                 {meta?.release?.proposal ? (
                   <>
                     {(choice === null || choice === true) && (
@@ -343,6 +343,20 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                         }}
                       >
                         {choice === null ? 'Refuse' : 'Refused'}
+                      </Button>
+                    )}
+                    {(choice === false) && (
+                      <Button
+                        variant={!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'outline' : 'contain'}
+                        color={(loading || (metadata.banned_releases || []).includes(meta?.release?.title)) ? 'gray' : 'primary'}
+                        disabled={loading || (metadata.banned_releases || []).includes(meta?.release?.title)}
+                        onClick={() => setMovieMetadata(
+                          meta?.movie?.id,
+                          'banned_releases',
+                          [...(metadata?.banned_releases || []), meta?.release?.title]
+                        )}
+                      >
+                        {!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'Ban' : 'Banned'}
                       </Button>
                     )}
                   </>

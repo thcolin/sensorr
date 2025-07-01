@@ -11,5 +11,7 @@ export const clean = (string) => (string || '')
   .replace(/[\u003a-\u003f]/g, ' ') // Punctuation chars, ex: : ; < = > ?
   .replace(/[\u005b-\u0060]/g, ' ') // Punctuation chars, ex: [ \ ] ^ _ `
   .replace(/[\u007b-\u007f]/g, ' ') // Punctuation chars, ex: { | } ~ DEL
+  .replace('Œ', 'OE')
+  .replace('œ', 'oe')
   .replace(/\s+/g, ' ')
   .trim()

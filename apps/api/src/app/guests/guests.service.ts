@@ -1,10 +1,10 @@
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Plex } from '@sensorr/plex'
 import { EMPTY, from, interval, Observable, of } from 'rxjs'
 import { map, mergeMap, takeWhile, tap } from 'rxjs/operators'
-import { MoviesService } from '../movies/movies.service'
 import { Guest as GuestDocument } from './guest.schema'
 import app from './../../../../../package.json'
 
@@ -14,7 +14,7 @@ export class GuestsService {
 
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: PaginateModel<GuestDocument>,
-    private readonly moviesService: MoviesService
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async register() {
@@ -68,7 +68,7 @@ export class GuestsService {
 
   async deleteGuest(guest): Promise<any> {
     this.logger.log(`DeleteGuest "${guest.email}"`)
-    await this.moviesService.removeMoviesGuestRequests(guest.email)
+    this.eventEmitter.emit('guest.delete', { email: guest.email })
     return this.guestModel.deleteOne({ email: guest.email })
   }
 

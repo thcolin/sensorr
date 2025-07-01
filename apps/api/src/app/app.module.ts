@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ScheduleModule } from '@nestjs/schedule'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { ProxyModule } from './proxy/proxy.module'
 import { AuthModule } from './auth/auth.module'
 import { MoviesModule } from './movies/movies.module'
@@ -15,6 +16,7 @@ import { SensorrModule } from './sensorr/sensorr.module'
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     MongooseModule.forRoot(`mongodb://${process.env.NX_MONGO_USERNAME}:${process.env.NX_MONGO_PASSWORD}@${process.env.NX_MONGO_HOST}:${process.env.NX_MONGO_PORT}/sensorr?authSource=admin&directConnection=true`),
     ScheduleModule.forRoot(),
     ProxyModule,

@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react'
 import { useThemeUI } from 'theme-ui'
 import oleoo from 'oleoo'
+import report from 'new-github-issue-url'
 import { emojize, filesize } from '@sensorr/utils'
 import { Badge, Icon, Link } from '@sensorr/ui'
 import Tippy from '@tippyjs/react'
@@ -12,6 +13,8 @@ const UIRelease = ({
   compact = false,
   proceed = null,
   remove = null,
+  banned = false,
+  ban = null,
   statistics = null
 }) => {
   const { theme } = useThemeUI()
@@ -30,43 +33,85 @@ const UIRelease = ({
         <div key={entity?.link} sx={UIRelease.styles.wrapper} data-disabled={!downloadable}>
           <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
             <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
-              {(
-                (!entity?.title) ? (
-                  <Tippy maxWidth='80vw' disabled={true}>
-                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
-                  </Tippy>
-                ) : entity?.from === 'sync' ? (
-                  <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
-                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-                      <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
-                        ❯
+              <div sx={{ display: 'flex', alignItems: 'center' }}>
+                {(
+                  typeof ban === 'function' &&
+                  (downloadable || (entity?.proposal && entity?.choice === false))
+                ) && (
+                  <div
+                    sx={{
+                      display: 'flex',
+                      flexDirection: downloadable ? 'column' : 'row',
+                      marginLeft: downloadable ? '-8px' : 12,
+                      '>i': {
+                        fontStyle: 'unset',
+                        fontSize: 2,
+                        textAlign: 'center',
+                        color: 'grayDark',
+                        cursor: 'pointer',
+                        marginBottom: '3px',
+                        marginLeft: 9,
+                        opacity: downloadable ? 0.5 : 0.75,
+                        transition: 'opacity ease 100ms',
+                        ':hover': {
+                          opacity: 1,
+                        },
+                        '>a': {
+                          color: 'grayDark',
+                        },
+                      },
+                    }}
+                  >
+                    <i
+                      title={banned ? 'Unban release' : 'Ban release'}
+                      sx={banned ? { opacity: '1 !important' } : {}}
+                      onClick={ban}
+                    >
+                      ⊘
+                    </i>
+                    <i title="Report release parsing issue">
+                      <a target='_blank' rel='norefer noopener' href={reportOleoo({ generated: meta.generated, original: meta.original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
+                    </i>
+                  </div>
+                )}
+                {(
+                  (!entity?.title) ? (
+                    <Tippy maxWidth='80vw' disabled={true}>
+                      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
+                    </Tippy>
+                  ) : entity?.from === 'sync' ? (
+                    <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
+                      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
+                        <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
+                          ❯
+                        </span>
                       </span>
-                    </span>
-                  </Tippy>
-                ) : !entity?.valid && entity?.warning <= 10 ? (
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
-                ) : !entity?.valid && entity?.warning > 10 ? (
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
-                ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
-                  <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
-                  </Tippy>
-                ) : (entity?.proposal && entity?.choice === false) ? (
-                  <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
-                  </Tippy>
-                ) : (entity?.proposal && entity?.choice === true) ? (
-                  <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                  </Tippy>
-                ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
-                  <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                    <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                  </Tippy>
-                ) : (
-                  <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
-                )
-              )}
+                    </Tippy>
+                  ) : !entity?.valid && entity?.warning <= 10 ? (
+                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
+                  ) : !entity?.valid && entity?.warning > 10 ? (
+                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
+                  ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
+                    <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
+                    </Tippy>
+                  ) : (entity?.proposal && entity?.choice === false) ? (
+                    <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
+                    </Tippy>
+                  ) : (entity?.proposal && entity?.choice === true) ? (
+                    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+                    </Tippy>
+                  ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
+                    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+                    </Tippy>
+                  ) : (
+                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
+                  )
+                )}
+              </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>
                   <Tippy maxWidth='80vw' disabled={!entity?.original} content={<code><small>{entity?.original}</small></code>}>
@@ -390,6 +435,44 @@ UIRelease.styles = {
 }
 
 export const Release = memo(UIRelease)
+
+export const reportOleoo = ({ generated = '', original = '' }) => report({
+  user: 'thcolin',
+  repo: 'oleoo',
+  labels: ['sensorr'],
+  title: `Sensorr release parsing issue`,
+  body: (
+    'Sensorr release parsing issue:' + '\n\n' +
+    '<!-- Please fill /* Expected */ section -->' + '\n\n' +
+    'Original: `' + original + '`' + '\n' +
+    'Generated: `' + generated + '`' + '\n\n' +
+    '```\n/* Parsed */\n' + JSON.stringify(
+      oleoo.parse(original, {
+        strict: false,
+        flagged: true,
+        defaults: {
+          language: 'VO',
+          resolution: 'SD',
+          year: '0',
+        },
+      }),
+      null, 2
+    ) + '\n```' + '\n\n' +
+    '```\n/* Expected */\n' + JSON.stringify(
+      oleoo.parse(original, {
+        strict: false,
+        flagged: true,
+        defaults: {
+          language: 'VO',
+          resolution: 'SD',
+          year: '0',
+        },
+      }),
+      null, 2
+    ) + '\n```'
+  ),
+})
+
 
 const logos = {
   source: {

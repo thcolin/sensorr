@@ -32,29 +32,38 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
   return (
     <>
       <aside
-        sx={{ ...UIPane.styles.element, backgroundColor }}
-        style={{
-          right: {
-            height: '100dvh',
-            width: width,
-            maxWidth: '100vw',
-            top: '0em',
-            right: '0em',
-            bottom: '0em',
-            transform: `translate3d(${open ? `-${order * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
-            zIndex: 6 + level,
-          },
-          left: {
-            height: '100dvh',
-            width: width,
-            maxWidth: '100vw',
-            top: '0em',
-            bottom: '0em',
-            left: '0em',
-            transform: `translate3d(${open ? `${order * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
-            zIndex: 6 + level,
-          },
-        }[position]}
+        sx={{
+          ...UIPane.styles.element,
+          backgroundColor,
+          ...{
+            right: {
+              height: '100dvh',
+              width: width,
+              maxWidth: '100vw',
+              top: '0em',
+              right: '0em',
+              bottom: '0em',
+              transform: [
+                `translate3d(${open ? '0em, 0px, 0px' : '100%, 0px, 0px'})`,
+                `translate3d(${open ? `-${order * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
+              ],
+              zIndex: 6 + level,
+            },
+            left: {
+              height: '100dvh',
+              width: width,
+              maxWidth: '100vw',
+              top: '0em',
+              bottom: '0em',
+              left: '0em',
+              transform: [
+                `translate3d(${open ? '0em, 0px, 0px' : '-100%, 0px, 0px'})`,
+                `translate3d(${open ? `${order * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
+              ],
+              zIndex: 6 + level,
+            },
+          }[position],
+        }}
       >
         <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 6 + level }}>
           {ready && children}

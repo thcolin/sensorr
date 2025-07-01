@@ -10,7 +10,12 @@ import { useAPI } from '../../store/api'
 const Znabs = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
-  const form = useForm({ defaultValues: config.getProperties() })
+  const form = useForm({
+    defaultValues: {
+      ...config.getProperties(),
+      znabs: (config.get('znabs') || []).map(znab => ({ ...znab, oldName: znab.name })),
+    },
+  })
   const znabs = useFieldArray({ name: 'znabs', control: form.control })
   const znab = useForm({ defaultValues: { name: '', url:'', key:'' } })
 
@@ -29,7 +34,7 @@ const Znabs = ({ ...props }) => {
             <ZnabSettings form={znab} behavior='create' />
           </div>
         </form>
-        <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingBottom: 8 } }}>
+        <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingBottom: 8, lineHeight: '1 !important' } }}>
           <li>
             <small><strong>Jackett</strong>, use <code>Torznab Feed</code> of your favorite indexers and your <code>API Key</code> displayed in your home page</small>
           </li>
@@ -55,6 +60,7 @@ const Znabs = ({ ...props }) => {
 
 const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'default', remove = null, ...props }) => {
   const api = useAPI()
+  const { config } = useConfigContext()
   const values = form.watch(prefix)
 
   const [loading, setLoading] = useState(true)
@@ -152,7 +158,9 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               disabled={values.disabled}
             >
               <i sx={{ backgroundColor: values.disabled ? 'grayDarker' : loading ? 'warning' : operable ? 'success' : 'error' }}></i>
-              {(operable && !values.disabled && latency) && <span>{latency > 1000 ? `${(latency / 1000).toFixed(0)}s` : `${latency}ms`}</span>}
+              {operable && !values.disabled && latency && (
+                <span>{latency > 1000 ? `${(latency / 1000).toFixed(0)}s` : `${latency}ms`}</span>
+              )}
             </button>
           </React.Fragment>
         )}
@@ -160,50 +168,109 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
           name={`${prefix ? `${prefix}.` : ''}name`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <input type='text' {...field} sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }} placeholder='Name' disabled={values.disabled} required={true} />
+            <input
+              type='text'
+              {...field}
+              onChange={(e) => {
+                form.setValue(
+                  'policies',
+                  (config.get('policies') || []).map((policy) => ({
+                    ...policy,
+                    require: {
+                      ...(policy.require || {}),
+                      znab: (policy.require || {}).znab?.map((value) => value === values.oldName ? e.target.value : value) || [],
+                    },
+                    prefer: {
+                      ...(policy.prefer || {}),
+                      znab: (policy.prefer || {}).znab?.map((value) => value === values.oldName ? e.target.value : value) || [],
+                    },
+                    avoid: {
+                      ...(policy.avoid || {}),
+                      znab: (policy.avoid || {}).znab?.map((value) => value === values.oldName ? e.target.value : value) || [],
+                    },
+                  })),
+                )
+
+                field.onChange(e.target.value)
+              }}
+              sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
+              placeholder='Name'
+              disabled={values.disabled}
+              required={true}
+            />
           )}
         />
         <Controller
           name={`${prefix ? `${prefix}.` : ''}url`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <input type='url' {...field} sx={{ variant: 'input.default', flex: 4, fontFamily: 'monospace', width: '100%' }} placeholder='URL' disabled={values.disabled} required={true} />
+            <input
+              type='url'
+              {...field}
+              sx={{ variant: 'input.default', flex: 4, fontFamily: 'monospace', width: '100%' }}
+              placeholder='URL'
+              disabled={values.disabled}
+              required={true}
+            />
           )}
         />
         <Controller
           name={`${prefix ? `${prefix}.` : ''}key`}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <input type='text' {...field} sx={{ variant: 'input.default', flex: 2, fontFamily: 'monospace', width: '100%' }} placeholder='API Key' disabled={values.disabled} required={true} />
+            <input
+              type='text'
+              {...field}
+              sx={{ variant: 'input.default', flex: 2, fontFamily: 'monospace', width: '100%' }}
+              placeholder='API Key'
+              disabled={values.disabled}
+              required={true}
+            />
           )}
         />
         {behavior === 'default' && (
           <button
             type='button'
             sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.remove }}
-            onClick={() => remove(index)}
-            title="Remove indexer"
+            onClick={() => {
+              if (confirm('Do you really want to delete this Indexer? All references to this indexer in policies will be removed')) {
+                remove(index)
+                form.setValue(
+                  'policies',
+                  (config.get('policies') || []).map((policy) => ({
+                    ...policy,
+                    require: {
+                      ...(policy.require || {}),
+                      znab: (policy.require || {}).znab?.filter((value) => value !== values.oldName) || [],
+                    },
+                    prefer: {
+                      ...(policy.prefer || {}),
+                      znab: (policy.prefer || {}).znab?.filter((value) => value !== values.oldName) || [],
+                    },
+                    avoid: {
+                      ...(policy.avoid || {}),
+                      znab: (policy.avoid || {}).znab?.filter((value) => value !== values.oldName) || [],
+                    },
+                  })),
+                )
+              }
+            }}
+            title='Remove indexer'
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ transform: 'rotate(45deg)' }}>
-              <path fill="currentColor" d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/>
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }}>
+              <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
           </button>
         )}
         {behavior === 'create' && (
-          <button
-            type='submit'
-            sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }}
-            title="Add indexer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/>
+          <button type='submit' sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }} title='Add indexer'>
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+              <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
           </button>
         )}
       </div>
-      {(error && !values.disabled) && (
-        <div sx={ZnabSettings.styles.error}>{error}</div>
-      )}
+      {error && !values.disabled && <div sx={ZnabSettings.styles.error}>{error}</div>}
     </div>
   )
 }
