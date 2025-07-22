@@ -56,7 +56,7 @@ function plex(req, res) {
       log('plex', { err }, { err: true })
 
       if (!res.headersSent) {
-        res.status(err.code || 400).send(err.body || { err })
+        res.status(err.code || 400).send({ err: 'An error occurred. Please try again later.' })
       }
     },
   )

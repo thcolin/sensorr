@@ -15,21 +15,21 @@ function trigger(req, res) {
 
       if (job && job.pid) {
         log('trigger', { event: 'already-triggered', job: type }, { color: 'yellow' })
-        res.status(409).send({ message: 'Job already triggered', err, })
+        res.status(409).send({ message: 'Job already triggered' })
       } else {
         pm2.restart(job.name, err => {
           if (!err) {
             log('trigger', { event: 'success', job: type })
-            res.status(200).send({ message: `Trigger "${type}" job`, })
+            res.status(200).send({ message: `Trigger "${type}" job` })
           } else {
             log('trigger', { event: 'error', job: type, err }, { err: true })
-            res.status(409).send({ message: `Error during "${type}" job pm2 restart`, err, })
+            res.status(409).send({ message: `Error during "${type}" job pm2 restart` })
           }
         })
       }
     } else {
       log('trigger', { event: 'error', job: type, err }, { err: true })
-      res.status(400).send({ message: `Error on pm2 process list`, })
+      res.status(400).send({ message: `Error on pm2 process list` })
     }
   })
 }

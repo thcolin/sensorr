@@ -58,7 +58,7 @@ async function record({ argv, log, session, logger, sensorr, db }) {
         )
 
         logger.spawn(
-          `📼 Archiving movie **${movie.title}** ${`(${movie.year})`} with release **${release.title}** to _${file}_`,
+          `📼 Archiving movie **${sanitizeInput(movie.title)}** ${`(${sanitizeInput(movie.year)})`} with release **${sanitizeInput(release.title)}** to _${sanitizeInput(file)}_`,
           { context, release, file, done: true },
         )
       },
@@ -154,6 +154,10 @@ async function record({ argv, log, session, logger, sensorr, db }) {
       )),
     )
   }
+}
+
+function sanitizeInput(input) {
+  return input.replace(/[^a-zA-Z0-9-_ ]/g, '');
 }
 
 module.exports = record

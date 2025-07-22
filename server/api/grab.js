@@ -32,7 +32,7 @@ function grab(req, res) {
     },
     (reason) => {
       log('grab', { err: reason, title: release.title, link: release.link }, { err: true })
-      res.status(520).send({ release, reason: reason.toString(), })
+      res.status(520).send({ release, reason: "An error occurred while processing your request." })
     },
   )
 }

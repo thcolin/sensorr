@@ -25,13 +25,16 @@ class Sessions extends EventEmitter {
           uuid: file.split('-').slice(0, -1).join('-'),
         }))
         .filter(session => session.job && session.uuid)
-        .forEach(session => fs.stat(
-          path.join(paths.sessions, session.file),
-          (err, stats) => this.entities[session.uuid] = {
-            ...session,
-            time: stats.birthtime,
-          },
-        ))
+        .forEach(session => {
+          const safeFilePath = path.join(paths.sessions, path.basename(session.file));
+          fs.stat(
+            safeFilePath,
+            (err, stats) => this.entities[session.uuid] = {
+              ...session,
+              time: stats.birthtime,
+            },
+          )
+        })
 
       this.emit('change')
     })
