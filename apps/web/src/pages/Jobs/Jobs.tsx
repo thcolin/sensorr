@@ -352,12 +352,15 @@ UISidebar.styles = {
     }
   },
   filters: {
+    position: 'sticky',
+    top: '0px',
     display: 'flex',
     backgroundColor: 'primaryDarker',
     flexWrap: 'wrap',
     justifyContent: 'center',
     paddingX: 10,
     paddingY: 8,
+    zIndex: 2,
     '>div': {
       display: 'flex',
       flexShrink: 0,

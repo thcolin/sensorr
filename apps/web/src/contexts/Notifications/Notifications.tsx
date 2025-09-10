@@ -77,13 +77,13 @@ export const Provider = ({ ...props }) => {
     ))
   }, [])
 
-  const seenNotification = useCallback(async (id) => {
+  const dismissNotifications = useCallback(async (ids) => {
     setNotifications(notifications => notifications.map((notification) => (
-      id === notification._id ? { ...notification, meta: { ...(notification.meta || {}), seen: true } } : notification)
+      ids.includes(notification._id) ? { ...notification, meta: { ...(notification.meta || {}), seen: true } } : notification)
     ))
 
     try {
-      const { uri, params, init } = api.query.logs.ammendLog({ params: { log: id }, body: { 'meta.seen': true } })
+      const { uri, params, init } = api.query.logs.ammendLogs({ body: { logs: ids, 'meta.seen': true } })
       await api.fetch(uri, params, init)
     } catch (err) {
       console.warn(err)
@@ -138,7 +138,7 @@ export const Provider = ({ ...props }) => {
         subscribed,
         notifications: sorted,
         subscribeNotifications,
-        seenNotification,
+        dismissNotifications,
         answerNotification,
       }}
     />

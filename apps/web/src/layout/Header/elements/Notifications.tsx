@@ -1,5 +1,5 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
-import { Button, Guests, Icon, Link, MovieState, Pane, Picture, Warning } from '@sensorr/ui'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
@@ -16,8 +16,10 @@ const UINotifications = ({ ...props }) => {
   const ref = useRef()
   const [pointerRef, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
-  const { notifications, loading, subscribable, subscribed, subscribeNotifications } = useNotificationsContext() as any
-  const count = useMemo(() => notifications.filter(notification => !notification.meta?.seen).length, [notifications])
+  const { notifications, loading, dismissNotifications, subscribable, subscribed, subscribeNotifications } = useNotificationsContext() as any
+  const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
+  const [filters, setFilters] = useState([])
+  const filtered = useMemo(() => notifications.filter(notification => !filters.length || filters.includes(notification.meta?.command)), [notifications, filters])
 
   useEffect(() => {
     if (open && navigator.clearAppBadge) {
@@ -28,28 +30,60 @@ const UINotifications = ({ ...props }) => {
   return (
     <>
       <button {...(pwa ? { ref: pointerRef, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
-        {!!count && <span>{count}</span>}
+        {!!unseen.length && <span>{unseen.length}</span>}
         🔔
       </button>
       <Portal>
         <Pane position='right' width='40em' background='grayLightest' open={open} toggleOpen={togglePortal}>
           <div sx={UINotifications.styles.element}>
             <span>
-              <h2>Notifications</h2>
+              <span>
+                <span>
+                  <h2>Notifications</h2>
+                  {!!unseen.length && <span>{unseen.length}</span>}
+                </span>
+                <button onClick={() => dismissNotifications(unseen)}>
+                  Mark all as read
+                </button>
+              </span>
               <button onClick={() => closePortal()}>
                 <Icon value='clear' active={true} height='1.25em' width='1.25em' />
               </button>
             </span>
-            {(subscribable && !subscribed) && (
-              <button onClick={(e) => subscribeNotifications(e)}>
-                Enable System Notifications
-              </button>
-            )}
-            <div ref={ref}>
-              {notifications.length ? (
+            <div ref={ref} sx={UINotifications.styles.container}>
+              {subscribable && (
+                <div sx={UINotifications.styles.push}>
+                  <button onClick={(e) => subscribeNotifications(e)}>
+                    {subscribed ? '🔕' : '🔔'} <span>{subscribed ? 'Disable' : 'Enable'} Push Notifications</span>
+                  </button>
+                </div>
+              )}
+              <div sx={UINotifications.styles.filters}>
+                <div sx={{ opacity: !filters.length || filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
+                  <span>📹</span>
+                  <code>record</code>
+                </div>
+                <div sx={{ opacity: !filters.length || filters.includes('refine') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refine') ? filters.filter(f => f !== 'refine') : [...filters, 'refine'])}>
+                  <span>✨</span>
+                  <code>refine</code>
+                </div>
+                <div sx={{ opacity: !filters.length || filters.includes('shrink') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('shrink') ? filters.filter(f => f !== 'shrink') : [...filters, 'shrink'])}>
+                  <span>✂️</span>
+                  <code>shrink</code>
+                </div>
+                <div sx={{ opacity: !filters.length || filters.includes('sync') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('sync') ? filters.filter(f => f !== 'sync') : [...filters, 'sync'])}>
+                  <span>💊</span>
+                  <code>missing</code>
+                </div>
+                <div sx={{ opacity: !filters.length || filters.includes('keep-in-touch') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('keep-in-touch') ? filters.filter(f => f !== 'keep-in-touch') : [...filters, 'keep-in-touch'])}>
+                  <span>🍺</span>
+                  <code>request</code>
+                </div>
+              </div>
+              {filtered.length ? (
                 <div>
                   <ResponsiveVirtualGrid
-                    total={notifications.length}
+                    total={filtered.length}
                     cell={{ height: 240 }}
                     child={Notification}
                     childProps={{ closePortal }}
@@ -57,8 +91,8 @@ const UINotifications = ({ ...props }) => {
                     scrollContainer={ref.current}
                     scrollDirection={'vertical'}
                     useChildProps={(key) => ({
-                      key: notifications[key.split('-').shift()]?._id,
-                      ...notifications[key.split('-').shift()],
+                      key: filtered[key.split('-').shift()]?._id,
+                      ...filtered[key.split('-').shift()],
                     })}
                   />
                 </div>
@@ -106,11 +140,34 @@ UINotifications.styles = {
       justifyContent: 'space-between',
       backgroundColor: 'primary',
       padding: 2,
-      '>h2': {
-        variant: 'heading.default',
-        color: 'whitePure',
-        padding: 12,
-        margin: 12,
+      '>span': {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        '>span': {
+          display: 'flex',
+          alignItems: 'flex-start',
+          '>h2': {
+            variant: 'heading.default',
+            color: 'whitePure',
+            padding: 12,
+            margin: 12,
+          },
+          '>span': {
+            marginLeft: 8,
+            paddingX: 8,
+            paddingY: 10,
+            fontSize: 4,
+            fontWeight: 'bold',
+            backgroundColor: 'error',
+            borderRadius: '1em',
+          },
+        },
+        '>button': {
+          variant: 'button.reset',
+          fontSize: 6,
+          opacity: 0.8,
+        },
       },
       '>button': {
         variant: 'button.reset',
@@ -121,26 +178,68 @@ UINotifications.styles = {
         },
       },
     },
+  },
+  container: {
+    flex: 1,
+    overflow: 'auto',
+    paddingBottom: 2,
+  },
+  push: {
+    display: 'flex',
+    backgroundColor: 'primaryDarkest',
     '>button': {
       variant: 'button.reset',
-      fontSize: 5,
-      fontWeight: 'strong',
-      textAlign: 'center',
-      backgroundColor: 'accent',
-      padding: 4,
-    },
-    '>div': {
       flex: 1,
-      overflow: 'auto',
-      paddingBottom: 2,
-    }
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 8,
+      '>span': {
+        fontSize: 6,
+        marginLeft: 4,
+      },
+    },
+  },
+  filters: {
+    position: 'sticky',
+    top: '0px',
+    display: 'flex',
+    backgroundColor: 'primaryDarker',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingX: 10,
+    paddingY: 8,
+    zIndex: 2,
+    '>div': {
+      display: 'flex',
+      flexShrink: 0,
+      backgroundColor: 'accentDark',
+      margin: 11,
+      paddingX: 6,
+      paddingY: 10,
+      borderRadius: '1em',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      ':hover': {
+      backgroundColor: 'accentDarker',
+      },
+      '>span': {
+        marginRight: 7,
+      },
+      '>code': {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: 6,
+      },
+    },
   },
 }
 
 export const Notifications = memo(UINotifications)
 
 const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
-  const { seenNotification, answerNotification } = useNotificationsContext() as any
+  const { dismissNotifications, answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
 
@@ -168,7 +267,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   }, [meta?.choice, meta?.command, loading, metadata.state])
 
   return (
-    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : seenNotification(_id)} style={{ ...props.style, width: '100%' }}>
+    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : dismissNotifications([_id])} style={{ ...props.style, width: '100%' }}>
       <div sx={{ position: 'relative', display: 'flex', height: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
         {!meta?.seen && (
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>

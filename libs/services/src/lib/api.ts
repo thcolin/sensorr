@@ -386,6 +386,22 @@ export class API {
           body: JSON.stringify(body)
         },
       }),
+      ammendLogs: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `logs`,
+        params: {},
+        init: {
+          ...init,
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        },
+      }),
     },
     jobs: {
       statusProcess: (
