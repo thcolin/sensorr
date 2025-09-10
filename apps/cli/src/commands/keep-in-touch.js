@@ -133,7 +133,7 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
           await api.fetch(uri, params, init)
 
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
-          const plex = Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app)
+          const plex = Plex({ url: 'https://discover.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app)
           let total_results = 0
           results[guest.email] = []
 
