@@ -35,6 +35,8 @@
   "dependencies": {
     "@dicebear/collection": "^7.0.4",
     "@dicebear/core": "^7.0.4",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@emotion/core": "^11.0.0",
     "@material-ui/core": "^4.12.4",
     "@nestjs/common": "^10.3.3",
