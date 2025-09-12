@@ -59,7 +59,7 @@ export class MoviesService {
       for (const release of releases) {
         if (release.proposal) {
           if ((release as ReleaseDTO & { choice: boolean }).choice) {
-            await this.sensorrService.downloadRelease(release, 'enclosure', 'fs')
+            await this.sensorrService.downloadRelease(release, (release.from === 'record' && release.job === 'manual') ? 'enclosure' : 'cache', 'fs')
 
             if (release.job !== 'manual') {
               await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
