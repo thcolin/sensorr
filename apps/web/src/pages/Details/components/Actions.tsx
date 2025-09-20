@@ -57,7 +57,7 @@ const animations = {
 const UIMovieActions = ({
   entity,
   metadata,
-  setMetadata,
+  setMetadata = null,
   ready,
   toggleSensorr,
   palette = null,
@@ -100,6 +100,7 @@ const UIMovieActions = ({
         metadata={metadata}
         ready={ready}
         palette={modePalette}
+        expandable={false}
         expanded={expanded}
         setExpanded={setExpanded}
         setHover={setHover}
@@ -133,6 +134,7 @@ const UITicket = ({
   metadata,
   ready,
   palette,
+  expandable = true,
   expanded,
   setExpanded,
   setHover,
@@ -203,11 +205,11 @@ const UITicket = ({
             </button>
           </span>
           <button
-            title='Edit movie metadata (query terms and years, policy and keep-up-to-date option)'
+            // title='Edit movie metadata (query terms and years, policy and keep-up-to-date option)'
             onClick={() => setExpanded(e => !e)}
             onMouseEnter={() => ready ? setHover(true) : null}
             onMouseLeave={() => ready ? setHover(false) : null}
-            disabled={!ready}
+            disabled={!ready || !expandable}
             sx={{
               ...UITicket.styles.right,
               ':hover:not(:disabled)': {
@@ -384,7 +386,7 @@ const UIPreferences = ({
           height: '6.125em',
           transform: 'rotate(-8deg)',
           transition: 'left 400ms ease-in-out 200ms, top 400ms ease-in-out 200ms, margin 400ms ease-in-out 200ms, transform 400ms ease-in-out 200ms, height 400ms ease-in-out',
-          ...(hover ? { animation: `1s ${animations.shake} 400ms 2` } : {}),
+          // ...(hover ? { animation: `1s ${animations.shake} 400ms 2` } : {}),
           '>div>div': {
             opacity: 0,
             transition: 'opacity 200ms ease-in-out 400ms',

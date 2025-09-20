@@ -55,6 +55,7 @@ UIOption.styles = {
     display: 'flex',
     alignItems: 'center',
     marginY: 8,
+    boxSizing: 'border-box',
   },
   input: {
     variant: 'input.reset',
@@ -73,6 +74,7 @@ UIOption.styles = {
     display: 'block',
     height: '1em',
     width: '1em',
+    boxSizing: 'border-box',
   },
 }
 

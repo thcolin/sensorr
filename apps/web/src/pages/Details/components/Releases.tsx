@@ -51,6 +51,7 @@ UIReleases.styles = {
     flex: 1,
     display: 'flex',
     overflow: 'hidden',
+    marginY: 4,
     '>div': {
       flex: 1,
       display: 'flex',

@@ -1,6 +1,6 @@
 import { Fragment, createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Icon, Warning } from '@sensorr/ui'
-import { filesize } from '@sensorr/utils'
+import { Icon, Warning } from '@sensorr/ui'
+import { filesize, useResponsiveValue } from '@sensorr/utils'
 import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
@@ -11,6 +11,7 @@ import { Sensorr } from '../../../components/Sensorr'
 import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary } from '../Summary'
+import { MovieActions } from '../../Details/components/Actions'
 
 const RecordsContext = createContext([])
 
@@ -29,7 +30,6 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
-  const toggleMetadata = useRef() as any
   const toggleSensorr = useRef() as any
   const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
 
@@ -74,7 +74,6 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   }, [job.job])
 
   useEffect(() => {
-    // console.log((ref.current as any).scrollTop)
     if ((ref.current as any).scrollTop > 400) {
       (ref.current as any).scrollTo({ top: (ref.current as any).scrollTop + 480, behavior: 'instant' })
     }
@@ -151,13 +150,12 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
             </div>
           ) : filtered.length ? (
             <div sx={UIProcessMoviesJob.styles.records}>
-              <MetadataSingleton setToggle={fn => toggleMetadata.current = fn} />
               <SensorrSingleton setToggle={fn => toggleSensorr.current = fn} />
               <ResponsiveVirtualGrid
                 scrollContainer={ref.current}
                 total={filtered.length}
                 viewportRowOffset={8}
-                cell={{ height: device === 'mobile' ? 688 : 480 }}
+                cell={{ height: device === 'mobile' ? 800 : 512 }}
                 child={RecordData}
                 useChildProps={(key) => ({
                   key: (filtered[key.split('-').shift()] as any).movie?.id,
@@ -167,7 +165,6 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                   job: job.job,
                   command: job.meta.command,
                   setMovieMetadata,
-                  toggleMetadata: (e, movie) => toggleMetadata.current(e, movie),
                   toggleSensorr: (e, movie) => toggleSensorr.current(e, movie),
                 }}
               />
@@ -235,24 +232,10 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleMetadata, toggleSensorr, done, error, ...props }) => {
-  // const sensorr = useSensorr()
-  // const query = useMemo(() => sensorr.getQuery(movie, metadata.query), [movie?.id, metadata.query])
-
-  // const values = useMemo(() => ({
-  //   terms: [
-  //     ...(query?._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
-  //     ...(query?.titles || []).filter(title => !(query?._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query?.terms || []).includes(title) })),
-  //     ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
-  //   ],
-  //   years: [
-  //     ...(query?._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.years?.includes(term) })),
-  //     ...(query?.years || []).filter(term => !query?._defaults?.years?.includes(term)).map(term => ({ value: term, label: term })),
-  //   ],
-  // }), [query?._defaults, query?.titles, query])
-
+const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, done, error, ...props }) => {
   const api = useAPI()
   const [logs, setLogs] = useState(null)
+  const mobile = useResponsiveValue([true, false])
 
   const [optimistic, setOptimistic] = useState({ treated, choice })
 
@@ -268,7 +251,7 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   useEffect(() => {
     setLogs(null)
 
-    if (job === 'anonymous' || !done) {
+    if (job === 'anonymous' || !done) {
       return
     }
 
@@ -294,91 +277,38 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   return (
     <div sx={UIRecord.styles.element}>
       <div sx={UIRecord.styles.record}>
-        <div sx={UIRecord.styles.movie}>
-          <Movie entity={movie || {}} />
-          <div sx={UIRecord.styles.buttons}>
-            <Button
-              variant='contain'
-              color='primary'
-              onClick={(e) => toggleSensorr(e, movie)}
-              title={`Search releases for this movie from your indexers`}
-              sx={{
-                flex: 1,
-                borderTopRightRadius: '0px',
-                borderBottomRightRadius: '0px',
-                lineHeight: 'normal',
-              }}
-            >
-              Search for<br/>
-              Releases
-            </Button>
-            <Button
-              variant='contain'
-              color='accent'
-              onClick={(e) => toggleMetadata(e, movie)}
-              title='Edit movie metadata (query terms and years, policy and keep-up-to-date option)'
-              sx={{
-                borderTopLeftRadius: '0px',
-                borderBottomLeftRadius: '0px',
-                paddingRight: 8,
-              }}
-            >
-              <span sx={{ display: 'flex', transform: 'rotate(90deg)' }}>...</span>
-            </Button>
+        <div sx={UIRecord.styles.wrapper}>
+          <div sx={UIRecord.styles.movie}>
+            <Movie entity={movie || {}} />
+            {mobile && (
+              <div sx={UIRecord.styles.metadata}>
+                <Metadata
+                  entity={movie || {}}
+                  metadata={metadata}
+                  setMetadata={(key, value) => setMovieMetadata(movie?.id, key, value)}
+                  help={false}
+                />
+              </div>
+            )}
           </div>
-          {/* <div sx={{ flex: 1 }}>
-            <div sx={UIRecord.styles.input}>
-              <span>Terms</span>
-              <QueryInput
-                direction='column'
-                value={values.terms}
-                onChange={(values) => {
-                  setMovieMetadata(movie?.id, 'query', {
-                    ...metadata.query,
-                    terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                  })
-                }}
-              />
-              <small>Sensorr will search for all selected terms on configured indexers</small>
-            </div>
-            <div sx={{ display: 'flex', '>div': { flex: 1 } }}>
-              <div sx={UIRecord.styles.input}>
-                <span>Years</span>
-                <QueryInput
-                  value={values.years}
-                  onChange={(values) => {
-                    setMovieMetadata(movie?.id, 'query', {
-                      ...metadata.query,
-                      years: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                    })
-                  }}
-                />
-                <small>Sensorr will filter releases with selected years</small>
-              </div>
-              <div sx={UIRecord.styles.input}>
-                <span>Policy</span>
-                <PolicyInput
-                  value={metadata?.policy}
-                  onChange={value => {
-                    setMovieMetadata(movie?.id, 'policy', value)
-                  }}
-                />
-                <small>Sensorr will apply selected policy to sort and select the best release</small>
-              </div>
-            </div>
-            <div sx={UIRecord.styles.search}>
-              <Button
-                variant='contain'
-                color='primary'
-                onClick={(e) => toggleSensorr(e, movie)}
-                sx={{ flex: 1 }}
-              >
-                Search for Releases
-              </Button>
-            </div>
-          </div> */}
+          <div sx={UIRecord.styles.button}>
+            <MovieActions
+              ready={!!metadata?.state && metadata?.state !== 'loading'}
+              entity={movie}
+              metadata={metadata}
+              toggleSensorr={(e) => toggleSensorr(e, movie)}
+            />
+          </div>
         </div>
         <div sx={UIRecord.styles.results}>
+          {!mobile && (
+            <Metadata
+              entity={movie || {}}
+              metadata={metadata}
+              setMetadata={(key, value) => setMovieMetadata(movie?.id, key, value)}
+              help={false}
+            />
+          )}
           {logs === null ? (
             <div sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon value='spinner' />
@@ -445,9 +375,9 @@ UIRecord.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minHeight: ['43em', '30em'],
-    maxHeight: ['43em', '30em'],
-    paddingY: 4,
+    minHeight: ['50em', '32em'],
+    maxHeight: ['50em', '32em'],
+    paddingY: 0,
   },
   record: {
     display: 'flex',
@@ -458,36 +388,36 @@ UIRecord.styles = {
     backgroundColor: 'grayLighter',
     overflow: 'hidden',
   },
-  movie: {
+  wrapper: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: ['center', 'unset'],
-    marginRight: 4,
+    maxWidth: '100%',
+    marginRight: [12, 4],
+    marginBottom: [4, 12],
   },
-  buttons: {
+  metadata: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    fontSize: 5,
+    marginLeft: 4,
+  },
+  movie: {
+    display: 'flex',
+    flexDirection: 'row',
+    maxWidth: '100%',
+  },
+  button: {
     display: 'flex',
     marginX: 4,
-    marginTop: 4,
+    marginTop: 0,
     marginBottom: [12, 4],
+    fontSize: 6,
     zIndex: 1,
   },
-  // input: {
-  //   display: 'flex',
-  //   flexDirection: 'column',
-  //   paddingY: 8,
-  //   paddingX: 2,
-  //   '>span': {
-  //     fontWeight: 'semibold',
-  //     fontSize: 7,
-  //     color: 'gray-600',
-  //   },
-  //   '>small': {
-  //     display: 'block',
-  //     marginTop: 10,
-  //     fontSize: 7,
-  //     color: 'gray-500',
-  //   },
-  // },
   results: {
     flex: 1,
     display: 'flex',
@@ -496,9 +426,7 @@ UIRecord.styles = {
     marginTop: [2, 12],
     overflow: 'hidden',
   },
-  empty: {
-
-  },
+  empty: {},
   release: {
     flexShrink: 0,
     '>div>div': {
@@ -508,11 +436,6 @@ UIRecord.styles = {
       },
     },
   },
-  // search: {
-  //   display: 'flex',
-  //   marginY: 4,
-  //   paddingX: 2,
-  // },
 }
 
 const Record = memo(UIRecord)
@@ -713,18 +636,18 @@ const MetadataSingleton = ({ setToggle, ...props }) => {
     <Metadata
       entity={entity || {}}
       metadata={metadata}
-      onChange={setMetadata}
+      setMetadata={setMetadata}
       loading={loading}
-      components={{
-        toggle: ({ toggleOpen }) => {
-          setToggle((e, entity) => {
-            setEntity(entity)
-            toggleOpen(e)
-          })
+      // components={{
+      //   toggle: ({ toggleOpen }) => {
+      //     setToggle((e, entity) => {
+      //       setEntity(entity)
+      //       toggleOpen(e)
+      //     })
 
-          return null
-        }
-      }}
+      //     return null
+      //   }
+      // }}
     />
   )
 }

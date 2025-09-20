@@ -136,14 +136,22 @@ export const Provider = ({ ...props }) => {
     })
 
     if (ids.length === 1) {
-      return promise
-    }
+      if (!['query', 'policy', 'refine', 'shrink'].includes(key)) {
+        return
+      }
 
-    await toast.promise(promise, {
-      loading: `Updating **${ids.length}** movies metadata...`,
-      success: () => `Updated **${ids.length}** movies metadata`,
-      error: () => `Error while updating **${ids.length}** movies metadata`,
-    })
+      await toast.promise(promise, {
+        loading: `Updating movie metadata...`,
+        success: () => `Movie metadata updated`,
+        error: () => `Error while updating movie metadata`,
+      })
+    } else {
+      await toast.promise(promise, {
+        loading: `Updating **${ids.length}** movies metadata...`,
+        success: () => `Updated **${ids.length}** movies metadata`,
+        error: () => `Error while updating **${ids.length}** movies metadata`,
+      })
+    }
   }, [setMetadata])
 
   const enhanceMovieMetadata = useCallback((entity, metadata) => ({

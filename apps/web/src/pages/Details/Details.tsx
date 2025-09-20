@@ -9,9 +9,10 @@ import { Poster } from './components/Poster'
 import { Overview } from './components/Overview'
 import { Skeleton } from './components/Skeleton'
 import { Tabs } from '../../components/Entities/Tabs'
-import { MovieActions } from './components/Actions'
+import { MovieActions, OptionInput } from './components/Actions'
 import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
+import { Metadata } from './components/Metadata'
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -35,6 +36,7 @@ const UIDetails = ({
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
+  const [metadataState, setMetadataState] = useHistoryState('metadata', ['wished', 'archived', 'missing'].includes(state))
   const [meaningfulState, setMeaningfulState] = useHistoryState('meaningful', false)
 
   const toggleSensorr = useRef() as any
@@ -111,12 +113,24 @@ const UIDetails = ({
               {behavior === 'movie' && (
                 <React.Fragment>
                   <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                    <h4 sx={UIDetails.styles.subtitle}>
-                      {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
-                      {!!entity.original_title && !!meaningful.year && (<span> </span>)}
-                      {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
-                    </h4>
-                  </Skeleton>
+                    <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
+                      <summary>
+                        <span />
+                        <h4 sx={UIDetails.styles.subtitle}>
+                          {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
+                          {!!entity.original_title && !!meaningful.year && (<span> </span>)}
+                          {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+                        </h4>
+                      </summary>
+                      <div>
+                        <Metadata
+                          entity={entity || {}}
+                          metadata={metadata}
+                          setMetadata={setMetadata}
+                        />
+                      </div>
+                    </details>
+                    </Skeleton>
                   <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
                     <div sx={UIDetails.styles.externals}>
                       <div>
@@ -361,6 +375,29 @@ UIDetails.styles = {
       fontWeight: 'strong',
     },
   },
+  metadata: {
+    '>summary': {
+      position: 'relative',
+      lineHeight: 'space',
+      '>span': {
+        position: 'absolute',
+        width: '1em',
+        height: '100%',
+        left: '0em',
+        margin: '0em',
+        cursor: 'pointer',
+      },
+      '>h4': {
+        display: 'inline-block',
+        marginLeft: 8,
+      },
+    },
+    '>div': {
+      borderBottom: '1px solid',
+      borderColor: 'grayLight',
+      paddingTop: [4, 8],
+    },
+  },
   details: {
     '>summary': {
       position: 'relative',
@@ -386,7 +423,7 @@ UIDetails.styles = {
         lineHeight: 'body',
         marginX: 5,
         marginBottom: 8,
-      }
+      },
     },
   },
   choices: {

@@ -373,11 +373,14 @@ UIPoster.styles = {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
+    '>a': {
+      lineHeight: 'normal',
+    },
   },
   subtitle: {
     display: 'flex',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
     color: 'grayDarker',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
