@@ -333,7 +333,16 @@ export class MoviesService {
     ).pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
       mergeMap((change: any) => this.movieModel.find({ 'id': { $eq: change?.documentKey?._id } }, METADATA_FIELDS).lean().exec()),
-      map(metadata => ({ data: metadata.reduce((acc, curr) => ({ ...acc, [curr._id]: curr }), {}) } as MessageEvent)),
+      map(metadata => ({
+        data: metadata.reduce((acc, curr) => ({
+          ...acc,
+          [curr._id]: {
+            ...curr,
+            shrink: typeof curr.shrink === 'boolean' ? curr.shrink : true,
+            refine: typeof curr.refine === 'boolean' ? curr.refine : true,
+          },
+        }), {}),
+      } as MessageEvent)),
       tap(() => this.logger.log(`ListenMetadata, message=""`)),
     )
   }

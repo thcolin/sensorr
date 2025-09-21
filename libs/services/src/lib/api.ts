@@ -37,6 +37,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      deleteSubscription: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'notifications/subscribe',
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
     },
     movies: {
       postMovie: (

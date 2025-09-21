@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Sse } from '@nestjs/common'
+import { Body, Controller, Delete, Post, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { NotificationsService } from './notifications.service'
 import { SubscriptionDTO } from './subscription.dto'
@@ -19,5 +19,10 @@ export class NotificationsController {
   @Post('/subscribe')
   async subscribeNotifications(@Body() subscription: SubscriptionDTO) {
     return this.notificationsService.subscribeNotifications(subscription)
+  }
+
+  @Delete('/subscribe')
+  async deleteNotificationsSubscription(@Body() subscription: SubscriptionDTO) {
+    return this.notificationsService.deleteNotificationsSubscription(subscription)
   }
 }

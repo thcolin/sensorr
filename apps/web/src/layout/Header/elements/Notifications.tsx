@@ -16,7 +16,7 @@ const UINotifications = ({ ...props }) => {
   const ref = useRef()
   const [pointerRef, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
-  const { notifications, loading, dismissNotifications, subscribable, subscribed, subscribeNotifications } = useNotificationsContext() as any
+  const { notifications, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
   const [filters, setFilters] = useState([])
   const filtered = useMemo(() => notifications.filter(notification => !filters.length || filters.includes(notification.meta?.command)), [notifications, filters])
@@ -40,9 +40,16 @@ const UINotifications = ({ ...props }) => {
               <span>
                 <span>
                   <h2>Notifications</h2>
+                  <button
+                    title={!subscribable ? 'Push Notifications unavailable' : subscribed ? 'Disable Push Notifications' : 'Enable Push Notifications'}
+                    onClick={(e) => toggleNotificationsSubscription(e)}
+                    disabled={!subscribable}
+                  >
+                    {subscribed ? '🔔' : '🔕'}
+                  </button>
                   {!!unseen.length && <span>{unseen.length}</span>}
                 </span>
-                <button onClick={() => dismissNotifications(unseen)}>
+                <button onClick={() => dismissNotifications(unseen)} disabled={!unseen.length}>
                   Mark all as read
                 </button>
               </span>
@@ -51,13 +58,6 @@ const UINotifications = ({ ...props }) => {
               </button>
             </span>
             <div ref={ref} sx={UINotifications.styles.container}>
-              {subscribable && (
-                <div sx={UINotifications.styles.push}>
-                  <button onClick={(e) => subscribeNotifications(e)}>
-                    {subscribed ? '🔕' : '🔔'} <span>{subscribed ? 'Disable' : 'Enable'} Push Notifications</span>
-                  </button>
-                </div>
-              )}
               <div sx={UINotifications.styles.filters}>
                 <div sx={{ opacity: !filters.length || filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
                   <span>📹</span>
@@ -162,11 +162,22 @@ UINotifications.styles = {
             backgroundColor: 'error',
             borderRadius: '1em',
           },
+          '>button': {
+            variant: 'button.reset',
+            marginLeft: 8,
+            fontSize: 1,
+            alignSelf: 'center',
+            ':disabled': {
+              opacity: 0.8,
+            },
+          },
         },
         '>button': {
           variant: 'button.reset',
           fontSize: 6,
-          opacity: 0.8,
+          ':disabled': {
+            opacity: 0.8,
+          },
         },
       },
       '>button': {

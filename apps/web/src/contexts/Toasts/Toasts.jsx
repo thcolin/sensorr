@@ -6,15 +6,15 @@ import { Icon } from '@sensorr/ui'
 import { useDeviceContext } from '../Device/Device'
 
 const UIToasts = ({ ...props }) => {
-  const { device } = useDeviceContext()
+  const { device, pwa } = useDeviceContext()
   const { theme } = useThemeUI()
 
   return (
     <Toaster
-      position={device === 'mobile' ? 'top-center' : 'bottom-right'}
+      position={device === 'mobile' ? 'bottom-center' : 'bottom-right'}
       reverseOrder={false}
       gutter={8}
-      containerStyle={device === 'mobile' ? { marginTop: '4em' } : {}}
+      containerStyle={device === 'mobile' && pwa ? { marginBottom: 'calc(2.5em + env(safe-area-inset-bottom))' } : {}}
       toastOptions={{
         // duration: 4000,
         blank: { duration: 4000 },

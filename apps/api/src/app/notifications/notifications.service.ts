@@ -70,6 +70,11 @@ export class NotificationsService {
     return this.subscriptionModel.create(subscription)
   }
 
+  async deleteNotificationsSubscription(subscription: SubscriptionDTO) {
+    this.logger.log(`SubscribeNotifications "${subscription.endpoint}"`)
+    return this.subscriptionModel.findOneAndDelete({ endpoint: subscription.endpoint })
+  }
+
   async dispatchWebPushNotifications() {
     if (!process.env.NX_SENSORR_VAPID_PUBLIC_KEY) {
       this.logger.log(`DispatchWebPushNotifications (disabled)`)
@@ -136,7 +141,8 @@ export class NotificationsService {
               return from(webpush.sendNotification(subscription, JSON.stringify(data))).pipe(
                 catchError((err) => {
                   this.logger.error(`${err}, endpoint=${subscription.endpoint}`)
-                  return this.subscriptionModel.findOneAndDelete({ endpoint: subscription.endpoint })
+                  return Promise.resolve(true)
+                  // return this.subscriptionModel.findOneAndDelete({ endpoint: subscription.endpoint })
                 }),
               )
             }),

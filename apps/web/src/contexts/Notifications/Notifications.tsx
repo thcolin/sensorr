@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import ReconnectingEventSource from 'reconnecting-eventsource'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '../Auth/Auth'
 import { useConfigContext } from '../Config/Config'
 import { useAPI } from '../../store/api'
@@ -28,9 +29,9 @@ export const Provider = ({ ...props }) => {
   const [subscribed, setSubscribed] = useState(null)
   const [notifications, setNotifications] = useState([])
 
-  const subscribeNotifications = useCallback((e) => {
+  const toggleNotificationsSubscription = useCallback(async (e) => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready
+      await toast.promise(navigator.serviceWorker.ready
         .then((registration) => {
           if (Notification.permission === 'granted') {
             setSubscribed(true)
@@ -41,33 +42,45 @@ export const Provider = ({ ...props }) => {
             Notification.requestPermission((permission) => {
               if (permission !== 'granted') {
                 setSubscribed(false)
-                return reject('Notifications disabled by user')
+                return reject('Notifications disabled, allow permission from your navigator or system settings')
               }
 
-              setSubscribed(true)
               return resolve(registration)
             })
           })
         })
-        .then((registration: ServiceWorkerRegistration) => {
-          return registration.pushManager.getSubscription()
-            .then((subscription) => {
-              if(!subscription){
-                registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(config.get('vapidPublicKey')) })
-                  .then((subscription) => {
-                    const { uri, params, init } = api.query.notifications.postSubscription({ body: subscription })
-                    return api.fetch(uri, params, init)
-                  })
-              }
-            })
-            .then((res) => {
-              console.log('Notifications subscription success')
-            })
-            .catch((err) => {
-              console.warn('Notifications subscription failed:', err)
-            })
-        })
-        .catch((err) => console.warn(err))
+        .then((registration: ServiceWorkerRegistration) => registration.pushManager.getSubscription()
+          .then((subscription) => {
+            if (subscription){
+              return subscription.unsubscribe().then((successful) => {
+                const { uri, params, init } = api.query.notifications.deleteSubscription({ body: subscription })
+                return api.fetch(uri, params, init)
+              }).then(() => {
+                setSubscribed(false)
+                return { subscribed: false }
+              })
+            } else {
+              return registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlB64ToUint8Array(config.get('vapidPublicKey')),
+              }).then((subscription) => {
+                const { uri, params, init } = api.query.notifications.postSubscription({ body: subscription })
+                return api.fetch(uri, params, init)
+              }).then(() => {
+                setSubscribed(true)
+                return { subscribed: true }
+              })
+            }
+          })
+        ),
+      {
+        loading: `Handling Push Notifications...`,
+        success: (data) => `Push Notifications ${data.subscribed ? 'enabled' : 'disabled'}`,
+        error: (err) => {
+          console.warn(err)
+          return typeof err === 'string' ? err : `Error during Push Notifications subscription`
+        },
+      })
     }
   }, [config])
 
@@ -137,7 +150,7 @@ export const Provider = ({ ...props }) => {
         subscribable,
         subscribed,
         notifications: sorted,
-        subscribeNotifications,
+        toggleNotificationsSubscription,
         dismissNotifications,
         answerNotification,
       }}
