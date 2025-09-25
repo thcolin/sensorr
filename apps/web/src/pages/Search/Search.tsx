@@ -84,13 +84,13 @@ export const Search = (resource) => compose(
                 }}
                 sx={{
                   variant: 'input.reset',
+                  height: '100%',
+                  width: '100%',
                   marginX: [12, 4],
-                  maxWidth: '30rem',
-                  paddingX: 8,
-                  paddingBottom: 10,
+                  maxWidth: '60rem',
                   fontSize: 4,
-                  borderBottom: '1px solid',
-                  borderColor: 'whitePure',
+                  textAlign: 'center',
+                  backgroundColor: 'accent',
                 }}
               />
             </div>
