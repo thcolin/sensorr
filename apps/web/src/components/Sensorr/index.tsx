@@ -248,7 +248,6 @@ const UISensorr = compose(
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, ...props }) => {
   const { setMovieMetadata, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
-  console.log(metadata)
   const statistics = useMemo(() => ({
     lowest: {
       score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,

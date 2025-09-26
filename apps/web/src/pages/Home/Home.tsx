@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies } from '../../components/Entities/Movies'
+import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
@@ -34,20 +34,37 @@ const Home = ({ ...props }) => {
           subtitle: '',
         }}
       />
-      <ArchivedMovies
-        id='archived'
-        label={t('items.movies.archived.label')}
-        // title={t('items.movies.archived.title')}
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        hide={true}
-        more={{
-          title: t('items.movies.archived.more'),
-          to: '/movie/library',
-          state: { controls: { state: ['archived'] } },
-        }}
-      />
+      {device === 'mobile' ? (
+        <LibraryMovies
+          id='library'
+          label={t('items.movies.library.label')}
+          // title={t('items.movies.archived.title')}
+          display='row'
+          child={MovieWithCreditsAndReviews}
+          limit={20}
+          hide={true}
+          more={{
+            title: t('items.movies.library.more'),
+            to: '/movie/library',
+            // state: { controls: { state: ['archived'] } },
+          }}
+        />
+      ) : (
+        <ArchivedMovies
+          id='archived'
+          label={t('items.movies.archived.label')}
+          // title={t('items.movies.archived.title')}
+          display='row'
+          child={MovieWithCreditsAndReviews}
+          limit={20}
+          hide={true}
+          more={{
+            title: t('items.movies.archived.more'),
+            to: '/movie/library',
+            state: { controls: { state: ['archived'] } },
+          }}
+        />
+      )}
       <CalendarMovies
         id='calendar'
         label={t('items.movies.calendar.label')}

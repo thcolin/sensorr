@@ -72,33 +72,38 @@ const UIPoster = ({
       onMouseEnter={loadExternals}
       sx={{
         ...UIPoster.styles.element,
-        ...(selected !== null ? {
-          ':hover': {
+        opacity: ready ? opacity : 1,
+        ':hover': {
+          zIndex: 5,
+          ...(selected !== null ? {
             '>div:first-of-type': {
               '>div:first-of-type': {
-              right: ['2.75em', '3.875em !important'],
+                left: ['-0.75em', '0.75em !important'],
               },
             },
-          },
-        } : {}),
-        opacity: ready ? opacity : 1,
+          } : {}),
+        },
       }}
     >
       <div sx={UIPoster.styles.wrapper}>
         <div
           sx={{
             ...UIPoster.styles.left,
-            right: ['2.75em', (selected || selectedVisible) ? '3.875em' : '6em'],
+            left: ['-0.75em', (selected || selectedVisible) ? '0.5em' : '-1.5em'],
             opacity: ready ? 1 : 0,
             transition: [
               ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
-              'right 150ms ease-in-out',
+              'left 150ms ease-in-out, right 150ms ease-in-out',
             ].join(', '),
-            ...(!badges?.focus?.component ? {
+            ...((!badges?.focus?.component || !badges?.reviews?.component) ? {
               '>div>span>span': {
-                minWidth: ['6.5em', '6em'],
+                minWidth: ['4.7em', '5.5em'],
               },
             } : {}),
+            ':hover + div': {
+              opacity: 0,
+              transition: 'opacity 200ms ease-in-out',
+            },
           }}
         >
           {selected !== null && (
@@ -108,13 +113,15 @@ const UIPoster = ({
                 left: '1em',
                 zIndex: 1,
                 backgroundColor: selected ? 'primary' : 'gray',
-                width: '1.5em',
-                height: '1.5em',
+                width: '2em',
+                height: '2em',
                 borderRadius: '2em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: '0.25em',
+                borderStyle: 'solid',
+                borderWidth: '0.25em',
+                borderColor: 'grayLightest',
               }}
             >
               <Option
@@ -133,10 +140,16 @@ const UIPoster = ({
                 ...UIPoster.styles.focus,
                 zIndex: 2,
                 ...(selected !== null ? {} : {}),
-                ...(badges?.focus?.component ? {
+                ...((badges?.reviews?.component && badges?.focus?.component) ? {
+                  ':not(:hover)>span:first-of-type': {
+                    transition: 'visibility ease 0ms 200ms',
+                  },
+                  ':not(:hover)>span:last-of-type': {
+                    transition: 'visibility ease 0ms 200ms',
+                  },
                   ':hover': {
                     '>span:first-of-type': {
-                      visibility: 'visible'
+                      visibility: 'visible',
                     },
                     '>span:last-of-type': {
                       visibility: 'hidden',
@@ -145,11 +158,13 @@ const UIPoster = ({
                 } : {}),
               }}
             >
-              <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
-                <badges.reviews.component {...badges?.reviews?.props} />
-              </span>
+              {badges?.reviews?.component && (
+                <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
+                  <badges.reviews.component {...badges?.reviews?.props} sx={{ backgroundColor: palette?.color || 'gray', borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }} />
+                </span>
+              )}
               {badges?.focus?.component && (
-                <span sx={{ display: 'block', marginTop: '-1.5em' }}>
+                <span sx={{ display: 'block', marginTop: badges?.reviews?.component ? ['-1.75em', '-2em'] : 12, borderRadius: '2em', borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }}>
                   <badges.focus.component {...badges?.focus?.props} />
                 </span>
               )}
@@ -201,24 +216,24 @@ const UIPoster = ({
               onReady={onPosterReady}
               sx={{
                 transition: `background-color 800ms ease-in-out, color 800ms ease-in-out, mask 100ms ease-in-out ${ready ? '400ms' : '200ms'}`,
-                maskPosition: 'center center',
-                maskSize: ready ? '100%' : '150%',
-                maskRepeat: 'no-repeat',
-                maskImage: !badges?.state?.component ? 'unset' : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 480"><path d="${(
-                  (device === 'mobile') ? (
-                    (badges?.reviews?.component) ? (
-                      (badges?.proposal?.component) ? 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V106.7c0,0-29.3-14.1-23.2-57.1 c0,0-24.8-12.5-23.3-49.6' : 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V58.5c0,0-46.8-5.2-46.4-58.5'
-                    ) : (
-                      (badges?.proposal?.component) ? 'M0,0v480h320V106.7c0,0-29.3-14.1-23.2-57.1c0,0-24.8-12.5-23.3-49.6H0z' : 'M0,0v480h320V60c0,0-49.3-9.5-46.4-60H0z'
-                    )
-                  ) : (
-                    (badges?.reviews?.component) ? (
-                      (badges?.proposal?.component) ? 'M0 32.1h97.2s27-2.2 28.9-32.1H281s-6.9 27.9 17.9 42c0 0-13.2 34.4 21.1 45v393H0V32.1z' : 'M0,32.1h97.2c0,0,27-2.2,28.9-32.1H281c0,0-7.5,44.1,39,48v432H0V32.1z'
-                    ) : (
-                      (badges?.proposal?.component) ? 'M0,0c0,0,69.2,0,126.1,0S281,0,281,0s-6.9,27.9,17.9,42c0,0-13.2,34.4,21.1,45v393H0V0z' : 'M0,0h281c0,0-7.5,44.1,39,48v432H0V0z'
-                    )
-                  )
-                )}"></path></svg>')`,
+                // maskPosition: 'center center',
+                // maskSize: ready ? '100%' : '150%',
+                // maskRepeat: 'no-repeat',
+                // maskImage: !badges?.state?.component ? 'unset' : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 480"><path d="${(
+                //   (device === 'mobile') ? (
+                //     (badges?.reviews?.component) ? (
+                //       (badges?.proposal?.component) ? 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V106.7c0,0-29.3-14.1-23.2-57.1 c0,0-24.8-12.5-23.3-49.6' : 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V58.5c0,0-46.8-5.2-46.4-58.5'
+                //     ) : (
+                //       (badges?.proposal?.component) ? 'M0,0v480h320V106.7c0,0-29.3-14.1-23.2-57.1c0,0-24.8-12.5-23.3-49.6H0z' : 'M0,0v480h320V60c0,0-49.3-9.5-46.4-60H0z'
+                //     )
+                //   ) : (
+                //     (badges?.reviews?.component) ? (
+                //       (badges?.proposal?.component) ? 'M0 32.1h97.2s27-2.2 28.9-32.1H281s-6.9 27.9 17.9 42c0 0-13.2 34.4 21.1 45v393H0V32.1z' : 'M0,32.1h97.2c0,0,27-2.2,28.9-32.1H281c0,0-7.5,44.1,39,48v432H0V32.1z'
+                //     ) : (
+                //       (badges?.proposal?.component) ? 'M0,0c0,0,69.2,0,126.1,0S281,0,281,0s-6.9,27.9,17.9,42c0,0-13.2,34.4,21.1,45v393H0V0z' : 'M0,0h281c0,0-7.5,44.1,39,48v432H0V0z'
+                //     )
+                //   )
+                // )}"></path></svg>')`,
               }}
             />
           </InteractiveLongPressLink>
@@ -299,7 +314,7 @@ UIPoster.styles = {
     alignItems: 'flex-end',
     top: '-1em',
     fontSize: [5, 4],
-    zIndex: 2,
+    zIndex: 3,
   },
   right: {
     position: 'absolute',
@@ -331,19 +346,19 @@ UIPoster.styles = {
   focus: {
     position: 'relative',
     minWidth: ['4.5em', 'auto'],
-    borderRadius: '2em',
+  },
+  state: {
+    borderRadius: '50%',
     borderStyle: 'solid',
     borderWidth: '0.25em',
     borderColor: 'grayLightest',
   },
-  state: {
-    padding: 10,
-    borderRadius: '50%',
-  },
   proposal: {
-    padding: 10,
     marginTop: '-0.75em',
     borderRadius: '50%',
+    borderStyle: 'solid',
+    borderWidth: '0.25em',
+    borderColor: 'grayLightest',
   },
   link: {
     display: 'flex',

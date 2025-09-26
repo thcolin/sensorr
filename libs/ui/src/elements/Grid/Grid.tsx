@@ -4,7 +4,7 @@ import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 
 const withGridItemContainer = () => (WrappedComponent) => {
   const withGridItemContainer = ({ style, index, readyInViewport, scrolling, ...props }) => (
-    <div style={{ ...UIGrid.styles.entity, ...style }}>
+    <div sx={{ ...UIGrid.styles.entity, ...style, ':hover': { zIndex: 1 } }}>
       <WrappedComponent {...props} index={index} placeholder={!readyInViewport} />
     </div>
   )

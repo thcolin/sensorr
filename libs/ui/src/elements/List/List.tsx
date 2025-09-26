@@ -8,9 +8,15 @@ import { Icon } from '../../atoms/Icon/Icon'
 import { Link, LinkProps } from '../../atoms/Link/Link'
 
 const withGridItemContainer = () => (WrappedComponent) => {
-  const withGridItemContainer = ({ style, index, readyInViewport, scrolling, ...props }) => (
-    <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
-      <WrappedComponent {...props} index={index} />
+  const withGridItemContainer = ({ style, index, readyInViewport, scrolling, more, moreIndex, total, ...props }) => (
+    <div sx={{ display: 'flex', justifyContent: 'center', ...style, ':focus-within': { zIndex: 1 } }}>
+      {moreIndex === index ? (
+        <div sx={UIList.styles.row.more}>
+          <More {...more} />
+        </div>
+      ) : (
+        <WrappedComponent {...props} index={index} />
+      )}
     </div>
   )
 
@@ -91,11 +97,11 @@ const UIList = ({
       {override || (
         (mobile && virtual && display === 'row') ? (
           <ResponsiveVirtualGrid
-            total={length}
-            cell={{ height: 210, width: 120 }}
+            total={length + 1}
+            cell={{ height: 210, width: 130 }}
             onRender={onMore || null}
             child={WrappedChild}
-            childProps={childProps}
+            childProps={{ ...childProps, more, moreIndex: length }}
             viewportOffset={2}
             scrollContainer={ref.current}
             scrollDirection={'horizontal'}

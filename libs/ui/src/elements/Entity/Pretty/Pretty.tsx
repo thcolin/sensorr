@@ -125,6 +125,7 @@ UIPretty.styles = {
     left: '-2rem',
     opacity: 0,
     transition: 'opacity 400ms ease-in-out',
+    zIndex: 6,
   },
 }
 
@@ -159,7 +160,11 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
         )}
       </div>
       <div sx={UIAbout.styles.badges}>
-        {badges?.reviews?.component && <badges.reviews.component {...badges?.reviews?.props} palette={palette} />}
+        {badges?.reviews?.component && (
+          <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
+            <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
+          </div>
+        )}
         {badges?.guests?.component && (
           <div sx={UIAbout.styles.guests}>
             <badges.guests.component {...badges?.guests?.props} />
@@ -223,6 +228,7 @@ UIAbout.styles = {
   guests: {
     fontSize: 9,
     marginLeft: 6,
+    transition: 'opacity ease-in-out 200ms 200ms',
   },
   overview: {
     flex: 1,
