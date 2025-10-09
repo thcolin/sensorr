@@ -14849,6 +14849,16 @@ ospath@^1.2.2:
   resolved "https://registry.yarnpkg.com/ospath/-/ospath-1.2.2.tgz#1276639774a3f8ef2572f7fe4280e0ea4550c07b"
   integrity sha512-o6E5qJV5zkAbIDNhGSIlyOhScKXgQrSRMilfph0clDfM0nEnBOlKlH4sWDmG95BW/CvwNz0vmm7dJVtU2KlMiA==
 
+overlayscrollbars-react@^0.5.6:
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/overlayscrollbars-react/-/overlayscrollbars-react-0.5.6.tgz#e9779f9fc2c1a3288570a45c83f8e42518bfb8c1"
+  integrity sha512-E5To04bL5brn9GVCZ36SnfGanxa2I2MDkWoa4Cjo5wol7l+diAgi4DBc983V7l2nOk/OLJ6Feg4kySspQEGDBw==
+
+overlayscrollbars@^2.12.0:
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/overlayscrollbars/-/overlayscrollbars-2.12.0.tgz#b6447716246cb62a32a43193b354bd423a85fa21"
+  integrity sha512-mWJ5MOkcZ/ljHwfLw8+bN0V9ziGCoNoqULcp994j5DTGNQvnkWKWkA7rnO29Kyew5AoHxUnJ4Ndqfcl0HSQjXg==
+
 own-keys@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/own-keys/-/own-keys-1.0.1.tgz#e4006910a2bf913585289676eebd6f390cf51358"

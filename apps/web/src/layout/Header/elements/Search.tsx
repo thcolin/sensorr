@@ -205,6 +205,7 @@ History.styles = {
       margin: 12,
       padding: 12,
       overflowY: 'auto',
+      overflowX: 'hidden',
       '>li': {
         display: 'flex',
         alignItems: 'center',
@@ -401,6 +402,8 @@ Results.styles = {
     width: '100vw',
     backgroundColor: 'grayLightest',
     overflowY: 'auto',
+    overflowX: 'hidden',
+    scrollbarGutter: 'stable both-edges'
   },
   wrapper: {
     flex: 1,

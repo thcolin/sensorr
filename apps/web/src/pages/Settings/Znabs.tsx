@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
+import Body from '../../layout/Body/Body'
 
 const Znabs = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
@@ -25,36 +26,38 @@ const Znabs = ({ ...props }) => {
   }, [znabs.append, znab.reset])
 
   return (
-    <section>
-      <article>
-        <h2>Indexers</h2>
-        <p>Sensorr use <strong>Indexer Proxy</strong> (like <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer'>Jackett</a> and <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer'>Prowlarr</a>) which offers a standardized API (<a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer'>Torznab</a>) to search for releases on your favorite torrent trackers or usenest indexers, add and configure indexers you want to use</p>
-        <form onSubmit={znab.handleSubmit(onAppend)}>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
-            <ZnabSettings form={znab} behavior='create' />
-          </div>
-        </form>
-        <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingBottom: 8, lineHeight: '1 !important' } }}>
-          <li>
-            <small><strong>Jackett</strong>, use <code>Torznab Feed</code> of your favorite indexers and your <code>API Key</code> displayed in your home page</small>
-          </li>
-          <li>
-            <small><strong>Prowlarr</strong>, use <code>Torznab Url</code> of your favorite indexers and your <code>API Key</code> from <code>Settings &#x3E; General &#x3E; Security</code> section</small>
-          </li>
-        </ul>
-        <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-        <form onSubmit={form.handleSubmit(onSave)}>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
-            {znabs.fields.map((znab: any, index) => (
-              <ZnabSettings key={znab.id} form={form} prefix={`znabs[${index}]`} index={index} remove={znabs.remove} />
-            ))}
-          </div>
-          <div sx={{ display: 'flex', marginTop: 4 }}>
-            <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
-          </div>
-        </form>
-      </article>
-    </section>
+    <Body>
+      <section>
+        <article>
+          <h2>Indexers</h2>
+          <p>Sensorr use <strong>Indexer Proxy</strong> (like <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer'>Jackett</a> and <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer'>Prowlarr</a>) which offers a standardized API (<a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer'>Torznab</a>) to search for releases on your favorite torrent trackers or usenest indexers, add and configure indexers you want to use</p>
+          <form onSubmit={znab.handleSubmit(onAppend)}>
+            <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
+              <ZnabSettings form={znab} behavior='create' />
+            </div>
+          </form>
+          <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingBottom: 8, lineHeight: '1 !important' } }}>
+            <li>
+              <small><strong>Jackett</strong>, use <code>Torznab Feed</code> of your favorite indexers and your <code>API Key</code> displayed in your home page</small>
+            </li>
+            <li>
+              <small><strong>Prowlarr</strong>, use <code>Torznab Url</code> of your favorite indexers and your <code>API Key</code> from <code>Settings &#x3E; General &#x3E; Security</code> section</small>
+            </li>
+          </ul>
+          <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
+          <form onSubmit={form.handleSubmit(onSave)}>
+            <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
+              {znabs.fields.map((znab: any, index) => (
+                <ZnabSettings key={znab.id} form={form} prefix={`znabs[${index}]`} index={index} remove={znabs.remove} />
+              ))}
+            </div>
+            <div sx={{ display: 'flex', marginTop: 4 }}>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </Body>
   )
 }
 
@@ -391,6 +394,7 @@ ZnabSettings.styles = {
     fontFamily: 'monospace',
     fontSize: 5,
     overflowX: 'auto',
+    overflowY: 'hidden',
     whiteSpace: 'nowrap',
   },
 }

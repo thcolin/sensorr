@@ -16,6 +16,7 @@ import { ShrinkJob, summary as summaryShrink } from './Job/Shrink'
 import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
+import Body from '../../layout/Body/Body'
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -58,54 +59,60 @@ const UIJobs = ({ controls = null, ...props }) => {
     return () => eventSource.close()
   }, [job, jobs])
 
+  if (!loading && !jobs.length) {
+    return (
+      <Body>
+        <section sx={UIJobs.styles.element}>
+          <div sx={UIJobs.styles.placeholder}>
+            <Warning
+              emoji="🏗️"
+              title="No jobs yet"
+              subtitle="Jobs start everyday automatically, but you can start one manually from Settings"
+            />
+          </div>
+        </section>
+      </Body>
+    )
+  }
+
   return (
     <section sx={UIJobs.styles.element}>
-      {(!loading && !jobs.length) ? (
-        <div sx={UIJobs.styles.placeholder}>
-          <Warning
-            emoji="🏗️"
-            title="No jobs yet"
-            subtitle="Jobs start everyday automatically, but you can start one manually from Settings"
-          />
+      <Sidebar loading={loading} jobs={jobs} job={job} />
+      <Body>
+        <div sx={UIJobs.styles.content}>
+          {loading ? (
+            <div sx={UIJobs.styles.placeholder}>
+              <Warning
+                emoji="🏗️"
+                title="Loading jobs"
+                subtitle="Please wait a few moments..."
+              />
+            </div>
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'record' ? (
+            <RecordJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'refine' ? (
+            <RefineJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'shrink' ? (
+            <ShrinkJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'refresh' ? (
+            <RefreshJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'sync' ? (
+            <SyncJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'keep-in-touch' ? (
+            <KeepInTouchJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'migrate' ? (
+            <MigrateJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : (
+            <div sx={UIJobs.styles.placeholder}>
+              <Warning
+                emoji="🏗️"
+                title="Setup job"
+                subtitle="Please wait a few moments..."
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <Fragment>
-          <Sidebar loading={loading} jobs={jobs} job={job} />
-          <div sx={UIJobs.styles.content}>
-            {loading ? (
-              <div sx={UIJobs.styles.placeholder}>
-                <Warning
-                  emoji="🏗️"
-                  title="Loading jobs"
-                  subtitle="Please wait a few moments..."
-                />
-              </div>
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'record' ? (
-              <RecordJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'refine' ? (
-              <RefineJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'shrink' ? (
-              <ShrinkJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'refresh' ? (
-              <RefreshJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'sync' ? (
-              <SyncJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'keep-in-touch' ? (
-              <KeepInTouchJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : jobs.find(j => j.job === job)?.meta?.command === 'migrate' ? (
-              <MigrateJob job={jobs.find(j => j.job === job)} logs={logs} />
-            ) : (
-              <div sx={UIJobs.styles.placeholder}>
-                <Warning
-                  emoji="🏗️"
-                  title="Setup job"
-                  subtitle="Please wait a few moments..."
-                />
-              </div>
-            )}
-          </div>
-        </Fragment>
-      )}
+      </Body>
     </section>
   )
 }
@@ -226,38 +233,40 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
               <code>keep-in-touch</code>
             </div>
           </div>
-          {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
-            <Fragment key={distance}>
-              <h6>{distance}</h6>
-              <div sx={{ paddingX: 2 }}>
-                {jobs.map(j => (
-                  <Job
-                    key={j.job}
-                    emoji={{
-                      'sync': '🔗',
-                      'refresh': '🔌',
-                      'record': '📹',
-                      'refine': '✨',
-                      'shrink': '✂️',
-                      'keep-in-touch': '🍻',
-                      'migrate': '🚚',
-                    }[j.meta.command]}
-                    selected={j.job === job}
-                    {...j}
-                    summary={({
-                      'sync': summarySync,
-                      'refresh': summaryRefresh,
-                      'record': summaryRecord,
-                      'refine': summaryRefine,
-                      'shrink': summaryShrink,
-                      'keep-in-touch': summaryKeepInTouch,
-                      'migrate': summaryMigrate,
-                    }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}
-                  />
-                ))}
-              </div>
-            </Fragment>
-          ))}
+          <div sx={UISidebar.styles.jobs}>
+            {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
+              <Fragment key={distance}>
+                <h6>{distance}</h6>
+                <div sx={{ paddingX: 2 }}>
+                  {jobs.map(j => (
+                    <Job
+                      key={j.job}
+                      emoji={{
+                        'sync': '🔗',
+                        'refresh': '🔌',
+                        'record': '📹',
+                        'refine': '✨',
+                        'shrink': '✂️',
+                        'keep-in-touch': '🍻',
+                        'migrate': '🚚',
+                      }[j.meta.command]}
+                      selected={j.job === job}
+                      {...j}
+                      summary={({
+                        'sync': summarySync,
+                        'refresh': summaryRefresh,
+                        'record': summaryRecord,
+                        'refine': summaryRefine,
+                        'shrink': summaryShrink,
+                        'keep-in-touch': summaryKeepInTouch,
+                        'migrate': summaryMigrate,
+                      }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}
+                    />
+                  ))}
+                </div>
+              </Fragment>
+            ))}
+          </div>
         </nav>
       )}
     </aside>
@@ -392,13 +401,20 @@ UISidebar.styles = {
     justifyContent: 'center',
   },
   nav: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     position: ['absolute', 'relative'],
     transition: 'height 400ms ease-in-out',
     top: ['90px', 'unset'],
     width: ['100%', 'unset'],
     zIndex: [1, 'unset'],
     backgroundColor: 'grayLightest',
-    overflow: 'scroll',
+  },
+  jobs: {
+    overflowX: 'hidden',
+    overflowY: 'auto',
     '>h6': {
       position: 'sticky',
       top: '0px',
@@ -411,7 +427,7 @@ UISidebar.styles = {
       textTransform: 'capitalize',
       zIndex: 1,
     },
-  },
+  }
 }
 
 const Sidebar = memo(UISidebar)

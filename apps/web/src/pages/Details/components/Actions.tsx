@@ -501,6 +501,7 @@ UIPreferences.styles = {
   },
   container: {
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
   block: {
     display: 'flex',
@@ -565,6 +566,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       ...({
         row: {
           overflowX: 'auto',
+          overflowY: 'hidden',
         },
         column: {
           overflow: 'auto',

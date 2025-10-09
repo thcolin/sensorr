@@ -164,6 +164,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       ...({
         row: {
           overflowX: 'auto',
+          overflowY: 'hidden',
         },
         column: {
           overflow: 'auto',

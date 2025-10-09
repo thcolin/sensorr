@@ -101,6 +101,7 @@ UIAbout.styles = {
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
   title: {
     margin: 12,
@@ -140,6 +141,7 @@ UIAbout.styles = {
     fontWeight: 'medium',
     whiteSpace: 'pre-wrap',
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
 }
 

@@ -117,9 +117,10 @@ Settings.styles = {
       display: 'flex',
       flexDirection: 'column',
       overflowY: ['unset', 'auto'],
+      overflowX: ['unset', 'hidden'],
       backgroundColor: ['grayLight', 'unset'],
       marginX: [2, 12],
-      borderRadius: '0.25em',
+      // borderRadius: '0.25em',
       'a': {
         fontFamily: 'heading',
         color: 'text',
@@ -192,9 +193,9 @@ Settings.styles = {
     },
   },
   container: {
+    display: 'flex',
     flex: 1,
-    overflow: 'auto',
-    '>section': {
+    'section': {
       display: 'flex',
       flexDirection: 'column',
       flex: 1,

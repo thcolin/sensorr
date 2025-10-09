@@ -42,15 +42,19 @@ const Navigation = ({ display = 'web', ...props }) => {
       <div sx={Navigation.styles.app.element}>
         <RippleNavLink to='/' viewTransition onClick={location.pathname === '/' ? () => {} : handleAppNavigation} style={(location.pathname === '/' || location.pathname.startsWith('/movie') || location.pathname.startsWith('/collection')) ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M5.6 15.1c.3 3.3 1.4 13.1 1.9 17.4.1 1.1 1.1 2 2.3 2h3.7l-1.1-19.4H5.6zM15.7 34.4v.1h4.6v-.1l1.1-19.3h-6.8zM23.6 15.1l-1.1 19.4h3.7c1.1 0 2.1-.9 2.3-2 .5-4.3 1.6-14.1 2-17.4h-6.9zM27.1 10v-.6c0-2.5-2-4.6-4.6-4.6h-.6c-1.2-2.2-4-3-6.2-1.8-.7.4-1.4 1-1.8 1.8h-.6c-2.5 0-4.5 2.1-4.5 4.6v.6c-1.1.6-1.9 1.6-2.2 2.8h22.6c-.2-1.2-1-2.2-2.1-2.8z"/></svg>
+          <span>Movies</span>
         </RippleNavLink>
         <RippleNavLink to='/person/followed' viewTransition onClick={location.pathname === '/person/followed' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M13.4 17.9c-1.1 1.1-2.6 1.8-4.2 1.8-3.2-.1-5.7-2.7-5.7-5.9C3.6 10.7 6 8.2 9 8.1c-.8 3.8 1 7.8 4.4 9.8zM32.6 13.8c0 3.2-2.6 5.8-5.8 5.8-1.6 0-3.1-.7-4.2-1.8 3.4-2 5.2-5.9 4.4-9.8 3.1.2 5.6 2.7 5.6 5.8zM7.8 23.9c-.6 1.2-.9 2.5-.9 3.9v6.1H2V30c0-3.3 2.6-6 5.8-6.1zM34 30v3.9h-4.9v-6.1c0-1.3-.3-2.7-.9-3.9 3.2.1 5.8 2.8 5.8 6.1zM24.8 9.9c0 3.7-3 6.8-6.8 6.8-3.7 0-6.8-3-6.8-6.8s3-6.8 6.8-6.8c3.7 0 6.7 3.1 6.8 6.8zM26.6 27.7v6.1H9.4v-6.1c0-1.4.5-2.8 1.4-3.9.3-.4.7-.8 1.1-1.1.3-.3.7-.5 1.1-.6.8-.4 1.7-.6 2.6-.5h4.9c.9 0 1.8.2 2.6.5.4.2.7.4 1.1.6.4.3.8.7 1.1 1.1.8 1.1 1.3 2.5 1.3 3.9z"/></svg>
+          <span>Stars</span>
         </RippleNavLink>
         <RippleNavLink to='/jobs' viewTransition onClick={location.pathname === '/jobs' ? () => {} : handleAppNavigation} style={({ isActive }) => isActive ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M24.9 20.8v8c0 .6-.5 1.1-1.1 1.1h-.1c-.6-2.4-3.1-3.9-5.5-3.3-1.6.4-2.9 1.7-3.3 3.3h-2.6c-.8-2.4-3.3-3.9-5.7-3.2-1.6.4-2.9 1.7-3.3 3.3h-.2c-.3 0-.6-.1-.8-.3-.2-.3-.3-.6-.3-.9v-8c0-.6.5-1.1 1.1-1.1h20.6c.3 0 .6.1.8.4.2.1.4.4.4.7zM32.9 29.9h-2.3c-.9 0-1.8-.4-2.4-1-.6-.6-1-1.5-1-2.4V8.2c.1-.6.6-1.1 1.3-1 .6.1 1 .5 1 1v18.3c0 .3.1.6.3.8.2.2.5.3.8.3h2.3c.6.1 1.1.6 1 1.3 0 .5-.5 1-1 1z"/><path fill="currentColor" d="M10 31.1c-.1 1.3-1.2 2.2-2.4 2.1-1.1-.1-2.1-1-2.1-2.1-.1-1.3.9-2.4 2.1-2.4s2.4.9 2.4 2.1v.3zM21.4 31.1c0 1.3-1 2.3-2.3 2.3-1.3 0-2.3-1-2.3-2.3 0-1.3 1-2.3 2.3-2.3 1.3 0 2.3 1 2.3 2.3zM20 17.4H5.4V4.8c0-.6.5-1.1 1.1-1.1h7.7c1.6 0 3 1.1 3.3 2.7l2.5 11z"/></svg>
+          <span>Jobs</span>
         </RippleNavLink>
         <RippleNavLink to='/settings' viewTransition onClick={location.pathname === '/settings' ? () => {} : handleAppNavigation} style={({ isActive }) => isActive ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M32.2 14.7c-.9-.2-2.1-.4-3.4-.6.8-1.1 1.5-2.1 2-2.9.6-.9.5-2.1-.3-2.9l-2.2-2.2c-.8-.8-2-.9-2.9-.3-.8.5-1.8 1.2-2.9 2-.2-1.3-.5-2.5-.6-3.4-.2-1.1-1.1-1.8-2.2-1.8h-3.1c-1.1 0-2 .8-2.2 1.8-.2.9-.4 2.1-.6 3.4-1.1-.8-2.1-1.5-2.9-2-1.1-.6-2.3-.5-3.1.3L5.6 8.3c-.8.8-.9 2-.3 2.9.5.8 1.2 1.8 2 2.9-1.3.2-2.5.5-3.4.6-1.1.2-1.9 1.1-1.9 2.2V20c0 1.1.8 2 1.8 2.2.9.2 2.1.4 3.4.6-.8 1.1-1.4 2.1-2 2.9-.6.9-.5 2.1.3 2.9l2.2 2.2c.8.8 2 .9 2.9.3.8-.5 1.8-1.2 2.9-2 .2 1.3.5 2.5.6 3.4.2 1.1 1.2 1.9 2.2 1.9h3.1c1.1 0 2-.8 2.2-1.8.2-.9.4-2.1.6-3.4 1.1.8 2.1 1.5 2.9 2 .9.6 2.1.5 2.9-.3l2.2-2.2c.8-.8.9-2 .3-2.9-.5-.8-1.2-1.8-2-2.9 1.3-.2 2.5-.5 3.4-.6 1.1-.2 1.9-1.2 1.9-2.3v-3.1c.2-1.1-.6-2-1.6-2.2zM18 24.2c-3.2 0-5.7-2.6-5.7-5.7 0-3.2 2.6-5.7 5.7-5.7 3.2 0 5.7 2.6 5.7 5.7 0 3.2-2.5 5.7-5.7 5.7z"/></svg>
+          <span>Settings</span>
         </RippleNavLink>
       </div>
     )
@@ -105,15 +109,22 @@ Navigation.styles = {
       zIndex: 5,
       '>a': {
         variant: 'link.reset',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         flex: 1,
-        paddingY: 4,
-        paddingBottom: 'max(1em, env(safe-area-inset-bottom))',
+        paddingY: 6,
+        paddingBottom: 'max(0.75em, env(safe-area-inset-bottom))',
         color: 'grayDark',
         textAlign: 'center',
         transition: 'color 200ms ease-in-out',
         '>svg': {
           height: '1.5em',
           width: '1.5em',
+        },
+        '>span': {
+          fontSize: 7,
+          marginTop: 6,
         },
       },
     },
@@ -132,6 +143,7 @@ Navigation.styles = {
       alignItems: 'center',
       justifyContent: 'flex-start',
       overflowX: 'auto',
+      overflowY: 'hidden',
       '>a': {
         variant: 'link.reset',
         paddingTop: 2,

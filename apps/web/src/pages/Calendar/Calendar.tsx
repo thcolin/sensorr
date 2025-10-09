@@ -27,6 +27,7 @@ import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import withFetchCalendarQuery from './withFetchCalendarQuery'
+import { withBody } from '../../layout/withLayout'
 
 const EntitiesHideable = ({ controls, child: Child, ...props }) => {
   const HideableChild = useMemo(() => (props) => {
@@ -283,6 +284,7 @@ export const Calendar = compose(
     },
   }),
   withPlacehodersHistoryState(),
+  withBody(),
 )(EntitiesHideable)
 
 export default Calendar

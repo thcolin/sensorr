@@ -21,6 +21,8 @@ UIProgress.styles = {
     display: 'flex',
     flex: 1,
     overflowX: 'auto',
+    overflowY: 'hidden',
+    scrollbarWidth: 'none',
     backgroundColor: 'accentDark',
     // borderRight: '1px solid',
     // borderLeft: '1px solid',

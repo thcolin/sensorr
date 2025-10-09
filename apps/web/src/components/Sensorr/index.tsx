@@ -345,6 +345,7 @@ UISensorrWrapper.styles = {
       backgroundColor: 'accent',
       paddingX: 12,
       height: ['auto', '4.75rem'],
+      overflow: 'unset',
     },
   },
   head: {
@@ -389,6 +390,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       '>div:first-of-type': {
         display: 'flex',
         padding: '0px 0.25em',
+        scrollbarWidth: 'none',
       }
     }),
     input: (style) => ({
@@ -411,6 +413,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       ...({
         row: {
           overflowX: 'auto',
+          overflowY: 'hidden',
         },
         column: {
           overflow: 'auto',

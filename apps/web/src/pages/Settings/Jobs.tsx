@@ -9,6 +9,7 @@ import cronstrue from 'cronstrue'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
+import Body from '../../layout/Body/Body'
 
 const JobsSettings = ({ ...props }) => {
   const api = useAPI()
@@ -59,84 +60,88 @@ const JobsSettings = ({ ...props }) => {
   }, [])
 
   return (
-    <section sx={JobsSettings.styles.element}>
-      <article>
-        <h2>Lifecycle Logic</h2>
-        <p sx={{ paddingBottom: 4 }}>
-          The <code>📹 Record</code> job acts upon <code>🍿 Wished</code> movies, finding and downloading the best-scored version to change their status to <code>📼 Archived</code>.
-        </p>
-        <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
-          An <code>📼 Archived</code> release failing to meet <code>* Required</code> policy rules is considered as <code>🪨 Unrefined</code> and will be treated by <code>✨ Refine</code> job which will seek a <code>💎 Refined</code> version for this release with a better score.
-          Subsequently, the <code>✂️ Shrink</code> job will optimize <code>💎 Refined</code> releases by finding smaller <code>💍 Shrinked</code> ones.
-        </p>
-        <p sx={{ paddingBottom: 4 }}>
-          If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
-        </p>
-        <h2>Jobs</h2>
-        <p>
-          Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
-        </p>
-      </article>
-      <form onSubmit={form.handleSubmit(onSave)} >
-        {[
-          {
-            command: 'record',
-            emoji: '📹',
-            description: 'Record Sensorr wished movies',
-            options: ['cron', 'proposalOnly'],
-          },
-          {
-            command: 'refine',
-            emoji: '✨',
-            description: 'Refine archived movies with better fitting release',
-            options: ['cron', 'proposalOnly'],
-          },
-          {
-            command: 'shrink',
-            emoji: '✂️',
-            description: 'Shrink refined movies with smallest release available',
-            options: ['cron', 'proposalOnly', 'threshold'],
-          },
-          {
-            command: 'refresh',
-            emoji: '🔌',
-            description: 'Refresh Sensorr data with TMDB changes',
-            options: ['cron'],
-          },
-          {
-            command: 'sync',
-            emoji: '🔗',
-            description: 'Sync Sensorr library with registered Plex server',
-            disabled: !config.get('plex.token'),
-            warning: config.get('plex.token') ? null : (
-              <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-                <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
-              </span>
-            ),
-            options: ['cron'],
-          },
-          {
-            command: 'keep-in-touch',
-            emoji: '🍻',
-            description: 'Goes through guests Plex watchlist and sync wished movies',
-            options: ['cron'],
-          },
-        ].map(value => (
-          <JobSettings
-            {...value}
-            running={Object.values(process).find((p: any) => p.command === value.command)}
-            disabled={value.disabled || ongoing.includes(value.command)}
-            runJob={runJob}
-            stopJob={stopJob}
-            control={form.control}
-            watch={form.watch}
-          />
-        ))}
-        <div sx={{ display: 'flex', marginTop: 4 }}>
-          <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
-        </div>
-      </form>
-    </section>
+    <Body>
+      <section sx={JobsSettings.styles.element}>
+        <article>
+          <h2>Lifecycle Logic</h2>
+          <p sx={{ paddingBottom: 4 }}>
+            The <code>📹 Record</code> job acts upon <code>🍿 Wished</code> movies, finding and downloading the best-scored version to change their status to <code>📼 Archived</code>.
+          </p>
+          <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
+            An <code>📼 Archived</code> release failing to meet <code>* Required</code> policy rules is considered as <code>🪨 Unrefined</code> and will be treated by <code>✨ Refine</code> job which will seek a <code>💎 Refined</code> version for this release with a better score.
+            Subsequently, the <code>✂️ Shrink</code> job will optimize <code>💎 Refined</code> releases by finding smaller <code>💍 Shrinked</code> ones.
+          </p>
+          <p sx={{ paddingBottom: 4 }}>
+            If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
+          </p>
+          <h2>Jobs</h2>
+          <p>
+            Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
+          </p>
+        </article>
+        <article>
+          <form onSubmit={form.handleSubmit(onSave)} >
+            {[
+              {
+                command: 'record',
+                emoji: '📹',
+                description: 'Record Sensorr wished movies',
+                options: ['cron', 'proposalOnly'],
+              },
+              {
+                command: 'refine',
+                emoji: '✨',
+                description: 'Refine archived movies with better fitting release',
+                options: ['cron', 'proposalOnly'],
+              },
+              {
+                command: 'shrink',
+                emoji: '✂️',
+                description: 'Shrink refined movies with smallest release available',
+                options: ['cron', 'proposalOnly', 'threshold'],
+              },
+              {
+                command: 'refresh',
+                emoji: '🔌',
+                description: 'Refresh Sensorr data with TMDB changes',
+                options: ['cron'],
+              },
+              {
+                command: 'sync',
+                emoji: '🔗',
+                description: 'Sync Sensorr library with registered Plex server',
+                disabled: !config.get('plex.token'),
+                warning: config.get('plex.token') ? null : (
+                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
+                  </span>
+                ),
+                options: ['cron'],
+              },
+              {
+                command: 'keep-in-touch',
+                emoji: '🍻',
+                description: 'Goes through guests Plex watchlist and sync wished movies',
+                options: ['cron'],
+              },
+            ].map(value => (
+              <JobSettings
+                {...value}
+                running={Object.values(process).find((p: any) => p.command === value.command)}
+                disabled={value.disabled || ongoing.includes(value.command)}
+                runJob={runJob}
+                stopJob={stopJob}
+                control={form.control}
+                watch={form.watch}
+              />
+            ))}
+            <div sx={{ display: 'flex', marginTop: 4 }}>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </Body>
   )
 }
 

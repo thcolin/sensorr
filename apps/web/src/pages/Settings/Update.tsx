@@ -16,7 +16,7 @@ const Update = ({ ...props }) => {
           To update Sensorr you need to update Sensorr Docker images. You can either use a tool to automatically update images, like <a href='https://github.com/containrrr/watchtower' target='_blank' rel='noopener noreferrer'>watchtower</a> or manually take down the stack, pull updated images and start the stack back
         </p>
         <br/>
-        <code sx={{ display: 'block', padding: '1em 1.5em !important', overflowY: 'auto' }}>
+        <code sx={{ display: 'block', padding: '1em 1.5em !important', overflowY: 'auto', overflowX: 'hidden' }}>
           cd ~/.sensorr # Or wherever you put your Sensorr `docker-compose.yml` file<br/>
           docker compose down --remove-orphans<br/>
           docker compose pull sensorr/sensorr-web<br/>
@@ -38,6 +38,7 @@ Update.styles = {
     borderRadius: '0.25em',
     fontSize: 5,
     overflowX: 'auto',
+    overflowY: 'hidden',
     whiteSpace: 'nowrap',
   },
 }

@@ -56,6 +56,7 @@ export const global = {
   pre: {
     fontFamily: 'monospace',
     overflowX: 'auto',
+    overflowY: 'hidden',
     code: {
       color: 'inherit',
     },

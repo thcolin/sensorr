@@ -54,6 +54,8 @@ import { useDeviceContext } from '../contexts/Device/Device'
 import { Provider as ScrollPositionProvider } from '../contexts/ScrollPosition/ScrollPosition'
 import { Provider as DetailsDrawerProvider } from '../contexts/DetailsDrawer/DetailsDrawer'
 
+import 'overlayscrollbars/overlayscrollbars.css'
+
 const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet)))
 
 const TrendingMovies = Trending('movies')
@@ -103,10 +105,10 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='settings' element={<Settings />}>
           <Route path='' element={<SettingsRedirector />} />
           <Route path='tmdb' element={<TMDBSettings />} />
-          <Route path='jobs' element={<JobsSettings />} />
           <Route path='blackhole' element={<BlackholeSettings />} />
           <Route path='indexers' element={<ZnabsSettings />} />
           <Route path='policies' element={<PoliciesSettings />} />
+          <Route path='jobs' element={<JobsSettings />} />
           <Route path='friends' element={<FriendsSettings />} />
           <Route path='plex' element={<PlexSettings />} />
           <Route path='mobile' element={<MobileSettings />} />
@@ -128,8 +130,10 @@ const App = ({ ...props }) => {
     const timeout = setTimeout(() => {
       (document.querySelector('#root-loading') as HTMLElement).style.setProperty('opacity', '0');
       document.querySelector('#root-loading').addEventListener('transitionend', () => {
-        (document.querySelector('#root-loading') as HTMLElement).style.setProperty('z-index', '-1');
-        (document.querySelector('#root-loading') as HTMLElement).remove();
+        if (document.querySelector('#root-loading') as HTMLElement) {
+          (document.querySelector('#root-loading') as HTMLElement).style.setProperty('z-index', '-1');
+          (document.querySelector('#root-loading') as HTMLElement).remove();
+        }
       })
     }, 400)
 

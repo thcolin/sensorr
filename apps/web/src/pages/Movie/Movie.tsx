@@ -16,6 +16,7 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
+import { withBody } from '../../layout/withLayout'
 
 const TMDBTabs = compose(
   withTabsBehavior(),
@@ -270,4 +271,4 @@ const Movie = ({ ...props }) => {
   )
 }
 
-export default Movie
+export default withBody({ overlayScrollbars: true })(Movie)

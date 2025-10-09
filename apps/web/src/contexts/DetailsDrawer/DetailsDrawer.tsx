@@ -57,6 +57,7 @@ const styles = {
     fontWeight: 'medium',
     whiteSpace: 'pre-wrap',
     overflowY: 'auto',
+    overflowX: 'hidden',
     '>p': {
       margin: 12,
       fontSize: 6,

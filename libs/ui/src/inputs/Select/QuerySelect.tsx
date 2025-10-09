@@ -56,6 +56,7 @@ export const QuerySelect = forwardRef(({ onChange, ...props }: any, ref) => {
     valueContainer: (style) => ({
       ...style,
       overflowX: 'auto',
+      overflowY: 'hidden',
       flexWrap: { row: 'nowrap', column: 'wrap' }[props.direction] || 'wrap',
     }),
     multiValue: (style, { data: { pinned, disabled } }) => ({

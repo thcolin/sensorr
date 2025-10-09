@@ -24,7 +24,8 @@ Warnings.styles = {
     },
     '>div': {
       flex: 1,
-      overflowY: 'scroll',
+      overflowY: 'auto',
+      overflowX: 'hidden',
       maxHeight: '30vh',
       marginBottom: 0,
       borderTop: '1px solid',

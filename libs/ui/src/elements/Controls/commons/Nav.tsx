@@ -53,6 +53,8 @@ UINav.styles = {
       flex: 1,
     },
     overflowX: 'scroll',
+    overflowY: 'hidden',
+    scrollbarWidth: 'none',
   },
 }
 

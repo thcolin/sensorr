@@ -7,6 +7,7 @@ import Details from '../Details/Details'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
+import { withBody } from '../../layout/withLayout'
 
 const Collection = ({ ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
@@ -73,4 +74,4 @@ const Collection = ({ ...props }) => {
   )
 }
 
-export default Collection
+export default withBody()(Collection)

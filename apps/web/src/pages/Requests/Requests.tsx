@@ -22,6 +22,7 @@ import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
+import { withBody } from '../../layout/withLayout'
 
 const Movie = ({ ...props }) => (
   <MovieWithCreditsAndReviews {...props as any} />
@@ -187,6 +188,7 @@ const Requests = compose(
     },
   }),
   withPlacehodersHistoryState(),
+  withBody(),
 )(Entities)
 
 export default Requests

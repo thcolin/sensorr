@@ -35,6 +35,7 @@ import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
+import { withBody } from '../../layout/withLayout'
 
 const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
   const { selection, setSelection } = useBulkContext()
@@ -607,6 +608,7 @@ const Library = compose(
     },
   }),
   withPlacehodersHistoryState(),
+  withBody(),
 )(Entities)
 
 export default Library

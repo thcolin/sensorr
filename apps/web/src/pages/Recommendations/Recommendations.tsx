@@ -9,6 +9,7 @@ import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
+import Body from '../../layout/Body/Body'
 
 export const Recommendations = (id) => compose(
   withProps({
@@ -56,7 +57,12 @@ export const Recommendations = (id) => compose(
 const RecommendationsWrapper = ({ ...props }) => {
   const { id } = useParams() as any
   const Component = useMemo(() => Recommendations(id), [id])
-  return <Component />
+
+  return (
+    <Body>
+      <Component />
+    </Body>
+  )
 }
 
 export default RecommendationsWrapper

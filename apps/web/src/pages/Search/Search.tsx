@@ -10,6 +10,7 @@ import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
+import { withBody } from '../../layout/withLayout'
 
 export const Search = (resource) => compose(
   withProps({
@@ -100,6 +101,7 @@ export const Search = (resource) => compose(
     },
   }),
   withPlacehodersHistoryState(),
+  withBody(),
 )(Entities)
 
 export default Search

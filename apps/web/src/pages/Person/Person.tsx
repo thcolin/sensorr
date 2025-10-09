@@ -11,6 +11,7 @@ import withProps from '../../components/enhancers/withProps'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
+import { withBody } from '../../layout/withLayout'
 
 const PersonDetails = compose(
   withPersonsMetadataContext(),
@@ -294,4 +295,4 @@ const Person = ({ ...props }) => {
   )
 }
 
-export default Person
+export default withBody({ overlayScrollbars: true })(Person)

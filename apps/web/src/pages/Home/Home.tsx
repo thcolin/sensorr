@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
+import Body from '../../layout/Body/Body'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
@@ -15,7 +16,7 @@ const Home = ({ ...props }) => {
   }), [device])
 
   return (
-    <>
+    <Body overlayScrollbars={true}>
       <TrendingMovies
         id='trending_movies'
         label={t('items.movies.trending.label')}
@@ -176,7 +177,7 @@ const Home = ({ ...props }) => {
           subtitle: '',
         }}
       />
-    </>
+    </Body>
   )
 }
 

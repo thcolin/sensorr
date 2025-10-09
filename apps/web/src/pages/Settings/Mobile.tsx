@@ -1,7 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 
 const Mobile = ({ ...props }) => (
-  <div sx={{ display: 'flex', alignItems: 'stretch', minHeight: '100%' }}>
+  <div sx={{ display: 'flex', alignItems: 'stretch', minHeight: '100%', width: '100%' }}>
     <div sx={{ flex: 1, overflow: 'auto', paddingX: '2.5em', paddingBottom: 0 }}>
       <h2>Mobile Installation Instructions (PWA)</h2>
       <p>Scan the QR code to open this page on your device, then follow the specific installation steps for your OS.</p>

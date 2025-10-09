@@ -614,6 +614,7 @@ UIRecordLogs.styles = {
   container: {
     flex: 1,
     overflowY: 'scroll',
+    overflowX: 'hidden',
   },
   logs: {
     margin: 12,

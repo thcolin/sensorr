@@ -36,7 +36,7 @@
       var mode = localStorage.getItem('theme-ui-color-mode')
       document.head.insertAdjacentHTML(
         'beforeend',
-        `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode || 'dark']}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode || 'dark']}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode || 'dark']}; }</style>`,
+        `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode || 'dark']}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode || 'dark']}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode || 'dark']}; --preflight-scrollbar-color: ${{ dark: 'rgba(255, 255, 255, 0.2)', light: 'rgba(0, 0, 0, 0.2)' }[mode || 'dark']}; }</style>`,
       )
 
       if (mode) {
@@ -75,6 +75,7 @@
         box-sizing: border-box;
         background-color: var(--theme-ui-colors-grayLightest);
         overscroll-behavior: none;
+        scrollbar-width: thin;
       }
 
       body {
@@ -87,6 +88,12 @@
 
       * {
         box-sizing: inherit;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 100ms ease-in-out;
+      }
+
+      *:hover {
+        scrollbar-color: var(--preflight-scrollbar-color) transparent;
       }
 
       small {

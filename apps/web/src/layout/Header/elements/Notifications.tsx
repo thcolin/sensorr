@@ -364,6 +364,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     alignSelf: 'start',
                     maxWidth: '100%',
                     overflowX: 'auto',
+                    overflowY: 'hidden',
                     marginBottom: [10, 12],
                     '>span': {
                       ':not(:last-of-type)': {

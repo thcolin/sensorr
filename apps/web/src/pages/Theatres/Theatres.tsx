@@ -9,6 +9,7 @@ import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
+import { withBody } from '../../layout/withLayout'
 
 const EntitiesHideable = ({ controls, child: Child, ...props }) => {
   const HideableChild = useMemo(() => (props) => {
@@ -199,6 +200,7 @@ export const Theatres = compose(
     },
   }),
   withPlacehodersHistoryState(),
+  withBody(),
 )(EntitiesHideable)
 
 export default Theatres

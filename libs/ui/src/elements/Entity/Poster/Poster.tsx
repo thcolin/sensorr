@@ -160,7 +160,7 @@ const UIPoster = ({
             >
               {badges?.reviews?.component && (
                 <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
-                  <badges.reviews.component {...badges?.reviews?.props} sx={{ backgroundColor: palette?.color || 'gray', borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }} />
+                  <badges.reviews.component {...badges?.reviews?.props} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }} />
                 </span>
               )}
               {badges?.focus?.component && (
@@ -352,6 +352,7 @@ UIPoster.styles = {
     borderStyle: 'solid',
     borderWidth: '0.25em',
     borderColor: 'grayLightest',
+    backgroundColor: 'gray',
   },
   proposal: {
     marginTop: '-0.75em',

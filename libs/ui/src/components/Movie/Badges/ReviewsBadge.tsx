@@ -1,10 +1,12 @@
-import { useMemo } from 'react'
+import { ElementRef, useMemo, useRef } from 'react'
 import Color from 'color'
 import deltaE from 'delta-e'
 import { utils } from '@sensorr/tmdb'
 import { Badge } from '../../../atoms/Badge/Badge'
 
-export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews, palette, forceOpen = false, ...props }) => {
+export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews, display, palette, forceOpen = false, ...props }) => {
+  // const ref = useRef<HTMLSpanElement>()
+
   const reviews = useMemo(() => {
     if (!entity?.id) {
       return []
@@ -29,11 +31,20 @@ export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews, palette, 
   return (
     <span
       {...props}
+      // ref={ref}
       tabIndex={0}
+      // onClick={() => {
+      //   console.log(document.activeElement, ref.current, document.activeElement === ref.current)
+
+      //   if (document.activeElement === ref.current) {
+      //     ref.current.blur()
+      //   }
+      // }}
       sx={{
         display: 'flex',
         flexDirection: 'row',
         width: forceOpen ? '100%' : ['4.7em', '5em'],
+        backgroundColor: 'gray', 
         borderRadius: '2em',
         overflow: 'hidden',
         transition: 'width ease-in-out 200ms',
@@ -100,7 +111,7 @@ const Icons = {
       <path fill="#fff" d="m27 41-5 2V22l6-1-1 20Z"/>
       <path fill="#fff" d="m14 21 1 20 5 2V22l-6-1Z"/>
       <path fill="gold" d="M7 13c0 3 6 5 14 5 7 0 12-2 13-4h-1v-1l-1-1a2 2 0 0 0-2-3h-1a2 2 0 0 0-2-2l-2-1a2 2 0 0 0-3-1 2 2 0 0 0-4 2h-1a2 2 0 0 0-3 0 2 2 0 0 0-2 3 2 2 0 0 0-2 1l-1-1a2 2 0 0 0-2 3Z"/>
-      <path fill="#FA320A" fill-rule="evenodd" d="M32 11h-1c3 1 5 2 5 4l-3 23c-1 3-6 6-12 6S9 41 9 38L6 15l1-2c0 3 6 5 14 5 7 0 12-2 13-4h-1v-1l-1-1v-1ZM10 38 8 19l3 1 2 21-3-3Zm22 0-3 3 2-21 3-1-2 19Zm-5 3-5 2V22l6-1-1 20ZM14 21l1 20 5 2V22l-6-1Z" clip-rule="evenodd"/>
+      <path fill="#FA320A" fillRule="evenodd" d="M32 11h-1c3 1 5 2 5 4l-3 23c-1 3-6 6-12 6S9 41 9 38L6 15l1-2c0 3 6 5 14 5 7 0 12-2 13-4h-1v-1l-1-1v-1ZM10 38 8 19l3 1 2 21-3-3Zm22 0-3 3 2-21 3-1-2 19Zm-5 3-5 2V22l6-1-1 20ZM14 21l1 20 5 2V22l-6-1Z" clipRule="evenodd"/>
     </svg>
   ),
   stale: ({ ...props }) => (
@@ -111,7 +122,7 @@ const Icons = {
       <path fill="#fff" d="m11 38-2-3 20 2 2 3-20-2Z"/>
       <path fill="#00641E" d="m31 35 2-1 1 1a2 2 0 0 1 1 0v-1l2-1h1l1-6c0-7-2-12-4-12-3-1-5 5-5 12l1 8Z"/>
       <path fill="gold" d="m47 42-1-2-2-2v-1l-1-2h-1l-1-1-2-1h-2l-2 1v1a2 2 0 0 0-1 0l-1-1-2 1 3 7a1 1 0 0 0 2 0 1 1 0 0 0 1 0l1 1 2-1 1 1h1l2 1 1-1a1 1 0 0 0 2 0 2 2 0 0 0 0-1Z"/>
-      <path fill="#04A53C" fill-rule="evenodd" d="m34 12 3 2c3 3 4 11 3 19h-2l1-6c0-7-2-12-4-12-3-1-5 5-5 12l1 8 3 7h1-1l-23-3c-3 0-6-6-6-12s3-11 6-12l23-3Zm-5 5L9 19l2-3 20-2-2 3Zm2 23-20-2-2-3 20 2 2 3ZM7 28l1 5 20 2v-7H7Zm1-7 20-1v6H7l1-5Z" clip-rule="evenodd"/>
+      <path fill="#04A53C" fillRule="evenodd" d="m34 12 3 2c3 3 4 11 3 19h-2l1-6c0-7-2-12-4-12-3-1-5 5-5 12l1 8 3 7h1-1l-23-3c-3 0-6-6-6-12s3-11 6-12l23-3Zm-5 5L9 19l2-3 20-2-2 3Zm2 23-20-2-2-3 20 2 2 3ZM7 28l1 5 20 2v-7H7Zm1-7 20-1v6H7l1-5Z" clipRule="evenodd"/>
     </svg>
   )
 }

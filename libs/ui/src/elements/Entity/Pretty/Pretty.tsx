@@ -185,6 +185,7 @@ UIAbout.styles = {
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
   title: {
     margin: 12,
@@ -219,6 +220,7 @@ UIAbout.styles = {
     alignItems: 'center',
     minHeight: '2.25em',
     overflowX: 'auto',
+    overflowY: 'hidden',
     whiteSpace: 'nowrap',
     fontWeight: 'semibold',
     '>*:not(:last-child)': {
@@ -238,6 +240,7 @@ UIAbout.styles = {
     fontWeight: 'medium',
     whiteSpace: 'pre-wrap',
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
 }
 

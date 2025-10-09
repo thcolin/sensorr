@@ -82,7 +82,7 @@ const UIMovie = ({
 
     return {
       state: { component: MovieState, props: { value: state, onChange: setState, compact: true } },
-      reviews: { component: ReviewsBadge, props: { entity, reviews, loadReviews } },
+      reviews: { component: ReviewsBadge, props: { entity, reviews, loadReviews, display } },
       ...(!proposal.proposals?.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).reduce((guests, guest) => [...guests, { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } }], []) } } } : {}),
       ...(props?.focus ? { focus: { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } } } : {}),

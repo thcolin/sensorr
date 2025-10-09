@@ -178,7 +178,7 @@ const PolicySettings = forwardRef<any, any>(({
       display: 'flex',
       alignItems: 'stretch',
       position: 'relative',
-      '>*': {
+      '>*:not(button)': {
         backgroundColor: 'whiteDark',
         borderTopLeftRadius: '0rem !important',
         borderBottomLeftRadius: '0rem !important',
@@ -238,6 +238,8 @@ const PolicySettings = forwardRef<any, any>(({
     add: {
       backgroundColor: 'accent',
       color: 'whitePure',
+      borderTopLeftRadius: '0rem !important',
+      borderBottomLeftRadius: '0rem !important',
       '&:hover': {
         backgroundColor: 'accentDarker',
       },

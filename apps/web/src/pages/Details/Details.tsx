@@ -302,9 +302,11 @@ UIDetails.styles = {
   body: {
     display: 'flex',
     flexDirection: ['column', 'row'],
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: '105em',
     paddingX: [4, '5em'],
     marginBottom: 2,
-    maxWidth: '105em',
   },
   poster: {
     display: 'flex',

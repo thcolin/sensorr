@@ -17,6 +17,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { useAPI, query as APIQuery } from '../../store/api'
 import i18n from '../../store/i18n'
+import Body from '../../layout/Body/Body'
 
 const FollowedPersons = compose(
   withProps({
@@ -149,15 +150,17 @@ const FollowedPersons = compose(
 
 const Followed = ({ ...props }) => {
   return (
-    <FollowedPersons
-      display="grid"
-      child={Person}
-      empty={{
-        emoji: '',
-        title: '',
-        subtitle: '',
-      }}
-    />
+    <Body overlayScrollbars={true}>
+      <FollowedPersons
+        display="grid"
+        child={Person}
+        empty={{
+          emoji: '',
+          title: '',
+          subtitle: '',
+        }}
+      />
+    </Body>
   )
 }
 
