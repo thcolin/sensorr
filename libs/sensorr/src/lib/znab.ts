@@ -42,7 +42,7 @@ export class Znab {
       q: query,
       Query: query,
       t: 'search',
-      cat: '2000,2010,2020,2030,2040,2050,2060',
+      cat: '2000,2010,2020,2030,2040,2050,2060,2070,2080,2090,5080',
     }) as [string, RequestInit]
 
     const res = await fetch(resource, { ...initial, ...init } as any)
