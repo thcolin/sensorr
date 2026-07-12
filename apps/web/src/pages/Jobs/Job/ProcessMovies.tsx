@@ -1,7 +1,7 @@
-import { Fragment, createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Warning } from '@sensorr/ui'
 import { filesize, useResponsiveValue } from '@sensorr/utils'
-import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -15,21 +15,42 @@ import { MovieActions } from '../../Details/components/Actions'
 
 const RecordsContext = createContext([])
 
-const RecordData = ({ style, index, readyInViewport, scrolling, sensorr, ...props }) => {
+// Rough per-row height seed for the virtualizer. Only used before the real DOM
+// measurement (via `measureElement`) kicks in — being approximate is fine, it
+// just reduces the scroll "jump" while off-screen rows get measured. Driven by
+// the known log count so records with more logs start taller.
+const estimateRecordHeight = (record: any, device: string) => {
+  const logs = record?.logs?.length ?? 0
+  const releases = (record?.movie?.releases?.length || 0) + (record?.release ? 1 : 0)
+
+  // Floors match the (roughly fixed) poster column height, which sets the minimum
+  // row height regardless of logs — keeps the scrollbar stable while off-screen rows
+  // are still estimated. The real height is measured via `measureElement`.
+  if (device === 'mobile') {
+    return Math.max(760, 620 + logs * 24 + releases * 130)
+  }
+
+  return Math.max(560, 480 + logs * 22 + releases * 150)
+}
+
+const RecordData = ({ index, sensorr = null, ...props }) => {
   const record = useContext(RecordsContext as any)[index]
 
-  return (
-    <div style={{ ...style, width: '100%' }}>
-      <Record {...record} {...props} sensorr={sensorr === record.movie?.id} />
-    </div>
-  )
+  return <Record {...record} {...props} sensorr={sensorr === record.movie?.id} />
 }
 
 const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const ref = useRef()
+  const listRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  // Per-group logs cache, kept OUTSIDE the row lifecycle. Virtualization unmounts
+  // off-screen rows, so without this a re-mounted row would refetch (spinner → logs)
+  // and re-measure taller, shifting every row below it — the "jumping" symptom.
+  const logsCache = useRef(new Map<string, any[]>())
   const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
   const toggleSensorr = useRef() as any
   const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
 
@@ -69,8 +90,46 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     warning: record.warning && (!znab || (record.release?.valid && record.release?.znab === znab)),
   }[filter])), [filter, znab, records])
 
+  const rowVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => ref.current as any,
+    estimateSize: (index) => estimateRecordHeight(filtered[index], device),
+    overscan: 8,
+    scrollMargin,
+  })
+
+  // The job header scrolls with the list inside the same scroll container, so the
+  // virtualized list starts at a non-zero offset. Keep `scrollMargin` in sync with
+  // that offset (equivalent to the old grid's `layout.top`), recomputed whenever the
+  // header height changes (summary badges, znab filters…) or the viewport resizes.
+  useLayoutEffect(() => {
+    const list = listRef.current
+    const scroller = ref.current as any
+
+    if (!list || !scroller) {
+      return
+    }
+
+    const compute = () => {
+      // scroll-invariant offset of the list from the top of the scroll container
+      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
+      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
+    }
+
+    compute()
+    const observer = new ResizeObserver(compute)
+    observer.observe(scroller)
+
+    if (headerRef.current) {
+      observer.observe(headerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [filtered.length])
+
   useEffect(() => {
     setFilter(null)
+    logsCache.current.clear()
   }, [job.job])
 
   useEffect(() => {
@@ -81,7 +140,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
 
   return (
     <div ref={ref} sx={UIProcessMoviesJob.styles.element}>
-      <div>
+      <div ref={headerRef}>
         <Warning
           emoji={{ record: '📹', refine: '✨', shrink: '✂️' }[job.meta.command]}
           title={(
@@ -151,23 +210,36 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
           ) : filtered.length ? (
             <div sx={UIProcessMoviesJob.styles.records}>
               <SensorrSingleton setToggle={fn => toggleSensorr.current = fn} />
-              <ResponsiveVirtualGrid
-                scrollContainer={ref.current}
-                total={filtered.length}
-                viewportRowOffset={8}
-                cell={{ height: device === 'mobile' ? 800 : 512 }}
-                child={RecordData}
-                useChildProps={(key) => ({
-                  key: (filtered[key.split('-').shift()] as any).movie?.id,
-                  metadata: (moviesMetadataContext[(filtered[key.split('-').shift()] as any).movie?.id] || {}),
+              <div ref={listRef} style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                  const record = filtered[virtualItem.index] as any
+
+                  return (
+                    <div
+                      key={record.movie?.id ?? virtualItem.key}
+                      data-index={virtualItem.index}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin}px)`,
+                      }}
+                    >
+                      <RecordData
+                        index={virtualItem.index}
+                        metadata={moviesMetadataContext[record.movie?.id] || {}}
+                        job={job.job}
+                        command={job.meta.command}
+                        setMovieMetadata={setMovieMetadata}
+                        toggleSensorr={(e, movie) => toggleSensorr.current(e, movie)}
+                        logsCache={logsCache.current}
+                      />
+                    </div>
+                  )
                 })}
-                childProps={{
-                  job: job.job,
-                  command: job.meta.command,
-                  setMovieMetadata,
-                  toggleSensorr: (e, movie) => toggleSensorr.current(e, movie),
-                }}
-              />
+              </div>
             </div>
           ) : job.meta.done ? (
             <Warning emoji={job.meta.error ? '💢' : '🍿'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No recorded movies during this job'} />
@@ -232,9 +304,10 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, done, error, ...props }) => {
+const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, logsCache, done, error, ...props }) => {
   const api = useAPI()
-  const [logs, setLogs] = useState(null)
+  const cacheKey = `${job}-${group}`
+  const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
   const mobile = useResponsiveValue([true, false])
 
   const [optimistic, setOptimistic] = useState({ treated, choice })
@@ -249,11 +322,19 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   }, [treated])
 
   useEffect(() => {
-    setLogs(null)
-
     if (job === 'anonymous' || !done) {
+      setLogs(null)
       return
     }
+
+    const cached = logsCache?.get(cacheKey)
+
+    if (cached) {
+      setLogs(cached)
+      return
+    }
+
+    setLogs(null)
 
     const controller = new AbortController()
 
@@ -261,7 +342,9 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
       const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { controller }, params: { job, group } })
 
       try {
-        setLogs(await api.fetch(uri, params, init))
+        const result = await api.fetch(uri, params, init)
+        logsCache?.set(cacheKey, result)
+        setLogs(result)
         // if not done should listen to eventSource and close when done
       } catch (e) {
         console.warn(e)
@@ -272,7 +355,7 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
     cb()
 
     return () => controller.abort()
-  }, [job, group, done])
+  }, [job, group, done, cacheKey])
 
   return (
     <div sx={UIRecord.styles.element}>
@@ -309,7 +392,7 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
               help={false}
             />
           )}
-          {logs === null ? (
+          {logs === null && !summaryLogs?.length ? (
             <div sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon value='spinner' />
             </div>
@@ -375,8 +458,6 @@ UIRecord.styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minHeight: ['50em', '32em'],
-    maxHeight: ['50em', '32em'],
     paddingY: 0,
   },
   record: {
@@ -441,17 +522,8 @@ UIRecord.styles = {
 const Record = memo(UIRecord)
 
 const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadata  }) => {
-  const refAssignCallback = useCallback((ref) => {
-    if (ref) {
-      var element = ref
-      var scrollHeight = element.scrollHeight
-      var clientHeight = element.getBoundingClientRect().height
-      element.scrolTop = (scrollHeight - clientHeight) / 2
-    }
-  }, [])
-
   return (
-    <div sx={UIRecordLogs.styles.element} ref={refAssignCallback}>
+    <div sx={UIRecordLogs.styles.element}>
       <div sx={UIRecordLogs.styles.container}>
         <div sx={UIRecordLogs.styles.logs}>
           {logs.map((log, index) => (
@@ -609,11 +681,10 @@ UIRecordLogs.styles = {
     borderTop: '1px solid',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
-    overflow: 'hidden',
+    overflowX: 'hidden',
   },
   container: {
     flex: 1,
-    overflowY: 'scroll',
     overflowX: 'hidden',
   },
   logs: {

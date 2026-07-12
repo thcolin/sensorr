@@ -4279,6 +4279,18 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
+"@tanstack/react-virtual@^3.14.5":
+  version "3.14.5"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-virtual/-/react-virtual-3.14.5.tgz#183c959aeb85448899dcb1a4da55213e5d4f6078"
+  integrity sha512-4EKRXh7zBLkbKbFmG3AUVkircuHd+7OdT1pocJSepxtfBd3qnrJgJ5rtPkRYyo9fmyVb2+pI2xPy5oYvMLQy6A==
+  dependencies:
+    "@tanstack/virtual-core" "3.17.3"
+
+"@tanstack/virtual-core@3.17.3":
+  version "3.17.3"
+  resolved "https://registry.yarnpkg.com/@tanstack/virtual-core/-/virtual-core-3.17.3.tgz#71ae7e658fe155392a2dcbf640035febdf2fdb05"
+  integrity sha512-8Np/TFELpI0ySuJoVmjvOrQYXH/8sTX0Biv9szhFhY39xOdAAY+smrMxjxOum/ux3eM8MUJQsEJ0/R0UpvC8dw==
+
 "@testing-library/dom@^7.28.1":
   version "7.31.2"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-7.31.2.tgz#df361db38f5212b88555068ab8119f5d841a8c4a"
