@@ -49,7 +49,7 @@ const JobsSettings = ({ ...props }) => {
     toast.promise(request, {
       loading: 'Loading...',
       success: (data) => {
-        console.log(data)
+        // console.log(data)
         return `Job "${job}" successfully stop`
       },
       error: (err) => {

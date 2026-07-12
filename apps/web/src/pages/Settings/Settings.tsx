@@ -18,7 +18,7 @@ const Settings = ({ ...props }) => {
   const [updateAvailable, setUpdateAvailable] = useState(null)
 
   const onSave = useCallback((data) => {
-    console.log('onSave', data)
+    // console.log('onSave', data)
     toast.promise(new Promise(async (resolve, reject) => {
       const { uri, params, init } = api.query.config.postConfig({ body: data })
 

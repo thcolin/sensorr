@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
+import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 import { emojize } from '@sensorr/utils'
 
@@ -44,53 +45,56 @@ const Policies = ({ ...props }) => {
   }, [policies.append, policy.reset])
 
   return (
-    <section>
-      <article>
-        <h2>Policies</h2>
-        <p>
-          Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.
-        </p>
-        <ul>
-          <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
-          <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance.</li>
-          <li sx={{ listStyleType: 'none' }}>
-            <ul>
-              <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
-            </ul>
-          </li>
-        </ul>
-        <h4>Score</h4>
-        <p>
-          Sensorr ranks releases using a clear point system. A release first earns a base score of <strong>1000 points</strong> for matching the movie's title (original or localized).
-          <br/>
-          It then accumulates additional points from your <code>⭐ prefer</code> tags. The top-ranked tag is worth <strong>100 points</strong>, while subsequent tags in the same list are worth progressively less.
-          <br/>
-          The release with the highest total score is always chosen. In case of a tie, <code>sort</code> setting acts as the tie-breaker.
-        </p>
-        <form onSubmit={policy.handleSubmit(onAppend)}>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
-            <PolicySettings form={policy} behavior='create' />
-          </div>
-        </form>
-        <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-        <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSave)}>
-          <SortablePolicies
-            policies={policies}
-            form={form}
-            onSortEnd={({ from, to }) => {
-              if (from === 0 || to === 0) {
-                toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
-              }
+    <Body>
 
-              policies.swap(from, to)
-            }}
-          />
-          <div sx={{ display: 'flex', marginTop: 4 }}>
-            <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
-          </div>
-        </form>
-      </article>
-    </section>
+      <section>
+        <article>
+          <h2>Policies</h2>
+          <p>
+            Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.
+          </p>
+          <ul>
+            <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
+            <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance.</li>
+            <li sx={{ listStyleType: 'none' }}>
+              <ul>
+                <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
+              </ul>
+            </li>
+          </ul>
+          <h4>Score</h4>
+          <p>
+            Sensorr ranks releases using a clear point system. A release first earns a base score of <strong>1000 points</strong> for matching the movie's title (original or localized).
+            <br/>
+            It then accumulates additional points from your <code>⭐ prefer</code> tags. The top-ranked tag is worth <strong>100 points</strong>, while subsequent tags in the same list are worth progressively less.
+            <br/>
+            The release with the highest total score is always chosen. In case of a tie, <code>sort</code> setting acts as the tie-breaker.
+          </p>
+          <form onSubmit={policy.handleSubmit(onAppend)}>
+            <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
+              <PolicySettings form={policy} behavior='create' />
+            </div>
+          </form>
+          <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
+          <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSave)}>
+            <SortablePolicies
+              policies={policies}
+              form={form}
+              onSortEnd={({ from, to }) => {
+                if (from === 0 || to === 0) {
+                  toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
+                }
+
+                policies.swap(from, to)
+              }}
+            />
+            <div sx={{ display: 'flex', marginTop: 4 }}>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </Body>
   )
 }
 

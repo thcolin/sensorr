@@ -24,23 +24,23 @@ export const Provider = ({ ...props }) => {
     setHistoryIndex(curr => ({ POP: curr - 1, PUSH: curr + 1, REPLACE: curr }[historyAction]))
 
     if (!pwa) {
-      (ref.current as any).style.viewTransitionName = 'fade'
+      document.getElementById('main').style.viewTransitionName = 'fade'
       return false
     }
 
     if (window.SENSORR_BODY_VIEW_TRANSITION_NAME) {
-      (ref.current as any).style.viewTransitionName = window.SENSORR_BODY_VIEW_TRANSITION_NAME
+      document.getElementById('main').style.viewTransitionName = window.SENSORR_BODY_VIEW_TRANSITION_NAME
       window.SENSORR_BODY_VIEW_TRANSITION_NAME = null
       return false
     }
 
     if (historyAction === 'PUSH') {
-      (ref.current as any).style.viewTransitionName = 'forward'
+      document.getElementById('main').style.viewTransitionName = 'forward'
       return false
     }
 
     if (historyAction === 'POP') {
-      (ref.current as any).style.viewTransitionName = 'backward'
+      document.getElementById('main').style.viewTransitionName = 'backward'
       return false
     }
 
@@ -53,23 +53,30 @@ export const Provider = ({ ...props }) => {
       return
     }
 
-    if (navigationType === 'PUSH') {
-      (ref.current as any).scroll(0, 0)
-      // Ugly af, but it need a time before scroll() to effectivly scroll when a <VirtualGrid /> is used
-      const timeout = setTimeout(() => (ref.current as any).scroll(0, 0), 0)
-      return () => clearTimeout(timeout)
-    } else if (navigationType === 'POP') {
-      (ref.current as any).scroll(0, sessionStorage.getItem(`${location.key}-scroll`) || 0)
-      // Ugly af, but it need a time before scroll() to effectivly scroll when a <VirtualGrid /> is used
-      const timeout = setTimeout(() => (ref.current as any).scroll(0, sessionStorage.getItem(`${location.key}-scroll`) || 0), 0)
-      return () => clearTimeout(timeout)
-    } else if (navigationType === 'REPLACE') {
+    // On REPLACE we only persist the current position (same page, updated search params), while
+    // PUSH (new key, no saved value → 0) and POP (restore saved value) both delegate to the shared
+    // restoration helper.
+    if (navigationType === 'REPLACE') {
       sessionStorage.setItem(`${location.key}-scroll`, (ref.current as any).scrollTop)
+      return
     }
+
+    restoreScrollPosition()
   }, [location.key, navigationType])
 
   const restoreScrollPosition = useCallback(() => {
-    (ref.current as any).scroll(0, sessionStorage.getItem(`${location.key}-scroll`) || 0)
+    const top = Number(sessionStorage.getItem(`${location.key}-scroll`)) || 0
+
+    // Apply immediately, then re-apply on the next frame: when a <VirtualGrid /> mounts, its full
+    // scroll height may only settle after the first paint, so a single synchronous set can be clamped.
+    const apply = () => {
+      if (ref.current) {
+        (ref.current as any).scrollTop = top
+      }
+    }
+
+    apply()
+    requestAnimationFrame(apply)
   }, [location.key])
 
   return (

@@ -6,7 +6,9 @@ export const withLayout = (Page) => {
   const withLayout = (props) => (
     <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
-      <Page {...props} />
+      <div id='main' sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Page {...props} />
+      </div>
       <Navigation display='app' />
     </div>
   )

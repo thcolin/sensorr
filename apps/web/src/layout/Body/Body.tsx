@@ -17,17 +17,20 @@ const Body = ({ overlayScrollbars = false, ...props }) => {
   if (overlayScrollbars) {
     return (
       <OverlayScrollbarsComponent
-        id='body'
         element='div'
         options={{ scrollbars: { autoHide: 'scroll' } }}
-        defer={true}
+        defer={false}
         sx={Body.styles.overlayScrollbars.element}
-        ref={(r) => {
-          if (!r) {
-            return
-          }
-
-          ref.current = r.getElement().firstElementChild as HTMLDivElement
+        events={{
+          initialized: (instance) => {
+            // OverlayScrollbars wraps the content in a dedicated viewport element which is
+            // the one actually scrolling. Expose it as `#body` (the app-wide scroll container
+            // contract used by `scrollToTop` and the VirtualGrid) and track it for scroll restoration.
+            const viewport = instance.elements().viewport as HTMLDivElement
+            viewport.id = 'body'
+            ref.current = viewport
+            restoreScrollPosition()
+          },
         }}
         {...props}
       />
