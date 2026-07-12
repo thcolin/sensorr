@@ -78,7 +78,7 @@ const UIPoster = ({
           ...(selected !== null ? {
             '>div:first-of-type': {
               '>div:first-of-type': {
-                left: ['-0.75em', '0.75em !important'],
+                left: '1.25em !important',
               },
             },
           } : {}),
@@ -89,7 +89,9 @@ const UIPoster = ({
         <div
           sx={{
             ...UIPoster.styles.left,
-            left: ['-0.75em', (selected || selectedVisible) ? '0.5em' : '-1.5em'],
+            // Au repos le badge recouvre totalement la coche (position d'origine, identique aux
+            // pages sans sélection). Il se décale (hover ou coché) pour révéler la coche.
+            left: (selected || selectedVisible) ? '1.25em' : ['-0.75em', '-1.5em'],
             opacity: ready ? 1 : 0,
             transition: [
               ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
