@@ -47,11 +47,21 @@ const UINotifications = ({ ...props }) => {
                   >
                     {subscribed ? '🔔' : '🔕'}
                   </button>
-                  {!!unseen.length && <span>{unseen.length}</span>}
+                  {!!unseen.length && (
+                    <span
+                      role='button'
+                      title='Mark all as read'
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        if (confirm(`Mark all ${unseen.length} notification${unseen.length > 1 ? 's' : ''} as read ?`)) {
+                          dismissNotifications(unseen)
+                        }
+                      }}
+                    >
+                      {unseen.length}
+                    </span>
+                  )}
                 </span>
-                <button onClick={() => dismissNotifications(unseen)} disabled={!unseen.length}>
-                  Mark all as read
-                </button>
               </span>
               <button onClick={() => closePortal()}>
                 <Icon value='clear' active={true} height='1.25em' width='1.25em' />
