@@ -1,5 +1,4 @@
-import { Body, Controller, Delete, HttpException, Logger, Param, Post, Sse } from '@nestjs/common'
-import { Observable } from 'rxjs'
+import { Body, Controller, Delete, Get, HttpException, Logger, Param, Post } from '@nestjs/common'
 import { PlexService } from './plex.service'
 
 @Controller('plex')
@@ -24,8 +23,8 @@ export class PlexController {
     }
   }
 
-  @Sse(':id')
-  status(@Param() params): Observable<MessageEvent> {
-    return this.plexService.listenStatus(params.id)
+  @Get(':id/status')
+  status(@Param('id') id): Promise<{ done: boolean, token?: string, expired?: boolean, error?: string }> {
+    return this.plexService.checkStatus(id)
   }
 }

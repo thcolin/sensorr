@@ -2,9 +2,8 @@ import { PaginateModel, PaginateResult } from 'mongoose'
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { Plex } from '@sensorr/plex'
-import { EMPTY, from, interval, Observable, of } from 'rxjs'
-import { map, mergeMap, takeWhile, tap } from 'rxjs/operators'
+import { Plex, createPin, checkPin, PlexApp } from '@sensorr/plex'
+import { ConfigService } from '../config/config.service'
 import { Guest as GuestDocument } from './guest.schema'
 import app from './../../../../../package.json'
 
@@ -14,51 +13,45 @@ export class GuestsService {
 
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: PaginateModel<GuestDocument>,
+    private configService: ConfigService,
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async register() {
-    const plex = Plex({ url: 'https://metadata.provider.plex.tv:443', fallbackPort: 443 }, app)
-    const { id, code } = await plex.authenticator.getNewPin()
-    this.logger.log(`Register "${JSON.stringify({ id, code })}"`)
-    return { id, code, done: false }
+  private plexApp(): PlexApp {
+    return {
+      name: app.name,
+      version: app.version,
+      plex: this.configService.config.get('plex.client_identifier') || app.plex,
+    }
   }
 
-  listenRegistration(id): Observable<MessageEvent> {
-    this.logger.log(`ListenRegistration "${id}"`)
-    const plex = Plex({ url: 'https://metadata.provider.plex.tv:443', fallbackPort: 443 }, app)
+  async register() {
+    const pin = await createPin(this.plexApp())
+    this.logger.log(`Register "${JSON.stringify({ id: pin.id, code: pin.code })}"`)
+    return { id: pin.id, code: pin.code, expiresAt: pin.expiresAt, done: false }
+  }
 
-    // TODO: Check for observable status after tab close (should be closed)
-    return interval(2000).pipe(
-      mergeMap(() => from(new Promise(async resolve => plex.authenticator.checkPinForAuth(id, (error, status) => resolve({ error, status }))))),
-      takeWhile(({ error, status }) => !error && status === 'waiting', true),
-      mergeMap(({ error, status }) => {
-        if (error) {
-          this.logger.log(`ListenRegistration "${id}", error="${error}"`)
-          return of({ data: { error } } as MessageEvent)
-        }
+  // One-shot PIN status check, polled by the client (replaces the previous SSE stream whose
+  // server-side polling died whenever the client connection dropped — e.g. a backgrounded mobile tab).
+  async checkRegistration(id): Promise<{ done: boolean, expired?: boolean }> {
+    const result = await checkPin(id, this.plexApp())
 
-        if (!['waiting', 'authorized'].includes(status)) {
-          this.logger.log(`ListenRegistration "${id}", error="Invalid Pin status '${status}'"`)
-          return of({ data: { error: `Invalid Pin status "${status}"` } } as MessageEvent)
-        }
+    if (result.status === 'invalid') {
+      this.logger.log(`CheckRegistration "${id}", status="invalid"`)
+      return { done: false, expired: true }
+    }
 
-        if (status !== 'authorized') {
-          this.logger.log(`ListenRegistration "${id}", status="${status}"`)
-          return EMPTY
-        }
+    if (result.status !== 'authorized') {
+      return { done: false }
+    }
 
-        return of(plex.authenticator.token).pipe(
-          tap(() => this.logger.log(`ListenRegistration "${id}", status="${status}", registered`)),
-          mergeMap(token => from(
-            Plex({ url: 'https://plex.tv:443', token, fallbackPort: 443 }, app).query(`/api/v2/user`)
-          ).pipe(
-            mergeMap(({ email, thumb: avatar, title, username }) => this.upsertGuest({ email, avatar, name: title || username, plex_id: id, plex_token: token }))
-          )),
-          map(() => ({ data: { done: true } } as MessageEvent))
-        )
-      })
-    )
+    this.logger.log(`CheckRegistration "${id}", status="authorized", registered`)
+    const { email, thumb: avatar, title, username } = await Plex(
+      { url: 'https://plex.tv:443', token: result.token, fallbackPort: 443 },
+      this.plexApp(),
+    ).query(`/api/v2/user`)
+    await this.upsertGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token })
+    return { done: true }
   }
 
   async upsertGuest(guest): Promise<any> {

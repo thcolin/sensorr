@@ -20,6 +20,14 @@ export class Guest extends Document {
 
   @Prop()
   plex_token: string
+
+  // Token health: Plex expires tokens on inactivity. Set to false when the token no longer works,
+  // so a dead guest becomes visible/queryable instead of being silently skipped by keep-in-touch.
+  @Prop({ default: true })
+  plex_token_valid: boolean
+
+  @Prop()
+  plex_token_checked_at: number
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest)

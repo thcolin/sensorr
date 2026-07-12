@@ -1,9 +1,10 @@
-import { memo, useCallback, useState } from 'react'
-import ReconnectingEventSource from 'reconnecting-eventsource'
+import { memo, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon, Warning } from '@sensorr/ui'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
+
+const POLL_INTERVAL = 3000
 
 const UIPlex = ({ ...props }) => {
   const { config } = useConfigContext()
@@ -18,30 +19,88 @@ const UIPlex = ({ ...props }) => {
 
     try {
       const pin = await api.fetch(uri, params, init)
-      config.set('plex.pin', pin)
+      config.set('plex.pin', { id: pin.id, code: pin.code })
       setStep('pin')
-      setRegistering(false)
-      const eventSource = new ReconnectingEventSource(`/api/plex/${pin.id}?authorization=Bearer%20${api.access_token}`)
-      eventSource.onmessage = ({ data }) => {
-        const raw = JSON.parse(data)
-
-        if (raw.error) {
-          console.warn(raw.error)
-          toast.error('Error while fetching Plex PIN')
-          return
-        }
-
-        if (raw.token) {
-          config.set('plex.token', raw.token)
-          setStep('token')
-          eventSource.close()
-        }
-      }
     } catch (err) {
       console.warn(err)
       toast.error('Error while fetching Plex PIN')
+    } finally {
+      setRegistering(false)
     }
   }, [])
+
+  // Poll the PIN status while waiting for the user to authorize it on plex.tv (client-driven,
+  // survives page reloads and mobile tab backgrounding — see KeepInTouch for the rationale).
+  useEffect(() => {
+    if (step !== 'pin') {
+      return
+    }
+
+    const id = config.get('plex.pin.id')
+    if (!id) {
+      return
+    }
+
+    let stopped = false
+    let interval = null
+
+    const check = async () => {
+      if (stopped) {
+        return
+      }
+
+      try {
+        const { uri, params, init } = api.query.plex.status({ id })
+        const raw = await api.fetch(uri, params, init)
+
+        if (raw.error) {
+          console.warn(raw.error)
+          toast.error(raw.error)
+          return
+        }
+
+        if (raw.expired) {
+          if (interval) {
+            clearInterval(interval)
+          }
+          toast.error('Plex PIN expired, please register again')
+          setStep('url')
+          return
+        }
+
+        if (raw.done && raw.token) {
+          if (interval) {
+            clearInterval(interval)
+          }
+          config.set('plex.token', raw.token)
+          setStep('token')
+        }
+      } catch (err) {
+        // Transient error: keep polling, the next tick retries
+        console.warn(err)
+      }
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        check()
+      }
+    }
+
+    check()
+    interval = setInterval(check, POLL_INTERVAL)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      stopped = true
+      if (interval) {
+        clearInterval(interval)
+      }
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [step])
 
   const handleReset = useCallback(async () => {
     if (!confirm('Are you sure you want to unregister your Plex server ? Every releases from this server will be removed from Sensorr, but movies will still be "archived"')) {

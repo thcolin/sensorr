@@ -163,6 +163,11 @@ const config = convict({
       format: 'String',
       default: '',
     },
+    client_identifier: {
+      doc: 'Unique Plex client identifier (X-Plex-Client-Identifier), generated once per installation and persisted',
+      format: 'String',
+      default: '',
+    },
   },
   znabs: {
     doc: 'ZNAB sources',

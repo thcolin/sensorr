@@ -1,14 +1,15 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import config from '@sensorr/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 @Injectable()
-export class ConfigService {
+export class ConfigService implements OnModuleInit {
   private readonly logger = new Logger(ConfigService.name)
   private readonly file = path.resolve(`${__dirname}/../../../../../config.json`)
   config: any = config
@@ -19,6 +20,18 @@ export class ConfigService {
     this.config.loadFile(this.file)
     this.config.set('docker', process.env.NX_API_DOCKER_ENV === 'true')
     this.config.set('vapidPublicKey', process.env.NX_SENSORR_VAPID_PUBLIC_KEY)
+  }
+
+  // Ensure a unique, stable X-Plex-Client-Identifier per installation.
+  // Plex requires it to be unique/persistent per app installation, and reusing a shared
+  // identifier across installs leads to device/token management issues on Plex's side.
+  async onModuleInit() {
+    if (!this.config.get('plex.client_identifier')) {
+      const identifier = randomUUID()
+      this.config.set('plex.client_identifier', identifier)
+      await this.write()
+      this.logger.log(`Generated Plex client identifier "${identifier}"`)
+    }
   }
 
   async get() {

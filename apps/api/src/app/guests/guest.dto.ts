@@ -6,4 +6,6 @@ export class GuestDTO {
   readonly avatar: string
   readonly plex_id: string
   readonly plex_token: string
+  readonly plex_token_valid: boolean
+  readonly plex_token_checked_at: number
 }

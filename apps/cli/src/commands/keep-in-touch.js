@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import fs from 'node:fs/promises'
 import { render, Text } from 'ink'
 import { TMDB } from '@sensorr/tmdb'
-import { Plex } from '@sensorr/plex'
+import { Plex, pingToken } from '@sensorr/plex'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import { lighten } from '../store/logger'
@@ -25,6 +25,9 @@ export default (job, handlers) => ({
 
     await tmdb.init()
     const app = JSON.parse(await fs.readFile(new URL('../../../../package.json', import.meta.url)))
+    // Use the installation's unique, persisted X-Plex-Client-Identifier (falls back to the legacy
+    // hardcoded one only if it hasn't been generated yet)
+    app.plex = config.get('plex.client_identifier') || app.plex
 
     const { waitUntilExit } = render((
       <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb, app }}>
@@ -124,12 +127,20 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
     const cb = async () => {
       setStatus('loading')
       const results = {}
+      let expired = 0
 
       for (let guest of state.guests) {
         try {
+          // Keep-alive: refresh the token's last-seen so Plex doesn't expire it on inactivity
+          // (profile/watchlist reads don't refresh it, /api/v2/ping does)
+          const alive = await pingToken(guest.plex_token, state.app)
+          if (!alive) {
+            state.logger.warn({ message: `Plex token keep-alive ping failed for ${guest.email}`, metadata: { ...state.metadata, guest: guest.email } })
+          }
+
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex account</Text> }))
           const account = await Plex({ url: 'https://plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app).query(`/api/v2/user`)
-          const { uri, params, init } = api.query.guests.postGuest({ body: { email: account.email, avatar: account.thumb, name: account.title || account.username } })
+          const { uri, params, init } = api.query.guests.postGuest({ body: { email: account.email, avatar: account.thumb, name: account.title || account.username, plex_token_valid: true, plex_token_checked_at: Date.now() } })
           await api.fetch(uri, params, init)
 
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
@@ -146,10 +157,22 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{results[guest.email].length}</Text> movie(s) found on <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
           state.logger.info({ message: `${results[guest.email].length} movies found on ${guest.email} Plex watchlist`, metadata: { ...state.metadata, guest: guest.email, watchlist: results[guest.email].length } })
         } catch (error) {
-          setTask((task) => ({ ...task, output: <Text>⚠️  Unable to look at <Text bold={true}>{guest.email}</Text> Plex account or watchlist: "{error.message || error}"</Text> }))
-          state.logger.warn({ message: `Unable to look at ${guest.email} Plex account or watchlist: "${error.message || error}"`, metadata: { ...state.metadata, summary: { warning: 1 } } })
+          // Token likely expired/revoked: mark the guest so it stops being silently skipped and
+          // the administrator knows this guest must re-link their Plex account on /keep-in-touch.
+          expired++
+          try {
+            const { uri, params, init } = api.query.guests.postGuest({ body: { email: guest.email, plex_token_valid: false, plex_token_checked_at: Date.now() } })
+            await api.fetch(uri, params, init)
+          } catch (err) {}
+
+          setTask((task) => ({ ...task, output: <Text>⚠️  Unable to look at <Text bold={true}>{guest.email}</Text> Plex account or watchlist (token expired?), ask them to re-link: "{error.message || error}"</Text> }))
+          state.logger.warn({ message: `Unable to look at ${guest.email} Plex account or watchlist, token expired? Ask them to re-link on /keep-in-touch: "${error.message || error}"`, metadata: { ...state.metadata, guest: guest.email, plex_token_valid: false, summary: { warning: 1 } } })
           await new Promise(resolve => setTimeout(resolve, 2400))
         }
+      }
+
+      if (expired > 0) {
+        state.logger.warn({ message: `⚠️  ${expired} guest(s) have an expired Plex token and must re-link their account on /keep-in-touch`, metadata: { ...state.metadata, summary: { expired } } })
       }
 
       const requests = Object.keys(results).reduce((requests, guest, index) => ({

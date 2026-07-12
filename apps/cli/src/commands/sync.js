@@ -23,6 +23,8 @@ export default (job, handlers) => ({
     }
 
     const app = JSON.parse(await fs.readFile(new URL('../../../../package.json', import.meta.url)))
+    // Use the installation's unique, persisted X-Plex-Client-Identifier
+    app.plex = config.get('plex.client_identifier') || app.plex
     const plex = Plex(config.get('plex'), app)
     const tmdb = new TMDB({
       key: config.get('tmdb'),
