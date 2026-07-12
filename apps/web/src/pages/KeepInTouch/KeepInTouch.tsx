@@ -1,49 +1,132 @@
 import { memo, useEffect, useState } from 'react'
-import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
 import { Warning, Icon } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
+
+// Persist the PIN so a page reload (e.g. a mobile tab discarded while the user is on plex.tv/link)
+// reuses the SAME code instead of minting a new one and orphaning the code already entered.
+const STORAGE_KEY = 'sensorr_plex_guest_pin'
+const POLL_INTERVAL = 3000
+
+const readStoredPin = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    if (raw && raw.id && raw.expiresAt && raw.expiresAt > Date.now()) {
+      return raw
+    }
+  } catch (err) {}
+
+  return null
+}
+
+const clearStoredPin = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch (err) {}
+}
 
 const KeepInTouch = () => {
   const api = useAPI()
   const [pin, setPin] = useState(null) as any
 
   useEffect(() => {
-    const cb = async () => {
+    let stopped = false
+    let interval = null
+    let currentId = null
+    let done = false
+
+    const register = async () => {
       const { uri, params, init } = api.query.guests.register({})
+      const fresh = await api.fetch(uri, params, init)
 
       try {
-        const pin = await api.fetch(uri, params, init)
-        setPin(pin)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
+      } catch (err) {}
 
-        if (pin.done) {
+      return fresh
+    }
+
+    // Client-driven polling: a fresh request always succeeds when the tab returns to the
+    // foreground, unlike the previous SSE whose server-side polling died on mobile backgrounding.
+    const check = async (id) => {
+      if (stopped || done || id !== currentId) {
+        return
+      }
+
+      try {
+        const { uri, params, init } = api.query.guests.status({ id })
+        const raw = await api.fetch(uri, params, init)
+
+        if (raw.done) {
+          done = true
+          clearStoredPin()
+          if (interval) {
+            clearInterval(interval)
+          }
+          setPin(prev => ({ ...prev, done: true }))
           return
         }
 
-        const eventSource = new ReconnectingEventSource(`/api/guests/${pin.id}`)
-        eventSource.onmessage = ({ data }) => {
-          const raw = JSON.parse(data)
-
-          if (raw.error) {
-            console.warn(raw.error)
-            eventSource.close()
-            toast.error('Error while fetching Plex PIN, contact administrator')
-            return
+        if (raw.expired) {
+          clearStoredPin()
+          if (interval) {
+            clearInterval(interval)
           }
-
-          if (raw.done) {
-            setPin(pin => ({ ...pin, done: true }))
-            eventSource.close()
-          }
+          await start()
         }
+      } catch (err) {
+        // Transient error (network / Plex hiccup): keep polling, the next tick retries
+        console.warn(err)
+      }
+    }
+
+    const start = async () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+
+      try {
+        const current = readStoredPin() || await register()
+
+        if (stopped) {
+          return
+        }
+
+        currentId = current.id
+        setPin(current)
+
+        if (current.done) {
+          done = true
+          return
+        }
+
+        check(current.id)
+        interval = setInterval(() => check(current.id), POLL_INTERVAL)
       } catch (err) {
         console.warn(err)
         toast.error('Error while fetching Plex PIN, contact administrator')
       }
     }
 
-    cb()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && currentId && !done) {
+        check(currentId)
+      }
+    }
+
+    start()
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      stopped = true
+      if (interval) {
+        clearInterval(interval)
+      }
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
   }, [])
 
   return (

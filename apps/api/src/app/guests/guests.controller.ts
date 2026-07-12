@@ -1,5 +1,4 @@
-import { Body, Controller, Param, Get, Post, Sse, Delete } from '@nestjs/common'
-import { Observable } from 'rxjs'
+import { Body, Controller, Param, Get, Post, Delete } from '@nestjs/common'
 import { Public } from '../auth/auth.decorators'
 import { GuestsService } from './guests.service'
 import { GuestDTO } from './guest.dto'
@@ -10,14 +9,14 @@ export class GuestsController {
 
   @Public()
   @Get('/register')
-  async register(): Promise<{ done: boolean, code: string, id: string }> {
+  async register(): Promise<{ done: boolean, code: string, id: string, expiresAt: number }> {
     return this.guestsService.register()
   }
 
   @Public()
-  @Sse(':id')
-  status(@Param() params): Observable<MessageEvent> {
-    return this.guestsService.listenRegistration(params.id)
+  @Get(':id/status')
+  status(@Param('id') id): Promise<{ done: boolean, expired?: boolean }> {
+    return this.guestsService.checkRegistration(id)
   }
 
   @Post()

@@ -263,6 +263,20 @@ export class API {
           },
         }
       }),
+      status: (
+        { id, init = {} }: { id: string, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `plex/${id}/status`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
     },
     guests: {
       postGuest: (
@@ -315,6 +329,19 @@ export class API {
         { init = {} }: { init?: any }
       ): { uri: string, params: {}, init: {} } => ({
         uri: 'guests/register',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      }),
+      status: (
+        { id, init = {} }: { id: string, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `guests/${id}/status`,
         params: {},
         init: {
           ...init,
