@@ -9,7 +9,7 @@ import {
   Warning,
   Sorting,
 } from '@sensorr/ui'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop, useHistoryState, useTitle } from '@sensorr/utils'
 import { fields } from '@sensorr/tmdb'
 import Person from '../../components/Person/Person'
 import withProps from '../../components/enhancers/withProps'
@@ -149,6 +149,8 @@ const FollowedPersons = compose(
 )(Entities)
 
 const Followed = ({ ...props }) => {
+  useTitle(i18n.t('pages.followed.title'))
+
   return (
     <Body overlayScrollbars={true}>
       <FollowedPersons

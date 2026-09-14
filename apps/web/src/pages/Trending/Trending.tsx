@@ -8,6 +8,7 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
@@ -30,6 +31,7 @@ const EntitiesHideable = ({ controls, child: Child, ...props }) => {
 }
 
 export const Trending = (resource) => compose(
+  withTitle(`${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
   withProps({
     id: 'trending',
     display: 'grid',

@@ -1,4 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react'
+import withTitle from '../../components/enhancers/withTitle'
 
 const Mobile = ({ ...props }) => (
   <div sx={{ display: 'flex', alignItems: 'stretch', minHeight: '100%', width: '100%' }}>
@@ -76,4 +77,4 @@ const Mobile = ({ ...props }) => (
   </div>
 )
 
-export default Mobile
+export default withTitle('Settings - Mobile')(Mobile)

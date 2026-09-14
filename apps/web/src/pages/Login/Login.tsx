@@ -1,11 +1,13 @@
 import { memo, useCallback, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Button } from '@sensorr/ui'
+import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
 import { useAuthContext } from '../../contexts/Auth/Auth'
 
 const Login = () => {
+  useTitle('Login')
   const api = useAPI()
   const { authenticate, authenticated } = useAuthContext()
   const [ongoing, setOngoing] = useState(false)

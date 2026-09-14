@@ -50,6 +50,7 @@ import PlexSettings from './Settings/Plex'
 import MobileSettings from './Settings/Mobile'
 import UpdateSettings from './Settings/Update'
 import { useDeviceContext } from '../contexts/Device/Device'
+import { useTitle } from '@sensorr/utils'
 
 import { Provider as ScrollPositionProvider } from '../contexts/ScrollPosition/ScrollPosition'
 import { Provider as DetailsDrawerProvider } from '../contexts/DetailsDrawer/DetailsDrawer'
@@ -65,6 +66,7 @@ const SearchMovies = Search('movies')
 const SearchPersons = Search('persons')
 
 const SettingsRedirector = ({ ...props }) => {
+  useTitle('Settings')
   const { device } = useDeviceContext()
 
   if (device === 'mobile') {

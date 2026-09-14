@@ -3,8 +3,10 @@ import toast from 'react-hot-toast'
 import { Button, Icon, Link } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import Body from '../../layout/Body/Body'
+import { useTitle } from '@sensorr/utils'
 
 const Friends = ({ ...props }) => {
+  useTitle('Settings - Friends')
   const { loading, guests, deleteGuest } = useGuestsContext() as any
   const [invitation, setInvitation] = useState(
     `Someone wonderful want to follow your Plex "Watchlist" and consider your movie wishes !\n` +

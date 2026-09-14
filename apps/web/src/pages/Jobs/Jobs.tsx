@@ -6,6 +6,7 @@ import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
 import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
+import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { RecordJob, summary as summaryRecord } from './Job/Record'
@@ -24,6 +25,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   const navigate = useNavigate()
   const { jobs, loading } = useJobsContext() as any
   const { job } = useParams() as any
+  useTitle(['Jobs', jobs.find(j => j.job === job)?.meta?.command].filter(part => part).join(' - '))
   const store = useRef(null)
   const [logs, setLogs] = useState(null)
   const drainLogs = useMemo(() => throttle(3000, () => setLogs(store.current)), [])

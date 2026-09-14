@@ -3,10 +3,12 @@ import toast from 'react-hot-toast'
 import { Icon, Warning } from '@sensorr/ui'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
+import { useTitle } from '@sensorr/utils'
 
 const POLL_INTERVAL = 3000
 
 const UIPlex = ({ ...props }) => {
+  useTitle('Settings - Plex')
   const { config } = useConfigContext()
   const api = useAPI()
   const [registering, setRegistering] = useState(false)

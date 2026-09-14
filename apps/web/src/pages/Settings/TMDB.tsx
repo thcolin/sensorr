@@ -6,8 +6,10 @@ import { countries, flag, name } from 'country-emoji'
 import cl from 'country-language'
 import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
+import { useTitle } from '@sensorr/utils'
 
 const TMDB = ({ ...props }) => {
+  useTitle('Settings - TMDB')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const form = useForm({ defaultValues: config.getProperties() })

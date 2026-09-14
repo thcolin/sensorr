@@ -7,6 +7,7 @@ import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMe
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
@@ -29,6 +30,7 @@ const EntitiesHideable = ({ controls, child: Child, ...props }) => {
 }
 
 export const Theatres = compose(
+  withTitle(i18n.t('pages.theatres.title')),
   withProps({
     id: 'theatres',
     display: 'grid',

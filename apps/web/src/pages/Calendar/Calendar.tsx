@@ -25,6 +25,7 @@ import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMe
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import withFetchCalendarQuery from './withFetchCalendarQuery'
 import { withBody } from '../../layout/withLayout'
@@ -47,6 +48,7 @@ const EntitiesHideable = ({ controls, child: Child, ...props }) => {
 }
 
 export const Calendar = compose(
+  withTitle(i18n.t('pages.calendar.title')),
   withProps({
     display: 'grid',
     child: MovieWithCreditsAndReviews,

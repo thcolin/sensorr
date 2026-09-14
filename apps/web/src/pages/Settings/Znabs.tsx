@@ -7,8 +7,10 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
+import { useTitle } from '@sensorr/utils'
 
 const Znabs = ({ ...props }) => {
+  useTitle('Settings - Indexers')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const form = useForm({

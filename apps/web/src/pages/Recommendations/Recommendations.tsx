@@ -7,11 +7,13 @@ import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
 
 export const Recommendations = (id) => compose(
+  withTitle(i18n.t('pages.recommendations.title')),
   withProps({
     id: 'recommendations',
     display: 'grid',

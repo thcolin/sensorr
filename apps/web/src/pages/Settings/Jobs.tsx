@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { Option, Icon, Button, Link } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
+import { emojize, useTitle } from '@sensorr/utils'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
 
 const JobsSettings = ({ ...props }) => {
+  useTitle('Settings - Jobs')
   const api = useAPI()
   const { config } = useConfigContext()
   const { onSave } = useOutletContext() as any
