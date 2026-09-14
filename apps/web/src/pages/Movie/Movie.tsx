@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { transformMovieDetails, transformCollectionDetails, Warning, Link, Entities } from '@sensorr/ui'
 import { utils } from '@sensorr/tmdb'
-import { compose, emojize } from '@sensorr/utils'
+import { compose, emojize, useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { query as wikidataQuery, useWikiDataRequest } from '../../store/wikidata'
@@ -52,6 +52,8 @@ const Movie = ({ ...props }) => {
   )
 
   const ready = !movie.loading && !!(movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
+
+  useTitle(ready && [movie.details.title, movie.details.year && `(${movie.details.year})`].filter(part => part).join(' '))
 
   useEffect(() => {
     if (ready) {

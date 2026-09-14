@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useTitle } from '@sensorr/utils'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
@@ -9,6 +10,7 @@ import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 
 const Home = ({ ...props }) => {
+  useTitle('Home')
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const pretty = useCallback(({ index }) => ({

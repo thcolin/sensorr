@@ -8,11 +8,13 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 
 export const Search = (resource) => compose(
+  withTitle(`${i18n.t('pages.search.title')} ${resource}`),
   withProps({
     id: 'search',
     display: 'grid',

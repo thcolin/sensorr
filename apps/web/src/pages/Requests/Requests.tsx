@@ -20,6 +20,7 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
@@ -29,6 +30,7 @@ const Movie = ({ ...props }) => (
 )
 
 const Requests = compose(
+  withTitle(i18n.t('pages.requests.title')),
   withProps({
     id: 'requests',
     display: 'grid',

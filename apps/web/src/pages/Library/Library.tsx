@@ -32,6 +32,7 @@ import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMe
 import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import withProps from '../../components/enhancers/withProps'
+import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
@@ -56,6 +57,7 @@ const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
 }
 
 const Library = compose(
+  withTitle(i18n.t('pages.library.title')),
   withProps({
     id: 'library',
     display: 'grid',

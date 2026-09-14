@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Warning, Icon } from '@sensorr/ui'
+import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
 
@@ -27,6 +28,7 @@ const clearStoredPin = () => {
 }
 
 const KeepInTouch = () => {
+  useTitle('Keep in touch')
   const api = useAPI()
   const [pin, setPin] = useState(null) as any
 

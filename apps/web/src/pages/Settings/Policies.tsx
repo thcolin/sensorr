@@ -23,9 +23,10 @@ import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { emojize } from '@sensorr/utils'
+import { emojize, useTitle } from '@sensorr/utils'
 
 const Policies = ({ ...props }) => {
+  useTitle('Settings - Policies')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
 

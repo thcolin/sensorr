@@ -3,8 +3,10 @@ import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
+import { useTitle } from '@sensorr/utils'
 
 const Blackhole = ({ ...props }) => {
+  useTitle('Settings - Blackhole')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const form = useForm({ defaultValues: config.getProperties() })

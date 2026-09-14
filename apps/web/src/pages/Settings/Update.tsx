@@ -1,7 +1,9 @@
 import { useOutletContext } from 'react-router-dom'
 import Body from '../../layout/Body/Body'
+import { useTitle } from '@sensorr/utils'
 
 const Update = ({ ...props }) => {
+  useTitle('Settings - Update')
   const { updateAvailable, remoteApp } = useOutletContext() as any
 
   return (

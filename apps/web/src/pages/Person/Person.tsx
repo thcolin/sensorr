@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { utils } from '@sensorr/tmdb'
 import { transformMovieDetails, transformPersonDetails, Warning } from '@sensorr/ui'
-import { compose, emojize } from '@sensorr/utils'
+import { compose, emojize, useTitle } from '@sensorr/utils'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { usePersonsMetadataContext, withPersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
@@ -39,6 +39,8 @@ const Person = ({ ...props }) => {
   }, { transform: transformMovieDetails })
 
   const ready = !loading && !!(data?.id || error)
+
+  useTitle(ready && details.title)
 
   useEffect(() => {
     if (ready) {

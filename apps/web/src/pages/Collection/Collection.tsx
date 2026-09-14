@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { transformCollectionDetails, Warning } from '@sensorr/ui'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { useTitle } from '@sensorr/utils'
 import { useTMDBRequest } from '../../store/tmdb'
 import Details from '../Details/Details'
 import { useDeviceContext } from '../../contexts/Device/Device'
@@ -25,6 +26,8 @@ const Collection = ({ ...props }) => {
   // TODO: Get all credits and display them in 'credits' tab
 
   const ready = !loading && !!(data?.id || error)
+
+  useTitle(ready && details.title)
 
   useEffect(() => {
     if (ready) {
