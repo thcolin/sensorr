@@ -39,6 +39,7 @@ import Collection from './Collection/Collection'
 import Trending from './Trending/Trending'
 import Search from './Search/Search'
 import Jobs from './Jobs/Jobs'
+import Notifications from './Notifications/Notifications'
 import Settings from './Settings/Settings'
 import TMDBSettings from './Settings/TMDB'
 import JobsSettings from './Settings/Jobs'
@@ -102,6 +103,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
         <Route path='person/:id' element={<Person />} />
         <Route path='collection/:id' element={<Collection />} />
+        <Route path='notifications' element={<Notifications />} />
         <Route path='jobs' element={<Jobs />} />
         <Route path='jobs/:job' element={<Jobs />} />
         <Route path='settings' element={<Settings />}>
