@@ -79,13 +79,13 @@ export class MoviesService {
             await this.sensorrService.downloadRelease(release, (release.from === 'record' && release.job === 'manual') ? 'enclosure' : 'cache', 'fs')
 
             if (release.job !== 'manual') {
-              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
             }
           } else {
             await this.sensorrService.removeRelease(release)
 
             if (release.job !== 'manual') {
-              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
             }
           }
         }

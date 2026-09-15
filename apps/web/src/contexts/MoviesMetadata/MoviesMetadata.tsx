@@ -111,7 +111,7 @@ export const Provider = ({ ...props }) => {
           : typeof value === 'function' ? value(initial[i] || {}) : {}
         ),
         ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) && initial[i]?.releases ? { releases: (initial[i]?.releases || []).filter(({ proposal }) => !proposal) } : {}),
-        ...(key === 'proposal' && initial[i]?.releases ? { ...(value ? { state: 'archived' } : {}), releases: (initial[i]?.releases || []).map(r => ({ ...r, ...(r.proposal ? { choice: value } : {}) })) } : {}),
+        ...(key === 'proposal' && initial[i]?.releases ? { ...((typeof value === 'object' ? value.choice : value) ? { state: 'archived' } : {}), releases: (initial[i]?.releases || []).map(r => ({ ...r, ...(r.proposal && (typeof value !== 'object' || r.id === value.id) ? { choice: typeof value === 'object' ? value.choice : value } : {}) })) } : {}),
         ...(key === 'release' ? { state: 'archived', releases: [...(initial[i]?.releases || []), value] } : {}),
       }
     }), {})
@@ -209,7 +209,7 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
     const sensorr = useSensorr()
     const { loading, metadata: { [entity.id]: _metadata = {} }, setMovieMetadata, removeMovieRelease } = useMoviesMetadataContext() as any
     const setMetadata = useCallback((key, value) => setMovieMetadata(entity.id, key, value), [entity?.id])
-    const proceedRelease = useCallback((release, choice) => setMovieMetadata(entity.id, 'proposal', choice), [entity?.id])
+    const proceedRelease = useCallback((release, choice) => setMovieMetadata(entity.id, 'proposal', release?.id ? { id: release.id, choice } : choice), [entity?.id])
     const removeRelease = useCallback((release) => removeMovieRelease(entity.id, release), [entity?.id])
     const setState = useCallback(state => setMetadata('state', state), [setMetadata])
 

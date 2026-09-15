@@ -314,7 +314,7 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
     setOptimistic({ treated: true, choice })
-    setMovieMetadata(movie?.id, 'proposal', choice)
+    setMovieMetadata(movie?.id, 'proposal', release?.id ? { id: release.id, choice } : choice)
   }, [movie?.id, setMovieMetadata])
 
   useEffect(() => {

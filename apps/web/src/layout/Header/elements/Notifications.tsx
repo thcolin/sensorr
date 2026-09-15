@@ -446,7 +446,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                         color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
-                          setMovieMetadata(meta?.movie?.id, 'proposal', true)
+                          setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: true } : true)
                           answerNotification(_id, true)
                         }}
                       >
@@ -459,7 +459,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                         color={(loading || choice !== null) ? 'gray' : 'primary'}
                         disabled={loading || choice !== null}
                         onClick={() => {
-                          setMovieMetadata(meta?.movie?.id, 'proposal', false)
+                          setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: false } : false)
                           answerNotification(_id, false)
                         }}
                       >
