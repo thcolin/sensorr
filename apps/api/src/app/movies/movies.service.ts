@@ -72,8 +72,10 @@ export class MoviesService {
       }
 
       for (const release of releases) {
-        if (release.proposal) {
-          if ((release as ReleaseDTO & { choice: boolean }).choice) {
+        const { choice } = release as ReleaseDTO & { choice?: boolean }
+
+        if (release.proposal && choice !== undefined) {
+          if (choice) {
             await this.sensorrService.downloadRelease(release, (release.from === 'record' && release.job === 'manual') ? 'enclosure' : 'cache', 'fs')
 
             if (release.job !== 'manual') {
@@ -98,8 +100,11 @@ export class MoviesService {
           ...changes[i],
           ...(changes[i].releases ? {
             releases: changes[i].releases
-              .filter(release => !release.proposal || (release as ReleaseDTO & { choice: boolean }).choice)
-              .map(({ proposal, choice, ...release }: ReleaseDTO & { choice: boolean }) => release),
+              .filter(release => !release.proposal || (release as ReleaseDTO & { choice?: boolean }).choice !== false)
+              .map(({ proposal, choice, ...release }: ReleaseDTO & { choice?: boolean }) => ({
+                ...release,
+                ...(proposal && choice === undefined ? { proposal: true } : {}),
+              })),
           } : {}),
         },
         new: true,
