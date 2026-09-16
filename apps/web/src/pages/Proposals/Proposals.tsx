@@ -15,9 +15,10 @@ import { fields } from '@sensorr/tmdb'
 import { compose, emojize, filesize, scrollToTop, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useNavigate, useParams } from 'react-router-dom'
+import { formatRelative } from 'date-fns'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
-import { Proposal, scoreReleases, useProposalDiff } from '../../components/Sensorr/Proposal'
+import { Proposal, Size, Transition, scoreReleases, useProposalDiff } from '../../components/Sensorr/Proposal'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -39,7 +40,7 @@ const serializeRule = (key, values) => ({
 
 // Fixed row height: the list is a scanning surface, not a reading one, and a fixed
 // height frees the virtualizer from measuring 3371 rows.
-const ROW_HEIGHT = 120
+const ROW_HEIGHT = 128
 
 const UIProposalItem = ({ entity = null, metadata = null, selected = false, onSelect = null, ...props }) => {
   const releases = useMemo(() => scoreReleases(metadata?.releases, metadata?.policy), [metadata?.releases, metadata?.policy])
@@ -73,18 +74,17 @@ const UIProposalItem = ({ entity = null, metadata = null, selected = false, onSe
           ].filter(Boolean).join(' · ')}
         </small>
         <small sx={UIProposalItem.styles.diff}>
-          {diff.changed.length ?
-            diff.changed.map(({ axis, from, to }) => <code key={axis}>{from}▸{to}</code>) :
+          {diff.changed.length ? (
+            <>
+              {diff.changed.slice(0, 3).map(({ axis, from, to }) => (
+                <Transition key={axis} axis={axis} from={from} to={to} policy={metadata?.policy} compact={true} />
+              ))}
+              {diff.changed.length > 3 && <em>+{diff.changed.length - 3}</em>}
+            </>
+          ) : proposal ? (
             <em>nothing changes</em>
-          }
-        </small>
-        <small sx={UIProposalItem.styles.foot}>
-          <span>{diff.was.length && !diff.now.length ? emojize('✅', 'meets policy') : ''}</span>
-          {typeof diff.size === 'number' && !!diff.size && (
-            <code sx={{ color: diff.size < 0 ? 'primary' : 'grayDarker' }}>
-              {diff.size > 0 ? '+' : '−'}{filesize.stringify(Math.abs(diff.size))}
-            </code>
-          )}
+          ) : null}
+          {!!diff.size && <Size from={diff.from?.size} to={proposal?.size} delta={diff.size} command={proposal?.from} compact={true} />}
         </small>
       </span>
     </button>
@@ -128,7 +128,8 @@ UIProposalItem.styles = {
     minWidth: 0,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 10,
   },
   title: {
     display: 'flex',
@@ -153,13 +154,10 @@ UIProposalItem.styles = {
   diff: {
     display: 'flex',
     alignItems: 'center',
-    gap: 9,
+    flexWrap: 'wrap',
+    gap: 10,
     overflow: 'hidden',
-    '>code': {
-      variant: 'code.tag',
-      fontSize: 7,
-      flexShrink: 0,
-    },
+    maxHeight: '3.5em',
     '>em': {
       color: 'grayDarker',
       fontSize: 7,
@@ -199,6 +197,21 @@ const UIProposals = ({ entities = {}, length = null, ready = true, error = null,
   })
 
   const items = rowVirtualizer.getVirtualItems()
+
+  // One sticky heading driven by the topmost visible row, rather than heading rows
+  // inserted in the virtualized flow. Same grouping as the Jobs sidebar
+  // (Jobs.tsx:152-163), which the list follows when sorted by date.
+  const heading = useMemo(() => {
+    const entity = entities[items[0]?.index] as any
+    const date = entity?.updated_at || entity?.refined_at || entity?.shrinked_at
+
+    if (!date) {
+      return null
+    }
+
+    const relative = formatRelative(new Date(date), new Date()).split(' ')[0]
+    return ['today', 'yesterday'].includes(relative) ? relative : new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  }, [entities, items[0]?.index])
 
   useEffect(() => {
     if (ready && onMore && items.length) {
@@ -240,6 +253,12 @@ const UIProposals = ({ entities = {}, length = null, ready = true, error = null,
   return (
     <section sx={UIProposals.styles.element}>
       <aside ref={listRef} sx={{ ...UIProposals.styles.list, display: [id ? 'none' : 'block', 'block'] }}>
+        {!!heading && <h6 sx={UIProposals.styles.heading}>{heading}</h6>}
+        {!ready && !length ? (
+          <div sx={UIProposals.styles.skeletons}>
+            {Array(8).fill(null).map((foo, index) => <span key={index} />)}
+          </div>
+        ) : (
         <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
           {items.map((virtualItem) => (
             <div
@@ -265,6 +284,7 @@ const UIProposals = ({ entities = {}, length = null, ready = true, error = null,
             </div>
           ))}
         </div>
+        )}
       </aside>
       <div sx={{ ...UIProposals.styles.detail, display: [id ? 'flex' : 'none', 'flex'] }}>
         <Body>
@@ -303,8 +323,37 @@ UIProposals.styles = {
     maxWidth: ['100%', '24em'],
     overflowY: 'auto',
     overflowX: 'hidden',
+    backgroundColor: 'grayLightest',
     borderRight: '1px solid',
     borderRightColor: 'grayLight',
+  },
+  heading: {
+    position: 'sticky',
+    top: '0px',
+    paddingX: 4,
+    paddingY: 6,
+    margin: 12,
+    backgroundColor: 'grayLighter',
+    borderBottom: '1px solid',
+    borderColor: 'grayLight',
+    textTransform: 'capitalize',
+    zIndex: 1,
+  },
+  skeletons: {
+    display: 'flex',
+    flexDirection: 'column',
+    '>span': {
+      height: `${ROW_HEIGHT}px`,
+      borderBottom: '1px solid',
+      borderBottomColor: 'gray',
+      backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLightest} 0%, ${theme.rawColors.grayLighter} 50%, ${theme.rawColors.grayLightest} 100%)`,
+      backgroundSize: '200% 100%',
+      animation: 'sensorr-proposals-shimmer 1.4s ease-in-out infinite',
+    },
+    '@keyframes sensorr-proposals-shimmer': {
+      '0%': { backgroundPosition: '200% 0' },
+      '100%': { backgroundPosition: '-200% 0' },
+    },
   },
   back: {
     variant: 'button.reset',

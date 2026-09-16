@@ -34,56 +34,161 @@ export const scoreReleases = (releases, policy) => (typeof policy?.apply === 'fu
 
 const has = (list, value) => (list || []).includes(value)
 
+const SUPERSCRIPT = '⁰¹²³⁴⁵⁶⁷⁸⁹'
+
+// What the policy says about one value, and nothing more. `require` and `avoid` are
+// sets; `prefer` is an ordered list whose position is the score (policy.ts:330-353).
+export const levelOf = (axis, value, policy) => {
+  if (!value) {
+    return { kind: null }
+  }
+
+  if (has(policy?.avoid?.[axis], value)) {
+    return { kind: 'avoid', mark: '!' }
+  }
+
+  const preferred = policy?.prefer?.[axis] || []
+  const rank = preferred.indexOf(value)
+
+  if (has(policy?.require?.[axis], value)) {
+    return { kind: 'require', mark: '*', rank: rank === -1 ? null : rank + 1, total: preferred.length }
+  }
+
+  if (rank !== -1) {
+    return { kind: 'prefer', mark: SUPERSCRIPT[Math.min(9, rank + 1)], rank: rank + 1, total: preferred.length }
+  }
+
+  return { kind: null }
+}
+
+// The three states the colour is allowed to assert, and the one it is not. `prefer`
+// covers only znab, resolution and language in the configured policies, so an axis
+// none of the three volets mentions stays grey and says so with a tilde.
+export const transitionOf = (axis, from, to, policy) => {
+  const left = levelOf(axis, from, policy)
+  const right = levelOf(axis, to, policy)
+
+  if (from === to) {
+    return { state: 'same', separator: '=', left, right }
+  }
+
+  if (right.kind === 'avoid' || (left.kind === 'require' && right.kind !== 'require')) {
+    return { state: 'broken', separator: '→', left, right: { ...right, mark: right.mark || '!' } }
+  }
+
+  if (right.kind === 'require') {
+    return { state: 'held', separator: '→', left, right }
+  }
+
+  if (!left.kind && !right.kind) {
+    return { state: 'quiet', separator: '~', left, right }
+  }
+
+  return { state: 'moved', separator: '→', left, right }
+}
+
+const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, ...props }) => {
+  const { state, separator, left, right } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
+  const styles = compact ? UITransition.styles.compact : UITransition.styles.full
+
+  if (state === 'same') {
+    return (
+      <span {...props} sx={{ ...UITransition.styles.element, ...styles.element, opacity: 0.3 }} title={`${axis}: ${to}`}>
+        <span sx={{ ...UITransition.styles.side, ...styles.side }}>
+          {to}{!compact && !!right.mark && <sup>{right.mark}</sup>}
+        </span>
+      </span>
+    )
+  }
+
+  return (
+    <span {...props} sx={{ ...UITransition.styles.element, ...styles.element }} title={`${axis}: ${from} ${separator} ${to}`}>
+      <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.before }}>
+        {from || '–'}{!compact && !!left.mark && <sup>{left.mark}</sup>}
+      </span>
+      <span sx={{ ...UITransition.styles.separator, ...styles.separator }}>{separator}</span>
+      <span sx={{ ...UITransition.styles.side, ...styles.side, ...(UITransition.styles as any)[state] }}>
+        {to || '–'}{!compact && !!right.mark && <sup>{right.mark}</sup>}
+      </span>
+    </span>
+  )
+}
+
+UITransition.styles = {
+  element: {
+    display: 'inline-flex',
+    alignItems: 'stretch',
+    maxWidth: '100%',
+    borderRadius: '0.25em',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    overflow: 'hidden',
+    fontFamily: 'monospace',
+    whiteSpace: 'nowrap',
+    lineHeight: 'normal',
+    backgroundColor: 'gray',
+    color: 'text',
+  },
+  side: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    '>sup': {
+      fontSize: 8,
+      marginLeft: 11,
+      opacity: 0.75,
+    },
+  },
+  before: {
+    backgroundColor: 'grayLight',
+    opacity: 0.6,
+  },
+  separator: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    backgroundColor: 'grayLight',
+    color: 'grayDarker',
+  },
+  held: {
+    backgroundColor: 'primary',
+    color: 'whitePure',
+    fontWeight: 'semibold',
+  },
+  broken: {
+    backgroundColor: 'errorDarker',
+    color: 'whitePure',
+    fontWeight: 'semibold',
+  },
+  moved: {
+    fontWeight: 'semibold',
+  },
+  quiet: {},
+  full: {
+    element: { fontSize: 5 },
+    side: { paddingX: 8, paddingY: 10 },
+    separator: { width: '1.5em', fontSize: 6 },
+  },
+  compact: {
+    element: { fontSize: 7 },
+    side: { paddingX: 10, paddingY: 11, maxWidth: '6em' },
+    separator: { width: '1.25em', fontSize: 7 },
+  },
+}
+
+export const Transition = memo(UITransition)
+
 // The job never compares against one release: it builds a synthetic pair, the best
 // score and the smallest size across every owned release (ProcessMoviesTask.js:307-311
-// and :329-334). Showing a delta against a single release would not match its verdict.
+// and :329-334). A delta against a single release would not match its verdict.
 const baseline = (owned) => ({
   score: owned.length ? Math.max(...owned.map(({ score }) => score || 0)) : null,
   size: owned.length ? Math.min(...owned.map(({ size }) => size || 0)) : null,
   release: owned.reduce((best, release) => (best && best.score >= release.score) ? best : release, null),
 })
-
-// What the policy is able to assert, and nothing more. `prefer` only covers znab,
-// resolution and language in practice, so an axis it says nothing about is reported
-// as changed, never as gained.
-const judge = (axis, from, to, policy) => {
-  if (from === to) {
-    return { state: 'same' }
-  }
-
-  if (has(policy?.avoid?.[axis], to)) {
-    return { state: 'avoided', label: 'avoided' }
-  }
-
-  const required = policy?.require?.[axis]
-
-  if (required?.length) {
-    if (has(required, to) && !has(required, from)) {
-      return { state: 'gained', label: 'required' }
-    }
-
-    if (!has(required, to) && has(required, from)) {
-      return { state: 'lost', label: 'required' }
-    }
-  }
-
-  const preferred = policy?.prefer?.[axis]
-
-  if (preferred?.length) {
-    const before = preferred.indexOf(from)
-    const after = preferred.indexOf(to)
-
-    if (after !== -1 && (before === -1 || after < before)) {
-      return { state: 'gained', label: 'preferred' }
-    }
-
-    if (before !== -1 && (after === -1 || after > before)) {
-      return { state: 'lost', label: 'preferred' }
-    }
-  }
-
-  return { state: 'changed', label: 'changed' }
-}
 
 export const useProposalDiff = (owned, proposed, policy) => useMemo(() => {
   const base = baseline(owned)
@@ -94,7 +199,7 @@ export const useProposalDiff = (owned, proposed, policy) => useMemo(() => {
     axis,
     from: left[axis],
     to: right[axis],
-    ...judge(axis, left[axis], right[axis], policy),
+    ...transitionOf(axis, left[axis], right[axis], policy),
   })) : []
 
   const required = Object.keys(policy?.require || {}).filter(axis => (policy.require[axis] || []).length)
@@ -156,87 +261,34 @@ const Verdict = memo(UIVerdict)
 
 // Two composite language flags can look alike (MULTi-VFF against MULTi-VF2), so the
 // value is always written out next to it. Source and encoding logos read on their own.
-const Value = ({ axis = '', value = null, ...props }) => (
-  <span sx={Value.styles.element}>
-    {!!logos[axis]?.[value] && logos[axis][value]}
-    {(!logos[axis]?.[value] || axis === 'language') && <code>{value || '–'}</code>}
-  </span>
-)
+// Size is not an oleoo axis and the policy says nothing about it, so it keeps its own
+// pill: the direction is factual, and `shrink` is the only job that promises it.
+const UISize = ({ from = null, to = null, delta = null, command = 'refine', compact = false, ...props }) => {
+  const styles = compact ? UITransition.styles.compact : UITransition.styles.full
+  const state = !delta ? 'same' : command === 'shrink' ? (delta < 0 ? 'held' : 'broken') : 'moved'
 
-Value.styles = {
-  element: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 9,
-    minWidth: 0,
-    '>code': { variant: 'code.tag', fontSize: 6, whiteSpace: 'nowrap' },
-    '>abbr': { fontSize: 3, textDecoration: 'none' },
-    '>svg': { height: '1.25em', color: 'text' },
-  },
-}
-
-const UIDiffRow = ({ axis = '', from = null, to = null, state = 'same', label = '', ...props }) => (
-  <div sx={{ ...UIDiffRow.styles.element, ...(state === 'same' ? UIDiffRow.styles.same : {}) }}>
-    <label>{axis}</label>
-    <Value axis={axis} value={from} />
-    <span sx={UIDiffRow.styles.arrow}>{state === 'same' ? '=' : '→'}</span>
-    <Value axis={axis} value={to} />
-    <em sx={{ ...UIDiffRow.styles.label, ...(UIDiffRow.styles as any)[state] }}>{label}</em>
-  </div>
-)
-
-UIDiffRow.styles = {
-  element: {
-    display: 'grid',
-    gridTemplateColumns: '6em minmax(0, 9em) 1.25em minmax(0, 9em) minmax(0, 1fr)',
-    alignItems: 'center',
-    gap: 8,
-    paddingY: 10,
-    fontSize: 6,
-    '>label': {
-      color: 'grayDarker',
-      textTransform: 'capitalize',
-    },
-  },
-  same: {
-    opacity: 0.3,
-  },
-  arrow: {
-    color: 'grayDarker',
-    textAlign: 'center',
-  },
-  label: {
-    fontStyle: 'normal',
-    fontSize: 7,
-    fontWeight: 'semibold',
-    color: 'grayDarker',
-  },
-  gained: { color: 'primary' },
-  lost: { color: 'warning' },
-  avoided: { color: 'error' },
-  changed: { color: 'grayDarker' },
-}
-
-const DiffRow = memo(UIDiffRow)
-
-const UISizeRow = ({ from = null, to = null, delta = null, command = 'refine', ...props }) => {
-  const wanted = command === 'shrink' ? 'down' : null
-  const state = !delta ? 'same' : wanted === 'down' ? (delta < 0 ? 'gained' : 'avoided') : (delta < 0 ? 'gained' : 'lost')
+  if (!delta) {
+    return (
+      <span {...props} sx={{ ...UITransition.styles.element, ...styles.element, opacity: 0.3 }} title='size: unchanged'>
+        <span sx={{ ...UITransition.styles.side, ...styles.side }}>{typeof to === 'number' ? filesize.stringify(to) : '–'}</span>
+      </span>
+    )
+  }
 
   return (
-    <div sx={{ ...UIDiffRow.styles.element, ...(delta ? {} : UIDiffRow.styles.same) }}>
-      <label>Size</label>
-      <span sx={Value.styles.element}><code>{typeof from === 'number' ? filesize.stringify(from) : '–'}</code></span>
-      <span sx={UIDiffRow.styles.arrow}>{delta ? '→' : '='}</span>
-      <span sx={Value.styles.element}><code>{typeof to === 'number' ? filesize.stringify(to) : '–'}</code></span>
-      <em sx={{ ...UIDiffRow.styles.label, ...(UIDiffRow.styles as any)[state] }}>
-        {delta ? `${delta > 0 ? '+' : '−'}${filesize.stringify(Math.abs(delta))}` : 'same'}
-      </em>
-    </div>
+    <span {...props} sx={{ ...UITransition.styles.element, ...styles.element }} title={`size: ${filesize.stringify(from)} → ${filesize.stringify(to)}`}>
+      <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.before }}>
+        {typeof from === 'number' ? filesize.stringify(from) : '–'}
+      </span>
+      <span sx={{ ...UITransition.styles.separator, ...styles.separator }}>{delta < 0 ? '↓' : '↑'}</span>
+      <span sx={{ ...UITransition.styles.side, ...styles.side, ...(UITransition.styles as any)[state] }}>
+        {typeof to === 'number' ? filesize.stringify(to) : '–'}
+      </span>
+    </span>
   )
 }
 
-const SizeRow = memo(UISizeRow)
+export const Size = memo(UISize)
 
 const UIProposal = ({ entity = null, metadata = null, setMetadata = null, proceedRelease = null, ...props }) => {
   const releases = useMemo(() => scoreReleases(metadata?.releases, metadata?.policy), [metadata?.releases, metadata?.policy])
@@ -289,12 +341,18 @@ const UIProposal = ({ entity = null, metadata = null, setMetadata = null, procee
           {!!proposal && (
             <>
               <Verdict was={diff.was} now={diff.now} changed={diff.changed} command={command} compared={!!diff.from} />
-              {!!diff.rows.length && (
-                <div sx={UIProposal.styles.diff}>
-                  {diff.rows.map(row => <DiffRow key={row.axis} {...row} />)}
-                  <SizeRow from={diff.from?.size} to={proposal.size} delta={diff.size} command={command} />
-                </div>
-              )}
+              <div sx={UIProposal.styles.diff}>
+                {diff.rows.map(({ axis, from, to }) => (
+                  <span key={axis} sx={UIProposal.styles.axis}>
+                    <label>{axis}</label>
+                    <Transition axis={axis} from={from} to={to} policy={metadata?.policy} />
+                  </span>
+                ))}
+                <span sx={UIProposal.styles.axis}>
+                  <label>size</label>
+                  <Size from={diff.from?.size} to={proposal.size} delta={diff.size} command={command} />
+                </span>
+              </div>
             </>
           )}
         </div>
@@ -432,11 +490,26 @@ UIProposal.styles = {
   },
   diff: {
     display: 'flex',
-    flexDirection: 'column',
-    paddingY: 8,
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: 6,
+    paddingY: 4,
     borderTop: '1px solid',
     borderBottom: '1px solid',
     borderColor: 'gray',
+  },
+  axis: {
+    display: 'inline-flex',
+    flexDirection: 'column',
+    minWidth: 0,
+    '>label': {
+      color: 'grayDarker',
+      fontSize: 8,
+      fontWeight: 'semibold',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      marginBottom: 11,
+    },
   },
   releases: {
     display: 'flex',
