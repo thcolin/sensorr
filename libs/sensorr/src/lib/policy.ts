@@ -348,6 +348,7 @@ export class Policy {
 
       return {
         ...release,
+        account,
         score: (release.score || 0) + (release.valid ? 1000 : 0) + Object.keys(account).reduce((sum, key) => sum += Object.values(account[key]).reduce((s: number, v: number) => s + v, 0) as number, 0),
       }
     },
