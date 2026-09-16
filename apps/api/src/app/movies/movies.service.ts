@@ -253,43 +253,64 @@ export class MoviesService {
             false: [{ 'releases': { $not: { $elemMatch: { 'proposal': true } } } }],
           })[params['releases.proposal']] || [] : []),
           ...(params['release_znab.prefer'] ? [{
-            'releases': { $elemMatch: { znab: { $in: params['release_znab.prefer'].split('|') } }}
+            'releases': { $elemMatch: {
+              znab: { $in: params['release_znab.prefer'].split('|') },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_znab.avoid'] ? [{
             'releases': { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } }} }
           }] : []),
           ...(params['release_encoding.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_encoding.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_encoding.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_encoding.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_encoding.avoid'] } }} }
           }] : []),
           ...(params['release_resolution.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_resolution.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_resolution.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_resolution.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_resolution.avoid'] } }} }
           }] : []),
           ...(params['release_source.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_source.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_source.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_source.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_source.avoid'] } }} }
           }] : []),
           ...(params['release_dub.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_dub.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_dub.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_dub.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_dub.avoid'] } }} }
           }] : []),
           ...(params['release_language.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_language.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_language.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_language.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_language.avoid'] } }} }
           }] : []),
           ...(params['release_flags.prefer'] ? [{
-            'releases': { $elemMatch: { title: { $regex: params['release_flags.prefer'] } }}
+            'releases': { $elemMatch: {
+              title: { $regex: params['release_flags.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_flags.avoid'] ? [{
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_flags.avoid'] } }} }
@@ -314,6 +335,9 @@ export class MoviesService {
       page,
       lean: true,
       ...(limit ? { limit } : { pagination: false }),
+      // A caller that only needs a few fields pays 1.6 KB a movie instead of 4.9 KB,
+      // which is what makes loading the whole proposal queue at once tenable.
+      ...(params.fields ? { select: params.fields.split('|') } : {}),
       sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], id: 1 },
       customLabels: { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' },
     })
@@ -630,43 +654,64 @@ export class MoviesService {
                       false: [{ 'releases': { $not: { $elemMatch: { 'proposal': true } } } }],
                     })[params['releases.proposal']] || [] : []),
                     ...(params['release_znab.prefer'] ? [{
-                      'releases': { $elemMatch: { znab: { $in: params['release_znab.prefer'].split('|') } }}
+                      'releases': { $elemMatch: {
+              znab: { $in: params['release_znab.prefer'].split('|') },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_znab.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } }} }
                     }] : []),
                     ...(params['release_encoding.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_encoding.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_encoding.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_encoding.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_encoding.avoid'] } }} }
                     }] : []),
                     ...(params['release_resolution.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_resolution.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_resolution.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_resolution.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_resolution.avoid'] } }} }
                     }] : []),
                     ...(params['release_source.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_source.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_source.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_source.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_source.avoid'] } }} }
                     }] : []),
                     ...(params['release_dub.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_dub.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_dub.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_dub.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_dub.avoid'] } }} }
                     }] : []),
                     ...(params['release_language.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_language.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_language.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_language.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_language.avoid'] } }} }
                     }] : []),
                     ...(params['release_flags.prefer'] ? [{
-                      'releases': { $elemMatch: { title: { $regex: params['release_flags.prefer'] } }}
+                      'releases': { $elemMatch: {
+              title: { $regex: params['release_flags.prefer'] },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
                     }] : []),
                     ...(params['release_flags.avoid'] ? [{
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_flags.avoid'] } }} }

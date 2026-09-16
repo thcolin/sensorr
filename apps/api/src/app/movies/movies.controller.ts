@@ -34,7 +34,7 @@ export class MoviesController {
     @Query('sort_by') sort_by = 'updated_at.desc',
     @Query() query,
   ): Promise<{}> {
-    return this.moviesService.getMovies({ ...query, sort_by }, page, limit)
+    return this.moviesService.getMovies({ ...query, sort_by }, page, Number(limit))
   }
 
   @Get('metadata')
