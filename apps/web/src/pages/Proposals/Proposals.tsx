@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   withControls,
   FilterStatistics,
@@ -8,19 +8,27 @@ import {
   Range,
   Checkbox,
   Icon,
+  Picture,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
-import { compose, emojize, scrollToTop, useHistoryState, useResponsiveValue } from '@sensorr/utils'
+import { compose, emojize, filesize, scrollToTop, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAPI, query as APIQuery } from '../../store/api'
-import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
-import { Proposal } from '../../components/Sensorr/Proposal'
+import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
+import { Proposal, scoreReleases, useProposalDiff } from '../../components/Sensorr/Proposal'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { withBody } from '../../layout/withLayout'
+import Body from '../../layout/Body/Body'
+
+const EMOJI = {
+  'record': '📹',
+  'refine': '✨',
+  'shrink': '✂️',
+}
 
 // Same shape as `Library`'s release rules: three groups (prefer / avoid / ignore)
 // serialized into the `release_<tag>.prefer|avoid` params the API already filters on
@@ -30,52 +38,168 @@ const serializeRule = (key, values) => ({
   ...(values.some(({ group }) => group === 'avoid') ? { [`release_${key}.avoid`]: values.filter(({ group }) => group === 'avoid').map(({ value }) => value).join('|') } : {}),
 })
 
-// Rough per-row height seed for the virtualizer, replaced by `measureElement` as
-// soon as a row is on screen. Driven by the release count, which sets the height.
-const estimateProposalHeight = (entity: any, mobile: boolean) => {
-  const releases = entity?.releases?.length || 2
+// Fixed row height: the list is a scanning surface, not a reading one, and a fixed
+// height frees the virtualizer from measuring 3371 rows.
+const ROW_HEIGHT = 120
 
-  return mobile ? Math.max(420, 260 + releases * 110) : Math.max(300, 200 + releases * 90)
+const UIProposalItem = ({ entity = null, metadata = null, selected = false, onSelect = null, ...props }) => {
+  const releases = useMemo(() => scoreReleases(metadata?.releases, metadata?.policy), [metadata?.releases, metadata?.policy])
+  const owned = useMemo(() => releases.filter(({ proposal }) => !proposal), [releases])
+  const proposal = useMemo(() => releases.filter(({ proposal }) => proposal)[0] || null, [releases])
+  const diff = useProposalDiff(owned, proposal, metadata?.policy)
+  const regression = diff.changed.some(({ state }) => state === 'avoided' || state === 'lost')
+
+  return (
+    <button
+      type='button'
+      onClick={() => onSelect(entity?.id)}
+      sx={{
+        ...UIProposalItem.styles.element,
+        ...(selected ? UIProposalItem.styles.selected : {}),
+        ...(regression ? UIProposalItem.styles.regression : {}),
+      }}
+    >
+      <span sx={UIProposalItem.styles.poster}>
+        <Picture path={entity?.poster_path} size='w92' />
+      </span>
+      <span sx={UIProposalItem.styles.body}>
+        <span sx={UIProposalItem.styles.title}>
+          <strong>{entity?.title}</strong>
+          <span>{EMOJI[proposal?.from]}</span>
+        </span>
+        <small sx={UIProposalItem.styles.about}>
+          {[
+            entity?.release_date && new Date(entity.release_date).getFullYear(),
+            entity?.genres?.slice(0, 2).map(({ name }) => name).join(', '),
+          ].filter(Boolean).join(' · ')}
+        </small>
+        <small sx={UIProposalItem.styles.diff}>
+          {diff.changed.length ?
+            diff.changed.map(({ axis, from, to }) => <code key={axis}>{from}▸{to}</code>) :
+            <em>nothing changes</em>
+          }
+        </small>
+        <small sx={UIProposalItem.styles.foot}>
+          <span>{diff.was.length && !diff.now.length ? emojize('✅', 'meets policy') : ''}</span>
+          {typeof diff.size === 'number' && !!diff.size && (
+            <code sx={{ color: diff.size < 0 ? 'primary' : 'grayDarker' }}>
+              {diff.size > 0 ? '+' : '−'}{filesize.stringify(Math.abs(diff.size))}
+            </code>
+          )}
+        </small>
+      </span>
+    </button>
+  )
 }
+
+UIProposalItem.styles = {
+  element: {
+    variant: 'button.reset',
+    display: 'flex',
+    alignItems: 'stretch',
+    width: '100%',
+    height: `${ROW_HEIGHT}px`,
+    paddingX: 8,
+    paddingY: 9,
+    textAlign: 'left',
+    cursor: 'pointer',
+    borderLeft: '0.25em solid transparent',
+    borderBottom: '1px solid',
+    borderBottomColor: 'gray',
+    '&:hover': {
+      backgroundColor: 'grayLightest',
+    },
+  },
+  selected: {
+    backgroundColor: 'grayLighter',
+    borderLeftColor: 'primary',
+  },
+  regression: {
+    borderLeftColor: 'error',
+  },
+  poster: {
+    flexShrink: 0,
+    display: 'flex',
+    width: '3.5em',
+    marginRight: 8,
+    '>span': { width: '100%' },
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  title: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    '>strong': {
+      minWidth: 0,
+      fontSize: 5,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  },
+  about: {
+    color: 'grayDarker',
+    fontSize: 7,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  diff: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 9,
+    overflow: 'hidden',
+    '>code': {
+      variant: 'code.tag',
+      fontSize: 7,
+      flexShrink: 0,
+    },
+    '>em': {
+      color: 'grayDarker',
+      fontSize: 7,
+      fontStyle: 'normal',
+    },
+  },
+  foot: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    color: 'grayDarker',
+    fontSize: 7,
+    '>code': {
+      fontFamily: 'monospace',
+      fontWeight: 'semibold',
+    },
+  },
+}
+
+const ProposalItem = withMovieMetadataContext({ enhanced: true })(UIProposalItem)
 
 const UIProposals = ({ entities = {}, length = null, ready = true, error = null, onMore = null, ...props }) => {
   const listRef = useRef(null)
+  const navigate = useNavigate()
+  const { id } = useParams()
+  // On a narrow screen the two panels cannot share the width: the list is the page,
+  // and picking one swaps it for the detail. Same pattern as Settings.tsx:62,89.
   const mobile = useResponsiveValue([true, false])
-  const { metadata } = useMoviesMetadataContext() as any
-  const [scrollMargin, setScrollMargin] = useState(0)
 
   const rowVirtualizer = useVirtualizer({
     count: length || 0,
-    getScrollElement: () => document.getElementById('body'),
-    estimateSize: (index) => estimateProposalHeight(entities[index], mobile),
+    getScrollElement: () => listRef.current,
+    estimateSize: () => ROW_HEIGHT,
     getItemKey: (index) => entities[index]?.id ?? index,
-    overscan: 4,
-    scrollMargin,
+    overscan: 6,
   })
 
   const items = rowVirtualizer.getVirtualItems()
-
-  // The green nav scrolls inside the same container as the list, so the list does
-  // not start at offset 0. Same mechanism as ProcessMovies.tsx:105-128.
-  useLayoutEffect(() => {
-    const list = listRef.current
-    const scroller = document.getElementById('body')
-
-    if (!list || !scroller) {
-      return
-    }
-
-    const compute = () => {
-      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
-      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
-    }
-
-    compute()
-    const observer = new ResizeObserver(compute)
-    observer.observe(scroller)
-
-    return () => observer.disconnect()
-  }, [length])
 
   useEffect(() => {
     if (ready && onMore && items.length) {
@@ -83,85 +207,124 @@ const UIProposals = ({ entities = {}, length = null, ready = true, error = null,
     }
   }, [ready, JSON.stringify(items.map(({ index }) => index))])
 
-  // Once a proposal is answered, bring the next undecided one under the eyes
-  // instead of leaving the treated row filling the screen.
-  const treated = useMemo(() => Object.keys(entities).filter(index => (metadata[entities[index]?.id]?.releases || [])
-    .some(({ proposal, choice }) => proposal && typeof choice === 'boolean')
-  ), [entities, metadata])
+  const onSelect = useCallback((movie) => navigate(`/movie/proposals/${movie}`), [navigate])
+  const active = useMemo(() => Object.values(entities).find((entity: any) => `${entity?.id}` === id) as any, [entities, id])
 
-  const previous = useRef(treated.length)
-
+  // Landing straight on /movie/proposals opens the first one, so the right panel is
+  // never empty while the queue is not. An id that no loaded page carries — a link
+  // kept from another sort or another day — falls back to the first rather than
+  // spinning forever, since the API has no route to fetch one movie.
   useEffect(() => {
-    if (treated.length > previous.current) {
-      const next = Object.keys(entities)
-        .map(index => Number(index))
-        .sort((a, b) => a - b)
-        .find(index => !treated.includes(String(index)) && index > Math.max(...treated.map(Number)))
-
-      if (typeof next === 'number') {
-        rowVirtualizer.scrollToIndex(next, { align: 'start' })
-      }
+    if (!ready || !entities[0]?.id) {
+      return
     }
 
-    previous.current = treated.length
-  }, [treated.length])
+    if (mobile) {
+      return
+    }
+
+    if (!id || (Object.keys(entities).length && !active)) {
+      navigate(`/movie/proposals/${entities[0].id}`, { replace: true })
+    }
+  }, [id, ready, active, mobile, entities[0]?.id])
 
   if (error || (ready && !length)) {
     return (
       <Warning
         emoji='🛎️'
         title={error ? 'Error' : 'Nothing to treat'}
-        subtitle={error?.message || error || (
-          <span>
-            Proposals show up here once a <code>refine</code> or <code>shrink</code> job runs with <strong>proposalOnly</strong> enabled.
-          </span>
-        )}
+        subtitle={error?.message || error || 'No movie is waiting for a choice'}
       />
     )
   }
 
   return (
-    <div sx={UIProposals.styles.element}>
-      <div ref={listRef} style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
-        {items.map((virtualItem) => (
-          <div
-            key={virtualItem.key}
-            data-index={virtualItem.index}
-            ref={rowVirtualizer.measureElement}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin}px)`,
-            }}
-          >
-            {entities[virtualItem.index] ? (
-              <Proposal entity={entities[virtualItem.index]} />
-            ) : (
-              <div sx={UIProposals.styles.placeholder}>
-                <Icon value='spinner' />
-              </div>
-            )}
-          </div>
-        ))}
+    <section sx={UIProposals.styles.element}>
+      <aside ref={listRef} sx={{ ...UIProposals.styles.list, display: [id ? 'none' : 'block', 'block'] }}>
+        <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+          {items.map((virtualItem) => (
+            <div
+              key={virtualItem.key}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${ROW_HEIGHT}px`,
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              {entities[virtualItem.index] ? (
+                <ProposalItem
+                  entity={entities[virtualItem.index]}
+                  selected={`${entities[virtualItem.index]?.id}` === id}
+                  onSelect={onSelect}
+                />
+              ) : (
+                <div sx={UIProposals.styles.placeholder}><Icon value='spinner' /></div>
+              )}
+            </div>
+          ))}
+        </div>
+      </aside>
+      <div sx={{ ...UIProposals.styles.detail, display: [id ? 'flex' : 'none', 'flex'] }}>
+        <Body>
+          <button type='button' onClick={() => navigate('/movie/proposals')} sx={UIProposals.styles.back}>
+            <Icon value='chevron' direction={true} width='0.625em' height='0.625em' />
+            <span>{length} proposals</span>
+          </button>
+          {active ? (
+            <Proposal entity={active} />
+          ) : (
+            <div sx={UIProposals.styles.placeholder}><Icon value='spinner' /></div>
+          )}
+        </Body>
       </div>
-    </div>
+    </section>
   )
 }
 
 UIProposals.styles = {
   element: {
+    position: 'relative',
     flex: 1,
     display: 'flex',
+    flexDirection: ['column', 'row'],
+    overflow: 'hidden',
+  },
+  detail: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'column',
-    paddingY: 4,
+    overflow: 'hidden',
+  },
+  list: {
+    flexShrink: 0,
+    minWidth: ['100%', '24em'],
+    maxWidth: ['100%', '24em'],
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    borderRight: '1px solid',
+    borderRightColor: 'grayLight',
+  },
+  back: {
+    variant: 'button.reset',
+    display: ['inline-flex', 'none'],
+    alignItems: 'center',
+    gap: 8,
+    paddingX: 8,
+    paddingY: 8,
+    color: 'grayDarker',
+    fontSize: 6,
+    fontWeight: 'semibold',
+    cursor: 'pointer',
   },
   placeholder: {
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '18em',
+    height: '100%',
     opacity: 0.5,
   },
 }
@@ -345,7 +508,6 @@ const Proposals = compose(
       return statistics
     },
   }),
-  withBody(),
 )(UIProposals)
 
 export default Proposals
