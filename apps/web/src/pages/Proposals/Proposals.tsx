@@ -30,12 +30,11 @@ const EMOJI = {
   'shrink': '✂️',
 }
 
-// Same shape as `Library`'s release rules: three groups (prefer / avoid / ignore)
-// serialized into the `release_<tag>.prefer|avoid` params the API already filters on
-// (movies.service.ts:216-232).
+// Library's release rules without the ⛔ group: `release_<tag>.avoid` is
+// `$not: { $elemMatch }`, so it excludes a movie on the strength of the release
+// already owned, which says nothing about the proposal.
 const serializeRule = (key, values) => ({
   ...(values.some(({ group }) => group === 'prefer') ? { [`release_${key}.prefer`]: values.filter(({ group }) => group === 'prefer').map(({ value }) => value).join('|') } : {}),
-  ...(values.some(({ group }) => group === 'avoid') ? { [`release_${key}.avoid`]: values.filter(({ group }) => group === 'avoid').map(({ value }) => value).join('|') } : {}),
 })
 
 // Fixed row height: the list is a scanning surface, not a reading one, and a fixed
@@ -386,9 +385,9 @@ const Proposals = compose(
                   <br/>
                   <span sx={{ display: 'inline-block', marginTop: 4, marginBottom: 8 }}>
                     <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'primaryDarkest', borderRadius: '2px', marginX: 8 }}>⭐ ACCEPT</code>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'error', borderRadius: '2px', marginX: 8 }}>⛔ FILTER</code>
                     <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', border: '1px solid white', borderRadius: '2px', marginX: 8 }}>🔕 IGNORE</code>
                   </span>
+
                 </span>
               )}
             />
@@ -478,13 +477,13 @@ const Proposals = compose(
           />
         )
       },
-      znab: { initial: [], component: ZNABFilter, serialize: serializeRule },
-      encoding: { initial: [], component: EncodingFilter, serialize: serializeRule },
-      resolution: { initial: [], component: ResolutionFilter, serialize: serializeRule },
-      source: { initial: [], component: SourceFilter, serialize: serializeRule },
-      dub: { initial: [], component: DubFilter, serialize: serializeRule },
-      language: { initial: [], component: LanguageFilter, serialize: serializeRule },
-      flags: { initial: [], component: FlagsFilter, serialize: serializeRule },
+      znab: { initial: [], component: withProps({ avoidable: false })(ZNABFilter), serialize: serializeRule },
+      encoding: { initial: [], component: withProps({ avoidable: false })(EncodingFilter), serialize: serializeRule },
+      resolution: { initial: [], component: withProps({ avoidable: false })(ResolutionFilter), serialize: serializeRule },
+      source: { initial: [], component: withProps({ avoidable: false })(SourceFilter), serialize: serializeRule },
+      dub: { initial: [], component: withProps({ avoidable: false })(DubFilter), serialize: serializeRule },
+      language: { initial: [], component: withProps({ avoidable: false })(LanguageFilter), serialize: serializeRule },
+      flags: { initial: [], component: withProps({ avoidable: false })(FlagsFilter), serialize: serializeRule },
     },
     useStatistics: (entities, fields, state) => {
       const api = useAPI()

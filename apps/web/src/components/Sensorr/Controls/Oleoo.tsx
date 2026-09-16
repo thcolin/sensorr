@@ -5,7 +5,10 @@ import { emojize } from '@sensorr/utils'
 import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
-const RuleSortableSelect = ({ onChange, options, requirable = false, ...props }) => {
+// `avoidable={false}` drops the ⛔ group from the cycle. The API expresses avoid as
+// `$not: { $elemMatch }`, which means "no release of the movie", so on a screen that
+// asks about one release the control would have no effect.
+const RuleSortableSelect = ({ onChange, options, requirable = false, avoidable = true, ...props }) => {
   const value = useMemo(() => {
     const prefer = props.value.filter(v => v.group === 'prefer')
     const avoid = props.value.filter(v => v.group === 'avoid')
@@ -18,10 +21,10 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, ...props })
 
     return [
       ...(prefer.length ? [{ label: '⭐' }, ...prefer, { separator: true }] : []),
-      ...(avoid.length ? [{ label: '⛔' }, ...avoid, { separator: true }] : []),
+      ...(avoidable && avoid.length ? [{ label: '⛔' }, ...avoid, { separator: true }] : []),
       ...(ignore.length ? [{ label: '🔕' }, ...ignore, { separator: true }] : []),
     ]
-  }, [props.value, options])
+  }, [props.value, options, avoidable])
 
   const handleChange = useCallback((values, { action, removedValue } = { action: null, removedValue: null }) => {
     switch (action) {
@@ -39,7 +42,7 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, ...props })
                 group: 'prefer',
               },
               prefer: {
-                group: 'avoid',
+                group: avoidable ? 'avoid' : null,
                 required: false,
               },
               avoid: {
@@ -54,7 +57,7 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, ...props })
         onChange(values.filter(v => v.value))
         return
     }
-  }, [onChange])
+  }, [onChange, avoidable])
 
   return (
     <SortableSelect {...props} requirable={requirable} value={value} onChange={handleChange} />
