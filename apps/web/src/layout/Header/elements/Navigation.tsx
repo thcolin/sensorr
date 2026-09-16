@@ -75,6 +75,7 @@ const Navigation = ({ display = 'web', ...props }) => {
               <NavLink onClick={handleWebNavigation} to="/movie/trending" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Trending</NavLink>
               <NavLink onClick={handleWebNavigation} to="/movie/theatres" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Theatres</NavLink>
               <NavLink onClick={handleWebNavigation} to="/movie/requests" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Requests</NavLink>
+              <NavLink onClick={handleWebNavigation} to="/movie/proposals" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Proposals</NavLink>
             </div>
           )}
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>
