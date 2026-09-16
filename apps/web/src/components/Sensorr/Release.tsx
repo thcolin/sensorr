@@ -474,7 +474,7 @@ export const reportOleoo = ({ generated = '', original = '' }) => report({
 })
 
 
-const logos = {
+export const logos = {
   source: {
     // 'CAM': <code>CAM</code>,
     // 'TC': <code>TC</code>,
