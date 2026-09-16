@@ -295,7 +295,12 @@ export class MoviesService {
             'releases': { $not: { $elemMatch: { title: { $regex: params['release_flags.avoid'] } }} }
           }] : []),
           ...(params['release_from'] ? [{
-            'releases': { $elemMatch: { from: { $in: params['release_from'].split('|') } } }
+            // Scoped by the same $elemMatch as `releases.proposal`, otherwise a movie
+            // matches on a pending proposal and on an unrelated release from another job.
+            'releases': { $elemMatch: {
+              from: { $in: params['release_from'].split('|') },
+              ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+            } }
           }] : []),
           ...(params['release_size.lte'] ? [{
             'releases': { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } }
@@ -667,7 +672,10 @@ export class MoviesService {
                       'releases': { $not: { $elemMatch: { title: { $regex: params['release_flags.avoid'] } }} }
                     }] : []),
                     ...(params['release_from'] ? [{
-                      'releases': { $elemMatch: { from: { $in: params['release_from'].split('|') } } }
+                      'releases': { $elemMatch: {
+                        from: { $in: params['release_from'].split('|') },
+                        ...(`${params['releases.proposal']}` === 'true' ? { proposal: true } : {}),
+                      } }
                     }] : []),
                     ...(params['release_size.lte'] ? [{
                       'releases': { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } }
