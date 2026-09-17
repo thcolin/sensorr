@@ -55,13 +55,13 @@ export class SensorrService {
         break
       case 'cache':
         this.logger.log(`Download "${filename}" from ${source} to ${destination}, blackhole="database"`)
-        await this.metafileModel.findByIdAndUpdate(release.link, { id: release.link, buffer }, { new: true, upsert: true })
+        await this.metafileModel.findByIdAndUpdate(release.link, { buffer }, { new: true, upsert: true })
         break
     }
   }
 
   async removeRelease(release: ReleaseDTO) {
-    await this.metafileModel.deleteOne({ id: release.link })
+    await this.metafileModel.deleteOne({ _id: release.link })
   }
 
   listenStatus(): Observable<MessageEvent> {
