@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { from, fromEventPattern, merge, Observable } from 'rxjs'
+import { from, merge, Observable } from 'rxjs'
 import { catchError, filter, map, mergeMap, tap } from 'rxjs/operators'
 import webpush from 'web-push'
 // import { filesize } from '@sensorr/utils'
 import { Log as LogDocument } from '../logs/log.schema'
+import { LogsService } from '../logs/logs.service'
 import { SubscriptionDTO } from './subscription.dto'
 import { Subscription as SubscriptionDocument } from './subscription.schema'
 
@@ -24,11 +25,11 @@ export class NotificationsService {
   constructor(
     @InjectModel(LogDocument.name) private readonly logModel: Model<LogDocument>,
     @InjectModel(SubscriptionDocument.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
+    private logsService: LogsService,
   ) {}
 
   listenNotifications(history = true): Observable<MessageEvent> {
     this.logger.log('ListenNotifications')
-    const stream = this.logModel.watch()
 
     return merge(...[
       ...(history ? [
@@ -44,14 +45,7 @@ export class NotificationsService {
           map(data => ({ data } as MessageEvent)),
         ),
       ] : []),
-      fromEventPattern(
-        (handler) => stream.on('change', handler),
-        (handler) => {
-          this.logger.log('ListenNotifications, closed')
-          stream.removeListener('change', handler)
-          stream.close()
-        },
-      ).pipe(
+      this.logsService.changes$.pipe(
         filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && (
           (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'refine' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||

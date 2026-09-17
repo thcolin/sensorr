@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
-import { Observable, fromEventPattern } from 'rxjs'
-import { filter, mergeMap, map, tap } from 'rxjs/operators'
+import { Observable, defer, fromEventPattern } from 'rxjs'
+import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
@@ -17,6 +17,21 @@ const METADATA_FIELDS = ['state', 'policy', 'refine', 'shrink', 'query', 'plex_u
 @Injectable()
 export class MoviesService {
   private readonly logger = new Logger(MoviesService.name)
+
+  private readonly changes$: Observable<any> = defer(() => {
+    this.logger.log('Changes, opened')
+    const stream = this.movieModel.watch()
+
+    return fromEventPattern(
+      (handler) => stream.on('change', handler),
+      (handler) => stream.removeListener('change', handler),
+    ).pipe(
+      finalize(() => {
+        this.logger.log('Changes, closed')
+        stream.close()
+      }),
+    )
+  }).pipe(share())
 
   constructor(
     @InjectModel(MovieDocument.name) private readonly movieModel: PaginateModel<MovieDocument>,
@@ -321,18 +336,10 @@ export class MoviesService {
 
   listenMetadata(): Observable<MessageEvent> {
     this.logger.log('ListenMetadata')
-    const stream = this.movieModel.watch()
 
-    return fromEventPattern(
-      (handler) => stream.on('change', handler),
-      (handler) => {
-        this.logger.log('ListenMetadata, closed')
-        stream.removeListener('change', handler)
-        stream.close()
-      },
-    ).pipe(
+    return this.changes$.pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
-      mergeMap((change: any) => this.movieModel.find({ 'id': { $eq: change?.documentKey?._id } }, METADATA_FIELDS).lean().exec()),
+      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, METADATA_FIELDS).lean().exec()),
       map(metadata => ({
         data: metadata.reduce((acc, curr) => ({
           ...acc,
