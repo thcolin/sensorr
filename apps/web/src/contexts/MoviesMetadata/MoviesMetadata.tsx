@@ -26,28 +26,40 @@ export const Provider = ({ ...props }) => {
       return
     }
 
+    const controller = new AbortController()
+
     const cb = async () => {
       try {
         let total_pages = null
-        let page = 0
+        let page = 1
+        let buffer = {}
 
         do {
-          const { uri, params, init } = api.query.movies.getMetadata({ params: { page: page++ } })
+          const { uri, params, init } = api.query.movies.getMetadata({ params: { page: page++ }, init: { signal: controller.signal } })
           const raw = await api.fetch(uri, params, init)
           total_pages = raw.total_pages
-          setMetadata(metadata => ({ ...metadata, ...raw.results }))
+          buffer = { ...buffer, ...raw.results }
+
+          // First page unblocks the posters, the rest lands in one go
+          if (page === 2 || page > total_pages) {
+            setMetadata(metadata => ({ ...metadata, ...buffer }))
+            setLoading(false)
+            buffer = {}
+          }
         } while (!total_pages || page <= total_pages)
       } catch (e) {
         console.warn(e)
-      }
 
-      setLoading(false)
+        if (e.name !== 'AbortError') {
+          setLoading(false)
+        }
+      }
     }
 
     cb()
 
     // Refresh if page was at sleep for 10s
-    setInterval(() => {
+    const interval = setInterval(() => {
       const currentTime = (new Date()).getTime()
 
       if (currentTime > (refreshTime.current + 10000)) {
@@ -57,12 +69,19 @@ export const Provider = ({ ...props }) => {
       refreshTime.current = currentTime
     }, 2000)
 
+    let eventSource
+
     try {
-      const eventSource = new ReconnectingEventSource(`/api/movies/changes?authorization=Bearer%20${api.access_token}`)
+      eventSource = new ReconnectingEventSource(`/api/movies/changes?authorization=Bearer%20${api.access_token}`)
       eventSource.onmessage = ({ data }) => setMetadata(metadata => ({ ...metadata, ...JSON.parse(data) }))
-      return () => eventSource.close()
     } catch (e) {
       console.warn(e)
+    }
+
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+      eventSource?.close()
     }
   }, [authenticated])
 
