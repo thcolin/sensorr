@@ -8,4 +8,4 @@ fi
 chmod 600 /opt/keyfile/mongodb-keyfile
 chown 999:999 /opt/keyfile/mongodb-keyfile
 
-exec /usr/local/bin/docker-entrypoint.sh --replSet rs0 --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile
+exec /usr/local/bin/docker-entrypoint.sh --replSet rs0 --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile --wiredTigerCacheSizeGB 1 --oplogSize 1024
