@@ -318,7 +318,7 @@ export class MoviesService {
       page,
       lean: true,
       leanWithId: true,
-      limit: 200,
+      limit: 1000,
       select: METADATA_FIELDS,
       customLabels: { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' },
     })
