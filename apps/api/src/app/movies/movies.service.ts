@@ -92,7 +92,7 @@ export class MoviesService {
 
     const { insertedCount, modifiedCount } = await this.movieModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
-        filter: { id: i },
+        filter: { _id: i },
         update: {
           _id: i,
           ...changes[i],
@@ -117,7 +117,7 @@ export class MoviesService {
 
   async deleteMovies(changes: { [key: string]: MovieDTO }): Promise<any> {
     this.logger.log(`DeleteMovies "${Object.keys(changes)}"`)
-    const { deletedCount } = await this.movieModel.deleteMany({ id: { $in: Object.keys(changes).map(Number)} })
+    const { deletedCount } = await this.movieModel.deleteMany({ _id: { $in: Object.keys(changes).map(Number)} })
     return { deleted: deletedCount }
   }
 
