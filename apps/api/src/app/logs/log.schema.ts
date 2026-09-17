@@ -23,3 +23,6 @@ export class Log extends Document {
 export const LogSchema = SchemaFactory.createForClass(Log)
 LogSchema.plugin(pagination as any)
 LogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 1209600 }) // 2 weeks logs expiration
+LogSchema.index({ 'meta.job': 1, timestamp: 1 })
+LogSchema.index({ 'meta.summary': 1 }, { partialFilterExpression: { 'meta.summary': { $exists: true } } })
+LogSchema.index({ 'meta.command': 1, timestamp: -1 })
