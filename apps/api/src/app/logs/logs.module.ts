@@ -12,5 +12,8 @@ import { Log, LogSchema } from './log.schema'
   providers: [
     LogsService,
   ],
+  exports: [
+    LogsService,
+  ],
 })
 export class LogsModule {}

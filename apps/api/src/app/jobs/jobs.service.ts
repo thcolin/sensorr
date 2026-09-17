@@ -3,9 +3,10 @@ import { SchedulerRegistry } from '@nestjs/schedule'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { CronJob } from 'cron'
-import { from, fromEventPattern, merge, Observable } from 'rxjs'
+import { from, merge, Observable } from 'rxjs'
 import { filter, map, scan, tap } from 'rxjs/operators'
 import { Log as LogDocument } from '../logs/log.schema'
+import { LogsService } from '../logs/logs.service'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 
@@ -29,24 +30,17 @@ export class JobsService {
     private schedulerRegistry: SchedulerRegistry,
     private sensorrService: SensorrService,
     private configService: ConfigService,
+    private logsService: LogsService,
   ) {}
 
   listenJobs(): Observable<MessageEvent> {
     this.logger.log('ListenJobs')
-    const stream = this.logModel.watch()
 
     return merge(
       from(this.logModel.find({ 'meta.summary': { $exists: true } }).lean().exec()).pipe(
         map(res => res.reduce((acc, doc: any) => ({ ...acc, [doc?.meta.job]: this.transform(doc, acc[doc?.meta.job]) }), {})),
       ),
-      fromEventPattern(
-        (handler) => stream.on('change', handler),
-        (handler) => {
-          this.logger.log('ListenJobs, closed')
-          stream.removeListener('change', handler)
-          stream.close()
-        },
-      ).pipe(
+      this.logsService.changes$.pipe(
         filter((change: any) => change?.ns?.coll === 'log' && change?.operationType === 'insert' && change?.fullDocument?.meta?.summary),
       ),
     ).pipe(
@@ -64,20 +58,12 @@ export class JobsService {
 
   listenJob(job: string, additional: null | { match: any, test: (doc: any) => boolean }): Observable<MessageEvent> {
     this.logger.log(`ListenJob "${job}"${additional ? ` ${JSON.stringify(additional.match)}` : ''}`)
-    const stream = this.logModel.watch({ $match: { 'meta.job': { $eq: job }, ...(additional ? additional.match : {}) } } as any)
 
     return merge(
       from(this.logModel.find({ 'meta.job': { $eq: job }, ...(additional ? additional.match : {}) }).sort({ timestamp: -1 }).lean().exec()).pipe(
         map(data => ({ data } as MessageEvent)),
       ),
-      fromEventPattern(
-        (handler) => stream.on('change', handler),
-        (handler) => {
-          this.logger.log(`ListenJob "${job}", closed`)
-          stream.removeListener('change', handler)
-          stream.close()
-        },
-      ).pipe(
+      this.logsService.changes$.pipe(
         filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && change.fullDocument?.meta?.job === job && (!additional || additional.test(change.fullDocument))),
         map(({ fullDocument: data }) => ({ data } as MessageEvent)),
         tap(() => this.logger.log(`ListenJob "${job}", message=""`)),
