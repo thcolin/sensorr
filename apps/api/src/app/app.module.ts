@@ -17,7 +17,11 @@ import { SensorrModule } from './sensorr/sensorr.module'
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
-    MongooseModule.forRoot(`mongodb://${process.env.NX_MONGO_USERNAME}:${process.env.NX_MONGO_PASSWORD}@${process.env.NX_MONGO_HOST}:${process.env.NX_MONGO_PORT}/sensorr?authSource=admin&directConnection=true`),
+    MongooseModule.forRoot(`mongodb://${process.env.NX_MONGO_USERNAME}:${process.env.NX_MONGO_PASSWORD}@${process.env.NX_MONGO_HOST}:${process.env.NX_MONGO_PORT}/sensorr?authSource=admin&directConnection=true`, {
+      maxPoolSize: 20,
+      minPoolSize: 2,
+      maxIdleTimeMS: 60000,
+    }),
     ScheduleModule.forRoot(),
     ProxyModule,
     AuthModule,
