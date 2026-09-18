@@ -1,0 +1,116 @@
+{
+  "screenshots": [
+    {
+      "file": "library-desktop.webp",
+      "route": "/movie/library",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "library-mobile.webp",
+      "route": "/movie/library",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "movie-desktop.webp",
+      "route": "/movie/11300",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "movie-mobile.webp",
+      "route": "/movie/11300",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "home-desktop.webp",
+      "route": "/",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "home-mobile.webp",
+      "route": "/",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "discover-desktop.webp",
+      "route": "/movie/discover",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "discover-mobile.webp",
+      "route": "/movie/discover",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "proposals-desktop.webp",
+      "route": "/movie/proposals",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "proposals-mobile.webp",
+      "route": "/movie/proposals",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "login-desktop.webp",
+      "route": "/login",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "login-mobile.webp",
+      "route": "/login",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "design-button-desktop.webp",
+      "route": "/design/atoms/button",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "design-button-mobile.webp",
+      "route": "/design/atoms/button",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "design-entity-poster-desktop.webp",
+      "route": "/design/elements/entity-poster",
+      "width": 1440,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    },
+    {
+      "file": "design-entity-poster-mobile.webp",
+      "route": "/design/elements/entity-poster",
+      "width": 390,
+      "date": "2026-09-18",
+      "commit": "621e99a"
+    }
+  ]
+}

@@ -11,9 +11,9 @@ metadata, your Plex server for what you already own, and your friends' Plex watc
 what they would like to see. It is meant for one person hosting their own movie library at
 home.
 
-<!-- Screenshot to come: uncomment once docs/assets/screenshots/library-desktop.webp exists
 ![Sensorr library](docs/assets/screenshots/library-desktop.webp)
--->
+
+<sub>Library screen, captured 2026-09-18 at commit `621e99a`. More screens in [`docs/assets/screenshots/`](docs/assets/screenshots/).</sub>
 
 # Features
 
