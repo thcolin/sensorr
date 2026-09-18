@@ -59,15 +59,20 @@ export const Provider = ({ ...props }) => {
     cb()
 
     // Refresh if page was at sleep for 10s
-    const interval = setInterval(() => {
+    const onVisibilityChange = () => {
       const currentTime = (new Date()).getTime()
+
+      if (document.visibilityState === 'hidden') {
+        refreshTime.current = currentTime
+        return
+      }
 
       if (currentTime > (refreshTime.current + 10000)) {
         cb()
       }
+    }
 
-      refreshTime.current = currentTime
-    }, 2000)
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     let eventSource
 
@@ -80,7 +85,7 @@ export const Provider = ({ ...props }) => {
 
     return () => {
       controller.abort()
-      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       eventSource?.close()
     }
   }, [authenticated])
