@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-18T16:01:40Z",
+  "title": "Design System: Sensorr",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Vivid Spring Green",
+        "canonical": "hsla(154, 99%, 41%, 1)",
+        "note": "The one saturated color. Blend of TMDB's historical green and an Amazon redesign concept seen on Dribbble. Same value as `success`.",
+        "tonalRamp": [
+          "hsla(154, 99%, 15.0%, 1)",
+          "hsla(154, 99%, 26.4%, 1)",
+          "hsla(154, 99%, 37.9%, 1)",
+          "hsla(154, 99%, 49.3%, 1)",
+          "hsla(154, 99%, 60.7%, 1)",
+          "hsla(154, 99%, 72.1%, 1)",
+          "hsla(154, 99%, 83.6%, 1)",
+          "hsla(154, 99%, 95.0%, 1)"
+        ]
+      },
+      "primaryDark": {
+        "role": "primary",
+        "displayName": "Spring Green Dark",
+        "canonical": "hsla(154, 98%, 38%, 1)",
+        "note": "Hover step of anything green.",
+        "tonalRamp": [
+          "hsla(154, 98%, 15.0%, 1)",
+          "hsla(154, 98%, 26.4%, 1)",
+          "hsla(154, 98%, 37.9%, 1)",
+          "hsla(154, 98%, 49.3%, 1)",
+          "hsla(154, 98%, 60.7%, 1)",
+          "hsla(154, 98%, 72.1%, 1)",
+          "hsla(154, 98%, 83.6%, 1)",
+          "hsla(154, 98%, 95.0%, 1)"
+        ]
+      },
+      "primaryDarker": {
+        "role": "primary",
+        "displayName": "Spring Green Darker",
+        "canonical": "hsla(154, 97%, 35%, 1)",
+        "note": "Active step, and the `highlight` alias.",
+        "tonalRamp": [
+          "hsla(154, 97%, 15.0%, 1)",
+          "hsla(154, 97%, 26.4%, 1)",
+          "hsla(154, 97%, 37.9%, 1)",
+          "hsla(154, 97%, 49.3%, 1)",
+          "hsla(154, 97%, 60.7%, 1)",
+          "hsla(154, 97%, 72.1%, 1)",
+          "hsla(154, 97%, 83.6%, 1)",
+          "hsla(154, 97%, 95.0%, 1)"
+        ]
+      },
+      "primaryDarkest": {
+        "role": "primary",
+        "displayName": "Spring Green Darkest",
+        "canonical": "hsla(154, 96%, 32%, 1)",
+        "note": "Disabled step.",
+        "tonalRamp": [
+          "hsla(154, 96%, 15.0%, 1)",
+          "hsla(154, 96%, 26.4%, 1)",
+          "hsla(154, 96%, 37.9%, 1)",
+          "hsla(154, 96%, 49.3%, 1)",
+          "hsla(154, 96%, 60.7%, 1)",
+          "hsla(154, 96%, 72.1%, 1)",
+          "hsla(154, 96%, 83.6%, 1)",
+          "hsla(154, 96%, 95.0%, 1)"
+        ]
+      },
+      "primaryLightest": {
+        "role": "primary",
+        "displayName": "Spring Green Lightest",
+        "canonical": "hsla(154, 99%, 95%, 1)",
+        "note": "Type set on a green field.",
+        "tonalRamp": [
+          "hsla(154, 99%, 15.0%, 1)",
+          "hsla(154, 99%, 26.4%, 1)",
+          "hsla(154, 99%, 37.9%, 1)",
+          "hsla(154, 99%, 49.3%, 1)",
+          "hsla(154, 99%, 60.7%, 1)",
+          "hsla(154, 99%, 72.1%, 1)",
+          "hsla(154, 99%, 83.6%, 1)",
+          "hsla(154, 99%, 95.0%, 1)"
+        ]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Forest Accent",
+        "canonical": "hsla(154, 95%, 35%, 1)",
+        "note": "The second green on a screen that already has a primary one: link hover, secondary button.",
+        "tonalRamp": [
+          "hsla(154, 95%, 15.0%, 1)",
+          "hsla(154, 95%, 26.4%, 1)",
+          "hsla(154, 95%, 37.9%, 1)",
+          "hsla(154, 95%, 49.3%, 1)",
+          "hsla(154, 95%, 60.7%, 1)",
+          "hsla(154, 95%, 72.1%, 1)",
+          "hsla(154, 95%, 83.6%, 1)",
+          "hsla(154, 95%, 95.0%, 1)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Deep Petrol",
+        "canonical": "hsla(197, 64%, 9%, 1)",
+        "note": "The only cool hue in the palette. A ground behind bright content.",
+        "tonalRamp": [
+          "hsla(197, 64%, 15.0%, 1)",
+          "hsla(197, 64%, 26.4%, 1)",
+          "hsla(197, 64%, 37.9%, 1)",
+          "hsla(197, 64%, 49.3%, 1)",
+          "hsla(197, 64%, 60.7%, 1)",
+          "hsla(197, 64%, 72.1%, 1)",
+          "hsla(197, 64%, 83.6%, 1)",
+          "hsla(197, 64%, 95.0%, 1)"
+        ]
+      },
+      "plex": {
+        "role": "tertiary",
+        "displayName": "Plex Amber",
+        "canonical": "hsla(41, 89%, 47%, 1)",
+        "note": "Plex's brand orange, not a Sensorr color. Present so a Plex affordance looks like Plex.",
+        "tonalRamp": [
+          "hsla(41, 89%, 15.0%, 1)",
+          "hsla(41, 89%, 26.4%, 1)",
+          "hsla(41, 89%, 37.9%, 1)",
+          "hsla(41, 89%, 49.3%, 1)",
+          "hsla(41, 89%, 60.7%, 1)",
+          "hsla(41, 89%, 72.1%, 1)",
+          "hsla(41, 89%, 83.6%, 1)",
+          "hsla(41, 89%, 95.0%, 1)"
+        ]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Signal Red",
+        "canonical": "hsla(0, 77%, 52%, 1)",
+        "note": "A broken policy, a destructive button, a failed job.",
+        "tonalRamp": [
+          "hsla(0, 77%, 15.0%, 1)",
+          "hsla(0, 77%, 26.4%, 1)",
+          "hsla(0, 77%, 37.9%, 1)",
+          "hsla(0, 77%, 49.3%, 1)",
+          "hsla(0, 77%, 60.7%, 1)",
+          "hsla(0, 77%, 72.1%, 1)",
+          "hsla(0, 77%, 83.6%, 1)",
+          "hsla(0, 77%, 95.0%, 1)"
+        ]
+      },
+      "warning": {
+        "role": "warning",
+        "displayName": "Signal Amber",
+        "canonical": "hsla(45, 89%, 47%, 1)",
+        "note": "A job that ran but did not finish its work.",
+        "tonalRamp": [
+          "hsla(45, 89%, 15.0%, 1)",
+          "hsla(45, 89%, 26.4%, 1)",
+          "hsla(45, 89%, 37.9%, 1)",
+          "hsla(45, 89%, 49.3%, 1)",
+          "hsla(45, 89%, 60.7%, 1)",
+          "hsla(45, 89%, 72.1%, 1)",
+          "hsla(45, 89%, 83.6%, 1)",
+          "hsla(45, 89%, 95.0%, 1)"
+        ]
+      },
+      "info": {
+        "role": "info",
+        "displayName": "Signal Blue",
+        "canonical": "hsla(200, 77%, 52%, 1)",
+        "note": "A neutral notice.",
+        "tonalRamp": [
+          "hsla(200, 77%, 15.0%, 1)",
+          "hsla(200, 77%, 26.4%, 1)",
+          "hsla(200, 77%, 37.9%, 1)",
+          "hsla(200, 77%, 49.3%, 1)",
+          "hsla(200, 77%, 60.7%, 1)",
+          "hsla(200, 77%, 72.1%, 1)",
+          "hsla(200, 77%, 83.6%, 1)",
+          "hsla(200, 77%, 95.0%, 1)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Reading Grey",
+        "canonical": "hsla(0, 0%, 90%, 1)",
+        "note": "The body reading color in dark mode. `textLight` through `textLightest` run up to 98%, closer to the surface they contrast with.",
+        "tonalRamp": [
+          "hsla(0, 0%, 10%, 1)",
+          "hsla(0, 0%, 20%, 1)",
+          "hsla(0, 0%, 28%, 1)",
+          "hsla(0, 0%, 40%, 1)",
+          "hsla(0, 0%, 60%, 1)",
+          "hsla(0, 0%, 69%, 1)",
+          "hsla(0, 0%, 80%, 1)",
+          "hsla(0, 0%, 90%, 1)"
+        ]
+      },
+      "gray": {
+        "role": "neutral",
+        "displayName": "Stacked Surfaces",
+        "canonical": "hsla(0, 0%, 10%, 1)",
+        "note": "The layer stack. `white` is the page, `grayLightest`/`grayLighter`/`grayLight` are panels on it, `gray` is a filled chip, `grayDark`/`grayDarker`/`grayDarkest` are borders in three states. The project's own `gray-900` to `gray-50` scale, dark to light.",
+        "tonalRamp": [
+          "hsla(0, 0%, 10%, 1)",
+          "hsla(0, 0%, 20%, 1)",
+          "hsla(0, 0%, 28%, 1)",
+          "hsla(0, 0%, 40%, 1)",
+          "hsla(0, 0%, 60%, 1)",
+          "hsla(0, 0%, 69%, 1)",
+          "hsla(0, 0%, 80%, 1)",
+          "hsla(0, 0%, 95%, 1)"
+        ]
+      },
+      "whitePure": {
+        "role": "neutral",
+        "displayName": "Absolute White",
+        "canonical": "hsla(0, 0%, 100%, 1)",
+        "note": "One of the two colors that never invert between modes. Use when you need actual white regardless of mode.",
+        "tonalRamp": [
+          "hsla(0, 0%, 15.0%, 1)",
+          "hsla(0, 0%, 26.4%, 1)",
+          "hsla(0, 0%, 37.9%, 1)",
+          "hsla(0, 0%, 49.3%, 1)",
+          "hsla(0, 0%, 60.7%, 1)",
+          "hsla(0, 0%, 72.1%, 1)",
+          "hsla(0, 0%, 83.6%, 1)",
+          "hsla(0, 0%, 95.0%, 1)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "h1": {
+        "displayName": "Heading 1",
+        "purpose": "Page title, one per screen. Raleway 800 at scale step 0."
+      },
+      "h2": {
+        "displayName": "Heading 2",
+        "purpose": "Section heading."
+      },
+      "h3": {
+        "displayName": "Heading 3",
+        "purpose": "Sub-section, and the /design gallery stage title."
+      },
+      "h4": {
+        "displayName": "Heading 4",
+        "purpose": "Scale step 3 of the heading ramp."
+      },
+      "h5": {
+        "displayName": "Heading 5",
+        "purpose": "Scale step 4 of the heading ramp."
+      },
+      "h6": {
+        "displayName": "Heading 6",
+        "purpose": "Scale step 5 of the heading ramp, the smallest heading."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "A field's name, in the heading face. A field label is a small heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The default, set on `body` in global.ts. Line-height 1.2."
+      },
+      "body-long": {
+        "displayName": "Body Long",
+        "purpose": "Same face at reading line-height 1.5, for anything longer than a line: inputs, overviews, Warning subtitles."
+      },
+      "button": {
+        "displayName": "Control",
+        "purpose": "Button text. Semibold, one step below body, line-height reset to 1 so height comes from padding."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "A poster's year and genre line."
+      },
+      "mono": {
+        "displayName": "Machine",
+        "purpose": "Badge labels and transition pills. Fira Code marks a value the machine produced or parsed."
+      },
+      "mono-strong": {
+        "displayName": "Machine Strong",
+        "purpose": "A tag."
+      }
+    },
+    "shadows": [
+      {
+        "name": "poster-glow",
+        "value": "0px 3px 30px <poster colorfulColor, else primary>",
+        "purpose": "The single intentional shadow in the system, at libs/ui/src/elements/Entity/Poster/Poster.tsx:483. A 30px blur with no spread, tinted with the poster's own most chromatic color. Reads as a lamp behind the artwork, not a drop shadow."
+      },
+      {
+        "name": "range-focus-ring",
+        "value": "0px 0px 0px 2px rgba(0, 0, 0, 0.1)",
+        "purpose": "The Range thumb at rest, libs/ui/src/inputs/Range/Range.tsx:183. Spread only, zero blur: a ring, not a shadow. Grows to 8px on hover and 14px while dragging."
+      }
+    ],
+    "motion": [
+      {
+        "name": "appear",
+        "value": "opacity 400ms ease-in-out",
+        "purpose": "The house transition, 9 occurrences. Anything appearing or leaving."
+      },
+      {
+        "name": "field",
+        "value": "border-color 100ms ease-in-out",
+        "purpose": "Inputs, selects and textareas. Fast, because it answers a keystroke."
+      },
+      {
+        "name": "control",
+        "value": "color 200ms ease-in-out, background-color 200ms ease-in-out, border-color 200ms ease-in-out",
+        "purpose": "Buttons. All three properties move together so a button never appears to change shape."
+      },
+      {
+        "name": "nav",
+        "value": "opacity ease 300ms",
+        "purpose": "Web navigation items rising from 0.33 to 0.66 on hover."
+      },
+      {
+        "name": "palette-bleed",
+        "value": "background-color 800ms ease-in-out",
+        "purpose": "The Shadow atom, the slowest thing in the app: a poster's color bleeding into the page."
+      },
+      {
+        "name": "view-transition",
+        "value": "400ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Route changes through the View Transitions API. Five named transitions in modules.css: fade, top, forward, backward, and root explicitly set to animation: none."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "0px"
+      },
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The filled action. The only place the saturated green carries text.",
+      "html": "<button class=\"ds-btn-primary\">Download</button>",
+      "css": ".ds-btn-primary { appearance: none; padding: 0.75em 1em; font-family: \"Open Sans\", \"Segoe UI\", Candara, sans-serif; font-size: 0.875em; font-weight: 600; line-height: 1; color: hsl(0, 0%, 100%); background-color: var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); border: 0.125em solid var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); border-radius: 0.25em; cursor: pointer; transition: color 200ms ease-in-out, background-color 200ms ease-in-out, border-color 200ms ease-in-out; } .ds-btn-primary:hover { background-color: var(--theme-ui-colors-primaryDark, hsla(154, 98%, 38%, 1)); border-color: var(--theme-ui-colors-primaryDark, hsla(154, 98%, 38%, 1)); } .ds-btn-primary:active { background-color: var(--theme-ui-colors-primaryDarker, hsla(154, 97%, 35%, 1)); border-color: var(--theme-ui-colors-primaryDarker, hsla(154, 97%, 35%, 1)); } .ds-btn-primary:disabled { color: hsl(0, 0%, 80%); background-color: var(--theme-ui-colors-primaryDarkest, hsla(154, 96%, 32%, 1)); border-color: var(--theme-ui-colors-primaryDarkest, hsla(154, 96%, 32%, 1)); cursor: default; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline-primary",
+      "description": "The same geometry with a transparent fill. The color sits on the border and the text at once.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline { appearance: none; padding: 0.75em 1em; font-family: \"Open Sans\", \"Segoe UI\", Candara, sans-serif; font-size: 0.875em; font-weight: 600; line-height: 1; color: var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); background-color: transparent; border: 0.125em solid var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); border-radius: 0.25em; cursor: pointer; transition: border-color 200ms ease, color 200ms ease; } .ds-btn-outline:hover { color: var(--theme-ui-colors-primaryDark, hsla(154, 98%, 38%, 1)); border-color: var(--theme-ui-colors-primaryDark, hsla(154, 98%, 38%, 1)); } .ds-btn-outline:active { color: var(--theme-ui-colors-primaryDarker, hsla(154, 97%, 35%, 1)); border-color: var(--theme-ui-colors-primaryDarker, hsla(154, 97%, 35%, 1)); } .ds-btn-outline:disabled { color: var(--theme-ui-colors-primaryDarkest, hsla(154, 96%, 32%, 1)); border-color: var(--theme-ui-colors-primaryDarkest, hsla(154, 96%, 32%, 1)); cursor: default; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Transparent, bordered, and silent about everything but its border color. Rest, hover, focus and disabled are four border colors and nothing else.",
+      "html": "<input class=\"ds-input-text\" type=\"text\" placeholder=\"1080p BluRay x265\" />",
+      "css": ".ds-input-text { appearance: none; width: 100%; padding: 0.5em 1em; font-family: \"Open Sans\", \"Segoe UI\", Candara, sans-serif; font-size: 0.875em; line-height: 1.5; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); background: none; outline: none; border: 1px solid var(--theme-ui-colors-grayDark, hsla(0, 0%, 20%, 1)); border-radius: 0.25rem; transition: border-color 100ms ease-in-out; } .ds-input-text:hover:not(:disabled):not(:focus):not(:active) { border-color: var(--theme-ui-colors-grayDarker, hsla(0, 0%, 40%, 1)); } .ds-input-text:focus, .ds-input-text:active:not(:disabled) { border-color: var(--theme-ui-colors-grayDarkest, hsla(0, 0%, 60%, 1)); } .ds-input-text:disabled { color: var(--theme-ui-colors-grayDarkest, hsla(0, 0%, 60%, 1)); border-color: var(--theme-ui-colors-gray, hsla(0, 0%, 10%, 1)); }"
+    },
+    {
+      "name": "State Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "A 2em pill carrying an emoji and a monospaced label. The carrier for movie and person state, and for Focus metrics.",
+      "html": "<span class=\"ds-badge\"><span class=\"ds-badge-emoji\">📹</span><label class=\"ds-badge-label\">Wished</label></span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; height: 2em; padding: 0 0.75em; border-radius: 2em; white-space: nowrap; user-select: none; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); background-color: var(--theme-ui-colors-gray, hsla(0, 0%, 10%, 1)); } .ds-badge-emoji { line-height: 1; } .ds-badge-label { margin-left: 0.5em; font-family: \"Fira Code\", Consolas, \"DejaVu Sans Mono\", monospace; font-size: 0.875em; line-height: 1; text-transform: capitalize; }"
+    },
+    {
+      "name": "Circular Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "The same badge with no label. It becomes a 2em circle, ringed so it reads as a sticker on top of a poster.",
+      "html": "<span class=\"ds-badge-circular\">🔒</span>",
+      "css": ".ds-badge-circular { display: inline-flex; align-items: center; justify-content: center; height: 2em; width: 2em; border-radius: 50%; line-height: 1; user-select: none; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); background-color: var(--theme-ui-colors-gray, hsla(0, 0%, 10%, 1)); border: 0.25em solid var(--theme-ui-colors-grayLightest, hsla(0, 0%, 2%, 1)); }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "A green link pill. Its text token is `white`, which inverts with the mode, so in the default dark mode it renders black on green.",
+      "html": "<a class=\"ds-tag\" href=\"#\">Science Fiction</a>",
+      "css": ".ds-tag { display: inline-block; padding: 0.5em 1em; font-family: \"Fira Code\", Consolas, \"DejaVu Sans Mono\", monospace; font-size: 0.75em; font-weight: 600; text-decoration: none; border-radius: 1.5em; color: var(--theme-ui-colors-white, hsla(0, 0%, 0%, 1)); background-color: var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); } .ds-tag:hover { cursor: pointer; background-color: var(--theme-ui-colors-primaryDark, hsla(154, 98%, 38%, 1)); }"
+    },
+    {
+      "name": "Transition Pill",
+      "kind": "custom",
+      "refersTo": "transition-pill",
+      "description": "The signature component. One policy axis as old value, separator, new value. The separator says what happened (= unchanged, ~ outside the policy, -> moved) and the right half is colored only when the policy has an opinion: primary when a require still holds, errorDarker when one breaks.",
+      "html": "<span class=\"ds-pill\"><span class=\"ds-pill-side ds-pill-before\">720p</span><span class=\"ds-pill-sep\">→</span><span class=\"ds-pill-side ds-pill-held\">1080p<sup>*</sup></span></span> <span class=\"ds-pill\"><span class=\"ds-pill-side ds-pill-before\">x265</span><span class=\"ds-pill-sep\">→</span><span class=\"ds-pill-side ds-pill-broken\">XviD<sup>!</sup></span></span>",
+      "css": ".ds-pill { display: inline-flex; align-items: stretch; max-width: 100%; overflow: hidden; font-family: \"Fira Code\", Consolas, \"DejaVu Sans Mono\", monospace; font-size: 0.875em; line-height: 1.2; white-space: nowrap; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); background-color: var(--theme-ui-colors-gray, hsla(0, 0%, 10%, 1)); border: 1px solid var(--theme-ui-colors-grayDark, hsla(0, 0%, 20%, 1)); border-radius: 0.25em; } .ds-pill-side { display: inline-flex; align-items: center; min-width: 0; padding: 0.5em 0.25em; overflow: hidden; text-overflow: ellipsis; } .ds-pill-side > sup { margin-left: 0.125em; font-size: 0.5em; opacity: 0.75; } .ds-pill-before { background-color: var(--theme-ui-colors-grayLight, hsla(0, 0%, 7%, 1)); opacity: 0.6; } .ds-pill-sep { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.5em; font-size: 0.75em; background-color: var(--theme-ui-colors-grayLight, hsla(0, 0%, 7%, 1)); color: var(--theme-ui-colors-grayDarker, hsla(0, 0%, 40%, 1)); } .ds-pill-held { font-weight: 600; color: var(--theme-ui-colors-whitePure, hsla(0, 0%, 100%, 1)); background-color: var(--theme-ui-colors-primary, hsla(154, 99%, 41%, 1)); } .ds-pill-broken { font-weight: 600; color: var(--theme-ui-colors-whitePure, hsla(0, 0%, 100%, 1)); background-color: var(--theme-ui-colors-errorDarker, hsla(0, 73%, 43%, 1)); }"
+    },
+    {
+      "name": "Web Navigation",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "The browser shell's top bar. The active item is not colored, it is simply the only one at full opacity.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\">Home</a><a class=\"ds-nav-item\" href=\"#\">Movies</a><a class=\"ds-nav-item\" href=\"#\">Stars</a><a class=\"ds-nav-item\" href=\"#\">Jobs</a><a class=\"ds-nav-item\" href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: flex-start; overflow-x: auto; background-color: var(--theme-ui-colors-white, hsla(0, 0%, 0%, 1)); } .ds-nav-item { padding: 1.5em 1.75em; font-family: \"Open Sans\", \"Segoe UI\", Candara, sans-serif; font-size: 0.875em; font-weight: 600; text-decoration: none; white-space: nowrap; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); opacity: 0.33; transition: opacity ease 300ms; } .ds-nav-item:hover { opacity: 0.66; cursor: pointer; } .ds-nav-item-active { opacity: 1; }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "One shape for `nothing here` and `something went wrong`. The emoji carries the meaning; the copy only names it.",
+      "html": "<div class=\"ds-warning\"><h1 class=\"ds-warning-emoji\">📭</h1><h2 class=\"ds-warning-title\">No proposals</h2><p class=\"ds-warning-subtitle\">Nothing matched the policy on the last run</p></div>",
+      "css": ".ds-warning { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5em 2.5em 4.5em 2.5em; text-align: center; color: var(--theme-ui-colors-text, hsla(0, 0%, 90%, 1)); } .ds-warning-emoji { margin: 0; font-size: 5em; } .ds-warning-title { margin: 0; padding: 0.5em 0; font-family: \"Raleway\", Frutiger, Calibri, sans-serif; font-size: 1.5em; font-weight: 800; text-transform: uppercase; } .ds-warning-subtitle { margin: 0; font-family: \"Open Sans\", \"Segoe UI\", Candara, sans-serif; line-height: 1.5; color: var(--theme-ui-colors-grayDarkest, hsla(0, 0%, 60%, 1)); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Your Friendly Digital Video Recorder",
+    "overview": "Not a slogan invented for this document. It is the line the product already says about itself, in seven places, and spelled out in full in apps/web/src/pages/KeepInTouch/KeepInTouch.tsx:155: \"A Friendly Digital Video Recorder. Think VCR but in modern times.\" Every screen answers to that sentence.\n\nA VCR is a machine you program once and then trust. Sensorr's subject is the movie and its release: a policy sorts candidate releases into require, prefer and avoid groups, and the interface's real job is to show what that policy did - which axis held, which one broke, what a swap would cost. The Proposal screen is where the product is most itself: five axes (resolution, source, encoding, dub, language) rendered as before-after pills, green when the policy still holds, red when it breaks. Followed, KeepInTouch, Person and Calendar are discovery paths - the part Radarr does not have - but they feed the wishlist; they are not the subject.\n\nSo the surface is dense and instrumented rather than spacious. A poster carries up to six badges. A row of metadata is monospaced because it is data, not prose. The chrome is near-black so the posters carry the color, and the one saturated green is reserved for the thing the machine decided. Emoji do the work of an icon set: there is no icon font and no icon package in libs/ui.",
+    "keyCharacteristics": [
+      "Instrumented: every state a job can be in has a badge, and every badge says which.",
+      "Discreet: chrome recedes to near-black, the artwork is the color.",
+      "Dense: information per screen is high on purpose; a library is a wall of posters.",
+      "Detailed: five-axis diffs, superscript policy ranks, byte-exact sizes.",
+      "Fine: 1px borders, 0.25em radii, no ornament above the data.",
+      "UX-friendly: every control says its state before you touch it."
+    ],
+    "rules": [
+      {
+        "name": "The Poster Paints the Screen Rule",
+        "section": "colors",
+        "body": "Sensorr does not pick accent colors for content - it takes them from the artwork at runtime. libs/palette/ loads the poster into a canvas, ships the pixels to a Web Worker, and gets back five values: backgroundColor, color, alternativeColor, accentColor and colorfulColor. The worker pairs the dominant color with every other extracted color, keeps only pairs above a contrast threshold, and lightens or darkens the partner until the pair reaches 4.5:1 - so a palette taken from a poster is WCAG-corrected before it is ever painted. When a surface shows one movie, the theme's neutrals are the frame and the poster's palette is the content. Do not hardcode an accent for a movie-scoped surface."
+      },
+      {
+        "name": "The One Green Rule",
+        "section": "colors",
+        "body": "primary and success are the same hsla(154, 99%, 41%, 1). Green therefore always means the system says yes: this is on, this is kept, this held. Never reach for green because a surface needs a color."
+      },
+      {
+        "name": "The Declared-and-Unreachable Light Mode Rule",
+        "section": "colors",
+        "body": "libs/theme/src/lib/theme/colors.ts:72-98 defines a complete 27-line light palette, and colors.ts:141 registers it as modes.light. index.ts:11-14 sets initialColorModeName: 'dark' and useColorSchemeMediaQuery: false, and nothing in the application calls setColorMode or useColorMode - the only references to colorMode anywhere in apps/ and libs/ are reads. The light palette is therefore dead code that stays correct: it is documented debt, not a feature. Keep it consistent when you add a color, but do not describe Sensorr as having a light theme, and do not build a toggle without deciding first whether the light palette is still wanted."
+      },
+      {
+        "name": "The Monospace-Means-Machine Rule",
+        "section": "typography",
+        "body": "Fira Code is never a stylistic choice. It marks a value the machine produced or parsed: a release name, an axis value, a resolution, a size, a count, a policy rank. If a human wrote the string, it is Open Sans. If a parser produced it, it is Fira Code."
+      },
+      {
+        "name": "The No Free Sizes Rule",
+        "section": "typography",
+        "body": "Every font size is an index into one thirteen-step scale, and that same scale is the spacing scale. fontSize: 5 and paddingY: 5 are the same 0.875em. Never write a font size as a literal; take the nearest step."
+      },
+      {
+        "name": "The No Shadow Rule",
+        "section": "elevation",
+        "body": "A new surface gets a tonal step and a 1px border. If you find yourself reaching for box-shadow to separate two things, the two things need different gray* values instead. The only sanctioned exceptions are a color taken from artwork (the poster glow) and a spread-only focus halo."
+      },
+      {
+        "name": "The Pill-Is-A-State Rule",
+        "section": "shapes",
+        "body": "Anything fully rounded is read-only information about state: a wishlist badge, a policy axis, a tag. Anything with a 0.25em corner is something you can press. Do not round an action into a pill."
+      }
+    ],
+    "dos": [
+      "Do take colors from libs/theme/src/lib/theme/colors.ts by token name. The literal hsl(0, 0%, 100%) in Button.tsx and the hsl(0, 0%, 10%) family beside it are pre-existing exceptions, not a pattern to copy.",
+      "Do use the shared scale for both spacing and type, remembering it runs descending - 12 is zero and 0 is 2em.",
+      "Do let usePalette color anything scoped to one movie, and keep the theme's neutrals as the frame around it.",
+      "Do separate surfaces with a tonal step plus a 1px grayDark border.",
+      "Do reach for Badge for a state, Tag for a link, Button for an action.",
+      "Do put machine-produced strings in the monospace face and human-written strings in the body face.",
+      "Do add a variant by adding a named export to the component's *.stories.tsx and checking it at /design/:stage/:component while yarn web runs.",
+      "Do run node tools/docs/check-design.mjs after editing libs/theme or DESIGN.md's frontmatter."
+    ],
+    "donts": [
+      "Don't add a box-shadow. The system is flat; use a tonal step.",
+      "Don't use green for anything other than \"the system says yes\". primary and success are the same value, and that identity is the meaning.",
+      "Don't round an action into a pill, or square off a state badge.",
+      "Don't fill or shadow an input to show focus - move border-color and nothing else.",
+      "Don't write a font size, a padding or a margin as a raw value; take a scale step.",
+      "Don't assume light mode works. The light palette is declared and unreachable; see the named rule in Colors.",
+      "Don't introduce an icon library. Emoji and inline SVG are the icon set, and the font stacks are built around that.",
+      "Don't change primary to fix the contrast gap. That is a brand decision, not a styling one."
+    ]
+  }
+}

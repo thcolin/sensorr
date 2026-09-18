@@ -52,3 +52,6 @@ Thumbs.db
 # nx graph output (3.7M), regenerate with `npx nx graph --file=docs/assets/nx-graph.html`
 /docs/assets/nx-graph.html
 /docs/assets/static
+
+# impeccable: design.json and config.json are shared, config.local.json is per developer
+/.impeccable/config.local.json
