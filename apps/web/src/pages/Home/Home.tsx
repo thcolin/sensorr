@@ -192,7 +192,7 @@ Home.styles = {
   },
   subtitle: {
     textAlign: 'right',
-    color: 'rangoon',
+    color: 'text',
     paddingX: 4,
     fontSize: 7,
     opacity: 0.5,

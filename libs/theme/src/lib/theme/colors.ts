@@ -37,6 +37,7 @@ const raw = {
   error: 'hsla(0, 77%, 52%, 1)',
   errorDark: 'hsla(0, 75%, 48%, 1)',
   errorDarker: 'hsla(0, 73%, 43%, 1)',
+  errorDarkest: 'hsla(0, 71%, 38%, 1)',
   whitePure: 'hsla(0, 0%, 100%, 1)',
   white: 'hsla(0, 0%, 100%, 1)',
   whiteDark: 'hsla(0, 0%, 98%, 1)',
