@@ -1,15 +1,8 @@
-import { Meta } from '@storybook/react'
 import { Picture as UIPicture, Empty } from './Picture'
 import { fixtures } from '@sensorr/tmdb'
 import { fixtures as palettes } from '@sensorr/palette'
 
-const empty = {
-  default: <Empty.default />,
-  movie: <Empty.movie />,
-  person: <Empty.person />,
-}
-
-export default { component: UIPicture, title: 'Atoms / Picture' } as Meta
+export default { component: UIPicture, title: 'Atoms / Picture' }
 
 export const Picture = (args: any) => <UIPicture {...args} />
 
@@ -18,7 +11,7 @@ Picture.args = {
   palette: palettes.green,
   size: 'w300',
   ready: true,
-  empty: empty.movie,
+  empty: Empty.movie,
 }
 
 Picture.argTypes = {
@@ -58,7 +51,7 @@ Picture.argTypes = {
   empty: {
     control: {
       type: 'select',
-      options: empty,
+      options: Empty,
     },
   },
   onReady: {
@@ -69,9 +62,9 @@ Picture.argTypes = {
 }
 
 export const Loading = (args: any) => <UIPicture {...args} path={null} ready={false} />
-export const EmptyMovie = (args: any) => <UIPicture {...args} path={null} empty={empty.movie} />
-export const EmptyPerson = (args: any) => <UIPicture {...args} path={null} empty={empty.person} />
-export const EmptyDefault = (args: any) => <UIPicture {...args} path={null} empty={empty.default} />
+export const EmptyMovie = (args: any) => <UIPicture {...args} path={null} empty={Empty.movie} />
+export const EmptyPerson = (args: any) => <UIPicture {...args} path={null} empty={Empty.person} />
+export const EmptyDefault = (args: any) => <UIPicture {...args} path={null} empty={Empty.default} />
 export const MoviePoster = (args: any) => <UIPicture {...args} path={fixtures.movie.poster_path} />
 export const MovieBackdrop = (args: any) => <UIPicture {...args} path={fixtures.movie.backdrop_path} />
 export const PersonProfile = (args: any) => <UIPicture {...args} path={fixtures.person.profile_path} />

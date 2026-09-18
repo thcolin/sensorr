@@ -1,5 +1,4 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../helpers'
 import { Select as UISelect } from './Select'
 
 const options = [
@@ -10,13 +9,14 @@ const options = [
 
 const loadOptions = (query = 'Bill') => options
 
-export default { component: UISelect, title: 'Inputs / Select' } as Meta
+export default { component: UISelect, title: 'Inputs / Select' }
 
 export const Select = (args: any) => <UISelect {...args} />
 
 Select.args = {
   label: 'Peoples',
   options,
+  value: null,
   onChange: () => {},
   onBehavior: () => {},
 }
@@ -50,18 +50,18 @@ Select.argTypes = {
 
 export const LightSelect = (args: any) => (
   <ColorModeWrapper value='light'>
-    <Select {...args} label='Peoples' loadOptions={loadOptions} />
+    <Select {...args} label='Peoples' options={options} value={null} onChange={() => {}} loadOptions={loadOptions} />
   </ColorModeWrapper>
 )
 
 export const DarkSelect = (args: any) => (
   <ColorModeWrapper value='dark'>
-    <Select {...args} label='Peoples' loadOptions={loadOptions} />
+    <Select {...args} label='Peoples' options={options} value={null} onChange={() => {}} loadOptions={loadOptions} />
   </ColorModeWrapper>
 )
 
 export const PrimarySelect = (args: any) => (
   <ColorModeWrapper value='primary'>
-    <Select {...args} label='Peoples' loadOptions={loadOptions} />
+    <Select {...args} label='Peoples' options={options} value={null} onChange={() => {}} loadOptions={loadOptions} />
   </ColorModeWrapper>
 )

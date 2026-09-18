@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterGenres as UIFilterGenres } from './FilterGenres'
 
-export default { component: UIFilterGenres, title: 'Components / Movie / filters / Genres' } as Meta
+export default { component: UIFilterGenres, title: 'Components / Movie / filters / Genres' }
 
 export const FilterGenres = (args: any) => (
   <ColorModeWrapper value='primary'>
@@ -11,7 +10,7 @@ export const FilterGenres = (args: any) => (
 )
 
 FilterGenres.args = {
-  value: [53, 10749, 14],
+  value: { values: [53, 10749, 14], behavior: 'or' },
   onChange: () => {},
   statistics: [
     { _id: 18, count: 3 },
@@ -28,7 +27,7 @@ FilterGenres.args = {
   ],
   tmdb: null,
   disabled: false,
-  display: 'grid',
+  display: 'checkbox',
 }
 
 FilterGenres.argTypes = {

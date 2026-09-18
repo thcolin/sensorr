@@ -1,4 +1,3 @@
-import { Meta } from '@storybook/react'
 import { Card as UICard } from './Card'
 import { Badge } from '../../../atoms/Badge/Badge'
 import { transformMovieDetails } from '../../../components/Movie/Movie'
@@ -10,24 +9,20 @@ const details = {
   person: transformPersonDetails(fixtures.person),
   cast: transformPersonDetails(fixtures.cast),
   crew: transformPersonDetails(fixtures.crew),
+  loading: transformMovieDetails({ id: null, poster_path: false } as any),
 }
 
 const state = {
-  loading: <Badge emoji='⌛' compact={true} />,
-  ignored: <Badge emoji='🔕' compact={true} />,
-  missing: <Badge emoji='💊' compact={true} />,
-  pinned: <Badge emoji='📍' compact={true} />,
-  wished: <Badge emoji='🍿' compact={true} />,
-  archived: <Badge emoji='📼' compact={true} />,
-  followed: <Badge emoji='🔔' compact={true} />,
+  loading: { component: Badge, props: { emoji: '⌛', compact: true } },
+  ignored: { component: Badge, props: { emoji: '🔕', compact: true } },
+  missing: { component: Badge, props: { emoji: '💊', compact: true } },
+  pinned: { component: Badge, props: { emoji: '📍', compact: true } },
+  wished: { component: Badge, props: { emoji: '🍿', compact: true } },
+  archived: { component: Badge, props: { emoji: '📼', compact: true } },
+  followed: { component: Badge, props: { emoji: '🔔', compact: true } },
 }
 
-const overrides = {
-  none: {},
-  loading: { ready: false },
-}
-
-export default { component: UICard, title: 'Elements / Entity / Card' } as Meta
+export default { component: UICard, title: 'Elements / Entity / Card' }
 
 export const Card = (args: any) =>
 <UICard {...args} />
@@ -35,8 +30,7 @@ export const Card = (args: any) =>
 Card.args = {
   details: details.movie,
   link: '/movie/1',
-  state: state.wished,
-  overrides: overrides.none,
+  badges: { state: state.wished },
 }
 
 Card.argTypes = {
@@ -46,16 +40,10 @@ Card.argTypes = {
       options: details,
     }
   },
-  state: {
+  badges: {
     control: {
       type: 'select',
       options: state,
-    }
-  },
-  overrides: {
-    control: {
-      type: 'select',
-      options: overrides,
     }
   },
   palette: {
@@ -72,9 +60,9 @@ Card.argTypes = {
 
 export const Loading = (args: any) => (
   <UICard {...args}
+    details={details.loading}
     link={''}
-    state={null}
-    overrides={overrides.loading}
+    ready={false}
   />
 )
 
@@ -82,8 +70,7 @@ export const Movie = (args: any) => (
   <UICard {...args}
     details={details.movie}
     link={'/movie/1'}
-    state={state.wished}
-    overrides={overrides.none}
+    badges={{ state: state.wished }}
   />
 )
 
@@ -91,8 +78,7 @@ export const Person = (args: any) => (
   <UICard {...args}
     details={details.person}
     link={'/person/1'}
-    state={state.followed}
-    overrides={overrides.none}
+    badges={{ state: state.followed }}
   />
 )
 
@@ -100,7 +86,6 @@ export const Person = (args: any) => (
 //   <UICard {...args}
 //     details={details.collection}
 //     link={'/person/1'}
-//     state={state.followed}
-//     overrides={overrides.none}
+//     badges={{ state: state.followed }}
 //   />
 // )

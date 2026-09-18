@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterStatistics as UIFilterStatistics } from './FilterStatistics'
 
-export default { component: UIFilterStatistics, title: 'Components / commons / filters / Requested By' } as Meta
+export default { component: UIFilterStatistics, title: 'Components / commons / filters / Statistics' }
 
 export const FilterStatistics = (args: any) => (
   <ColorModeWrapper value='primary'>
@@ -11,14 +10,15 @@ export const FilterStatistics = (args: any) => (
 )
 
 FilterStatistics.args = {
-  value: ['test@domain.tld'],
+  label: 'ui.filters.requested_by',
+  value: { values: ['test@domain.tld'], behavior: 'or' },
   onChange: () => {},
   statistics: [
     { _id: 'test@domain.tld', count: 3 },
     { _id: 'admin@domain.tld', count: 5 },
   ],
   disabled: false,
-  display: 'grid',
+  display: 'checkbox',
 }
 
 FilterStatistics.argTypes = {

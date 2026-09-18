@@ -1,4 +1,3 @@
-import { Meta } from '@storybook/react'
 import { State as UIState } from './State'
 
 const options = [
@@ -41,7 +40,7 @@ const options = [
   },
 ]
 
-export default { component: UIState, title: 'Atoms / State' } as Meta
+export default { component: UIState, title: 'Atoms / State' }
 
 export const State = (args: any) => <UIState {...args} />
 

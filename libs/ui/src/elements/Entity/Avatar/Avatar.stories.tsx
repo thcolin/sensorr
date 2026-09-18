@@ -1,6 +1,4 @@
-import { Meta } from '@storybook/react'
 import { Avatar as UIAvatar } from './Avatar'
-import { Badge } from '../../../atoms/Badge/Badge'
 import { transformMovieDetails } from '../../../components/Movie/Movie'
 import { transformPersonDetails } from '../../../components/Person/Person'
 import { fixtures } from '@sensorr/tmdb'
@@ -10,14 +8,10 @@ const details = {
   person: transformPersonDetails(fixtures.person),
   cast: transformPersonDetails(fixtures.cast),
   crew: transformPersonDetails(fixtures.crew),
+  loading: transformMovieDetails({ id: null, poster_path: false } as any),
 }
 
-const overrides = {
-  none: {},
-  loading: { ready: false },
-}
-
-export default { component: UIAvatar, title: 'Elements / Entity / Avatar' } as Meta
+export default { component: UIAvatar, title: 'Elements / Entity / Avatar' }
 
 export const Avatar = (args: any) =>
 <UIAvatar {...args} />
@@ -25,7 +19,6 @@ export const Avatar = (args: any) =>
 Avatar.args = {
   details: details.movie,
   link: '/movie/1',
-  overrides: overrides.none,
 }
 
 Avatar.argTypes = {
@@ -33,12 +26,6 @@ Avatar.argTypes = {
     control: {
       type: 'select',
       options: details,
-    },
-  },
-  overrides: {
-    control: {
-      type: 'select',
-      options: overrides,
     },
   },
   palette: {
@@ -55,9 +42,10 @@ Avatar.argTypes = {
 
 export const Loading = (args: any) => (
   <UIAvatar {...args}
+    details={details.loading}
     link={''}
     highlight={false}
-    overrides={overrides.loading}
+    ready={false}
   />
 )
 
@@ -66,7 +54,6 @@ export const Movie = (args: any) => (
     details={details.movie}
     link={'/movie/1'}
     highlight={false}
-    overrides={overrides.none}
   />
 )
 
@@ -75,7 +62,6 @@ export const MovieHighlight = (args: any) => (
     details={details.movie}
     link={'/movie/1'}
     highlight={true}
-    overrides={overrides.none}
   />
 )
 
@@ -84,7 +70,6 @@ export const Person = (args: any) => (
     details={details.person}
     link={'/person/1'}
     highlight={false}
-    overrides={overrides.none}
   />
 )
 
@@ -93,7 +78,6 @@ export const PersonHighlight = (args: any) => (
     details={details.person}
     link={'/person/1'}
     highlight={true}
-    overrides={overrides.none}
   />
 )
 
@@ -102,7 +86,6 @@ export const Crew = (args: any) => (
     details={details.crew}
     link={'/person/1'}
     highlight={false}
-    overrides={overrides.none}
   />
 )
 
@@ -111,7 +94,6 @@ export const CrewHighlight = (args: any) => (
     details={details.crew}
     link={'/person/1'}
     highlight={true}
-    overrides={overrides.none}
   />
 )
 
@@ -120,7 +102,6 @@ export const Cast = (args: any) => (
     details={details.cast}
     link={'/person/1'}
     highlight={false}
-    overrides={overrides.none}
   />
 )
 
@@ -129,7 +110,6 @@ export const CastHighlight = (args: any) => (
     details={details.cast}
     link={'/person/1'}
     highlight={true}
-    overrides={overrides.none}
   />
 )
 
@@ -137,7 +117,6 @@ export const CastHighlight = (args: any) => (
 //   <UIAvatar {...args}
 //     details={details.collection}
 //     link={'/person/1'}
-//     state={state.followed}
-//     overrides={overrides.none}
+//     highlight={false}
 //   />
 // )

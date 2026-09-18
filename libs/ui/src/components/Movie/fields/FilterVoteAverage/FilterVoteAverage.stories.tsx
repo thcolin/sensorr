@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterVoteAverage as UIFilterVoteAverage } from './FilterVoteAverage'
 
-export default { component: UIFilterVoteAverage, title: 'Components / Movie / filters / Vote Average' } as Meta
+export default { component: UIFilterVoteAverage, title: 'Components / Movie / filters / Vote Average' }
 
 export const FilterVoteAverage = (args: any) => (
   <ColorModeWrapper value='primary'>

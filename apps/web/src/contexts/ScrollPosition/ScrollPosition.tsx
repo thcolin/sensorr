@@ -23,24 +23,31 @@ export const Provider = ({ ...props }) => {
     sessionStorage.setItem(`${location.key}-scroll`, (ref.current as any).scrollTop)
     setHistoryIndex(curr => ({ POP: curr - 1, PUSH: curr + 1, REPLACE: curr }[historyAction]))
 
+    // routes mounted outside `withLayout` have no `#main` to carry the view transition
+    const main = document.getElementById('main')
+
+    if (!main) {
+      return false
+    }
+
     if (!pwa) {
-      document.getElementById('main').style.viewTransitionName = 'fade'
+      main.style.viewTransitionName = 'fade'
       return false
     }
 
     if (window.SENSORR_BODY_VIEW_TRANSITION_NAME) {
-      document.getElementById('main').style.viewTransitionName = window.SENSORR_BODY_VIEW_TRANSITION_NAME
+      main.style.viewTransitionName = window.SENSORR_BODY_VIEW_TRANSITION_NAME
       window.SENSORR_BODY_VIEW_TRANSITION_NAME = null
       return false
     }
 
     if (historyAction === 'PUSH') {
-      document.getElementById('main').style.viewTransitionName = 'forward'
+      main.style.viewTransitionName = 'forward'
       return false
     }
 
     if (historyAction === 'POP') {
-      document.getElementById('main').style.viewTransitionName = 'backward'
+      main.style.viewTransitionName = 'backward'
       return false
     }
 

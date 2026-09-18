@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterBirthday as UIFilterBirthday } from './FilterBirthday'
 
-export default { component: UIFilterBirthday, title: 'Components / Person / filters / Birthday' } as Meta
+export default { component: UIFilterBirthday, title: 'Components / Person / filters / Birthday' }
 
 export const FilterBirthday = (args: any) => (
   <ColorModeWrapper value='primary'>

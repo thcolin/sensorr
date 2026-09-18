@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { Warning as UIWarning } from './Warning'
 
-export default { component: UIWarning, title: 'Atoms / Warning' } as Meta
+export default { component: UIWarning, title: 'Atoms / Warning' }
 
 export const Warning = (args: any) => <UIWarning {...args} />
 

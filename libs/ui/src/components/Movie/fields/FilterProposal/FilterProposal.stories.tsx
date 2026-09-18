@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterProposal as UIFilterProposal } from './FilterProposal'
 
-export default { component: UIFilterProposal, title: 'Components / Movie / filters / Genres' } as Meta
+export default { component: UIFilterProposal, title: 'Components / Movie / filters / Proposal' }
 
 export const FilterProposal = (args: any) => (
   <ColorModeWrapper value='primary'>
@@ -11,24 +10,13 @@ export const FilterProposal = (args: any) => (
 )
 
 FilterProposal.args = {
-  value: [53, 10749, 14],
+  value: { values: [true] },
   onChange: () => {},
   statistics: [
-    { _id: 18, count: 3 },
-    { _id: 53, count: 5 },
-    { _id: 12, count: 4 },
-    { _id: 80, count: 3 },
-    { _id: 10749, count: 1 },
-    { _id: 27, count: 1 },
-    { _id: 28, count: 7 },
-    { _id: 14, count: 2 },
-    { _id: 10751, count: 2 },
-    { _id: 35, count: 2 },
-    { _id: 878, count: 3 },
+    { _id: true, count: 3 },
+    { _id: false, count: 5 },
   ],
-  tmdb: null,
   disabled: false,
-  display: 'grid',
 }
 
 FilterProposal.argTypes = {
@@ -36,9 +24,6 @@ FilterProposal.argTypes = {
     control: null,
   },
   statistics: {
-    control: null,
-  },
-  tmdb: {
     control: null,
   },
 }

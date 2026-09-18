@@ -1,4 +1,3 @@
-import { Meta } from '@storybook/react'
 import { Movie as UIMovie } from './Movie'
 import { fixtures } from '@sensorr/tmdb'
 
@@ -26,7 +25,7 @@ const credits = {
   ],
 }
 
-export default { component: UIMovie, title: 'Components / Movie' } as Meta
+export default { component: UIMovie, title: 'Components / Movie' }
 
 export const Movie = (args: any) => <UIMovie {...args} />
 
@@ -35,19 +34,6 @@ Movie.args = {
   entity: fixtures.movie,
   focus: null,
   state: 'wished',
-  policy: 'french',
-  policies: [
-    {
-      emoji: '🇫🇷',
-      label: 'FRENCH',
-      value: 'french',
-    },
-    {
-      emoji: '🇬🇧',
-      label: 'VOSTFR',
-      value: 'vostfr',
-    },
-  ],
   placeholder: null,
   credits: null,
 }
@@ -56,20 +42,6 @@ Movie.argTypes = {
   entity: {
     control: {
       type: null,
-    },
-  },
-  policies: {
-    control: {
-      type: null,
-    },
-  },
-  policy: {
-    control: {
-      type: 'select',
-      options: {
-        none: null,
-        french: 'french',
-      },
     },
   },
   credits: {

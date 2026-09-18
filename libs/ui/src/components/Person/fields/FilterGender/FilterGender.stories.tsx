@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterGender as UIFilterGender } from './FilterGender'
 
-export default { component: UIFilterGender, title: 'Components / Person / filters / Gender' } as Meta
+export default { component: UIFilterGender, title: 'Components / Person / filters / Gender' }
 
 export const FilterGender = (args: any) => (
   <ColorModeWrapper value='primary'>
@@ -18,9 +17,8 @@ FilterGender.args = {
     { _id: 1, count: 5 },
     { _id: 2, count: 4 },
   ],
-  tmdb: null,
   disabled: false,
-  display: 'grid',
+  display: 'checkbox',
 }
 
 FilterGender.argTypes = {
@@ -28,9 +26,6 @@ FilterGender.argTypes = {
     control: null,
   },
   statistics: {
-    control: null,
-  },
-  tmdb: {
     control: null,
   },
 }

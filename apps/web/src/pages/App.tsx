@@ -58,6 +58,9 @@ import { Provider as DetailsDrawerProvider } from '../contexts/DetailsDrawer/Det
 
 import 'overlayscrollbars/overlayscrollbars.css'
 
+// `require`, not `import`, so webpack folds the branch and leaves the gallery and its stories out of production builds
+const design = process.env.NODE_ENV !== 'production' ? require('./Design/Design').routes : null
+
 const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet)))
 
 const TrendingMovies = Trending('movies')
@@ -84,6 +87,7 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route element={<ScrollPositionProvider children={<Outlet />} />}>
       <Route path='/login' element={<Login />} />
       <Route path='/keep-in-touch' element={<KeepInTouch />} />
+      {design}
       <Route path='/' element={<LayoutConfigSecurityContainer />}>
         <Route path='' element={<Home />} />
         <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />

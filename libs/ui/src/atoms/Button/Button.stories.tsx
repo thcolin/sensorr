@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../helpers'
 import { Button as UIButton } from './Button'
 
-export default { component: UIButton, title: 'Atoms / Button' } as Meta
+export default { component: UIButton, title: 'Atoms / Button' }
 
 export const Button = (args: any) => <UIButton {...args} />
 

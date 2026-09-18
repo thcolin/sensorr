@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
 import { Person as UIPerson } from './Person'
 import { fixtures } from '@sensorr/tmdb'
 
-export default { component: UIPerson, title: 'Components / Person' } as Meta
+export default { component: UIPerson, title: 'Components / Person' }
 
 export const Person = (args: any) => <UIPerson {...args} />
 

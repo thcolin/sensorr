@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterRequestedBy as UIFilterRequestedBy } from './FilterRequestedBy'
 
-export default { component: UIFilterRequestedBy, title: 'Components / commons / filters / Requested By' } as Meta
+export default { component: UIFilterRequestedBy, title: 'Components / commons / filters / Requested By' }
 
 export const FilterRequestedBy = (args: any) => (
   <ColorModeWrapper value='primary'>
@@ -11,7 +10,7 @@ export const FilterRequestedBy = (args: any) => (
 )
 
 FilterRequestedBy.args = {
-  value: ['test@domain.tld'],
+  value: { values: ['test@domain.tld'], behavior: 'or' },
   onChange: () => {},
   statistics: [
     { _id: 'test@domain.tld', count: 3 },

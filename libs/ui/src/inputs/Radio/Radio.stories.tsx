@@ -1,5 +1,4 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../helpers'
 import { Radio as UIRadio } from './Radio'
 
 const options = [
@@ -32,7 +31,7 @@ const options = [
 
 const value = 'popularity'
 
-export default { component: UIRadio, title: 'Inputs / Radio' } as Meta
+export default { component: UIRadio, title: 'Inputs / Radio' }
 
 export const Radio = (args: any) => <UIRadio {...args} />
 

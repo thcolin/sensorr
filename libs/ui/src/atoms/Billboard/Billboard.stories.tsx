@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
 import { Billboard as UIBillboard } from './Billboard'
 import { fixtures as palettes } from '@sensorr/palette'
 
-export default { component: UIBillboard, title: 'Atoms / Billboard' } as Meta
+export default { component: UIBillboard, title: 'Atoms / Billboard' }
 
 export const Billboard = (args: any) => <UIBillboard {...args} />
 

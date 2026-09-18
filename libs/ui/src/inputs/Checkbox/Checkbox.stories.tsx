@@ -1,5 +1,4 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../helpers'
 import { Checkbox as UICheckbox } from './Checkbox'
 
 const options = [
@@ -31,7 +30,7 @@ const options = [
 
 const value = ['wished', 'missing']
 
-export default { component: UICheckbox, title: 'Inputs / Checkbox' } as Meta
+export default { component: UICheckbox, title: 'Inputs / Checkbox' }
 
 export const Checkbox = (args: any) => <UICheckbox {...args} />
 

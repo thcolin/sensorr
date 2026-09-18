@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
 import { Shadow as UIShadow } from './Shadow'
 import { fixtures as palettes } from '@sensorr/palette'
 
-export default { component: UIShadow, title: 'Atoms / Shadow' } as Meta
+export default { component: UIShadow, title: 'Atoms / Shadow' }
 
 export const Shadow = (args: any) => <UIShadow {...args} />
 

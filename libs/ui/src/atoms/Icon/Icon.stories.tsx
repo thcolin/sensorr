@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { Icon as UIIcon } from './Icon'
 
-export default { component: UIIcon, title: 'Atoms / Icon' } as Meta
+export default { component: UIIcon, title: 'Atoms / Icon' }
 
 export const Icon = (args: any) => <UIIcon {...args} />
 

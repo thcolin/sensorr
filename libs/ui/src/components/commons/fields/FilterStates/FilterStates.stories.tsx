@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterStates as UIFilterStates } from './FilterStates'
 
-export default { component: UIFilterStates, title: 'Components / commons / filters / States' } as Meta
+export default { component: UIFilterStates, title: 'Components / commons / filters / States' }
 
 export const FilterStates = (args: any) => (
   <ColorModeWrapper value='primary'>

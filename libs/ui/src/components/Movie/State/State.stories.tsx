@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { MovieState as UIState } from './State'
 
-export default { component: UIState, title: 'Components / Movie / State' } as Meta
+export default { component: UIState, title: 'Components / Movie / State' }
 
 export const State = (args: any) => <UIState {...args} />
 

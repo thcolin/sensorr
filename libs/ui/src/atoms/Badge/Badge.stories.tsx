@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { Badge as UIBadge } from './Badge'
 
-export default { component: UIBadge, title: 'Atoms / Badge' } as Meta
+export default { component: UIBadge, title: 'Atoms / Badge' }
 
 export const Badge = (args: any) => <UIBadge {...args} />
 

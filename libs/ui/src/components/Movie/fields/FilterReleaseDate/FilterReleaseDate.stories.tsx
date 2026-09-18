@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterReleaseDate as UIFilterReleaseDate } from './FilterReleaseDate'
 
-export default { component: UIFilterReleaseDate, title: 'Components / Movie / filters / Release Date' } as Meta
+export default { component: UIFilterReleaseDate, title: 'Components / Movie / filters / Release Date' }
 
 export const FilterReleaseDate = (args: any) => (
   <ColorModeWrapper value='primary'>

@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
 import { Focus as UIFocus } from './Focus'
 import { fixtures } from '@sensorr/tmdb'
 
-export default { component: UIFocus, title: 'Atoms / Focus' } as Meta
+export default { component: UIFocus, title: 'Atoms / Focus' }
 
 export const Focus = (args: any) => <UIFocus {...args} />
 

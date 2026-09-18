@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterPopularity as UIFilterPopularity } from './FilterPopularity'
 
-export default { component: UIFilterPopularity, title: 'Components / commons / filters / Popularity' } as Meta
+export default { component: UIFilterPopularity, title: 'Components / commons / filters / Popularity' }
 
 export const FilterPopularity = (args: any) => (
   <ColorModeWrapper value='primary'>

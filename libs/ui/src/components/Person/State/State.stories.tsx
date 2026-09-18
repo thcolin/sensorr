@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { PersonState as UIState } from './State'
 
-export default { component: UIState, title: 'Components / Person / State' } as Meta
+export default { component: UIState, title: 'Components / Person / State' }
 
 export const State = (args: any) => <UIState {...args} />
 

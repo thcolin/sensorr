@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterBudget as UIFilterBudget } from './FilterBudget'
 
-export default { component: UIFilterBudget, title: 'Components / Movie / filters / Vote Count' } as Meta
+export default { component: UIFilterBudget, title: 'Components / Movie / filters / Budget' }
 
 export const FilterBudget = (args: any) => (
   <ColorModeWrapper value='primary'>

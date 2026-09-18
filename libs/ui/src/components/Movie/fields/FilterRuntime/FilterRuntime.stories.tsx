@@ -1,8 +1,7 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../../../helpers'
 import { FilterRuntime as UIFilterRuntime } from './FilterRuntime'
 
-export default { component: UIFilterRuntime, title: 'Components / Movie / filters / Runtime' } as Meta
+export default { component: UIFilterRuntime, title: 'Components / Movie / filters / Runtime' }
 
 export const FilterRuntime = (args: any) => (
   <ColorModeWrapper value='primary'>

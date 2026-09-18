@@ -1,7 +1,6 @@
-import { Meta } from '@storybook/react'
 import { Tooltip as UITooltip } from './Tooltip'
 
-export default { component: UITooltip, title: 'Atoms / Tooltip' } as Meta
+export default { component: UITooltip, title: 'Atoms / Tooltip' }
 
 export const Tooltip = (args: any) => <UITooltip {...args} />
 

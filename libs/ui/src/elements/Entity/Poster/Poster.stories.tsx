@@ -1,4 +1,3 @@
-import { Meta } from '@storybook/react'
 import { Poster as UIPoster } from './Poster'
 import { Badge } from '../../../atoms/Badge/Badge'
 import { transformMovieDetails } from '../../../components/Movie/Movie'
@@ -10,43 +9,26 @@ const details = {
   person: transformPersonDetails(fixtures.person),
   cast: transformPersonDetails(fixtures.cast),
   crew: transformPersonDetails(fixtures.crew),
+  loading: transformMovieDetails({ id: null, poster_path: false } as any),
 }
 
 const focus = {
-  none: null,
-  date: <Badge emoji='📅' label='30/03' compact={true} size='small' />,
-  popularity: <Badge emoji='📣' label='2K' compact={true} size='small' />,
-  vote_average: <Badge emoji='👍' label='6.1' compact={true} size='small' />,
+  date: { component: Badge, props: { emoji: '📅', label: '30/03', compact: true, size: 'small' } },
+  popularity: { component: Badge, props: { emoji: '📣', label: '2K', compact: true, size: 'small' } },
+  vote_average: { component: Badge, props: { emoji: '👍', label: '6.1', compact: true, size: 'small' } },
 }
 
 const state = {
-  loading: <Badge emoji='⌛' compact={true} />,
-  ignored: <Badge emoji='🔕' compact={true} />,
-  missing: <Badge emoji='💊' compact={true} />,
-  pinned: <Badge emoji='📍' compact={true} />,
-  wished: <Badge emoji='🍿' compact={true} />,
-  archived: <Badge emoji='📼' compact={true} />,
-  followed: <Badge emoji='🔔' compact={true} />,
+  loading: { component: Badge, props: { emoji: '⌛', compact: true } },
+  ignored: { component: Badge, props: { emoji: '🔕', compact: true } },
+  missing: { component: Badge, props: { emoji: '💊', compact: true } },
+  pinned: { component: Badge, props: { emoji: '📍', compact: true } },
+  wished: { component: Badge, props: { emoji: '🍿', compact: true } },
+  archived: { component: Badge, props: { emoji: '📼', compact: true } },
+  followed: { component: Badge, props: { emoji: '🔔', compact: true } },
 }
 
-const actions = {
-  none: null,
-  policy: [<Badge emoji='🇫🇷' size='small' compact={true} />],
-}
-
-const relations = {
-  none: null,
-  loading: null,
-  credits: null,
-}
-
-const overrides = {
-  none: { focus: null },
-  focus: { focus: <Badge emoji='📣' label='2K' compact={true} size='small' /> },
-  loading: { ready: false },
-}
-
-export default { component: UIPoster, title: 'Elements / Entity / Poster' } as Meta
+export default { component: UIPoster, title: 'Elements / Entity / Poster' }
 
 export const Poster = (args: any) =>
 <UIPoster {...args} />
@@ -54,10 +36,7 @@ export const Poster = (args: any) =>
 Poster.args = {
   details: details.movie,
   link: '/movie/1',
-  focus: focus.none,
-  state: state.wished,
-  relations: relations.none,
-  overrides: overrides.none,
+  badges: { state: state.wished },
 }
 
 Poster.argTypes = {
@@ -67,34 +46,10 @@ Poster.argTypes = {
       options: details,
     }
   },
-  focus: {
+  badges: {
     control: {
       type: 'select',
-      options: focus,
-    }
-  },
-  state: {
-    control: {
-      type: 'select',
-      options: state,
-    }
-  },
-  actions: {
-    control: {
-      type: 'select',
-      options: actions,
-    }
-  },
-  relations: {
-    control: {
-      type: 'select',
-      options: relations,
-    }
-  },
-  overrides: {
-    control: {
-      type: 'select',
-      options: overrides,
+      options: { focus, state },
     }
   },
   palette: {
@@ -111,11 +66,9 @@ Poster.argTypes = {
 
 export const Loading = (args: any) => (
   <UIPoster {...args}
+    details={details.loading}
     link={''}
-    focus={null}
-    state={null}
-    relations={null}
-    overrides={overrides.loading}
+    ready={false}
   />
 )
 
@@ -123,10 +76,7 @@ export const Movie = (args: any) => (
   <UIPoster {...args}
     details={details.movie}
     link={'/movie/1'}
-    focus={focus.none}
-    state={state.wished}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.wished }}
   />
 )
 
@@ -134,21 +84,7 @@ export const MovieWithFocus = (args: any) => (
   <UIPoster {...args}
     details={details.movie}
     link={'/movie/1'}
-    focus={focus.vote_average}
-    state={state.archived}
-    relations={relations.none}
-    overrides={overrides.none}
-  />
-)
-
-export const MovieWithForceFocus = (args: any) => (
-  <UIPoster {...args}
-    details={details.movie}
-    link={'/movie/1'}
-    focus={focus.vote_average}
-    state={state.archived}
-    relations={relations.none}
-    overrides={overrides.focus}
+    badges={{ state: state.archived, focus: focus.vote_average }}
   />
 )
 
@@ -156,10 +92,7 @@ export const Person = (args: any) => (
   <UIPoster {...args}
     details={details.person}
     link={'/person/1'}
-    focus={focus.none}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed }}
   />
 )
 
@@ -167,10 +100,7 @@ export const PersonWithFocus = (args: any) => (
   <UIPoster {...args}
     details={details.person}
     link={'/person/1'}
-    focus={focus.popularity}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed, focus: focus.popularity }}
   />
 )
 
@@ -178,10 +108,7 @@ export const Cast = (args: any) => (
   <UIPoster {...args}
     details={details.cast}
     link={'/person/1'}
-    focus={focus.none}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed }}
   />
 )
 
@@ -189,10 +116,7 @@ export const CastWithFocus = (args: any) => (
   <UIPoster {...args}
     details={details.cast}
     link={'/person/1'}
-    focus={focus.popularity}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed, focus: focus.popularity }}
   />
 )
 
@@ -200,10 +124,7 @@ export const Crew = (args: any) => (
   <UIPoster {...args}
     details={details.crew}
     link={'/person/1'}
-    focus={focus.none}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed }}
   />
 )
 
@@ -211,9 +132,6 @@ export const CrewWithFocus = (args: any) => (
   <UIPoster {...args}
     details={details.crew}
     link={'/person/1'}
-    focus={focus.popularity}
-    state={state.followed}
-    relations={relations.none}
-    overrides={overrides.none}
+    badges={{ state: state.followed, focus: focus.popularity }}
   />
 )

@@ -1,5 +1,4 @@
-import { Meta } from '@storybook/react'
-import { ColorModeWrapper } from '../../../.storybook/helpers'
+import { ColorModeWrapper } from '../../helpers'
 import { Range as UIRange } from './Range'
 
 const data = {
@@ -15,7 +14,7 @@ const data = {
   '9': 51,
 }
 
-export default { component: UIRange, title: 'Inputs / Range' } as Meta
+export default { component: UIRange, title: 'Inputs / Range' }
 
 export const Range = (args: any) => <UIRange {...args} />
 
