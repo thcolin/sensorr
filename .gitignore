@@ -48,3 +48,7 @@ sensorr-dump.zip
 Thumbs.db
 
 .nx/cache
+
+# nx graph output (3.7M), regenerate with `npx nx graph --file=docs/assets/nx-graph.html`
+/docs/assets/nx-graph.html
+/docs/assets/static

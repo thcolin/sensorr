@@ -1,5 +1,34 @@
 # Sensorr
 
+> 🍿📼 Your Friendly Digital Video Recorder. Think VCR but in modern times.
+
+Sensorr watches for the movies you want. You keep a library of wished movies and a list of
+people you follow, and on a schedule Sensorr searches your Torznab indexers, scores every
+release it finds against your policies, and drops the winning `.torrent` file into a
+blackhole directory for your download client to pick up. Out of the shipped configuration it
+queues that release as a proposal instead, and waits for you to accept it. It reads TMDB for
+metadata, your Plex server for what you already own, and your friends' Plex watchlists for
+what they would like to see. It is meant for one person hosting their own movie library at
+home.
+
+<!-- Screenshot to come: uncomment once docs/assets/screenshots/library-desktop.webp exists
+![Sensorr library](docs/assets/screenshots/library-desktop.webp)
+-->
+
+# Features
+
+- **A library with states.** A movie is `Pinned`, `Wished`, `Archived`, `Ignored` or `Missing`. `record` hunts the wished ones, `refine` and `shrink` go back over the archived ones.
+- **Follow people.** Follow a director, an actor, a composer, and the Calendar lists what they release, month by month.
+- **Torznab indexers.** Declare as many as you want, enable and disable them one by one.
+- **Policies instead of a quality profile.** Seven axes, source, encoding, resolution, language, dub, flags and indexer, each split in three groups: `avoid` rejects a release outright, `prefer` ranks the rest by score, `require` is the end-goal `refine` works towards.
+- **Blackhole downloads.** Sensorr writes the release file into your blackhole directory, always named `.torrent`, and your download client does the rest.
+- **Six scheduled jobs.** `record` grabs the best release available for wished movies, `refine` looks for a better fitting one for archived movies, `shrink` for the smallest one for refined movies, `refresh` re-fetches TMDB metadata for every movie and person you store, `sync` reconciles the library with Plex, `keep-in-touch` reads your friends' watchlists.
+- **Proposals.** `record`, `refine` and `shrink` can be set to `proposalOnly`: they submit what they found instead of downloading it, and you pick from the comparison screen.
+- **Requests from friends.** A friend links their Plex account with a code, and `keep-in-touch` turns the movies on their Plex watchlist into requests. A movie Sensorr did not know lands as `Ignored`, never `Wished`; you decide from the Requests screen.
+- **Browse TMDB from inside Sensorr.** Discover, Trending, Calendar, Theatres, Collections, Recommendations and Similar.
+- **A PWA with web push.** Installable, and it pushes a notification when a job grabs a release, finds a movie missing from Plex, or picks up a request.
+- **English and French.**
+
 # Install
 
 ```sh
@@ -64,3 +93,13 @@ docker compose pull sensorr/sensorr-api
 docker compose up -d
 ```
 
+# Documentation
+
+- [Configuration](docs/configuration.md), every key of `config.json`
+- [Jobs, proposals and policy](docs/jobs.md), why there are six jobs and how a release gets ranked
+- [Development](docs/development.md), running Sensorr from a clone
+- [Architecture](docs/architecture.md), what talks to what
+
+# License
+
+MIT, see [LICENSE](LICENSE).
