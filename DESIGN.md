@@ -186,17 +186,26 @@ components:
     rounded: "{rounded.tag}"
     padding: "0.5em 1em"
   transition-pill:
-    backgroundColor: "{colors.gray}"
+    backgroundColor: "{colors.grayDark}"
     textColor: "{colors.text}"
     typography: "{typography.mono}"
-    rounded: "{rounded.control}"
-    padding: "0.25em 0.5em"
+    rounded: "1em"
+    padding: "0.25em 0.75em"
+  transition-pill-before:
+    backgroundColor: "{colors.gray}"
+    textColor: "{colors.grayDarkest}"
   transition-pill-held:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.whitePure}"
+  transition-pill-held-before:
+    backgroundColor: "{colors.accentDarker}"
+    textColor: "{colors.primaryLightest}"
   transition-pill-broken:
     backgroundColor: "{colors.errorDarker}"
     textColor: "{colors.whitePure}"
+  transition-pill-broken-before:
+    backgroundColor: "{colors.errorDarkest}"
+    textColor: "{colors.text}"
 ---
 
 # Design System: Sensorr
@@ -221,9 +230,9 @@ its release**: a policy sorts candidate releases into `require`, `prefer` and `a
 groups (`libs/sensorr/src/lib/policy.ts:79-105`), and the interface's real job is to show
 what that policy did — which axis held, which one broke, what a swap would cost. The
 Proposal screen is where the product is most itself: five axes (`resolution`, `source`,
-`encoding`, `dub`, `language`) rendered as before → after pills, green when the policy
+`encoding`, `dub`, `language`) rendered as an old value tucked under the new one, green when the policy
 still holds, red when it breaks
-(`apps/web/src/components/Sensorr/Proposal.tsx:67-88` and `:117-180`). `Followed`,
+(`apps/web/src/components/Sensorr/Proposal.tsx:38-118`). `Followed`,
 `KeepInTouch`, `Person` and `Calendar` are discovery paths — the part Radarr does not
 have — but they feed the wishlist; they are not the subject.
 
@@ -458,14 +467,14 @@ tally across `apps/` and `libs/`: `0.25em` appears 28 times, `50%` 14 times, `2e
 times, `0.25rem` 6 times, `1.5em` twice.
 
 - **Controls and containers** take `0.25em` (`rounded.control`) — buttons, code tags,
-  transition pills, panels. Just enough to not be a raw rectangle.
+  panels. Just enough to not be a raw rectangle.
 - **Text fields and selects** take `0.25rem` (`rounded.field`)
   (`libs/theme/src/lib/theme/variants.ts:82` and `:126`). The unit difference from
   `control` is real: a field's corner does not grow with its font size, a button's does.
 - **Badges and tags** are fully round: `2em` on a `2em`-tall badge, `1.5em` on a tag,
   `50%` when a badge has an emoji and no label
   (`libs/ui/src/atoms/Badge/Badge.tsx:52-79`). A pill means *a state*; a rectangle means
-  *an action*.
+  *an action*. Transition pills and the job filters of `/jobs` take `1em`.
 - **Avatars and status dots** are circles, ringed with a `0.25em` solid `grayLightest`
   border so they read as stickers on top of a poster
   (`libs/ui/src/elements/Entity/Poster/Poster.tsx:352-365`).
@@ -549,21 +558,24 @@ Two distinct things, and they do not share a shape.
 - **Both:** transitions are `opacity ease 300ms` (web) and `color 200ms ease-in-out` (app).
 
 ### Transition Pill (signature)
-The Proposals screen renders each policy axis as one pill split in two:
-old value, a separator, new value
-(`apps/web/src/components/Sensorr/Proposal.tsx:104-180`). The separator alone tells you
-what happened — `=` unchanged, `~` outside the policy, `→` moved — and the right half is
-colored only when the policy has an opinion:
-- `held` (the new value satisfies `require`): `primary` fill, `whitePure` text, semibold.
-- `broken` (the new value is in `avoid`, or a `require` was lost): `errorDarker` fill,
-  `whitePure` text, semibold.
-- `moved`: semibold, no fill.
-- `quiet` (no group mentions the axis): unstyled, and the separator says so with `~`.
+The Proposals screen renders each policy axis as two overlapping pills: the old value
+underneath, the new value on top of it, `0.75em` over its right end
+(`apps/web/src/components/Sensorr/Proposal.tsx`). The shape comes from the job filters of
+`/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue
+stepped down in lightness. The new value carries the state, the old one takes a darker
+tint of the same hue:
+- `held` (the new value satisfies `require`): `primary` over `accentDarker`, semibold
+  `whitePure` over `primaryLightest`.
+- `broken` (the new value is in `avoid`, or a `require` was lost): `errorDarker` over
+  `errorDarkest`.
+- `moved` and `quiet` (no group has an opinion on the new value): `grayDark` over `gray`.
+- `same`: the new value alone, at `opacity: 0.3`.
 
-Ranks ride as superscripts: `*` for a required value, a superscript digit for its position
-in `prefer`, `!` for an avoided one. The left half is always `grayLight` at `opacity: 0.6`
-so the eye lands on the new value. **This is the component that makes Sensorr look like
-Sensorr; extend its vocabulary rather than inventing a second diff widget.**
+There is no separator: the overlap says "becomes", the hue says what the policy thinks,
+and the `title` still spells `x264 ~ x265` for the tooltip. Ranks ride as superscripts:
+`*` for a required value, a superscript digit for its position in `prefer`, `!` for an
+avoided one. **This is the component that makes Sensorr look like Sensorr; extend its
+vocabulary rather than inventing a second diff widget.**
 
 ### Empty and Error States (signature)
 `Warning` (`libs/ui/src/atoms/Warning/Warning.tsx`) is the one shape for "nothing here" and
@@ -627,7 +639,7 @@ Pure white on `primary` measures **2.04:1** — `hsla(154, 99%, 41%, 1)` is `#01
 relative luminance 0.4642, against white's 1.0. AA asks 4.5:1 for normal text and 3:1 for
 large text; this clears neither. It affects the filled primary `Button`
 (`libs/ui/src/atoms/Button/Button.tsx:21-38`), the `held` transition pill
-(`apps/web/src/components/Sensorr/Proposal.tsx:156-160`) and the active tab of the
+(`apps/web/src/components/Sensorr/Proposal.tsx:93-96`) and the active tab of the
 `/design` gallery (`apps/web/src/pages/Design/Design.tsx:58-61`). The disabled primary
 button is the same gap one step down: `hsl(0, 0%, 80%)` on `primaryDarkest` measures
 **2.11:1**. Both figures were computed here and match `@google/design.md@0.4.0 lint`.
