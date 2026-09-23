@@ -327,10 +327,11 @@ const layout = {
     },
   },
   // Both sides open as one pane, each filter of the current release facing its proposed
-  // counterpart; a phone stacks them.
+  // counterpart on a darker half; a phone stacks them.
   aside: {
     display: 'grid',
     width: ['100vw', '50em'],
+    background: [null, 'linear-gradient(to right, var(--theme-ui-colors-primary) 50%, var(--theme-ui-colors-primaryDark) 50%)'],
     gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(0, 1fr)'],
     gridTemplateRows: 'auto',
     gap: '2em',
