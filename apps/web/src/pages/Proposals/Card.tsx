@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
+import { formatDistanceToNowStrict } from 'date-fns'
+import { Button, Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
@@ -15,12 +16,15 @@ import { sizeStateOf } from './queue'
 export const EMOJI = {
   'refine': '✨',
   'shrink': '✂️',
+  'overdue': '⏳',
 }
 
 export const VERDICTS = {
   accept: { emoji: '✅', label: 'Accepted', color: 'primary', text: 'whitePure' },
   refuse: { emoji: '❌', label: 'Refused', color: 'grayDark', text: 'text' },
   ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
+  retry: { emoji: '🔁', label: 'Retried', color: 'grayDark', text: 'text' },
+  drop: { emoji: '🗑️', label: 'Dropped', color: 'grayDark', text: 'text' },
 }
 
 export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${filesize.stringify(Math.abs(bytes))}`
@@ -644,6 +648,69 @@ UICompact.styles = {
 }
 
 export const Compact = memo(UICompact)
+
+// An accepted swap that never landed: what Plex has against what was accepted, and the
+// three ways out. It never opens into a card, its gestures are not a verdict on a proposal.
+const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0, leaving = null }) => {
+  const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
+  const accepted = item.proposal?.accepted_at
+
+  return (
+    <div sx={{ ...UICompact.styles.element, ...UIOverdue.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
+      <span sx={UICompact.styles.poster}>
+        <Picture path={item.entity?.poster_path} size='w92' />
+      </span>
+      <span sx={UICompact.styles.body}>
+        <span sx={UICompact.styles.title}>
+          <strong title={item.entity?.title}>{item.entity?.title}</strong>
+          {!!year && <small>{year}</small>}
+        </span>
+        <span sx={UICompact.styles.diff}>
+          <span>
+            {item.diff.changed.map(({ axis, from, to }) => (
+              <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
+            ))}
+          </span>
+          {!!accepted && <small sx={UIOverdue.styles.age} title={new Date(accepted).toLocaleString()}>accepted {formatDistanceToNowStrict(new Date(accepted), { addSuffix: true })}</small>}
+        </span>
+      </span>
+      <span sx={UIOverdue.styles.actions}>
+        <Button variant='outline' color='gray' disabled={disabled} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again'>Retry</Button>
+        <Button variant='outline' color='gray' disabled={disabled} onClick={onSearch} title='Pick another release in its place'>Search</Button>
+        <Button variant='outline' color='gray' disabled={disabled} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has'>Drop</Button>
+      </span>
+      <code sx={UICompact.styles.size} title={`Size against the lightest owned release: ${delta(item.diff.size)}`}>
+        <Size item={item} threshold={threshold} compact={true} named={false} />
+      </code>
+      {!!leaving && <Band verdict={leaving} />}
+    </div>
+  )
+}
+
+UIOverdue.styles = {
+  // On a phone the gestures and the size share the last line.
+  element: {
+    gridTemplateColumns: ['auto 1fr auto', 'auto 1fr auto auto'],
+    gridTemplateRows: ['1fr auto', '1fr'],
+    gridTemplateAreas: ['"poster body body" "poster actions size"', '"poster body actions size"'],
+    '>span, >code': {
+      pointerEvents: 'auto',
+    },
+  },
+  age: {
+    flexShrink: 0,
+    color: 'grayDarker',
+    fontSize: 6,
+  },
+  actions: {
+    gridArea: 'actions',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+}
+
+export const Overdue = memo(UIOverdue)
 
 // A row while the queue loads: the compact row's own grid, with a bar where each text goes.
 // `shape` sets the title's width and the pills', in em, so the rows do not repeat.

@@ -14,10 +14,11 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Placeholder, VERDICTS, delta, morph, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Overdue, Placeholder, VERDICTS, delta, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
+import { SensorrSingleton } from '../../components/Sensorr'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, itemOf, matches } from './queue'
+import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, isOverdue, itemOf, matches } from './queue'
 
 const MB = 1024 * 1024
 
@@ -44,6 +45,7 @@ const LABELS = {
   refine: 'refine',
   shrink: 'shrink',
   rest: 'ignored',
+  overdue: 'overdue',
 }
 
 const DELAY = 5000
@@ -420,6 +422,7 @@ const MORPH = {
 const omit = (object, ids) => Object.keys(object).filter(key => !ids.map(String).includes(key)).reduce((acc, key) => ({ ...acc, [key]: object[key] }), {})
 
 const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) => {
+  const api = useAPI()
   const sensorr = useSensorr()
   const { metadata, setMovieMetadata } = useMoviesMetadataContext() as any
   const { ref: body } = useScrollPositionContext()
@@ -433,21 +436,35 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [skipped, setSkipped] = useState({})
   const [decided, setDecided] = useState({})
   const [leaving, setLeaving] = useState({})
-  const [collapsed, setCollapsed] = useState({ rest: true })
+  const [collapsed, setCollapsed] = useState({ rest: true, overdue: true })
   const [activeId, setActiveId] = useState(null)
   const [focus, setFocus] = useState([])
-  const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
+  const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0, retry: 0, drop: 0 })
+  const [overdue, setOverdue] = useState([])
+  const toggleSensorr = useRef(null)
   const pending = useRef(null)
   const keys = useRef(null)
   const decidedRef = useRef({})
   const lastIndex = useRef(0)
   const skips = useRef(0)
 
+  // An overdue swap is no longer a proposal, so its movie is fetched on its own.
+  useEffect(() => {
+    const { uri, params, init } = APIQuery.movies.getMovies({ params: { 'releases.overdue': true, limit: 1000, fields: FIELDS.join('|') } })
+
+    api.fetch(uri, params, init)
+      .then(res => setOverdue(res.results || []))
+      .catch((error) => {
+        console.warn(error)
+        toast.error('Error while loading the overdue swaps')
+      })
+  }, [])
+
   // Keyed on the releases array, so a SSE change only recomputes the movies it touched.
   const policies = useMemo(() => new Map(), [sensorr.policies])
   const cache = useRef(new WeakMap())
 
-  const all = useMemo(() => Object.values(entities).map((entity: any) => {
+  const all = useMemo(() => [...Object.values(entities), ...overdue].map((entity: any) => {
     const source = metadata[entity.id] || entity
     const releases = source.releases || []
     const cached = cache.current.get(releases)
@@ -463,7 +480,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const item = { ...itemOf(entity, releases, policies.get(source.policy)), source }
     cache.current.set(releases, { entity, policy: policies.get(source.policy), item })
     return item
-  }).filter(item => !!item.proposal && item.command !== 'record'), [entities, metadata, policies])
+  }).filter((item, index, all) => !!item.proposal && item.command !== 'record' && all.findIndex(({ id }) => id === item.id) === index), [entities, overdue, metadata, policies])
 
   const items = useMemo(() => all.filter(item => matches(item, values)), [all, values])
 
@@ -485,11 +502,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return [
       ...rows,
       { type: 'group', group, count },
-      ...(collapsed[group] ? [] : items.map(item => ({ type: 'item', item, leaving: leaving[item.id] || null }))),
+      ...(collapsed[group] ? [] : items.map(item => ({ type: 'item', group, item, leaving: leaving[item.id] || null }))),
     ]
   }, []), [groups, collapsed, leaving])
 
-  const queue = useMemo(() => rows.filter(row => row.type === 'item' && !row.leaving).map(row => row.item), [rows])
+  // An overdue swap never opens into a card, so the keyboard skips it.
+  const queue = useMemo(() => rows.filter(row => row.type === 'item' && !row.leaving && row.group !== 'overdue').map(row => row.item), [rows])
   const found = queue.findIndex(item => item.id === activeId)
   // `null` means every card is closed; an id that left the queue falls back to its neighbour.
   const activeIndex = activeId === null ? -1 : found !== -1 ? found : Math.min(lastIndex.current, queue.length - 1)
@@ -516,6 +534,13 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     previous.current = active
   }, [items, active?.id])
 
+  // The release picked in the drawer takes the place of the overdue swap, as a swap of the
+  // same command, so that it replaces what Plex has once it lands.
+  const search = useCallback((e, item) => toggleSensorr.current?.(e, item.entity, (release) => setMovieMetadata(item.id, 'releases', (current) => [
+    ...((current?.releases ? current : item.source).releases || []).filter(({ id }) => id !== item.proposal.id),
+    { ...release, from: item.command, job: 'manual', proposal: true, choice: true },
+  ])), [setMovieMetadata])
+
   // The latest metadata is what gets written, so a release added or a ban set meanwhile
   // survives; the loaded document stands in until the metadata context has the movie.
   const send = useCallback(async ({ targets, verdict }) => {
@@ -527,11 +552,23 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setDecided(decided => omit(decided, targets.map(({ id }) => id)))
     setSession(session => ({ ...session, [verdict]: session[verdict] + targets.length - failed.length }))
 
-    if (failed.length) {
-      setActiveId(failed[0].id)
+    if (failed.length && verdict === 'retry') {
+      toast.error((
+        <span sx={UIProposals.styles.toast}>
+          <span>Retry failed for <strong>{failed[0].entity?.title}</strong>, the indexer may no longer have its .torrent</span>
+          <span>
+            <Button variant='outline' color='gray' onClick={(e) => search(e, failed[0])}>Search</Button>
+          </span>
+        </span>
+      ), { id: 'proposal-retry' })
+    } else if (failed.length) {
+      if (!isOverdue(failed[0].proposal)) {
+        setActiveId(failed[0].id)
+      }
+
       toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${failed.length > 1 ? `**${failed.length}** proposals` : `**${failed[0].entity?.title}**`}`)
     }
-  }, [setMovieMetadata])
+  }, [setMovieMetadata, search])
 
   const flush = useCallback(() => {
     const current = pending.current
@@ -929,6 +966,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                       </Tippy>
                     ) : null}
                   />
+                ) : row.group === 'overdue' ? (
+                  <Overdue item={row.item} threshold={threshold} leaving={row.leaving} onGesture={(gesture) => decideTargets([row.item], gesture)} onSearch={(e) => search(e, row.item)} disabled={!connected} />
                 ) : (row.item === active || (row.leaving && row.item.id === activeId)) ? (
                   <Active
                     item={row.item}
@@ -960,6 +999,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       {mobile && !!active && (
         <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
       )}
+      <SensorrSingleton setToggle={fn => toggleSensorr.current = fn} />
     </>
   )
 }
