@@ -12,6 +12,7 @@ import {
   FilterRuntime,
   FilterVoteAverage,
   FilterVoteCount,
+  FilterKnownForDepartment,
   withControls,
   Warning,
   Icon,
@@ -90,6 +91,7 @@ export const Calendar = compose(
         gridTemplateAreas: `
           "head"
           "with_release_type"
+          "with_credits_departments"
           "with_genres"
           "without_genres"
           "vote_average"
@@ -205,6 +207,11 @@ export const Calendar = compose(
             { value: 3, label: 'Theatrical' }
           ], behavior: 'or' },
         component: FilterReleaseType,
+      },
+      with_credits_departments: {
+        initial: ['Acting', 'Directing', 'Writing'],
+        serialize: (key, raw) => ({ [key]: (raw || []).join('|') }),
+        component: withProps({ label: i18n.t('ui.filters.credits') })(FilterKnownForDepartment),
       },
       head: {
         initial: null,

@@ -5,12 +5,13 @@ import { Checkbox } from '../../../../inputs/Checkbox/Checkbox'
 
 export interface FilterKnownForDepartmentProps {
   display?: 'checkbox' | 'select'
+  label?: string
   statistics: { _id: any, count: number }[]
   value: any
   onChange: any
 }
 
-const UIFilterKnownForDepartment = ({ statistics, display, ...props }: FilterKnownForDepartmentProps) => {
+const UIFilterKnownForDepartment = ({ statistics, display, label, ...props }: FilterKnownForDepartmentProps) => {
   const { t } = useTranslation()
 
   const options = useMemo(() => (fixtures.departments
@@ -25,7 +26,7 @@ const UIFilterKnownForDepartment = ({ statistics, display, ...props }: FilterKno
   return (
     <Checkbox
       {...props as any}
-      label={t('ui.filters.known_for_department')}
+      label={label || t('ui.filters.known_for_department')}
       options={options}
     />
   )

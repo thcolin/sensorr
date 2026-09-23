@@ -5,6 +5,7 @@ import { useControlsState } from '@sensorr/ui'
 import { useHistoryState } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
+import { judge, summarize } from './refine'
 
 const withFetchCalendarQuery = (
   defaultQuery?: { params?: {} },
@@ -21,17 +22,19 @@ const withFetchCalendarQuery = (
       .filter(key => !['hide_library'].includes(key))
       .reduce((acc, key) => ({ ...acc, [key]: controlsQuery.params[key] }), {})
 
-    const query = useMemo(() => ({
-      uri: 'discover/movie',
-      params: {
+    const [query, refinements] = useMemo(() => {
+      const { with_release_type, with_credits_departments, ...params } = {
         ...defaultQuery?.params,
         ...controlsQuery?.params,
-      },
-    }), [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
+      } as any
+
+      return [{ uri: 'discover/movie', params }, { with_release_type, with_credits_departments }]
+    }, [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
 
     const [loading, setLoading] = useState(true)
     const [total, setTotal] = useState(null)
     const [error, setError] = useState(null)
+    const [statistics, setStatistics] = useState({})
 
     const [pages, setPages] = useState({})
     const processed = useRef([])
@@ -113,28 +116,46 @@ const withFetchCalendarQuery = (
         try {
           let page = 1
           let done = false
-          let total = 0
           let pages = {}
 
           do {
             const res = await fetcher(query.uri, { ...query.params, page: page })
-            total = Number(res.total)
             pages = { ...pages, [page]: res.entities }
             done = !res.entities.length
             page++
           } while (!done)
 
-          setTotal(total)
-          setPages(pages)
+          const entities = Object.values(pages).flat() as any[]
+          const summaries = {}
+
+          for (let i = 0; i < entities.length; i += 20) {
+            await Promise.all(entities.slice(i, i + 20).map(async (entity) => {
+              const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => null)
+              summaries[entity.id] = details && summarize(details, persons.metadata)
+            }))
+          }
+
+          const released = entities.filter(entity => judge(summaries[entity.id], { ...refinements, with_credits_departments: '' }))
+          const refined = released.filter(entity => judge(summaries[entity.id], refinements))
+
+          totals.current = { 1: refined.length }
+          setStatistics({
+            with_credits_departments: released
+              .flatMap(entity => summaries[entity.id]?.departments || [])
+              .reduce((acc, _id) => [...acc.filter(stat => stat._id !== _id), { _id, count: (acc.find(stat => stat._id === _id)?.count || 0) + 1 }], []),
+          })
+          setTotal(refined.length)
+          setPages({ 1: refined })
         } catch (error) {
           setTotal(null)
           setPages({})
+          setStatistics({})
           setError(error)
         } finally {
           setLoading(false)
         }
       })
-    }, [query, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
+    }, [query, refinements, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
 
     const entities = useMemo(() => {
       const sorted = (Object.keys(totals.current).length !== Object.keys(pages).length ? [] : Object.values(pages)
@@ -169,6 +190,7 @@ const withFetchCalendarQuery = (
         {...props}
         entities={entities}
         length={total}
+        statistics={statistics}
         ready={(props as any).ready !== false && !loading}
         controls={controls}
         error={(!persons.loading && !Object.keys(persons.metadata).length) ? {

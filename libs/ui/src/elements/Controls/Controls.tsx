@@ -225,7 +225,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
       hooks?.onChange && hooks?.onChange(values, serialized)
     }, [fields, controls?.onChange])
 
-    const statistics = useStatistics(
+    const computed = useStatistics(
       props.entities,
       fields,
       Object.keys(state?.values || {}).reduce((acc, key) => ({
@@ -233,6 +233,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
         ...(fields[key]?.serialize && fields[key].serialize(key, (state?.values || {})[key])),
       }), {})
     )
+    const statistics = useMemo(() => ({ ...computed, ...props.statistics }), [computed, props.statistics])
 
     useEffect(() => {
       if (state) {

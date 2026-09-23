@@ -73,6 +73,7 @@ export default {
       release_type: emojize('📼', 'Released'),
       certification: emojize('🔞', 'Certification'),
       known_for_department: emojize('💼', 'Known For Department'),
+      credits: emojize('💼', 'Credits'),
       gender: emojize('⚧️', 'Gender'),
       requested_by: emojize('🤖', 'Requested by'),
       policy: emojize('🚨', 'Policies'),
