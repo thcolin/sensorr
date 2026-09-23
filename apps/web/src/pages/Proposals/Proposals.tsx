@@ -41,7 +41,8 @@ const DELAY = 5000
 const LEAVE = 400
 
 const GROUP_HEIGHT = 40
-const COMPACT_HEIGHT = 80
+// Card.tsx gives the compact row a third line on a phone.
+const COMPACT_HEIGHT = [108, 80]
 const ACTIVE_HEIGHT = 300
 
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => (
@@ -425,7 +426,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => body.current,
-    estimateSize: (index) => rows[index]?.type === 'group' ? GROUP_HEIGHT : rows[index]?.item === active ? ACTIVE_HEIGHT : COMPACT_HEIGHT,
+    estimateSize: (index) => rows[index]?.type === 'group' ? GROUP_HEIGHT : rows[index]?.item === active ? ACTIVE_HEIGHT : COMPACT_HEIGHT[mobile ? 0 : 1],
     getItemKey: (index) => rows[index]?.type === 'group' ? `group-${rows[index].group}` : rows[index]?.item.id ?? index,
     overscan: 6,
     scrollMargin,
@@ -582,7 +583,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     onGesture={onGesture}
                   />
                 ) : (
-                  <Compact item={row.item} onSelect={setActiveId} />
+                  <Compact item={row.item} threshold={threshold} onSelect={setActiveId} />
                 )}
               </div>
             )
@@ -652,7 +653,7 @@ UIProposals.styles = {
     paddingX: [8, 4],
     paddingY: 4,
     '>span': {
-      height: `${COMPACT_HEIGHT}px`,
+      height: COMPACT_HEIGHT.map(height => `${height}px`),
       backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLighter} 0%, ${theme.rawColors.grayLight} 50%, ${theme.rawColors.grayLighter} 100%)`,
       backgroundSize: '200% 100%',
       animation: 'sensorr-proposals-shimmer 1.4s ease-in-out infinite',

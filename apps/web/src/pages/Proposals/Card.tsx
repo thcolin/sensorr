@@ -152,6 +152,19 @@ UIGestures.styles = {
 
 export const Gestures = memo(UIGestures)
 
+// Lightest owned release under the proposed one: lighter holds, heavier breaks.
+const Size = ({ item, threshold }) => item.owned.length ? (
+  <>
+    <span>📦</span>
+    <Transition
+      axis='size'
+      from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
+      to={filesize.stringify(item.proposal?.size || 0)}
+      state={Math.abs(item.diff.size || 0) < (threshold || 1) ? 'quiet' : item.diff.size < 0 ? 'held' : 'broken'}
+    />
+  </>
+) : <>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</>
+
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [others, setOthers] = useState(false)
@@ -173,17 +186,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
             <header sx={UIActive.styles.head}>
               <h3 title={facts.title}>{facts.title}</h3>
               <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-                {item.owned.length ? (
-                  <>
-                    <span>📦</span>
-                    <Transition
-                      axis='size'
-                      from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
-                      to={filesize.stringify(item.proposal?.size || 0)}
-                      state={Math.abs(item.diff.size || 0) < (threshold || 1) ? 'quiet' : item.diff.size < 0 ? 'held' : 'broken'}
-                    />
-                  </>
-                ) : emojize('📦', filesize.stringify(item.proposal?.size || 0))}
+                <Size item={item} threshold={threshold} />
               </code>
             </header>
             <div sx={UIActive.styles.sub}>
@@ -223,7 +226,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
             </div>
             {!!item.diff.rows.length && (
               <div sx={UIActive.styles.pills} data-pills={true}>
-                {[...item.diff.changed, ...item.diff.rows.filter(({ state }) => state === 'same')].map(({ axis, from, to }) => (
+                {item.diff.rows.map(({ axis, from, to }) => (
                   <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
                 ))}
               </div>
@@ -466,7 +469,7 @@ UIActive.styles = {
 
 export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive))
 
-const UICompact = ({ item, onSelect, ...props }) => {
+const UICompact = ({ item, onSelect, threshold = 0, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
 
   return (
@@ -485,7 +488,9 @@ const UICompact = ({ item, onSelect, ...props }) => {
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
-          <code>{emojize('📦', item.owned.length ? delta(item.diff.size) : filesize.stringify(item.proposal?.size || 0))}</code>
+          <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+            {item.owned.length ? <Size item={item} threshold={threshold} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+          </code>
         </span>
       </span>
     </button>
@@ -499,7 +504,7 @@ UICompact.styles = {
     alignItems: 'stretch',
     gap: 4,
     width: '100%',
-    height: '80px',
+    height: ['108px', '80px'],
     paddingX: 4,
     paddingY: 10,
     textAlign: 'left',
@@ -550,22 +555,33 @@ UICompact.styles = {
       fontSize: 6,
     },
   },
+  // On a phone the size takes a line of its own, so the axes keep the whole width.
   diff: {
     display: 'flex',
-    alignItems: 'center',
+    flexDirection: ['column', 'row'],
+    alignItems: ['flex-start', 'center'],
     justifyContent: 'space-between',
     gap: 8,
+    // A pill that does not fit wraps onto a hidden second line rather than being cut.
     '>span': {
       display: 'flex',
+      flexWrap: 'wrap',
       gap: 10,
       minWidth: 0,
+      maxWidth: '100%',
+      height: '1.5em',
       overflow: 'hidden',
     },
     '>code': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
       flexShrink: 0,
       fontFamily: 'monospace',
-      fontSize: 7,
       color: 'text',
+      '>small': {
+        fontSize: 7,
+      },
     },
   },
 }

@@ -571,7 +571,7 @@ tint of the same hue:
   `errorDarkest`.
 - `moved` and `quiet` (no group has an opinion on the new value): `grayDark` over `gray`.
 - `same`: the new value alone, at `opacity: 0.3`.
-- The card header draws the size the same way, lightest owned release under the proposed
+- The card header and the list rows draw the size the same way, lightest owned release under the proposed
   one, with a forced `state`: `held` when lighter, `broken` when heavier, `quiet` below the
   "Same size below" threshold.
 
