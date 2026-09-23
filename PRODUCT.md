@@ -50,7 +50,7 @@ friends' watchlists) feeds the wishlist; it is not the subject.
 - Refusing a proposal removes the release but does not ban it, so the same release can be
   proposed again by the next `refine`. Banning adds it to `banned_releases`, which the jobs
   exclude.
-- Undecided: whether the proposal queue is loaded whole on the client to sort by gain.
+- The proposal queue is loaded whole on the client, so it can be grouped and sorted by gain.
 
 ## Brand Commitments
 

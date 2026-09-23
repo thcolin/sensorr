@@ -399,6 +399,11 @@ UIActive.styles = {
     ':hover': {
       color: 'text',
     },
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+      outlineOffset: '2px',
+    },
   },
   pills: {
     display: 'flex',
@@ -437,7 +442,7 @@ const UICompact = ({ item, onSelect, ...props }) => {
       </span>
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
-          <h6 title={item.entity?.title}>{item.entity?.title}</h6>
+          <strong title={item.entity?.title}>{item.entity?.title}</strong>
           {!!year && <small>{year}</small>}
         </span>
         <span sx={UICompact.styles.diff}>
@@ -495,8 +500,10 @@ UICompact.styles = {
     display: 'flex',
     alignItems: 'baseline',
     gap: 8,
-    '>h6': {
-      margin: 12,
+    '>strong': {
+      fontFamily: 'heading',
+      fontWeight: 'heading',
+      fontSize: 5,
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -556,8 +563,21 @@ UIGroupTitle.styles = {
     '>button[data-menu]': {
       variant: 'button.reset',
       display: 'inline-flex',
-      paddingX: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: '2.5rem',
+      position: 'relative',
       cursor: 'pointer',
+      '::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-0.75em 0em',
+      },
+      ':focus-visible': {
+        outline: '1px solid',
+        outlineColor: 'grayDarkest',
+        outlineOffset: '2px',
+      },
       opacity: 0,
       transition: 'opacity 200ms ease-in-out',
     },
@@ -577,6 +597,17 @@ UIGroupTitle.styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
+    position: 'relative',
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      inset: '-0.75em 0em',
+    },
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+      outlineOffset: '2px',
+    },
     fontWeight: 'inherit',
     cursor: 'pointer',
     '>code': {

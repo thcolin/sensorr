@@ -193,7 +193,7 @@ export const decide = (metadata, releaseId, verdict: Verdict) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
 
   return {
-    releases: (metadata?.releases || []).map(r => r.id === releaseId ? { ...r, choice: verdict === 'accept' } : r),
+    releases: (metadata?.releases || []).map(r => (r.proposal && r.id === releaseId) ? { ...r, choice: verdict === 'accept' } : r),
     ...(verdict === 'accept' ? { state: 'archived' } : {}),
     ...(verdict === 'ban' && release ? { banned_releases: [...new Set([...(metadata?.banned_releases || []), release.title])] } : {}),
   }

@@ -169,6 +169,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [activeId, setActiveId] = useState(null)
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
+  const decidedRef = useRef({})
   const lastIndex = useRef(0)
   const skips = useRef(0)
 
@@ -181,16 +182,16 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const releases = source.releases || []
     const cached = cache.current.get(releases)
 
-    if (cached?.entity === entity && cached?.name === source.policy) {
-      return cached.item
-    }
-
     if (!policies.has(source.policy)) {
       policies.set(source.policy, new Policy(source.policy || '', sensorr.policies))
     }
 
+    if (cached?.entity === entity && cached?.policy === policies.get(source.policy)) {
+      return cached.item
+    }
+
     const item = { ...itemOf(entity, releases, policies.get(source.policy)), source }
-    cache.current.set(releases, { entity, name: source.policy, item })
+    cache.current.set(releases, { entity, policy: policies.get(source.policy), item })
     return item
   }).filter(item => !!item.proposal), [entities, metadata, policies])
 
@@ -238,14 +239,20 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     previous.current = active
   }, [items, active?.id])
 
+  // The latest metadata is what gets written, so a release added or a ban set meanwhile
+  // survives; the loaded document stands in until the metadata context has the movie.
   const send = useCallback(async ({ targets, verdict }) => {
-    try {
-      await Promise.all(targets.map(item => setMovieMetadata(item.id, null, () => decide(item.source, item.proposal.id, verdict))))
-      setSession(session => ({ ...session, [verdict]: session[verdict] + targets.length }))
-    } catch (e) {
-      setDecided(decided => omit(decided, targets.map(({ id }) => id)))
-      setActiveId(targets[0].id)
-      toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${targets.length > 1 ? `**${targets.length}** proposals` : `**${targets[0].entity?.title}**`}`)
+    const results = await Promise.allSettled(targets.map(item => setMovieMetadata(item.id, null, (current) => decide(current?.releases ? current : item.source, item.proposal.id, verdict))))
+    const failed = targets.filter((item, index) => results[index].status === 'rejected')
+
+    // Sent or not, the metadata now says where each movie stands: `decided` only covered the wait.
+    decidedRef.current = omit(decidedRef.current, targets.map(({ id }) => id))
+    setDecided(decided => omit(decided, targets.map(({ id }) => id)))
+    setSession(session => ({ ...session, [verdict]: session[verdict] + targets.length - failed.length }))
+
+    if (failed.length) {
+      setActiveId(failed[0].id)
+      toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${failed.length > 1 ? `**${failed.length}** proposals` : `**${failed[0].entity?.title}**`}`)
     }
   }, [setMovieMetadata])
 
@@ -271,6 +278,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     clearTimeout(current.timer)
     pending.current = null
     toast.dismiss('proposal-pending')
+    decidedRef.current = omit(decidedRef.current, current.targets.map(({ id }) => id))
     setDecided(decided => omit(decided, current.targets.map(({ id }) => id)))
     setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
     setActiveId(current.targets[0].id)
@@ -292,7 +300,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [flush])
 
-  const decideTargets = useCallback((targets, verdict: Verdict) => {
+  const decideTargets = useCallback((candidates, verdict: Verdict) => {
+    const targets = candidates.filter(({ id }) => !decidedRef.current[id])
+
     if (!connected || !targets.length) {
       return
     }
@@ -300,6 +310,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     flush()
 
     const ids = targets.map(({ id }) => id)
+    decidedRef.current = { ...decidedRef.current, ...ids.reduce((acc, id) => ({ ...acc, [id]: verdict }), {}) }
     setDecided(decided => ({ ...decided, ...ids.reduce((acc, id) => ({ ...acc, [id]: verdict }), {}) }))
 
     if (targets.length === 1) {
@@ -325,6 +336,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       return
     }
 
+    if (gesture !== 'skip' && !connected) {
+      return
+    }
+
     if (gesture === 'skip') {
       setActiveId(queue[activeIndex + 1]?.id ?? null)
       setSkipped(skipped => ({ ...skipped, [active.id]: ++skips.current }))
@@ -333,11 +348,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     setActiveId(queue[activeIndex + 1]?.id ?? null)
     decideTargets([active], gesture)
-  }, [active, activeIndex, queue, decideTargets])
+  }, [active, activeIndex, queue, decideTargets, connected])
 
   const onToggle = useCallback((group) => {
     if (!collapsed[group] && active && groups.find(({ items }) => items.includes(active))?.group === group) {
-      const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group }) => !collapsed[group] && group)?.items.find(item => !leaving[item.id])
+      const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group, items }) => !collapsed[group] && items.some(item => !leaving[item.id]))?.items.find(item => !leaving[item.id])
       setActiveId(next?.id ?? null)
     }
 
@@ -349,7 +364,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable || document.querySelector('[data-proposals-menu]')) {
         return
       }
 
@@ -505,7 +520,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                         placement='bottom'
                         appendTo={document.body}
                         content={(
-                          <div sx={UIProposals.styles.menu}>
+                          <div sx={UIProposals.styles.menu} data-proposals-menu={true}>
                             <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
                               Refuse all {row.count}
                             </Button>
