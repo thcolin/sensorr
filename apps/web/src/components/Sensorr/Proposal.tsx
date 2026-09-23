@@ -82,8 +82,8 @@ UITransition.styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     borderRadius: '1em',
-    paddingX: 5,
-    paddingY: 9,
+    paddingX: 6,
+    paddingY: 10,
     '>sup': {
       fontSize: 8,
       marginLeft: 11,
@@ -95,7 +95,7 @@ UITransition.styles = {
     borderTopRightRadius: '0em',
     borderBottomRightRadius: '0em',
     marginRight: '-1em',
-    paddingRight: '1.875em',
+    paddingRight: '1.75em',
     fontWeight: 'normal',
   },
   after: {

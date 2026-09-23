@@ -190,7 +190,7 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.mono}"
     rounded: "1em"
-    padding: "0.375em 0.875em"
+    padding: "0.25em 0.75em"
   transition-pill-before:
     backgroundColor: "{colors.gray}"
     textColor: "{colors.grayDarkest}"

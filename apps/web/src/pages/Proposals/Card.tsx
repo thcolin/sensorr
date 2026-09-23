@@ -451,7 +451,8 @@ UIActive.styles = {
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 8,
+    columnGap: 7,
+    rowGap: 8,
   },
   band: {
     position: 'absolute',
@@ -566,10 +567,11 @@ UICompact.styles = {
     '>span': {
       display: 'flex',
       flexWrap: 'wrap',
-      gap: 10,
+      alignItems: 'flex-start',
+      gap: 7,
       minWidth: 0,
       maxWidth: '100%',
-      height: '1.5em',
+      height: '1.3em',
       overflow: 'hidden',
     },
     '>code': {
