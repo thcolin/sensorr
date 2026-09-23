@@ -14,7 +14,7 @@ export const summarize = (details, followed) => ({
   ])],
 })
 
-const split = (raw?: string) => (raw || '').split(/[|,]/).filter(Boolean)
+const split = (raw?: string) => (typeof raw === 'string' ? raw : '').split(/[|,]/).filter(Boolean)
 
 export const judge = (summary, { with_release_type, with_credits_departments }: { with_release_type?: string, with_credits_departments?: string }) => {
   if (!summary) {
@@ -28,7 +28,7 @@ export const judge = (summary, { with_release_type, with_credits_departments }: 
   const types = split(with_release_type).map(Number)
   const matches = (type) => summary.types.includes(type)
 
-  if (types.length && !(with_release_type.includes(',') ? types.every(matches) : types.some(matches))) {
+  if (types.length && !(String(with_release_type).includes(',') ? types.every(matches) : types.some(matches))) {
     return false
   }
 

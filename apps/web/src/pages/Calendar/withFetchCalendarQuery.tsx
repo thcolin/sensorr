@@ -91,8 +91,8 @@ const withFetchCalendarQuery = (
 
           for (let i = 0; i < entities.length && !cancelled; i += 20) {
             await Promise.all(entities.slice(i, i + 20).map(async (entity) => {
-              const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch((error) => {
-                console.warn(`Movie ${entity.id} kept unfiltered, its details failed`, error)
+              const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => {
+                console.warn(`Movie ${entity.id} kept unfiltered, its details failed`)
                 return null
               })
               summaries[entity.id] = details && summarize(details, persons.metadata)
