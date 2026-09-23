@@ -530,7 +530,11 @@ UICompact.styles = {
       cursor: 'pointer',
       opacity: 0,
       transition: 'opacity 150ms ease-in-out',
-      // Both faint like the clear icon at rest, and solid grey under the pointer.
+      // Both faint at rest and solid grey under the pointer. The clear icon brings its
+      // own colour, so both svgs get the same one here.
+      svg: {
+        color: 'grayDarkest',
+      },
       'svg path': {
         opacity: 0.2,
         transition: 'opacity 150ms ease-in-out',
