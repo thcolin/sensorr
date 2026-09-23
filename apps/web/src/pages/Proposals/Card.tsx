@@ -333,10 +333,12 @@ UIActive.styles = {
       borderColor: 'grayLight',
     },
   },
+  // Both sit right above the releases band on a wide screen: they keep it at a distance.
   skeleton: {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+    marginBottom: [0, 4],
     '>span': {
       display: 'block',
       height: '2em',
@@ -388,6 +390,7 @@ UIActive.styles = {
     flexWrap: 'wrap',
     columnGap: 3,
     rowGap: 8,
+    marginBottom: [0, 4],
   },
   pills: {
     display: 'flex',
