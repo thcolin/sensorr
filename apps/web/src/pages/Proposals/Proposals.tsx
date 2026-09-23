@@ -596,7 +596,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setDecided(decided => omit(decided, current.targets.map(({ id }) => id)))
     keys.current.morph(() => {
       setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
-      setActiveId(current.targets[0].id)
+
+      if (!isOverdue(current.targets[0].proposal)) {
+        setActiveId(current.targets[0].id)
+      }
     }, current.targets[0].id)
   }, [])
 
