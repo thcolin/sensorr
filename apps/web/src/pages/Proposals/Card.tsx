@@ -1,7 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
-import Tippy from '@tippyjs/react'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
@@ -446,17 +445,16 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
       {!!onDecide && (
         <div sx={UICompact.styles.decide} data-decide={true} onClick={(e) => e.target === e.currentTarget && onSelect(item.id)}>
           {(['accept', 'refuse'] as const).map(verdict => (
-            <Tippy key={verdict} content={<code>{verdict === 'accept' ? 'Accept' : 'Refuse'}</code>} delay={[300, 0]}>
-              <button
-                type='button'
-                disabled={disabled}
-                onClick={() => onDecide(verdict)}
-                aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
-                data-verdict={verdict}
-              >
-                <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='1.125em' height='1.125em' />
-              </button>
-            </Tippy>
+            <button
+              key={verdict}
+              type='button'
+              disabled={disabled}
+              onClick={() => onDecide(verdict)}
+              aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
+              data-verdict={verdict}
+            >
+              <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='1.125em' height='1.125em' />
+            </button>
           ))}
         </div>
       )}
