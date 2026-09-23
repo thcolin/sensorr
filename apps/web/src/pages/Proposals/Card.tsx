@@ -30,9 +30,15 @@ export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${fi
 const details = new Map()
 const loaded = new Map()
 
+// The size MovieWithCreditsAndReviews asks TMDB for in `display='poster'`.
+const POSTER = 'w300'
+
 // One name per element that both forms of the card draw, so the View Transition in
-// Proposals.tsx moves it from one place to the other. The class groups them in its CSS.
-export const morph = (kind, id) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: kind }) as any
+// Proposals.tsx moves it from one place to the other. The class groups them in its CSS,
+// and may differ between the two forms while the name stays the same.
+export const morph = (kind, id, group = kind) => name(kind, id, group)
+
+const name = (kind, id, group = kind) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: group }) as any
 
 export const useLoadDetails = () => {
   const tmdb = useTMDB()
@@ -47,7 +53,14 @@ export const useLoadDetails = () => {
       details.set(id, Promise.all([
         tmdb.fetch(`movie/${id}`, { append_to_response: 'credits,keywords' }),
         wikidata.fetch(wikidata.query.movies.getMovieAdditionalData.query(id), wikidata.query.movies.getMovieAdditionalData.transform).catch(() => ({})),
-      ]).then(([movie, additional]) => {
+      ]).then(async ([movie, additional]) => {
+        // The card's poster is decoded before it opens, so it is drawn from its first frame.
+        if (movie?.poster_path) {
+          const poster = new Image()
+          poster.src = `https://image.tmdb.org/t/p/${POSTER}${movie.poster_path}`
+          await poster.decode().catch(() => null)
+        }
+
         loaded.set(id, { movie, additional })
         return { movie, additional }
       }).catch((error) => {
@@ -109,10 +122,10 @@ const Band = memo(UIBand)
 
 
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
-const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
+const Size = ({ item, threshold, compact = false, named = true }) => item.owned.length ? (
   <>
     <Transition
-      style={morph('size', item.id)}
+      style={named ? morph('size', item.id) : undefined}
       axis='size'
       from={emojize('📦', filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0)))}
       to={filesize.stringify(item.proposal?.size || 0)}
@@ -120,18 +133,20 @@ const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
       compact={compact}
     />
   </>
-) : <span style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</span>
+) : <span style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</span>
 
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [meaningful, setMeaningful] = useState(false)
+  // Its selects measure themselves on mount: drawn closed, they would slow every opening.
+  const [editing, setEditing] = useState(false)
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
 
   return (
     <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : {}) }} aria-current={!leaving}>
       <div sx={UIActive.styles.wrapper}>
         <div sx={UIActive.styles.card}>
-          <div sx={UIActive.styles.poster} style={morph('poster', item.id)}>
+          <div sx={UIActive.styles.poster} style={morph('poster', item.id)} data-morph-poster={true}>
             <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
           </div>
           <div sx={UIActive.styles.body}>
@@ -147,7 +162,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               </code>
             </header>
             <div sx={UIActive.styles.sub}>
-              <details sx={UIActive.styles.metadata}>
+              <details sx={UIActive.styles.metadata} onToggle={(e) => setEditing((e.target as HTMLDetailsElement).open)}>
                 <summary>
                   <span />
                   <span>
@@ -156,7 +171,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                   </span>
                 </summary>
                 <div>
-                  <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
+                  {editing && <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />}
                 </div>
               </details>
               <aside>
@@ -400,14 +415,15 @@ export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive
 
 // On a wide screen the chevron next to the decisions opens the card. A phone has no
 // hover to show them: there, a button stretched under the whole row opens it.
-const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, leaving = null, ...props }) => {
+const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
+  const morph = morphing ? name : () => undefined
   const label = `Open ${item.entity?.title || 'proposal'}`
 
   return (
     <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
       <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={label} tabIndex={-1} />
-      <span sx={UICompact.styles.poster} style={morph('poster', item.id)}>
+      <span sx={UICompact.styles.poster} style={morph('poster', item.id)} data-morph-poster={true}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
       <span sx={UICompact.styles.body}>
@@ -444,7 +460,7 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
         </div>
       )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} named={morphing} /> : <small style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
       </code>
       {!!leaving && <Band verdict={leaving} />}
     </div>

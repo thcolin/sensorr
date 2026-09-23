@@ -137,6 +137,11 @@ const online = {
 // content fades in once it has room, and a decided card folds away upward as the rows
 // below take its place.
 const MORPH = {
+  // A poster mounted by the move fades in from grey on its own; its image is already
+  // decoded (Card.tsx), so it shows at once and the move carries the change.
+  'html[data-morphing] [data-morph-poster] *': {
+    transition: 'none !important',
+  },
   '::view-transition-group(*)': {
     animationDuration: '400ms',
     animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
@@ -150,12 +155,13 @@ const MORPH = {
   '::view-transition-new(*.card)': {
     animation: '300ms ease-out 120ms both sensorr-morph-in',
   },
-  // The unchanged axes only the full card draws: out at once, in with the card's content.
+  // The unchanged axes only the full card draws sit at their final place from the start:
+  // out at once, and in only once the card has grown under them.
   '::view-transition-old(*.pill):only-child': {
     animation: '150ms ease-out both sensorr-morph-out',
   },
   '::view-transition-new(*.pill):only-child': {
-    animation: '300ms ease-out 120ms both sensorr-morph-in',
+    animation: '200ms ease-out 250ms both sensorr-morph-in',
   },
   '::view-transition-old(*.row):only-child, ::view-transition-old(*.card):only-child': {
     animation: '300ms cubic-bezier(0.4, 0, 0.2, 1) both sensorr-morph-fold',
@@ -186,6 +192,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [leaving, setLeaving] = useState({})
   const [collapsed, setCollapsed] = useState({ rest: true })
   const [activeId, setActiveId] = useState(null)
+  const [focus, setFocus] = useState([])
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
   const keys = useRef(null)
@@ -305,7 +312,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     keys.current.morph(() => {
       setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
       setActiveId(current.targets[0].id)
-    })
+    }, current.targets[0].id)
   }, [])
 
   // Leaving the page sends what is waiting rather than dropping it; closing the tab
@@ -361,7 +368,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         if (next !== undefined) {
           setActiveId(next)
         }
-      }), LEAVE)
+      }, next), LEAVE)
     }
 
     pending.current = { targets, verdict, timer: setTimeout(flush, DELAY) }
@@ -397,7 +404,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       keys.current.morph(() => {
         setActiveId(queue[activeIndex + 1]?.id ?? null)
         setSkipped(skipped => ({ ...skipped, [active.id]: ++skips.current }))
-      })
+      }, queue[activeIndex + 1]?.id)
       return
     }
 
@@ -445,6 +452,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [scrollMargin, setScrollMargin] = useState(0)
   const stickies = useMemo(() => rows.map((row, index) => row.type === 'group' ? index : null).filter(index => index !== null), [rows])
   const sticky = useRef(0)
+  // The rows on screen when a move starts, kept mounted until it ends: the browser drops
+  // the whole transition as soon as one element it captured leaves the DOM.
+  const kept = useRef(null)
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -456,7 +466,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     scrollPaddingStart: GROUP_HEIGHT + (mobile ? 0 : 76),
     rangeExtractor: useCallback((range) => {
       sticky.current = [...stickies].reverse().find(index => range.startIndex >= index) ?? 0
-      return [...new Set([sticky.current, ...defaultRangeExtractor(range)])].sort((a, b) => a - b)
+      return [...new Set([sticky.current, ...defaultRangeExtractor(range), ...(kept.current || [])])].filter(index => index < range.count).sort((a, b) => a - b)
     }, [stickies]),
   })
 
@@ -487,17 +497,29 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }
   }
 
-  useEffect(reveal, [activeId])
+  // A move already scrolled while the page was frozen; scrolling again under it would
+  // shift every row once the snapshots are dropped.
+  useEffect(() => {
+    if (!document.documentElement.dataset.morphing) {
+      reveal()
+    }
+  }, [activeId])
 
   // Every change of the open card goes through here. The browser snapshots the list,
   // React renders the new state synchronously, the rows are measured and scrolled to
   // at their real height, and each element both forms draw moves from its old place.
   // The CSS of the moves is the Global block of the render below.
-  keys.current.morph = (update) => {
+  // Only the rows that change form name their poster, title, pills… for the move: every
+  // named element is one more snapshot, and the other rows only need to slide.
+  keys.current.morph = (update, target = null) => {
+    flushSync(() => setFocus([activeId, target].filter(id => id !== null && id !== undefined)))
+
     // A pill wrapped onto the compact row's hidden line would fly in from under it.
-    list.current?.querySelectorAll('[data-clipped]').forEach((pills: HTMLElement) => {
+    list.current?.querySelectorAll('[data-clipped]:has([style*="view-transition-name"])').forEach((pills: HTMLElement) => {
       Array.from(pills.children).forEach((pill: HTMLElement) => {
-        pill.style.viewTransitionName = pill.offsetTop > (pills.firstElementChild as HTMLElement).offsetTop ? 'none' : ''
+        if (pill.offsetTop > (pills.firstElementChild as HTMLElement).offsetTop) {
+          pill.style.viewTransitionName = 'none'
+        }
       })
     })
 
@@ -516,16 +538,22 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     // the toasts instead of over them. Named for good, they would leave `#main` in a route change.
     const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster')) as HTMLElement[]
     layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
+    document.documentElement.dataset.morphing = 'true'
+    kept.current = virtualizer.getVirtualItems().map(({ index }) => index)
 
     const transition = (document as any).startViewTransition(apply)
-    transition.finished.finally(() => layers.forEach((layer) => { layer.style.viewTransitionName = '' }))
+    transition.finished.finally(() => {
+      kept.current = null
+      layers.forEach((layer) => { layer.style.viewTransitionName = '' })
+      delete document.documentElement.dataset.morphing
+    })
   }
 
   keys.current.reveal = reveal
 
   const select = useCallback((id) => {
     Promise.race([loadDetails(id)?.catch(() => null), new Promise(resolve => setTimeout(resolve, PRELOAD))])
-      .then(() => keys.current.morph(() => setActiveId(id)))
+      .then(() => keys.current.morph(() => setActiveId(id), id))
   }, [])
 
   const total = Object.values(session).reduce((sum: number, count: number) => sum + count, 0) as number
@@ -599,8 +627,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                 data-index={virtual.index}
                 ref={virtualizer.measureElement}
                 sx={stuck ? UIProposals.styles.sticky : {}}
-                style={stuck ? morph(row.type === 'group' ? 'group' : 'row', virtual.key) : {
-                  ...morph(row.type === 'item' && (row.item === active || row.item.id === activeId) ? 'card' : row.type === 'group' ? 'group' : 'row', virtual.key),
+                style={stuck ? morph('row', virtual.key, 'group') : {
+                  ...morph('row', virtual.key, row.type === 'group' ? 'group' : (row.item === active || row.item.id === activeId) ? 'card' : 'row'),
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -651,7 +679,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     onClose={row.leaving ? null : keys.current.close}
                   />
                 ) : (
-                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} onSelect={select} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
+                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} morphing={focus.includes(row.item.id)} onSelect={select} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
                 )}
               </div>
             )
