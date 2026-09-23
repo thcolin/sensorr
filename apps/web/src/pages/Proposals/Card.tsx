@@ -1,5 +1,5 @@
 import { Fragment, memo, useEffect, useMemo, useState } from 'react'
-import { Button, Icon, Picture, transformMovieDetails } from '@sensorr/ui'
+import { Button, Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
@@ -7,6 +7,7 @@ import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMe
 import { Metadata } from '../Details/components/Metadata'
 import { Externals, Meaningful } from '../Details/components/Externals'
 import { Transition } from '../../components/Sensorr/Proposal'
+import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { ReleaseState, Statistic, safeUrl } from '../../components/Sensorr/Release'
 
 export const EMOJI = {
@@ -180,11 +181,11 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
       <div sx={UIActive.styles.collapse}>
         <div sx={UIActive.styles.card}>
           <div sx={UIActive.styles.poster}>
-            <Picture path={entity?.poster_path} size='w342' />
+            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
           </div>
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
-              <h3 title={facts.title}>{facts.title}</h3>
+              <h3 title={facts.title}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
               <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
                 <Size item={item} threshold={threshold} />
               </code>
@@ -303,13 +304,10 @@ UIActive.styles = {
     borderBottom: '1px solid',
     borderColor: 'gray',
   },
+  // Movie's poster sizes itself, badges included, as on every other page.
   poster: {
     flexShrink: 0,
-    alignSelf: ['center', 'stretch'],
-    width: ['6em', '11em'],
-    aspectRatio: ['2 / 3', 'auto'],
-    minHeight: [null, '16.5em'],
-    '>span': { width: '100%' },
+    alignSelf: ['center', 'flex-start'],
   },
   body: {
     flex: 1,
