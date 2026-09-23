@@ -27,6 +27,7 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.refresh.paused` | `boolean` | `false` | Pause Refresh job |
 | `jobs.sync.cron` | `string` | `0 3 * * 0` | Sync job cron |
 | `jobs.sync.paused` | `boolean` | `false` | Pause Sync job |
+| `jobs.sync.cleanup` | `boolean` | `false` | Sync job deletes from Plex the versions an accepted swap replaces, once the swap has landed |
 | `jobs.keep-in-touch.cron` | `string` | `0 3 * * 0` | Keep-in-touch job cron |
 | `jobs.keep-in-touch.paused` | `boolean` | `false` | Pause Keep-in-touch job |
 | `jobs.refine.cron` | `string` | `0 5 * * 0` | Refine job cron |
