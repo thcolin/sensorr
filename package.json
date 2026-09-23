@@ -108,6 +108,7 @@
     "tslib": "^2.6.2",
     "unzipper": "^0.10.14",
     "use-ripple-hook": "^1.0.24",
+    "util": "^0.12.5",
     "uuid": "^9.0.1",
     "web-push": "^3.6.7",
     "winston": "^3.11.0",
