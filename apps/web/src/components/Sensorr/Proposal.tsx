@@ -104,8 +104,8 @@ UITransition.styles = {
   },
   tints: {
     held: {
-      before: { backgroundColor: 'accentDarker', color: 'primaryLightest' },
-      after: { backgroundColor: 'primary', color: 'whitePure' },
+      before: { backgroundColor: 'accentDarkest', color: 'primaryLightest' },
+      after: { backgroundColor: 'accentDarker', color: 'whitePure' },
     },
     broken: {
       before: { backgroundColor: 'errorDarkest', color: 'text' },

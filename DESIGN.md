@@ -195,10 +195,10 @@ components:
     backgroundColor: "{colors.gray}"
     textColor: "{colors.grayDarkest}"
   transition-pill-held:
-    backgroundColor: "{colors.primary}"
+    backgroundColor: "{colors.accentDarker}"
     textColor: "{colors.whitePure}"
   transition-pill-held-before:
-    backgroundColor: "{colors.accentDarker}"
+    backgroundColor: "{colors.accentDarkest}"
     textColor: "{colors.primaryLightest}"
   transition-pill-broken:
     backgroundColor: "{colors.errorDarker}"
@@ -565,8 +565,9 @@ underneath, the new value on top of it, `0.75em` over its right end
 `/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue
 stepped down in lightness. The new value carries the state, the old one takes a darker
 tint of the same hue:
-- `held` (the new value satisfies `require`): `primary` over `accentDarker`, semibold
-  `whitePure` over `primaryLightest`.
+- `held` (the new value satisfies `require`): `accentDarker` over `accentDarkest`, semibold
+  `whitePure` over `primaryLightest`. Not `primary`: white on it measures 2.04:1, too low
+  for `0.75em` type; white on `accentDarker` measures 4.58:1.
 - `broken` (the new value is in `avoid`, or a `require` was lost): `errorDarker` over
   `errorDarkest`.
 - `moved` and `quiet` (no group has an opinion on the new value): `grayDark` over `gray`.
@@ -642,9 +643,9 @@ instead of writing a bespoke empty state.
 Pure white on `primary` measures **2.04:1** — `hsla(154, 99%, 41%, 1)` is `#01d076`,
 relative luminance 0.4642, against white's 1.0. AA asks 4.5:1 for normal text and 3:1 for
 large text; this clears neither. It affects the filled primary `Button`
-(`libs/ui/src/atoms/Button/Button.tsx:21-38`), the `held` transition pill
-(`apps/web/src/components/Sensorr/Proposal.tsx:93-96`) and the active tab of the
-`/design` gallery (`apps/web/src/pages/Design/Design.tsx:58-61`). The disabled primary
+(`libs/ui/src/atoms/Button/Button.tsx:21-38`) and the active tab of the
+`/design` gallery (`apps/web/src/pages/Design/Design.tsx:58-61`). The `held` transition
+pill left `primary` for `accentDarker` on 2026-09-23 for this reason. The disabled primary
 button is the same gap one step down: `hsl(0, 0%, 80%)` on `primaryDarkest` measures
 **2.11:1**. Both figures were computed here and match `@google/design.md@0.4.0 lint`.
 
