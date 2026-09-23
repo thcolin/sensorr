@@ -11,7 +11,6 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { ReleaseState, Statistic, safeUrl } from '../../components/Sensorr/Release'
 
 export const EMOJI = {
-  'record': '📹',
   'refine': '✨',
   'shrink': '✂️',
 }

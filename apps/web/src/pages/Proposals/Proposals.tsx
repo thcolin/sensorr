@@ -29,7 +29,6 @@ const DEFAULTS = {
 }
 
 const LABELS = {
-  record: 'record',
   refine: 'refine',
   shrink: 'shrink',
   rest: 'same language',
@@ -196,7 +195,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const item = { ...itemOf(entity, releases, policies.get(source.policy)), source }
     cache.current.set(releases, { entity, policy: policies.get(source.policy), item })
     return item
-  }).filter(item => !!item.proposal), [entities, metadata, policies])
+  }).filter(item => !!item.proposal && item.command !== 'record'), [entities, metadata, policies])
 
   const groups = useMemo(() => arrange(
     items.filter(item => !decided[item.id] || leaving[item.id]),
@@ -474,7 +473,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const nav = (
     <Controls
-      title='Proposals'
+      title='Swaps'
       layout={layout as any}
       fields={fields as any}
       values={{ threshold, sort_by: { value: sort, sort: descending } }}
@@ -669,7 +668,7 @@ UIProposals.styles = {
 }
 
 const Proposals = compose(
-  withTitle('Proposals'),
+  withTitle('Swaps'),
   withBody(),
   withFetchQuery(APIQuery.movies.getMovies({ params: { 'releases.proposal': true, limit: 10000, fields: FIELDS.join('|') } }), 1, useAPI, undefined, 10000),
 )(UIProposals)

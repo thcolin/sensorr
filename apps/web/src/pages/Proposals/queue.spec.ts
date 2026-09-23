@@ -53,7 +53,7 @@ describe('queue', () => {
     const heavier = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB))
     const better = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi-VF2', 12 * GB))
 
-    const [, refine] = arrange([heavier, lighter, better], { threshold: 0.5 * GB })
+    const [refine] = arrange([heavier, lighter, better], { threshold: 0.5 * GB })
 
     expect(refine.items.map(({ id }) => id)).toEqual([3, 1, 2])
   })
@@ -62,7 +62,7 @@ describe('queue', () => {
     const unknown = movie(1, [{ ...release('a', 'VOSTFR', 8 * GB), meta: { resolution: '1080p' } }], release('b', 'MULTi-VF2', 8 * GB))
     const known = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB))
 
-    const [, refine] = arrange([unknown, known], { threshold: 0.5 * GB })
+    const [refine] = arrange([unknown, known], { threshold: 0.5 * GB })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })
@@ -71,7 +71,7 @@ describe('queue', () => {
     const first = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB))
     const second = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 6 * GB))
 
-    const [, refine] = arrange([first, second], { threshold: 0.5 * GB, skipped: { 1: 1 } })
+    const [refine] = arrange([first, second], { threshold: 0.5 * GB, skipped: { 1: 1 } })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })

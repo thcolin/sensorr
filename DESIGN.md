@@ -229,7 +229,7 @@ A VCR is a machine you program once and then trust. Sensorr's subject is the **m
 its release**: a policy sorts candidate releases into `require`, `prefer` and `avoid`
 groups (`libs/sensorr/src/lib/policy.ts:79-105`), and the interface's real job is to show
 what that policy did — which axis held, which one broke, what a swap would cost. The
-Proposal screen is where the product is most itself: five axes (`resolution`, `source`,
+Swaps screen is where the product is most itself: five axes (`resolution`, `source`,
 `encoding`, `dub`, `language`) rendered as an old value tucked under the new one, green when the policy
 still holds, red when it breaks
 (`apps/web/src/components/Sensorr/Proposal.tsx:38-118`). `Followed`,
@@ -559,7 +559,7 @@ Two distinct things, and they do not share a shape.
 - **Both:** transitions are `opacity ease 300ms` (web) and `color 200ms ease-in-out` (app).
 
 ### Transition Pill (signature)
-The Proposals screen renders each policy axis as two overlapping pills: the old value
+The Swaps screen renders each policy axis as two overlapping pills: the old value
 underneath, the new value on top of it, `0.75em` over its right end
 (`apps/web/src/components/Sensorr/Proposal.tsx`). The shape comes from the job filters of
 `/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue

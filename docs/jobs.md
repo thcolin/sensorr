@@ -78,7 +78,7 @@ A job with `proposalOnly` on does the same search and the same ranking, and stop
 - the release is stored with `proposal: true` (`apps/cli/src/components/Tasks/ProcessMoviesTask.js:299`);
 - the `.torrent` goes to `cache` instead of `fs` — it is kept as a document in the database keyed by the release link (`apps/api/src/app/sensorr/sensorr.service.ts:56`) instead of being written to the blackhole.
 
-Nothing has been downloaded and nothing has been claimed. The movie shows up on the Proposals screen, and both the notification and the screen offer the same two gestures.
+Nothing has been downloaded and nothing has been claimed. A `refine` or `shrink` proposal shows up on the Swaps screen (`/movie/swaps`), and both the notification and the screen offer the same two gestures. A `record` proposal has no owned release to swap, so it stays off that screen and is decided from the notification or from the proposal badge on the poster.
 
 **Accept.** The movie is set to `archived` and the release is marked `choice: true` (`apps/web/src/contexts/MoviesMetadata/MoviesMetadata.tsx:90`). The API then reads the cached `.torrent`, writes it into the blackhole, and **deletes the cache entry** (`upsertMovies` in `apps/api/src/app/movies/movies.service.ts`, calling `apps/api/src/app/sensorr/sensorr.service.ts:46`). The same method drops the `proposal` flag, so the stored release becomes an ordinary owned one, and amends the job's log lines as treated.
 

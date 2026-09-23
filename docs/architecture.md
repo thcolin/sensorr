@@ -107,7 +107,7 @@ flowchart TD
   dlfs --> blackhole[".torrent written into the blackhole directory<br/>sensorr.service.ts:49"]
   dlcache --> cached["Torrent buffer stored in the blackhole collection<br/>sensorr.service.ts:58"]
 
-  cached --> review["Proposals screen, one decision per release"]
+  cached --> review["Swaps screen or notification, one decision per release"]
   review -->|accepted| accept["POST /api/movies with choice true<br/>movies.service.ts upsertMovies, cache to fs"]
   review -->|refused| refuse["Buffer deleted, nothing downloaded<br/>movies.service.ts upsertMovies"]
   accept --> blackhole

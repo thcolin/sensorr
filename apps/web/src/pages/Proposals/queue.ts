@@ -4,7 +4,8 @@
 // they read in a release name. `dub` is the audio codec, not the language.
 export const AXES = ['resolution', 'source', 'encoding', 'dub', 'language']
 
-export const GROUPS = ['record', 'refine', 'shrink', 'rest']
+// A `record` proposal has no owned release to swap; it is decided from the notifications.
+export const GROUPS = ['refine', 'shrink', 'rest']
 
 export type Verdict = 'accept' | 'refuse' | 'ban'
 
@@ -158,7 +159,6 @@ export const gainOf = (item) => {
 // The date each job last processed the movie; the release itself carries none
 // (ProcessMoviesTask.js:214-218).
 export const PROCESSED_AT = {
-  'record': 'updated_at',
   'refine': 'refined_at',
   'shrink': 'shrinked_at',
 }

@@ -97,8 +97,9 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/calendar' element={<Calendar />} />
         <Route path='movie/theatres' element={<Theatres />} />
         <Route path='movie/requests' element={<Requests />} />
-        <Route path='movie/proposals' element={<Proposals />} />
-        <Route path='movie/proposals/:id' element={<Proposals />} />
+        <Route path='movie/swaps' element={<Proposals />} />
+        <Route path='movie/swaps/:id' element={<Proposals />} />
+        <Route path='movie/proposals/*' element={<Navigate to='/movie/swaps' replace />} />
         <Route path='movie/search' element={<SearchMovies />} />
         <Route path='movie/:id' element={<Movie />} />
         <Route path='movie/:id/recommendations' element={<Recommendations />} />
