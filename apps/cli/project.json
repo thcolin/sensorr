@@ -49,7 +49,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/cli"],
       "options": {
-        "jestConfig": "apps/cli/jest.config.js",
+        "jestConfig": "apps/cli/jest.config.cjs",
         "passWithNoTests": true
       }
     }
