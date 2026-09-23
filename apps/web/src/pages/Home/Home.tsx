@@ -70,6 +70,7 @@ const Home = ({ ...props }) => {
       )}
       <CalendarMovies
         id='calendar'
+        dateMax={new Date(new Date().setMonth(new Date().getMonth() + 2))}
         label={t('items.movies.calendar.label')}
         // title={t('items.movies.calendar.title')}
         display='row'

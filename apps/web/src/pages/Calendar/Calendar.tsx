@@ -210,7 +210,7 @@ export const Calendar = compose(
       },
       with_credits_departments: {
         initial: ['Acting', 'Directing', 'Writing'],
-        serialize: (key, raw) => ({ [key]: (raw || []).join('|') }),
+        serialize: (key, raw) => raw?.length ? { [key]: raw.join('|') } : {},
         component: withProps({ label: i18n.t('ui.filters.credits') })(FilterKnownForDepartment),
       },
       head: {
