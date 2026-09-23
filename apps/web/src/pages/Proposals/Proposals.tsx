@@ -167,6 +167,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [leaving, setLeaving] = useState({})
   const [collapsed, setCollapsed] = useState({})
   const [activeId, setActiveId] = useState(null)
+  const [still, setStill] = useState(null)
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
   const keys = useRef(null)
@@ -223,6 +224,13 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   useEffect(() => {
     lastIndex.current = Math.max(0, activeIndex)
   }, [activeIndex])
+
+  // The card that takes over from a closed section was already there: it must not grow in.
+  useEffect(() => {
+    if (still && active?.id !== still) {
+      setStill(null)
+    }
+  }, [still, active])
 
   useEffect(() => {
     queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id)?.catch(() => null))
@@ -377,6 +385,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     if (!collapsed[group] && active && groups.find(({ items }) => items.includes(active))?.group === group) {
       const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group, items }) => !collapsed[group] && items.some(item => !leaving[item.id]))?.items.find(item => !leaving[item.id])
       setActiveId(next?.id ?? null)
+      setStill(next?.id ?? null)
     }
 
     setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
@@ -566,6 +575,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     item={row.item}
                     entity={row.item.entity}
                     leaving={row.leaving}
+                    entering={row.item.id !== still}
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}

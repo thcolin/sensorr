@@ -152,7 +152,7 @@ UIGestures.styles = {
 
 export const Gestures = memo(UIGestures)
 
-const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile = false, onGesture, disabled = false, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, entering = true, mobile = false, onGesture, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [others, setOthers] = useState(false)
   const [meaningful, setMeaningful] = useState(false)
@@ -163,7 +163,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile 
   const verdict = leaving && VERDICTS[leaving]
 
   return (
-    <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : UIActive.styles.entering) }} aria-current={!leaving}>
+    <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : entering ? UIActive.styles.entering : {}) }} aria-current={!leaving}>
       <div sx={UIActive.styles.collapse}>
         <div sx={UIActive.styles.card}>
           <div sx={UIActive.styles.poster}>
