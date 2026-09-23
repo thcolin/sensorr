@@ -172,6 +172,8 @@ UIMeaningful.styles = {
       },
       '>[data-aside]': {
         display: 'inline-flex',
+        alignItems: 'center',
+        height: '2em',
         verticalAlign: 'top',
         fontWeight: 'normal',
         lineHeight: 1.15,
