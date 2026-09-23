@@ -200,13 +200,13 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, enterin
                 <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
               </div>
             ) : (
-              <div sx={UIActive.styles.skeleton}><span /><span /></div>
+              <div sx={UIActive.styles.skeleton}><span /></div>
             )}
             <div sx={UIActive.styles.releases} data-releases={true}>
               {owned.map(release => <ReleaseLine key={release.id} release={release} heaviest={heaviest} />)}
               {item.owned.length > 1 && (
                 <button type='button' onClick={() => setOthers(!others)} sx={UIActive.styles.others} aria-expanded={others}>
-                  {others ? 'less' : `+${item.owned.length - 1}`}
+                  {others ? 'Hide the other owned releases' : `${item.owned.length - 1} more owned ${item.owned.length > 2 ? 'releases' : 'release'}`}
                 </button>
               )}
               {!!item.proposal && <ReleaseLine release={item.proposal} heaviest={heaviest} />}
@@ -392,8 +392,8 @@ UIActive.styles = {
     gap: 8,
     '>span': {
       display: 'block',
-      height: '1.5em',
-      width: '24em',
+      height: '2em',
+      width: '32em',
       maxWidth: '100%',
       backgroundColor: 'grayLight',
       borderRadius: '0.25em',
