@@ -47,7 +47,7 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
                 `translate3d(${open ? '0em, 0px, 0px' : '100%, 0px, 0px'})`,
                 `translate3d(${open ? `-${order * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
               ],
-              zIndex: 6 + level,
+              zIndex: 8 + level,
             },
             left: {
               height: '100dvh',
@@ -60,25 +60,26 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
                 `translate3d(${open ? '0em, 0px, 0px' : '-100%, 0px, 0px'})`,
                 `translate3d(${open ? `${order * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
               ],
-              zIndex: 6 + level,
+              zIndex: 8 + level,
             },
           }[position],
         }}
       >
-        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 6 + level }}>
+        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 8 + level }}>
           {ready && children}
         </div>
         <div sx={UIPane.styles.spinner} style={{ visibility: ready ? 'hidden' : 'visible' }}>
           <Icon value='spinner' color='gray-100' />
         </div>
       </aside>
+      {/* Above the header, which rises to 6 while the search results are open (Header.tsx). */}
       {shadow && (
         <button
           key='shadow'
           sx={UIPane.styles.shadow}
           onClick={toggleOpen}
           style={{
-            zIndex: open ? (5 + level) : -1,
+            zIndex: open ? (7 + level) : -1,
             transition: `opacity 400ms ease, z-index ${open ? '0ms' : '400ms'} linear`,
             opacity: open ? 1 : 0,
           }}
