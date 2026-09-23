@@ -78,6 +78,9 @@ const baseline = (owned) => ({
   release: owned.reduce((best, release) => (best && best.score >= release.score) ? best : release, null),
 })
 
+// What the policy holds first, then what it breaks, then what it has no opinion on.
+const IMPACT = ['held', 'broken', 'moved', 'quiet', 'same']
+
 export const proposalDiff = (owned, proposed, policy) => {
   const base = baseline(owned)
   const left = base.release?.meta || null
@@ -88,7 +91,7 @@ export const proposalDiff = (owned, proposed, policy) => {
     from: left[axis],
     to: right[axis],
     ...transitionOf(axis, left[axis], right[axis], policy),
-  })) : []
+  })).sort((a, b) => IMPACT.indexOf(a.state) - IMPACT.indexOf(b.state)) : []
 
   return {
     rows,

@@ -27,6 +27,21 @@ describe('queue', () => {
     expect(groupOf(item, 0.25 * GB)).toBe('refine')
   })
 
+  it('lists the axes the policy holds first and the unchanged ones last', () => {
+    const strict = { ...policy, require: { encoding: ['x265'] }, avoid: { source: ['WEB-DL'] } }
+    const owned = release('a', 'VOSTFR', 8 * GB)
+    const proposed = release('b', 'MULTi', 8 * GB, { meta: { language: 'MULTi', resolution: '1080p', source: 'WEB-DL', encoding: 'x265' } })
+    const item = itemOf({ id: 1 }, [owned, { ...proposed, proposal: true, from: 'refine' }], strict)
+
+    expect(item.diff.rows.map(({ axis, state }) => `${axis}:${state}`)).toEqual([
+      'encoding:held',
+      'source:broken',
+      'language:moved',
+      'resolution:same',
+      'dub:same',
+    ])
+  })
+
   it('keeps a language change in its job group whatever the size', () => {
     const item = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 8 * GB))
 
