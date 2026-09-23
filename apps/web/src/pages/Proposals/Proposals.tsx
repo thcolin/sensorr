@@ -288,11 +288,11 @@ const fields = {
     serialize: () => ({}),
     // Sorting drops `style`, which carries the grid area.
     component: ({ style, ...props }) => (
-      <div style={style} sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <div style={style} sx={{ display: 'grid', height: '100%' }}>
         <Sorting
           {...props as any}
           options={[
-            { label: emojize('🕰️', 'Processed'), value: 'time' },
+            { label: emojize('📅', 'Processed'), value: 'time' },
             { label: emojize('📦', 'Space freed'), value: 'gain' },
           ]}
         />
