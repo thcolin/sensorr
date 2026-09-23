@@ -32,7 +32,7 @@ export class SensorrService {
     const filename = sanitizeFilename(`${release.title}-${release.znab}.torrent`)
     let res, buffer
 
-    // Accepting empties the cache, so a swap sent again is fetched from its indexer
+    // An accepted release has already left the cache, so it is fetched again from its indexer
     if (source === 'cache' && !(await this.metafileModel.exists({ _id: release.link }))) {
       source = 'enclosure'
     }

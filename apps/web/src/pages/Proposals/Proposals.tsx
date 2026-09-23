@@ -464,7 +464,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const policies = useMemo(() => new Map(), [sensorr.policies])
   const cache = useRef(new WeakMap())
 
-  const all = useMemo(() => [...Object.values(entities), ...overdue].map((entity: any) => {
+  const sources = useMemo(() => {
+    const ids = new Set(Object.values(entities).map((entity: any) => entity.id))
+    return [...Object.values(entities), ...overdue.filter(({ id }) => !ids.has(id))]
+  }, [entities, overdue])
+
+  const all = useMemo(() => sources.map((entity: any) => {
     const source = metadata[entity.id] || entity
     const releases = source.releases || []
     const cached = cache.current.get(releases)
@@ -480,7 +485,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const item = { ...itemOf(entity, releases, policies.get(source.policy)), source }
     cache.current.set(releases, { entity, policy: policies.get(source.policy), item })
     return item
-  }).filter((item, index, all) => !!item.proposal && item.command !== 'record' && all.findIndex(({ id }) => id === item.id) === index), [entities, overdue, metadata, policies])
+  }).filter(item => !!item.proposal && item.command !== 'record'), [sources, metadata, policies])
 
   const items = useMemo(() => all.filter(item => matches(item, values)), [all, values])
 
@@ -555,7 +560,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     if (failed.length && verdict === 'retry') {
       toast.error((
         <span sx={UIProposals.styles.toast}>
-          <span>Retry failed for <strong>{failed[0].entity?.title}</strong>, the indexer may no longer have its .torrent</span>
+          <span>Retry failed for <strong>{failed[0].entity?.title}</strong>, the swap is kept</span>
           <span>
             <Button variant='outline' color='gray' onClick={(e) => { toast.dismiss('proposal-retry'); search(e, failed[0]) }}>Search</Button>
           </span>
@@ -701,7 +706,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const onToggle = useCallback((group) => {
     if (!collapsed[group] && active && groups.find(({ items }) => items.includes(active))?.group === group) {
-      const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group, items }) => !collapsed[group] && items.some(item => !leaving[item.id]))?.items.find(item => !leaving[item.id])
+      const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group, items }) => group !== 'overdue' && !collapsed[group] && items.some(item => !leaving[item.id]))?.items.find(item => !leaving[item.id])
       setActiveId(next?.id ?? null)
     }
 
@@ -869,7 +874,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       onChange={(next) => setValues({ ...values, ...next })}
       statistics={{}}
       loading={!ready}
-      total={ready ? items.filter(item => !decided[item.id]).length : null}
+      total={ready ? items.filter(item => !decided[item.id] && !isOverdue(item.proposal)).length : null}
     />
   )
 
