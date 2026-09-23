@@ -165,7 +165,7 @@ const Size = ({ item, threshold }) => item.owned.length ? (
   </>
 ) : <>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</>
 
-const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, disabled = false, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [others, setOthers] = useState(false)
   const [meaningful, setMeaningful] = useState(false)
@@ -188,6 +188,11 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
                 <Size item={item} threshold={threshold} />
               </code>
+              {!!onClose && (
+                <button type='button' onClick={onClose} sx={UIActive.styles.close} aria-label='Close' title='Close (Esc)'>
+                  <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: 'rotate(180deg)' }} />
+                </button>
+              )}
             </header>
             <div sx={UIActive.styles.sub}>
               <details sx={UIActive.styles.metadata}>
@@ -349,6 +354,7 @@ UIActive.styles = {
     gap: 4,
     '>h3': {
       margin: 12,
+      marginRight: 'auto',
       minWidth: 0,
     },
     '>code': {
@@ -430,6 +436,26 @@ UIActive.styles = {
     paddingY: 8,
     borderTop: '1px solid',
     borderColor: 'gray',
+  },
+  close: {
+    variant: 'button.reset',
+    alignSelf: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '2em',
+    height: '2em',
+    borderRadius: '50%',
+    color: 'grayDarkest',
+    cursor: 'pointer',
+    ':hover': {
+      color: 'text',
+      backgroundColor: 'grayLight',
+    },
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+    },
   },
   others: {
     variant: 'button.reset',

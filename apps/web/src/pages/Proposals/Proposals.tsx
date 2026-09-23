@@ -195,7 +195,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const queue = useMemo(() => rows.filter(row => row.type === 'item' && !row.leaving).map(row => row.item), [rows])
   const found = queue.findIndex(item => item.id === activeId)
-  const activeIndex = found !== -1 ? found : Math.min(lastIndex.current, queue.length - 1)
+  // `null` means every card is closed; an id that left the queue falls back to its neighbour.
+  const activeIndex = activeId === null ? -1 : found !== -1 ? found : Math.min(lastIndex.current, queue.length - 1)
   const active = queue[activeIndex] || null
 
   useEffect(() => {
@@ -368,7 +369,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
   }, [collapsed, active, groups, leaving])
 
-  keys.current = { onGesture, undo, ban }
+  keys.current = { onGesture, undo, ban, close: () => setActiveId(null) }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -378,7 +379,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
       const gesture = { a: 'accept', r: 'refuse', s: 'skip', arrowdown: 'skip' }[e.key.toLowerCase()]
 
-      if (e.key.toLowerCase() === 'z') {
+      if (e.key === 'Escape') {
+        keys.current.close()
+      } else if (e.key.toLowerCase() === 'z') {
         e.preventDefault()
         keys.current.undo()
       } else if (e.key.toLowerCase() === 'b') {
@@ -557,6 +560,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}
+                    onClose={row.leaving ? null : () => setActiveId(null)}
                   />
                 ) : (
                   <Compact item={row.item} threshold={threshold} onSelect={setActiveId} />
