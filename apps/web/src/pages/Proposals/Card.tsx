@@ -510,7 +510,10 @@ UICompact.styles = {
   },
   // Hovering the row fades the icons in, leaving it fades them out.
   // A click on the empty part of their zone opens the card like the rest of the row.
+  // Positioned above the stretched open button, which would otherwise catch its clicks.
   decide: {
+    position: 'relative',
+    zIndex: 1,
     gridArea: 'decide',
     alignSelf: 'stretch',
     display: ['none', 'flex'],
