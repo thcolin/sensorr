@@ -19,7 +19,6 @@ const withFetchQuery = (
   useControlsValues?: () => [
     ({ uri: string, params: { [key: string]: string }}),
     (query: { uri: string, params: { [key: string]: string} }) => void,
-    string[]?
   ],
   steps: number = 20,
 ) => <TProps,>(WrappedComponent: React.JSXElementConstructor<TProps>) => {
@@ -31,11 +30,8 @@ const withFetchQuery = (
   }: withFetchQueryProps & Omit<TProps, 'length' | 'entities' | 'onMore'>) => {
     const service = useService()
     // Wait for first controlsQuery hydration by serializing initial state
-    const [controlsValues, setControlsValues, ignoreControlsValues] = (useControlsValues || (() => [{}, () => null, []]))()
+    const [controlsValues, setControlsValues] = (useControlsValues || (() => [{}, () => null]))()
     const [controlsQuery, controls] = useControlsState(() => [controlsValues, setControlsValues], ({ uri, ...params }) => ({ ready: true, uri, params }))
-    controlsQuery.params = Object.keys(controlsQuery.params || {})
-      .filter(key => !(ignoreControlsValues || []).includes(key))
-      .reduce((acc, key) => ({ ...acc, [key]: controlsQuery.params[key] }), {})
 
     const query = useMemo(() => ({
       uri: controlsQuery.uri || propsQuery.uri || defaultQuery.uri,

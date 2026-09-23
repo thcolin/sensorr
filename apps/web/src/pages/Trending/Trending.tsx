@@ -1,9 +1,7 @@
-import { useMemo } from 'react'
-import { Entities, withControls, Option } from '@sensorr/ui'
+import { withControls, Option } from '@sensorr/ui'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
 import { useTMDB } from '../../store/tmdb'
@@ -12,23 +10,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
-
-const EntitiesHideable = ({ controls, child: Child, ...props }) => {
-  const HideableChild = useMemo(() => (props) => {
-    const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMoviesMetadataContext() as any
-
-    return (
-      <Child
-        {...props}
-        opacity={(!loading && controls.values.hide_library && metadata && metadata?.state !== 'ignored') ? 0.125 : 1}
-      />
-    )
-  }, [controls.values.hide_library, Child])
-
-  return (
-    <Entities {...props as any} child={HideableChild} />
-  )
-}
+import { EntitiesHideable } from '../../components/Entities/Hideable'
 
 export const Trending = (resource) => compose(
   withTitle(`${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
@@ -58,10 +40,7 @@ export const Trending = (resource) => compose(
     }[resource],
     props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }) }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day' }[resource] }, 1, useTMDB, () => [
-    ...useHistoryState('controls', { uri: '', params: {} }),
-    ['hide_library']
-  ] as any),
+  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource]),
     useStatistics,
@@ -87,7 +66,7 @@ export const Trending = (resource) => compose(
       hide_library: {
         initial: false,
         hideFromFiltersCount: true,
-        serialize: (key, raw) => ({ [key]: raw }),
+        serialize: () => ({}),
         component: ({ value, onChange, ...props }) => (
           <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
             <Option

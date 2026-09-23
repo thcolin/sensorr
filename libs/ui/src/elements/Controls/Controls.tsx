@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import usePortal from 'react-useportal'
 import { InputsProps } from './commons/Inputs'
 import { Nav, Results, Title } from './commons/Nav'
@@ -215,6 +215,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
       }), {}),
     }), [fields, JSON.stringify(controls?.values), JSON.stringify(controls?.props)])
 
+    const previous = useRef<string>(null)
     const handleChange = useCallback(values => {
       const serialized = Object.keys(values).reduce((acc, key) => ({
         ...acc,
@@ -222,7 +223,13 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
       }), {})
 
       controls?.onChange && controls?.onChange(values, serialized)
-      hooks?.onChange && hooks?.onChange(values, serialized)
+
+      // Only a change of the serialized query calls `hooks.onChange`, so a display-only field
+      // (serializing to nothing) doesn't trigger it, e.g. pages scrolling back to top.
+      if (JSON.stringify(serialized) !== previous.current) {
+        previous.current = JSON.stringify(serialized)
+        hooks?.onChange && hooks?.onChange(values, serialized)
+      }
     }, [fields, controls?.onChange])
 
     const computed = useStatistics(

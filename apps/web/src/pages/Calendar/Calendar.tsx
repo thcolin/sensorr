@@ -1,6 +1,4 @@
-import { useMemo } from 'react'
 import {
-  Entities,
   Sorting,
   FilterReleaseDate,
   FilterReleaseType,
@@ -22,7 +20,6 @@ import { compose, scrollToTop } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { Trans, useTranslation } from 'react-i18next'
-import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
@@ -30,23 +27,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import withFetchCalendarQuery from './withFetchCalendarQuery'
 import { withBody } from '../../layout/withLayout'
-
-const EntitiesHideable = ({ controls, child: Child, ...props }) => {
-  const HideableChild = useMemo(() => (props) => {
-    const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMoviesMetadataContext() as any
-
-    return (
-      <Child
-        {...props}
-        opacity={(!loading && controls.values.hide_library && metadata && metadata?.state !== 'ignored') ? 0.125 : 1}
-      />
-    )
-  }, [controls.values.hide_library, Child])
-
-  return (
-    <Entities {...props as any} child={HideableChild} />
-  )
-}
+import { EntitiesHideable } from '../../components/Entities/Hideable'
 
 export const Calendar = compose(
   withTitle(i18n.t('pages.calendar.title')),
@@ -147,7 +128,7 @@ export const Calendar = compose(
       hide_library: {
         initial: false,
         hideFromFiltersCount: true,
-        serialize: (key, raw) => ({ [key]: raw }),
+        serialize: () => ({}),
         component: ({ value, onChange, ...props }) => (
           <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
             <Option

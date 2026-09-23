@@ -18,9 +18,6 @@ const withFetchCalendarQuery = (
     // Wait for first controlsQuery hydration by serializing initial state
     const useControlsValues = useCallback(() => useHistoryState('controls', { uri: '', params: {} }), [])
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
-    controlsQuery.params = Object.keys(controlsQuery.params || {})
-      .filter(key => !['hide_library'].includes(key))
-      .reduce((acc, key) => ({ ...acc, [key]: controlsQuery.params[key] }), {})
 
     const [query, refinements] = useMemo(() => {
       const { with_release_type, with_credits_departments, ...params } = {
