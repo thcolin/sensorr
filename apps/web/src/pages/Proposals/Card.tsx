@@ -493,7 +493,7 @@ UICompact.styles = {
     },
     '@media (hover: hover)': {
       ':hover, :focus-within': {
-        '>[data-decide] >button': { opacity: 1, transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out' },
+        '>[data-decide] >button': { opacity: 1, transition: 'opacity 150ms ease-in-out' },
       },
     },
   },
@@ -531,12 +531,14 @@ UICompact.styles = {
       color: 'grayDarkest',
       cursor: 'pointer',
       opacity: 0,
-      transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out',
-      '&[data-verdict=accept]:hover:not(:disabled), &[data-verdict=accept]:focus-visible': {
-        color: 'primary',
+      transition: 'opacity 150ms ease-in-out',
+      // Both faint like the clear icon at rest, and solid grey under the pointer.
+      'svg path': {
+        opacity: 0.2,
+        transition: 'opacity 150ms ease-in-out',
       },
-      '&[data-verdict=refuse]:hover:not(:disabled), &[data-verdict=refuse]:focus-visible': {
-        color: 'text',
+      ':hover:not(:disabled), :focus-visible': {
+        'svg path': { opacity: 1 },
       },
       ':focus-visible': {
         opacity: 1,
