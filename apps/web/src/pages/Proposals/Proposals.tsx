@@ -142,14 +142,11 @@ const MORPH = {
   'html[data-morphing] [data-morph-poster] *': {
     transition: 'none !important',
   },
-  // The poster image, in both forms: a 2:3 box that only changes size.
-  '[data-morph-poster] img[src*="image.tmdb.org"]': {
+  // The 2:3 box of the poster in both forms: Movie's box with its badges drawn over it,
+  // and the row's picture. The frame around Movie's box is wider, so it is not the one.
+  'div[data-morph-poster] > div > div:first-child, span[data-morph-poster] > span:first-child': {
     viewTransitionName: 'var(--morph-poster, none)',
     viewTransitionClass: 'poster',
-  },
-  '::view-transition-image-pair(*.poster)': {
-    overflow: 'hidden',
-    borderRadius: '0.25em',
   },
   '::view-transition-group(*)': {
     animationDuration: '400ms',

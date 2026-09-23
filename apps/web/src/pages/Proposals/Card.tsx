@@ -38,8 +38,8 @@ const POSTER = 'w300'
 // and may differ between the two forms while the name stays the same.
 export const morph = (kind, id, group = kind) => name(kind, id, group)
 
-// The full card's poster sits in a frame wider than the image, badges around it: the
-// image itself is what moves, named through this property (MORPH in Proposals.tsx).
+// The full card's poster sits in a frame wider than its 2:3 box: the box is what moves,
+// named through this property (MORPH in Proposals.tsx).
 const poster = (id) => ({ '--morph-poster': `swap-poster-${id}` }) as any
 
 const name = (kind, id, group = kind) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: group }) as any
