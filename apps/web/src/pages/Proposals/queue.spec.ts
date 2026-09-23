@@ -1,4 +1,4 @@
-import { arrange, decide, groupOf, itemOf } from './queue'
+import { arrange, balanceOf, decide, groupOf, itemOf } from './queue'
 
 const GB = 1024 ** 3
 
@@ -81,5 +81,13 @@ describe('queue', () => {
 
     expect(decide(metadata, 'b', 'refuse')).not.toHaveProperty('banned_releases')
     expect(decide(metadata, 'b', 'accept')).toMatchObject({ state: 'archived', releases: [{ id: 'b', choice: true }] })
+  })
+  it('weighs the disk from the Plex files only, per command', () => {
+    const plex = (id, language, size) => release(id, language, size, { from: 'sync' })
+    const upgrade = movie(1, [plex('a', 'MULTi', 4 * GB), release('b', 'VOSTFR', GB, { from: 'record' })], release('c', 'MULTi-VFF', 7 * GB))
+    const lighter = movie(2, [plex('d', 'MULTi', 10 * GB)], release('e', 'MULTi', 6 * GB, { from: 'shrink' }))
+    const unknown = movie(3, [release('f', 'VOSTFR', 2 * GB, { from: 'record' })], release('g', 'MULTi', 3 * GB))
+
+    expect(balanceOf([upgrade, lighter, unknown])).toEqual({ now: 14 * GB, after: 13 * GB, refine: 3 * GB, shrink: -4 * GB })
   })
 })

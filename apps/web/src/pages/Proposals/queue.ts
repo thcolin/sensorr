@@ -168,6 +168,26 @@ export const arrange = (items, { threshold, skipped = {} }) => {
   }))
 }
 
+// What the disk would weigh once every swap is accepted. Only the Plex files exist on
+// disk (`from: 'sync'`, sync.js): an older release Sensorr recorded is history, not a file.
+export const balanceOf = (items) => items.reduce((balance, item) => {
+  const files = item.owned.filter(({ from }) => from === 'sync')
+
+  if (!files.length || typeof item.proposal?.size !== 'number') {
+    return balance
+  }
+
+  const now = files.reduce((sum, { size }) => sum + (size || 0), 0)
+  const group = item.command === 'shrink' ? 'shrink' : 'refine'
+
+  return {
+    ...balance,
+    now: balance.now + now,
+    after: balance.after + item.proposal.size,
+    [group]: balance[group] + item.proposal.size - now,
+  }
+}, { now: 0, after: 0, refine: 0, shrink: 0 })
+
 // Banning lists the title in `banned_releases`, the only list the jobs exclude on
 // (policy.ts:149-161): a refused release can be proposed again, a banned one cannot.
 export const decide = (metadata, releaseId, verdict: Verdict) => {

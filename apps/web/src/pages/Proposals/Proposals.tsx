@@ -14,9 +14,9 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Placeholder, VERDICTS, morph, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Placeholder, VERDICTS, delta, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
-import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
+import { GROUPS, Verdict, arrange, balanceOf, decide, itemOf } from './queue'
 
 const MB = 1024 * 1024
 
@@ -106,6 +106,140 @@ UIThreshold.styles = {
   },
 }
 
+// The disk now, then what each command moves: a lighter group eats into it before the
+// tick, a heavier one runs past it. Same stroke as the slider next to it.
+const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
+  const commands = ['refine', 'shrink'].filter(command => balance[command])
+  const frees = commands.filter(command => balance[command] < 0)
+  const takes = commands.filter(command => balance[command] > 0)
+  const freed = frees.reduce((sum, command) => sum - balance[command], 0)
+  const max = balance.now + takes.reduce((sum, command) => sum + balance[command], 0)
+  const width = (bytes) => `${(100 * bytes / max).toFixed(2)}%`
+
+  if (!balance.now) {
+    return null
+  }
+
+  return (
+    <div style={style} sx={{ ...UIBalance.styles.element, ...(props.inline ? UIBalance.styles.inline : {}) }} title={`The Plex files of these movies weigh ${filesize.stringify(balance.now)}, and ${filesize.stringify(balance.after)} once every swap is accepted`}>
+      <div sx={UIBalance.styles.meter}>
+        <div sx={{ ...UIBalance.styles.rail, height: compact ? '0.25em' : '0.5em' }}>
+          <i sx={UIBalance.styles.kept} style={{ width: width(balance.now - freed) }} />
+          {frees.map(command => <i key={command} sx={UIBalance.styles.frees} style={{ width: width(-balance[command]) }} />)}
+          {takes.map(command => <i key={command} sx={UIBalance.styles.takes} style={{ width: width(balance[command]) }} />)}
+        </div>
+        <span sx={UIBalance.styles.tick} style={{ left: width(balance.now) }} />
+        {!compact && (
+          <>
+            <small sx={{ ...UIBalance.styles.label, bottom: 'calc(100% + 0.75em)' }} style={{ right: `calc(100% - ${width(balance.now)})` }}>
+              now <code>{filesize.stringify(balance.now)}</code>
+            </small>
+            <small sx={{ ...UIBalance.styles.label, top: 'calc(100% + 0.75em)', right: '0%' }}>
+              after <code>{filesize.stringify(balance.after)}</code>
+            </small>
+          </>
+        )}
+      </div>
+      <span sx={UIBalance.styles.chips}>
+        {commands.map(command => (
+          <span key={command} sx={UIBalance.styles.chip}>
+            <i sx={balance[command] < 0 ? UIBalance.styles.frees : UIBalance.styles.takes} />
+            {command} <code>{delta(balance[command])}</code>
+          </span>
+        ))}
+      </span>
+    </div>
+  )
+}
+
+const FREES = 'hsla(0, 0%, 100%, 0.45)'
+const TAKES = 'repeating-linear-gradient(-45deg, hsla(0, 0%, 100%, 1) 0 2px, hsla(0, 0%, 100%, 0.18) 2px 5px)'
+
+UIBalance.styles = {
+  element: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    minWidth: 0,
+    maxWidth: '36em',
+    whiteSpace: 'nowrap',
+  },
+  // In the bar on a desktop; a phone gives it a strip of its own under the bar.
+  inline: {
+    display: ['none', 'flex'],
+  },
+  meter: {
+    position: 'relative',
+    flex: 1,
+    minWidth: '6em',
+  },
+  rail: {
+    display: 'flex',
+    borderRadius: '1em',
+    overflow: 'hidden',
+    backgroundColor: 'hsla(0, 0%, 0%, 0.16)',
+    '>i': {
+      height: '100%',
+    },
+    '>i+i': {
+      marginLeft: '2px',
+    },
+  },
+  kept: {
+    backgroundColor: 'whitePure',
+  },
+  frees: {
+    background: FREES,
+    minWidth: '4px',
+  },
+  takes: {
+    background: TAKES,
+  },
+  // A gap in the primary green on both sides, so the tick reads over any fill.
+  tick: {
+    position: 'absolute',
+    top: '-0.375em',
+    bottom: '-0.375em',
+    width: '2px',
+    marginLeft: '-1px',
+    borderRadius: '1px',
+    backgroundColor: 'whitePure',
+    boxShadow: theme => `0 0 0 2px ${theme.rawColors.primary}`,
+  },
+  label: {
+    position: 'absolute',
+    fontSize: 7,
+    lineHeight: 1,
+    '>code': {
+      fontFamily: 'monospace',
+      fontWeight: 'semibold',
+    },
+  },
+  chips: {
+    display: 'flex',
+    gap: 8,
+  },
+  chip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 9,
+    paddingX: 8,
+    paddingY: 10,
+    borderRadius: '2em',
+    backgroundColor: 'hsla(0, 0%, 0%, 0.16)',
+    fontSize: 6,
+    '>i': {
+      width: '1.4em',
+      height: '0.6em',
+      borderRadius: '1em',
+    },
+    '>code': {
+      fontFamily: 'monospace',
+      fontWeight: 'semibold',
+    },
+  },
+}
+
 const fields = {
   threshold: {
     initial: DEFAULTS.threshold,
@@ -117,12 +251,12 @@ const fields = {
 const layout = {
   nav: {
     display: 'grid',
-    gridTemplateColumns: ['min-content min-content', '1fr min-content min-content'],
+    gridTemplateColumns: ['min-content min-content', 'min-content minmax(0, 1fr) min-content min-content'],
     gridTemplateRows: 'auto',
     gap: ['1em', '2em'],
     gridTemplateAreas: [
       `"results threshold"`,
-      `"title results threshold"`,
+      `"title balance results threshold"`,
     ],
     '>h4': {
       display: ['none', 'block'],
@@ -239,6 +373,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     items.filter(item => !decided[item.id] || leaving[item.id]),
     { threshold, skipped },
   ), [items, decided, leaving, threshold, skipped])
+
+  const balance = useMemo(() => balanceOf(items.filter(item => !decided[item.id])), [items, decided])
+  const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])
 
   const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
     const count = items.filter(item => !leaving[item.id]).length
@@ -587,6 +724,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const nav = (
     <Controls
       title='Swaps'
+      components={{ balance: Balance }}
       layout={layout as any}
       fields={fields as any}
       values={{ threshold }}
@@ -634,6 +772,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     <>
       <Global styles={MORPH} />
       {nav}
+      {mobile && !!balance.now && (
+        <div sx={UIProposals.styles.balance}>
+          <UIBalance balance={balance} compact={true} />
+        </div>
+      )}
       <div ref={list} sx={UIProposals.styles.element}>
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
           {virtualizer.getVirtualItems().map((virtual) => {
@@ -714,6 +857,21 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 }
 
 UIProposals.styles = {
+  balance: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '3em',
+    paddingX: 6,
+    backgroundColor: 'primary',
+    borderTop: '1px solid',
+    borderColor: 'hsla(0, 0%, 0%, 0.12)',
+    color: 'whitePure',
+    fontSize: 5,
+    '>div': {
+      flex: 1,
+      maxWidth: 'none',
+    },
+  },
   element: {
     flex: 1,
     width: '100%',
