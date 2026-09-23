@@ -713,7 +713,8 @@ UIProposals.styles = {
     flex: 1,
     width: '100%',
     paddingX: [8, '0px'],
-    paddingY: 4,
+    // Flush with the controls bar, where the sticky group title lands once scrolled.
+    paddingBottom: 4,
   },
   sticky: {
     position: 'sticky',
@@ -762,7 +763,7 @@ UIProposals.styles = {
     maxWidth: '105em',
     alignSelf: 'center',
     paddingX: [8, 4],
-    paddingY: 4,
+    paddingBottom: 4,
     '>span': {
       height: COMPACT_HEIGHT.map(height => `${height}px`),
       backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLighter} 0%, ${theme.rawColors.grayLight} 50%, ${theme.rawColors.grayLighter} 100%)`,
