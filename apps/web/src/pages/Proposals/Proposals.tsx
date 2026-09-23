@@ -625,18 +625,16 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }, [flush])
 
   const notify = useCallback((targets, verdict: Verdict) => {
-    const { emoji, label } = VERDICTS[verdict]
-    const message = (
-      <span sx={UIProposals.styles.toast}>
-        <span>{emojize(emoji, label)} · {targets.length > 1 ? `${targets.length} proposals` : targets[0].entity?.title}</span>
-        <span>
-          {verdict === 'refuse' && <Button variant='outline' color='primary' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
-          <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
-        </span>
-      </span>
+    const { label } = VERDICTS[verdict]
+    const message = `${label} ${targets.length > 1 ? `**${targets.length}** proposals` : `**${targets[0].entity?.title}**`}, sent in ${DELAY / 1000} s`
+    const actions = (
+      <>
+        {verdict === 'refuse' && <Button variant='outline' color='primary' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
+        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
+      </>
     )
 
-    ;({ accept: toast.success, refuse: toast, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
+    ;({ accept: toast.success, refuse: toast, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, ...(verdict === 'ban' ? { title: label } : {}) })
   }, [undo])
 
   // `next` is the card to open once this one has left, when it was the open one.

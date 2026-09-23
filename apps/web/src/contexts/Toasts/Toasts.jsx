@@ -57,10 +57,11 @@ const UIToasts = ({ ...props }) => {
                         t.type === 'loading' ? <LoaderIcon primary={theme.rawColors.grayDarkest} secondary={theme.rawColors.grayDark} /> : null
                       )}
                     </span>
-                    <span> {t.type === 'blank' ? 'Info' : t.type}</span>
+                    <span> {t.title || (t.type === 'blank' ? 'Info' : t.type)}</span>
                   </strong>
                   <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
-                  {t.type === 'error' && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
+                  {t.actions && <span sx={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>{t.actions}</span>}
+                  {t.type === 'error' && !t.actions && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
                 </>
               )}
             </div>
