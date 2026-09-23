@@ -1,0 +1,71 @@
+import { arrange, decide, groupOf, itemOf } from './queue'
+
+const GB = 1024 ** 3
+
+const policy = {
+  require: {},
+  avoid: {},
+  prefer: { language: ['MULTi-VF2', 'MULTi-VFF', 'MULTi', 'VOSTFR'] },
+}
+
+const release = (id, language, size, extra = {}) => ({
+  id,
+  title: `Movie.2020.${language}.1080p.BluRay.x264-${id}`,
+  original: `Movie.2020.${language}.1080p.BluRay.x264-${id}`,
+  size,
+  meta: { language, resolution: '1080p', source: 'BLURAY', encoding: 'x264' },
+  ...extra,
+})
+
+const movie = (id, owned, proposed) => itemOf({ id }, [...owned, { ...proposed, proposal: true, from: proposed.from || 'refine' }], policy)
+
+describe('queue', () => {
+  it('puts a same-language proposal within the threshold in the last group', () => {
+    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.3 * GB))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('rest')
+    expect(groupOf(item, 0.25 * GB)).toBe('refine')
+  })
+
+  it('keeps a language change in its job group whatever the size', () => {
+    const item = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 8 * GB))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('refine')
+  })
+
+  it('orders a group by language gain, then by space gained', () => {
+    const lighter = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi', 6 * GB))
+    const heavier = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB))
+    const better = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi-VF2', 12 * GB))
+
+    const [, refine] = arrange([heavier, lighter, better], { threshold: 0.5 * GB })
+
+    expect(refine.items.map(({ id }) => id)).toEqual([3, 1, 2])
+  })
+
+  it('sends a skipped proposal to the end of its group', () => {
+    const first = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB))
+    const second = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 6 * GB))
+
+    const [, refine] = arrange([first, second], { threshold: 0.5 * GB, skipped: { 1: 1 } })
+
+    expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
+  })
+
+  it('bans by refusing the release and listing its title in banned_releases', () => {
+    const metadata = { banned_releases: ['Other'], releases: [release('a', 'VOSTFR', GB), { ...release('b', 'MULTi', GB), proposal: true }] }
+    const changes = decide(metadata, 'b', 'ban')
+
+    expect(changes.releases.find(({ id }) => id === 'b')).toMatchObject({ proposal: true, choice: false })
+    expect(changes.releases.find(({ id }) => id === 'a')).not.toHaveProperty('choice')
+    expect(changes.banned_releases).toEqual(['Other', metadata.releases[1].title])
+    expect(changes).not.toHaveProperty('state')
+  })
+
+  it('refuses without banning and accepts by archiving', () => {
+    const metadata = { releases: [{ ...release('b', 'MULTi', GB), proposal: true }] }
+
+    expect(decide(metadata, 'b', 'refuse')).not.toHaveProperty('banned_releases')
+    expect(decide(metadata, 'b', 'accept')).toMatchObject({ state: 'archived', releases: [{ id: 'b', choice: true }] })
+  })
+})

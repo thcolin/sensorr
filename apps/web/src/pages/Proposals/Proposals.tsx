@@ -1,561 +1,623 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  withControls,
-  FilterStatistics,
-  FilterStates,
-  Sorting,
-  Warning,
-  Range,
-  Checkbox,
-  Icon,
-  Picture,
-} from '@sensorr/ui'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
+import Tippy from '@tippyjs/react'
+import toast from 'react-hot-toast'
+import { Button, Controls, Icon, Link, Sorting, Warning } from '@sensorr/ui'
+import { Policy } from '@sensorr/sensorr'
 import i18n from '@sensorr/i18n'
-import { fields } from '@sensorr/tmdb'
-import { compose, emojize, filesize, scrollToTop, useHistoryState, useResponsiveValue } from '@sensorr/utils'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { useNavigate, useParams } from 'react-router-dom'
-import { formatRelative } from 'date-fns'
+import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useAPI, query as APIQuery } from '../../store/api'
-import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
-import { Proposal, Size, Transition, scoreReleases, useProposalDiff } from '../../components/Sensorr/Proposal'
+import { useSensorr } from '../../store/sensorr'
+import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
-import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import Body from '../../layout/Body/Body'
+import { withBody } from '../../layout/withLayout'
+import { Active, Compact, EMOJI, Gestures, GroupTitle, VERDICTS, useLoadDetails } from './Card'
+import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
 
-const EMOJI = {
-  'record': '📹',
-  'refine': '✨',
-  'shrink': '✂️',
+const MB = 1024 * 1024
+
+// Only what a card draws: 1.6 KB a movie instead of 4.9 KB (movies.service.ts, `fields`).
+const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'state']
+
+const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
+
+const DEFAULTS = {
+  threshold: 500 * MB,
+  sort_by: { value: 'gain', sort: true },
 }
 
-// Library's release rules without the ⛔ group: `release_<tag>.avoid` is
-// `$not: { $elemMatch }`, so it excludes a movie on the strength of the release
-// already owned, which says nothing about the proposal.
-const serializeRule = (key, values) => ({
-  ...(values.some(({ group }) => group === 'prefer') ? { [`release_${key}.prefer`]: values.filter(({ group }) => group === 'prefer').map(({ value }) => value).join('|') } : {}),
-})
-
-// Fixed row height: the list is a scanning surface, not a reading one, and a fixed
-// height frees the virtualizer from measuring 3371 rows.
-const ROW_HEIGHT = 128
-
-const UIProposalItem = ({ entity = null, metadata = null, selected = false, onSelect = null, ...props }) => {
-  const releases = useMemo(() => scoreReleases(metadata?.releases, metadata?.policy), [metadata?.releases, metadata?.policy])
-  const owned = useMemo(() => releases.filter(({ proposal }) => !proposal), [releases])
-  const proposal = useMemo(() => releases.filter(({ proposal }) => proposal)[0] || null, [releases])
-  const diff = useProposalDiff(owned, proposal, metadata?.policy)
-  const regression = diff.changed.some(({ state }) => state === 'avoided' || state === 'lost')
-
-  return (
-    <button
-      type='button'
-      onClick={() => onSelect(entity?.id)}
-      sx={{
-        ...UIProposalItem.styles.element,
-        ...(selected ? UIProposalItem.styles.selected : {}),
-        ...(regression ? UIProposalItem.styles.regression : {}),
-      }}
-    >
-      <span sx={UIProposalItem.styles.poster}>
-        <Picture path={entity?.poster_path} size='w92' />
-      </span>
-      <span sx={UIProposalItem.styles.body}>
-        <span sx={UIProposalItem.styles.title}>
-          <strong>{entity?.title}</strong>
-          <span>{EMOJI[proposal?.from]}</span>
-        </span>
-        <small sx={UIProposalItem.styles.about}>
-          {[
-            entity?.release_date && new Date(entity.release_date).getFullYear(),
-            entity?.genres?.slice(0, 2).map(({ name }) => name).join(', '),
-          ].filter(Boolean).join(' · ')}
-        </small>
-        <small sx={UIProposalItem.styles.diff}>
-          {diff.changed.length ? (
-            <>
-              {diff.changed.slice(0, 3).map(({ axis, from, to }) => (
-                <Transition key={axis} axis={axis} from={from} to={to} policy={metadata?.policy} compact={true} />
-              ))}
-              {diff.changed.length > 3 && <em>+{diff.changed.length - 3}</em>}
-            </>
-          ) : proposal ? (
-            <em>nothing changes</em>
-          ) : null}
-          {!!diff.size && <Size from={diff.from?.size} to={proposal?.size} delta={diff.size} command={proposal?.from} compact={true} />}
-        </small>
-      </span>
-    </button>
-  )
+const LABELS = {
+  record: 'record',
+  refine: 'refine',
+  shrink: 'shrink',
 }
 
-UIProposalItem.styles = {
+// Time a decision waits before it is sent, while `Z` can still take it back.
+const DELAY = 5000
+
+// Band then collapse: 150 ms + 250 ms, the leaving card is dropped once both are done.
+const LEAVE = 400
+
+const GROUP_HEIGHT = 40
+const COMPACT_HEIGHT = 80
+const ACTIVE_HEIGHT = 360
+
+const UIThreshold = ({ value, onChange, style = {}, ...props }) => (
+  <div style={style} sx={UIThreshold.styles.element}>
+    <label htmlFor='threshold'>Same size below</label>
+    <div>
+      <span>{value ? filesize.stringify(value) : 'nothing changes'}</span>
+      <select id='threshold' value={value} onChange={e => onChange(Number(e.target.value))}>
+        {THRESHOLDS.map(threshold => (
+          <option key={threshold} value={threshold}>{threshold ? filesize.stringify(threshold) : 'nothing changes'}</option>
+        ))}
+      </select>
+    </div>
+  </div>
+)
+
+UIThreshold.styles = {
   element: {
-    variant: 'button.reset',
-    display: 'flex',
-    alignItems: 'stretch',
-    width: '100%',
-    height: `${ROW_HEIGHT}px`,
-    paddingX: 8,
-    paddingY: 9,
-    textAlign: 'left',
-    cursor: 'pointer',
-    borderLeft: '0.25em solid transparent',
-    borderBottom: '1px solid',
-    borderBottomColor: 'gray',
-    '&:hover': {
-      backgroundColor: 'grayLightest',
-    },
-  },
-  selected: {
-    backgroundColor: 'grayLighter',
-    borderLeftColor: 'primary',
-  },
-  regression: {
-    borderLeftColor: 'error',
-  },
-  poster: {
-    flexShrink: 0,
-    display: 'flex',
-    width: '3.5em',
-    marginRight: 8,
-    '>span': { width: '100%' },
-  },
-  body: {
-    flex: 1,
-    minWidth: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  title: {
-    display: 'flex',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 8,
-    '>strong': {
-      minWidth: 0,
-      fontSize: 5,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
-  },
-  about: {
-    color: 'grayDarker',
-    fontSize: 7,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  diff: {
     display: 'flex',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 10,
-    overflow: 'hidden',
-    maxHeight: '3.5em',
-    '>em': {
-      color: 'grayDarker',
-      fontSize: 7,
-      fontStyle: 'normal',
+    marginY: 4,
+    borderRadius: '0.25em',
+    ':hover': {
+      backgroundColor: 'accent',
     },
-  },
-  foot: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    color: 'grayDarker',
-    fontSize: 7,
-    '>code': {
-      fontFamily: 'monospace',
-      fontWeight: 'semibold',
+    '>label': {
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      marginLeft: 4,
+      marginRight: 8,
+    },
+    '>div': {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+      paddingX: 4,
+      borderTopRightRadius: '0.25em',
+      borderBottomRightRadius: '0.25em',
+      ':hover': {
+        backgroundColor: 'accentDark',
+      },
+      '>span': {
+        fontFamily: 'monospace',
+        fontSize: 4,
+        fontWeight: 'semibold',
+      },
+      '>select': {
+        variant: 'select.reset',
+        position: 'absolute',
+        width: '100%',
+        right: '0px',
+        opacity: 0,
+        fontSize: 4,
+      },
     },
   },
 }
 
-const ProposalItem = withMovieMetadataContext({ enhanced: true })(UIProposalItem)
+const fields = {
+  threshold: {
+    initial: DEFAULTS.threshold,
+    serialize: () => ({}),
+    component: UIThreshold,
+  },
+  sort_by: {
+    initial: DEFAULTS.sort_by,
+    serialize: () => ({}),
+    component: withProps({
+      options: [
+        { label: emojize('💎', 'Gain'), value: 'gain' },
+        { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
+      ],
+    })(Sorting),
+  },
+}
 
-const UIProposals = ({ entities = {}, length = null, ready = true, error = null, onMore = null, ...props }) => {
-  const listRef = useRef(null)
-  const navigate = useNavigate()
-  const { id } = useParams()
-  // On a narrow screen the two panels cannot share the width: the list is the page,
-  // and picking one swaps it for the detail. Same pattern as Settings.tsx:62,89.
+const layout = {
+  nav: {
+    display: 'grid',
+    gridTemplateColumns: ['min-content min-content min-content', '1fr min-content min-content min-content'],
+    gridTemplateRows: 'auto',
+    gap: '2em',
+    gridTemplateAreas: [
+      `"results threshold sort_by"`,
+      `"title results threshold sort_by"`,
+    ],
+    '>h4': {
+      display: ['none', 'block'],
+    },
+  },
+}
+
+const online = {
+  subscribe: (callback) => {
+    window.addEventListener('online', callback)
+    window.addEventListener('offline', callback)
+    return () => {
+      window.removeEventListener('online', callback)
+      window.removeEventListener('offline', callback)
+    }
+  },
+  get: () => navigator.onLine,
+}
+
+const omit = (object, ids) => Object.keys(object).filter(key => !ids.map(String).includes(key)).reduce((acc, key) => ({ ...acc, [key]: object[key] }), {})
+
+const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) => {
+  const sensorr = useSensorr()
+  const { metadata, setMovieMetadata } = useMoviesMetadataContext() as any
+  const { ref: body } = useScrollPositionContext()
+  const loadDetails = useLoadDetails()
   const mobile = useResponsiveValue([true, false])
+  const connected = useSyncExternalStore(online.subscribe, online.get)
+  const [values, setValues] = useHistoryState('proposals', DEFAULTS) as any
+  const threshold = typeof values?.threshold === 'number' ? values.threshold : DEFAULTS.threshold
+  const sort = values?.sort_by?.value || DEFAULTS.sort_by.value
+  const descending = typeof values?.sort_by?.sort === 'boolean' ? values.sort_by.sort : DEFAULTS.sort_by.sort
 
-  const rowVirtualizer = useVirtualizer({
-    count: length || 0,
-    getScrollElement: () => listRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    getItemKey: (index) => entities[index]?.id ?? index,
+  const [skipped, setSkipped] = useState({})
+  const [decided, setDecided] = useState({})
+  const [leaving, setLeaving] = useState({})
+  const [collapsed, setCollapsed] = useState({})
+  const [activeId, setActiveId] = useState(null)
+  const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
+  const pending = useRef(null)
+  const lastIndex = useRef(0)
+
+  // One Policy per policy name, and one item per releases array: a SSE change only
+  // recomputes the movies it touched.
+  const policies = useMemo(() => new Map(), [sensorr.policies])
+  const cache = useRef(new WeakMap())
+
+  const items = useMemo(() => Object.values(entities).map((entity: any) => {
+    const source = metadata[entity.id] || entity
+    const releases = source.releases || []
+    const cached = cache.current.get(releases)
+
+    if (cached?.entity === entity && cached?.name === source.policy) {
+      return cached.item
+    }
+
+    if (!policies.has(source.policy)) {
+      policies.set(source.policy, new Policy(source.policy || '', sensorr.policies))
+    }
+
+    const item = { ...itemOf(entity, releases, policies.get(source.policy)), source }
+    cache.current.set(releases, { entity, name: source.policy, item })
+    return item
+  }).filter(item => !!item.proposal), [entities, metadata, policies])
+
+  const groups = useMemo(() => arrange(
+    items.filter(item => !decided[item.id] || leaving[item.id]),
+    { threshold, sort, descending, skipped },
+  ), [items, decided, leaving, threshold, sort, descending, skipped])
+
+  const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
+    const count = items.filter(item => !leaving[item.id]).length
+
+    if (!items.length) {
+      return rows
+    }
+
+    return [
+      ...rows,
+      { type: 'group', group, count },
+      ...(collapsed[group] ? [] : items.map(item => ({ type: 'item', item, leaving: leaving[item.id] || null }))),
+    ]
+  }, []), [groups, collapsed, leaving])
+
+  const queue = useMemo(() => rows.filter(row => row.type === 'item' && !row.leaving).map(row => row.item), [rows])
+  const found = queue.findIndex(item => item.id === activeId)
+  const activeIndex = found !== -1 ? found : Math.min(lastIndex.current, queue.length - 1)
+  const active = queue[activeIndex] || null
+
+  useEffect(() => {
+    lastIndex.current = Math.max(0, activeIndex)
+  }, [activeIndex])
+
+  // The active movie's credits and ratings, and the two after it, before they are needed.
+  useEffect(() => {
+    queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id)?.catch(() => null))
+  }, [queue, activeIndex])
+
+  // Treated from another tab or by a job: the proposal is gone from the metadata.
+  const previous = useRef(null)
+  useEffect(() => {
+    const id = previous.current?.id
+
+    if (id && !decided[id] && !items.some(item => item.id === id)) {
+      toast(<span>{emojize('🛎️', `${previous.current.entity?.title} was treated elsewhere`)}</span>, { id: 'proposal-elsewhere' })
+    }
+
+    previous.current = active
+  }, [items, active?.id])
+
+  const send = useCallback(async ({ targets, verdict }) => {
+    try {
+      await Promise.all(targets.map(item => setMovieMetadata(item.id, null, () => decide(item.source, item.proposal.id, verdict))))
+      setSession(session => ({ ...session, [verdict]: session[verdict] + targets.length }))
+    } catch (e) {
+      setDecided(decided => omit(decided, targets.map(({ id }) => id)))
+      setActiveId(targets[0].id)
+      toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${targets.length > 1 ? `**${targets.length}** proposals` : `**${targets[0].entity?.title}**`}`)
+    }
+  }, [setMovieMetadata])
+
+  const flush = useCallback(() => {
+    const current = pending.current
+
+    if (!current) {
+      return
+    }
+
+    clearTimeout(current.timer)
+    pending.current = null
+    send(current)
+  }, [send])
+
+  const undo = useCallback(() => {
+    const current = pending.current
+
+    if (!current) {
+      return
+    }
+
+    clearTimeout(current.timer)
+    pending.current = null
+    toast.dismiss('proposal-pending')
+    setDecided(decided => omit(decided, current.targets.map(({ id }) => id)))
+    setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
+    setActiveId(current.targets[0].id)
+  }, [])
+
+  // Leaving the page sends what is waiting rather than dropping it.
+  useEffect(() => () => flush(), [flush])
+
+  const decideTargets = useCallback((targets, verdict: Verdict) => {
+    if (!connected || !targets.length) {
+      return
+    }
+
+    flush()
+
+    const ids = targets.map(({ id }) => id)
+    setDecided(decided => ({ ...decided, ...ids.reduce((acc, id) => ({ ...acc, [id]: verdict }), {}) }))
+
+    if (targets.length === 1) {
+      setLeaving(leaving => ({ ...leaving, [ids[0]]: verdict }))
+      setTimeout(() => setLeaving(leaving => omit(leaving, ids)), LEAVE)
+    }
+
+    pending.current = { targets, verdict, timer: setTimeout(flush, DELAY) }
+
+    const { emoji, label } = VERDICTS[verdict]
+    const message = (
+      <span sx={UIProposals.styles.toast}>
+        <span>{emojize(emoji, label)} · {targets.length > 1 ? `${targets.length} proposals` : targets[0].entity?.title}</span>
+        <Button variant='outline' color='gray' onClick={undo}>Undo<code>Z</code></Button>
+      </span>
+    )
+
+    ;({ accept: toast.success, refuse: toast, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
+  }, [connected, flush, undo])
+
+  const onGesture = useCallback((gesture) => {
+    if (!active) {
+      return
+    }
+
+    if (gesture === 'skip') {
+      setActiveId(queue[activeIndex + 1]?.id ?? null)
+      setSkipped(skipped => ({ ...skipped, [active.id]: Object.keys(skipped).length + 1 }))
+      return
+    }
+
+    setActiveId(queue[activeIndex + 1]?.id ?? null)
+    decideTargets([active], gesture)
+  }, [active, activeIndex, queue, decideTargets])
+
+  const onToggle = useCallback((group) => {
+    if (!collapsed[group] && active && groups.find(({ items }) => items.includes(active))?.group === group) {
+      const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group }) => !collapsed[group] && group)?.items.find(item => !leaving[item.id])
+      setActiveId(next?.id ?? null)
+    }
+
+    setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
+  }, [collapsed, active, groups, leaving])
+
+  const keys = useRef(null)
+  keys.current = { onGesture, undo }
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+        return
+      }
+
+      const gesture = { a: 'accept', r: 'refuse', b: 'ban', s: 'skip', arrowdown: 'skip' }[e.key.toLowerCase()]
+
+      if (e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        keys.current.undo()
+      } else if (gesture) {
+        e.preventDefault()
+        keys.current.onGesture(gesture)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  const list = useRef<HTMLDivElement>(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+  const stickies = useMemo(() => rows.map((row, index) => row.type === 'group' ? index : null).filter(index => index !== null), [rows])
+  const sticky = useRef(0)
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => body.current,
+    estimateSize: (index) => rows[index]?.type === 'group' ? GROUP_HEIGHT : rows[index]?.item === active ? ACTIVE_HEIGHT : COMPACT_HEIGHT,
+    getItemKey: (index) => rows[index]?.type === 'group' ? `group-${rows[index].group}` : rows[index]?.item.id ?? index,
     overscan: 6,
+    scrollMargin,
+    scrollPaddingStart: GROUP_HEIGHT + (mobile ? 0 : 76),
+    rangeExtractor: useCallback((range) => {
+      sticky.current = [...stickies].reverse().find(index => range.startIndex >= index) ?? 0
+      return [...new Set([sticky.current, ...defaultRangeExtractor(range)])].sort((a, b) => a - b)
+    }, [stickies]),
   })
 
-  const items = rowVirtualizer.getVirtualItems()
-
-  // One sticky heading driven by the topmost visible row, rather than heading rows
-  // inserted in the virtualized flow. Same grouping as the Jobs sidebar
-  // (Jobs.tsx:152-163), which the list follows when sorted by date.
-  const heading = useMemo(() => {
-    const entity = entities[items[0]?.index] as any
-    const date = entity?.updated_at || entity?.refined_at || entity?.shrinked_at
-
-    if (!date) {
-      return null
-    }
-
-    const relative = formatRelative(new Date(date), new Date()).split(' ')[0]
-    return ['today', 'yesterday'].includes(relative) ? relative : new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-  }, [entities, items[0]?.index])
-
-  useEffect(() => {
-    if (ready && onMore && items.length) {
-      onMore(items)
-    }
-  }, [ready, JSON.stringify(items.map(({ index }) => index))])
-
-  const onSelect = useCallback((movie) => navigate(`/movie/proposals/${movie}`), [navigate])
-  const active = useMemo(() => Object.values(entities).find((entity: any) => `${entity?.id}` === id) as any, [entities, id])
-
-  // Landing straight on /movie/proposals opens the first one, so the right panel is
-  // never empty while the queue is not. An id that no loaded page carries — a link
-  // kept from another sort or another day — falls back to the first rather than
-  // spinning forever, since the API has no route to fetch one movie.
-  useEffect(() => {
-    if (!ready || !entities[0]?.id) {
+  // The list sits under the green bar inside the same scroll container, so its
+  // offset is the virtualizer's scroll margin (same as ProcessMovies.tsx:101-128).
+  useLayoutEffect(() => {
+    if (!list.current || !body.current) {
       return
     }
 
-    if (mobile) {
-      return
+    const compute = () => {
+      const offset = list.current.getBoundingClientRect().top - body.current.getBoundingClientRect().top + body.current.scrollTop
+      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
     }
 
-    if (!id || (Object.keys(entities).length && !active)) {
-      navigate(`/movie/proposals/${entities[0].id}`, { replace: true })
-    }
-  }, [id, ready, active, mobile, entities[0]?.id])
+    compute()
+    const observer = new ResizeObserver(compute)
+    observer.observe(body.current)
+    return () => observer.disconnect()
+  }, [ready, rows.length > 0])
 
-  if (error || (ready && !length)) {
+  // Brought back by `Z`, a failed send or a click lower down: keep it in view.
+  useEffect(() => {
+    const index = rows.findIndex(row => row.type === 'item' && row.item === active)
+
+    if (index !== -1 && activeId === active?.id) {
+      virtualizer.scrollToIndex(index, { align: 'auto' })
+    }
+  }, [activeId])
+
+  const total = Object.values(session).reduce((sum: number, count: number) => sum + count, 0) as number
+
+  if (error) {
     return (
-      <Warning
-        emoji='🛎️'
-        title={error ? 'Error' : 'Nothing to treat'}
-        subtitle={error?.message || error || 'No movie is waiting for a choice'}
-      />
+      <Warning emoji='🚨' title='Error' subtitle={error?.message || `${error}`}>
+        <Button variant='outline' color='gray' onClick={() => window.location.reload()}>Retry</Button>
+      </Warning>
+    )
+  }
+
+  const nav = (
+    <Controls
+      title='Proposals'
+      layout={layout as any}
+      fields={fields as any}
+      values={{ threshold, sort_by: { value: sort, sort: descending } }}
+      onChange={(next) => setValues({ ...values, ...next })}
+      statistics={{}}
+      loading={!ready}
+      total={ready ? items.filter(item => !decided[item.id]).length : null}
+    />
+  )
+
+  if (!ready) {
+    return (
+      <>
+        {nav}
+        <div sx={UIProposals.styles.skeletons}>
+          <span /><span data-active /><span /><span /><span /><span /><span /><span />
+        </div>
+      </>
+    )
+  }
+
+  if (!rows.length) {
+    return (
+      <>
+        {nav}
+        {total ? (
+          <Warning
+            emoji='📼'
+            title='All decided'
+            subtitle={Object.keys(session).filter(verdict => session[verdict]).map(verdict => `${session[verdict]} ${VERDICTS[verdict].label.toLowerCase()}`).join(' · ')}
+          />
+        ) : (
+          <Warning
+            emoji='📭'
+            title='Nothing to decide'
+            subtitle={<span>Jobs with <code>proposalOnly</code> set wait here for a choice, see <Link to='/settings/jobs'>job settings</Link></span>}
+          />
+        )}
+      </>
     )
   }
 
   return (
-    <section sx={UIProposals.styles.element}>
-      <aside ref={listRef} sx={{ ...UIProposals.styles.list, display: [id ? 'none' : 'block', 'block'] }}>
-        {!!heading && <h6 sx={UIProposals.styles.heading}>{heading}</h6>}
-        {!ready && !length ? (
-          <div sx={UIProposals.styles.skeletons}>
-            {Array(8).fill(null).map((foo, index) => <span key={index} />)}
-          </div>
-        ) : (
-        <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
-          {items.map((virtualItem) => (
-            <div
-              key={virtualItem.key}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${ROW_HEIGHT}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
-              {entities[virtualItem.index] ? (
-                <ProposalItem
-                  entity={entities[virtualItem.index]}
-                  selected={`${entities[virtualItem.index]?.id}` === id}
-                  onSelect={onSelect}
-                />
-              ) : (
-                <div sx={UIProposals.styles.placeholder}><Icon value='spinner' /></div>
-              )}
-            </div>
-          ))}
+    <>
+      {nav}
+      <div ref={list} sx={UIProposals.styles.element}>
+        <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+          {virtualizer.getVirtualItems().map((virtual) => {
+            const row = rows[virtual.index]
+            const stuck = row.type === 'group' && virtual.index === sticky.current
+
+            return (
+              <div
+                key={virtual.key}
+                data-index={virtual.index}
+                ref={virtualizer.measureElement}
+                sx={stuck ? UIProposals.styles.sticky : {}}
+                style={stuck ? {} : {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtual.start - virtualizer.options.scrollMargin}px)`,
+                }}
+              >
+                {row.type === 'group' ? (
+                  <GroupTitle
+                    group={row.group}
+                    emoji={EMOJI[row.group] || '🟰'}
+                    label={LABELS[row.group] || `Same language, ±${filesize.stringify(threshold)}`}
+                    count={row.count}
+                    open={!collapsed[row.group]}
+                    onToggle={() => onToggle(row.group)}
+                    menu={row.group === 'rest' ? (
+                      <Tippy
+                        interactive={true}
+                        trigger='click'
+                        placement='bottom'
+                        appendTo={document.body}
+                        content={(
+                          <div sx={UIProposals.styles.menu}>
+                            <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
+                              Refuse all
+                            </Button>
+                            <Button variant='contain' color='primary' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'accept')}>
+                              Accept all
+                            </Button>
+                          </div>
+                        )}
+                      >
+                        <button type='button' data-menu={true} aria-label='Decide the whole group'>
+                          <Icon value='more' width='1em' height='1em' />
+                        </button>
+                      </Tippy>
+                    ) : null}
+                  />
+                ) : (row.leaving || row.item === active) ? (
+                  <Active
+                    item={row.item}
+                    entity={row.item.entity}
+                    leaving={row.leaving}
+                    mobile={mobile}
+                    disabled={!connected}
+                    onGesture={onGesture}
+                  />
+                ) : (
+                  <Compact item={row.item} onSelect={setActiveId} />
+                )}
+              </div>
+            )
+          })}
         </div>
-        )}
-      </aside>
-      <div sx={{ ...UIProposals.styles.detail, display: [id ? 'flex' : 'none', 'flex'] }}>
-        <Body>
-          <button type='button' onClick={() => navigate('/movie/proposals')} sx={UIProposals.styles.back}>
-            <Icon value='chevron' direction={true} width='0.625em' height='0.625em' />
-            <span>{length} proposals</span>
-          </button>
-          {active ? (
-            <Proposal entity={active} />
-          ) : (
-            <div sx={UIProposals.styles.placeholder}><Icon value='spinner' /></div>
-          )}
-        </Body>
       </div>
-    </section>
+      {mobile && !!active && (
+        <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
+      )}
+    </>
   )
 }
 
 UIProposals.styles = {
   element: {
-    position: 'relative',
     flex: 1,
-    display: 'flex',
-    flexDirection: ['column', 'row'],
-    overflow: 'hidden',
+    width: '100%',
+    maxWidth: '105em',
+    alignSelf: 'center',
+    paddingX: [8, 4],
+    paddingY: 4,
   },
-  detail: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  list: {
-    flexShrink: 0,
-    minWidth: ['100%', '24em'],
-    maxWidth: ['100%', '24em'],
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    backgroundColor: 'grayLightest',
-    borderRight: '1px solid',
-    borderRightColor: 'grayLight',
-  },
-  heading: {
+  sticky: {
     position: 'sticky',
-    top: '0px',
-    paddingX: 4,
-    paddingY: 6,
-    margin: 12,
+    top: ['0px', '4.75rem'],
+    zIndex: 2,
+  },
+  toast: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+    fontSize: 5,
+    '>button': {
+      display: 'inline-flex',
+      alignItems: 'baseline',
+      gap: 8,
+      '>code': {
+        fontFamily: 'monospace',
+        opacity: 0.5,
+      },
+    },
+  },
+  menu: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    padding: 8,
+  },
+  bar: {
+    position: 'sticky',
+    bottom: '0em',
+    zIndex: 3,
+    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
+    paddingX: 8,
+    paddingY: 8,
     backgroundColor: 'grayLighter',
-    borderBottom: '1px solid',
-    borderColor: 'grayLight',
-    textTransform: 'capitalize',
-    zIndex: 1,
+    borderTop: '1px solid',
+    borderColor: 'grayDark',
+    '>button': {
+      flex: 1,
+      justifyContent: 'center',
+      paddingX: 8,
+    },
   },
   skeletons: {
     display: 'flex',
     flexDirection: 'column',
+    gap: 11,
+    width: '100%',
+    maxWidth: '105em',
+    alignSelf: 'center',
+    paddingX: [8, 4],
+    paddingY: 4,
     '>span': {
-      height: `${ROW_HEIGHT}px`,
-      borderBottom: '1px solid',
-      borderBottomColor: 'gray',
+      height: `${COMPACT_HEIGHT}px`,
       backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLightest} 0%, ${theme.rawColors.grayLighter} 50%, ${theme.rawColors.grayLightest} 100%)`,
       backgroundSize: '200% 100%',
       animation: 'sensorr-proposals-shimmer 1.4s ease-in-out infinite',
+      '&:first-of-type': { height: `${GROUP_HEIGHT}px` },
+      '&[data-active]': { height: `${ACTIVE_HEIGHT}px` },
+      '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
     },
     '@keyframes sensorr-proposals-shimmer': {
       '0%': { backgroundPosition: '200% 0' },
       '100%': { backgroundPosition: '-200% 0' },
     },
   },
-  back: {
-    variant: 'button.reset',
-    display: ['inline-flex', 'none'],
-    alignItems: 'center',
-    gap: 8,
-    paddingX: 8,
-    paddingY: 8,
-    color: 'grayDarker',
-    fontSize: 6,
-    fontWeight: 'semibold',
-    cursor: 'pointer',
-  },
-  placeholder: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    opacity: 0.5,
-  },
 }
 
 const Proposals = compose(
   withTitle('Proposals'),
-  withFetchQuery(APIQuery.movies.getMovies({}), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
-  withControls({
-    title: 'Proposals',
-    hooks: {
-      onChange: () => scrollToTop(),
-    },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results toggle sort_by"`,
-          `"title results toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: {
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: `
-          "head"
-          "job"
-          "policy"
-          "state"
-          "size"
-          "znab"
-          "language"
-          "dub"
-          "resolution"
-          "source"
-          "encoding"
-          "flags"
-        `,
-      },
-    },
-    fields: {
-      head: {
-        initial: null,
-        component: ({ ...props }) => (
-          <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
-            <Warning
-              emoji='🛎️'
-              title='Proposals'
-              subtitle={(
-                <span>
-                  Narrow down proposals waiting for your choice, use each rule tag according to your preferences
-                  <br/>
-                  <span sx={{ display: 'inline-block', marginTop: 4, marginBottom: 8 }}>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'primaryDarkest', borderRadius: '2px', marginX: 8 }}>⭐ ACCEPT</code>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', border: '1px solid white', borderRadius: '2px', marginX: 8 }}>🔕 IGNORE</code>
-                  </span>
-
-                </span>
-              )}
-            />
-          </div>
-        ),
-      },
-      // Not rendered (absent from `gridTemplateAreas`) but still serialized, so
-      // every request is scoped to movies carrying a pending proposal.
-      proposal: {
-        initial: true,
-        serialize: () => ({ 'releases.proposal': true }),
-        component: () => null,
-      },
-      sort_by: {
-        initial: {
-          value: 'updated_at',
-          sort: true,
-        },
-        serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
-        component: withProps({
-          label: i18n.t('ui.sorting'),
-          options: [
-            { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
-            { label: emojize('✨', 'Refined'), value: 'refined_at' },
-            { label: emojize('✂️', 'Shrinked'), value: 'shrinked_at' },
-            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-            { label: i18n.t('ui.sortings.primary_release_date'), value: 'release_date' },
-          ]
-        })(Sorting)
-      },
-      state: {
-        ...fields.state,
-        serialize: (key, raw) => raw?.length ? { [key]: raw.filter(value => !['proposal'].includes(value)).join('|') } : {},
-        component: withProps({ type: 'movie' })(FilterStates),
-      },
-      policy: {
-        initial: { values: [] },
-        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
-        component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
-      },
-      size: {
-        initial: [0, 50],
-        serialize: (key, raw) => {
-          if (raw[0] === 0 && raw[1] === 50) {
-            return {}
-          }
-
-          return Array.isArray(raw) ? { [`release_size.gte`]: raw[0], ...(raw[1] === 50 ? {} : { [`release_size.lte`]: raw[1] }) } : {}
-        },
-        component: ({ ...props }) => (
-          <Range
-            {...props as any}
-            min={0}
-            max={50}
-            marks={[...Array(50).fill(true).map((foo, value) => ({ value }))]}
-            data={null}
-            label={i18n.t('ui.filters.size')}
-            labelize={(value) => `${value} GB`}
-            value={props.value || [0, 50]}
-            step={null}
-          />
-        )
-      },
-      job: {
-        initial: { values: [] },
-        serialize: (key, raw) => !raw?.values?.length ? {} : { 'release_from': raw?.values.join('|') },
-        component: ({ ...props }) => (
-          <Checkbox
-            {...props as any}
-            label={i18n.t('ui.filters.job')}
-            options={[
-              {
-                value: 'record',
-                label: emojize('📹', 'Record'),
-              },
-              {
-                value: 'refine',
-                label: emojize('✨', 'Refine'),
-              },
-              {
-                value: 'shrink',
-                label: emojize('✂️', 'Shrink'),
-              },
-            ]}
-            value={props.value.values}
-            onChange={values => props.onChange({ ...props.value, values })}
-          />
-        )
-      },
-      znab: { initial: [], component: withProps({ avoidable: false })(ZNABFilter), serialize: serializeRule },
-      encoding: { initial: [], component: withProps({ avoidable: false })(EncodingFilter), serialize: serializeRule },
-      resolution: { initial: [], component: withProps({ avoidable: false })(ResolutionFilter), serialize: serializeRule },
-      source: { initial: [], component: withProps({ avoidable: false })(SourceFilter), serialize: serializeRule },
-      dub: { initial: [], component: withProps({ avoidable: false })(DubFilter), serialize: serializeRule },
-      language: { initial: [], component: withProps({ avoidable: false })(LanguageFilter), serialize: serializeRule },
-      flags: { initial: [], component: withProps({ avoidable: false })(FlagsFilter), serialize: serializeRule },
-    },
-    useStatistics: (entities, fields, state) => {
-      const api = useAPI()
-      const [statistics, setStatistics] = useState({})
-
-      useEffect(() => {
-        const cb = async () => {
-          const { uri, params, init } = APIQuery.movies.getStatistics({ params: state })
-
-          try {
-            setStatistics(await api.fetch(uri, params, init))
-          } catch (e) {
-            console.warn(e)
-            setStatistics({})
-          }
-        }
-
-        cb()
-      }, [JSON.stringify(state)])
-
-      return statistics
-    },
-  }),
+  withBody(),
+  withFetchQuery(APIQuery.movies.getMovies({ params: { 'releases.proposal': true, limit: 10000, fields: FIELDS.join('|') } }), 1, useAPI, undefined, 10000),
 )(UIProposals)
 
 export default Proposals

@@ -161,7 +161,7 @@ export const Provider = ({ ...props }) => {
 
     if (ids.length === 1) {
       if (!['query', 'policy', 'refine', 'shrink'].includes(key)) {
-        return
+        return promise
       }
 
       await toast.promise(promise, {
