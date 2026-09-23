@@ -134,8 +134,8 @@ const online = {
 }
 
 // The card moves at the pace of the route changes (libs/theme modules.css); its own
-// content fades in once it has room, and a decided card folds away upward as the rows
-// below take its place.
+// content shows as the row's edge uncovers it, and a decided card folds away upward as
+// the rows below take its place.
 const MORPH = {
   // A poster mounted by the move fades in from grey on its own; its image is already
   // decoded (Card.tsx), so it shows at once and the move carries the change.
@@ -156,7 +156,7 @@ const MORPH = {
     animation: '150ms ease-out both sensorr-morph-out',
   },
   '::view-transition-new(*.card)': {
-    animation: '300ms ease-out 120ms both sensorr-morph-in',
+    animation: '250ms ease-out both sensorr-morph-in',
   },
   '::view-transition-new(*.closing)': {
     animation: '250ms ease-out 150ms both sensorr-morph-in',
