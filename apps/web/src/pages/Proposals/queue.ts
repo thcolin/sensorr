@@ -95,9 +95,14 @@ export const proposalDiff = (owned, proposed, policy) => {
     ...transitionOf(axis, left[axis], right[axis], policy),
   })).sort((a, b) => IMPACT.indexOf(a.state) - IMPACT.indexOf(b.state)) : []
 
+  const changed = rows.filter(({ state }) => state !== 'same')
+  const language = rows.find(({ axis }) => axis === 'language')
+
   return {
     rows,
-    changed: rows.filter(({ state }) => state !== 'same'),
+    changed,
+    // A list row reads the language first even when it stays: keeping VOSTFR or MULTi decides too.
+    listed: language ? [language, ...changed.filter(({ axis }) => axis !== 'language')] : changed,
     size: (typeof base.size === 'number' && typeof proposed?.size === 'number') ? proposed.size - base.size : null,
     from: base.release,
     lightest: owned.reduce((lightest, release) => (lightest && (lightest.size || 0) <= (release.size || 0)) ? lightest : release, null),

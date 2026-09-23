@@ -441,7 +441,7 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
         </span>
         <span sx={UICompact.styles.diff}>
           <span>
-            {item.diff.changed.map(({ axis, from, to }) => (
+            {item.diff.listed.map(({ axis, from, to }) => (
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
@@ -668,7 +668,7 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
         </span>
         <span sx={UICompact.styles.diff}>
           <span>
-            {item.diff.changed.map(({ axis, from, to }) => (
+            {item.diff.listed.map(({ axis, from, to }) => (
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>

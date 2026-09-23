@@ -70,6 +70,19 @@ describe('queue', () => {
     ])
   })
 
+  it('lists the language first in a row, even when it stays', () => {
+    const strict = { ...policy, require: { encoding: ['x265'] } }
+    const owned = release('a', 'VOSTFR', 8 * GB)
+    const same = release('b', 'VOSTFR', 6 * GB, { meta: { language: 'VOSTFR', resolution: '1080p', source: 'BLURAY', encoding: 'x265' } })
+    const moved = release('c', 'MULTi', 6 * GB, { meta: { language: 'MULTi', resolution: '1080p', source: 'BLURAY', encoding: 'x265' } })
+
+    expect(itemOf({ id: 1 }, [owned, { ...same, proposal: true, from: 'refine' }], strict).diff.listed.map(({ axis, state }) => `${axis}:${state}`)).toEqual([
+      'language:same',
+      'encoding:held',
+    ])
+    expect(itemOf({ id: 1 }, [owned, { ...moved, proposal: true, from: 'refine' }], strict).diff.listed.map(({ axis }) => axis)).toEqual(['language', 'encoding'])
+  })
+
   it('keeps a same-language proposal that reaches a required value in its job group', () => {
     const strict = { ...policy, require: { resolution: ['1080p'] } }
     const owned = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })

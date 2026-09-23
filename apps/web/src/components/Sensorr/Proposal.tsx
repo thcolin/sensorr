@@ -50,7 +50,7 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
 
   if (state === 'same') {
     return (
-      <span {...props} sx={{ ...element, opacity: 0.3 }} title={`${axis}: ${to}`}>
+      <span {...props} sx={{ ...element, opacity: compact ? 1 : 0.3 }} title={`${axis}: ${to}`}>
         <span sx={{ ...side, ...after }}>
           <Value axis={axis} value={to} compact={compact} />
         </span>
