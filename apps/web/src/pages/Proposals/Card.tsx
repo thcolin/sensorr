@@ -73,10 +73,9 @@ const useDetails = (id) => {
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
 const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
   <>
-    <span>📦</span>
     <Transition
       axis='size'
-      from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
+      from={emojize('📦', filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0)))}
       to={filesize.stringify(item.proposal?.size || 0)}
       state={sizeStateOf(item.diff.size, threshold)}
       compact={compact}
