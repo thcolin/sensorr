@@ -151,9 +151,17 @@ export const PROCESSED_AT = {
 
 const timeOf = (item) => new Date(item.entity?.[PROCESSED_AT[item.command]] || item.entity?.updated_at || 0).getTime()
 
-// Newest first, always: the date the job last processed the movie.
-export const arrange = (items, { threshold, skipped = {} }) => {
-  const keyed = items.map(item => ({ item, group: groupOf(item, threshold), time: timeOf(item) }))
+// `time` is the date the job last processed the movie, `gain` the space the swap frees;
+// `sort` true puts the newest or the biggest gain first.
+export const SORTS = {
+  time: (item) => timeOf(item),
+  gain: (item) => -(item.diff.size || 0),
+}
+
+export const arrange = (items, { threshold, skipped = {}, sort_by = { value: 'time', sort: true } }) => {
+  const key = SORTS[sort_by.value] || SORTS.time
+  const direction = sort_by.sort ? 1 : -1
+  const keyed = items.map(item => ({ item, group: groupOf(item, threshold), key: key(item) }))
 
   return GROUPS.map(group => ({
     group,
@@ -166,7 +174,7 @@ export const arrange = (items, { threshold, skipped = {} }) => {
           return skip
         }
 
-        return b.time - a.time
+        return direction * (b.key - a.key)
       })
       .map(({ item }) => item),
   }))

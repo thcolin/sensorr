@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
-import { Button, Controls, Icon, Link, Range, Slider, Warning } from '@sensorr/ui'
+import { Button, Controls, Icon, Link, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { Policy } from '@sensorr/sensorr'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
@@ -32,6 +32,7 @@ const SIDES = {
 
 const DEFAULTS = {
   threshold: 500 * MB,
+  sort_by: { value: 'time', sort: true },
   ...Object.keys(SIDES).reduce((acc, side) => ({
     ...acc,
     [`${side}_size`]: [0, SIZE_MAX],
@@ -282,6 +283,22 @@ const fields = {
     hideFromFiltersCount: true,
     component: UIThreshold,
   },
+  sort_by: {
+    initial: DEFAULTS.sort_by,
+    serialize: () => ({}),
+    // Sorting drops `style`, which carries the grid area.
+    component: ({ style, ...props }) => (
+      <div style={style} sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+        <Sorting
+          {...props as any}
+          options={[
+            { label: emojize('🕰️', 'Processed'), value: 'time' },
+            { label: emojize('📦', 'Space freed'), value: 'gain' },
+          ]}
+        />
+      </div>
+    ),
+  },
   ...Object.keys(SIDES).reduce((acc, side) => ({
     ...acc,
     [`head_${side}`]: {
@@ -314,13 +331,13 @@ const area = (row, side) => row === 'head' ? `head_${side}` : `${side}_${row}`
 const layout = {
   nav: {
     display: 'grid',
-    gridTemplateColumns: ['minmax(0, 1fr) min-content', 'min-content minmax(0, 1fr) min-content min-content min-content'],
+    gridTemplateColumns: ['minmax(0, 1fr) min-content', 'min-content minmax(0, 1fr) min-content min-content min-content min-content'],
     gridTemplateRows: 'auto',
     gap: ['1em', '2em'],
-    // A phone has no room for the slider in the bar: it moves to the top of the filters.
+    // A phone has no room for the slider and the sorting in the bar: they move to the top of the filters.
     gridTemplateAreas: [
       `"results toggle"`,
-      `"title balance results threshold toggle"`,
+      `"title balance results threshold toggle sort_by"`,
     ],
     '>h4': {
       display: ['none', 'block'],
@@ -336,7 +353,7 @@ const layout = {
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
-      ['threshold', ...rows.map(row => area(row, 'current')), ...rows.map(row => area(row, 'proposed'))].map(name => `"${name}"`).join(' '),
+      ['sort_by', 'threshold', ...rows.map(row => area(row, 'current')), ...rows.map(row => area(row, 'proposed'))].map(name => `"${name}"`).join(' '),
       rows.map(row => `"${area(row, 'current')} ${area(row, 'proposed')}"`).join(' '),
     ],
   },
@@ -452,8 +469,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const groups = useMemo(() => arrange(
     items.filter(item => !decided[item.id] || leaving[item.id]),
-    { threshold, skipped },
-  ), [items, decided, leaving, threshold, skipped])
+    { threshold, skipped, sort_by: values.sort_by },
+  ), [items, decided, leaving, threshold, skipped, values.sort_by])
 
   const balance = useMemo(() => balanceOf(items.filter(item => !decided[item.id])), [items, decided])
   const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])

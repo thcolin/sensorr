@@ -94,6 +94,18 @@ describe('queue', () => {
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })
 
+  it('orders a group by the space the swap frees, biggest gain first', () => {
+    const small = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 7 * GB))
+    const big = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 2 * GB))
+    const grows = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi', 9 * GB))
+
+    const [desc] = arrange([small, grows, big], { threshold: 0.5 * GB, sort_by: { value: 'gain', sort: true } })
+    const [asc] = arrange([small, grows, big], { threshold: 0.5 * GB, sort_by: { value: 'gain', sort: false } })
+
+    expect(desc.items.map(({ id }) => id)).toEqual([2, 1, 3])
+    expect(asc.items.map(({ id }) => id)).toEqual([3, 1, 2])
+  })
+
   it('sends a skipped proposal to the end of its group', () => {
     const first = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB))
     const second = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 6 * GB))
