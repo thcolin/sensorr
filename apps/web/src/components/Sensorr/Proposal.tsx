@@ -53,7 +53,7 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
 
   return (
     <span {...props} sx={{ ...UITransition.styles.element, ...styles.element }} title={`${axis}: ${from} ${separator} ${to}`}>
-      <span sx={{ ...UITransition.styles.side, ...styles.side, ...styles.before, ...tint.before }}>
+      <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.before, ...styles.before, ...tint.before }}>
         <Value axis={axis} value={from} compact={compact} />{!compact && !!left.mark && <sup>{left.mark}</sup>}
       </span>
       <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.after, ...tint.after }}>
@@ -85,6 +85,12 @@ UITransition.styles = {
       opacity: 0.75,
     },
   },
+  // Square under the new value, so its rounded end sits on a full fill.
+  before: {
+    borderTopRightRadius: '0em',
+    borderBottomRightRadius: '0em',
+    marginRight: '-1em',
+  },
   after: {
     position: 'relative',
     fontWeight: 'semibold',
@@ -106,12 +112,12 @@ UITransition.styles = {
   full: {
     element: { fontSize: 5 },
     side: { paddingX: 6, paddingY: 10 },
-    before: { paddingRight: '1.5em', marginRight: '-0.75em' },
+    before: { paddingRight: '1.75em' },
   },
   compact: {
     element: { fontSize: 7 },
     side: { paddingX: 8, paddingY: 11, maxWidth: '9em' },
-    before: { paddingRight: '1.25em', marginRight: '-0.75em' },
+    before: { paddingRight: '1.5em' },
   },
 }
 
