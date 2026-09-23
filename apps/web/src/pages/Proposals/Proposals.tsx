@@ -878,7 +878,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         </div>
       )}
       <div ref={list} sx={UIProposals.styles.element}>
-        <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+        <div style={{ height: virtualizer.getTotalSize(), flexShrink: 0, position: 'relative', width: '100%' }}>
           {virtualizer.getVirtualItems().map((virtual) => {
             const row = rows[virtual.index]
             const stuck = row.type === 'group' && virtual.index === sticky.current
@@ -947,7 +947,15 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
             )
           })}
         </div>
-        <Warning emoji='📼' title='End of tape' subtitle='Be kind, rewind.' />
+        <Warning
+          emoji='📼'
+          title="You've reached the end of the tape"
+          subtitle={(
+            <span>
+              Be kind, <em>rewind</em>, and let the next <em>refine</em> or <em>shrink</em> job record some more swaps.
+            </span>
+          )}
+        />
       </div>
       {mobile && !!active && (
         <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
@@ -974,6 +982,8 @@ UIProposals.styles = {
   },
   element: {
     flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
     width: '100%',
     paddingX: [8, '0px'],
     // Flush with the controls bar, where the sticky group title lands once scrolled.
