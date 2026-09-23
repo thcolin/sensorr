@@ -437,12 +437,21 @@ UIActive.styles = {
       outlineOffset: '2px',
     },
   },
+  // The ratings stay beside the genres when the details below them open.
   facts: {
     display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    alignItems: ['center', 'flex-start'],
+    flexWrap: ['wrap', 'nowrap'],
     columnGap: 3,
     rowGap: 8,
+    // The open details wrap at the summary's width instead of widening it.
+    '>details': {
+      minWidth: 0,
+      '>div': { width: [null, '0px'], minWidth: [null, '100%'] },
+    },
+    '>div': {
+      flexShrink: 0,
+    },
   },
   pills: {
     display: 'flex',
