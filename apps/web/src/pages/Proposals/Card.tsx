@@ -654,15 +654,16 @@ export const Compact = memo(UICompact)
 const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0, leaving = null }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const accepted = item.proposal?.accepted_at
+  const title = item.entity?.title
 
   return (
     <div sx={{ ...UICompact.styles.element, ...UIOverdue.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
-      <span sx={UICompact.styles.poster}>
+      <span sx={{ ...UICompact.styles.poster, ...UIOverdue.styles.poster }}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
-          <strong title={item.entity?.title}>{item.entity?.title}</strong>
+          <strong title={title}>{title}</strong>
           {!!year && <small>{year}</small>}
         </span>
         <span sx={UICompact.styles.diff}>
@@ -671,13 +672,15 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
-          {!!accepted && <small sx={UIOverdue.styles.age} title={new Date(accepted).toLocaleString()}>accepted {formatDistanceToNowStrict(new Date(accepted), { addSuffix: true })}</small>}
+          <small sx={UIOverdue.styles.age} title={accepted ? new Date(accepted).toLocaleString() : undefined}>
+            {[item.proposal?.znab, accepted && `accepted ${formatDistanceToNowStrict(new Date(accepted), { addSuffix: true })}`, 'not on Plex'].filter(Boolean).join(' · ')}
+          </small>
         </span>
       </span>
       <span sx={UIOverdue.styles.actions}>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again'>Retry</Button>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={onSearch} title='Pick another release in its place'>Search</Button>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has'>Drop</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again' aria-label={`Retry ${title}`}>Retry</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={onSearch} title='Pick another release in its place' aria-label={`Search another release of ${title}`}>Search</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has' aria-label={`Drop the swap of ${title}, Plex keeps its version`} data-drop={true}>Drop</Button>
       </span>
       <code sx={UICompact.styles.size} title={`Size against the lightest owned release: ${delta(item.diff.size)}`}>
         <Size item={item} threshold={threshold} compact={true} named={false} />
@@ -701,9 +704,14 @@ UIOverdue.styles = {
       pointerEvents: 'auto',
     },
   },
+  // Same box as the compact row's poster on a phone, whatever the height of the gestures.
+  poster: {
+    alignSelf: ['start', 'stretch'],
+    height: ['92px', '100%'],
+  },
   age: {
     flexShrink: 0,
-    color: 'grayDarker',
+    color: 'grayDarkest',
     fontSize: 6,
   },
   actions: {
@@ -711,9 +719,14 @@ UIOverdue.styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
+    // Drop is set apart from the two ways of getting the swap, like the chevron of the compact row.
     '>button': {
       flex: [1, 'none'],
       justifyContent: 'center',
+      minHeight: ['44px', 'auto'],
+    },
+    '>button[data-drop]': {
+      marginLeft: [12, 8],
     },
   },
 }
