@@ -603,6 +603,10 @@ instead of writing a bespoke empty state.
   `400ms cubic-bezier(0.4, 0, 0.2, 1)`: `fade`, `top`, `forward`, `backward`, and `root`
   explicitly set to `animation: none`
   (`libs/theme/src/lib/theme/modules.css:27-104`).
+- On `/movie/swaps`, a row opening into its card is a View Transition at the same
+  duration and curve: poster, title, year, size, pills and chevron are named in both
+  forms and move from one place to the other, and the card's own content fades in after
+  them (`MORPH` in `apps/web/src/pages/Proposals/Proposals.tsx`).
 - Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `placeholder`, `bounce`,
   `pulse`, `blink`, `spin`.
 

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
 import { Button, Controls, Icon, Link, Slider, Warning } from '@sensorr/ui'
+import { Global } from 'theme-ui'
 import { Policy } from '@sensorr/sensorr'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useAPI, query as APIQuery } from '../../store/api'
@@ -12,7 +14,7 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, GroupTitle, VERDICTS, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupTitle, VERDICTS, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
 import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
 
@@ -34,8 +36,11 @@ const LABELS = {
 
 const DELAY = 5000
 
-// The band and collapse durations of Card.tsx, after which the leaving card is dropped.
-const LEAVE = 400
+// The verdict band slides in for 150ms (Card.tsx) and stays a moment before the card goes.
+const LEAVE = 250
+
+// How long a card waits for its movie before opening without it, so it opens at its height.
+const PRELOAD = 300
 
 const GROUP_HEIGHT = 40
 // Card.tsx gives the compact row a third line on a phone.
@@ -128,6 +133,42 @@ const online = {
   get: () => navigator.onLine,
 }
 
+// The card moves at the pace of the route changes (libs/theme modules.css); its own
+// content fades in once it has room, and a decided card folds away upward as the rows
+// below take its place.
+const MORPH = {
+  '::view-transition-group(*)': {
+    animationDuration: '400ms',
+    animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  '::view-transition-image-pair(*.card), ::view-transition-image-pair(*.row)': {
+    overflow: 'hidden',
+  },
+  '::view-transition-old(*.card)': {
+    animation: '150ms ease-out both sensorr-morph-out',
+  },
+  '::view-transition-new(*.card)': {
+    animation: '300ms ease-out 120ms both sensorr-morph-in',
+  },
+  // The unchanged axes only the full card draws: out at once, in with the card's content.
+  '::view-transition-old(*.pill):only-child': {
+    animation: '150ms ease-out both sensorr-morph-out',
+  },
+  '::view-transition-new(*.pill):only-child': {
+    animation: '300ms ease-out 120ms both sensorr-morph-in',
+  },
+  '::view-transition-old(*.row):only-child, ::view-transition-old(*.card):only-child': {
+    animation: '300ms cubic-bezier(0.4, 0, 0.2, 1) both sensorr-morph-fold',
+  },
+  '@keyframes sensorr-morph-out': { to: { opacity: 0 } },
+  '@keyframes sensorr-morph-in': { from: { opacity: 0 } },
+  '@keyframes sensorr-morph-fold': { to: { opacity: 0, clipPath: 'inset(0 0 100% 0)' } },
+  '@media (prefers-reduced-motion: reduce)': {
+    '::view-transition-group(*)': { animation: 'none' },
+    '::view-transition-old(*), ::view-transition-new(*)': { animationDuration: '150ms', animationDelay: '0s' },
+  },
+}
+
 const omit = (object, ids) => Object.keys(object).filter(key => !ids.map(String).includes(key)).reduce((acc, key) => ({ ...acc, [key]: object[key] }), {})
 
 const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) => {
@@ -145,7 +186,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [leaving, setLeaving] = useState({})
   const [collapsed, setCollapsed] = useState({ rest: true })
   const [activeId, setActiveId] = useState(null)
-  const [still, setStill] = useState(null)
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
   const keys = useRef(null)
@@ -198,18 +238,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const found = queue.findIndex(item => item.id === activeId)
   // `null` means every card is closed; an id that left the queue falls back to its neighbour.
   const activeIndex = activeId === null ? -1 : found !== -1 ? found : Math.min(lastIndex.current, queue.length - 1)
-  const active = queue[activeIndex] || null
+  // The decided card keeps the place until it leaves: the next one opens as it goes.
+  const active = leaving[activeId] ? null : queue[activeIndex] || null
 
   useEffect(() => {
     lastIndex.current = Math.max(0, activeIndex)
   }, [activeIndex])
-
-  // The card that takes over from a closed section was already there: it must not grow in.
-  useEffect(() => {
-    if (still && active?.id !== still) {
-      setStill(null)
-    }
-  }, [still, active])
 
   useEffect(() => {
     queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id)?.catch(() => null))
@@ -268,8 +302,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     toast.dismiss('proposal-pending')
     decidedRef.current = omit(decidedRef.current, current.targets.map(({ id }) => id))
     setDecided(decided => omit(decided, current.targets.map(({ id }) => id)))
-    setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
-    setActiveId(current.targets[0].id)
+    keys.current.morph(() => {
+      setLeaving(leaving => omit(leaving, current.targets.map(({ id }) => id)))
+      setActiveId(current.targets[0].id)
+    })
   }, [])
 
   // Leaving the page sends what is waiting rather than dropping it; closing the tab
@@ -303,7 +339,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     ;({ accept: toast.success, refuse: toast, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
   }, [undo])
 
-  const decideTargets = useCallback((candidates, verdict: Verdict) => {
+  // `next` is the card to open once this one has left, when it was the open one.
+  const decideTargets = useCallback((candidates, verdict: Verdict, next = undefined) => {
     const targets = candidates.filter(({ id }) => !decidedRef.current[id])
 
     if (!connected || !targets.length) {
@@ -318,7 +355,13 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     if (targets.length === 1) {
       setLeaving(leaving => ({ ...leaving, [ids[0]]: verdict }))
-      setTimeout(() => setLeaving(leaving => omit(leaving, ids)), LEAVE)
+      setTimeout(() => keys.current.morph(() => {
+        setLeaving(leaving => omit(leaving, ids))
+
+        if (next !== undefined) {
+          setActiveId(next)
+        }
+      }), LEAVE)
     }
 
     pending.current = { targets, verdict, timer: setTimeout(flush, DELAY) }
@@ -351,26 +394,26 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }
 
     if (gesture === 'skip') {
-      setActiveId(queue[activeIndex + 1]?.id ?? null)
-      setSkipped(skipped => ({ ...skipped, [active.id]: ++skips.current }))
+      keys.current.morph(() => {
+        setActiveId(queue[activeIndex + 1]?.id ?? null)
+        setSkipped(skipped => ({ ...skipped, [active.id]: ++skips.current }))
+      })
       return
     }
 
-    setActiveId(queue[activeIndex + 1]?.id ?? null)
-    decideTargets([active], gesture)
+    decideTargets([active], gesture, queue[activeIndex + 1]?.id ?? null)
   }, [active, activeIndex, queue, decideTargets, connected])
 
   const onToggle = useCallback((group) => {
     if (!collapsed[group] && active && groups.find(({ items }) => items.includes(active))?.group === group) {
       const next = groups.slice(GROUPS.indexOf(group) + 1).find(({ group, items }) => !collapsed[group] && items.some(item => !leaving[item.id]))?.items.find(item => !leaving[item.id])
       setActiveId(next?.id ?? null)
-      setStill(next?.id ?? null)
     }
 
     setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
   }, [collapsed, active, groups, leaving])
 
-  keys.current = { onGesture, undo, ban, close: () => setActiveId(null) }
+  keys.current = { ...keys.current, onGesture, undo, ban, close: () => keys.current.morph(() => setActiveId(null)) }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -434,13 +477,56 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return () => observer.disconnect()
   }, [ready, rows.length > 0])
 
-  useEffect(() => {
+  // A card taller than the screen, as on a phone, shows from its top rather than its end.
+  const reveal = () => {
     const index = rows.findIndex(row => row.type === 'item' && row.item === active)
 
     if (index !== -1 && activeId === active?.id) {
-      virtualizer.scrollToIndex(index, { align: 'auto' })
+      const tall = (virtualizer.measurementsCache[index]?.size || 0) > (body.current?.clientHeight || 0) - virtualizer.options.scrollPaddingStart
+      virtualizer.scrollToIndex(index, { align: tall ? 'start' : 'auto' })
     }
-  }, [activeId])
+  }
+
+  useEffect(reveal, [activeId])
+
+  // Every change of the open card goes through here. The browser snapshots the list,
+  // React renders the new state synchronously, the rows are measured and scrolled to
+  // at their real height, and each element both forms draw moves from its old place.
+  // The CSS of the moves is the Global block of the render below.
+  keys.current.morph = (update) => {
+    // A pill wrapped onto the compact row's hidden line would fly in from under it.
+    list.current?.querySelectorAll('[data-clipped]').forEach((pills: HTMLElement) => {
+      Array.from(pills.children).forEach((pill: HTMLElement) => {
+        pill.style.viewTransitionName = pill.offsetTop > (pills.firstElementChild as HTMLElement).offsetTop ? 'none' : ''
+      })
+    })
+
+    const apply = () => {
+      flushSync(update)
+      flushSync(() => list.current?.querySelectorAll('[data-index]').forEach(node => virtualizer.measureElement(node)))
+      keys.current.reveal()
+    }
+
+    if (!(document as any).startViewTransition) {
+      apply()
+      return
+    }
+
+    // Named for the length of the move only, so the rows slide under the controls bar and
+    // the toasts instead of over them. Named for good, they would leave `#main` in a route change.
+    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster')) as HTMLElement[]
+    layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
+
+    const transition = (document as any).startViewTransition(apply)
+    transition.finished.finally(() => layers.forEach((layer) => { layer.style.viewTransitionName = '' }))
+  }
+
+  keys.current.reveal = reveal
+
+  const select = useCallback((id) => {
+    Promise.race([loadDetails(id)?.catch(() => null), new Promise(resolve => setTimeout(resolve, PRELOAD))])
+      .then(() => keys.current.morph(() => setActiveId(id)))
+  }, [])
 
   const total = Object.values(session).reduce((sum: number, count: number) => sum + count, 0) as number
 
@@ -499,6 +585,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   return (
     <>
+      <Global styles={MORPH} />
       {nav}
       <div ref={list} sx={UIProposals.styles.element}>
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
@@ -512,7 +599,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                 data-index={virtual.index}
                 ref={virtualizer.measureElement}
                 sx={stuck ? UIProposals.styles.sticky : {}}
-                style={stuck ? {} : {
+                style={stuck ? morph(row.type === 'group' ? 'group' : 'row', virtual.key) : {
+                  ...morph(row.type === 'item' && (row.item === active || row.item.id === activeId) ? 'card' : row.type === 'group' ? 'group' : 'row', virtual.key),
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -551,20 +639,19 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                       </Tippy>
                     ) : null}
                   />
-                ) : (row.leaving || row.item === active) ? (
+                ) : (row.item === active || (row.leaving && row.item.id === activeId)) ? (
                   <Active
                     item={row.item}
                     entity={row.item.entity}
                     threshold={threshold}
                     leaving={row.leaving}
-                    entering={row.item.id !== still}
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}
-                    onClose={row.leaving ? null : () => setActiveId(null)}
+                    onClose={row.leaving ? null : keys.current.close}
                   />
                 ) : (
-                  <Compact item={row.item} threshold={threshold} onSelect={setActiveId} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
+                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} onSelect={select} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
                 )}
               </div>
             )

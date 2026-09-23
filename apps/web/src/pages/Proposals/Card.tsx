@@ -26,7 +26,13 @@ export const VERDICTS = {
 export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${filesize.stringify(Math.abs(bytes))}`
 
 // Kept for the few movies around the active one, so a decision never waits on TMDB.
+// `loaded` holds the settled ones, so a card opens with its facts in its first render.
 const details = new Map()
+const loaded = new Map()
+
+// One name per element that both forms of the card draw, so the View Transition in
+// Proposals.tsx moves it from one place to the other. The class groups them in its CSS.
+export const morph = (kind, id) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: kind }) as any
 
 export const useLoadDetails = () => {
   const tmdb = useTMDB()
@@ -41,12 +47,16 @@ export const useLoadDetails = () => {
       details.set(id, Promise.all([
         tmdb.fetch(`movie/${id}`, { append_to_response: 'credits,keywords' }),
         wikidata.fetch(wikidata.query.movies.getMovieAdditionalData.query(id), wikidata.query.movies.getMovieAdditionalData.transform).catch(() => ({})),
-      ]).then(([movie, additional]) => ({ movie, additional })).catch((error) => {
+      ]).then(([movie, additional]) => {
+        loaded.set(id, { movie, additional })
+        return { movie, additional }
+      }).catch((error) => {
         details.delete(id)
         throw error
       }))
 
       while (details.size > 12) {
+        loaded.delete(details.keys().next().value)
         details.delete(details.keys().next().value)
       }
     }
@@ -65,15 +75,44 @@ const useDetails = (id) => {
     return () => { active = false }
   }, [id])
 
-  return state.id === id ? state : { id, movie: null, additional: null }
+  return state.id === id ? state : { id, movie: null, additional: null, ...loaded.get(id) }
 }
 
+// Drawn over whichever form the card has when it is decided.
+const UIBand = ({ verdict }) => (
+  <div sx={{ ...UIBand.styles.element, backgroundColor: VERDICTS[verdict].color, color: VERDICTS[verdict].text }} role='status'>
+    <strong>{emojize(VERDICTS[verdict].emoji, VERDICTS[verdict].label)}</strong>
+  </div>
+)
+
+UIBand.styles = {
+  element: {
+    position: 'absolute',
+    inset: '0em',
+    zIndex: 2,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 3,
+    '@keyframes sensorr-proposal-band': {
+      from: { transform: 'translateX(-100%)' },
+      to: { transform: 'translateX(0%)' },
+    },
+    animation: 'sensorr-proposal-band 150ms ease-out',
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
+  },
+}
+
+const Band = memo(UIBand)
 
 
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
 const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
   <>
     <Transition
+      style={morph('size', item.id)}
       axis='size'
       from={emojize('📦', filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0)))}
       to={filesize.stringify(item.proposal?.size || 0)}
@@ -81,99 +120,92 @@ const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
       compact={compact}
     />
   </>
-) : <>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</>
+) : <span style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</span>
 
-const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [meaningful, setMeaningful] = useState(false)
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
-  const verdict = leaving && VERDICTS[leaving]
 
   return (
-    <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : entering ? UIActive.styles.entering : {}) }} aria-current={!leaving}>
-      <div sx={UIActive.styles.collapse}>
-        <div sx={UIActive.styles.wrapper}>
-          <div sx={UIActive.styles.card}>
-            <div sx={UIActive.styles.poster}>
-              <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
-            </div>
-            <div sx={UIActive.styles.body}>
-              <header sx={UIActive.styles.head}>
-                <h3 title={facts.title}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
-                <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-                  <Size item={item} threshold={threshold} />
-                </code>
-                {!!onClose && (
-                  <button type='button' onClick={onClose} sx={UIActive.styles.close} aria-label='Close' title='Close (Esc)'>
-                    <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: 'rotate(180deg)' }} />
-                  </button>
-                )}
-              </header>
-              <div sx={UIActive.styles.sub}>
-                <details sx={UIActive.styles.metadata}>
-                  <summary>
-                    <span />
-                    <span>
-                      {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
-                      {!!facts.year && <span>({facts.year})</span>}
-                    </span>
-                  </summary>
-                  <div>
-                    <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
-                  </div>
-                </details>
-                <aside>
-                  {emojize(EMOJI[item.command], item.command)}
-                  <code>#{item.proposal?.job}</code>
-                </aside>
-              </div>
-              {movie ? (
-                <div sx={UIActive.styles.facts}>
-                  {mobile ? (
-                    <>
-                      <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
-                      <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
-                    </>
-                  ) : (
-                    <Meaningful
-                      meaningful={facts.meaningful}
-                      open={meaningful}
-                      onToggle={setMeaningful}
-                      aside={<Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div sx={UIActive.styles.skeleton}><span /></div>
+    <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : {}) }} aria-current={!leaving}>
+      <div sx={UIActive.styles.wrapper}>
+        <div sx={UIActive.styles.card}>
+          <div sx={UIActive.styles.poster} style={morph('poster', item.id)}>
+            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
+          </div>
+          <div sx={UIActive.styles.body}>
+            <header sx={UIActive.styles.head}>
+              <h3 title={facts.title} style={morph('title', item.id)}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
+              {!!onClose && (
+                <button type='button' onClick={onClose} sx={UIActive.styles.close} style={morph('toggle', item.id)} aria-label='Close' title='Close (Esc)'>
+                  <Icon value='chevron' direction={true} width='0.75em' height='0.75em' />
+                </button>
               )}
-              {/* The movie page's releases band, with the swap drawn under it. */}
-              <div sx={UIActive.styles.releases} data-releases={true}>
+              <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+                <Size item={item} threshold={threshold} />
+              </code>
+            </header>
+            <div sx={UIActive.styles.sub}>
+              <details sx={UIActive.styles.metadata}>
+                <summary>
+                  <span />
+                  <span>
+                    {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
+                    {!!facts.year && <span style={morph('year', item.id)}>({facts.year})</span>}
+                  </span>
+                </summary>
                 <div>
-                  {item.owned.map(release => (
-                    <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
-                  ))}
-                  {!!item.proposal && (
-                    <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
-                  )}
+                  <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
                 </div>
-                {!!item.diff.rows.length && (
-                  <div sx={UIActive.styles.pills} data-pills={true}>
-                    {item.diff.rows.map(({ axis, from, to }) => (
-                      <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
-                    ))}
-                  </div>
+              </details>
+              <aside>
+                {emojize(EMOJI[item.command], item.command)}
+                <code>#{item.proposal?.job}</code>
+              </aside>
+            </div>
+            {movie ? (
+              <div sx={UIActive.styles.facts}>
+                {mobile ? (
+                  <>
+                    <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
+                    <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
+                  </>
+                ) : (
+                  <Meaningful
+                    meaningful={facts.meaningful}
+                    open={meaningful}
+                    onToggle={setMeaningful}
+                    aside={<Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />}
+                  />
                 )}
-                {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
               </div>
+            ) : (
+              <div sx={UIActive.styles.skeleton}><span /></div>
+            )}
+            {/* The movie page's releases band, with the swap drawn under it. */}
+            <div sx={UIActive.styles.releases} data-releases={true}>
+              <div>
+                {item.owned.map(release => (
+                  <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
+                ))}
+                {!!item.proposal && (
+                  <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
+                )}
+              </div>
+              {!!item.diff.rows.length && (
+                <div sx={UIActive.styles.pills} data-pills={true}>
+                  {item.diff.rows.map(({ axis, from, to }) => (
+                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} style={morph('pill', `${item.id}-${axis}`)} />
+                  ))}
+                </div>
+              )}
+              {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
             </div>
           </div>
         </div>
       </div>
-      {!!verdict && (
-        <div sx={{ ...UIActive.styles.band, backgroundColor: verdict.color, color: verdict.text }} role='status'>
-          <strong>{emojize(verdict.emoji, verdict.label)}</strong>
-        </div>
-      )}
+      {!!leaving && <Band verdict={leaving} />}
     </article>
   )
 }
@@ -182,50 +214,9 @@ UIActive.styles = {
   element: {
     position: 'relative',
     overflow: 'hidden',
-    '@keyframes sensorr-proposal-expand': {
-      from: { gridTemplateRows: '0fr', opacity: 0 },
-      to: { gridTemplateRows: '1fr', opacity: 1 },
-    },
-    '@keyframes sensorr-proposal-collapse': {
-      from: { gridTemplateRows: '1fr' },
-      to: { gridTemplateRows: '0fr' },
-    },
-    '@keyframes sensorr-proposal-band': {
-      from: { transform: 'translateX(-100%)' },
-      to: { transform: 'translateX(0%)' },
-    },
-    '@keyframes sensorr-proposal-fade': {
-      from: { opacity: 1 },
-      to: { opacity: 0 },
-    },
-  },
-  entering: {
-    '>div:first-of-type': {
-      animation: 'sensorr-proposal-expand 250ms ease-in-out',
-      '@media (prefers-reduced-motion: reduce)': {
-        animation: 'none',
-      },
-    },
   },
   leaving: {
     pointerEvents: 'none',
-    '>div:first-of-type': {
-      animation: 'sensorr-proposal-collapse 250ms ease-in-out 150ms forwards',
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'sensorr-proposal-fade 250ms ease-in-out forwards',
-      '>div:first-of-type': {
-        animation: 'none',
-      },
-    },
-  },
-  collapse: {
-    display: 'grid',
-    gridTemplateRows: '1fr',
-    '>div': {
-      minHeight: 0,
-      overflow: 'hidden',
-    },
   },
   wrapper: {
     borderBottom: '1px solid',
@@ -365,24 +356,25 @@ UIActive.styles = {
       flexDirection: 'column',
     },
   },
+  // The row's open chevron, turned over: same place, same grey, always shown.
   close: {
     variant: 'button.reset',
     alignSelf: 'center',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '2em',
-    height: '2em',
-    borderRadius: '50%',
+    padding: 10,
     color: 'grayDarkest',
     cursor: 'pointer',
-    ':hover': {
-      color: 'text',
-      backgroundColor: 'grayLight',
+    'svg path': {
+      opacity: 0.4,
+      transition: 'opacity 150ms ease-in-out',
+    },
+    ':hover, :focus-visible': {
+      'svg path': { opacity: 1 },
     },
     ':focus-visible': {
       outline: '1px solid',
       outlineColor: 'grayDarkest',
+      borderRadius: '0.25em',
     },
   },
   facts: {
@@ -402,48 +394,41 @@ UIActive.styles = {
     rowGap: 8,
     paddingY: 8,
   },
-  band: {
-    position: 'absolute',
-    inset: '0em',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 3,
-    animation: 'sensorr-proposal-band 150ms ease-in-out',
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
-    },
-  },
 }
 
 export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive))
 
-// The row is not a button itself: the hover decisions would be buttons nested in it.
-// A button stretched under the content opens the card; the decisions sit above it.
-const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, ...props }) => {
+// On a wide screen the chevron next to the decisions opens the card. A phone has no
+// hover to show them: there, a button stretched under the whole row opens it.
+const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, leaving = null, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
+  const label = `Open ${item.entity?.title || 'proposal'}`
 
   return (
-    <div sx={UICompact.styles.element}>
-      <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={`Open ${item.entity?.title || 'proposal'}`} />
-      <span sx={UICompact.styles.poster}>
+    <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
+      <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={label} tabIndex={-1} />
+      <span sx={UICompact.styles.poster} style={morph('poster', item.id)}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
-          <strong title={item.entity?.title}>{item.entity?.title}</strong>
-          {!!year && <small>{year}</small>}
+          <strong title={item.entity?.title} style={morph('title', item.id)}>{item.entity?.title}</strong>
+          {!!year && <small style={morph('year', item.id)}>{year}</small>}
         </span>
         <span sx={UICompact.styles.diff}>
-          <span>
+          <span data-clipped={true}>
             {item.diff.changed.map(({ axis, from, to }) => (
-              <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
+              <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} style={morph('pill', `${item.id}-${axis}`)} />
             ))}
           </span>
         </span>
       </span>
       {!!onDecide && (
-        <div sx={UICompact.styles.decide} data-decide={true} onClick={(e) => e.target === e.currentTarget && onSelect(item.id)}>
+        <div sx={UICompact.styles.decide} data-decide={true}>
+          <button type='button' onClick={() => onSelect(item.id)} aria-label={label} title='Open' data-toggle={true} style={morph('toggle', item.id)}>
+            <Icon value='chevron' direction={false} width='0.75em' height='0.75em' />
+          </button>
+          <span aria-hidden={true} />
           {(['accept', 'refuse'] as const).map(verdict => (
             <button
               key={verdict}
@@ -459,8 +444,9 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
         </div>
       )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
       </code>
+      {!!leaving && <Band verdict={leaving} />}
     </div>
   )
 }
@@ -491,12 +477,13 @@ UICompact.styles = {
     },
     '@media (hover: hover)': {
       ':hover, :focus-within': {
-        '>[data-decide] >button': { opacity: 1, transition: 'opacity 150ms ease-in-out' },
+        '>[data-decide] >*': { opacity: 1, transition: 'opacity 150ms ease-in-out' },
       },
     },
   },
   open: {
     variant: 'button.reset',
+    display: ['block', 'none'],
     position: 'absolute',
     inset: '0px',
     cursor: 'pointer',
@@ -507,8 +494,6 @@ UICompact.styles = {
     },
   },
   // Hovering the row fades the icons in, leaving it fades them out.
-  // A click on the empty part of their zone opens the card like the rest of the row.
-  // Positioned above the stretched open button, which would otherwise catch its clicks.
   decide: {
     position: 'relative',
     zIndex: 1,
@@ -521,7 +506,14 @@ UICompact.styles = {
     width: '12em',
     marginY: -8,
     pointerEvents: 'auto',
-    cursor: 'pointer',
+    '>span': {
+      width: '1px',
+      height: '1.125em',
+      marginX: 10,
+      backgroundColor: 'grayDark',
+      opacity: 0,
+      transition: 'opacity 150ms ease-in-out',
+    },
     '>button': {
       variant: 'button.reset',
       display: 'flex',
