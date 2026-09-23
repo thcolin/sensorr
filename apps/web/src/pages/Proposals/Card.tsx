@@ -445,10 +445,6 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
       </span>
       {!!onDecide && (
         <div sx={UICompact.styles.decide} data-decide={true}>
-          <button type='button' onClick={() => onSelect(item.id)} aria-label={label} title='Open' data-toggle={true} style={morph('toggle', item.id)}>
-            <Icon value='chevron' direction={false} width='0.75em' height='0.75em' />
-          </button>
-          <span aria-hidden={true} />
           {(['accept', 'refuse'] as const).map(verdict => (
             <button
               key={verdict}
@@ -461,6 +457,10 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
               <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='1.125em' height='1.125em' />
             </button>
           ))}
+          <span aria-hidden={true} />
+          <button type='button' onClick={() => onSelect(item.id)} aria-label={label} title='Open' data-toggle={true} style={morph('toggle', item.id)}>
+            <Icon value='chevron' direction={false} width='0.75em' height='0.75em' />
+          </button>
         </div>
       )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
@@ -529,10 +529,15 @@ UICompact.styles = {
     '>span': {
       width: '1px',
       height: '1.125em',
-      marginX: 10,
+      marginX: 6,
       backgroundColor: 'grayDark',
       opacity: 0,
       transition: 'opacity 150ms ease-in-out',
+    },
+    // The chevron opens rather than decides: set apart from the two verdicts.
+    '>button[data-toggle]': {
+      marginLeft: 8,
+      marginRight: 8,
     },
     '>button': {
       variant: 'button.reset',

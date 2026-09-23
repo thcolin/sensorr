@@ -56,7 +56,7 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
 
   return (
     <div style={style} sx={UIThreshold.styles.element} title='A proposal in the same language whose size moves less than this is ignored'>
-      <label id='threshold-label'>Ignore below</label>
+      <label id='threshold-label'>Ignore below (gain)</label>
       <div>
         <Slider
           aria-labelledby='threshold-label'
@@ -76,20 +76,26 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
 }
 
 UIThreshold.styles = {
+  // On a phone the label wraps and the slider narrows, so the value stays on screen.
   element: {
     display: 'flex',
     alignItems: 'center',
-    gap: 4,
+    gap: [8, 4],
     height: '100%',
     whiteSpace: 'nowrap',
+    '>label': {
+      whiteSpace: ['normal', 'nowrap'],
+      maxWidth: ['6.5em', 'none'],
+      lineHeight: ['heading', 'inherit'],
+    },
     '>div': {
       display: 'flex',
       alignItems: 'center',
-      width: ['6em', '8em'],
+      width: ['5em', '8em'],
       paddingX: 8,
     },
     '>code': {
-      minWidth: '5.5em',
+      minWidth: ['0em', '5.5em'],
       fontFamily: 'monospace',
       fontSize: 4,
       fontWeight: 'semibold',
@@ -110,7 +116,7 @@ const layout = {
     display: 'grid',
     gridTemplateColumns: ['min-content min-content', '1fr min-content min-content'],
     gridTemplateRows: 'auto',
-    gap: '2em',
+    gap: ['1em', '2em'],
     gridTemplateAreas: [
       `"results threshold"`,
       `"title results threshold"`,
