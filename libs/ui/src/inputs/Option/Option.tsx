@@ -68,6 +68,9 @@ UIOption.styles = {
     '&:not(:disabled)': {
       cursor: 'pointer',
     },
+    '&:focus-visible': {
+      boxShadow: '0 0 0 0.15em currentColor',
+    },
   },
   checked: {
     position: 'absolute',
