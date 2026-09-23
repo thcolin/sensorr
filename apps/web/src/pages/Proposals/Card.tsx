@@ -1,5 +1,5 @@
-import { Fragment, memo, useEffect, useMemo, useState } from 'react'
-import { Button, Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
+import { memo, useEffect, useMemo, useState } from 'react'
+import { Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
@@ -8,7 +8,8 @@ import { Metadata } from '../Details/components/Metadata'
 import { Externals, Meaningful } from '../Details/components/Externals'
 import { Transition } from '../../components/Sensorr/Proposal'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
-import { ReleaseState, Statistic, safeUrl } from '../../components/Sensorr/Release'
+import { Release } from '../../components/Sensorr/Release'
+import { Gestures } from '../../components/Sensorr/Gestures'
 
 export const EMOJI = {
   'refine': '✨',
@@ -66,91 +67,7 @@ const useDetails = (id) => {
   return state.id === id ? state : { id, movie: null, additional: null }
 }
 
-const UIReleaseLine = ({ release, heaviest }) => (
-  <div sx={UIReleaseLine.styles.element}>
-    <ReleaseState entity={release} />
-    <span sx={UIReleaseLine.styles.name}>
-      <code title={release.original}>{(release.title || '').split('.').map((part, index, parts) => <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>)}</code>
-      {!!release.znab && (
-        <>
-          <a href={safeUrl(release.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({release.znab})</small></code></a>
-          <a href={safeUrl(release.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title='Download .torrent file'><code><small>.torrent</small></code></a>
-        </>
-      )}
-    </span>
-    <Statistic emoji='📦' title={`Size (${filesize.stringify(release.size || 0)})`} ratio={Math.min(1, Math.max(0.01, (release.size || 0) / (heaviest || 1)))}>
-      {filesize.stringify(release.size || 0)}
-    </Statistic>
-  </div>
-)
 
-UIReleaseLine.styles = {
-  element: {
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: ['wrap', 'nowrap'],
-    gap: 8,
-    fontSize: 6,
-    '>span:first-of-type': {
-      marginX: -4,
-    },
-    '>div:last-child': {
-      flexBasis: ['100%', 'auto'],
-    },
-  },
-  name: {
-    flex: 1,
-    minWidth: 0,
-    display: 'inline-flex',
-    alignItems: 'baseline',
-    flexWrap: 'wrap',
-    columnGap: 8,
-    '>code': {
-      overflowWrap: 'anywhere',
-    },
-    'a': {
-      opacity: 0.8,
-      ':hover': {
-        opacity: 1,
-      },
-    },
-  },
-}
-
-const ReleaseLine = memo(UIReleaseLine)
-
-const GESTURES = [
-  { verdict: 'accept', key: 'A', label: 'Accept', variant: 'contain' },
-  { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline' },
-] as const
-
-const UIGestures = ({ onGesture, disabled = false, ...props }) => (
-  <div {...props} sx={UIGestures.styles.element}>
-    {GESTURES.map(({ verdict, key, label, variant }) => (
-      <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} aria-keyshortcuts={key}>
-        {label}
-      </Button>
-    ))}
-  </div>
-)
-
-UIGestures.styles = {
-  element: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 8,
-    '>button': {
-      flex: ['1', '0 1 12em'],
-      ':focus-visible': {
-        outline: '1px solid',
-        outlineColor: 'grayDarkest',
-        outlineOffset: '2px',
-      },
-    },
-  },
-}
-
-export const Gestures = memo(UIGestures)
 
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
 const Size = ({ item, threshold }) => item.owned.length ? (
@@ -172,7 +89,6 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
   const lightest = item.diff.lightest
   const owned = others ? item.owned : (lightest ? [lightest] : [])
-  const heaviest = Math.max(item.proposal?.size || 0, ...owned.map(({ size }) => size || 0))
   const verdict = leaving && VERDICTS[leaving]
 
   return (
@@ -231,23 +147,30 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
             ) : (
               <div sx={UIActive.styles.skeleton}><span /></div>
             )}
+            {/* The same releases band as the movie page, with the swap drawn under it. */}
             <div sx={UIActive.styles.releases} data-releases={true}>
-              {owned.map(release => <ReleaseLine key={release.id} release={release} heaviest={heaviest} />)}
-              {item.owned.length > 1 && (
-                <button type='button' onClick={() => setOthers(!others)} sx={UIActive.styles.others} aria-expanded={others}>
-                  {others ? 'Hide the other owned releases' : `${item.owned.length - 1} more owned ${item.owned.length > 2 ? 'releases' : 'release'}`}
-                </button>
-              )}
-              {!!item.proposal && <ReleaseLine release={item.proposal} heaviest={heaviest} />}
-            </div>
-            {!!item.diff.rows.length && (
-              <div sx={UIActive.styles.pills} data-pills={true}>
-                {item.diff.rows.map(({ axis, from, to }) => (
-                  <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
+              <div>
+                {owned.map(release => (
+                  <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
                 ))}
+                {item.owned.length > 1 && (
+                  <button type='button' onClick={() => setOthers(!others)} sx={UIActive.styles.others} aria-expanded={others}>
+                    {others ? 'Hide the other owned releases' : `${item.owned.length - 1} more owned ${item.owned.length > 2 ? 'releases' : 'release'}`}
+                  </button>
+                )}
+                {!!item.proposal && (
+                  <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
+                )}
               </div>
-            )}
-            {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} data-gestures={true} />}
+              {!!item.diff.rows.length && (
+                <div sx={UIActive.styles.pills} data-pills={true}>
+                  {item.diff.rows.map(({ axis, from, to }) => (
+                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
+                  ))}
+                </div>
+              )}
+              {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
+            </div>
           </div>
         </div>
       </div>
@@ -339,13 +262,7 @@ UIActive.styles = {
     '>div[data-releases]': {
       order: [1, 'initial'],
     },
-    '>div[data-pills]': {
-      order: [2, 'initial'],
-    },
-    '>div[data-gestures]': {
-      marginTop: 'auto',
-      paddingTop: 8,
-    },
+
   },
   head: {
     display: 'flex',
@@ -429,13 +346,20 @@ UIActive.styles = {
       borderRadius: '0.25em',
     },
   },
+  // The movie page's releases band: a slightly lighter ground, the rows, then the swap.
   releases: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
-    paddingY: 8,
-    borderTop: '1px solid',
-    borderColor: 'gray',
+    gap: 4,
+    marginTop: 'auto',
+    paddingX: [8, 4],
+    paddingY: 4,
+    borderRadius: '0.25em',
+    backgroundColor: 'grayLighter',
+    '>div:first-of-type': {
+      display: 'flex',
+      flexDirection: 'column',
+    },
   },
   close: {
     variant: 'button.reset',

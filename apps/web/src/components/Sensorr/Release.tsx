@@ -3,7 +3,8 @@ import { useThemeUI } from 'theme-ui'
 import oleoo from 'oleoo'
 import report from 'new-github-issue-url'
 import { emojize, filesize } from '@sensorr/utils'
-import { Badge, Icon, Link } from '@sensorr/ui'
+import { Icon, Link } from '@sensorr/ui'
+import { Gestures } from './Gestures'
 import Tippy from '@tippyjs/react'
 
 const UIRelease = ({
@@ -15,7 +16,8 @@ const UIRelease = ({
   remove = null,
   banned = false,
   ban = null,
-  statistics = null
+  statistics = null,
+  actions = true,
 }) => {
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
@@ -181,27 +183,8 @@ const UIRelease = ({
           </div>
         </div>
       </div>
-      {entity?.proposal && entity?.valid !== false && typeof entity?.choice !== 'boolean' && (
-        <div sx={UIRelease.styles.proposal}>
-          <button sx={{ variant: 'button.reset' }} onClick={() => proceed(entity, true)}>
-            <Badge
-              emoji={<Icon value='check' width='1em' height='1em' />}
-              label='Accept'
-              compact={true}
-              size='normal'
-              color='theme'
-            />
-          </button>
-          <button sx={{ variant: 'button.reset' }} onClick={() => proceed(entity, false)}>
-            <Badge
-              emoji={<Icon value='clear' width='1em' height='1em' />}
-              label='Refuse'
-              compact={true}
-              size='normal'
-              color='theme'
-            />
-          </button>
-        </div>
+      {actions && entity?.proposal && entity?.valid !== false && typeof entity?.choice !== 'boolean' && (
+        <Gestures onGesture={(verdict) => proceed(entity, verdict === 'accept')} shortcuts={false} sx={UIRelease.styles.proposal} />
       )}
     </div>
   )
@@ -332,18 +315,7 @@ UIRelease.styles = {
     fontSize: 5,
   },
   proposal: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
     marginTop: 2,
-    '>button': {
-      marginX: 4,
-      opacity: 0.75,
-      transition: 'opacity 200ms ease',
-      '&:hover': {
-        opacity: 1,
-      },
-    },
   },
 }
 

@@ -12,7 +12,8 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, Gestures, GroupTitle, VERDICTS, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupTitle, VERDICTS, useLoadDetails } from './Card'
+import { Gestures } from '../../components/Sensorr/Gestures'
 import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
 
 const MB = 1024 * 1024
