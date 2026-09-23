@@ -213,7 +213,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, enterin
             </div>
             {!!item.diff.rows.length && (
               <div sx={UIActive.styles.pills} data-pills={true}>
-                {item.diff.rows.map(({ axis, from, to }) => (
+                {[...item.diff.changed, ...item.diff.rows.filter(({ state }) => state === 'same')].map(({ axis, from, to }) => (
                   <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
                 ))}
               </div>
