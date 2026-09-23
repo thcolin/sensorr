@@ -146,14 +146,20 @@ const MORPH = {
     animationDuration: '400ms',
     animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
   },
-  '::view-transition-image-pair(*.card), ::view-transition-image-pair(*.row)': {
+  // A pseudo-element takes the class of the new state: `card` is the row opening,
+  // `closing` the one that was open. In both, what only the full card draws goes first
+  // or comes last, so the row's edge moves with the elements it carries.
+  '::view-transition-image-pair(*.card), ::view-transition-image-pair(*.closing), ::view-transition-image-pair(*.row)': {
     overflow: 'hidden',
   },
-  '::view-transition-old(*.card)': {
+  '::view-transition-old(*.card), ::view-transition-old(*.closing)': {
     animation: '150ms ease-out both sensorr-morph-out',
   },
   '::view-transition-new(*.card)': {
     animation: '300ms ease-out 120ms both sensorr-morph-in',
+  },
+  '::view-transition-new(*.closing)': {
+    animation: '250ms ease-out 150ms both sensorr-morph-in',
   },
   // The unchanged axes only the full card draws sit at their final place from the start:
   // out at once, and in only once the card has grown under them.
@@ -637,7 +643,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                 ref={virtualizer.measureElement}
                 sx={stuck ? UIProposals.styles.sticky : {}}
                 style={stuck ? morph('row', virtual.key, 'group') : {
-                  ...morph('row', virtual.key, row.type === 'group' ? 'group' : (row.item === active || row.item.id === activeId) ? 'card' : 'row'),
+                  ...morph('row', virtual.key, row.type === 'group' ? 'group' : (row.item === active || row.item.id === activeId) ? 'card' : focus.includes(row.item.id) ? 'closing' : 'row'),
                   position: 'absolute',
                   top: 0,
                   left: 0,
