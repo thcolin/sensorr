@@ -56,6 +56,11 @@ const FetchAPIMoviesTask = ({ threshold = 0, ...props }) => {
         const res = await api.fetch(uri, { ...params, limit: '' }, init)
 
         const results = res.results.filter(movie => {
+          // An accepted swap still on its way would be compared as if it were owned
+          if (movie.releases.some(({ replaces }) => replaces?.length)) {
+            return false
+          }
+
           const policy = new Policy(movie.policy, state.policies)
           const res = policy.apply(movie.releases.map(release => ({ ...release, title: release.original })), null, true)
           return res.some(release => release.valid)

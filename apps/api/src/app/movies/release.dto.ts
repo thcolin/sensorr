@@ -12,4 +12,5 @@ export class ReleaseDTO {
   replaces?: string[]
   accepted_at?: number
   overdue?: boolean
+  landed?: { id: string, at: number }
 }

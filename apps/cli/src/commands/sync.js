@@ -156,9 +156,14 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const guids = (payload.Guid || []).map(({ id }) => id.split('://')).reduce((acc, [agent, id]) => ({ ...acc, [agent]: id }), {})
           let movie = (state.library || []).find((movie) => `${movie.id}` === `${guids.tmdb}` || `${movie.imdb_id}` === `${guids.imdb}`)
           const { MediaContainer: { Metadata: [{ Media: medias }] } } = await state.plex.query(payload.key)
+          const versionsOf = (item, list) => list.map(media => ({ id: `${item.guid}#${media.id}`, size: media.Part.reduce((acc, curr) => acc + curr.size, 0) }))
           const swaps = settleSwaps(
             (movie?.releases || []).filter(release => !(release.id || '').startsWith('plex://')),
-            medias.map(media => ({ id: `${payload.guid}#${media.id}`, size: media.Part.reduce((acc, curr) => acc + curr.size, 0) })),
+            {
+              here: versionsOf(payload, medias),
+              // The same movie may sit in several Plex items, when Plex did not merge a new file into the old one
+              all: (state.distant || []).filter(item => (item.Guid || []).some(({ id }) => (payload.Guid || []).some(guid => guid.id === id))).flatMap(item => versionsOf(item, item.Media || [])),
+            },
             { cleanup: state.cleanup, now: Date.now() },
           )
 

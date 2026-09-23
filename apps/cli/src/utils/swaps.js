@@ -3,9 +3,14 @@ const TOLERANCE = 0.02
 
 export const OVERDUE_AFTER = 7 * 24 * 60 * 60 * 1000
 
+// Plex indexes a file as soon as it shows up, which may be before it is complete.
+export const SETTLE_AFTER = 24 * 60 * 60 * 1000
+
 // An accepted swap has landed once Plex shows a version it does not replace, of about the size it was
-// accepted at. Only then are the versions it replaces removed: until it lands, they are the only copy.
-export const settleSwaps = (releases, versions, { cleanup, now }) => {
+// accepted at, and still shows it a day later. Only then are the versions it replaces removed: until it
+// lands, they are the only copy. `all` holds the movie's versions across every Plex item, `here` those of
+// the item being synced, the only ones that item can delete.
+export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
   const remove = new Set()
 
   const settled = releases.map((release) => {
@@ -13,19 +18,36 @@ export const settleSwaps = (releases, versions, { cleanup, now }) => {
       return release
     }
 
-    const { overdue, ...pending } = release
+    const { overdue, landed, ...pending } = release
     const { replaces, ...rest } = pending
-    const landed = versions.some(({ id, size }) => !replaces.includes(id) && (!release.size || Math.abs(size - release.size) <= release.size * TOLERANCE))
+    const found = release.size > 0 && all.find(({ id, size }) => !replaces.includes(id) && Math.abs(size - release.size) <= release.size * TOLERANCE)
+    const replaced = here.filter(({ id }) => replaces.includes(id))
 
-    if (!landed) {
+    if (!all.some(({ id }) => replaces.includes(id))) {
+      return found ? rest : release
+    }
+
+    if (!replaced.length) {
+      return release
+    }
+
+    if (!found) {
       return (now - (release.accepted_at || now) > OVERDUE_AFTER) ? { ...pending, overdue: true } : pending
     }
 
     if (!cleanup) {
-      return pending
+      return rest
     }
 
-    replaces.filter(id => versions.some(version => version.id === id)).forEach(id => remove.add(id))
+    if (landed?.id !== found.id) {
+      return { ...pending, landed: { id: found.id, at: now } }
+    }
+
+    if (now - landed.at < SETTLE_AFTER) {
+      return release
+    }
+
+    replaced.forEach(({ id }) => remove.add(id))
     return rest
   })
 
