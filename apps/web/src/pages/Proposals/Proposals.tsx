@@ -50,7 +50,7 @@ const ACTIVE_HEIGHT = 300
 // Title then pill widths, in em, for the rows drawn while the queue loads: enough to fill a screen.
 const SHAPES = [[9, 6.5, 6.5], [7, 11.5, 5.5, 9], [11, 9, 6], [16, 9, 6, 5.5], [8, 9, 5.5, 5.5], [10, 11.5, 6.5, 6.5], [9.5, 6.5], [11.5, 9, 7], [6.5, 11.5, 6], [13, 9, 6.5]]
 
-// A same-language proposal whose size moves less than this goes to the ignored group.
+// A proposal that frees less disk space than this goes to the ignored group; one that grows keeps its group.
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
   const index = Math.max(0, THRESHOLDS.indexOf(value))
   const [draft, setDraft] = useState(index)
@@ -58,7 +58,7 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
   useEffect(() => setDraft(index), [index])
 
   return (
-    <div style={style} sx={UIThreshold.styles.element} title='A proposal in the same language whose size moves less than this is ignored'>
+    <div style={style} sx={UIThreshold.styles.element} title='A proposal that frees less disk space than this is ignored'>
       <label id='threshold-label'>Ignore below (gain)</label>
       <div>
         <Slider

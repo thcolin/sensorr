@@ -126,11 +126,15 @@ export const itemOf = (entity, releases, policy) => {
 }
 
 // At a threshold of 0 the last group keeps only the proposals on which no axis changes.
+// Above it, it keeps the ones that free less space than the threshold: a proposal that
+// grows, changes the language or reaches a value the policy requires stays in its job group.
 export const groupOf = (item, threshold) => {
   if (item.owned.length) {
     const language = item.diff.rows.find(({ axis }) => axis === 'language')
+    const held = item.diff.rows.some(({ state }) => state === 'held')
+    const size = item.diff.size || 0
 
-    if (threshold === 0 ? (item.diff.rows.length && !item.diff.changed.length) : (language?.state === 'same' && Math.abs(item.diff.size || 0) < threshold)) {
+    if (threshold === 0 ? (item.diff.rows.length && !item.diff.changed.length) : (language?.state === 'same' && !held && size <= 0 && -size < threshold)) {
       return 'rest'
     }
   }

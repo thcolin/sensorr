@@ -20,11 +20,17 @@ const release = (id, language, size, extra = {}) => ({
 const movie = (id, owned, proposed) => itemOf({ id }, [...owned, { ...proposed, proposal: true, from: proposed.from || 'refine' }], policy)
 
 describe('queue', () => {
-  it('puts a same-language proposal within the threshold in the last group', () => {
-    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.3 * GB))
+  it('puts a same-language proposal that frees less than the threshold in the last group', () => {
+    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 7.7 * GB))
 
     expect(groupOf(item, 0.5 * GB)).toBe('rest')
     expect(groupOf(item, 0.25 * GB)).toBe('refine')
+  })
+
+  it('keeps a same-language proposal that grows in its job group', () => {
+    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.1 * GB))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('refine')
   })
 
   it('lists the axes the policy holds first and the unchanged ones last', () => {
@@ -40,6 +46,15 @@ describe('queue', () => {
       'resolution:same',
       'dub:same',
     ])
+  })
+
+  it('keeps a same-language proposal that reaches a required value in its job group', () => {
+    const strict = { ...policy, require: { resolution: ['1080p'] } }
+    const owned = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
+    const proposed = release('b', 'MULTi', 2 * GB)
+    const item = itemOf({ id: 1 }, [owned, { ...proposed, proposal: true, from: 'refine' }], strict)
+
+    expect(groupOf(item, 0.1 * GB)).toBe('refine')
   })
 
   it('keeps a language change in its job group whatever the size', () => {
