@@ -103,14 +103,18 @@ export class MoviesService {
           ...(changes[i].releases ? {
             releases: changes[i].releases
               .filter(release => !release.proposal || (release as ReleaseDTO & { choice?: boolean }).choice !== false)
-              .map(({ proposal, choice, ...release }: ReleaseDTO & { choice?: boolean }) => ({
+              .map(({ proposal, choice, overdue, landed, ...release }: ReleaseDTO & { choice?: boolean }) => ({
                 ...release,
                 ...(proposal && choice === undefined ? { proposal: true } : {}),
-                // An accepted swap names the Plex versions it replaces, for `sync` to delete once it lands
+                // An accepted swap names the Plex versions it replaces, for `sync` to delete once it lands.
+                // Accepting an overdue swap again starts it over.
                 ...(proposal && choice === true && SWAPS.includes(release.from) ? {
                   replaces: changes[i].releases.filter(({ from }) => from === 'sync').map(({ id }) => id),
                   accepted_at: Date.now(),
-                } : {}),
+                } : {
+                  ...(overdue ? { overdue } : {}),
+                  ...(landed ? { landed } : {}),
+                }),
               })),
           } : {}),
         },
@@ -236,6 +240,7 @@ export class MoviesService {
       } : {}),
       ...(Object.keys(params).some(key => [
         'releases.proposal',
+        'releases.overdue',
         'release_znab.prefer',
         'release_znab.avoid',
         'release_encoding.prefer',
@@ -259,6 +264,7 @@ export class MoviesService {
             true: [{ 'releases': { $elemMatch: { 'proposal': true } } }],
             false: [{ 'releases': { $not: { $elemMatch: { 'proposal': true } } } }],
           })[params['releases.proposal']] || [] : []),
+          ...(`${params['releases.overdue']}` === 'true' ? [{ 'releases': { $elemMatch: { 'overdue': true } } }] : []),
           ...(params['release_znab.prefer'] ? [{
             'releases': { $elemMatch: {
               znab: { $in: params['release_znab.prefer'].split('|') },
