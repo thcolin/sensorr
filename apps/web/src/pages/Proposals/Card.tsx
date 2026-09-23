@@ -510,12 +510,12 @@ UICompact.styles = {
   element: {
     variant: 'button.reset',
     display: 'flex',
-    alignItems: 'stretch',
-    gap: 4,
+    alignItems: 'center',
+    gap: 6,
     width: '100%',
     height: ['108px', '80px'],
     paddingX: 4,
-    paddingY: 10,
+    paddingY: 8,
     textAlign: 'left',
     cursor: 'pointer',
     borderBottom: '1px solid',
@@ -533,7 +533,10 @@ UICompact.styles = {
   poster: {
     flexShrink: 0,
     display: 'flex',
-    width: '2.5em',
+    height: '100%',
+    aspectRatio: '2 / 3',
+    borderRadius: '0.25em',
+    overflow: 'hidden',
     '>span': { width: '100%' },
   },
   body: {
@@ -542,7 +545,7 @@ UICompact.styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: 9,
+    gap: 8,
   },
   title: {
     display: 'flex',
@@ -551,7 +554,8 @@ UICompact.styles = {
     '>strong': {
       fontFamily: 'heading',
       fontWeight: 'heading',
-      fontSize: 5,
+      fontSize: 4,
+      lineHeight: 'heading',
       minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
