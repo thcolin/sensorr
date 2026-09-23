@@ -210,8 +210,19 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
             </div>
             {movie ? (
               <div sx={UIActive.styles.facts}>
-                <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
-                <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
+                {mobile ? (
+                  <>
+                    <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
+                    <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
+                  </>
+                ) : (
+                  <Meaningful
+                    meaningful={facts.meaningful}
+                    open={meaningful}
+                    onToggle={setMeaningful}
+                    aside={<Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />}
+                  />
+                )}
               </div>
             ) : (
               <div sx={UIActive.styles.skeleton}><span /></div>
@@ -437,21 +448,12 @@ UIActive.styles = {
       outlineOffset: '2px',
     },
   },
-  // The ratings stay beside the genres when the details below them open.
   facts: {
     display: 'flex',
-    alignItems: ['center', 'flex-start'],
-    flexWrap: ['wrap', 'nowrap'],
+    alignItems: 'center',
+    flexWrap: 'wrap',
     columnGap: 3,
     rowGap: 8,
-    // The open details wrap at the summary's width instead of widening it.
-    '>details': {
-      minWidth: 0,
-      '>div': { width: [null, '0px'], minWidth: [null, '100%'] },
-    },
-    '>div': {
-      flexShrink: 0,
-    },
   },
   pills: {
     display: 'flex',

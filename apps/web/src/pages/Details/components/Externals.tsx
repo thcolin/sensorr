@@ -102,7 +102,7 @@ UIExternals.styles = {
 
 export const Externals = memo(UIExternals)
 
-const UIMeaningful = ({ meaningful, open, onToggle }) => (
+const UIMeaningful = ({ meaningful, open, onToggle, aside = null }) => (
   <details sx={UIMeaningful.styles.element} onToggle={(e: any) => onToggle(e.target.open)} open={open}>
     <summary>
       <span />
@@ -116,6 +116,7 @@ const UIMeaningful = ({ meaningful, open, onToggle }) => (
         (meaningful.age && <meaningful.age />)
       }
       {(meaningful.genres && <meaningful.genres />)}
+      {aside && <span data-aside={true}>{aside}</span>}
     </summary>
     <div>
       {(
@@ -168,6 +169,13 @@ UIMeaningful.styles = {
         fontWeight: 'semibold',
         whiteSpace: 'nowrap',
         marginX: 5,
+      },
+      '>[data-aside]': {
+        display: 'inline-flex',
+        verticalAlign: 'top',
+        fontWeight: 'normal',
+        lineHeight: 1.15,
+        marginLeft: 3,
       },
     },
     '>div': {
