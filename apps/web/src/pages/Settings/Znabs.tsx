@@ -335,11 +335,13 @@ ZnabSettings.styles = {
       width: '0.75em',
     },
   },
+  // Wide enough for `999ms`, with or without it, so the inputs line up from one row to the next.
   test: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingX: 2,
+    flexShrink: 0,
+    width: '6.5em',
     border: '1px solid',
     borderRight: '0px',
     borderColor: 'grayDark',
