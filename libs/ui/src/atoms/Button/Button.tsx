@@ -248,19 +248,17 @@ UIButton.styles = {
         },
       },
       gray: {
-        borderColor: 'grayLight',
-        color: 'grayLight',
+        borderColor: 'grayDark',
+        color: 'text',
         ':hover': {
-          borderColor: 'gray',
-          color: 'gray',
+          borderColor: 'grayDarker',
         },
         ':active': {
-          borderColor: 'grayDark',
-          color: 'grayDark',
+          borderColor: 'grayDarkest',
         },
         ':disabled': {
           borderColor: 'gray',
-          color: 'gray',
+          color: 'grayDarker',
         },
       },
     }[color],

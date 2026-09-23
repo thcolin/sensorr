@@ -46,3 +46,15 @@ export const PrimaryOutlineButton = (args: any) => (
     <Button variant='outline' children='Cancel' />
   </ColorModeWrapper>
 )
+
+export const GrayOutlineButton = (args: any) => (
+  <ColorModeWrapper value='dark'>
+    <Button variant='outline' children='Skip' color='gray' />
+  </ColorModeWrapper>
+)
+
+export const ErrorOutlineButton = (args: any) => (
+  <ColorModeWrapper value='dark'>
+    <Button variant='outline' children='Ban' color='error' />
+  </ColorModeWrapper>
+)
