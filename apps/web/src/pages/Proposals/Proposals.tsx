@@ -532,7 +532,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     const apply = () => {
       flushSync(update)
-      flushSync(() => list.current?.querySelectorAll('[data-index]').forEach(node => virtualizer.measureElement(node)))
+      // `measureElement` answers from its cache when no ResizeObserver entry comes with the
+      // call, so the rows are sized from the DOM: the capture must see them in place.
+      flushSync(() => list.current?.querySelectorAll('[data-index]').forEach((node: HTMLElement) => virtualizer.resizeItem(Number(node.dataset.index), node.offsetHeight)))
       keys.current.reveal()
     }
 
