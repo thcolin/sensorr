@@ -557,7 +557,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         <span sx={UIProposals.styles.toast}>
           <span>Retry failed for <strong>{failed[0].entity?.title}</strong>, the indexer may no longer have its .torrent</span>
           <span>
-            <Button variant='outline' color='gray' onClick={(e) => search(e, failed[0])}>Search</Button>
+            <Button variant='outline' color='gray' onClick={(e) => { toast.dismiss('proposal-retry'); search(e, failed[0]) }}>Search</Button>
           </span>
         </span>
       ), { id: 'proposal-retry' })
@@ -628,7 +628,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       </span>
     )
 
-    ;({ accept: toast.success, refuse: toast, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
+    ;({ accept: toast.success, refuse: toast, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
   }, [undo])
 
   // `next` is the card to open once this one has left, when it was the open one.
