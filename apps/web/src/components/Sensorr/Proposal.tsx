@@ -40,7 +40,7 @@ const Value = memo(UIValue)
 const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, state: forced = null, ...props }) => {
   const { state: computed, separator } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
   const state = forced || computed
-  const side = { ...UITransition.styles.side, ...(compact ? UITransition.styles.compact : {}) }
+  const side = UITransition.styles.side
   const element = { ...UITransition.styles.element, fontSize: compact ? 6 : 5 }
   const tint = UITransition.styles.tints[state] || UITransition.styles.tints.quiet
 
@@ -109,9 +109,6 @@ UITransition.styles = {
       before: { backgroundColor: 'gray', color: 'grayDarkest' },
       after: { backgroundColor: 'grayDark', color: 'text' },
     },
-  },
-  compact: {
-    maxWidth: '9em',
   },
 }
 
