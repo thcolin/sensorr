@@ -192,9 +192,11 @@ Settings.styles = {
       },
     },
   },
+  // Without it, a line that does not wrap (an indexer's error) widens the page past the screen.
   container: {
     display: 'flex',
     flex: 1,
+    minWidth: 0,
     'section': {
       display: 'flex',
       flexDirection: 'column',
