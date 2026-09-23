@@ -475,7 +475,8 @@ times, `0.25rem` 6 times, `1.5em` twice.
 - **Badges and tags** are fully round: `2em` on a `2em`-tall badge, `1.5em` on a tag,
   `50%` when a badge has an emoji and no label
   (`libs/ui/src/atoms/Badge/Badge.tsx:52-79`). A pill means *a state*; a rectangle means
-  *an action*. Transition pills and the job filters of `/jobs` take `1em`.
+  *an action*. Transition pills and the command filters of `/jobs` and the Notifications
+  pane take `1em`.
 - **Avatars and status dots** are circles, ringed with a `0.25em` solid `grayLightest`
   border so they read as stickers on top of a poster
   (`libs/ui/src/elements/Entity/Poster/Poster.tsx:352-365`).
@@ -494,7 +495,8 @@ them because the format only accepts `px`, `rem` and `em`; it lives in this sect
 
 **The Pill-Is-A-State Rule.** Anything fully rounded is read-only information about state:
 a wishlist badge, a policy axis, a tag. Anything with a `0.25em` corner is something you
-can press. Do not round an action into a pill.
+can press. Do not round an action into a pill. One exception, kept on 2026-09-23: the
+command filters stay pills, because what they toggle is a state of the list below them.
 
 ## Components
 
@@ -527,6 +529,11 @@ Two distinct things, and they do not share a shape.
 - **Tag** (`libs/ui/src/elements/Entity/Tag/Tag.tsx`): a `1.5em`-radius `primary` pill
   with `white` text — which in dark mode resolves to *black* type on green, since `white`
   is one of the inverting surface tokens. It is a link, not a status.
+- **Command filter** (`apps/web/src/components/Sensorr/CommandFilters.tsx`): the quick
+  filters of `/jobs` and of the Notifications pane, a row of `1em`-radius toggles on a
+  `grayLighter` band. At rest a `grayDark` outline and the command's emoji; pressed, an
+  `accentDarkest` fill with `whitePure` text and a check in place of the emoji. A leading
+  `all` chip is pressed when nothing is filtered, and every chip carries its count.
 
 ### Cards / Containers
 - **Corner Style:** square. `Card` sets no radius; its child `Poster` carries the artwork's
@@ -561,9 +568,9 @@ Two distinct things, and they do not share a shape.
 ### Transition Pill (signature)
 The Swaps screen renders each policy axis as two overlapping pills: the old value
 underneath, the new value on top of it, `0.75em` over its right end
-(`apps/web/src/components/Sensorr/Proposal.tsx`). The shape comes from the job filters of
-`/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue
-stepped down in lightness. The new value carries the state, the old one takes a darker
+(`apps/web/src/components/Sensorr/Proposal.tsx`). The `1em` radius is the one of the command
+filters (`apps/web/src/components/Sensorr/CommandFilters.tsx`); the pill itself has no
+border and steps one hue down in lightness. The new value carries the state, the old one takes a darker
 tint of the same hue. Both halves are set in regular weight:
 - `held` (the new value satisfies `require`): `primaryDarkest` over `accentDarkest`,
   `whitePure` over `primaryLightest`. Not `primary`: white on it measures 2.04:1, too low
