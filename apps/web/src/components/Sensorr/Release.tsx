@@ -17,7 +17,6 @@ const UIRelease = ({
   ban = null,
   statistics = null
 }) => {
-  const { theme } = useThemeUI()
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
   return (
@@ -74,43 +73,7 @@ const UIRelease = ({
                     </i>
                   </div>
                 )}
-                {(
-                  (!entity?.title) ? (
-                    <Tippy maxWidth='80vw' disabled={true}>
-                      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
-                    </Tippy>
-                  ) : entity?.from === 'sync' ? (
-                    <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
-                      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-                        <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
-                          ❯
-                        </span>
-                      </span>
-                    </Tippy>
-                  ) : !entity?.valid && entity?.warning <= 10 ? (
-                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
-                  ) : !entity?.valid && entity?.warning > 10 ? (
-                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
-                  ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
-                    <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
-                    </Tippy>
-                  ) : (entity?.proposal && entity?.choice === false) ? (
-                    <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
-                    </Tippy>
-                  ) : (entity?.proposal && entity?.choice === true) ? (
-                    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                    </Tippy>
-                  ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
-                    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
-                      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
-                    </Tippy>
-                  ) : (
-                    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
-                  )
-                )}
+                <ReleaseState entity={entity} />
               </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>
@@ -197,55 +160,19 @@ const UIRelease = ({
                 ) : (
                   <div sx={UIRelease.styles.statistics}>
                     {typeof statistics.lowest.score !== 'undefined' && (
-                      <div title={`Score (${entity?.score})`}>
-                        <span>💯</span>
-                        <span
-                          style={{
-                            background: `linear-gradient(
-                              90deg,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                              ${theme.rawColors.gray} ${(Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)) * 100}%,
-                              ${theme.rawColors.gray} 100%
-                            )`,
-                          }}
-                        />
-                        <small style={{ opacity: 0.5 }}><code>{entity?.score}</code></small>
-                      </div>
+                      <Statistic emoji='💯' title={`Score (${entity?.score})`} valid={entity?.valid !== false} ratio={Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)}>
+                        {entity?.score}
+                      </Statistic>
                     )}
                     {typeof statistics.lowest.peers !== 'undefined' && (
-                      <div title={`Peers (${entity?.seeders}/${entity?.peers})`}>
-                        <span>🌍</span>
-                        <span
-                          sx={{
-                            background: `linear-gradient(
-                              90deg,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                              ${theme.rawColors.gray} ${(Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)) * 100}%,
-                              ${theme.rawColors.gray} 100%
-                            )`,
-                          }}
-                        />
-                        <small style={{ opacity: 0.5 }}><code>{entity?.peers}</code></small>
-                      </div>
+                      <Statistic emoji='🌍' title={`Peers (${entity?.seeders}/${entity?.peers})`} valid={entity?.valid !== false} ratio={Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)}>
+                        {entity?.peers}
+                      </Statistic>
                     )}
                     {typeof statistics.lowest.size !== 'undefined' && (
-                      <div title={`Size (${filesize.stringify(entity?.size)})`}>
-                        <span>📦</span>
-                        <span
-                          sx={{
-                            background: `linear-gradient(
-                              90deg,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} 0%,
-                              ${entity?.valid !== false ? theme.rawColors.primary : theme.rawColors.grayDarker} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
-                              ${theme.rawColors.gray} ${Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size))) * 100}%,
-                              ${theme.rawColors.gray} 100%
-                            )`,
-                          }}
-                        />
-                        <small style={{ opacity: 0.5 }}><code>{filesize.stringify(entity?.size)}</code></small>
-                      </div>
+                      <Statistic emoji='📦' title={`Size (${filesize.stringify(entity?.size)})`} valid={entity?.valid !== false} ratio={Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size)))}>
+                        {filesize.stringify(entity?.size)}
+                      </Statistic>
                     )}
                   </div>
                 )}
@@ -399,20 +326,6 @@ UIRelease.styles = {
   statistics: {
     display: 'flex',
     flexDirection: 'column',
-    '>div': {
-      display: 'flex',
-      alignItems: 'center',
-      whiteSpace: 'nowrap',
-      '>span:nth-of-type(2)': {
-        display: 'block',
-        height: '0.125em',
-        width: '6em',
-        marginX: 4,
-      },
-      '>small': {
-        width: '6em',
-      },
-    },
   },
   remove: {
     marginLeft: '-14px',
@@ -433,6 +346,84 @@ UIRelease.styles = {
     },
   },
 }
+
+// Which job put the release there, and what became of it: the emoji every release line starts with.
+const UIReleaseState = ({ entity = null }) => (
+  (!entity?.title) ? (
+    <Tippy maxWidth='80vw' disabled={true}>
+      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
+    </Tippy>
+  ) : entity?.from === 'sync' ? (
+    <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
+      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
+        <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
+          ❯
+        </span>
+      </span>
+    </Tippy>
+  ) : !entity?.valid && entity?.warning <= 10 ? (
+    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🚨</span>
+  ) : !entity?.valid && entity?.warning > 10 ? (
+    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
+  ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
+    <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
+    </Tippy>
+  ) : (entity?.proposal && entity?.choice === false) ? (
+    <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
+    </Tippy>
+  ) : (entity?.proposal && entity?.choice === true) ? (
+    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+    </Tippy>
+  ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
+    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+      <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+    </Tippy>
+  ) : (
+    <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>⭐</span>
+  )
+)
+
+export const ReleaseState = memo(UIReleaseState)
+
+// One bar of a release's statistics, filled to `ratio` of the heaviest candidate.
+const UIStatistic = ({ emoji, title, ratio, valid = true, children }) => {
+  const { theme } = useThemeUI()
+  const color = valid ? theme.rawColors.primary : theme.rawColors.grayDarker
+
+  return (
+    <div title={title} sx={UIStatistic.styles.element}>
+      <span>{emoji}</span>
+      <span
+        style={{
+          background: `linear-gradient(90deg, ${color} 0%, ${color} ${ratio * 100}%, ${theme.rawColors.gray} ${ratio * 100}%, ${theme.rawColors.gray} 100%)`,
+        }}
+      />
+      <small style={{ opacity: 0.5 }}><code>{children}</code></small>
+    </div>
+  )
+}
+
+UIStatistic.styles = {
+  element: {
+    display: 'flex',
+    alignItems: 'center',
+    whiteSpace: 'nowrap',
+    '>span:nth-of-type(2)': {
+      display: 'block',
+      height: '0.125em',
+      width: '6em',
+      marginX: 4,
+    },
+    '>small': {
+      width: '6em',
+    },
+  },
+}
+
+export const Statistic = memo(UIStatistic)
 
 export const Release = memo(UIRelease)
 
