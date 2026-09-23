@@ -1,4 +1,4 @@
-import { arrange, balanceOf, decide, groupOf, itemOf } from './queue'
+import { arrange, balanceOf, decide, groupOf, itemOf, matches } from './queue'
 
 const GB = 1024 ** 3
 
@@ -31,6 +31,28 @@ describe('queue', () => {
     const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.1 * GB))
 
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
+  })
+
+  it('filters each side of the swap on its own release rules', () => {
+    const owned = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
+    const item = itemOf({ id: 1 }, [owned, { ...release('b', 'MULTi', 4 * GB), proposal: true, from: 'refine' }], policy)
+    const prefer = (value) => [{ value, group: 'prefer' }]
+    const avoid = (value) => [{ value, group: 'avoid' }]
+
+    expect(matches(item, {})).toBe(true)
+    expect(matches(item, { current_resolution: prefer('720p'), proposed_resolution: prefer('1080p') })).toBe(true)
+    expect(matches(item, { current_resolution: prefer('1080p') })).toBe(false)
+    expect(matches(item, { proposed_source: avoid('BLURAY') })).toBe(false)
+    expect(matches(item, { proposed_size: [0, 3] })).toBe(false)
+    expect(matches(item, { current_size: [1, 50] })).toBe(true)
+  })
+
+  it('passes the current side when any owned release matches', () => {
+    const hd = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
+    const item = movie(1, [hd, release('b', 'VOSTFR', 8 * GB)], release('c', 'MULTi', 4 * GB))
+
+    expect(matches(item, { current_resolution: [{ value: '720p', group: 'prefer' }] })).toBe(true)
+    expect(matches(item, { current_language: [{ value: 'VOSTFR', group: 'prefer' }] })).toBe(true)
   })
 
   it('lists the axes the policy holds first and the unchanged ones last', () => {

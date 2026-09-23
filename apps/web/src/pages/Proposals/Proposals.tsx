@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
-import { Button, Controls, Icon, Link, Slider, Warning } from '@sensorr/ui'
+import { Button, Controls, Icon, Link, Range, Slider, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { Policy } from '@sensorr/sensorr'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
@@ -16,7 +16,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
 import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Placeholder, VERDICTS, delta, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
-import { GROUPS, Verdict, arrange, balanceOf, decide, itemOf } from './queue'
+import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
+import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, itemOf, matches } from './queue'
 
 const MB = 1024 * 1024
 
@@ -24,8 +25,18 @@ const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 
 
 const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
 
+const SIDES = {
+  current: { emoji: '📀', title: 'Current release', subtitle: 'Keep the swaps where at least one owned release matches these rules' },
+  proposed: { emoji: '💿', title: 'Proposed release', subtitle: 'Keep the swaps whose proposed release matches these rules' },
+}
+
 const DEFAULTS = {
   threshold: 500 * MB,
+  ...Object.keys(SIDES).reduce((acc, side) => ({
+    ...acc,
+    [`${side}_size`]: [0, SIZE_MAX],
+    ...FILTERS.reduce((acc, filter) => ({ ...acc, [`${side}_${filter}`]: [] }), {}),
+  }), {}),
 }
 
 const LABELS = {
@@ -240,27 +251,93 @@ UIBalance.styles = {
   },
 }
 
+const SizeFilter = ({ ...props }) => (
+  <Range
+    {...props as any}
+    min={0}
+    max={SIZE_MAX}
+    marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
+    data={null}
+    label={emojize('📦', 'Size')}
+    labelize={(value) => `${value} GB`}
+    value={props.value || [0, SIZE_MAX]}
+    step={null}
+  />
+)
+
+const COMPONENTS = {
+  znab: ZNABFilter,
+  resolution: ResolutionFilter,
+  source: SourceFilter,
+  encoding: EncodingFilter,
+  dub: DubFilter,
+  language: LanguageFilter,
+  flags: FlagsFilter,
+}
+
 const fields = {
   threshold: {
     initial: DEFAULTS.threshold,
     serialize: () => ({}),
+    hideFromFiltersCount: true,
     component: UIThreshold,
   },
+  ...Object.keys(SIDES).reduce((acc, side) => ({
+    ...acc,
+    [`head_${side}`]: {
+      initial: null,
+      component: () => (
+        <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: `head_${side}` }}>
+          <Warning emoji={SIDES[side].emoji} title={SIDES[side].title} subtitle={SIDES[side].subtitle} />
+        </div>
+      ),
+    },
+    [`${side}_size`]: {
+      initial: DEFAULTS[`${side}_size`],
+      serialize: () => ({}),
+      component: SizeFilter,
+    },
+    ...FILTERS.reduce((acc, filter) => ({
+      ...acc,
+      [`${side}_${filter}`]: {
+        initial: [],
+        serialize: () => ({}),
+        component: COMPONENTS[filter],
+      },
+    }), {}),
+  }), {}),
 }
+
+const rows = ['head', 'size', ...FILTERS]
+const area = (row, side) => row === 'head' ? `head_${side}` : `${side}_${row}`
 
 const layout = {
   nav: {
     display: 'grid',
-    gridTemplateColumns: ['min-content min-content', 'min-content minmax(0, 1fr) min-content min-content'],
+    gridTemplateColumns: ['minmax(0, 1fr) min-content', 'min-content minmax(0, 1fr) min-content min-content min-content'],
     gridTemplateRows: 'auto',
     gap: ['1em', '2em'],
+    // A phone has no room for the slider in the bar: it moves to the top of the filters.
     gridTemplateAreas: [
-      `"results threshold"`,
-      `"title balance results threshold"`,
+      `"results toggle"`,
+      `"title balance results threshold toggle"`,
     ],
     '>h4': {
       display: ['none', 'block'],
     },
+  },
+  // Both sides open as one pane, each filter of the current release facing its proposed
+  // counterpart; a phone stacks them.
+  aside: {
+    display: 'grid',
+    width: ['100vw', '50em'],
+    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(0, 1fr)'],
+    gridTemplateRows: 'auto',
+    gap: '2em',
+    gridTemplateAreas: [
+      ['threshold', ...rows.map(row => area(row, 'current')), ...rows.map(row => area(row, 'proposed'))].map(name => `"${name}"`).join(' '),
+      rows.map(row => `"${area(row, 'current')} ${area(row, 'proposed')}"`).join(' '),
+    ],
   },
 }
 
@@ -331,8 +408,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const loadDetails = useLoadDetails()
   const mobile = useResponsiveValue([true, false])
   const connected = useSyncExternalStore(online.subscribe, online.get)
-  const [values, setValues] = useHistoryState('proposals', DEFAULTS) as any
-  const threshold = typeof values?.threshold === 'number' ? values.threshold : DEFAULTS.threshold
+  const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
+  const values = useMemo(() => ({ ...DEFAULTS, ...stored }), [stored])
+  const threshold = typeof values.threshold === 'number' ? values.threshold : DEFAULTS.threshold
 
   const [skipped, setSkipped] = useState({})
   const [decided, setDecided] = useState({})
@@ -351,7 +429,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const policies = useMemo(() => new Map(), [sensorr.policies])
   const cache = useRef(new WeakMap())
 
-  const items = useMemo(() => Object.values(entities).map((entity: any) => {
+  const all = useMemo(() => Object.values(entities).map((entity: any) => {
     const source = metadata[entity.id] || entity
     const releases = source.releases || []
     const cached = cache.current.get(releases)
@@ -368,6 +446,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     cache.current.set(releases, { entity, policy: policies.get(source.policy), item })
     return item
   }).filter(item => !!item.proposal && item.command !== 'record'), [entities, metadata, policies])
+
+  const items = useMemo(() => all.filter(item => matches(item, values)), [all, values])
 
   const groups = useMemo(() => arrange(
     items.filter(item => !decided[item.id] || leaving[item.id]),
@@ -727,7 +807,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       components={{ balance: Balance }}
       layout={layout as any}
       fields={fields as any}
-      values={{ threshold }}
+      values={values}
       onChange={(next) => setValues({ ...values, ...next })}
       statistics={{}}
       loading={!ready}
@@ -751,7 +831,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return (
       <>
         {nav}
-        {total ? (
+        {(all.length && !items.length) ? (
+          <Warning emoji='🔍' title='No match' subtitle='No swap matches the release filters' />
+        ) : total ? (
           <Warning
             emoji='📼'
             title='All decided'

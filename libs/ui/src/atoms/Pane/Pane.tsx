@@ -5,7 +5,7 @@ import { Icon } from '../Icon/Icon'
 
 export interface PaneProps {
   position: 'right' | 'left'
-  width?: string
+  width?: string | string[]
   background?: string
   open: boolean
   toggleOpen: () => void

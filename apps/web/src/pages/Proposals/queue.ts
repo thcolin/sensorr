@@ -172,6 +172,41 @@ export const arrange = (items, { threshold, skipped = {} }) => {
   }))
 }
 
+// The release filters of Library (Controls/Oleoo.tsx), read here on each side of a swap:
+// ⭐ keeps a release that carries one of the values, ⛔ drops one that carries any. The
+// size range is in GB and its top mark means no upper bound. Values are keyed
+// `${side}_${filter}`, side being `current` or `proposed`.
+export const FILTERS = ['znab', 'resolution', 'source', 'encoding', 'dub', 'language', 'flags']
+
+export const SIZE_MAX = 50
+
+const GB = 1024 ** 3
+
+const carries = (release, filter, values) => values.some(value => [].concat(release?.meta?.[filter]).includes(value))
+
+export const matchesRelease = (release, values, side) => {
+  const [min, max] = values[`${side}_size`] || [0, SIZE_MAX]
+  const size = (release?.size || 0) / GB
+
+  if (size < min || (max < SIZE_MAX && size > max)) {
+    return false
+  }
+
+  return FILTERS.every(filter => {
+    const rules = values[`${side}_${filter}`] || []
+    const prefer = rules.filter(({ group }) => group === 'prefer').map(({ value }) => value)
+    const avoid = rules.filter(({ group }) => group === 'avoid').map(({ value }) => value)
+
+    return (!prefer.length || carries(release, filter, prefer)) && !carries(release, filter, avoid)
+  })
+}
+
+// The current side passes when any owned release does, as the release filters of Library.
+export const matches = (item, values) => (
+  (item.owned.length ? item.owned : [null]).some(release => matchesRelease(release, values, 'current')) &&
+  matchesRelease(item.proposal, values, 'proposed')
+)
+
 // What the disk would weigh once every swap is accepted. Only the Plex files exist on
 // disk (`from: 'sync'`, sync.js): an older release Sensorr recorded is history, not a file.
 export const balanceOf = (items) => items.reduce((balance, item) => {

@@ -11,7 +11,7 @@ export interface AsideProps extends Omit<InputsProps, 'control'> {
   shadow?: boolean
 }
 
-const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, controls = true, watch: watcher, ...props }) => {
+const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, controls = true, watch: watcher, ...props }) => {
   const { t } = useTranslation()
   const { control, reset, watch, handleSubmit } = useForm({ defaultValues })
   const watching = !!(watcher || [])[0] && watch(watcher[0]).reduce((acc, curr, i) => ({ ...acc, [watcher[i]]: curr }), {})
@@ -36,6 +36,7 @@ const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', ...
     <Pane
       position={position as any}
       background={backgroundColor}
+      width={width}
       open={open}
       toggleOpen={toggle}
       level={level}
