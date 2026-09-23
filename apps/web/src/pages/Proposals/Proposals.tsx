@@ -32,6 +32,7 @@ const LABELS = {
   record: 'record',
   refine: 'refine',
   shrink: 'shrink',
+  rest: 'same language',
 }
 
 const DELAY = 5000
@@ -169,6 +170,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
   const lastIndex = useRef(0)
+  const skips = useRef(0)
 
   // Keyed on the releases array, so a SSE change only recomputes the movies it touched.
   const policies = useMemo(() => new Map(), [sensorr.policies])
@@ -274,8 +276,21 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setActiveId(current.targets[0].id)
   }, [])
 
-  // Leaving the page sends what is waiting rather than dropping it.
+  // Leaving the page sends what is waiting rather than dropping it; closing the tab
+  // asks first, so the request has time to leave.
   useEffect(() => () => flush(), [flush])
+
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (pending.current) {
+        flush()
+        e.preventDefault()
+      }
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [flush])
 
   const decideTargets = useCallback((targets, verdict: Verdict) => {
     if (!connected || !targets.length) {
@@ -312,7 +327,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     if (gesture === 'skip') {
       setActiveId(queue[activeIndex + 1]?.id ?? null)
-      setSkipped(skipped => ({ ...skipped, [active.id]: Object.keys(skipped).length + 1 }))
+      setSkipped(skipped => ({ ...skipped, [active.id]: ++skips.current }))
       return
     }
 
@@ -425,7 +440,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       <>
         {nav}
         <div sx={UIProposals.styles.skeletons}>
-          <span /><span data-active /><span /><span /><span /><span /><span /><span />
+          <span data-group /><span data-active /><span /><span /><span /><span /><span data-group /><span data-group />
         </div>
       </>
     )
@@ -479,7 +494,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                   <GroupTitle
                     group={row.group}
                     emoji={EMOJI[row.group] || '🟰'}
-                    label={LABELS[row.group] || `Same language, ±${filesize.stringify(threshold)}`}
+                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest}, ±${filesize.stringify(threshold)}` : `${LABELS.rest}, nothing changes`) : LABELS[row.group]}
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
@@ -492,10 +507,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                         content={(
                           <div sx={UIProposals.styles.menu}>
                             <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
-                              Refuse all
+                              Refuse all {row.count}
                             </Button>
                             <Button variant='contain' color='primary' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'accept')}>
-                              Accept all
+                              Accept all {row.count}
                             </Button>
                           </div>
                         )}
@@ -594,10 +609,10 @@ UIProposals.styles = {
     paddingY: 4,
     '>span': {
       height: `${COMPACT_HEIGHT}px`,
-      backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLightest} 0%, ${theme.rawColors.grayLighter} 50%, ${theme.rawColors.grayLightest} 100%)`,
+      backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLighter} 0%, ${theme.rawColors.grayLight} 50%, ${theme.rawColors.grayLighter} 100%)`,
       backgroundSize: '200% 100%',
       animation: 'sensorr-proposals-shimmer 1.4s ease-in-out infinite',
-      '&:first-of-type': { height: `${GROUP_HEIGHT}px` },
+      '&[data-group]': { height: `${GROUP_HEIGHT}px` },
       '&[data-active]': { height: `${ACTIVE_HEIGHT}px` },
       '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
     },

@@ -8,7 +8,7 @@ const UIValue = ({ axis, value, compact = false }) => {
   const drawn = !!logo && logo.type !== 'code'
 
   if (!value) {
-    return <>–</>
+    return <span title='not found in the release name'>?</span>
   }
 
   if (axis === 'language') {

@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react'
+import { Fragment, memo, useEffect, useMemo, useState } from 'react'
 import { Button, Icon, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
@@ -70,7 +70,7 @@ const UIReleaseLine = ({ release, heaviest }) => (
   <div sx={UIReleaseLine.styles.element}>
     <ReleaseState entity={release} />
     <span sx={UIReleaseLine.styles.name}>
-      <code title={release.original}>{release.title}</code>
+      <code title={release.original}>{(release.title || '').split('.').map((part, index, parts) => <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>)}</code>
       {!!release.znab && (
         <>
           <a href={release.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({release.znab})</small></code></a>
@@ -94,6 +94,9 @@ UIReleaseLine.styles = {
     '>span:first-of-type': {
       marginX: -4,
     },
+    '>div:last-child': {
+      flexBasis: ['100%', 'auto'],
+    },
   },
   name: {
     flex: 1,
@@ -103,7 +106,7 @@ UIReleaseLine.styles = {
     flexWrap: 'wrap',
     columnGap: 8,
     '>code': {
-      wordBreak: 'break-all',
+      overflowWrap: 'anywhere',
     },
     'a': {
       opacity: 0.8,
@@ -143,6 +146,11 @@ UIGestures.styles = {
       display: 'inline-flex',
       alignItems: 'baseline',
       gap: 8,
+      ':focus-visible': {
+        outline: '1px solid',
+        outlineColor: 'grayDarkest',
+        outlineOffset: '2px',
+      },
       '>code': {
         fontFamily: 'monospace',
         opacity: 0.5,
@@ -198,7 +206,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile 
             ) : (
               <div sx={UIActive.styles.skeleton}><span /><span /></div>
             )}
-            <div sx={UIActive.styles.releases}>
+            <div sx={UIActive.styles.releases} data-releases={true}>
               {owned.map(release => <ReleaseLine key={release.id} release={release} heaviest={heaviest} />)}
               {item.owned.length > 1 && (
                 <button type='button' onClick={() => setOthers(!others)} sx={UIActive.styles.others} aria-expanded={others}>
@@ -208,10 +216,11 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile 
               {!!item.proposal && <ReleaseLine release={item.proposal} heaviest={heaviest} />}
             </div>
             {!!item.diff.rows.length && (
-              <div sx={UIActive.styles.pills}>
+              <div sx={UIActive.styles.pills} data-pills={true}>
                 {item.diff.rows.map(({ axis, from, to }) => (
                   <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
                 ))}
+                <code title='Size gained or lost against the lightest owned release'>{emojize('📦', delta(item.diff.size))}</code>
               </div>
             )}
             {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
@@ -283,9 +292,8 @@ UIActive.styles = {
     gap: 4,
     paddingX: 4,
     paddingY: 4,
-    backgroundColor: 'grayLighter',
-    border: '1px solid',
-    borderColor: 'grayDark',
+    borderBottom: '1px solid',
+    borderColor: 'gray',
   },
   poster: {
     flexShrink: 0,
@@ -299,6 +307,18 @@ UIActive.styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
+    '>*': {
+      order: [3, 'initial'],
+    },
+    '>header': {
+      order: [0, 'initial'],
+    },
+    '>div[data-releases]': {
+      order: [1, 'initial'],
+    },
+    '>div[data-pills]': {
+      order: [2, 'initial'],
+    },
   },
   head: {
     display: 'flex',
@@ -382,8 +402,14 @@ UIActive.styles = {
   },
   pills: {
     display: 'flex',
+    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
+    '>code': {
+      fontFamily: 'monospace',
+      color: 'text',
+      marginLeft: [0, 8],
+    },
   },
   band: {
     position: 'absolute',
@@ -480,7 +506,7 @@ UICompact.styles = {
       flexShrink: 0,
       color: 'grayDarker',
       fontFamily: 'monospace',
-      fontSize: 7,
+      fontSize: 6,
     },
   },
   diff: {
@@ -540,6 +566,11 @@ UIGroupTitle.styles = {
         opacity: 1,
       },
     },
+    '@media (hover: none)': {
+      '>button[data-menu]': {
+        opacity: 1,
+      },
+    },
   },
   toggle: {
     variant: 'button.reset',
@@ -548,9 +579,6 @@ UIGroupTitle.styles = {
     gap: 8,
     fontWeight: 'inherit',
     cursor: 'pointer',
-    '>span': {
-      textTransform: 'capitalize',
-    },
     '>code': {
       fontFamily: 'monospace',
       color: 'grayDarker',

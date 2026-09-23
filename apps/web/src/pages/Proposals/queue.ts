@@ -140,12 +140,14 @@ const standing = (axis, value, policy) => {
   return (level.kind === 'require' ? 1000 : level.kind === 'avoid' ? -1000 : 0) - (rank === -1 ? preferred.length : rank)
 }
 
+// A language the parser could not read on either side says nothing, so it gains nothing.
 export const gainOf = (item) => {
   const to = item.proposal?.meta?.language
   const from = item.diff.from?.meta?.language
+  const known = !!to && (!item.owned.length || !!from)
 
   return {
-    language: standing('language', to, item.policy) - (item.owned.length ? standing('language', from, item.policy) : 0),
+    language: !known ? 0 : standing('language', to, item.policy) - (item.owned.length ? standing('language', from, item.policy) : 0),
     space: -(item.owned.length ? (item.diff.size || 0) : (item.proposal?.size || 0)),
   }
 }
