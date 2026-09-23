@@ -508,7 +508,7 @@ UICompact.styles = {
       outlineOffset: '-1px',
     },
   },
-  // Hovering the row fades the icons in; they linger 300ms after the pointer leaves.
+  // Hovering the row fades the icons in, leaving it fades them out.
   // A click on the empty part of their zone opens the card like the rest of the row.
   decide: {
     gridArea: 'decide',
@@ -528,7 +528,7 @@ UICompact.styles = {
       color: 'grayDarkest',
       cursor: 'pointer',
       opacity: 0,
-      transition: 'opacity 200ms ease-in-out 300ms, color 150ms ease-in-out',
+      transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out',
       '&[data-verdict=accept]:hover:not(:disabled), &[data-verdict=accept]:focus-visible': {
         color: 'primary',
       },
