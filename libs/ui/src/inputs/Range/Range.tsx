@@ -198,4 +198,4 @@ const UISlider = ({ ...props }) => {
   )
 }
 
-const Slider = memo(UISlider)
+export const Slider = memo(UISlider)

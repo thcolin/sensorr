@@ -134,28 +134,6 @@ export const groupOf = (item, threshold) => {
   return GROUPS.includes(item.command) ? item.command : 'refine'
 }
 
-// A position in `prefer` is what the policy says about a value; an unlisted value comes
-// after every listed one. `require` and `avoid` outweigh any rank.
-const standing = (axis, value, policy) => {
-  const preferred = policy?.prefer?.[axis] || []
-  const level = levelOf(axis, value, policy)
-  const rank = preferred.indexOf(value)
-
-  return (level.kind === 'require' ? 1000 : level.kind === 'avoid' ? -1000 : 0) - (rank === -1 ? preferred.length : rank)
-}
-
-// A language the parser could not read on either side says nothing, so it gains nothing.
-export const gainOf = (item) => {
-  const to = item.proposal?.meta?.language
-  const from = item.diff.from?.meta?.language
-  const known = !!to && (!item.owned.length || !!from)
-
-  return {
-    language: !known ? 0 : standing('language', to, item.policy) - (item.owned.length ? standing('language', from, item.policy) : 0),
-    space: -(item.owned.length ? (item.diff.size || 0) : (item.proposal?.size || 0)),
-  }
-}
-
 // The date each job last processed the movie; the release itself carries none
 // (ProcessMoviesTask.js:214-218).
 export const PROCESSED_AT = {
@@ -165,9 +143,9 @@ export const PROCESSED_AT = {
 
 const timeOf = (item) => new Date(item.entity?.[PROCESSED_AT[item.command]] || item.entity?.updated_at || 0).getTime()
 
-export const arrange = (items, { threshold, sort = 'gain', descending = true, skipped = {} }) => {
-  const direction = descending ? 1 : -1
-  const keyed = items.map(item => ({ item, group: groupOf(item, threshold), gain: gainOf(item), time: timeOf(item) }))
+// Newest first, always: the date the job last processed the movie.
+export const arrange = (items, { threshold, skipped = {} }) => {
+  const keyed = items.map(item => ({ item, group: groupOf(item, threshold), time: timeOf(item) }))
 
   return GROUPS.map(group => ({
     group,
@@ -180,11 +158,7 @@ export const arrange = (items, { threshold, sort = 'gain', descending = true, sk
           return skip
         }
 
-        if (sort === 'gain') {
-          return direction * ((b.gain.language - a.gain.language) || (b.gain.space - a.gain.space) || (b.time - a.time))
-        }
-
-        return direction * (b.time - a.time)
+        return b.time - a.time
       })
       .map(({ item }) => item),
   }))

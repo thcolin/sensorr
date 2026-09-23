@@ -48,21 +48,11 @@ describe('queue', () => {
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
   })
 
-  it('orders a group by language gain, then by space gained', () => {
-    const lighter = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi', 6 * GB))
-    const heavier = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB))
-    const better = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi-VF2', 12 * GB))
+  it('orders a group by the date the job last processed the movie, newest first', () => {
+    const older = { ...movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB)), entity: { id: 1, refined_at: '2026-09-01' } }
+    const newer = { ...movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB)), entity: { id: 2, refined_at: '2026-09-20' } }
 
-    const [refine] = arrange([heavier, lighter, better], { threshold: 0.5 * GB })
-
-    expect(refine.items.map(({ id }) => id)).toEqual([3, 1, 2])
-  })
-
-  it('gives no language gain when the owned language is unknown', () => {
-    const unknown = movie(1, [{ ...release('a', 'VOSTFR', 8 * GB), meta: { resolution: '1080p' } }], release('b', 'MULTi-VF2', 8 * GB))
-    const known = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB))
-
-    const [refine] = arrange([unknown, known], { threshold: 0.5 * GB })
+    const [refine] = arrange([older, newer], { threshold: 0.5 * GB })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })

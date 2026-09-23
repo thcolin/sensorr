@@ -2,15 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, use
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
-import { Button, Controls, Icon, Link, Sorting, Warning } from '@sensorr/ui'
+import { Button, Controls, Icon, Link, Slider, Warning } from '@sensorr/ui'
 import { Policy } from '@sensorr/sensorr'
-import i18n from '@sensorr/i18n'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
-import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
@@ -25,13 +23,12 @@ const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
 
 const DEFAULTS = {
   threshold: 500 * MB,
-  sort_by: { value: 'gain', sort: true },
 }
 
 const LABELS = {
   refine: 'refine',
   shrink: 'shrink',
-  rest: 'same language',
+  rest: 'ignored',
 }
 
 const DELAY = 5000
@@ -44,60 +41,52 @@ const GROUP_HEIGHT = 40
 const COMPACT_HEIGHT = [108, 80]
 const ACTIVE_HEIGHT = 300
 
-const UIThreshold = ({ value, onChange, style = {}, ...props }) => (
-  <div style={style} sx={UIThreshold.styles.element}>
-    <label htmlFor='threshold'>Same size below</label>
-    <div>
-      <span>{value ? filesize.stringify(value) : 'nothing changes'}</span>
-      <select id='threshold' value={value} onChange={e => onChange(Number(e.target.value))}>
-        {THRESHOLDS.map(threshold => (
-          <option key={threshold} value={threshold}>{threshold ? filesize.stringify(threshold) : 'nothing changes'}</option>
-        ))}
-      </select>
+// A same-language proposal whose size moves less than this goes to the ignored group.
+const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
+  const index = Math.max(0, THRESHOLDS.indexOf(value))
+  const [draft, setDraft] = useState(index)
+
+  useEffect(() => setDraft(index), [index])
+
+  return (
+    <div style={style} sx={UIThreshold.styles.element} title='A proposal in the same language whose size moves less than this is ignored'>
+      <label id='threshold-label'>Ignore below</label>
+      <div>
+        <Slider
+          aria-labelledby='threshold-label'
+          value={draft}
+          min={0}
+          max={THRESHOLDS.length - 1}
+          step={1}
+          marks={true}
+          onChange={(e, next) => setDraft(next as number)}
+          onChangeCommitted={(e, next) => onChange(THRESHOLDS[next as number])}
+          getAriaValueText={(next) => THRESHOLDS[next] ? filesize.stringify(THRESHOLDS[next]) : 'no change'}
+        />
+      </div>
+      <code>{THRESHOLDS[draft] ? filesize.stringify(THRESHOLDS[draft]) : 'no change'}</code>
     </div>
-  </div>
-)
+  )
+}
 
 UIThreshold.styles = {
   element: {
     display: 'flex',
     alignItems: 'center',
-    marginY: 4,
-    borderRadius: '0.25em',
-    ':hover': {
-      backgroundColor: 'accent',
-    },
-    '>label': {
-      display: 'flex',
-      alignItems: 'center',
-      height: '100%',
-      marginLeft: 4,
-      marginRight: 8,
-    },
+    gap: 4,
+    height: '100%',
+    whiteSpace: 'nowrap',
     '>div': {
-      position: 'relative',
       display: 'flex',
       alignItems: 'center',
-      height: '100%',
-      paddingX: 4,
-      borderTopRightRadius: '0.25em',
-      borderBottomRightRadius: '0.25em',
-      ':hover': {
-        backgroundColor: 'accentDark',
-      },
-      '>span': {
-        fontFamily: 'monospace',
-        fontSize: 4,
-        fontWeight: 'semibold',
-      },
-      '>select': {
-        variant: 'select.reset',
-        position: 'absolute',
-        width: '100%',
-        right: '0px',
-        opacity: 0,
-        fontSize: 4,
-      },
+      width: ['6em', '8em'],
+      paddingX: 8,
+    },
+    '>code': {
+      minWidth: '5.5em',
+      fontFamily: 'monospace',
+      fontSize: 4,
+      fontWeight: 'semibold',
     },
   },
 }
@@ -108,27 +97,17 @@ const fields = {
     serialize: () => ({}),
     component: UIThreshold,
   },
-  sort_by: {
-    initial: DEFAULTS.sort_by,
-    serialize: () => ({}),
-    component: withProps({
-      options: [
-        { label: emojize('💎', 'Gain'), value: 'gain' },
-        { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
-      ],
-    })(Sorting),
-  },
 }
 
 const layout = {
   nav: {
     display: 'grid',
-    gridTemplateColumns: ['min-content min-content min-content', '1fr min-content min-content min-content'],
+    gridTemplateColumns: ['min-content min-content', '1fr min-content min-content'],
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
-      `"results threshold sort_by"`,
-      `"title results threshold sort_by"`,
+      `"results threshold"`,
+      `"title results threshold"`,
     ],
     '>h4': {
       display: ['none', 'block'],
@@ -159,13 +138,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const connected = useSyncExternalStore(online.subscribe, online.get)
   const [values, setValues] = useHistoryState('proposals', DEFAULTS) as any
   const threshold = typeof values?.threshold === 'number' ? values.threshold : DEFAULTS.threshold
-  const sort = values?.sort_by?.value || DEFAULTS.sort_by.value
-  const descending = typeof values?.sort_by?.sort === 'boolean' ? values.sort_by.sort : DEFAULTS.sort_by.sort
 
   const [skipped, setSkipped] = useState({})
   const [decided, setDecided] = useState({})
   const [leaving, setLeaving] = useState({})
-  const [collapsed, setCollapsed] = useState({})
+  const [collapsed, setCollapsed] = useState({ rest: true })
   const [activeId, setActiveId] = useState(null)
   const [still, setStill] = useState(null)
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
@@ -199,8 +176,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const groups = useMemo(() => arrange(
     items.filter(item => !decided[item.id] || leaving[item.id]),
-    { threshold, sort, descending, skipped },
-  ), [items, decided, leaving, threshold, sort, descending, skipped])
+    { threshold, skipped },
+  ), [items, decided, leaving, threshold, skipped])
 
   const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
     const count = items.filter(item => !leaving[item.id]).length
@@ -476,7 +453,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       title='Swaps'
       layout={layout as any}
       fields={fields as any}
-      values={{ threshold, sort_by: { value: sort, sort: descending } }}
+      values={{ threshold }}
       onChange={(next) => setValues({ ...values, ...next })}
       statistics={{}}
       loading={!ready}
@@ -542,8 +519,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                 {row.type === 'group' ? (
                   <GroupTitle
                     group={row.group}
-                    emoji={EMOJI[row.group] || '🟰'}
-                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest}, ±${filesize.stringify(threshold)}` : `${LABELS.rest}, nothing changes`) : LABELS[row.group]}
+                    emoji={EMOJI[row.group] || '💤'}
+                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest}, ±${filesize.stringify(threshold)}` : `${LABELS.rest}, no change`) : LABELS[row.group]}
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
