@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
+import Tippy from '@tippyjs/react'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
@@ -443,21 +444,21 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
         </span>
       </span>
       {!!onDecide && (
-        <span sx={UICompact.styles.decide} data-decide={true}>
+        <div sx={UICompact.styles.decide} data-decide={true} onClick={(e) => e.target === e.currentTarget && onSelect(item.id)}>
           {(['accept', 'refuse'] as const).map(verdict => (
-            <button
-              key={verdict}
-              type='button'
-              disabled={disabled}
-              onClick={() => onDecide(verdict)}
-              aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
-              title={verdict === 'accept' ? 'Accept' : 'Refuse'}
-              data-verdict={verdict}
-            >
-              <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='0.875em' height='0.875em' />
-            </button>
+            <Tippy key={verdict} content={<code>{verdict === 'accept' ? 'Accept' : 'Refuse'}</code>} delay={[300, 0]}>
+              <button
+                type='button'
+                disabled={disabled}
+                onClick={() => onDecide(verdict)}
+                aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
+                data-verdict={verdict}
+              >
+                <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='1.125em' height='1.125em' />
+              </button>
+            </Tippy>
           ))}
-        </span>
+        </div>
       )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
         {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
@@ -491,8 +492,8 @@ UICompact.styles = {
       pointerEvents: 'none',
     },
     '@media (hover: hover)': {
-      ':hover, :focus-within': {
-        '>[data-decide]': { opacity: 1, visibility: 'visible', transition: 'opacity 150ms ease-in-out 250ms' },
+      '>[data-decide]:hover, >[data-decide]:focus-within': {
+        '>button': { opacity: 1, transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out' },
       },
     },
   },
@@ -507,44 +508,41 @@ UICompact.styles = {
       outlineOffset: '-1px',
     },
   },
-  // Faded in on hover only, in a column that is always there, so nothing moves.
+  // A zone over the right of the row, left of the size: hovering it fades the icons
+  // in, and a click on its empty part opens the card like the rest of the row.
   decide: {
     gridArea: 'decide',
+    alignSelf: 'stretch',
     display: ['none', 'flex'],
+    alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
+    width: '12em',
+    marginY: -8,
     pointerEvents: 'auto',
-    opacity: 0,
-    visibility: 'hidden',
-    transition: 'opacity 150ms ease-in-out, visibility 0ms linear 150ms',
+    cursor: 'pointer',
     '>button': {
       variant: 'button.reset',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '1.75em',
-      height: '1.75em',
-      borderRadius: '50%',
-      backgroundColor: 'gray',
+      padding: 10,
       color: 'grayDarkest',
       cursor: 'pointer',
-      transition: 'background-color 150ms ease-in-out, color 150ms ease-in-out',
-      ':hover:not(:disabled), :focus-visible': {
-        color: 'whitePure',
-      },
+      opacity: 0,
+      transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out',
       '&[data-verdict=accept]:hover:not(:disabled), &[data-verdict=accept]:focus-visible': {
-        backgroundColor: 'primaryDarkest',
+        color: 'primary',
       },
       '&[data-verdict=refuse]:hover:not(:disabled), &[data-verdict=refuse]:focus-visible': {
-        backgroundColor: 'grayDarker',
+        color: 'text',
       },
       ':focus-visible': {
+        opacity: 1,
         outline: '1px solid',
         outlineColor: 'grayDarkest',
-        outlineOffset: '2px',
+        borderRadius: '0.25em',
       },
       ':disabled': {
         cursor: 'default',
-        opacity: 0.5,
       },
     },
   },
