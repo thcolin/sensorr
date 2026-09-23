@@ -9,7 +9,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful }) => (
         <a
           href={review.external}
           target='_blank'
-          rel='norefer noopener'
+          rel='noreferrer noopener'
           key={review.source}
           sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
           title={{
@@ -46,7 +46,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful }) => (
           <a
             href={(entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.link}
             target='_blank'
-            rel='norefer noopener'
+            rel='noreferrer noopener'
             sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
             title={`Available for streaming on "${provider.provider_name}" (source JustWatch)`}
           >
@@ -61,7 +61,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful }) => (
           <a
             href={additional?.externals[external]}
             target='_blank'
-            rel='norefer noopener'
+            rel='noreferrer noopener'
             key={external}
             sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
             title={{

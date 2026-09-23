@@ -7,7 +7,7 @@ import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMe
 import { Metadata } from '../Details/components/Metadata'
 import { Externals, Meaningful } from '../Details/components/Externals'
 import { Transition } from '../../components/Sensorr/Proposal'
-import { ReleaseState, Statistic } from '../../components/Sensorr/Release'
+import { ReleaseState, Statistic, safeUrl } from '../../components/Sensorr/Release'
 
 export const EMOJI = {
   'record': '📹',
@@ -73,8 +73,8 @@ const UIReleaseLine = ({ release, heaviest }) => (
       <code title={release.original}>{(release.title || '').split('.').map((part, index, parts) => <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>)}</code>
       {!!release.znab && (
         <>
-          <a href={release.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({release.znab})</small></code></a>
-          <a href={release.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title='Download .torrent file'><code><small>.torrent</small></code></a>
+          <a href={safeUrl(release.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({release.znab})</small></code></a>
+          <a href={safeUrl(release.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title='Download .torrent file'><code><small>.torrent</small></code></a>
         </>
       )}
     </span>

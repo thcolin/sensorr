@@ -69,7 +69,7 @@ const UIRelease = ({
                       ⊘
                     </i>
                     <i title="Report release parsing issue">
-                      <a target='_blank' rel='norefer noopener' href={reportOleoo({ generated: meta.generated, original: meta.original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
+                      <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: meta.generated, original: meta.original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                     </i>
                   </div>
                 )}
@@ -91,9 +91,9 @@ const UIRelease = ({
                   {!!entity?.znab && (
                     <span sx={UIRelease.styles.subtitle}>
                       <span>&nbsp;&nbsp;&nbsp;</span>
-                      <a href={entity?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
+                      <a href={safeUrl(entity?.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
                       <span>&nbsp;&nbsp;&nbsp;</span>
-                      <a href={entity?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+                      <a href={safeUrl(entity?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
                     </span>
                   )}
                 </div>
@@ -424,6 +424,9 @@ UIStatistic.styles = {
 export const Statistic = memo(UIStatistic)
 
 export const Release = memo(UIRelease)
+
+// Indexer links reach an `href` as they come: only http(s) is let through.
+export const safeUrl = (url) => /^https?:\/\//i.test(url || '') ? url : undefined
 
 export const reportOleoo = ({ generated = '', original = '' }) => report({
   user: 'thcolin',
