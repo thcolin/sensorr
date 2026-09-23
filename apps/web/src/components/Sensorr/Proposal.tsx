@@ -40,13 +40,13 @@ const Value = memo(UIValue)
 const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, state: forced = null, ...props }) => {
   const { state: computed, separator, left, right } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
   const state = forced || computed
-  const styles = compact ? UITransition.styles.compact : UITransition.styles.full
+  const side = { ...UITransition.styles.side, ...(compact ? UITransition.styles.compact : {}) }
   const tint = UITransition.styles.tints[state] || UITransition.styles.tints.quiet
 
   if (state === 'same') {
     return (
-      <span {...props} sx={{ ...UITransition.styles.element, ...styles.element, opacity: 0.3 }} title={`${axis}: ${to}`}>
-        <span sx={{ ...UITransition.styles.side, ...styles.side, ...tint.after }}>
+      <span {...props} sx={{ ...UITransition.styles.element, opacity: 0.3 }} title={`${axis}: ${to}`}>
+        <span sx={{ ...side, ...tint.after }}>
           <Value axis={axis} value={to} compact={compact} />{!compact && !!right.mark && <sup>{right.mark}</sup>}
         </span>
       </span>
@@ -54,11 +54,11 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
   }
 
   return (
-    <span {...props} sx={{ ...UITransition.styles.element, ...styles.element }} title={`${axis}: ${from} ${separator} ${to}`}>
-      <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.before, ...styles.before, ...tint.before }}>
+    <span {...props} sx={UITransition.styles.element} title={`${axis}: ${from} ${separator} ${to}`}>
+      <span sx={{ ...side, ...UITransition.styles.before, ...tint.before }}>
         <Value axis={axis} value={from} compact={compact} />{!compact && !!left.mark && <sup>{left.mark}</sup>}
       </span>
-      <span sx={{ ...UITransition.styles.side, ...styles.side, ...UITransition.styles.after, ...tint.after }}>
+      <span sx={{ ...side, ...UITransition.styles.after, ...tint.after }}>
         <Value axis={axis} value={to} compact={compact} />{!compact && !!right.mark && <sup>{right.mark}</sup>}
       </span>
     </span>
@@ -73,6 +73,7 @@ UITransition.styles = {
     fontFamily: 'monospace',
     whiteSpace: 'nowrap',
     lineHeight: 'normal',
+    fontSize: 6,
   },
   side: {
     display: 'inline-flex',
@@ -81,6 +82,8 @@ UITransition.styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     borderRadius: '1em',
+    paddingX: 5,
+    paddingY: 9,
     '>sup': {
       fontSize: 8,
       marginLeft: 11,
@@ -92,6 +95,7 @@ UITransition.styles = {
     borderTopRightRadius: '0em',
     borderBottomRightRadius: '0em',
     marginRight: '-1em',
+    paddingRight: '1.875em',
     fontWeight: 'normal',
   },
   after: {
@@ -112,15 +116,8 @@ UITransition.styles = {
       after: { backgroundColor: 'grayDark', color: 'text' },
     },
   },
-  full: {
-    element: { fontSize: 5 },
-    side: { paddingX: 6, paddingY: 10 },
-    before: { paddingRight: '1.75em' },
-  },
   compact: {
-    element: { fontSize: 7 },
-    side: { paddingX: 8, paddingY: 11, maxWidth: '9em' },
-    before: { paddingRight: '1.5em' },
+    maxWidth: '9em',
   },
 }
 

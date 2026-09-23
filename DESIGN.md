@@ -190,7 +190,7 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.mono}"
     rounded: "1em"
-    padding: "0.25em 0.75em"
+    padding: "0.375em 0.875em"
   transition-pill-before:
     backgroundColor: "{colors.gray}"
     textColor: "{colors.grayDarkest}"
@@ -384,7 +384,8 @@ mixing them is how the interface tells you what kind of thing you are looking at
   (`libs/theme/src/lib/theme/variants.ts:28-53`).
 - **caption** (600, `0.625em`, 1.2): a poster's year and genre line
   (`libs/ui/src/elements/Entity/Poster/Poster.tsx:398-415`).
-- **mono** (400, `0.875em`, 1): badge labels and transition pills.
+- **mono** (400, `0.875em`, 1): badge labels. Transition pills set it at `0.75em`, the same
+  size in the active card and in the list.
 - **mono-strong** (600, `0.75em`, 1.2): a tag.
 
 ### Named Rules
