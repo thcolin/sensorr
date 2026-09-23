@@ -441,23 +441,28 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
             ))}
           </span>
           {!!onDecide && <Gestures onGesture={onDecide} disabled={disabled} muted={true} shortcuts={false} sx={UICompact.styles.decide} data-decide={true} />}
-          <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-            {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
-          </code>
         </span>
       </span>
+      <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+      </code>
     </div>
   )
 }
 
 UICompact.styles = {
+  // The size sits in its own column, centred on the row; on a phone it drops under the pills.
   element: {
     position: 'relative',
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto'],
+    gridTemplateRows: ['1fr auto', '1fr'],
+    gridTemplateAreas: ['"poster body" "poster size"', '"poster body size"'],
     alignItems: 'center',
-    gap: 6,
+    columnGap: 6,
+    rowGap: 8,
     width: '100%',
-    height: ['108px', '80px'],
+    height: ['108px', '88px'],
     paddingX: 4,
     paddingY: 8,
     borderBottom: '1px solid',
@@ -466,7 +471,7 @@ UICompact.styles = {
     ':hover': {
       backgroundColor: 'grayLightest',
     },
-    '>span': {
+    '>span, >code': {
       pointerEvents: 'none',
     },
     '@media (hover: hover)': {
@@ -502,7 +507,8 @@ UICompact.styles = {
     },
   },
   poster: {
-    flexShrink: 0,
+    gridArea: 'poster',
+    alignSelf: 'stretch',
     display: 'flex',
     height: '100%',
     aspectRatio: '2 / 3',
@@ -511,12 +517,14 @@ UICompact.styles = {
     '>span': { width: '100%' },
   },
   body: {
+    gridArea: 'body',
+    alignSelf: ['end', 'center'],
     flex: 1,
     minWidth: 0,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
   title: {
     display: 'flex',
@@ -557,16 +565,16 @@ UICompact.styles = {
       height: '1.3em',
       overflow: 'hidden',
     },
-    '>code': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      flexShrink: 0,
-      fontFamily: 'monospace',
-      color: 'text',
-      '>small': {
-        fontSize: 7,
-      },
+  },
+  size: {
+    gridArea: 'size',
+    justifySelf: ['start', 'end'],
+    display: 'flex',
+    alignItems: 'center',
+    fontFamily: 'monospace',
+    color: 'text',
+    '>small': {
+      fontSize: 7,
     },
   },
 }

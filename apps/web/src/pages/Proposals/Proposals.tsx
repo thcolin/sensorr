@@ -39,7 +39,7 @@ const LEAVE = 400
 
 const GROUP_HEIGHT = 40
 // Card.tsx gives the compact row a third line on a phone.
-const COMPACT_HEIGHT = [108, 80]
+const COMPACT_HEIGHT = [108, 88]
 const ACTIVE_HEIGHT = 300
 
 // A same-language proposal whose size moves less than this goes to the ignored group.
