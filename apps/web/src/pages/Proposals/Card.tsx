@@ -492,8 +492,8 @@ UICompact.styles = {
       pointerEvents: 'none',
     },
     '@media (hover: hover)': {
-      '>[data-decide]:hover, >[data-decide]:focus-within': {
-        '>button': { opacity: 1, transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out' },
+      ':hover, :focus-within': {
+        '>[data-decide] >button': { opacity: 1, transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out' },
       },
     },
   },
@@ -508,8 +508,8 @@ UICompact.styles = {
       outlineOffset: '-1px',
     },
   },
-  // A zone over the right of the row, left of the size: hovering it fades the icons
-  // in, and a click on its empty part opens the card like the rest of the row.
+  // Hovering the row fades the icons in; they linger 300ms after the pointer leaves.
+  // A click on the empty part of their zone opens the card like the rest of the row.
   decide: {
     gridArea: 'decide',
     alignSelf: 'stretch',
@@ -528,7 +528,7 @@ UICompact.styles = {
       color: 'grayDarkest',
       cursor: 'pointer',
       opacity: 0,
-      transition: 'opacity 150ms ease-in-out, color 150ms ease-in-out',
+      transition: 'opacity 200ms ease-in-out 300ms, color 150ms ease-in-out',
       '&[data-verdict=accept]:hover:not(:disabled), &[data-verdict=accept]:focus-visible': {
         color: 'primary',
       },
