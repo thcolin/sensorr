@@ -289,7 +289,8 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
           await api.fetch(uri, params, init)
           processed.push(movie)
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed` }))
-          state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: true, requested_by } })
+          // `processed` is what turns this log into a request notification, and an archived movie leaves nothing to answer
+          state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: movie.state !== 'archived', requested_by } })
         } else {
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" guests requests no need update` }))
           state.logger.info({ message: `Movie "${movie.title}" guests requests no need update`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: false, requested_by } })

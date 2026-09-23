@@ -25,7 +25,13 @@ const UINotifications = ({ ...props }) => {
   const ref = useRef()
   const [pointerRef, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
-  const { notifications, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
+  const { notifications: all, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
+  const { metadata } = useMoviesMetadataContext() as any
+  const notifications = useMemo(() => all.filter(notification => !(
+    notification.meta?.command === 'keep-in-touch' &&
+    typeof notification.meta?.choice === 'undefined' &&
+    metadata[notification.meta?.movie?.id]?.state === 'archived'
+  )), [all, metadata])
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
   const [filter, setFilter] = useState(null)
   const filtered = useMemo(() => notifications.filter(notification => !filter || notification.meta?.command === filter), [notifications, filter])
