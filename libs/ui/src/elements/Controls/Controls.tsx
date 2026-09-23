@@ -167,13 +167,15 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
                 order={index}
                 watch={watch}
                 {...((Array.isArray(layout.aside) ? layout.aside : [layout.aside]).length > 1 ? {
-                  level: index === 0 ? (level || 0) + (subAsides.findLastIndex(v => v) >= index ? 0 : 2) : (level || 0) + 1,
+                  level: index === 0 ? (subAsides.findLastIndex(v => v) >= index ? [(level || 0), (level || 0) + 2] : (level || 0) + 2) : (level || 0) + 1,
                 } : {
                   level,
                 })}
                 {...(index === 0 ? {
                   open,
                   toggleOpen: togglePortal,
+                  dimmed: subAsides.some(v => v),
+                  onDimmedClick: () => setSubAsides(subAsides => subAsides.map(() => false)),
                   onChange: (next) => handleChange(next, () => closePortal(false)),
                 } : {
                   open: subAsides[index - 1],

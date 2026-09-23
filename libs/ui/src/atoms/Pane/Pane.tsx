@@ -1,11 +1,7 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { Shadow } from '../Shadow/Shadow'
 import { Icon } from '../Icon/Icon'
-
-// On desktop a sub pane opens in two steps: its shadow sweeps over the pane before it, then it slides out from under that pane's edge
-const SWEEP = 300
-const SLIDE = 400
 
 export interface PaneProps {
   position: 'right' | 'left'
@@ -13,27 +9,18 @@ export interface PaneProps {
   background?: string
   open: boolean
   toggleOpen: () => void
-  level?: number
+  level?: number | number[]
   order?: number
   shadow?: boolean
+  dimmed?: boolean
+  onDimmedClick?: () => void
   children: React.ReactNode
 }
 
-const UIPane = ({ position, width = '25em', background: backgroundColor = 'primary', open, toggleOpen, children, level = 0, order = 0, shadow = true, ...props }: PaneProps) => {
+const UIPane = ({ position, width = '25em', background: backgroundColor = 'primary', open, toggleOpen, children, level = 0, order = 0, shadow = true, dimmed = false, onDimmedClick, ...props }: PaneProps) => {
   const { theme } = useThemeUI()
+  const levels = [].concat(level)
   const [ready, setReady] = useState(open)
-  const previousLevel = useRef(level)
-  const rising = useRef(false)
-
-  if (level !== previousLevel.current) {
-    rising.current = level > previousLevel.current
-    previousLevel.current = level
-  }
-
-  useEffect(() => {
-    const timeout = setTimeout(() => { rising.current = false }, SWEEP + SLIDE)
-    return () => clearTimeout(timeout)
-  }, [level])
 
   useEffect(() => {
     if (open) {
@@ -50,13 +37,6 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
       <aside
         sx={{
           ...UIPane.styles.element,
-          // A pane coming back up waits for the shadow above it to leave
-          transition: [
-            `transform ${SLIDE}ms ease, z-index 0ms linear ${rising.current ? SLIDE : 0}ms`,
-            order
-              ? `transform ${SLIDE}ms ease ${open ? SWEEP : 0}ms, clip-path ${SLIDE}ms ease ${open ? SWEEP : 0}ms`
-              : `transform ${SLIDE}ms ease, z-index 0ms linear ${rising.current ? SWEEP + SLIDE : 0}ms`,
-          ],
           backgroundColor,
           ...{
             right: {
@@ -68,10 +48,9 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
               bottom: '0em',
               transform: [
                 `translate3d(${open ? '0em, 0px, 0px' : '100%, 0px, 0px'})`,
-                `translate3d(${open ? `-${order * 25}em, 0px, 0px` : order ? `-${(order - 1) * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
+                `translate3d(${open ? `-${order * 25}em, 0px, 0px` : '100%, 0px, 0px'})`,
               ],
-              ...(order ? { clipPath: ['none', `inset(0px ${open ? '0%' : '100%'} 0px 0px)`] } : {}),
-              zIndex: 8 + level,
+              zIndex: levels.map(level => 8 + level),
             },
             left: {
               height: '100dvh',
@@ -82,20 +61,33 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
               left: '0em',
               transform: [
                 `translate3d(${open ? '0em, 0px, 0px' : '-100%, 0px, 0px'})`,
-                `translate3d(${open ? `${order * 25}em, 0px, 0px` : order ? `${(order - 1) * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
+                `translate3d(${open ? `${order * 25}em, 0px, 0px` : '-100%, 0px, 0px'})`,
               ],
-              ...(order ? { clipPath: ['none', `inset(0px 0px 0px ${open ? '0%' : '100%'})`] } : {}),
-              zIndex: 8 + level,
+              zIndex: levels.map(level => 8 + level),
             },
           }[position],
         }}
       >
-        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 8 + level }}>
+        <div sx={UIPane.styles.wrapper} style={{ opacity: ready ? 1 : 0, zIndex: 8 + levels[0] }}>
           {ready && children}
         </div>
         <div sx={UIPane.styles.spinner} style={{ visibility: ready ? 'hidden' : 'visible' }}>
           <Icon value='spinner' color='gray-100' />
         </div>
+        {/* On desktop a sub pane slides out from under this one, so this one carries the sub pane's shadow itself */}
+        {onDimmedClick && (
+          <button
+            sx={UIPane.styles.dim}
+            onClick={onDimmedClick}
+            style={{
+              zIndex: dimmed ? 9 + levels[0] : -1,
+              transition: `opacity 400ms ease, z-index ${dimmed ? '0ms' : '400ms'} linear`,
+              opacity: dimmed ? 1 : 0,
+            }}
+          >
+            <Shadow palette={{ backgroundColor: theme.rawColors.gray }} fade={0.1} />
+          </button>
+        )}
       </aside>
       {/* Above the header, which rises to 6 while the search results are open (Header.tsx). */}
       {shadow && (
@@ -103,25 +95,14 @@ const UIPane = ({ position, width = '25em', background: backgroundColor = 'prima
           key='shadow'
           sx={{
             ...UIPane.styles.shadow,
-            opacity: [open ? 1 : 0, order || open ? 1 : 0],
-            transition: [
-              `opacity ${SLIDE}ms ease, z-index ${open ? `0ms linear ${rising.current ? SLIDE : 0}ms` : `${SLIDE}ms linear`}`,
-              order
-                ? `z-index 0ms linear ${open ? 0 : SWEEP + SLIDE}ms`
-                : `opacity ${SLIDE}ms ease, z-index ${open ? `0ms linear ${rising.current ? SWEEP + SLIDE : 0}ms` : `${SLIDE}ms linear`}`,
-            ],
-            ...(order ? {
-              '>div': {
-                ...UIPane.styles.shadow['>div'],
-                [position]: '0em',
-                width: ['100%', `${order * 25}em`],
-                transform: ['none', `translate3d(${open ? '0%' : { left: '-100%', right: '100%' }[position]}, 0px, 0px)`],
-                transition: ['background-color 800ms ease-in-out', `transform ${SWEEP}ms ease ${open ? 0 : SLIDE}ms, background-color 800ms ease-in-out`],
-              },
-            } : {}),
+            ...(order ? { '>div': { ...UIPane.styles.shadow['>div'], display: ['block', 'none'] } } : {}),
           }}
           onClick={toggleOpen}
-          style={{ zIndex: open ? (7 + level) : -1 }}
+          style={{
+            zIndex: open ? (7 + levels[0]) : -1,
+            transition: `opacity 400ms ease, z-index ${open ? '0ms' : '400ms'} linear`,
+            opacity: open ? 1 : 0,
+          }}
         >
           <Shadow palette={{ backgroundColor: theme.rawColors.gray }} fade={0.1} />
         </button>
@@ -135,6 +116,7 @@ UIPane.styles = {
     position: 'fixed',
     display: 'flex',
     color: '#FFF',
+    transition: 'transform 400ms ease',
     transform: 'translateZ(0)',
   },
   wrapper: {
@@ -150,6 +132,19 @@ UIPane.styles = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     transition: 'visibility 0ms ease 5000ms',
+  },
+  dim: {
+    variant: 'button.reset',
+    position: 'absolute',
+    display: ['none', 'block'],
+    top: '0em',
+    left: '0em',
+    height: '100%',
+    width: '100%',
+    '>div': {
+      top: '0em',
+      left: '0em',
+    },
   },
   shadow: {
     variant: 'button.reset',

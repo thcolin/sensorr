@@ -7,11 +7,13 @@ import { Pane } from '../../../atoms/Pane/Pane'
 
 export interface AsideProps extends Omit<InputsProps, 'control'> {
   toggleOpen: () => void
-  level?: number
+  level?: number | number[]
   shadow?: boolean
+  dimmed?: boolean
+  onDimmedClick?: () => void
 }
 
-const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, background = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, controls = true, watch: watcher, ...props }) => {
+const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, background = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, dimmed = false, onDimmedClick = undefined, controls = true, watch: watcher, ...props }) => {
   const { t } = useTranslation()
   const { control, reset, watch, handleSubmit } = useForm({ defaultValues })
   const watching = !!(watcher || [])[0] && watch(watcher[0]).reduce((acc, curr, i) => ({ ...acc, [watcher[i]]: curr }), {})
@@ -42,6 +44,8 @@ const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', wid
       level={level}
       order={order}
       shadow={shadow}
+      dimmed={dimmed}
+      onDimmedClick={onDimmedClick}
     >
       <form sx={{ ...UIAside.styles.form, backgroundColor, background }} onSubmit={handleSubmit(onChange)} onKeyPress={e => e.key === 'Enter' && e.preventDefault()}>
         <div sx={UIAside.styles.container}>
