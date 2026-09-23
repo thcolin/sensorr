@@ -2,9 +2,7 @@ import { memo, useMemo } from 'react'
 import { transitionOf } from '../../pages/Proposals/queue'
 import { logos } from './Release'
 
-// A value as the Releases panel draws it: the source, codec and flag logos, and the
-// language flag next to its name, since MULTi-VFF and MULTi-VF2 share a flag. A value
-// without a drawn logo stays text.
+// The language keeps its name next to its flag: MULTi-VFF and MULTi-VF2 share one.
 const UIValue = ({ axis, value, compact = false }) => {
   const logo = logos[axis]?.[value]
   const drawn = !!logo && logo.type !== 'code'

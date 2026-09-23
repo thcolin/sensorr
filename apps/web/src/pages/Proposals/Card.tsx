@@ -21,11 +21,9 @@ export const VERDICTS = {
   ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
 }
 
-// A signed size delta, in the unit `filesize` picks for its absolute value.
 export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${filesize.stringify(Math.abs(bytes))}`
 
-// The TMDB credits and the WikiData ratings of the active movie. The next two are
-// loaded ahead so a decision never waits on them; only the last few stay in memory.
+// Kept for the few movies around the active one, so a decision never waits on TMDB.
 const details = new Map()
 
 export const useLoadDetails = () => {

@@ -347,7 +347,6 @@ UIRelease.styles = {
   },
 }
 
-// Which job put the release there, and what became of it: the emoji every release line starts with.
 const UIReleaseState = ({ entity = null }) => (
   (!entity?.title) ? (
     <Tippy maxWidth='80vw' disabled={true}>
@@ -388,7 +387,6 @@ const UIReleaseState = ({ entity = null }) => (
 
 export const ReleaseState = memo(UIReleaseState)
 
-// One bar of a release's statistics, filled to `ratio` of the heaviest candidate.
 const UIStatistic = ({ emoji, title, ratio, valid = true, children }) => {
   const { theme } = useThemeUI()
   const color = valid ? theme.rawColors.primary : theme.rawColors.grayDarker

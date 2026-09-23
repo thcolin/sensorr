@@ -1,8 +1,6 @@
 import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
 
-// The ratings and the links out of a movie: TMDB, Rotten Tomatoes and Metacritic scores,
-// the Plex and streaming providers, and every external database WikiData knows.
 const UIExternals = ({ entity, metadata, additional, meaningful }) => (
   <div sx={UIExternals.styles.element}>
     <div>
@@ -104,8 +102,6 @@ UIExternals.styles = {
 
 export const Externals = memo(UIExternals)
 
-// The director, runtime and genres line, which opens on the dates, figures, companies
-// and keywords.
 const UIMeaningful = ({ meaningful, open, onToggle }) => (
   <details sx={UIMeaningful.styles.element} onToggle={(e: any) => onToggle(e.target.open)} open={open}>
     <summary>

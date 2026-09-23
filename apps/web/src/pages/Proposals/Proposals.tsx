@@ -19,7 +19,6 @@ import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
 
 const MB = 1024 * 1024
 
-// Only what a card draws: 1.6 KB a movie instead of 4.9 KB (movies.service.ts, `fields`).
 const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'state']
 
 const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
@@ -35,10 +34,9 @@ const LABELS = {
   shrink: 'shrink',
 }
 
-// Time a decision waits before it is sent, while `Z` can still take it back.
 const DELAY = 5000
 
-// Band then collapse: 150 ms + 250 ms, the leaving card is dropped once both are done.
+// The band and collapse durations of Card.tsx, after which the leaving card is dropped.
 const LEAVE = 400
 
 const GROUP_HEIGHT = 40
@@ -172,8 +170,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const pending = useRef(null)
   const lastIndex = useRef(0)
 
-  // One Policy per policy name, and one item per releases array: a SSE change only
-  // recomputes the movies it touched.
+  // Keyed on the releases array, so a SSE change only recomputes the movies it touched.
   const policies = useMemo(() => new Map(), [sensorr.policies])
   const cache = useRef(new WeakMap())
 
@@ -223,12 +220,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     lastIndex.current = Math.max(0, activeIndex)
   }, [activeIndex])
 
-  // The active movie's credits and ratings, and the two after it, before they are needed.
   useEffect(() => {
     queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id)?.catch(() => null))
   }, [queue, activeIndex])
 
-  // Treated from another tab or by a job: the proposal is gone from the metadata.
+  // Treated from another tab or by a job: the proposal left the metadata.
   const previous = useRef(null)
   useEffect(() => {
     const id = previous.current?.id
@@ -376,8 +372,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }, [stickies]),
   })
 
-  // The list sits under the green bar inside the same scroll container, so its
-  // offset is the virtualizer's scroll margin (same as ProcessMovies.tsx:101-128).
+  // The list shares `#body` with the green bar above it, hence the scroll margin.
   useLayoutEffect(() => {
     if (!list.current || !body.current) {
       return
@@ -394,7 +389,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return () => observer.disconnect()
   }, [ready, rows.length > 0])
 
-  // Brought back by `Z`, a failed send or a click lower down: keep it in view.
   useEffect(() => {
     const index = rows.findIndex(row => row.type === 'item' && row.item === active)
 

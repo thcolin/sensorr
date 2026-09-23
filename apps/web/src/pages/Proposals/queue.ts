@@ -1,6 +1,4 @@
-// The proposal queue as data: what each proposal changes, which group it falls in,
-// in which order it comes, and what a verdict writes on the movie. Kept free of any
-// UI import so it can be tested on its own.
+// Free of any UI import, so that queue.spec.ts runs without the app around it.
 
 // oleoo axes compared between the owned release and the proposed one, in the order
 // they read in a release name. `dub` is the audio codec, not the language.
@@ -103,9 +101,6 @@ export const proposalDiff = (owned, proposed, policy) => {
 
 export const isPending = (release) => !!release?.proposal && typeof release?.choice !== 'boolean'
 
-export const pendingOf = (releases) => (releases || []).find(isPending) || null
-
-// A proposal as the queue sees it: the movie, what it owns, what is proposed, and the diff.
 export const itemOf = (entity, releases, policy) => {
   const scored = scoreReleases(releases, policy)
   const owned = scored.filter(({ proposal }) => !proposal)
@@ -122,8 +117,7 @@ export const itemOf = (entity, releases, policy) => {
   }
 }
 
-// The last group gathers what barely moves: same language, and a size that changes by
-// less than the threshold. At 0 it keeps only proposals on which no axis changes at all.
+// At a threshold of 0 the last group keeps only the proposals on which no axis changes.
 export const groupOf = (item, threshold) => {
   if (item.owned.length) {
     const language = item.diff.rows.find(({ axis }) => axis === 'language')
@@ -166,8 +160,6 @@ export const PROCESSED_AT = {
 
 const timeOf = (item) => new Date(item.entity?.[PROCESSED_AT[item.command]] || item.entity?.updated_at || 0).getTime()
 
-// Groups in their fixed order, each sorted by gain (language first, then space) or by
-// date. A skipped proposal goes after every other one of its group, in skip order.
 export const arrange = (items, { threshold, sort = 'gain', descending = true, skipped = {} }) => {
   const direction = descending ? 1 : -1
   const keyed = items.map(item => ({ item, group: groupOf(item, threshold), gain: gainOf(item), time: timeOf(item) }))
@@ -193,10 +185,8 @@ export const arrange = (items, { threshold, sort = 'gain', descending = true, sk
   }))
 }
 
-// What a verdict writes on the movie metadata. Accepting archives the movie, like
-// `setMovieMetadata(id, 'proposal', …)` does; banning also lists the release title in
-// `banned_releases`, the only list the jobs exclude on (policy.ts:149-161), which is what
-// makes it differ from refusing.
+// Banning lists the title in `banned_releases`, the only list the jobs exclude on
+// (policy.ts:149-161): a refused release can be proposed again, a banned one cannot.
 export const decide = (metadata, releaseId, verdict: Verdict) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
 
