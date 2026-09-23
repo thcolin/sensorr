@@ -103,7 +103,7 @@ export class MoviesService {
           ...(changes[i].releases ? {
             releases: changes[i].releases
               .filter(release => !release.proposal || (release as ReleaseDTO & { choice?: boolean }).choice !== false)
-              .map(({ proposal, choice, overdue, landed, ...release }: ReleaseDTO & { choice?: boolean }) => ({
+              .map(({ proposal, choice, overdue, ...release }: ReleaseDTO & { choice?: boolean }) => ({
                 ...release,
                 ...(proposal && choice === undefined ? { proposal: true } : {}),
                 // An accepted swap names the Plex versions it replaces, for `sync` to delete once it lands.
@@ -113,7 +113,6 @@ export class MoviesService {
                   accepted_at: Date.now(),
                 } : {
                   ...(overdue ? { overdue } : {}),
-                  ...(landed ? { landed } : {}),
                 }),
               })),
           } : {}),

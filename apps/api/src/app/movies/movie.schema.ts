@@ -210,7 +210,6 @@ export class Movie extends Document {
       replaces: [String],
       accepted_at: Number,
       overdue: Boolean,
-      landed: { id: String, at: Number },
     }
   ]))
   releases: Record<any, any>
