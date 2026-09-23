@@ -42,12 +42,16 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
   const state = forced || computed
   const side = UITransition.styles.side
   const element = { ...UITransition.styles.element, fontSize: compact ? 6 : 5 }
-  const tint = UITransition.styles.tints[state] || UITransition.styles.tints.quiet
+  const { quiet } = UITransition.styles.tints
+  const tint = UITransition.styles.tints[state] || quiet
+  // An unknown value carries no verdict: its side stays gray whatever the axis did.
+  const before = from ? tint.before : quiet.before
+  const after = to ? tint.after : quiet.after
 
   if (state === 'same') {
     return (
       <span {...props} sx={{ ...element, opacity: 0.3 }} title={`${axis}: ${to}`}>
-        <span sx={{ ...side, ...tint.after }}>
+        <span sx={{ ...side, ...after }}>
           <Value axis={axis} value={to} compact={compact} />
         </span>
       </span>
@@ -56,10 +60,10 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
 
   return (
     <span {...props} sx={element} title={`${axis}: ${from} ${separator} ${to}`}>
-      <span sx={{ ...side, ...UITransition.styles.before, ...tint.before }}>
+      <span sx={{ ...side, ...UITransition.styles.before, ...before }}>
         <Value axis={axis} value={from} compact={compact} />
       </span>
-      <span sx={{ ...side, ...UITransition.styles.after, ...tint.after }}>
+      <span sx={{ ...side, ...UITransition.styles.after, ...after }}>
         <Value axis={axis} value={to} compact={compact} />
       </span>
     </span>
