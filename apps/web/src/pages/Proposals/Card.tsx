@@ -440,9 +440,25 @@ const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshol
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
-          {!!onDecide && <Gestures onGesture={onDecide} disabled={disabled} muted={true} shortcuts={false} sx={UICompact.styles.decide} data-decide={true} />}
         </span>
       </span>
+      {!!onDecide && (
+        <span sx={UICompact.styles.decide} data-decide={true}>
+          {(['accept', 'refuse'] as const).map(verdict => (
+            <button
+              key={verdict}
+              type='button'
+              disabled={disabled}
+              onClick={() => onDecide(verdict)}
+              aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
+              title={verdict === 'accept' ? 'Accept' : 'Refuse'}
+              data-verdict={verdict}
+            >
+              <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='0.875em' height='0.875em' />
+            </button>
+          ))}
+        </span>
+      )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
         {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
       </code>
@@ -455,9 +471,9 @@ UICompact.styles = {
   element: {
     position: 'relative',
     display: 'grid',
-    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto'],
+    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto auto'],
     gridTemplateRows: ['1fr auto', '1fr'],
-    gridTemplateAreas: ['"poster body" "poster size"', '"poster body size"'],
+    gridTemplateAreas: ['"poster body" "poster size"', '"poster body decide size"'],
     alignItems: 'center',
     columnGap: 6,
     rowGap: 8,
@@ -476,7 +492,7 @@ UICompact.styles = {
     },
     '@media (hover: hover)': {
       ':hover, :focus-within': {
-        '[data-decide]': { opacity: 1, visibility: 'visible', transition: 'opacity 150ms ease-in-out' },
+        '>[data-decide]': { opacity: 1, visibility: 'visible', transition: 'opacity 150ms ease-in-out 250ms' },
       },
     },
   },
@@ -491,19 +507,45 @@ UICompact.styles = {
       outlineOffset: '-1px',
     },
   },
-  // Shown on hover only, so a phone never gets them.
+  // Faded in on hover only, in a column that is always there, so nothing moves.
   decide: {
+    gridArea: 'decide',
     display: ['none', 'flex'],
-    marginRight: 'auto',
+    gap: 8,
     pointerEvents: 'auto',
     opacity: 0,
     visibility: 'hidden',
     transition: 'opacity 150ms ease-in-out, visibility 0ms linear 150ms',
     '>button': {
-      flex: 'none',
-      paddingX: 6,
-      paddingY: 10,
-      fontSize: 7,
+      variant: 'button.reset',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '1.75em',
+      height: '1.75em',
+      borderRadius: '50%',
+      backgroundColor: 'gray',
+      color: 'grayDarkest',
+      cursor: 'pointer',
+      transition: 'background-color 150ms ease-in-out, color 150ms ease-in-out',
+      ':hover:not(:disabled), :focus-visible': {
+        color: 'whitePure',
+      },
+      '&[data-verdict=accept]:hover:not(:disabled), &[data-verdict=accept]:focus-visible': {
+        backgroundColor: 'primaryDarkest',
+      },
+      '&[data-verdict=refuse]:hover:not(:disabled), &[data-verdict=refuse]:focus-visible': {
+        backgroundColor: 'grayDarker',
+      },
+      ':focus-visible': {
+        outline: '1px solid',
+        outlineColor: 'grayDarkest',
+        outlineOffset: '2px',
+      },
+      ':disabled': {
+        cursor: 'default',
+        opacity: 0.5,
+      },
     },
   },
   poster: {

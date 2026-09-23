@@ -6,12 +6,11 @@ const GESTURES = [
   { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline' },
 ] as const
 
-// `shortcuts` announces the A and R keys, which only the Swaps screen listens to;
-// `muted` draws both in grey, for a decision offered in passing.
-const UIGestures = ({ onGesture, disabled = false, shortcuts = true, muted = false, ...props }) => (
+// `shortcuts` announces the A and R keys, which only the Swaps screen listens to.
+const UIGestures = ({ onGesture, disabled = false, shortcuts = true, ...props }) => (
   <div {...props} sx={UIGestures.styles.element}>
     {GESTURES.map(({ verdict, key, label, variant }) => (
-      <Button key={verdict} variant={muted ? 'contain' : variant} color={muted ? 'gray' : 'primary'} disabled={disabled} onClick={() => onGesture(verdict)} {...(shortcuts ? { 'aria-keyshortcuts': key } : {})}>
+      <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} {...(shortcuts ? { 'aria-keyshortcuts': key } : {})}>
         {label}
       </Button>
     ))}
