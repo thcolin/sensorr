@@ -7,7 +7,7 @@ import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/Movie
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useAPI } from '../../../store/api'
 import Movie from '../../../components/Movie/Movie'
-import { Sensorr } from '../../../components/Sensorr'
+import { SensorrSingleton } from '../../../components/Sensorr'
 import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary } from '../Summary'
@@ -720,26 +720,6 @@ const MetadataSingleton = ({ setToggle, ...props }) => {
       //     return null
       //   }
       // }}
-    />
-  )
-}
-
-const SensorrSingleton = ({ setToggle, ...props }) => {
-  const [entity, setEntity] = useState(null)
-  const { loading, metadata: { [entity?.id]: _metadata = {} }, enhanceMovieMetadata } = useMoviesMetadataContext() as any
-  const metadata = useMemo(() => enhanceMovieMetadata(entity, _metadata), [entity?.id, _metadata])
-
-  return (
-    <Sensorr
-      entity={entity || {}}
-      loading={loading}
-      metadata={metadata}
-      setPortalToggle={(toggleOpen) => {
-        setToggle((e, entity) => {
-          setEntity(entity)
-          toggleOpen(e)
-        })
-      }}
     />
   )
 }
