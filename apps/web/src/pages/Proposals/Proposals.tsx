@@ -14,7 +14,7 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, GroupTitle, VERDICTS, morph, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Placeholder, VERDICTS, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
 import { GROUPS, Verdict, arrange, decide, itemOf } from './queue'
 
@@ -46,6 +46,9 @@ const GROUP_HEIGHT = 40
 // Card.tsx gives the compact row a third line on a phone.
 const COMPACT_HEIGHT = [108, 88]
 const ACTIVE_HEIGHT = 300
+
+// Title then pill widths, in em, for the rows drawn while the queue loads: enough to fill a screen.
+const SHAPES = [[9, 6.5, 6.5], [7, 11.5, 5.5, 9], [11, 9, 6], [16, 9, 6, 5.5], [8, 9, 5.5, 5.5], [10, 11.5, 6.5, 6.5], [9.5, 6.5], [11.5, 9, 7], [6.5, 11.5, 6], [13, 9, 6.5]]
 
 // A same-language proposal whose size moves less than this goes to the ignored group.
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
@@ -598,8 +601,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return (
       <>
         {nav}
-        <div sx={UIProposals.styles.skeletons}>
-          <span data-group /><span data-active /><span /><span /><span /><span /><span data-group /><span data-group />
+        <div sx={UIProposals.styles.element} aria-busy={true}>
+          <GroupPlaceholder />
+          {SHAPES.map((shape, i) => <Placeholder key={i} shape={shape} />)}
         </div>
       </>
     )
@@ -700,6 +704,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
             )
           })}
         </div>
+        <Warning emoji='📼' title='End of tape' subtitle='Be kind, rewind.' />
       </div>
       {mobile && !!active && (
         <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
@@ -753,29 +758,6 @@ UIProposals.styles = {
       flex: 1,
       justifyContent: 'center',
       paddingX: 8,
-    },
-  },
-  skeletons: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 11,
-    width: '100%',
-    maxWidth: '105em',
-    alignSelf: 'center',
-    paddingX: [8, 4],
-    paddingBottom: 4,
-    '>span': {
-      height: COMPACT_HEIGHT.map(height => `${height}px`),
-      backgroundImage: (theme) => `linear-gradient(90deg, ${theme.rawColors.grayLighter} 0%, ${theme.rawColors.grayLight} 50%, ${theme.rawColors.grayLighter} 100%)`,
-      backgroundSize: '200% 100%',
-      animation: 'sensorr-proposals-shimmer 1.4s ease-in-out infinite',
-      '&[data-group]': { height: `${GROUP_HEIGHT}px` },
-      '&[data-active]': { height: `${ACTIVE_HEIGHT}px` },
-      '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
-    },
-    '@keyframes sensorr-proposals-shimmer': {
-      '0%': { backgroundPosition: '200% 0' },
-      '100%': { backgroundPosition: '-200% 0' },
     },
   },
 }

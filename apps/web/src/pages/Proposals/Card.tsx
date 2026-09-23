@@ -645,6 +645,47 @@ UICompact.styles = {
 
 export const Compact = memo(UICompact)
 
+// A row while the queue loads: the compact row's own grid, with a bar where each text goes.
+// `shape` sets the title's width and the pills', in em, so the rows do not repeat.
+export const Placeholder = ({ shape }: { shape: number[] }) => {
+  const [title, ...pills] = shape
+
+  return (
+    <div sx={{ ...UICompact.styles.element, ':hover': {} }} aria-hidden={true}>
+      <span sx={{ ...UICompact.styles.poster, ...Placeholder.styles.bar, ...Placeholder.styles.poster }} />
+      <span sx={UICompact.styles.body}>
+        <span sx={UICompact.styles.title}>
+          <span sx={{ ...Placeholder.styles.bar, width: `${title}em`, height: '1em' }} />
+          <span sx={{ ...Placeholder.styles.bar, width: '2.25em', height: '0.75em' }} />
+        </span>
+        <span sx={UICompact.styles.diff}>
+          <span>
+            {pills.map((width, i) => <span key={i} sx={{ ...Placeholder.styles.bar, ...Placeholder.styles.pill, width: `${width}em` }} />)}
+          </span>
+        </span>
+      </span>
+      <span sx={{ ...UICompact.styles.size, ...Placeholder.styles.bar, ...Placeholder.styles.pill, width: '10em' }} />
+    </div>
+  )
+}
+
+// Still, like an empty poster anywhere else in the app. The poster box takes the grey
+// Picture draws before its image, so nothing changes colour when the rows arrive.
+Placeholder.styles = {
+  bar: {
+    display: 'block',
+    borderRadius: '0.25em',
+    backgroundColor: 'gray',
+  },
+  poster: {
+    backgroundColor: 'grayLight',
+  },
+  pill: {
+    height: '1.25rem',
+    borderRadius: '1em',
+  },
+}
+
 export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, menu = null, ...props }) => (
   <h6 {...props} sx={UIGroupTitle.styles.element}>
     <button type='button' onClick={onToggle} aria-expanded={open} sx={UIGroupTitle.styles.toggle}>
@@ -725,3 +766,9 @@ UIGroupTitle.styles = {
 }
 
 export const GroupTitle = memo(UIGroupTitle)
+
+export const GroupPlaceholder = () => (
+  <h6 sx={UIGroupTitle.styles.element} aria-hidden={true}>
+    <span sx={{ ...Placeholder.styles.bar, width: '7.5em', height: '1em' }} />
+  </h6>
+)
