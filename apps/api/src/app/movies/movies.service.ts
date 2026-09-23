@@ -12,6 +12,8 @@ import { ReleaseDTO } from './release.dto'
 import { MovieDTO } from './movie.dto'
 import { Movie as MovieDocument } from './movie.schema'
 
+const SWAPS = ['refine', 'shrink']
+
 const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
 
 @Injectable()
@@ -104,6 +106,11 @@ export class MoviesService {
               .map(({ proposal, choice, ...release }: ReleaseDTO & { choice?: boolean }) => ({
                 ...release,
                 ...(proposal && choice === undefined ? { proposal: true } : {}),
+                // An accepted swap names the Plex versions it replaces, for `sync` to delete once it lands
+                ...(proposal && choice === true && SWAPS.includes(release.from) ? {
+                  replaces: changes[i].releases.filter(({ from }) => from === 'sync').map(({ id }) => id),
+                  accepted_at: Date.now(),
+                } : {}),
               })),
           } : {}),
         },

@@ -207,6 +207,9 @@ export class Movie extends Document {
       link: String,
       enclosure: String,
       size: Number,
+      replaces: [String],
+      accepted_at: Number,
+      overdue: Boolean,
     }
   ]))
   releases: Record<any, any>

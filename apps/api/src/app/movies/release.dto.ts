@@ -9,4 +9,7 @@ export class ReleaseDTO {
   link?: string
   enclosure?: string
   size?: number
+  replaces?: string[]
+  accepted_at?: number
+  overdue?: boolean
 }
