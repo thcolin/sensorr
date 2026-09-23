@@ -10,6 +10,15 @@ import { useNotificationsContext } from '../../../contexts/Notifications/Notific
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
+import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
+
+const COMMANDS = {
+  'record': { emoji: '📹', label: 'record' },
+  'refine': { emoji: '✨', label: 'refine' },
+  'shrink': { emoji: '✂️', label: 'shrink' },
+  'sync': { emoji: '💊', label: 'missing' },
+  'keep-in-touch': { emoji: '🍺', label: 'request' },
+}
 
 const UINotifications = ({ ...props }) => {
   const { pwa } = useDeviceContext()
@@ -18,8 +27,11 @@ const UINotifications = ({ ...props }) => {
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const { notifications, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
-  const [filters, setFilters] = useState([])
-  const filtered = useMemo(() => notifications.filter(notification => !filters.length || filters.includes(notification.meta?.command)), [notifications, filters])
+  const [filter, setFilter] = useState(null)
+  const filtered = useMemo(() => notifications.filter(notification => !filter || notification.meta?.command === filter), [notifications, filter])
+  const options = useMemo(() => Object.keys(COMMANDS)
+    .filter(command => command === filter || notifications.some(notification => notification.meta?.command === command))
+    .map(command => ({ value: command, ...COMMANDS[command], count: notifications.filter(notification => notification.meta?.command === command).length })), [notifications, filter])
 
   useEffect(() => {
     if (open && navigator.clearAppBadge) {
@@ -68,28 +80,7 @@ const UINotifications = ({ ...props }) => {
               </button>
             </span>
             <div ref={ref} sx={UINotifications.styles.container}>
-              <div sx={UINotifications.styles.filters}>
-                <div sx={{ opacity: !filters.length || filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
-                  <span>📹</span>
-                  <code>record</code>
-                </div>
-                <div sx={{ opacity: !filters.length || filters.includes('refine') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refine') ? filters.filter(f => f !== 'refine') : [...filters, 'refine'])}>
-                  <span>✨</span>
-                  <code>refine</code>
-                </div>
-                <div sx={{ opacity: !filters.length || filters.includes('shrink') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('shrink') ? filters.filter(f => f !== 'shrink') : [...filters, 'shrink'])}>
-                  <span>✂️</span>
-                  <code>shrink</code>
-                </div>
-                <div sx={{ opacity: !filters.length || filters.includes('sync') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('sync') ? filters.filter(f => f !== 'sync') : [...filters, 'sync'])}>
-                  <span>💊</span>
-                  <code>missing</code>
-                </div>
-                <div sx={{ opacity: !filters.length || filters.includes('keep-in-touch') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('keep-in-touch') ? filters.filter(f => f !== 'keep-in-touch') : [...filters, 'keep-in-touch'])}>
-                  <span>🍺</span>
-                  <code>request</code>
-                </div>
-              </div>
+              <CommandTabs options={options} value={filter} onChange={setFilter} />
               {filtered.length ? (
                 <div>
                   <ResponsiveVirtualGrid
@@ -107,7 +98,13 @@ const UINotifications = ({ ...props }) => {
                   />
                 </div>
               ) : (
-                <Warning emoji='🔔' title="Up to date" subtitle="Not notifications yet" />
+                filter ? (
+                  <Warning emoji='🔔' title='No match' subtitle={`No ${COMMANDS[filter]?.label || filter} notification`}>
+                    <Button variant='outline' color='gray' onClick={() => setFilter(null)}>Show all</Button>
+                  </Warning>
+                ) : (
+                  <Warning emoji='🔔' title='Up to date' subtitle='No notifications yet' />
+                )
               )}
             </div>
           </div>
@@ -150,6 +147,7 @@ UINotifications.styles = {
       justifyContent: 'space-between',
       backgroundColor: 'primary',
       padding: 2,
+      paddingBottom: 8,
       '>span': {
         display: 'flex',
         flexDirection: 'column',
@@ -221,40 +219,6 @@ UINotifications.styles = {
       },
     },
   },
-  filters: {
-    position: 'sticky',
-    top: '0px',
-    display: 'flex',
-    backgroundColor: 'primaryDarker',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingX: 10,
-    paddingY: 8,
-    zIndex: 2,
-    '>div': {
-      display: 'flex',
-      flexShrink: 0,
-      backgroundColor: 'accentDark',
-      margin: 11,
-      paddingX: 6,
-      paddingY: 10,
-      borderRadius: '1em',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      ':hover': {
-      backgroundColor: 'accentDarker',
-      },
-      '>span': {
-        marginRight: 7,
-      },
-      '>code': {
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: 6,
-      },
-    },
-  },
 }
 
 export const Notifications = memo(UINotifications)
@@ -294,13 +258,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
         )}
         <span sx={{ display: ['none', 'flex'], alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray', width: '2em', height: '2em', padding: 8, borderRadius: '1em', fontSize: 3, marginRight: 6 }}>
-          {{
-            'record': '📹',
-            'refine': '✨',
-            'shrink': '✂️',
-            'sync': '💊',
-            'keep-in-touch': '🍺',
-          }[meta?.command]}
+          {COMMANDS[meta?.command]?.emoji}
         </span>
         <div sx={{ display: 'flex', alignItems: 'center' }}>
           <div sx={{ width: '6.5em', height: '10em', flexShrink: 0 }}>

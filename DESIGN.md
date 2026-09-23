@@ -475,7 +475,7 @@ times, `0.25rem` 6 times, `1.5em` twice.
 - **Badges and tags** are fully round: `2em` on a `2em`-tall badge, `1.5em` on a tag,
   `50%` when a badge has an emoji and no label
   (`libs/ui/src/atoms/Badge/Badge.tsx:52-79`). A pill means *a state*; a rectangle means
-  *an action*. Transition pills and the job filters of `/jobs` take `1em`.
+  *an action*. Transition pills take `1em`.
 - **Avatars and status dots** are circles, ringed with a `0.25em` solid `grayLightest`
   border so they read as stickers on top of a poster
   (`libs/ui/src/elements/Entity/Poster/Poster.tsx:352-365`).
@@ -528,6 +528,17 @@ Two distinct things, and they do not share a shape.
   with `white` text — which in dark mode resolves to *black* type on green, since `white`
   is one of the inverting surface tokens. It is a link, not a status.
 
+### Command Tabs
+The quick filters of `/jobs` and of the Notifications pane
+(`apps/web/src/components/Sensorr/CommandTabs.tsx`) are tabs, not chips: a row flush under
+the `primary` head, one command at a time, `📼 all` first. Each tab is the command's emoji,
+its name in Fira Code `0.8125em` (500, 700 when pressed) and its count in a round badge
+`1.7em` tall, `rgba(0, 0, 0, 0.2)` at rest and `accentDarkest` when pressed. Inactive names
+sit at 74% white; the pressed tab is full white with a `2px` white underline. Tabs are
+`1.5em` apart and the row scrolls sideways when it outgrows the sidebar. A one-digit badge
+shifts its padding `0.05em` to the right, because Fira Code draws a lone digit left of its
+advance.
+
 ### Cards / Containers
 - **Corner Style:** square. `Card` sets no radius; its child `Poster` carries the artwork's
   own edges.
@@ -561,8 +572,7 @@ Two distinct things, and they do not share a shape.
 ### Transition Pill (signature)
 The Swaps screen renders each policy axis as two overlapping pills: the old value
 underneath, the new value on top of it, `0.75em` over its right end
-(`apps/web/src/components/Sensorr/Proposal.tsx`). The shape comes from the job filters of
-`/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue
+(`apps/web/src/components/Sensorr/Proposal.tsx`). Each pill takes a `1em` radius, no border, one hue
 stepped down in lightness. The new value carries the state, the old one takes a darker
 tint of the same hue. Both halves are set in regular weight:
 - `held` (the new value satisfies `require`): `primaryDarkest` over `accentDarkest`,

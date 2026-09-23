@@ -18,6 +18,17 @@ import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
+import { CommandTabs } from '../../components/Sensorr/CommandTabs'
+
+const EMOJIS = {
+  'sync': '🔗',
+  'refresh': '🔌',
+  'record': '📹',
+  'refine': '✨',
+  'shrink': '✂️',
+  'keep-in-touch': '🍻',
+  'migrate': '🚚',
+}
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -148,8 +159,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const [ref, onPointerDown] = useRipple()
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
-  const [filters, setFilters] = useState([])
-  const groups = useMemo(() => jobs.filter(job => !filters.length || filters.includes(job.meta.command)).reduce((groups, job) => {
+  const [filter, setFilter] = useState(null)
+  const groups = useMemo(() => jobs.filter(job => !filter || job.meta.command === filter).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 
@@ -160,7 +171,10 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         job,
       ].sort((a, b) => b.start - a.start),
     }
-  }, {}), [jobs, filters])
+  }, {}), [jobs, filter])
+  const options = useMemo(() => Object.keys(EMOJIS)
+    .filter(command => command === filter || jobs.some(job => job.meta.command === command))
+    .map(command => ({ value: command, emoji: EMOJIS[command], label: command, count: jobs.filter(job => job.meta.command === command).length })), [jobs, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -175,15 +189,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
-              {{
-                'sync': '🔗',
-                'refresh': '🔌',
-                'record': '📹',
-                'refine': '✨',
-                'shrink': '✂️',
-                'keep-in-touch': '🍻',
-                'migrate': '🚚',
-              }[active?.meta?.command] || '⌛'}
+              {EMOJIS[active?.meta?.command] || '⌛'}
             </span>
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
@@ -209,32 +215,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <div sx={UISidebar.styles.filters}>
-            <div sx={{ opacity: !filters.length || filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
-              <span>📹</span>
-              <code>record</code>
-            </div>
-            <div sx={{ opacity: !filters.length || filters.includes('refine') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refine') ? filters.filter(f => f !== 'refine') : [...filters, 'refine'])}>
-              <span>✨</span>
-              <code>refine</code>
-            </div>
-            <div sx={{ opacity: !filters.length || filters.includes('shrink') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('shrink') ? filters.filter(f => f !== 'shrink') : [...filters, 'shrink'])}>
-              <span>✂️</span>
-              <code>shrink</code>
-            </div>
-            <div sx={{ opacity: !filters.length || filters.includes('sync') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('sync') ? filters.filter(f => f !== 'sync') : [...filters, 'sync'])}>
-              <span>🔗</span>
-              <code>sync</code>
-            </div>
-            <div sx={{ opacity: !filters.length || filters.includes('refresh') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refresh') ? filters.filter(f => f !== 'refresh') : [...filters, 'refresh'])}>
-              <span>🔌</span>
-              <code>refresh</code>
-            </div>
-            <div sx={{ opacity: !filters.length || filters.includes('keep-in-touch') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('keep-in-touch') ? filters.filter(f => f !== 'keep-in-touch') : [...filters, 'keep-in-touch'])}>
-              <span>🍻</span>
-              <code>keep-in-touch</code>
-            </div>
-          </div>
+          <CommandTabs options={options} value={filter} onChange={setFilter} />
           <div sx={UISidebar.styles.jobs}>
             {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
@@ -243,15 +224,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                   {jobs.map(j => (
                     <Job
                       key={j.job}
-                      emoji={{
-                        'sync': '🔗',
-                        'refresh': '🔌',
-                        'record': '📹',
-                        'refine': '✨',
-                        'shrink': '✂️',
-                        'keep-in-touch': '🍻',
-                        'migrate': '🚚',
-                      }[j.meta.command]}
+                      emoji={EMOJIS[j.meta.command]}
                       selected={j.job === job}
                       {...j}
                       summary={({
@@ -290,7 +263,8 @@ UISidebar.styles = {
     backgroundColor: 'primary',
     color: 'whitePure',
     paddingX: [12, 3],
-    paddingY: [12, 3],
+    paddingTop: [12, 3],
+    paddingBottom: [12, 8],
     '>h4': {
       display: ['none', 'block'],
       margin: '0px',
@@ -361,40 +335,6 @@ UISidebar.styles = {
     '>button': {
       paddingX: 0,
     }
-  },
-  filters: {
-    position: 'sticky',
-    top: '0px',
-    display: 'flex',
-    backgroundColor: 'primaryDarker',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingX: 10,
-    paddingY: 8,
-    zIndex: 2,
-    '>div': {
-      display: 'flex',
-      flexShrink: 0,
-      backgroundColor: 'accentDark',
-      margin: 11,
-      paddingX: 6,
-      paddingY: 10,
-      borderRadius: '1em',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      ':hover': {
-      backgroundColor: 'accentDarker',
-      },
-      '>span': {
-        marginRight: 7,
-      },
-      '>code': {
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: 6,
-      },
-    },
   },
   placeholder: {
     flex: 1,
