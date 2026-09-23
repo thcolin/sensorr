@@ -568,6 +568,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   keys.current.reveal = reveal
 
+  // The pointer reaches a row a few hundred milliseconds before its chevron is clicked.
+  const prefetch = useCallback((id) => loadDetails(id)?.catch(() => null), [])
+
   const select = useCallback((id) => {
     Promise.race([loadDetails(id)?.catch(() => null), new Promise(resolve => setTimeout(resolve, PRELOAD))])
       .then(() => keys.current.morph(() => setActiveId(id), id))
@@ -696,7 +699,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     onClose={row.leaving ? null : keys.current.close}
                   />
                 ) : (
-                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} morphing={focus.includes(row.item.id)} onSelect={select} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
+                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} morphing={focus.includes(row.item.id)} onSelect={select} onHover={prefetch} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
                 )}
               </div>
             )

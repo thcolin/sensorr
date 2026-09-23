@@ -415,13 +415,13 @@ export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive
 
 // On a wide screen the chevron next to the decisions opens the card. A phone has no
 // hover to show them: there, a button stretched under the whole row opens it.
-const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, ...props }) => {
+const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const morph = morphing ? name : () => undefined
   const label = `Open ${item.entity?.title || 'proposal'}`
 
   return (
-    <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
+    <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }} onPointerEnter={onHover ? () => onHover(item.id) : undefined}>
       <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={label} tabIndex={-1} />
       <span sx={UICompact.styles.poster} style={morph('poster', item.id)} data-morph-poster={true}>
         <Picture path={item.entity?.poster_path} size='w92' />
