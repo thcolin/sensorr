@@ -3,114 +3,254 @@
     {
       "file": "library-desktop.webp",
       "route": "/movie/library",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 2260,
+      "bytes": 255150,
+      "date": "2026-09-18"
     },
     {
       "file": "library-mobile.webp",
       "route": "/movie/library",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 4480,
+      "bytes": 201482,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "library-filters-desktop.webp",
+      "route": "/movie/library (filters panel open)",
+      "device": "desktop",
+      "width": 1440,
+      "height": 4840,
+      "bytes": 121146,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "library-filters-mobile.webp",
+      "route": "/movie/library (filters panel open)",
+      "device": "mobile",
+      "width": 780,
+      "height": 9620,
+      "bytes": 157274,
+      "date": "2026-09-18"
     },
     {
       "file": "movie-desktop.webp",
       "route": "/movie/11300",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 3000,
+      "bytes": 154974,
+      "date": "2026-09-18"
     },
     {
       "file": "movie-mobile.webp",
       "route": "/movie/11300",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 7280,
+      "bytes": 189948,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "releases-desktop.webp",
+      "route": "/movie/27205 (releases drawer)",
+      "device": "desktop",
+      "width": 1440,
+      "height": 3000,
+      "bytes": 160658,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "releases-mobile.webp",
+      "route": "/movie/27205 (releases drawer)",
+      "device": "mobile",
+      "width": 780,
+      "height": 7280,
+      "bytes": 138758,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "releases-filters-desktop.webp",
+      "route": "/movie/27205 (releases drawer, policy panel open)",
+      "device": "desktop",
+      "width": 1440,
+      "height": 3280,
+      "bytes": 105468,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "releases-filters-mobile.webp",
+      "route": "/movie/27205 (releases drawer, policy panel open)",
+      "device": "mobile",
+      "width": 780,
+      "height": 7280,
+      "bytes": 189786,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "jobs-desktop.webp",
+      "route": "/jobs/:job",
+      "device": "desktop",
+      "width": 1440,
+      "height": 2700,
+      "bytes": 162918,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "jobs-mobile.webp",
+      "route": "/jobs/:job",
+      "device": "mobile",
+      "width": 780,
+      "height": 5200,
+      "bytes": 112652,
+      "date": "2026-09-18"
     },
     {
       "file": "home-desktop.webp",
       "route": "/",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 3780,
+      "bytes": 262292,
+      "date": "2026-09-18"
     },
     {
       "file": "home-mobile.webp",
       "route": "/",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 5640,
+      "bytes": 215570,
+      "date": "2026-09-18"
     },
     {
       "file": "discover-desktop.webp",
       "route": "/movie/discover",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 2260,
+      "bytes": 250698,
+      "date": "2026-09-18"
     },
     {
       "file": "discover-mobile.webp",
       "route": "/movie/discover",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 4480,
+      "bytes": 202636,
+      "date": "2026-09-18"
     },
     {
-      "file": "proposals-desktop.webp",
-      "route": "/movie/proposals",
+      "file": "settings-policies-desktop.webp",
+      "route": "/settings/policies",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 1580,
+      "bytes": 70748,
+      "date": "2026-09-18"
     },
     {
-      "file": "proposals-mobile.webp",
-      "route": "/movie/proposals",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "file": "settings-policies-mobile.webp",
+      "route": "/settings/policies",
+      "device": "mobile",
+      "width": 780,
+      "height": 4000,
+      "bytes": 118766,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "settings-jobs-desktop.webp",
+      "route": "/settings/jobs",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1610,
+      "bytes": 81416,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "settings-jobs-mobile.webp",
+      "route": "/settings/jobs",
+      "device": "mobile",
+      "width": 780,
+      "height": 3440,
+      "bytes": 112294,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "settings-indexers-desktop.webp",
+      "route": "/settings/indexers",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 53166,
+      "date": "2026-09-18"
+    },
+    {
+      "file": "settings-indexers-mobile.webp",
+      "route": "/settings/indexers",
+      "device": "mobile",
+      "width": 780,
+      "height": 2200,
+      "bytes": 61080,
+      "date": "2026-09-18"
     },
     {
       "file": "login-desktop.webp",
       "route": "/login",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 900,
+      "bytes": 7238,
+      "date": "2026-09-18"
     },
     {
       "file": "login-mobile.webp",
       "route": "/login",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 1688,
+      "bytes": 11870,
+      "date": "2026-09-18"
     },
     {
       "file": "design-button-desktop.webp",
       "route": "/design/atoms/button",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 1400,
+      "bytes": 17552,
+      "date": "2026-09-18"
     },
     {
       "file": "design-button-mobile.webp",
       "route": "/design/atoms/button",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 6240,
+      "bytes": 33182,
+      "date": "2026-09-18"
     },
     {
       "file": "design-entity-poster-desktop.webp",
       "route": "/design/elements/entity-poster",
+      "device": "desktop",
       "width": 1440,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "height": 1830,
+      "bytes": 55078,
+      "date": "2026-09-18"
     },
     {
       "file": "design-entity-poster-mobile.webp",
       "route": "/design/elements/entity-poster",
-      "width": 390,
-      "date": "2026-09-18",
-      "commit": "621e99a"
+      "device": "mobile",
+      "width": 780,
+      "height": 8800,
+      "bytes": 85438,
+      "date": "2026-09-18"
     }
   ]
 }

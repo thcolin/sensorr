@@ -13,7 +13,7 @@ home.
 
 ![Sensorr library](docs/assets/screenshots/library-desktop.webp)
 
-<sub>Library screen, captured 2026-09-18 at commit `621e99a`. More screens in [`docs/assets/screenshots/`](docs/assets/screenshots/).</sub>
+<sub>Library screen, captured 2026-09-18. More screens in [`docs/assets/screenshots/`](docs/assets/screenshots/).</sub>
 
 # Features
 
