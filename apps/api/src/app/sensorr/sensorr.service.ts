@@ -32,9 +32,19 @@ export class SensorrService {
     const filename = sanitizeFilename(`${release.title}-${release.znab}.torrent`)
     let res, buffer
 
+    // Accepting empties the cache, so a swap sent again is fetched from its indexer
+    if (source === 'cache' && !(await this.metafileModel.exists({ _id: release.link }))) {
+      source = 'enclosure'
+    }
+
     switch (source) {
       case 'enclosure':
         res = await fetch(release.enclosure)
+
+        if (!res.ok) {
+          throw new Error(`Indexer answered ${res.status} for "${release.title}"`)
+        }
+
         buffer = await res.buffer()
         break
       case 'cache':
