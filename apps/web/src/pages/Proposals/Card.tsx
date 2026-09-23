@@ -146,26 +146,26 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               ) : (
                 <div sx={UIActive.styles.skeleton}><span /></div>
               )}
-            </div>
-          </div>
-          {/* The same releases band as the movie page, with the swap drawn under it. */}
-          <div sx={UIActive.styles.releases} data-releases={true}>
-            <div>
-              {item.owned.map(release => (
-                <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
-              ))}
-              {!!item.proposal && (
-                <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
-              )}
-            </div>
-            {!!item.diff.rows.length && (
-              <div sx={UIActive.styles.pills} data-pills={true}>
-                {item.diff.rows.map(({ axis, from, to }) => (
-                  <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
-                ))}
+              {/* The movie page's releases band, with the swap drawn under it. */}
+              <div sx={UIActive.styles.releases} data-releases={true}>
+                <div>
+                  {item.owned.map(release => (
+                    <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
+                  ))}
+                  {!!item.proposal && (
+                    <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
+                  )}
+                </div>
+                {!!item.diff.rows.length && (
+                  <div sx={UIActive.styles.pills} data-pills={true}>
+                    {item.diff.rows.map(({ axis, from, to }) => (
+                      <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
+                    ))}
+                  </div>
+                )}
+                {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
               </div>
-            )}
-            {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
+            </div>
           </div>
         </div>
       </div>
@@ -237,10 +237,13 @@ UIActive.styles = {
     alignItems: 'stretch',
     gap: 4,
     paddingX: 4,
-    paddingY: 4,
+    paddingTop: 4,
+    paddingBottom: [4, '0em'],
   },
   // Movie's poster sizes itself, badges included, as on every other page.
   poster: {
+    position: 'relative',
+    zIndex: 1,
     flexShrink: 0,
     alignSelf: ['center', 'flex-start'],
   },
@@ -255,6 +258,9 @@ UIActive.styles = {
     },
     '>header': {
       order: [0, 'initial'],
+    },
+    '>div[data-releases]': {
+      order: [1, 'initial'],
     },
 
   },
@@ -340,14 +346,17 @@ UIActive.styles = {
       borderRadius: '0.25em',
     },
   },
-  // The movie page's releases band: edge to edge under the poster, flush with the border.
+  // The movie page's releases band. It stays in the body column, and its shadow paints
+  // the same grey out to both edges of the card, behind the poster.
   releases: {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
-    paddingX: [8, '4em'],
+    marginTop: 'auto',
     paddingY: '1.5em',
     backgroundColor: 'grayLighter',
+    boxShadow: (theme) => `0 0 0 100vmax ${theme.colors.grayLighter}`,
+    clipPath: 'inset(0 -100vmax)',
     '>div:first-of-type': {
       display: 'flex',
       flexDirection: 'column',
