@@ -42,7 +42,7 @@ const LEAVE = 400
 
 const GROUP_HEIGHT = 40
 const COMPACT_HEIGHT = 80
-const ACTIVE_HEIGHT = 360
+const ACTIVE_HEIGHT = 300
 
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => (
   <div style={style} sx={UIThreshold.styles.element}>
@@ -169,6 +169,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [activeId, setActiveId] = useState(null)
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0 })
   const pending = useRef(null)
+  const keys = useRef(null)
   const decidedRef = useRef({})
   const lastIndex = useRef(0)
   const skips = useRef(0)
@@ -300,6 +301,21 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [flush])
 
+  const notify = useCallback((targets, verdict: Verdict) => {
+    const { emoji, label } = VERDICTS[verdict]
+    const message = (
+      <span sx={UIProposals.styles.toast}>
+        <span>{emojize(emoji, label)} · {targets.length > 1 ? `${targets.length} proposals` : targets[0].entity?.title}</span>
+        <span>
+          {verdict === 'refuse' && <Button variant='outline' color='primary' onClick={() => keys.current.ban()}>Ban<code>B</code></Button>}
+          <Button variant='outline' color='gray' onClick={undo}>Undo<code>Z</code></Button>
+        </span>
+      </span>
+    )
+
+    ;({ accept: toast.success, refuse: toast, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
+  }, [undo])
+
   const decideTargets = useCallback((candidates, verdict: Verdict) => {
     const targets = candidates.filter(({ id }) => !decidedRef.current[id])
 
@@ -319,17 +335,24 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }
 
     pending.current = { targets, verdict, timer: setTimeout(flush, DELAY) }
+    notify(targets, verdict)
+  }, [connected, flush, notify])
 
-    const { emoji, label } = VERDICTS[verdict]
-    const message = (
-      <span sx={UIProposals.styles.toast}>
-        <span>{emojize(emoji, label)} · {targets.length > 1 ? `${targets.length} proposals` : targets[0].entity?.title}</span>
-        <Button variant='outline' color='gray' onClick={undo}>Undo<code>Z</code></Button>
-      </span>
-    )
+  // A refusal still waiting to be sent turns into a ban, as in the notifications.
+  const ban = useCallback(() => {
+    const current = pending.current
 
-    ;({ accept: toast.success, refuse: toast, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY })
-  }, [connected, flush, undo])
+    if (!current || current.verdict !== 'refuse') {
+      return
+    }
+
+    clearTimeout(current.timer)
+    const ids = current.targets.map(({ id }) => id)
+    decidedRef.current = { ...decidedRef.current, ...ids.reduce((acc, id) => ({ ...acc, [id]: 'ban' }), {}) }
+    setDecided(decided => ({ ...decided, ...ids.reduce((acc, id) => ({ ...acc, [id]: 'ban' }), {}) }))
+    pending.current = { ...current, verdict: 'ban', timer: setTimeout(flush, DELAY) }
+    notify(current.targets, 'ban')
+  }, [flush, notify])
 
   const onGesture = useCallback((gesture) => {
     if (!active) {
@@ -359,8 +382,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
   }, [collapsed, active, groups, leaving])
 
-  const keys = useRef(null)
-  keys.current = { onGesture, undo }
+  keys.current = { onGesture, undo, ban }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -368,11 +390,14 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         return
       }
 
-      const gesture = { a: 'accept', r: 'refuse', b: 'ban', s: 'skip', arrowdown: 'skip' }[e.key.toLowerCase()]
+      const gesture = { a: 'accept', r: 'refuse', s: 'skip', arrowdown: 'skip' }[e.key.toLowerCase()]
 
       if (e.key.toLowerCase() === 'z') {
         e.preventDefault()
         keys.current.undo()
+      } else if (e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        keys.current.ban()
       } else if (gesture) {
         e.preventDefault()
         keys.current.onGesture(gesture)
@@ -580,7 +605,11 @@ UIProposals.styles = {
     justifyContent: 'space-between',
     gap: 4,
     fontSize: 5,
-    '>button': {
+    '>span:last-of-type': {
+      display: 'flex',
+      gap: 8,
+    },
+    'button': {
       display: 'inline-flex',
       alignItems: 'baseline',
       gap: 8,

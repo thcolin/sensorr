@@ -120,31 +120,33 @@ UIReleaseLine.styles = {
 const ReleaseLine = memo(UIReleaseLine)
 
 const GESTURES = [
-  { verdict: 'ban', key: 'B', label: '⊘ Ban', variant: 'outline', color: 'error' },
-  { verdict: 'skip', key: 'S', label: 'Skip', variant: 'outline', color: 'gray' },
-  { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline', color: 'gray' },
-  { verdict: 'accept', key: 'A', label: 'Accept', variant: 'contain', color: 'primary' },
+  { verdict: 'accept', key: 'A', label: 'Accept', variant: 'contain' },
+  { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline' },
 ] as const
 
 const UIGestures = ({ onGesture, disabled = false, ...props }) => (
   <div {...props} sx={UIGestures.styles.element}>
-    {GESTURES.map(({ verdict, key, label, variant, color }) => (
-      <Button key={verdict} variant={variant} color={color} disabled={disabled} onClick={() => onGesture(verdict)} aria-keyshortcuts={key}>
+    {GESTURES.map(({ verdict, key, label, variant }) => (
+      <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} aria-keyshortcuts={key}>
         {label}<code>{key}</code>
       </Button>
     ))}
+    <button type='button' disabled={disabled} onClick={() => onGesture('skip')} aria-keyshortcuts='S'>
+      Skip<code>S</code>
+    </button>
   </div>
 )
 
 UIGestures.styles = {
   element: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    flexWrap: 'wrap',
+    display: 'grid',
+    gridTemplateColumns: ['repeat(2, 1fr) auto', '1fr repeat(2, minmax(8em, 12em)) 1fr'],
+    alignItems: 'center',
     gap: 8,
     '>button': {
       display: 'inline-flex',
       alignItems: 'baseline',
+      justifyContent: 'center',
       gap: 8,
       ':focus-visible': {
         outline: '1px solid',
@@ -153,6 +155,23 @@ UIGestures.styles = {
       },
       '>code': {
         fontFamily: 'monospace',
+        opacity: 0.5,
+      },
+    },
+    '>button:first-of-type': {
+      gridColumn: ['auto', 2],
+    },
+    '>button:last-of-type': {
+      variant: 'button.reset',
+      justifySelf: 'start',
+      paddingX: 8,
+      color: 'grayDarker',
+      cursor: 'pointer',
+      ':hover': {
+        color: 'text',
+      },
+      ':disabled': {
+        cursor: 'default',
         opacity: 0.5,
       },
     },
@@ -176,33 +195,38 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile 
       <div sx={UIActive.styles.collapse}>
         <div sx={UIActive.styles.card}>
           <div sx={UIActive.styles.poster}>
-            <Picture path={entity?.poster_path} size='w185' />
+            <Picture path={entity?.poster_path} size='w342' />
           </div>
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
               <h3 title={facts.title}>{facts.title}</h3>
+              <code title={item.owned.length ? 'Size gained or lost against the lightest owned release' : 'Size of the proposed release'}>
+                {emojize('📦', item.owned.length ? delta(item.diff.size) : filesize.stringify(item.proposal?.size || 0))}
+              </code>
+            </header>
+            <div sx={UIActive.styles.sub}>
+              <details sx={UIActive.styles.metadata}>
+                <summary>
+                  <span />
+                  <span>
+                    {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
+                    {!!facts.year && <span>({facts.year})</span>}
+                  </span>
+                </summary>
+                <div>
+                  <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
+                </div>
+              </details>
               <aside>
                 {emojize(EMOJI[item.command], item.command)}
                 <code>#{item.proposal?.job}</code>
               </aside>
-            </header>
-            <details sx={UIActive.styles.metadata}>
-              <summary>
-                <span />
-                <span>
-                  {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
-                  {!!facts.year && <span>({facts.year})</span>}
-                </span>
-              </summary>
-              <div>
-                <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
-              </div>
-            </details>
+            </div>
             {movie ? (
-              <>
+              <div sx={UIActive.styles.facts}>
                 <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} />
                 <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
-              </>
+              </div>
             ) : (
               <div sx={UIActive.styles.skeleton}><span /><span /></div>
             )}
@@ -220,10 +244,9 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, mobile 
                 {item.diff.rows.map(({ axis, from, to }) => (
                   <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
                 ))}
-                <code title='Size gained or lost against the lightest owned release'>{emojize('📦', delta(item.diff.size))}</code>
               </div>
             )}
-            {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
+            {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} data-gestures={true} />}
           </div>
         </div>
       </div>
@@ -288,7 +311,7 @@ UIActive.styles = {
   card: {
     display: 'flex',
     flexDirection: ['column', 'row'],
-    alignItems: ['stretch', 'flex-start'],
+    alignItems: 'stretch',
     gap: 4,
     paddingX: 4,
     paddingY: 4,
@@ -297,8 +320,10 @@ UIActive.styles = {
   },
   poster: {
     flexShrink: 0,
-    alignSelf: ['center', 'flex-start'],
-    width: ['6em', '10em'],
+    alignSelf: ['center', 'stretch'],
+    width: ['6em', '11em'],
+    aspectRatio: ['2 / 3', 'auto'],
+    minHeight: [null, '16.5em'],
     '>span': { width: '100%' },
   },
   body: {
@@ -319,6 +344,10 @@ UIActive.styles = {
     '>div[data-pills]': {
       order: [2, 'initial'],
     },
+    '>div[data-gestures]': {
+      marginTop: 'auto',
+      paddingTop: 8,
+    },
   },
   head: {
     display: 'flex',
@@ -327,6 +356,23 @@ UIActive.styles = {
     gap: 4,
     '>h3': {
       margin: 12,
+      minWidth: 0,
+    },
+    '>code': {
+      flexShrink: 0,
+      fontFamily: 'monospace',
+      fontSize: 4,
+      fontWeight: 'bold',
+      whiteSpace: 'nowrap',
+    },
+  },
+  sub: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 4,
+    '>details': {
+      flex: 1,
       minWidth: 0,
     },
     '>aside': {
@@ -405,16 +451,19 @@ UIActive.styles = {
       outlineOffset: '2px',
     },
   },
-  pills: {
+  facts: {
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap',
+    columnGap: 3,
+    rowGap: 8,
+  },
+  pills: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    '>code': {
-      fontFamily: 'monospace',
-      color: 'text',
-      marginLeft: [0, 8],
-    },
   },
   band: {
     position: 'absolute',
