@@ -59,8 +59,16 @@ const UIToasts = ({ ...props }) => {
                     </span>
                     <span> {t.title || (t.type === 'blank' ? 'Info' : t.type)}</span>
                   </strong>
-                  <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
-                  {t.actions && <span sx={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>{t.actions}</span>}
+                  {!t.actions ? (
+                    <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
+                  ) : (
+                    <span sx={{ display: 'flex', alignItems: 'center', gap: '0.75em', fontSize: 5, 'p': { margin: '0em' } }}>
+                      <span sx={{ flex: 1 }}><Markdown>{t.message}</Markdown></span>
+                      <span sx={{ display: 'flex', flexShrink: 0, gap: '0.5em', '>button': { marginY: '0em', paddingY: '0.125em', paddingX: '0.625em', fontSize: 6 } }}>
+                        {t.actions}
+                      </span>
+                    </span>
+                  )}
                   {t.type === 'error' && !t.actions && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
                 </>
               )}
