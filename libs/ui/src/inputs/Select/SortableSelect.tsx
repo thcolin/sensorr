@@ -41,11 +41,6 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
             <div
               title={props.data.required ? `Required` : `Non Required`}
               onClick={() => {
-                console.log(
-                  props.selectProps,
-                  props.selectProps.value.map(data => ({ ...data, ...(data.value === props.data.value ? { required: !data.required } : {}) })),
-                )
-
                 props.selectProps.onChange(
                   props.selectProps.value.map(data => ({ ...data, ...(data.value === props.data.value ? { required: !data.required } : {}) })),
                   { action: 'toggle-require-value', removedValue: { ...props.data, required: !props.data.required } }
