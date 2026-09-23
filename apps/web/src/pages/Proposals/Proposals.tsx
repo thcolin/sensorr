@@ -574,6 +574,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                   <Active
                     item={row.item}
                     entity={row.item.entity}
+                    threshold={threshold}
                     leaving={row.leaving}
                     entering={row.item.id !== still}
                     mobile={mobile}

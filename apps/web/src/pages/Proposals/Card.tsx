@@ -152,7 +152,7 @@ UIGestures.styles = {
 
 export const Gestures = memo(UIGestures)
 
-const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, entering = true, mobile = false, onGesture, disabled = false, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [others, setOthers] = useState(false)
   const [meaningful, setMeaningful] = useState(false)
@@ -172,8 +172,18 @@ const UIActive = ({ item, entity, metadata, setMetadata, leaving = null, enterin
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
               <h3 title={facts.title}>{facts.title}</h3>
-              <code title={item.owned.length ? 'Size gained or lost against the lightest owned release' : 'Size of the proposed release'}>
-                {emojize('📦', item.owned.length ? delta(item.diff.size) : filesize.stringify(item.proposal?.size || 0))}
+              <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+                {item.owned.length ? (
+                  <>
+                    <span>📦</span>
+                    <Transition
+                      axis='size'
+                      from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
+                      to={filesize.stringify(item.proposal?.size || 0)}
+                      state={Math.abs(item.diff.size || 0) < (threshold || 1) ? 'quiet' : item.diff.size < 0 ? 'held' : 'broken'}
+                    />
+                  </>
+                ) : emojize('📦', filesize.stringify(item.proposal?.size || 0))}
               </code>
             </header>
             <div sx={UIActive.styles.sub}>
@@ -331,6 +341,9 @@ UIActive.styles = {
       minWidth: 0,
     },
     '>code': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
       flexShrink: 0,
       fontFamily: 'monospace',
       fontSize: 4,

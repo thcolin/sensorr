@@ -36,8 +36,10 @@ UIValue.styles = {
 const Value = memo(UIValue)
 
 // The new value sits on top of the old one, one tint brighter in the same hue.
-const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, ...props }) => {
-  const { state, separator, left, right } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
+// `state` overrides the policy for a comparison no policy covers, like the size.
+const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, state: forced = null, ...props }) => {
+  const { state: computed, separator, left, right } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
+  const state = forced || computed
   const styles = compact ? UITransition.styles.compact : UITransition.styles.full
   const tint = UITransition.styles.tints[state] || UITransition.styles.tints.quiet
 
@@ -90,6 +92,7 @@ UITransition.styles = {
     borderTopRightRadius: '0em',
     borderBottomRightRadius: '0em',
     marginRight: '-1em',
+    fontWeight: 'normal',
   },
   after: {
     position: 'relative',
