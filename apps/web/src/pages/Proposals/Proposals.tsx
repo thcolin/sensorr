@@ -455,6 +455,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   // The rows on screen when a move starts, kept mounted until it ends: the browser drops
   // the whole transition as soon as one element it captured leaves the DOM.
   const kept = useRef(null)
+  const moving = useRef(null)
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -539,10 +540,18 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster')) as HTMLElement[]
     layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
     document.documentElement.dataset.morphing = 'true'
-    kept.current = virtualizer.getVirtualItems().map(({ index }) => index)
+    kept.current = [...new Set([...(kept.current || []), ...virtualizer.getVirtualItems().map(({ index }) => index)])]
 
+    // A click during a move starts the next one, which skips this one: its end must not
+    // undo what the next one has just set up.
     const transition = (document as any).startViewTransition(apply)
+    moving.current = transition
     transition.finished.finally(() => {
+      if (moving.current !== transition) {
+        return
+      }
+
+      moving.current = null
       kept.current = null
       layers.forEach((layer) => { layer.style.viewTransitionName = '' })
       delete document.documentElement.dataset.morphing
