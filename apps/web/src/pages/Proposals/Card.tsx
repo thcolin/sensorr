@@ -210,8 +210,8 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
             </div>
             {movie ? (
               <div sx={UIActive.styles.facts}>
-                <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
                 <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
+                <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
               </div>
             ) : (
               <div sx={UIActive.styles.skeleton}><span /></div>
