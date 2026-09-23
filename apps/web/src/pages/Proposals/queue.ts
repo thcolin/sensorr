@@ -250,7 +250,8 @@ export const decide = (metadata, releaseId, verdict: Verdict) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
 
   if (verdict === 'retry') {
-    return { releases: (metadata?.releases || []).map(r => r.id === releaseId ? { ...r, proposal: true, choice: true } : r) }
+    const again = ({ overdue, landed, ...release }) => ({ ...release, proposal: true, choice: true })
+    return { releases: (metadata?.releases || []).map(r => r.id === releaseId ? again(r) : r) }
   }
 
   if (verdict === 'drop') {

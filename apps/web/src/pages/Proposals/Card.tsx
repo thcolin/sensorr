@@ -675,9 +675,9 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
         </span>
       </span>
       <span sx={UIOverdue.styles.actions}>
-        <Button variant='outline' color='gray' disabled={disabled} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again'>Retry</Button>
-        <Button variant='outline' color='gray' disabled={disabled} onClick={onSearch} title='Pick another release in its place'>Search</Button>
-        <Button variant='outline' color='gray' disabled={disabled} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has'>Drop</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again'>Retry</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={onSearch} title='Pick another release in its place'>Search</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has'>Drop</Button>
       </span>
       <code sx={UICompact.styles.size} title={`Size against the lightest owned release: ${delta(item.diff.size)}`}>
         <Size item={item} threshold={threshold} compact={true} named={false} />
@@ -694,6 +694,9 @@ UIOverdue.styles = {
     gridTemplateRows: ['1fr auto auto', '1fr'],
     gridTemplateAreas: ['"poster body" "poster size" "actions actions"', '"poster body actions size"'],
     height: ['auto', '88px'],
+    ':hover': {
+      backgroundColor: 'transparent',
+    },
     '>span, >code': {
       pointerEvents: 'auto',
     },

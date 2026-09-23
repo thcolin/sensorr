@@ -157,7 +157,9 @@ describe('queue', () => {
   it('retries an overdue swap by accepting it again, and drops it by removing it', () => {
     const metadata = { releases: [...overdue().owned, overdue().proposal] }
 
-    expect(decide(metadata, 'x265', 'retry')).toEqual({ releases: [metadata.releases[0], { ...metadata.releases[1], proposal: true, choice: true }] })
+    const { overdue: _, ...accepted } = metadata.releases[1]
+
+    expect(decide(metadata, 'x265', 'retry')).toEqual({ releases: [metadata.releases[0], { ...accepted, proposal: true, choice: true }] })
     expect(decide(metadata, 'x265', 'drop')).toEqual({ releases: [metadata.releases[0]] })
   })
 })
