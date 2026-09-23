@@ -688,11 +688,12 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
 }
 
 UIOverdue.styles = {
-  // On a phone the gestures and the size share the last line.
+  // On a phone the gestures take a line of their own under the poster, so it keeps its height.
   element: {
-    gridTemplateColumns: ['auto 1fr auto', 'auto 1fr auto auto'],
-    gridTemplateRows: ['1fr auto', '1fr'],
-    gridTemplateAreas: ['"poster body body" "poster actions size"', '"poster body actions size"'],
+    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto auto'],
+    gridTemplateRows: ['1fr auto auto', '1fr'],
+    gridTemplateAreas: ['"poster body" "poster size" "actions actions"', '"poster body actions size"'],
+    height: ['auto', '88px'],
     '>span, >code': {
       pointerEvents: 'auto',
     },
@@ -707,6 +708,10 @@ UIOverdue.styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
+    '>button': {
+      flex: [1, 'none'],
+      justifyContent: 'center',
+    },
   },
 }
 
