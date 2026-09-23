@@ -140,7 +140,6 @@ describe('queue', () => {
     expect(balanceOf([upgrade, lighter, unknown])).toEqual({ now: 14 * GB, after: 13 * GB, refine: 3 * GB, shrink: -4 * GB })
   })
 
-  // American Beauty on Cortex: a 2.5 GB x264 on Plex, a 1.7 GB x265 accepted and never landed.
   const overdue = () => itemOf({ id: 14 }, [
     release('plex', 'MULTi', 2.5 * GB, { from: 'sync' }),
     release('x265', 'MULTi', 1.7 * GB, { from: 'refine', replaces: ['plex'], accepted_at: 1, overdue: true }),

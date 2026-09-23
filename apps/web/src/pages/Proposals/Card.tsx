@@ -650,7 +650,7 @@ UICompact.styles = {
 export const Compact = memo(UICompact)
 
 // An accepted swap that never landed: what Plex has against what was accepted, and the
-// three ways out. It never opens into a card, its gestures are not a verdict on a proposal.
+// three ways out. It never opens into a card.
 const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0, leaving = null }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const accepted = item.proposal?.accepted_at
