@@ -53,5 +53,24 @@ Thumbs.db
 /docs/assets/nx-graph.html
 /docs/assets/static
 
-# impeccable: design.json and config.json are shared, config.local.json is per developer
-/.impeccable/config.local.json
+# impeccable-ignore-start
+# Ephemeral output, runtime state, and per-dev overrides.
+# Shared artifacts stay tracked: config.json, design.json, surfaces/*.md, critique/*.md.
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/*.png
+.impeccable/review/
+.impeccable/questions/
+.impeccable/live/server.json
+.impeccable/live/sessions/
+.impeccable/live/previews/
+.impeccable/live/annotations/
+.impeccable/live/cache/
+.impeccable/live/manual-edit-apply-transaction.json
+.impeccable/live/manual-edit-events.jsonl
+.impeccable/live/manual-edit-evidence/
+.impeccable/live/pending-manual-edits.json
+.impeccable/live/deferred-svelte-component-accepts.json
+.impeccable/live/*.png
+# impeccable-ignore-end

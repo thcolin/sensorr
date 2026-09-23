@@ -1,0 +1,21 @@
+{
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "heading",
+        "createdAt": "2026-09-23T12:01:31.933Z",
+        "reason": "false positive: fontFamily 'heading' is the theme-ui token resolving to Raleway (libs/theme/src/lib/theme/font.ts:4), declared in DESIGN.md typography, used 23 times in apps/web and libs/ui"
+      }
+    ]
+  }
+}
