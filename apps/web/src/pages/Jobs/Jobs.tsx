@@ -18,17 +18,6 @@ import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
-import { CommandFilters } from '../../components/Sensorr/CommandFilters'
-
-const EMOJIS = {
-  'sync': '🔗',
-  'refresh': '🔌',
-  'record': '📹',
-  'refine': '✨',
-  'shrink': '✂️',
-  'keep-in-touch': '🍻',
-  'migrate': '🚚',
-}
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -172,9 +161,6 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
       ].sort((a, b) => b.start - a.start),
     }
   }, {}), [jobs, filters])
-  const options = useMemo(() => Object.keys(EMOJIS)
-    .filter(command => filters.includes(command) || jobs.some(job => job.meta.command === command))
-    .map(command => ({ value: command, emoji: EMOJIS[command], label: command, count: jobs.filter(job => job.meta.command === command).length })), [jobs, filters])
 
   useEffect(() => {
     setExpanded(false)
@@ -189,7 +175,15 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
-              {EMOJIS[active?.meta?.command] || '⌛'}
+              {{
+                'sync': '🔗',
+                'refresh': '🔌',
+                'record': '📹',
+                'refine': '✨',
+                'shrink': '✂️',
+                'keep-in-touch': '🍻',
+                'migrate': '🚚',
+              }[active?.meta?.command] || '⌛'}
             </span>
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
@@ -215,7 +209,32 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <CommandFilters options={options} value={filters} onChange={setFilters} />
+          <div sx={UISidebar.styles.filters}>
+            <div sx={{ opacity: !filters.length || filters.includes('record') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('record') ? filters.filter(f => f !== 'record') : [...filters, 'record'])}>
+              <span>📹</span>
+              <code>record</code>
+            </div>
+            <div sx={{ opacity: !filters.length || filters.includes('refine') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refine') ? filters.filter(f => f !== 'refine') : [...filters, 'refine'])}>
+              <span>✨</span>
+              <code>refine</code>
+            </div>
+            <div sx={{ opacity: !filters.length || filters.includes('shrink') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('shrink') ? filters.filter(f => f !== 'shrink') : [...filters, 'shrink'])}>
+              <span>✂️</span>
+              <code>shrink</code>
+            </div>
+            <div sx={{ opacity: !filters.length || filters.includes('sync') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('sync') ? filters.filter(f => f !== 'sync') : [...filters, 'sync'])}>
+              <span>🔗</span>
+              <code>sync</code>
+            </div>
+            <div sx={{ opacity: !filters.length || filters.includes('refresh') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('refresh') ? filters.filter(f => f !== 'refresh') : [...filters, 'refresh'])}>
+              <span>🔌</span>
+              <code>refresh</code>
+            </div>
+            <div sx={{ opacity: !filters.length || filters.includes('keep-in-touch') ? 1 : 0.5 }} onClick={() => setFilters(filters => filters.includes('keep-in-touch') ? filters.filter(f => f !== 'keep-in-touch') : [...filters, 'keep-in-touch'])}>
+              <span>🍻</span>
+              <code>keep-in-touch</code>
+            </div>
+          </div>
           <div sx={UISidebar.styles.jobs}>
             {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
@@ -224,7 +243,15 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                   {jobs.map(j => (
                     <Job
                       key={j.job}
-                      emoji={EMOJIS[j.meta.command]}
+                      emoji={{
+                        'sync': '🔗',
+                        'refresh': '🔌',
+                        'record': '📹',
+                        'refine': '✨',
+                        'shrink': '✂️',
+                        'keep-in-touch': '🍻',
+                        'migrate': '🚚',
+                      }[j.meta.command]}
                       selected={j.job === job}
                       {...j}
                       summary={({
@@ -334,6 +361,40 @@ UISidebar.styles = {
     '>button': {
       paddingX: 0,
     }
+  },
+  filters: {
+    position: 'sticky',
+    top: '0px',
+    display: 'flex',
+    backgroundColor: 'primaryDarker',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingX: 10,
+    paddingY: 8,
+    zIndex: 2,
+    '>div': {
+      display: 'flex',
+      flexShrink: 0,
+      backgroundColor: 'accentDark',
+      margin: 11,
+      paddingX: 6,
+      paddingY: 10,
+      borderRadius: '1em',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      ':hover': {
+      backgroundColor: 'accentDarker',
+      },
+      '>span': {
+        marginRight: 7,
+      },
+      '>code': {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: 6,
+      },
+    },
   },
   placeholder: {
     flex: 1,
