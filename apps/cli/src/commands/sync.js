@@ -8,6 +8,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
+import { settleSwaps } from '../utils/swaps'
 
 const meta = {
   command: 'sync',
@@ -35,7 +36,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, tmdb, cleanup: config.get('jobs.sync.cleanup') }}>
         <FetchSensorrMoviesTask />
         <FetchPlexMoviesTask />
         <CheckSensorrMoviesTask />
@@ -135,7 +136,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      const corrections = [], warning = []
+      const corrections = [], cleanups = [], warning = []
       setStatus('loading')
 
       for (const payload of (state.distant || [])) {
@@ -154,13 +155,29 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
 
           const guids = (payload.Guid || []).map(({ id }) => id.split('://')).reduce((acc, [agent, id]) => ({ ...acc, [agent]: id }), {})
           let movie = (state.library || []).find((movie) => `${movie.id}` === `${guids.tmdb}` || `${movie.imdb_id}` === `${guids.imdb}`)
-          const { MediaContainer: { Metadata: [{ Media }] } } = await state.plex.query(payload.key)
+          const { MediaContainer: { Metadata: [{ Media: medias }] } } = await state.plex.query(payload.key)
+          const swaps = settleSwaps(
+            (movie?.releases || []).filter(release => !(release.id || '').startsWith('plex://')),
+            medias.map(media => ({ id: `${payload.guid}#${media.id}`, size: media.Part.reduce((acc, curr) => acc + curr.size, 0) })),
+            { cleanup: state.cleanup, now: Date.now() },
+          )
+
+          for (const media of medias.filter(media => swaps.remove.includes(`${payload.guid}#${media.id}`))) {
+            await state.plex.deleteQuery(`/library/metadata/${payload.ratingKey}/media/${media.id}`)
+            cleanups.push(media.id)
+            state.logger.info({
+              message: `🧹 Delete "${media.Part[0].file.split(/[\\/]/).pop()}" from Plex, replaced by an accepted swap of "${payload.title}"`,
+              metadata: { ...state.metadata, group: 'cleanups', movie: lighten.movie(movie), file: media.Part[0].file, size: media.Part.reduce((acc, curr) => acc + curr.size, 0) },
+            })
+          }
+
+          const Media = medias.filter(media => !swaps.remove.includes(`${payload.guid}#${media.id}`))
 
           const body = {
             state: 'archived',
             plex_url: `https://app.plex.tv/desktop/#!/server/${state.server}/details?key=${encodeURIComponent(payload.key)}`,
             releases: [
-              ...(movie?.releases || []).filter(release => !(release.id || '').startsWith('plex://')).map(release => ({
+              ...swaps.releases.map(release => ({
                 ...release,
                 title: oleoo.parse(release.original, { strict: false, flagged: true }).generated,
               })),
@@ -287,7 +304,8 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const reason = (
             movie?.state !== body?.state ? `Plex movie state unknown from Sensorr library (${movie?.state || 'unknown'})` :
             movie?.plex_url !== body?.plex_url ? `Plex movie link unknown from Sensorr library` :
-            JSON.stringify((movie?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` : null
+            JSON.stringify((movie?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` :
+            swaps.changed ? `Accepted swap landed or overdue` : null
           )
 
           if (!reason) {
@@ -343,7 +361,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))
-      state.logger.info({ message: `🩹 ${corrections.length} Fixed movies with Plex metadata`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length} } } })
+      state.logger.info({ message: `🩹 ${corrections.length} Fixed movies with Plex metadata`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length}, cleanups: { success: cleanups.length } } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{corrections.length}</Text> movies data fixed with Plex metadata (<Text bold={true}>archived</Text>)</Text> }))
       setStatus('done')
     }

@@ -117,7 +117,7 @@ const JobsSettings = ({ ...props }) => {
                     <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
                   </span>
                 ),
-                options: ['cron'],
+                options: ['cron', 'cleanup'],
               },
               {
                 command: 'keep-in-touch',
@@ -227,7 +227,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
       {options.includes('cron') && (
         <div
           sx={JobSettings.styles.options}
-          style={options.includes('proposalOnly') ? { borderBottomLeftRadius: '0rem', borderBottomRightRadius: '0rem' } : {}}
+          style={options.length > 1 ? { borderBottomLeftRadius: '0rem', borderBottomRightRadius: '0rem' } : {}}
         >
           <React.Fragment>
             <Controller
@@ -303,6 +303,30 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
                   <small>
                     Won't download best release, will only <strong>propose</strong> it, up to you to decide whether to accept or refuse it
                     later
+                  </small>
+                </div>
+              </Option>
+            )}
+          />
+        </div>
+      )}
+      {options.includes('cleanup') && (
+        <div sx={JobSettings.styles.options}>
+          <Controller
+            name={`jobs.${command}.cleanup`}
+            control={control}
+            render={({ field: { value: checked, onChange } }) => (
+              <Option
+                type='checkbox'
+                id={`jobs.${command}.cleanup`}
+                checked={checked}
+                onChange={(e: any) => onChange(e.target.checked)}
+              >
+                <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                  <strong>{emojize('🧹', 'Cleanup')}</strong>
+                  <br />
+                  <small>
+                    Once an accepted swap has landed on Plex, will <strong>delete</strong> the versions it replaces, files included
                   </small>
                 </div>
               </Option>

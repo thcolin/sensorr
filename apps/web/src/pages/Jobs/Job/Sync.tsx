@@ -6,7 +6,7 @@ import Movie from '../../../components/Movie/Movie'
 import { Summary } from '../Summary'
 import { Warnings } from '../Warnings'
 
-export const summary = ({ archived = 0, plex = 0, corrections, missings }, extended = true) => [
+export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missings }, extended = true) => [
   ...(extended ? [{
     key: 'archived',
     emoji: '🗄️',
@@ -25,6 +25,12 @@ export const summary = ({ archived = 0, plex = 0, corrections, missings }, exten
     title: <span><strong>{corrections?.success || 0}</strong> Fixed movies with Plex metadata</span>,
     length: corrections?.success || 0,
   },
+  ...(cleanups?.success > 0 ? [{
+    key: 'cleanups',
+    emoji: '🧹',
+    title: <span><strong>{cleanups?.success}</strong> Replaced versions deleted from Plex</span>,
+    length: cleanups?.success,
+  }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',
     emoji: '💊',
@@ -43,6 +49,7 @@ const UISyncJob = ({ job, logs }) => {
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     corrections: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'corrections').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    cleanups: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     missings: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'missings').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
   }), [logs])
 
@@ -79,6 +86,9 @@ const UISyncJob = ({ job, logs }) => {
                       success: job.meta.done ? job.meta.summary.corrections?.success : entities.corrections.length,
                       warning: job.meta.done ? job.meta.summary.corrections?.warning : entities.warning.length,
                     },
+                    cleanups: {
+                      success: job.meta.done ? job.meta.summary.cleanups?.success : entities.cleanups.length,
+                    },
                     missings: {
                       success: job.meta.done ? job.meta.summary.missings?.success : entities.missings.length,
                       warning: job.meta.summary.missings?.warning,
@@ -101,7 +111,7 @@ const UISyncJob = ({ job, logs }) => {
           <div sx={UISyncJob.styles.placeholder}>
             <Icon value='spinner' />
           </div>
-        ) : (entities?.warning?.length || entities?.corrections?.length || entities?.missings?.length) ? (
+        ) : (entities?.warning?.length || entities?.corrections?.length || entities?.cleanups?.length || entities?.missings?.length) ? (
           <div sx={UISyncJob.styles.entities}>
             <Warnings logs={entities.warning} />
             <Entities
@@ -109,6 +119,18 @@ const UISyncJob = ({ job, logs }) => {
               entities={entities?.missings}
               length={entities?.missings?.length}
               label={emojize('💊', 'Missing')}
+              display='grid'
+              hide={true}
+              child={Movie}
+              props={() => ({
+                display: 'poster',
+              })}
+            />
+            <Entities
+              id={`sync-cleaned-${job.id}`}
+              entities={entities?.cleanups}
+              length={entities?.cleanups?.length}
+              label={emojize('🧹', 'Cleaned')}
               display='grid'
               hide={true}
               child={Movie}

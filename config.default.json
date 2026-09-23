@@ -15,7 +15,8 @@
     },
     "sync": {
       "cron": "0 1 * * *",
-      "paused": false
+      "paused": false,
+      "cleanup": false
     },
     "refresh": {
       "cron": "0 3 * * 0",

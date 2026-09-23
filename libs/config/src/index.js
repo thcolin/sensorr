@@ -87,6 +87,11 @@ const config = convict({
         format: 'Boolean',
         default: false,
       },
+      cleanup: {
+        doc: 'Sync job deletes from Plex the versions an accepted swap replaces, once the swap has landed',
+        format: 'Boolean',
+        default: false,
+      },
     },
     'keep-in-touch': {
       cron: {
