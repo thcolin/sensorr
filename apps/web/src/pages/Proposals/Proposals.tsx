@@ -655,7 +655,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                   <GroupTitle
                     group={row.group}
                     emoji={EMOJI[row.group] || '💤'}
-                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest}, ±${filesize.stringify(threshold)}` : `${LABELS.rest}, no change`) : LABELS[row.group]}
+                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest} (<${filesize.stringify(threshold)})` : `${LABELS.rest} (no change)`) : LABELS[row.group]}
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
