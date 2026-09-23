@@ -5,9 +5,10 @@
 export const AXES = ['resolution', 'source', 'encoding', 'dub', 'language']
 
 // A `record` proposal has no owned release to swap; it is decided from the notifications.
-export const GROUPS = ['refine', 'shrink', 'rest']
+// `overdue` holds the accepted swaps that never landed on Plex (apps/cli/src/utils/swaps.js).
+export const GROUPS = ['refine', 'shrink', 'rest', 'overdue']
 
-export type Verdict = 'accept' | 'refuse' | 'ban'
+export type Verdict = 'accept' | 'refuse' | 'ban' | 'retry' | 'drop'
 
 // Releases stored on the movie document carry no score: it is recomputed from the
 // movie policy, exactly like the job does before comparing (ProcessMoviesTask.js:307).
@@ -109,10 +110,12 @@ export const sizeStateOf = (delta, threshold = 0) => Math.abs(delta || 0) < (thr
 
 export const isPending = (release) => !!release?.proposal && typeof release?.choice !== 'boolean'
 
+export const isOverdue = (release) => release?.overdue === true
+
 export const itemOf = (entity, releases, policy) => {
   const scored = scoreReleases(releases, policy)
-  const owned = scored.filter(({ proposal }) => !proposal)
-  const proposal = scored.find(isPending) || null
+  const owned = scored.filter(release => !release.proposal && !isOverdue(release))
+  const proposal = scored.find(isPending) || scored.find(isOverdue) || null
 
   return {
     id: entity.id,
@@ -129,6 +132,10 @@ export const itemOf = (entity, releases, policy) => {
 // Above it, it keeps the ones that free less space than the threshold: a proposal that
 // grows, changes the language or reaches a value the policy requires stays in its job group.
 export const groupOf = (item, threshold) => {
+  if (isOverdue(item.proposal)) {
+    return 'overdue'
+  }
+
   if (item.owned.length) {
     const language = item.diff.rows.find(({ axis }) => axis === 'language')
     const held = item.diff.rows.some(({ state }) => state === 'held')
@@ -220,7 +227,7 @@ export const matches = (item, values) => (
 export const balanceOf = (items) => items.reduce((balance, item) => {
   const files = item.owned.filter(({ from }) => from === 'sync')
 
-  if (!files.length || typeof item.proposal?.size !== 'number') {
+  if (!files.length || typeof item.proposal?.size !== 'number' || isOverdue(item.proposal)) {
     return balance
   }
 
@@ -237,8 +244,18 @@ export const balanceOf = (items) => items.reduce((balance, item) => {
 
 // Banning lists the title in `banned_releases`, the only list the jobs exclude on
 // (policy.ts:149-161): a refused release can be proposed again, a banned one cannot.
+// An overdue swap is retried by accepting it again, and dropped by removing it: the movie
+// keeps the version it has on Plex, and `refine` may propose another one.
 export const decide = (metadata, releaseId, verdict: Verdict) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
+
+  if (verdict === 'retry') {
+    return { releases: (metadata?.releases || []).map(r => r.id === releaseId ? { ...r, proposal: true, choice: true } : r) }
+  }
+
+  if (verdict === 'drop') {
+    return { releases: (metadata?.releases || []).filter(r => r.id !== releaseId) }
+  }
 
   return {
     releases: (metadata?.releases || []).map(r => (r.proposal && r.id === releaseId) ? { ...r, choice: verdict === 'accept' } : r),
