@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
 
-const UIExternals = ({ entity, metadata, additional, meaningful }) => (
+const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => (
   <div sx={UIExternals.styles.element}>
     <div>
       {meaningful?.vote_average && <meaningful.vote_average />}
@@ -55,7 +55,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful }) => (
         ))}
       </div>
     )}
-    {!!Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).length && (
+    {links && !!Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).length && (
       <div>
         {Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).map(external => (
           <a
