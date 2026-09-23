@@ -5,7 +5,7 @@ import { PaginateModel, PaginateResult } from 'mongoose'
 import { PersonDTO } from './person.dto'
 import { Person as PersonDocument } from './person.schema'
 
-const METADATA_FIELDS = ['state']
+const METADATA_FIELDS = ['name', 'state']
 
 @Injectable()
 export class PersonsService {

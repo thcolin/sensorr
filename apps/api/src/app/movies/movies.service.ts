@@ -12,7 +12,7 @@ import { ReleaseDTO } from './release.dto'
 import { MovieDTO } from './movie.dto'
 import { Movie as MovieDocument } from './movie.schema'
 
-const METADATA_FIELDS = ['state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
 
 @Injectable()
 export class MoviesService {
