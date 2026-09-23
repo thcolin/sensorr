@@ -580,7 +580,7 @@ UICompact.styles = {
     '>strong': {
       fontFamily: 'heading',
       fontWeight: 'heading',
-      fontSize: 4,
+      fontSize: 3,
       lineHeight: 'heading',
       minWidth: 0,
       overflow: 'hidden',
