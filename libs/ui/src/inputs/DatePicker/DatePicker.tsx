@@ -125,7 +125,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
       >
         ‹
       </button>
-      <div sx={UIDatePicker.styles.year}>
+      <div sx={UIDatePicker.styles.anchor}>
         <button
           ref={year}
           type='button'
@@ -133,8 +133,10 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
           aria-expanded={!!open}
           onClick={toggle}
           disabled={disabled}
+          sx={UIDatePicker.styles.year}
         >
-          {state.getFullYear()} ▾
+          {state.getFullYear()}
+          <span aria-hidden='true' sx={{ fontSize: 5, opacity: 0.75, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease-out' }}>▾</span>
         </button>
         {open && (
           <div role='dialog' aria-label='Year' sx={UIDatePicker.styles.popover} style={open}>
@@ -173,7 +175,11 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
                       handleDebounceChange(new Date(year, state.getMonth(), 1), true)
                       setOpen(null)
                     }}
-                    sx={UIDatePicker.styles.month(state.getFullYear() === year)}
+                    sx={{
+                      ...UIDatePicker.styles.pill,
+                      ...(state.getFullYear() === year ? UIDatePicker.styles.selected : {}),
+                      textDecoration: today.getFullYear() === year ? 'underline' : 'none',
+                    }}
                   >
                     {year}
                   </button>
@@ -182,7 +188,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
           </div>
         )}
       </div>
-      <div ref={months} sx={UIDatePicker.styles.container}>
+      <div ref={months} sx={UIDatePicker.styles.months}>
         {Array(12)
           .fill(0)
           .map((_, index) => (
@@ -192,13 +198,15 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
               aria-pressed={state.getMonth() === index}
               onClick={() => handleDebounceChange(new Date(state.getFullYear(), index, 1), true)}
               disabled={disabled}
-              sx={UIDatePicker.styles.month(state.getMonth() === index)}
+              sx={{
+                ...UIDatePicker.styles.pill,
+                ...(state.getMonth() === index ? UIDatePicker.styles.selected : {}),
+                textDecoration: today.getFullYear() === state.getFullYear() && today.getMonth() === index ? 'underline' : 'none',
+              }}
             >
-              <span>
-                {new Date(state.getFullYear(), index, 1).toLocaleString(i18n.language, {
-                  month: 'short',
-                })}
-              </span>
+              {new Date(state.getFullYear(), index, 1).toLocaleString(i18n.language, {
+                month: 'short',
+              })}
             </button>
           ))}
       </div>
@@ -215,7 +223,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
         type='button'
         onClick={() => handleDebounceChange(new Date(today.getFullYear(), today.getMonth(), 1), true)}
         disabled={disabled}
-        sx={{ ...UIDatePicker.styles.month(false), flex: 'none', display: current ? ['none', 'block'] : 'block', visibility: current ? 'hidden' : 'visible' }}
+        sx={{ ...UIDatePicker.styles.today, display: current ? ['none', 'block'] : 'block', visibility: current ? 'hidden' : 'visible' }}
       >
         Today
       </button>
@@ -226,66 +234,80 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
 UIDatePicker.styles = {
   element: {
     display: 'flex',
-    alignItems: 'stretch',
+    alignItems: 'center',
+    gap: [2, 4],
     width: ['100vw', 'auto'],
-    height: '100%',
     minWidth: 0,
+    paddingX: [2, 4],
+    paddingY: 8,
     backgroundColor: 'primaryDark',
   },
+  anchor: {
+    flexShrink: 0,
+  },
   year: {
+    variant: 'button.reset',
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
-    backgroundColor: 'primaryDarker',
-    '>button': {
-      variant: 'button.reset',
-      height: '100%',
-      paddingX: 8,
-      fontFamily: 'heading',
-      fontSize: 2,
-      fontWeight: 'bold',
-      color: 'whitePure',
+    gap: 4,
+    paddingX: 8,
+    paddingY: 4,
+    borderRadius: '0.25em',
+    fontFamily: 'heading',
+    fontSize: 3,
+    fontWeight: 'bold',
+    color: 'whitePure',
+    fontVariantNumeric: 'tabular-nums',
+    ':hover:not(:disabled)': {
+      backgroundColor: 'primaryDarker',
+    },
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'whitePure',
     },
   },
   popover: {
     position: 'fixed',
     zIndex: 6,
     width: '16em',
-    borderRadius: '4px',
-    overflow: 'hidden',
-    backgroundColor: 'primaryDark',
+    padding: 6,
+    borderRadius: '0.5em',
+    backgroundColor: 'primaryDarker',
     color: 'whitePure',
+    boxShadow: '0 0.5em 1.5em hsla(0, 0%, 0%, 0.35)',
   },
   pager: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'primaryDarker',
+    marginBottom: 4,
     fontFamily: 'heading',
     fontWeight: 'bold',
+    fontSize: 5,
+    fontVariantNumeric: 'tabular-nums',
   },
   years: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
-    '>button': {
-      minWidth: 'unset',
-    },
+    gap: 2,
   },
-  container: {
+  months: {
+    position: 'relative',
     flex: 1,
     display: 'flex',
-    alignItems: 'stretch',
-    position: 'relative',
     minWidth: 0,
     overflowX: 'auto',
     scrollbarWidth: 'none',
     '::-webkit-scrollbar': {
       display: 'none',
     },
+    '>button': {
+      flex: 1,
+      minWidth: '3.5em',
+    },
   },
   navigation: {
     variant: 'button.reset',
-    alignSelf: 'center',
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
@@ -293,32 +315,61 @@ UIDatePicker.styles = {
     height: '2em',
     width: '2em',
     borderRadius: '50%',
-    marginX: 6,
+    color: 'whitePure',
     ':disabled': {
       opacity: 0.5,
     },
     ':hover:not(:disabled)': {
       backgroundColor: 'primaryDarkest',
     },
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'whitePure',
+    },
   },
-  month: (selected: boolean) => ({
+  pill: {
     variant: 'button.reset',
-    flex: 1,
-    border: 'none',
+    paddingX: 6,
+    paddingY: 4,
+    borderRadius: '0.25em',
     fontSize: 5,
-    paddingX: 8,
-    paddingY: 6,
-    overflow: 'hidden',
-    minWidth: '4.5em',
-    backgroundColor: selected ? 'whitePure' : 'transparent',
-    color: selected ? 'primary' : 'whitePure',
+    color: 'whitePure',
+    textUnderlineOffset: '0.3em',
+    fontVariantNumeric: 'tabular-nums',
+    ':hover:not(:disabled)': {
+      backgroundColor: 'primaryDarkest',
+    },
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'whitePure',
+    },
+  },
+  selected: {
+    backgroundColor: 'whitePure',
+    color: 'primaryDarkest',
+    fontWeight: 'bold',
+    ':hover:not(:disabled)': {
+      backgroundColor: 'whitePure',
+    },
+  },
+  today: {
+    variant: 'button.reset',
+    flexShrink: 0,
+    paddingX: 6,
+    paddingY: 4,
+    borderRadius: '0.25em',
+    fontSize: 5,
+    color: 'whitePure',
+    border: '1px solid',
+    borderColor: 'hsla(0, 0%, 100%, 0.5)',
     ':hover': {
-      backgroundColor: selected ? 'whitePure' : 'primaryDarker',
+      backgroundColor: 'primaryDarkest',
     },
-    ':disabled': {
-      opacity: 0.5,
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'whitePure',
     },
-  }),
+  },
 }
 
 export const DatePicker = memo(UIDatePicker)
