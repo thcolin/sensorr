@@ -103,6 +103,10 @@ export const proposalDiff = (owned, proposed, policy) => {
   }
 }
 
+// The size never has a policy: lighter holds, heavier breaks, and a move under the
+// threshold says nothing.
+export const sizeStateOf = (delta, threshold = 0) => Math.abs(delta || 0) < (threshold || 1) ? 'quiet' : delta < 0 ? 'held' : 'broken'
+
 export const isPending = (release) => !!release?.proposal && typeof release?.choice !== 'boolean'
 
 export const itemOf = (entity, releases, policy) => {

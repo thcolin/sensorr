@@ -10,6 +10,7 @@ import { Transition } from '../../components/Sensorr/Proposal'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { Release } from '../../components/Sensorr/Release'
 import { Gestures } from '../../components/Sensorr/Gestures'
+import { sizeStateOf } from './queue'
 
 export const EMOJI = {
   'refine': '✨',
@@ -77,7 +78,7 @@ const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
       axis='size'
       from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
       to={filesize.stringify(item.proposal?.size || 0)}
-      state={Math.abs(item.diff.size || 0) < (threshold || 1) ? 'quiet' : item.diff.size < 0 ? 'held' : 'broken'}
+      state={sizeStateOf(item.diff.size, threshold)}
       compact={compact}
     />
   </>
