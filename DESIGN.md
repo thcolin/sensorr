@@ -195,13 +195,13 @@ components:
     backgroundColor: "{colors.gray}"
     textColor: "{colors.grayDarkest}"
   transition-pill-held:
-    backgroundColor: "{colors.accentDarker}"
+    backgroundColor: "{colors.primaryDarkest}"
     textColor: "{colors.whitePure}"
   transition-pill-held-before:
     backgroundColor: "{colors.accentDarkest}"
     textColor: "{colors.primaryLightest}"
   transition-pill-broken:
-    backgroundColor: "{colors.errorDarker}"
+    backgroundColor: "{colors.errorDark}"
     textColor: "{colors.whitePure}"
   transition-pill-broken-before:
     backgroundColor: "{colors.errorDarkest}"
@@ -248,7 +248,7 @@ vocabulary.
 - Instrumented: every state a job can be in has a badge, and every badge says which.
 - Discreet: chrome recedes to near-black, the artwork is the color.
 - Dense: information per screen is high on purpose; a library is a wall of posters.
-- Detailed: five-axis diffs, superscript policy ranks, byte-exact sizes.
+- Detailed: five-axis diffs, policy ranks, byte-exact sizes.
 - Fine: 1px borders, 0.25em radii, no ornament above the data.
 - UX-friendly: every control says its state before you touch it.
 
@@ -564,12 +564,13 @@ underneath, the new value on top of it, `0.75em` over its right end
 (`apps/web/src/components/Sensorr/Proposal.tsx`). The shape comes from the job filters of
 `/jobs` (`apps/web/src/pages/Jobs/Jobs.tsx:365-395`): `1em` radius, no border, one hue
 stepped down in lightness. The new value carries the state, the old one takes a darker
-tint of the same hue:
-- `held` (the new value satisfies `require`): `accentDarker` over `accentDarkest`, semibold
+tint of the same hue. Both halves are set in regular weight:
+- `held` (the new value satisfies `require`): `primaryDarkest` over `accentDarkest`,
   `whitePure` over `primaryLightest`. Not `primary`: white on it measures 2.04:1, too low
-  for `0.75em` type; white on `accentDarker` measures 4.58:1.
-- `broken` (the new value is in `avoid`, or a `require` was lost): `errorDarker` over
-  `errorDarkest`.
+  for `0.75em` type. White on `primaryDarkest` measures 3.40:1, below AA, kept for the
+  7-point step that keeps the overlap visible.
+- `broken` (the new value is in `avoid`, or a `require` was lost): `errorDark` over
+  `errorDarkest`, a 10-point step; white on `errorDark` measures 5.15:1.
 - `moved` and `quiet` (no group has an opinion on the new value): `grayDark` over `gray`.
 - `same`: the new value alone, at `opacity: 0.3`.
 - The card header and the list rows draw the size the same way, lightest owned release under the proposed
@@ -577,9 +578,9 @@ tint of the same hue:
   "Same size below" threshold.
 
 There is no separator: the overlap says "becomes", the hue says what the policy thinks,
-and the `title` still spells `x264 ~ x265` for the tooltip. Ranks ride as superscripts:
-`*` for a required value, a superscript digit for its position in `prefer`, `!` for an
-avoided one. **This is the component that makes Sensorr look like Sensorr; extend its
+and the `title` still spells `x264 ~ x265` for the tooltip. The policy marks (`*`, `!`, the
+`prefer` rank) stay out of the pill: at `0.75em` they read as a stray dot, and the hue
+already says what the policy thinks. **This is the component that makes Sensorr look like Sensorr; extend its
 vocabulary rather than inventing a second diff widget.**
 
 ### Empty and Error States (signature)
@@ -645,7 +646,7 @@ relative luminance 0.4642, against white's 1.0. AA asks 4.5:1 for normal text an
 large text; this clears neither. It affects the filled primary `Button`
 (`libs/ui/src/atoms/Button/Button.tsx:21-38`) and the active tab of the
 `/design` gallery (`apps/web/src/pages/Design/Design.tsx:58-61`). The `held` transition
-pill left `primary` for `accentDarker` on 2026-09-23 for this reason. The disabled primary
+pill left `primary` for `primaryDarkest` on 2026-09-23 for this reason. The disabled primary
 button is the same gap one step down: `hsl(0, 0%, 80%)` on `primaryDarkest` measures
 **2.11:1**. Both figures were computed here and match `@google/design.md@0.4.0 lint`.
 
