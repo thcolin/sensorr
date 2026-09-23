@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../../../atoms/Button/Button'
 import { Inputs, InputsProps } from './Inputs'
-import { Pane } from 'libs/ui/src/atoms/Pane/Pane'
+import { Pane } from '../../../atoms/Pane/Pane'
 
 export interface AsideProps extends Omit<InputsProps, 'control'> {
   toggleOpen: () => void
