@@ -994,15 +994,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
             )
           })}
         </div>
-        <Warning
-          emoji='📼'
-          title="You've reached the end of the tape"
-          subtitle={(
-            <span>
-              Be kind, <em>rewind</em>, and let the next <em>refine</em> or <em>shrink</em> job record some more swaps.
-            </span>
-          )}
-        />
+        <Warning emoji='📼' title='End of tape' subtitle='Be kind, rewind.' />
       </div>
       {mobile && !!active && (
         <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
