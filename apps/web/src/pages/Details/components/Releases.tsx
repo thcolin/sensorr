@@ -4,7 +4,7 @@ import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Release } from '../../../components/Sensorr/Release'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { Gestures } from '../../../components/Sensorr/Gestures'
-import { filesize } from '@sensorr/utils'
+import { emojize, filesize } from '@sensorr/utils'
 import { isPending, proposalDiff, scoreReleases, sizeStateOf } from '../../Proposals/queue'
 
 const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, ready, ...props }) => {
@@ -63,7 +63,7 @@ const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, 
                   {typeof diff.size === 'number' && (
                     <Transition
                       axis='size'
-                      from={filesize.stringify((release.size || 0) - diff.size)}
+                      from={emojize('📦', filesize.stringify((release.size || 0) - diff.size))}
                       to={filesize.stringify(release.size || 0)}
                       state={sizeStateOf(diff.size)}
                     />
