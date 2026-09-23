@@ -142,6 +142,15 @@ const MORPH = {
   'html[data-morphing] [data-morph-poster] *': {
     transition: 'none !important',
   },
+  // The poster image, in both forms: a 2:3 box that only changes size.
+  '[data-morph-poster] img[src*="image.tmdb.org"]': {
+    viewTransitionName: 'var(--morph-poster, none)',
+    viewTransitionClass: 'poster',
+  },
+  '::view-transition-image-pair(*.poster)': {
+    overflow: 'hidden',
+    borderRadius: '0.25em',
+  },
   '::view-transition-group(*)': {
     animationDuration: '400ms',
     animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
@@ -160,14 +169,6 @@ const MORPH = {
   },
   '::view-transition-new(*.closing)': {
     animation: '250ms ease-out 150ms both sensorr-morph-in',
-  },
-  // The unchanged axes only the full card draws sit at their final place from the start:
-  // out at once, and in only once the card has grown under them.
-  '::view-transition-old(*.pill):only-child': {
-    animation: '150ms ease-out both sensorr-morph-out',
-  },
-  '::view-transition-new(*.pill):only-child': {
-    animation: '200ms ease-out 250ms both sensorr-morph-in',
   },
   '::view-transition-old(*.row):only-child, ::view-transition-old(*.card):only-child': {
     animation: '300ms cubic-bezier(0.4, 0, 0.2, 1) both sensorr-morph-fold',
@@ -516,19 +517,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   // React renders the new state synchronously, the rows are measured and scrolled to
   // at their real height, and each element both forms draw moves from its old place.
   // The CSS of the moves is the Global block of the render below.
-  // Only the rows that change form name their poster, title, pills… for the move: every
+  // Only the rows that change form name their poster, title, size… for the move: every
   // named element is one more snapshot, and the other rows only need to slide.
   keys.current.morph = (update, target = null) => {
     flushSync(() => setFocus([activeId, target].filter(id => id !== null && id !== undefined)))
-
-    // A pill wrapped onto the compact row's hidden line would fly in from under it.
-    list.current?.querySelectorAll('[data-clipped]:has([style*="view-transition-name"])').forEach((pills: HTMLElement) => {
-      Array.from(pills.children).forEach((pill: HTMLElement) => {
-        if (pill.offsetTop > (pills.firstElementChild as HTMLElement).offsetTop) {
-          pill.style.viewTransitionName = 'none'
-        }
-      })
-    })
 
     const apply = () => {
       flushSync(update)

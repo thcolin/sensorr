@@ -38,6 +38,10 @@ const POSTER = 'w300'
 // and may differ between the two forms while the name stays the same.
 export const morph = (kind, id, group = kind) => name(kind, id, group)
 
+// The full card's poster sits in a frame wider than the image, badges around it: the
+// image itself is what moves, named through this property (MORPH in Proposals.tsx).
+const poster = (id) => ({ '--morph-poster': `swap-poster-${id}` }) as any
+
 const name = (kind, id, group = kind) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: group }) as any
 
 export const useLoadDetails = () => {
@@ -146,7 +150,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
     <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : {}) }} aria-current={!leaving}>
       <div sx={UIActive.styles.wrapper}>
         <div sx={UIActive.styles.card}>
-          <div sx={UIActive.styles.poster} style={morph('poster', item.id)} data-morph-poster={true}>
+          <div sx={UIActive.styles.poster} style={poster(item.id)} data-morph-poster={true}>
             <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
           </div>
           <div sx={UIActive.styles.body}>
@@ -211,7 +215,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               {!!item.diff.rows.length && (
                 <div sx={UIActive.styles.pills} data-pills={true}>
                   {item.diff.rows.map(({ axis, from, to }) => (
-                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} style={morph('pill', `${item.id}-${axis}`)} />
+                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
                   ))}
                 </div>
               )}
@@ -423,7 +427,7 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
   return (
     <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }} onPointerEnter={onHover ? () => onHover(item.id) : undefined}>
       <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={label} tabIndex={-1} />
-      <span sx={UICompact.styles.poster} style={morph('poster', item.id)} data-morph-poster={true}>
+      <span sx={UICompact.styles.poster} style={morphing ? poster(item.id) : undefined} data-morph-poster={true}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
       <span sx={UICompact.styles.body}>
@@ -432,9 +436,9 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
           {!!year && <small style={morph('year', item.id)}>{year}</small>}
         </span>
         <span sx={UICompact.styles.diff}>
-          <span data-clipped={true}>
+          <span>
             {item.diff.changed.map(({ axis, from, to }) => (
-              <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} style={morph('pill', `${item.id}-${axis}`)} />
+              <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
         </span>
