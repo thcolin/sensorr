@@ -222,7 +222,7 @@ export const Calendar = compose(
               title="Calendar"
               subtitle={(
                 <span>
-                  Explore movies from followed persons in a calendar view, refinable with various filters like <strong>average rating</strong>, <strong>number of votes</strong>, <strong>genres</strong>, <strong>certifications</strong>, etc...
+                  Explore movies from followed persons in a calendar view, refinable with various filters like <strong>credits</strong>, <strong>average rating</strong>, <strong>number of votes</strong>, <strong>genres</strong>, <strong>certifications</strong>, etc...
                   <br/>
                   <small><em>Follow more people to enhance your calendar !</em></small>
                 </span>

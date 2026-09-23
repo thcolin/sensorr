@@ -32,11 +32,9 @@ const withFetchCalendarQuery = (
     }, [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
 
     const [loading, setLoading] = useState(true)
-    const [total, setTotal] = useState(null)
     const [error, setError] = useState(null)
-    const [statistics, setStatistics] = useState({})
+    const [fetched, setFetched] = useState(null)
 
-    const [pages, setPages] = useState({})
     const processed = useRef([])
     const records = useRef([])
     const totals = useRef({})
@@ -103,6 +101,7 @@ const withFetchCalendarQuery = (
 
       setLoading(true)
       setError(null)
+      setFetched(null)
 
       if ((props as any).ready === false || (props as any).loading === true || persons.loading) {
         return
@@ -135,33 +134,25 @@ const withFetchCalendarQuery = (
             }))
           }
 
-          const released = entities.filter(entity => judge(summaries[entity.id], { ...refinements, with_credits_departments: '' }))
-          const refined = released.filter(entity => judge(summaries[entity.id], refinements))
-
-          totals.current = { 1: refined.length }
-          setStatistics({
-            with_credits_departments: released
-              .flatMap(entity => summaries[entity.id]?.departments || [])
-              .reduce((acc, _id) => [...acc.filter(stat => stat._id !== _id), { _id, count: (acc.find(stat => stat._id === _id)?.count || 0) + 1 }], []),
-          })
-          setTotal(refined.length)
-          setPages({ 1: refined })
+          setFetched({ entities, summaries })
         } catch (error) {
-          setTotal(null)
-          setPages({})
-          setStatistics({})
           setError(error)
         } finally {
           setLoading(false)
         }
       })
-    }, [query, refinements, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
+    }, [query, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
 
-    const entities = useMemo(() => {
-      const sorted = (Object.keys(totals.current).length !== Object.keys(pages).length ? [] : Object.values(pages)
-        .reduce((acc, curr) => [...(acc as any), ...(curr as any)], [])) as any
+    const refined = useMemo(() => {
+      if (!fetched) {
+        return { entities: {}, total: null, statistics: {} }
+      }
 
-      sorted.sort((a, b) => {
+      const { entities, summaries } = fetched
+      const released = entities.filter(entity => judge(summaries[entity.id], { ...refinements, with_credits_departments: '' }))
+      const kept = released.filter(entity => judge(summaries[entity.id], refinements))
+
+      kept.sort((a, b) => {
         const [key, order] = (query?.params?.sort_by || 'primary_release_date.asc').split('.')
 
         switch (key) {
@@ -176,21 +167,23 @@ const withFetchCalendarQuery = (
         }
       })
 
-      return (Object.entries(totals.current)
-        .reduce((acc, [page, total]) => [...acc, ...(new Array(total).fill(Number(page))).map((page, index) => ({ page, index }))], [])
-        .reduce((acc, { page, index }, i) => ({
-          ...acc,
-          ...(sorted[i] ? { [i]: sorted[i] } : pages[page] ? { [i]: pages[page][index] } : {}),
-        }), {})
-      )
-    }, [pages, query?.params?.sort_by])
+      return {
+        entities: kept.reduce((acc, entity, index) => ({ ...acc, [index]: entity }), {}),
+        total: kept.length,
+        statistics: {
+          with_credits_departments: released
+            .flatMap(entity => summaries[entity.id]?.departments || [])
+            .reduce((acc, _id) => [...acc.filter(stat => stat._id !== _id), { _id, count: (acc.find(stat => stat._id === _id)?.count || 0) + 1 }], []),
+        },
+      }
+    }, [fetched, refinements, query?.params?.sort_by])
 
     return (
       <WrappedComponent
         {...props}
-        entities={entities}
-        length={total}
-        statistics={statistics}
+        entities={refined.entities}
+        length={refined.total}
+        statistics={refined.statistics}
         ready={(props as any).ready !== false && !loading}
         controls={controls}
         error={(!persons.loading && !Object.keys(persons.metadata).length) ? {
