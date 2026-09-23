@@ -36,6 +36,26 @@ were already there. A change is clean when it adds no new red on top of those; t
 project-by-project list to compare against, and the exact lint line to read, are in
 [`docs/development.md`](docs/development.md#verify).
 
+## Visual check
+
+What `/thcolin:craft` and `/thcolin:design` read before touching a screen: how to run the app on real
+data, what to open, how to capture.
+
+- Frontend paths: `apps/web/**`, `libs/ui/**`, `libs/theme/**`.
+- Run `yarn web` alone. `apps/web/proxy.conf.json` sends `/api` to the Cortex instance, so the app shows
+  the real library, about 9 000 movies and 3 000 pending proposals. **Look, never act**: an `Accept`,
+  `Refuse` or `Ban` click from this app writes on Cortex. Never start a second API against the Cortex
+  database, see Pitfalls.
+- Screens: `http://localhost:4200/movie/library`, `/movie/proposals`, `/jobs`, `/settings/policies`. The
+  component gallery is `/design`, one story file per route, see
+  [`docs/development.md`](docs/development.md#the-component-gallery).
+- Capture with `mcp__chrome-devtools__take_screenshot`, window 1440×900; mobile at 390 px wide. Reference
+  captures of every screen are in `docs/assets/screenshots/`, `*-desktop.webp` and `*-mobile.webp`.
+- Visual authority: [`DESIGN.md`](DESIGN.md), derived from `libs/theme`; `node tools/docs/check-design.mjs`
+  fails when they disagree. The impeccable design hook is installed in `.claude/settings.local.json`
+  (`/impeccable hooks on`), and `/impeccable critique <source file>` writes to `.impeccable/critique/`,
+  which stays tracked.
+
 ## Where the tracking lives
 
 The worklog for a piece of work lives in my Obsidian vault, outside the repo. Nothing in
