@@ -38,6 +38,7 @@ UICommandTabs.styles = {
     position: 'sticky',
     top: '0px',
     zIndex: 2,
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'flex-end',
     gap: '1.5em',
