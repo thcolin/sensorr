@@ -128,51 +128,23 @@ const UIGestures = ({ onGesture, disabled = false, ...props }) => (
   <div {...props} sx={UIGestures.styles.element}>
     {GESTURES.map(({ verdict, key, label, variant }) => (
       <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} aria-keyshortcuts={key}>
-        {label}<code>{key}</code>
+        {label}
       </Button>
     ))}
-    <button type='button' disabled={disabled} onClick={() => onGesture('skip')} aria-keyshortcuts='S'>
-      Skip<code>S</code>
-    </button>
   </div>
 )
 
 UIGestures.styles = {
   element: {
-    display: 'grid',
-    gridTemplateColumns: ['repeat(2, 1fr) auto', '1fr repeat(2, minmax(8em, 12em)) 1fr'],
-    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'center',
     gap: 8,
     '>button': {
-      display: 'inline-flex',
-      alignItems: 'baseline',
-      justifyContent: 'center',
-      gap: 8,
+      flex: ['1', '0 1 12em'],
       ':focus-visible': {
         outline: '1px solid',
         outlineColor: 'grayDarkest',
         outlineOffset: '2px',
-      },
-      '>code': {
-        fontFamily: 'monospace',
-        opacity: 0.5,
-      },
-    },
-    '>button:first-of-type': {
-      gridColumn: ['auto', 2],
-    },
-    '>button:last-of-type': {
-      variant: 'button.reset',
-      justifySelf: 'start',
-      paddingX: 8,
-      color: 'grayDarker',
-      cursor: 'pointer',
-      ':hover': {
-        color: 'text',
-      },
-      ':disabled': {
-        cursor: 'default',
-        opacity: 0.5,
       },
     },
   },

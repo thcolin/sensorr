@@ -307,8 +307,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       <span sx={UIProposals.styles.toast}>
         <span>{emojize(emoji, label)} · {targets.length > 1 ? `${targets.length} proposals` : targets[0].entity?.title}</span>
         <span>
-          {verdict === 'refuse' && <Button variant='outline' color='primary' onClick={() => keys.current.ban()}>Ban<code>B</code></Button>}
-          <Button variant='outline' color='gray' onClick={undo}>Undo<code>Z</code></Button>
+          {verdict === 'refuse' && <Button variant='outline' color='primary' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
+          <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
         </span>
       </span>
     )
@@ -589,9 +589,7 @@ UIProposals.styles = {
   element: {
     flex: 1,
     width: '100%',
-    maxWidth: '105em',
-    alignSelf: 'center',
-    paddingX: [8, 4],
+    paddingX: [8, '0px'],
     paddingY: 4,
   },
   sticky: {
@@ -608,15 +606,6 @@ UIProposals.styles = {
     '>span:last-of-type': {
       display: 'flex',
       gap: 8,
-    },
-    'button': {
-      display: 'inline-flex',
-      alignItems: 'baseline',
-      gap: 8,
-      '>code': {
-        fontFamily: 'monospace',
-        opacity: 0.5,
-      },
     },
   },
   menu: {
