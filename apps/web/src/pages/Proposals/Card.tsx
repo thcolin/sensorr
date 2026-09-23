@@ -70,7 +70,7 @@ const useDetails = (id) => {
 
 
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
-const Size = ({ item, threshold }) => item.owned.length ? (
+const Size = ({ item, threshold, compact = false }) => item.owned.length ? (
   <>
     <span>📦</span>
     <Transition
@@ -78,99 +78,94 @@ const Size = ({ item, threshold }) => item.owned.length ? (
       from={filesize.stringify((item.proposal?.size || 0) - (item.diff.size || 0))}
       to={filesize.stringify(item.proposal?.size || 0)}
       state={Math.abs(item.diff.size || 0) < (threshold || 1) ? 'quiet' : item.diff.size < 0 ? 'held' : 'broken'}
+      compact={compact}
     />
   </>
 ) : <>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</>
 
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, entering = true, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
-  const [others, setOthers] = useState(false)
   const [meaningful, setMeaningful] = useState(false)
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
-  const lightest = item.diff.lightest
-  const owned = others ? item.owned : (lightest ? [lightest] : [])
   const verdict = leaving && VERDICTS[leaving]
 
   return (
     <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : entering ? UIActive.styles.entering : {}) }} aria-current={!leaving}>
       <div sx={UIActive.styles.collapse}>
-        <div sx={UIActive.styles.card}>
-          <div sx={UIActive.styles.poster}>
-            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
-          </div>
-          <div sx={UIActive.styles.body}>
-            <header sx={UIActive.styles.head}>
-              <h3 title={facts.title}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
-              <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-                <Size item={item} threshold={threshold} />
-              </code>
-              {!!onClose && (
-                <button type='button' onClick={onClose} sx={UIActive.styles.close} aria-label='Close' title='Close (Esc)'>
-                  <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: 'rotate(180deg)' }} />
-                </button>
-              )}
-            </header>
-            <div sx={UIActive.styles.sub}>
-              <details sx={UIActive.styles.metadata}>
-                <summary>
-                  <span />
-                  <span>
-                    {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
-                    {!!facts.year && <span>({facts.year})</span>}
-                  </span>
-                </summary>
-                <div>
-                  <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
-                </div>
-              </details>
-              <aside>
-                {emojize(EMOJI[item.command], item.command)}
-                <code>#{item.proposal?.job}</code>
-              </aside>
+        <div sx={UIActive.styles.wrapper}>
+          <div sx={UIActive.styles.card}>
+            <div sx={UIActive.styles.poster}>
+              <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
             </div>
-            {movie ? (
-              <div sx={UIActive.styles.facts}>
-                {mobile ? (
-                  <>
-                    <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
-                    <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
-                  </>
-                ) : (
-                  <Meaningful
-                    meaningful={facts.meaningful}
-                    open={meaningful}
-                    onToggle={setMeaningful}
-                    aside={<Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />}
-                  />
-                )}
-              </div>
-            ) : (
-              <div sx={UIActive.styles.skeleton}><span /></div>
-            )}
-            {/* The same releases band as the movie page, with the swap drawn under it. */}
-            <div sx={UIActive.styles.releases} data-releases={true}>
-              <div>
-                {owned.map(release => (
-                  <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
-                ))}
-                {item.owned.length > 1 && (
-                  <button type='button' onClick={() => setOthers(!others)} sx={UIActive.styles.others} aria-expanded={others}>
-                    {others ? 'Hide the other owned releases' : `${item.owned.length - 1} more owned ${item.owned.length > 2 ? 'releases' : 'release'}`}
+            <div sx={UIActive.styles.body}>
+              <header sx={UIActive.styles.head}>
+                <h3 title={facts.title}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
+                <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+                  <Size item={item} threshold={threshold} />
+                </code>
+                {!!onClose && (
+                  <button type='button' onClick={onClose} sx={UIActive.styles.close} aria-label='Close' title='Close (Esc)'>
+                    <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: 'rotate(180deg)' }} />
                   </button>
                 )}
-                {!!item.proposal && (
-                  <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
-                )}
+              </header>
+              <div sx={UIActive.styles.sub}>
+                <details sx={UIActive.styles.metadata}>
+                  <summary>
+                    <span />
+                    <span>
+                      {!!entity?.original_title && entity.original_title !== facts.title && <strong>{entity.original_title}</strong>}
+                      {!!facts.year && <span>({facts.year})</span>}
+                    </span>
+                  </summary>
+                  <div>
+                    <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />
+                  </div>
+                </details>
+                <aside>
+                  {emojize(EMOJI[item.command], item.command)}
+                  <code>#{item.proposal?.job}</code>
+                </aside>
               </div>
-              {!!item.diff.rows.length && (
-                <div sx={UIActive.styles.pills} data-pills={true}>
-                  {item.diff.rows.map(({ axis, from, to }) => (
-                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
-                  ))}
+              {movie ? (
+                <div sx={UIActive.styles.facts}>
+                  {mobile ? (
+                    <>
+                      <Meaningful meaningful={facts.meaningful} open={meaningful} onToggle={setMeaningful} />
+                      <Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />
+                    </>
+                  ) : (
+                    <Meaningful
+                      meaningful={facts.meaningful}
+                      open={meaningful}
+                      onToggle={setMeaningful}
+                      aside={<Externals entity={movie} metadata={metadata} additional={additional} meaningful={facts.meaningful} links={false} />}
+                    />
+                  )}
                 </div>
+              ) : (
+                <div sx={UIActive.styles.skeleton}><span /></div>
               )}
-              {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
             </div>
+          </div>
+          {/* The same releases band as the movie page, with the swap drawn under it. */}
+          <div sx={UIActive.styles.releases} data-releases={true}>
+            <div>
+              {item.owned.map(release => (
+                <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
+              ))}
+              {!!item.proposal && (
+                <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
+              )}
+            </div>
+            {!!item.diff.rows.length && (
+              <div sx={UIActive.styles.pills} data-pills={true}>
+                {item.diff.rows.map(({ axis, from, to }) => (
+                  <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} />
+                ))}
+              </div>
+            )}
+            {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
           </div>
         </div>
       </div>
@@ -232,6 +227,10 @@ UIActive.styles = {
       overflow: 'hidden',
     },
   },
+  wrapper: {
+    borderBottom: '1px solid',
+    borderColor: 'gray',
+  },
   card: {
     display: 'flex',
     flexDirection: ['column', 'row'],
@@ -239,8 +238,6 @@ UIActive.styles = {
     gap: 4,
     paddingX: 4,
     paddingY: 4,
-    borderBottom: '1px solid',
-    borderColor: 'gray',
   },
   // Movie's poster sizes itself, badges included, as on every other page.
   poster: {
@@ -258,9 +255,6 @@ UIActive.styles = {
     },
     '>header': {
       order: [0, 'initial'],
-    },
-    '>div[data-releases]': {
-      order: [1, 'initial'],
     },
 
   },
@@ -346,15 +340,13 @@ UIActive.styles = {
       borderRadius: '0.25em',
     },
   },
-  // The movie page's releases band: a slightly lighter ground, the rows, then the swap.
+  // The movie page's releases band: edge to edge under the poster, flush with the border.
   releases: {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
-    marginTop: 'auto',
-    paddingX: [8, 4],
-    paddingY: 4,
-    borderRadius: '0.25em',
+    paddingX: [8, '4em'],
+    paddingY: '1.5em',
     backgroundColor: 'grayLighter',
     '>div:first-of-type': {
       display: 'flex',
@@ -381,22 +373,6 @@ UIActive.styles = {
       outlineColor: 'grayDarkest',
     },
   },
-  others: {
-    variant: 'button.reset',
-    alignSelf: 'flex-start',
-    color: 'grayDarker',
-    fontFamily: 'monospace',
-    fontSize: 7,
-    cursor: 'pointer',
-    ':hover': {
-      color: 'text',
-    },
-    ':focus-visible': {
-      outline: '1px solid',
-      outlineColor: 'grayDarkest',
-      outlineOffset: '2px',
-    },
-  },
   facts: {
     display: 'flex',
     alignItems: 'center',
@@ -411,6 +387,7 @@ UIActive.styles = {
     flexWrap: 'wrap',
     columnGap: 7,
     rowGap: 8,
+    paddingY: 8,
   },
   band: {
     position: 'absolute',
@@ -428,11 +405,14 @@ UIActive.styles = {
 
 export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive))
 
-const UICompact = ({ item, onSelect, threshold = 0, ...props }) => {
+// The row is not a button itself: the hover decisions would be buttons nested in it.
+// A button stretched under the content opens the card; the decisions sit above it.
+const UICompact = ({ item, onSelect, onDecide = null, disabled = false, threshold = 0, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
 
   return (
-    <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.element}>
+    <div sx={UICompact.styles.element}>
+      <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={`Open ${item.entity?.title || 'proposal'}`} />
       <span sx={UICompact.styles.poster}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
@@ -447,18 +427,19 @@ const UICompact = ({ item, onSelect, threshold = 0, ...props }) => {
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
+          {!!onDecide && <Gestures onGesture={onDecide} disabled={disabled} muted={true} shortcuts={false} sx={UICompact.styles.decide} data-decide={true} />}
           <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-            {item.owned.length ? <Size item={item} threshold={threshold} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+            {item.owned.length ? <Size item={item} threshold={threshold} compact={true} /> : <small>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
           </code>
         </span>
       </span>
-    </button>
+    </div>
   )
 }
 
 UICompact.styles = {
   element: {
-    variant: 'button.reset',
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     gap: 6,
@@ -466,18 +447,45 @@ UICompact.styles = {
     height: ['108px', '80px'],
     paddingX: 4,
     paddingY: 8,
-    textAlign: 'left',
-    cursor: 'pointer',
     borderBottom: '1px solid',
     borderColor: 'gray',
     transition: 'background-color 200ms ease-in-out',
     ':hover': {
       backgroundColor: 'grayLightest',
     },
+    '>span': {
+      pointerEvents: 'none',
+    },
+    '@media (hover: hover)': {
+      ':hover, :focus-within': {
+        '[data-decide]': { opacity: 1, visibility: 'visible', transition: 'opacity 150ms ease-in-out' },
+      },
+    },
+  },
+  open: {
+    variant: 'button.reset',
+    position: 'absolute',
+    inset: '0px',
+    cursor: 'pointer',
     ':focus-visible': {
       outline: '1px solid',
       outlineColor: 'grayDarkest',
       outlineOffset: '-1px',
+    },
+  },
+  // Shown on hover only, so a phone never gets them.
+  decide: {
+    display: ['none', 'flex'],
+    marginRight: 'auto',
+    pointerEvents: 'auto',
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'opacity 150ms ease-in-out, visibility 0ms linear 150ms',
+    '>button': {
+      flex: 'none',
+      paddingX: 6,
+      paddingY: 10,
+      fontSize: 7,
     },
   },
   poster: {

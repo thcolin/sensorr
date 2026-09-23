@@ -41,11 +41,12 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
   const { state: computed, separator } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
   const state = forced || computed
   const side = { ...UITransition.styles.side, ...(compact ? UITransition.styles.compact : {}) }
+  const element = { ...UITransition.styles.element, fontSize: compact ? 6 : 5 }
   const tint = UITransition.styles.tints[state] || UITransition.styles.tints.quiet
 
   if (state === 'same') {
     return (
-      <span {...props} sx={{ ...UITransition.styles.element, opacity: 0.3 }} title={`${axis}: ${to}`}>
+      <span {...props} sx={{ ...element, opacity: 0.3 }} title={`${axis}: ${to}`}>
         <span sx={{ ...side, ...tint.after }}>
           <Value axis={axis} value={to} compact={compact} />
         </span>
@@ -54,7 +55,7 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
   }
 
   return (
-    <span {...props} sx={UITransition.styles.element} title={`${axis}: ${from} ${separator} ${to}`}>
+    <span {...props} sx={element} title={`${axis}: ${from} ${separator} ${to}`}>
       <span sx={{ ...side, ...UITransition.styles.before, ...tint.before }}>
         <Value axis={axis} value={from} compact={compact} />
       </span>
@@ -73,7 +74,6 @@ UITransition.styles = {
     fontFamily: 'monospace',
     whiteSpace: 'nowrap',
     lineHeight: 'normal',
-    fontSize: 6,
     fontWeight: 'normal',
   },
   side: {

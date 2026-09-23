@@ -564,7 +564,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     onClose={row.leaving ? null : () => setActiveId(null)}
                   />
                 ) : (
-                  <Compact item={row.item} threshold={threshold} onSelect={setActiveId} />
+                  <Compact item={row.item} threshold={threshold} onSelect={setActiveId} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
                 )}
               </div>
             )
