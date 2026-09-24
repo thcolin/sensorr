@@ -22,15 +22,13 @@ The root `.env` is tracked and carries the development defaults for the `NX_*` v
 
 ### `yarn web`
 
-Runs `nx run web:serve` and serves the PWA on **http://localhost:4200**. `apps/web/project.json` sets no `port`, so the `@nx/webpack:dev-server` default applies. Requests to `/api` go through `apps/web/proxy.conf.json`, whose `target` decides which API answers them. Without an API behind it, the app stops at the login screen.
+Runs `nx run web:serve-h2`: the dev server, `nx run web:serve`, on http://localhost:4200, and `tools/dev/h2-front.mjs` in front of it, which serves the PWA on **https://localhost:4443** over HTTP/2. Open the https URL. `apps/web/project.json` sets no `port`, so the `@nx/webpack:dev-server` default applies. Requests to `/api` go through `apps/web/proxy.conf.json`, whose `target` decides which API answers them. Without an API behind it, the app stops at the login screen.
 
-Keep to one tab on that URL. A tab keeps four SSE streams open (`apps/web/src/contexts/MoviesMetadata/MoviesMetadata.tsx:80`, `apps/web/src/contexts/Jobs/Jobs.tsx:20` and `:45`, `apps/web/src/contexts/Notifications/Notifications.tsx:111`), five on `/jobs`, and over HTTP/1.1 Chrome opens at most six connections per host: a second tab never finishes loading. Production is not affected, Caddy serves it over HTTP/2.
+HTTP/2 is what lets several tabs load. A tab keeps four SSE streams open (`apps/web/src/contexts/MoviesMetadata/MoviesMetadata.tsx:80`, `apps/web/src/contexts/Jobs/Jobs.tsx:20` and `:45`, `apps/web/src/contexts/Notifications/Notifications.tsx:111`), five on `/jobs`, and over HTTP/1.1 Chrome opens at most six connections per host: on http://localhost:4200, a second tab never finishes loading. Over HTTP/2 every request of every tab shares one connection. Production is not affected, Caddy serves it over HTTP/2.
 
-### `yarn web:h2`
+The front forwards everything to `http://localhost:4200`, `/api` and its SSE streams included, unbuffered. The live-reload websocket follows the page's origin (`publicHost` in `apps/web/project.json`); browsers open it as a separate HTTP/1.1 upgrade, which the front pipes to the dev server and which does not count against the six connections. For other ports, `node tools/dev/h2-front.mjs <listen port> <dev server port>` next to your own `web:serve`.
 
-Runs `yarn web` and, next to it, `tools/dev/h2-front.mjs`, which serves the same app on **https://localhost:4443** over HTTP/2. Every request of every tab then shares one connection, and four tabs load. The front forwards everything to `http://localhost:4200`, `/api` and its SSE streams included, unbuffered. The live-reload websocket follows the page's origin (`publicHost` in `apps/web/project.json`); browsers open it as a separate HTTP/1.1 upgrade, which the front pipes to the dev server and which does not count against the six connections. For other ports, `node tools/dev/h2-front.mjs <listen port> <dev server port>` next to your own `web:serve`.
-
-It is opt-in rather than what `yarn web` does, because it needs [mkcert](https://github.com/FiloSottile/mkcert) and a trusted local CA, while `yarn web` and `nx e2e web-e2e` need nothing but Node.
+It needs [mkcert](https://github.com/FiloSottile/mkcert). Without it, `nx run web:serve` alone serves HTTP/1.1 on http://localhost:4200, one tab at a time; `nx e2e web-e2e` starts that target itself and needs nothing but Node.
 
 The first run writes a certificate for `localhost`, `127.0.0.1` and `::1` with `mkcert` into `tmp/h2-front/`, which git ignores. To trust it, run `mkcert -install` once yourself: it asks for your password and adds mkcert's CA to the system keychain, which Chrome reads, and to Firefox's store when `certutil` is installed (`brew install nss`). Until then, browsers show a certificate warning. The origin is new, so the app asks you to sign in again.
 
@@ -53,7 +51,7 @@ bin/sensorr record
 
 ### The component gallery
 
-**http://localhost:4200/design**, while `yarn web` is running. It renders the 156 stories exported by the 40 `*.stories.tsx` files of `libs/ui/src`, one page per story file, each story with its `.args` spread as props.
+**https://localhost:4443/design**, while `yarn web` is running. It renders the 156 stories exported by the 40 `*.stories.tsx` files of `libs/ui/src`, one page per story file, each story with its `.args` spread as props.
 
 `/design/:stage/:component`, where a stage is a folder of `libs/ui/src` and a component is one story file: `/design/atoms/badge`, `/design/elements/grid`, `/design/inputs/select`, `/design/components/movie`. Both `/design` and `/design/:stage` redirect to their first entry. The stages come from the files found, so `layout` has no tab as long as `libs/ui/src/layout` holds no story file. Only the story file of the URL is mounted, which is what keeps a virtualized `Grid` or `List` from being measured inside a container that has no height.
 

@@ -1,4 +1,4 @@
-// HTTP/2 over TLS in front of `yarn web`, so several tabs share one connection: over HTTP/1.1,
+// HTTP/2 over TLS in front of `nx run web:serve`, so several tabs share one connection: over HTTP/1.1,
 // each tab's SSE streams take up Chrome's six connections per host and the next tab hangs.
 // Usage: node tools/dev/h2-front.mjs [listen port = 4443] [dev server port = 4200]
 import http2 from 'node:http2'
@@ -14,7 +14,12 @@ const strip = (headers) => Object.fromEntries(Object.entries(headers).filter(([k
 
 if (!existsSync(dir + 'cert.pem')) {
   mkdirSync(dir, { recursive: true })
-  execFileSync('mkcert', ['-cert-file', dir + 'cert.pem', '-key-file', dir + 'key.pem', 'localhost', '127.0.0.1', '::1'], { stdio: 'inherit' })
+  try {
+    execFileSync('mkcert', ['-cert-file', dir + 'cert.pem', '-key-file', dir + 'key.pem', 'localhost', '127.0.0.1', '::1'], { stdio: 'inherit' })
+  } catch (e) {
+    console.error(`[h2-front] mkcert failed (${e.code || e.status}): install it, or run \`nx run web:serve\` for HTTP/1.1 on http://localhost:${upstream}`)
+    process.exit(1)
+  }
 }
 
 const server = http2.createSecureServer({ allowHTTP1: true, key: readFileSync(dir + 'key.pem'), cert: readFileSync(dir + 'cert.pem') }, (req, res) => {

@@ -46,10 +46,10 @@ data, what to open, how to capture.
   the real library, about 9 000 movies and 3 000 pending proposals. **Look, never act**: an `Accept`,
   `Refuse` or `Ban` click from this app writes on Cortex. Never start a second API against the Cortex
   database, see Pitfalls.
-- One tab per origin on `http://localhost:4200`: a second one never loads, its SSE streams exhaust Chrome's six
-  HTTP/1.1 connections. For more tabs, `yarn web:h2` serves the same app over HTTP/2 on `https://localhost:4443`,
-  trusted once `mkcert -install` has run ([`docs/development.md`](docs/development.md#yarn-webh2)).
-- Screens: `http://localhost:4200/movie/library`, `/movie/proposals`, `/jobs`, `/settings/policies`. The
+- Open `https://localhost:4443`, the HTTP/2 front `yarn web` starts, trusted once `mkcert -install` has run.
+  On `http://localhost:4200`, the dev server itself, a second tab never loads: its SSE streams exhaust Chrome's
+  six HTTP/1.1 connections ([`docs/development.md`](docs/development.md#yarn-web)).
+- Screens: `https://localhost:4443/movie/library`, `/movie/proposals`, `/jobs`, `/settings/policies`. The
   component gallery is `/design`, one story file per route, see
   [`docs/development.md`](docs/development.md#the-component-gallery).
 - Capture with `mcp__chrome-devtools__take_screenshot`, window 1440×900; mobile at 390 px wide. Reference
