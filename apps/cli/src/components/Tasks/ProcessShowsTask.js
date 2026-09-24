@@ -328,7 +328,8 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
         const stored = [...(show.releases || [])]
 
         for (const release of picks) {
-          const label = coverageLabel(release.coverage, levelOf(release.meta, release.category))
+          const level = levelOf(release.meta, release.category)
+          const label = coverageLabel(release.coverage, level)
           const raw = {
             id: release.id,
             title: release.title,
@@ -341,6 +342,7 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             enclosure: release.enclosure,
             size: release.size,
             coverage: release.coverage,
+            level,
           }
 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))

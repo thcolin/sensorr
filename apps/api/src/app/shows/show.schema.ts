@@ -165,6 +165,7 @@ export class Show extends Document {
           episode: Number,
         },
       ],
+      level: String,
       torrent: {
         name: String,
         files: [

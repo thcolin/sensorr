@@ -90,7 +90,7 @@ const Show = ({ ...props }) => {
       )}
     >
       {inLibrary && (
-        <Proposals metadata={metadata} episodes={episodes} proceedRelease={proceedRelease} />
+        <Proposals metadata={metadata} proceedRelease={proceedRelease} />
       )}
       {episodesError ? (
         <Warning

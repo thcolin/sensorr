@@ -4,7 +4,7 @@ import { emojize, filesize } from '@sensorr/utils'
 import { Gestures } from '../../../components/Sensorr/Gestures'
 import { isPending } from '../../Proposals/queue'
 
-const UIProposals = ({ metadata, episodes, proceedRelease, ...props }) => {
+const UIProposals = ({ metadata, proceedRelease, ...props }) => {
   const pending = useMemo(() => (metadata?.releases || []).filter(isPending), [metadata?.releases])
   const [sending, setSending] = useState({})
 
@@ -19,7 +19,7 @@ const UIProposals = ({ metadata, episodes, proceedRelease, ...props }) => {
         {pending.map(release => (
           <div key={release.id} sx={UIProposals.styles.row}>
             <div sx={UIProposals.styles.release}>
-              <strong>{coverageLabel(release.coverage || [], episodes || [])}</strong>
+              <strong>{coverageLabel(release.coverage || [], release.level || undefined)}</strong>
               <code title={[release.title, release.znab].filter(Boolean).join(' - ')}>{release.title}</code>
               <span>{filesize.stringify(release.size || 0)}</span>
             </div>

@@ -3,6 +3,7 @@ import { ReleaseDTO } from '../movies/release.dto'
 
 export class ShowReleaseDTO extends ReleaseDTO {
   coverage?: { season: number, episode: number }[]
+  level?: 'series' | 'season' | 'episode'
   torrent?: TorrentFiles
   imported_at?: number
 }
