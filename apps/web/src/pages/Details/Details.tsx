@@ -33,6 +33,8 @@ const UIDetails = ({
   proceedRelease,
   removeRelease,
   tabs,
+  actions = null,
+  children = null,
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
@@ -71,7 +73,7 @@ const UIDetails = ({
     <div sx={UIDetails.styles.element}>
       <Head billboard={billboard} palette={palette.palette} entity={entity} ready={ready} onReady={onReady.billboard} />
       <div sx={UIDetails.styles.body}>
-        <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh' }[behavior], '-25vh'] }}>
+        <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
           <Poster
             path={poster}
             palette={palette.palette}
@@ -103,6 +105,7 @@ const UIDetails = ({
               />
             </div>
           )}
+          {actions}
         </div>
         <div sx={{ ...UIDetails.styles.wrapper, marginTop: ['0em', expanded ? '1em' : '-2em'] }}>
           <div sx={UIDetails.styles.container}>
@@ -136,6 +139,15 @@ const UIDetails = ({
                   </Skeleton>
                 </React.Fragment>
               )}
+              {behavior === 'tv' && (
+                <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+                  <h4 sx={UIDetails.styles.subtitle}>
+                    {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
+                    {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
+                    {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+                  </h4>
+                </Skeleton>
+              )}
               <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
                 <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
               </Skeleton>
@@ -159,6 +171,7 @@ const UIDetails = ({
           ready={ready}
         />
       )}
+      {children}
       <div>
         <div sx={UIDetails.styles.tabs}>
           {(tabs || []).map(({ id, component: Component = Tabs, tabs }) => (

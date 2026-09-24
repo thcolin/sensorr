@@ -1,0 +1,59 @@
+import { memo } from 'react'
+import { State as UIState, StateProps } from '../../../atoms/State/State'
+import { Badge, BadgeProps } from '../../../atoms/Badge/Badge'
+
+export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
+  value: 'loading' | 'unfollowed' | 'followed'
+}
+
+// A show's state badge says whether it is followed, `monitored` in its document
+export const ShowStateOptions = [
+  {
+    emoji: '⌛',
+    label: 'Loading',
+    value: 'loading',
+    hide: true,
+  },
+  {
+    emoji: '🔕',
+    label: 'Not followed',
+    value: 'unfollowed',
+  },
+  {
+    emoji: '🔔',
+    label: 'Followed',
+    value: 'followed',
+  },
+]
+
+const UIShowState = ({
+  ...props
+}: ShowStateProps) => (
+  <UIState {...props as any} options={ShowStateOptions} />
+)
+
+export const ShowState = memo(UIShowState)
+
+// Keyed by the values of `episodeStatus` from @sensorr/sensorr
+export const EpisodeStatusOptions = {
+  upcoming: { emoji: '📅', label: 'Upcoming' },
+  unmonitored: { emoji: '🔕', label: 'Not followed' },
+  wanted: { emoji: '🍿', label: 'Wanted' },
+  proposed: { emoji: '🛎️', label: 'Proposed' },
+  owned: { emoji: '📼', label: 'Owned' },
+}
+
+export interface EpisodeStatusProps extends Omit<BadgeProps, 'emoji' | 'label'> {
+  value: 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
+}
+
+const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProps) => (
+  <Badge
+    {...props}
+    emoji={EpisodeStatusOptions[value]?.emoji}
+    label={!compact && EpisodeStatusOptions[value]?.label}
+    title={EpisodeStatusOptions[value]?.label}
+  />
+)
+
+export const EpisodeStatus = memo(UIEpisodeStatus)

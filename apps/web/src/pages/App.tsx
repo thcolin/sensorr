@@ -36,6 +36,7 @@ import Movie from './Movie/Movie'
 import Followed from './Followed/Followed'
 import Person from './Person/Person'
 import Collection from './Collection/Collection'
+import Show from './Shows/Show'
 import Trending from './Trending/Trending'
 import Search from './Search/Search'
 import Jobs from './Jobs/Jobs'
@@ -104,6 +105,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/:id' element={<Movie />} />
         <Route path='movie/:id/recommendations' element={<Recommendations />} />
         <Route path='movie/:id/similar' element={<Similar />} />
+        <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />
         <Route path='person/search' element={<SearchPersons />} />

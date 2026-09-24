@@ -26,6 +26,15 @@ export const Empty = {
       />
     </svg>
   )),
+  tv: memo(({ ...props }) => (
+    <svg {...props} xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'>
+      <path
+        fill='currentColor'
+        fillRule='evenodd'
+        d='M10.4 2.6l1.2-1.2L18 7.8l6.4-6.4 1.2 1.2-6.75 6.75V10h-1.7v-.65zM6 10h24a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V13a3 3 0 0 1 3-3zm2 3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2V15a2 2 0 0 0-2-2zm21 2.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 1 0 0-3zm0 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 1 0 0-3zM8 30h4v3H8zm16 0h4v3h-4z'
+      />
+    </svg>
+  )),
   default: memo(({ ...props }) => (
     <svg {...props} xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2400 2400'>
       <path

@@ -8,6 +8,7 @@ import { Provider as LoadingProvider } from './contexts/Loading/Loading'
 import { Provider as AuthProvider } from './contexts/Auth/Auth'
 import { Provider as ConfigProvider } from './contexts/Config/Config'
 import { Provider as MoviesMetadataProvider } from './contexts/MoviesMetadata/MoviesMetadata'
+import { Provider as ShowsMetadataProvider } from './contexts/ShowsMetadata/ShowsMetadata'
 import { Provider as PersonsMetadataProvider } from './contexts/PersonsMetadata/PersonsMetadata'
 import { Provider as SearchProvider } from './contexts/Search/Search'
 import { Provider as JobsProvider } from './contexts/Jobs/Jobs'
@@ -38,22 +39,24 @@ root.render(
           <AuthProvider>
             <ConfigProvider>
               <MoviesMetadataProvider>
-                <PersonsMetadataProvider>
-                  <SearchProvider>
-                    <JobsProvider>
-                      <NotificationsProvider>
-                        <GuestsProvider>
-                          <DeviceProvider>
-                            <BulkProvider>
-                              <Toasts />
-                              <App />
-                            </BulkProvider>
-                          </DeviceProvider>
-                        </GuestsProvider>
-                      </NotificationsProvider>
-                    </JobsProvider>
-                  </SearchProvider>
-                </PersonsMetadataProvider>
+                <ShowsMetadataProvider>
+                  <PersonsMetadataProvider>
+                    <SearchProvider>
+                      <JobsProvider>
+                        <NotificationsProvider>
+                          <GuestsProvider>
+                            <DeviceProvider>
+                              <BulkProvider>
+                                <Toasts />
+                                <App />
+                              </BulkProvider>
+                            </DeviceProvider>
+                          </GuestsProvider>
+                        </NotificationsProvider>
+                      </JobsProvider>
+                    </SearchProvider>
+                  </PersonsMetadataProvider>
+                </ShowsMetadataProvider>
               </MoviesMetadataProvider>
             </ConfigProvider>
           </AuthProvider>
