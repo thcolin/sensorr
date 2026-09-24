@@ -46,7 +46,7 @@ export const getReports = async (token: string, since = 0): Promise<Report[]> =>
 
     const page = data.reports.nodes.map(parseReport)
     reports.push(...page.filter(({ date }) => date > since))
-    after = data.reports.pageInfo.hasNextPage && page.every(({ date }) => date > since) ? data.reports.pageInfo.endCursor : null
+    after = data.reports.pageInfo.hasNextPage && data.reports.pageInfo.endCursor !== after && page.every(({ date }) => date > since) ? data.reports.pageInfo.endCursor : null
   } while (after)
 
   return reports
