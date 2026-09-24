@@ -31,7 +31,6 @@ const SIDES = {
   proposed: ['💿', 'Target size'],
 }
 
-// The groups a release filter cycles through, in the order of a click.
 const SWAP = ['source', 'target']
 
 const DEFAULTS = {
@@ -351,16 +350,15 @@ const layout = {
       display: ['none', 'block'],
     },
   },
-  // One box per filter, each tag once, the two size ranges side by side; a phone stacks them.
+  // A phone has no room for the slider and the sorting in the bar: they move to the top of the filters.
   aside: {
     display: 'grid',
-    width: ['100vw', '50em'],
-    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(0, 1fr)'],
+    gridTemplateColumns: 'minmax(0, 1fr)',
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
       ['sort_by', 'threshold', 'head', 'current_size', 'proposed_size', ...FILTERS].map(name => `"${name}"`).join(' '),
-      ['head head', 'current_size proposed_size', ...FILTERS.map(filter => `${filter} ${filter}`)].map(row => `"${row}"`).join(' '),
+      ['head', 'current_size', 'proposed_size', ...FILTERS].map(name => `"${name}"`).join(' '),
     ],
   },
 }

@@ -6,7 +6,6 @@ import { Select } from './Select'
 
 const SortableSelectContainer = SortableContainer(Select) as any
 
-// The fill of a value in each group; 🔕 values stay outlined.
 const fills = (theme) => ({
   prefer: theme.rawColors.primaryDarker,
   avoid: theme.rawColors.error,
