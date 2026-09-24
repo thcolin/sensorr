@@ -37,6 +37,8 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 import { withBody } from '../../layout/withLayout'
 
+const SLICE = 50
+
 const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
   const { selection, setSelection } = useBulkContext()
   const location = useLocation()
@@ -222,8 +224,9 @@ const Library = compose(
           // `bulk` lists every id matching the filters, and arrives with the statistics, after the movies.
           const entities = statistics?.[0]?.entities
           const visible = useMemo(() => entities ? new Set(entities) : null, [entities])
-          // A filter that hides a checked movie takes it out of the selection it acts on.
-          const selected = useMemo(() => (selection[location.key] || []).filter(id => !visible || visible.has(id)), [selection, location.key, visible])
+          // A filter that hides a checked movie takes it out of the selection it acts on, and
+          // nothing is acted on until the ids of the current filters are known.
+          const selected = useMemo(() => visible ? (selection[location.key] || []).filter(id => visible.has(id)) : [], [selection, location.key, visible])
 
           // The metadata context already tells a failure in its toast.
           const apply = async (key, value, question) => {
@@ -232,7 +235,14 @@ const Library = compose(
             }
 
             setSending(true)
-            await setMovieMetadata(selected, key, value).catch(() => null)
+
+            // Accepting a proposal downloads its release before the API writes: in slices, as Swaps does.
+            const size = key === 'proposal' ? SLICE : selected.length
+
+            for (let index = 0; index < selected.length; index += size) {
+              await setMovieMetadata(selected.slice(index, index + size), key, value).catch(() => null)
+            }
+
             setSending(false)
           }
 
@@ -494,6 +504,9 @@ const Library = compose(
       const [statistics, setStatistics] = useState({})
 
       useEffect(() => {
+        // The ids of the previous filters must not stand in for the current ones.
+        setStatistics({})
+
         const cb = async () => {
           const { uri, params, init } = APIQuery.movies.getStatistics({ params: state })
 

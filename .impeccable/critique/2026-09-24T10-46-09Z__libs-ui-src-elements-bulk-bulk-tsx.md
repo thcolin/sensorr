@@ -1,7 +1,7 @@
 ---
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/bulk-selection/libs/ui/src/elements/Bulk/Bulk.tsx"
+target_identity: "file:libs/ui/src/elements/Bulk/Bulk.tsx"
 target_fingerprint: "sha256:cd62dc47b8e78566e8df43ac8ba767a2f9b0ecdfc1683e714a33df156c768d4b"
-target_path: /Users/thcolin/orca/workspaces/sensorr/bulk-selection/libs/ui/src/elements/Bulk/Bulk.tsx
+target_path: libs/ui/src/elements/Bulk/Bulk.tsx
 timestamp: 2026-09-24T10-46-09Z
 slug: libs-ui-src-elements-bulk-bulk-tsx
 ---
