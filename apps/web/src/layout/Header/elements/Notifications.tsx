@@ -16,6 +16,7 @@ const COMMANDS = {
   'record': { emoji: '📹', label: 'record' },
   'refine': { emoji: '✨', label: 'refine' },
   'shrink': { emoji: '✂️', label: 'shrink' },
+  'report': { emoji: '🚩', label: 'report' },
   'sync': { emoji: '💊', label: 'missing' },
   'keep-in-touch': { emoji: '🍺', label: 'request' },
 }
@@ -280,6 +281,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
                 'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
                 'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
+                'report': meta?.release?.proposal ? `Reported movie proposal` : `Reported movie replaced`,
                 'sync': `Movie missing from your Plex Server`,
                 'keep-in-touch': `Movie request`,
               }[meta?.command]}
@@ -309,12 +311,13 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 'record': meta?.release?.proposal ? `Release proposal` : `Release`,
                 'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
                 'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
+                'report': meta?.release?.proposal ? `Release proposal` : `Release`,
                 'sync': `Do you want to fix it ?`,
                 'keep-in-touch': `Requested by`,
               }[meta?.command]}
             </span>
           </div>
-          {['record', 'refine', 'shrink'].includes(meta?.command) && (
+          {['record', 'refine', 'shrink', 'report'].includes(meta?.command) && (
             <div sx={{ marginTop: 8 }}>
               <Tippy maxWidth='80vw' disabled={!meta?.release?.original} content={<code><small>{meta?.release?.original}</small></code>}>
                 <code

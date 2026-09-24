@@ -14,7 +14,7 @@ import { Movie as MovieDocument } from './movie.schema'
 
 const SWAPS = ['refine', 'shrink', 'report']
 
-const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by', 'reports']
+const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
 
 @Injectable()
 export class MoviesService {

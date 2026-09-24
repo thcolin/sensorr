@@ -15,6 +15,7 @@ import { SyncJob, summary as summarySync } from './Job/Sync'
 import { MigrateJob, summary as summaryMigrate } from './Job/Migrate'
 import { ShrinkJob, summary as summaryShrink } from './Job/Shrink'
 import { RefineJob, summary as summaryRefine } from './Job/Refine'
+import { ReportJob, summary as summaryReport } from './Job/Report'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
@@ -26,6 +27,7 @@ const EMOJIS = {
   'record': '📹',
   'refine': '✨',
   'shrink': '✂️',
+  'report': '🚩',
   'keep-in-touch': '🍻',
   'migrate': '🚚',
 }
@@ -55,7 +57,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
     store.current = null
     setLogs(null)
-    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
+    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink', 'report'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
     eventSource.onmessage = ({ data }) => {
       const raw = JSON.parse(data)
 
@@ -107,6 +109,8 @@ const UIJobs = ({ controls = null, ...props }) => {
             <RefineJob job={jobs.find(j => j.job === job)} logs={logs} />
           ) : jobs.find(j => j.job === job)?.meta?.command === 'shrink' ? (
             <ShrinkJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : jobs.find(j => j.job === job)?.meta?.command === 'report' ? (
+            <ReportJob job={jobs.find(j => j.job === job)} logs={logs} />
           ) : jobs.find(j => j.job === job)?.meta?.command === 'refresh' ? (
             <RefreshJob job={jobs.find(j => j.job === job)} logs={logs} />
           ) : jobs.find(j => j.job === job)?.meta?.command === 'sync' ? (
@@ -233,6 +237,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                         'record': summaryRecord,
                         'refine': summaryRefine,
                         'shrink': summaryShrink,
+                        'report': summaryReport,
                         'keep-in-touch': summaryKeepInTouch,
                         'migrate': summaryMigrate,
                       }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}

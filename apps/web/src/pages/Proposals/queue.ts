@@ -5,8 +5,9 @@
 export const AXES = ['resolution', 'source', 'encoding', 'dub', 'language']
 
 // A `record` proposal has no owned release to swap; it is decided from the notifications.
+// A `report` one answers a friend who reported the movie from Plex, so it comes first.
 // `overdue` holds the accepted swaps that never landed on Plex (apps/cli/src/utils/swaps.js).
-export const GROUPS = ['refine', 'shrink', 'rest', 'overdue']
+export const GROUPS = ['report', 'refine', 'shrink', 'rest', 'overdue']
 
 export type Verdict = 'accept' | 'refuse' | 'ban' | 'retry' | 'drop'
 
@@ -139,6 +140,10 @@ export const itemOf = (entity, releases, policy) => {
 export const groupOf = (item, threshold) => {
   if (isOverdue(item.proposal)) {
     return 'overdue'
+  }
+
+  if (item.command === 'report') {
+    return 'report'
   }
 
   if (item.owned.length) {

@@ -16,6 +16,7 @@ import { sizeStateOf } from './queue'
 export const EMOJI = {
   'refine': '✨',
   'shrink': '✂️',
+  'report': '🚩',
   'overdue': '⏳',
 }
 
@@ -165,6 +166,8 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
   const [editing, setEditing] = useState(false)
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
+  // A report names the movie, not one of its versions: it reads under every owned one.
+  const report = (item.entity?.reports || []).reduce((latest, report) => (!latest || report.date > latest.date) ? report : latest, null)
 
   return (
     <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : {}) }} aria-current={!leaving}>
@@ -230,6 +233,17 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                 {item.owned.map(release => (
                   <Release key={release.id} entity={{ ...release, valid: true, from: release.from || 'record' }} compact={true} display={mobile ? 'column' : 'row'} actions={false} />
                 ))}
+                {item.command === 'report' && !!report && (
+                  <p sx={UIActive.styles.report}>
+                    <span aria-hidden={true}>🚩</span>
+                    <span>
+                      <q>{report.message}</q>
+                      <small title={new Date(report.date).toLocaleString()}>
+                        {[report.username, formatDistanceToNowStrict(new Date(report.date), { addSuffix: true })].filter(Boolean).join(' · ')}
+                      </small>
+                    </span>
+                  </p>
+                )}
                 {!!item.proposal && (
                   <Release entity={{ ...item.proposal, valid: true }} display={mobile ? 'column' : 'row'} actions={false} />
                 )}
@@ -410,6 +424,32 @@ UIActive.styles = {
     '>div:first-of-type': {
       display: 'flex',
       flexDirection: 'column',
+    },
+  },
+  // Laid on the release rows' columns: the flag in the icon's, the text under the name.
+  report: {
+    display: 'flex',
+    alignItems: 'baseline',
+    margin: 12,
+    paddingX: [12, 2],
+    paddingY: 8,
+    fontSize: 6,
+    '>span:first-of-type': {
+      flexShrink: 0,
+      width: '4.5em',
+      textAlign: 'center',
+    },
+    '>span:last-of-type': {
+      display: 'flex',
+      alignItems: 'baseline',
+      flexWrap: 'wrap',
+      columnGap: 8,
+      minWidth: 0,
+      overflowWrap: 'anywhere',
+    },
+    '>span >small': {
+      color: 'grayDarker',
+      whiteSpace: 'nowrap',
     },
   },
   // The row's open chevron, turned over: same place, same grey, always shown.
