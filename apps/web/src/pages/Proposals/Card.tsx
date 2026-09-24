@@ -20,8 +20,8 @@ export const EMOJI = {
 }
 
 export const VERDICTS = {
-  accept: { emoji: '✅', label: 'Accepted', color: 'primary', text: 'whitePure' },
-  refuse: { emoji: '❌', label: 'Refused', color: 'error', text: 'whitePure' },
+  accept: { emoji: '✅', icon: 'check', label: 'Accepted', color: 'primary', text: 'whitePure' },
+  refuse: { emoji: '❌', icon: 'clear', label: 'Refused', color: 'error', text: 'whitePure' },
   ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
   retry: { emoji: '🔁', label: 'Retried', color: 'grayDark', text: 'text' },
   drop: { emoji: '🗑️', label: 'Dropped', color: 'grayDark', text: 'text' },
@@ -108,11 +108,21 @@ const useDetails = (id) => {
 // Drawn over whichever form the card has when it is decided.
 const UIBand = ({ verdict }) => (
   <div sx={{ ...UIBand.styles.element, backgroundColor: VERDICTS[verdict].color, color: VERDICTS[verdict].text }} role='status'>
-    <strong>{emojize(VERDICTS[verdict].emoji, VERDICTS[verdict].label)}</strong>
+    <strong sx={UIBand.styles.label}>
+      {VERDICTS[verdict].icon ? <><Icon value={VERDICTS[verdict].icon} active={true} width='1em' height='1em' />{VERDICTS[verdict].label}</> : emojize(VERDICTS[verdict].emoji, VERDICTS[verdict].label)}
+    </strong>
   </div>
 )
 
 UIBand.styles = {
+  label: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    svg: {
+      color: 'currentColor',
+    },
+  },
   element: {
     position: 'absolute',
     inset: '0em',

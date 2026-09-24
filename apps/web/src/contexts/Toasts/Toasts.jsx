@@ -78,11 +78,11 @@ const UIToasts = ({ ...props }) => {
                 aria-hidden='true'
                 sx={{
                   position: 'absolute',
-                  left: '0em',
+                  left: '4px',
                   right: '0em',
                   bottom: '0em',
                   height: '0.1875em',
-                  backgroundColor: stripe,
+                  backgroundColor: 'grayDarkest',
                   transformOrigin: 'left',
                   '@keyframes sensorr-toast-countdown': {
                     from: { transform: 'scaleX(1)' },

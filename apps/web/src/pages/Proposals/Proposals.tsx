@@ -719,7 +719,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }, [flush])
 
   const notify = useCallback((targets, verdict: Verdict) => {
-    const { emoji, label } = VERDICTS[verdict]
+    const { emoji, icon, label, color } = VERDICTS[verdict] as any
     const message = targets.length > 1 ? `**${targets.length}** proposals` : `**${targets[0].entity?.title}**`
     const actions = (
       <>
@@ -728,7 +728,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       </>
     )
 
-    ;({ accept: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: emoji })
+    ;({ accept: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
   }, [undo])
 
   // `next` is the card to open once this one has left, when it was the open one.
