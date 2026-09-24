@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, Warning } from '@sensorr/ui'
+import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
+import { coverageLabel, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
@@ -8,6 +9,7 @@ import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
+import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
@@ -19,6 +21,8 @@ const COMMANDS = {
   'report': { emoji: '🚩', label: 'report' },
   'sync': { emoji: '💊', label: 'missing' },
   'keep-in-touch': { emoji: '🍺', label: 'request' },
+  'record-shows': { emoji: '📹', label: 'record-shows' },
+  'airing': { emoji: '📡', label: 'airing' },
 }
 
 const UINotifications = ({ ...props }) => {
@@ -28,11 +32,12 @@ const UINotifications = ({ ...props }) => {
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const { notifications: all, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
   const { metadata } = useMoviesMetadataContext() as any
+  const { metadata: showsMetadata } = useShowsMetadataContext() as any
   const notifications = useMemo(() => all.filter(notification => !(
     notification.meta?.command === 'keep-in-touch' &&
     typeof notification.meta?.choice === 'undefined' &&
-    metadata[notification.meta?.movie?.id]?.state === 'archived'
-  )), [all, metadata])
+    (notification.meta?.show ? showsMetadata[notification.meta.show.id] : metadata[notification.meta?.movie?.id])?.state === 'archived'
+  )), [all, metadata, showsMetadata])
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
   const [filter, setFilter] = useState(null)
   const filtered = useMemo(() => notifications.filter(notification => !filter || notification.meta?.command === filter), [notifications, filter])
@@ -230,8 +235,50 @@ UINotifications.styles = {
 
 export const Notifications = memo(UINotifications)
 
-const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
-  const { dismissNotifications, answerNotification } = useNotificationsContext() as any
+const Notification = (props) => props.meta?.show ? <ShowNotification {...props} /> : <MovieNotification {...props} />
+
+const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poster, heading, children }) => {
+  const { dismissNotifications } = useNotificationsContext() as any
+
+  return (
+    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : dismissNotifications([_id])} style={{ ...style, width: '100%' }}>
+      <div sx={{ position: 'relative', display: 'flex', height: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
+        {!meta?.seen && (
+          <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
+        )}
+        <span sx={{ display: ['none', 'flex'], alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray', width: '2em', height: '2em', padding: 8, borderRadius: '1em', fontSize: 3, marginRight: 6 }}>
+          {COMMANDS[meta?.command]?.emoji}
+        </span>
+        <div sx={{ display: 'flex', alignItems: 'center' }}>
+          <div sx={{ width: '6.5em', height: '10em', flexShrink: 0 }}>
+            <Link to={to} onClick={() => closePortal()}>
+              <Picture path={poster} size='w185' />
+            </Link>
+          </div>
+        </div>
+        <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: 4, alignSelf: 'stretch', overflow: 'hidden' }}>
+          <div sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'grayDarker' }}>
+            <span sx={{ fontSize: 6, fontWeight: 'semibold' }}>
+              {heading}
+            </span>
+            <span sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span sx={{ fontSize: 7, fontWeight: 'semibold', whiteSpace: 'nowrap' }}>
+                {formatDistanceToNowStrict(new Date(timestamp), { addSuffix: true })}
+              </span>
+              <Link to={`/jobs/${meta?.job}`} onClick={() => closePortal()} sx={{ marginTop: 10, fontSize: 7, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                #{meta?.job}
+              </Link>
+            </span>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
+  const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
 
@@ -259,256 +306,62 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   }, [meta?.choice, meta?.command, loading, metadata.state])
 
   return (
-    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : dismissNotifications([_id])} style={{ ...props.style, width: '100%' }}>
-      <div sx={{ position: 'relative', display: 'flex', height: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
-        {!meta?.seen && (
-          <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
-        )}
-        <span sx={{ display: ['none', 'flex'], alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray', width: '2em', height: '2em', padding: 8, borderRadius: '1em', fontSize: 3, marginRight: 6 }}>
-          {COMMANDS[meta?.command]?.emoji}
+    <NotificationFrame
+      _id={_id}
+      timestamp={timestamp}
+      meta={meta}
+      closePortal={closePortal}
+      style={props.style}
+      to={`/movie/${meta?.movie?.id}`}
+      poster={meta?.movie?.poster_path}
+      heading={{
+        'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
+        'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
+        'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
+        'report': meta?.release?.proposal ? `Report proposal` : `Reported movie, replacement downloaded`,
+        'sync': `Movie missing from your Plex Server`,
+        'keep-in-touch': `Movie request`,
+      }[meta?.command]}
+    >
+      <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
+        <span sx={{ fontSize: 6, marginRight: 6 }}>
+          <MovieState
+            value={(loading ? 'loading' : metadata.state) || 'ignored'}
+            onChange={state => setMovieMetadata(meta?.movie?.id, 'state', state)}
+            compact={true}
+          />
         </span>
-        <div sx={{ display: 'flex', alignItems: 'center' }}>
-          <div sx={{ width: '6.5em', height: '10em', flexShrink: 0 }}>
-            <Link to={`/movie/${meta?.movie?.id}`} onClick={() => closePortal()}>
-              <Picture path={meta?.movie?.poster_path} size='w185' />
-            </Link>
-          </div>
-        </div>
-        <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: 4, alignSelf: 'stretch', overflow: 'hidden' }}>
-          <div sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'grayDarker' }}>
-            <span sx={{ fontSize: 6, fontWeight: 'semibold' }}>
-              {{
-                'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
-                'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
-                'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
-                'report': meta?.release?.proposal ? `Report proposal` : `Reported movie, replacement downloaded`,
-                'sync': `Movie missing from your Plex Server`,
-                'keep-in-touch': `Movie request`,
-              }[meta?.command]}
-            </span>
-            <span sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <span sx={{ fontSize: 7, fontWeight: 'semibold', whiteSpace: 'nowrap' }}>
-                {formatDistanceToNowStrict(new Date(timestamp), { addSuffix: true })}
-              </span>
-              <Link to={`/jobs/${meta?.job}`} onClick={() => closePortal()} sx={{ marginTop: 10, fontSize: 7, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                #{meta?.job}
-              </Link>
-            </span>
-          </div>
-          <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
-            <span sx={{ fontSize: 6, marginRight: 6 }}>
-              <MovieState
-                value={(loading ? 'loading' : metadata.state) || 'ignored'}
-                onChange={state => setMovieMetadata(meta?.movie?.id, 'state', state)}
-                compact={true}
-              />
-            </span>
-            <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
-          </div>
-          <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
-            <span sx={{ fontSize: 6 }}>
-              {{
-                'record': meta?.release?.proposal ? `Release proposal` : `Release`,
-                'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
-                'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
-                'report': meta?.release?.proposal ? `Release proposal` : `Release`,
-                'sync': `Do you want to fix it ?`,
-                'keep-in-touch': `Requested by`,
-              }[meta?.command]}
-            </span>
-          </div>
-          {['record', 'refine', 'shrink', 'report'].includes(meta?.command) && (
-            <div sx={{ marginTop: 8 }}>
-              <Tippy maxWidth='80vw' disabled={!meta?.release?.original} content={<code><small>{meta?.release?.original}</small></code>}>
-                <code
-                  title={meta?.release?.title}
-                  sx={{
-                    display: 'block',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    fontSize: 6,
-                  }}
-                >
-                  {meta?.release?.title || 'No releases found during this job'}
-                </code>
-              </Tippy>
-              <div sx={{ display: 'flex', flexDirection: ['column', 'row'], alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                <div
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    alignSelf: 'start',
-                    maxWidth: '100%',
-                    overflowX: 'auto',
-                    overflowY: 'hidden',
-                    marginBottom: [10, 12],
-                    '>span': {
-                      ':not(:last-of-type)': {
-                        marginRight: 6,
-                      },
-                      '>code': {
-                        display: 'block',
-                        paddingX: 4,
-                        paddingY: 8,
-                        backgroundColor: 'gray',
-                        borderRadius: '0.25em',
-                        color: 'text',
-                        fontWeight: 600,
-                        fontSize: 7,
-                        whiteSpace: 'nowrap',
-                      },
-                      '>abbr': {
-                        fontSize: 0,
-                      },
-                      '>svg': {
-                        display: 'inline',
-                        height: '1.5em',
-                        color: 'black',
-                      },
-                    },
-                  }}
-                >
-                  {typeof meta?.release?.peers !== 'undefined' && (
-                    <span title={`Peers (${meta?.release?.seeders}/${meta?.release?.peers})`}>
-                      <code>{emojize('🌍 ', meta?.release?.peers || 0)}</code>
-                    </span>
-                  )}
-                  {typeof meta?.release?.size !== 'undefined' && (
-                    <span title={`Size (${filesize.stringify(meta?.release?.size)})`}>
-                      <code>{emojize('📦 ', filesize.stringify(meta?.release?.size || 0))}</code>
-                    </span>
-                  )}
-                  {typeof meta?.release?.score !== 'undefined' && (
-                    <span title={`Score (${meta?.release?.score})`}>
-                      <code>{emojize('💯 ', meta?.release?.score || 0)}</code>
-                    </span>
-                  )}
-                </div>
-                <div
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    'a': {
-                      zIndex: 1,
-                      opacity: 0.8,
-                      fontSize: 6,
-                      ':hover': {
-                        opacity: 1,
-                      },
-                    },
-                  }}
-                >
-                  <a href={meta?.release?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({meta?.release?.znab})</small></code></a>
-                  <span>&nbsp;&nbsp;&nbsp;</span>
-                  <a href={meta?.release?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
-                </div>
-              </div>
-              <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
-                {meta?.release?.proposal ? (
-                  <>
-                    {(choice === null || choice === true) && (
-                      <Button
-                        variant='contain'
-                        color={(loading || choice !== null) ? 'gray' : 'primary'}
-                        disabled={loading || choice !== null}
-                        onClick={() => {
-                          setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: true } : true)
-                          answerNotification(_id, true)
-                        }}
-                      >
-                        {choice === null ? 'Accept' : 'Accepted'}
-                      </Button>
-                    )}
-                    {(choice === null || choice === false) && (
-                      <Button
-                        variant={choice === null ? 'outline' : 'contain'}
-                        color={(loading || choice !== null) ? 'gray' : 'primary'}
-                        disabled={loading || choice !== null}
-                        onClick={() => {
-                          setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: false } : false)
-                          answerNotification(_id, false)
-                        }}
-                      >
-                        {choice === null ? 'Refuse' : 'Refused'}
-                      </Button>
-                    )}
-                    {(choice === false) && (
-                      <Button
-                        variant={!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'outline' : 'contain'}
-                        color={(loading || (metadata.banned_releases || []).includes(meta?.release?.title)) ? 'gray' : 'primary'}
-                        disabled={loading || (metadata.banned_releases || []).includes(meta?.release?.title)}
-                        onClick={() => setMovieMetadata(
-                          meta?.movie?.id,
-                          'banned_releases',
-                          [...(metadata?.banned_releases || []), meta?.release?.title]
-                        )}
-                      >
-                        {!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'Ban' : 'Banned'}
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
-                )}
-              </div>
-            </div>
-          )}
-          {/* {meta?.command === 'refine' && (
-            <Release entity={meta?.release} display='column' proceed={() => {}} />
-          )} */}
-          {/* {meta?.command === 'shrink' && (
-            <Release entity={meta?.release} display='column' proceed={() => {}} />
-          )} */}
-          {meta?.command === 'sync' && (
-            <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
-              {(choice === null || choice === true) && (
-                <Button
-                  variant='contain'
-                  color={(loading || choice !== null) ? 'gray' : 'primary'}
-                  disabled={loading || choice !== null}
-                  onClick={() => {
-                    setMovieMetadata(meta?.movie?.id, 'state', 'wished')
-                    answerNotification(_id, true)
-                  }}
-                >
-                  {choice === null ? '"Wish" it back' : 'Fixed'}
-                </Button>
-              )}
-              {(choice === null || choice === false) && (
-                <Button
-                  variant={choice === null ? 'outline' : 'contain'}
-                  color={(loading || choice !== null) ? 'gray' : 'primary'}
-                  disabled={loading || choice !== null}
-                  onClick={() => answerNotification(_id, false)}
-                >
-                  {choice === null ? 'Ignore' : 'Ignored'}
-                </Button>
-              )}
-            </div>
-          )}
-          {meta?.command === 'keep-in-touch' && (
-            <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8, fontSize: '1rem' }}>
-              <div sx={{ flex: 1, marginRight: 4, marginBottom: 3, fontSize: 9 }}>
-                <Guests
-                  childProps={{ onClick: () => closePortal() }}
-                  guests={meta?.requested_by.map(guest => ({
-                    entity: { id: 0, name: guests[guest].name, override: guests[guest].email, profile_path: guests[guest].avatar }
-                  }))}
-                />
-              </div>
-              <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+        <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
+      </div>
+      <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
+        <span sx={{ fontSize: 6 }}>
+          {{
+            'record': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'report': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'sync': `Do you want to fix it ?`,
+            'keep-in-touch': `Requested by`,
+          }[meta?.command]}
+        </span>
+      </div>
+      {['record', 'refine', 'shrink', 'report'].includes(meta?.command) && (
+        <div sx={{ marginTop: 8 }}>
+          <NotificationRelease release={meta?.release} />
+          <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+            {meta?.release?.proposal ? (
+              <>
                 {(choice === null || choice === true) && (
                   <Button
                     variant='contain'
                     color={(loading || choice !== null) ? 'gray' : 'primary'}
                     disabled={loading || choice !== null}
                     onClick={() => {
-                      setMovieMetadata(meta?.movie?.id, 'state', 'wished')
+                      setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: true } : true)
                       answerNotification(_id, true)
                     }}
                   >
-                    {choice === null ? '"Wish" it' : ({ archived: 'Archived', wished: 'Wished' }[metadata.state] || 'Loading')}
+                    {choice === null ? 'Accept' : 'Accepted'}
                   </Button>
                 )}
                 {(choice === null || choice === false) && (
@@ -516,16 +369,354 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     variant={choice === null ? 'outline' : 'contain'}
                     color={(loading || choice !== null) ? 'gray' : 'primary'}
                     disabled={loading || choice !== null}
-                    onClick={() => answerNotification(_id, false)}
+                    onClick={() => {
+                      setMovieMetadata(meta?.movie?.id, 'proposal', meta?.release?.id ? { id: meta.release.id, choice: false } : false)
+                      answerNotification(_id, false)
+                    }}
                   >
-                    {choice === null ? 'Ignore' : 'Ignored'}
+                    {choice === null ? 'Refuse' : 'Refused'}
                   </Button>
                 )}
-              </div>
-            </div>
+                {(choice === false) && (
+                  <Button
+                    variant={!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'outline' : 'contain'}
+                    color={(loading || (metadata.banned_releases || []).includes(meta?.release?.title)) ? 'gray' : 'primary'}
+                    disabled={loading || (metadata.banned_releases || []).includes(meta?.release?.title)}
+                    onClick={() => setMovieMetadata(
+                      meta?.movie?.id,
+                      'banned_releases',
+                      [...(metadata?.banned_releases || []), meta?.release?.title]
+                    )}
+                  >
+                    {!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'Ban' : 'Banned'}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
+            )}
+          </div>
+        </div>
+      )}
+      {/* {meta?.command === 'refine' && (
+        <Release entity={meta?.release} display='column' proceed={() => {}} />
+      )} */}
+      {/* {meta?.command === 'shrink' && (
+        <Release entity={meta?.release} display='column' proceed={() => {}} />
+      )} */}
+      {meta?.command === 'sync' && (
+        <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+          {(choice === null || choice === true) && (
+            <Button
+              variant='contain'
+              color={(loading || choice !== null) ? 'gray' : 'primary'}
+              disabled={loading || choice !== null}
+              onClick={() => {
+                setMovieMetadata(meta?.movie?.id, 'state', 'wished')
+                answerNotification(_id, true)
+              }}
+            >
+              {choice === null ? '"Wish" it back' : 'Fixed'}
+            </Button>
+          )}
+          {(choice === null || choice === false) && (
+            <Button
+              variant={choice === null ? 'outline' : 'contain'}
+              color={(loading || choice !== null) ? 'gray' : 'primary'}
+              disabled={loading || choice !== null}
+              onClick={() => answerNotification(_id, false)}
+            >
+              {choice === null ? 'Ignore' : 'Ignored'}
+            </Button>
           )}
         </div>
-      </div>
-    </div>
+      )}
+      {meta?.command === 'keep-in-touch' && (
+        <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8, fontSize: '1rem' }}>
+          <div sx={{ flex: 1, marginRight: 4, marginBottom: 3, fontSize: 9 }}>
+            <Guests
+              childProps={{ onClick: () => closePortal() }}
+              guests={meta?.requested_by.map(guest => ({
+                entity: { id: 0, name: guests[guest].name, override: guests[guest].email, profile_path: guests[guest].avatar }
+              }))}
+            />
+          </div>
+          <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+            {(choice === null || choice === true) && (
+              <Button
+                variant='contain'
+                color={(loading || choice !== null) ? 'gray' : 'primary'}
+                disabled={loading || choice !== null}
+                onClick={() => {
+                  setMovieMetadata(meta?.movie?.id, 'state', 'wished')
+                  answerNotification(_id, true)
+                }}
+              >
+                {choice === null ? '"Wish" it' : ({ archived: 'Archived', wished: 'Wished' }[metadata.state] || 'Loading')}
+              </Button>
+            )}
+            {(choice === null || choice === false) && (
+              <Button
+                variant={choice === null ? 'outline' : 'contain'}
+                color={(loading || choice !== null) ? 'gray' : 'primary'}
+                disabled={loading || choice !== null}
+                onClick={() => answerNotification(_id, false)}
+              >
+                {choice === null ? 'Ignore' : 'Ignored'}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </NotificationFrame>
   )
 }
+
+// A show line names what its release covers, and is answered on the show, never on a movie
+const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
+  const { answerNotification } = useNotificationsContext() as any
+  const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
+  const { guests } = useGuestsContext() as any
+  const [following, setFollowing] = useState(false)
+  const label = useMemo(() => meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : '', [meta?.release])
+  // Answered from the show page, a proposal is no longer pending there: accepted if kept, refused if gone
+  const stored = (metadata.releases || []).find(release => release.id === meta?.release?.id)
+  const banned = (metadata.banned_releases || []).includes(meta?.release?.title)
+
+  const choice = useMemo(() => {
+    if (typeof meta?.choice !== 'undefined') {
+      return meta?.choice
+    }
+
+    if (loading) {
+      return null
+    }
+
+    if (meta?.command === 'keep-in-touch') {
+      return (metadata.state === 'wished' || metadata.state === 'archived') ? true : null
+    }
+
+    return stored?.proposal ? null : stored ? true : false
+  }, [meta?.choice, meta?.command, loading, metadata.state, stored])
+
+  const answer = (choice) => {
+    setShowMetadata(meta?.show?.id, 'proposal', { id: meta?.release?.id, choice }).catch(() => null)
+    answerNotification(_id, choice)
+  }
+
+  const follow = async () => {
+    setFollowing(true)
+    await followShow(meta?.show?.id, true).catch(() => null)
+    setFollowing(false)
+    answerNotification(_id, true)
+  }
+
+  return (
+    <NotificationFrame
+      _id={_id}
+      timestamp={timestamp}
+      meta={meta}
+      closePortal={closePortal}
+      style={props.style}
+      to={`/tv/${meta?.show?.id}`}
+      poster={meta?.show?.poster_path}
+      heading={{
+        'record-shows': meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
+        'airing': meta?.release?.proposal ? `Airing episode proposal` : `Airing episode recorded`,
+        'keep-in-touch': `Show request`,
+      }[meta?.command]}
+    >
+      <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
+        <span sx={{ fontSize: 6, marginRight: 6 }}>
+          <ShowState
+            value={loading ? 'loading' : metadata.monitored ? 'followed' : 'unfollowed'}
+            onChange={state => followShow(meta?.show?.id, state === 'followed').catch(() => null)}
+            compact={true}
+          />
+        </span>
+        <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.show?.name}</span>
+        {!!label && (
+          <code sx={{ flexShrink: 0, marginLeft: 6, fontWeight: 'semibold' }}>{label}</code>
+        )}
+      </div>
+      <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
+        <span sx={{ fontSize: 6 }}>
+          {{
+            'record-shows': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'keep-in-touch': `Requested by`,
+          }[meta?.command]}
+        </span>
+      </div>
+      {['record-shows', 'airing'].includes(meta?.command) && (
+        <div sx={{ marginTop: 8 }}>
+          <NotificationRelease release={meta?.release} />
+          <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+            {meta?.release?.proposal ? (
+              <>
+                {(choice === null || choice === true) && (
+                  <Button
+                    variant='contain'
+                    color={(loading || choice !== null) ? 'gray' : 'primary'}
+                    disabled={loading || choice !== null}
+                    onClick={() => answer(true)}
+                  >
+                    {choice === null ? 'Accept' : 'Accepted'}
+                  </Button>
+                )}
+                {(choice === null || choice === false) && (
+                  <Button
+                    variant={choice === null ? 'outline' : 'contain'}
+                    color={(loading || choice !== null) ? 'gray' : 'primary'}
+                    disabled={loading || choice !== null}
+                    onClick={() => answer(false)}
+                  >
+                    {choice === null ? 'Refuse' : 'Refused'}
+                  </Button>
+                )}
+                {(choice === false && !!metadata.state) && (
+                  <Button
+                    variant={!banned ? 'outline' : 'contain'}
+                    color={(loading || banned) ? 'gray' : 'primary'}
+                    disabled={loading || banned}
+                    onClick={() => setShowMetadata(meta?.show?.id, 'banned_releases', [...(metadata.banned_releases || []), meta?.release?.title]).catch(() => null)}
+                  >
+                    {!banned ? 'Ban' : 'Banned'}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
+            )}
+          </div>
+        </div>
+      )}
+      {meta?.command === 'keep-in-touch' && (
+        <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8, fontSize: '1rem' }}>
+          <div sx={{ flex: 1, marginRight: 4, marginBottom: 3, fontSize: 9 }}>
+            <Guests
+              childProps={{ onClick: () => closePortal() }}
+              guests={(meta?.requested_by || []).filter(guest => guests[guest]).map(guest => ({
+                entity: { id: 0, name: guests[guest].name, override: guests[guest].email, profile_path: guests[guest].avatar }
+              }))}
+            />
+          </div>
+          <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
+            {(choice === null || choice === true) && (
+              <Button
+                variant='contain'
+                color={(loading || following || choice !== null) ? 'gray' : 'primary'}
+                disabled={loading || following || choice !== null}
+                aria-busy={following}
+                onClick={follow}
+              >
+                {following ? 'Following...' : choice === null ? 'Follow' : metadata.monitored ? 'Followed' : 'In library'}
+              </Button>
+            )}
+            {(choice === null || choice === false) && (
+              <Button
+                variant={choice === null ? 'outline' : 'contain'}
+                color={(loading || following || choice !== null) ? 'gray' : 'primary'}
+                disabled={loading || following || choice !== null}
+                onClick={() => answerNotification(_id, false)}
+              >
+                {choice === null ? 'Ignore' : 'Ignored'}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </NotificationFrame>
+  )
+}
+
+// The release a record line proposed or downloaded, as the movie and show lines both show it
+const NotificationRelease = ({ release }) => (
+  <>
+    <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
+      <code
+        title={release?.title}
+        sx={{
+          display: 'block',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          fontSize: 6,
+        }}
+      >
+        {release?.title || 'No releases found during this job'}
+      </code>
+    </Tippy>
+    <div sx={{ display: 'flex', flexDirection: ['column', 'row'], alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+      <div
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          alignSelf: 'start',
+          maxWidth: '100%',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          marginBottom: [10, 12],
+          '>span': {
+            ':not(:last-of-type)': {
+              marginRight: 6,
+            },
+            '>code': {
+              display: 'block',
+              paddingX: 4,
+              paddingY: 8,
+              backgroundColor: 'gray',
+              borderRadius: '0.25em',
+              color: 'text',
+              fontWeight: 600,
+              fontSize: 7,
+              whiteSpace: 'nowrap',
+            },
+            '>abbr': {
+              fontSize: 0,
+            },
+            '>svg': {
+              display: 'inline',
+              height: '1.5em',
+              color: 'black',
+            },
+          },
+        }}
+      >
+        {typeof release?.peers !== 'undefined' && (
+          <span title={`Peers (${release?.seeders}/${release?.peers})`}>
+            <code>{emojize('🌍 ', release?.peers || 0)}</code>
+          </span>
+        )}
+        {typeof release?.size !== 'undefined' && (
+          <span title={`Size (${filesize.stringify(release?.size)})`}>
+            <code>{emojize('📦 ', filesize.stringify(release?.size || 0))}</code>
+          </span>
+        )}
+        {typeof release?.score !== 'undefined' && (
+          <span title={`Score (${release?.score})`}>
+            <code>{emojize('💯 ', release?.score || 0)}</code>
+          </span>
+        )}
+      </div>
+      <div
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          'a': {
+            zIndex: 1,
+            opacity: 0.8,
+            fontSize: 6,
+            ':hover': {
+              opacity: 1,
+            },
+          },
+        }}
+      >
+        <a href={release?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({release?.znab})</small></code></a>
+        <span>&nbsp;&nbsp;&nbsp;</span>
+        <a href={release?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+      </div>
+    </div>
+  </>
+)

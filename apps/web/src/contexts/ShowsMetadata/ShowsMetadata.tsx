@@ -244,6 +244,19 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
+  // A show outside the library, or only requested, is followed by adding it, as from its page
+  const followShow = useCallback(async (id: number, followed: boolean) => {
+    const current = ref.current[id]
+
+    if (current && current.state !== 'ignored') {
+      return setShowMetadata(id, 'monitored', followed)
+    }
+
+    if (followed) {
+      return addShow(id)
+    }
+  }, [setShowMetadata, addShow])
+
   return (
     <showsMetadataContext.Provider
       {...props}
@@ -255,6 +268,7 @@ export const Provider = ({ ...props }) => {
         setShowMetadata,
         setEpisodesMetadata,
         addShow,
+        followShow,
       }}
     />
   )
@@ -264,13 +278,10 @@ export const useShowsMetadataContext = () => useContext(showsMetadataContext)
 
 export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
-    const { loading, metadata: { [entity?.id]: found }, setShowMetadata, addShow } = useShowsMetadataContext() as any
-    const metadata = found || {}
-    const inLibrary = !!found && found.state !== 'ignored'
+    const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice }), [entity?.id])
-    // Following a show from outside the library adds it whole, as its page does
-    const setState = useCallback(state => (!inLibrary && state === 'followed') ? addShow(entity.id) : setMetadata('monitored', state === 'followed'), [inLibrary, setMetadata, entity?.id])
+    const setState = useCallback(state => followShow(entity.id, state === 'followed').catch(() => null), [entity?.id, followShow])
 
     return (
       <WrappedComponent
