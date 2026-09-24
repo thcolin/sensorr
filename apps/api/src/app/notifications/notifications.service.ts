@@ -38,6 +38,7 @@ export class NotificationsService {
             { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+            { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
           ]
@@ -50,6 +51,7 @@ export class NotificationsService {
           (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'refine' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'shrink' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
+          (change.fullDocument?.meta?.command === 'report' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'sync' && change.fullDocument?.meta?.group === 'missings' && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id)
         )),
@@ -90,6 +92,7 @@ export class NotificationsService {
             'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
             'refine': `✨ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
             'shrink': `✂️ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+            'report': `🚩 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
             'sync': `💊 Missing from your Plex Server`,
             'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
           }[meta?.command],
@@ -104,6 +107,10 @@ export class NotificationsService {
               { action: 'refuse', title: 'Refuse' },
             ],
             'shrink': [
+              { action: 'accept', title: 'Accept' },
+              { action: 'refuse', title: 'Refuse' },
+            ],
+            'report': [
               { action: 'accept', title: 'Accept' },
               { action: 'refuse', title: 'Refuse' },
             ],
@@ -122,6 +129,7 @@ export class NotificationsService {
             { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
           ]

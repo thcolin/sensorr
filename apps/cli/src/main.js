@@ -11,6 +11,7 @@ import refresh from './commands/refresh'
 import sync from './commands/sync'
 import refine from './commands/refine'
 import shrink from './commands/shrink'
+import report from './commands/report'
 import keepInTouch from './commands/keep-in-touch'
 import migrate from './commands/migrate'
 
@@ -67,6 +68,7 @@ const main = async () => {
     .command(sync(job, handlers))
     .command(refine(job, handlers))
     .command(shrink(job, handlers))
+    .command(report(job, handlers))
     .command(keepInTouch(job, handlers))
     .command(migrate(job, handlers))
     .scriptName('sensorr')
