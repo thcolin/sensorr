@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Entities,
   withControls,
@@ -18,12 +18,11 @@ import {
   Button,
   Checkbox,
   Option,
-  Select,
+  Bulk,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
 import { compose, emojize, languages, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { useThemeUI } from 'theme-ui'
 import { useLocation } from 'react-router-dom'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
@@ -214,182 +213,72 @@ const Library = compose(
       bulk: {
         initial: null,
         component: ({ total, statistics, ...props }) => {
-          const { theme } = useThemeUI()
           const { setMovieMetadata } = useMoviesMetadataContext() as any
           const { selection, setSelection } = useBulkContext()
           const sensorr = useSensorr()
           const location = useLocation()
+          const selected = selection[location.key] || []
+          // `bulk` lists every id matching the filters, and arrives with the statistics, after the movies.
+          const entities = statistics?.[0]?.entities
 
-          const handleCallback = useCallback(({ value, label }) => {
-            switch (value) {
-              case 'state-ignored':
-                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "ignored" ?`)) {
-                  setMovieMetadata(selection[location.key], 'state', 'ignored')
-                }
-              break;
-              case 'state-wished':
-                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "wished" ?`)) {
-                  setMovieMetadata(selection[location.key], 'state', 'wished')
-                }
-              break;
-              case 'state-pinned':
-                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "pinned" ?`)) {
-                  setMovieMetadata(selection[location.key], 'state', 'pinned')
-                }
-              break;
-              case 'state-archived':
-                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies state to "archived" ?`)) {
-                  setMovieMetadata(selection[location.key], 'state', 'archived')
-                }
-              break;
-              case 'proposal-accept':
-                if (confirm(`Do you want to accept all ${selection[location.key]?.length || 0} movies proposal ?`)) {
-                  setMovieMetadata(selection[location.key], 'proposal', true)
-                }
-              break;
-              case 'proposal-refuse':
-                if (confirm(`Do you want to refuse all ${selection[location.key]?.length || 0} movies proposal ?`)) {
-                  setMovieMetadata(selection[location.key], 'proposal', false)
-                }
-              break;
-              case 'policy':
-                if (confirm(`Do you want to change ${selection[location.key]?.length || 0} movies policies to ${label} ?`)) {
-                  setMovieMetadata(selection[location.key], 'policy', label)
-                }
-              break;
-              case 'refine-enable':
-                if (confirm(`Do you want to enable refine job for ${selection[location.key]?.length || 0} movies ?`)) {
-                  setMovieMetadata(selection[location.key], 'refine', true)
-                }
-              break;
-              case 'refine-disable':
-                if (confirm(`Do you want to disable refine job for ${selection[location.key]?.length || 0} movies ?`)) {
-                  setMovieMetadata(selection[location.key], 'refine', false)
-                }
-              break;
-              case 'shrink-enable':
-                if (confirm(`Do you want to enable shrink job for ${selection[location.key]?.length || 0} movies ?`)) {
-                  setMovieMetadata(selection[location.key], 'shrink', true)
-                }
-              break;
-              case 'shrink-disable':
-                if (confirm(`Do you want to disable shrink job for ${selection[location.key]?.length || 0} movies ?`)) {
-                  setMovieMetadata(selection[location.key], 'shrink', false)
-                }
-              break;
+          const apply = (key, value, question) => {
+            if (confirm(question)) {
+              setMovieMetadata(selected, key, value)
             }
-          }, [selection[location.key]])
+          }
 
           return (
             <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
               <Option
                 id='movies'
                 type='checkbox'
-                checked={(selection[location.key]?.length || 0) !== 0}
-                onChange={() => {
-                  if ((selection[location.key]?.length || 0) === 0) {
-                    setSelection(selection => ({ ...selection, [location.key]: (statistics[0]?.entities || []) }))
-                  } else {
-                    setSelection(selection => ({ ...selection, [location.key]: [] }))
-                  }
-                }}
+                checked={selected.length !== 0}
+                disabled={!entities && selected.length === 0}
+                onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
               >
-                {(selection[location.key]?.length || 0) === 0 ? 'Select All' : (selection[location.key]?.length || 0) === (statistics[0]?.entities || [])?.length ? 'Unselect All' : `${selection[location.key]?.length || 0} Selected`}
+                {selected.length === 0 ? 'Select All' : selected.length === (entities || []).length ? 'Unselect All' : `${selected.length} Selected`}
               </Option>
-              {!!(selection[location.key]?.length || 0) && (
-                <Select
-                  options={[
-                    {
-                      label: emojize('📚', 'Change states'),
-                      options: [
-                        { value: 'state-ignored', label: emojize('🔕', `Ignored`) },
-                        { value: 'state-wished', label: emojize('🍿', `Wished`) },
-                        { value: 'state-pinned', label: emojize('📍', `Pinned`) },
-                        { value: 'state-archived', label: emojize('📼', `Archived`) },
-                      ],
-                    },
-                    {
-                      label: emojize('🛎️', 'Handle proposal'),
-                      options: [
-                        { value: 'proposal-accept', label: `Accept` },
-                        { value: 'proposal-refuse', label: `Refuse` },
-                      ],
-                    },
-                    {
-                      label: emojize('🚨', 'Change policies'),
-                      options: sensorr.policies.map(policy => ({ value: `policy`, label: policy.name })),
-                    },
-                    {
-                      label: emojize('✨', 'Refine'),
-                      options: [
-                        { value: 'refine-enable', label: `Enable` },
-                        { value: 'refine-disable', label: `Disable` },
-                      ],
-                    },
-                    {
-                      label: emojize('✂️', 'Shrink'),
-                      options: [
-                        { value: 'shrink-enable', label: `Enable` },
-                        { value: 'shrink-disable', label: `Disable` },
-                      ],
-                    },
-                  ]}
-                  value={null}
-                  onChange={handleCallback}
-                  multi={false}
-                  closeMenuOnSelect={true}
-                  isSearchable={false}
-                  isClearable={false}
-                  defaultOptions={false}
-                  menuPlacement='bottom'
-                  menuPosition='fixed'
-                  styles={{
-                    control: (style) => ({
-                      ...style,
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      boxShadow: 'none',
-                      cursor: 'pointer',
-                      '>div:first-of-type': {
-                        display: 'flex',
-                        padding: '0em',
-                        '>input': {
-                          left: 0,
-                          margin: '2px',
-                          padding: '2px 0',
-                          transform: 'unset',
-                        },
-                      }
-                    }),
-                    menu: (style) => ({
-                      ...style,
-                      color: theme.colors.primary,
-                      width: '15em',
-                    }),
-                    groupHeading: (style) => ({
-                      ...style,
-                      fontFamily: (theme.fonts as any).heading,
-                      fontWeight: (theme.fontWeights as any).semibold,
-                      textTransform: 'capitalize',
-                      fontSize: '1em',
-                      paddingTop: '0.5em',
-                      paddingBottom: '0.5em',
-                      backgroundColor: theme.colors.primary,
-                      color: 'white',
-                    }),
-                    option: (style, props) => ({
-                      ...style,
-                      backgroundColor: props.isFocused ? theme.colors.primaryLightest : props.isSelected ? theme.colors.accent : 'white',
-                      color: props.isSelected ? 'white' : theme.colors.primary,
-                      fontSize: '0.875em',
-                      cursor: 'pointer',
-                      ':active': {
-                        backgroundColor: theme.colors.primaryLightest,
-                      },
-                    }),
-                  }}
-                />
-              )}
+              <Bulk
+                count={selected.length}
+                onClear={() => setSelection(selection => ({ ...selection, [location.key]: [] }))}
+                actions={[
+                  {
+                    key: 'state',
+                    label: emojize('📚', 'State'),
+                    options: [
+                      { value: 'ignored', label: emojize('🔕', 'Ignored') },
+                      { value: 'wished', label: emojize('🍿', 'Wished') },
+                      { value: 'pinned', label: emojize('📍', 'Pinned') },
+                      { value: 'archived', label: emojize('📼', 'Archived') },
+                    ],
+                    onChange: ({ value }) => apply('state', value, `Do you want to change ${selected.length} movies state to "${value}" ?`),
+                  },
+                  {
+                    key: 'proposal',
+                    label: emojize('🛎️', 'Proposal'),
+                    options: [
+                      { value: true, label: 'Accept' },
+                      { value: false, label: 'Refuse' },
+                    ],
+                    onChange: ({ value }) => apply('proposal', value, `Do you want to ${value ? 'accept' : 'refuse'} all ${selected.length} movies proposal ?`),
+                  },
+                  {
+                    key: 'policy',
+                    label: emojize('🚨', 'Policy'),
+                    options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
+                    onChange: ({ value }) => apply('policy', value, `Do you want to change ${selected.length} movies policies to ${value} ?`),
+                  },
+                  ...['refine', 'shrink'].map(job => ({
+                    key: job,
+                    label: emojize({ refine: '✨', shrink: '✂️' }[job], { refine: 'Refine', shrink: 'Shrink' }[job]),
+                    options: [
+                      { value: true, label: 'Enable' },
+                      { value: false, label: 'Disable' },
+                    ],
+                    onChange: ({ value }) => apply(job, value, `Do you want to ${value ? 'enable' : 'disable'} ${job} job for ${selected.length} movies ?`),
+                  })),
+                ]}
+              />
             </div>
           )
         }

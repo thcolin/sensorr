@@ -181,7 +181,7 @@ const UIBulk = ({ count, actions, onClear, disabled = false }: BulkProps) => {
         {...(!visible ? { inert: '' } : {})}
       >
         <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label='Selection'>
-          <Button type='button' variant='outline' color='gray' onClick={onClear} aria-label={`Clear the selection of ${shown.current}`} title='Clear the selection'>
+          <Button type='button' variant='outline' color='gray' data-variant='outline' onClick={onClear} aria-label={`Clear the selection of ${shown.current}`} title='Clear the selection'>
             <span><code>{shown.current.toLocaleString('en')}</code> selected</span>
             <Icon value='clear' width='1em' height='1em' />
           </Button>
@@ -350,6 +350,9 @@ UIBulk.styles = {
     inset: '0px',
     zIndex: 6,
     cursor: 'default',
+    '>div': {
+      inset: '0px',
+    },
   },
 }
 
