@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
-import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
-import { Button, Controls, Icon, Link, Range, Slider, Sorting, Warning } from '@sensorr/ui'
+import { Button, Controls, Link, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { Policy } from '@sensorr/sensorr'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
@@ -29,11 +28,11 @@ const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
 
 const SIDES = {
-  current: ['📀', 'Source size'],
-  proposed: ['💿', 'Target size'],
+  current: ['📀', 'Current size'],
+  proposed: ['💿', 'Proposed size'],
 }
 
-const SWAP = ['source', 'target']
+const SWAP = ['current', 'proposed']
 
 const DEFAULTS = {
   threshold: 0,
@@ -307,7 +306,7 @@ const fields = {
     initial: null,
     component: () => (
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
-        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 Source, an owned release carries it; 💿 Target, the proposed release carries it; 🔕 it does not count' />
+        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 Current, an owned release carries it; 💿 Proposed, the proposed release carries it; 🔕 it does not count' />
       </div>
     ),
   },
@@ -728,7 +727,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable || document.querySelector('[data-proposals-menu]')) {
+      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
         return
       }
 
@@ -962,25 +961,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
-                    menu={row.group === 'rest' ? (
-                      <Tippy
-                        interactive={true}
-                        trigger='click'
-                        placement='bottom'
-                        appendTo={document.body}
-                        content={(
-                          <div sx={UIProposals.styles.menu} data-proposals-menu={true}>
-                            <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
-                              Refuse all {row.count}
-                            </Button>
-                          </div>
-                        )}
-                      >
-                        <button type='button' data-menu={true} aria-label='Decide the whole group'>
-                          <Icon value='more' width='1em' height='1em' />
-                        </button>
-                      </Tippy>
-                    ) : null}
                   />
                 ) : row.group === 'overdue' ? (
                   <Overdue item={row.item} threshold={threshold} leaving={row.leaving} onGesture={(gesture) => decideTargets([row.item], gesture)} onSearch={(e) => search(e, row.item)} disabled={!connected} />
@@ -1060,12 +1040,6 @@ UIProposals.styles = {
       display: 'flex',
       gap: 8,
     },
-  },
-  menu: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    padding: 8,
   },
   bar: {
     position: 'sticky',
