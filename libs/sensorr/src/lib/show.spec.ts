@@ -388,7 +388,7 @@ describe('searchShowUnits', () => {
   const units = searchUnits(cats, episodes, now)
   const episodeName = (episode: number) => `Samurai.Pizza.Cats.S01E${String(episode).padStart(2, '0')}.MULTi.1080p.WEB.x264-GRP`
   const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => from + index)
-  const run = async (answer: (params: { season?: number, episode?: number }) => string[]) => {
+  const run = async (answer: (params: { season?: number, episode?: number }, znab: string) => string[]) => {
     const requests = []
     const { picks } = await searchShowUnits(units, episodes, {
       znabs,
@@ -396,7 +396,7 @@ describe('searchShowUnits', () => {
       apply: (releases, unit) => policy.apply(releases, { ...query, unit } as any),
       search: async (znab, term, params) => {
         requests.push({ znab: znab.name, term, ...params })
-        return answer(params).map(name => release(name))
+        return answer(params, znab.name).map(name => release(name))
       },
     })
 
@@ -433,10 +433,21 @@ describe('searchShowUnits', () => {
     expect(picks.length).toBe(54)
   })
 
-  it('searches every episode alone when nothing is found', async () => {
+  it('searches an episode alone only on the indexers whose season search found something', async () => {
+    const { requests, picks } = await run(({ season, episode }, znab) => (
+      znab !== 'ABN' ? [] : episode === undefined ? (season === 1 ? range(1, 50).map(episodeName) : []) : [episodeName(episode)]
+    ))
+
+    expect(requests.length).toBe(16 + 4 * 2)
+    expect([...new Set(requests.filter(({ episode }) => episode).map(({ znab }) => znab))]).toEqual(['ABN'])
+    expect(picks.length).toBe(54)
+  })
+
+  it('searches no episode alone when the season search finds nothing', async () => {
     const { requests, picks } = await run(() => [])
 
-    expect(requests.length).toBe(16 + 54 * 8)
+    expect(requests.length).toBe(16)
+    expect(requests.filter(({ episode }) => episode !== undefined)).toEqual([])
     expect(picks).toEqual([])
   })
 })

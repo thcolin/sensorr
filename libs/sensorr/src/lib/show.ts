@@ -180,6 +180,8 @@ export const searchShowUnits = async (
   },
 ) => {
   const requests = new Map<string, any[]>()
+  const answered = new Set<string>()
+  const pair = (key: string, znab, term: string) => `${key}:${znabs.indexOf(znab)}:${term}`
   const request = async (params: { season?: number, episode?: number }, served: ShowUnit[]) => {
     const key = `${params.season}:${params.episode}`
 
@@ -188,7 +190,16 @@ export const searchShowUnits = async (
 
       for (const znab of znabs) {
         for (const term of terms) {
-          (await search(znab, term, params, served)).forEach((release) => releases.set(release.link, release))
+          if (params.episode !== undefined && !answered.has(pair(`${params.season}:undefined`, znab, term))) {
+            continue
+          }
+
+          const found = await search(znab, term, params, served)
+          found.forEach((release) => releases.set(release.link, release))
+
+          if (found.length) {
+            answered.add(pair(key, znab, term))
+          }
         }
       }
 
