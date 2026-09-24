@@ -87,18 +87,10 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
       then?.()
     }
 
-    if (reduced()) {
-      node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: 'forwards' }).finished.then(done)
-      return
-    }
-
-    const options = Array.from(node.querySelectorAll('[data-option], [data-cancel]')) as HTMLElement[]
-    options.forEach(option => option.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, fill: 'forwards' }))
-    node.animate([{ clipPath: inset(null) }, { clipPath: inset(from.current) }], { duration: EXPAND, delay: 100, easing: EASING, fill: 'forwards' }).finished.then(() => {
-      faded.current.forEach(animation => animation.cancel())
-      segments().forEach(segment => segment.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' }))
-      done()
-    })
+    // The way back is a crossfade: the options leave as the labels at rest come back under them.
+    faded.current.forEach(animation => animation.cancel())
+    segments().forEach(segment => segment.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' }))
+    node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease-out', fill: 'forwards' }).finished.then(done)
   }, [expanded])
 
   // The label slides from where its button was to the start of the bar, then the options come in.
