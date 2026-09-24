@@ -16,7 +16,7 @@ Four systems live outside the boundary.
 | --- | --- | --- |
 | TMDB | `@sensorr/tmdb` (`libs/tmdb/src/tmdb.ts:8`, `https://api.themoviedb.org/3/`) | the browser (`apps/web/src/store/tmdb.tsx:4`) and the CLI (`apps/cli/src/commands/sync.js:29`, `refresh.js`, `keep-in-touch.js`, `migrate.js`) |
 | znab indexers (Torznab) | `@sensorr/sensorr` (`libs/sensorr/src/lib/znab.ts:40`) | the CLI directly, the browser through the API proxy |
-| Plex, `plex.tv` for PIN auth and a Plex Media Server for the library | `@sensorr/plex` (`libs/plex/src/lib/pin.ts:3`, `plex.ts:4`) | the API (`plex.service.ts`, `guests.service.ts`) and the CLI (`sync`, `keep-in-touch`) |
+| Plex, `plex.tv` for PIN auth, `community.plex.tv` for the reported issues, and a Plex Media Server for the library | `@sensorr/plex` (`libs/plex/src/lib/pin.ts:3`, `reports.ts`, `plex.ts:4`) | the API (`plex.service.ts`, `guests.service.ts`) and the CLI (`sync`, `keep-in-touch`, `report`) |
 | Web push services | `web-push` in `apps/api/src/app/notifications/notifications.service.ts:141` | the API only |
 
 The API never calls TMDB over HTTP. It imports `fields` from `@sensorr/tmdb` for query
