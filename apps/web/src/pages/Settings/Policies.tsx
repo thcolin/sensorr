@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useThemeUI } from 'theme-ui'
 import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -56,13 +57,13 @@ const Policies = ({ ...props }) => {
           </p>
           <ul>
             <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
-            <li><code>🌐 original language</code> gives the policy to any movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one.</li>
             <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance.</li>
             <li sx={{ listStyleType: 'none' }}>
               <ul>
                 <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
               </ul>
             </li>
+            <li><code>🌐 original language</code> gives the policy to a movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one. Movies already in your library keep theirs.</li>
           </ul>
           <h4>Score</h4>
           <p>
@@ -177,7 +178,14 @@ const PolicySettings = forwardRef<any, any>(({
   ...props
 }, ref) => {
   const [open, setOpen] = useState(false)
+  const { theme } = useThemeUI()
   const originalLanguages = form.watch(`${prefix ? `${prefix}.` : ''}match.original_languages`) || []
+  const name = form.watch(`${prefix ? `${prefix}.` : ''}name`)
+  const others = (prefix && form.watch('policies')) || []
+  const winners = originalLanguages.reduce((acc, language) => ({
+    ...acc,
+    [language]: others.find(policy => !policy.removed && policy.match?.original_languages?.includes(language))?.name || name,
+  }), {})
   const styles = useMemo(() => ({
     element: {
       display: 'flex',
@@ -363,7 +371,7 @@ const PolicySettings = forwardRef<any, any>(({
         )}
         {!!originalLanguages.length && (
           <div
-            title={`Given by default to movies in ${originalLanguages.map(language => languages[language]?.name || language).join(', ')}`}
+            title={originalLanguages.map(language => winners[language] === name ? `New movies in ${languages[language]?.name || language} get this policy` : `New movies in ${languages[language]?.name || language} get ${winners[language]} first`).join('\n')}
             sx={{
               cursor: 'default',
               display: 'flex',
@@ -379,9 +387,9 @@ const PolicySettings = forwardRef<any, any>(({
             }}
           >
             {originalLanguages.map(language => (
-              <span key={language}>
-                <span role='img' aria-label={languages[language]?.name || language}>{languages[language]?.emoji || '🏳️'}</span>
-                <span sx={{ display: ['none', 'inline'], marginLeft: 10 }}>{language}</span>
+              <span key={language} sx={{ opacity: winners[language] === name ? 1 : 0.3 }}>
+                <span role='img' aria-label={`New movies in ${languages[language]?.name || language} get ${winners[language]}`}>{languages[language]?.emoji || '🏳️'}</span>
+                <span aria-hidden={true} sx={{ display: ['none', 'inline'], marginLeft: 6 }}>{language}</span>
               </span>
             ))}
           </div>
@@ -483,12 +491,18 @@ const PolicySettings = forwardRef<any, any>(({
                   <Select
                     {...field}
                     label={emojize('🌐', 'Original language')}
-                    placeholder='Any movie'
+                    placeholder='No language'
                     options={LANGUAGES}
                     value={(value || []).map(language => LANGUAGES.find(option => option.value === language) || { value: language, label: `🏳️  Unknown (${language})` })}
                     onChange={(options) => onChange((options || []).map(option => option.value))}
                     multi={true}
                     resetable={false}
+                    menuPortalTarget={document.body}
+                    styles={{
+                      menuPortal: (style) => ({ ...style, zIndex: 10 }),
+                      multiValue: (style) => ({ ...style, flexShrink: 0, backgroundColor: theme.rawColors.grayDark, color: theme.rawColors.text }),
+                      multiValueLabel: (style) => ({ ...style, color: theme.rawColors.text }),
+                    }}
                   />
                 )}
               />
