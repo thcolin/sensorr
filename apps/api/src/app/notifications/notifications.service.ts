@@ -4,19 +4,11 @@ import { Model } from 'mongoose'
 import { from, merge, Observable } from 'rxjs'
 import { catchError, filter, map, mergeMap, tap } from 'rxjs/operators'
 import webpush from 'web-push'
-// import { filesize } from '@sensorr/utils'
 import { Log as LogDocument } from '../logs/log.schema'
 import { LogsService } from '../logs/logs.service'
 import { SubscriptionDTO } from './subscription.dto'
 import { Subscription as SubscriptionDocument } from './subscription.schema'
-
-const units = ['B', 'KB', 'MB', 'GB', 'TB']
-const filesize = {
-  stringify: (bytes, unit = true) => {
-    const exponent = bytes == 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1024))
-    return `${(bytes / Math.pow(1024, exponent)).toFixed(2) as any * 1} ${unit ? units[exponent] : ''}`
-  },
-}
+import { pushOf } from './push'
 
 @Injectable()
 export class NotificationsService {
@@ -41,6 +33,9 @@ export class NotificationsService {
             { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
+            { "meta.command": "record-shows", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+            { "meta.command": "airing", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.show.id": { $exists: true } },
           ]
         }).sort({ timestamp: -1 }).lean().exec()).pipe(
           map(data => ({ data } as MessageEvent)),
@@ -53,7 +48,10 @@ export class NotificationsService {
           (change.fullDocument?.meta?.command === 'shrink' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'report' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'sync' && change.fullDocument?.meta?.group === 'missings' && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id)
+          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id) ||
+          (change.fullDocument?.meta?.command === 'record-shows' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
+          (change.fullDocument?.meta?.command === 'airing' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
+          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.show?.id)
         )),
         map(({ fullDocument: data }) => ({ data } as MessageEvent)),
         tap(() => this.logger.log(`ListenNotifications, message=""`)),
@@ -86,44 +84,7 @@ export class NotificationsService {
 
     this.listenNotifications(false)
       .pipe(
-        map(({ data: { meta } }) => ({
-          title: `${meta?.movie?.title}${meta?.movie?.release_date ? ` (${(new Date(meta?.movie?.release_date)).getFullYear()})` : ''}`,
-          body: {
-            'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
-            'refine': `✨ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
-            'shrink': `✂️ ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
-            'report': `🚩 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
-            'sync': `💊 Missing from your Plex Server`,
-            'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
-          }[meta?.command],
-          image: `https://image.tmdb.org/t/p/w185${meta?.movie?.poster_path}`,
-          actions: {
-            'record': [
-              { action: 'accept', title: 'Accept' },
-              { action: 'refuse', title: 'Refuse' },
-            ],
-            'refine': [
-              { action: 'accept', title: 'Accept' },
-              { action: 'refuse', title: 'Refuse' },
-            ],
-            'shrink': [
-              { action: 'accept', title: 'Accept' },
-              { action: 'refuse', title: 'Refuse' },
-            ],
-            'report': [
-              { action: 'accept', title: 'Accept' },
-              { action: 'refuse', title: 'Refuse' },
-            ],
-            'sync': [
-              { action: 'wish-it-back', title: '"Wish" it back' },
-              { action: 'ignore', title: 'Ignore' },
-            ],
-            'keep-in-touch': [
-              { action: 'wish-it', title: '"Wish" it' },
-              { action: 'ignore', title: 'Ignore' },
-            ],
-          }[meta?.command],
-        })),
+        map(({ data: { meta } }) => pushOf(meta)),
         mergeMap(notification => from(this.logModel.find({
           $or: [
             { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
@@ -132,6 +93,9 @@ export class NotificationsService {
             { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "record-shows", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "airing", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
           ]
         }).lean().exec()).pipe(
           map(unread => ({ notification, unread: unread.length })),
