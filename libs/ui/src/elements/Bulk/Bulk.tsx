@@ -221,7 +221,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
               ))}
             </span>
             <button type='button' sx={UIBulk.styles.segment} data-cancel={true} onClick={() => close()} aria-label='Cancel' title='Cancel (Esc)'>
-              <Icon value='clear' active={true} width='1.25em' height='1.25em' />
+              <Icon value='clear' active={true} width='1em' height='1em' />
             </button>
           </div>
         )}
@@ -374,9 +374,10 @@ UIBulk.styles = {
       '::-webkit-scrollbar': {
         display: 'none',
       },
-      // A label then its values, as Sort by and its choice in the controls bar.
+      // A label then its values, as Sort by and its choice in the controls bar. The values
+      // share the width of the bar, so a family of two fills it as Accept and Refuse do.
       '>button': {
-        minWidth: 'auto',
+        flex: '1 0 auto',
         fontWeight: 'semibold',
       },
       '>button + button': separated,
@@ -384,10 +385,15 @@ UIBulk.styles = {
     '>button': {
       ...separated,
       minWidth: 'auto',
-      width: '2.75em',
+      width: '3em',
       paddingX: 12,
       svg: {
         color: 'whitePure',
+        opacity: 0.5,
+        transition: 'opacity 200ms ease-in-out',
+      },
+      ':hover:not(:disabled) svg, :focus-visible svg': {
+        opacity: 1,
       },
     },
   },
