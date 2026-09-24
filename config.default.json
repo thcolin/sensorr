@@ -40,6 +40,10 @@
     "refresh-shows": {
       "cron": "0 4 * * *",
       "paused": true
+    },
+    "sync-shows": {
+      "cron": "0 2 * * *",
+      "paused": true
     }
   },
   "plex": {},

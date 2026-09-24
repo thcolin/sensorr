@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, filesOf, showFilesOf } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -85,5 +85,41 @@ describe('releaseOf', () => {
   it('does not throw on a version without streams', () => {
     expect(() => releaseOf(payload, { videoResolution: '4k', Part: [{ file: 'Movie.2020.mkv' }] })).not.toThrow()
     expect(oleoo.parse(releaseOf(payload, { videoResolution: '4k', Part: [{ file: 'Movie.2020.mkv' }] }).title, { strict: false }).resolution).toBe('2160p')
+  })
+})
+
+describe('showFilesOf', () => {
+  const media = (id, file, sizes = [1000]) => ({ id, Part: sizes.map((size) => ({ file, size })) })
+  const item = (parentIndex, index, Media) => ({ guid: `plex://episode/${parentIndex}-${index}`, parentIndex, index, Media })
+  const episodes = [
+    { id: 11, season_number: 1, episode_number: 1, files: [] },
+    { id: 12, season_number: 1, episode_number: 2, files: [{ id: 'plex://episode/1-2#9', size: 1000, title: 'Old', original: 'Old' }] },
+    { id: 13, season_number: 1, episode_number: 3 },
+  ]
+
+  it('names a file as oleoo reads its file name, and sums the size of its parts', () => {
+    expect(filesOf(item(1, 1, [media(4, '/tvshows/Friends/Season 01/Friends.S01E01.1080p.WEB-DL.x264-GRP.mkv', [700, 300])]))).toEqual([{
+      id: 'plex://episode/1-1#4',
+      size: 1000,
+      title: 'Friends.S01E01.1080p.WEB-DL.x264-GRP',
+      original: 'Friends.S01E01.1080p.WEB-DL.x264-GRP',
+    }])
+  })
+
+  it('gives each episode the files of the Plex episode with the same season and episode number', () => {
+    const { episodes: synced } = showFilesOf(episodes, [
+      item(1, 1, [media(4, 'Friends.S01E01.720p.HDTV.x264-A.mkv'), media(5, 'Friends.S01E01.1080p.BluRay.x264-B.mkv')]),
+      item(1, 3, [media(6, 'Friends.S01E03.720p.HDTV.x264-A.mkv')]),
+    ])
+
+    expect(synced.map(({ id, files }) => [id, files.map(({ id }) => id)])).toEqual([
+      [11, ['plex://episode/1-1#4', 'plex://episode/1-1#5']],
+      [12, []],
+      [13, ['plex://episode/1-3#6']],
+    ])
+  })
+
+  it('counts the Plex episodes no Sensorr episode numbers the same', () => {
+    expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toBe(1)
   })
 })

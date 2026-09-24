@@ -43,6 +43,8 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.report.since` | `number` | `0` | Date of the newest Plex reported issue already handled by Report job, older ones are ignored (auto filled on first run) |
 | `jobs.refresh-shows.cron` | `string` | `0 4 * * *` | Refresh-shows job cron, shows still airing are refreshed on every run, the others once a month |
 | `jobs.refresh-shows.paused` | `boolean` | `true` | Pause Refresh-shows job |
+| `jobs.sync-shows.cron` | `string` | `0 2 * * *` | Sync-shows job cron |
+| `jobs.sync-shows.paused` | `boolean` | `true` | Pause Sync-shows job |
 
 ## Plex
 

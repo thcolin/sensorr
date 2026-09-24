@@ -178,6 +178,18 @@ const config = convict({
         default: true,
       },
     },
+    'sync-shows': {
+      cron: {
+        doc: 'Sync-shows job cron',
+        format: 'String',
+        default: '0 2 * * *',
+      },
+      paused: {
+        doc: 'Pause Sync-shows job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
   },
   plex: {
     url: {
