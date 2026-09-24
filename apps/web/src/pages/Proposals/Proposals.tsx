@@ -502,7 +502,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [collapsed, setCollapsed] = useState({ rest: true, overdue: true })
   const [activeId, setActiveId] = useState(null)
   const [focus, setFocus] = useState([])
-  const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0, retry: 0, drop: 0 })
+  const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0, retry: 0, drop: 0, replace: 0 })
   const [overdue, setOverdue] = useState([])
   const toggleSensorr = useRef(null)
   const pending = useRef(null)
@@ -632,7 +632,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const byId = new Map<string, any>(targets.map(item => [String(item.id), item]))
     const update = (current, id) => {
       const item = byId.get(String(id))
-      return decide(current?.releases ? current : item.source, item.proposal.id, verdict)
+      return decide(current?.releases ? current : item.source, item.proposal.id, verdict, item.pick)
     }
     const slices = Array.from({ length: Math.ceil(targets.length / SLICE) }, (_, index) => targets.slice(index * SLICE, (index + 1) * SLICE))
     const failed = targets.length === 1
@@ -721,7 +721,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const notify = useCallback((targets, verdict: Verdict) => {
     const { emoji, icon, label, color } = VERDICTS[verdict] as any
-    const [item] = targets
+    const [target] = targets
+    // A replaced swap is announced with the release picked in its place.
+    const item = target.pick ? { ...target, proposal: target.pick, diff: { ...target.diff, size: typeof target.diff.size === 'number' ? target.diff.size + (target.pick.size || 0) - (target.proposal.size || 0) : null } } : target
     const { entity, proposal } = item
     const year = entity?.release_date && new Date(entity.release_date).getFullYear()
     const message = targets.length > 1 ? `**${targets.length}** proposals` : (
@@ -740,7 +742,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       </>
     )
 
-    ;({ accept: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
+    ;({ accept: toast.success, replace: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
   }, [undo, threshold])
 
   // `next` is the card to open once this one has left, when it was the open one.
@@ -817,7 +819,13 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     setCollapsed(collapsed => ({ ...collapsed, [group]: !collapsed[group] }))
   }, [collapsed, active, groups, leaving])
 
-  keys.current = { ...keys.current, onGesture, undo, ban, close: () => keys.current.morph(() => setActiveId(null)) }
+  // The release picked in the drawer is accepted in place of the proposal, which is refused.
+  const pick = useCallback((item, release) => {
+    const index = queue.findIndex(({ id }) => id === item.id)
+    decideTargets([{ ...item, pick: { ...release, from: item.command, job: 'manual', proposal: true, choice: true } }], 'replace', index === -1 ? undefined : (queue[index + 1]?.id ?? null))
+  }, [queue, decideTargets])
+
+  keys.current = { ...keys.current, onGesture, undo, ban, pick, close: () => keys.current.morph(() => setActiveId(null)) }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -1073,6 +1081,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}
+                    onSearch={(e) => toggleSensorr.current?.(e, row.item.entity, (release) => keys.current.pick(row.item, release))}
                     onClose={row.leaving ? null : keys.current.close}
                     selected={selected.has(row.item.id)}
                     selectedVisible={chosen.length > 0}

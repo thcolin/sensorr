@@ -11,6 +11,7 @@ import { Transition } from '../../components/Sensorr/Proposal'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { Release } from '../../components/Sensorr/Release'
 import { Gestures } from '../../components/Sensorr/Gestures'
+import { MovieActions } from '../Details/components/Actions'
 import { sizeStateOf } from './queue'
 
 export const EMOJI = {
@@ -26,6 +27,7 @@ export const VERDICTS = {
   ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
   retry: { emoji: '🔁', label: 'Retried', color: 'grayDark', text: 'text' },
   drop: { emoji: '🗑️', label: 'Dropped', color: 'grayDark', text: 'text' },
+  replace: { emoji: '✅', icon: 'check', label: 'Replaced', color: 'primary', text: 'whitePure' },
 }
 
 export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${filesize.stringify(Math.abs(bytes))}`
@@ -160,7 +162,7 @@ export const Size = ({ item, threshold, compact = false, named = true }) => item
   </>
 ) : <small style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>
 
-const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, selected = null, selectedVisible = false, onSelectedChange = undefined, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onSearch, onClose = null, disabled = false, selected = null, selectedVisible = false, onSelectedChange = undefined, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [meaningful, setMeaningful] = useState(false)
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
@@ -172,8 +174,13 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
     <article sx={{ ...UIActive.styles.element, ...(leaving ? UIActive.styles.leaving : {}) }} aria-current={!leaving}>
       <div sx={UIActive.styles.wrapper}>
         <div sx={UIActive.styles.card}>
-          <div sx={UIActive.styles.poster} style={poster(item.id)} data-morph-poster={true}>
-            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} selected={selected} selectedVisible={selectedVisible} onSelectedChange={onSelectedChange} />
+          <div sx={UIActive.styles.aside}>
+            <div sx={UIActive.styles.poster} style={poster(item.id)} data-morph-poster={true}>
+              <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} selected={selected} selectedVisible={selectedVisible} onSelectedChange={onSelectedChange} />
+            </div>
+            <div sx={UIActive.styles.ticket}>
+              <MovieActions entity={entity} metadata={metadata} ready={!disabled && !leaving} toggleSensorr={onSearch} />
+            </div>
           </div>
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
@@ -289,12 +296,24 @@ UIActive.styles = {
     paddingTop: 4,
     paddingBottom: [4, '0em'],
   },
+  aside: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    flexShrink: 0,
+    alignSelf: ['center', 'flex-start'],
+  },
   // Movie's poster sizes itself, badges included, as on every other page.
   poster: {
     position: 'relative',
     zIndex: 1,
-    flexShrink: 0,
-    alignSelf: ['center', 'flex-start'],
+  },
+  ticket: {
+    display: 'flex',
+    width: '100%',
+    marginTop: 4,
+    marginBottom: [0, 4],
+    fontSize: 6,
   },
   body: {
     flex: 1,
