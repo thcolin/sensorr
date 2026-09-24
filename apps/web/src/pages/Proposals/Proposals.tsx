@@ -516,6 +516,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const chosen = useMemo(() => selectable.filter(item => selected.has(item.id)), [selectable, selected])
   const setSelected = useCallback((ids) => setSelection(selection => ({ ...selection, [location.key]: typeof ids === 'function' ? ids(selection[location.key] || []) : ids })), [location.key])
   const toggle = useCallback((id) => setSelected(ids => ids.includes(id) ? ids.filter(v => v !== id) : [...ids, id]), [setSelected])
+  // A group all checked unchecks; otherwise every row of the group is added to the selection.
+  const toggleGroup = useCallback((items) => setSelected(ids => {
+    const group = items.map(({ id }) => id)
+    return group.every(id => ids.includes(id)) ? ids.filter(id => !group.includes(id)) : [...new Set([...ids, ...group])]
+  }), [setSelected])
 
   const balance = useMemo(() => balanceOf(chosen.length ? chosen : items.filter(item => !decided[item.id])), [chosen, items, decided])
   const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])
@@ -542,10 +547,10 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     return [
       ...rows,
-      { type: 'group', group, count },
+      { type: 'group', group, count, selectable: items.filter(item => !leaving[item.id] && !decided[item.id] && !isOverdue(item.proposal)) },
       ...(collapsed[group] ? [] : items.map(item => ({ type: 'item', group, item, leaving: leaving[item.id] || null }))),
     ]
-  }, []), [groups, collapsed, leaving])
+  }, []), [groups, collapsed, leaving, decided])
 
   // An overdue swap never opens into a card, so the keyboard skips it.
   const queue = useMemo(() => rows.filter(row => row.type === 'item' && !row.leaving && row.group !== 'overdue').map(row => row.item), [rows])
@@ -997,6 +1002,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
+                    selected={row.group !== 'overdue' && !!row.selectable.length && row.selectable.every(item => selected.has(item.id))}
+                    onSelectedChange={row.group === 'overdue' || !row.selectable.length ? null : () => toggleGroup(row.selectable)}
                     menu={row.group === 'rest' ? (
                       <Tippy
                         interactive={true}

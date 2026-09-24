@@ -421,6 +421,45 @@ UIActive.styles = {
 
 export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive))
 
+// The checkbox of the library's posters: shown under the pointer of its row or group, then
+// everywhere once one is checked. A phone shows it once one is checked.
+const Select = ({ id, checked, visible, label, onChange, disabled = false, layout = {} }) => (
+  <div sx={{ ...Select.styles.element, ...layout }} data-select={true} data-visible={checked || visible} data-checked={checked}>
+    <Option id={id} type='checkbox' behavior='radio' borderless={true} checked={checked} disabled={disabled} onChange={onChange} aria-label={label} />
+  </div>
+)
+
+Select.styles = {
+  element: {
+    position: 'relative',
+    zIndex: 1,
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '2em',
+    height: '2em',
+    borderRadius: '2em',
+    border: '0.25em solid',
+    borderColor: 'grayLightest',
+    backgroundColor: 'gray',
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'opacity 150ms ease-in-out, visibility 0ms 150ms, background-color 150ms ease-in-out',
+    '&[data-visible=true]': {
+      opacity: 1,
+      visibility: 'visible',
+      transition: 'opacity 150ms ease-in-out, background-color 150ms ease-in-out',
+    },
+    '&[data-checked=true]': {
+      backgroundColor: 'primary',
+    },
+    '>label': {
+      marginY: 12,
+    },
+  },
+}
+
 // On a wide screen the chevron next to the decisions opens the card. A phone has no
 // hover to show them: there, a button stretched under the whole row opens it.
 const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, selected = false, selectedVisible = false, onSelectedChange = null, ...props }) => {
@@ -435,9 +474,15 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
       {!!onSelectedChange && (
-        <div sx={UICompact.styles.select} data-select={true} data-visible={selected || selectedVisible} data-checked={selected}>
-          <Option id={`select-${item.id}`} type='checkbox' behavior='radio' borderless={true} checked={selected} disabled={!!leaving} onChange={() => onSelectedChange(item.id)} aria-label={`Select ${item.entity?.title || 'proposal'}`} />
-        </div>
+        <Select
+          id={`select-${item.id}`}
+          checked={selected}
+          visible={selectedVisible}
+          disabled={!!leaving}
+          label={`Select ${item.entity?.title || 'proposal'}`}
+          onChange={() => onSelectedChange(item.id)}
+          layout={UICompact.styles.select}
+        />
       )}
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
@@ -511,39 +556,13 @@ UICompact.styles = {
       },
     },
   },
-  // The checkbox of the library's posters, on the corner of the row's poster: shown under
-  // the pointer, then on every row once one is checked. A phone shows it once one is checked.
+  // On the corner of the row's poster.
   select: {
-    position: 'relative',
-    zIndex: 1,
     gridArea: 'poster',
     alignSelf: 'start',
     justifySelf: 'start',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '2em',
-    height: '2em',
     marginTop: '-0.375em',
     marginLeft: '-0.625em',
-    borderRadius: '2em',
-    border: '0.25em solid',
-    borderColor: 'grayLightest',
-    backgroundColor: 'gray',
-    opacity: 0,
-    visibility: 'hidden',
-    transition: 'opacity 150ms ease-in-out, visibility 0ms 150ms, background-color 150ms ease-in-out',
-    '&[data-visible=true]': {
-      opacity: 1,
-      visibility: 'visible',
-      transition: 'opacity 150ms ease-in-out, background-color 150ms ease-in-out',
-    },
-    '&[data-checked=true]': {
-      backgroundColor: 'primary',
-    },
-    '>label': {
-      marginY: 12,
-    },
   },
   open: {
     variant: 'button.reset',
@@ -814,14 +833,24 @@ Placeholder.styles = {
   },
 }
 
-export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, menu = null, ...props }) => (
+export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, menu = null, selected = false, onSelectedChange = null, ...props }) => (
   <h6 {...props} sx={UIGroupTitle.styles.element}>
     <button type='button' onClick={onToggle} aria-expanded={open} sx={UIGroupTitle.styles.toggle}>
       <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
       <span>{emojize(emoji, label)}</span>
       <code>{count}</code>
     </button>
-    {menu}
+    <span sx={UIGroupTitle.styles.end}>
+      {/* The select-all of the controls bar, for the rows of this group. */}
+      {!!onSelectedChange && (
+        <span data-select-all={true}>
+          <Option id={`select-${group}`} type='checkbox' checked={selected} onChange={onSelectedChange}>
+            {selected ? 'Unselect All' : 'Select All'}
+          </Option>
+        </span>
+      )}
+      {menu}
+    </span>
   </h6>
 )
 
@@ -836,7 +865,7 @@ UIGroupTitle.styles = {
     backgroundColor: 'grayLighter',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
-    '>button[data-menu]': {
+    '[data-menu]': {
       variant: 'button.reset',
       display: 'inline-flex',
       alignItems: 'center',
@@ -858,13 +887,34 @@ UIGroupTitle.styles = {
       transition: 'opacity 200ms ease-in-out',
     },
     ':hover, :focus-within': {
-      '>button[data-menu]': {
+      '[data-menu]': {
         opacity: 1,
       },
     },
     '@media (hover: none)': {
-      '>button[data-menu]': {
+      '[data-menu]': {
         opacity: 1,
+      },
+    },
+  },
+  // Faint at rest and solid under the pointer, in the type of the controls bar.
+  end: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    '>[data-select-all]': {
+      display: 'inline-flex',
+      opacity: 0.6,
+      fontFamily: 'body',
+      fontWeight: 'body',
+      transition: 'opacity 200ms ease-in-out',
+      ':hover, :focus-within': {
+        opacity: 1,
+      },
+      // No taller than the title, so the group keeps the height the list reserves for it.
+      label: {
+        marginY: 12,
+        lineHeight: 1,
       },
     },
   },
