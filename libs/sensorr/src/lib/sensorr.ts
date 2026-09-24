@@ -2,11 +2,11 @@ import { Znab as ZnabInterface } from './interfaces'
 import { nanoid, clean } from './utils'
 import { Znab } from './znab'
 
-const titlesOf = (names: string[], alternatives: { title: string, type?: string, iso_3166_1: string }[] = [], region: string) => [...new Set(
+const titlesOf = (names: string[], alternatives: { title: string, type?: string, iso_3166_1: string }[] = [], countries: string[]) => [...new Set(
   [
     ...names,
     ...(alternatives || [])
-      .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', region.slice(-2)].includes(iso_3166_1))
+      .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && countries.includes(iso_3166_1))
       .map(({ title }) => title),
   ].filter(v => v).map(title => clean(title)).filter(v => v)
 )]
@@ -15,6 +15,9 @@ const termsOf = (titles: string[]) => titles.reduce((acc, value, index, array) =
   ...acc,
   ...(array.filter((v, i) => i !== index).every(v => !value.includes(v)) ? [value] : []),
 ], [])
+
+// A term in another script, a Japanese original name for one, is only searched when a show has no other
+const isLatin = (term: string) => !/\p{L}/u.test(term.replace(/\p{Script=Latin}/gu, ''))
 
 export class Sensorr {
   znabs: ZnabInterface[] = []
@@ -44,7 +47,7 @@ export class Sensorr {
   }
 
   getQuery(movie, query = null, banned_releases = []) {
-    const titles = titlesOf([movie?.title, movie?.original_title], movie?.alternative_titles?.titles, this.region)
+    const titles = titlesOf([movie?.title, movie?.original_title], movie?.alternative_titles?.titles, ['US', 'GB', this.region.slice(-2)])
     const _defaults = movie?.query?._defaults ? movie?.query?._defaults : {
       titles,
       terms: termsOf(titles),
@@ -68,12 +71,14 @@ export class Sensorr {
 
   // A show's defaults are never saved, unlike a movie's: its years grow with every season it airs
   getShowQuery(show, query = null, banned_releases = []) {
-    const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, this.region)
+    const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, ['FR', 'US', 'GB'])
+    const terms = termsOf(titles)
+    const latin = terms.filter(isLatin)
     const first = show?.first_air_date ? new Date(show.first_air_date).getFullYear() : null
     const last = show?.last_air_date ? Math.max(first, new Date(show.last_air_date).getFullYear()) : first
     const _defaults = {
       titles,
-      terms: termsOf(titles),
+      terms: latin.length ? latin : terms,
       years: first ? Array.from({ length: last - first + 1 }, (_, index) => `${first + index}`) : [],
     }
 

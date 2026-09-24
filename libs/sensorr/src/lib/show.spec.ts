@@ -2,6 +2,7 @@ import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
 import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchUnits, ShowUnit } from './show'
+import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
 const day = 24 * 60 * 60 * 1000
@@ -39,6 +40,24 @@ const airingEpisodes = () => [
   ...seasonOf(2, 8, '2024-09-05').map(episode => episode.episode_number === 3 ? { ...episode, files: [{ id: 'f' }] } : episode),
   ...seasonOf(3, 10, '2026-08-20'),
 ]
+
+// Samouraï Pizza Cats: ended, one season of 54 episodes, a Japanese original name
+const cats = {
+  id: 17420,
+  name: 'Samouraï Pizza Cats',
+  original_name: 'キャッ党 忍伝てやんでえ',
+  status: 'Ended',
+  first_air_date: '1990-02-01',
+  last_air_date: '1991-02-12',
+  alternative_titles: {
+    results: [
+      { iso_3166_1: 'FR', title: 'Samourai Pizza Cats', type: '' },
+      { iso_3166_1: 'US', title: 'Samurai Pizza Cats', type: '' },
+      { iso_3166_1: 'GB', title: 'Samurai Pizza Cats', type: '' },
+      { iso_3166_1: 'JP', title: 'Kyatto Ninden Teyandee', type: 'romaji' },
+    ],
+  },
+}
 
 const own = (episodes, season, episode) => episodes.map(e => (e.season_number === season && e.episode_number === episode) ? { ...e, files: [{ id: 'f' }] } : e)
 const labels = (units: ShowUnit[]) => units.map(({ type, season, episode, fallback }) => [type, season, episode, fallback].filter(v => v !== undefined).join(':'))
@@ -82,6 +101,14 @@ describe('Sensorr.getShowQuery', () => {
   it('gives the first air year alone to a show without a last air date, and no year without a first one', () => {
     expect(sensorr.getShowQuery({ name: 'Pilot', first_air_date: '2026-09-17' }).years).toEqual(['2026'])
     expect(sensorr.getShowQuery({ name: 'Pilot' }).years).toEqual([])
+  })
+
+  it('searches the names and the FR, US and GB titles once each, and a term in another script only when it is the only one', () => {
+    const query = sensorr.getShowQuery(cats)
+
+    expect(query.terms).toEqual(['samourai pizza cats', 'samurai pizza cats'])
+    expect(query.titles).toEqual(['samourai pizza cats', clean(cats.original_name), 'samurai pizza cats'])
+    expect(sensorr.getShowQuery({ name: cats.original_name, original_name: cats.original_name }).terms).toEqual([clean(cats.original_name)])
   })
 
   it('keeps a saved query only when it has titles, terms and years', () => {
