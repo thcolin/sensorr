@@ -9,8 +9,8 @@ const SortableSelectContainer = SortableContainer(Select) as any
 const fills = (theme) => ({
   prefer: theme.rawColors.primaryDarker,
   avoid: theme.rawColors.error,
-  source: theme.rawColors.accentDarkest,
-  target: theme.rawColors.primaryDarker,
+  current: theme.rawColors.accentDarkest,
+  proposed: theme.rawColors.primaryDarker,
 })
 
 export const SortableSelect = ({ value, onChange, requirable = false, ...props }) => {

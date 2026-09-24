@@ -190,8 +190,8 @@ export const arrange = (items, { threshold, skipped = {}, sort_by = { value: 'ti
   }))
 }
 
-// The release filters of Library (Controls/Oleoo.tsx): 📀 `source` keeps a swap whose
-// owned release carries one of the values, 💿 `target` one whose proposed release does.
+// The release filters of Library (Controls/Oleoo.tsx): 📀 `current` keeps a swap whose
+// owned release carries one of the values, 💿 `proposed` one whose proposed release does.
 // A size range is in GB, and its top mark means no upper bound.
 export const FILTERS = ['znab', 'resolution', 'source', 'encoding', 'dub', 'language', 'flags']
 
@@ -210,17 +210,17 @@ const fits = (release, range) => {
 
 const valuesOf = (values, filter, group) => (values[filter] || []).filter(rule => rule.group === group).map(({ value }) => value)
 
-// The source side passes when one owned release carries a value of every filter, as the
+// The current side passes when one owned release carries a value of every filter, as the
 // release filters of Library.
 export const matches = (item, values) => (
   (item.owned.length ? item.owned : [null]).some(release => fits(release, values.current_size) && FILTERS.every(filter => {
-    const source = valuesOf(values, filter, 'source')
-    return !source.length || carries(release, filter, source)
+    const current = valuesOf(values, filter, 'current')
+    return !current.length || carries(release, filter, current)
   })) &&
   fits(item.proposal, values.proposed_size) &&
   FILTERS.every(filter => {
-    const target = valuesOf(values, filter, 'target')
-    return !target.length || carries(item.proposal, filter, target)
+    const proposed = valuesOf(values, filter, 'proposed')
+    return !proposed.length || carries(item.proposal, filter, proposed)
   })
 )
 

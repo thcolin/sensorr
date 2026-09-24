@@ -8,13 +8,13 @@ import { withProps } from '../../enhancers/withProps'
 const MARKS = {
   prefer: { label: '⭐', title: 'Prefer' },
   avoid: { label: '⛔', title: 'Avoid' },
-  source: { label: '📀', title: 'Source: an owned release carries one of them' },
-  target: { label: '💿', title: 'Target: the proposed release carries one of them' },
+  current: { label: '📀', title: 'Current: an owned release carries one of them' },
+  proposed: { label: '💿', title: 'Proposed: the proposed release carries one of them' },
   ignore: { label: '🔕', title: 'Ignored' },
 }
 
 // A click moves a value to the next group of `groups`, then back to 🔕. Swaps passes
-// `['source', 'target']`: which side of the swap has to carry the value.
+// `['current', 'proposed']`: which side of the swap has to carry the value.
 const RULES = ['prefer', 'avoid']
 
 const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RULES, ...props }) => {

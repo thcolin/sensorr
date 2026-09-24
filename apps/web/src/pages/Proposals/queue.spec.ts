@@ -39,10 +39,10 @@ describe('queue', () => {
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
   })
 
-  it('filters the owned release on the source values and the proposed one on the target values', () => {
+  it('filters the owned release on the current values and the proposed one on the proposed values', () => {
     const owned = release('a', 'VOSTFR', 2 * GB, { meta: { language: 'VOSTFR', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
     const item = itemOf({ id: 1 }, [owned, { ...release('b', 'MULTi-VFF', 4 * GB), proposal: true, from: 'refine' }], policy)
-    const rules = (source, target) => [...source.map(value => ({ value, group: 'source' })), ...target.map(value => ({ value, group: 'target' }))]
+    const rules = (current, proposed) => [...current.map(value => ({ value, group: 'current' })), ...proposed.map(value => ({ value, group: 'proposed' }))]
 
     expect(matches(item, {})).toBe(true)
     expect(matches(item, { language: rules(['FRENCH', 'VOSTFR'], ['MULTi', 'MULTi-VFF']) })).toBe(true)
@@ -55,13 +55,13 @@ describe('queue', () => {
     expect(matches(item, { current_size: [1, 50] })).toBe(true)
   })
 
-  it('passes the source side when one owned release carries a value of every filter', () => {
+  it('passes the current side when one owned release carries a value of every filter', () => {
     const hd = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
     const item = movie(1, [hd, release('b', 'VOSTFR', 8 * GB)], release('c', 'MULTi', 4 * GB))
 
-    expect(matches(item, { resolution: [{ value: '720p', group: 'source' }] })).toBe(true)
-    expect(matches(item, { language: [{ value: 'VOSTFR', group: 'source' }] })).toBe(true)
-    expect(matches(item, { language: [{ value: 'VOSTFR', group: 'source' }], resolution: [{ value: '720p', group: 'source' }] })).toBe(false)
+    expect(matches(item, { resolution: [{ value: '720p', group: 'current' }] })).toBe(true)
+    expect(matches(item, { language: [{ value: 'VOSTFR', group: 'current' }] })).toBe(true)
+    expect(matches(item, { language: [{ value: 'VOSTFR', group: 'current' }], resolution: [{ value: '720p', group: 'current' }] })).toBe(false)
   })
 
   it('lists the axes the policy holds first and the unchanged ones last', () => {

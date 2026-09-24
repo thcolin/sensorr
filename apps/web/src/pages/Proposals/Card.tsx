@@ -774,14 +774,13 @@ Placeholder.styles = {
   },
 }
 
-export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, menu = null, ...props }) => (
+export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, ...props }) => (
   <h6 {...props} sx={UIGroupTitle.styles.element}>
     <button type='button' onClick={onToggle} aria-expanded={open} sx={UIGroupTitle.styles.toggle}>
       <Icon value='chevron' direction={false} width='0.625em' height='0.625em' style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
       <span>{emojize(emoji, label)}</span>
       <code>{count}</code>
     </button>
-    {menu}
   </h6>
 )
 
@@ -796,37 +795,6 @@ UIGroupTitle.styles = {
     backgroundColor: 'grayLighter',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
-    '>button[data-menu]': {
-      variant: 'button.reset',
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: '2.5rem',
-      position: 'relative',
-      cursor: 'pointer',
-      '::after': {
-        content: '""',
-        position: 'absolute',
-        inset: '-0.75em 0em',
-      },
-      ':focus-visible': {
-        outline: '1px solid',
-        outlineColor: 'grayDarkest',
-        outlineOffset: '2px',
-      },
-      opacity: 0,
-      transition: 'opacity 200ms ease-in-out',
-    },
-    ':hover, :focus-within': {
-      '>button[data-menu]': {
-        opacity: 1,
-      },
-    },
-    '@media (hover: none)': {
-      '>button[data-menu]': {
-        opacity: 1,
-      },
-    },
   },
   toggle: {
     variant: 'button.reset',
