@@ -49,7 +49,6 @@ const ShowWithBulk = ({ entity, ...props }) => {
     <Show
       {...props as any}
       entity={entity}
-      // A placeholder has no id yet, so it gets no checkbox.
       selected={entity?.id ? !!selection[location.key]?.includes(entity.id) : null}
       selectedVisible={selection[location.key]?.length > 0}
       onSelectedChange={(id) => setSelection(selection => ({
@@ -127,7 +126,6 @@ const Library = compose(
           </div>
         ),
       },
-      // TODO: enhance, don't use a specific context, use fields system and give Child correct props (will save values inside route state)
       bulk: {
         initial: null,
         component: ({ total, statistics, ...props }) => {

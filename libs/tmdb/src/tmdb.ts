@@ -174,7 +174,6 @@ export class TMDB {
             ...result,
             genres: genre_ids.map((id) => this.tvGenres[id]),
           })),
-          // TODO: Remove [TMDB issue](https://www.themoviedb.org/talk/61bbb4dc6a300b00977d906c) is fixed
           total_results: Math.min(10000, body.total_results),
           total_pages: Math.min(500, body.total_pages),
         }

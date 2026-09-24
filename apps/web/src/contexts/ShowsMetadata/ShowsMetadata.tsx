@@ -59,7 +59,6 @@ export const Provider = ({ ...props }) => {
 
     cb()
 
-    // Refresh if page was at sleep for 10s
     const onVisibilityChange = () => {
       const currentTime = (new Date()).getTime()
 
