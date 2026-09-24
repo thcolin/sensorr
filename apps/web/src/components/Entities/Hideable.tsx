@@ -2,11 +2,11 @@ import { createContext, useContext, useMemo } from 'react'
 import { Entities } from '@sensorr/ui'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 
-const HideLibraryContext = createContext(false)
+const HideLibraryContext = createContext({ hideLibrary: false, useMetadataContext: useMoviesMetadataContext })
 
 const HideableChild = ({ child: Child, ...props }) => {
-  const hideLibrary = useContext(HideLibraryContext)
-  const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMoviesMetadataContext() as any
+  const { hideLibrary, useMetadataContext } = useContext(HideLibraryContext)
+  const { loading, metadata: { [props.entity?.id]: metadata = null } } = useMetadataContext() as any
 
   return (
     <Child
@@ -18,11 +18,13 @@ const HideableChild = ({ child: Child, ...props }) => {
 
 // `hide_library` goes through a context rather than into the child's closure: a new child
 // component on each toggle would remount every card and reload its poster.
-export const EntitiesHideable = ({ controls, child, ...props }) => {
+// `useMetadataContext` tells which library the entities belong to, the movies one by default.
+export const EntitiesHideable = ({ controls, child, useMetadataContext = useMoviesMetadataContext, ...props }) => {
   const Child = useMemo(() => (props) => <HideableChild {...props} child={child} />, [child])
+  const value = useMemo(() => ({ hideLibrary: !!controls.values.hide_library, useMetadataContext }), [controls.values.hide_library, useMetadataContext])
 
   return (
-    <HideLibraryContext.Provider value={!!controls.values.hide_library}>
+    <HideLibraryContext.Provider value={value}>
       <Entities {...props as any} child={Child} />
     </HideLibraryContext.Provider>
   )

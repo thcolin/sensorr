@@ -249,6 +249,9 @@ export default {
       persons: {
         title: 'Trending',
       },
+      shows: {
+        title: 'Trending',
+      },
     },
     theatres: {
       title: 'Theatres',

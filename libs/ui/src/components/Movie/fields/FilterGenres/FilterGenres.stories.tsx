@@ -41,3 +41,23 @@ FilterGenres.argTypes = {
     control: null,
   },
 }
+
+export const FilterGenresTV = (args: any) => (
+  <ColorModeWrapper value='primary'>
+    <UIFilterGenres {...args} />
+  </ColorModeWrapper>
+)
+
+FilterGenresTV.args = {
+  ...FilterGenres.args,
+  type: 'tv',
+  value: { values: [10765, 18], behavior: 'or' },
+  statistics: [
+    { _id: 18, count: 6 },
+    { _id: 10765, count: 3 },
+    { _id: 10759, count: 2 },
+    { _id: 35, count: 2 },
+  ],
+}
+
+FilterGenresTV.argTypes = FilterGenres.argTypes

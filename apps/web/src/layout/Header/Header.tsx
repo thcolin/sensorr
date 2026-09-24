@@ -18,6 +18,7 @@ const PWD = ({ ...props }) => {
       {(
         location.pathname === '/' ? 'Home' :
         location.pathname.startsWith('/movie') ? 'Movies' :
+        location.pathname.startsWith('/tv') ? 'Shows' :
         location.pathname.startsWith('/collection') ? 'Collections' :
         location.pathname.startsWith('/person') ? 'Stars' :
         location.pathname.startsWith('/search') ? 'Search' :

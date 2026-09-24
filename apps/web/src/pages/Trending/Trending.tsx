@@ -4,6 +4,8 @@ import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
+import Show from '../../components/Show/Show'
+import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
@@ -13,11 +15,12 @@ import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
 export const Trending = (resource) => compose(
-  withTitle(`${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
+  withTitle(`${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource])} ${resource}`),
   withProps({
     id: 'trending',
     display: 'grid',
-    child: { movies: MovieWithCreditsAndReviews, persons: Person }[resource],
+    child: { movies: MovieWithCreditsAndReviews, persons: Person, shows: Show }[resource],
+    useMetadataContext: { shows: useShowsMetadataContext }[resource],
     empty: {
       movies: {
         emoji: '🍿',
@@ -37,12 +40,17 @@ export const Trending = (resource) => compose(
           </span>
         ),
       },
+      shows: {
+        emoji: '📺',
+        title: "Oh no, your request didn't return results",
+        subtitle: 'themoviedb.org lists no trending show today, try again later',
+      },
     }[resource],
     props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }) }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day', shows: 'trending/tv/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
-    title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource]),
+    title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource]),
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),

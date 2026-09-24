@@ -88,6 +88,9 @@ const Navigation = ({ display = 'web', ...props }) => {
             <div sx={Navigation.styles.web.secondary}>
               <Chevron />
               <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Library</NavLink>
+              <NavLink onClick={handleWebNavigation} to="/tv/discover" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Discover</NavLink>
+              <NavLink onClick={handleWebNavigation} to="/tv/calendar" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Calendar</NavLink>
+              <NavLink onClick={handleWebNavigation} to="/tv/trending" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Trending</NavLink>
             </div>
           )}
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>

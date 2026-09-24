@@ -37,6 +37,8 @@ import Followed from './Followed/Followed'
 import Person from './Person/Person'
 import Collection from './Collection/Collection'
 import ShowsLibrary from './Shows/Library'
+import ShowsCalendar from './Shows/Calendar'
+import ShowsDiscover from './Shows/Discover'
 import Show from './Shows/Show'
 import Trending from './Trending/Trending'
 import Search from './Search/Search'
@@ -67,6 +69,7 @@ const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(O
 
 const TrendingMovies = Trending('movies')
 const TrendingPersons = Trending('persons')
+const TrendingShows = Trending('shows')
 
 const SearchMovies = Search('movies')
 const SearchPersons = Search('persons')
@@ -108,6 +111,9 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/:id/similar' element={<Similar />} />
         <Route path='tv' element={<Navigate replace={true} to='/tv/library' />} />
         <Route path='tv/library' element={<ShowsLibrary />} />
+        <Route path='tv/calendar' element={<ShowsCalendar />} />
+        <Route path='tv/discover' element={<ShowsDiscover />} />
+        <Route path='tv/trending' element={<TrendingShows />} />
         <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />

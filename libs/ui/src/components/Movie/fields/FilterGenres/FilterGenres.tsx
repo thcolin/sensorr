@@ -6,20 +6,21 @@ import { Select } from '../../../../inputs/Select/Select'
 
 export interface FilterGenresProps {
   display?: 'checkbox' | 'select'
+  type?: 'movie' | 'tv'
   statistics: { _id: any, count: number }[]
   tmdb: TMDB
   value: any
   onChange: any
 }
 
-const UIFilterGenres = ({ statistics, tmdb, display, ...props }: FilterGenresProps) => {
+const UIFilterGenres = ({ statistics, tmdb, display, type = 'movie', ...props }: FilterGenresProps) => {
   const { t } = useTranslation()
-  const [genres, setGenres] = useState(fixtures.genres)
+  const [genres, setGenres] = useState(type === 'tv' ? fixtures.tvGenres : fixtures.genres)
 
   useEffect(() => {
     const cb = async () => {
       try {
-        const res = (await tmdb.fetch('genre/movie/list', {}, {}, true))
+        const res = (await tmdb.fetch(`genre/${type}/list`, {}, {}, true))
         setGenres(res.genres)
       } catch (e) {
         console.warn(e)
@@ -52,6 +53,14 @@ const UIFilterGenres = ({ statistics, tmdb, display, ...props }: FilterGenresPro
         53: '😬',
         10752: '🪖', // 🎖️
         37: '🌵', // 🤠, 🐎
+        10759: '💥',
+        10762: '🎈',
+        10763: '📰',
+        10764: '🎥',
+        10765: '👽',
+        10766: '💔',
+        10767: '🎙️',
+        10768: '🪖',
       }[genre.id || '🐎']}  ${genre.name}`,
       count: statistics?.find(obj => obj._id === genre.id)?.count || 0,
     }))

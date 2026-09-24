@@ -22,7 +22,7 @@ const UIFilterReleaseDate = ({ display = 'range', statistics, ...props }) => {
         <DatePicker
           {...props as any}
           {...field}
-          label={t('ui.filters.release_date')}
+          label={props.label || t('ui.filters.release_date')}
         />
       )
     case 'range':
@@ -31,7 +31,7 @@ const UIFilterReleaseDate = ({ display = 'range', statistics, ...props }) => {
         <Range
           {...props as any}
           {...field}
-          label={t('ui.filters.release_date')}
+          label={props.label || t('ui.filters.release_date')}
           value={props.value?.map(parse) || [field.min, field.max]}
           onChange={(value) => props.onChange(value.map(serialize))}
         />
