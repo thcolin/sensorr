@@ -14,6 +14,7 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) =
         record: `📹 Record wished movies`,
         refine: `✨ Refine archived movies`,
         shrink: `✂️ Shrink archived movies`,
+        report: `🚩 Replace reported movies`,
       }[command],
       status: 'waiting',
     },
@@ -53,6 +54,7 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) =
             record: `📹 Record wished movies`,
             refine: `✨ Refine archived movies`,
             shrink: `✂️ Shrink archived movies`,
+            report: `🚩 Replace reported movies`,
           }[command]} {!!subtasks.length && (
             <Text color='grey'>({subtasks.filter(([id, status]) => ['done', 'warning', 'error'].includes(status)).length}/{subtasks.length})</Text>
           )}
@@ -216,6 +218,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
       refine: { refined_at: new Date().getTime() },
       shrink: { shrinked_at: new Date().getTime() },
       record: {},
+      report: {},
     }[state.metadata.command]
 
     const policy = new Policy({
@@ -238,6 +241,9 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             break;
             case 'shrink':
             state.logger.info({ message: `✂️ Shrink "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query, releases: policy.apply(movie.releases, null) } } })
+            break;
+          case 'report':
+            state.logger.info({ message: `🚩 Replace "${movie.title}" (${new Date(movie.release_date).getFullYear()})`, metadata: { ...state.metadata, important: true, group: movie.id, movie: { ...lighten.movie(movie), query, releases: policy.apply(movie.releases, null) } } })
             break;
         }
 
@@ -302,6 +308,11 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           link: release.link,
           enclosure: release.enclosure,
           size: release.size,
+          // Downloaded without a proposal, a report replaces the reported versions all the same.
+          ...(state.metadata.command === 'report' && !proposalOnly ? {
+            replaces: movie.releases.filter(({ from }) => from === 'sync').map(({ id }) => id),
+            accepted_at: Date.now(),
+          } : {}),
         }
 
         if (state.metadata.command === 'refine') {

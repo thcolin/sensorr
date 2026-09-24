@@ -144,6 +144,28 @@ const config = convict({
         default: true,
       },
     },
+    report: {
+      cron: {
+        doc: 'Report job cron',
+        format: 'String',
+        default: '0 * * * *',
+      },
+      paused: {
+        doc: 'Pause Report job',
+        format: 'Boolean',
+        default: true,
+      },
+      proposalOnly: {
+        doc: "Report job will only submit proposal and don't download any release",
+        format: 'Boolean',
+        default: true,
+      },
+      since: {
+        doc: 'Date of the newest Plex reported issue already handled by Report job, older ones are ignored (auto filled on first run)',
+        format: 'Number',
+        default: 0,
+      },
+    },
   },
   plex: {
     url: {

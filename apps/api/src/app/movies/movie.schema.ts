@@ -198,6 +198,16 @@ export class Movie extends Document {
   @Prop(raw([
     {
       id: String,
+      message: String,
+      date: Number,
+      username: String,
+    }
+  ]))
+  reports: Record<any, any>
+
+  @Prop(raw([
+    {
+      id: String,
       title: String,
       original: String,
       from: String,

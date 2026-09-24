@@ -98,5 +98,6 @@ export class MovieDTO {
   }
   readonly banned_releases: string[]
   readonly requested_by: string[]
+  readonly reports: { id: string, message: string, date: number, username: string }[]
   readonly releases: ReleaseDTO[]
 }
