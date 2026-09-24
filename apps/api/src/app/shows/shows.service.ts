@@ -187,6 +187,7 @@ export class ShowsService {
     }, {
       page,
       lean: true,
+      leanWithId: false,
       ...(limit ? { limit } : { pagination: false }),
       ...(params.fields ? { select: params.fields.split('|') } : {}),
       sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], id: 1 },
@@ -293,6 +294,7 @@ export class ShowsService {
     }, {
       page,
       lean: true,
+      leanWithId: false,
       ...(limit ? { limit } : { pagination: false }),
       ...(params.fields ? { select: params.fields.split('|') } : {}),
       sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], show_id: 1, season_number: 1, episode_number: 1 },
