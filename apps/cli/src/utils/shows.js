@@ -41,6 +41,9 @@ export const airingUnits = (units, episodes, since) => {
   return units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
 }
 
+// An episode Plex no longer has is wanted again: the release that brought its files goes with them
+export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
+
 // GET /api/shows leaves ignored shows out unless asked for them
 export const fetchSensorrShows = async (api, params = {}) => {
   const shows = []

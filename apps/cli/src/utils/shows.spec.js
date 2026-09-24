@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf } from './shows'
 
 const now = 1790000000000
 
@@ -99,6 +99,18 @@ describe('sonarrEpisodesOf', () => {
   it('leaves unmonitored the episodes of an unmonitored series or season, as Sonarr never searches them', () => {
     expect(sonarrEpisodesOf(episodes, sonarr, { ...show, monitored: false }).episodes.map(({ monitored }) => monitored)).toEqual([false, false, false, false])
     expect(sonarrEpisodesOf(episodes, sonarr, show, [{ seasonNumber: 1, monitored: false }]).episodes.slice(0, 2).map(({ monitored }) => monitored)).toEqual([false, false])
+  })
+})
+
+describe('syncedFilesOf', () => {
+  const files = [{ id: '1', size: 10, title: 'S01E01', original: 'Show.S01E01.mkv' }]
+
+  it('keeps the release of an episode Plex still has', () => {
+    expect(syncedFilesOf(files)).toEqual({ files })
+  })
+
+  it('drops the release of an episode Plex no longer has, so it is searched again', () => {
+    expect(syncedFilesOf([])).toEqual({ files: [], release: null })
   })
 })
 
