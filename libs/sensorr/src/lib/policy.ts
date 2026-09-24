@@ -39,7 +39,6 @@ export const SENSORR_POLICY_FALLBACK = {
   }
 }
 
-// The first policy whose `match` covers the movie. Without one, a movie follows the first policy
 export const matchPolicy = (movie: { original_language?: string }, policies = []) =>
   policies.find(policy => policy.match?.original_languages?.includes(movie?.original_language))
 

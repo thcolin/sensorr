@@ -72,7 +72,7 @@ export class MoviesService {
     const stored = await this.movieModel.find({ _id: { $in: entering } }, { policy: 1, original_language: 1 }).lean()
 
     return entering.reduce((acc, id) => {
-      const movie = stored.find(({ _id }) => `${_id}` === `${id}`) as any
+      const movie = stored.find(({ _id }) => `${_id}` === `${id}`)
       const policy = !movie?.policy && matchPolicy({ original_language: changes[id].original_language || movie?.original_language }, policies)
       return policy ? { ...acc, [id]: { ...changes[id], policy: policy.name } } : acc
     }, changes)
