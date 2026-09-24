@@ -47,12 +47,20 @@
       "executor": "@nx/webpack:dev-server",
       "options": {
         "buildTarget": "web:build",
-        "proxyConfig": "apps/web/proxy.conf.json"
+        "proxyConfig": "apps/web/proxy.conf.json",
+        "publicHost": "auto://0.0.0.0:0/ws"
       },
       "configurations": {
         "production": {
           "buildTarget": "web:build:production"
         }
+      }
+    },
+    "serve-h2": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx run web:serve", "node tools/dev/h2-front.mjs"],
+        "parallel": true
       }
     },
     "lint": {

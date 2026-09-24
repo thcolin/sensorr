@@ -24,6 +24,16 @@ The root `.env` is tracked and carries the development defaults for the `NX_*` v
 
 Runs `nx run web:serve` and serves the PWA on **http://localhost:4200**. `apps/web/project.json` sets no `port`, so the `@nx/webpack:dev-server` default applies. Requests to `/api` go through `apps/web/proxy.conf.json`, whose `target` decides which API answers them. Without an API behind it, the app stops at the login screen.
 
+Keep to one tab on that URL. A tab keeps four SSE streams open (`apps/web/src/contexts/MoviesMetadata/MoviesMetadata.tsx:80`, `apps/web/src/contexts/Jobs/Jobs.tsx:20` and `:45`, `apps/web/src/contexts/Notifications/Notifications.tsx:111`), five on `/jobs`, and over HTTP/1.1 Chrome opens at most six connections per host: a second tab never finishes loading. Production is not affected, Caddy serves it over HTTP/2.
+
+### `yarn web:h2`
+
+Runs `yarn web` and, next to it, `tools/dev/h2-front.mjs`, which serves the same app on **https://localhost:4443** over HTTP/2. Every request of every tab then shares one connection, and four tabs load. The front forwards everything to `http://localhost:4200`, `/api` and its SSE streams included, unbuffered. The live-reload websocket follows the page's origin (`publicHost` in `apps/web/project.json`); browsers open it as a separate HTTP/1.1 upgrade, which the front pipes to the dev server and which does not count against the six connections. For other ports, `node tools/dev/h2-front.mjs <listen port> <dev server port>` next to your own `web:serve`.
+
+It is opt-in rather than what `yarn web` does, because it needs [mkcert](https://github.com/FiloSottile/mkcert) and a trusted local CA, while `yarn web` and `nx e2e web-e2e` need nothing but Node.
+
+The first run writes a certificate for `localhost`, `127.0.0.1` and `::1` with `mkcert` into `tmp/h2-front/`, which git ignores. To trust it, run `mkcert -install` once yourself: it asks for your password and adds mkcert's CA to the system keychain, which Chrome reads, and to Firefox's store when `certutil` is installed (`brew install nss`). Until then, browsers show a certificate warning. The origin is new, so the app asks you to sign in again.
+
 ### `yarn api`
 
 Runs `nx run api:serve`, which builds `apps/api` and runs the bundle. It listens on **http://localhost:4300/api**: `apps/api/src/main.ts:27` reads `PORT`, then `NX_API_PORT`, then falls back to `3333`, and the root `.env` sets `NX_API_PORT=4300`.
