@@ -18,7 +18,6 @@ import { Transition } from '../../../components/Sensorr/Proposal'
 import { Size, delta } from '../../Proposals/Card'
 import { itemOf } from '../../Proposals/queue'
 
-// A job run before these sums were logged has no `proposed`, and shows neither.
 export const space = ({ proposed, accepted }) => typeof proposed !== 'number' ? [] : [
   {
     key: 'proposed',
