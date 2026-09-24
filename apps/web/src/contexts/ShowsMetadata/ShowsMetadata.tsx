@@ -264,10 +264,13 @@ export const useShowsMetadataContext = () => useContext(showsMetadataContext)
 
 export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
-    const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata } = useShowsMetadataContext() as any
+    const { loading, metadata: { [entity?.id]: found }, setShowMetadata, addShow } = useShowsMetadataContext() as any
+    const metadata = found || {}
+    const inLibrary = !!found && found.state !== 'ignored'
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice }), [entity?.id])
-    const setState = useCallback(state => setMetadata('monitored', state === 'followed'), [setMetadata])
+    // Following a show from outside the library adds it whole, as its page does
+    const setState = useCallback(state => (!inLibrary && state === 'followed') ? addShow(entity.id) : setMetadata('monitored', state === 'followed'), [inLibrary, setMetadata, entity?.id])
 
     return (
       <WrappedComponent
