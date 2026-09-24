@@ -139,3 +139,76 @@ export interface Crew {
   name: string | null,
   profile_path: string | null,
 }
+
+export interface Network {
+  id: number
+  name: string
+  logo_path: string | null
+}
+
+export interface ExternalIds {
+  imdb_id: string | null
+  tvdb_id: number | null
+}
+
+export interface ShowSeason {
+  id: number
+  season_number: number
+  name: string
+  episode_count: number
+  air_date: string | null
+  poster_path: string | null
+}
+
+export interface Show {
+  id: number
+  name: string
+  original_name: string
+  original_language: string
+  overview: string | null
+  first_air_date: string | null
+  last_air_date: string | null
+  status: 'Returning Series' | 'Planned' | 'In Production' | 'Ended' | 'Canceled' | 'Pilot'
+  type: 'Documentary' | 'News' | 'Miniseries' | 'Reality' | 'Scripted' | 'Talk Show' | 'Video'
+  in_production: boolean
+  number_of_seasons: number
+  number_of_episodes: number
+  episode_run_time: number[]
+  genres: Genre[]
+  networks: Network[]
+  origin_country: string[]
+  poster_path: string | null
+  backdrop_path: string | null
+  popularity: number
+  vote_average: number
+  vote_count: number
+  external_ids?: ExternalIds
+  alternative_titles?: {
+    results: {
+      iso_3166_1: string,
+      title: string,
+    }[]
+  }
+  seasons: ShowSeason[]
+}
+
+export interface Episode {
+  id: number
+  show_id?: number
+  season_number: number
+  episode_number: number
+  name: string
+  overview: string | null
+  air_date: string | null
+  runtime: number | null
+  still_path: string | null
+}
+
+export interface Season {
+  id: number
+  season_number: number
+  name: string
+  air_date: string | null
+  poster_path: string | null
+  episodes: Episode[]
+}

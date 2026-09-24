@@ -9,6 +9,7 @@ export class TMDB {
   key: string
   region: string = 'en-US'
   genres: Genre[] = []
+  tvGenres: Genre[] = []
   studios = studios
   certifications = certifications
   adult: boolean = false
@@ -47,6 +48,8 @@ export class TMDB {
     try {
       const body = await this.fetch('genre/movie/list', {}, {}, true)
       this.genres = body.genres.reduce((acc, genre) => ({ ...acc, [genre.id]: genre }), {})
+      const tvBody = await this.fetch('genre/tv/list', {}, {}, true)
+      this.tvGenres = tvBody.genres.reduce((acc, genre) => ({ ...acc, [genre.id]: genre }), {})
     } catch (e) {
       console.warn(e)
     } finally {
@@ -105,6 +108,22 @@ export class TMDB {
             },
           }),
         }
+      case (uri.match(/person\/\d+\/tv_credits/) || {}).input:
+        return {
+          ...body,
+          ...(body.cast && {
+            cast: body.cast.map(({ genre_ids = [], ...show }) => ({
+              ...show,
+              genres: genre_ids.map((id) => this.tvGenres[id]),
+            })),
+          }),
+          ...(body.crew && {
+            crew: body.crew.map(({ genre_ids = [], ...show }) => ({
+              ...show,
+              genres: genre_ids.map((id) => this.tvGenres[id]),
+            })),
+          }),
+        }
       case (uri.match(/person\/\d+\/movie_credits/) || {}).input:
         return {
           ...body,
@@ -145,6 +164,43 @@ export class TMDB {
             ...result,
             genres: genre_ids.map((id) => this.genres[id]),
           })),
+        }
+      case (uri.match(/trending\/tv\/\w+/) || {}).input:
+      case 'discover/tv':
+      case 'search/tv':
+        return {
+          ...body,
+          results: body.results.map(({ genre_ids = [], ...result }) => ({
+            ...result,
+            genres: genre_ids.map((id) => this.tvGenres[id]),
+          })),
+          // TODO: Remove [TMDB issue](https://www.themoviedb.org/talk/61bbb4dc6a300b00977d906c) is fixed
+          total_results: Math.min(10000, body.total_results),
+          total_pages: Math.min(500, body.total_pages),
+        }
+      case (uri.match(/tv\/\d+\/season\/\d+/) || {}).input:
+        return body
+      case (uri.match(/tv\/\d+/) || {}).input:
+        return {
+          ...body,
+          ...(body.recommendations && {
+            recommendations: {
+              ...body.recommendations,
+              results: body.recommendations.results.map(({ genre_ids = [], ...result }) => ({
+                ...result,
+                genres: genre_ids.map((id) => this.tvGenres[id]),
+              })),
+            },
+          }),
+          ...(body.similar && {
+            similar: {
+              ...body.similar,
+              results: body.similar.results.map(({ genre_ids = [], ...result }) => ({
+                ...result,
+                genres: genre_ids.map((id) => this.tvGenres[id]),
+              })),
+            },
+          }),
         }
       default:
         return body
