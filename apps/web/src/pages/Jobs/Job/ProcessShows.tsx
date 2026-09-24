@@ -360,7 +360,7 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
             </div>
             {done && (releases.length ? releases.map(release => (
               <div key={release.id} sx={UIRecord.styles.release}>
-                <code>{coverageLabel(release.coverage || [], levelOf(release.meta, release.category) || undefined)}</code>
+                <code>{coverageLabel(release.coverage || [], release.level || levelOf(release.meta, release.category) || undefined)}</code>
                 <Release
                   entity={{ from: command, job, ...release, ...optimistic[release.id] }}
                   display='column'
