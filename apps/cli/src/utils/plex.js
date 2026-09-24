@@ -1,6 +1,5 @@
 import oleoo from 'oleoo'
 
-// ISO 639-1 part of a Plex `languageTag`, to the oleoo language it reads as.
 const LANGUAGES = {
   en: 'ENGLiSH', fa: 'PERSiAN', am: 'AMHARiC', ar: 'ARABiC', km: 'CAMBODiAN', zh: 'CHiNESE', da: 'DANiSH',
   nl: 'DUTCH', et: 'ESTONiAN', fi: 'FiNNiSH', de: 'GERMAN', el: 'GREEK', he: 'HEBREW', iw: 'HEBREW',
@@ -24,19 +23,14 @@ const CHANNEL_FLAGS = ['1.0', '2.0', '3.0', '5.1', '6.1', '7.1']
 
 const baseOf = (stream) => (stream.languageTag || '').split('-')[0]
 
-// A French track says which French it is in its tag, else in its title (`AC3-5.1-VFQ`, `VFF`, `VOF`).
 const frenchOf = (stream) => (
   (stream.languageTag === 'fr-CA' || /vfq|qu[eé]b|canad/i.test(stream.title || '')) ? 'VFQ' :
   (stream.languageTag === 'fr-FR' || /vff|truefrench|vof/i.test(stream.title || '')) ? 'TRUEFRENCH' :
   'FRENCH'
 )
 
-// The languages Plex can only make more precise in a release name.
 const REFINES = { MULTi: ['MULTi-VFF', 'MULTi-VFQ', 'MULTi-VF2'], FRENCH: ['TRUEFRENCH', 'VFQ'] }
 
-// The language of a Plex version in oleoo terms. French tracks fold the way oleoo folds a
-// release name (node_modules/oleoo/src/index.js:707-718); with none, French subtitles make it
-// VOSTFR, else it is the first track's language. `null` when no audio track carries a language.
 export const languageOf = (streams) => {
   const audios = streams.filter(stream => stream.streamType === 2 && baseOf(stream))
   const subtitles = streams.filter(stream => stream.streamType === 3 && baseOf(stream))
@@ -61,8 +55,6 @@ export const languageOf = (streams) => {
   ].join('-')
 }
 
-// The audio codec as an oleoo `dub`, with its channels when oleoo has a name for both
-// (`EAC3-5.1`), and the codecs oleoo only knows as flags.
 export const dubOf = (media) => {
   const channels = CHANNELS[media.audioChannels]
   const dub = DUBS[media.audioCodec]
@@ -74,17 +66,14 @@ export const dubOf = (media) => {
   }
 }
 
-// The file name keeps the last word on the language, since Plex tracks are often tagged wrong (a
-// French track tagged `en`, subtitles left outside the file). Plex fills a name that says nothing,
-// and names the French that a name leaves plain.
+// The file name keeps the last word on the language: Plex tracks are often tagged wrong,
+// a French track tagged `en`, or subtitles left outside the file.
 export const settleLanguage = (named, read) => (
   (!named || named === 'VO') ? (read || named) :
   (REFINES[named] || []).includes(read) ? read :
   named
 )
 
-// A release name for one Plex version of a movie. Codecs and resolution are what Plex read in the
-// file; the file name fills what Plex does not know (source, group, cut).
 export const releaseOf = (payload, media) => {
   const streams = media.Part[0].Stream || []
   const fallback = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
