@@ -79,7 +79,6 @@ describe('settleSwaps', () => {
 })
 
 describe('spaceOf', () => {
-  // Sans Sarah, rien ne va !, proposed by the shrink job in4fjcb on 2026-09-20
   const sarah = { releases: [{ from: 'sync', size: 9393388028 }], release: { size: 5587867192 } }
 
   it('sums, over the proposals, the proposed size minus every Plex file of the movie', () => {

@@ -54,8 +54,8 @@ export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missing
   }] : []),
 ]
 
-// What the cleanups deleted and what the swaps that replaced them brought in. A swap removing
-// versions from several Plex items logs its landed release with each: its size counts once.
+// A swap removing versions from several Plex items logs its landed release with each: its size
+// counts once.
 const spaceOf = (logs) => {
   const landed = logs.filter((log: any) => log.meta.landed)
 

@@ -9,7 +9,6 @@ export const OVERDUE_AFTER = 7 * 24 * 60 * 60 * 1000
 // the item being synced, the only ones that item can delete.
 export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
   const remove = new Set()
-  // The version that landed, for each version it removes
   const landed = {}
 
   const settled = releases.map((release) => {
@@ -53,8 +52,8 @@ export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
   }
 }
 
-// What the disk would weigh once every proposal is accepted, as the Swaps gauge counts it
-// (apps/web/src/pages/Proposals/queue.ts, balanceOf): only the Plex files exist on disk.
+// Counted as the Swaps gauge counts it (apps/web/src/pages/Proposals/queue.ts, balanceOf): only
+// the Plex files exist on disk.
 export const spaceOf = (movies) => {
   const swaps = movies
     .map((movie) => ({ size: movie.release?.size, files: (movie.releases || []).filter(({ from }) => from === 'sync') }))
