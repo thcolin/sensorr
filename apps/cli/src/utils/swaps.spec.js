@@ -15,6 +15,23 @@ describe('settleSwaps', () => {
     expect(changed).toBe(true)
   })
 
+  it('tells, for each version it removes, the version that landed', () => {
+    expect(settleSwaps([swap], both, { cleanup: true, now }).landed).toEqual({ [old.id]: { release: swap.id, size: arrived.size } })
+  })
+
+  it('points the versions of two items to the same landed swap', () => {
+    const twin = { id: 'plex://movie/b#4', size: 9393388028 }
+    const replacing = { ...swap, replaces: [old.id, twin.id] }
+    const all = [old, twin, arrived]
+
+    expect(settleSwaps([replacing], { here: [old], all }, { cleanup: true, now }).landed[old.id].release).toBe(swap.id)
+    expect(settleSwaps([replacing], { here: [twin], all }, { cleanup: true, now }).landed[twin.id].release).toBe(swap.id)
+  })
+
+  it('tells nothing landed when cleanup is off', () => {
+    expect(settleSwaps([swap], both, { cleanup: false, now }).landed).toEqual({})
+  })
+
   it('removes nothing while the swap has not landed', () => {
     const { releases, remove, changed } = settleSwaps([swap], { here: [old], all: [old] }, { cleanup: true, now })
 
