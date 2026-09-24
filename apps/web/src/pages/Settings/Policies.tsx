@@ -18,7 +18,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useThemeUI } from 'theme-ui'
 import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -179,7 +178,6 @@ const PolicySettings = forwardRef<any, any>(({
   ...props
 }, ref) => {
   const [open, setOpen] = useState(false)
-  const { theme } = useThemeUI()
   const originalLanguages = form.watch(`${prefix ? `${prefix}.` : ''}match.original_languages`) || []
   const name = form.watch(`${prefix ? `${prefix}.` : ''}name`)
   const others = siblings || (prefix && form.watch('policies')) || []
@@ -485,13 +483,26 @@ const PolicySettings = forwardRef<any, any>(({
           </summary>
           {open && (
             <div>
+              <ControlledPolicyFilter form={form} prefix={prefix} name='znab' Component={ZNABFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='encoding' Component={EncodingFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='resolution' Component={ResolutionFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='source' Component={SourceFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='dub' Component={DubFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='language' Component={LanguageFilter} />
+              <ControlledPolicyFilter form={form} prefix={prefix} name='flags' Component={FlagsFilter} />
               <Controller
                 name={`${prefix ? `${prefix}.` : ''}match.original_languages`}
                 control={form.control}
                 render={({ field: { ref, value, onChange, ...field } }) => (
                   <Select
                     {...field}
-                    label={emojize('🌐', 'Original language')}
+                    label={(
+                      <>
+                        {emojize('🌐', 'Original language')}
+                        <br />
+                        <small sx={{ fontWeight: 'normal' }}>New movies in these languages get this policy when they enter your library without one</small>
+                      </>
+                    )}
                     placeholder='No language'
                     options={LANGUAGES}
                     value={(value || []).map(language => LANGUAGES.find(option => option.value === language) || { value: language, label: `🏳️  Unknown (${language})` })}
@@ -500,21 +511,13 @@ const PolicySettings = forwardRef<any, any>(({
                     resetable={false}
                     menuPortalTarget={document.body}
                     closeMenuOnScroll={true}
+                    menuPlacement='auto'
                     styles={{
                       menuPortal: (style) => ({ ...style, zIndex: 10 }),
-                      multiValue: (style) => ({ ...style, flexShrink: 0, backgroundColor: theme.rawColors.grayDark, color: theme.rawColors.text }),
-                      multiValueLabel: (style) => ({ ...style, color: theme.rawColors.text }),
                     }}
                   />
                 )}
               />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='znab' Component={ZNABFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='encoding' Component={EncodingFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='resolution' Component={ResolutionFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='source' Component={SourceFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='dub' Component={DubFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='language' Component={LanguageFilter} />
-              <ControlledPolicyFilter form={form} prefix={prefix} name='flags' Component={FlagsFilter} />
             </div>
           )}
         </details>

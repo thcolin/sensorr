@@ -5,7 +5,7 @@ import ReactSelect from 'react-select'
 import nanobounce from 'nanobounce'
 
 export interface SelectProps {
-  label?: string
+  label?: React.ReactNode
   options: {
     label: string
     value: string
