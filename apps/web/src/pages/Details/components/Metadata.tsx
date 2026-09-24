@@ -7,7 +7,7 @@ import { useThemeUI } from 'theme-ui'
 const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) => {
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
-  const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || matchPolicy(entity, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, entity?.original_language, sensorr.policies])
+  const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || matchPolicy({ original_language: entity?.original_language }, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, entity?.original_language, sensorr.policies])
 
   const values = useMemo(() => ({
     terms: [

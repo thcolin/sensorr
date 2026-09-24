@@ -159,9 +159,9 @@ const SortablePolicies = ({ policies, form, onSortEnd }) => {
   )
 }
 
-const LANGUAGES = Object.entries(languages)
-  .sort(([, a]: [string, any], [, b]: [string, any]) => a.name.localeCompare(b.name))
-  .map(([value, { name, emoji }]: [string, any]) => ({ value, label: `${emoji || '🏳️'}  ${name}` }))
+const LANGUAGES = Object.entries(languages as Record<string, { name: string, emoji?: string }>)
+  .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+  .map(([value, { name, emoji }]) => ({ value, label: `${emoji || '🏳️'}  ${name}` }))
 
 const PolicySettings = forwardRef<any, any>(({
   form,
@@ -380,7 +380,7 @@ const PolicySettings = forwardRef<any, any>(({
           >
             {originalLanguages.map(language => (
               <span key={language}>
-                {languages[language]?.emoji || '🏳️'}
+                <span role='img' aria-label={languages[language]?.name || language}>{languages[language]?.emoji || '🏳️'}</span>
                 <span sx={{ display: ['none', 'inline'], marginLeft: 10 }}>{language}</span>
               </span>
             ))}
