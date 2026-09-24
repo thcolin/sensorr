@@ -442,10 +442,9 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
               <RecordLogs
                 logs={logs || summaryLogs}
                 command={command}
-                movie={movie}
                 release={release}
                 metadata={metadata}
-                setMovieMetadata={setMovieMetadata}
+                setMetadata={(key, value) => setMovieMetadata(movie?.id, key, value)}
               />
               {['refine', 'shrink', 'report'].includes(command) && movie?.releases?.map(release => (
                 <div sx={UIRecord.styles.release} key={release.id}>
@@ -579,18 +578,23 @@ UIRecord.styles = {
 
 const Record = memo(UIRecord)
 
-const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadata  }) => {
+// A show record has several releases: without `release`, each line shows its own
+const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metadata, setMetadata }) => {
   return (
     <div sx={UIRecordLogs.styles.element}>
       <div sx={UIRecordLogs.styles.container}>
         <div sx={UIRecordLogs.styles.logs}>
-          {logs.map((log, index) => (
+          {logs.map((log, index) => {
+            const query = (log.meta?.movie || log.meta?.show)?.query
+            const release = typeof recordRelease === 'undefined' ? log.meta?.release : recordRelease
+
+            return (
             <div key={index}>
               <RecordLog
                 {...log}
                 line={index + 1}
                 expandable={(
-                  (command === 'record' && !!log.meta?.movie?.query?.terms?.length) ||
+                  (['record', 'record-shows', 'airing'].includes(command) && !!query?.terms?.length) ||
                   (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
                   (['shrink', 'report'].includes(command) && !!log.meta?.movie?.releases?.length) ||
                   !!log.meta?.stats?.total ||
@@ -611,11 +615,11 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                         score={release.score}, size={filesize.stringify(release.size)}, job={release.from}#{release.job}
                       </code>
                     ))}
-                    {command === 'record' && log.meta?.movie?.query?.terms?.length && (
+                    {['record', 'record-shows', 'airing'].includes(command) && query?.terms?.length && (
                       <code>
                         <i></i>
                         <i>➤</i>
-                        <span> Use query terms "{log.meta?.movie?.query?.terms.join('", "')}" and years "{log.meta?.movie?.query?.years.join('", "')}"</span>
+                        <span> Use query terms "{query.terms.join('", "')}" and years "{(query.years || []).join('", "')}"</span>
                       </code>
                     )}
                     {!!log.meta?.stats?.total && (
@@ -633,8 +637,7 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMovieMetadata(
-                                    movie?.id,
+                                  onClick={() => setMetadata(
                                     'banned_releases',
                                     (metadata?.banned_releases || []).includes(release) ?
                                       [...(metadata?.banned_releases || [])].filter(r => r !== release) :
@@ -662,8 +665,7 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMovieMetadata(
-                                    movie?.id,
+                                  onClick={() => setMetadata(
                                     'banned_releases',
                                     (metadata?.banned_releases || []).includes(release) ?
                                       [...(metadata?.banned_releases || [])].filter(r => r !== release) :
@@ -691,8 +693,7 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMovieMetadata(
-                                    movie?.id,
+                                  onClick={() => setMetadata(
                                     'banned_releases',
                                     (metadata?.banned_releases || []).includes(release) ?
                                       [...(metadata?.banned_releases || [])].filter(r => r !== release) :
@@ -725,7 +726,8 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                 )}
               />
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
@@ -754,7 +756,7 @@ UIRecordLogs.styles = {
   },
 }
 
-const RecordLogs = memo(UIRecordLogs)
+export const RecordLogs = memo(UIRecordLogs)
 
 const MetadataSingleton = ({ setToggle, ...props }) => {
   const [entity, setEntity] = useState(null)

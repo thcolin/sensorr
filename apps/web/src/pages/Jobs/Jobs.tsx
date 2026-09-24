@@ -17,6 +17,8 @@ import { ShrinkJob, summary as summaryShrink } from './Job/Shrink'
 import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { ReportJob, summary as summaryReport } from './Job/Report'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
+import { ProcessShowsJob, summary as summaryProcessShows } from './Job/ProcessShows'
+import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows } from './Job/Shows'
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
@@ -30,6 +32,11 @@ const EMOJIS = {
   'report': '🚩',
   'keep-in-touch': '🍻',
   'migrate': '🚚',
+  'refresh-shows': '🔌',
+  'sync-shows': '🔗',
+  'import-shows': '📥',
+  'record-shows': '📹',
+  'airing': '📡',
 }
 
 const UIJobs = ({ controls = null, ...props }) => {
@@ -57,7 +64,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
     store.current = null
     setLogs(null)
-    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink', 'report'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
+    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink', 'report', 'record-shows', 'airing'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
     eventSource.onmessage = ({ data }) => {
       const raw = JSON.parse(data)
 
@@ -119,6 +126,10 @@ const UIJobs = ({ controls = null, ...props }) => {
             <KeepInTouchJob job={jobs.find(j => j.job === job)} logs={logs} />
           ) : jobs.find(j => j.job === job)?.meta?.command === 'migrate' ? (
             <MigrateJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : ['record-shows', 'airing'].includes(jobs.find(j => j.job === job)?.meta?.command) ? (
+            <ProcessShowsJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : ['refresh-shows', 'sync-shows', 'import-shows'].includes(jobs.find(j => j.job === job)?.meta?.command) ? (
+            <ShowsJob job={jobs.find(j => j.job === job)} logs={logs} />
           ) : (
             <div sx={UIJobs.styles.placeholder}>
               <Warning
@@ -240,6 +251,11 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                         'report': summaryReport,
                         'keep-in-touch': summaryKeepInTouch,
                         'migrate': summaryMigrate,
+                        'refresh-shows': summaryRefreshShows,
+                        'sync-shows': summarySyncShows,
+                        'import-shows': summaryImportShows,
+                        'record-shows': summaryProcessShows,
+                        'airing': summaryProcessShows,
                       }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}
                     />
                   ))}

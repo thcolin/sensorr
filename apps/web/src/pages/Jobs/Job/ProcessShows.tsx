@@ -1,0 +1,436 @@
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Icon, Warning } from '@sensorr/ui'
+import { coverageLabel, levelOf } from '@sensorr/sensorr'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { formatDuration, intervalToDuration } from 'date-fns'
+import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
+import { useAPI } from '../../../store/api'
+import Show from '../../../components/Show/Show'
+import { Release } from '../../../components/Sensorr/Release'
+import { Summary } from '../Summary'
+import { RecordLogs } from './ProcessMovies'
+
+export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning }, extended = true, config = {} as any) => [
+  ...(extended ? [{
+    key: 'wished',
+    emoji: '📺',
+    title: <span><strong>{wished}</strong> Wished shows with wanted episodes</span>,
+    length: wished,
+  }] : []),
+  ...(extended && (processed > 0) ? [{
+    key: 'processed',
+    emoji: '🎟 ',
+    title: <span><strong>{processed}</strong> Processed shows</span>,
+    length: processed,
+  }] : []),
+  // A show can override the job setting, so a run may both propose and record
+  ...((config?.proposalOnly || proposal > 0) ? [{
+    key: 'proposal',
+    emoji: '🛎️ ',
+    title: <span><strong>{Math.max(0, proposal - treated)}</strong> Release proposals</span>,
+    length: Math.max(0, proposal - treated),
+  }] : []),
+  ...(treated > 0 ? [{
+    key: 'treated',
+    emoji: '📼 ',
+    title: <span><strong>{treated}</strong> Answered release proposals</span>,
+    length: treated,
+  }] : []),
+  {
+    key: 'recorded',
+    emoji: '📼',
+    title: <span><strong>{recorded}</strong> Recorded show releases</span>,
+    length: recorded,
+  },
+  ...(extended && (withdrawn > 0) ? [{
+    key: 'withdrawn',
+    emoji: '⛔ ',
+    title: <span><strong>{withdrawn}</strong> Withdrawn shows releases</span>,
+    length: withdrawn,
+  }] : []),
+  ...(extended && (ignored > 0) ? [{
+    key: 'ignored',
+    emoji: '🗑️ ',
+    title: <span><strong>{ignored}</strong> Ignored shows releases</span>,
+    length: ignored,
+  }] : []),
+  ...(extended && (missing > 0) ? [{
+    key: 'missing',
+    emoji: '📭 ',
+    title: <span><strong>{missing}</strong> Shows with no releases found</span>,
+    length: missing,
+  }] : []),
+  ...(warning > 0 ? [{
+    key: 'warning',
+    emoji: '⚠️',
+    title: <span><strong>{warning}</strong> Disturbed during process</span>,
+    length: warning,
+  }] : []),
+]
+
+// Same seed as the movie records, the real height is measured once the row renders
+const estimateRecordHeight = (record: any) => Math.max(420, 360 + (record?.logs?.length ?? 0) * 22 + (record?.releases?.length ?? 1) * 150)
+
+const matches = (record: any, filter: string) => ({
+  recorded: record.releases.some(release => !release.proposal),
+  proposal: record.releases.some(release => release.proposal && !release.treated),
+  treated: record.releases.some(release => release.proposal && release.treated),
+  withdrawn: !record.releases.length && record.failure?.warning <= 10,
+  ignored: !record.releases.length && record.failure?.warning > 10,
+  missing: !record.releases.length && !record.failure && !record.warning,
+  warning: !!record.warning,
+})[filter] ?? true
+
+// record-shows and airing log every line with `meta.type` 'show' and the show id as `meta.group`,
+// and may pick several releases for one show: a record keeps them all
+const UIProcessShowsJob = ({ job, logs }) => {
+  const ref = useRef()
+  const listRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const logsCache = useRef(new Map<string, any[]>())
+  const [filter, setFilter] = useState(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+  const { metadata: showsMetadata, setShowMetadata } = useShowsMetadataContext() as any
+
+  const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => (!log.meta.group || log.meta.type !== 'show') ? groups : {
+    ...groups,
+    [log.meta.group]: {
+      group: log.meta.group,
+      timestamp: groups[log.meta.group]?.timestamp || log.timestamp,
+      show: {
+        ...groups[log.meta.group]?.show,
+        ...log.meta.show,
+      },
+      releases: [
+        ...(groups[log.meta.group]?.releases || []),
+        ...((log.meta.show && log.meta.release?.valid) ? [{ log: log._id, ...log.meta.release, treated: log.meta.treated, choice: log.meta.choice }] : []),
+      ],
+      failure: groups[log.meta.group]?.failure || ((!log.meta.show && log.meta.release && !log.meta.release.valid) ? log.meta.release : undefined),
+      warning: groups[log.meta.group]?.warning || (log.meta.done ? log.meta.warning : undefined),
+      logs: [...(log.message ? [log] : []), ...(groups[log.meta.group]?.logs || [])].sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+      done: !!job.meta.done || groups[log.meta.group]?.done || log.meta.done,
+    },
+  }, {})).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [logs, job.meta.done])
+
+  const filtered = useMemo(() => records.filter((record: any) => !filter || matches(record, filter)), [records, filter])
+
+  const rowVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => ref.current as any,
+    estimateSize: (index) => estimateRecordHeight(filtered[index]),
+    overscan: 8,
+    scrollMargin,
+  })
+
+  // The header scrolls with the list, which therefore starts below it
+  useLayoutEffect(() => {
+    const list = listRef.current
+    const scroller = ref.current as any
+
+    if (!list || !scroller) {
+      return
+    }
+
+    const compute = () => {
+      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
+      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
+    }
+
+    compute()
+    const observer = new ResizeObserver(compute)
+    observer.observe(scroller)
+
+    if (headerRef.current) {
+      observer.observe(headerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [filtered.length])
+
+  useEffect(() => {
+    setFilter(null)
+    logsCache.current.clear()
+  }, [job.job])
+
+  return (
+    <div ref={ref} sx={UIProcessShowsJob.styles.element}>
+      <div ref={headerRef}>
+        <Warning
+          emoji={{ 'record-shows': '📹', 'airing': '📡' }[job.meta.command]}
+          title={(
+            <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              <span sx={UIProcessShowsJob.styles.title}>{job.meta.command}</span>
+            </span>
+          )}
+          subtitle={(
+            <>
+              <span sx={UIProcessShowsJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              {job.meta.done && (
+                <>
+                  <br/>
+                  <strong sx={UIProcessShowsJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                </>
+              )}
+            </>
+          )}
+          children={(
+            <span sx={UIProcessShowsJob.styles.summary}>
+              <Summary
+                error={job.meta.error}
+                meta={summary({
+                  ...job.meta.summary,
+                  ...(job.meta.done ? {} : { processed: records.length }),
+                  treated: records.reduce((sum, record: any) => sum + record.releases.filter(release => release.treated).length, 0),
+                }, true, job.meta.config).map(meta => ({
+                  ...meta,
+                  props: {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-pressed': filter === meta.key,
+                    style: {
+                      cursor: 'pointer',
+                      opacity: !filter || filter === meta.key ? 1 : 0.5,
+                    },
+                    onClick: () => setFilter(filter => (filter === meta.key || ['wished', 'processed'].includes(meta.key)) ? null : meta.key),
+                    onKeyDown: (e) => ['Enter', ' '].includes(e.key) && (e.preventDefault(), setFilter(filter => (filter === meta.key || ['wished', 'processed'].includes(meta.key)) ? null : meta.key)),
+                  },
+                }))}
+              />
+            </span>
+          )}
+          sx={{
+            paddingTop: 'unset !important',
+            '>h2': {
+              textTransform: 'unset !important',
+            },
+          }}
+        />
+      </div>
+      <div sx={UIProcessShowsJob.styles.content}>
+        {logs === null ? (
+          <div sx={UIProcessShowsJob.styles.placeholder}>
+            <Icon value='spinner' />
+          </div>
+        ) : filtered.length ? (
+          <div ref={listRef} style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+              const record = filtered[virtualItem.index] as any
+
+              return (
+                <div
+                  key={record.group}
+                  data-index={virtualItem.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin}px)`,
+                  }}
+                >
+                  <Record
+                    {...record}
+                    job={job.job}
+                    command={job.meta.command}
+                    metadata={showsMetadata[record.show?.id] || {}}
+                    setShowMetadata={setShowMetadata}
+                    logsCache={logsCache.current}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : job.meta.done ? (
+          <Warning emoji={job.meta.error ? '💢' : '📺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No recorded shows during this job'} />
+        ) : (
+          <Warning emoji='⏳' title='Loading' subtitle='Waiting first record...' />
+        )}
+      </div>
+    </div>
+  )
+}
+
+UIProcessShowsJob.styles = {
+  element: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    paddingY: 0,
+    overflowX: 'hidden',
+  },
+  title: {
+    fontFamily: 'monospace',
+  },
+  subtitle: {
+    color: 'grayDarkest',
+    fontFamily: 'monospace',
+  },
+  summary: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  content: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  placeholder: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+}
+
+export const ProcessShowsJob = memo(UIProcessShowsJob)
+
+const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, logsCache, done, ...props }) => {
+  const api = useAPI()
+  const cacheKey = `${job}-${group}`
+  const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
+  const [optimistic, setOptimistic] = useState({})
+  const banned = metadata?.banned_releases || []
+
+  const setMetadata = useCallback((key, value) => setShowMetadata(show?.id, key, value).catch(() => null), [show?.id, setShowMetadata])
+  const toggleBan = useCallback((title) => setMetadata('banned_releases', banned.includes(title) ? banned.filter(r => r !== title) : [...banned, title]), [banned, setMetadata])
+
+  const proceed = useCallback(({ treated, choice: _choice, ...release }, choice) => {
+    setOptimistic(optimistic => ({ ...optimistic, [release.id]: { treated: true, choice } }))
+    setMetadata('proposal', { id: release.id, choice })
+  }, [setMetadata])
+
+  useEffect(() => {
+    if (job === 'anonymous' || !done) {
+      setLogs(null)
+      return
+    }
+
+    const cached = logsCache?.get(cacheKey)
+
+    if (cached) {
+      setLogs(cached)
+      return
+    }
+
+    setLogs(null)
+
+    const controller = new AbortController()
+
+    const cb = async () => {
+      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { controller }, params: { job, group } })
+
+      try {
+        const result = await api.fetch(uri, params, init)
+        logsCache?.set(cacheKey, result)
+        setLogs(result)
+      } catch (e) {
+        console.warn(e)
+        setLogs([])
+      }
+    }
+
+    cb()
+
+    return () => controller.abort()
+  }, [job, group, done, cacheKey])
+
+  return (
+    <div sx={UIRecord.styles.element}>
+      <div sx={UIRecord.styles.show}>
+        <Show entity={show || {}} />
+      </div>
+      <div sx={UIRecord.styles.results}>
+        {logs === null && !summaryLogs?.length ? (
+          <div sx={UIRecord.styles.placeholder}>
+            <Icon value='spinner' />
+          </div>
+        ) : (
+          <>
+            <div sx={UIRecord.styles.logs}>
+              <RecordLogs
+                logs={logs || summaryLogs}
+                command={command}
+                metadata={metadata}
+                setMetadata={setMetadata}
+              />
+            </div>
+            {done && (releases.length ? releases.map(release => (
+              <div key={release.id} sx={UIRecord.styles.release}>
+                <code>{coverageLabel(release.coverage || [], levelOf(release.meta, release.category) || undefined)}</code>
+                <Release
+                  entity={{ from: command, job, ...release, ...optimistic[release.id] }}
+                  display='column'
+                  proceed={proceed}
+                  banned={banned.includes(release.title)}
+                  ban={() => toggleBan(release.title)}
+                />
+              </div>
+            )) : (
+              <div sx={UIRecord.styles.release}>
+                <Release entity={failure || {}} display='column' />
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+UIRecord.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: ['column', 'row'],
+    alignItems: ['center', 'unset'],
+    paddingY: 4,
+    paddingX: [4, 0],
+    backgroundColor: 'grayLighter',
+    overflow: 'hidden',
+  },
+  show: {
+    flexShrink: 0,
+    marginRight: [12, 4],
+    marginBottom: [4, 12],
+  },
+  results: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    width: ['100%', 'auto'],
+    maxWidth: '100%',
+    overflow: 'hidden',
+  },
+  placeholder: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // A show run searches every unit on every indexer, its lines are many
+  logs: {
+    maxHeight: '30vh',
+    overflowY: 'auto',
+  },
+  release: {
+    flexShrink: 0,
+    paddingTop: 6,
+    '>code': {
+      display: 'block',
+      paddingX: [12, 2],
+      fontWeight: 'semibold',
+      fontVariantNumeric: 'tabular-nums',
+    },
+    '>div>div': {
+      paddingX: 12,
+      '>div': {
+        paddingY: 4,
+      },
+    },
+  },
+}
+
+const Record = memo(UIRecord)

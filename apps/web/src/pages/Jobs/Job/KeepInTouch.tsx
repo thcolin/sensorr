@@ -3,10 +3,11 @@ import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
+import Show from '../../../components/Show/Show'
 import { Summary } from '../Summary'
 import { Warnings } from '../Warnings'
 
-export const summary = ({ library = 0, guests = 0, watchlist = 0, processed = 0, warning = 0 }, extended = true) => [
+export const summary = ({ library = 0, guests = 0, watchlist = 0, processed = 0, watchlist_shows = 0, processed_shows = 0, warning = 0 }, extended = true) => [
   ...(extended ? [{
     key: 'library',
     emoji: '🗄️',
@@ -25,12 +26,24 @@ export const summary = ({ library = 0, guests = 0, watchlist = 0, processed = 0,
     title: <span><strong>{watchlist}</strong> Movies found on guests Plex watchlist</span>,
     length: watchlist,
   }] : []),
+  ...(extended && watchlist_shows > 0 ? [{
+    key: 'watchlist_shows',
+    emoji: '📺',
+    title: <span><strong>{watchlist_shows}</strong> Shows found on guests Plex watchlist</span>,
+    length: watchlist_shows,
+  }] : []),
   {
     key: 'processed',
     emoji: '🍺',
     title: <span><strong>{processed}</strong> Requests processed (added or updated)</span>,
     length: processed,
   },
+  ...(processed_shows > 0 ? [{
+    key: 'processed_shows',
+    emoji: '🍻',
+    title: <span><strong>{processed_shows}</strong> Show requests processed (added or updated)</span>,
+    length: processed_shows,
+  }] : []),
   ...(warning ? [{
     key: 'warning',
     emoji: '⚠️',
@@ -43,8 +56,9 @@ const UIKeepInTouchJob = ({ job, logs }) => {
   const [guest, setGuest] = useState(null)
   const warning = useMemo(() => (logs || []).filter(log => log.level === 'warn'), [logs])
   const entities = useMemo(() => (logs || []).filter(log => log.meta.movie && log.meta.processed && (!guest || log.meta.requested_by?.includes(guest))).map(({ meta: { movie, requested_by } }) => ({ ...movie, requested_by })), [logs, guest])
+  const shows = useMemo(() => (logs || []).filter(log => log.meta.show && log.meta.processed && (!guest || log.meta.requested_by?.includes(guest))).map(({ meta: { show } }) => show), [logs, guest])
 
-  const guests = useMemo(() => (logs || []).filter(log => log.meta.movie && log.meta.processed).reduce((guests: any, log: any) => ({
+  const guests = useMemo(() => (logs || []).filter(log => (log.meta.movie || log.meta.show) && log.meta.processed).reduce((guests: any, log: any) => ({
     ...guests,
     ...(log.meta.requested_by || []).reduce((acc, guest) => ({
       ...acc,
@@ -102,7 +116,16 @@ const UIKeepInTouchJob = ({ job, logs }) => {
         ) : (
           <div>
             <Warnings logs={warning} />
-            {entities.length ? (
+            <Entities
+              id={`keep-in-touch-shows-${job.id}`}
+              entities={shows}
+              length={shows.length}
+              label={emojize('📺', 'Show requests')}
+              display='grid'
+              hide={true}
+              child={Show as any}
+            />
+            {(entities.length || shows.length) ? (
               <Entities
                 id={`keep-in-touch-${job.id}`}
                 entities={entities}
