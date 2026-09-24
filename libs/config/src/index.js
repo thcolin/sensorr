@@ -65,49 +65,96 @@ const config = convict({
   },
   jobs: {
     record: {
-      cron: {
-        doc: 'Record job cron',
-        format: 'String',
-        default: '0 17 * * *',
+      movies: {
+        cron: {
+          doc: 'Record movies job cron',
+          format: 'String',
+          default: '0 17 * * *',
+        },
+        paused: {
+          doc: 'Pause Record movies job',
+          format: 'Boolean',
+          default: false,
+        },
+        proposalOnly: {
+          doc: "Record movies job will only submit proposal and don't download any release",
+          format: 'Boolean',
+          default: false,
+        },
       },
-      paused: {
-        doc: 'Pause Record job',
-        format: 'Boolean',
-        default: false,
-      },
-      proposalOnly: {
-        doc: "Record job will only submit proposal and don't download any release",
-        format: 'Boolean',
-        default: false,
+      shows: {
+        cron: {
+          doc: 'Record shows job cron, wished shows are searched by whole series, season packs and episodes',
+          format: 'String',
+          default: '0 17 * * *',
+        },
+        paused: {
+          doc: 'Pause Record shows job',
+          format: 'Boolean',
+          default: true,
+        },
+        proposalOnly: {
+          doc: "Record shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
     refresh: {
-      cron: {
-        doc: 'Refresh job cron',
-        format: 'String',
-        default: '0 4 * * *',
+      movies: {
+        cron: {
+          doc: 'Refresh movies job cron',
+          format: 'String',
+          default: '0 4 * * *',
+        },
+        paused: {
+          doc: 'Pause Refresh movies job',
+          format: 'Boolean',
+          default: false,
+        },
       },
-      paused: {
-        doc: 'Pause Refresh job',
-        format: 'Boolean',
-        default: false,
+      shows: {
+        cron: {
+          doc: 'Refresh shows job cron, shows still airing are refreshed on every run, the others once a month',
+          format: 'String',
+          default: '0 4 * * *',
+        },
+        paused: {
+          doc: 'Pause Refresh shows job',
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
     sync: {
-      cron: {
-        doc: 'Sync job cron',
-        format: 'String',
-        default: '0 3 * * 0',
+      movies: {
+        cron: {
+          doc: 'Sync movies job cron',
+          format: 'String',
+          default: '0 3 * * 0',
+        },
+        paused: {
+          doc: 'Pause Sync movies job',
+          format: 'Boolean',
+          default: false,
+        },
+        cleanup: {
+          doc: 'Sync movies job deletes from Plex the versions an accepted swap replaces, once the swap has landed',
+          format: 'Boolean',
+          default: false,
+        },
       },
-      paused: {
-        doc: 'Pause Sync job',
-        format: 'Boolean',
-        default: false,
-      },
-      cleanup: {
-        doc: 'Sync job deletes from Plex the versions an accepted swap replaces, once the swap has landed',
-        format: 'Boolean',
-        default: false,
+      shows: {
+        cron: {
+          doc: 'Sync shows job cron',
+          format: 'String',
+          default: '0 2 * * *',
+        },
+        paused: {
+          doc: 'Pause Sync shows job',
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
     'keep-in-touch': {
@@ -123,134 +170,103 @@ const config = convict({
       },
     },
     refine: {
-      cron: {
-        doc: 'Refine job cron',
-        format: 'String',
-        default: '0 5 * * 0',
-      },
-      paused: {
-        doc: 'Pause Refine job',
-        format: 'Boolean',
-        default: false,
-      },
-      proposalOnly: {
-        doc: "Refine job will only submit proposal and don't download any release",
-        format: 'Boolean',
-        default: true,
+      movies: {
+        cron: {
+          doc: 'Refine movies job cron',
+          format: 'String',
+          default: '0 5 * * 0',
+        },
+        paused: {
+          doc: 'Pause Refine movies job',
+          format: 'Boolean',
+          default: false,
+        },
+        proposalOnly: {
+          doc: "Refine movies job will only submit proposal and don't download any release",
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
     shrink: {
-      cron: {
-        doc: 'Shrink job cron',
-        format: 'String',
-        default: '0 5 * * 0',
-      },
-      paused: {
-        doc: 'Pause Shrink job',
-        format: 'Boolean',
-        default: false,
-      },
-      proposalOnly: {
-        doc: "Shrink job will only submit proposal and don't download any release",
-        format: 'Boolean',
-        default: true,
-      },
-      threshold: {
-        doc: "Shrink job will only consider movies with releases above this threshold (Gb)",
-        format: 'Number',
-        default: true,
+      movies: {
+        cron: {
+          doc: 'Shrink movies job cron',
+          format: 'String',
+          default: '0 5 * * 0',
+        },
+        paused: {
+          doc: 'Pause Shrink movies job',
+          format: 'Boolean',
+          default: false,
+        },
+        proposalOnly: {
+          doc: "Shrink movies job will only submit proposal and don't download any release",
+          format: 'Boolean',
+          default: true,
+        },
+        threshold: {
+          doc: "Shrink movies job will only consider movies with releases above this threshold (Gb)",
+          format: 'Number',
+          default: true,
+        },
       },
     },
     report: {
-      cron: {
-        doc: 'Report job cron',
-        format: 'String',
-        default: '0 * * * *',
-      },
-      paused: {
-        doc: 'Pause Report job',
-        format: 'Boolean',
-        default: true,
-      },
-      proposalOnly: {
-        doc: "Report job will only submit proposal and don't download any release",
-        format: 'Boolean',
-        default: true,
-      },
-      since: {
-        doc: 'Date of the newest Plex reported issue already handled by Report job, older ones are ignored (auto filled on first run)',
-        format: 'Number',
-        default: 0,
-      },
-    },
-    'refresh-shows': {
-      cron: {
-        doc: 'Refresh-shows job cron, shows still airing are refreshed on every run, the others once a month',
-        format: 'String',
-        default: '0 4 * * *',
-      },
-      paused: {
-        doc: 'Pause Refresh-shows job',
-        format: 'Boolean',
-        default: true,
+      movies: {
+        cron: {
+          doc: 'Report movies job cron',
+          format: 'String',
+          default: '0 * * * *',
+        },
+        paused: {
+          doc: 'Pause Report movies job',
+          format: 'Boolean',
+          default: true,
+        },
+        proposalOnly: {
+          doc: "Report movies job will only submit proposal and don't download any release",
+          format: 'Boolean',
+          default: true,
+        },
+        since: {
+          doc: 'Date of the newest Plex reported issue already handled by Report movies job, older ones are ignored (auto filled on first run)',
+          format: 'Number',
+          default: 0,
+        },
       },
     },
-    'sync-shows': {
-      cron: {
-        doc: 'Sync-shows job cron',
-        format: 'String',
-        default: '0 2 * * *',
-      },
-      paused: {
-        doc: 'Pause Sync-shows job',
-        format: 'Boolean',
-        default: true,
-      },
-    },
-    'import-shows': {
-      cron: {
-        doc: 'Import-shows job cron, finished show releases are hard linked from the staging folder into the library',
-        format: 'String',
-        default: '*/10 * * * *',
-      },
-      paused: {
-        doc: 'Pause Import-shows job',
-        format: 'Boolean',
-        default: true,
-      },
-    },
-    'record-shows': {
-      cron: {
-        doc: 'Record-shows job cron, wished shows are searched by whole series, season packs and episodes',
-        format: 'String',
-        default: '0 17 * * *',
-      },
-      paused: {
-        doc: 'Pause Record-shows job',
-        format: 'Boolean',
-        default: true,
-      },
-      proposalOnly: {
-        doc: "Record-shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
-        format: 'Boolean',
-        default: true,
+    import: {
+      shows: {
+        cron: {
+          doc: 'Import shows job cron, finished show releases are hard linked from the staging folder into the library',
+          format: 'String',
+          default: '*/10 * * * *',
+        },
+        paused: {
+          doc: 'Pause Import shows job',
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
     airing: {
-      cron: {
-        doc: 'Airing job cron, wanted episodes aired in the last 7 days are searched one by one',
-        format: 'String',
-        default: '0 * * * *',
-      },
-      paused: {
-        doc: 'Pause Airing job',
-        format: 'Boolean',
-        default: true,
-      },
-      proposalOnly: {
-        doc: "Airing job will only submit proposal and don't download any release, for the shows that don't say otherwise",
-        format: 'Boolean',
-        default: true,
+      shows: {
+        cron: {
+          doc: 'Airing shows job cron, wanted episodes aired in the last 7 days are searched one by one',
+          format: 'String',
+          default: '0 * * * *',
+        },
+        paused: {
+          doc: 'Pause Airing shows job',
+          format: 'Boolean',
+          default: true,
+        },
+        proposalOnly: {
+          doc: "Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+          format: 'Boolean',
+          default: true,
+        },
       },
     },
   },

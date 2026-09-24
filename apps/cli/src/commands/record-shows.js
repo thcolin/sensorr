@@ -6,7 +6,8 @@ import { FetchAPIShowsTask, ProcessShowsTask } from '../components/Tasks/Process
 import command from '../utils/command'
 
 const meta = {
-  command: 'record-shows',
+  command: 'record',
+  type: 'show',
   desc: '📹 Record wished shows episodes with best releases available',
   builder: {},
 }
@@ -19,9 +20,9 @@ export default (job, handlers) => ({
     const znabs = config.get('znabs').filter((znab) => !znab.disabled).map((znab) => new Znab(znab, {}))
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, sensorr, znabs, policies: config.get('policies') }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, sensorr, znabs, policies: config.get('policies') }}>
         <FetchAPIShowsTask />
-        <ProcessShowsTask command={meta.command} proposalOnly={config.get('jobs.record-shows.proposalOnly')} />
+        <ProcessShowsTask command={meta.command} proposalOnly={config.get('jobs.record.shows.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 

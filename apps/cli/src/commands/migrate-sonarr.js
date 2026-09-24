@@ -8,7 +8,8 @@ import command from '../utils/command'
 import { fetchShow, sonarrShowOf, sonarrEpisodesOf } from '../utils/shows'
 
 const meta = {
-  command: 'migrate-sonarr',
+  command: 'migrate',
+  type: 'show',
   desc: '🚚 Migrate series from a Sonarr server',
   builder: {
     url: {
@@ -24,8 +25,10 @@ const meta = {
   },
 }
 
+// `migrate sonarr`, a subcommand of `migrate`, its lines logged as `migrate` for shows
 export default (job, handlers) => ({
   ...meta,
+  command: 'sonarr',
   handler: command(job, meta, async ({ argv, config, logger }) => {
     if (!process.env.SONARR_API_KEY) {
       throw new Error('You need to set SONARR_API_KEY with your Sonarr API key before migrating from it !')
@@ -53,7 +56,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb, sonarr, dry: argv.dryRun }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, tmdb, sonarr, dry: argv.dryRun }}>
         <FetchSonarrSeriesTask />
         <MigrateSonarrSeriesTask />
       </Tasks>

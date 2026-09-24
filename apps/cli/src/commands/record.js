@@ -8,6 +8,7 @@ import command from '../utils/command'
 
 const meta = {
   command: 'record',
+  type: 'movie',
   desc: '📹 Record wished movies with best release available',
   builder: {},
 }
@@ -18,9 +19,9 @@ export default (job, handlers) => ({
     const sensorr = new Sensorr({ znabs: config.get('znabs'), region: config.get('region') })
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, sensorr, policies: config.get('policies') }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, sensorr, policies: config.get('policies') }}>
         <FetchAPIMoviesTask command='record' />
-        <ProcessMoviesTask command='record' proposalOnly={config.get('jobs.record.proposalOnly')} />
+        <ProcessMoviesTask command='record' proposalOnly={config.get('jobs.record.movies.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 

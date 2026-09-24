@@ -7,6 +7,7 @@ import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
+import { jobNameOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { RecordJob, summary as summaryRecord } from './Job/Record'
@@ -23,20 +24,37 @@ import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 
+// Keyed by `jobNameOf`
 const EMOJIS = {
-  'sync': '🔗',
-  'refresh': '🔌',
-  'record': '📹',
-  'refine': '✨',
-  'shrink': '✂️',
-  'report': '🚩',
+  'sync movies': '🔗',
+  'refresh movies': '🔌',
+  'record movies': '📹',
+  'refine movies': '✨',
+  'shrink movies': '✂️',
+  'report movies': '🚩',
   'keep-in-touch': '🍻',
   'migrate': '🚚',
-  'refresh-shows': '🔌',
-  'sync-shows': '🔗',
-  'import-shows': '📥',
-  'record-shows': '📹',
-  'airing': '📡',
+  'refresh shows': '🔌',
+  'sync shows': '🔗',
+  'import shows': '📥',
+  'record shows': '📹',
+  'airing shows': '📡',
+}
+
+const VIEWS = {
+  'record movies': RecordJob,
+  'refine movies': RefineJob,
+  'shrink movies': ShrinkJob,
+  'report movies': ReportJob,
+  'refresh movies': RefreshJob,
+  'sync movies': SyncJob,
+  'keep-in-touch': KeepInTouchJob,
+  'migrate': MigrateJob,
+  'record shows': ProcessShowsJob,
+  'airing shows': ProcessShowsJob,
+  'refresh shows': ShowsJob,
+  'sync shows': ShowsJob,
+  'import shows': ShowsJob,
 }
 
 const UIJobs = ({ controls = null, ...props }) => {
@@ -45,7 +63,9 @@ const UIJobs = ({ controls = null, ...props }) => {
   const navigate = useNavigate()
   const { jobs, loading } = useJobsContext() as any
   const { job } = useParams() as any
-  useTitle(['Jobs', jobs.find(j => j.job === job)?.meta?.command].filter(part => part).join(' - '))
+  const active = jobs.find(j => j.job === job)
+  const View = active && VIEWS[jobNameOf(active.meta)]
+  useTitle(['Jobs', active && jobNameOf(active.meta)].filter(part => part).join(' - '))
   const store = useRef(null)
   const [logs, setLogs] = useState(null)
   const drainLogs = useMemo(() => throttle(3000, () => setLogs(store.current)), [])
@@ -64,7 +84,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
     store.current = null
     setLogs(null)
-    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink', 'report', 'record-shows', 'airing'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
+    const eventSource = new ReconnectingEventSource(`/api/jobs/${job}?authorization=Bearer%20${api.access_token}${['record', 'refine', 'shrink', 'report', 'airing'].includes(jobs.find(j => j.job === job)?.meta?.command) ? '&summarize=1' : ''}`)
     eventSource.onmessage = ({ data }) => {
       const raw = JSON.parse(data)
 
@@ -110,26 +130,8 @@ const UIJobs = ({ controls = null, ...props }) => {
                 subtitle="Please wait a few moments..."
               />
             </div>
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'record' ? (
-            <RecordJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'refine' ? (
-            <RefineJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'shrink' ? (
-            <ShrinkJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'report' ? (
-            <ReportJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'refresh' ? (
-            <RefreshJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'sync' ? (
-            <SyncJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'keep-in-touch' ? (
-            <KeepInTouchJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : jobs.find(j => j.job === job)?.meta?.command === 'migrate' ? (
-            <MigrateJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : ['record-shows', 'airing'].includes(jobs.find(j => j.job === job)?.meta?.command) ? (
-            <ProcessShowsJob job={jobs.find(j => j.job === job)} logs={logs} />
-          ) : ['refresh-shows', 'sync-shows', 'import-shows'].includes(jobs.find(j => j.job === job)?.meta?.command) ? (
-            <ShowsJob job={jobs.find(j => j.job === job)} logs={logs} />
+          ) : View ? (
+            <View job={active} logs={logs} />
           ) : (
             <div sx={UIJobs.styles.placeholder}>
               <Warning
@@ -175,7 +177,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
   const [filter, setFilter] = useState(null)
-  const groups = useMemo(() => jobs.filter(job => !filter || job.meta.command === filter).reduce((groups, job) => {
+  const groups = useMemo(() => jobs.filter(job => !filter || jobNameOf(job.meta) === filter).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 
@@ -188,8 +190,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
     }
   }, {}), [jobs, filter])
   const options = useMemo(() => Object.keys(EMOJIS)
-    .filter(command => command === filter || jobs.some(job => job.meta.command === command))
-    .map(command => ({ value: command, emoji: EMOJIS[command], label: command, count: jobs.filter(job => job.meta.command === command).length })), [jobs, filter])
+    .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
+    .map(name => ({ value: name, emoji: EMOJIS[name], label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -204,12 +206,12 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
-              {EMOJIS[active?.meta?.command] || '⌛'}
+              {EMOJIS[active && jobNameOf(active.meta)] || '⌛'}
             </span>
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
                 <div sx={{ marginRight: 7, lineHeight: 'reset' }}><Icon value={active?.meta?.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></div>
-                <h5>{active?.meta?.command || 'Loading'}</h5>
+                <h5>{active ? jobNameOf(active.meta) : 'Loading'}</h5>
                 {active?.meta?.done && (
                   <span>
                     {formatDuration(intervalToDuration({ start: new Date(active?.start), end: new Date(active?.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}
@@ -239,24 +241,24 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                   {jobs.map(j => (
                     <Job
                       key={j.job}
-                      emoji={EMOJIS[j.meta.command]}
+                      emoji={EMOJIS[jobNameOf(j.meta)]}
                       selected={j.job === job}
                       {...j}
                       summary={({
-                        'sync': summarySync,
-                        'refresh': summaryRefresh,
-                        'record': summaryRecord,
-                        'refine': summaryRefine,
-                        'shrink': summaryShrink,
-                        'report': summaryReport,
+                        'sync movies': summarySync,
+                        'refresh movies': summaryRefresh,
+                        'record movies': summaryRecord,
+                        'refine movies': summaryRefine,
+                        'shrink movies': summaryShrink,
+                        'report movies': summaryReport,
                         'keep-in-touch': summaryKeepInTouch,
                         'migrate': summaryMigrate,
-                        'refresh-shows': summaryRefreshShows,
-                        'sync-shows': summarySyncShows,
-                        'import-shows': summaryImportShows,
-                        'record-shows': summaryProcessShows,
-                        'airing': summaryProcessShows,
-                      }[j.meta.command] || (() => []))(j.meta.summary, false, j.meta.config)}
+                        'refresh shows': summaryRefreshShows,
+                        'sync shows': summarySyncShows,
+                        'import shows': summaryImportShows,
+                        'record shows': summaryProcessShows,
+                        'airing shows': summaryProcessShows,
+                      }[jobNameOf(j.meta)] || (() => []))(j.meta.summary, false, j.meta.config)}
                     />
                   ))}
                 </div>
@@ -414,7 +416,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
           <span sx={UIJob.styles.container}>
             <span sx={{ display: 'flex', alignItems: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIJob.styles.title}>{command}</span>
+              <span sx={UIJob.styles.title}>{jobNameOf({ command, type: meta.type })}</span>
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
                   {formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}

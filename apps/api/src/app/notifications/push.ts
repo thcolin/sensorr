@@ -55,13 +55,13 @@ const showPushOf = (meta) => ({
     meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : '',
   ].filter(Boolean).join(' '),
   body: {
-    'record-shows': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+    'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
     'airing': `📡 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
     'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
   }[meta?.command],
   image: `https://image.tmdb.org/t/p/w185${meta?.show?.poster_path}`,
   actions: {
-    'record-shows': meta?.release?.proposal ? [
+    'record': meta?.release?.proposal ? [
       { action: 'accept', title: 'Accept' },
       { action: 'refuse', title: 'Refuse' },
     ] : [],
@@ -76,4 +76,4 @@ const showPushOf = (meta) => ({
   }[meta?.command],
 })
 
-export const pushOf = (meta) => meta?.show ? showPushOf(meta) : moviePushOf(meta)
+export const pushOf = (meta) => meta?.type === 'show' ? showPushOf(meta) : moviePushOf(meta)

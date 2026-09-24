@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
+import { jobNameOf } from '@sensorr/sensorr'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Show from '../../../components/Show/Show'
 import { Summary } from '../Summary'
@@ -108,9 +109,9 @@ const showsOf = (logs, test) => logs
   .map(({ meta }) => meta.show || meta.entity)
   .filter((show, index, shows) => shows.findIndex(({ id }) => id === show.id) === index)
 
-// Each section gathers, by show, the lines a series job logged with `meta.type` 'show' or `meta.show`
+// Keyed by `jobNameOf`, each section gathers, by show, the lines a series job logged with `meta.type` 'show' or `meta.show`
 const COMMANDS = {
-  'refresh-shows': {
+  'refresh shows': {
     emoji: '🔌',
     summary: summaryRefreshShows,
     live: (sections, summary) => ({ show: { ...summary.show, success: sections.refreshed.length } }),
@@ -120,7 +121,7 @@ const COMMANDS = {
     ],
     empty: 'No changes applied during this job',
   },
-  'sync-shows': {
+  'sync shows': {
     emoji: '🔗',
     summary: summarySyncShows,
     live: (sections, summary) => ({
@@ -135,7 +136,7 @@ const COMMANDS = {
     ],
     empty: 'No fixed shows during this job',
   },
-  'import-shows': {
+  'import shows': {
     emoji: '📥',
     summary: summaryImportShows,
     live: (sections, summary) => ({ imports: { ...summary.imports, success: sections.imported.length } }),
@@ -148,7 +149,7 @@ const COMMANDS = {
 }
 
 const UIShowsJob = ({ job, logs }) => {
-  const command = COMMANDS[job.meta.command]
+  const command = COMMANDS[jobNameOf(job.meta)]
   const warnings = useMemo(() => [...(logs || [])].filter(command.warnings).sort(newest), [logs, command])
   const sections = useMemo(() => command.sections.reduce((acc, { key, test }) => ({
     ...acc,
@@ -166,7 +167,7 @@ const UIShowsJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIShowsJob.styles.title}>{job.meta.command}</span>
+              <span sx={UIShowsJob.styles.title}>{jobNameOf(job.meta)}</span>
             </span>
           )}
           subtitle={(

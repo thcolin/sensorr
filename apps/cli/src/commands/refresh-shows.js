@@ -8,7 +8,8 @@ import command from '../utils/command'
 import { fetchShow, fetchSensorrShows, isRefreshDue, monitoredOf } from '../utils/shows'
 
 const meta = {
-  command: 'refresh-shows',
+  command: 'refresh',
+  type: 'show',
   desc: '🔌 Refresh Sensorr shows and their episodes with TMDB latest changes',
   builder: {},
 }
@@ -25,7 +26,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, tmdb }}>
         <FetchAPIShowsTask />
         <FetchTMDBShowsChangesTask />
       </Tasks>

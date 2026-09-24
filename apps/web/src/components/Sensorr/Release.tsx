@@ -348,7 +348,7 @@ const UIReleaseState = ({ entity = null }) => (
     <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>
-  ) : ['record', 'refine', 'shrink', 'report', 'record-shows', 'airing'].includes(entity?.from) ? (
+  ) : ['record', 'refine', 'shrink', 'report', 'airing'].includes(entity?.from) ? (
     <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>

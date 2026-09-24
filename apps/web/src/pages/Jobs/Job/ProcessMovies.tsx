@@ -12,7 +12,7 @@ import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary, freed, freedLabel } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
-import { Policy } from '@sensorr/sensorr'
+import { Policy, jobNameOf } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { Size } from '../../Proposals/Card'
@@ -176,7 +176,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIProcessMoviesJob.styles.title}>{job.meta.command}</span>
+              <span sx={UIProcessMoviesJob.styles.title}>{jobNameOf(job.meta)}</span>
             </span>
           )}
           subtitle={(
@@ -594,7 +594,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                 {...log}
                 line={index + 1}
                 expandable={(
-                  (['record', 'record-shows', 'airing'].includes(command) && !!query?.terms?.length) ||
+                  (['record', 'airing'].includes(command) && !!query?.terms?.length) ||
                   (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
                   (['shrink', 'report'].includes(command) && !!log.meta?.movie?.releases?.length) ||
                   !!log.meta?.stats?.total ||
@@ -615,7 +615,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                         score={release.score}, size={filesize.stringify(release.size)}, job={release.from}#{release.job}
                       </code>
                     ))}
-                    {['record', 'record-shows', 'airing'].includes(command) && query?.terms?.length && (
+                    {['record', 'airing'].includes(command) && query?.terms?.length && (
                       <code>
                         <i></i>
                         <i>➤</i>

@@ -11,6 +11,7 @@ import { isBusy, isPending, movieOf, newReportsOf, cursorOf, reportedOf } from '
 
 const meta = {
   command: 'report',
+  type: 'movie',
   desc: '🚩 Replace archived movies reported from Plex with their best release',
   builder: {},
 }
@@ -28,9 +29,9 @@ export default (job, handlers) => ({
     const sensorr = new Sensorr({ znabs: config.get('znabs'), region: config.get('region') })
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, sensorr, token: config.get('plex.token'), since: config.get('jobs.report.since'), policies: config.get('policies') }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, plex, sensorr, token: config.get('plex.token'), since: config.get('jobs.report.movies.since'), policies: config.get('policies') }}>
         <FetchAPIMoviesTask />
-        <ProcessMoviesTask command='report' proposalOnly={config.get('jobs.report.proposalOnly')} />
+        <ProcessMoviesTask command='report' proposalOnly={config.get('jobs.report.movies.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 
@@ -83,7 +84,7 @@ const FetchAPIMoviesTask = ({ ...props }) => {
           }
         }
 
-        const put = api.query.config.putConfig({ body: { key: 'jobs.report.since', value: cursorOf(reports, state.since) } })
+        const put = api.query.config.putConfig({ body: { key: 'jobs.report.movies.since', value: cursorOf(reports, state.since) } })
         await api.fetch(put.uri, put.params, put.init)
 
         const { uri, params, init } = api.query.movies.getMovies({ params: { state: 'archived', reported: true } })

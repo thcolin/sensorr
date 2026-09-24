@@ -20,27 +20,28 @@ const JobsSettings = ({ ...props }) => {
   const { process } = useJobsContext() as any
   const [ongoing, setOngoing] = useState([])
 
-  const runJob = useCallback(async (command) => {
-    setOngoing(ongoing => [...ongoing, command])
-    const { uri, params, init } = api.query.jobs.runJob({ body: { command } })
+  const runJob = useCallback(async (command, type) => {
+    const name = [command, type].filter(Boolean).join(' ')
+    setOngoing(ongoing => [...ongoing, name])
+    const { uri, params, init } = api.query.jobs.runJob({ body: { command, type } })
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
-      loading: `Running new Job **${command}**, please wait...`,
+      loading: `Running new Job **${name}**, please wait...`,
       success: (data) => {
-        setOngoing(ongoing => ongoing.filter(c => c !== command))
-        return `Job **${command}** successfully run (${data.job})`
+        setOngoing(ongoing => ongoing.filter(c => c !== name))
+        return `Job **${name}** successfully run (${data.job})`
       },
       error: (err) => {
         console.warn(err)
-        setOngoing(ongoing => ongoing.filter(c => c !== command))
-        return `Error during Job **${command}** run`
+        setOngoing(ongoing => ongoing.filter(c => c !== name))
+        return `Error during Job **${name}** run`
       },
     })
   }, [])
 
-  const stopJob = useCallback(async (command, job) => {
-    if (!confirm(`Do you really want to stop ${command} job "${job}" ?`)) {
+  const stopJob = useCallback(async (name, job) => {
+    if (!confirm(`Do you really want to stop ${name} job "${job}" ?`)) {
       return
     }
 
@@ -85,24 +86,28 @@ const JobsSettings = ({ ...props }) => {
             {[
               {
                 command: 'record',
+                type: 'movies',
                 emoji: '📹',
                 description: 'Record Sensorr wished movies',
                 options: ['cron', 'proposalOnly'],
               },
               {
                 command: 'refine',
+                type: 'movies',
                 emoji: '✨',
                 description: 'Refine archived movies with better fitting release',
                 options: ['cron', 'proposalOnly'],
               },
               {
                 command: 'shrink',
+                type: 'movies',
                 emoji: '✂️',
                 description: 'Shrink refined movies with smallest release available',
                 options: ['cron', 'proposalOnly', 'threshold'],
               },
               {
                 command: 'report',
+                type: 'movies',
                 emoji: '🚩',
                 description: 'Replace archived movies reported from Plex with their best release',
                 disabled: !config.get('plex.token'),
@@ -115,12 +120,14 @@ const JobsSettings = ({ ...props }) => {
               },
               {
                 command: 'refresh',
+                type: 'movies',
                 emoji: '🔌',
-                description: 'Refresh Sensorr data with TMDB changes',
+                description: 'Refresh Sensorr movies and persons with TMDB changes',
                 options: ['cron'],
               },
               {
                 command: 'sync',
+                type: 'movies',
                 emoji: '🔗',
                 description: 'Sync Sensorr library with registered Plex server',
                 disabled: !config.get('plex.token'),
@@ -134,35 +141,40 @@ const JobsSettings = ({ ...props }) => {
               {
                 command: 'keep-in-touch',
                 emoji: '🍻',
-                description: 'Goes through guests Plex watchlist and sync wished movies',
+                description: 'Goes through guests Plex watchlist and sync wished movies and shows',
                 options: ['cron'],
               },
               {
-                command: 'record-shows',
+                command: 'record',
+                type: 'shows',
                 emoji: '📹',
                 description: 'Record wished shows by whole series, season packs and episodes',
                 options: ['cron', 'proposalOnly'],
               },
               {
                 command: 'airing',
+                type: 'shows',
                 emoji: '📡',
                 description: 'Record wanted episodes aired in the last 7 days',
                 options: ['cron', 'proposalOnly'],
               },
               {
-                command: 'import-shows',
+                command: 'import',
+                type: 'shows',
                 emoji: '📥',
                 description: 'Import finished show releases from the staging folder into the library',
                 options: ['cron'],
               },
               {
-                command: 'refresh-shows',
+                command: 'refresh',
+                type: 'shows',
                 emoji: '🔌',
                 description: 'Refresh Sensorr shows and their episodes with TMDB changes',
                 options: ['cron'],
               },
               {
-                command: 'sync-shows',
+                command: 'sync',
+                type: 'shows',
                 emoji: '🔗',
                 description: 'Sync Sensorr shows with registered Plex server',
                 disabled: !config.get('plex.token'),
@@ -176,8 +188,8 @@ const JobsSettings = ({ ...props }) => {
             ].map(value => (
               <JobSettings
                 {...value}
-                running={Object.values(process).find((p: any) => p.command === value.command)}
-                disabled={value.disabled || ongoing.includes(value.command)}
+                running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
+                disabled={value.disabled || ongoing.includes([value.command, value.type].filter(Boolean).join(' '))}
                 runJob={runJob}
                 stopJob={stopJob}
                 control={form.control}
@@ -221,9 +233,11 @@ JobsSettings.styles = {
 
 export default JobsSettings
 
-const JobSettings = ({ command, emoji, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
-  const cronValue = watch(`jobs.${command}.cron`)
-  const paused = watch(`jobs.${command}.paused`)
+const JobSettings = ({ command, type = undefined, emoji, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
+  const name = [command, type].filter(Boolean).join(' ')
+  const key = ['jobs', command, type].filter(Boolean).join('.')
+  const cronValue = watch(`${key}.cron`)
+  const paused = watch(`${key}.paused`)
 
   let cronString = ''
 
@@ -242,14 +256,14 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
     <div sx={JobSettings.styles.element}>
       <div sx={JobSettings.styles.container}>
         <div sx={JobSettings.styles.metadata}>
-          <h5>{emojize(emoji, command)}</h5>
+          <h5>{emojize(emoji, name)}</h5>
           <p>{description}</p>
         </div>
         <div sx={{ display: 'flex' }}>
           <button
             type='button'
             sx={JobSettings.styles.run}
-            onClick={() => (running ? stopJob(command, running.job) : runJob(command))}
+            onClick={() => (running ? stopJob(name, running.job) : runJob(command, type))}
             disabled={disabled}
           >
             <Icon value={running ? 'live' : 'play'} height='1em' width='1em' />
@@ -279,10 +293,10 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
         >
           <React.Fragment>
             <Controller
-              name={`jobs.${command}.paused`}
+              name={`${key}.paused`}
               control={control}
               render={({ field: { value: checked, onChange } }) => (
-                <Option type='checkbox' id={`jobs.${command}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)}>
+                <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)}>
                   <div sx={{ lineHeight: 'normal', paddingY: 10, whiteSpace: 'nowrap', marginRight: 0 }}>
                     <strong>{emojize('🤖', 'Scheduled')}</strong>
                     <br />
@@ -292,7 +306,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
               )}
             />
             <Controller
-              name={`jobs.${command}.cron`}
+              name={`${key}.cron`}
               control={control}
               rules={{
                 required: !paused,
@@ -336,12 +350,12 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
       {options.includes('proposalOnly') && (
         <div sx={JobSettings.styles.options}>
           <Controller
-            name={`jobs.${command}.proposalOnly`}
+            name={`${key}.proposalOnly`}
             control={control}
             render={({ field: { value: checked, onChange } }) => (
               <Option
                 type='checkbox'
-                id={`jobs.${command}.proposalOnly`}
+                id={`${key}.proposalOnly`}
                 checked={checked}
                 onChange={(e: any) => onChange(e.target.checked)}
               >
@@ -361,12 +375,12 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
       {options.includes('cleanup') && (
         <div sx={JobSettings.styles.options}>
           <Controller
-            name={`jobs.${command}.cleanup`}
+            name={`${key}.cleanup`}
             control={control}
             render={({ field: { value: checked, onChange } }) => (
               <Option
                 type='checkbox'
-                id={`jobs.${command}.cleanup`}
+                id={`${key}.cleanup`}
                 checked={checked}
                 onChange={(e: any) => onChange(e.target.checked)}
               >
@@ -385,12 +399,12 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
       {options.includes('threshold') && (
         <div sx={JobSettings.styles.options}>
           <Controller
-            name={`jobs.${command}.threshold`}
+            name={`${key}.threshold`}
             control={control}
             render={({ field: { value, onChange } }) => (
               <Option
                 type='checkbox'
-                id={`jobs.${command}.threshold`}
+                id={`${key}.threshold`}
                 checked={value > 0}
                 onChange={(e: any) => onChange(e.target.checked ? (value ? value : 1) : 0)}
               >
@@ -403,7 +417,7 @@ const JobSettings = ({ command, emoji, description, warning = null, options, run
             )}
           />
           <Controller
-            name={`jobs.${command}.threshold`}
+            name={`${key}.threshold`}
             control={control}
             render={({ field: { ref, ...field } }) => (
               <div

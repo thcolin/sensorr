@@ -14,55 +14,71 @@
       "paused": false
     },
     "record": {
-      "cron": "0 17 * * *",
-      "paused": false,
-      "proposalOnly": true
+      "movies": {
+        "cron": "0 17 * * *",
+        "paused": false,
+        "proposalOnly": true
+      },
+      "shows": {
+        "cron": "0 17 * * *",
+        "paused": true,
+        "proposalOnly": true
+      }
     },
     "sync": {
-      "cron": "0 1 * * *",
-      "paused": false,
-      "cleanup": false
+      "movies": {
+        "cron": "0 1 * * *",
+        "paused": false,
+        "cleanup": false
+      },
+      "shows": {
+        "cron": "0 2 * * *",
+        "paused": true
+      }
     },
     "refresh": {
-      "cron": "0 3 * * 0",
-      "paused": false
+      "movies": {
+        "cron": "0 3 * * 0",
+        "paused": false
+      },
+      "shows": {
+        "cron": "0 4 * * *",
+        "paused": true
+      }
     },
     "refine": {
-      "cron": "0 23 1 * *",
-      "paused": false,
-      "proposalOnly": true
+      "movies": {
+        "cron": "0 23 1 * *",
+        "paused": false,
+        "proposalOnly": true
+      }
     },
     "shrink": {
-      "cron": "0 5 * * 0",
-      "paused": false,
-      "proposalOnly": true
+      "movies": {
+        "cron": "0 5 * * 0",
+        "paused": false,
+        "proposalOnly": true
+      }
     },
     "report": {
-      "cron": "0 * * * *",
-      "paused": true,
-      "proposalOnly": true
-    },
-    "refresh-shows": {
-      "cron": "0 4 * * *",
-      "paused": true
-    },
-    "sync-shows": {
-      "cron": "0 2 * * *",
-      "paused": true
-    },
-    "import-shows": {
-      "cron": "*/10 * * * *",
-      "paused": true
-    },
-    "record-shows": {
-      "cron": "0 17 * * *",
-      "paused": true,
-      "proposalOnly": true
+      "movies": {
+        "cron": "0 * * * *",
+        "paused": true,
+        "proposalOnly": true
+      }
     },
     "airing": {
-      "cron": "0 * * * *",
-      "paused": true,
-      "proposalOnly": true
+      "shows": {
+        "cron": "0 * * * *",
+        "paused": true,
+        "proposalOnly": true
+      }
+    },
+    "import": {
+      "shows": {
+        "cron": "*/10 * * * *",
+        "paused": true
+      }
     }
   },
   "plex": {},

@@ -5,6 +5,7 @@ import { Model } from 'mongoose'
 import { CronJob } from 'cron'
 import { from, merge, Observable } from 'rxjs'
 import { filter, map, scan, tap } from 'rxjs/operators'
+import { JOBS } from '@sensorr/sensorr'
 import { Log as LogDocument } from '../logs/log.schema'
 import { LogsService } from '../logs/logs.service'
 import { ConfigService } from '../config/config.service'
@@ -73,28 +74,35 @@ export class JobsService {
     )
   }
 
+  // One cron per job, `jobs.<command>.<type>` or `jobs.keep-in-touch`
   setupCrons() {
     this.logger.log(`SetupCrons`)
-    Object.entries(this.configService.config.get('jobs'))
-      .map(([name, { cron, paused }]: [string, { cron: string, paused: boolean }]) => !paused && this.setupCron(name, cron))
+
+    for (const [command, types] of Object.entries(JOBS)) {
+      for (const type of types.length ? types : [undefined]) {
+        const { cron, paused } = this.configService.config.get(['jobs', command, type].filter(Boolean).join('.'))
+
+        if (!paused) {
+          this.setupCron(command, type, cron)
+        }
+      }
+    }
   }
 
-  setupCron(name: string, cron: string) {
-    if (!Object.keys(this.configService.config.get('jobs')).includes(name)) {
-      throw new Error(`Unknown job "${name}"`)
-    }
-
+  setupCron(command: string, type: string | undefined, cron: string) {
+    const name = [command, type].filter(Boolean).join(' ')
     const job = new CronJob(cron, () => {
-      this.sensorrService.runProcess(name, cron)
+      this.sensorrService.runProcess(command, type, cron)
     })
     this.schedulerRegistry.addCronJob(name, job)
     job.start()
     this.logger.log(`SetupCron "${name}" at "${cron}"`)
   }
 
-  editCron(name: string, cron: string) {
+  editCron(command: string, type: string | undefined, cron: string) {
+    const name = [command, type].filter(Boolean).join(' ')
     this.schedulerRegistry.deleteCronJob(name)
     this.logger.log(`EditCron "${name}", cron="${cron}"`)
-    this.setupCron(name, cron)
+    this.setupCron(command, type, cron)
   }
 }

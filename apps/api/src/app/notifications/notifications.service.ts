@@ -33,9 +33,9 @@ export class NotificationsService {
             { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "record-shows", "meta.release.valid": true, "meta.show.id": { $exists: true } },
-            { "meta.command": "airing", "meta.release.valid": true, "meta.show.id": { $exists: true } },
-            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.show.id": { $exists: true } },
+            { "meta.command": "record", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+            { "meta.command": "airing", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+            { "meta.command": "keep-in-touch", "meta.type": "show", "meta.processed": true, "meta.show.id": { $exists: true } },
           ]
         }).sort({ timestamp: -1 }).lean().exec()).pipe(
           map(data => ({ data } as MessageEvent)),
@@ -49,9 +49,9 @@ export class NotificationsService {
           (change.fullDocument?.meta?.command === 'report' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'sync' && change.fullDocument?.meta?.group === 'missings' && change.fullDocument?.meta?.movie?.id) ||
           (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'record-shows' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
-          (change.fullDocument?.meta?.command === 'airing' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
-          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.show?.id)
+          (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
+          (change.fullDocument?.meta?.command === 'airing' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
+          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.show?.id)
         )),
         map(({ fullDocument: data }) => ({ data } as MessageEvent)),
         tap(() => this.logger.log(`ListenNotifications, message=""`)),
@@ -93,9 +93,9 @@ export class NotificationsService {
             { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
             { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "record-shows", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "airing", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "record", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "airing", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
+            { "meta.command": "keep-in-touch", "meta.type": "show", "meta.processed": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
           ]
         }).lean().exec()).pipe(
           map(unread => ({ notification, unread: unread.length })),

@@ -13,6 +13,7 @@ import { releaseOf } from '../utils/plex'
 
 const meta = {
   command: 'sync',
+  type: 'movie',
   desc: '🔗 Sync Sensorr library with registered Plex server',
   builder: {},
 }
@@ -37,7 +38,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, tmdb, cleanup: config.get('jobs.sync.cleanup') }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, plex, tmdb, cleanup: config.get('jobs.sync.movies.cleanup') }}>
         <FetchSensorrMoviesTask />
         <FetchPlexMoviesTask />
         <CheckSensorrMoviesTask />

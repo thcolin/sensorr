@@ -9,7 +9,8 @@ import command from '../utils/command'
 import { fetchSensorrShows, isImportable, isReleaseFinished, importLinksOf, showFolderOf, INCOMPLETE } from '../utils/shows'
 
 const meta = {
-  command: 'import-shows',
+  command: 'import',
+  type: 'show',
   desc: '📥 Import finished show releases from the staging folder into the library',
   builder: {},
 }
@@ -18,7 +19,7 @@ export default (job, handlers) => ({
   ...meta,
   handler: command(job, meta, async ({ config, logger }) => {
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, shows: config.get('shows') }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, shows: config.get('shows') }}>
         <FetchSensorrShowsTask />
         <ImportShowsReleasesTask />
       </Tasks>

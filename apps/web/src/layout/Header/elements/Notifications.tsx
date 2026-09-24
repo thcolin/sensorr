@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
-import { coverageLabel, levelOf } from '@sensorr/sensorr'
+import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
@@ -14,15 +14,16 @@ import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
 
+// Keyed by `jobNameOf`
 const COMMANDS = {
-  'record': { emoji: '📹', label: 'record' },
-  'refine': { emoji: '✨', label: 'refine' },
-  'shrink': { emoji: '✂️', label: 'shrink' },
-  'report': { emoji: '🚩', label: 'report' },
-  'sync': { emoji: '💊', label: 'missing' },
+  'record movies': { emoji: '📹', label: 'record movies' },
+  'refine movies': { emoji: '✨', label: 'refine movies' },
+  'shrink movies': { emoji: '✂️', label: 'shrink movies' },
+  'report movies': { emoji: '🚩', label: 'report movies' },
+  'sync movies': { emoji: '💊', label: 'missing' },
   'keep-in-touch': { emoji: '🍺', label: 'request' },
-  'record-shows': { emoji: '📹', label: 'record-shows' },
-  'airing': { emoji: '📡', label: 'airing' },
+  'record shows': { emoji: '📹', label: 'record shows' },
+  'airing shows': { emoji: '📡', label: 'airing shows' },
 }
 
 const UINotifications = ({ ...props }) => {
@@ -36,14 +37,14 @@ const UINotifications = ({ ...props }) => {
   const notifications = useMemo(() => all.filter(notification => !(
     notification.meta?.command === 'keep-in-touch' &&
     typeof notification.meta?.choice === 'undefined' &&
-    (notification.meta?.show ? showsMetadata[notification.meta.show.id] : metadata[notification.meta?.movie?.id])?.state === 'archived'
+    (notification.meta?.type === 'show' ? showsMetadata[notification.meta.show.id] : metadata[notification.meta?.movie?.id])?.state === 'archived'
   )), [all, metadata, showsMetadata])
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
   const [filter, setFilter] = useState(null)
-  const filtered = useMemo(() => notifications.filter(notification => !filter || notification.meta?.command === filter), [notifications, filter])
+  const filtered = useMemo(() => notifications.filter(notification => !filter || jobNameOf(notification.meta) === filter), [notifications, filter])
   const options = useMemo(() => Object.keys(COMMANDS)
-    .filter(command => command === filter || notifications.some(notification => notification.meta?.command === command))
-    .map(command => ({ value: command, ...COMMANDS[command], count: notifications.filter(notification => notification.meta?.command === command).length })), [notifications, filter])
+    .filter(name => name === filter || notifications.some(notification => jobNameOf(notification.meta) === name))
+    .map(name => ({ value: name, ...COMMANDS[name], count: notifications.filter(notification => jobNameOf(notification.meta) === name).length })), [notifications, filter])
 
   useEffect(() => {
     if (open && navigator.clearAppBadge) {
@@ -235,7 +236,7 @@ UINotifications.styles = {
 
 export const Notifications = memo(UINotifications)
 
-const Notification = (props) => props.meta?.show ? <ShowNotification {...props} /> : <MovieNotification {...props} />
+const Notification = (props) => props.meta?.type === 'show' ? <ShowNotification {...props} /> : <MovieNotification {...props} />
 
 const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poster, heading, children }) => {
   const { dismissNotifications } = useNotificationsContext() as any
@@ -247,7 +248,7 @@ const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poste
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
         )}
         <span sx={{ display: ['none', 'flex'], alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray', width: '2em', height: '2em', padding: 8, borderRadius: '1em', fontSize: 3, marginRight: 6 }}>
-          {COMMANDS[meta?.command]?.emoji}
+          {COMMANDS[jobNameOf(meta)]?.emoji}
         </span>
         <div sx={{ display: 'flex', alignItems: 'center' }}>
           <div sx={{ width: '6.5em', height: '10em', flexShrink: 0 }}>
@@ -521,7 +522,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       to={`/tv/${meta?.show?.id}`}
       poster={meta?.show?.poster_path}
       heading={{
-        'record-shows': meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
+        'record': meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
         'airing': meta?.release?.proposal ? `Airing episode proposal` : `Airing episode recorded`,
         'keep-in-touch': `Show request`,
       }[meta?.command]}
@@ -542,13 +543,13 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
         <span sx={{ fontSize: 6 }}>
           {{
-            'record-shows': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'record': meta?.release?.proposal ? `Release proposal` : `Release`,
             'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
             'keep-in-touch': `Requested by`,
           }[meta?.command]}
         </span>
       </div>
-      {['record-shows', 'airing'].includes(meta?.command) && (
+      {['record', 'airing'].includes(meta?.command) && (
         <div sx={{ marginTop: 8 }}>
           <NotificationRelease release={meta?.release} />
           <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>

@@ -8,6 +8,7 @@ import command from '../utils/command'
 
 const meta = {
   command: 'refresh',
+  type: 'movie',
   desc: '🔌 Refresh Sensorr entities with TMDB latest changes',
   builder: {},
 }
@@ -24,7 +25,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, tmdb }}>
         <FetchAPIEntitiesTask />
         <FetchTMDBChangesTask type='movie' />
         <FetchTMDBChangesTask type='person' dependencies={['fetch-movie-changes']} />

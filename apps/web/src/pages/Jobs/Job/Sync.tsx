@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
+import { jobNameOf } from '@sensorr/sensorr'
 import Movie from '../../../components/Movie/Movie'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { sizeStateOf } from '../../Proposals/queue'
@@ -115,7 +116,7 @@ const UISyncJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UISyncJob.styles.title}>{job.meta.command}</span>
+              <span sx={UISyncJob.styles.title}>{jobNameOf(job.meta)}</span>
             </span>
           )}
           subtitle={(

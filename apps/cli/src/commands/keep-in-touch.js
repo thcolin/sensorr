@@ -65,7 +65,7 @@ const FetchSensorrMoviesTask = ({ onError, ...props }) => {
         setState((state) => ({ ...state, library: results }))
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{total_results}</Text> movies found</Text> }))
         setStatus('done')
-        state.logger.info({ message: `🗄️  ${total_results} Movies in Sensorr library`, metadata: { ...state.metadata, summary: { library: total_results } } })
+        state.logger.info({ message: `🗄️  ${total_results} Movies in Sensorr library`, metadata: { ...state.metadata, type: 'movie', summary: { library: total_results } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))
@@ -96,7 +96,7 @@ const FetchSensorrShowsTask = ({ onError, ...props }) => {
         setState((state) => ({ ...state, shows }))
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{shows.length}</Text> shows found</Text> }))
         setStatus('done')
-        state.logger.info({ message: `🗄️  ${shows.length} Shows in Sensorr library`, metadata: { ...state.metadata, summary: { shows: shows.length } } })
+        state.logger.info({ message: `🗄️  ${shows.length} Shows in Sensorr library`, metadata: { ...state.metadata, type: 'show', summary: { shows: shows.length } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))
@@ -190,7 +190,7 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
           } while (results[guest.email].length < total_results)
 
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{results[guest.email].length}</Text> movie(s) found on <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
-          state.logger.info({ message: `${results[guest.email].length} movies found on ${guest.email} Plex watchlist`, metadata: { ...state.metadata, guest: guest.email, watchlist: results[guest.email].length } })
+          state.logger.info({ message: `${results[guest.email].length} movies found on ${guest.email} Plex watchlist`, metadata: { ...state.metadata, type: 'movie', guest: guest.email, watchlist: results[guest.email].length } })
 
           // Movies are already in: a failure on the shows says nothing about the token
           try {
@@ -256,7 +256,7 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
       setState((state) => ({ ...state, requests, showRequests }))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{Object.keys(requests).length}</Text> movie(s) and <Text bold={true}>{Object.keys(showRequests).length}</Text> show(s) found on guest(s) Plex watchlists</Text> }))
       setStatus('done')
-      state.logger.info({ message: `📡 ${Object.keys(requests).length} movies found on guests Plex watchlist`, metadata: { ...state.metadata, summary: { watchlist: Object.keys(requests).length } } })
+      state.logger.info({ message: `📡 ${Object.keys(requests).length} movies found on guests Plex watchlist`, metadata: { ...state.metadata, type: 'movie', summary: { watchlist: Object.keys(requests).length } } })
       state.logger.info({ message: `📡 ${Object.keys(showRequests).length} shows found on guests Plex watchlist`, metadata: { ...state.metadata, type: 'show', summary: { watchlist_shows: Object.keys(showRequests).length } } })
     }
 
@@ -306,7 +306,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
 
             if (!tmdb_id) {
               setTask((task) => ({ ...task, output: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} don't have TMDB id` }))
-              state.logger.warn({ message: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} don't have TMDB id`, metadata: { ...state.metadata, plex_guid, requested_by } })
+              state.logger.warn({ message: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} don't have TMDB id`, metadata: { ...state.metadata, type: 'movie', plex_guid, requested_by } })
               continue
             } else if (!movie) {
               setTask((task) => ({ ...task, output: `Movie "${plex_guid}" requested by ${requested_by.join(', ')} unknown from library, look up for his TMDB data with TMDB id "${tmdb_id}"...` }))
@@ -332,7 +332,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
               const { uri, params, init } = api.query.movies.postMovie({ body: movie })
               await api.fetch(uri, params, init)
               processed.push(movie)
-              state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: true, requested_by } })
+              state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, type: 'movie', important: true, group: movie.id, movie: lighten.movie(movie), processed: true, requested_by } })
               continue
             } else {
               setTask((task) => ({ ...task, output: `Movie "${movie.title}" requested by ${requested_by.join(', ')} found in library with TMDB id "${tmdb_id}" !` }))
@@ -357,16 +357,16 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
           processed.push(movie)
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed` }))
           // `processed` is what turns this log into a request notification, and an archived movie leaves nothing to answer
-          state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: movie.state !== 'archived', requested_by } })
+          state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, type: 'movie', important: true, group: movie.id, movie: lighten.movie(movie), processed: movie.state !== 'archived', requested_by } })
         } else {
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" guests requests no need update` }))
-          state.logger.info({ message: `Movie "${movie.title}" guests requests no need update`, metadata: { ...state.metadata, important: true, group: movie.id, movie: lighten.movie(movie), processed: false, requested_by } })
+          state.logger.info({ message: `Movie "${movie.title}" guests requests no need update`, metadata: { ...state.metadata, type: 'movie', important: true, group: movie.id, movie: lighten.movie(movie), processed: false, requested_by } })
         }
 
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))
-      state.logger.info({ message: `🍺 ${processed.length} requests processed (added or updated)`, metadata: { ...state.metadata, summary: { processed: processed.length } } })
+      state.logger.info({ message: `🍺 ${processed.length} requests processed (added or updated)`, metadata: { ...state.metadata, type: 'movie', summary: { processed: processed.length } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{processed.length}</Text> requests processed (added or updated)</Text> }))
       setStatus('done')
     }

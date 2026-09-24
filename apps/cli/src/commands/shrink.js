@@ -8,6 +8,7 @@ import command from '../utils/command'
 
 const meta = {
   command: 'shrink',
+  type: 'movie',
   desc: '✂️ Shrink refined movies with smallest release available',
   builder: {},
 }
@@ -18,9 +19,9 @@ export default (job, handlers) => ({
     const sensorr = new Sensorr({ znabs: config.get('znabs'), region: config.get('region') })
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, sensorr, policies: config.get('policies') }}>
-        <FetchAPIMoviesTask threshold={config.get('jobs.shrink.threshold')} />
-        <ProcessMoviesTask command='shrink' proposalOnly={config.get('jobs.shrink.proposalOnly')} />
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, sensorr, policies: config.get('policies') }}>
+        <FetchAPIMoviesTask threshold={config.get('jobs.shrink.movies.threshold')} />
+        <ProcessMoviesTask command='shrink' proposalOnly={config.get('jobs.shrink.movies.proposalOnly')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 

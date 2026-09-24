@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Warning } from '@sensorr/ui'
-import { coverageLabel, levelOf } from '@sensorr/sensorr'
+import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
@@ -81,7 +81,7 @@ const matches = (record: any, filter: string) => ({
   warning: !!record.warning,
 })[filter] ?? true
 
-// record-shows and airing log every line with `meta.type` 'show' and the show id as `meta.group`,
+// record shows and airing shows log every line with `meta.type` 'show' and the show id as `meta.group`,
 // and may pick several releases for one show: a record keeps them all
 const UIProcessShowsJob = ({ job, logs }) => {
   const ref = useRef()
@@ -156,11 +156,11 @@ const UIProcessShowsJob = ({ job, logs }) => {
     <div ref={ref} sx={UIProcessShowsJob.styles.element}>
       <div ref={headerRef}>
         <Warning
-          emoji={{ 'record-shows': '📹', 'airing': '📡' }[job.meta.command]}
+          emoji={{ 'record': '📹', 'airing': '📡' }[job.meta.command]}
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIProcessShowsJob.styles.title}>{job.meta.command}</span>
+              <span sx={UIProcessShowsJob.styles.title}>{jobNameOf(job.meta)}</span>
             </span>
           )}
           subtitle={(

@@ -7,7 +7,7 @@ import { lighten } from '../../store/logger'
 import { proposalOnlyOf, airingUnits } from '../../utils/shows'
 
 const TITLES = {
-  'record-shows': `📹 Record wished shows`,
+  record: `📹 Record wished shows`,
   airing: `📡 Record aired episodes`,
 }
 

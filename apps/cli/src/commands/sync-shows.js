@@ -11,7 +11,8 @@ import { showFilesOf } from '../utils/plex'
 import { fetchShow, fetchSensorrShows } from '../utils/shows'
 
 const meta = {
-  command: 'sync-shows',
+  command: 'sync',
+  type: 'show',
   desc: '🔗 Sync Sensorr shows with registered Plex server',
   builder: {},
 }
@@ -36,7 +37,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, plex, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, plex, tmdb }}>
         <FetchSensorrShowsTask />
         <FetchPlexShowsTask />
         <CheckSensorrShowsTask />

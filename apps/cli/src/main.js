@@ -6,6 +6,7 @@ import chalk from 'chalk'
 import nodeFetch from 'node-fetch'
 
 import logger from './store/logger'
+import { typed } from './utils/command'
 import record from './commands/record'
 import recordShows from './commands/record-shows'
 import airing from './commands/airing'
@@ -69,23 +70,20 @@ const main = async () => {
   const instance = yargs(hideBin(process.argv))
   parser.current = instance
     .wrap(instance.terminalWidth())
-    .command(record(job, handlers))
-    .command(recordShows(job, handlers))
-    .command(airing(job, handlers))
-    .command(refresh(job, handlers))
-    .command(refreshShows(job, handlers))
-    .command(sync(job, handlers))
-    .command(syncShows(job, handlers))
-    .command(importShows(job, handlers))
-    .command(refine(job, handlers))
-    .command(shrink(job, handlers))
-    .command(report(job, handlers))
+    .command(typed('record', '📹 Record wished movies, or wished shows episodes, with best releases available', [record(job, handlers), recordShows(job, handlers)]))
+    .command(typed('airing', '📡 Record wished episodes aired in the last 7 days', [airing(job, handlers)]))
+    .command(typed('refresh', '🔌 Refresh Sensorr movies and persons, or shows and their episodes, with TMDB latest changes', [refresh(job, handlers), refreshShows(job, handlers)]))
+    .command(typed('sync', '🔗 Sync Sensorr movies, or shows, with registered Plex server', [sync(job, handlers), syncShows(job, handlers)]))
+    .command(typed('import', '📥 Import finished show releases from the staging folder into the library', [importShows(job, handlers)]))
+    .command(typed('refine', '✨ Refine archived movies with better fitting release', [refine(job, handlers)]))
+    .command(typed('shrink', '✂️ Shrink refined movies with smallest release available', [shrink(job, handlers)]))
+    .command(typed('report', '🚩 Replace archived movies reported from Plex with their best release', [report(job, handlers)]))
     .command(keepInTouch(job, handlers))
-    .command(migrate(job, handlers))
-    .command(migrateSonarr(job, handlers))
+    .command({ ...migrate(job, handlers), builder: (yargs) => yargs.command(migrateSonarr(job, handlers)) })
     .scriptName('sensorr')
     .locale('en')
     .detectLocale(false)
+    .strictCommands()
     .fail(false)
 
   try {

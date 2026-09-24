@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Query, Sse } from '@nestjs/common'
 import { Observable } from 'rxjs'
+import { isJob } from '@sensorr/sensorr'
 import { JobsService } from './jobs.service'
 import { Log as LogDocument } from '../logs/log.schema'
 import { SensorrService } from '../sensorr/sensorr.service'
@@ -29,12 +30,12 @@ export class JobsController implements OnApplicationBootstrap {
 
   @Post()
   async runJob(@Body() body) {
-    if (!this.sensorrService.ALLOWED_COMMANDS.includes(body.command)) {
-      throw new HttpException(`Unknown Sensorr command "${body.command}"`, 404)
+    if (!isJob(body.command, body.type)) {
+      throw new HttpException(`Unknown Sensorr job "${[body.command, body.type].filter(Boolean).join(' ')}"`, 404)
     }
 
     try {
-      const job = await this.sensorrService.runProcess(body.command)
+      const job = await this.sensorrService.runProcess(body.command, body.type)
       return { success: true, job }
     } catch (err) {
       this.logger.error(err)
