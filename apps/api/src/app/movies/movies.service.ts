@@ -81,7 +81,9 @@ export class MoviesService {
             await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs')
 
             if (release.job !== 'manual') {
-              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+              const files = releases.filter(({ from }) => from === 'sync')
+              const accepted = (files.length && typeof release.size === 'number') ? { accepted: release.size - files.reduce((sum, file) => sum + (file.size || 0), 0) } : {}
+              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1, ...accepted } })
             }
           } else {
             await this.sensorrService.removeRelease(release)

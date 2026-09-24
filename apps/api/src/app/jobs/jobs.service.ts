@@ -22,7 +22,7 @@ export class JobsService {
       end: Math.max(acc?.end || 0, new Date(timestamp).getTime()),
     } : {}),
     messages: [...(acc?.messages || []), message].filter(m => !!m),
-    meta: { ...acc?.meta, ...meta, summary: { ...acc?.meta?.summary, ...summary, treated: (summary?.treated || 0) + (acc?.meta?.summary?.treated || 0) } },
+    meta: { ...acc?.meta, ...meta, summary: { ...acc?.meta?.summary, ...summary, treated: (summary?.treated || 0) + (acc?.meta?.summary?.treated || 0), ...((typeof summary?.accepted === 'number' || typeof acc?.meta?.summary?.accepted === 'number') ? { accepted: (summary?.accepted || 0) + (acc?.meta?.summary?.accepted || 0) } : {}) } },
   })
 
   constructor(

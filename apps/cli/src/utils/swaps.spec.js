@@ -1,4 +1,4 @@
-import { settleSwaps, OVERDUE_AFTER } from './swaps'
+import { settleSwaps, spaceOf, OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
 const old = { id: 'plex://movie/a#1', size: 5864708518 }
@@ -75,5 +75,20 @@ describe('settleSwaps', () => {
 
     expect(overdue.overdue).toBe(true)
     expect(settleSwaps([overdue], both, { cleanup: true, now }).releases[0]).not.toHaveProperty('overdue')
+  })
+})
+
+describe('spaceOf', () => {
+  // Sans Sarah, rien ne va !, proposed by the shrink job in4fjcb on 2026-09-20
+  const sarah = { releases: [{ from: 'sync', size: 9393388028 }], release: { size: 5587867192 } }
+
+  it('sums, over the proposals, the proposed size minus every Plex file of the movie', () => {
+    const twice = { releases: [{ from: 'sync', size: 4000000000 }, { from: 'sync', size: 3000000000 }, { from: 'refine', size: 1 }], release: { size: 5000000000 } }
+
+    expect(spaceOf([sarah, twice])).toEqual({ proposed: (5587867192 - 9393388028) + (5000000000 - 7000000000) })
+  })
+
+  it('tells nothing when no proposal has a file on Plex to compare with', () => {
+    expect(spaceOf([{ releases: [], release: { size: 1 } }])).toEqual({})
   })
 })
