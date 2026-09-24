@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Policy } from '@sensorr/sensorr'
+import { Policy, scoredTitle } from '@sensorr/sensorr'
 import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
@@ -305,7 +305,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
         }
 
         if (state.metadata.command === 'refine') {
-          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: r.original })), null)
+          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: scoredTitle(r) })), null)
 
           const current = {
             score: Math.max(...scoreboard.map(({ score }) => score)),
@@ -327,7 +327,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             return
           }
         } else if (state.metadata.command === 'shrink') {
-          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: r.original })), null)
+          const scoreboard = policy.apply(movie.releases.map(({ meta, ...r }) => ({ ...r, title: scoredTitle(r) })), null)
 
           const current = {
             score: Math.max(...scoreboard.map(({ score }) => score)),

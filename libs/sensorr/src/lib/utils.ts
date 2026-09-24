@@ -15,3 +15,7 @@ export const clean = (string) => (string || '')
   .replace('œ', 'oe')
   .replace(/\s+/g, ' ')
   .trim()
+
+// The name a stored release is scored on. Sync builds its `title` from the Plex streams, while
+// the file name alone often says nothing (`Brazil`); any other release keeps its indexer name.
+export const scoredTitle = (release) => release.from === 'sync' ? release.title : release.original

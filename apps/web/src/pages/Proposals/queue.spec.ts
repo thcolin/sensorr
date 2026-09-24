@@ -1,3 +1,4 @@
+import { Policy } from '@sensorr/sensorr'
 import { arrange, balanceOf, decide, groupOf, itemOf, matches } from './queue'
 
 const GB = 1024 ** 3
@@ -193,5 +194,15 @@ describe('queue', () => {
 
     expect(decide(metadata, 'x265', 'retry')).toEqual({ releases: [metadata.releases[0], { ...accepted, proposal: true, choice: true }] })
     expect(decide(metadata, 'x265', 'drop')).toEqual({ releases: [metadata.releases[0]] })
+  })
+  it('compares a Plex file on the name sync built from its streams, not on its file name', () => {
+    const scored = new Policy({ ...policy, require: { resolution: ['1080p'] } } as any)
+    const owned = { id: 'plex://movie/a#1', from: 'sync', title: 'Brazil.1985.MULTi.1080p.x264.AC3-NOTEAM', original: 'Brazil', size: 8 * GB }
+    const proposed = { id: 'b', from: 'refine', proposal: true, title: 'Brazil.1985.MULTi-VFF.1080p.BluRay.x264-B', original: 'Brazil.1985.MULTi-VFF.1080p.BluRay.x264-B', size: 7 * GB }
+    const item = itemOf({ id: 1 }, [owned, proposed], scored)
+
+    expect(item.owned[0].meta).toMatchObject({ resolution: '1080p', language: 'MULTi' })
+    expect(item.diff.rows.find(({ axis }) => axis === 'language')).toMatchObject({ from: 'MULTi', to: 'MULTi-VFF' })
+    expect(item.diff.rows.find(({ axis }) => axis === 'resolution')).toMatchObject({ from: '1080p', to: '1080p' })
   })
 })
