@@ -1,4 +1,5 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue } from './shows'
+import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
 
@@ -127,6 +128,17 @@ describe('isImportable', () => {
     expect(isImportable({ torrent, proposal: true })).toBe(false)
     expect(isImportable({ accepted_at: now })).toBe(false)
     expect(isImportable({ torrent: { name: 'Show', files: [] } })).toBe(false)
+  })
+})
+
+describe('isReleaseOverdue', () => {
+  it('marks an accepted release overdue a week after it was accepted', () => {
+    expect(isReleaseOverdue({ accepted_at: now - OVERDUE_AFTER - 1 }, now)).toBe(true)
+    expect(isReleaseOverdue({ accepted_at: now - OVERDUE_AFTER }, now)).toBe(false)
+  })
+
+  it('never marks a release without an acceptance date', () => {
+    expect(isReleaseOverdue({}, now)).toBe(false)
   })
 })
 

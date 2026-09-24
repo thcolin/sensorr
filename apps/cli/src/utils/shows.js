@@ -1,6 +1,7 @@
 import path from 'node:path'
 import oleoo from 'oleoo'
 import sanitizeFilename from 'sanitize-filename'
+import { OVERDUE_AFTER } from './swaps'
 export { fetchShow } from '@sensorr/tmdb'
 
 const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
@@ -87,6 +88,9 @@ export const INCOMPLETE = '.!qB'
 
 // An accepted release, or one downloaded without a proposal, is imported once, and only when its .torrent was read
 export const isImportable = (release) => !release.proposal && !release.imported_at && !!release.torrent?.files?.length
+
+// Same rule as an accepted movie swap: a release still not imported a week after it was accepted is overdue
+export const isReleaseOverdue = (release, now) => now - (release.accepted_at || now) > OVERDUE_AFTER
 
 // `listing` maps a path under the staging folder to its size, qBittorrent suffixes a file with `.!qB` until it is complete
 export const isReleaseFinished = (release, listing) => release.torrent.files.every(({ path: file, size }) => (

@@ -6,7 +6,7 @@ import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { fetchSensorrShows, isImportable, isReleaseFinished, importLinksOf, showFolderOf, INCOMPLETE } from '../utils/shows'
+import { fetchSensorrShows, isImportable, isReleaseFinished, isReleaseOverdue, importLinksOf, showFolderOf, INCOMPLETE } from '../utils/shows'
 
 const meta = {
   command: 'import',
@@ -96,7 +96,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      let imported = 0, pending = 0, links = 0, warning = 0
+      let imported = 0, pending = 0, links = 0, warning = 0, late = 0
       const { library, staging } = state.shows
       setStatus('loading')
 
@@ -117,17 +117,26 @@ const ImportShowsReleasesTask = ({ ...props }) => {
           }))
 
           let episodes = null
-          const done = []
+          const done = [], overdue = []
+          const now = Date.now()
+          const fetchEpisodes = async () => {
+            const { uri, params, init } = api.query.shows.getShowEpisodes({ params: { id: show.id } })
+            return api.fetch(uri, params, init)
+          }
 
           for (const release of show.releases.filter(isImportable)) {
             if (!isReleaseFinished(release, await listingOf(staging, release))) {
               pending++
+
+              if (!release.overdue && isReleaseOverdue(release, now)) {
+                overdue.push(release)
+              }
+
               continue
             }
 
             if (!episodes) {
-              const { uri, params, init } = api.query.shows.getShowEpisodes({ params: { id: show.id } })
-              episodes = await api.fetch(uri, params, init)
+              episodes = await fetchEpisodes()
             }
 
             let retry = false
@@ -156,13 +165,33 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             }
           }
 
-          if (done.length) {
-            const now = Date.now()
+          // Its episodes are released before the mark is written, so a failed write only repeats this next run
+          if (overdue.length) {
+            episodes = episodes || await fetchEpisodes()
+
+            for (const release of overdue) {
+              const released = episodes.filter((episode) => episode.release === release.id)
+
+              if (released.length) {
+                const { uri, params, init } = api.query.episodes.postEpisodes({ body: released.reduce((acc, { id }) => ({ ...acc, [id]: { release: null } }), {}) })
+                await api.fetch(uri, params, init)
+              }
+
+              late++
+              state.logger.warn({ message: `⏳ "${release.title}" of "${show.name}" not imported a week after it was accepted, ${released.length} episodes searched again`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), release: { id: release.id, title: release.title }, overdue: true, released: released.length } })
+            }
+          }
+
+          if (done.length || overdue.length) {
             const { uri, params, init } = api.query.shows.postShows({
               body: {
                 [show.id]: {
-                  ...(!show.path ? { path: folder } : {}),
-                  releases: show.releases.map((release) => done.includes(release.id) ? { ...release, imported_at: now } : release),
+                  ...(!show.path && done.length ? { path: folder } : {}),
+                  releases: show.releases.map(({ overdue: mark, ...release }) => (
+                    done.includes(release.id) ? { ...release, imported_at: now } :
+                    (mark || overdue.some(({ id }) => id === release.id)) ? { ...release, overdue: true } :
+                    release
+                  )),
                 },
               },
             })
@@ -175,7 +204,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
         }
       }
 
-      state.logger.info({ message: `📥 Imported ${imported} show releases, ${links} files linked, ${pending} still downloading`, metadata: { ...state.metadata, summary: { imports: { success: imported, pending, links, warning } } } })
+      state.logger.info({ message: `📥 Imported ${imported} show releases, ${links} files linked, ${pending} still downloading, ${late} newly overdue`, metadata: { ...state.metadata, summary: { imports: { success: imported, pending, links, warning, overdue: late } } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> releases imported, <Text bold={true}>{links}</Text> files linked, <Text bold={true}>{pending}</Text> still downloading</Text> }))
       setStatus('done')
