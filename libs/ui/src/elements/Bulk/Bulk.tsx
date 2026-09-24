@@ -291,10 +291,10 @@ UIBulk.styles = {
     },
     '>button + button': separated,
     '>button:first-of-type': {
-      paddingLeft: 2,
+      paddingLeft: 0,
     },
     '>button:last-of-type': {
-      paddingRight: 2,
+      paddingRight: 0,
     },
     '&[data-start=true]': {
       maskImage: 'linear-gradient(to right, transparent, black 2em)',
@@ -315,7 +315,7 @@ UIBulk.styles = {
     gap: 7,
     minWidth: '8em',
     height: '3em',
-    paddingX: 3,
+    paddingX: 1,
     fontFamily: 'body',
     fontWeight: 'body',
     whiteSpace: 'nowrap',
@@ -368,8 +368,8 @@ UIBulk.styles = {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
-      paddingLeft: 2,
-      paddingRight: 3,
+      paddingLeft: 0,
+      paddingRight: 1,
       fontFamily: 'body',
       fontWeight: 'body',
       whiteSpace: 'nowrap',
