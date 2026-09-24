@@ -6,10 +6,11 @@ import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
 const MARKS = {
-  prefer: '⭐',
-  avoid: '⛔',
-  source: '📀',
-  target: '💿',
+  prefer: { label: '⭐', title: 'Prefer' },
+  avoid: { label: '⛔', title: 'Avoid' },
+  source: { label: '📀', title: 'Source: an owned release carries one of them' },
+  target: { label: '💿', title: 'Target: the proposed release carries one of them' },
+  ignore: { label: '🔕', title: 'Ignored' },
 }
 
 // A click moves a value to the next group of `groups`, then back to 🔕. Swaps passes
@@ -28,9 +29,9 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RU
     return [
       ...groups.flatMap(group => {
         const values = props.value.filter(v => v.group === group)
-        return values.length ? [{ label: MARKS[group] }, ...values, { separator: true }] : []
+        return values.length ? [MARKS[group], ...values, { separator: true }] : []
       }),
-      ...(ignore.length ? [{ label: '🔕' }, ...ignore, { separator: true }] : []),
+      ...(ignore.length ? [MARKS.ignore, ...ignore, { separator: true }] : []),
     ]
   }, [props.value, options, groups])
 
