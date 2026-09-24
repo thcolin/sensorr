@@ -86,6 +86,8 @@ export const searchUnits = (show: { status?: string }, episodes: ShowEpisode[], 
   const targets = (list: ShowEpisode[]) => list.map(({ season_number, episode_number }) => ({ season: season_number, episode: episode_number }))
   const aired = (list: ShowEpisode[]) => list.length > 0 && list.every(({ air_date }) => air_date && new Date(air_date).getTime() <= new Date(now).getTime() - DAY)
   const owned = (list: ShowEpisode[]) => list.some(({ monitored, files }) => monitored && files?.length)
+  // A pack downloads its whole scope, so every episode of it must be monitored, and wanted unless it is owned already
+  const asked = (list: ShowEpisode[]) => list.every(episode => episode.monitored && ['wanted', 'owned'].includes(episodeStatus(episode, now)))
   const ofSeason = (list: ShowEpisode[], season: number) => list.filter(({ season_number }) => season_number === season)
 
   const wanted = episodes
@@ -93,7 +95,7 @@ export const searchUnits = (show: { status?: string }, episodes: ShowEpisode[], 
     .sort((a, b) => (a.season_number - b.season_number) || (a.episode_number - b.episode_number))
   const regular = episodes.filter(({ season_number }) => season_number !== 0)
   const packable = [...new Set(wanted.map(({ season_number }) => season_number))]
-    .filter(season => season !== 0 && aired(ofSeason(episodes, season)))
+    .filter(season => season !== 0 && aired(ofSeason(episodes, season)) && asked(ofSeason(episodes, season)))
   const pack = (season: number, fallback = false): ShowUnit => ({
     type: 'season',
     season,
@@ -103,7 +105,7 @@ export const searchUnits = (show: { status?: string }, episodes: ShowEpisode[], 
   const series = wanted.filter(({ season_number }) => season_number !== 0)
 
   return [
-    ...((ENDED.includes(show?.status) && series.length && aired(regular) && !owned(regular)) ? [{ type: 'series', episodes: targets(series) } as ShowUnit] : []),
+    ...((ENDED.includes(show?.status) && series.length && aired(regular) && !owned(regular) && asked(regular)) ? [{ type: 'series', episodes: targets(series) } as ShowUnit] : []),
     ...packable.filter(season => !owned(ofSeason(episodes, season))).map(season => pack(season)),
     ...wanted.map(episode => ({ type: 'episode', season: episode.season_number, episode: episode.episode_number, episodes: targets([episode]) } as ShowUnit)),
     ...packable.filter(season => owned(ofSeason(episodes, season))).map(season => pack(season, true)),

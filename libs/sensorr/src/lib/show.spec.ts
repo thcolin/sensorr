@@ -229,9 +229,30 @@ describe('searchUnits', () => {
       .map(episode => ({ ...episode, monitored: episode.season_number === 3 || (episode.season_number === 0 && episode.episode_number === 2) }))
     const units = searchUnits(friends, own(episodes, 1, 1), now)
 
-    expect(labels(units.filter(({ type }) => type !== 'episode'))).toEqual(['series', 'season:3'])
+    expect(labels(units.filter(({ type }) => type !== 'episode'))).toEqual(['season:3'])
     expect(labels(units.filter(({ type }) => type === 'episode')).slice(0, 2)).toEqual(['episode:0:2', 'episode:3:1'])
     expect(units[0].episodes).toHaveLength(25)
+  })
+
+  it('never packs a season or a series with an episode outside season 0 that is unmonitored or already proposed', () => {
+    const unmonitored = friendsEpisodes().map(e => (e.season_number === 2 && e.episode_number === 7) ? { ...e, monitored: false } : e)
+    const proposed = friendsEpisodes().map(e => (e.season_number === 4 && e.episode_number === 1) ? { ...e, release: 'guid' } : e)
+
+    expect(labels(searchUnits(friends, unmonitored, now).filter(({ type }) => type !== 'episode'))).toEqual([
+      'season:1', 'season:3', 'season:4', 'season:5', 'season:6', 'season:7', 'season:8', 'season:9', 'season:10',
+    ])
+    expect(searchUnits(friends, unmonitored, now).filter(({ type, season }) => type === 'episode' && season === 2)).toHaveLength(23)
+    expect(labels(searchUnits(friends, proposed, now).filter(({ type }) => type !== 'episode'))).toEqual([
+      'season:1', 'season:2', 'season:3', 'season:5', 'season:6', 'season:7', 'season:8', 'season:9', 'season:10',
+    ])
+  })
+
+  it('keeps the last resort pack of a season whose other episodes are all monitored and wanted', () => {
+    const owned = own(friendsEpisodes(), 5, 3)
+    const unmonitored = owned.map(e => (e.season_number === 5 && e.episode_number === 9) ? { ...e, monitored: false } : e)
+
+    expect(labels(searchUnits(friends, owned, now).filter(({ fallback }) => fallback))).toEqual(['season:5:true'])
+    expect(labels(searchUnits(friends, unmonitored, now).filter(({ fallback }) => fallback))).toEqual([])
   })
 
   it('never packs a season or a series with an episode not aired for a full day', () => {
