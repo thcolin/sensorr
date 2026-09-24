@@ -6,6 +6,14 @@ import { Select } from './Select'
 
 const SortableSelectContainer = SortableContainer(Select) as any
 
+// The fill of a value in each group; 🔕 values stay outlined.
+const fills = (theme) => ({
+  prefer: theme.rawColors.primaryDarker,
+  avoid: theme.rawColors.error,
+  source: theme.rawColors.accentDarkest,
+  target: theme.rawColors.primaryDarker,
+})
+
 export const SortableSelect = ({ value, onChange, requirable = false, ...props }) => {
   const { theme } = useThemeUI()
 
@@ -33,7 +41,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
             alignItems: 'stretch',
             margin: '0.25em',
             border: `1px solid`,
-            borderColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[props.data.group] || '#FFF',
+            borderColor: fills(theme)[props.data.group] || '#FFF',
             borderRadius: 2,
           }}
         >
@@ -89,8 +97,8 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
       ...style,
       position: 'relative',
       flexShrink: 0,
-      backgroundColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || 'transparent',
-      color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
+      backgroundColor: fills(theme)[group] || 'transparent',
+      color: '#FFF',
       margin: '0px',
       zIndex: 5,
       borderRadius: '0px',
@@ -112,9 +120,9 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
         display: 'none',
       },
     }),
-    multiValueLabel: (style, { data: { group } }) => ({
+    multiValueLabel: (style) => ({
       ...style,
-      color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
+      color: '#FFF',
       fontSize: '0.75em',
       fontFamily: (theme.fonts as any).monospace,
       fontWeight: 600,

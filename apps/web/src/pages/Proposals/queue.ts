@@ -190,10 +190,10 @@ export const arrange = (items, { threshold, skipped = {}, sort_by = { value: 'ti
   }))
 }
 
-// The release filters of Library (Controls/Oleoo.tsx), read here on each side of a swap:
-// ⭐ keeps a release that carries one of the values, ⛔ drops one that carries any. The
-// size range is in GB and its top mark means no upper bound. Values are keyed
-// `${side}_${filter}`, side being `current` or `proposed`.
+// The release filters of Library (Controls/Oleoo.tsx), read once for both sides of a
+// swap: 📀 `source` keeps a swap whose owned release carries one of the values, 💿
+// `target` one whose proposed release does. Values are keyed by filter. Each side has
+// its own size range, in GB, whose top mark means no upper bound.
 export const FILTERS = ['znab', 'resolution', 'source', 'encoding', 'dub', 'language', 'flags']
 
 export const SIZE_MAX = 50
@@ -202,27 +202,27 @@ const GB = 1024 ** 3
 
 const carries = (release, filter, values) => values.some(value => [].concat(release?.meta?.[filter]).includes(value))
 
-export const matchesRelease = (release, values, side) => {
-  const [min, max] = values[`${side}_size`] || [0, SIZE_MAX]
+const fits = (release, range) => {
+  const [min, max] = range || [0, SIZE_MAX]
   const size = (release?.size || 0) / GB
 
-  if (size < min || (max < SIZE_MAX && size > max)) {
-    return false
-  }
-
-  return FILTERS.every(filter => {
-    const rules = values[`${side}_${filter}`] || []
-    const prefer = rules.filter(({ group }) => group === 'prefer').map(({ value }) => value)
-    const avoid = rules.filter(({ group }) => group === 'avoid').map(({ value }) => value)
-
-    return (!prefer.length || carries(release, filter, prefer)) && !carries(release, filter, avoid)
-  })
+  return size >= min && (max >= SIZE_MAX || size <= max)
 }
 
-// The current side passes when any owned release does, as the release filters of Library.
+const valuesOf = (values, filter, group) => (values[filter] || []).filter(rule => rule.group === group).map(({ value }) => value)
+
+// The source side passes when one owned release carries a value of every filter, as the
+// release filters of Library.
 export const matches = (item, values) => (
-  (item.owned.length ? item.owned : [null]).some(release => matchesRelease(release, values, 'current')) &&
-  matchesRelease(item.proposal, values, 'proposed')
+  (item.owned.length ? item.owned : [null]).some(release => fits(release, values.current_size) && FILTERS.every(filter => {
+    const source = valuesOf(values, filter, 'source')
+    return !source.length || carries(release, filter, source)
+  })) &&
+  fits(item.proposal, values.proposed_size) &&
+  FILTERS.every(filter => {
+    const target = valuesOf(values, filter, 'target')
+    return !target.length || carries(item.proposal, filter, target)
+  })
 )
 
 // What the disk would weigh once every swap is accepted. Only the Plex files exist on

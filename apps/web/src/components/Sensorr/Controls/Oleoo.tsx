@@ -5,13 +5,19 @@ import { emojize } from '@sensorr/utils'
 import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
-// `avoidable={false}` drops the ⛔ group from the cycle. The API expresses avoid as
-// `$not: { $elemMatch }`, which means "no release of the movie", so on a screen that
-// asks about one release the control would have no effect.
-const RuleSortableSelect = ({ onChange, options, requirable = false, avoidable = true, ...props }) => {
+const MARKS = {
+  prefer: '⭐',
+  avoid: '⛔',
+  source: '📀',
+  target: '💿',
+}
+
+// A click moves a value to the next group of `groups`, then back to 🔕. Swaps passes
+// `['source', 'target']`: which side of the swap has to carry the value.
+const RULES = ['prefer', 'avoid']
+
+const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RULES, ...props }) => {
   const value = useMemo(() => {
-    const prefer = props.value.filter(v => v.group === 'prefer')
-    const avoid = props.value.filter(v => v.group === 'avoid')
     const ignore = [
       ...props.value.filter(v => !v.group && v.required),
       ...options
@@ -20,11 +26,13 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, avoidable =
     ]
 
     return [
-      ...(prefer.length ? [{ label: '⭐' }, ...prefer, { separator: true }] : []),
-      ...(avoidable && avoid.length ? [{ label: '⛔' }, ...avoid, { separator: true }] : []),
+      ...groups.flatMap(group => {
+        const values = props.value.filter(v => v.group === group)
+        return values.length ? [{ label: MARKS[group] }, ...values, { separator: true }] : []
+      }),
       ...(ignore.length ? [{ label: '🔕' }, ...ignore, { separator: true }] : []),
     ]
-  }, [props.value, options, avoidable])
+  }, [props.value, options, groups])
 
   const handleChange = useCallback((values, { action, removedValue } = { action: null, removedValue: null }) => {
     switch (action) {
@@ -32,32 +40,19 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, avoidable =
         onChange(values)
         return
       case 'remove-value':
-      case 'pop-value':
+      case 'pop-value': {
+        const next = groups[groups.indexOf(removedValue.group) + 1] || null
         onChange([
           ...values.filter(v => v.value),
-          {
-            ...removedValue,
-            ...({
-              [null as any]: {
-                group: 'prefer',
-              },
-              prefer: {
-                group: avoidable ? 'avoid' : null,
-                required: false,
-              },
-              avoid: {
-                group: null,
-                required: false,
-              },
-            }[removedValue.group]),
-          }
+          { ...removedValue, group: next, ...(removedValue.group ? { required: false } : {}) },
         ])
         return
+      }
       default:
         onChange(values.filter(v => v.value))
         return
     }
-  }, [onChange, avoidable])
+  }, [onChange, groups])
 
   return (
     <SortableSelect {...props} requirable={requirable} value={value} onChange={handleChange} />
