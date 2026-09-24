@@ -155,13 +155,16 @@ export class ShowsService {
 
   async getShows(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<ShowDocument>> {
     this.logger.log(`GetShows, params=${JSON.stringify(params)}, page=${page}`)
-    return this.showModel.paginate({
+    const res = await this.showModel.paginate({
       state: { $nin: ['ignored'] },
       ...(params.state ? {
         state: { $in: params.state.split('|') }
       } : {}),
       ...(params.policy ? {
         policy: { $in: params.policy.split('|') }
+      } : {}),
+      ...(params.status ? {
+        status: { $in: params.status.split('|') }
       } : {}),
       ...monitored(params.monitored),
       ...(params.requested_by ? {
@@ -189,6 +192,29 @@ export class ShowsService {
       sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], id: 1 },
       customLabels: LABELS,
     })
+
+    if (`${params.progress}` === 'true') {
+      const progress = await this.getProgress((res.results as any[]).map(({ _id }) => _id))
+      res.results = (res.results as any[]).map(show => ({ ...show, progress: progress[show._id] || { owned: 0, aired: 0 } })) as any
+    }
+
+    return res
+  }
+
+  // Same counts as `progressOf` from @sensorr/sensorr, specials left out
+  async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number } }> {
+    const counts = await this.episodeModel.aggregate([
+      { $match: { show_id: { $in: ids }, season_number: { $ne: 0 } } },
+      {
+        $group: {
+          _id: '$show_id',
+          owned: { $sum: { $cond: [{ $gt: [{ $size: { $ifNull: ['$files', []] } }, 0] }, 1, 0] } },
+          aired: { $sum: { $cond: [{ $and: [{ $gt: ['$air_date', null] }, { $lte: ['$air_date', new Date()] }] }, 1, 0] } },
+        },
+      },
+    ])
+
+    return counts.reduce((acc, { _id, owned, aired }) => ({ ...acc, [_id]: { owned, aired } }), {})
   }
 
   async getShow(id: number) {

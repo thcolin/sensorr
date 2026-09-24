@@ -92,3 +92,25 @@ export const buildShowSeasonsRequests = (
     params: { append_to_response: chunk.map((season) => `season/${season}`).join(',') },
   }))
 }
+
+// A show and every one of its episodes, specials included, in as few requests as TMDB allows
+export const fetchShow = async (tmdb: { fetch: (uri: string, params?: any) => Promise<any> }, id: number) => {
+  const raw = await tmdb.fetch(`tv/${id}`, { append_to_response: 'external_ids,alternative_titles' })
+  const numbers = (raw.seasons || []).map(({ season_number }) => season_number)
+  const seasons = []
+
+  for (const { uri, params } of buildShowSeasonsRequests(raw.id, Math.max(0, ...numbers)).filter(({ params }) => params.append_to_response)) {
+    const chunk = await tmdb.fetch(uri, params)
+    seasons.push(...numbers.map((number) => chunk[`season/${number}`]).filter(Boolean))
+  }
+
+  // buildShowSeasonsRequests starts at season 1
+  if (numbers.includes(0)) {
+    seasons.push(await tmdb.fetch(`tv/${raw.id}/season/0`))
+  }
+
+  return {
+    show: lightenShow(raw),
+    episodes: seasons.flatMap((season) => lightenEpisodes({ ...season, episodes: season.episodes || [] }, raw.id)),
+  }
+}

@@ -19,3 +19,12 @@ export const episodeStatus = (
 
   return episode.release ? 'proposed' : 'wanted'
 }
+
+// An episode TMDB has not dated yet has not aired, and a file counts even when its date is still ahead
+export const progressOf = (
+  episodes: { air_date?: string | Date | null, files?: any[] }[],
+  now: Date | number = Date.now(),
+): { owned: number, aired: number } => episodes.reduce((acc, episode) => ({
+  owned: acc.owned + (episode.files?.length ? 1 : 0),
+  aired: acc.aired + ((episode.air_date && new Date(episode.air_date).getTime() <= new Date(now).getTime()) ? 1 : 0),
+}), { owned: 0, aired: 0 })

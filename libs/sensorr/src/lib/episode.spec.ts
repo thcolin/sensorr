@@ -1,4 +1,4 @@
-import { episodeStatus } from './episode'
+import { episodeStatus, progressOf } from './episode'
 
 describe('episodeStatus', () => {
   const now = new Date('2026-09-24T12:00:00Z')
@@ -33,5 +33,28 @@ describe('episodeStatus', () => {
     expect(episodeStatus(aired, now)).toBe('wanted')
     expect(episodeStatus({ ...aired, air_date: '2026-09-24' }, now)).toBe('wanted')
     expect(episodeStatus(aired, now.getTime())).toBe('wanted')
+  })
+})
+
+describe('progressOf', () => {
+  const now = new Date('2026-09-24T12:00:00Z')
+  const files = [{ id: '1', size: 1, title: 'S01E01', original: 'Show.S01E01.mkv' }]
+
+  it('counts the episodes aired by now and the ones with a file', () => {
+    expect(progressOf([
+      { air_date: '2026-09-10', files },
+      { air_date: '2026-09-17', files: [] },
+      { air_date: '2026-09-24' },
+      { air_date: '2026-10-01' },
+      { air_date: null },
+    ], now)).toEqual({ owned: 1, aired: 3 })
+  })
+
+  it('counts a file even when TMDB dates its episode later', () => {
+    expect(progressOf([{ air_date: '2026-10-01', files }], now.getTime())).toEqual({ owned: 1, aired: 0 })
+  })
+
+  it('gives zero to no episode', () => {
+    expect(progressOf([], now)).toEqual({ owned: 0, aired: 0 })
   })
 })

@@ -1,4 +1,4 @@
-import { lightenShow, lightenEpisodes, buildShowSeasonsRequests } from '../shows'
+import { lightenShow, lightenEpisodes, buildShowSeasonsRequests, fetchShow } from '../shows'
 import * as fixtures from './shows.fixtures'
 
 describe('lightenShow', () => {
@@ -91,5 +91,32 @@ describe('buildShowSeasonsRequests', () => {
     expect(buildShowSeasonsRequests(1, 0)).toEqual([
       { uri: 'tv/1', params: { append_to_response: '' } },
     ])
+  })
+})
+
+describe('fetchShow', () => {
+  const season = (season_number, count) => ({
+    season_number,
+    episodes: Array(count).fill(null).map((foo, index) => ({ id: season_number * 100 + index + 1, season_number, episode_number: index + 1, name: `E${index + 1}`, crew: [] })),
+  })
+
+  it('fetches every season, specials included, and lightens show and episodes', async () => {
+    const calls = []
+    const tmdb = {
+      fetch: async (uri, params) => {
+        calls.push([uri, params?.append_to_response])
+        if (uri === 'tv/7/season/0') return season(0, 1)
+        if (!params.append_to_response.includes('season/')) return { id: 7, name: 'Show', credits: {}, seasons: [0, 1, 2, 21].map((season_number) => ({ season_number })) }
+        return params.append_to_response.split(',').reduce((acc, key) => ({ ...acc, [key]: season(Number(key.split('/')[1]), 2) }), { id: 7 })
+      },
+    }
+
+    const { show, episodes } = await fetchShow(tmdb, 7)
+
+    expect(calls.map(([uri]) => uri)).toEqual(['tv/7', 'tv/7', 'tv/7', 'tv/7/season/0'])
+    expect(calls[0][1]).toBe('external_ids,alternative_titles')
+    expect(show).not.toHaveProperty('credits')
+    expect(episodes.map(({ season_number }) => season_number)).toEqual([1, 1, 2, 2, 21, 21, 0])
+    expect(episodes[0]).toEqual({ id: 101, show_id: 7, season_number: 1, episode_number: 1, name: 'E1', overview: undefined, air_date: undefined, runtime: undefined, still_path: undefined })
   })
 })

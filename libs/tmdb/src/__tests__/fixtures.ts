@@ -1,4 +1,5 @@
 import { Movie, Person, Cast, Crew } from '../interfaces'
+import { show } from './shows.fixtures'
 
 export const genres = [
   {
@@ -1269,4 +1270,5 @@ export default {
   person,
   crew,
   cast,
+  show,
 }
