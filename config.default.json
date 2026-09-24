@@ -49,6 +49,10 @@
     "sync-shows": {
       "cron": "0 2 * * *",
       "paused": true
+    },
+    "import-shows": {
+      "cron": "*/10 * * * *",
+      "paused": true
     }
   },
   "plex": {},

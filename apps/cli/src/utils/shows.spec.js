@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER } from './shows'
+import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf } from './shows'
 
 const now = 1790000000000
 
@@ -121,5 +121,87 @@ describe('sonarrEpisodesOf', () => {
 
   it('tells the Sonarr episodes TMDB does not number', () => {
     expect(sonarrEpisodesOf(episodes, sonarr, show).unmatched).toEqual([sonarr[2]])
+  })
+})
+
+describe('isImportable', () => {
+  const torrent = { name: 'Show.S01E01.mkv', files: [{ path: 'Show.S01E01.mkv', size: 10 }] }
+
+  it('imports an accepted release whose .torrent was read, once', () => {
+    expect(isImportable({ torrent, accepted_at: now })).toBe(true)
+    expect(isImportable({ torrent })).toBe(true)
+    expect(isImportable({ torrent, imported_at: now })).toBe(false)
+  })
+
+  it('leaves a pending proposal and a release without its files', () => {
+    expect(isImportable({ torrent, proposal: true })).toBe(false)
+    expect(isImportable({ accepted_at: now })).toBe(false)
+    expect(isImportable({ torrent: { name: 'Show', files: [] } })).toBe(false)
+  })
+})
+
+describe('isReleaseFinished', () => {
+  const release = { torrent: { name: 'Show.S01', files: [{ path: 'Show.S01/Show.S01E01.mkv', size: 10 }, { path: 'Show.S01/Show.S01E02.mkv', size: 20 }] } }
+
+  it('finishes a release once every file is there at its full size', () => {
+    expect(isReleaseFinished(release, { 'Show.S01/Show.S01E01.mkv': 10, 'Show.S01/Show.S01E02.mkv': 20 })).toBe(true)
+  })
+
+  it('waits for a missing file, or one smaller than announced', () => {
+    expect(isReleaseFinished(release, { 'Show.S01/Show.S01E01.mkv': 10 })).toBe(false)
+    expect(isReleaseFinished(release, { 'Show.S01/Show.S01E01.mkv': 10, 'Show.S01/Show.S01E02.mkv': 19 })).toBe(false)
+  })
+
+  it('waits for a file qBittorrent still writes', () => {
+    expect(isReleaseFinished(release, { 'Show.S01/Show.S01E01.mkv': 10, 'Show.S01/Show.S01E02.mkv.!qB': 20 })).toBe(false)
+    expect(isReleaseFinished(release, { 'Show.S01/Show.S01E01.mkv': 10, 'Show.S01/Show.S01E02.mkv': 20, 'Show.S01/Show.S01E02.mkv.!qB': 20 })).toBe(false)
+  })
+})
+
+describe('importTargetOf', () => {
+  it('names the show folder after its name and first air year', () => {
+    expect(importTargetOf('/tvshows', { name: 'Breaking Bad', first_air_date: '2008-01-20T00:00:00.000Z' }, 5, 'Breaking.Bad.S05/Breaking.Bad.S05E14.mkv')).toBe('/tvshows/Breaking Bad (2008)/Season 05/Breaking.Bad.S05E14.mkv')
+  })
+
+  it('keeps the folder the show already has', () => {
+    expect(importTargetOf('/tvshows', { name: 'Friends', first_air_date: '1994-09-22', path: 'Friends' }, 10, 'Friends.S10E17.mkv')).toBe('/tvshows/Friends/Season 10/Friends.S10E17.mkv')
+  })
+
+  it('drops what a folder name cannot hold', () => {
+    expect(showFolderOf({ name: 'Law & Order: Special Victims Unit', first_air_date: '1999-09-20' })).toBe('Law & Order Special Victims Unit (1999)')
+    expect(showFolderOf({ name: 'Untitled' })).toBe('Untitled')
+  })
+})
+
+describe('importLinksOf', () => {
+  const show = { name: 'The Office', first_air_date: '2005-03-24' }
+  const episodes = [
+    { season_number: 3, episode_number: 23, files: [{ id: '1' }] },
+    { season_number: 3, episode_number: 24, files: [] },
+    { season_number: 3, episode_number: 25 },
+    { season_number: 4, episode_number: 1, files: [] },
+  ]
+  const release = {
+    coverage: [{ season: 3, episode: 23 }, { season: 3, episode: 24 }, { season: 3, episode: 25 }],
+    torrent: {
+      name: 'The.Office.US.S03',
+      files: [
+        { path: 'The.Office.US.S03/The.Office.US.S03E23.mkv', size: 1 },
+        { path: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', size: 2 },
+        { path: 'The.Office.US.S03/The.Office.US.S04E01.mkv', size: 3 },
+        { path: 'The.Office.US.S03/Sample/The.Office.US.S03E24E25.sample.mkv', size: 4 },
+        { path: 'The.Office.US.S03/The.Office.US.S03.nfo', size: 5 },
+      ],
+    },
+  }
+
+  it('links each file to the covered episodes without files it holds', () => {
+    expect(importLinksOf(release, show, episodes, '/tvshows')).toEqual([
+      { source: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24E25.mkv', season: 3, episodes: [24, 25] },
+    ])
+  })
+
+  it('links nothing for a release covering episodes that all have files', () => {
+    expect(importLinksOf(release, show, episodes.map((episode) => ({ ...episode, files: [{ id: '1' }] })), '/tvshows')).toEqual([])
   })
 })

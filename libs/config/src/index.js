@@ -207,6 +207,18 @@ const config = convict({
         default: true,
       },
     },
+    'import-shows': {
+      cron: {
+        doc: 'Import-shows job cron, finished show releases are hard linked from the staging folder into the library',
+        format: 'String',
+        default: '*/10 * * * *',
+      },
+      paused: {
+        doc: 'Pause Import-shows job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
   },
   plex: {
     url: {

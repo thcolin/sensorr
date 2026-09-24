@@ -1,3 +1,6 @@
+import path from 'node:path'
+import oleoo from 'oleoo'
+import sanitizeFilename from 'sanitize-filename'
 import { lightenShow, lightenEpisodes, buildShowSeasonsRequests } from '@sensorr/tmdb'
 
 const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
@@ -76,4 +79,36 @@ export const sonarrEpisodesOf = (episodes, sonarr, show) => {
     episodes: episodes.map((episode) => copied.get(episode.id) || { ...episode, monitored: monitoredOf(episode, show, known) }),
     unmatched: sonarr.filter(({ seasonNumber, episodeNumber }) => !numbers.has(`${seasonNumber}:${episodeNumber}`)),
   }
+}
+
+export const INCOMPLETE = '.!qB'
+
+// An accepted release, or one downloaded without a proposal, is imported once, and only when its .torrent was read
+export const isImportable = (release) => !release.proposal && !release.imported_at && !!release.torrent?.files?.length
+
+// `listing` maps a path under the staging folder to its size, qBittorrent suffixes a file with `.!qB` until it is complete
+export const isReleaseFinished = (release, listing) => release.torrent.files.every(({ path: file, size }) => (
+  listing[file] === size && !(`${file}${INCOMPLETE}` in listing)
+))
+
+export const showFolderOf = (show) => show.path || sanitizeFilename(show.first_air_date ? `${show.name} (${new Date(show.first_air_date).getUTCFullYear()})` : show.name)
+
+export const importTargetOf = (library, show, season, file) => path.join(library, showFolderOf(show), `Season ${`${season}`.padStart(2, '0')}`, path.basename(file))
+
+// A file goes to the episodes oleoo reads in its name, when the release covers them and none has a file yet; samples never do
+export const importLinksOf = (release, show, episodes, library) => {
+  const keyOf = (season, episode) => `${season}:${episode}`
+  const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
+  const missing = new Set(episodes.filter(({ files }) => !files?.length).map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
+
+  return release.torrent.files.flatMap(({ path: file }) => {
+    if (/\bsamples?\b/i.test(file)) {
+      return []
+    }
+
+    const { season, episodes: numbers } = oleoo.parse(path.basename(file))
+    const matched = typeof season === 'number' ? numbers.filter((number) => covered.has(keyOf(season, number)) && missing.has(keyOf(season, number))) : []
+
+    return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched }] : []
+  })
 }

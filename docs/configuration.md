@@ -53,6 +53,8 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.refresh-shows.paused` | `boolean` | `true` | Pause Refresh-shows job |
 | `jobs.sync-shows.cron` | `string` | `0 2 * * *` | Sync-shows job cron |
 | `jobs.sync-shows.paused` | `boolean` | `true` | Pause Sync-shows job |
+| `jobs.import-shows.cron` | `string` | `*/10 * * * *` | Import-shows job cron, finished show releases are hard linked from the staging folder into the library |
+| `jobs.import-shows.paused` | `boolean` | `true` | Pause Import-shows job |
 
 ## Plex
 

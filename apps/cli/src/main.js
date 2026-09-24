@@ -11,6 +11,7 @@ import refresh from './commands/refresh'
 import refreshShows from './commands/refresh-shows'
 import sync from './commands/sync'
 import syncShows from './commands/sync-shows'
+import importShows from './commands/import-shows'
 import refine from './commands/refine'
 import shrink from './commands/shrink'
 import report from './commands/report'
@@ -71,6 +72,7 @@ const main = async () => {
     .command(refreshShows(job, handlers))
     .command(sync(job, handlers))
     .command(syncShows(job, handlers))
+    .command(importShows(job, handlers))
     .command(refine(job, handlers))
     .command(shrink(job, handlers))
     .command(report(job, handlers))
