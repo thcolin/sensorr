@@ -19,7 +19,7 @@ import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Overdue, Placehol
 import { Gestures } from '../../components/Sensorr/Gestures'
 import { SensorrSingleton } from '../../components/Sensorr'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, isOverdue, itemOf, matches } from './queue'
+import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, isOverdue, itemOf, matches, proposalDiff } from './queue'
 
 const MB = 1024 * 1024
 
@@ -723,7 +723,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     const { emoji, icon, label, color } = VERDICTS[verdict] as any
     const [target] = targets
     // A replaced swap is announced with the release picked in its place.
-    const item = target.pick ? { ...target, proposal: target.pick, diff: { ...target.diff, size: typeof target.diff.size === 'number' ? target.diff.size + (target.pick.size || 0) - (target.proposal.size || 0) : null } } : target
+    const item = target.pick ? { ...target, proposal: target.pick, diff: proposalDiff(target.owned, target.pick, target.policy) } : target
     const { entity, proposal } = item
     const year = entity?.release_date && new Date(entity.release_date).getFullYear()
     const message = targets.length > 1 ? `**${targets.length}** proposals` : (

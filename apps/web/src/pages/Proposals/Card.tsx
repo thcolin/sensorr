@@ -179,7 +179,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} selected={selected} selectedVisible={selectedVisible} onSelectedChange={onSelectedChange} />
             </div>
             <div sx={UIActive.styles.ticket}>
-              <MovieActions entity={entity} metadata={metadata} ready={!disabled && !leaving} toggleSensorr={onSearch} />
+              <MovieActions entity={entity} metadata={metadata} ready={!disabled} toggleSensorr={onSearch} />
             </div>
           </div>
           <div sx={UIActive.styles.body}>

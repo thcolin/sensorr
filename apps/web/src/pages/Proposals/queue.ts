@@ -259,7 +259,7 @@ export const balanceOf = (items) => items.reduce((balance, item) => {
 export const decide = (metadata, releaseId, verdict: Verdict, pick = null) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
 
-  if (verdict === 'replace' && pick?.id !== releaseId) {
+  if (verdict === 'replace' && pick && pick.id !== releaseId) {
     const refused = decide(metadata, releaseId, 'refuse').releases
     return {
       releases: [...refused.filter(({ id }) => id !== releaseId), pick, ...refused.filter(({ id }) => id === releaseId)],
