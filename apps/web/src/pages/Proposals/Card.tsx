@@ -166,7 +166,6 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
   const [editing, setEditing] = useState(false)
   const facts = useMemo(() => transformMovieDetails({ ...entity, ...(movie || {}) }), [entity, movie])
-  // A report names the movie, not one of its versions: it reads under every owned one.
   const report = (item.entity?.reports || []).reduce((latest, report) => (!latest || report.date > latest.date) ? report : latest, null)
 
   return (
