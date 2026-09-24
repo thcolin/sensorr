@@ -442,7 +442,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const mobile = useResponsiveValue([true, false])
   const connected = useSyncExternalStore(online.subscribe, online.get)
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
-  // A value stored by an earlier version of the filters has no field anymore.
+  // The stored state outlives a change of fields: keep only the keys the pane still has.
   const values = useMemo(() => ({ ...DEFAULTS, ...Object.fromEntries(Object.keys(DEFAULTS).filter(key => typeof stored?.[key] !== 'undefined').map(key => [key, stored[key]])) }), [stored])
   const threshold = THRESHOLDS.includes(values.threshold) ? values.threshold : DEFAULTS.threshold
 
