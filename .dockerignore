@@ -39,6 +39,7 @@ testem.log
 .local.env
 database-keyfile
 config.json
+config.json.bak
 
 # System Files
 .DS_Store

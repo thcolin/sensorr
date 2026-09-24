@@ -1,10 +1,12 @@
 import fs from 'fs/promises'
+import { copyFileSync, readFileSync, writeFileSync } from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import config from '@sensorr/config'
+import { migrateJobs } from './migrate'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -17,6 +19,7 @@ export class ConfigService implements OnModuleInit {
   constructor(
     private eventEmitter: EventEmitter2,
   ) {
+    this.migrate()
     this.config.loadFile(this.file)
     this.config.set('docker', process.env.NX_API_DOCKER_ENV === 'true')
     this.config.set('vapidPublicKey', process.env.NX_SENSORR_VAPID_PUBLIC_KEY)
@@ -32,6 +35,20 @@ export class ConfigService implements OnModuleInit {
       await this.write()
       this.logger.log(`Generated Plex client identifier "${identifier}"`)
     }
+  }
+
+  // Runs before the file is loaded: convict would keep the old job keys next to the new ones
+  private migrate() {
+    const raw = JSON.parse(readFileSync(this.file, 'utf8'))
+    const migrated = migrateJobs(raw)
+
+    if (migrated === raw) {
+      return
+    }
+
+    copyFileSync(this.file, `${this.file}.bak`)
+    writeFileSync(this.file, JSON.stringify(migrated, null, 2))
+    this.logger.log(`Migrate jobs of "${this.file}" to jobs.<command>.<type>, previous file kept as "${this.file}.bak"`)
   }
 
   async get() {
