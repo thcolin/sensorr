@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
@@ -55,6 +55,35 @@ const DELAY = 5000
 // The groups a title can select whole. The ignored group holds swaps that bring a language
 // for more disk, and the overdue one is decided swap by swap.
 const WHOLE = ['refine', 'shrink']
+
+// The API downloads each accepted release before it writes, so a batch goes out in slices,
+// one after the other: a failing indexer fails its slice, not 3 000 swaps.
+const SLICE = 50
+
+// The select-all reads the selection from here, so its checkbox is the same element from one
+// render to the next and keeps the focus.
+const SelectAllContext = createContext(null)
+
+const UISelectAll = ({ id = 'swaps', style = {}, strip = false }: { id?: string, style?: object, strip?: boolean }) => {
+  const { count, selectable, setSelected } = useContext(SelectAllContext)
+
+  return (
+    <div style={style} sx={{ ...UISelectAll.styles.element, display: strip ? 'flex' : ['none', 'flex'], justifyContent: strip ? 'flex-end' : 'flex-start' }}>
+      <Option id={id} type='checkbox' checked={count !== 0} disabled={!selectable.length} onChange={() => setSelected(count ? [] : selectable.map(({ id }) => id))}>
+        {count === 0 ? 'Select All' : `${count} Selected`}
+      </Option>
+    </div>
+  )
+}
+
+UISelectAll.styles = {
+  element: {
+    alignItems: 'center',
+    flexShrink: 0,
+    minWidth: '8em',
+    fontVariantNumeric: 'tabular-nums',
+  },
+}
 
 // The verdict band slides in for 150ms (Card.tsx) and stays a moment before the card goes.
 const LEAVE = 250
@@ -534,25 +563,14 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const setSelected = useCallback((ids) => setSelection(selection => ({ ...selection, [location.key]: typeof ids === 'function' ? ids(selection[location.key] || []) : ids })), [location.key])
   const toggle = useCallback((id) => setSelected(ids => ids.includes(id) ? ids.filter(v => v !== id) : [...ids, id]), [setSelected])
   const toggleGroup = useCallback((items) => setSelected(ids => {
-    const group = items.map(({ id }) => id)
-    return group.every(id => ids.includes(id)) ? ids.filter(id => !group.includes(id)) : [...new Set([...ids, ...group])]
+    const current = new Set(ids)
+    const group = new Set(items.map(({ id }) => id))
+    return [...group].every(id => current.has(id)) ? ids.filter(id => !group.has(id)) : [...new Set([...ids, ...group])]
   }), [setSelected])
+  const selectAll = useMemo(() => ({ count: chosen.length, selectable, setSelected }), [chosen.length, selectable, setSelected])
 
   const balance = useMemo(() => balanceOf(chosen.length ? chosen : items.filter(item => !decided[item.id])), [chosen, items, decided])
   const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])
-  const SelectAll = useCallback(({ style = {}, strip = false }: { style?: object, strip?: boolean }) => (
-    <div style={style} sx={{ display: strip ? 'flex' : ['none', 'flex'], alignItems: 'center', flexShrink: 0, minWidth: '8em', justifyContent: strip ? 'flex-end' : 'flex-start' }}>
-      <Option
-        id='swaps'
-        type='checkbox'
-        checked={chosen.length !== 0}
-        disabled={!selectable.length}
-        onChange={() => setSelected(chosen.length ? [] : selectable.map(({ id }) => id))}
-      >
-        {chosen.length === 0 ? 'Select All' : `${chosen.length} Selected`}
-      </Option>
-    </div>
-  ), [chosen.length, selectable, setSelected])
 
   const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
     const count = items.filter(item => !leaving[item.id]).length
@@ -605,16 +623,20 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   // The latest metadata is what gets written, so a release added or a ban set meanwhile
   // survives; the loaded document stands in until the metadata context has the movie.
-  // A batch goes out as one request: one per swap would also fetch each movie from TMDB.
-  const send = useCallback(async ({ targets, verdict }) => {
+  // A batch goes out in slices of `SLICE`: one request per swap would also fetch each movie from TMDB.
+  const send = useCallback(async ({ targets, verdict, selection = false }) => {
     const byId = new Map<string, any>(targets.map(item => [String(item.id), item]))
     const update = (current, id) => {
       const item = byId.get(String(id))
       return decide(current?.releases ? current : item.source, item.proposal.id, verdict)
     }
+    const slices = Array.from({ length: Math.ceil(targets.length / SLICE) }, (_, index) => targets.slice(index * SLICE, (index + 1) * SLICE))
     const failed = targets.length === 1
       ? await setMovieMetadata(targets[0].id, null, (current) => update(current, targets[0].id)).then(() => [], () => targets)
-      : await setMovieMetadata(targets.map(({ id }) => id), null, update).then(() => [], () => targets)
+      : await slices.reduce(async (previous, slice) => {
+        const failed = await previous
+        return setMovieMetadata(slice.map(({ id }) => id), null, update, { silent: true }).then(() => failed, () => [...failed, ...slice])
+      }, Promise.resolve([]))
 
     // Sent or not, the metadata now says where each movie stands: `decided` only covered the wait.
     decidedRef.current = omit(decidedRef.current, targets.map(({ id }) => id))
@@ -637,7 +659,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
       toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${failed.length > 1 ? `**${failed.length}** proposals` : `**${failed[0].entity?.title}**`}`)
 
-      if (failed.length > 1) {
+      // A batch sent from the selection comes back checked, so it can be sent again.
+      if (selection) {
         setSelected(failed.map(({ id }) => id))
       }
     }
@@ -706,7 +729,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }, [undo])
 
   // `next` is the card to open once this one has left, when it was the open one.
-  const decideTargets = useCallback((candidates, verdict: Verdict, next = undefined) => {
+  const decideTargets = useCallback((candidates, verdict: Verdict, next = undefined, selection = false) => {
     const targets = candidates.filter(({ id }) => !decidedRef.current[id])
 
     if (!connected || !targets.length) {
@@ -730,7 +753,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       }, next), LEAVE)
     }
 
-    pending.current = { targets, verdict, timer: setTimeout(flush, DELAY) }
+    pending.current = { targets, verdict, selection, timer: setTimeout(flush, DELAY) }
     notify(targets, verdict)
   }, [connected, flush, notify])
 
@@ -931,17 +954,19 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }
 
   const nav = (
-    <Controls
-      title='Swaps'
-      components={{ balance: Balance, bulk: SelectAll }}
-      layout={layout as any}
-      fields={fields as any}
-      values={values}
-      onChange={(next) => setValues({ ...values, ...next })}
-      statistics={{}}
-      loading={!ready}
-      total={ready ? items.filter(item => !decided[item.id] && !isOverdue(item.proposal)).length : null}
-    />
+    <SelectAllContext.Provider value={selectAll}>
+      <Controls
+        title='Swaps'
+        components={{ balance: Balance, bulk: UISelectAll }}
+        layout={layout as any}
+        fields={fields as any}
+        values={values}
+        onChange={(next) => setValues({ ...values, ...next })}
+        statistics={{}}
+        loading={!ready}
+        total={ready ? items.filter(item => !decided[item.id] && !isOverdue(item.proposal)).length : null}
+      />
+    </SelectAllContext.Provider>
   )
 
   if (!ready) {
@@ -983,10 +1008,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     <>
       <Global styles={MORPH} />
       {nav}
-      {mobile && !!balance.now && (
+      {mobile && (
         <div sx={UIProposals.styles.balance}>
           <UIBalance balance={balance} compact={true} />
-          <SelectAll strip={true} />
+          <SelectAllContext.Provider value={selectAll}>
+            <UISelectAll id='swaps-strip' strip={true} />
+          </SelectAllContext.Provider>
         </div>
       )}
       <div ref={list} sx={UIProposals.styles.element}>
@@ -1086,10 +1113,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
           key: verdict,
           label: verdict === 'accept' ? 'Accept' : 'Refuse',
           icon: verdict === 'accept' ? <Icon value='check' /> : <Icon value='clear' active={true} />,
-          variant: verdict === 'accept' ? 'contain' : 'outline',
-          color: 'primary',
           onClick: () => {
-            decideTargets(chosen, verdict)
+            decideTargets(chosen, verdict, undefined, true)
             setSelected([])
           },
         }))}

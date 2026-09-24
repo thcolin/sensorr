@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeUI } from 'theme-ui'
-import { ButtonProps } from '../../atoms/Button/Button'
 import { Shadow } from '../../atoms/Shadow/Shadow'
 import { Icon } from '../../atoms/Icon/Icon'
 
@@ -15,8 +14,6 @@ export interface BulkAction {
   key: string
   label: React.ReactNode
   icon?: React.ReactNode
-  variant?: ButtonProps['variant']
-  color?: ButtonProps['color']
   disabled?: boolean
   onClick?: () => void
   // An action with options opens over the whole bar and lists them; picking one calls `onChange`.
@@ -181,15 +178,13 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         aria-hidden={!visible}
         {...(!visible ? { inert: '' } : {})}
       >
-        <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`}>
-          {actions.map(({ key, label, icon = null, variant = 'outline', color = 'gray', disabled: off = false, onClick, options }) => (
+        <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`} {...(action ? { inert: '' } : {})}>
+          {actions.map(({ key, label, icon = null, disabled: off = false, onClick, options }) => (
             <button
               key={key}
               type='button'
               sx={UIBulk.styles.segment}
               data-key={key}
-              data-variant={variant}
-              data-color={color}
               disabled={disabled || off}
               aria-expanded={options ? expanded?.key === key : undefined}
               onClick={options ? (e) => open(key, e) : onClick}
@@ -322,7 +317,6 @@ UIBulk.styles = {
     cursor: 'pointer',
     transition: 'color 200ms ease-in-out, background-color 200ms ease-in-out',
     ':hover:not(:disabled)': {
-      gap: 7,
       backgroundColor: 'primaryDark',
     },
     ':active:not(:disabled)': {

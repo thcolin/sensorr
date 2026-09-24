@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Entities,
   withControls,
@@ -218,18 +218,26 @@ const Library = compose(
           const { selection, setSelection } = useBulkContext()
           const sensorr = useSensorr()
           const location = useLocation()
-          const selected = selection[location.key] || []
+          const [sending, setSending] = useState(false)
           // `bulk` lists every id matching the filters, and arrives with the statistics, after the movies.
           const entities = statistics?.[0]?.entities
+          const visible = useMemo(() => entities ? new Set(entities) : null, [entities])
+          // A filter that hides a checked movie takes it out of the selection it acts on.
+          const selected = useMemo(() => (selection[location.key] || []).filter(id => !visible || visible.has(id)), [selection, location.key, visible])
 
-          const apply = (key, value, question) => {
-            if (confirm(question)) {
-              setMovieMetadata(selected, key, value)
+          // The metadata context already tells a failure in its toast.
+          const apply = async (key, value, question) => {
+            if (!confirm(question)) {
+              return
             }
+
+            setSending(true)
+            await setMovieMetadata(selected, key, value).catch(() => null)
+            setSending(false)
           }
 
           return (
-            <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+            <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
               <Option
                 id='movies'
                 type='checkbox'
@@ -241,6 +249,7 @@ const Library = compose(
               </Option>
               <Bulk
                 count={selected.length}
+                disabled={sending}
                 actions={[
                   {
                     key: 'state',

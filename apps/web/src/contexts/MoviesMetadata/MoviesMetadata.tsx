@@ -97,7 +97,8 @@ export const Provider = ({ ...props }) => {
   const setMovieMetadata = useCallback(async (
     id: number | number[],
     key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | 'banned_releases' | null,
-    value: any
+    value: any,
+    { silent = false } = {},
   ) => {
     const ids = Array.isArray(id) ? id : [id]
     const initial = Object.keys(ref.current).filter(i => ids.includes(Number(i))).reduce((acc, i) => ({ ...acc, [i]: ref.current[i] }), {})
@@ -158,6 +159,11 @@ export const Provider = ({ ...props }) => {
         reject(new Error())
       }
     })
+
+    // A caller that tells the outcome itself, as the swaps' own toast, asks for no second one.
+    if (silent) {
+      return promise
+    }
 
     if (ids.length === 1) {
       if (!['query', 'policy', 'refine', 'shrink'].includes(key)) {

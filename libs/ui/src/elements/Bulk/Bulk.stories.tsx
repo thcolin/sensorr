@@ -24,8 +24,8 @@ Swaps.args = {
   count: 12,
   total: 12,
   actions: [
-    { key: 'accept', label: 'Accept', variant: 'contain', color: 'primary', onClick: () => null },
-    { key: 'refuse', label: 'Refuse', variant: 'outline', color: 'primary', onClick: () => null },
+    { key: 'accept', label: 'Accept', onClick: () => null },
+    { key: 'refuse', label: 'Refuse', onClick: () => null },
   ],
 }
 
