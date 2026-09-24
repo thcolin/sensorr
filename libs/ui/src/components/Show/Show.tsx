@@ -4,6 +4,7 @@ import clanguages from 'country-language'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Progress } from '../../atoms/Progress/Progress'
+import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Proposal } from '../Movie/Proposal/Proposal'
 import { Guests } from '../Movie/Guests/Guests'
@@ -14,6 +15,7 @@ export interface ShowProps extends Omit<
   'link' | 'state' | 'focus' | 'placeholder' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty'
 > {
   entity: any
+  display?: 'poster' | 'card'
   link?: ((entity: any) => LinkProps)
   placeholder?: boolean
   state?: 'loading' | 'unfollowed' | 'followed'
@@ -30,6 +32,7 @@ export interface ShowProps extends Omit<
 // `entity.progress` is what GET /api/shows adds with `progress=true`
 const UIShow = ({
   entity: data,
+  display = 'poster',
   placeholder,
   state,
   setState,
@@ -66,6 +69,19 @@ const UIShow = ({
   }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease])
 
   const progress = !placeholder && entity?.progress
+
+  if (display === 'card') {
+    return (
+      <Card
+        {...props}
+        details={details}
+        link={link}
+        ready={typeof entity?.id === 'number' && !placeholder && ready}
+        empty={Empty.tv}
+        badges={badges}
+      />
+    )
+  }
 
   return (
     <div sx={UIShow.styles.element}>

@@ -39,3 +39,9 @@ export const ShowPosterComplete = () => <UIShow entity={{ ...entity, progress: {
 export const ShowPosterNotAired = () => <UIShow entity={{ ...entity, progress: { owned: 0, aired: 0 } }} state='followed' />
 
 export const ShowPosterWithProposal = () => <UIShow entity={entity} state='followed' metadata={{ releases: [proposal] }} proceedRelease={() => {}} />
+
+export const ShowCard = () => <UIShow entity={entity} display='card' state='followed' />
+
+export const ShowCardUnfollowed = () => <UIShow entity={entity} display='card' state='unfollowed' />
+
+export const ShowCardLoading = () => <UIShow entity={null} display='card' placeholder={true} />

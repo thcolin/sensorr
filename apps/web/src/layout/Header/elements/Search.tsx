@@ -4,6 +4,7 @@ import { useSearchContext } from '../../../contexts/Search/Search'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import Movie from '../../../components/Movie/Movie'
 import Person from '../../../components/Person/Person'
+import Show from '../../../components/Show/Show'
 import nanobounce from 'nanobounce'
 
 export const Input = ({ ...props }) => {
@@ -289,6 +290,18 @@ export const Results = ({ ...props }) => {
                     to: `/movie/search`,
                     state: { controls: { query } },
                   }}
+                />
+              )}
+              {!!results.shows?.results?.length && (
+                <Entities
+                  id="search-shows"
+                  label="📺 Shows"
+                  entities={results.shows.results}
+                  hide={true}
+                  child={Show}
+                  props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
+                  display={device !== 'mobile' ? 'column' : 'row'}
+                  stack={true}
                 />
               )}
               {!!results.collections?.results?.length && (

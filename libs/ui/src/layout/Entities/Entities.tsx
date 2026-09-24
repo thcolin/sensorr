@@ -2,6 +2,7 @@ import { createContext, memo, useCallback, useContext, useMemo } from 'react'
 import { Movie as MovieInterface, Collection as CollectionInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface } from '@sensorr/tmdb'
 import { Movie, MovieProps } from '../../components/Movie/Movie'
 import { Person, PersonProps } from '../../components/Person/Person'
+import { Show, ShowProps } from '../../components/Show/Show'
 import { AbstractEntity, AbstractEntityProps } from '../../components/AbstractEntity/AbstractEntity'
 import { Grid, GridProps } from '../../elements/Grid/Grid'
 import { List, ListProps } from '../../elements/List/List'
@@ -35,8 +36,8 @@ interface CommonProps extends
   Omit<GridProps, 'length' |'child' |'override' |'onMore'>,
   Omit<ListProps, 'entities' | 'length' | 'child' | 'override' | 'display'>
 {
-  child: typeof Movie | typeof AbstractEntity | typeof Person
-  props?: (props?: { index?: number, entity?: EntityInterface }) => Omit<MovieProps, 'entity'> | Omit<AbstractEntityProps, 'entity'> | Omit<PersonProps, 'entity'>
+  child: typeof Movie | typeof AbstractEntity | typeof Person | typeof Show
+  props?: (props?: { index?: number, entity?: EntityInterface }) => Omit<MovieProps, 'entity'> | Omit<AbstractEntityProps, 'entity'> | Omit<PersonProps, 'entity'> | Omit<ShowProps, 'entity'>
   length?: number
   entities?: EntityInterface[]
   onMore?: () => void

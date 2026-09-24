@@ -46,17 +46,19 @@ export const Provider = ({ ...props }) => {
     const cb = async () => {
       try {
         setLoading(true)
-        const [movies, persons, collections, keywords, companies] = await Promise.all([
+        const [movies, shows, persons, collections, keywords, companies] = await Promise.all([
           tmdb.fetch('search/movie', { query }, { signal: controller.signal }),
+          tmdb.fetch('search/tv', { query }, { signal: controller.signal }),
           tmdb.fetch('search/person', { query }, { signal: controller.signal }),
           tmdb.fetch('search/collection', { query }, { signal: controller.signal }),
           tmdb.fetch('search/keyword', { query }, { signal: controller.signal }),
           tmdb.fetch('search/company', { query }, { signal: controller.signal }),
         ])
-        setResults({ movies, persons, collections, keywords, companies })
+        setResults({ movies, shows, persons, collections, keywords, companies })
 
         if (
           !!movies?.results?.length ||
+          !!shows?.results?.length ||
           !!collections?.results?.length ||
           !!persons?.results?.length ||
           !!companies?.results?.length ||
