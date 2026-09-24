@@ -136,7 +136,7 @@ const Band = memo(UIBand)
 
 
 // Lightest owned release under the proposed one: lighter holds, heavier breaks.
-const Size = ({ item, threshold, compact = false, named = true }) => item.owned.length ? (
+export const Size = ({ item, threshold, compact = false, named = true }) => item.owned.length ? (
   <>
     <Transition
       style={named ? morph('size', item.id) : undefined}

@@ -12,6 +12,27 @@ import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
+import { Policy } from '@sensorr/sensorr'
+import { useSensorr } from '../../../store/sensorr'
+import { Transition } from '../../../components/Sensorr/Proposal'
+import { Size, delta } from '../../Proposals/Card'
+import { itemOf } from '../../Proposals/queue'
+
+// A job run before these sums were logged has no `proposed`, and shows neither.
+export const space = ({ proposed, accepted }) => typeof proposed !== 'number' ? [] : [
+  {
+    key: 'proposed',
+    emoji: '💾',
+    title: <span><strong>{delta(proposed)}</strong> on disk once every proposal of this job is accepted</span>,
+    length: delta(proposed),
+  },
+  {
+    key: 'accepted',
+    emoji: '💿',
+    title: <span><strong>{delta(accepted || 0)}</strong> on disk from the proposals of this job already accepted</span>,
+    length: delta(accepted || 0),
+  },
+]
 
 const RecordsContext = createContext([])
 
@@ -173,7 +194,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                     shrinked: (!job.meta.done && job.meta.summary.shrinked) ? `${records.length}/${job.meta.summary.shrinked}` : job.meta.summary.shrinked,
                   }, true, job.meta.config).map(meta => ({
                     ...meta,
-                    props: {
+                    props: ['proposed', 'accepted'].includes(meta.key) ? {} : {
                       style: {
                         cursor: 'pointer',
                         opacity: !filter || filter === meta.key ? 1 : 0.5
@@ -311,6 +332,13 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   const mobile = useResponsiveValue([true, false])
 
   const [optimistic, setOptimistic] = useState({ treated, choice })
+  const sensorr = useSensorr()
+  // The Swaps row of this proposal, against the releases the movie had when the job ran
+  const item = useMemo(() => (release?.valid && release?.proposal) ? itemOf(
+    movie || {},
+    [...(movie?.releases || []), { ...release, from: command, proposal: true }],
+    new Policy(metadata?.policy || '', sensorr.policies),
+  ) : null, [movie, release, command, metadata?.policy, sensorr.policies])
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
     setOptimistic({ treated: true, choice })
@@ -411,6 +439,14 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
                   <Release entity={release} display='column' compact={true} />
                 </div>
               ))}
+              {done && !!item?.owned.length && (
+                <div sx={UIRecord.styles.diff}>
+                  {item.diff.listed.map(({ axis, from, to }) => (
+                    <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
+                  ))}
+                  <Size item={item} threshold={0} compact={true} named={false} />
+                </div>
+              )}
               {done && (
                 (release && !release?.hide) ? (
                   <div sx={UIRecord.styles.release}>
@@ -454,6 +490,14 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
 }
 
 UIRecord.styles = {
+  diff: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 7,
+    paddingX: 4,
+    paddingTop: 8,
+  },
   element: {
     flex: 1,
     display: 'flex',
