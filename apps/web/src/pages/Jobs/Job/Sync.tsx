@@ -4,9 +4,8 @@ import { emojize, filesize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
 import { Transition } from '../../../components/Sensorr/Proposal'
-import { delta } from '../../Proposals/Card'
 import { sizeStateOf } from '../../Proposals/queue'
-import { Summary } from '../Summary'
+import { Summary, freed, freedLabel } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missings }, extended = true) => [
@@ -36,9 +35,9 @@ export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missing
   }] : []),
   ...((cleanups?.success > 0 && typeof cleanups?.deleted === 'number' && typeof cleanups?.arrived === 'number') ? [{
     key: 'space',
-    emoji: '💾',
-    title: <span><strong>{delta(cleanups.arrived - cleanups.deleted)}</strong> on disk, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
-    length: delta(cleanups.arrived - cleanups.deleted),
+    emoji: cleanups.arrived > cleanups.deleted ? '📈' : '📉',
+    title: <span><strong>{freed(cleanups.arrived - cleanups.deleted)}</strong> {freedLabel(cleanups.arrived - cleanups.deleted)}, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
+    length: freed(cleanups.arrived - cleanups.deleted),
   }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',

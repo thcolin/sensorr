@@ -10,26 +10,26 @@ import Movie from '../../../components/Movie/Movie'
 import { SensorrSingleton } from '../../../components/Sensorr'
 import { Release, reportOleoo } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
-import { Summary } from '../Summary'
+import { Summary, freed, freedLabel } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
 import { Policy } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
 import { Transition } from '../../../components/Sensorr/Proposal'
-import { Size, delta } from '../../Proposals/Card'
+import { Size } from '../../Proposals/Card'
 import { itemOf } from '../../Proposals/queue'
 
 export const spacePills = ({ proposed, accepted }) => typeof proposed !== 'number' ? [] : [
   {
     key: 'proposed',
     emoji: '💾',
-    title: <span><strong>{delta(proposed)}</strong> on disk once every proposal of this job is accepted</span>,
-    length: delta(proposed),
+    title: <span><strong>{freed(proposed)}</strong> {freedLabel(proposed)} once every proposal of this job is accepted</span>,
+    length: freed(proposed),
   },
   {
     key: 'accepted',
     emoji: '💿',
-    title: <span><strong>{delta(accepted || 0)}</strong> on disk from the proposals of this job already accepted</span>,
-    length: delta(accepted || 0),
+    title: <span><strong>{freed(accepted || 0)}</strong> {freedLabel(accepted || 0)} from the proposals of this job already accepted</span>,
+    length: freed(accepted || 0),
   },
 ]
 
