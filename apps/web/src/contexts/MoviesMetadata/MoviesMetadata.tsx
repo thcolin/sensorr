@@ -107,8 +107,8 @@ export const Provider = ({ ...props }) => {
         id: i,
         updated_at: new Date().getTime(),
         ...(
-          ['state', 'query', 'policy', 'refine', 'shrink', 'releases', 'banned_releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}) : value }
-          : typeof value === 'function' ? value(initial[i] || {}) : {}
+          ['state', 'query', 'policy', 'refine', 'shrink', 'releases', 'banned_releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}, i) : value }
+          : typeof value === 'function' ? value(initial[i] || {}, i) : {}
         ),
         ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) && initial[i]?.releases ? { releases: (initial[i]?.releases || []).filter(({ proposal }) => !proposal) } : {}),
         ...(key === 'proposal' && initial[i]?.releases ? { ...((typeof value === 'object' ? value.choice : value) ? { state: 'archived' } : {}), releases: (initial[i]?.releases || []).map(r => ({ ...r, ...(r.proposal && (typeof value !== 'object' || r.id === value.id) ? { choice: typeof value === 'object' ? value.choice : value } : {}) })) } : {}),

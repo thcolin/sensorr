@@ -3,14 +3,16 @@ import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
-import { Button, Controls, Icon, Link, Range, Slider, Sorting, Warning } from '@sensorr/ui'
+import { Bulk, Button, Controls, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
+import { useLocation } from 'react-router-dom'
 import { Policy } from '@sensorr/sensorr'
 import { compose, emojize, filesize, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
+import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
@@ -333,13 +335,14 @@ const area = (row, side) => row === 'head' ? `head_${side}` : `${side}_${row}`
 const layout = {
   nav: {
     display: 'grid',
-    gridTemplateColumns: ['minmax(0, 1fr) min-content', 'min-content minmax(0, 1fr) min-content min-content min-content min-content'],
+    gridTemplateColumns: ['minmax(0, 1fr) min-content', 'min-content minmax(0, 1fr) min-content min-content min-content min-content min-content'],
     gridTemplateRows: 'auto',
     gap: ['1em', '2em'],
-    // A phone has no room for the slider and the sorting in the bar: they move to the top of the filters.
+    // A phone has no room for the slider and the sorting in the bar: they move to the top of the filters,
+    // and the select-all checkbox to the strip of the balance.
     gridTemplateAreas: [
       `"results toggle"`,
-      `"title balance results threshold toggle sort_by"`,
+      `"title balance results bulk threshold toggle sort_by"`,
     ],
     '>h4': {
       display: ['none', 'block'],
@@ -438,6 +441,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const loadDetails = useLoadDetails()
   const mobile = useResponsiveValue([true, false])
   const connected = useSyncExternalStore(online.subscribe, online.get)
+  const { selection, setSelection } = useBulkContext()
+  const location = useLocation()
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
   const values = useMemo(() => ({ ...DEFAULTS, ...stored }), [stored])
   const threshold = typeof values.threshold === 'number' ? values.threshold : DEFAULTS.threshold
@@ -503,8 +508,29 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     { threshold, skipped, sort_by: values.sort_by },
   ), [items, decided, leaving, threshold, skipped, values.sort_by])
 
-  const balance = useMemo(() => balanceOf(items.filter(item => !decided[item.id])), [items, decided])
+  // An overdue swap is not a proposal any more, so it is decided on its own.
+  const selectable = useMemo(() => items.filter(item => !decided[item.id] && !isOverdue(item.proposal)), [items, decided])
+  const selected = useMemo(() => new Set(selection[location.key] || []), [selection, location.key])
+  // A filter that hides a checked swap takes it out of the count.
+  const chosen = useMemo(() => selectable.filter(item => selected.has(item.id)), [selectable, selected])
+  const setSelected = useCallback((ids) => setSelection(selection => ({ ...selection, [location.key]: typeof ids === 'function' ? ids(selection[location.key] || []) : ids })), [location.key])
+  const toggle = useCallback((id) => setSelected(ids => ids.includes(id) ? ids.filter(v => v !== id) : [...ids, id]), [setSelected])
+
+  const balance = useMemo(() => balanceOf(chosen.length ? chosen : items.filter(item => !decided[item.id])), [chosen, items, decided])
   const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])
+  const SelectAll = useCallback(({ style = {}, strip = false }: { style?: object, strip?: boolean }) => (
+    <div style={style} sx={{ display: strip ? 'flex' : ['none', 'flex'], alignItems: 'center', flexShrink: 0, minWidth: '8em', justifyContent: strip ? 'flex-end' : 'flex-start' }}>
+      <Option
+        id='swaps'
+        type='checkbox'
+        checked={chosen.length !== 0}
+        disabled={!selectable.length}
+        onChange={() => setSelected(chosen.length ? [] : selectable.map(({ id }) => id))}
+      >
+        {chosen.length === 0 ? 'Select All' : chosen.length === selectable.length ? 'Unselect All' : `${chosen.length} Selected`}
+      </Option>
+    </div>
+  ), [chosen.length, selectable, setSelected])
 
   const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
     const count = items.filter(item => !leaving[item.id]).length
@@ -557,9 +583,16 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   // The latest metadata is what gets written, so a release added or a ban set meanwhile
   // survives; the loaded document stands in until the metadata context has the movie.
+  // A batch goes out as one request: one per swap would also fetch each movie from TMDB.
   const send = useCallback(async ({ targets, verdict }) => {
-    const results = await Promise.allSettled(targets.map(item => setMovieMetadata(item.id, null, (current) => decide(current?.releases ? current : item.source, item.proposal.id, verdict))))
-    const failed = targets.filter((item, index) => results[index].status === 'rejected')
+    const byId = new Map<string, any>(targets.map(item => [String(item.id), item]))
+    const update = (current, id) => {
+      const item = byId.get(String(id))
+      return decide(current?.releases ? current : item.source, item.proposal.id, verdict)
+    }
+    const failed = targets.length === 1
+      ? await setMovieMetadata(targets[0].id, null, (current) => update(current, targets[0].id)).then(() => [], () => targets)
+      : await setMovieMetadata(targets.map(({ id }) => id), null, update).then(() => [], () => targets)
 
     // Sent or not, the metadata now says where each movie stands: `decided` only covered the wait.
     decidedRef.current = omit(decidedRef.current, targets.map(({ id }) => id))
@@ -581,8 +614,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       }
 
       toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${failed.length > 1 ? `**${failed.length}** proposals` : `**${failed[0].entity?.title}**`}`)
+
+      if (failed.length > 1) {
+        setSelected(failed.map(({ id }) => id))
+      }
     }
-  }, [setMovieMetadata, search])
+  }, [setMovieMetadata, search, setSelected])
 
   const flush = useCallback(() => {
     const current = pending.current
@@ -830,7 +867,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
     // Named for the length of the move only, so the rows slide under the controls bar and
     // the toasts instead of over them. Named for good, they would leave `#main` in a route change.
-    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster')) as HTMLElement[]
+    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster, [data-bulk]')) as HTMLElement[]
     layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
     document.documentElement.dataset.morphing = 'true'
     kept.current = [...new Set([...(kept.current || []), ...virtualizer.getVirtualItems().map(({ index }) => index)])]
@@ -874,7 +911,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const nav = (
     <Controls
       title='Swaps'
-      components={{ balance: Balance }}
+      components={{ balance: Balance, bulk: SelectAll }}
       layout={layout as any}
       fields={fields as any}
       values={values}
@@ -927,6 +964,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       {mobile && !!balance.now && (
         <div sx={UIProposals.styles.balance}>
           <UIBalance balance={balance} compact={true} />
+          <SelectAll strip={true} />
         </div>
       )}
       <div ref={list} sx={UIProposals.styles.element}>
@@ -993,9 +1031,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     disabled={!connected}
                     onGesture={onGesture}
                     onClose={row.leaving ? null : keys.current.close}
+                    selected={selected.has(row.item.id)}
+                    selectedVisible={chosen.length > 0}
+                    onSelectedChange={toggle}
                   />
                 ) : (
-                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} morphing={focus.includes(row.item.id)} onSelect={select} onHover={prefetch} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} />
+                  <Compact item={row.item} threshold={threshold} leaving={row.leaving} morphing={focus.includes(row.item.id)} onSelect={select} onHover={prefetch} onDecide={(verdict) => decideTargets([row.item], verdict)} disabled={!connected} selected={selected.has(row.item.id)} selectedVisible={chosen.length > 0} onSelectedChange={toggle} />
                 )}
               </div>
             )
@@ -1011,9 +1052,23 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
           )}
         />
       </div>
-      {mobile && !!active && (
+      {mobile && !!active && !chosen.length && (
         <Gestures onGesture={onGesture} disabled={!connected} sx={UIProposals.styles.bar} />
       )}
+      <Bulk
+        count={chosen.length}
+        disabled={!connected}
+        actions={(['accept', 'refuse'] as const).map(verdict => ({
+          key: verdict,
+          label: verdict === 'accept' ? 'Accept' : 'Refuse',
+          variant: verdict === 'accept' ? 'contain' : 'outline',
+          color: 'primary',
+          onClick: () => {
+            decideTargets(chosen, verdict)
+            setSelected([])
+          },
+        }))}
+      />
       <SensorrSingleton setToggle={fn => toggleSensorr.current = fn} />
     </>
   )
@@ -1028,9 +1083,10 @@ UIProposals.styles = {
     backgroundColor: 'primary',
     borderTop: '1px solid',
     borderColor: 'hsla(0, 0%, 0%, 0.12)',
+    gap: 4,
     color: 'whitePure',
     fontSize: 5,
-    '>div': {
+    '>div:first-of-type': {
       flex: 1,
       maxWidth: 'none',
     },

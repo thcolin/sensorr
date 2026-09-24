@@ -22,10 +22,10 @@ export interface BulkAction {
   onChange?: (option: BulkOption) => void
 }
 
+// The count and the way out of the selection live with the page's own select-all checkbox.
 export interface BulkProps {
   count: number
   actions: BulkAction[]
-  onClear: () => void
   disabled?: boolean
 }
 
@@ -39,7 +39,7 @@ const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matc
 // The rows of an action are clipped out of the whole bar, from the box of the button that opened them.
 const inset = (from, radius = '0.25em') => from ? `inset(${from.top}px ${from.right}px ${from.bottom}px ${from.left}px round ${radius})` : `inset(0px round ${radius})`
 
-const UIBulk = ({ count, actions, onClear, disabled = false }: BulkProps) => {
+const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   const { theme } = useThemeUI()
   const [expanded, setExpanded] = useState(null)
   const [dimmed, setDimmed] = useState(false)
@@ -180,11 +180,7 @@ const UIBulk = ({ count, actions, onClear, disabled = false }: BulkProps) => {
         aria-hidden={!visible}
         {...(!visible ? { inert: '' } : {})}
       >
-        <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label='Selection'>
-          <Button type='button' variant='outline' color='gray' data-variant='outline' onClick={onClear} aria-label={`Clear the selection of ${shown.current}`} title='Clear the selection'>
-            <span><code>{shown.current.toLocaleString('en')}</code> selected</span>
-            <Icon value='clear' width='1em' height='1em' />
-          </Button>
+        <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`}>
           {actions.map(({ key, label, variant = 'outline', color = 'gray', disabled: off = false, onClick, options }) => (
             <Button
               key={key}
@@ -267,6 +263,7 @@ UIBulk.styles = {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
+      justifyContent: 'center',
       gap: 8,
       margin: 12,
       whiteSpace: 'nowrap',
@@ -276,13 +273,13 @@ UIBulk.styles = {
         outlineOffset: '2px',
       },
     },
+    // The width of the Accept and Refuse of the swap card (Gestures.tsx), so both read as the same buttons.
+    '[role=toolbar] > button': {
+      width: '12em',
+    },
     // Each button floats on its own, over posters as over rows: an outline gets the surface of the toasts.
     'button[data-variant=outline]:not([data-option]):not([data-cancel])': {
       backgroundColor: 'gray',
-    },
-    code: {
-      fontFamily: 'monospace',
-      fontWeight: 'semibold',
     },
   },
   row: {

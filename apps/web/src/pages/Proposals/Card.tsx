@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { Button, Icon, Link, Picture, transformMovieDetails } from '@sensorr/ui'
+import { Button, Icon, Link, Option, Picture, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
@@ -143,7 +143,7 @@ const Size = ({ item, threshold, compact = false, named = true }) => item.owned.
   </>
 ) : <span style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</span>
 
-const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
+const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, selected = null, selectedVisible = false, onSelectedChange = undefined, ...props }) => {
   const { movie, additional } = useDetails(item.id)
   const [meaningful, setMeaningful] = useState(false)
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
@@ -155,7 +155,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
       <div sx={UIActive.styles.wrapper}>
         <div sx={UIActive.styles.card}>
           <div sx={UIActive.styles.poster} style={poster(item.id)} data-morph-poster={true}>
-            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} />
+            <MovieWithCreditsAndReviews entity={entity} display='poster' meaningful={false} selected={selected} selectedVisible={selectedVisible} onSelectedChange={onSelectedChange} />
           </div>
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
@@ -423,7 +423,7 @@ export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive
 
 // On a wide screen the chevron next to the decisions opens the card. A phone has no
 // hover to show them: there, a button stretched under the whole row opens it.
-const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, ...props }) => {
+const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, selected = false, selectedVisible = false, onSelectedChange = null, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const morph = morphing ? name : () => undefined
   const label = `Open ${item.entity?.title || 'proposal'}`
@@ -434,6 +434,11 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
       <span sx={UICompact.styles.poster} style={morphing ? poster(item.id) : undefined} data-morph-poster={true}>
         <Picture path={item.entity?.poster_path} size='w92' />
       </span>
+      {!!onSelectedChange && (
+        <div sx={UICompact.styles.select} data-select={true} data-visible={selected || selectedVisible} data-checked={selected}>
+          <Option id={`select-${item.id}`} type='checkbox' behavior='radio' borderless={true} checked={selected} disabled={!!leaving} onChange={() => onSelectedChange(item.id)} aria-label={`Select ${item.entity?.title || 'proposal'}`} />
+        </div>
+      )}
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
           <strong title={item.entity?.title} style={morph('title', item.id)}>{item.entity?.title}</strong>
@@ -502,7 +507,42 @@ UICompact.styles = {
     '@media (hover: hover)': {
       ':hover, :focus-within': {
         '>[data-decide] >*': { opacity: 1, transition: 'opacity 150ms ease-in-out' },
+        '>[data-select]': { opacity: 1, visibility: 'visible', transition: 'opacity 150ms ease-in-out, background-color 150ms ease-in-out' },
       },
+    },
+  },
+  // The checkbox of the library's posters, on the corner of the row's poster: shown under
+  // the pointer, then on every row once one is checked. A phone shows it once one is checked.
+  select: {
+    position: 'relative',
+    zIndex: 1,
+    gridArea: 'poster',
+    alignSelf: 'start',
+    justifySelf: 'start',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '2em',
+    height: '2em',
+    marginTop: '-0.375em',
+    marginLeft: '-0.625em',
+    borderRadius: '2em',
+    border: '0.25em solid',
+    borderColor: 'grayLightest',
+    backgroundColor: 'gray',
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'opacity 150ms ease-in-out, visibility 0ms 150ms, background-color 150ms ease-in-out',
+    '&[data-visible=true]': {
+      opacity: 1,
+      visibility: 'visible',
+      transition: 'opacity 150ms ease-in-out, background-color 150ms ease-in-out',
+    },
+    '&[data-checked=true]': {
+      backgroundColor: 'primary',
+    },
+    '>label': {
+      marginY: 12,
     },
   },
   open: {

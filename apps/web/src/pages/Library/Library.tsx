@@ -240,7 +240,6 @@ const Library = compose(
               </Option>
               <Bulk
                 count={selected.length}
-                onClear={() => setSelection(selection => ({ ...selection, [location.key]: [] }))}
                 actions={[
                   {
                     key: 'state',

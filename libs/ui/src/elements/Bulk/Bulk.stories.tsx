@@ -14,7 +14,7 @@ const Story = ({ count: initial, ...args }: any) => {
       <Button variant='outline' color='gray' onClick={() => setCount(count ? 0 : args.total)}>
         {count ? 'Clear' : `Select ${args.total}`}
       </Button>
-      <UIBulk {...args} count={count} onClear={() => setCount(0)} />
+      <UIBulk {...args} count={count} />
     </div>
   )
 }
@@ -25,8 +25,8 @@ Swaps.args = {
   count: 12,
   total: 12,
   actions: [
-    { key: 'refuse', label: 'Refuse', variant: 'outline', color: 'primary', onClick: () => null },
     { key: 'accept', label: 'Accept', variant: 'contain', color: 'primary', onClick: () => null },
+    { key: 'refuse', label: 'Refuse', variant: 'outline', color: 'primary', onClick: () => null },
   ],
 }
 
