@@ -4,7 +4,7 @@ import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
 import { lighten } from '../../store/logger'
-import { spaceOf } from '../../utils/swaps'
+import { proposedSpaceOf } from '../../utils/swaps'
 
 export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { tasks, state } } = useTask(
@@ -72,7 +72,7 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) =
               warning: `⚠️  ${movies.length}  Disturbed during process`,
             }[type] || ''),
             [type]: movies.length,
-            metadata: { ...state.metadata, summary: { [type]: movies.length, ...(type === 'proposal' ? spaceOf(movies) : {}) } },
+            metadata: { ...state.metadata, summary: { [type]: movies.length, ...(type === 'proposal' ? proposedSpaceOf(movies) : {}) } },
           }))
 
         await new Promise(resolve => setTimeout(resolve, 600))

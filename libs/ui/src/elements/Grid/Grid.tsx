@@ -67,7 +67,7 @@ const UIGrid = ({
     { height: 225, width: 120 },
     { height: 346, width: 204 },
   ])
-  const cell = useMemo(() => ({ ...responsive, height: responsive.height + extra }), [responsive, extra])
+  const cell = { ...responsive, height: responsive.height + extra }
 
   const scrollContainer = useScrollContainer()
   const WrappedChild = useMemo(() => withGridItemContainer()(Child), [Child])

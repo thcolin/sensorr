@@ -18,7 +18,7 @@ import { Transition } from '../../../components/Sensorr/Proposal'
 import { Size, delta } from '../../Proposals/Card'
 import { itemOf } from '../../Proposals/queue'
 
-export const space = ({ proposed, accepted }) => typeof proposed !== 'number' ? [] : [
+export const spacePills = ({ proposed, accepted }) => typeof proposed !== 'number' ? [] : [
   {
     key: 'proposed',
     emoji: '💾',
@@ -32,6 +32,13 @@ export const space = ({ proposed, accepted }) => typeof proposed !== 'number' ? 
     length: delta(accepted || 0),
   },
 ]
+
+const filesOf = (movie) => (movie?.releases || []).filter(({ from }) => from === 'sync')
+
+// What the accepted proposals of the job freed, against the Plex files the movies had when it ran
+const acceptedOf = (records) => records
+  .filter((record: any) => record.choice === true && typeof record.release?.size === 'number' && filesOf(record.movie).length)
+  .reduce((sum, record: any) => sum + record.release.size - filesOf(record.movie).reduce((acc, { size }) => acc + (size || 0), 0), 0)
 
 const RecordsContext = createContext([])
 
@@ -189,6 +196,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                     ...job.meta.summary,
                     ...(job.meta.done ? {} : { processed: records.length }),
                     treated: records.filter((record: any) => record.treated).length,
+                    ...(typeof job.meta.summary.proposed === 'number' ? { accepted: acceptedOf(records) } : {}),
                     refined: (!job.meta.done && job.meta.summary.refined) ? `${records.length}/${job.meta.summary.refined}` : job.meta.summary.refined,
                     shrinked: (!job.meta.done && job.meta.summary.shrinked) ? `${records.length}/${job.meta.summary.shrinked}` : job.meta.summary.shrinked,
                   }, true, job.meta.config).map(meta => ({
@@ -252,6 +260,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                         metadata={moviesMetadataContext[record.movie?.id] || {}}
                         job={job.job}
                         command={job.meta.command}
+                        proposalOnly={!!job.meta.config?.proposalOnly}
                         setMovieMetadata={setMovieMetadata}
                         toggleSensorr={(e, movie) => toggleSensorr.current(e, movie)}
                         logsCache={logsCache.current}
@@ -324,7 +333,7 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, logsCache, done, error, ...props }) => {
+const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, logsCache, done, error, ...props }) => {
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -333,11 +342,11 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   const [optimistic, setOptimistic] = useState({ treated, choice })
   const sensorr = useSensorr()
   // The Swaps row of this proposal, against the releases the movie had when the job ran
-  const item = useMemo(() => (release?.valid && release?.proposal) ? itemOf(
+  const item = useMemo(() => (proposalOnly && release?.valid && release?.proposal) ? itemOf(
     movie || {},
     [...(movie?.releases || []).filter(({ proposal }) => !proposal), { ...release, from: command, proposal: true }],
     new Policy(metadata?.policy || '', sensorr.policies),
-  ) : null, [movie, release, command, metadata?.policy, sensorr.policies])
+  ) : null, [proposalOnly, movie, release, command, metadata?.policy, sensorr.policies])
 
   const proceed = useCallback(({ treated: _treated, choice: _choice, ...release }, choice) => {
     setOptimistic({ treated: true, choice })

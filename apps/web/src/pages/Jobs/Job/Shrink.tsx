@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { ProcessMoviesJob, space } from './ProcessMovies'
+import { ProcessMoviesJob, spacePills } from './ProcessMovies'
 
 export const summary = ({ shrinked = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning, proposed, accepted }, extended = true, config = {} as any) => [
   ...(extended ? [{
@@ -37,7 +37,7 @@ export const summary = ({ shrinked = 0, processed, recorded = 0, proposal = 0, t
     title: <span><strong>{withdrawn}</strong> Withdrawn movies releases</span>,
     length: withdrawn,
   }] : []),
-  ...space({ proposed, accepted }),
+  ...spacePills({ proposed, accepted }),
   ...(extended && (ignored > 0) ? [{
     key: 'ignored',
     emoji: '🗑️ ',

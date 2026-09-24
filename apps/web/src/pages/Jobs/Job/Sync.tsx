@@ -56,7 +56,7 @@ export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missing
 
 // A swap removing versions from several Plex items logs its landed release with each: its size
 // counts once.
-const spaceOf = (logs) => {
+const cleanedSpaceOf = (logs) => {
   const landed = logs.filter((log: any) => log.meta.landed)
 
   if (!landed.length) {
@@ -69,8 +69,8 @@ const spaceOf = (logs) => {
   }
 }
 
-const UICleanedMovie = ({ entity, cleanups, ...props }) => {
-  const space = useMemo(() => spaceOf((cleanups || []).filter((log: any) => log.meta.movie?.id === entity?.id)), [cleanups, entity?.id])
+const UICleanedMovie = ({ entity, cleaned, ...props }) => {
+  const space = useMemo(() => cleanedSpaceOf((cleaned || []).filter((log: any) => log.meta.movie?.id === entity?.id)), [cleaned, entity?.id])
 
   return (
     <div sx={UICleanedMovie.styles.element}>
@@ -100,13 +100,13 @@ UICleanedMovie.styles = {
 const CleanedMovie = memo(UICleanedMovie)
 
 const UISyncJob = ({ job, logs }) => {
+  const cleaned = useMemo(() => [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups'), [logs])
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     corrections: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'corrections').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-    logs: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups'),
-    cleanups: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups').map(({ meta: { movie } }) => movie).filter((movie, index, movies) => movies.findIndex(({ id }) => id === movie.id) === index).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    cleanups: cleaned.map(({ meta: { movie } }) => movie).filter((movie, index, movies) => movies.findIndex(({ id }) => id === movie.id) === index).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     missings: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'missings').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-  }), [logs])
+  }), [logs, cleaned])
 
   return (
     <div sx={UISyncJob.styles.element}>
@@ -143,7 +143,7 @@ const UISyncJob = ({ job, logs }) => {
                     },
                     cleanups: job.meta.done ? job.meta.summary.cleanups : {
                       success: entities.cleanups.length,
-                      ...spaceOf(entities.logs),
+                      ...cleanedSpaceOf(cleaned),
                     },
                     missings: {
                       success: job.meta.done ? job.meta.summary.missings?.success : entities.missings.length,
@@ -193,7 +193,7 @@ const UISyncJob = ({ job, logs }) => {
               child={CleanedMovie as any}
               props={() => ({
                 display: 'poster',
-                cleanups: entities.logs,
+                cleaned,
               }) as any}
             />
             <Entities
