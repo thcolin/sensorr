@@ -53,3 +53,27 @@ export const fetchSensorrShows = async (api, params = {}) => {
 
   return shows
 }
+
+// Sonarr series only listed, never monitored nor downloaded, are not taken over
+export const sonarrShowOf = (series) => (!series.monitored && !series.statistics?.episodeFileCount) ? null : {
+  state: series.monitored ? 'wished' : 'archived',
+  monitored: !!series.monitored,
+  monitor_new_seasons: series.monitorNewItems === 'all',
+  path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
+}
+
+// Sonarr decides for every episode it numbers the same, the others follow the rule of a new episode
+export const sonarrEpisodesOf = (episodes, sonarr, show) => {
+  const keyOf = ({ season_number, episode_number }) => `${season_number}:${episode_number}`
+  const numbered = new Map(sonarr.map((episode) => [`${episode.seasonNumber}:${episode.episodeNumber}`, episode]))
+  const numbers = new Set(episodes.map(keyOf))
+  const known = episodes
+    .filter((episode) => numbered.has(keyOf(episode)))
+    .map((episode) => ({ ...episode, monitored: !!numbered.get(keyOf(episode)).monitored }))
+  const copied = new Map(known.map((episode) => [episode.id, episode]))
+
+  return {
+    episodes: episodes.map((episode) => copied.get(episode.id) || { ...episode, monitored: monitoredOf(episode, show, known) }),
+    unmatched: sonarr.filter(({ seasonNumber, episodeNumber }) => !numbers.has(`${seasonNumber}:${episodeNumber}`)),
+  }
+}

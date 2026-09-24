@@ -16,6 +16,7 @@ import shrink from './commands/shrink'
 import report from './commands/report'
 import keepInTouch from './commands/keep-in-touch'
 import migrate from './commands/migrate'
+import migrateSonarr from './commands/migrate-sonarr'
 
 globalThis.fetch = nodeFetch
 
@@ -75,6 +76,7 @@ const main = async () => {
     .command(report(job, handlers))
     .command(keepInTouch(job, handlers))
     .command(migrate(job, handlers))
+    .command(migrateSonarr(job, handlers))
     .scriptName('sensorr')
     .locale('en')
     .detectLocale(false)

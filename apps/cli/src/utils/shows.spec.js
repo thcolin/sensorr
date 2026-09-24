@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, fetchShow, REFRESH_AFTER } from './shows'
+import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER } from './shows'
 
 const now = 1790000000000
 
@@ -71,5 +71,55 @@ describe('fetchShow', () => {
     expect(show).not.toHaveProperty('credits')
     expect(episodes.map(({ season_number }) => season_number)).toEqual([1, 1, 2, 2, 21, 21, 0])
     expect(episodes[0]).toEqual({ id: 101, show_id: 7, season_number: 1, episode_number: 1, name: 'E1', overview: undefined, air_date: undefined, runtime: undefined, still_path: undefined })
+  })
+})
+
+describe('sonarrShowOf', () => {
+  const series = { monitored: true, monitorNewItems: 'all', path: '/tv/Friends (1994)/', statistics: { episodeFileCount: 0 } }
+
+  it('wishes a monitored series', () => {
+    expect(sonarrShowOf(series)).toEqual({ state: 'wished', monitored: true, monitor_new_seasons: true, path: 'Friends (1994)' })
+  })
+
+  it('archives an unmonitored series with files, and skips one without any', () => {
+    expect(sonarrShowOf({ ...series, monitored: false, statistics: { episodeFileCount: 3 } })).toMatchObject({ state: 'archived', monitored: false })
+    expect(sonarrShowOf({ ...series, monitored: false })).toBe(null)
+    expect(sonarrShowOf({ ...series, monitored: false, statistics: undefined })).toBe(null)
+  })
+
+  it('monitors new seasons only when Sonarr monitors all new items', () => {
+    expect(sonarrShowOf({ ...series, monitorNewItems: 'none' }).monitor_new_seasons).toBe(false)
+    expect(sonarrShowOf({ ...series, monitorNewItems: undefined }).monitor_new_seasons).toBe(false)
+  })
+})
+
+describe('sonarrEpisodesOf', () => {
+  const show = { monitored: true, monitor_new_seasons: false }
+  const episodes = [
+    { id: 1, season_number: 1, episode_number: 1 },
+    { id: 2, season_number: 1, episode_number: 2 },
+    { id: 3, season_number: 1, episode_number: 3 },
+    { id: 4, season_number: 2, episode_number: 1 },
+  ]
+  const sonarr = [
+    { seasonNumber: 1, episodeNumber: 1, monitored: false },
+    { seasonNumber: 1, episodeNumber: 2, monitored: true },
+    { seasonNumber: 1, episodeNumber: 25, monitored: true },
+  ]
+
+  it('copies monitored from Sonarr by season and episode number', () => {
+    const { episodes: migrated } = sonarrEpisodesOf(episodes, sonarr, show)
+
+    expect(migrated.slice(0, 2).map(({ monitored }) => monitored)).toEqual([false, true])
+  })
+
+  it('follows the rule of a new episode for the ones Sonarr does not number', () => {
+    const { episodes: migrated } = sonarrEpisodesOf(episodes, sonarr, show)
+
+    expect(migrated.slice(2).map(({ id, monitored }) => [id, monitored])).toEqual([[3, true], [4, false]])
+  })
+
+  it('tells the Sonarr episodes TMDB does not number', () => {
+    expect(sonarrEpisodesOf(episodes, sonarr, show).unmatched).toEqual([sonarr[2]])
   })
 })
