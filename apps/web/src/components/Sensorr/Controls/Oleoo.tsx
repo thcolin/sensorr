@@ -8,8 +8,8 @@ import { withProps } from '../../enhancers/withProps'
 const MARKS = {
   prefer: '⭐',
   avoid: '⛔',
-  source: '📀 Source',
-  target: '💿 Target',
+  source: '📀',
+  target: '💿',
 }
 
 // A click moves a value to the next group of `groups`, then back to 🔕. Swaps passes
