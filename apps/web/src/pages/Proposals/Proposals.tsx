@@ -52,6 +52,10 @@ const LABELS = {
 
 const DELAY = 5000
 
+// The groups a title can select whole. The ignored group holds swaps that bring a language
+// for more disk, and the overdue one is decided swap by swap.
+const WHOLE = ['refine', 'shrink']
+
 // The verdict band slides in for 150ms (Card.tsx) and stays a moment before the card goes.
 const LEAVE = 250
 
@@ -1014,8 +1018,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
-                    selected={row.group !== 'overdue' && !!row.selectable.length && row.selectable.every(item => selected.has(item.id))}
-                    onSelectedChange={row.group === 'overdue' || !row.selectable.length ? null : () => toggleGroup(row.selectable)}
+                    selected={!!row.selectable.length && row.selectable.every(item => selected.has(item.id))}
+                    onSelectedChange={WHOLE.includes(row.group) && row.selectable.length ? () => toggleGroup(row.selectable) : null}
                     menu={row.group === 'rest' ? (
                       <Tippy
                         interactive={true}
