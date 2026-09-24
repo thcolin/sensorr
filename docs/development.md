@@ -81,11 +81,11 @@ Read the `Successfully ran target lint for 14 projects` line, **not** the exit c
 npx nx run-many --target=test --all
 ```
 
-Exits 1. Five of the thirteen projects fail: `api`, `sensorr`, `plex`, `tmdb` and `ui`. Jest reports 4 failed suites in `ui`, but two of those four do run and simply hold a failing test.
+Exits 1. Four of the thirteen projects fail: `api`, `plex`, `tmdb` and `ui`. Jest reports 4 failed suites in `ui`, but two of those four do run and simply hold a failing test.
 
 | Project | Failure |
 | --- | --- |
-| `sensorr`, `api` | Jest never starts: `module is not defined in ES module scope`. Each `jest.config.js` is CommonJS while `libs/sensorr/package.json:4` and `apps/api/package.json:3` declare `"type": "module"`. `apps/cli` had the same failure until its config was renamed `jest.config.cjs` |
+| `api` | Jest never starts: `module is not defined in ES module scope`. Its `jest.config.js` is CommonJS while `apps/api/package.json:3` declares `"type": "module"`. `apps/cli` and `libs/sensorr` had the same failure until their config was renamed `jest.config.cjs` |
 | `tmdb` | `libs/tmdb/src/__tests__/tmdb.spec.ts`, `Cannot find module 'jest-fetch-mock'`, the package is not installed |
 | `plex` | `libs/plex/src/lib/plex.spec.ts`, `TS2724: '"./plex"' has no exported member named 'plex'. Did you mean 'Plex'?` |
 | `ui` | 2 suites of 9 never run, and 2 tests of 7 fail, see below |
