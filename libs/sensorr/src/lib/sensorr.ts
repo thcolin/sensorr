@@ -2,6 +2,20 @@ import { Znab as ZnabInterface } from './interfaces'
 import { nanoid, clean } from './utils'
 import { Znab } from './znab'
 
+const titlesOf = (names: string[], alternatives: { title: string, type?: string, iso_3166_1: string }[] = [], region: string) => [...new Set(
+  [
+    ...names,
+    ...(alternatives || [])
+      .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', region.slice(-2)].includes(iso_3166_1))
+      .map(({ title }) => title),
+  ].filter(v => v).map(title => clean(title)).filter(v => v)
+)]
+
+const termsOf = (titles: string[]) => titles.reduce((acc, value, index, array) => [
+  ...acc,
+  ...(array.filter((v, i) => i !== index).every(v => !value.includes(v)) ? [value] : []),
+], [])
+
 export class Sensorr {
   znabs: ZnabInterface[] = []
   policies: any[]
@@ -30,29 +44,10 @@ export class Sensorr {
   }
 
   getQuery(movie, query = null, banned_releases = []) {
+    const titles = titlesOf([movie?.title, movie?.original_title], movie?.alternative_titles?.titles, this.region)
     const _defaults = movie?.query?._defaults ? movie?.query?._defaults : {
-      titles: [...new Set(
-        [
-          movie?.title,
-          movie?.original_title,
-          ...(movie?.alternative_titles?.titles || [])
-            .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', this.region.slice(-2)].includes(iso_3166_1))
-            .map(({ title }) => title),
-        ].filter(v => v).map(title => clean(title)).filter(v => v)
-      )],
-      terms: [...new Set(
-        [
-          movie?.title,
-          movie?.original_title,
-          ...(movie?.alternative_titles?.titles || [])
-            .filter(({ type, iso_3166_1 }) => type !== 'Alphabetical' && ['US', 'GB', this.region.slice(-2)].includes(iso_3166_1))
-            .map(({ title }) => title),
-        ].filter(v => v).map(title => clean(title)).filter(v => v)
-      )]
-      .reduce((acc, value, index, array) => [
-        ...acc,
-        ...(array.filter((v, i) => i !== index).every(v => !value.includes(v)) ? [value] : []),
-      ], []),
+      titles,
+      terms: termsOf(titles),
       years: [...new Set([
         movie?.release_date && `${new Date(movie.release_date).getFullYear()}`,
         ...(movie?.release_dates?.results || []).reduce((acc, curr) => [
@@ -62,6 +57,24 @@ export class Sensorr {
             .map(({ release_date }) => `${new Date(release_date).getFullYear()}`),
         ], []),
       ].filter(v => v))],
+    }
+
+    return {
+      _defaults,
+      banned_releases,
+      ...((query?.titles?.length && query?.terms?.length && query?.years?.length) ? query : _defaults),
+    }
+  }
+
+  // A show's defaults are never saved, unlike a movie's: its years grow with every season it airs
+  getShowQuery(show, query = null, banned_releases = []) {
+    const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, this.region)
+    const first = show?.first_air_date ? new Date(show.first_air_date).getFullYear() : null
+    const last = show?.last_air_date ? Math.max(first, new Date(show.last_air_date).getFullYear()) : first
+    const _defaults = {
+      titles,
+      terms: termsOf(titles),
+      years: first ? Array.from({ length: last - first + 1 }, (_, index) => `${first + index}`) : [],
     }
 
     return {

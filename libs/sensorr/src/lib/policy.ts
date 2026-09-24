@@ -2,6 +2,7 @@ import { compareTwoStrings as similarity } from 'string-similarity'
 import oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
+import { ShowUnit, levelOf, matchesUnit, unitLabel } from './show'
 
 const MINIMUM_SIMILARITY = 0.6
 
@@ -118,18 +119,20 @@ export class Policy {
       terms: string[],
       years: number[],
       titles: string[],
-      banned_releases: string[]
+      banned_releases: string[],
+      unit?: ShowUnit,
     } = null,
     strict = false
   ) {
     const ignore = !query
+    const unit = query?.unit
 
     return releases
       .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
       .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
-      .map(release => Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
-      .map(release => Policy.normalizers.releasePublishDate(release, query?.years, ignore))
-      .map(release => Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
+      .map(release => unit ? Policy.normalizers.showReleaseUnit(release, unit) : Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
+      .map(release => unit ? release : Policy.normalizers.releasePublishDate(release, query?.years, ignore))
+      .map(release => unit ? Policy.normalizers.showReleaseYears(release, query?.years) : Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
       .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
       .map(release => Policy.normalizers.releasePolicy(release, this))
       .map(release => Policy.normalizers.releaseRequirePolicy(release, this, strict))
@@ -208,6 +211,36 @@ export class Policy {
         reason: valid ? null : `📅 Release year (${release.meta.year}) ${
           Number(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${years.join(', ')})`
         }`,
+        warning: valid ? 0 : 40,
+      }
+    },
+    showReleaseUnit: (release, unit: ShowUnit) => {
+      if (!release.valid) {
+        return release
+      }
+
+      const valid = matchesUnit(release.meta, release.category, unit)
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : `📺 Release (${levelOf(release.meta, release.category) || release.meta.type}) doesn't match the ${unitLabel(unit)} searched`,
+        warning: valid ? 0 : 60,
+      }
+    },
+    showReleaseYears: (release, years = []) => {
+      if (!release.valid) {
+        return release
+      }
+
+      const bounds = years.map(year => Number(year))
+      const found = (`${release.meta.year || ''}`.match(/\d{4}/g) || []).map(year => Number(year))
+      const valid = !bounds.length || found.every(year => year >= Math.min(...bounds) && year <= Math.max(...bounds))
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : `📅 Release year (${release.meta.year}) outside show years (${Math.min(...bounds)}-${Math.max(...bounds)})`,
         warning: valid ? 0 : 40,
       }
     },
