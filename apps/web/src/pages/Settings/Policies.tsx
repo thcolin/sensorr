@@ -63,7 +63,7 @@ const Policies = ({ ...props }) => {
                 <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
               </ul>
             </li>
-            <li><code>🌐 original language</code> gives the policy to a movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one. Movies already in your library keep theirs.</li>
+            <li><code>🌐 original language</code> gives the policy to a movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one. Movies already in your library are left as they are.</li>
           </ul>
           <h4>Score</h4>
           <p>
@@ -75,7 +75,7 @@ const Policies = ({ ...props }) => {
           </p>
           <form onSubmit={policy.handleSubmit(onAppend)}>
             <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
-              <PolicySettings form={policy} behavior='create' />
+              <PolicySettings form={policy} siblings={form.watch('policies')} behavior='create' />
             </div>
           </form>
           <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
@@ -173,6 +173,7 @@ const PolicySettings = forwardRef<any, any>(({
   remove = null,
   isDefault = false,
   overlay = false,
+  siblings = null,
   onPointerDown,
   role,
   ...props
@@ -181,7 +182,7 @@ const PolicySettings = forwardRef<any, any>(({
   const { theme } = useThemeUI()
   const originalLanguages = form.watch(`${prefix ? `${prefix}.` : ''}match.original_languages`) || []
   const name = form.watch(`${prefix ? `${prefix}.` : ''}name`)
-  const others = (prefix && form.watch('policies')) || []
+  const others = siblings || (prefix && form.watch('policies')) || []
   const winners = originalLanguages.reduce((acc, language) => ({
     ...acc,
     [language]: others.find(policy => !policy.removed && policy.match?.original_languages?.includes(language))?.name || name,
@@ -371,7 +372,7 @@ const PolicySettings = forwardRef<any, any>(({
         )}
         {!!originalLanguages.length && (
           <div
-            title={originalLanguages.map(language => winners[language] === name ? `New movies in ${languages[language]?.name || language} get this policy` : `New movies in ${languages[language]?.name || language} get ${winners[language]} first`).join('\n')}
+            title={originalLanguages.map(language => winners[language] === name ? `New movies in ${languages[language]?.name || language} get this policy` : `New movies in ${languages[language]?.name || language} go to ${winners[language]}`).join('\n')}
             sx={{
               cursor: 'default',
               display: 'flex',
@@ -388,7 +389,7 @@ const PolicySettings = forwardRef<any, any>(({
           >
             {originalLanguages.map(language => (
               <span key={language} sx={{ opacity: winners[language] === name ? 1 : 0.3 }}>
-                <span role='img' aria-label={`New movies in ${languages[language]?.name || language} get ${winners[language]}`}>{languages[language]?.emoji || '🏳️'}</span>
+                <span role='img' aria-label={`New movies in ${languages[language]?.name || language} go to ${winners[language]}`}>{languages[language]?.emoji || '🏳️'}</span>
                 <span aria-hidden={true} sx={{ display: ['none', 'inline'], marginLeft: 6 }}>{language}</span>
               </span>
             ))}
@@ -498,6 +499,7 @@ const PolicySettings = forwardRef<any, any>(({
                     multi={true}
                     resetable={false}
                     menuPortalTarget={document.body}
+                    closeMenuOnScroll={true}
                     styles={{
                       menuPortal: (style) => ({ ...style, zIndex: 10 }),
                       multiValue: (style) => ({ ...style, flexShrink: 0, backgroundColor: theme.rawColors.grayDark, color: theme.rawColors.text }),
