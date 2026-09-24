@@ -15,15 +15,15 @@ Four systems live outside the boundary.
 | System | Reached through | Called by |
 | --- | --- | --- |
 | TMDB | `@sensorr/tmdb` (`libs/tmdb/src/tmdb.ts:8`, `https://api.themoviedb.org/3/`) | the browser (`apps/web/src/store/tmdb.tsx:4`) and the CLI (`apps/cli/src/commands/sync.js:29`, `refresh.js`, `keep-in-touch.js`, `migrate.js`) |
-| znab indexers (Torznab) | `@sensorr/sensorr` (`libs/sensorr/src/lib/znab.ts:40`) | the CLI directly, the browser through the API proxy |
+| znab indexers (Torznab) | `@sensorr/sensorr` (`libs/sensorr/src/lib/znab.ts:57`) | the CLI directly, the browser through the API proxy |
 | Plex, `plex.tv` for PIN auth, `community.plex.tv` for the reported issues, and a Plex Media Server for the library | `@sensorr/plex` (`libs/plex/src/lib/pin.ts:3`, `reports.ts`, `plex.ts:4`) | the API (`plex.service.ts`, `guests.service.ts`) and the CLI (`sync`, `keep-in-touch`, `report`) |
-| Web push services | `web-push` in `apps/api/src/app/notifications/notifications.service.ts:141` | the API only |
+| Web push services | `web-push` in `apps/api/src/app/notifications/notifications.service.ts:107` | the API only |
 
 The API never calls TMDB over HTTP. It imports `fields` from `@sensorr/tmdb` for query
 building, and that module holds no `fetch`.
 
 The blackhole is not a system, it is the handoff. Sensorr writes a file into a directory
-(`apps/api/src/app/sensorr/sensorr.service.ts:49`) and stops there; whatever picks the file
+(`apps/api/src/app/sensorr/sensorr.service.ts:65`) and stops there; whatever picks the file
 up is never named, never configured, never contacted.
 
 ## Containers
@@ -35,7 +35,7 @@ Three applications and a database.
 for anything live: movie metadata (`movies.controller.ts:54`), jobs and their logs
 (`jobs.controller.ts:20,25,45,61`), notifications (`notifications.controller.ts:14`). It
 calls TMDB straight from the browser, and reaches the indexers through the API proxy:
-`libs/sensorr/src/lib/znab.ts:34` rewrites the indexer URL into `/api/proxy?target=…` when
+`libs/sensorr/src/lib/znab.ts:37` rewrites the indexer URL into `/api/proxy?target=…` when
 the `proxify` option is set, which `apps/web/src/store/sensorr.tsx:7` sets and the CLI does
 not.
 
@@ -56,22 +56,22 @@ nothing else knows about it.
 
 ### How the API runs the CLI
 
-By spawning a process. `apps/api/src/app/sensorr/sensorr.service.ts:85`:
+By spawning a process. `apps/api/src/app/sensorr/sensorr.service.ts:103`:
 
 ```ts
 const child = cp.spawn(SENSORR_BIN, [command])
 ```
 
-`SENSORR_BIN` is `NX_SENSORR_BIN`, defaulting to `bin/sensorr` (`sensorr.service.ts:17`),
+`SENSORR_BIN` is `NX_SENSORR_BIN`, defaulting to `bin/sensorr` (`sensorr.service.ts:18`),
 a shell wrapper that execs `dist/apps/cli/main.js` (`bin/sensorr:3`), so it runs the last build, not
 the sources.
 
 The handshake between them is one line of stdout. When stdin is not a TTY the CLI prints
-`{"job":"<nanoid>"}` before anything else (`apps/cli/src/main.js:32-34`), and the API parses
-that first line to learn the job id (`sensorr.service.ts:92-96`). After that the two never
+`{"job":"<nanoid>"}` before anything else (`apps/cli/src/main.js:39-41`), and the API parses
+that first line to learn the job id (`sensorr.service.ts:108-114`). After that the two never
 speak over the pipe again: the CLI reports through the `log` collection in Mongo and acts
 through the HTTP API, exactly like the browser does. The API keeps the child only to expose
-progress (`jobs.controller.ts:25`) and to kill it (`sensorr.service.ts:120`).
+progress (`jobs.controller.ts:25`) and to kill it (`sensorr.service.ts:138`).
 
 The crons live on the same mechanism. `jobs.controller.ts:17` calls `setupCrons()` at boot,
 `jobs.service.ts:88-104` creates one `CronJob` per job that is not `paused`, and each tick
@@ -85,13 +85,13 @@ How a wished movie becomes a `.torrent` in the blackhole.
 flowchart TD
   cron["API cron tick<br/>jobs.service.ts:100"] --> spawn
   post["POST /api/jobs from Settings<br/>pages/Settings/Jobs.tsx:25"] --> spawn
-  spawn["cp.spawn(bin/sensorr, record)<br/>sensorr.service.ts:85"] --> boot
+  spawn["cp.spawn(bin/sensorr, record)<br/>sensorr.service.ts:103"] --> boot
 
   boot["CLI logs in, loads config from the API<br/>utils/command.js:9-13"] --> fetch
   fetch["GET /api/movies, state wished, no pending proposal<br/>commands/record.js:40"] --> query
-  query["Build search terms from titles and years<br/>libs/sensorr/src/lib/sensorr.ts:32"] --> search
-  search["One search per indexer per term<br/>libs/sensorr/src/lib/znab.ts:40"] --> policy
-  policy["Policy filters, scores and sorts<br/>libs/sensorr/src/lib/policy.ts:108"] --> valid
+  query["Build search terms from titles and years<br/>libs/sensorr/src/lib/sensorr.ts:46"] --> search
+  search["One search per indexer per term<br/>libs/sensorr/src/lib/znab.ts:57"] --> policy
+  policy["Policy filters, scores and sorts<br/>libs/sensorr/src/lib/policy.ts:116"] --> valid
 
   valid{"Is the best release valid ?"}
   valid -->|no| stop["Movie saved with its query, nothing downloaded<br/>ProcessMoviesTask.js:282-289"]
@@ -104,8 +104,8 @@ flowchart TD
   direct --> dlfs["POST /api/sensorr/release/download, destination fs<br/>ProcessMoviesTask.js:361"]
   propose --> dlcache["POST /api/sensorr/release/download, destination cache<br/>ProcessMoviesTask.js:361"]
 
-  dlfs --> blackhole[".torrent written into the blackhole directory<br/>sensorr.service.ts:49"]
-  dlcache --> cached["Torrent buffer stored in the blackhole collection<br/>sensorr.service.ts:58"]
+  dlfs --> blackhole[".torrent written into the blackhole directory<br/>sensorr.service.ts:65"]
+  dlcache --> cached["Torrent buffer stored in the blackhole collection<br/>sensorr.service.ts:74"]
 
   cached --> review["Swaps screen or notification, one decision per release"]
   review -->|accepted| accept["POST /api/movies with choice true<br/>movies.service.ts upsertMovies, cache to fs"]

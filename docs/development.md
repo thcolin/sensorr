@@ -18,7 +18,7 @@ Running Sensorr from a clone, and changing it. To run Sensorr as a user, follow 
 yarn install
 ```
 
-The root `.env` is tracked and carries the development defaults for the `NX_*` variables the apps read. Without it the API builds a `mongodb://undefined:undefined@undefined:undefined/sensorr` URI (`apps/api/src/app/app.module.ts:20`) and never connects.
+The root `.env` is tracked and carries the development defaults for the `NX_*` variables the apps read. Without it the API builds a `mongodb://undefined:undefined@undefined:undefined/sensorr` URI (`apps/api/src/app/app.module.ts:21`) and never connects.
 
 ### `yarn web`
 
@@ -40,7 +40,7 @@ It needs Mongo up as a replica set. On boot it also schedules one cron per job t
 
 ### `yarn cli`
 
-Prints the yargs help and exits. `cli:serve` forwards no argument, and `apps/cli/src/main.js:82` shows the help when the command list is empty. To run a command, build once and use the wrapper:
+Prints the yargs help and exits. `cli:serve` forwards no argument, and `apps/cli/src/main.js:94` shows the help when the command list is empty. To run a command, build once and use the wrapper:
 
 ```sh
 nx build cli
@@ -55,7 +55,7 @@ bin/sensorr record
 
 `/design/:stage/:component`, where a stage is a folder of `libs/ui/src` and a component is one story file: `/design/atoms/badge`, `/design/elements/grid`, `/design/inputs/select`, `/design/components/movie`. Both `/design` and `/design/:stage` redirect to their first entry. The stages come from the files found, so `layout` has no tab as long as `libs/ui/src/layout` holds no story file. Only the story file of the URL is mounted, which is what keeps a virtualized `Grid` or `List` from being measured inside a container that has no height.
 
-`apps/web/src/pages/Design/stories.ts:48` finds the files with webpack's `require.context`, so a new `*.stories.tsx` appears without registering it anywhere. `apps/web/src/pages/App.tsx:62` requires the page behind `process.env.NODE_ENV !== 'production'`: webpack folds the branch, so neither the gallery nor the 40 story modules reach a production build.
+`apps/web/src/pages/Design/stories.ts:48` finds the files with webpack's `require.context`, so a new `*.stories.tsx` appears without registering it anywhere. `apps/web/src/pages/App.tsx:66` requires the page behind `process.env.NODE_ENV !== 'production'`: webpack folds the branch, so neither the gallery nor the 40 story modules reach a production build.
 
 No story throws on render: the 40 pages were opened one by one on 2026-09-18 and none of the 156 figures showed the error boundary. `apps/web/src/pages/Design/Boundary.tsx` catches a story that throws and shows its name and error message in place of the component, so one broken story never blanks the page.
 

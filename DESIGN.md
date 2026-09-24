@@ -221,13 +221,13 @@ after touching either.
 Not a slogan invented for this document. It is the line the product already says about
 itself, in seven places: `apps/web/src/index.html:31`, `apps/web/src/manifest.json:4`,
 `apps/web/src/layout/Loading/Loading.tsx:12`, `apps/web/src/pages/Login/Login.tsx:49`,
-`apps/web/src/pages/Settings/Settings.tsx:78`, `apps/cli/src/main.js:42`, and — spelled
+`apps/web/src/pages/Settings/Settings.tsx:78`, `apps/cli/src/main.js:48`, and — spelled
 out in full — `apps/web/src/pages/KeepInTouch/KeepInTouch.tsx:155`: *"A Friendly Digital
 Video Recorder. Think VCR but in modern times."* Every screen answers to that sentence.
 
 A VCR is a machine you program once and then trust. Sensorr's subject is the **movie and
 its release**: a policy sorts candidate releases into `require`, `prefer` and `avoid`
-groups (`libs/sensorr/src/lib/policy.ts:79-105`), and the interface's real job is to show
+groups (`libs/sensorr/src/lib/policy.ts:87-113`), and the interface's real job is to show
 what that policy did — which axis held, which one broke, what a swap would cost. The
 Swaps screen is where the product is most itself: five axes (`resolution`, `source`,
 `encoding`, `dub`, `language`) rendered as an old value tucked under the new one, green when the policy
@@ -406,7 +406,7 @@ literal; take the nearest step.
 `768px` and `1200px`. Because theme-ui reads style arrays against that list, almost every
 responsive rule in the codebase is a two-entry array — mobile value, then everything from
 768px up — and a third entry is used only where the desktop band genuinely differs (the
-header's secondary items, `apps/web/src/layout/Header/Header.tsx:96-99`).
+header's secondary items, `apps/web/src/layout/Header/Header.tsx:97-100`).
 
 **One scale for space and type.** `sizes` is thirteen `em` steps and the theme registers
 it as both `space` and `fontSizes` (`libs/theme/src/lib/theme/index.ts:16-21`). It runs
@@ -425,7 +425,7 @@ lay out as `repeat(auto-fill, 22em)` (`libs/ui/src/inputs/Options/Options.tsx:29
 **Two navigations for two shells.** Installed as a PWA, navigation is a bottom bar with
 icon-over-label items and `padding-bottom: max(0.75em, env(safe-area-inset-bottom))`. In a
 browser it is a horizontal scroller at the top, with a second row of sub-routes that
-appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.tsx:40-94`).
+appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.tsx:41-109`).
 
 ## Elevation & Depth
 
@@ -568,7 +568,7 @@ advance.
 - **Browser:** a horizontal scroller of semibold `0.875em` body text at `opacity: 0.33`,
   rising to `0.66` on hover above the first breakpoint and to `1` when active — the active
   item is *not* colored, it is simply the only one at full opacity
-  (`apps/web/src/layout/Header/elements/Navigation.tsx:136-183`). A chevron introduces the
+  (`apps/web/src/layout/Header/elements/Navigation.tsx:151-198`). A chevron introduces the
   sub-route row, which only exists inside its branch.
 - **PWA:** a bottom bar of inline-SVG icons over `0.625em` labels, `grayLighter` ground,
   1px `gray` top border, `grayDark` at rest and `primary` when active. Items ripple on
