@@ -47,6 +47,7 @@ export class ShowDTO {
   readonly policy: string
   readonly proposal_only: boolean | null
   readonly path: string
+  readonly plex_guid: string
   readonly requested_by: string[]
   readonly banned_releases: string[]
   readonly releases: ShowReleaseDTO[]

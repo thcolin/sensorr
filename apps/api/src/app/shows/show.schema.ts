@@ -134,6 +134,9 @@ export class Show extends Document {
   @Prop()
   path: string
 
+  @Prop()
+  plex_guid: string
+
   @Prop(raw([String]))
   requested_by: Record<any, any>
 

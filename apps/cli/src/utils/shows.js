@@ -44,6 +44,12 @@ export const fetchShow = async (tmdb, id) => {
   }
 }
 
+// A show a guest asks for arrives unmonitored, the way a requested movie arrives ignored
+export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by) => ({
+  show: { ...show, state: 'ignored', monitored: false, monitor_new_seasons: false, plex_guid, requested_by },
+  episodes: episodes.map((episode) => ({ ...episode, monitored: false })),
+})
+
 // An empty `proposal_only` on the show follows the job
 export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
 

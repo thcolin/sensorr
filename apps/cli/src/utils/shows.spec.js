@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, proposalOnlyOf, airingUnits } from './shows'
+import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits } from './shows'
 
 const now = 1790000000000
 
@@ -203,6 +203,32 @@ describe('importLinksOf', () => {
 
   it('links nothing for a release covering episodes that all have files', () => {
     expect(importLinksOf(release, show, episodes.map((episode) => ({ ...episode, files: [{ id: '1' }] })), '/tvshows')).toEqual([])
+  })
+})
+
+describe('requestedShowOf', () => {
+  const fetched = {
+    show: { id: 1668, name: 'Friends', status: 'Ended' },
+    episodes: [
+      { id: 1, show_id: 1668, season_number: 0, episode_number: 1 },
+      { id: 2, show_id: 1668, season_number: 1, episode_number: 1 },
+    ],
+  }
+
+  it('brings a requested show in ignored and unmonitored, every episode unmonitored, with the guests requesting it', () => {
+    const { show, episodes } = requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com'])
+
+    expect(show).toEqual({
+      id: 1668,
+      name: 'Friends',
+      status: 'Ended',
+      state: 'ignored',
+      monitored: false,
+      monitor_new_seasons: false,
+      plex_guid: 'plex://show/5d9c086c46115600200aa2fe',
+      requested_by: ['guest@example.com'],
+    })
+    expect(episodes.map(({ id, monitored }) => [id, monitored])).toEqual([[1, false], [2, false]])
   })
 })
 
