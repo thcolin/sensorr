@@ -223,7 +223,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                   ))}
                 </div>
               )}
-              {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} />}
+              {!mobile && <Gestures onGesture={onGesture} disabled={disabled || !!leaving} sx={UIActive.styles.gestures} />}
             </div>
           </div>
         </div>
@@ -407,6 +407,10 @@ UIActive.styles = {
     columnGap: 3,
     rowGap: 8,
     marginBottom: [0, 4],
+  },
+  // Set apart from the pills above, which describe the swap the buttons decide.
+  gestures: {
+    marginTop: 6,
   },
   pills: {
     display: 'flex',
