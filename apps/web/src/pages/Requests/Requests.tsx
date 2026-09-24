@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Entities,
   withControls,
@@ -15,8 +15,10 @@ import {
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import Show from '../../components/Show/Show'
+import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import withProps from '../../components/enhancers/withProps'
@@ -28,6 +30,63 @@ import { withBody } from '../../layout/withLayout'
 const Movie = ({ ...props }) => (
   <MovieWithCreditsAndReviews {...props as any} />
 )
+
+const UNFULFILLED = 'pinned|missing|ignored'
+
+// A requested show arrives outside the library, `ignored`: following it from its poster adds it, as from its page.
+// It follows the guests and "Unfulfilled" filters, the others are movie fields.
+const RequestsEntities = ({ controls, ...props }) => {
+  const api = useAPI()
+  const { loading, metadata } = useShowsMetadataContext() as any
+  const [shows, setShows] = useState(null)
+  const [error, setError] = useState(null)
+  const unfulfilled = (controls?.values?.state ?? UNFULFILLED) === UNFULFILLED
+  const guests = controls?.values?.requested_by
+  const params = useMemo(() => ({
+    state: unfulfilled ? 'ignored' : 'ignored|wished|archived',
+    ...(guests?.values?.length ? { requested_by: guests.values.join({ or: '|', and: ',' }[guests.behavior]) } : { 'requested_by.gte': 1 }),
+  }), [unfulfilled, JSON.stringify(guests)])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const { uri, params: query, init } = APIQuery.shows.getShows({ params, init: { signal: controller.signal } })
+
+    setShows(null)
+    setError(null)
+    api.fetch(uri, { ...query, limit: '' }, init)
+      .then(({ results }) => setShows(results))
+      .catch((e) => {
+        if (e.name !== 'AbortError') {
+          console.warn(e)
+          setError(e)
+        }
+      })
+
+    return () => controller.abort()
+  }, [params])
+
+  // Followed or removed since the listing, a show leaves the unfulfilled ones at once
+  const listed = useMemo(() => (shows || []).filter(show => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [shows, loading, unfulfilled, metadata])
+
+  return (
+    <>
+      {(!!shows || !!error) && (
+        <Entities
+          id='requests-shows'
+          entities={listed}
+          length={listed.length}
+          error={error}
+          label={emojize('📺', 'Shows')}
+          display='row'
+          hide={!error}
+          empty={{ emoji: '📺', title: 'No show requests', subtitle: 'Your guests have not asked for a show yet' }}
+          child={Show as any}
+        />
+      )}
+      <Entities {...props as any} controls={controls} {...((listed.length || error) ? { label: emojize('🎞️', 'Movies') } : {})} />
+    </>
+  )
+}
 
 const Requests = compose(
   withTitle(i18n.t('pages.requests.title')),
@@ -96,10 +155,12 @@ const Requests = compose(
               title="Requests"
               subtitle={(
                 <span>
-                  Explore your guests requested movies
+                  Explore your guests requested movies and shows
                   <br/>
                   <br/>
                   <small><em>Change each requested movie state to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🍿 Wished</code> if you want to accept it, or <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔕 Ignored</code> if you want to refuse it</em></small>
+                  <br/>
+                  <small><em>Change a requested show to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔔 Followed</code> to add it to your library</em></small>
                 </span>
               )}
             />
@@ -191,6 +252,6 @@ const Requests = compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
-)(Entities)
+)(RequestsEntities)
 
 export default Requests
