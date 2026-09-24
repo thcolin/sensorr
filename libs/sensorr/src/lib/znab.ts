@@ -129,15 +129,22 @@ function camelize(obj) {
 function transform(items, init) {
   return Object.values(items
       .map(item => {
-        const meta = oleoo.parse(item.title, {
-          strict: false,
-          flagged: true,
-          defaults: {
-            language: 'VO',
-            resolution: 'SD',
-            year: '0',
-          },
-        })
+        let meta
+
+        try {
+          meta = oleoo.parse(item.title, {
+            strict: false,
+            flagged: true,
+            defaults: {
+              language: 'VO',
+              resolution: 'SD',
+              year: '0',
+            },
+          })
+        } catch (e) {
+          // oleoo refuses a name past 1024 characters or a range past 9999 episodes: drop that result, not the search
+          return null
+        }
 
         return ({
           ...init,
@@ -163,6 +170,7 @@ function transform(items, init) {
           },
         })
       })
+      .filter(Boolean)
     .reduce((acc, item) => ({ ...acc, [item.link]: item }), {})
   )
 }
