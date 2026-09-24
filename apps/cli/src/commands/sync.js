@@ -9,6 +9,7 @@ import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { settleSwaps, cleanedSpaceOf } from '../utils/swaps'
+import { releaseOf } from '../utils/plex'
 
 const meta = {
   command: 'sync',
@@ -189,117 +190,12 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
                 title: oleoo.parse(release.original, { strict: false, flagged: true }).generated,
               })),
               ...Media.map(media => {
-                const fallback = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
-
-                const meta = {
-                  type: 'movie',
-                  fallback,
-                  title: (payload.title)
-                    .toLowerCase()
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^\sa-zA-Z0-9]/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' '),
-                  year: payload.year,
-                  language: (fallback.language && fallback.language !== 'VO') ? fallback.language : media.Part[0].Stream
-                    .reduce((acc, curr, index, arr) => {
-                      const audios = arr.filter(stream => stream.streamType === 2)
-
-                      if (audios.length > 1) {
-                        return 'MULTi'
-                      }
-
-                      const subtitles = arr.filter(stream => stream.streamType === 3).sort((a, b) => a.languageTag === 'en' ? 1 : -1)
-                      if (subtitles.length && subtitles[0].languageTag !== audios[0].languageTag) {
-                        return `VOST${(subtitles[0].languageTag || '').toUpperCase()}`
-                      }
-
-                      return {
-                        en: 'ENGLISH',
-                        fr: 'FRENCH',
-                        fa: 'PERSIAN',
-                        am: 'AMHARIC',
-                        ar: 'ARABIC',
-                        km: 'CAMBODIAN',
-                        zh: 'CHINESE',
-                        cr: 'CREOLE',
-                        da: 'DANISH',
-                        nl: 'DUTCH',
-                        et: 'ESTONIAN',
-                        fi: 'FINNISH',
-                        de: 'GERMAN',
-                        el: 'GREEK',
-                        iw: 'HEBREW',
-                        in: 'INDONESIAN',
-                        ga: 'IRISH',
-                        it: 'ITALIAN',
-                        ja: 'JAPANESE',
-                        ko: 'KOREAN',
-                        lo: 'LAOTIAN',
-                        lv: 'LATVIAN',
-                        lt: 'LITHUANIAN',
-                        ms: 'MALAY',
-                        ms: 'MALAYSIAN',
-                        mi: 'MAORI',
-                        no: 'NORWEGIAN',
-                        ps: 'PASHTO',
-                        pl: 'POLISH',
-                        pt: 'PORTUGUESE',
-                        ro: 'ROMANIAN',
-                        ru: 'RUSSIAN',
-                        es: 'SPANISH',
-                        sw: 'SWAHILI',
-                        sv: 'SWEDISH',
-                        tl: 'TAGALOG',
-                        tg: 'TAJIK',
-                        th: 'THAI',
-                        tr: 'TURKISH',
-                        uk: 'UKRAINIAN',
-                        vi: 'VIETNAMESE',
-                        cy: 'WELSH',
-                      }[audios[0].languageTag]
-                    }),
-                  source: fallback.source,
-                  encoding: {
-                    h264: 'x264',
-                    hevc: 'x265',
-                    vc1: 'VC1',
-                    mpeg4: media.Part[0].Stream.reduce((acc, curr) => curr.streamType === 1 ? { XVID: 'XviD', DX50: 'DivX' }[curr.codecID] : acc, null),
-                  }[media.videoCodec] || fallback.encoding,
-                  resolution: media.videoResolution === '2160' ? '2160p' :  media.videoResolution === '1080' ? '1080p' : media.videoResolution === '720' ? '720p' : 'SD',
-                  dub: fallback.dub || {
-                    ac3: 'AC3',
-                    eac3: 'AC3',
-                    // mp3: 'MP3',
-                    // flac: 'FLAC',
-                    // opus: 'OPUS',
-                    // vorbis: 'VORBIS'
-                  }[media.audioCodec],
-                  flags: [...new Set([
-                    ...(fallback.flags || []),
-                    ...({
-                      aac: ['AAC'],
-                      dca: ['DTS'],
-                      'dca-ma': ['HDMA'],
-                      truehd: ['TRUEHD'],
-                    }[media.audioCodec] || []),
-                  ])],
-                  group: fallback.group,
-                  season: null,
-                  episode: null,
-                  episodes: [],
-                }
-
-                const release = oleoo.stringify(meta, { flagged: true })
+                const { title, original } = releaseOf(payload, media)
 
                 return {
                   id: `${payload.guid}#${media.id}`,
-                  title: release,
-                  original: fallback.original,
+                  title,
+                  original,
                   from: 'sync',
                   job: state.metadata.job,
                   size: media.Part.reduce((acc, curr) => acc + curr.size, 0),
