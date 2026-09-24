@@ -28,6 +28,13 @@ describe('queue', () => {
     expect(groupOf(item, 0.25 * GB)).toBe('refine')
   })
 
+  it('keeps a report proposal in its own group, whatever it frees', () => {
+    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 7.7 * GB, { from: 'report' }))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('report')
+    expect(groupOf(item, 0)).toBe('report')
+  })
+
   it('puts a proposal that grows in the last group above a threshold', () => {
     const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.1 * GB))
 
@@ -122,7 +129,7 @@ describe('queue', () => {
     const older = { ...movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB)), entity: { id: 1, refined_at: '2026-09-01' } }
     const newer = { ...movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB)), entity: { id: 2, refined_at: '2026-09-20' } }
 
-    const [refine] = arrange([older, newer], { threshold: 0 })
+    const [, refine] = arrange([older, newer], { threshold: 0 })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })
@@ -132,8 +139,8 @@ describe('queue', () => {
     const big = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 2 * GB))
     const grows = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi', 9 * GB))
 
-    const [desc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: true } })
-    const [asc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: false } })
+    const [, desc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: true } })
+    const [, asc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: false } })
 
     expect(desc.items.map(({ id }) => id)).toEqual([2, 1, 3])
     expect(asc.items.map(({ id }) => id)).toEqual([3, 1, 2])
@@ -143,7 +150,7 @@ describe('queue', () => {
     const first = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB))
     const second = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 6 * GB))
 
-    const [refine] = arrange([first, second], { threshold: 0.5 * GB, skipped: { 1: 1 } })
+    const [, refine] = arrange([first, second], { threshold: 0.5 * GB, skipped: { 1: 1 } })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })

@@ -110,6 +110,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     wished: (!znab || (record.release?.valid && record.release?.znab === znab)),
     refined: (!znab || (record.release?.valid && record.release?.znab === znab)),
     shrinked: (!znab || (record.release?.valid && record.release?.znab === znab)),
+    reported: (!znab || (record.release?.valid && record.release?.znab === znab)),
     recorded: record.release?.valid && (!record.release?.proposal || record.treated) && (!znab || (record.release?.valid && record.release?.znab === znab)),
     treated: record.release?.valid && record.release?.proposal && record.treated && (!znab || (record.release?.valid && record.release?.znab === znab)),
     proposal: record.release?.valid && record.release?.proposal && !record.treated && (!znab || (record.release?.valid && record.release?.znab === znab)),
@@ -171,7 +172,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     <div ref={ref} sx={UIProcessMoviesJob.styles.element}>
       <div ref={headerRef}>
         <Warning
-          emoji={{ record: '📹', refine: '✨', shrink: '✂️' }[job.meta.command]}
+          emoji={{ record: '📹', refine: '✨', shrink: '✂️', report: '🚩' }[job.meta.command]}
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
@@ -201,6 +202,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                     ...(typeof job.meta.summary.proposed === 'number' ? { accepted: acceptedOf(records, moviesMetadataContext) } : {}),
                     refined: (!job.meta.done && job.meta.summary.refined) ? `${records.length}/${job.meta.summary.refined}` : job.meta.summary.refined,
                     shrinked: (!job.meta.done && job.meta.summary.shrinked) ? `${records.length}/${job.meta.summary.shrinked}` : job.meta.summary.shrinked,
+                    reported: (!job.meta.done && job.meta.summary.reported) ? `${records.length}/${job.meta.summary.reported}` : job.meta.summary.reported,
                   }, true, job.meta.config).map(meta => ({
                     ...meta,
                     props: ['proposed', 'accepted'].includes(meta.key) ? {} : {
@@ -211,6 +213,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                       onClick: {
                         refined: () => setFilter(null),
                         shrinked: () => setFilter(null),
+                        reported: () => setFilter(null),
                       }[meta.key] || (() => setFilter(filter => filter === meta.key ? null : meta.key)),
                     },
                   }))}
@@ -444,7 +447,7 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
                 metadata={metadata}
                 setMovieMetadata={setMovieMetadata}
               />
-              {['refine', 'shrink'].includes(command) && movie?.releases?.map(release => (
+              {['refine', 'shrink', 'report'].includes(command) && movie?.releases?.map(release => (
                 <div sx={UIRecord.styles.release} key={release.id}>
                   <Release entity={release} display='column' compact={true} />
                 </div>
@@ -589,18 +592,18 @@ const UIRecordLogs = ({ logs, command, movie, release, metadata, setMovieMetadat
                 expandable={(
                   (command === 'record' && !!log.meta?.movie?.query?.terms?.length) ||
                   (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
-                  (command === 'shrink' && !!log.meta?.movie?.releases?.length) ||
+                  (['shrink', 'report'].includes(command) && !!log.meta?.movie?.releases?.length) ||
                   !!log.meta?.stats?.total ||
                   (!!log.meta?.release && (release?.valid || !release?.hide))
                 )}
                 forceOpen={(
                   (command === 'refine' && !!log.meta?.movie?.releases?.length) ||
-                  (command === 'shrink' && !!log.meta?.movie?.releases?.length) ||
+                  (['shrink', 'report'].includes(command) && !!log.meta?.movie?.releases?.length) ||
                   (!!log.meta?.release && (release?.valid || !release?.hide))
                 )}
                 children={() => (
                   <Fragment>
-                    {['refine', 'shrink'].includes(command) && !!log.meta?.movie?.releases?.length && (log.meta?.movie?.releases || []).map((release, index) => (
+                    {['refine', 'shrink', 'report'].includes(command) && !!log.meta?.movie?.releases?.length && (log.meta?.movie?.releases || []).map((release, index) => (
                       <code key={index}>
                         <i></i>
                         <i>➤</i>

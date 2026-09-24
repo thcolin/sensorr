@@ -102,6 +102,18 @@ const JobsSettings = ({ ...props }) => {
                 options: ['cron', 'proposalOnly', 'threshold'],
               },
               {
+                command: 'report',
+                emoji: '🚩',
+                description: 'Replace archived movies reported from Plex with their best release',
+                disabled: !config.get('plex.token'),
+                warning: config.get('plex.token') ? null : (
+                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
+                  </span>
+                ),
+                options: ['cron', 'proposalOnly'],
+              },
+              {
                 command: 'refresh',
                 emoji: '🔌',
                 description: 'Refresh Sensorr data with TMDB changes',

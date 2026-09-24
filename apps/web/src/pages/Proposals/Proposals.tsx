@@ -23,7 +23,7 @@ import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, isOverd
 
 const MB = 1024 * 1024
 
-const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'state']
+const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'reports', 'state']
 
 const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 
@@ -45,6 +45,7 @@ const DEFAULTS = {
 }
 
 const LABELS = {
+  report: 'report',
   refine: 'refine',
   shrink: 'shrink',
   rest: 'ignored',
