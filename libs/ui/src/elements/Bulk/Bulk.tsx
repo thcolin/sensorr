@@ -13,6 +13,7 @@ export interface BulkOption {
 export interface BulkAction {
   key: string
   label: React.ReactNode
+  icon?: React.ReactNode
   variant?: ButtonProps['variant']
   color?: ButtonProps['color']
   disabled?: boolean
@@ -185,7 +186,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         {...(!visible ? { inert: '' } : {})}
       >
         <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`}>
-          {actions.map(({ key, label, variant = 'outline', color = 'gray', disabled: off = false, onClick, options }) => (
+          {actions.map(({ key, label, icon = null, variant = 'outline', color = 'gray', disabled: off = false, onClick, options }) => (
             <button
               key={key}
               type='button'
@@ -197,6 +198,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
               aria-expanded={options ? expanded?.key === key : undefined}
               onClick={options ? (e) => open(key, e) : onClick}
             >
+              {!!icon && <span data-icon={true} aria-hidden={true}>{icon}</span>}
               {label}
               {!!options && <Icon value='chevron' direction={true} width='0.625em' height='0.625em' />}
             </button>
@@ -288,6 +290,12 @@ UIBulk.styles = {
       display: 'none',
     },
     '>button + button': separated,
+    '>button:first-of-type': {
+      paddingLeft: 2,
+    },
+    '>button:last-of-type': {
+      paddingRight: 2,
+    },
     '&[data-start=true]': {
       maskImage: 'linear-gradient(to right, transparent, black 2em)',
     },
@@ -304,10 +312,10 @@ UIBulk.styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    minWidth: '7em',
-    height: '2.75em',
-    paddingX: 4,
+    gap: 7,
+    minWidth: '8em',
+    height: '3em',
+    paddingX: 3,
     fontFamily: 'body',
     fontWeight: 'body',
     whiteSpace: 'nowrap',
@@ -330,6 +338,15 @@ UIBulk.styles = {
       color: 'hsla(0, 0%, 100%, 0.5)',
       cursor: 'default',
     },
+    // The white of the label, at the size of the decisions of a swap row (Card.tsx).
+    '>[data-icon]': {
+      display: 'inline-flex',
+      svg: {
+        width: '1.125em',
+        height: '1.125em',
+        color: 'whitePure',
+      },
+    },
   },
   // As wide as its options need, centred on the bar, and scrolling past the screen's width.
   overlay: {
@@ -351,7 +368,8 @@ UIBulk.styles = {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
-      paddingX: 4,
+      paddingLeft: 2,
+      paddingRight: 3,
       fontFamily: 'body',
       fontWeight: 'body',
       whiteSpace: 'nowrap',

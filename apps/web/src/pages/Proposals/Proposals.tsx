@@ -1062,6 +1062,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         actions={(['accept', 'refuse'] as const).map(verdict => ({
           key: verdict,
           label: verdict === 'accept' ? 'Accept' : 'Refuse',
+          icon: <Icon value={verdict === 'accept' ? 'check' : 'clear'} active={true} />,
           variant: verdict === 'accept' ? 'contain' : 'outline',
           color: 'primary',
           onClick: () => {
