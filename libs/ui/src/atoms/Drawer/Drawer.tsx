@@ -51,6 +51,26 @@ const UIDrawer = ({
   }, [dimensions, level])
 
   useEffect(() => {
+    if (hidden) {
+      return
+    }
+
+    // A key an open select or input already used is not a request to close.
+    const onKeyDown = async (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) {
+        return
+      }
+
+      await animateToggle(false)
+      preventEffectAnimation.current = true
+      close()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [hidden, animateToggle, close])
+
+  useEffect(() => {
     if (preventEffectAnimation.current) {
       preventEffectAnimation.current = false
       return
