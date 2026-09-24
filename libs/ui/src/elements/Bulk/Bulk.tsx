@@ -38,7 +38,6 @@ const STAGGER = 30
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// The rows of an action are clipped out of the whole bar, from the box of the button that opened them.
 const inset = (from, radius = '2em') => from ? `inset(${from.top}px ${from.right}px ${from.bottom}px ${from.left}px round ${radius})` : `inset(0px round ${radius})`
 
 const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
@@ -61,7 +60,6 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   }
 
   const action = actions.find(({ key }) => key === expanded?.key)
-  // The label of the opening button is drawn by the options, which slide it to their start.
   const segments = () => Array.from(row.current?.children || []) as HTMLElement[]
 
   const open = useCallback((key, e) => {
@@ -89,13 +87,11 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
       then?.()
     }
 
-    // The way back is a crossfade: the options leave as the labels at rest come back under them.
     faded.current.forEach(animation => animation.cancel())
     segments().forEach(segment => segment.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' }))
     node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease-out', fill: 'forwards' }).finished.then(done)
   }, [expanded])
 
-  // The label slides from where its button was to the start of the bar, then the options come in.
   useLayoutEffect(() => {
     const node = overlay.current
 
@@ -150,7 +146,6 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
     }
   }, [visible])
 
-  // On a phone the row scrolls sideways, and fades on the side that has more.
   const onScroll = useCallback(() => {
     const node = row.current
 
@@ -254,7 +249,6 @@ const BOTTOM = {
   },
 }
 
-// One green bar, as the controls bar at the top of the page, one segment per action.
 UIBulk.styles = {
   element: {
     position: 'fixed',
@@ -354,7 +348,6 @@ UIBulk.styles = {
       },
     },
   },
-  // As wide as its options need, centred on the bar, and scrolling past the screen's width.
   overlay: {
     position: 'absolute',
     top: '0px',
@@ -392,8 +385,7 @@ UIBulk.styles = {
       '::-webkit-scrollbar': {
         display: 'none',
       },
-      // A label then its values, as Sort by and its choice in the controls bar. The values
-      // share the width of the bar, so a family of two fills it as Accept and Refuse do.
+      // A label then its values, as Sort by and its choice in the controls bar.
       '>button': {
         flex: '1 0 auto',
         fontWeight: 'semibold',
@@ -403,7 +395,6 @@ UIBulk.styles = {
       },
       '>button + button': separated,
     },
-    // The way out frames the values with the label, in the same green.
     '>button': {
       minWidth: 'auto',
       width: '3em',

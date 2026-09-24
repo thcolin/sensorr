@@ -529,7 +529,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const chosen = useMemo(() => selectable.filter(item => selected.has(item.id)), [selectable, selected])
   const setSelected = useCallback((ids) => setSelection(selection => ({ ...selection, [location.key]: typeof ids === 'function' ? ids(selection[location.key] || []) : ids })), [location.key])
   const toggle = useCallback((id) => setSelected(ids => ids.includes(id) ? ids.filter(v => v !== id) : [...ids, id]), [setSelected])
-  // A group all checked unchecks; otherwise every row of the group is added to the selection.
   const toggleGroup = useCallback((items) => setSelected(ids => {
     const group = items.map(({ id }) => id)
     return group.every(id => ids.includes(id)) ? ids.filter(id => !group.includes(id)) : [...new Set([...ids, ...group])]

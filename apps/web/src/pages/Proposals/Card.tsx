@@ -408,7 +408,6 @@ UIActive.styles = {
     rowGap: 8,
     marginBottom: [0, 4],
   },
-  // Set apart from the pills above, which describe the swap the buttons decide.
   gestures: {
     marginTop: 6,
   },
@@ -425,8 +424,6 @@ UIActive.styles = {
 
 export const Active = memo(withMovieMetadataContext({ enhanced: true })(UIActive))
 
-// The checkbox of the library's posters: shown under the pointer of its row or group, then
-// everywhere once one is checked. A phone shows it once one is checked.
 const Select = ({ id, checked, visible, label, onChange, disabled = false, layout = {} }) => (
   <div sx={{ ...Select.styles.element, ...layout }} data-select={true} data-visible={checked || visible} data-checked={checked}>
     <Option id={id} type='checkbox' behavior='radio' borderless={true} checked={checked} disabled={disabled} onChange={onChange} aria-label={label} />
@@ -560,7 +557,6 @@ UICompact.styles = {
       },
     },
   },
-  // On the corner of the row's poster.
   select: {
     gridArea: 'poster',
     alignSelf: 'start',
@@ -845,7 +841,6 @@ export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, menu 
       <code>{count}</code>
     </button>
     <span sx={UIGroupTitle.styles.end}>
-      {/* The select-all of the controls bar, for the rows of this group. */}
       {!!onSelectedChange && (
         <span data-select-all={true}>
           <Option id={`select-${group}`} type='checkbox' checked={selected} onChange={onSelectedChange}>
@@ -901,7 +896,6 @@ UIGroupTitle.styles = {
       },
     },
   },
-  // Faint at rest and solid under the pointer, in the type of the controls bar.
   end: {
     display: 'inline-flex',
     alignItems: 'center',
