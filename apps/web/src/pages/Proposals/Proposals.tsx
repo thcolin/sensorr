@@ -28,11 +28,11 @@ const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
 
 const SIDES = {
-  current: ['📀', 'Current size'],
-  proposed: ['💿', 'Proposed size'],
+  current: { emoji: '📀', label: 'Current size' },
+  proposed: { emoji: '💿', label: 'Proposed size' },
 }
 
-const SWAP = ['current', 'proposed']
+const SWAP = Object.keys(SIDES)
 
 const DEFAULTS = {
   threshold: 0,
@@ -262,7 +262,7 @@ const SizeFilter = ({ side, ...props }) => (
     max={SIZE_MAX}
     marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
     data={null}
-    label={emojize(SIDES[side][0], SIDES[side][1])}
+    label={emojize(SIDES[side].emoji, SIDES[side].label)}
     labelize={(value) => `${value} GB`}
     value={props.value || [0, SIZE_MAX]}
     step={null}
@@ -442,7 +442,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const mobile = useResponsiveValue([true, false])
   const connected = useSyncExternalStore(online.subscribe, online.get)
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
-  const values = useMemo(() => ({ ...DEFAULTS, ...stored }), [stored])
+  // A value stored by an earlier version of the filters has no field anymore.
+  const values = useMemo(() => Object.keys(DEFAULTS).reduce((acc, key) => ({ ...acc, [key]: stored?.[key] ?? DEFAULTS[key] }), {}), [stored]) as any
   const threshold = THRESHOLDS.includes(values.threshold) ? values.threshold : DEFAULTS.threshold
 
   const [skipped, setSkipped] = useState({})
