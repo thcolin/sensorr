@@ -1,6 +1,5 @@
-// Undocumented: the GraphQL endpoint Plex Web itself calls to list the "Report an Issue..." feed
-// of the server admin (https://support.plex.tv/articles/share-and-report/). Plex can change it
-// without notice; introspection is disabled, and a report has no "resolved" status.
+// Undocumented: the GraphQL endpoint Plex Web itself calls for the admin's "Report an Issue..." feed
+// (https://support.plex.tv/articles/share-and-report/). Plex can change it without notice.
 const COMMUNITY_API_URL = 'https://community.plex.tv/api'
 
 const QUERY = `query getReportedIssues($first: PaginationInt!, $after: String) {

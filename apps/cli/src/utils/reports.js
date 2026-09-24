@@ -1,4 +1,3 @@
-// A report names the movie, not one of its versions: every owned release gets banned.
 export const bansOf = (movie) => [...new Set([
   ...(movie.banned_releases || []),
   ...(movie.releases || []).filter(({ proposal }) => !proposal).flatMap(({ original, title }) => [original, title]),
