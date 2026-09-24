@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageOf, pickReleases, searchUnits, ShowUnit } from './show'
+import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchUnits, ShowUnit } from './show'
 
 const now = new Date('2026-09-24T12:00:00Z')
 const day = 24 * 60 * 60 * 1000
@@ -353,5 +353,52 @@ describe('pickReleases', () => {
     expect(picked(pickReleases(units.map((unit, index) => ({ unit, results: results[index] })), episodes))).toEqual([
       ['Friends.S01E01E02.MULTi.1080p.BluRay.x264-GRP', 2],
     ])
+  })
+})
+
+describe('isUnitCovered', () => {
+  const episode = (season: number, number: number): ShowUnit => ({ type: 'episode', season, episode: number, episodes: [{ season, episode: number }] })
+  const picks = [{ coverage: [{ season: 1, episode: 1 }, { season: 1, episode: 2 }] }]
+
+  it('skips a unit once every episode it targets is picked', () => {
+    expect(isUnitCovered(episode(1, 2), picks)).toBe(true)
+    expect(isUnitCovered(episode(1, 3), picks)).toBe(false)
+    expect(isUnitCovered({ type: 'season', season: 1, episodes: [{ season: 1, episode: 2 }, { season: 1, episode: 3 }] }, picks)).toBe(false)
+    expect(isUnitCovered(episode(1, 3), [])).toBe(false)
+  })
+
+  it('skips a last resort pack once any episode of its season is picked', () => {
+    const fallback: ShowUnit = { type: 'season', season: 1, episodes: [{ season: 1, episode: 3 }], fallback: true }
+
+    expect(isUnitCovered(fallback, picks)).toBe(true)
+    expect(isUnitCovered({ ...fallback, season: 2, episodes: [{ season: 2, episode: 1 }] }, picks)).toBe(false)
+  })
+
+  it('agrees with pickReleases on the units left to search', () => {
+    const episodes = own(friendsEpisodes(), 5, 3)
+    const units = searchUnits(friends, episodes, now).filter(({ season }) => season === 5)
+    const results = new Map([[units[0], [{ ...release('Friends.S05E01E02.MULTi.1080p.BluRay.x264-GRP'), valid: true }]]])
+    const picks = pickReleases(units.map(unit => ({ unit, results: results.get(unit) || [] })), episodes)
+
+    expect(units.filter(unit => !isUnitCovered(unit, picks)).map(({ episode }) => episode).slice(0, 2)).toEqual([4, 5])
+    expect(isUnitCovered(units[units.length - 1], picks)).toBe(true)
+  })
+})
+
+describe('coverageLabel', () => {
+  const range = (season: number, from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => ({ season, episode: from + index }))
+
+  it('names several seasons by their range, and a pack by its season', () => {
+    expect(coverageLabel([...range(1, 1, 24), ...range(10, 1, 18)], 'series')).toBe('S01-S10')
+    expect(coverageLabel(range(3, 1, 25), 'season')).toBe('S03')
+    expect(coverageLabel(range(3, 2, 25), 'season')).toBe('S03')
+    expect(coverageLabel(range(3, 1, 25))).toBe('S03')
+  })
+
+  it('names episodes by their numbers, a run of them by its bounds', () => {
+    expect(coverageLabel([{ season: 3, episode: 4 }])).toBe('S03E04')
+    expect(coverageLabel(range(3, 4, 6), 'episode')).toBe('S03E04-E06')
+    expect(coverageLabel([{ season: 3, episode: 6 }, { season: 3, episode: 4 }], 'episode')).toBe('S03E04E06')
+    expect(coverageLabel([])).toBe('')
   })
 })

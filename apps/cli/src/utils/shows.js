@@ -44,6 +44,18 @@ export const fetchShow = async (tmdb, id) => {
   }
 }
 
+// An empty `proposal_only` on the show follows the job
+export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
+
+// `airing` searches single episodes only, those aired since `since`
+export const airingUnits = (units, episodes, since) => {
+  const aired = new Set(episodes
+    .filter(({ air_date }) => air_date && new Date(air_date).getTime() >= since)
+    .map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
+
+  return units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
+}
+
 // GET /api/shows leaves ignored shows out unless asked for them
 export const fetchSensorrShows = async (api, params = {}) => {
   const shows = []

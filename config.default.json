@@ -53,6 +53,16 @@
     "import-shows": {
       "cron": "*/10 * * * *",
       "paused": true
+    },
+    "record-shows": {
+      "cron": "0 17 * * *",
+      "paused": true,
+      "proposalOnly": true
+    },
+    "airing": {
+      "cron": "0 * * * *",
+      "paused": true,
+      "proposalOnly": true
     }
   },
   "plex": {},

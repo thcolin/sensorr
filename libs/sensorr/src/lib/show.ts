@@ -142,3 +142,35 @@ export const pickReleases = (unitsWithResults: { unit: ShowUnit, results: any[] 
 
   return picked
 }
+
+// Same rules as pickReleases: a unit is not searched once the picks cover every episode it targets, or, for a last resort pack, any episode of its season
+export const isUnitCovered = (unit: ShowUnit, picks: { coverage: Coverage[] }[]) => {
+  const covered = picks.flatMap(({ coverage }) => coverage)
+
+  return unit.fallback
+    ? covered.some(({ season }) => season === unit.season)
+    : unit.episodes.every(({ season, episode }) => covered.some(c => c.season === season && c.episode === episode))
+}
+
+// `S01-S10` over several seasons, `S03` for a pack, `S03E04` or `S03E04-E06` for episodes
+export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = coverage.length === 1 ? 'episode' : 'season') => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const seasons = [...new Set(coverage.map(({ season }) => season))].sort((a, b) => a - b)
+  const episodes = coverage.map(({ episode }) => episode).sort((a, b) => a - b)
+
+  if (!seasons.length) {
+    return ''
+  }
+
+  if (seasons.length > 1) {
+    return `S${pad(seasons[0])}-S${pad(seasons[seasons.length - 1])}`
+  }
+
+  if (level !== 'episode') {
+    return `S${pad(seasons[0])}`
+  }
+
+  const run = episodes.length > 1 && episodes.every((episode, index) => !index || episode === episodes[index - 1] + 1)
+
+  return `S${pad(seasons[0])}${run ? `E${pad(episodes[0])}-E${pad(episodes[episodes.length - 1])}` : episodes.map(episode => `E${pad(episode)}`).join('')}`
+}

@@ -219,6 +219,40 @@ const config = convict({
         default: true,
       },
     },
+    'record-shows': {
+      cron: {
+        doc: 'Record-shows job cron, wished shows are searched by whole series, season packs and episodes',
+        format: 'String',
+        default: '0 17 * * *',
+      },
+      paused: {
+        doc: 'Pause Record-shows job',
+        format: 'Boolean',
+        default: true,
+      },
+      proposalOnly: {
+        doc: "Record-shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+        format: 'Boolean',
+        default: true,
+      },
+    },
+    airing: {
+      cron: {
+        doc: 'Airing job cron, wanted episodes aired in the last 7 days are searched one by one',
+        format: 'String',
+        default: '0 * * * *',
+      },
+      paused: {
+        doc: 'Pause Airing job',
+        format: 'Boolean',
+        default: true,
+      },
+      proposalOnly: {
+        doc: "Airing job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+        format: 'Boolean',
+        default: true,
+      },
+    },
   },
   plex: {
     url: {

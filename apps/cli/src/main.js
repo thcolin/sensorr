@@ -7,6 +7,8 @@ import nodeFetch from 'node-fetch'
 
 import logger from './store/logger'
 import record from './commands/record'
+import recordShows from './commands/record-shows'
+import airing from './commands/airing'
 import refresh from './commands/refresh'
 import refreshShows from './commands/refresh-shows'
 import sync from './commands/sync'
@@ -68,6 +70,8 @@ const main = async () => {
   parser.current = instance
     .wrap(instance.terminalWidth())
     .command(record(job, handlers))
+    .command(recordShows(job, handlers))
+    .command(airing(job, handlers))
     .command(refresh(job, handlers))
     .command(refreshShows(job, handlers))
     .command(sync(job, handlers))

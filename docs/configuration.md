@@ -55,6 +55,12 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.sync-shows.paused` | `boolean` | `true` | Pause Sync-shows job |
 | `jobs.import-shows.cron` | `string` | `*/10 * * * *` | Import-shows job cron, finished show releases are hard linked from the staging folder into the library |
 | `jobs.import-shows.paused` | `boolean` | `true` | Pause Import-shows job |
+| `jobs.record-shows.cron` | `string` | `0 17 * * *` | Record-shows job cron, wished shows are searched by whole series, season packs and episodes |
+| `jobs.record-shows.paused` | `boolean` | `true` | Pause Record-shows job |
+| `jobs.record-shows.proposalOnly` | `boolean` | `true` | Record-shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.airing.cron` | `string` | `0 * * * *` | Airing job cron, wanted episodes aired in the last 7 days are searched one by one |
+| `jobs.airing.paused` | `boolean` | `true` | Pause Airing job |
+| `jobs.airing.proposalOnly` | `boolean` | `true` | Airing job will only submit proposal and don't download any release, for the shows that don't say otherwise |
 
 ## Plex
 

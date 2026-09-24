@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf } from './shows'
+import { isRefreshDue, monitoredOf, fetchShow, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, proposalOnlyOf, airingUnits } from './shows'
 
 const now = 1790000000000
 
@@ -203,5 +203,33 @@ describe('importLinksOf', () => {
 
   it('links nothing for a release covering episodes that all have files', () => {
     expect(importLinksOf(release, show, episodes.map((episode) => ({ ...episode, files: [{ id: '1' }] })), '/tvshows')).toEqual([])
+  })
+})
+
+describe('proposalOnlyOf', () => {
+  it('follows the show when it says, the job otherwise', () => {
+    expect(proposalOnlyOf({ proposal_only: false }, true)).toBe(false)
+    expect(proposalOnlyOf({ proposal_only: true }, false)).toBe(true)
+    expect(proposalOnlyOf({ proposal_only: null }, true)).toBe(true)
+    expect(proposalOnlyOf({}, false)).toBe(false)
+    expect(proposalOnlyOf({}, undefined)).toBe(false)
+  })
+})
+
+describe('airingUnits', () => {
+  const since = new Date('2026-09-17T12:00:00Z').getTime()
+  const episodes = [
+    { season_number: 3, episode_number: 1, air_date: '2026-09-10' },
+    { season_number: 3, episode_number: 2, air_date: '2026-09-18' },
+    { season_number: 3, episode_number: 3, air_date: '2026-09-24' },
+    { season_number: 3, episode_number: 4, air_date: null },
+  ]
+  const units = [
+    { type: 'season', season: 3, episodes: [] },
+    ...[1, 2, 3, 4].map((episode) => ({ type: 'episode', season: 3, episode, episodes: [{ season: 3, episode }] })),
+  ]
+
+  it('keeps the single episodes aired since the given date, and no pack', () => {
+    expect(airingUnits(units, episodes, since).map(({ type, episode }) => `${type}:${episode}`)).toEqual(['episode:2', 'episode:3'])
   })
 })
