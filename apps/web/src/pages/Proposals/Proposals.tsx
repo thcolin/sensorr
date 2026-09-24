@@ -388,6 +388,15 @@ const MORPH = {
     viewTransitionName: 'var(--morph-poster, none)',
     viewTransitionClass: 'poster',
   },
+  // A named row is drawn outside the clip of `#body`, over the header once scrolled past
+  // its top: nested in the group of `#body`, the rows are cut at its edges.
+  'html[data-morphing] #body': {
+    viewTransitionName: 'swap-body',
+    viewTransitionGroup: 'contain',
+  },
+  '::view-transition-group-children(swap-body)': {
+    overflow: 'clip',
+  },
   '::view-transition-group(*)': {
     animationDuration: '400ms',
     animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
