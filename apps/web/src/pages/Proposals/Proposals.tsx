@@ -27,18 +27,19 @@ const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 
 const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
 
 const SIDES = {
-  current: { emoji: '📀', title: 'Current release', subtitle: 'Keep the swaps where at least one owned release matches these rules' },
-  proposed: { emoji: '💿', title: 'Proposed release', subtitle: 'Keep the swaps whose proposed release matches these rules' },
+  current: '📀',
+  proposed: '💿',
 }
+
+// The groups a release filter cycles through, in the order of a click.
+const SWAP = ['source', 'target']
 
 const DEFAULTS = {
   threshold: 500 * MB,
   sort_by: { value: 'time', sort: true },
-  ...Object.keys(SIDES).reduce((acc, side) => ({
-    ...acc,
-    [`${side}_size`]: [0, SIZE_MAX],
-    ...FILTERS.reduce((acc, filter) => ({ ...acc, [`${side}_${filter}`]: [] }), {}),
-  }), {}),
+  current_size: [0, SIZE_MAX],
+  proposed_size: [0, SIZE_MAX],
+  ...FILTERS.reduce((acc, filter) => ({ ...acc, [filter]: [] }), {}),
 }
 
 const LABELS = {
@@ -254,14 +255,14 @@ UIBalance.styles = {
   },
 }
 
-const SizeFilter = ({ ...props }) => (
+const SizeFilter = ({ side, ...props }) => (
   <Range
     {...props as any}
     min={0}
     max={SIZE_MAX}
     marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
     data={null}
-    label={emojize('📦', 'Size')}
+    label={emojize(SIDES[side], 'Size')}
     labelize={(value) => `${value} GB`}
     value={props.value || [0, SIZE_MAX]}
     step={null}
@@ -301,34 +302,34 @@ const fields = {
       </div>
     ),
   },
+  head: {
+    initial: null,
+    component: () => (
+      <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
+        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 an owned release carries it, 💿 the proposed release carries it, 🔕 it does not count' />
+      </div>
+    ),
+  },
   ...Object.keys(SIDES).reduce((acc, side) => ({
     ...acc,
-    [`head_${side}`]: {
-      initial: null,
-      component: () => (
-        <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: `head_${side}` }}>
-          <Warning emoji={SIDES[side].emoji} title={SIDES[side].title} subtitle={SIDES[side].subtitle} />
-        </div>
-      ),
-    },
     [`${side}_size`]: {
       initial: DEFAULTS[`${side}_size`],
       serialize: () => ({}),
-      component: SizeFilter,
+      component: (props) => <SizeFilter {...props} side={side} />,
     },
-    ...FILTERS.reduce((acc, filter) => ({
-      ...acc,
-      [`${side}_${filter}`]: {
-        initial: [],
-        serialize: () => ({}),
-        component: COMPONENTS[filter],
+  }), {}),
+  ...FILTERS.reduce((acc, filter) => ({
+    ...acc,
+    [filter]: {
+      initial: [],
+      serialize: () => ({}),
+      component: (props) => {
+        const Filter = COMPONENTS[filter]
+        return <Filter {...props} groups={SWAP} />
       },
-    }), {}),
+    },
   }), {}),
 }
-
-const rows = ['head', 'size', ...FILTERS]
-const area = (row, side) => row === 'head' ? `head_${side}` : `${side}_${row}`
 
 const layout = {
   nav: {
@@ -345,18 +346,16 @@ const layout = {
       display: ['none', 'block'],
     },
   },
-  // Both sides open as one pane, each filter of the current release facing its proposed
-  // counterpart on a darker half; a phone stacks them.
+  // One box per filter, each tag once, the two size ranges side by side; a phone stacks them.
   aside: {
     display: 'grid',
     width: ['100vw', '50em'],
-    background: [null, 'linear-gradient(to right, var(--theme-ui-colors-primary) 50%, var(--theme-ui-colors-primaryDark) 50%)'],
     gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(0, 1fr)'],
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
-      ['sort_by', 'threshold', ...rows.map(row => area(row, 'current')), ...rows.map(row => area(row, 'proposed'))].map(name => `"${name}"`).join(' '),
-      rows.map(row => `"${area(row, 'current')} ${area(row, 'proposed')}"`).join(' '),
+      ['sort_by', 'threshold', 'head', 'current_size', 'proposed_size', ...FILTERS].map(name => `"${name}"`).join(' '),
+      ['head head', 'current_size proposed_size', ...FILTERS.map(filter => `${filter} ${filter}`)].map(row => `"${row}"`).join(' '),
     ],
   },
 }
