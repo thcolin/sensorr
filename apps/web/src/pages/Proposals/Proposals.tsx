@@ -26,6 +26,8 @@ const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 
 
 const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
 
+const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
+
 const SIDES = {
   current: ['📀', 'Source size'],
   proposed: ['💿', 'Target size'],
@@ -84,10 +86,10 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
           marks={true}
           onChange={(e, next) => setDraft(next as number)}
           onChangeCommitted={(e, next) => onChange(THRESHOLDS[next as number])}
-          getAriaValueText={(next) => THRESHOLDS[next] ? filesize.stringify(THRESHOLDS[next]) : '0 MB'}
+          getAriaValueText={(next) => thresholdOf(THRESHOLDS[next])}
         />
       </div>
-      <code>{THRESHOLDS[draft] ? filesize.stringify(THRESHOLDS[draft]) : '0 MB'}</code>
+      <code>{thresholdOf(THRESHOLDS[draft])}</code>
     </div>
   )
 }
