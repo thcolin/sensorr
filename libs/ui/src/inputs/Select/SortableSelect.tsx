@@ -29,7 +29,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
 
       if (typeof props.data.value === 'undefined') {
         return (
-          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown }} />
+          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown, title: props.data.title }} />
         )
       }
 
