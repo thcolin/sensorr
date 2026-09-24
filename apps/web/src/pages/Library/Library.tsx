@@ -45,7 +45,8 @@ const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
     <MovieWithCreditsAndReviews
       {...props as any}
       entity={entity}
-      selected={!!selection[location.key]?.includes(entity?.id)}
+      // A placeholder has no id yet, so it gets no checkbox.
+      selected={entity?.id ? !!selection[location.key]?.includes(entity.id) : null}
       selectedVisible={selection[location.key]?.length > 0}
       onSelectedChange={(id) => setSelection(selection => ({
         ...selection,
@@ -80,11 +81,11 @@ const Library = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+        gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: [
-          `"results toggle sort_by"`,
+          `"results bulk toggle sort_by"`,
           `"title results bulk toggle sort_by"`,
         ],
         '>h4': {
@@ -236,7 +237,7 @@ const Library = compose(
                 disabled={!entities && selected.length === 0}
                 onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
               >
-                {selected.length === 0 ? 'Select All' : selected.length === (entities || []).length ? 'Unselect All' : `${selected.length} Selected`}
+                {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
               </Option>
               <Bulk
                 count={selected.length}

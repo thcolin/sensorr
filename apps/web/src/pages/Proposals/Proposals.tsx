@@ -545,7 +545,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         disabled={!selectable.length}
         onChange={() => setSelected(chosen.length ? [] : selectable.map(({ id }) => id))}
       >
-        {chosen.length === 0 ? 'Select All' : chosen.length === selectable.length ? 'Unselect All' : `${chosen.length} Selected`}
+        {chosen.length === 0 ? 'Select All' : `${chosen.length} Selected`}
       </Option>
     </div>
   ), [chosen.length, selectable, setSelected])
@@ -1081,7 +1081,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
         actions={(['accept', 'refuse'] as const).map(verdict => ({
           key: verdict,
           label: verdict === 'accept' ? 'Accept' : 'Refuse',
-          icon: <Icon value={verdict === 'accept' ? 'check' : 'clear'} active={true} />,
+          icon: verdict === 'accept' ? <Icon value='check' /> : <Icon value='clear' active={true} />,
           variant: verdict === 'accept' ? 'contain' : 'outline',
           color: 'primary',
           onClick: () => {
