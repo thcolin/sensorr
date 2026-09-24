@@ -24,7 +24,7 @@ const UIRelease = ({
   return (
     <div>
       <div sx={UIRelease.styles.element}>
-        {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink'].includes(entity?.from) && (
+        {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink', 'report'].includes(entity?.from) && (
           <div sx={UIRelease.styles.remove}>
             <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
               <Icon value='clear' width='1em' height='1em' />
@@ -348,7 +348,7 @@ const UIReleaseState = ({ entity = null }) => (
     <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>
-  ) : ['record', 'refine', 'shrink'].includes(entity?.from) ? (
+  ) : ['record', 'refine', 'shrink', 'report'].includes(entity?.from) ? (
     <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>

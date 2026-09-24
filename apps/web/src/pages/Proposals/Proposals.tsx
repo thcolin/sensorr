@@ -55,7 +55,7 @@ const LABELS = {
 const DELAY = 5000
 
 // The groups a title can select whole. The ignored group holds swaps that bring a language
-// for more disk, and the overdue one is decided swap by swap.
+// for more disk, and the overdue and report ones are decided swap by swap.
 const WHOLE = ['refine', 'shrink']
 
 // The API downloads each accepted release before it writes, so a batch goes out in slices,
