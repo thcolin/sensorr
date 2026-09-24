@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
 import { Empty } from '@sensorr/ui'
@@ -16,6 +16,96 @@ const RippleNavLink = ({ ...props }) => {
   return (
     <NavLink ref={ref} onPointerDown={onPointerDown} {...props as any} />
   )
+}
+
+const SECONDARY = {
+  '/movie': [
+    { to: '/movie/library', label: 'Library' },
+    { to: '/movie/discover', label: 'Discover' },
+    { to: '/movie/calendar', label: 'Calendar' },
+    { to: '/movie/trending', label: 'Trending' },
+    { to: '/movie/theatres', label: 'Theatres' },
+    { to: '/movie/requests', label: 'Requests' },
+    { to: '/movie/swaps', label: 'Swaps' },
+  ],
+  '/tv': [
+    { to: '/tv/library', label: 'Library' },
+    { to: '/tv/discover', label: 'Discover' },
+    { to: '/tv/calendar', label: 'Calendar' },
+    { to: '/tv/trending', label: 'Trending' },
+  ],
+  '/person': [
+    { to: '/person/followed', label: 'Followed' },
+    { to: '/person/trending', label: 'Trending' },
+  ],
+}
+
+const Secondary = ({ ...props }) => {
+  const location = useLocation()
+  const container = useRef() as any
+  const mounted = useRef(false)
+  const section = Object.keys(SECONDARY).find((prefix) => location.pathname.startsWith(prefix))
+
+  useEffect(() => {
+    const active = container.current?.querySelector('[aria-current="page"]')
+
+    if (active) {
+      container.current.scrollTo({
+        left: active.offsetLeft - (container.current.clientWidth / 2) + (active.offsetWidth / 2),
+        behavior: mounted.current ? 'smooth' : 'auto',
+      })
+    }
+
+    mounted.current = !!active
+  }, [location.pathname])
+
+  if (!section) {
+    return null
+  }
+
+  return (
+    <nav ref={container} sx={Secondary.styles.element}>
+      {SECONDARY[section].map(({ to, label }) => (
+        <NavLink key={to} onClick={() => { window.SENSORR_BODY_VIEW_TRANSITION_NAME = 'fade' }} to={to} viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>{label}</NavLink>
+      ))}
+    </nav>
+  )
+}
+
+Secondary.styles = {
+  element: {
+    position: 'relative',
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    scrollbarWidth: 'none',
+    '::-webkit-scrollbar': {
+      display: 'none',
+    },
+    paddingX: 8,
+    '>a': {
+      variant: 'link.reset',
+      flexShrink: 0,
+      padding: 4,
+      fontWeight: 600,
+      fontSize: 6,
+      color: 'text',
+      whiteSpace: 'nowrap',
+      opacity: 0.33,
+      transition: 'opacity ease 300ms',
+      '&:hover': {
+        opacity: [0.33, 0.66],
+      },
+      ':focus-visible': {
+        opacity: 1,
+        outline: '2px solid',
+        outlineColor: 'text',
+        outlineOffset: '-2px',
+      },
+    },
+  },
 }
 
 const Navigation = ({ display = 'web', ...props }) => {
@@ -37,6 +127,15 @@ const Navigation = ({ display = 'web', ...props }) => {
       behavior: 'smooth',
     })
   }, [])
+
+  const renderSecondary = (section) => location.pathname.startsWith(section) && (
+    <div sx={Navigation.styles.web.secondary}>
+      <Chevron />
+      {SECONDARY[section].map(({ to, label }) => (
+        <NavLink key={to} onClick={handleWebNavigation} to={to} viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>{label}</NavLink>
+      ))}
+    </div>
+  )
 
   if (pwa && display === 'app') {
     return (
@@ -65,42 +164,21 @@ const Navigation = ({ display = 'web', ...props }) => {
     )
   }
 
+  if (pwa && display === 'secondary') {
+    return <Secondary />
+  }
+
   if (!pwa && display === 'web') {
     return (
       <div sx={Navigation.styles.web.element}>
         <div ref={container} sx={Navigation.styles.web.container}>
           <NavLink onClick={handleWebNavigation} to="/" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Home</NavLink>
           <NavLink onClick={handleWebNavigation} to="/movie/library" viewTransition style={(location.pathname.startsWith('/movie') || location.pathname.startsWith('/collection')) ? Navigation.styles.web.active : {}}>Movies</NavLink>
-          {location.pathname.startsWith('/movie') && (
-            <div sx={Navigation.styles.web.secondary}>
-              <Chevron />
-              <NavLink onClick={handleWebNavigation} to="/movie/library" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Library</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/discover" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Discover</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/calendar" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Calendar</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/trending" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Trending</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/theatres" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Theatres</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/requests" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Requests</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/movie/swaps" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Swaps</NavLink>
-            </div>
-          )}
+          {renderSecondary('/movie')}
           <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={location.pathname.startsWith('/tv') ? Navigation.styles.web.active : {}}>Shows</NavLink>
-          {location.pathname.startsWith('/tv') && (
-            <div sx={Navigation.styles.web.secondary}>
-              <Chevron />
-              <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Library</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/tv/discover" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Discover</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/tv/calendar" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Calendar</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/tv/trending" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Trending</NavLink>
-            </div>
-          )}
+          {renderSecondary('/tv')}
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>
-          {location.pathname.startsWith('/person') && (
-            <div sx={Navigation.styles.web.secondary}>
-              <Chevron />
-              <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Followed</NavLink>
-              <NavLink onClick={handleWebNavigation} to="/person/trending" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Trending</NavLink>
-            </div>
-          )}
+          {renderSecondary('/person')}
           <NavLink onClick={handleWebNavigation} to="/jobs" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Jobs</NavLink>
           <NavLink onClick={handleWebNavigation} to={device === 'mobile' ? '/settings' : '/settings/tmdb'} viewTransition style={location.pathname.startsWith('/settings') ? Navigation.styles.web.active : {}}>Settings</NavLink>
         </div>
