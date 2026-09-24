@@ -1,6 +1,6 @@
-import { bansOf, isBusy, newReportsOf, cursorOf } from './reports'
+import { bansOf, isBusy, newReportsOf, cursorOf, movieOf, reportedOf, isPending, replacesOf } from './reports'
 
-const server = 'c17e95cd787ad46b050ebcff895a4b88d25f2d23'
+const server = 'a-plex-server'
 const synced = { id: 'plex://movie/a#1', title: 'Douglas 2020 FRENCH 1080p x264', original: 'Hannah.Gadsby.Douglas.2020.1080p.WEB.H264-GRP', from: 'sync' }
 const proposed = { id: 'https://indexer/1', title: 'Douglas 2020 MULTi 1080p x264', original: 'Hannah.Gadsby.Douglas.2020.MULTi.1080p.WEB.H264-OTHER', from: 'refine', proposal: true }
 
@@ -49,6 +49,64 @@ describe('cursorOf', () => {
   })
 
   it('starts from now on the first run', () => {
-    expect(cursorOf([], 0)).toBeGreaterThan(1790000000000)
+    jest.spyOn(Date, 'now').mockReturnValue(4000)
+    expect(cursorOf([], 0)).toBe(4000)
+    jest.restoreAllMocks()
+  })
+})
+
+describe('movieOf', () => {
+  const library = [{ id: 1 }, { id: 2, imdb_id: 'tt2' }]
+
+  it('finds the movie by its TMDB guid first, then by its IMDb one', () => {
+    expect(movieOf({ type: 'movie', Guid: [{ id: 'imdb://tt2' }, { id: 'tmdb://1' }] }, library)).toBe(library[0])
+    expect(movieOf({ type: 'movie', Guid: [{ id: 'imdb://tt2' }] }, library)).toBe(library[1])
+  })
+
+  it('matches nothing when neither side has the guid', () => {
+    expect(movieOf({ type: 'movie', Guid: [{ id: 'tmdb://3' }] }, library)).toBe(null)
+  })
+
+  it('ignores a show, and an item Plex no longer has', () => {
+    expect(movieOf({ type: 'show', Guid: [{ id: 'tmdb://1' }] }, library)).toBe(null)
+    expect(movieOf(null, library)).toBe(null)
+  })
+})
+
+describe('reportedOf', () => {
+  const report = { id: 'r1', message: 'vo manquante', date: 2000, username: 'friend', server, key: '/library/metadata/1' }
+
+  it('keeps the text, the date and who reported, and bans what the movie owns', () => {
+    const reported = reportedOf({ releases: [synced] }, report)
+
+    expect(reported.reports).toEqual([{ id: 'r1', message: 'vo manquante', date: 2000, username: 'friend' }])
+    expect(reported.banned_releases).toEqual([synced.original, synced.title])
+  })
+
+  it('leaves a movie that already holds the report as it is', () => {
+    const reported = reportedOf({ releases: [synced] }, report)
+
+    expect(reportedOf(reported, report)).toBe(reported)
+  })
+
+  it('adds a second report to the first one', () => {
+    const twice = reportedOf(reportedOf({ releases: [synced] }, report), { ...report, id: 'r2', date: 3000 })
+
+    expect(twice.reports.map(({ id }) => id)).toEqual(['r1', 'r2'])
+  })
+})
+
+describe('isPending', () => {
+  it('waits for a search newer than the latest report', () => {
+    expect(isPending({ reports: [{ date: 2000 }] })).toBe(true)
+    expect(isPending({ reports: [{ date: 2000 }], reported_at: 2500 })).toBe(false)
+    expect(isPending({ reports: [{ date: 2000 }, { date: 3000 }], reported_at: 2500 })).toBe(true)
+    expect(isPending({})).toBe(false)
+  })
+})
+
+describe('replacesOf', () => {
+  it('names the Plex versions only', () => {
+    expect(replacesOf({ releases: [synced, proposed, { id: 'https://indexer/0', from: 'record' }] })).toEqual([synced.id])
   })
 })

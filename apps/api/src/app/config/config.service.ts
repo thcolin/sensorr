@@ -52,6 +52,9 @@ export class ConfigService implements OnModuleInit {
   }
 
   async update(changes) {
+    // The Settings pages post the whole config they loaded: the report job's cursor would go back with it.
+    delete changes?.jobs?.report?.since
+
     if (changes.policies && changes.policies.some(policy => policy.removed || (policy.oldName !== policy.name))) {
       for (const policy of changes.policies) {
         if (policy.removed || policy.oldName !== policy.name) {
