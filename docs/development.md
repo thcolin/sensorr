@@ -10,7 +10,7 @@ Running Sensorr from a clone, and changing it. To run Sensorr as a user, follow 
 
 **Mongo as a replica set**, for anything that touches the API: it opens change streams, which a standalone `mongod` refuses ([architecture.md](architecture.md#data)). The `sensorr-db` service of `docker-compose.yml` gives you one.
 
-**A TMDB API key**, set as `tmdb` in `config.json` or from the Settings page, for anything that reads metadata. **A Plex server** only for the `sync`, `sync-shows`, `report` and `keep-in-touch` commands.
+**A TMDB API key**, set as `tmdb` in `config.json` or from the Settings page, for anything that reads metadata. **A Plex server** only for `sync movies`, `sync shows`, `report movies` and `keep-in-touch`.
 
 ## Install and run
 
@@ -44,16 +44,16 @@ Prints the yargs help and exits. `cli:serve` forwards no argument, and `apps/cli
 
 ```sh
 nx build cli
-bin/sensorr record
+bin/sensorr record movies
 ```
 
-`bin/sensorr` runs the last build and not the working tree ([architecture.md](architecture.md#how-the-api-runs-the-cli)). The movie commands are `record`, `refresh`, `sync`, `refine`, `shrink`, `report`, `keep-in-touch` and `migrate`; the series ones are `record-shows`, `airing`, `refresh-shows`, `sync-shows`, `import-shows` and `migrate-sonarr`. Each one signs into the API and loads the configuration from it, so the API has to be up and `NX_SENSORR_USERNAME` / `NX_SENSORR_PASSWORD` set.
+`bin/sensorr` runs the last build and not the working tree ([architecture.md](architecture.md#how-the-api-runs-the-cli)). A job about one media type takes it as its argument: `record`, `refresh` and `sync` take `movies` or `shows`, `refine`, `shrink` and `report` take `movies`, `airing` and `import` take `shows`. A type the command does not handle is refused with the list it accepts. `keep-in-touch` takes none. `migrate <archive>` imports a legacy dump and `migrate sonarr --url <Sonarr URL>` the series of a Sonarr server. An unknown command, `record-shows` among them, fails with `Unknown command`. Each one signs into the API and loads the configuration from it, so the API has to be up and `NX_SENSORR_USERNAME` / `NX_SENSORR_PASSWORD` set.
 
 #### `bin/sensorr` needs Node 18
 
 `bin/sensorr:3` runs `node --experimental-specifier-resolution=node`, and the bundle keeps extensionless imports of packages that have no `exports` map, `stream-json/jsonl/Parser` from `apps/cli/src/commands/migrate.js` among them. Node 19 removed what that flag did. Node 24 still accepts the flag and ignores it, so every command fails at load, before its first line, with `ERR_MODULE_NOT_FOUND` and `Did you mean to import "stream-json/jsonl/Parser.js"?`. Run the CLI on Node 18, like the images.
 
-A local API spawns the same wrapper, so on Node 24 its jobs fail the same way, and `POST /api/jobs` never answers: the child exits without printing the job id, and nothing rejects (`apps/api/src/app/sensorr/sensorr.service.ts:122-128`).
+A local API spawns the same wrapper, so on Node 24 its jobs fail the same way, and `POST /api/jobs` never answers: the child exits without printing the job id, and nothing rejects (`apps/api/src/app/sensorr/sensorr.service.ts:123-129`).
 
 ### The component gallery
 
@@ -91,7 +91,7 @@ Exits 1. Four of the thirteen projects fail: `api`, `plex`, `tmdb` and `ui`. Jes
 
 | Project | Failure |
 | --- | --- |
-| `api` | 1 suite of 2 never runs. `apps/api/src/app/sensorr/sensorr.service.spec.ts` imports `config.service.ts`, which ts-jest fails to compile: `TS1192: Module '"fs/promises"' has no default export`, `TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag`, `TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', or 'nodenext'`. `apps/api/tsconfig.spec.json` sets `"module": "commonjs"` and no `esModuleInterop`. `notifications/push.spec.ts` passes |
+| `api` | 1 suite of 3 never runs. `apps/api/src/app/sensorr/sensorr.service.spec.ts` imports `config.service.ts`, which ts-jest fails to compile: `TS1192: Module '"fs/promises"' has no default export`, `TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag`, `TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', or 'nodenext'`. `apps/api/tsconfig.spec.json` sets `"module": "commonjs"` and no `esModuleInterop`. `notifications/push.spec.ts` and `config/migrate.spec.ts` pass |
 | `tmdb` | 1 suite of 2 never runs: `libs/tmdb/src/__tests__/tmdb.spec.ts`, `TS2307: Cannot find module 'jest-fetch-mock'`, the package is not installed. `shows.spec.ts` passes |
 | `plex` | 1 suite of 2 never runs: `libs/plex/src/lib/plex.spec.ts`, `TS2724: '"./plex"' has no exported member named 'plex'. Did you mean 'Plex'?`. `reports.spec.ts` passes |
 | `ui` | 2 suites of 9 never run, and 2 tests of 7 fail, see below |

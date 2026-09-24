@@ -28,39 +28,39 @@ A `[]` in a name stands for one item of the array above it.
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `jobs.record.cron` | `string` | `0 17 * * *` | Record job cron |
-| `jobs.record.paused` | `boolean` | `false` | Pause Record job |
-| `jobs.record.proposalOnly` | `boolean` | `false` | Record job will only submit proposal and don't download any release |
-| `jobs.refresh.cron` | `string` | `0 4 * * *` | Refresh job cron |
-| `jobs.refresh.paused` | `boolean` | `false` | Pause Refresh job |
-| `jobs.sync.cron` | `string` | `0 3 * * 0` | Sync job cron |
-| `jobs.sync.paused` | `boolean` | `false` | Pause Sync job |
-| `jobs.sync.cleanup` | `boolean` | `false` | Sync job deletes from Plex the versions an accepted swap replaces, once the swap has landed |
+| `jobs.record.movies.cron` | `string` | `0 17 * * *` | Record movies job cron |
+| `jobs.record.movies.paused` | `boolean` | `false` | Pause Record movies job |
+| `jobs.record.movies.proposalOnly` | `boolean` | `false` | Record movies job will only submit proposal and don't download any release |
+| `jobs.record.shows.cron` | `string` | `0 17 * * *` | Record shows job cron, wished shows are searched by whole series, season packs and episodes |
+| `jobs.record.shows.paused` | `boolean` | `true` | Pause Record shows job |
+| `jobs.record.shows.proposalOnly` | `boolean` | `true` | Record shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.refresh.movies.cron` | `string` | `0 4 * * *` | Refresh movies job cron |
+| `jobs.refresh.movies.paused` | `boolean` | `false` | Pause Refresh movies job |
+| `jobs.refresh.shows.cron` | `string` | `0 4 * * *` | Refresh shows job cron, shows still airing are refreshed on every run, the others once a month |
+| `jobs.refresh.shows.paused` | `boolean` | `true` | Pause Refresh shows job |
+| `jobs.sync.movies.cron` | `string` | `0 3 * * 0` | Sync movies job cron |
+| `jobs.sync.movies.paused` | `boolean` | `false` | Pause Sync movies job |
+| `jobs.sync.movies.cleanup` | `boolean` | `false` | Sync movies job deletes from Plex the versions an accepted swap replaces, once the swap has landed |
+| `jobs.sync.shows.cron` | `string` | `0 2 * * *` | Sync shows job cron |
+| `jobs.sync.shows.paused` | `boolean` | `true` | Pause Sync shows job |
 | `jobs.keep-in-touch.cron` | `string` | `0 3 * * 0` | Keep-in-touch job cron |
 | `jobs.keep-in-touch.paused` | `boolean` | `false` | Pause Keep-in-touch job |
-| `jobs.refine.cron` | `string` | `0 5 * * 0` | Refine job cron |
-| `jobs.refine.paused` | `boolean` | `false` | Pause Refine job |
-| `jobs.refine.proposalOnly` | `boolean` | `true` | Refine job will only submit proposal and don't download any release |
-| `jobs.shrink.cron` | `string` | `0 5 * * 0` | Shrink job cron |
-| `jobs.shrink.paused` | `boolean` | `false` | Pause Shrink job |
-| `jobs.shrink.proposalOnly` | `boolean` | `true` | Shrink job will only submit proposal and don't download any release |
-| `jobs.shrink.threshold` | `number` | `true` | Shrink job will only consider movies with releases above this threshold (Gb) |
-| `jobs.report.cron` | `string` | `0 * * * *` | Report job cron |
-| `jobs.report.paused` | `boolean` | `true` | Pause Report job |
-| `jobs.report.proposalOnly` | `boolean` | `true` | Report job will only submit proposal and don't download any release |
-| `jobs.report.since` | `number` | `0` | Date of the newest Plex reported issue already handled by Report job, older ones are ignored (auto filled on first run) |
-| `jobs.refresh-shows.cron` | `string` | `0 4 * * *` | Refresh-shows job cron, shows still airing are refreshed on every run, the others once a month |
-| `jobs.refresh-shows.paused` | `boolean` | `true` | Pause Refresh-shows job |
-| `jobs.sync-shows.cron` | `string` | `0 2 * * *` | Sync-shows job cron |
-| `jobs.sync-shows.paused` | `boolean` | `true` | Pause Sync-shows job |
-| `jobs.import-shows.cron` | `string` | `*/10 * * * *` | Import-shows job cron, finished show releases are hard linked from the staging folder into the library |
-| `jobs.import-shows.paused` | `boolean` | `true` | Pause Import-shows job |
-| `jobs.record-shows.cron` | `string` | `0 17 * * *` | Record-shows job cron, wished shows are searched by whole series, season packs and episodes |
-| `jobs.record-shows.paused` | `boolean` | `true` | Pause Record-shows job |
-| `jobs.record-shows.proposalOnly` | `boolean` | `true` | Record-shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
-| `jobs.airing.cron` | `string` | `0 * * * *` | Airing job cron, wanted episodes aired in the last 7 days are searched one by one |
-| `jobs.airing.paused` | `boolean` | `true` | Pause Airing job |
-| `jobs.airing.proposalOnly` | `boolean` | `true` | Airing job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.refine.movies.cron` | `string` | `0 5 * * 0` | Refine movies job cron |
+| `jobs.refine.movies.paused` | `boolean` | `false` | Pause Refine movies job |
+| `jobs.refine.movies.proposalOnly` | `boolean` | `true` | Refine movies job will only submit proposal and don't download any release |
+| `jobs.shrink.movies.cron` | `string` | `0 5 * * 0` | Shrink movies job cron |
+| `jobs.shrink.movies.paused` | `boolean` | `false` | Pause Shrink movies job |
+| `jobs.shrink.movies.proposalOnly` | `boolean` | `true` | Shrink movies job will only submit proposal and don't download any release |
+| `jobs.shrink.movies.threshold` | `number` | `true` | Shrink movies job will only consider movies with releases above this threshold (Gb) |
+| `jobs.report.movies.cron` | `string` | `0 * * * *` | Report movies job cron |
+| `jobs.report.movies.paused` | `boolean` | `true` | Pause Report movies job |
+| `jobs.report.movies.proposalOnly` | `boolean` | `true` | Report movies job will only submit proposal and don't download any release |
+| `jobs.report.movies.since` | `number` | `0` | Date of the newest Plex reported issue already handled by Report movies job, older ones are ignored (auto filled on first run) |
+| `jobs.import.shows.cron` | `string` | `*/10 * * * *` | Import shows job cron, finished show releases are hard linked from the staging folder into the library |
+| `jobs.import.shows.paused` | `boolean` | `true` | Pause Import shows job |
+| `jobs.airing.shows.cron` | `string` | `0 * * * *` | Airing shows job cron, wanted episodes aired in the last 7 days are searched one by one |
+| `jobs.airing.shows.paused` | `boolean` | `true` | Pause Airing shows job |
+| `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
 
 ## Plex
 

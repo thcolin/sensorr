@@ -77,7 +77,7 @@ Conventional Commits, in English, scope = the area worked on. Recent history:
 ## Pitfalls
 
 **A second API means a second set of crons, writing for real.**
-Every cron tick spawns `bin/sensorr <command>`, a process that writes `.torrent` files to
+Every cron tick spawns `bin/sensorr <command> <type>`, a process that writes `.torrent` files to
 the blackhole and documents to Mongo. Never boot a second API against a database an
 instance is already serving. The mechanism is in
 [architecture.md](docs/architecture.md#how-the-api-runs-the-cli).
@@ -85,7 +85,7 @@ instance is already serving. The mechanism is in
 **`bin/sensorr` runs `dist/apps/cli/main.js`, not the sources.**
 So every job the API starts runs the last `nx build cli`, not what you just edited in
 `apps/cli/src` ([architecture.md](docs/architecture.md#how-the-api-runs-the-cli)). Worse
-when the bundle is absent: `apps/api/src/app/sensorr/sensorr.service.ts:105` only logs the
+when the bundle is absent: `apps/api/src/app/sensorr/sensorr.service.ts:124` only logs the
 spawn error, nothing rejects, and the `runProcess` promise never settles, so
 `POST /api/jobs` hangs instead of failing.
 
