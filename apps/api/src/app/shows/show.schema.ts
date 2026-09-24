@@ -162,6 +162,17 @@ export class Show extends Document {
           episode: Number,
         },
       ],
+      torrent: {
+        name: String,
+        files: [
+          {
+            _id: false,
+            path: String,
+            size: Number,
+          },
+        ],
+      },
+      imported_at: Number,
     }
   ]))
   releases: Record<any, any>

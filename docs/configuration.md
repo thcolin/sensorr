@@ -16,6 +16,14 @@ A `[]` in a name stands for one item of the array above it.
 | `region` | `string` | `fr-FR` | Sensorr region (usefull for TMDB requests) |
 | `adult` | `boolean` | `false` | Allow adult content from TMDB on Sensorr |
 
+## Shows
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `shows.library` | `string` | `/tvshows` | Shows library absolute path, where imported episodes are hard linked |
+| `shows.blackhole` | `string` | `/tvshows/.blackhole` | Blackhole absolute path to store downloaded shows .torrent files, on the same mount as the library |
+| `shows.staging` | `string` | `/tvshows/.staging` | Absolute path where the download client saves shows files, on the same mount as the library |
+
 ## Jobs
 
 | Name | Type | Default | Description |

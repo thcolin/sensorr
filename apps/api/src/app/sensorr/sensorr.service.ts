@@ -9,6 +9,7 @@ import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { torrentFiles, TorrentFiles } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -28,8 +29,10 @@ export class SensorrService {
     private configService: ConfigService,
   ) {}
 
-  async downloadRelease(release: ReleaseDTO, source: 'enclosure' | 'cache' = 'enclosure', destination: 'fs' | 'cache' = 'fs'): Promise<any> {
+  // A show release goes to its own blackhole and gives back the files of its .torrent, which `import-shows` waits for
+  async downloadRelease(release: ReleaseDTO, source: 'enclosure' | 'cache' = 'enclosure', destination: 'fs' | 'cache' = 'fs', kind: 'movie' | 'show' = 'movie'): Promise<TorrentFiles | void> {
     const filename = sanitizeFilename(`${release.title}-${release.znab}.torrent`)
+    const blackhole = this.configService.config.get(kind === 'show' ? 'shows.blackhole' : 'blackhole')
     let res, buffer
 
     // An accepted release has already left the cache, so it is fetched again from its indexer
@@ -53,10 +56,13 @@ export class SensorrService {
         break
     }
 
+    // Read before anything is written, so a file that is not a .torrent never reaches the blackhole
+    const torrent = kind === 'show' ? torrentFiles(buffer) : undefined
+
     switch (destination) {
       case 'fs':
-        this.logger.log(`Download "${filename}" from ${source} to ${destination}, blackhole="${this.configService.config.get('blackhole')}"`)
-        await fs.writeFile(path.join(this.configService.config.get('blackhole'), `${filename}`), buffer)
+        this.logger.log(`Download "${filename}" from ${source} to ${destination}, blackhole="${blackhole}"`)
+        await fs.writeFile(path.join(blackhole, `${filename}`), buffer)
 
         if (source === 'cache') {
           await this.metafileModel.deleteOne({ _id: release.link })
@@ -68,6 +74,8 @@ export class SensorrService {
         await this.metafileModel.findByIdAndUpdate(release.link, { buffer }, { new: true, upsert: true })
         break
     }
+
+    return torrent
   }
 
   async removeRelease(release: ReleaseDTO) {

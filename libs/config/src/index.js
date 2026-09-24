@@ -36,6 +36,23 @@ const config = convict({
     default: '/tmp',
     arg: 'blackhole',
   },
+  shows: {
+    library: {
+      doc: 'Shows library absolute path, where imported episodes are hard linked',
+      format: 'String',
+      default: '/tvshows',
+    },
+    blackhole: {
+      doc: 'Blackhole absolute path to store downloaded shows .torrent files, on the same mount as the library',
+      format: 'String',
+      default: '/tvshows/.blackhole',
+    },
+    staging: {
+      doc: 'Absolute path where the download client saves shows files, on the same mount as the library',
+      format: 'String',
+      default: '/tvshows/.staging',
+    },
+  },
   region: {
     doc: 'Sensorr region (usefull for TMDB requests)',
     format: 'String',

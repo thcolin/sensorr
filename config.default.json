@@ -3,6 +3,11 @@
   "region": "en-US",
   "adult": false,
   "blackhole": "/blackhole",
+  "shows": {
+    "library": "/tvshows",
+    "blackhole": "/tvshows/.blackhole",
+    "staging": "/tvshows/.staging"
+  },
   "jobs": {
     "keep-in-touch": {
       "cron": "0 16 * * *",

@@ -626,12 +626,13 @@ export class API {
     },
     sensorr: {
       downloadRelease: (
-        { body, init = {}, params: { source = 'enclosure', destination = 'fs' } = { source: 'enclosure', destination: 'fs' } }: { body: any, init?: any, params?: { source?: 'enclosure' | 'cache', destination?: 'fs' | 'cache' } }
+        { body, init = {}, params: { source = 'enclosure', destination = 'fs', kind } = { source: 'enclosure', destination: 'fs' } }: { body: any, init?: any, params?: { source?: 'enclosure' | 'cache', destination?: 'fs' | 'cache', kind?: 'movie' | 'show' } }
       ): { uri: string, params: {}, init: {} } => ({
         uri: 'sensorr/release/download',
         params: {
           source,
           destination,
+          ...(kind ? { kind } : {}),
         },
         init: {
           ...init,

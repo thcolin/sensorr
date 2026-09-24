@@ -48,6 +48,7 @@ services:
       - ./config.json:/app/config.json
       - ./.secrets:/app/.secrets
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
+      - ${SENSORR_TVSHOWS:-./tvshows}:/tvshows
 
   sensorr-db:
     image: sensorr/sensorr-db

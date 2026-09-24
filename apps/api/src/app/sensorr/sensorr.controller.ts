@@ -13,10 +13,11 @@ export class SensorrController {
     @Body() release: ReleaseDTO,
     @Query('source') source:('enclosure' | 'cache') = 'enclosure',
     @Query('destination') destination:('fs' | 'cache') = 'fs',
+    @Query('kind') kind:('movie' | 'show') = 'movie',
   ) {
     try {
-      await this.sensorrService.downloadRelease(release, source, destination)
-      return { success: true }
+      const torrent = await this.sensorrService.downloadRelease(release, source, destination, kind)
+      return { success: true, ...(torrent ? { torrent } : {}) }
     } catch (err) {
       this.logger.error(err)
       throw new HttpException(err, 500)

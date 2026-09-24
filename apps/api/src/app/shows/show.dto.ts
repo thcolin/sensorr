@@ -1,7 +1,10 @@
+import { TorrentFiles } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 
 export class ShowReleaseDTO extends ReleaseDTO {
   coverage?: { season: number, episode: number }[]
+  torrent?: TorrentFiles
+  imported_at?: number
 }
 
 export class ShowDTO {
