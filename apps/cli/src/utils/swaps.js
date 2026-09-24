@@ -9,6 +9,8 @@ export const OVERDUE_AFTER = 7 * 24 * 60 * 60 * 1000
 // the item being synced, the only ones that item can delete.
 export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
   const remove = new Set()
+  // The version that landed, for each version it removes
+  const landed = {}
 
   const settled = releases.map((release) => {
     if (!release.replaces?.length) {
@@ -36,13 +38,17 @@ export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
       return rest
     }
 
-    replaced.forEach(({ id }) => remove.add(id))
+    replaced.forEach(({ id }) => {
+      remove.add(id)
+      landed[id] = { release: release.id, size: found.size }
+    })
     return rest
   })
 
   return {
     releases: settled,
     remove: [...remove],
+    landed,
     changed: JSON.stringify(settled) !== JSON.stringify(releases),
   }
 }
