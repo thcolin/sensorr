@@ -10,6 +10,7 @@ target_fingerprint: "sha256:212d3725cf64021e02859e23a3cf725725c0740901c6a945c11a
 target_path: /Users/thcolin/Projects/perso/sensorr/apps/web/src/pages/Proposals/Card.tsx
 timestamp: 2026-09-24T21-11-30Z
 slug: apps-web-src-pages-proposals-card-tsx
+closed: true
 ---
 Method: dual-agent (A: design review · B: detector + browser)
 
