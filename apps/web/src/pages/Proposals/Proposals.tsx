@@ -34,7 +34,7 @@ const SIDES = {
 const SWAP = ['source', 'target']
 
 const DEFAULTS = {
-  threshold: 500 * MB,
+  threshold: 0,
   sort_by: { value: 'time', sort: true },
   current_size: [0, SIZE_MAX],
   proposed_size: [0, SIZE_MAX],
@@ -73,7 +73,7 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
 
   return (
     <div style={style} sx={UIThreshold.styles.element} title='A proposal that frees less disk space than this is ignored'>
-      <label id='threshold-label'>Ignore below (gain)</label>
+      <label id='threshold-label'>Min. freed</label>
       <div>
         <Slider
           aria-labelledby='threshold-label'
@@ -84,10 +84,10 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
           marks={true}
           onChange={(e, next) => setDraft(next as number)}
           onChangeCommitted={(e, next) => onChange(THRESHOLDS[next as number])}
-          getAriaValueText={(next) => THRESHOLDS[next] ? filesize.stringify(THRESHOLDS[next]) : 'no change'}
+          getAriaValueText={(next) => THRESHOLDS[next] ? filesize.stringify(THRESHOLDS[next]) : '0 MB'}
         />
       </div>
-      <code>{THRESHOLDS[draft] ? filesize.stringify(THRESHOLDS[draft]) : 'no change'}</code>
+      <code>{THRESHOLDS[draft] ? filesize.stringify(THRESHOLDS[draft]) : '0 MB'}</code>
     </div>
   )
 }
