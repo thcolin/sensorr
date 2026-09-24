@@ -1,20 +1,20 @@
 # Jobs, proposals and policy
 
-Why Sensorr does what it does. The code says *what* happens; this file says *why* there are seven jobs instead of one, why `refine` and `shrink` are separate, what a proposal costs you, and how a release ends up ranked first.
+Why Sensorr does what it does. The code says *what* happens; this file says *why* there are seven movie jobs instead of one, what the five series jobs add, why `refine` and `shrink` are separate, what a proposal costs you, and how a release ends up ranked first.
 
 For the list of every setting and its default, see [`configuration.md`](./configuration.md). This file names settings but never redefines them.
 
 ## How a job runs
 
-At boot the API registers one cron per job that is not `paused` (`apps/api/src/app/jobs/jobs.controller.ts:16`, `apps/api/src/app/jobs/jobs.service.ts:88`). A cron tick spawns the CLI as a child process, one command per job (`apps/api/src/app/sensorr/sensorr.service.ts:103`). Started that way the CLI prints a job id as its first line (`apps/cli/src/main.js:40`), and every log line the run emits carries it (`apps/cli/src/utils/command.js:15`), which is what the Jobs screen streams back.
+At boot the API registers one cron per job that is not `paused` (`apps/api/src/app/jobs/jobs.controller.ts:17`, `apps/api/src/app/jobs/jobs.service.ts:79`). A cron tick spawns the CLI as a child process, one command per job (`apps/api/src/app/sensorr/sensorr.service.ts:103`). Started that way the CLI prints a job id as its first line (`apps/cli/src/main.js:40`), and every log line the run emits carries it (`apps/cli/src/utils/command.js:15`), which is what the Jobs screen streams back.
 
-The same seven commands can be started by hand with `POST /jobs` and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:30`, `:69`). Nothing else is runnable: the API refuses any command outside its allow-list (`apps/api/src/app/sensorr/sensorr.service.ts:23`).
+The same twelve commands can be started by hand with `POST /jobs` and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:30`, `:69`). Nothing else is runnable: the API refuses any command outside its allow-list (`apps/api/src/app/sensorr/sensorr.service.ts:23`).
 
-`migrate` is an eighth CLI command (`apps/cli/src/main.js`) and deliberately not a job: it imports a legacy dump once, it has no cron key and the API will not start it.
+`migrate` and `migrate-sonarr` are two more CLI commands (`apps/cli/src/main.js`) and deliberately not jobs: each imports once, from a legacy dump or from Sonarr, neither has a cron key and the API will start neither.
 
 ## The jobs
 
-Seven jobs, three concerns. `record`, `refine`, `shrink` and `report` talk to indexers and put files in the blackhole. `sync`, `keep-in-touch` and `report` talk to Plex. `refresh` talks to TMDB.
+Seven movie jobs, three concerns. `record`, `refine`, `shrink` and `report` talk to indexers and put files in the blackhole. `sync`, `keep-in-touch` and `report` talk to Plex. `refresh` talks to TMDB.
 
 ### `record`
 
@@ -80,6 +80,8 @@ A watchlisted movie Sensorr does not know is created in state `ignored`, not `wi
 
 A guest whose token fails is flagged `plex_token_valid: false` rather than skipped silently, so the failure is visible instead of looking like an empty watchlist (`apps/cli/src/commands/keep-in-touch.js:214`).
 
+The shows of the watchlist are read in the same pass, with `type=2` (`apps/cli/src/commands/keep-in-touch.js:201`). A failure there is logged and skipped: the movies were read, so the token is fine (`:195`). A show is resolved to its TMDB id through the Plex metadata provider, and one Sensorr did not know is created `ignored`, unfollowed, every episode unfollowed (`requestedShowOf` in `apps/cli/src/utils/shows.js:27`), for the same reason as a movie: nothing reaches `record-shows` until you follow it. Its Plex guid is kept on the show, so the next run skips the lookup.
+
 ### `refresh`
 
 Keep TMDB metadata from going stale.
@@ -87,6 +89,75 @@ Keep TMDB metadata from going stale.
 Walks every movie and person id Sensorr stores (`FetchAPIEntitiesTask` in `apps/cli/src/commands/refresh.js`), then re-fetches each one from TMDB and writes it back (`FetchTMDBChangesTask`, same file). That second task also trims a movie's `release_dates` down to theatrical releases, one per year, before the write, to keep the stored document small.
 
 It writes TMDB fields only. Movie documents are updated field by field (`upsertMovie` in `apps/api/src/app/movies/movies.service.ts`), so `state`, `policy`, releases and per-movie flags survive a refresh untouched.
+
+## Series
+
+Five jobs, the same three concerns. `record-shows` and `airing` talk to indexers and put files in the shows blackhole. `sync-shows` talks to Plex, and `keep-in-touch` reads the shows of the watchlists too. `refresh-shows` talks to TMDB. `import-shows` is new: it is the only job that touches the files the download client wrote. All five are paused in the schema and in the shipped `config.default.json` (`libs/config/src/index.js:186-255`), so an install searches nothing for series until they are started.
+
+A show is followed at three levels: `monitored` on the show, on each episode, and a season is followed when its episodes are. `monitor_new_seasons` decides for a season TMDB adds later. An episode's status is computed, never stored (`episodeStatus`, `libs/sensorr/src/lib/episode.ts:4`): `owned` as soon as Plex has a file for it, `upcoming` until its air date, `unmonitored` when it is not followed, `proposed` while a release covers it, `wanted` otherwise. Only `wanted` episodes are searched.
+
+### `record-shows`
+
+Find releases for the followed episodes you do not have.
+
+Takes every `wished`, `monitored` show with at least one `wanted` episode (`apps/cli/src/components/Tasks/ProcessShowsTask.js:32-37`). For each one it turns the episodes into search units, searches every unit on every enabled indexer, runs the results through the policy, and picks releases (`searchUnits` and `pickReleases` in `libs/sensorr/src/lib/show.ts`).
+
+The units come in a fixed order, and the order is the preference (`libs/sensorr/src/lib/show.ts:107-112`):
+
+1. the whole series, when the show has ended, every regular episode has aired and is followed, and none is owned;
+2. a season pack, for every season whose episodes all aired a day ago or more, are all followed, and none owned;
+3. every `wanted` episode, one by one;
+4. a season pack again, as a last resort, for the seasons that already own an episode, skipped as soon as an episode release of that season was found.
+
+One complete release is one download instead of hundreds, and a pack is one per season, so the wider unit comes first. But a pack downloads its whole scope: it is only searched when every episode of that scope is followed and wanted or owned (`asked`, `libs/sensorr/src/lib/show.ts:90`), otherwise a pack would bring back the episodes you unfollowed. A season that owns an episode would get it downloaded twice, which is why its pack only comes last. A unit is not searched at all once the releases picked so far cover it (`isUnitCovered`, `libs/sensorr/src/lib/show.ts:147`), so a whole series found first costs one search per term, and each picked release keeps as its `coverage` only the wanted episodes it is the first to cover (`libs/sensorr/src/lib/show.ts:115`).
+
+An indexer whose `caps` announce `tvsearch` with the parameters a unit needs is queried with `t=tvsearch`, `q`, `season` and `ep`. Any other gets a free-text `t=search` with `S03` or `S03E04` appended to the term. Both ask for the TV categories 5000 to 5080 (`searchShow` in `libs/sensorr/src/lib/znab.ts:88`). Capabilities are read once per indexer per run (`apps/cli/src/commands/record-shows.js:18-19`), and an indexer that cannot answer them is searched as free text (`libs/sensorr/src/lib/znab.ts:69`).
+
+The policy is the same one, with the same chain, except for two normalizers swapped in when a unit is searched (`libs/sensorr/src/lib/policy.ts:133-135`). `showReleaseUnit` rejects a release whose level, series, season or episode as oleoo reads it, is not the unit's; a multi-season pack counts as the whole series, and so does a `COLLECTION` once the indexer files it under TV (`levelOf`, `libs/sensorr/src/lib/show.ts:28`). `showReleaseYears` rejects a year outside the show's first and last air years. There is no publish date check. A show that names no policy gets the first one matching its original language, as a movie does (`matchPolicies` in `apps/api/src/app/shows/shows.service.ts:72`).
+
+Every picked release is appended to the show's `releases` with its `coverage` and its `level`, its id is written on each episode it covers, and its `.torrent` goes to the shows blackhole or to the cache (`apps/cli/src/components/Tasks/ProcessShowsTask.js:330-357`). The API reads the file list of that `.torrent` before writing anything and returns it, and the release keeps it as `torrent`: it is what `import-shows` waits for (`apps/api/src/app/sensorr/sensorr.service.ts:60`).
+
+`proposal_only` on the show wins when it is set; left empty, the show follows `jobs.record-shows.proposalOnly` (`proposalOnlyOf`, `apps/cli/src/utils/shows.js:33`). Accept and Refuse on a show release work as on a movie ([Proposals](#proposals)): Accept writes the cached `.torrent` into the shows blackhole and gives the episodes the release id again, Refuse deletes it and takes the id back from the episodes (`upsertShows` in `apps/api/src/app/shows/shows.service.ts:89`).
+
+### `airing`
+
+Pick up a new episode within the hour it reaches the indexers.
+
+Same component as `record-shows`, two differences (`apps/cli/src/commands/airing.js`). It only takes the shows with a `wanted` episode aired in the last seven days (`airing.js:8`, `aired_after` in `apps/cli/src/components/Tasks/ProcessShowsTask.js:34`), and it only searches single episodes, those aired in that window (`airingUnits`, `apps/cli/src/utils/shows.js:36`): hours after an episode airs, there is no pack to find yet. It stands in for an RSS feed, bounded by what aired this week, and leaves the backlog to `record-shows`. It reads its own `jobs.airing.proposalOnly`.
+
+### `import-shows`
+
+Move finished downloads into the library without copying them.
+
+Takes every release that is not a pending proposal, not imported yet, and whose `.torrent` file list is known (`isImportable`, `apps/cli/src/utils/shows.js:86`). A release is finished when every file of its `.torrent` sits in `shows.staging` at the size the `.torrent` gives, and none also exists with the `.!qB` suffix qBittorrent puts on an incomplete file (`isReleaseFinished`, `apps/cli/src/utils/shows.js:89`). The paths are the torrent's own, a multi-file torrent under a folder named after it (`torrentFiles`, `libs/sensorr/src/lib/torrent.ts:45`), so the download client has to keep that layout.
+
+Each file is read with oleoo for its season and episodes, and linked only when the release covers that episode and the episode has no file yet; samples never are (`importLinksOf`, `apps/cli/src/utils/shows.js:97`). The target is `shows.library/<folder>/Season NN/<file name>`, the folder being the show's `path`, from Sonarr or an earlier import, or else `<name> (<first air year>)` (`showFolderOf`, `apps/cli/src/utils/shows.js:93`). The file keeps its name: Plex's scanner reads it as it is.
+
+A hard link and not a copy or a move: the download client keeps seeding from `.staging`, and the library takes no second copy of the space. It is also why the shows directory is one volume ([architecture.md](architecture.md#one-volume-for-the-hard-link)). The release is stamped `imported_at`, and a show without `path` gets the folder it was linked into (`apps/cli/src/commands/import-shows.js:158-168`). A release whose every file was skipped is stamped all the same. Nothing is written on the episodes: they turn `owned` when `sync-shows` sees the file on Plex.
+
+### `sync-shows`
+
+Make Sensorr's idea of your episodes match Plex's.
+
+Refuses to start without a registered Plex server (`apps/cli/src/commands/sync-shows.js:22`). It reads every Plex `show` section, every show with its guids and every episode (`apps/cli/src/commands/sync-shows.js:99-104`). A Plex show is tied to a Sensorr show by its `tmdb://` guid, one without it is logged and skipped, and several Plex items of one TMDB show are read together (`:147-158`). Episodes are matched on Plex's season `parentIndex` and episode `index` against TMDB's numbers (`showFilesOf`, `apps/cli/src/utils/plex.js:130`); a Plex episode TMDB numbers differently is counted as `unmatched` and left out, since TMDB alone decides the numbering. Each file is kept on its episode with its size and a name oleoo rebuilds from the file name (`filesOf`, `apps/cli/src/utils/plex.js:118`): unlike `sync`, there is no metadata request per episode, which a library of thousands of episodes would pay on every run.
+
+A show Plex has and Sensorr does not is added `archived` and unfollowed, episodes included (`apps/cli/src/commands/sync-shows.js:181-189`): you have it, nothing should search it. An episode that loses its files logs one warning per show (`:208-211`), and a Sensorr show absent from Plex loses the files of every episode (`:255-266`). The show keeps its state, there is no `missing` show. An episode Sensorr downloaded keeps its `release` id, so once it has lost its file it reads `proposed` and not `wanted`: only a refusal clears that id (`apps/api/src/app/shows/shows.service.ts:116`), and no job searches it again. Unbinding the Plex server clears the files of every episode (`handlePlexReset` in `apps/api/src/app/shows/shows.service.ts:65`).
+
+### `refresh-shows`
+
+Keep TMDB metadata of shows from going stale, and learn the episodes TMDB adds.
+
+A show still airing, TMDB `status` `Returning Series`, `In Production`, `Planned` or `Pilot`, is refreshed on every run; any other once its last refresh is 30 days old (`isRefreshDue`, `apps/cli/src/utils/shows.js:11`). An airing show gets episodes every week, an ended one rarely changes, and a refresh costs one TMDB request per 20 seasons (`libs/tmdb/src/shows.ts:76-92`). It reads the `ignored` shows too (`fetchSensorrShows`, `apps/cli/src/utils/shows.js:45`), so a requested show stays current.
+
+It writes TMDB fields and `refreshed_at` only (`apps/cli/src/commands/refresh-shows.js:113`), so the Sensorr fields survive, as with `refresh`. A known episode gets its TMDB fields only. A new one is followed by the rule of a new episode (`monitoredOf`, `apps/cli/src/utils/shows.js:18`): like its season when the season already has a followed episode, like `monitor_new_seasons` when the season is new, never on an unfollowed show, and never for a special, which you follow by hand.
+
+### `migrate-sonarr`
+
+Take over the series Sonarr follows, once.
+
+A command, not a job, like `migrate`: no cron key, not in the API's allow-list (`apps/api/src/app/sensorr/sensorr.service.ts:23`). Run it by hand with `bin/sensorr migrate-sonarr --url <Sonarr URL>` and the API key in `SONARR_API_KEY`; `--dry-run` prints the counts and writes nothing (`apps/cli/src/commands/migrate-sonarr.js:13-24`, `:30`). It only sends `GET` requests to Sonarr's API v3, `series`, then `episode` for each series (`apps/cli/src/commands/migrate-sonarr.js:35-45`).
+
+A series without a `tmdbId` is skipped, TMDB being the only numbering Sensorr keeps. So is a series Sonarr neither monitors nor holds a file of (`sonarrShowOf`, `apps/cli/src/utils/shows.js:58`): added once, never used. Each other one is written as its TMDB show, `wished` when Sonarr monitors it and `archived` otherwise, with `monitored`, `monitor_new_seasons` from Sonarr's `monitorNewItems: all`, and `path`, the last segment of Sonarr's folder, so that `import-shows` keeps linking into the folders Sonarr made. Its episodes are TMDB's. Every episode both number the same copies Sonarr's flag, followed only when its series and its season are followed in Sonarr too, since Sonarr searches nothing else (`sonarrEpisodesOf`, `apps/cli/src/utils/shows.js:67`). The episodes Sonarr has and TMDB does not are logged per show; the ones TMDB has and Sonarr does not follow the rule of a new episode. It writes no file information: `sync-shows` reads that from Plex.
 
 ## Proposals
 
@@ -149,7 +220,7 @@ Ties are broken by `sorting` and `descending` (`libs/sensorr/src/lib/policy.ts:1
 
 Field names, types and defaults are in [`configuration.md`](./configuration.md). What follows is which knob to reach for.
 
-**Stop a job without deleting it.** `jobs.<name>.paused`. A paused job gets no cron at boot (`apps/api/src/app/jobs/jobs.service.ts:90`) but stays runnable by hand from the Jobs screen.
+**Stop a job without deleting it.** `jobs.<name>.paused`. A paused job gets no cron at boot (`apps/api/src/app/jobs/jobs.service.ts:79`) but stays runnable by hand from the Jobs screen.
 
 **Spread the load.** `jobs.<name>.cron`. `record` runs daily because wishes arrive daily; `refine` and `shrink` are weekly or monthly because they re-download things you already have. Keep them apart: each one queries every indexer once per search term, per movie.
 
@@ -163,4 +234,6 @@ Field names, types and defaults are in [`configuration.md`](./configuration.md).
 
 **Change when `refine` lets go.** `require`. Everything else being equal, this is the setting that decides how long a movie keeps costing you bandwidth.
 
-**Where files land.** `blackhole`, the directory both a recorded release and an accepted proposal are written to (`apps/api/src/app/sensorr/sensorr.service.ts:65`).
+**Where files land.** `blackhole`, the directory both a recorded release and an accepted proposal are written to (`apps/api/src/app/sensorr/sensorr.service.ts:65`). A show release goes to `shows.blackhole` instead (`apps/api/src/app/sensorr/sensorr.service.ts:35`), `import-shows` reads `shows.staging` and links into `shows.library`.
+
+**Put a show under proposals, or take it out.** `proposal_only` on the show, from its page. Left empty, the show follows `jobs.record-shows.proposalOnly` or `jobs.airing.proposalOnly`.
