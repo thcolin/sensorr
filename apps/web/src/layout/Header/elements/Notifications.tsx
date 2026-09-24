@@ -281,7 +281,7 @@ const Notification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
                 'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
                 'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
-                'report': meta?.release?.proposal ? `Reported movie proposal` : `Reported movie replaced`,
+                'report': meta?.release?.proposal ? `Report proposal` : `Reported movie replaced`,
                 'sync': `Movie missing from your Plex Server`,
                 'keep-in-touch': `Movie request`,
               }[meta?.command]}

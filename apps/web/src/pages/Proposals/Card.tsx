@@ -234,11 +234,15 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                 ))}
                 {item.command === 'report' && !!report && (
                   <p sx={UIActive.styles.report}>
-                    <span aria-hidden={true}>🚩</span>
+                    <span role='img' aria-label='Reported'>🚩</span>
                     <span>
-                      <q>{report.message}</q>
+                      {!!report.message?.trim() && <q>{report.message}</q>}
                       <small title={new Date(report.date).toLocaleString()}>
-                        {[report.username, formatDistanceToNowStrict(new Date(report.date), { addSuffix: true })].filter(Boolean).join(' · ')}
+                        {[
+                          report.username,
+                          formatDistanceToNowStrict(new Date(report.date), { addSuffix: true }),
+                          `${item.owned.length > 1 ? `${item.owned.length} owned releases` : 'owned release'} banned`,
+                        ].filter(Boolean).join(' · ')}
                       </small>
                     </span>
                   </p>
@@ -431,7 +435,8 @@ UIActive.styles = {
     alignItems: 'baseline',
     margin: 12,
     paddingX: [12, 2],
-    paddingY: 8,
+    paddingTop: [10, 8],
+    paddingBottom: [2, 8],
     fontSize: 6,
     '>span:first-of-type': {
       flexShrink: 0,
@@ -447,7 +452,8 @@ UIActive.styles = {
       overflowWrap: 'anywhere',
     },
     '>span >small': {
-      color: 'grayDarker',
+      color: 'grayDarkest',
+      fontSize: '1em',
       whiteSpace: 'nowrap',
     },
   },
