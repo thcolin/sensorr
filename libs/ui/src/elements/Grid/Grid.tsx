@@ -50,6 +50,8 @@ export interface GridProps {
   override?: React.ReactNode
   onMore?: () => void
   scrollPosition?: number
+  // Added to the height of a poster cell, for a child that draws something under its poster
+  extra?: number
 }
 
 const UIGrid = ({
@@ -58,12 +60,14 @@ const UIGrid = ({
   child: Child,
   childProps,
   onMore,
+  extra = 0,
   ...props
 }: GridProps) => {
-  const cell = useResponsiveValue([
+  const responsive = useResponsiveValue([
     { height: 225, width: 120 },
     { height: 346, width: 204 },
   ])
+  const cell = useMemo(() => ({ ...responsive, height: responsive.height + extra }), [responsive, extra])
 
   const scrollContainer = useScrollContainer()
   const WrappedChild = useMemo(() => withGridItemContainer()(Child), [Child])

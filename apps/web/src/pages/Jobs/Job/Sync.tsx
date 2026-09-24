@@ -188,6 +188,7 @@ const UISyncJob = ({ job, logs }) => {
               length={entities?.cleanups?.length}
               label={emojize('🧹', 'Cleaned')}
               display='grid'
+              extra={36}
               hide={true}
               child={CleanedMovie as any}
               props={() => ({
