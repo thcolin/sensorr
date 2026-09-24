@@ -138,7 +138,7 @@ const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
 
   return (
     <div style={style} sx={{ ...UIBalance.styles.element, ...(props.inline ? UIBalance.styles.inline : {}) }} title={`The Plex files of these movies weigh ${filesize.stringify(balance.now)}, and ${filesize.stringify(balance.after)} once every swap is accepted`}>
-      <div sx={UIBalance.styles.meter}>
+      <div sx={UIBalance.styles.meter} data-meter={true}>
         <div sx={{ ...UIBalance.styles.rail, height: compact ? '0.25em' : '0.5em' }}>
           <i sx={UIBalance.styles.kept} style={{ width: width(balance.now - freed) }} />
           {frees.map(command => <i key={command} sx={UIBalance.styles.frees} style={{ width: width(-balance[command]) }} />)}
@@ -184,6 +184,11 @@ UIBalance.styles = {
   // In the bar on a desktop; a phone gives it a strip of its own under the bar.
   inline: {
     display: ['none', 'flex'],
+    '@container controls (min-width: 768px) and (max-width: 1374px)': {
+      '>[data-meter]': {
+        display: 'none',
+      },
+    },
   },
   meter: {
     position: 'relative',
@@ -347,6 +352,14 @@ const layout = {
     ],
     '>h4': {
       display: ['none', 'block'],
+    },
+    // Short of room, the count of results goes first, then the meter of the balance (UIBalance).
+    '@container controls (min-width: 768px) and (max-width: 1500px)': {
+      gridTemplateColumns: 'min-content minmax(0, 1fr) min-content min-content min-content min-content',
+      gridTemplateAreas: `"title balance bulk threshold toggle sort_by"`,
+      '>[style*="grid-area: results"]': {
+        display: 'none',
+      },
     },
   },
   // Both sides open as one pane, each filter of the current release facing its proposed

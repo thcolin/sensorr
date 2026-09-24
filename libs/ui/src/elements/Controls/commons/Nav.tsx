@@ -42,7 +42,10 @@ UINav.styles = {
     top: ['unset', '0px'],
     zIndex: ['unset', 5],
   },
+  // A page lays its bar out against the width it gets, with `@container controls`.
   container: {
+    containerType: 'inline-size',
+    containerName: 'controls',
     display: 'flex',
     height: '4.75rem',
     backgroundColor: 'primary',
