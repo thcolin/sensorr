@@ -663,6 +663,7 @@ UICompact.styles = {
     display: 'flex',
     height: '100%',
     aspectRatio: '2 / 3',
+    marginRight: 8,
     borderRadius: '0.25em',
     overflow: 'hidden',
     '>span': { width: '100%' },
