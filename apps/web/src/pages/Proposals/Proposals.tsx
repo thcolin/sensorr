@@ -54,9 +54,6 @@ const DELAY = 5000
 // The verdict band slides in for 150ms (Card.tsx) and stays a moment before the card goes.
 const LEAVE = 250
 
-// How long a card waits for its movie before opening without it, so it opens at its height.
-const PRELOAD = 300
-
 const GROUP_HEIGHT = 40
 // Card.tsx gives the compact row a third line on a phone.
 const COMPACT_HEIGHT = [108, 88]
@@ -862,10 +859,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   // The pointer reaches a row a few hundred milliseconds before its chevron is clicked.
   const prefetch = useCallback((id) => loadDetails(id)?.catch(() => null), [])
 
-  const select = useCallback((id) => {
-    Promise.race([loadDetails(id)?.catch(() => null), new Promise(resolve => setTimeout(resolve, PRELOAD))])
-      .then(() => keys.current.morph(() => setActiveId(id), id))
-  }, [])
+  const select = useCallback((id) => keys.current.morph(() => setActiveId(id), id), [])
 
   const total = Object.values(session).reduce((sum: number, count: number) => sum + count, 0) as number
 
