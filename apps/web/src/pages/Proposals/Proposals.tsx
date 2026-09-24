@@ -24,7 +24,7 @@ const MB = 1024 * 1024
 
 const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'state']
 
-const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
+const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 
 const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
 
