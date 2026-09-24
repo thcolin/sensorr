@@ -35,8 +35,10 @@ describe('queue', () => {
 
   it('keeps a proposal of unknown size in its job group', () => {
     const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', undefined))
+    const owned = movie(2, [release('c', 'MULTi', undefined)], release('d', 'MULTi', 8 * GB))
 
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
+    expect(groupOf(owned, 0.5 * GB)).toBe('refine')
   })
 
   it('filters the owned release on the current values and the proposed one on the proposed values', () => {

@@ -76,7 +76,7 @@ export const transitionOf = (axis, from, to, policy) => {
 // score and the smallest size across every owned release (ProcessMoviesTask.js:307-311
 // and :329-334). A delta against a single release would not match its verdict.
 const baseline = (owned) => ({
-  size: owned.length ? Math.min(...owned.map(({ size }) => size || 0)) : null,
+  size: (owned.length && owned.every(({ size }) => typeof size === 'number')) ? Math.min(...owned.map(({ size }) => size)) : null,
   release: owned.reduce((best, release) => (best && best.score >= release.score) ? best : release, null),
 })
 
@@ -210,18 +210,16 @@ const fits = (release, range) => {
 
 const valuesOf = (values, filter, group) => (values[filter] || []).filter(rule => rule.group === group).map(({ value }) => value)
 
-// The current side passes when one owned release carries a value of every filter, as the
-// release filters of Library.
+const matchesRelease = (release, values, side) => fits(release, values[`${side}_size`]) && FILTERS.every(filter => {
+  const rules = valuesOf(values, filter, side)
+  return !rules.length || carries(release, filter, rules)
+})
+
+// The current side passes when one owned release matches every filter, as the release
+// filters of Library.
 export const matches = (item, values) => (
-  (item.owned.length ? item.owned : [null]).some(release => fits(release, values.current_size) && FILTERS.every(filter => {
-    const current = valuesOf(values, filter, 'current')
-    return !current.length || carries(release, filter, current)
-  })) &&
-  fits(item.proposal, values.proposed_size) &&
-  FILTERS.every(filter => {
-    const proposed = valuesOf(values, filter, 'proposed')
-    return !proposed.length || carries(item.proposal, filter, proposed)
-  })
+  (item.owned.length ? item.owned : [null]).some(release => matchesRelease(release, values, 'current')) &&
+  matchesRelease(item.proposal, values, 'proposed')
 )
 
 // What the disk would weigh once every swap is accepted. Only the Plex files exist on
