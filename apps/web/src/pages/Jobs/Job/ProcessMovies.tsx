@@ -493,6 +493,7 @@ UIRecord.styles = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 7,
     paddingX: 4,
     paddingTop: 8,
