@@ -9,6 +9,9 @@ export interface Policy {
   name?: string,
   sorting: string,
   descending: boolean,
+  match?: {
+    original_languages?: string[],
+  },
   prefer: {
     znab?: string[],
     source?: string[],

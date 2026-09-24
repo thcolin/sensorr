@@ -5,6 +5,7 @@ import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
+import { matchPolicy } from '@sensorr/sensorr'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
 import { LogsService } from '../logs/logs.service'
@@ -60,13 +61,32 @@ export class MoviesService {
     await this.movieModel.updateMany({}, { '$pull': { 'releases': { from: 'sync' } } })
   }
 
-  async upsertMovie(movie: MovieDTO): Promise<any> {
-    this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
-    return this.movieModel.findByIdAndUpdate(movie.id, movie, { new: true, upsert: true })
+  // A movie entering the library without a policy gets the first one matching it. Without a match it keeps none, and follows the first policy
+  private async matchPolicies(changes: { [key: string]: MovieDTO }): Promise<{ [key: string]: MovieDTO }> {
+    const entering = Object.keys(changes).filter(id => changes[id].state && changes[id].state !== 'ignored' && !changes[id].policy)
+    if (!entering.length) {
+      return changes
+    }
+
+    const policies = this.configService.config.get('policies') || []
+    const stored = await this.movieModel.find({ _id: { $in: entering } }, { policy: 1, original_language: 1 }).lean()
+
+    return entering.reduce((acc, id) => {
+      const movie = stored.find(({ _id }) => `${_id}` === `${id}`) as any
+      const policy = !movie?.policy && matchPolicy({ original_language: changes[id].original_language || movie?.original_language }, policies)
+      return policy ? { ...acc, [id]: { ...changes[id], policy: policy.name } } : acc
+    }, changes)
   }
 
-  async upsertMovies(changes: { [key: string]: MovieDTO }): Promise<any> {
-    this.logger.log(`UpsertMovies "${Object.keys(changes)}"`)
+  async upsertMovie(movie: MovieDTO): Promise<any> {
+    this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
+    const { [movie.id]: matched } = await this.matchPolicies({ [movie.id]: movie })
+    return this.movieModel.findByIdAndUpdate(movie.id, matched, { new: true, upsert: true })
+  }
+
+  async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {
+    this.logger.log(`UpsertMovies "${Object.keys(raw)}"`)
+    const changes = await this.matchPolicies(raw)
 
     for (const { id, releases } of Object.values(changes)) {
       if (!releases) {

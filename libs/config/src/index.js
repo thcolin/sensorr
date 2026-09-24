@@ -223,6 +223,18 @@ const config = convict({
         default: true,
         arg: 'descending',
       },
+      match: {
+        original_languages: {
+          doc: 'Original languages of the movies given this policy by default',
+          format: 'source-array',
+          default: [],
+          children: {
+            doc: 'Any ISO 639-1 code',
+            format: 'String',
+            default: null,
+          },
+        },
+      },
       require: {
         znab: {
           doc: 'Required ZNABs',
