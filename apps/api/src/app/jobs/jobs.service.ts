@@ -13,6 +13,8 @@ import { SensorrService } from '../sensorr/sensorr.service'
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name)
+  // The CLI logs a summary value whole, an Accept or a Refuse adds a delta to its log
+  private readonly sum = (key, summary, acc) => (typeof summary?.[key] === 'number' || typeof acc?.[key] === 'number') ? { [key]: (summary?.[key] || 0) + (acc?.[key] || 0) } : {}
   private readonly transform = ({ timestamp, message, meta: { job, summary, ...meta } }, acc) => ({
     ...acc,
     job,
@@ -22,7 +24,7 @@ export class JobsService {
       end: Math.max(acc?.end || 0, new Date(timestamp).getTime()),
     } : {}),
     messages: [...(acc?.messages || []), message].filter(m => !!m),
-    meta: { ...acc?.meta, ...meta, summary: { ...acc?.meta?.summary, ...summary, treated: (summary?.treated || 0) + (acc?.meta?.summary?.treated || 0), ...((typeof summary?.accepted === 'number' || typeof acc?.meta?.summary?.accepted === 'number') ? { accepted: (summary?.accepted || 0) + (acc?.meta?.summary?.accepted || 0) } : {}) } },
+    meta: { ...acc?.meta, ...meta, summary: { ...acc?.meta?.summary, ...summary, treated: (summary?.treated || 0) + (acc?.meta?.summary?.treated || 0), ...this.sum('accepted', summary, acc?.meta?.summary) } },
   })
 
   constructor(

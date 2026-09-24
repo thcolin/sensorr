@@ -54,10 +54,16 @@ export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
 
 // Counted as the Swaps gauge counts it (apps/web/src/pages/Proposals/queue.ts, balanceOf): only
 // the Plex files exist on disk.
-export const spaceOf = (movies) => {
+export const proposedSpaceOf = (movies) => {
   const swaps = movies
     .map((movie) => ({ size: movie.release?.size, files: (movie.releases || []).filter(({ from }) => from === 'sync') }))
     .filter(({ size, files }) => files.length && typeof size === 'number')
 
   return swaps.length ? { proposed: swaps.reduce((acc, { size, files }) => acc + size - files.reduce((sum, file) => sum + (file.size || 0), 0), 0) } : {}
 }
+
+// A swap removing versions from several Plex items lands once: its size counts once.
+export const cleanedSpaceOf = (cleanups) => ({
+  deleted: cleanups.reduce((sum, { size }) => sum + size, 0),
+  arrived: Object.values(cleanups.reduce((acc, { landed }) => ({ ...acc, [landed.release]: landed.size }), {})).reduce((sum, size) => sum + size, 0),
+})

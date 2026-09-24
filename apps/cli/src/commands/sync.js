@@ -8,7 +8,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { settleSwaps } from '../utils/swaps'
+import { settleSwaps, cleanedSpaceOf } from '../utils/swaps'
 
 const meta = {
   command: 'sync',
@@ -137,8 +137,6 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
 
     const cb = async () => {
       const corrections = [], cleanups = [], warning = []
-      // A swap landed in one Plex item may remove versions from several: its size counts once
-      const arrivals = {}
       setStatus('loading')
 
       for (const payload of (state.distant || [])) {
@@ -173,8 +171,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
             await state.plex.deleteQuery(`/library/metadata/${payload.ratingKey}/media/${media.id}`)
             const size = media.Part.reduce((acc, curr) => acc + curr.size, 0)
             const landed = swaps.landed[`${payload.guid}#${media.id}`]
-            cleanups.push(size)
-            arrivals[landed.release] = landed.size
+            cleanups.push({ size, landed })
             state.logger.info({
               message: `🧹 Delete "${media.Part[0].file.split(/[\\/]/).pop()}" from Plex, replaced by an accepted swap of "${payload.title}"`,
               metadata: { ...state.metadata, group: 'cleanups', movie: lighten.movie(movie), file: media.Part[0].file, size, landed },
@@ -371,7 +368,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))
-      state.logger.info({ message: `🩹 ${corrections.length} Fixed movies with Plex metadata`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length}, cleanups: { success: cleanups.length, deleted: cleanups.reduce((acc, size) => acc + size, 0), arrived: Object.values(arrivals).reduce((acc, size) => acc + size, 0) } } } })
+      state.logger.info({ message: `🩹 ${corrections.length} Fixed movies with Plex metadata`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length}, cleanups: { success: cleanups.length, ...cleanedSpaceOf(cleanups) } } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{corrections.length}</Text> movies data fixed with Plex metadata (<Text bold={true}>archived</Text>)</Text> }))
       setStatus('done')
     }
