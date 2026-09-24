@@ -1,5 +1,7 @@
 // Free of any UI import, so that queue.spec.ts runs without the app around it.
 
+import { scoredTitle } from '@sensorr/sensorr'
+
 // oleoo axes compared between the owned release and the proposed one, in the order
 // they read in a release name. `dub` is the audio codec, not the language.
 export const AXES = ['resolution', 'source', 'encoding', 'dub', 'language']
@@ -13,7 +15,7 @@ export type Verdict = 'accept' | 'refuse' | 'ban' | 'retry' | 'drop'
 // Releases stored on the movie document carry no score: it is recomputed from the
 // movie policy, exactly like the job does before comparing (ProcessMoviesTask.js:307).
 export const scoreReleases = (releases, policy) => (typeof policy?.apply === 'function' ?
-  policy.apply((releases || []).map(({ meta, ...release }) => ({ ...release, title: release.original })), null) :
+  policy.apply((releases || []).map(({ meta, ...release }) => ({ ...release, title: scoredTitle(release) })), null) :
   (releases || [])
 )
 

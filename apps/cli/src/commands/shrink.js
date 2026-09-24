@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { render, Text } from 'ink'
-import { Sensorr, Policy } from '@sensorr/sensorr'
+import { Sensorr, Policy, scoredTitle } from '@sensorr/sensorr'
 import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { ProcessMoviesTask } from '../components/Tasks/ProcessMoviesTask'
 import api from '../store/api'
@@ -62,7 +62,7 @@ const FetchAPIMoviesTask = ({ threshold = 0, ...props }) => {
           }
 
           const policy = new Policy(movie.policy, state.policies)
-          const res = policy.apply(movie.releases.map(release => ({ ...release, title: release.original })), null, true)
+          const res = policy.apply(movie.releases.map(release => ({ ...release, title: scoredTitle(release) })), null, true)
           return res.some(release => release.valid)
         })
 
