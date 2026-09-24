@@ -832,9 +832,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       return
     }
 
-    // Named for the length of the move only, so the rows slide under the controls bar and
-    // the toasts instead of over them. Named for good, they would leave `#main` in a route change.
-    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster')) as HTMLElement[]
+    // Named for the length of the move only, so the rows slide under the controls bar, the
+    // toasts and the app's header and tab bar instead of over them. Named for good, they would
+    // leave `#main` in a route change. The header and tab bar are for the browsers that ignore
+    // the clip of `#body` (MORPH), such as Firefox.
+    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster, :has(+ #main), #main ~ *')) as HTMLElement[]
     layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
     document.documentElement.dataset.morphing = 'true'
     kept.current = [...new Set([...(kept.current || []), ...virtualizer.getVirtualItems().map(({ index }) => index)])]
