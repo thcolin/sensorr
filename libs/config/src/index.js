@@ -166,6 +166,18 @@ const config = convict({
         default: 0,
       },
     },
+    'refresh-shows': {
+      cron: {
+        doc: 'Refresh-shows job cron, shows still airing are refreshed on every run, the others once a month',
+        format: 'String',
+        default: '0 4 * * *',
+      },
+      paused: {
+        doc: 'Pause Refresh-shows job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
   },
   plex: {
     url: {

@@ -8,6 +8,7 @@ import nodeFetch from 'node-fetch'
 import logger from './store/logger'
 import record from './commands/record'
 import refresh from './commands/refresh'
+import refreshShows from './commands/refresh-shows'
 import sync from './commands/sync'
 import refine from './commands/refine'
 import shrink from './commands/shrink'
@@ -65,6 +66,7 @@ const main = async () => {
     .wrap(instance.terminalWidth())
     .command(record(job, handlers))
     .command(refresh(job, handlers))
+    .command(refreshShows(job, handlers))
     .command(sync(job, handlers))
     .command(refine(job, handlers))
     .command(shrink(job, handlers))

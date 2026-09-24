@@ -39,6 +39,19 @@ export const lighten = {
     vote_average,
     // vote_count,
   }),
+  show: ({
+    genres,
+    id,
+    name,
+    poster_path,
+    vote_average,
+  }) => ({
+    genres,
+    id,
+    name,
+    poster_path,
+    vote_average,
+  }),
   person: ({
     known_for_department,
     id,

@@ -36,6 +36,10 @@
       "cron": "0 * * * *",
       "paused": true,
       "proposalOnly": true
+    },
+    "refresh-shows": {
+      "cron": "0 4 * * *",
+      "paused": true
     }
   },
   "plex": {},
