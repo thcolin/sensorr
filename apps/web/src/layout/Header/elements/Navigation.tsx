@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
+import { Empty } from '@sensorr/ui'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 
 const Chevron = ({ ...props }) => (
@@ -44,6 +45,10 @@ const Navigation = ({ display = 'web', ...props }) => {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M5.6 15.1c.3 3.3 1.4 13.1 1.9 17.4.1 1.1 1.1 2 2.3 2h3.7l-1.1-19.4H5.6zM15.7 34.4v.1h4.6v-.1l1.1-19.3h-6.8zM23.6 15.1l-1.1 19.4h3.7c1.1 0 2.1-.9 2.3-2 .5-4.3 1.6-14.1 2-17.4h-6.9zM27.1 10v-.6c0-2.5-2-4.6-4.6-4.6h-.6c-1.2-2.2-4-3-6.2-1.8-.7.4-1.4 1-1.8 1.8h-.6c-2.5 0-4.5 2.1-4.5 4.6v.6c-1.1.6-1.9 1.6-2.2 2.8h22.6c-.2-1.2-1-2.2-2.1-2.8z"/></svg>
           <span>Movies</span>
         </RippleNavLink>
+        <RippleNavLink to='/tv/library' viewTransition onClick={location.pathname === '/tv/library' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/tv') ? Navigation.styles.app.active : {}}>
+          <Empty.tv />
+          <span>Shows</span>
+        </RippleNavLink>
         <RippleNavLink to='/person/followed' viewTransition onClick={location.pathname === '/person/followed' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M13.4 17.9c-1.1 1.1-2.6 1.8-4.2 1.8-3.2-.1-5.7-2.7-5.7-5.9C3.6 10.7 6 8.2 9 8.1c-.8 3.8 1 7.8 4.4 9.8zM32.6 13.8c0 3.2-2.6 5.8-5.8 5.8-1.6 0-3.1-.7-4.2-1.8 3.4-2 5.2-5.9 4.4-9.8 3.1.2 5.6 2.7 5.6 5.8zM7.8 23.9c-.6 1.2-.9 2.5-.9 3.9v6.1H2V30c0-3.3 2.6-6 5.8-6.1zM34 30v3.9h-4.9v-6.1c0-1.3-.3-2.7-.9-3.9 3.2.1 5.8 2.8 5.8 6.1zM24.8 9.9c0 3.7-3 6.8-6.8 6.8-3.7 0-6.8-3-6.8-6.8s3-6.8 6.8-6.8c3.7 0 6.7 3.1 6.8 6.8zM26.6 27.7v6.1H9.4v-6.1c0-1.4.5-2.8 1.4-3.9.3-.4.7-.8 1.1-1.1.3-.3.7-.5 1.1-.6.8-.4 1.7-.6 2.6-.5h4.9c.9 0 1.8.2 2.6.5.4.2.7.4 1.1.6.4.3.8.7 1.1 1.1.8 1.1 1.3 2.5 1.3 3.9z"/></svg>
           <span>Stars</span>
@@ -76,6 +81,13 @@ const Navigation = ({ display = 'web', ...props }) => {
               <NavLink onClick={handleWebNavigation} to="/movie/theatres" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Theatres</NavLink>
               <NavLink onClick={handleWebNavigation} to="/movie/requests" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Requests</NavLink>
               <NavLink onClick={handleWebNavigation} to="/movie/swaps" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Swaps</NavLink>
+            </div>
+          )}
+          <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={location.pathname.startsWith('/tv') ? Navigation.styles.web.active : {}}>Shows</NavLink>
+          {location.pathname.startsWith('/tv') && (
+            <div sx={Navigation.styles.web.secondary}>
+              <Chevron />
+              <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Library</NavLink>
             </div>
           )}
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>
