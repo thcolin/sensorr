@@ -443,7 +443,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const connected = useSyncExternalStore(online.subscribe, online.get)
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
   // A value stored by an earlier version of the filters has no field anymore.
-  const values = useMemo(() => Object.keys(DEFAULTS).reduce((acc, key) => ({ ...acc, [key]: stored?.[key] ?? DEFAULTS[key] }), {}), [stored]) as any
+  const values = useMemo(() => ({ ...DEFAULTS, ...Object.fromEntries(Object.keys(DEFAULTS).filter(key => typeof stored?.[key] !== 'undefined').map(key => [key, stored[key]])) }), [stored])
   const threshold = THRESHOLDS.includes(values.threshold) ? values.threshold : DEFAULTS.threshold
 
   const [skipped, setSkipped] = useState({})
