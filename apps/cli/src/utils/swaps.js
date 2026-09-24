@@ -52,3 +52,13 @@ export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
     changed: JSON.stringify(settled) !== JSON.stringify(releases),
   }
 }
+
+// What the disk would weigh once every proposal is accepted, as the Swaps gauge counts it
+// (apps/web/src/pages/Proposals/queue.ts, balanceOf): only the Plex files exist on disk.
+export const spaceOf = (movies) => {
+  const swaps = movies
+    .map((movie) => ({ size: movie.release?.size, files: (movie.releases || []).filter(({ from }) => from === 'sync') }))
+    .filter(({ size, files }) => files.length && typeof size === 'number')
+
+  return swaps.length ? { proposed: swaps.reduce((acc, { size, files }) => acc + size - files.reduce((sum, file) => sum + (file.size || 0), 0), 0) } : {}
+}
