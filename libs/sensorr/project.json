@@ -25,7 +25,7 @@
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/sensorr"],
       "options": {
-        "jestConfig": "libs/sensorr/jest.config.js",
+        "jestConfig": "libs/sensorr/jest.config.cjs",
         "passWithNoTests": true
       }
     }

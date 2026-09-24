@@ -10,6 +10,7 @@ module.exports = {
   transform: {
     '^.+\\.[tj]sx?$': 'ts-jest',
   },
+  transformIgnorePatterns: ['node_modules/(?!(oleoo|nanoid)/)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/libs/sensorr',
 }
