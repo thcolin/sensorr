@@ -15,7 +15,7 @@ import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import { withBody } from '../../layout/withLayout'
-import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Overdue, Placeholder, VERDICTS, delta, morph, useLoadDetails } from './Card'
+import { Active, Compact, EMOJI, GroupPlaceholder, GroupTitle, Overdue, Placeholder, Size, VERDICTS, delta, morph, useLoadDetails } from './Card'
 import { Gestures } from '../../components/Sensorr/Gestures'
 import { SensorrSingleton } from '../../components/Sensorr'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
@@ -720,7 +720,18 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const notify = useCallback((targets, verdict: Verdict) => {
     const { emoji, icon, label, color } = VERDICTS[verdict] as any
-    const message = targets.length > 1 ? `**${targets.length}** proposals` : `**${targets[0].entity?.title}**`
+    const [item] = targets
+    const { entity, proposal } = item
+    const year = entity?.release_date && new Date(entity.release_date).getFullYear()
+    const message = targets.length > 1 ? `**${targets.length}** proposals` : (
+      <span sx={UIProposals.styles.pending}>
+        <span>
+          <span><span>{entity?.title}</span>{!!year && <small>{year}</small>}</span>
+          {!!proposal && <code>{proposal.title}</code>}
+        </span>
+        {!!proposal && <span><Size item={item} threshold={threshold} compact={true} named={false} /></span>}
+      </span>
+    )
     const actions = (
       <>
         <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
@@ -729,7 +740,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     )
 
     ;({ accept: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
-  }, [undo])
+  }, [undo, threshold])
 
   // `next` is the card to open once this one has left, when it was the open one.
   const decideTargets = useCallback((candidates, verdict: Verdict, next = undefined, selection = false) => {
@@ -1105,6 +1116,46 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 }
 
 UIProposals.styles = {
+  pending: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: 6,
+    width: '22em',
+    maxWidth: '100%',
+    '>span:first-of-type': {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gap: 10,
+      '>span': {
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 8,
+        '>span': {
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        },
+        '>small': {
+          flexShrink: 0,
+          color: 'grayDarker',
+          fontFamily: 'monospace',
+          fontSize: 6,
+        },
+      },
+      code: {
+        fontSize: 6,
+        color: 'grayDarkest',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+    },
+    '>span:nth-of-type(2)': {
+      display: 'flex',
+      justifyContent: 'center',
+    },
+  },
   balance: {
     display: 'flex',
     alignItems: 'center',

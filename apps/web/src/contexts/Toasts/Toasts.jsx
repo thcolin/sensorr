@@ -48,8 +48,8 @@ const UIToasts = ({ ...props }) => {
               }}
             >
             </div>
-            <div sx={{ flex: 1, padding: 4, paddingRight: typeof t.message !== 'string' ? 2 : 4 }}>
-              {typeof t.message !== 'string' ? t.message : (
+            <div sx={{ flex: 1, padding: 4, paddingRight: typeof t.message !== 'string' && !t.title ? 2 : 4 }}>
+              {typeof t.message !== 'string' && !t.title ? t.message : (
                 <>
                   <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, paddingRight: 2, fontFamily: 'heading', textTransform: 'capitalize' }}>
                     <span sx={{ marginRight: 8 }}>
@@ -62,7 +62,7 @@ const UIToasts = ({ ...props }) => {
                     </span>
                     <span> {t.title || (t.type === 'blank' ? 'Info' : t.type)}</span>
                   </strong>
-                  <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
+                  <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}>{typeof t.message === 'string' ? <Markdown>{t.message}</Markdown> : t.message}</span>
                   {t.actions && (
                     <span sx={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', gap: 8, marginTop: 4, '>button': { margin: 12, fontSize: 5 } }}>
                       {t.actions}
