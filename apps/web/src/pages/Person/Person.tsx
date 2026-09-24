@@ -10,6 +10,8 @@ import { usePersonsMetadataContext, withPersonsMetadataContext } from '../../con
 import withProps from '../../components/enhancers/withProps'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import Show from '../../components/Show/Show'
+import { SELF } from '../Calendar/refine'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import { withBody } from '../../layout/withLayout'
 
@@ -37,6 +39,8 @@ const Person = ({ ...props }) => {
     'with_runtime.gte': 20,
     sort_by: 'primary_release_date.desc',
   }, { transform: transformMovieDetails })
+
+  const tv = useTMDBRequest(`person/${id}/tv_credits`)
 
   const ready = !loading && !!(data?.id || error)
 
@@ -261,11 +265,26 @@ const Person = ({ ...props }) => {
       },
     }
 
+    // A show credited both in cast and crew, or for several jobs, comes once, and playing oneself is no part
+    const shows = {
+      id: `shows-${id}`,
+      label: emojize('📺', 'Shows'),
+      entities: [...(tv.data?.cast || []).filter(credit => !SELF.test(credit.character || '')), ...(tv.data?.crew || [])]
+        .filter((credit, index, credits) => credits.findIndex(({ id }) => id === credit.id) === index)
+        .sort((a, b) => new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime()),
+      child: Show,
+      ready: ready && !tv.loading,
+      error: tv.error,
+    }
+
+    const showsTabs = (!ready || tv.loading || tv.error || shows.entities.length) ? [{ id: 'shows', tabs: [shows] }] : []
+
     if (data.known_for_department === 'Acting') {
       return [
         ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
         ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
         ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
+        ...showsTabs,
       ]
     }
 
@@ -273,8 +292,9 @@ const Person = ({ ...props }) => {
       ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
       ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
       ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
+      ...showsTabs,
     ]
-  }, [ready, id, data, metadata])
+  }, [ready, id, data, metadata, tv.data, tv.loading, tv.error])
 
   if (error) {
     return (
