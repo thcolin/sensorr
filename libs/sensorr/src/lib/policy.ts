@@ -42,6 +42,10 @@ export const SENSORR_POLICY_FALLBACK = {
 export const matchPolicy = (movie: { original_language?: string }, policies = []) =>
   policies.find(policy => policy.match?.original_languages?.includes(movie?.original_language))
 
+// A movie enters the library when it gets a state while its stored one is missing or `ignored`, and a stored policy stays
+export const entryPolicy = (movie: { original_language?: string }, stored: { policy?: string, state?: string } = null, policies = []) =>
+  (!stored?.policy && (!stored?.state || stored.state === 'ignored')) ? matchPolicy(movie, policies) : undefined
+
 export class Policy {
   name: string
   sorting: string

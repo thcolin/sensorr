@@ -5,7 +5,7 @@ import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
-import { matchPolicy } from '@sensorr/sensorr'
+import { entryPolicy } from '@sensorr/sensorr'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
 import { LogsService } from '../logs/logs.service'
@@ -61,19 +61,19 @@ export class MoviesService {
     await this.movieModel.updateMany({}, { '$pull': { 'releases': { from: 'sync' } } })
   }
 
-  // A movie entering the library without a policy gets the first one matching it. Without a match it keeps none, and follows the first policy
+  // Without a match a movie keeps no policy, and follows the first one
   private async matchPolicies(changes: { [key: string]: MovieDTO }): Promise<{ [key: string]: MovieDTO }> {
-    const entering = Object.keys(changes).filter(id => changes[id].state && changes[id].state !== 'ignored' && !changes[id].policy)
-    if (!entering.length) {
+    const policies = this.configService.config.get('policies') || []
+    const candidates = Object.keys(changes).filter(id => changes[id].state && changes[id].state !== 'ignored' && !changes[id].policy)
+    if (!candidates.length || !policies.some(policy => policy.match?.original_languages?.length)) {
       return changes
     }
 
-    const policies = this.configService.config.get('policies') || []
-    const stored = await this.movieModel.find({ _id: { $in: entering } }, { policy: 1, original_language: 1 }).lean()
+    const stored = new Map((await this.movieModel.find({ _id: { $in: candidates } }, { policy: 1, state: 1, original_language: 1 }).lean()).map(movie => [`${movie._id}`, movie]))
 
-    return entering.reduce((acc, id) => {
-      const movie = stored.find(({ _id }) => `${_id}` === `${id}`)
-      const policy = !movie?.policy && matchPolicy({ original_language: changes[id].original_language || movie?.original_language }, policies)
+    return candidates.reduce((acc, id) => {
+      const movie = stored.get(`${id}`)
+      const policy = entryPolicy({ original_language: changes[id].original_language || movie?.original_language }, movie, policies)
       return policy ? { ...acc, [id]: { ...changes[id], policy: policy.name } } : acc
     }, changes)
   }

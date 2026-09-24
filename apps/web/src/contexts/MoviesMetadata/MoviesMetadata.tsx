@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
-import { matchPolicy, Policy } from '@sensorr/sensorr'
+import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useAuthContext } from '../Auth/Auth'
 import { useConfigContext } from '../Config/Config'
 import { useAPI } from '../../store/api'
@@ -187,7 +187,7 @@ export const Provider = ({ ...props }) => {
   const enhanceMovieMetadata = useCallback((entity, metadata) => ({
     ...metadata,
     query: sensorr.getQuery(entity, metadata?.query),
-    policy: new Policy(metadata?.policy || matchPolicy(entity, config.get('policies'))?.name, config.get('policies')),
+    policy: new Policy(metadata?.policy || entryPolicy(entity, metadata, config.get('policies'))?.name, config.get('policies')),
   }), [config])
 
   const removeMovieRelease = useCallback((id: number, release: any) => setMovieMetadata(id, 'releases',
@@ -228,7 +228,7 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
       return {
         ..._metadata,
         query: sensorr.getQuery(entity, _metadata?.query),
-        policy: new Policy(_metadata?.policy || matchPolicy(entity, sensorr.policies)?.name, sensorr.policies),
+        policy: new Policy(_metadata?.policy || entryPolicy(entity, _metadata, sensorr.policies)?.name, sensorr.policies),
       }
     }, [entity?.id, _metadata])
 
