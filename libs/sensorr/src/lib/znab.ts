@@ -11,6 +11,9 @@ export class Znab {
   options?: {
     proxify?: boolean,
   }
+  caps?: {
+    tvsearch: string[],
+  }
 
   constructor({ name, url, key, disabled }: ZnabInterface, { proxify }: { proxify?: boolean }) {
     this.name = name
@@ -37,13 +40,8 @@ export class Znab {
     }
   }
 
-  async search(query, initial = {}) {
-    const [resource, init = {}] = this.build({
-      q: query,
-      Query: query,
-      t: 'search',
-      cat: '2000,2010,2020,2030,2040,2050,2060,2070,2080,2090,5080',
-    }) as [string, RequestInit]
+  async request(params, initial = {}) {
+    const [resource, init = {}] = this.build(params) as [string, RequestInit]
 
     const res = await fetch(resource, { ...initial, ...init } as any)
 
@@ -53,8 +51,77 @@ export class Znab {
 
     const body = await res.text()
     await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (800 - 400 + 1) + 400)))
-    const raw = normalize(body, this.url)
+    return normalize(body, this.url)
+  }
+
+  async search(query, initial = {}) {
+    const raw = await this.request({
+      q: query,
+      Query: query,
+      t: 'search',
+      cat: '2000,2010,2020,2030,2040,2050,2060,2070,2080,2090,5080',
+    }, initial)
+
     return transform(raw.items, { term: query, znab: this.name })
+  }
+
+  // An indexer that cannot answer caps is searched as free text
+  async capabilities(initial = {}) {
+    if (!this.caps) {
+      const [resource, init = {}] = this.build({ t: 'caps' }) as [string, RequestInit]
+
+      try {
+        const res = await fetch(resource, { ...initial, ...init } as any)
+        this.caps = res.ok ? parseCaps(await res.text()) : { tvsearch: [] }
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          throw e
+        }
+
+        this.caps = { tvsearch: [] }
+      }
+    }
+
+    return this.caps
+  }
+
+  async searchShow(term, { season, episode }: { season?: number, episode?: number } = {}, initial = {}) {
+    const { tvsearch } = await this.capabilities(initial)
+    const params = { q: term, ...(season === undefined ? {} : { season }), ...(episode === undefined ? {} : { ep: episode }) }
+    const tv = Object.keys(params).every(param => tvsearch.includes(param))
+    const q = tv ? term : [term, [
+      season === undefined ? '' : `S${String(season).padStart(2, '0')}`,
+      episode === undefined ? '' : `E${String(episode).padStart(2, '0')}`,
+    ].join('')].filter(Boolean).join(' ')
+
+    const raw = await this.request({
+      ...(tv ? params : { q }),
+      Query: q,
+      t: tv ? 'tvsearch' : 'search',
+      cat: '5000,5010,5020,5030,5040,5045,5050,5060,5070,5080',
+    }, initial)
+    const categories = new Map(raw.items.map(item => [item.link, [].concat(item.category ?? []).map(Number).filter(Number.isFinite)]))
+
+    return transform(raw.items, { term: q, znab: this.name }).map((release: any) => ({ ...release, category: categories.get(release.link) }))
+  }
+}
+
+// xml2json-light names the `tv-search` element `tv`
+function parseCaps(body) {
+  let caps
+
+  try {
+    const json = JSON.parse(body)
+    caps = json?.caps || json
+  } catch (e) {
+    caps = xml2json(body)?.caps
+  }
+
+  const node = caps?.searching?.['tv-search'] || caps?.searching?.tv
+  const attributes = node?.['@attributes'] || node || {}
+
+  return {
+    tvsearch: attributes.available === 'yes' ? String(attributes.supportedParams || '').split(',').map(param => param.trim()).filter(Boolean) : [],
   }
 }
 
@@ -94,7 +161,7 @@ function normalize(raw, baseUrl) {
           seeders: Number(item.seeders),
           site: item.link.split(`${body.rss.channel.atom.href}dl/`).pop().split('/').shift(),
           uploadVolumeFactor: Number(uploadvolumefactor),
-          category: Array.isArray(item) ? (item as any).category.map(category => Number(category)) : Number(item.category),
+          category: Array.isArray(item.category) ? item.category.map(category => Number(category)) : Number(item.category),
         })
       })
 
