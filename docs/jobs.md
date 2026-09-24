@@ -1,6 +1,6 @@
 # Jobs, proposals and policy
 
-Why Sensorr does what it does. The code says *what* happens; this file says *why* there are six jobs instead of one, why `refine` and `shrink` are separate, what a proposal costs you, and how a release ends up ranked first.
+Why Sensorr does what it does. The code says *what* happens; this file says *why* there are seven jobs instead of one, why `refine` and `shrink` are separate, what a proposal costs you, and how a release ends up ranked first.
 
 For the list of every setting and its default, see [`configuration.md`](./configuration.md). This file names settings but never redefines them.
 
@@ -8,13 +8,13 @@ For the list of every setting and its default, see [`configuration.md`](./config
 
 At boot the API registers one cron per job that is not `paused` (`apps/api/src/app/jobs/jobs.controller.ts:16`, `apps/api/src/app/jobs/jobs.service.ts:88`). A cron tick spawns the CLI as a child process, one command per job (`apps/api/src/app/sensorr/sensorr.service.ts:85`). Started that way the CLI prints a job id as its first line (`apps/cli/src/main.js:32`), and every log line the run emits carries it (`apps/cli/src/utils/command.js:15`), which is what the Jobs screen streams back.
 
-The same six commands can be started by hand with `POST /jobs` and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:30`, `:69`). Nothing else is runnable: the API refuses any command outside its allow-list (`apps/api/src/app/sensorr/sensorr.service.ts:22`).
+The same seven commands can be started by hand with `POST /jobs` and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:30`, `:69`). Nothing else is runnable: the API refuses any command outside its allow-list (`apps/api/src/app/sensorr/sensorr.service.ts:22`).
 
-`migrate` is a seventh CLI command (`apps/cli/src/main.js:71`) and deliberately not a job: it imports a legacy dump once, it has no cron key and the API will not start it.
+`migrate` is an eighth CLI command (`apps/cli/src/main.js`) and deliberately not a job: it imports a legacy dump once, it has no cron key and the API will not start it.
 
 ## The jobs
 
-Six jobs, three concerns. `record`, `refine` and `shrink` talk to indexers and put files in the blackhole. `sync` and `keep-in-touch` talk to Plex. `refresh` talks to TMDB.
+Seven jobs, three concerns. `record`, `refine`, `shrink` and `report` talk to indexers and put files in the blackhole. `sync`, `keep-in-touch` and `report` talk to Plex. `refresh` talks to TMDB.
 
 ### `record`
 
@@ -54,9 +54,21 @@ The reverse direction matters too: a movie Sensorr believes is `archived` but th
 
 `sync` is also where an accepted swap ends. Accepting a `refine` or `shrink` proposal writes the new `.torrent` to the blackhole and leaves the old file where it is, so Plex ends up holding both as two versions of the same movie. The accepted release keeps `replaces`, the ids of the Plex versions the movie had at that moment, and `accepted_at` (`upsertMovies` in `apps/api/src/app/movies/movies.service.ts`). On each run, `sync` looks, across every Plex item of the movie, for a version that is not in `replaces` and whose size is within 2% of the accepted one: indexers round the size they announce (`apps/cli/src/utils/swaps.js`). With `jobs.sync.cleanup` on, the first run that sees it deletes the replaced versions, files included, through `DELETE /library/metadata/{ratingKey}/media/{mediaId}` (`apps/cli/src/commands/sync.js`), and ends the swap. This relies on the download client writing outside the library and moving a file in once complete: Plex indexes a file as soon as it appears, so a client writing into the library folder under the final name could let `sync` delete the only complete copy. The Plex server must allow media deletion (*Settings > Library > Allow media deletion*), otherwise it answers 403 and the movie is reported under warnings. Nothing is deleted before the new version is on Plex: a download can fail silently, and the replaced version would then be the only copy.
 
-With `jobs.sync.cleanup` off, the swap ends as soon as it lands and nothing is deleted. A swap that has not landed a week after it was accepted is marked `overdue: true`, and the mark goes away if it lands later. The indexer size covers the whole torrent, samples and subtitles included, so a small release with a large sample can miss the 2% and turn `overdue` although it landed. While a swap is pending, `refine` and `shrink` skip the movie (`apps/cli/src/commands/refine.js`, `apps/cli/src/commands/shrink.js`): they would compare candidates with a release that is not on Plex yet. Only accepted proposals carry `replaces`; a job with `proposalOnly` off and a release picked by hand from the movie page leave the old version on Plex.
+With `jobs.sync.cleanup` off, the swap ends as soon as it lands and nothing is deleted. A swap that has not landed a week after it was accepted is marked `overdue: true`, and the mark goes away if it lands later. The indexer size covers the whole torrent, samples and subtitles included, so a small release with a large sample can miss the 2% and turn `overdue` although it landed. While a swap is pending, `refine` and `shrink` skip the movie (`apps/cli/src/commands/refine.js`, `apps/cli/src/commands/shrink.js`): they would compare candidates with a release that is not on Plex yet. Only accepted proposals and `report` downloads carry `replaces`; `refine` or `shrink` with `proposalOnly` off, and a release picked by hand from the movie page, leave the old version on Plex.
 
 An overdue swap shows up at the end of the Swaps screen, in the collapsed `overdue` group, with three gestures (`apps/web/src/pages/Proposals/queue.ts`). **Retry** accepts the same release again: the cache was emptied by the first Accept, so the `.torrent` is fetched from the indexer's `enclosure` (`apps/api/src/app/sensorr/sensorr.service.ts`), `replaces` and `accepted_at` are set anew and `overdue` is cleared. If the indexer no longer serves it, nothing is written and the error offers **Search**. **Search** opens the release drawer on the movie, and the release picked there takes the place of the overdue one, as a swap of the same command with `job: 'manual'`, so it replaces the Plex version once it lands. Like a pick from a movie page, it is sent at once, with no Undo. **Drop** removes the accepted release from the movie: the movie stays `archived` with the version Plex has, and `refine` or `shrink` may propose another one. It is not `missing`, since Plex still has a copy. Retry and Drop wait five seconds before they are sent, like Accept and Refuse, so the toast can take them back.
+
+### `report`
+
+Replace a movie someone reported from Plex with the best release that is not the one they watched.
+
+Plex has a *Report an Issue...* entry on every movie (*Signaler un problème...* in French): a friend types a free text, and it lands in the server admin's *Reported Issues* feed. Plex offers no webhook or server event for it. The job reads the feed through `https://community.plex.tv/api`, the GraphQL endpoint Plex Web itself calls (`libs/plex/src/lib/reports.ts`). That endpoint is undocumented: Plex can change it without notice, and the job then fails with the error it got, visible on the Jobs screen. A report has no "resolved" status either, so the job keeps its own cursor, `jobs.report.since`, the date of the newest report it has seen.
+
+The first run only sets that cursor to now: reports made before the job was turned on are not replayed (`newReportsOf` in `apps/cli/src/utils/reports.js`). Every later run takes the reports of the registered server made after it. Each one names a Plex item, not one of its versions, so the job resolves the item to an `archived` Sensorr movie through its TMDB or IMDB guid, like `sync` does, and bans **every** release the movie owns, by original name and by title (`bansOf`, same file). A report on a show, on an item Plex no longer has, or on a movie Sensorr does not know is logged and skipped. The report itself, text, date and Plex username, is kept on the movie under `reports`.
+
+Then the movie is searched like `record` would: the best valid release wins, with no "must beat what you own" guard, since everything owned is now banned. It goes through `jobs.report.proposalOnly` like any other job. On, the release is proposed and shows up on the Swaps screen; accepting it sets `replaces` as for `refine` and `shrink`. Off, the release is downloaded at once and carries `replaces` all the same (`apps/cli/src/components/Tasks/ProcessMoviesTask.js`): this is the one job whose direct downloads end in a swap, because leaving the reported version next to the new one on Plex would leave the problem in place. Either way, `sync` deletes the reported version only once the new one is on Plex, and only with `jobs.sync.cleanup` on.
+
+A movie that already has a proposal pending or a swap on its way gets its bans and its report, but is not searched: that pending release is already its replacement. The job does not answer the report in Plex, and does not read its text: a report that is not a problem still triggers a search, which is why `proposalOnly` is on by default.
 
 ### `keep-in-touch`
 

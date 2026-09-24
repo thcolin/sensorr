@@ -120,5 +120,5 @@ Not part of the gate, and the only one of the three that exits 0. It writes a 7.
 | --- | --- |
 | [configuration.md](configuration.md) | every key of `config.json`, generated from `libs/config/src/index.js` by `tools/docs/generate-configuration.mjs` |
 | [architecture.md](architecture.md) | what talks to what |
-| [jobs.md](jobs.md) | why there are six jobs, and how a release gets ranked |
+| [jobs.md](jobs.md) | why there are seven jobs, and how a release gets ranked |
 | [../README.md](../README.md) | what Sensorr is, and the Docker install |

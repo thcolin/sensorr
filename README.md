@@ -22,7 +22,7 @@ home.
 - **Torznab indexers.** Declare as many as you want, enable and disable them one by one.
 - **Policies instead of a quality profile.** Seven axes, source, encoding, resolution, language, dub, flags and indexer, each split in three groups: `avoid` rejects a release outright, `prefer` ranks the rest by score, `require` is the end-goal `refine` works towards.
 - **Blackhole downloads.** Sensorr writes the release file into your blackhole directory, always named `.torrent`, and your download client does the rest.
-- **Six scheduled jobs.** `record` grabs the best release available for wished movies, `refine` looks for a better fitting one for archived movies, `shrink` for the smallest one for refined movies, `refresh` re-fetches TMDB metadata for every movie and person you store, `sync` reconciles the library with Plex, `keep-in-touch` reads your friends' watchlists.
+- **Seven scheduled jobs.** `record` grabs the best release available for wished movies, `refine` looks for a better fitting one for archived movies, `shrink` for the smallest one for refined movies, `refresh` re-fetches TMDB metadata for every movie and person you store, `sync` reconciles the library with Plex, `keep-in-touch` reads your friends' watchlists, `report` replaces a movie a friend reported from Plex.
 - **Proposals.** `record`, `refine` and `shrink` can be set to `proposalOnly`: they submit what they found instead of downloading it, and you pick from the comparison screen.
 - **Requests from friends.** A friend links their Plex account with a code, and `keep-in-touch` turns the movies on their Plex watchlist into requests. A movie Sensorr did not know lands as `Ignored`, never `Wished`; you decide from the Requests screen.
 - **Browse TMDB from inside Sensorr.** Discover, Trending, Calendar, Theatres, Collections, Recommendations and Similar.
@@ -96,7 +96,7 @@ docker compose up -d
 # Documentation
 
 - [Configuration](docs/configuration.md), every key of `config.json`
-- [Jobs, proposals and policy](docs/jobs.md), why there are six jobs and how a release gets ranked
+- [Jobs, proposals and policy](docs/jobs.md), why there are seven jobs and how a release gets ranked
 - [Development](docs/development.md), running Sensorr from a clone
 - [Architecture](docs/architecture.md), what talks to what
 

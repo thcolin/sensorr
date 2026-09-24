@@ -37,6 +37,10 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.shrink.paused` | `boolean` | `false` | Pause Shrink job |
 | `jobs.shrink.proposalOnly` | `boolean` | `true` | Shrink job will only submit proposal and don't download any release |
 | `jobs.shrink.threshold` | `number` | `true` | Shrink job will only consider movies with releases above this threshold (Gb) |
+| `jobs.report.cron` | `string` | `0 * * * *` | Report job cron |
+| `jobs.report.paused` | `boolean` | `true` | Pause Report job |
+| `jobs.report.proposalOnly` | `boolean` | `true` | Report job will only submit proposal and don't download any release |
+| `jobs.report.since` | `number` | `0` | Date of the newest Plex reported issue already handled by Report job, older ones are ignored (auto filled on first run) |
 
 ## Plex
 
