@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
 import { ProxyModule } from './proxy/proxy.module'
 import { AuthModule } from './auth/auth.module'
 import { MoviesModule } from './movies/movies.module'
+import { ShowsModule } from './shows/shows.module'
 import { PersonsModule } from './persons/persons.module'
 import { GuestsModule } from './guests/guests.module'
 import { JobsModule } from './jobs/jobs.module'
@@ -26,6 +27,7 @@ import { SensorrModule } from './sensorr/sensorr.module'
     ProxyModule,
     AuthModule,
     MoviesModule,
+    ShowsModule,
     PersonsModule,
     GuestsModule,
     JobsModule,

@@ -1,5 +1,7 @@
 // Maybe useless, see [mongoose `autoCreate` option](https://mongoosejs.com/docs/guide.html#autoCreate)
 db.createCollection('movies')
+db.createCollection('shows')
+db.createCollection('episodes')
 db.createCollection('persons')
 db.createCollection('guests')
 db.createCollection('blackhole')
