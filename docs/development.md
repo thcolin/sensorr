@@ -4,13 +4,13 @@ Running Sensorr from a clone, and changing it. To run Sensorr as a user, follow 
 
 ## Prerequisites
 
-**Node 18.** Nothing in the repo pins a version: `package.json` has no `engines` field and there is no `.nvmrc`. Node 18 is what the images build on, `apps/api/Dockerfile:1` and `apps/web/Dockerfile:1` both start from `node:18-alpine`, so it is the version Sensorr is known to run on.
+**Node 18.** Nothing in the repo pins a version: `package.json` has no `engines` field and there is no `.nvmrc`. Node 18 is what the images build on, `apps/api/Dockerfile:1` and `apps/web/Dockerfile:1` both start from `node:18-alpine`, so it is the version Sensorr is known to run on. For the CLI it is a requirement, see [`bin/sensorr` needs Node 18](#binsensorr-needs-node-18).
 
 **Yarn 1.** `yarn.lock` is a v1 lockfile and there is no `packageManager` field, so nothing stops `npm install` from ignoring it. Install with yarn.
 
 **Mongo as a replica set**, for anything that touches the API: it opens change streams, which a standalone `mongod` refuses ([architecture.md](architecture.md#data)). The `sensorr-db` service of `docker-compose.yml` gives you one.
 
-**A TMDB API key**, set as `tmdb` in `config.json` or from the Settings page, for anything that reads metadata. **A Plex server** only for the `sync` and `keep-in-touch` commands.
+**A TMDB API key**, set as `tmdb` in `config.json` or from the Settings page, for anything that reads metadata. **A Plex server** only for the `sync`, `sync-shows`, `report` and `keep-in-touch` commands.
 
 ## Install and run
 
@@ -47,7 +47,13 @@ nx build cli
 bin/sensorr record
 ```
 
-`bin/sensorr` runs the last build and not the working tree ([architecture.md](architecture.md#how-the-api-runs-the-cli)). The commands are `record`, `refresh`, `sync`, `refine`, `shrink`, `keep-in-touch` and `migrate`. Each one signs into the API and loads the configuration from it, so the API has to be up and `NX_SENSORR_USERNAME` / `NX_SENSORR_PASSWORD` set.
+`bin/sensorr` runs the last build and not the working tree ([architecture.md](architecture.md#how-the-api-runs-the-cli)). The movie commands are `record`, `refresh`, `sync`, `refine`, `shrink`, `report`, `keep-in-touch` and `migrate`; the series ones are `record-shows`, `airing`, `refresh-shows`, `sync-shows`, `import-shows` and `migrate-sonarr`. Each one signs into the API and loads the configuration from it, so the API has to be up and `NX_SENSORR_USERNAME` / `NX_SENSORR_PASSWORD` set.
+
+#### `bin/sensorr` needs Node 18
+
+`bin/sensorr:3` runs `node --experimental-specifier-resolution=node`, and the bundle keeps extensionless imports of packages that have no `exports` map, `stream-json/jsonl/Parser` from `apps/cli/src/commands/migrate.js` among them. Node 19 removed what that flag did. Node 24 still accepts the flag and ignores it, so every command fails at load, before its first line, with `ERR_MODULE_NOT_FOUND` and `Did you mean to import "stream-json/jsonl/Parser.js"?`. Run the CLI on Node 18, like the images.
+
+A local API spawns the same wrapper, so on Node 24 its jobs fail the same way, and `POST /api/jobs` never answers: the child exits without printing the job id, and nothing rejects (`apps/api/src/app/sensorr/sensorr.service.ts:122-128`).
 
 ### The component gallery
 
@@ -85,9 +91,9 @@ Exits 1. Four of the thirteen projects fail: `api`, `plex`, `tmdb` and `ui`. Jes
 
 | Project | Failure |
 | --- | --- |
-| `api` | Jest never starts: `module is not defined in ES module scope`. Its `jest.config.js` is CommonJS while `apps/api/package.json:3` declares `"type": "module"`. `apps/cli` and `libs/sensorr` had the same failure until their config was renamed `jest.config.cjs` |
-| `tmdb` | `libs/tmdb/src/__tests__/tmdb.spec.ts`, `Cannot find module 'jest-fetch-mock'`, the package is not installed |
-| `plex` | `libs/plex/src/lib/plex.spec.ts`, `TS2724: '"./plex"' has no exported member named 'plex'. Did you mean 'Plex'?` |
+| `api` | 1 suite of 2 never runs. `apps/api/src/app/sensorr/sensorr.service.spec.ts` imports `config.service.ts`, which ts-jest fails to compile: `TS1192: Module '"fs/promises"' has no default export`, `TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag`, `TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', or 'nodenext'`. `apps/api/tsconfig.spec.json` sets `"module": "commonjs"` and no `esModuleInterop`. `notifications/push.spec.ts` passes |
+| `tmdb` | 1 suite of 2 never runs: `libs/tmdb/src/__tests__/tmdb.spec.ts`, `TS2307: Cannot find module 'jest-fetch-mock'`, the package is not installed. `shows.spec.ts` passes |
+| `plex` | 1 suite of 2 never runs: `libs/plex/src/lib/plex.spec.ts`, `TS2724: '"./plex"' has no exported member named 'plex'. Did you mean 'Plex'?`. `reports.spec.ts` passes |
 | `ui` | 2 suites of 9 never run, and 2 tests of 7 fail, see below |
 
 Inside `ui`:
@@ -106,7 +112,7 @@ A change is clean when it adds no new red on top of those.
 npx nx build web
 ```
 
-Not part of the gate, and the only one of the three that exits 0. It writes a 7.3 MB `dist/apps/web`, which is the figure to compare a bundle change against.
+Not part of the gate, and the only one of the three that exits 0. It writes a 7.5 MB `dist/apps/web`, measured on 2026-09-25 with the Shows section in, which is the figure to compare a bundle change against. `npx nx build api` and `npx nx build cli` exit 0 as well.
 
 ## Project layout
 
@@ -120,5 +126,5 @@ Not part of the gate, and the only one of the three that exits 0. It writes a 7.
 | --- | --- |
 | [configuration.md](configuration.md) | every key of `config.json`, generated from `libs/config/src/index.js` by `tools/docs/generate-configuration.mjs` |
 | [architecture.md](architecture.md) | what talks to what |
-| [jobs.md](jobs.md) | why there are seven jobs, and how a release gets ranked |
+| [jobs.md](jobs.md) | what each job is for, and how a release gets ranked |
 | [../README.md](../README.md) | what Sensorr is, and the Docker install |
