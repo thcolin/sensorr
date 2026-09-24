@@ -137,6 +137,42 @@ const JobsSettings = ({ ...props }) => {
                 description: 'Goes through guests Plex watchlist and sync wished movies',
                 options: ['cron'],
               },
+              {
+                command: 'record-shows',
+                emoji: '📹',
+                description: 'Record wished shows by whole series, season packs and episodes',
+                options: ['cron', 'proposalOnly'],
+              },
+              {
+                command: 'airing',
+                emoji: '📡',
+                description: 'Record wanted episodes aired in the last 7 days',
+                options: ['cron', 'proposalOnly'],
+              },
+              {
+                command: 'import-shows',
+                emoji: '📥',
+                description: 'Import finished show releases from the staging folder into the library',
+                options: ['cron'],
+              },
+              {
+                command: 'refresh-shows',
+                emoji: '🔌',
+                description: 'Refresh Sensorr shows and their episodes with TMDB changes',
+                options: ['cron'],
+              },
+              {
+                command: 'sync-shows',
+                emoji: '🔗',
+                description: 'Sync Sensorr shows with registered Plex server',
+                disabled: !config.get('plex.token'),
+                warning: config.get('plex.token') ? null : (
+                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
+                  </span>
+                ),
+                options: ['cron'],
+              },
             ].map(value => (
               <JobSettings
                 {...value}
