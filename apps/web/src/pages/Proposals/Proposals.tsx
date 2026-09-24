@@ -444,7 +444,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const connected = useSyncExternalStore(online.subscribe, online.get)
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
   const values = useMemo(() => ({ ...DEFAULTS, ...stored }), [stored])
-  const threshold = typeof values.threshold === 'number' ? values.threshold : DEFAULTS.threshold
+  const threshold = THRESHOLDS.includes(values.threshold) ? values.threshold : DEFAULTS.threshold
 
   const [skipped, setSkipped] = useState({})
   const [decided, setDecided] = useState({})
