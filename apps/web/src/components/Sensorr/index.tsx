@@ -246,7 +246,7 @@ const UISensorr = compose(
       },
     },
   }),
-)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, ...props }) => {
+)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, ...props }) => {
   const { setMovieMetadata, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
   const statistics = useMemo(() => ({
     lowest: {
@@ -269,9 +269,10 @@ const UISensorr = compose(
           {entities.map(release => (
             <Release
               key={release.link}
-              entity={release}
+              entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
               statistics={statistics}
               downloadable={true}
+              actions={false}
               proceed={async (release, choice) => {
                 toggle()
 
@@ -298,7 +299,7 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, button = null, loading = false, portal = null, ...props }) => {
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, button = null, loading = false, portal = null, ...props }) => {
   const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
@@ -316,12 +317,13 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, bu
         <Drawer close={closePortal} open={open} height='85vh'>
           <div sx={UISensorrWrapper.styles.container}>
             <div sx={UISensorrWrapper.styles.head}>
-              <h4>Releases</h4>
+              <h4>{title}</h4>
             </div>
             <UISensorr
               metadata={metadata}
               onChange={onChange}
               onPick={onPick}
+              proposal={proposal}
               entity={!loading && entity?.id ? entity : {}}
               ready={!loading && entity?.id}
               toggle={togglePortal}
@@ -370,8 +372,9 @@ export const Sensorr = memo(UISensorrWrapper)
 
 // One drawer for a whole list: `setToggle` hands out the function that opens it on a movie,
 // with what to do with the release picked there, the default being a manual record.
+// `proposal` is marked among the results, and `title` names what a pick does.
 export const SensorrSingleton = ({ setToggle }) => {
-  const [{ entity, onPick }, setTarget] = useState({ entity: null, onPick: null })
+  const [{ entity, onPick, title, proposal }, setTarget] = useState({ entity: null, onPick: null, title: undefined, proposal: null })
   const { loading, metadata: { [entity?.id]: _metadata = {} }, enhanceMovieMetadata } = useMoviesMetadataContext() as any
   const metadata = useMemo(() => enhanceMovieMetadata(entity, _metadata), [entity?.id, _metadata])
 
@@ -381,9 +384,11 @@ export const SensorrSingleton = ({ setToggle }) => {
       loading={loading}
       metadata={metadata}
       onPick={onPick}
+      title={title}
+      proposal={proposal}
       setPortalToggle={(toggleOpen) => {
-        setToggle((e, entity, onPick = null) => {
-          setTarget({ entity, onPick })
+        setToggle((e, entity, onPick = null, { title = undefined, proposal = null } = {}) => {
+          setTarget({ entity, onPick, title, proposal })
           toggleOpen(e)
         })
       }}
