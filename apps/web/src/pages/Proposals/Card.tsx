@@ -306,12 +306,14 @@ UIActive.styles = {
   // Movie's poster sizes itself, badges included, as on every other page.
   poster: {
     position: 'relative',
-    zIndex: 1,
+    zIndex: 2,
   },
   // It comes out from under the poster once the card has opened: held while the move
-  // runs (Proposals.tsx sets `data-morphing` for its length). `backwards` rather than
-  // `both`: the transform `both` leaves behind stops Firefox painting its drop-shadow.
+  // runs (Proposals.tsx sets `data-morphing` for its length). Like the poster, it sits
+  // above the releases band, whose shadow would cover it while it animates.
   ticket: {
+    position: 'relative',
+    zIndex: 1,
     display: 'flex',
     width: '100%',
     marginTop: 0,
@@ -320,7 +322,7 @@ UIActive.styles = {
     '@keyframes sensorr-ticket-in': {
       from: { opacity: 0, transform: 'translateY(-2.5em)' },
     },
-    animation: '450ms cubic-bezier(0.2, 0, 0, 1) backwards sensorr-ticket-in',
+    animation: '500ms ease-out backwards sensorr-ticket-in',
     'html[data-morphing] &': {
       animationPlayState: 'paused',
     },
