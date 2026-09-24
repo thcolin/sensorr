@@ -28,7 +28,6 @@ export class SensorrService {
     private configService: ConfigService,
   ) {}
 
-  // A show release goes to its own blackhole and gives back the files of its .torrent, which `import shows` waits for
   async downloadRelease(release: ReleaseDTO, source: 'enclosure' | 'cache' = 'enclosure', destination: 'fs' | 'cache' = 'fs', kind: 'movie' | 'show' = 'movie'): Promise<TorrentFiles | void> {
     const filename = sanitizeFilename(`${release.title}-${release.znab}.torrent`)
     const blackhole = this.configService.config.get(kind === 'show' ? 'shows.blackhole' : 'blackhole')
@@ -55,7 +54,6 @@ export class SensorrService {
         break
     }
 
-    // Read before anything is written, so a file that is not a .torrent never reaches the blackhole
     const torrent = kind === 'show' ? torrentFiles(buffer) : undefined
 
     switch (destination) {

@@ -74,7 +74,6 @@ export class JobsService {
     )
   }
 
-  // One cron per job, `jobs.<command>.<type>` or `jobs.keep-in-touch`
   setupCrons() {
     this.logger.log(`SetupCrons`)
 

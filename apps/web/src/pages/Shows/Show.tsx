@@ -11,7 +11,6 @@ import { ShowActions } from './components/Actions'
 import { Proposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
 
-// A show with a document in Sensorr, ignored aside, is in the library: its episodes come from the API
 const Show = ({ ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
   const { id } = useParams() as any

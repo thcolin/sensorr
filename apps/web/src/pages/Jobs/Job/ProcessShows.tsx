@@ -23,7 +23,6 @@ export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, tre
     title: <span><strong>{processed}</strong> Processed shows</span>,
     length: processed,
   }] : []),
-  // A show can override the job setting, so a run may both propose and record
   ...((config?.proposalOnly || proposal > 0) ? [{
     key: 'proposal',
     emoji: '🛎️ ',
@@ -68,7 +67,6 @@ export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, tre
   }] : []),
 ]
 
-// Same seed as the movie records, the real height is measured once the row renders
 const estimateRecordHeight = (record: any) => Math.max(420, 360 + (record?.logs?.length ?? 0) * 22 + (record?.releases?.length ?? 1) * 150)
 
 const matches = (record: any, filter: string) => ({
@@ -81,8 +79,6 @@ const matches = (record: any, filter: string) => ({
   warning: !!record.warning,
 })[filter] ?? true
 
-// record shows and airing shows log every line with `meta.type` 'show' and the show id as `meta.group`,
-// and may pick several releases for one show: a record keeps them all
 const UIProcessShowsJob = ({ job, logs }) => {
   const ref = useRef()
   const listRef = useRef<HTMLDivElement>(null)
@@ -122,7 +118,6 @@ const UIProcessShowsJob = ({ job, logs }) => {
     scrollMargin,
   })
 
-  // The header scrolls with the list, which therefore starts below it
   useLayoutEffect(() => {
     const list = listRef.current
     const scroller = ref.current as any
@@ -410,7 +405,6 @@ UIRecord.styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // A show run searches every unit on every indexer, its lines are many
   logs: {
     maxHeight: '30vh',
     overflowY: 'auto',

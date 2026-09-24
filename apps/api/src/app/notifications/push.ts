@@ -48,7 +48,6 @@ const moviePushOf = (meta) => ({
   }[meta?.command],
 })
 
-// A show release names what it covers, and only a proposal has something to answer
 const showPushOf = (meta) => ({
   title: [
     meta?.show?.name,

@@ -5,12 +5,10 @@ import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Toggle } from './Toggle'
 
-// Past this many episodes a season scrolls in its own box and only renders what is in sight
 const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-// Specials come last, and the last regular season is the one open at first
 const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []

@@ -438,7 +438,6 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
           const guests = [...new Set([...(show.requested_by || []), ...requested_by])]
           const added = guests.length > (show.requested_by || []).length
 
-          // A show known by its TMDB id only keeps its Plex guid, so the next run skips the lookup
           if (added || show.plex_guid !== plex_guid) {
             const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests } } })
             await api.fetch(uri, params, init)
@@ -446,7 +445,6 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
 
           if (added) {
             processed.push(show)
-            // Same as a movie: an archived show leaves nothing to answer
             state.logger.info({ message: `Show "${show.name}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: show.id, type: 'show', show: lighten.show(show), processed: show.state !== 'archived', requested_by: guests } })
           } else {
             state.logger.info({ message: `Show "${show.name}" guests requests no need update`, metadata: { ...state.metadata, important: true, group: show.id, type: 'show', show: lighten.show(show), processed: false, requested_by } })

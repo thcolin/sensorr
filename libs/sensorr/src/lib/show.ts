@@ -24,7 +24,6 @@ const ENDED = ['Ended', 'Canceled']
 
 export const isTvCategory = (category) => [].concat(category ?? []).some(value => Math.floor(Number(value) / 1000) === 5)
 
-// A multi-season pack counts as the whole series, and a movie COLLECTION too once the indexer files it under TV
 export const levelOf = (meta, category = []): ShowUnit['type'] | null => {
   const seasons = meta?.seasons || []
 
@@ -61,7 +60,6 @@ export const unitLabel = (unit: ShowUnit) => unit.type === 'series' ? 'whole ser
   unit.type === 'episode' ? `E${String(unit.episode).padStart(2, '0')}` : ' pack',
 ].join('')
 
-// `show` is not read yet: every episode a release can cover is in `episodes`
 export const coverageOf = (meta, show, episodes: ShowEpisode[]): Coverage[] => {
   const seasons = meta?.seasons || []
   const numbers = meta?.episodes || []
@@ -86,7 +84,6 @@ export const searchUnits = (show: { status?: string }, episodes: ShowEpisode[], 
   const targets = (list: ShowEpisode[]) => list.map(({ season_number, episode_number }) => ({ season: season_number, episode: episode_number }))
   const aired = (list: ShowEpisode[]) => list.length > 0 && list.every(({ air_date }) => air_date && new Date(air_date).getTime() <= new Date(now).getTime() - DAY)
   const owned = (list: ShowEpisode[]) => list.some(({ monitored, files }) => monitored && files?.length)
-  // A pack downloads its whole scope, so every episode of it must be monitored, and wanted unless it is owned already
   const asked = (list: ShowEpisode[]) => list.every(episode => episode.monitored && ['wanted', 'owned'].includes(episodeStatus(episode, now)))
   const ofSeason = (list: ShowEpisode[], season: number) => list.filter(({ season_number }) => season_number === season)
 
@@ -112,7 +109,6 @@ export const searchUnits = (show: { status?: string }, episodes: ShowEpisode[], 
   ]
 }
 
-// Each release keeps as coverage only the episodes it is the first to cover
 export const pickReleases = (unitsWithResults: { unit: ShowUnit, results: any[] }[], episodes: ShowEpisode[]) => {
   const keyOf = ({ season, episode }: Coverage) => `${season}:${episode}`
   const wanted = new Set(unitsWithResults.flatMap(({ unit }) => unit.episodes.map(keyOf)))
@@ -143,7 +139,6 @@ export const pickReleases = (unitsWithResults: { unit: ShowUnit, results: any[] 
   return picked
 }
 
-// Same rules as pickReleases: a unit is not searched once the picks cover every episode it targets, or, for a last resort pack, any episode of its season
 export const isUnitCovered = (unit: ShowUnit, picks: { coverage: Coverage[] }[]) => {
   const covered = picks.flatMap(({ coverage }) => coverage)
 
@@ -152,7 +147,6 @@ export const isUnitCovered = (unit: ShowUnit, picks: { coverage: Coverage[] }[])
     : unit.episodes.every(({ season, episode }) => covered.some(c => c.season === season && c.episode === episode))
 }
 
-// `S01-S10` over several seasons, `S03` for a pack, `S03E04` or `S03E04-E06` for episodes
 export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = coverage.length === 1 ? 'episode' : 'season') => {
   const pad = (value: number) => String(value).padStart(2, '0')
   const seasons = [...new Set(coverage.map(({ season }) => season))].sort((a, b) => a - b)
@@ -175,7 +169,6 @@ export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = co
   return `S${pad(seasons[0])}${run ? `E${pad(episodes[0])}-E${pad(episodes[episodes.length - 1])}` : episodes.map(episode => `E${pad(episode)}`).join('')}`
 }
 
-// A season is searched once, for its pack and all its episodes, and an episode alone only when its season gave it nothing valid
 export const searchShowUnits = async (
   units: ShowUnit[],
   episodes: ShowEpisode[],

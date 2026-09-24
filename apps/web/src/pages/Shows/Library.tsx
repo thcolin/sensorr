@@ -31,7 +31,6 @@ const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
 const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {}))
   .map(([_id, count]) => ({ _id, count }))
 
-// Two values, one of which makes a filter: both or none leave it out
 const OneOf = ({ label, options, statistics, ...props }) => (
   <Checkbox
     {...props as any}
@@ -137,7 +136,6 @@ const Library = compose(
           const sensorr = useSensorr()
           const location = useLocation()
           const [sending, setSending] = useState(false)
-          // `bulk` lists every id matching the filters, and arrives with the statistics, after the shows.
           const entities = statistics?.[0]?.entities
           const visible = useMemo(() => entities ? new Set(entities) : null, [entities])
           // A filter that hides a checked show takes it out of the selection it acts on, and
@@ -254,7 +252,6 @@ const Library = compose(
         component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
       },
     },
-    // The library is small, a few hundred shows: its counts are made here from two light listings
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
       const [statistics, setStatistics] = useState({})

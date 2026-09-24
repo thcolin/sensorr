@@ -1,6 +1,5 @@
 export type EpisodeStatus = 'upcoming' | 'unmonitored' | 'owned' | 'proposed' | 'wanted'
 
-// An episode TMDB has not dated yet is upcoming, and a file seen on Plex wins over every other state
 export const episodeStatus = (
   episode: { air_date?: string | Date | null, monitored?: boolean, files?: any[], release?: string | null },
   now: Date | number = Date.now(),
@@ -20,7 +19,6 @@ export const episodeStatus = (
   return episode.release ? 'proposed' : 'wanted'
 }
 
-// An episode TMDB has not dated yet has not aired, and a file counts even when its date is still ahead
 export const progressOf = (
   episodes: { air_date?: string | Date | null, files?: any[] }[],
   now: Date | number = Date.now(),

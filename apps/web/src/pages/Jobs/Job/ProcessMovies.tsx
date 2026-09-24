@@ -578,7 +578,6 @@ UIRecord.styles = {
 
 const Record = memo(UIRecord)
 
-// A show record has several releases: without `release`, each line shows its own
 const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metadata, setMetadata }) => {
   return (
     <div sx={UIRecordLogs.styles.element}>

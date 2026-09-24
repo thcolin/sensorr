@@ -18,7 +18,6 @@ export default (job, meta, callback) => async (argv) => {
   await callback({ argv, config, logger })
 }
 
-// One command per job about one media type, `record movies`, the type refused when no implementation handles it
 export const typed = (command, desc, definitions) => {
   const types = definitions.reduce((acc, definition) => ({ ...acc, [`${definition.type}s`]: definition }), {})
 

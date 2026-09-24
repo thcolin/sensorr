@@ -25,7 +25,6 @@ const meta = {
   },
 }
 
-// `migrate sonarr`, a subcommand of `migrate`, its lines logged as `migrate` for shows
 export default (job, handlers) => ({
   ...meta,
   command: 'sonarr',
@@ -34,7 +33,6 @@ export default (job, handlers) => ({
       throw new Error('You need to set SONARR_API_KEY with your Sonarr API key before migrating from it !')
     }
 
-    // Read-only on Sonarr: only GET requests, and the key never leaves this closure
     const sonarr = async (path, query = {}) => {
       const res = await fetch(`${argv.url.replace(/\/+$/, '')}/api/v3/${path}?${new URLSearchParams(query)}`, {
         headers: { 'X-Api-Key': process.env.SONARR_API_KEY, Accept: 'application/json' },

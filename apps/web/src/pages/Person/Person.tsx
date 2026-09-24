@@ -265,7 +265,6 @@ const Person = ({ ...props }) => {
       },
     }
 
-    // A show credited both in cast and crew, or for several jobs, comes once, and playing oneself is no part
     const shows = {
       id: `shows-${id}`,
       label: emojize('📺', 'Shows'),

@@ -1,6 +1,5 @@
 import { migrateJobs } from './migrate'
 
-// The shape of a config.json written before jobs took a type, values of a running installation
 const old = () => ({
   tmdb: 'key',
   region: 'fr-FR',

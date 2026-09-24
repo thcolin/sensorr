@@ -16,7 +16,6 @@ const termsOf = (titles: string[]) => titles.reduce((acc, value, index, array) =
   ...(array.filter((v, i) => i !== index).every(v => !value.includes(v)) ? [value] : []),
 ], [])
 
-// A term in another script, a Japanese original name for one, is only searched when a show has no other
 const isLatin = (term: string) => !/\p{L}/u.test(term.replace(/\p{Script=Latin}/gu, ''))
 
 export class Sensorr {
@@ -69,7 +68,6 @@ export class Sensorr {
     }
   }
 
-  // A show's defaults are never saved, unlike a movie's: its years grow with every season it airs
   getShowQuery(show, query = null, banned_releases = []) {
     const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, ['FR', 'US', 'GB'])
     const terms = termsOf(titles)

@@ -6,7 +6,6 @@ import { useSensorr } from '../../../store/sensorr'
 import { PolicyInput } from '../../Details/components/Metadata'
 import { Toggle } from './Toggle'
 
-// Specials are left out of the show's progress, as they are of its search
 const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, removeShow, setMetadata, ...props }) => {
   const sensorr = useSensorr()
   const [adding, setAdding] = useState(false)

@@ -18,7 +18,6 @@ const HideableChild = ({ child: Child, ...props }) => {
 
 // `hide_library` goes through a context rather than into the child's closure: a new child
 // component on each toggle would remount every card and reload its poster.
-// `useMetadataContext` tells which library the entities belong to, the movies one by default.
 export const EntitiesHideable = ({ controls, child, useMetadataContext = useMoviesMetadataContext, ...props }) => {
   const Child = useMemo(() => (props) => <HideableChild {...props} child={child} />, [child])
   const value = useMemo(() => ({ hideLibrary: !!controls.values.hide_library, useMetadataContext }), [controls.values.hide_library, useMetadataContext])

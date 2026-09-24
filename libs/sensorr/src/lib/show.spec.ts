@@ -18,7 +18,6 @@ const seasonOf = (season_number: number, count: number, start: string, extra = {
   ...extra,
 }))
 
-// Friends: ended, 10 seasons, 236 episodes on TMDB, and specials nobody follows
 const friends = {
   id: 1668,
   name: 'Friends',
@@ -33,7 +32,6 @@ const friendsEpisodes = () => [
   ...[24, 24, 25, 24, 24, 25, 24, 24, 24, 18].flatMap((count, index) => seasonOf(index + 1, count, `${1994 + index}-09-22`)),
 ]
 
-// A show airing its season 3: season 1 owned, one episode of season 2 owned, season 3 airs every Thursday
 const airing = { id: 1, name: 'Airing Show', status: 'Returning Series', first_air_date: '2022-09-01', last_air_date: '2026-09-24' }
 const airingEpisodes = () => [
   ...seasonOf(1, 8, '2022-09-01', { files: [{ id: 'f' }] }),
@@ -41,7 +39,6 @@ const airingEpisodes = () => [
   ...seasonOf(3, 10, '2026-08-20'),
 ]
 
-// Samouraï Pizza Cats: ended, one season of 54 episodes, a Japanese original name
 const cats = {
   id: 17420,
   name: 'Samouraï Pizza Cats',
@@ -391,7 +388,6 @@ describe('searchShowUnits', () => {
   const units = searchUnits(cats, episodes, now)
   const episodeName = (episode: number) => `Samurai.Pizza.Cats.S01E${String(episode).padStart(2, '0')}.MULTi.1080p.WEB.x264-GRP`
   const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => from + index)
-  // Every request the search sends is one indexer answering one term, each followed by a 400 to 800 ms sleep
   const run = async (answer: (params: { season?: number, episode?: number }) => string[]) => {
     const requests = []
     const { picks } = await searchShowUnits(units, episodes, {

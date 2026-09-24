@@ -29,7 +29,6 @@ export interface ShowProps extends Omit<
   onSelectedChange?: (id: string) => void
 }
 
-// `entity.progress` is what GET /api/shows adds with `progress=true`
 const UIShow = ({
   entity: data,
   display = 'poster',

@@ -33,8 +33,6 @@ const Movie = ({ ...props }) => (
 
 const UNFULFILLED = 'pinned|missing|ignored'
 
-// A requested show arrives outside the library, `ignored`: following it from its poster adds it, as from its page.
-// It follows the guests and "Unfulfilled" filters, the others are movie fields.
 const RequestsEntities = ({ controls, ...props }) => {
   const api = useAPI()
   const { loading, metadata } = useShowsMetadataContext() as any
@@ -65,7 +63,6 @@ const RequestsEntities = ({ controls, ...props }) => {
     return () => controller.abort()
   }, [params])
 
-  // Followed or removed since the listing, a show leaves the unfulfilled ones at once
   const listed = useMemo(() => (shows || []).filter(show => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [shows, loading, unfulfilled, metadata])
 
   return (

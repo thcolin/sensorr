@@ -68,7 +68,6 @@ export class ShowsService {
     await this.episodeModel.updateMany({}, { files: [] })
   }
 
-  // Same rule as a movie: a show entering the library follows the first policy matching its original language
   private async matchPolicies(changes: { [key: string]: ShowDTO }): Promise<{ [key: string]: ShowDTO }> {
     const policies = this.configService.config.get('policies') || []
     const candidates = Object.keys(changes).filter(id => changes[id].state && changes[id].state !== 'ignored' && !changes[id].policy)
@@ -85,7 +84,6 @@ export class ShowsService {
     }, changes)
   }
 
-  // Only the fields sent are written, so a TMDB refresh leaves the Sensorr fields alone
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
@@ -202,7 +200,6 @@ export class ShowsService {
     return res
   }
 
-  // Same counts as `progressOf` from @sensorr/sensorr, specials left out
   async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number } }> {
     const counts = await this.episodeModel.aggregate([
       { $match: { show_id: { $in: ids }, season_number: { $ne: 0 } } },
@@ -243,7 +240,6 @@ export class ShowsService {
     return res
   }
 
-  // A deleted show is sent as `null`, so a client can drop it
   listenMetadata(): Observable<MessageEvent> {
     this.logger.log('ListenMetadata')
 
@@ -282,7 +278,6 @@ export class ShowsService {
         $and: [
           ...(params.aired_after ? [{ air_date: { $gte: new Date(params.aired_after) } }] : []),
           ...(params.aired_before ? [{ air_date: { $lte: new Date(params.aired_before) } }] : []),
-          // Same rule as `episodeStatus` from @sensorr/sensorr
           ...(`${params.wanted}` === 'true' ? [
             { monitored: true },
             { air_date: { $lte: new Date() } },

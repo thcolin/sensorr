@@ -17,7 +17,6 @@ const ShowTitle = ({ show }) => <Text color='grey'>"<Text color='white'>{show.na
 
 const unemoji = (value) => value?.replace(/([✀-➿]|[-]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[‑-⛿]|\uD83E[\uDD10-\uDDFF])/g, '')?.trim()
 
-// Only the shows with a wanted episode, aired since `since` when given, are worth a search
 export const FetchAPIShowsTask = ({ since = null, ...props }) => {
   const { task, setTask, status, setStatus, context: { state, setState, handleError } } = useTask({
     id: 'fetch-api-shows',
@@ -267,7 +266,6 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
 
             try {
               const found = await znab.searchShow(term, params)
-              // A season request feeds its pack and its episodes: a release counts as its best result among them
               const best = {}
               served.flatMap((unit) => policy.apply(found, { ...query, unit })).forEach((release) => {
                 const known = best[release.link]

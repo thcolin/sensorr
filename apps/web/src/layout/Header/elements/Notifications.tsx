@@ -473,14 +473,12 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   )
 }
 
-// A show line names what its release covers, and is answered on the show, never on a movie
 const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
   const [following, setFollowing] = useState(false)
   const label = useMemo(() => meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : '', [meta?.release])
-  // Answered from the show page, a proposal is no longer pending there: accepted if kept, refused if gone
   const stored = (metadata.releases || []).find(release => release.id === meta?.release?.id)
   const banned = (metadata.banned_releases || []).includes(meta?.release?.title)
 
@@ -631,7 +629,6 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   )
 }
 
-// The release a record line proposed or downloaded, as the movie and show lines both show it
 const NotificationRelease = ({ release }) => (
   <>
     <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>

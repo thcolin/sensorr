@@ -16,7 +16,6 @@ const pad = (number) => String(number).padStart(2, '0')
 
 const STATISTICS = {}
 
-// The episodes come from GET /api/episodes, limited to the shows followed when the page opens
 const withFollowedShows = () => (WrappedComponent) => {
   const withFollowedShows = ({ ...props }) => {
     const api = useAPI()

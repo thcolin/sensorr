@@ -75,7 +75,7 @@ describe('buildShowSeasonsRequests', () => {
   })
 
   it('splits into several requests past the 20-item append_to_response cap', () => {
-    const requests = buildShowSeasonsRequests(456, 38) // The Simpsons
+    const requests = buildShowSeasonsRequests(456, 38)
 
     expect(requests).toHaveLength(2)
     expect(requests[0].params.append_to_response.split(',')).toHaveLength(20)

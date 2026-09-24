@@ -1,7 +1,6 @@
 import { memo, useState } from 'react'
 import { Option } from '@sensorr/ui'
 
-// The optimistic value shows at once, the toggle stays disabled until its write is done
 const UIToggle = ({ id, checked, onChange, disabled = false, children = null, ...props }) => {
   const [pending, setPending] = useState(false)
 

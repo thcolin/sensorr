@@ -8,7 +8,6 @@ import { useTMDB } from '../../store/tmdb'
 
 const showsMetadataContext = createContext({})
 
-// Show metadata is loaded whole and kept live, episodes only for the shows a screen asks for
 export const Provider = ({ ...props }) => {
   const api = useAPI()
   const tmdb = useTMDB()
@@ -137,7 +136,6 @@ export const Provider = ({ ...props }) => {
       },
     }), {})
 
-    // Accepting a release gives it the episodes it covers, refusing takes them back, as the API does
     const covered = key !== 'proposal' ? [] : ids.flatMap(i => changes[i].releases
       .filter(release => typeof release.choice === 'boolean' && !(initial[i].releases || []).find(r => r.id === release.id && typeof r.choice === 'boolean'))
       .map(release => ({ show: Number(i), release })))
@@ -215,7 +213,6 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  // Added from its page, a show is followed whole, specials aside, and so are its next seasons
   const addShow = useCallback(async (id: number) => {
     const promise = (async () => {
       const { show, episodes: fetched } = await fetchShow(tmdb, id)
@@ -244,7 +241,6 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  // A show outside the library, or only requested, is followed by adding it, as from its page
   const followShow = useCallback(async (id: number, followed: boolean) => {
     const current = ref.current[id]
 
@@ -257,7 +253,6 @@ export const Provider = ({ ...props }) => {
     }
   }, [setShowMetadata, addShow])
 
-  // Its files stay where they are: only the show and its episodes leave Sensorr
   const removeShow = useCallback(async (id: number) => {
     const promise = (async () => {
       const { uri, params, init } = api.query.shows.deleteShows({ body: { [id]: { id } } })

@@ -5,7 +5,6 @@ export interface ProgressProps extends React.ProgressHTMLAttributes<HTMLProgress
   max: number
 }
 
-// Nothing to draw before a first episode airs
 const UIProgress = ({ value, max, ...props }: ProgressProps) => max > 0 ? (
   <progress {...props} value={Math.min(value, max)} max={max} sx={UIProgress.styles.element} />
 ) : null

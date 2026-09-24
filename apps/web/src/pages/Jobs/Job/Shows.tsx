@@ -102,14 +102,13 @@ export const summaryImportShows = ({ shows = 0, releases = 0, imports }, extende
 
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 
-// One show once per section, however many lines it logged there
 const showsOf = (logs, test) => logs
   .filter(test)
   .sort(newest)
   .map(({ meta }) => meta.show || meta.entity)
   .filter((show, index, shows) => shows.findIndex(({ id }) => id === show.id) === index)
 
-// Keyed by `jobNameOf`, each section gathers, by show, the lines a series job logged with `meta.type` 'show' or `meta.show`
+// Keyed by `jobNameOf`
 const COMMANDS = {
   'refresh shows': {
     emoji: '🔌',

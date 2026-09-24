@@ -40,7 +40,6 @@ export const show = {
     { id: 3624, season_number: 1, name: 'Season 1', episode_count: 10, air_date: '2011-04-17', poster_path: '/wgfKiqzuMrFIkU1M68DDDY8kGC1.jpg' },
     { id: 3625, season_number: 2, name: 'Season 2', episode_count: 10, air_date: '2012-04-01', poster_path: '/qYVDVOgYBnzqSNTBqB4kzp1sQjt.jpg' },
   ],
-  // Extra fields TMDB returns on `tv/{id}` that a stored show does not keep
   homepage: 'http://www.hbo.com/game-of-thrones',
   tagline: 'Winter Is Coming',
 } as unknown as Show
@@ -75,7 +74,6 @@ export const season = {
   ],
 } as Season
 
-// `genre/tv/list`, which shares only some ids with `genre/movie/list`
 export const tvGenres = [
   { id: 10759, name: 'Action & Adventure' },
   { id: 16, name: 'Animation' },

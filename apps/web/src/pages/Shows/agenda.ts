@@ -8,7 +8,6 @@ export const monthRange = (date: Date) => ({
   aired_before: day(new Date(date.getFullYear(), date.getMonth() + 1, 0)),
 })
 
-// Two episodes of one show on the same day stay two lines
 export const groupByDay = (episodes: any[], shows: { [id: string]: { name?: string } }) => Object.entries<any[]>(
   episodes
     .filter(episode => !!episode?.air_date)

@@ -16,7 +16,6 @@ export default (job, handlers) => ({
   ...meta,
   handler: command(job, meta, async ({ config, logger }) => {
     const sensorr = new Sensorr({ region: config.get('region') })
-    // One Znab per indexer for the whole run, so its capabilities are asked once
     const znabs = config.get('znabs').filter((znab) => !znab.disabled).map((znab) => new Znab(znab, {}))
 
     const { waitUntilExit } = render((

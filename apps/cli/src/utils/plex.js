@@ -114,7 +114,6 @@ export const releaseOf = (payload, media) => {
   return { title: oleoo.stringify(meta, { flagged: true }), original: fallback.original }
 }
 
-// An episode file is named as oleoo reads it, there is no per-episode metadata request behind it
 export const filesOf = (item) => (item.Media || []).map((media) => {
   const { generated, original } = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
 

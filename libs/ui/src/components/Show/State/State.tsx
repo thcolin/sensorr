@@ -6,7 +6,6 @@ export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
   value: 'loading' | 'unfollowed' | 'followed'
 }
 
-// A show's state badge says whether it is followed, `monitored` in its document
 export const ShowStateOptions = [
   {
     emoji: '⌛',

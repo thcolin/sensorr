@@ -8,14 +8,12 @@ const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
 
 export const REFRESH_AFTER = 30 * 24 * 60 * 60 * 1000
 
-// A show still airing is refreshed on every run, any other once its last refresh is 30 days old
 export const isRefreshDue = (show, now) => (
   AIRING.includes(show.status) ||
   !show.refreshed_at ||
   now - new Date(show.refreshed_at).getTime() >= REFRESH_AFTER
 )
 
-// A new episode follows its season, a new season follows `monitor_new_seasons`, and specials are only monitored by hand
 export const monitoredOf = (episode, show, known = []) => {
   const season = known.filter(({ season_number }) => season_number === episode.season_number)
 
@@ -24,16 +22,13 @@ export const monitoredOf = (episode, show, known = []) => {
   )
 }
 
-// A show a guest asks for arrives unmonitored, the way a requested movie arrives ignored
 export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by) => ({
   show: { ...show, state: 'ignored', monitored: false, monitor_new_seasons: false, plex_guid, requested_by },
   episodes: episodes.map((episode) => ({ ...episode, monitored: false })),
 })
 
-// An empty `proposal_only` on the show follows the job
 export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
 
-// `airing` searches single episodes only, those aired since `since`
 export const airingUnits = (units, episodes, since) => {
   const aired = new Set(episodes
     .filter(({ air_date }) => air_date && new Date(air_date).getTime() >= since)
@@ -42,7 +37,6 @@ export const airingUnits = (units, episodes, since) => {
   return units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
 }
 
-// An episode Plex no longer has is wanted again: the release that brought its files goes with them
 export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
 
 // GET /api/shows leaves ignored shows out unless asked for them
@@ -58,7 +52,6 @@ export const fetchSensorrShows = async (api, params = {}) => {
   return shows
 }
 
-// Sonarr series only listed, never monitored nor downloaded, are not taken over
 export const sonarrShowOf = (series) => (!series.monitored && !series.statistics?.episodeFileCount) ? null : {
   state: series.monitored ? 'wished' : 'archived',
   monitored: !!series.monitored,
@@ -66,7 +59,6 @@ export const sonarrShowOf = (series) => (!series.monitored && !series.statistics
   path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
 }
 
-// Sonarr decides for every episode it numbers the same, the others follow the rule of a new episode.
 // Sonarr only searches an episode whose series and season are monitored too, whatever the episode's own flag says.
 export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = []) => {
   const keyOf = ({ season_number, episode_number }) => `${season_number}:${episode_number}`
@@ -86,13 +78,11 @@ export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = []) => {
 
 export const INCOMPLETE = '.!qB'
 
-// An accepted release, or one downloaded without a proposal, is imported once, and only when its .torrent was read
 export const isImportable = (release) => !release.proposal && !release.imported_at && !!release.torrent?.files?.length
 
-// Same rule as an accepted movie swap: a release still not imported a week after it was accepted is overdue
 export const isReleaseOverdue = (release, now) => now - (release.accepted_at || now) > OVERDUE_AFTER
 
-// `listing` maps a path under the staging folder to its size, qBittorrent suffixes a file with `.!qB` until it is complete
+// qBittorrent suffixes a file with `.!qB` until it is complete
 export const isReleaseFinished = (release, listing) => release.torrent.files.every(({ path: file, size }) => (
   listing[file] === size && !(`${file}${INCOMPLETE}` in listing)
 ))
@@ -101,7 +91,6 @@ export const showFolderOf = (show) => show.path || sanitizeFilename(show.first_a
 
 export const importTargetOf = (library, show, season, file) => path.join(library, showFolderOf(show), `Season ${`${season}`.padStart(2, '0')}`, path.basename(file))
 
-// A file goes to the episodes oleoo reads in its name, when the release covers them and none has a file yet; samples never do
 export const importLinksOf = (release, show, episodes, library) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
