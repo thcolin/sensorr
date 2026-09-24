@@ -17,6 +17,13 @@ describe('languageOf', () => {
     expect(languageOf([video, audio('fr')])).toBe('FRENCH')
   })
 
+  it('reads a plain French track next to a named one as the same French', () => {
+    expect(languageOf([video, audio('fr-FR', 'VOF'), audio('fr', 'Audio Description')])).toBe('TRUEFRENCH')
+    expect(languageOf([video, audio('fr-CA'), audio('fr')])).toBe('VFQ')
+    expect(languageOf([video, audio('fr-FR'), audio('fr-CA')])).toBe('MULTi-VF2')
+    expect(languageOf([video, audio('fr'), audio('qaa'), audio('mul')])).toBe('FRENCH')
+  })
+
   it('reads a foreign track with French subtitles as VOSTFR, without them as its language', () => {
     expect(languageOf([video, audio('en'), subtitle('en'), subtitle('fr')])).toBe('VOSTFR')
     expect(languageOf([video, audio('ja'), audio('en')])).toBe('JAPANESE')
@@ -51,6 +58,7 @@ describe('dubOf', () => {
     expect(dubOf({ audioCodec: 'aac', audioChannels: 2 })).toEqual({ dub: 'AAC-2.0', flags: [] })
     expect(dubOf({ audioCodec: 'mp3', audioChannels: 2 })).toEqual({ dub: 'MP3', flags: [] })
     expect(dubOf({ audioCodec: 'dca', audioChannels: 6 })).toEqual({ dub: null, flags: ['DTS', '5.1'] })
+    expect(dubOf({ audioCodec: 'dca-ma', audioChannels: 8 })).toEqual({ dub: null, flags: ['DTS-HDMA', '7.1'] })
   })
 })
 
@@ -64,6 +72,14 @@ describe('releaseOf', () => {
 
     expect(original).toBe('SPY.KIDS.3.2003.Game.Over.antonio.banderas')
     expect([meta.resolution, meta.language, meta.encoding, meta.dub]).toEqual(['1080p', 'FRENCH', 'x264', 'AAC-2.0'])
+  })
+
+  it('writes the audio Plex reads over the one the file name says, once', () => {
+    const read = (file, audioCodec, audioChannels) => oleoo.parse(releaseOf(payload, { videoCodec: 'h264', videoResolution: '1080', audioCodec, audioChannels, Part: [{ file, Stream: [video, audio('en')] }] }).title, { strict: false, flagged: true })
+
+    expect(read('Movie.2020.1080p.AC3.x264-GRP.mkv', 'dca-ma', 8)).toMatchObject({ dub: null, group: 'GRP' })
+    expect(read('Movie.2020.1080p.AC3.x264-GRP.mkv', 'dca-ma', 8).flags).toEqual(expect.arrayContaining(['DTS-HDMA', '7.1']))
+    expect(read('Movie.2020.1080p.DTS.5.1.x264-GRP.mkv', 'dca', 8).flags).not.toContain('5.1')
   })
 
   it('does not throw on a version without streams', () => {

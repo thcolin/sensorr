@@ -15,13 +15,17 @@ const ENCODINGS = { h264: 'x264', hevc: 'x265', vc1: 'VC1' }
 
 const DUBS = { ac3: 'AC3', eac3: 'EAC3', aac: 'AAC', flac: 'FLAC', opus: 'OPUS', mp3: 'MP3', pcm: 'PCM' }
 
-const DUB_FLAGS = { dca: ['DTS'], 'dca-ma': ['DTS', 'HDMA'], truehd: ['TRUEHD'] }
+const DUB_FLAGS = { dca: ['DTS'], 'dca-ma': ['DTS-HDMA'], truehd: ['TrueHD'] }
 
 const CHANNELS = { 1: '1.0', 2: '2.0', 6: '5.1', 8: '7.1' }
 
 const CHANNEL_FLAGS = ['1.0', '2.0', '3.0', '5.1', '6.1', '7.1']
 
-const baseOf = (stream) => (stream.languageTag || '').split('-')[0]
+// ISO 639-2 codes for no language (`und`, `mul`, `zxx`) or a local one (`qaa` to `qtz`) say nothing.
+const baseOf = (stream) => {
+  const base = (stream.languageTag || '').split('-')[0]
+  return /^(und|mul|zxx|q[a-t][a-z])$/.test(base) ? '' : base
+}
 
 const frenchOf = (stream) => (
   (stream.languageTag === 'fr-CA' || /vfq|qu[eé]b|canad/i.test(stream.title || '')) ? 'VFQ' :
@@ -34,44 +38,42 @@ const REFINES = { MULTi: ['MULTi-VFF', 'MULTi-VFQ', 'MULTi-VF2'], FRENCH: ['TRUE
 export const languageOf = (streams) => {
   const audios = streams.filter(stream => stream.streamType === 2 && baseOf(stream))
   const subtitles = streams.filter(stream => stream.streamType === 3 && baseOf(stream))
-  const languages = [...new Set(audios.map(stream => baseOf(stream) === 'fr' ? frenchOf(stream) : (LANGUAGES[baseOf(stream)] || baseOf(stream))))]
-  const french = languages.filter(language => ['FRENCH', 'TRUEFRENCH', 'VFQ'].includes(language))
+  const french = new Set(audios.filter(stream => baseOf(stream) === 'fr').map(frenchOf))
+  const foreign = audios.filter(stream => baseOf(stream) !== 'fr')
 
   if (!audios.length) {
     return null
   }
 
-  if (!french.length) {
-    return subtitles.some(stream => baseOf(stream) === 'fr') ? 'VOSTFR' : (LANGUAGES[baseOf(audios[0])] || null)
+  if (!french.size) {
+    return subtitles.some(stream => baseOf(stream) === 'fr') ? 'VOSTFR' : (LANGUAGES[baseOf(foreign[0])] || null)
   }
 
-  return languages.length === 1 ? languages[0] : [
-    'MULTi',
-    ...(
-      (french.includes('TRUEFRENCH') && (french.includes('FRENCH') || french.includes('VFQ'))) ? ['VF2'] :
-      french.includes('TRUEFRENCH') ? ['VFF'] :
-      french.includes('VFQ') ? ['VFQ'] : []
-    ),
-  ].join('-')
+  // A plain `fr` track next to a named one is the same French, or an audio description of it.
+  const variety = (french.has('TRUEFRENCH') && french.has('VFQ')) ? 'VF2' : french.has('TRUEFRENCH') ? 'TRUEFRENCH' : french.has('VFQ') ? 'VFQ' : 'FRENCH'
+
+  return variety === 'VF2' ? 'MULTi-VF2' :
+    !foreign.length ? variety :
+    ['MULTi', { TRUEFRENCH: 'VFF', VFQ: 'VFQ' }[variety]].filter(Boolean).join('-')
 }
 
 export const dubOf = (media) => {
   const channels = CHANNELS[media.audioChannels]
   const dub = DUBS[media.audioCodec]
-  const named = dub && channels && Object.keys(oleoo.rules.dub).includes(`${dub}-${channels}`) ? `${dub}-${channels}` : dub
+  const withChannels = dub && channels && Object.keys(oleoo.rules.dub).includes(`${dub}-${channels}`) ? `${dub}-${channels}` : dub
 
   return {
-    dub: named || null,
+    dub: withChannels || null,
     flags: DUB_FLAGS[media.audioCodec] ? [...DUB_FLAGS[media.audioCodec], ...(channels ? [channels] : [])] : [],
   }
 }
 
 // The file name keeps the last word on the language: Plex tracks are often tagged wrong,
 // a French track tagged `en`, or subtitles left outside the file.
-export const settleLanguage = (named, read) => (
-  (!named || named === 'VO') ? (read || named) :
-  (REFINES[named] || []).includes(read) ? read :
-  named
+export const settleLanguage = (fromName, fromPlex) => (
+  (!fromName || fromName === 'VO') ? (fromPlex || fromName) :
+  (REFINES[fromName] || []).includes(fromPlex) ? fromPlex :
+  fromName
 )
 
 export const releaseOf = (payload, media) => {
@@ -84,7 +86,7 @@ export const releaseOf = (payload, media) => {
     title: (payload.title)
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^\sa-zA-Z0-9]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
@@ -100,9 +102,9 @@ export const releaseOf = (payload, media) => {
       fallback.encoding
     ),
     resolution: RESOLUTIONS[media.videoResolution] || (media.videoResolution ? 'SD' : fallback.resolution),
-    dub: dub || fallback.dub,
-    // A file name's `5.1` would read twice next to a dub that already carries its channels.
-    flags: [...new Set([...(fallback.flags || []).filter(flag => !(/-\d\.\d$/.test(dub || '') && CHANNEL_FLAGS.includes(flag))), ...flags])],
+    // A codec oleoo only knows as a flag (DTS, TrueHD) still says the file name's dub is not the one Plex reads.
+    dub: dub || (DUB_FLAGS[media.audioCodec] ? null : fallback.dub),
+    flags: [...new Set([...(fallback.flags || []).filter(flag => !(media.audioChannels && CHANNEL_FLAGS.includes(flag))), ...flags])],
     group: fallback.group,
     season: null,
     episode: null,
