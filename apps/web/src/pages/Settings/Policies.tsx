@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react'
-import { Button, Icon } from '@sensorr/ui'
+import { Button, Icon, Select } from '@sensorr/ui'
 import { useOutletContext } from 'react-router-dom'
 import {
   closestCenter,
@@ -23,7 +23,7 @@ import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { emojize, useTitle } from '@sensorr/utils'
+import { emojize, languages, useTitle } from '@sensorr/utils'
 
 const Policies = ({ ...props }) => {
   useTitle('Settings - Policies')
@@ -56,6 +56,7 @@ const Policies = ({ ...props }) => {
           </p>
           <ul>
             <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
+            <li><code>🌐 original language</code> gives the policy to any movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one.</li>
             <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance.</li>
             <li sx={{ listStyleType: 'none' }}>
               <ul>
@@ -158,6 +159,10 @@ const SortablePolicies = ({ policies, form, onSortEnd }) => {
   )
 }
 
+const LANGUAGES = Object.entries(languages)
+  .sort(([, a]: [string, any], [, b]: [string, any]) => a.name.localeCompare(b.name))
+  .map(([value, { name, emoji }]: [string, any]) => ({ value, label: `${emoji || '🏳️'}  ${name}` }))
+
 const PolicySettings = forwardRef<any, any>(({
   form,
   policies = null,
@@ -172,6 +177,7 @@ const PolicySettings = forwardRef<any, any>(({
   ...props
 }, ref) => {
   const [open, setOpen] = useState(false)
+  const originalLanguages = form.watch(`${prefix ? `${prefix}.` : ''}match.original_languages`) || []
   const styles = useMemo(() => ({
     element: {
       display: 'flex',
@@ -355,6 +361,31 @@ const PolicySettings = forwardRef<any, any>(({
             <span>✓</span>
           </div>
         )}
+        {!!originalLanguages.length && (
+          <div
+            title={`Given by default to movies in ${originalLanguages.map(language => languages[language]?.name || language).join(', ')}`}
+            sx={{
+              cursor: 'default',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              border: '1px solid',
+              borderColor: 'grayDark',
+              borderLeft: 'none',
+              paddingX: 4,
+              fontSize: 6,
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {originalLanguages.map(language => (
+              <span key={language}>
+                {languages[language]?.emoji || '🏳️'}
+                <span sx={{ display: ['none', 'inline'], marginLeft: 10 }}>{language}</span>
+              </span>
+            ))}
+          </div>
+        )}
         <Controller
           name={`${prefix ? `${prefix}.` : ''}descending`}
           control={form.control}
@@ -445,6 +476,22 @@ const PolicySettings = forwardRef<any, any>(({
           </summary>
           {open && (
             <div>
+              <Controller
+                name={`${prefix ? `${prefix}.` : ''}match.original_languages`}
+                control={form.control}
+                render={({ field: { ref, value, onChange, ...field } }) => (
+                  <Select
+                    {...field}
+                    label={emojize('🌐', 'Original language')}
+                    placeholder='Any movie'
+                    options={LANGUAGES}
+                    value={(value || []).map(language => LANGUAGES.find(option => option.value === language) || { value: language, label: `🏳️  Unknown (${language})` })}
+                    onChange={(options) => onChange((options || []).map(option => option.value))}
+                    multi={true}
+                    resetable={false}
+                  />
+                )}
+              />
               <ControlledPolicyFilter form={form} prefix={prefix} name='znab' Component={ZNABFilter} />
               <ControlledPolicyFilter form={form} prefix={prefix} name='encoding' Component={EncodingFilter} />
               <ControlledPolicyFilter form={form} prefix={prefix} name='resolution' Component={ResolutionFilter} />
