@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef } from 'react'
-import { Policy } from '@sensorr/sensorr'
+import { matchPolicy, Policy } from '@sensorr/sensorr'
 import { Icon, QuerySelect, Option } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
 import { useThemeUI } from 'theme-ui'
@@ -7,7 +7,7 @@ import { useThemeUI } from 'theme-ui'
 const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) => {
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
-  const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || '', sensorr.policies) : metadata.policy, [metadata.policy, sensorr.policies])
+  const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || matchPolicy(entity, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, entity?.original_language, sensorr.policies])
 
   const values = useMemo(() => ({
     terms: [
