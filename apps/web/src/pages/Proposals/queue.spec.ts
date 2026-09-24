@@ -27,8 +27,14 @@ describe('queue', () => {
     expect(groupOf(item, 0.25 * GB)).toBe('refine')
   })
 
-  it('keeps a same-language proposal that grows in its job group', () => {
+  it('puts a proposal that grows in the last group above a threshold', () => {
     const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', 8.1 * GB))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('rest')
+  })
+
+  it('keeps a proposal of unknown size in its job group', () => {
+    const item = movie(1, [release('a', 'MULTi', 8 * GB)], release('b', 'MULTi', undefined))
 
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
   })
@@ -83,17 +89,25 @@ describe('queue', () => {
     expect(itemOf({ id: 1 }, [owned, { ...moved, proposal: true, from: 'refine' }], strict).diff.listed.map(({ axis }) => axis)).toEqual(['language', 'encoding'])
   })
 
-  it('keeps a same-language proposal that reaches a required value in its job group', () => {
+  it('puts a proposal that reaches a required value in the last group when it frees too little', () => {
     const strict = { ...policy, require: { resolution: ['1080p'] } }
     const owned = release('a', 'MULTi', 2 * GB, { meta: { language: 'MULTi', resolution: '720p', source: 'BLURAY', encoding: 'x264' } })
     const proposed = release('b', 'MULTi', 2 * GB)
     const item = itemOf({ id: 1 }, [owned, { ...proposed, proposal: true, from: 'refine' }], strict)
 
-    expect(groupOf(item, 0.1 * GB)).toBe('refine')
+    expect(groupOf(item, 0.1 * GB)).toBe('rest')
+    expect(groupOf(item, 0)).toBe('refine')
   })
 
-  it('keeps a language change in its job group whatever the size', () => {
+  it('puts a language change that frees too little in the last group, and keeps it at 0', () => {
     const item = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 8 * GB))
+
+    expect(groupOf(item, 0.5 * GB)).toBe('rest')
+    expect(groupOf(item, 0)).toBe('refine')
+  })
+
+  it('keeps a proposal that frees at least the threshold in its job group', () => {
+    const item = movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 7 * GB))
 
     expect(groupOf(item, 0.5 * GB)).toBe('refine')
   })
@@ -102,7 +116,7 @@ describe('queue', () => {
     const older = { ...movie(1, [release('a', 'VOSTFR', 8 * GB)], release('b', 'MULTi-VF2', 6 * GB)), entity: { id: 1, refined_at: '2026-09-01' } }
     const newer = { ...movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 9 * GB)), entity: { id: 2, refined_at: '2026-09-20' } }
 
-    const [refine] = arrange([older, newer], { threshold: 0.5 * GB })
+    const [refine] = arrange([older, newer], { threshold: 0 })
 
     expect(refine.items.map(({ id }) => id)).toEqual([2, 1])
   })
@@ -112,8 +126,8 @@ describe('queue', () => {
     const big = movie(2, [release('c', 'VOSTFR', 8 * GB)], release('d', 'MULTi', 2 * GB))
     const grows = movie(3, [release('e', 'VOSTFR', 8 * GB)], release('f', 'MULTi', 9 * GB))
 
-    const [desc] = arrange([small, grows, big], { threshold: 0.5 * GB, sort_by: { value: 'gain', sort: true } })
-    const [asc] = arrange([small, grows, big], { threshold: 0.5 * GB, sort_by: { value: 'gain', sort: false } })
+    const [desc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: true } })
+    const [asc] = arrange([small, grows, big], { threshold: 0, sort_by: { value: 'gain', sort: false } })
 
     expect(desc.items.map(({ id }) => id)).toEqual([2, 1, 3])
     expect(asc.items.map(({ id }) => id)).toEqual([3, 1, 2])

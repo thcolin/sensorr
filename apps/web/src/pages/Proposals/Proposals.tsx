@@ -64,7 +64,7 @@ const ACTIVE_HEIGHT = 300
 // Title then pill widths, in em, for the rows drawn while the queue loads: enough to fill a screen.
 const SHAPES = [[9, 6.5, 6.5], [7, 11.5, 5.5, 9], [11, 9, 6], [16, 9, 6, 5.5], [8, 9, 5.5, 5.5], [10, 11.5, 6.5, 6.5], [9.5, 6.5], [11.5, 9, 7], [6.5, 11.5, 6], [13, 9, 6.5]]
 
-// A proposal that frees less disk space than this goes to the ignored group; one that grows keeps its group.
+// A proposal that frees less disk space than this goes to the ignored group, one that grows included.
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
   const index = Math.max(0, THRESHOLDS.indexOf(value))
   const [draft, setDraft] = useState(index)
@@ -968,9 +968,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                           <div sx={UIProposals.styles.menu} data-proposals-menu={true}>
                             <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
                               Refuse all {row.count}
-                            </Button>
-                            <Button variant='contain' color='primary' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'accept')}>
-                              Accept all {row.count}
                             </Button>
                           </div>
                         )}
