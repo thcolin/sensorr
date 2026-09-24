@@ -402,61 +402,63 @@ const UIPreferences = ({
           </svg>
           <hr/>
         </div>
-        <div sx={UIPreferences.styles.container}>
-          <div sx={UIPreferences.styles.block}>
-            <span>Terms</span>
-            <QueryInput
-              direction='column'
-              value={values.terms}
-              onChange={(values) => {
-                setMetadata('query', {
-                  ...metadata.query,
-                  terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                })
-              }}
-            />
-            <small>Sensorr will search for all selected terms on configured indexers</small>
+        {expanded && (
+          <div sx={UIPreferences.styles.container}>
+            <div sx={UIPreferences.styles.block}>
+              <span>Terms</span>
+              <QueryInput
+                direction='column'
+                value={values.terms}
+                onChange={(values) => {
+                  setMetadata('query', {
+                    ...metadata.query,
+                    terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
+                  })
+                }}
+              />
+              <small>Sensorr will search for all selected terms on configured indexers</small>
+            </div>
+            <div sx={UIPreferences.styles.block}>
+              <span>Years</span>
+              <QueryInput
+                value={values.years}
+                onChange={(values) => {
+                  setMetadata('query', {
+                    ...metadata.query,
+                    years: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
+                  })
+                }}
+              />
+              <small>Sensorr will filter releases with selected years</small>
+            </div>
+            <div sx={UIPreferences.styles.block}>
+              <span>Policy</span>
+              <PolicyInput
+                value={metadata?.policy}
+                onChange={value => setMetadata('policy', value)}
+              />
+              <small>Sensorr will apply selected policy to sort and select the best release</small>
+            </div>
+            <div sx={UIPreferences.styles.block}>
+              <span>Refine for better release</span>
+              <OptionInput
+                id={`refine-${entity?.id}`}
+                children="Sensorr will regularly search for better release than the current archived one"
+                value={metadata?.refine}
+                onChange={value => setMetadata('refine', value)}
+              />
+            </div>
+            <div sx={UIPreferences.styles.block}>
+              <span>Shrink for smaller release</span>
+              <OptionInput
+                id={`shrink-${entity?.id}`}
+                children="Sensorr will regularly search for smaller release than the current archived one"
+                value={metadata?.shrink}
+                onChange={value => setMetadata('shrink', value)}
+              />
+            </div>
           </div>
-          <div sx={UIPreferences.styles.block}>
-            <span>Years</span>
-            <QueryInput
-              value={values.years}
-              onChange={(values) => {
-                setMetadata('query', {
-                  ...metadata.query,
-                  years: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                })
-              }}
-            />
-            <small>Sensorr will filter releases with selected years</small>
-          </div>
-          <div sx={UIPreferences.styles.block}>
-            <span>Policy</span>
-            <PolicyInput
-              value={metadata?.policy}
-              onChange={value => setMetadata('policy', value)}
-            />
-            <small>Sensorr will apply selected policy to sort and select the best release</small>
-          </div>
-          <div sx={UIPreferences.styles.block}>
-            <span>Refine for better release</span>
-            <OptionInput
-              id={`refine-${entity?.id}`}
-              children="Sensorr will regularly search for better release than the current archived one"
-              value={metadata?.refine}
-              onChange={value => setMetadata('refine', value)}
-            />
-          </div>
-          <div sx={UIPreferences.styles.block}>
-            <span>Shrink for smaller release</span>
-            <OptionInput
-              id={`shrink-${entity?.id}`}
-              children="Sensorr will regularly search for smaller release than the current archived one"
-              value={metadata?.shrink}
-              onChange={value => setMetadata('shrink', value)}
-            />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
