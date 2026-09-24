@@ -76,7 +76,7 @@ export const transitionOf = (axis, from, to, policy) => {
 // score and the smallest size across every owned release (ProcessMoviesTask.js:307-311
 // and :329-334). A delta against a single release would not match its verdict.
 const baseline = (owned) => ({
-  size: owned.length ? Math.min(...owned.map(({ size }) => size || 0)) : null,
+  size: (owned.length && owned.every(({ size }) => typeof size === 'number')) ? Math.min(...owned.map(({ size }) => size)) : null,
   release: owned.reduce((best, release) => (best && best.score >= release.score) ? best : release, null),
 })
 
@@ -134,19 +134,17 @@ export const itemOf = (entity, releases, policy) => {
 }
 
 // At a threshold of 0 the last group keeps only the proposals on which no axis changes.
-// Above it, it keeps the ones that free less space than the threshold: a proposal that
-// grows, changes the language or reaches a value the policy requires stays in its job group.
+// Above it, it keeps every proposal that frees less space than the threshold, one that
+// grows included, whatever else it changes. A proposal of unknown size keeps its group.
 export const groupOf = (item, threshold) => {
   if (isOverdue(item.proposal)) {
     return 'overdue'
   }
 
   if (item.owned.length) {
-    const language = item.diff.rows.find(({ axis }) => axis === 'language')
-    const held = item.diff.rows.some(({ state }) => state === 'held')
-    const size = item.diff.size || 0
+    const size = item.diff.size
 
-    if (threshold === 0 ? (item.diff.rows.length && !item.diff.changed.length) : (language?.state === 'same' && !held && size <= 0 && -size < threshold)) {
+    if (threshold === 0 ? (item.diff.rows.length && !item.diff.changed.length) : (typeof size === 'number' && -size < threshold)) {
       return 'rest'
     }
   }
@@ -192,10 +190,9 @@ export const arrange = (items, { threshold, skipped = {}, sort_by = { value: 'ti
   }))
 }
 
-// The release filters of Library (Controls/Oleoo.tsx), read here on each side of a swap:
-// ⭐ keeps a release that carries one of the values, ⛔ drops one that carries any. The
-// size range is in GB and its top mark means no upper bound. Values are keyed
-// `${side}_${filter}`, side being `current` or `proposed`.
+// The release filters of Library (Controls/Oleoo.tsx): 📀 `current` keeps a swap whose
+// owned release carries one of the values, 💿 `proposed` one whose proposed release does.
+// A size range is in GB, and its top mark means no upper bound.
 export const FILTERS = ['znab', 'resolution', 'source', 'encoding', 'dub', 'language', 'flags']
 
 export const SIZE_MAX = 50
@@ -204,24 +201,22 @@ const GB = 1024 ** 3
 
 const carries = (release, filter, values) => values.some(value => [].concat(release?.meta?.[filter]).includes(value))
 
-export const matchesRelease = (release, values, side) => {
-  const [min, max] = values[`${side}_size`] || [0, SIZE_MAX]
+const fits = (release, range) => {
+  const [min, max] = range || [0, SIZE_MAX]
   const size = (release?.size || 0) / GB
 
-  if (size < min || (max < SIZE_MAX && size > max)) {
-    return false
-  }
-
-  return FILTERS.every(filter => {
-    const rules = values[`${side}_${filter}`] || []
-    const prefer = rules.filter(({ group }) => group === 'prefer').map(({ value }) => value)
-    const avoid = rules.filter(({ group }) => group === 'avoid').map(({ value }) => value)
-
-    return (!prefer.length || carries(release, filter, prefer)) && !carries(release, filter, avoid)
-  })
+  return size >= min && (max >= SIZE_MAX || size <= max)
 }
 
-// The current side passes when any owned release does, as the release filters of Library.
+const valuesOf = (values, filter, group) => (values[filter] || []).filter(rule => rule.group === group).map(({ value }) => value)
+
+const matchesRelease = (release, values, side) => fits(release, values[`${side}_size`]) && FILTERS.every(filter => {
+  const rules = valuesOf(values, filter, side)
+  return !rules.length || carries(release, filter, rules)
+})
+
+// The current side passes when one owned release matches every filter, as the release
+// filters of Library.
 export const matches = (item, values) => (
   (item.owned.length ? item.owned : [null]).some(release => matchesRelease(release, values, 'current')) &&
   matchesRelease(item.proposal, values, 'proposed')

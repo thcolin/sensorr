@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
-import Tippy from '@tippyjs/react'
 import toast from 'react-hot-toast'
 import { Bulk, Button, Controls, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
@@ -26,21 +25,23 @@ const MB = 1024 * 1024
 
 const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'state']
 
-const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
+const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
+
+const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
 
 const SIDES = {
-  current: { emoji: '📀', title: 'Current release', subtitle: 'Keep the swaps where at least one owned release matches these rules' },
-  proposed: { emoji: '💿', title: 'Proposed release', subtitle: 'Keep the swaps whose proposed release matches these rules' },
+  current: { emoji: '📀', label: 'Current size' },
+  proposed: { emoji: '💿', label: 'Proposed size' },
 }
 
+const SWAP = Object.keys(SIDES)
+
 const DEFAULTS = {
-  threshold: 500 * MB,
+  threshold: 0,
   sort_by: { value: 'time', sort: true },
-  ...Object.keys(SIDES).reduce((acc, side) => ({
-    ...acc,
-    [`${side}_size`]: [0, SIZE_MAX],
-    ...FILTERS.reduce((acc, filter) => ({ ...acc, [`${side}_${filter}`]: [] }), {}),
-  }), {}),
+  current_size: [0, SIZE_MAX],
+  proposed_size: [0, SIZE_MAX],
+  ...FILTERS.reduce((acc, filter) => ({ ...acc, [filter]: [] }), {}),
 }
 
 const LABELS = {
@@ -88,9 +89,6 @@ UISelectAll.styles = {
 // The verdict band slides in for 150ms (Card.tsx) and stays a moment before the card goes.
 const LEAVE = 250
 
-// How long a card waits for its movie before opening without it, so it opens at its height.
-const PRELOAD = 300
-
 const GROUP_HEIGHT = 40
 // Card.tsx gives the compact row a third line on a phone.
 const COMPACT_HEIGHT = [108, 88]
@@ -99,7 +97,7 @@ const ACTIVE_HEIGHT = 300
 // Title then pill widths, in em, for the rows drawn while the queue loads: enough to fill a screen.
 const SHAPES = [[9, 6.5, 6.5], [7, 11.5, 5.5, 9], [11, 9, 6], [16, 9, 6, 5.5], [8, 9, 5.5, 5.5], [10, 11.5, 6.5, 6.5], [9.5, 6.5], [11.5, 9, 7], [6.5, 11.5, 6], [13, 9, 6.5]]
 
-// A proposal that frees less disk space than this goes to the ignored group; one that grows keeps its group.
+// A proposal that frees less disk space than this goes to the ignored group, one that grows included.
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
   const index = Math.max(0, THRESHOLDS.indexOf(value))
   const [draft, setDraft] = useState(index)
@@ -108,7 +106,7 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
 
   return (
     <div style={style} sx={UIThreshold.styles.element} title='A proposal that frees less disk space than this is ignored'>
-      <label id='threshold-label'>Ignore below (gain)</label>
+      <label id='threshold-label'>Min. freed</label>
       <div>
         <Slider
           aria-labelledby='threshold-label'
@@ -119,10 +117,10 @@ const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
           marks={true}
           onChange={(e, next) => setDraft(next as number)}
           onChangeCommitted={(e, next) => onChange(THRESHOLDS[next as number])}
-          getAriaValueText={(next) => THRESHOLDS[next] ? filesize.stringify(THRESHOLDS[next]) : 'no change'}
+          getAriaValueText={(next) => thresholdOf(THRESHOLDS[next])}
         />
       </div>
-      <code>{THRESHOLDS[draft] ? filesize.stringify(THRESHOLDS[draft]) : 'no change'}</code>
+      <code>{thresholdOf(THRESHOLDS[draft])}</code>
     </div>
   )
 }
@@ -217,7 +215,7 @@ UIBalance.styles = {
   // In the bar on a desktop; a phone gives it a strip of its own under the bar.
   inline: {
     display: ['none', 'flex'],
-    '@container controls (min-width: 768px) and (max-width: 1374px)': {
+    '@container controls (min-width: 768px) and (max-width: 1317px)': {
       '>[data-meter]': {
         display: 'none',
       },
@@ -295,14 +293,14 @@ UIBalance.styles = {
   },
 }
 
-const SizeFilter = ({ ...props }) => (
+const SizeFilter = ({ side, ...props }) => (
   <Range
     {...props as any}
     min={0}
     max={SIZE_MAX}
     marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
     data={null}
-    label={emojize('📦', 'Size')}
+    label={emojize(SIDES[side].emoji, SIDES[side].label)}
     labelize={(value) => `${value} GB`}
     value={props.value || [0, SIZE_MAX]}
     step={null}
@@ -342,34 +340,39 @@ const fields = {
       </div>
     ),
   },
+  head: {
+    initial: null,
+    component: () => (
+      <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
+        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 Current, an owned release carries it; 💿 Proposed, the proposed release carries it; 🔕 it does not count' />
+      </div>
+    ),
+  },
   ...Object.keys(SIDES).reduce((acc, side) => ({
     ...acc,
-    [`head_${side}`]: {
-      initial: null,
-      component: () => (
-        <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: `head_${side}` }}>
-          <Warning emoji={SIDES[side].emoji} title={SIDES[side].title} subtitle={SIDES[side].subtitle} />
-        </div>
-      ),
-    },
     [`${side}_size`]: {
       initial: DEFAULTS[`${side}_size`],
       serialize: () => ({}),
-      component: SizeFilter,
+      component: (props) => <SizeFilter {...props} side={side} />,
     },
-    ...FILTERS.reduce((acc, filter) => ({
-      ...acc,
-      [`${side}_${filter}`]: {
-        initial: [],
-        serialize: () => ({}),
-        component: COMPONENTS[filter],
+  }), {}),
+  ...FILTERS.reduce((acc, filter) => ({
+    ...acc,
+    [filter]: {
+      initial: [],
+      serialize: () => ({}),
+      // Select drops `style`, which carries the grid area.
+      component: ({ style, ...props }) => {
+        const Filter = COMPONENTS[filter]
+        return (
+          <div style={style}>
+            <Filter {...props} groups={SWAP} />
+          </div>
+        )
       },
-    }), {}),
+    },
   }), {}),
 }
-
-const rows = ['head', 'size', ...FILTERS]
-const area = (row, side) => row === 'head' ? `head_${side}` : `${side}_${row}`
 
 const layout = {
   nav: {
@@ -387,7 +390,7 @@ const layout = {
       display: ['none', 'block'],
     },
     // Short of room, the count of results goes first, then the meter of the balance (UIBalance).
-    '@container controls (min-width: 768px) and (max-width: 1500px)': {
+    '@container controls (min-width: 768px) and (max-width: 1443px)': {
       gridTemplateColumns: 'min-content minmax(0, 1fr) min-content min-content min-content min-content',
       gridTemplateAreas: `"title balance bulk threshold toggle sort_by"`,
       '>[style*="grid-area: results"]': {
@@ -395,18 +398,15 @@ const layout = {
       },
     },
   },
-  // Both sides open as one pane, each filter of the current release facing its proposed
-  // counterpart on a darker half; a phone stacks them.
+  // A phone has no room for the slider and the sorting in the bar: they move to the top of the filters.
   aside: {
     display: 'grid',
-    width: ['100vw', '50em'],
-    background: [null, 'linear-gradient(to right, var(--theme-ui-colors-primary) 50%, var(--theme-ui-colors-primaryDark) 50%)'],
-    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(0, 1fr)'],
+    gridTemplateColumns: 'minmax(0, 1fr)',
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
-      ['sort_by', 'threshold', ...rows.map(row => area(row, 'current')), ...rows.map(row => area(row, 'proposed'))].map(name => `"${name}"`).join(' '),
-      rows.map(row => `"${area(row, 'current')} ${area(row, 'proposed')}"`).join(' '),
+      ['sort_by', 'threshold', 'head', 'current_size', 'proposed_size', ...FILTERS].map(name => `"${name}"`).join(' '),
+      ['head', 'current_size', 'proposed_size', ...FILTERS].map(name => `"${name}"`).join(' '),
     ],
   },
 }
@@ -491,8 +491,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const { selection, setSelection } = useBulkContext()
   const location = useLocation()
   const [stored, setValues] = useHistoryState('proposals', DEFAULTS) as any
-  const values = useMemo(() => ({ ...DEFAULTS, ...stored }), [stored])
-  const threshold = typeof values.threshold === 'number' ? values.threshold : DEFAULTS.threshold
+  // The stored state outlives a change of fields: keep only the keys the pane still has.
+  const values = useMemo(() => ({ ...DEFAULTS, ...Object.fromEntries(Object.keys(DEFAULTS).filter(key => typeof stored?.[key] !== 'undefined').map(key => [key, stored[key]])) }), [stored])
+  const threshold = THRESHOLDS.includes(values.threshold) ? values.threshold : DEFAULTS.threshold
 
   const [skipped, setSkipped] = useState({})
   const [decided, setDecided] = useState({})
@@ -806,7 +807,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable || document.querySelector('[data-proposals-menu]')) {
+      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
         return
       }
 
@@ -910,9 +911,11 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       return
     }
 
-    // Named for the length of the move only, so the rows slide under the controls bar and
-    // the toasts instead of over them. Named for good, they would leave `#main` in a route change.
-    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster, [data-bulk]')) as HTMLElement[]
+    // Named for the length of the move only, so the rows slide under the controls bar, the
+    // toasts, the selection bar and the app's header and tab bar instead of over them. Named for
+    // good, they would leave `#main` in a route change. The header and tab bar are for the
+    // browsers that ignore the clip of `#body` (MORPH), such as Firefox.
+    const layers = Array.from(document.querySelectorAll('#body > nav, #_rht_toaster, [data-bulk], :has(+ #main), #main ~ *')) as HTMLElement[]
     layers.forEach((layer, index) => { layer.style.viewTransitionName = `swap-layer-${index}` })
     document.documentElement.dataset.morphing = 'true'
     kept.current = [...new Set([...(kept.current || []), ...virtualizer.getVirtualItems().map(({ index }) => index)])]
@@ -938,10 +941,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   // The pointer reaches a row a few hundred milliseconds before its chevron is clicked.
   const prefetch = useCallback((id) => loadDetails(id)?.catch(() => null), [])
 
-  const select = useCallback((id) => {
-    Promise.race([loadDetails(id)?.catch(() => null), new Promise(resolve => setTimeout(resolve, PRELOAD))])
-      .then(() => keys.current.morph(() => setActiveId(id), id))
-  }, [])
+  const select = useCallback((id) => keys.current.morph(() => setActiveId(id), id), [])
 
   const total = Object.values(session).reduce((sum: number, count: number) => sum + count, 0) as number
 
@@ -1047,28 +1047,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     onToggle={() => onToggle(row.group)}
                     selected={!!row.selectable.length && row.selectable.every(item => selected.has(item.id))}
                     onSelectedChange={WHOLE.includes(row.group) && row.selectable.length ? () => toggleGroup(row.selectable) : null}
-                    menu={row.group === 'rest' ? (
-                      <Tippy
-                        interactive={true}
-                        trigger='click'
-                        placement='bottom'
-                        appendTo={document.body}
-                        content={(
-                          <div sx={UIProposals.styles.menu} data-proposals-menu={true}>
-                            <Button variant='outline' color='gray' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'refuse')}>
-                              Refuse all {row.count}
-                            </Button>
-                            <Button variant='contain' color='primary' disabled={!connected} onClick={() => decideTargets(groups.find(({ group }) => group === 'rest').items.filter(item => !leaving[item.id]), 'accept')}>
-                              Accept all {row.count}
-                            </Button>
-                          </div>
-                        )}
-                      >
-                        <button type='button' data-menu={true} aria-label='Decide the whole group'>
-                          <Icon value='more' width='1em' height='1em' />
-                        </button>
-                      </Tippy>
-                    ) : null}
                   />
                 ) : row.group === 'overdue' ? (
                   <Overdue item={row.item} threshold={threshold} leaving={row.leaving} onGesture={(gesture) => decideTargets([row.item], gesture)} onSearch={(e) => search(e, row.item)} disabled={!connected} />
@@ -1165,12 +1143,6 @@ UIProposals.styles = {
       display: 'flex',
       gap: 8,
     },
-  },
-  menu: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    padding: 8,
   },
   bar: {
     position: 'sticky',

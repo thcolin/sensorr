@@ -6,6 +6,13 @@ import { Select } from './Select'
 
 const SortableSelectContainer = SortableContainer(Select) as any
 
+const colors = (theme) => ({
+  prefer: theme.rawColors.primaryDarker,
+  avoid: theme.rawColors.error,
+  current: theme.rawColors.accentDarkest,
+  proposed: theme.rawColors.primaryDarker,
+})
+
 export const SortableSelect = ({ value, onChange, requirable = false, ...props }) => {
   const { theme } = useThemeUI()
 
@@ -22,7 +29,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
 
       if (typeof props.data.value === 'undefined') {
         return (
-          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown }} />
+          <components.MultiValue {...props} innerProps={{ ...props.innerProps, onMouseDown, title: props.data.title }} />
         )
       }
 
@@ -33,7 +40,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
             alignItems: 'stretch',
             margin: '0.25em',
             border: `1px solid`,
-            borderColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[props.data.group] || '#FFF',
+            borderColor: colors(theme)[props.data.group] || '#FFF',
             borderRadius: 2,
           }}
         >
@@ -89,8 +96,8 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
       ...style,
       position: 'relative',
       flexShrink: 0,
-      backgroundColor: { prefer: theme.rawColors.primaryDarker, avoid: theme.rawColors.error }[group] || 'transparent',
-      color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
+      backgroundColor: colors(theme)[group] || 'transparent',
+      color: '#FFF',
       margin: '0px',
       zIndex: 5,
       borderRadius: '0px',
@@ -112,9 +119,9 @@ export const SortableSelect = ({ value, onChange, requirable = false, ...props }
         display: 'none',
       },
     }),
-    multiValueLabel: (style, { data: { group } }) => ({
+    multiValueLabel: (style) => ({
       ...style,
-      color: { prefer: '#FFF', avoid: '#FFF' }[group] || '#FFF',
+      color: '#FFF',
       fontSize: '0.75em',
       fontFamily: (theme.fonts as any).monospace,
       fontWeight: 600,
