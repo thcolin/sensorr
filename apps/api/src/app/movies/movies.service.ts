@@ -73,6 +73,12 @@ export class MoviesService {
         continue
       }
 
+      // A dropped swap never lands: what accepting it would have freed leaves the job summary
+      const stored: any = await this.movieModel.findById(id).lean()
+      for (const dropped of (stored?.releases || []).filter(({ id: releaseId, replaces }) => replaces?.length && !releases.some(release => release.id === releaseId))) {
+        await this.logsService.ammendLog({ 'meta.job': dropped.job, 'meta.group': id, 'meta.release.id': dropped.id, 'meta.release.proposal': true }, { 'meta.summary.accepted': 0 })
+      }
+
       for (const release of releases) {
         const { choice } = release as ReleaseDTO & { choice?: boolean }
 

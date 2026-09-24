@@ -35,8 +35,10 @@ export const spacePills = ({ proposed, accepted }) => typeof proposed !== 'numbe
 
 const filesOf = (movie) => (movie?.releases || []).filter(({ from }) => from === 'sync')
 
-// What the accepted proposals of the job freed, against the Plex files the movies had when it ran
-const acceptedOf = (records) => records
+// What the accepted proposals of the job freed, against the Plex files the movies had when it ran.
+// A dropped swap is gone from the movie's releases, and never lands.
+const acceptedOf = (records, metadata) => records
+  .filter((record: any) => !metadata[record.movie?.id]?.releases || metadata[record.movie.id].releases.some(({ id }) => id === record.release?.id))
   .filter((record: any) => record.choice === true && typeof record.release?.size === 'number' && filesOf(record.movie).length)
   .reduce((sum, record: any) => sum + record.release.size - filesOf(record.movie).reduce((acc, { size }) => acc + (size || 0), 0), 0)
 
@@ -196,7 +198,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                     ...job.meta.summary,
                     ...(job.meta.done ? {} : { processed: records.length }),
                     treated: records.filter((record: any) => record.treated).length,
-                    ...(typeof job.meta.summary.proposed === 'number' ? { accepted: acceptedOf(records) } : {}),
+                    ...(typeof job.meta.summary.proposed === 'number' ? { accepted: acceptedOf(records, moviesMetadataContext) } : {}),
                     refined: (!job.meta.done && job.meta.summary.refined) ? `${records.length}/${job.meta.summary.refined}` : job.meta.summary.refined,
                     shrinked: (!job.meta.done && job.meta.summary.shrinked) ? `${records.length}/${job.meta.summary.shrinked}` : job.meta.summary.shrinked,
                   }, true, job.meta.config).map(meta => ({
