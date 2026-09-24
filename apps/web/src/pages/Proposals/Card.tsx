@@ -179,7 +179,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                   </span>
                 </summary>
                 <div>
-                  {editing && <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} help={false} />}
+                  {editing && <Metadata entity={entity || {}} metadata={metadata} setMetadata={setMetadata} />}
                 </div>
               </details>
               <aside>
