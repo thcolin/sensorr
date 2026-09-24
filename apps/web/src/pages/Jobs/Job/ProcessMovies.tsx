@@ -335,7 +335,7 @@ const UIRecord = ({ command, job, group, movie, logs: summaryLogs, release, trea
   // The Swaps row of this proposal, against the releases the movie had when the job ran
   const item = useMemo(() => (release?.valid && release?.proposal) ? itemOf(
     movie || {},
-    [...(movie?.releases || []), { ...release, from: command, proposal: true }],
+    [...(movie?.releases || []).filter(({ proposal }) => !proposal), { ...release, from: command, proposal: true }],
     new Policy(metadata?.policy || '', sensorr.policies),
   ) : null, [movie, release, command, metadata?.policy, sensorr.policies])
 
