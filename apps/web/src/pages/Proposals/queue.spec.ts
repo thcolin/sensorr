@@ -176,7 +176,7 @@ describe('queue', () => {
     const metadata = { releases: [release('a', 'VOSTFR', GB), { ...release('b', 'MULTi', GB), proposal: true }] }
     const pick = { ...release('c', 'MULTi-VFF', GB), from: 'refine', job: 'manual', proposal: true, choice: true }
 
-    expect(decide(metadata, 'b', 'replace', pick)).toEqual({ state: 'archived', releases: [metadata.releases[0], { ...metadata.releases[1], choice: false }, pick] })
+    expect(decide(metadata, 'b', 'replace', pick)).toEqual({ state: 'archived', releases: [metadata.releases[0], pick, { ...metadata.releases[1], choice: false }] })
     expect(decide(metadata, 'b', 'replace', { ...pick, id: 'b' })).toEqual(decide(metadata, 'b', 'accept'))
   })
   it('weighs the disk from the Plex files only, per command', () => {

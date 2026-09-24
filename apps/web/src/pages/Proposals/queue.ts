@@ -254,13 +254,15 @@ export const balanceOf = (items) => items.reduce((balance, item) => {
 // An overdue swap is retried by accepting it again, and dropped by removing it: the movie
 // keeps the version it has on Plex, and `refine` may propose another one.
 // A swap is replaced by refusing the proposal and accepting `pick`, the release chosen
-// in the drawer, in the same write: the job's log is marked as treated.
+// in the drawer, in the same write: the job's log is marked as treated. The API handles
+// releases in order, so the pick is downloaded before the refusal deletes the cached one.
 export const decide = (metadata, releaseId, verdict: Verdict, pick = null) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
 
   if (verdict === 'replace' && pick?.id !== releaseId) {
+    const refused = decide(metadata, releaseId, 'refuse').releases
     return {
-      releases: [...decide(metadata, releaseId, 'refuse').releases, pick],
+      releases: [...refused.filter(({ id }) => id !== releaseId), pick, ...refused.filter(({ id }) => id === releaseId)],
       state: 'archived',
     }
   }
