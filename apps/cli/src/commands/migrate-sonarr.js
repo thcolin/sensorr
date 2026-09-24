@@ -137,7 +137,7 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
           }
 
           const { show, episodes: fetched } = await fetchShow(state.tmdb, series.tmdbId)
-          const { episodes, unmatched } = sonarrEpisodesOf(fetched, await state.sonarr('episode', { seriesId: series.id }), fields)
+          const { episodes, unmatched } = sonarrEpisodesOf(fetched, await state.sonarr('episode', { seriesId: series.id }), fields, series.seasons)
 
           if (unmatched.length) {
             const numbers = unmatched.map(({ seasonNumber, episodeNumber }) => `S${`${seasonNumber}`.padStart(2, '0')}E${`${episodeNumber}`.padStart(2, '0')}`)

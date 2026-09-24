@@ -62,14 +62,16 @@ export const sonarrShowOf = (series) => (!series.monitored && !series.statistics
   path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
 }
 
-// Sonarr decides for every episode it numbers the same, the others follow the rule of a new episode
-export const sonarrEpisodesOf = (episodes, sonarr, show) => {
+// Sonarr decides for every episode it numbers the same, the others follow the rule of a new episode.
+// Sonarr only searches an episode whose series and season are monitored too, whatever the episode's own flag says.
+export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = []) => {
   const keyOf = ({ season_number, episode_number }) => `${season_number}:${episode_number}`
   const numbered = new Map(sonarr.map((episode) => [`${episode.seasonNumber}:${episode.episodeNumber}`, episode]))
+  const unmonitored = new Set(seasons.filter(({ monitored }) => !monitored).map(({ seasonNumber }) => seasonNumber))
   const numbers = new Set(episodes.map(keyOf))
   const known = episodes
     .filter((episode) => numbered.has(keyOf(episode)))
-    .map((episode) => ({ ...episode, monitored: !!numbered.get(keyOf(episode)).monitored }))
+    .map((episode) => ({ ...episode, monitored: !!show.monitored && !unmonitored.has(episode.season_number) && !!numbered.get(keyOf(episode)).monitored }))
   const copied = new Map(known.map((episode) => [episode.id, episode]))
 
   return {

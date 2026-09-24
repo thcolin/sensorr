@@ -95,6 +95,11 @@ describe('sonarrEpisodesOf', () => {
   it('tells the Sonarr episodes TMDB does not number', () => {
     expect(sonarrEpisodesOf(episodes, sonarr, show).unmatched).toEqual([sonarr[2]])
   })
+
+  it('leaves unmonitored the episodes of an unmonitored series or season, as Sonarr never searches them', () => {
+    expect(sonarrEpisodesOf(episodes, sonarr, { ...show, monitored: false }).episodes.map(({ monitored }) => monitored)).toEqual([false, false, false, false])
+    expect(sonarrEpisodesOf(episodes, sonarr, show, [{ seasonNumber: 1, monitored: false }]).episodes.slice(0, 2).map(({ monitored }) => monitored)).toEqual([false, false])
+  })
 })
 
 describe('isImportable', () => {
