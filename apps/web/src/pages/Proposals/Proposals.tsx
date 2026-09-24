@@ -156,14 +156,15 @@ const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
           </>
         )}
       </div>
-      <span sx={UIBalance.styles.chips}>
+      {/* On a phone the strip gives their room to the select-all checkbox. */}
+      {!compact && <span sx={UIBalance.styles.chips}>
         {commands.map(command => (
           <span key={command} sx={UIBalance.styles.chip}>
             <i sx={balance[command] < 0 ? UIBalance.styles.frees : UIBalance.styles.takes} />
             {command} <code>{delta(balance[command])}</code>
           </span>
         ))}
-      </span>
+      </span>}
     </div>
   )
 }

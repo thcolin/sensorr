@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeUI } from 'theme-ui'
-import { Button, ButtonProps } from '../../atoms/Button/Button'
+import { ButtonProps } from '../../atoms/Button/Button'
 import { Shadow } from '../../atoms/Shadow/Shadow'
 import { Icon } from '../../atoms/Icon/Icon'
 
@@ -37,7 +37,7 @@ const STAGGER = 30
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // The rows of an action are clipped out of the whole bar, from the box of the button that opened them.
-const inset = (from, radius = '0.25em') => from ? `inset(${from.top}px ${from.right}px ${from.bottom}px ${from.left}px round ${radius})` : `inset(0px round ${radius})`
+const inset = (from, radius = '2em') => from ? `inset(${from.top}px ${from.right}px ${from.bottom}px ${from.left}px round ${radius})` : `inset(0px round ${radius})`
 
 const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   const { theme } = useThemeUI()
@@ -47,6 +47,9 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   const wrapper = useRef<HTMLDivElement>(null)
   const row = useRef<HTMLDivElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
+  // The box of the opening button inside the options, which can be wider than the bar.
+  const from = useRef(null)
+  const faded = useRef<Animation[]>([])
   const closing = useRef(false)
   const visible = count > 0
 
@@ -56,16 +59,16 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   }
 
   const action = actions.find(({ key }) => key === expanded?.key)
+  // The label of the opening button is drawn by the options, which slide it to their start.
+  const segments = () => Array.from(row.current?.children || []) as HTMLElement[]
 
   const open = useCallback((key, e) => {
-    const box = wrapper.current.getBoundingClientRect()
-    const button = e.currentTarget.getBoundingClientRect()
+    if (!wrapper.current || wrapper.current.dataset.visible !== 'true') {
+      return
+    }
 
     setDimmed(true)
-    setExpanded({
-      key,
-      from: { top: button.top - box.top, right: box.right - button.right, bottom: box.bottom - button.bottom, left: button.left - box.left },
-    })
+    setExpanded({ key, button: e.currentTarget.getBoundingClientRect() })
   }, [])
 
   const close = useCallback((then = null) => {
@@ -91,7 +94,11 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
 
     const options = Array.from(node.querySelectorAll('[data-option], [data-cancel]')) as HTMLElement[]
     options.forEach(option => option.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, fill: 'forwards' }))
-    node.animate([{ clipPath: inset(null) }, { clipPath: inset(expanded.from) }], { duration: EXPAND, delay: 100, easing: EASING, fill: 'forwards' }).finished.then(done)
+    node.animate([{ clipPath: inset(null) }, { clipPath: inset(from.current) }], { duration: EXPAND, delay: 100, easing: EASING, fill: 'forwards' }).finished.then(() => {
+      faded.current.forEach(animation => animation.cancel())
+      segments().forEach(segment => segment.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' }))
+      done()
+    })
   }, [expanded])
 
   // The label slides from where its button was to the start of the bar, then the options come in.
@@ -102,6 +109,9 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
       return
     }
 
+    const box = node.getBoundingClientRect()
+    const { button } = expanded
+    from.current = { top: button.top - box.top, right: box.right - button.right, bottom: box.bottom - button.bottom, left: button.left - box.left }
     node.querySelector<HTMLButtonElement>('[data-option]')?.focus({ preventScroll: true })
 
     if (reduced()) {
@@ -110,8 +120,9 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
     }
 
     const label = node.querySelector('[data-label]') as HTMLElement
-    node.animate([{ clipPath: inset(expanded.from) }, { clipPath: inset(null) }], { duration: EXPAND, easing: EASING })
-    label.animate([{ transform: `translateX(${expanded.from.left - label.offsetLeft}px)` }, { transform: 'none' }], { duration: EXPAND, easing: EASING })
+    faded.current = segments().map(segment => segment.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, easing: 'ease-out', fill: 'forwards' }))
+    node.animate([{ clipPath: inset(from.current) }, { clipPath: inset(null) }], { duration: EXPAND, easing: EASING })
+    label.animate([{ transform: `translateX(${from.current.left - label.offsetLeft}px)` }, { transform: 'none' }], { duration: EXPAND, easing: EASING })
     Array.from(node.querySelectorAll('[data-option], [data-cancel]')).forEach((option: HTMLElement, index) => option.animate(
       [{ opacity: 0, transform: 'translateX(-0.25em)' }, { opacity: 1, transform: 'none' }],
       { duration: 150, delay: 150 + index * STAGGER, easing: 'ease-out', fill: 'backwards' },
@@ -139,6 +150,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   // A selection emptied from elsewhere folds the options away with the bar.
   useEffect(() => {
     if (!visible) {
+      faded.current.forEach(animation => animation.cancel())
       setExpanded(null)
       setDimmed(false)
     }
@@ -164,9 +176,9 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         aria-hidden={true}
         sx={UIBulk.styles.dim}
         style={{
-          opacity: dimmed ? 1 : 0,
-          visibility: dimmed ? 'visible' : 'hidden',
-          transition: `opacity 200ms ease-out, visibility 0ms ${dimmed ? 0 : 200}ms`,
+          zIndex: dimmed && visible ? 6 : -1,
+          opacity: dimmed && visible ? 1 : 0,
+          transition: `opacity 400ms ease, z-index ${dimmed && visible ? '0ms' : '400ms'} linear`,
         }}
         onClick={() => close()}
       >
@@ -182,20 +194,20 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
       >
         <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`}>
           {actions.map(({ key, label, variant = 'outline', color = 'gray', disabled: off = false, onClick, options }) => (
-            <Button
+            <button
               key={key}
               type='button'
-              variant={variant}
-              color={color}
+              sx={UIBulk.styles.segment}
               data-key={key}
               data-variant={variant}
+              data-color={color}
               disabled={disabled || off}
               aria-expanded={options ? expanded?.key === key : undefined}
               onClick={options ? (e) => open(key, e) : onClick}
             >
               {label}
               {!!options && <Icon value='chevron' direction={true} width='0.625em' height='0.625em' />}
-            </Button>
+            </button>
           ))}
         </div>
         {!!action && (
@@ -203,28 +215,36 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
             <strong data-label={true}>{action.label}</strong>
             <span>
               {action.options.map((option, index) => (
-                <Button
-                  key={index}
-                  type='button'
-                  variant='outline'
-                  color='gray'
-                  data-option={true}
-                  disabled={disabled}
-                  onClick={() => close(() => action.onChange?.(option))}
-                >
+                <button key={index} type='button' sx={UIBulk.styles.segment} data-option={true} disabled={disabled} onClick={() => close(() => action.onChange?.(option))}>
                   {option.label}
-                </Button>
+                </button>
               ))}
             </span>
-            <Button type='button' variant='outline' color='gray' data-cancel={true} onClick={() => close()} title='Cancel (Esc)'>
-              Cancel
-            </Button>
+            <button type='button' sx={UIBulk.styles.segment} data-cancel={true} onClick={() => close()} aria-label='Cancel' title='Cancel (Esc)'>
+              <Icon value='clear' active={true} width='1.25em' height='1.25em' />
+            </button>
           </div>
         )}
       </div>
     </>,
     document.body,
   )
+}
+
+// The line of the strip under the controls bar of Swaps, drawn on half the height of the bar.
+const SEPARATOR = 'hsla(0, 0%, 0%, 0.12)'
+
+const separated = {
+  position: 'relative',
+  '::before': {
+    content: '""',
+    position: 'absolute',
+    left: '0px',
+    top: '25%',
+    bottom: '25%',
+    width: '1px',
+    backgroundColor: SEPARATOR,
+  },
 }
 
 // A PWA on a phone draws its navigation at the bottom (Navigation.tsx): the bar sits over it.
@@ -235,12 +255,16 @@ const BOTTOM = {
   },
 }
 
+// One green bar, as the controls bar at the top of the page, one segment per action.
 UIBulk.styles = {
   element: {
     position: 'fixed',
     left: '50%',
     zIndex: 6,
+    display: 'flex',
     maxWidth: 'calc(100vw - 2em)',
+    color: 'whitePure',
+    // The size of the controls bar (Nav.tsx).
     fontSize: 5,
     transform: 'translate3d(-50%, 0, 0)',
     transition: `transform ${EXPAND}ms ${EASING}, visibility 0ms`,
@@ -259,39 +283,19 @@ UIBulk.styles = {
         transition: 'opacity 150ms ease-out, visibility 0ms 150ms',
       },
     },
-    button: {
-      flexShrink: 0,
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      margin: 12,
-      whiteSpace: 'nowrap',
-      ':focus-visible': {
-        outline: '1px solid',
-        outlineColor: 'grayDarkest',
-        outlineOffset: '2px',
-      },
-    },
-    // The width of the Accept and Refuse of the swap card (Gestures.tsx), so both read as the same buttons.
-    '[role=toolbar] > button': {
-      width: '12em',
-    },
-    // Each button floats on its own, over posters as over rows: an outline gets the surface of the toasts.
-    'button[data-variant=outline]:not([data-option]):not([data-cancel])': {
-      backgroundColor: 'gray',
-    },
   },
+  // A pill, against the Pill-Is-A-State rule of DESIGN.md: the exception is written there.
   row: {
     display: 'flex',
-    gap: 8,
-    // Room for the focus outline, which the scroller would otherwise cut.
-    padding: 10,
+    minWidth: 0,
+    backgroundColor: 'primary',
+    borderRadius: '2em',
     overflowX: 'auto',
     scrollbarWidth: 'none',
     '::-webkit-scrollbar': {
       display: 'none',
     },
+    '>button + button': separated,
     '&[data-start=true]': {
       maskImage: 'linear-gradient(to right, transparent, black 2em)',
     },
@@ -302,50 +306,95 @@ UIBulk.styles = {
       maskImage: 'linear-gradient(to right, transparent, black 2em, black calc(100% - 2em), transparent)',
     },
   },
+  segment: {
+    variant: 'button.reset',
+    flexShrink: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minWidth: '7em',
+    height: '2.75em',
+    paddingX: 4,
+    fontFamily: 'body',
+    fontWeight: 'body',
+    whiteSpace: 'nowrap',
+    color: 'whitePure',
+    cursor: 'pointer',
+    transition: 'color 200ms ease-in-out, background-color 200ms ease-in-out',
+    ':hover:not(:disabled)': {
+      backgroundColor: 'primaryDark',
+    },
+    ':active:not(:disabled)': {
+      backgroundColor: 'primaryDarker',
+    },
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'whitePure',
+      outlineOffset: '-4px',
+      borderRadius: '2em',
+    },
+    ':disabled': {
+      color: 'hsla(0, 0%, 100%, 0.5)',
+      cursor: 'default',
+    },
+  },
+  // As wide as its options need, centred on the bar, and scrolling past the screen's width.
   overlay: {
     position: 'absolute',
-    inset: '0px',
+    top: '0px',
+    bottom: '0px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'max-content',
+    minWidth: '100%',
+    maxWidth: 'calc(100vw - 2em)',
     display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    paddingX: 6,
-    backgroundColor: 'gray',
-    border: '1px solid',
-    borderColor: 'grayDark',
-    borderRadius: '0.25em',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    backgroundColor: 'primary',
+    borderRadius: '2em',
     clipPath: inset(null),
     '>strong': {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
-      paddingRight: 6,
-      borderRight: '1px solid',
-      borderColor: 'grayDark',
-      fontFamily: 'heading',
-      fontWeight: 'heading',
+      paddingX: 4,
+      fontFamily: 'body',
+      fontWeight: 'body',
       whiteSpace: 'nowrap',
     },
     '>span': {
+      ...separated,
       flex: 1,
       display: 'flex',
-      gap: 8,
       minWidth: 0,
-      paddingY: 10,
       overflowX: 'auto',
       scrollbarWidth: 'none',
       '::-webkit-scrollbar': {
         display: 'none',
       },
+      // A label then its values, as Sort by and its choice in the controls bar.
+      '>button': {
+        minWidth: 'auto',
+        fontWeight: 'semibold',
+      },
+      '>button + button': separated,
     },
-    button: {
-      paddingY: 8,
+    '>button': {
+      ...separated,
+      minWidth: 'auto',
+      width: '2.75em',
+      paddingX: 12,
+      svg: {
+        color: 'whitePure',
+      },
     },
   },
   dim: {
     variant: 'button.reset',
     position: 'fixed',
     inset: '0px',
-    zIndex: 6,
     cursor: 'default',
     '>div': {
       inset: '0px',
