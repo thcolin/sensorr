@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Policy, matchPolicy, searchUnits, pickReleases, isUnitCovered, levelOf, unitLabel, coverageLabel } from '@sensorr/sensorr'
+import { Policy, matchPolicy, searchUnits, searchShowUnits, levelOf, coverageLabel } from '@sensorr/sensorr'
 import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
@@ -257,48 +257,46 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
         const episodes = await api.fetch(uri, params, init)
         const units = since ? airingUnits(searchUnits(show, episodes), episodes, since) : searchUnits(show, episodes)
         const znabs = state.znabs.filter((znab) => !(policy?.avoid?.znab || []).includes(znab.name))
-        const searched = new Map()
-        let picks = []
+        const { picks, searched } = await searchShowUnits(units, episodes, {
+          znabs,
+          terms: query.terms,
+          apply: (releases, unit) => policy.apply(releases, { ...query, unit }),
+          search: async (znab, term, params, served) => {
+            const label = params.season === undefined ? 'whole series' : coverageLabel([params], params.episode === undefined ? 'season' : 'episode')
+            setTask((task) => ({ ...task, output: `${label}, "${term}" (${znab.name})` }))
 
-        for (const unit of units) {
-          if (isUnitCovered(unit, picks)) {
-            continue
-          }
+            try {
+              const found = await znab.searchShow(term, params)
+              // A season request feeds its pack and its episodes: a release counts as its best result among them
+              const best = {}
+              served.flatMap((unit) => policy.apply(found, { ...query, unit })).forEach((release) => {
+                const known = best[release.link]
+                best[release.link] = (!known || (release.valid && !known.valid) || (!known.valid && !release.valid && release.warning < known.warning)) ? release : known
+              })
+              const results = Object.values(best)
 
-          const releases = {}
-
-          for (const znab of znabs) {
-            for (const term of query.terms) {
-              setTask((task) => ({ ...task, output: `${unitLabel(unit)}, "${term}" (${znab.name})` }))
-
-              try {
-                const found = await znab.searchShow(term, { season: unit.season, episode: unit.episode })
-                found.forEach((release) => { releases[release.link] = release })
-                const results = policy.apply(found, { ...query, unit })
-
-                const stats = {
-                  total: results?.length || 0,
-                  matches: results?.filter(release => release.valid && !release.warning).map(({ size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, size, score, seeders, link })),
-                  withdrawn: results?.filter(release => !release.valid && release.warning <= 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
-                  ignored: results?.filter(release => !release.valid && release.warning > 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
-                }
-
-                state.logger.info({ message: (
-                  (stats.matches.length) ? `⭐  ${znab.name} - "${term}" ${unitLabel(unit)}, ${stats.matches.length} matching releases found`
-                  : (stats.withdrawn.length) ? `⛔  ${znab.name} - "${term}" ${unitLabel(unit)}, ${stats.withdrawn.length} releases withdrawn by policy`
-                  : (stats.ignored.length) ? `🗑️  ${znab.name} - "${term}" ${unitLabel(unit)}, ${stats.total} releases ignored`
-                  : (stats.total) ? `📭  ${znab.name} - "${term}" ${unitLabel(unit)}, no matching releases found`
-                  : `📭  ${znab.name} - "${term}" ${unitLabel(unit)}, no releases found`
-                ), metadata: { ...metadata, znab: znab.name, term, unit: unitLabel(unit), stats } })
-              } catch (error) {
-                state.logger.warn({ message: `⚠️  ${znab.name} - "${term}" ${unitLabel(unit)}, ${error?.message || error}`, metadata: { ...metadata, znab: znab.name, term, unit: unitLabel(unit), warning: error } })
+              const stats = {
+                total: results?.length || 0,
+                matches: results?.filter(release => release.valid && !release.warning).map(({ size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, size, score, seeders, link })),
+                withdrawn: results?.filter(release => !release.valid && release.warning <= 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
+                ignored: results?.filter(release => !release.valid && release.warning > 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
               }
-            }
-          }
 
-          searched.set(unit, policy.apply(Object.values(releases), { ...query, unit }))
-          picks = pickReleases(units.map((unit) => ({ unit, results: searched.get(unit) || [] })), episodes)
-        }
+              state.logger.info({ message: (
+                (stats.matches.length) ? `⭐  ${znab.name} - "${term}" ${label}, ${stats.matches.length} matching releases found`
+                : (stats.withdrawn.length) ? `⛔  ${znab.name} - "${term}" ${label}, ${stats.withdrawn.length} releases withdrawn by policy`
+                : (stats.ignored.length) ? `🗑️  ${znab.name} - "${term}" ${label}, ${stats.total} releases ignored`
+                : (stats.total) ? `📭  ${znab.name} - "${term}" ${label}, no matching releases found`
+                : `📭  ${znab.name} - "${term}" ${label}, no releases found`
+              ), metadata: { ...metadata, znab: znab.name, term, unit: label, stats } })
+
+              return found
+            } catch (error) {
+              state.logger.warn({ message: `⚠️  ${znab.name} - "${term}" ${label}, ${error?.message || error}`, metadata: { ...metadata, znab: znab.name, term, unit: label, warning: error } })
+              return []
+            }
+          },
+        })
 
         if (!picks.length) {
           const release = [...searched.values()].flat().find(({ valid }) => !valid)
@@ -311,12 +309,12 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             setStatus('error')
           } else if (release.warning <= 10) {
             setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
-            state.logger.info({ message: `🚨 Release ${release.title} withdrawn`, metadata: { ...metadata, important: true, release, done: true } })
+            state.logger.info({ message: `🚨 Release ${release.title} withdrawn`, metadata: { ...metadata, important: true, release: { ...release, level: levelOf(release.meta, release.category) }, done: true } })
             await new Promise(resolve => setTimeout(resolve, 600))
             setStatus('warning')
           } else {
             setTask((task) => ({ ...task, output: `${release.reason}: ${release.title}` }))
-            state.logger.info({ message: `🗑️  No matching releases found`, metadata: { ...metadata, important: true, release: { ...release, hide: true }, done: true } })
+            state.logger.info({ message: `🗑️  No matching releases found`, metadata: { ...metadata, important: true, release: { ...release, level: levelOf(release.meta, release.category), hide: true }, done: true } })
             await new Promise(resolve => setTimeout(resolve, 600))
             setStatus('error')
           }
@@ -357,7 +355,7 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
           await api.fetch(postEpisodes.uri, postEpisodes.params, postEpisodes.init)
 
           picked.push({ ...raw, label })
-          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposal]} for ${label} (${release.znab})`, metadata: { ...metadata, important: true, show: lighten.show(show), release: { ...release, proposal } } })
+          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposal]} for ${label} (${release.znab})`, metadata: { ...metadata, important: true, show: lighten.show(show), release: { ...release, proposal, level } } })
         }
 
         setState((state) => ({ ...state, shows: { ...state.shows, [show.id]: { ...show, query, units: searched.size, picks: picked } } }))

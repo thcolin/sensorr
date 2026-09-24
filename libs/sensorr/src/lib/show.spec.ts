@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchUnits, ShowUnit } from './show'
+import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchShowUnits, searchUnits, ShowUnit } from './show'
 import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
@@ -380,6 +380,68 @@ describe('pickReleases', () => {
     expect(picked(pickReleases(units.map((unit, index) => ({ unit, results: results[index] })), episodes))).toEqual([
       ['Friends.S01E01E02.MULTi.1080p.BluRay.x264-GRP', 2],
     ])
+  })
+})
+
+describe('searchShowUnits', () => {
+  const policy = new Policy(SENSORR_POLICY_FALLBACK as any)
+  const query = new Sensorr({ region: 'fr-FR' }).getShowQuery(cats)
+  const znabs = ['ABN', 'TPB', 'TR4KER', 'C411'].map(name => ({ name }))
+  const episodes = seasonOf(1, 54, '1990-02-01')
+  const units = searchUnits(cats, episodes, now)
+  const episodeName = (episode: number) => `Samurai.Pizza.Cats.S01E${String(episode).padStart(2, '0')}.MULTi.1080p.WEB.x264-GRP`
+  const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => from + index)
+  // Every request the search sends is one indexer answering one term, each followed by a 400 to 800 ms sleep
+  const run = async (answer: (params: { season?: number, episode?: number }) => string[]) => {
+    const requests = []
+    const { picks } = await searchShowUnits(units, episodes, {
+      znabs,
+      terms: query.terms,
+      apply: (releases, unit) => policy.apply(releases, { ...query, unit } as any),
+      search: async (znab, term, params) => {
+        requests.push({ znab: znab.name, term, ...params })
+        return answer(params).map(name => release(name))
+      },
+    })
+
+    return { requests, picks: picks.map(({ original, coverage }) => [original, coverage.length]) }
+  }
+
+  it('plans a whole series, its season and its 54 episodes', () => {
+    expect(units.length).toBe(56)
+  })
+
+  it('searches the season once for its pack and its 54 episodes', async () => {
+    const { requests, picks } = await run(({ season, episode }) => (season === 1 && episode === undefined) ? range(1, 54).map(episodeName) : [])
+
+    expect(requests.length).toBe(16)
+    expect(requests.filter(({ episode }) => episode !== undefined)).toEqual([])
+    expect(picks).toEqual(range(1, 54).map(episode => [episodeName(episode), 1]))
+  })
+
+  it('takes the season pack out of the season results before any episode', async () => {
+    const pack = 'Samurai.Pizza.Cats.S01.MULTi.1080p.WEB.x264-GRP'
+    const { requests, picks } = await run(({ season, episode }) => (season === 1 && episode === undefined) ? [...range(1, 54).map(episodeName), pack] : [])
+
+    expect(requests.length).toBe(16)
+    expect(picks).toEqual([[pack, 54]])
+  })
+
+  it('searches an episode alone only when the season results give it no valid release', async () => {
+    const { requests, picks } = await run(({ season, episode }) => (
+      episode === undefined ? (season === 1 ? range(1, 50).map(episodeName) : []) : [episodeName(episode)]
+    ))
+
+    expect(requests.length).toBe(16 + 4 * 8)
+    expect([...new Set(requests.map(({ episode }) => episode).filter(Boolean))]).toEqual([51, 52, 53, 54])
+    expect(picks.length).toBe(54)
+  })
+
+  it('searches every episode alone when nothing is found', async () => {
+    const { requests, picks } = await run(() => [])
+
+    expect(requests.length).toBe(16 + 54 * 8)
+    expect(picks).toEqual([])
   })
 })
 

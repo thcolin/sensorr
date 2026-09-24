@@ -174,3 +174,57 @@ export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = co
 
   return `S${pad(seasons[0])}${run ? `E${pad(episodes[0])}-E${pad(episodes[episodes.length - 1])}` : episodes.map(episode => `E${pad(episode)}`).join('')}`
 }
+
+// A season is searched once, for its pack and all its episodes, and an episode alone only when its season gave it nothing valid
+export const searchShowUnits = async (
+  units: ShowUnit[],
+  episodes: ShowEpisode[],
+  { znabs, terms, search, apply }: {
+    znabs: any[],
+    terms: string[],
+    search: (znab: any, term: string, params: { season?: number, episode?: number }, served: ShowUnit[]) => Promise<any[]>,
+    apply: (releases: any[], unit: ShowUnit) => any[],
+  },
+) => {
+  const requests = new Map<string, any[]>()
+  const request = async (params: { season?: number, episode?: number }, served: ShowUnit[]) => {
+    const key = `${params.season}:${params.episode}`
+
+    if (!requests.has(key)) {
+      const releases = new Map()
+
+      for (const znab of znabs) {
+        for (const term of terms) {
+          (await search(znab, term, params, served)).forEach((release) => releases.set(release.link, release))
+        }
+      }
+
+      requests.set(key, [...releases.values()])
+    }
+
+    return requests.get(key)
+  }
+  const searched = new Map<ShowUnit, any[]>()
+  let picks = []
+
+  for (const unit of units) {
+    if (isUnitCovered(unit, picks)) {
+      continue
+    }
+
+    const found = unit.type === 'series'
+      ? await request({}, [unit])
+      : await request({ season: unit.season }, units.filter(({ type, season }) => type !== 'series' && season === unit.season))
+    let results = apply(found, unit)
+
+    if (unit.type === 'episode' && !results.some(({ valid }) => valid)) {
+      const own = await request({ season: unit.season, episode: unit.episode }, [unit])
+      results = apply([...new Map([...found, ...own].map((release) => [release.link, release])).values()], unit)
+    }
+
+    searched.set(unit, results)
+    picks = pickReleases(units.map((unit) => ({ unit, results: searched.get(unit) || [] })), episodes)
+  }
+
+  return { picks, searched }
+}
