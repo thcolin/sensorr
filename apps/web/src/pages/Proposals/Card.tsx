@@ -48,6 +48,12 @@ const poster = (id) => ({ '--morph-poster': `swap-poster-${id}` }) as any
 
 const name = (kind, id, group = kind) => ({ viewTransitionName: `swap-${kind}-${id}`, viewTransitionClass: group }) as any
 
+// A compact row on a wide screen, and its size column: wide enough for the longest size
+// pill, so the decisions of every row line up. The open card draws its chevron and its
+// size in the same box, so the chevron stays under the pointer that opened it.
+const ROW = '88px'
+const SIZE = '11.5em'
+
 export const useLoadDetails = () => {
   const tmdb = useTMDB()
   const wikidata = useWikiData()
@@ -141,7 +147,7 @@ const Size = ({ item, threshold, compact = false, named = true }) => item.owned.
       compact={compact}
     />
   </>
-) : <span style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</span>
+) : <small style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>
 
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onClose = null, disabled = false, ...props }) => {
   const { movie, additional } = useDetails(item.id)
@@ -160,14 +166,16 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
           <div sx={UIActive.styles.body}>
             <header sx={UIActive.styles.head}>
               <h3 title={facts.title} style={morph('title', item.id)}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
-              {!!onClose && (
-                <button type='button' onClick={onClose} sx={UIActive.styles.close} style={morph('toggle', item.id)} aria-label='Close' title='Close (Esc)'>
-                  <Icon value='chevron' direction={true} width='0.75em' height='0.75em' />
-                </button>
-              )}
-              <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-                <Size item={item} threshold={threshold} />
-              </code>
+              <span>
+                {!!onClose && (
+                  <button type='button' onClick={onClose} sx={UIActive.styles.close} style={morph('toggle', item.id)} aria-label='Close' title='Close (Esc)'>
+                    <Icon value='chevron' direction={true} width='0.75em' height='0.75em' />
+                  </button>
+                )}
+                <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+                  <Size item={item} threshold={threshold} compact={true} />
+                </code>
+              </span>
             </header>
             <div sx={UIActive.styles.sub}>
               <details sx={UIActive.styles.metadata} onToggle={(e) => setEditing((e.target as HTMLDetailsElement).open)}>
@@ -278,25 +286,40 @@ UIActive.styles = {
     },
 
   },
+  // On a wide screen the chevron and the size take the compact row's place, whatever the
+  // height of the title.
   head: {
     display: 'flex',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 4,
+    paddingRight: ['0em', `calc(${SIZE} + 3em)`],
     '>h3': {
       margin: 12,
       marginRight: 'auto',
       minWidth: 0,
     },
-    '>code': {
+    '>span': {
+      position: ['static', 'absolute'],
+      top: '0em',
+      right: 4,
+      zIndex: 1,
       display: 'flex',
       alignItems: 'center',
-      gap: 8,
+      gap: 6,
       flexShrink: 0,
+      height: ['auto', ROW],
+    },
+    '>span >code': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      minWidth: ['auto', SIZE],
       fontFamily: 'monospace',
-      fontSize: 4,
-      fontWeight: 'bold',
       whiteSpace: 'nowrap',
+      '>small': {
+        fontSize: 7,
+      },
     },
   },
   sub: {
@@ -385,6 +408,7 @@ UIActive.styles = {
     alignSelf: 'center',
     display: 'flex',
     padding: 10,
+    marginRight: 8,
     color: 'grayDarkest',
     cursor: 'pointer',
     'svg path': {
@@ -468,7 +492,7 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
         </div>
       )}
       <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
-        {item.owned.length ? <Size item={item} threshold={threshold} compact={true} named={morphing} /> : <small style={morph('size', item.id)}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>}
+        <Size item={item} threshold={threshold} compact={true} named={morphing} />
       </code>
       {!!leaving && <Band verdict={leaving} />}
     </div>
@@ -480,14 +504,14 @@ UICompact.styles = {
   element: {
     position: 'relative',
     display: 'grid',
-    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto auto'],
+    gridTemplateColumns: ['auto 1fr', `auto 1fr auto minmax(${SIZE}, auto)`],
     gridTemplateRows: ['1fr auto', '1fr'],
     gridTemplateAreas: ['"poster body" "poster size"', '"poster body decide size"'],
     alignItems: 'center',
     columnGap: 6,
     rowGap: 8,
     width: '100%',
-    height: ['108px', '88px'],
+    height: ['108px', ROW],
     paddingX: 4,
     paddingY: 8,
     borderBottom: '1px solid',
@@ -693,10 +717,10 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
 UIOverdue.styles = {
   // On a phone the gestures take a line of their own under the poster, so it keeps its height.
   element: {
-    gridTemplateColumns: ['auto 1fr', 'auto 1fr auto auto'],
+    gridTemplateColumns: ['auto 1fr', `auto 1fr auto minmax(${SIZE}, auto)`],
     gridTemplateRows: ['1fr auto auto', '1fr'],
     gridTemplateAreas: ['"poster body" "poster size" "actions actions"', '"poster body actions size"'],
-    height: ['auto', '88px'],
+    height: ['auto', ROW],
     ':hover': {
       backgroundColor: 'transparent',
     },
