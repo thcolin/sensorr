@@ -160,6 +160,9 @@ export class MoviesService {
       ...(typeof params.shrink === 'boolean' ? {
         shrink: params.shrink ? { $ne: false } : { $eq: false },
       } : {}),
+      ...(`${params.reported}` === 'true' ? {
+        'reports.0': { $exists: true },
+      } : {}),
       ...((params.genres && !/\,/.test(params.genres)) ? {
         'genres.id': { $in: params.genres.split('|').map(Number) }
       } : {}),

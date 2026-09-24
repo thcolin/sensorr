@@ -7,7 +7,7 @@ import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { ProcessMoviesTask } from '../components/Tasks/ProcessMoviesTask'
 import api from '../store/api'
 import command from '../utils/command'
-import { bansOf, isBusy, newReportsOf, cursorOf } from '../utils/reports'
+import { isBusy, isPending, movieOf, newReportsOf, cursorOf, reportedOf } from '../utils/reports'
 
 const meta = {
   command: 'report',
@@ -51,49 +51,60 @@ const FetchAPIMoviesTask = ({ ...props }) => {
       try {
         const { MediaContainer: { machineIdentifier: server } } = await state.plex.query('/')
         const reports = newReportsOf(await getReports(state.token, state.since), { server, since: state.since })
-        const movies = {}
 
         if (reports.length) {
           const { uri, params, init } = api.query.movies.getMovies({ params: { state: 'archived' } })
           const { results: library } = await api.fetch(uri, { ...params, limit: '' }, init)
+          const touched = {}
 
           for (const report of reports.sort((a, b) => a.date - b.date)) {
-            const payload = await state.plex.query(`${report.key}?includeGuids=1`).then(({ MediaContainer }) => MediaContainer.Metadata[0]).catch(() => null)
-            const guids = (payload?.Guid || []).map(({ id }) => id.split('://')).reduce((acc, [agent, id]) => ({ ...acc, [agent]: id }), {})
-            const found = payload?.type === 'movie' && library.find((movie) => `${movie.id}` === `${guids.tmdb}` || `${movie.imdb_id}` === `${guids.imdb}`)
-            const movie = found && (movies[found.id] || found)
+            const payload = await state.plex.query(`${report.key}?includeGuids=1`)
+              .then(({ MediaContainer }) => MediaContainer.Metadata[0])
+              // A reported item Plex no longer has is skipped, any other failure stops the run before the cursor moves.
+              .catch((error) => { if (/response code: 404$/.test(error?.message)) return null; throw error })
+            const found = movieOf(payload, library)
+            const movie = found && (touched[found.id] || found)
 
             if (!movie) {
               state.logger.info({ message: `🚩 Report "${report.message}" ignored, no archived movie for ${payload?.title ? `Plex ${payload.type} "${payload.title}"` : `Plex item ${report.key}`}`, metadata: { ...state.metadata } })
               continue
             }
 
-            const reported = {
-              ...movie,
-              banned_releases: bansOf(movie),
-              reports: [...(movie.reports || []), { id: report.id, message: report.message, date: report.date, username: report.username }],
-            }
+            const reported = reportedOf(movie, report)
 
-            const { uri, params, init } = api.query.movies.postMovie({ body: reported })
-            await api.fetch(uri, params, init)
-            state.logger.info({ message: `🚩 "${movie.title}" reported by ${report.username}: "${report.message}", ${movie.releases.filter(({ proposal }) => !proposal).length} owned release(s) banned`, metadata: { ...state.metadata, group: movie.id, report } })
-
-            if (isBusy(movie)) {
-              state.logger.info({ message: `🚩 "${movie.title}" already has a replacement pending, not searched`, metadata: { ...state.metadata, group: movie.id } })
+            if (reported === movie) {
               continue
             }
 
-            movies[movie.id] = reported
+            touched[movie.id] = reported
+            const { uri, params, init } = api.query.movies.postMovie({ body: reported })
+            await api.fetch(uri, params, init)
+            state.logger.info({ message: `🚩 "${movie.title}" reported by ${report.username}: "${report.message}", ${movie.releases.filter(({ proposal }) => !proposal).length} owned release(s) banned`, metadata: { ...state.metadata, group: movie.id, report } })
           }
         }
 
         const put = api.query.config.putConfig({ body: { key: 'jobs.report.since', value: cursorOf(reports, state.since) } })
         await api.fetch(put.uri, put.params, put.init)
 
+        const { uri, params, init } = api.query.movies.getMovies({ params: { state: 'archived', reported: true } })
+        const { results } = await api.fetch(uri, { ...params, limit: '' }, init)
+        const movies = {}
+
+        for (const movie of results.filter(isPending)) {
+          if (isBusy(movie)) {
+            state.logger.info({ message: `🚩 "${movie.title}" already has a replacement pending, not searched`, metadata: { ...state.metadata, group: movie.id } })
+            const { uri, params, init } = api.query.movies.postMovie({ body: { ...movie, reported_at: Date.now() } })
+            await api.fetch(uri, params, init)
+            continue
+          }
+
+          movies[movie.id] = movie
+        }
+
         setState((state) => ({ ...state, movies }))
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{reports.length}</Text> new reports, <Text bold={true}>{Object.keys(movies).length}</Text> movies to replace</Text> }))
         setStatus('done')
-        state.logger.info({ message: state.since ? `🚩 ${reports.length} New Plex reports, ${Object.keys(movies).length} movies to replace` : `🚩 First run, reports made until now are ignored`, metadata: { ...state.metadata, summary: { reported: Object.keys(movies).length } } })
+        state.logger.info({ message: state.since ? `🚩 ${reports.length} new Plex reports, ${Object.keys(movies).length} movies to replace` : `🚩 First run, reports made until now are ignored`, metadata: { ...state.metadata, summary: { reported: Object.keys(movies).length } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))

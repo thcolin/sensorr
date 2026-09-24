@@ -157,6 +157,9 @@ export class Movie extends Document {
   @Prop()
   shrinked_at: number
 
+  @Prop()
+  reported_at: number
+
   // @Prop()
   // cared_at: number
 

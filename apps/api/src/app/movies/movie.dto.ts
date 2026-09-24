@@ -70,6 +70,7 @@ export class MovieDTO {
   readonly updated_at: number
   readonly refined_at: number
   readonly shrinked_at: number
+  readonly reported_at: number
   // readonly cared_at: number
   readonly alternative_titles: {
     titles: [

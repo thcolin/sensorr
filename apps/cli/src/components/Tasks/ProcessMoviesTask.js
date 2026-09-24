@@ -5,6 +5,7 @@ import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
 import { lighten } from '../../store/logger'
 import { proposedSpaceOf } from '../../utils/swaps'
+import { replacesOf } from '../../utils/reports'
 
 export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { tasks, state } } = useTask(
@@ -218,7 +219,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
       refine: { refined_at: new Date().getTime() },
       shrink: { shrinked_at: new Date().getTime() },
       record: {},
-      report: {},
+      report: { reported_at: new Date().getTime() },
     }[state.metadata.command]
 
     const policy = new Policy({
@@ -310,7 +311,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           size: release.size,
           // Downloaded without a proposal, a report replaces the reported versions all the same.
           ...(state.metadata.command === 'report' && !proposalOnly ? {
-            replaces: movie.releases.filter(({ from }) => from === 'sync').map(({ id }) => id),
+            replaces: replacesOf(movie),
             accepted_at: Date.now(),
           } : {}),
         }

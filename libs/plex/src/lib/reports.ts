@@ -13,7 +13,7 @@ export type Report = { id: string, message: string, date: number, username: stri
 
 // `url` reads `server://<machineIdentifier>/com.plexapp.plugins.library/library/metadata/<ratingKey>`
 export const parseReport = ({ id, message, url, date, user }): Report => {
-  const [, server, key] = url.match(/^server:\/\/([^/]+)\/[^/]+(\/library\/metadata\/\d+)$/) || []
+  const [, server, key] = (url || '').match(/^server:\/\/([^/]+)\/[^/]+(\/library\/metadata\/\d+)$/) || []
   return { id, message, date: Date.parse(date), username: user?.username || null, server: server || null, key: key || null }
 }
 
@@ -27,6 +27,7 @@ export const getReports = async (token: string, since = 0): Promise<Report[]> =>
       method: 'POST',
       headers: { 'x-plex-token': token, 'content-type': 'application/json', 'accept': 'application/json' },
       body: JSON.stringify({ query: QUERY, variables: { first: 50, after } }),
+      signal: AbortSignal.timeout(30000),
     })
 
     if (!res.ok) {
@@ -37,6 +38,10 @@ export const getReports = async (token: string, since = 0): Promise<Report[]> =>
 
     if (errors?.length) {
       throw new Error(`Unable to fetch Plex reported issues (${errors.map(({ message }) => message).join(', ')})`)
+    }
+
+    if (!data?.reports?.nodes) {
+      throw new Error('Unable to read Plex reported issues, the response has no reports')
     }
 
     const page = data.reports.nodes.map(parseReport)
