@@ -27,8 +27,8 @@ const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 
 const THRESHOLDS = [0, 250 * MB, 500 * MB, 1024 * MB, 2048 * MB]
 
 const SIDES = {
-  current: '📀',
-  proposed: '💿',
+  current: ['📀', 'Source size'],
+  proposed: ['💿', 'Target size'],
 }
 
 // The groups a release filter cycles through, in the order of a click.
@@ -262,7 +262,7 @@ const SizeFilter = ({ side, ...props }) => (
     max={SIZE_MAX}
     marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
     data={null}
-    label={emojize(SIDES[side], 'Size')}
+    label={emojize(SIDES[side][0], SIDES[side][1])}
     labelize={(value) => `${value} GB`}
     value={props.value || [0, SIZE_MAX]}
     step={null}
@@ -306,7 +306,7 @@ const fields = {
     initial: null,
     component: () => (
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
-        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 an owned release carries it, 💿 the proposed release carries it, 🔕 it does not count' />
+        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 Source, an owned release carries it; 💿 Target, the proposed release carries it; 🔕 it does not count' />
       </div>
     ),
   },
@@ -323,9 +323,14 @@ const fields = {
     [filter]: {
       initial: [],
       serialize: () => ({}),
-      component: (props) => {
+      // Select drops `style`, which carries the grid area.
+      component: ({ style, ...props }) => {
         const Filter = COMPONENTS[filter]
-        return <Filter {...props} groups={SWAP} />
+        return (
+          <div style={style}>
+            <Filter {...props} groups={SWAP} />
+          </div>
+        )
       },
     },
   }), {}),
