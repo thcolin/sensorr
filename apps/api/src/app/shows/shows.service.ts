@@ -6,7 +6,9 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
 import { entryPolicy } from '@sensorr/sensorr'
 import { ConfigService } from '../config/config.service'
-import { ShowDTO } from './show.dto'
+import { SensorrService } from '../sensorr/sensorr.service'
+import { LogsService } from '../logs/logs.service'
+import { ShowDTO, ShowReleaseDTO } from './show.dto'
 import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
@@ -43,6 +45,8 @@ export class ShowsService {
     @InjectModel(ShowDocument.name) private readonly showModel: PaginateModel<ShowDocument>,
     @InjectModel(EpisodeDocument.name) private readonly episodeModel: PaginateModel<EpisodeDocument>,
     private configService: ConfigService,
+    private sensorrService: SensorrService,
+    private logsService: LogsService,
   ) {}
 
   @OnEvent('guest.delete')
@@ -85,11 +89,55 @@ export class ShowsService {
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
+    const torrents = new Map()
+
+    for (const [i, { releases }] of Object.entries(changes)) {
+      const id = Number(i)
+
+      for (const release of (releases || []) as (ShowReleaseDTO & { choice?: boolean })[]) {
+        if (!release.proposal || release.choice === undefined) {
+          continue
+        }
+
+        const log = { 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }
+
+        if (release.choice) {
+          torrents.set(release.id, await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs', 'show'))
+
+          if (release.coverage?.length) {
+            await this.episodeModel.updateMany({ show_id: id, $or: release.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: release.id })
+          }
+
+          if (release.job !== 'manual') {
+            await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+          }
+        } else {
+          await this.sensorrService.removeRelease(release)
+          await this.episodeModel.updateMany({ show_id: id, release: release.id }, { release: null })
+
+          if (release.job !== 'manual') {
+            await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+          }
+        }
+      }
+    }
 
     const { insertedCount, modifiedCount, upsertedCount } = await this.showModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
         filter: { _id: i },
-        update: { _id: i, ...changes[i] },
+        update: {
+          _id: i,
+          ...changes[i],
+          ...(changes[i].releases ? {
+            releases: (changes[i].releases as (ShowReleaseDTO & { choice?: boolean })[])
+              .filter(release => !release.proposal || release.choice !== false)
+              .map(({ proposal, choice, ...release }) => ({
+                ...release,
+                ...(proposal && choice === undefined ? { proposal: true } : {}),
+                ...(proposal && choice === true ? { torrent: torrents.get(release.id) || release.torrent, accepted_at: Date.now() } : {}),
+              })),
+          } : {}),
+        },
         upsert: true,
       },
     })))
