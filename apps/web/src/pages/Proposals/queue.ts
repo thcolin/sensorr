@@ -190,10 +190,9 @@ export const arrange = (items, { threshold, skipped = {}, sort_by = { value: 'ti
   }))
 }
 
-// The release filters of Library (Controls/Oleoo.tsx), read once for both sides of a
-// swap: 📀 `source` keeps a swap whose owned release carries one of the values, 💿
-// `target` one whose proposed release does. Values are keyed by filter. Each side has
-// its own size range, in GB, whose top mark means no upper bound.
+// The release filters of Library (Controls/Oleoo.tsx): 📀 `source` keeps a swap whose
+// owned release carries one of the values, 💿 `target` one whose proposed release does.
+// A size range is in GB, and its top mark means no upper bound.
 export const FILTERS = ['znab', 'resolution', 'source', 'encoding', 'dub', 'language', 'flags']
 
 export const SIZE_MAX = 50
