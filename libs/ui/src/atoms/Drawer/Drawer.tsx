@@ -62,6 +62,7 @@ const UIDrawer = ({
   return (
     <motion.div
       ref={scope}
+      {...(!hidden ? { role: 'dialog', 'aria-modal': true } : {})}
       initial={{ opacity: 0, visibility: 'hidden' }}
       style={{
         position: 'fixed',

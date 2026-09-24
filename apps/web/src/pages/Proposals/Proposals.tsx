@@ -829,7 +829,8 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+      // A drawer open over the queue, the releases one included, keeps the keys for itself.
+      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable || document.querySelector('[aria-modal="true"]')) {
         return
       }
 
