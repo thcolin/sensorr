@@ -308,12 +308,21 @@ UIActive.styles = {
     position: 'relative',
     zIndex: 1,
   },
+  // It comes out from under the poster once the card has opened: the move lasts 400ms
+  // (MORPH in Proposals.tsx), and a new card is drawn live inside it.
   ticket: {
     display: 'flex',
     width: '100%',
     marginTop: 4,
     marginBottom: [0, 4],
     fontSize: 6,
+    '@keyframes sensorr-ticket-in': {
+      from: { opacity: 0, transform: 'translateY(-1em)' },
+    },
+    animation: '250ms cubic-bezier(0.2, 0, 0, 1) 400ms both sensorr-ticket-in',
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
   },
   body: {
     flex: 1,

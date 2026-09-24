@@ -1082,7 +1082,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}
-                    onSearch={(e) => toggleSensorr.current?.(e, row.item.entity, (release) => keys.current.pick(row.item, release), { title: `Replace ${row.item.entity?.title}`, proposal: row.item.proposal })}
+                    onSearch={(e) => toggleSensorr.current?.(e, row.item.entity, (release) => keys.current.pick(row.item, release), { label: 'Replace', title: row.item.entity?.title, proposal: row.item.proposal })}
                     onClose={row.leaving ? null : keys.current.close}
                     selected={selected.has(row.item.id)}
                     selectedVisible={chosen.length > 0}

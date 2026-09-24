@@ -299,7 +299,7 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, button = null, loading = false, portal = null, ...props }) => {
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, label = null, title = 'Releases', proposal = null, button = null, loading = false, portal = null, ...props }) => {
   const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
@@ -317,7 +317,10 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
         <Drawer close={closePortal} open={open} height='85vh'>
           <div sx={UISensorrWrapper.styles.container}>
             <div sx={UISensorrWrapper.styles.head}>
-              <h4>{title}</h4>
+              <h4>
+                {!!label && <small>{label}</small>}
+                <span>{title}</span>
+              </h4>
             </div>
             <UISensorr
               metadata={metadata}
@@ -362,8 +365,19 @@ UISensorrWrapper.styles = {
     paddingY: 2,
     '>h4': {
       variant: 'heading.default',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
       color: 'whitePure',
       margin: 12,
+      '>small': {
+        fontFamily: 'body',
+        fontSize: 6,
+        fontWeight: 'semibold',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        opacity: 0.8,
+      },
     },
   },
 }
@@ -372,9 +386,9 @@ export const Sensorr = memo(UISensorrWrapper)
 
 // One drawer for a whole list: `setToggle` hands out the function that opens it on a movie,
 // with what to do with the release picked there, the default being a manual record.
-// `proposal` is marked among the results, and `title` names what a pick does.
+// `proposal` is marked among the results, and `label` over `title` names what a pick does.
 export const SensorrSingleton = ({ setToggle }) => {
-  const [{ entity, onPick, title, proposal }, setTarget] = useState({ entity: null, onPick: null, title: undefined, proposal: null })
+  const [{ entity, onPick, label, title, proposal }, setTarget] = useState({ entity: null, onPick: null, label: null, title: undefined, proposal: null })
   const { loading, metadata: { [entity?.id]: _metadata = {} }, enhanceMovieMetadata } = useMoviesMetadataContext() as any
   const metadata = useMemo(() => enhanceMovieMetadata(entity, _metadata), [entity?.id, _metadata])
 
@@ -384,11 +398,12 @@ export const SensorrSingleton = ({ setToggle }) => {
       loading={loading}
       metadata={metadata}
       onPick={onPick}
+      label={label}
       title={title}
       proposal={proposal}
       setPortalToggle={(toggleOpen) => {
-        setToggle((e, entity, onPick = null, { title = undefined, proposal = null } = {}) => {
-          setTarget({ entity, onPick, title, proposal })
+        setToggle((e, entity, onPick = null, { label = null, title = undefined, proposal = null } = {}) => {
+          setTarget({ entity, onPick, label, title, proposal })
           toggleOpen(e)
         })
       }}
