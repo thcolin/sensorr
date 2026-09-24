@@ -12,7 +12,7 @@ export default (job, meta, callback) => async (argv) => {
   const raw = await api.fetch(uri, params, init)
   config.load(raw)
 
-  logger.info({ message: meta.desc, metadata: { job, command: meta.command, config: config.get(`jobs.${meta.command}`), summary: true } })
+  logger.info({ message: meta.desc, metadata: { job, command: meta.command, config: config.has(`jobs.${meta.command}`) ? config.get(`jobs.${meta.command}`) : null, summary: true } })
 
   await callback({ argv, config, logger })
 }
