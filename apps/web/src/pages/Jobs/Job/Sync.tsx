@@ -1,8 +1,11 @@
 import { memo, useMemo } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
+import { emojize, filesize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
+import { Transition } from '../../../components/Sensorr/Proposal'
+import { delta } from '../../Proposals/Card'
+import { sizeStateOf } from '../../Proposals/queue'
 import { Summary } from '../Summary'
 import { Warnings } from '../Warnings'
 
@@ -31,6 +34,12 @@ export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missing
     title: <span><strong>{cleanups?.success}</strong> Replaced versions deleted from Plex</span>,
     length: cleanups?.success,
   }] : []),
+  ...((cleanups?.success > 0 && typeof cleanups?.deleted === 'number' && typeof cleanups?.arrived === 'number') ? [{
+    key: 'space',
+    emoji: '💾',
+    title: <span><strong>{delta(cleanups.arrived - cleanups.deleted)}</strong> on disk, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
+    length: delta(cleanups.arrived - cleanups.deleted),
+  }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',
     emoji: '💊',
@@ -45,10 +54,56 @@ export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missing
   }] : []),
 ]
 
+// What the cleanups deleted and what the swaps that replaced them brought in. A swap removing
+// versions from several Plex items logs its landed release with each: its size counts once.
+const spaceOf = (logs) => {
+  const landed = logs.filter((log: any) => log.meta.landed)
+
+  if (!landed.length) {
+    return {}
+  }
+
+  return {
+    deleted: landed.reduce((sum, log: any) => sum + (log.meta.size || 0), 0),
+    arrived: Object.values(landed.reduce((acc, log: any) => ({ ...acc, [log.meta.landed.release]: log.meta.landed.size }), {})).reduce((sum: number, size: number) => sum + size, 0) as number,
+  }
+}
+
+const UICleanedMovie = ({ entity, cleanups, ...props }) => {
+  const space = useMemo(() => spaceOf((cleanups || []).filter((log: any) => log.meta.movie?.id === entity?.id)), [cleanups, entity?.id])
+
+  return (
+    <div sx={UICleanedMovie.styles.element}>
+      <Movie entity={entity} {...props} />
+      {typeof space.deleted === 'number' && (
+        <Transition
+          axis='size'
+          from={emojize('📦', filesize.stringify(space.deleted))}
+          to={filesize.stringify(space.arrived)}
+          state={sizeStateOf(space.arrived - space.deleted)}
+          compact={true}
+        />
+      )}
+    </div>
+  )
+}
+
+UICleanedMovie.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+}
+
+const CleanedMovie = memo(UICleanedMovie)
+
 const UISyncJob = ({ job, logs }) => {
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     corrections: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'corrections').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    logs: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups'),
     cleanups: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups').map(({ meta: { movie } }) => movie).filter((movie, index, movies) => movies.findIndex(({ id }) => id === movie.id) === index).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     missings: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'missings').map(({ meta: { movie } }) => movie).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
   }), [logs])
@@ -86,8 +141,9 @@ const UISyncJob = ({ job, logs }) => {
                       success: job.meta.done ? job.meta.summary.corrections?.success : entities.corrections.length,
                       warning: job.meta.done ? job.meta.summary.corrections?.warning : entities.warning.length,
                     },
-                    cleanups: {
-                      success: job.meta.done ? job.meta.summary.cleanups?.success : entities.cleanups.length,
+                    cleanups: job.meta.done ? job.meta.summary.cleanups : {
+                      success: entities.cleanups.length,
+                      ...spaceOf(entities.logs),
                     },
                     missings: {
                       success: job.meta.done ? job.meta.summary.missings?.success : entities.missings.length,
@@ -133,10 +189,11 @@ const UISyncJob = ({ job, logs }) => {
               label={emojize('🧹', 'Cleaned')}
               display='grid'
               hide={true}
-              child={Movie}
+              child={CleanedMovie as any}
               props={() => ({
                 display: 'poster',
-              })}
+                cleanups: entities.logs,
+              }) as any}
             />
             <Entities
               id={`sync-fixed-${job.id}`}
