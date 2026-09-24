@@ -905,6 +905,7 @@ UIGroupTitle.styles = {
       opacity: 0.6,
       fontFamily: 'body',
       fontWeight: 'body',
+      fontSize: 6,
       transition: 'opacity 200ms ease-in-out',
       ':hover, :focus-within': {
         opacity: 1,
