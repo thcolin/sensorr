@@ -23,6 +23,8 @@ const UIToasts = ({ ...props }) => {
       }}
     >
       {(t) => {
+        const stripe = { success: 'success', error: 'error', loading: 'grayDarkest' }[t.type] || 'info'
+
         return ( // { id, type, message, icon, createdAt }
           <div
             sx={{
@@ -34,6 +36,7 @@ const UIToasts = ({ ...props }) => {
               borderLeft: 'none',
               borderColor: 'grayDark',
               borderRadius: '0.25em',
+              position: 'relative',
               opacity: t.visible ? 1 : 0,
               overflow: 'hidden',
             }}
@@ -41,14 +44,14 @@ const UIToasts = ({ ...props }) => {
             <div
               sx={{
                 borderLeft: '4px solid',
-                borderColor: { success: 'success', error: 'error', loading: 'grayDarkest' }[t.type] || 'info',
+                borderColor: stripe,
               }}
             >
             </div>
-            <div sx={{ flex: 1, padding: 4 }} >
+            <div sx={{ flex: 1, padding: 4, paddingRight: typeof t.message !== 'string' ? 2 : 4 }}>
               {typeof t.message !== 'string' ? t.message : (
                 <>
-                  <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, fontFamily: 'heading', textTransform: 'capitalize' }}>
+                  <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, paddingRight: 2, fontFamily: 'heading', textTransform: 'capitalize' }}>
                     <span sx={{ marginRight: 8 }}>
                       {t.icon || (
                         t.type === 'blank' ? <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 416.979 416.979"><path fill={theme.colors.black} d="M356.004 61.156c-81.37-81.47-213.377-81.551-294.848-.182-81.47 81.371-81.552 213.379-.181 294.85 81.369 81.47 213.378 81.551 294.849.181 81.469-81.369 81.551-213.379.18-294.849zM237.6 340.786a5.821 5.821 0 0 1-5.822 5.822h-46.576a5.821 5.821 0 0 1-5.822-5.822V167.885a5.821 5.821 0 0 1 5.822-5.822h46.576a5.82 5.82 0 0 1 5.822 5.822v172.901zm-29.11-202.885c-18.618 0-33.766-15.146-33.766-33.765 0-18.617 15.147-33.766 33.766-33.766s33.766 15.148 33.766 33.766c0 18.619-15.149 33.765-33.766 33.765z"/></svg> :
@@ -59,21 +62,37 @@ const UIToasts = ({ ...props }) => {
                     </span>
                     <span> {t.title || (t.type === 'blank' ? 'Info' : t.type)}</span>
                   </strong>
-                  {!t.actions ? (
-                    <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
-                  ) : (
-                    <span sx={{ display: 'flex', alignItems: 'center', gap: '0.75em', fontSize: 5, 'p': { margin: '0em' } }}>
-                      <span sx={{ flex: 1 }}><Markdown>{t.message}</Markdown></span>
-                      <span sx={{ display: 'flex', flexShrink: 0, gap: '0.5em', '>button': { marginY: '0em', paddingY: '0.125em', paddingX: '0.625em', fontSize: 6 } }}>
-                        {t.actions}
-                      </span>
+                  <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}><Markdown>{t.message}</Markdown></span>
+                  {t.actions && (
+                    <span sx={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', gap: 8, marginTop: 4, '>button': { margin: 12, fontSize: 5 } }}>
+                      {t.actions}
                     </span>
                   )}
                   {t.type === 'error' && !t.actions && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
                 </>
               )}
             </div>
-            <div>
+            {t.countdown && (
+              <div
+                key={t.createdAt}
+                aria-hidden='true'
+                sx={{
+                  position: 'absolute',
+                  left: '0em',
+                  right: '0em',
+                  bottom: '0em',
+                  height: '0.1875em',
+                  backgroundColor: stripe,
+                  transformOrigin: 'left',
+                  '@keyframes sensorr-toast-countdown': {
+                    from: { transform: 'scaleX(1)' },
+                    to: { transform: 'scaleX(0)' },
+                  },
+                  animation: `sensorr-toast-countdown ${t.duration}ms linear forwards`,
+                }}
+              />
+            )}
+            <div sx={{ position: 'absolute', top: '0em', right: '0em' }}>
               <button onClick={() => toast.dismiss(t.id)} sx={{ variant: 'button.reset', padding: 6 }}>
                 <Icon value="clear" height="1em" width="1em" />
               </button>

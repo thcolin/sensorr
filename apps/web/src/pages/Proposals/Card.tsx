@@ -21,7 +21,7 @@ export const EMOJI = {
 
 export const VERDICTS = {
   accept: { emoji: '✅', label: 'Accepted', color: 'primary', text: 'whitePure' },
-  refuse: { emoji: '❌', label: 'Refused', color: 'grayDark', text: 'text' },
+  refuse: { emoji: '❌', label: 'Refused', color: 'error', text: 'whitePure' },
   ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
   retry: { emoji: '🔁', label: 'Retried', color: 'grayDark', text: 'text' },
   drop: { emoji: '🗑️', label: 'Dropped', color: 'grayDark', text: 'text' },
