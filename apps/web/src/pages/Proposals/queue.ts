@@ -11,7 +11,7 @@ export const AXES = ['resolution', 'source', 'encoding', 'dub', 'language']
 // `overdue` holds the accepted swaps that never landed on Plex (apps/cli/src/utils/swaps.js).
 export const GROUPS = ['report', 'refine', 'shrink', 'rest', 'overdue']
 
-export type Verdict = 'accept' | 'refuse' | 'ban' | 'retry' | 'drop'
+export type Verdict = 'accept' | 'refuse' | 'ban' | 'retry' | 'drop' | 'replace'
 
 // Releases stored on the movie document carry no score: it is recomputed from the
 // movie policy, exactly like the job does before comparing (ProcessMoviesTask.js:307).
@@ -253,8 +253,17 @@ export const balanceOf = (items) => items.reduce((balance, item) => {
 // (policy.ts:149-161): a refused release can be proposed again, a banned one cannot.
 // An overdue swap is retried by accepting it again, and dropped by removing it: the movie
 // keeps the version it has on Plex, and `refine` may propose another one.
-export const decide = (metadata, releaseId, verdict: Verdict) => {
+// A swap is replaced by refusing the proposal and accepting `pick`, the release chosen
+// in the drawer, in the same write: the job's log is marked as treated.
+export const decide = (metadata, releaseId, verdict: Verdict, pick = null) => {
   const release = (metadata?.releases || []).find(({ id }) => id === releaseId)
+
+  if (verdict === 'replace' && pick?.id !== releaseId) {
+    return {
+      releases: [...decide(metadata, releaseId, 'refuse').releases, pick],
+      state: 'archived',
+    }
+  }
 
   if (verdict === 'retry') {
     const again = ({ overdue, ...release }) => ({ ...release, proposal: true, choice: true })
@@ -266,8 +275,8 @@ export const decide = (metadata, releaseId, verdict: Verdict) => {
   }
 
   return {
-    releases: (metadata?.releases || []).map(r => (r.proposal && r.id === releaseId) ? { ...r, choice: verdict === 'accept' } : r),
-    ...(verdict === 'accept' ? { state: 'archived' } : {}),
+    releases: (metadata?.releases || []).map(r => (r.proposal && r.id === releaseId) ? { ...r, choice: ['accept', 'replace'].includes(verdict) } : r),
+    ...(['accept', 'replace'].includes(verdict) ? { state: 'archived' } : {}),
     ...(verdict === 'ban' && release ? { banned_releases: [...new Set([...(metadata?.banned_releases || []), release.title])] } : {}),
   }
 }

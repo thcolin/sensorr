@@ -171,6 +171,14 @@ describe('queue', () => {
     expect(decide(metadata, 'b', 'refuse')).not.toHaveProperty('banned_releases')
     expect(decide(metadata, 'b', 'accept')).toMatchObject({ state: 'archived', releases: [{ id: 'b', choice: true }] })
   })
+
+  it('replaces by refusing the proposal and accepting the picked release', () => {
+    const metadata = { releases: [release('a', 'VOSTFR', GB), { ...release('b', 'MULTi', GB), proposal: true }] }
+    const pick = { ...release('c', 'MULTi-VFF', GB), from: 'refine', job: 'manual', proposal: true, choice: true }
+
+    expect(decide(metadata, 'b', 'replace', pick)).toEqual({ state: 'archived', releases: [metadata.releases[0], { ...metadata.releases[1], choice: false }, pick] })
+    expect(decide(metadata, 'b', 'replace', { ...pick, id: 'b' })).toEqual(decide(metadata, 'b', 'accept'))
+  })
   it('weighs the disk from the Plex files only, per command', () => {
     const plex = (id, language, size) => release(id, language, size, { from: 'sync' })
     const upgrade = movie(1, [plex('a', 'MULTi', 4 * GB), release('b', 'VOSTFR', GB, { from: 'record' })], release('c', 'MULTi-VFF', 7 * GB))
