@@ -7,9 +7,10 @@ import { PolicyInput } from '../../Details/components/Metadata'
 import { Toggle } from './Toggle'
 
 // Specials are left out of the show's progress, as they are of its search
-const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, setMetadata, ...props }) => {
+const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, removeShow, setMetadata, ...props }) => {
   const sensorr = useSensorr()
   const [adding, setAdding] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const policy = useMemo(() => new Policy(metadata?.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies), [metadata?.policy, entity?.original_language, sensorr.policies])
   const progress = useMemo(() => progressOf((episodes || []).filter(({ season_number }) => season_number !== 0)), [episodes])
   const size = useMemo(() => (episodes || []).reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0), [episodes])
@@ -49,6 +50,19 @@ const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, 
             {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches nothing for this show'}
           </small>
         </Toggle>
+        <Toggle
+          id={`new-seasons-${entity.id}`}
+          checked={!!metadata?.monitor_new_seasons}
+          disabled={!ready || !metadata?.monitored}
+          onChange={value => setMetadata('monitor_new_seasons', value)}
+        >
+          <span sx={UIShowActions.styles.option}>
+            Follow new seasons
+            <small sx={UIShowActions.styles.help}>
+              {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+            </small>
+          </span>
+        </Toggle>
       </div>
       <div sx={UIShowActions.styles.block}>
         <span>Policy</span>
@@ -84,6 +98,26 @@ const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, 
         </p>
         <Progress value={progress.owned} max={progress.aired} title={`${progress.owned} of ${progress.aired} aired episodes owned`} />
       </div>
+      <div sx={UIShowActions.styles.block}>
+        <Button
+          variant='outline'
+          color='error'
+          disabled={!ready || removing}
+          aria-busy={removing}
+          onClick={async () => {
+            if (!confirm(`Do you want to remove "${entity?.name}" and its ${(episodes || []).length} episodes from the library ? Their files stay on disk`)) {
+              return
+            }
+
+            setRemoving(true)
+            await removeShow().catch(() => null)
+            setRemoving(false)
+          }}
+        >
+          {removing ? 'Removing...' : 'Remove from library'}
+        </Button>
+        <small sx={UIShowActions.styles.help}>Sensorr forgets the show and its episodes, their files stay on disk</small>
+      </div>
     </div>
   )
 }
@@ -98,6 +132,11 @@ UIShowActions.styles = {
     marginTop: ['2em', '4em'],
     marginBottom: ['1em', '2em'],
     textAlign: 'left',
+    'button:focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+      outlineOffset: '2px',
+    },
   },
   block: {
     display: 'flex',
@@ -129,6 +168,11 @@ UIShowActions.styles = {
     ':disabled': {
       opacity: 0.5,
     },
+  },
+  option: {
+    display: 'flex',
+    flexDirection: 'column',
+    color: 'text',
   },
   help: {
     display: 'block',

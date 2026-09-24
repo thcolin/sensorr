@@ -257,6 +257,25 @@ export const Provider = ({ ...props }) => {
     }
   }, [setShowMetadata, addShow])
 
+  // Its files stay where they are: only the show and its episodes leave Sensorr
+  const removeShow = useCallback(async (id: number) => {
+    const promise = (async () => {
+      const { uri, params, init } = api.query.shows.deleteShows({ body: { [id]: { id } } })
+      await api.fetch(uri, params, init)
+      setMetadata(({ [id]: removed, ...metadata }: { [id: string]: any }) => metadata)
+      setEpisodes(({ [id]: removed, ...episodes }: { [id: string]: any }) => episodes)
+    })()
+
+    await toast.promise(promise, {
+      loading: `Removing show from the library...`,
+      success: () => `Show removed from the library`,
+      error: (err) => {
+        console.warn(err)
+        return `Error while removing show from the library`
+      },
+    })
+  }, [])
+
   return (
     <showsMetadataContext.Provider
       {...props}
@@ -269,6 +288,7 @@ export const Provider = ({ ...props }) => {
         setEpisodesMetadata,
         addShow,
         followShow,
+        removeShow,
       }}
     />
   )

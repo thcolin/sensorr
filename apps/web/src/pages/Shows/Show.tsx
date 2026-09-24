@@ -23,6 +23,7 @@ const Show = ({ ...props }) => {
     setShowMetadata,
     setEpisodesMetadata,
     addShow,
+    removeShow,
   } = useShowsMetadataContext() as any
   const [episodesError, setEpisodesError] = useState(null)
 
@@ -55,6 +56,7 @@ const Show = ({ ...props }) => {
   const setMetadata = useCallback((key, value) => setShowMetadata(Number(id), key, value), [id])
   const proceedRelease = useCallback((release, choice) => setShowMetadata(Number(id), 'proposal', { id: release.id, choice }), [id])
   const add = useCallback(() => addShow(Number(id)), [id])
+  const remove = useCallback(() => removeShow(Number(id)), [id])
 
   if (show.error) {
     return (
@@ -85,6 +87,7 @@ const Show = ({ ...props }) => {
           inLibrary={inLibrary}
           ready={actionsReady}
           addShow={add}
+          removeShow={remove}
           setMetadata={setMetadata}
         />
       )}
