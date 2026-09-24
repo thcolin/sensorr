@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { emojize } from '@sensorr/utils'
 import { Button } from '../../atoms/Button/Button'
 import { Bulk as UIBulk } from './Bulk'
 
@@ -38,18 +37,18 @@ Library.args = {
   actions: [
     {
       key: 'state',
-      label: emojize('📚', 'State'),
+      icon: '📚', label: 'State',
       options: [
-        { value: 'ignored', label: emojize('🔕', 'Ignored') },
-        { value: 'wished', label: emojize('🍿', 'Wished') },
-        { value: 'pinned', label: emojize('📍', 'Pinned') },
-        { value: 'archived', label: emojize('📼', 'Archived') },
+        { value: 'ignored', icon: '🔕', label: 'Ignored' },
+        { value: 'wished', icon: '🍿', label: 'Wished' },
+        { value: 'pinned', icon: '📍', label: 'Pinned' },
+        { value: 'archived', icon: '📼', label: 'Archived' },
       ],
       onChange: () => null,
     },
-    { key: 'proposal', label: emojize('🛎️', 'Proposal'), options: [{ value: true, label: 'Accept' }, { value: false, label: 'Refuse' }], onChange: () => null },
-    { key: 'policy', label: emojize('🚨', 'Policy'), options: [{ value: 'MULTi-VF2', label: '🇺🇳  MULTi-VF2' }, { value: 'VOF', label: '🇫🇷  VOF' }, { value: 'SD+', label: '📺  SD+' }], onChange: () => null },
-    { key: 'refine', label: emojize('✨', 'Refine'), options: [{ value: true, label: 'Enable' }, { value: false, label: 'Disable' }], onChange: () => null },
-    { key: 'shrink', label: emojize('✂️', 'Shrink'), options: [{ value: true, label: 'Enable' }, { value: false, label: 'Disable' }], onChange: () => null },
+    { key: 'proposal', icon: '🛎️', label: 'Proposal', options: [{ value: true, label: 'Accept' }, { value: false, label: 'Refuse' }], onChange: () => null },
+    { key: 'policy', icon: '🚨', label: 'Policy', options: [{ value: 'MULTi-VF2', label: '🇺🇳  MULTi-VF2' }, { value: 'VOF', label: '🇫🇷  VOF' }, { value: 'SD+', label: '📺  SD+' }], onChange: () => null },
+    { key: 'refine', icon: '✨', label: 'Refine', options: [{ value: true, label: 'Enable' }, { value: false, label: 'Disable' }], onChange: () => null },
+    { key: 'shrink', icon: '✂️', label: 'Shrink', options: [{ value: true, label: 'Enable' }, { value: false, label: 'Disable' }], onChange: () => null },
   ],
 }

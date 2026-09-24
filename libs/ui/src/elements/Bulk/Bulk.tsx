@@ -8,6 +8,7 @@ import { Icon } from '../../atoms/Icon/Icon'
 export interface BulkOption {
   value: any
   label: React.ReactNode
+  icon?: React.ReactNode
 }
 
 export interface BulkAction {
@@ -206,10 +207,14 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         </div>
         {!!action && (
           <div ref={overlay} sx={UIBulk.styles.overlay} role='group' aria-label={typeof action.label === 'string' ? action.label : undefined}>
-            <strong data-label={true}>{action.label}</strong>
+            <strong data-label={true}>
+              {!!action.icon && <span data-icon={true} aria-hidden={true}>{action.icon}</span>}
+              {action.label}
+            </strong>
             <span>
               {action.options.map((option, index) => (
                 <button key={index} type='button' sx={UIBulk.styles.segment} data-option={true} disabled={disabled} onClick={() => close(() => action.onChange?.(option))}>
+                  {!!option.icon && <span data-icon={true} aria-hidden={true}>{option.icon}</span>}
                   {option.label}
                 </button>
               ))}
@@ -323,6 +328,7 @@ UIBulk.styles = {
     cursor: 'pointer',
     transition: 'color 200ms ease-in-out, background-color 200ms ease-in-out',
     ':hover:not(:disabled)': {
+      gap: 7,
       backgroundColor: 'primaryDark',
     },
     ':active:not(:disabled)': {
@@ -339,7 +345,7 @@ UIBulk.styles = {
       cursor: 'default',
     },
     // The white of the label, at the size of the decisions of a swap row (Card.tsx).
-    '>[data-icon]': {
+    '[data-icon]': {
       display: 'inline-flex',
       svg: {
         width: '1.125em',
@@ -364,10 +370,13 @@ UIBulk.styles = {
     backgroundColor: 'primary',
     borderRadius: '2em',
     clipPath: inset(null),
+    // A level down takes the green of Library's releases pane, as the label of its values.
     '>strong': {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
+      gap: 7,
+      backgroundColor: 'primaryDark',
       paddingLeft: 0,
       paddingRight: 1,
       fontFamily: 'body',
@@ -375,7 +384,6 @@ UIBulk.styles = {
       whiteSpace: 'nowrap',
     },
     '>span': {
-      ...separated,
       flex: 1,
       display: 'flex',
       minWidth: 0,
@@ -389,18 +397,25 @@ UIBulk.styles = {
       '>button': {
         flex: '1 0 auto',
         fontWeight: 'semibold',
+        ':hover:not(:disabled)': {
+          backgroundColor: 'primaryDarker',
+        },
       },
       '>button + button': separated,
     },
+    // The way out frames the values with the label, in the same green.
     '>button': {
-      ...separated,
       minWidth: 'auto',
       width: '3em',
+      backgroundColor: 'primaryDark',
       paddingX: 12,
       svg: {
         color: 'whitePure',
         opacity: 0.5,
         transition: 'opacity 200ms ease-in-out',
+      },
+      ':hover:not(:disabled)': {
+        backgroundColor: 'primaryDarker',
       },
       ':hover:not(:disabled) svg, :focus-visible svg': {
         opacity: 1,

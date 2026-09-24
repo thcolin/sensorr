@@ -243,18 +243,20 @@ const Library = compose(
                 actions={[
                   {
                     key: 'state',
-                    label: emojize('📚', 'State'),
+                    icon: '📚',
+                    label: 'State',
                     options: [
-                      { value: 'ignored', label: emojize('🔕', 'Ignored') },
-                      { value: 'wished', label: emojize('🍿', 'Wished') },
-                      { value: 'pinned', label: emojize('📍', 'Pinned') },
-                      { value: 'archived', label: emojize('📼', 'Archived') },
+                      { value: 'ignored', icon: '🔕', label: 'Ignored' },
+                      { value: 'wished', icon: '🍿', label: 'Wished' },
+                      { value: 'pinned', icon: '📍', label: 'Pinned' },
+                      { value: 'archived', icon: '📼', label: 'Archived' },
                     ],
                     onChange: ({ value }) => apply('state', value, `Do you want to change ${selected.length} movies state to "${value}" ?`),
                   },
                   {
                     key: 'proposal',
-                    label: emojize('🛎️', 'Proposal'),
+                    icon: '🛎️',
+                    label: 'Proposal',
                     options: [
                       { value: true, label: 'Accept' },
                       { value: false, label: 'Refuse' },
@@ -263,13 +265,15 @@ const Library = compose(
                   },
                   {
                     key: 'policy',
-                    label: emojize('🚨', 'Policy'),
+                    icon: '🚨',
+                    label: 'Policy',
                     options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
                     onChange: ({ value }) => apply('policy', value, `Do you want to change ${selected.length} movies policies to ${value} ?`),
                   },
                   ...['refine', 'shrink'].map(job => ({
                     key: job,
-                    label: emojize({ refine: '✨', shrink: '✂️' }[job], { refine: 'Refine', shrink: 'Shrink' }[job]),
+                    icon: { refine: '✨', shrink: '✂️' }[job],
+                    label: { refine: 'Refine', shrink: 'Shrink' }[job],
                     options: [
                       { value: true, label: 'Enable' },
                       { value: false, label: 'Disable' },
