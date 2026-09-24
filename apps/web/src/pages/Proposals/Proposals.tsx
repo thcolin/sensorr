@@ -570,7 +570,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }), [setSelected])
   const selectAll = useMemo(() => ({ count: chosen.length, selectable, setSelected }), [chosen.length, selectable, setSelected])
 
-  const balance = useMemo(() => balanceOf(chosen.length ? chosen : items.filter(item => !decided[item.id])), [chosen, items, decided])
+  // The swaps the threshold ignores stay out of the disk they would change.
+  const counted = useMemo(() => groups.filter(({ group }) => group !== 'rest').flatMap(({ items }) => items).filter(item => !decided[item.id]), [groups, decided])
+  const balance = useMemo(() => balanceOf(chosen.length ? chosen : counted), [chosen, counted])
   const Balance = useCallback(({ style }) => <UIBalance balance={balance} style={style} inline={true} />, [balance])
 
   const rows = useMemo(() => groups.reduce((rows, { group, items }) => {
