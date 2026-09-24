@@ -308,9 +308,9 @@ UIActive.styles = {
     position: 'relative',
     zIndex: 2,
   },
-  // It comes out from under the poster once the card has opened: held while the move
-  // runs (Proposals.tsx sets `data-morphing` for its length). Like the poster, it sits
-  // above the releases band, whose shadow would cover it while it animates.
+  // It comes out from under the poster as the card's move (400ms, MORPH in Proposals.tsx)
+  // settles. Like the poster, it sits above the releases band, whose shadow would cover
+  // it while it animates.
   ticket: {
     position: 'relative',
     zIndex: 1,
@@ -320,12 +320,9 @@ UIActive.styles = {
     marginBottom: [0, 4],
     fontSize: 6,
     '@keyframes sensorr-ticket-in': {
-      from: { opacity: 0, transform: 'translateY(-2.5em)' },
+      from: { opacity: 0, transform: 'translateY(-1.5em)' },
     },
-    animation: '500ms ease-out backwards sensorr-ticket-in',
-    'html[data-morphing] &': {
-      animationPlayState: 'paused',
-    },
+    animation: '280ms cubic-bezier(0.25, 1, 0.5, 1) 300ms backwards sensorr-ticket-in',
     '@media (prefers-reduced-motion: reduce)': {
       animation: 'none',
     },
