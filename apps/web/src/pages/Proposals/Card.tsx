@@ -319,7 +319,7 @@ UIActive.styles = {
     '@keyframes sensorr-ticket-in': {
       from: { opacity: 0, transform: 'translateY(-1em)' },
     },
-    animation: '250ms cubic-bezier(0.2, 0, 0, 1) 400ms both sensorr-ticket-in',
+    animation: '250ms cubic-bezier(0.2, 0, 0, 1) 400ms backwards sensorr-ticket-in',
     '@media (prefers-reduced-motion: reduce)': {
       animation: 'none',
     },
