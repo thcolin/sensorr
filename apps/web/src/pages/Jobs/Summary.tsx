@@ -1,4 +1,10 @@
 import Tippy from '@tippyjs/react'
+import { filesize } from '@sensorr/utils'
+
+// Freeing space is the usual outcome of a job, so it goes unsigned; only growing the disk carries a sign
+export const freed = (change) => change > 0 ? `+${filesize.stringify(change)}` : filesize.stringify(-change)
+
+export const freedLabel = (change) => change > 0 ? 'more on disk' : 'freed on disk'
 
 export const Summary = ({ error = null, meta }) => (
   <span sx={Summary.styles.element}>
