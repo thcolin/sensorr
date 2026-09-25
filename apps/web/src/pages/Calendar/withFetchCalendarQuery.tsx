@@ -1,11 +1,89 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 // import toast from 'react-hot-toast'
 import nanobounce from 'nanobounce'
 import { useControlsState } from '@sensorr/ui'
-import { useHistoryState } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
+import { ControlsContext } from '../../components/Calendar/Calendar'
 import { judge, summarize } from './refine'
+
+// Every movie a followed person has in a TMDB discover query, with what its refinements are judged on. TMDB takes
+// 500 people at most a request: the pages of each slice are merged, until a page adds nothing new.
+export const fetchCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
+  const ids = Object.keys(followed)
+  const seen = new Set<number>()
+  const entities = []
+
+  for (let page = 1; !cancelled(); page++) {
+    const results = []
+
+    for (let i = 0; i < Math.ceil(ids.length / 500); i++) {
+      const raw = await tmdb.fetch('discover/movie', {
+        ...params,
+        page,
+        with_people: ids.slice(i * 500, (i + 1) * 500).join('|'),
+      })
+
+      raw.results.forEach(entity => {
+        if (!seen.has(entity.id)) {
+          seen.add(entity.id)
+          results.push(entity)
+        }
+      })
+    }
+
+    if (!results.length) {
+      break
+    }
+
+    entities.push(...results)
+  }
+
+  const summaries = {}
+
+  for (let i = 0; i < entities.length && !cancelled(); i += 20) {
+    await Promise.all(entities.slice(i, i + 20).map(async (entity) => {
+      const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => {
+        console.warn(`Movie ${entity.id} kept unfiltered, its details failed`)
+        return null
+      })
+      summaries[entity.id] = details && summarize(details, followed)
+    }))
+  }
+
+  return { entities, summaries }
+}
+
+// What the refinements keep of a fetch, sorted, and the departments the followed people hold in it
+export const refine = ({ entities, summaries }, refinements, sort_by = 'primary_release_date.asc') => {
+  const released = entities.filter(entity => judge(summaries[entity.id], { ...refinements, with_credits_departments: '' }))
+  const kept = released.filter(entity => judge(summaries[entity.id], refinements))
+  const [key, order] = sort_by.split('.')
+
+  kept.sort((a, b) => {
+    switch (key) {
+      case 'primary_release_date':
+        return order === 'desc' ? new Date(b.release_date).getTime() - new Date(a.release_date).getTime() : new Date(a.release_date).getTime() - new Date(b.release_date).getTime()
+      case 'popularity':
+      case 'vote_average':
+      case 'vote_count':
+        return order === 'desc' ? b[key] - a[key] : a[key] - b[key]
+      default:
+        return 0
+    }
+  })
+
+  const counts = released
+    .flatMap(entity => summaries[entity.id]?.departments || [])
+    .reduce((acc, department) => ({ ...acc, [department]: (acc[department] || 0) + 1 }), {})
+
+  return {
+    entities: kept,
+    statistics: {
+      with_credits_departments: Object.entries(counts).map(([_id, count]) => ({ _id, count })),
+    },
+  }
+}
 
 const withFetchCalendarQuery = (
   defaultQuery?: { params?: {} },
@@ -16,7 +94,7 @@ const withFetchCalendarQuery = (
     const debouncer = useMemo(() => nanobounce(0), [])
 
     // Wait for first controlsQuery hydration by serializing initial state
-    const useControlsValues = useCallback(() => useHistoryState('controls', { uri: '', params: {} }), [])
+    const useControlsValues = useCallback(() => useContext(ControlsContext), [])
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
 
     const [query, refinements] = useMemo(() => {
@@ -31,26 +109,6 @@ const withFetchCalendarQuery = (
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [fetched, setFetched] = useState(null)
-
-    const fetcher = useCallback(async (uri, params, seen: Set<number>) => {
-      const entities = []
-
-      for (let i = 0; i < Math.ceil(Object.keys(persons.metadata).length / 500); i++) {
-        const raw = await tmdb.fetch(uri, {
-          ...params,
-          with_people: Object.keys(persons.metadata).slice(i * 500, (i + 1) * 500).join('|'),
-        })
-
-        raw.results.forEach(entity => {
-          if (!seen.has(entity.id)) {
-            seen.add(entity.id)
-            entities.push(entity)
-          }
-        })
-      }
-
-      return entities
-    }, [persons.metadata])
 
     useEffect(() => {
       if ((props as any).error) {
@@ -71,33 +129,10 @@ const withFetchCalendarQuery = (
 
       debouncer(async () => {
         try {
-          const seen = new Set<number>()
-          const entities = []
-
-          for (let page = 1; !cancelled; page++) {
-            const results = await fetcher(query.uri, { ...query.params, page }, seen)
-
-            if (!results.length) {
-              break
-            }
-
-            entities.push(...results)
-          }
-
-          const summaries = {}
-
-          for (let i = 0; i < entities.length && !cancelled; i += 20) {
-            await Promise.all(entities.slice(i, i + 20).map(async (entity) => {
-              const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => {
-                console.warn(`Movie ${entity.id} kept unfiltered, its details failed`)
-                return null
-              })
-              summaries[entity.id] = details && summarize(details, persons.metadata)
-            }))
-          }
+          const fetched = await fetchCalendar(tmdb, persons.metadata, query.params, () => cancelled)
 
           if (!cancelled) {
-            setFetched({ entities, summaries })
+            setFetched(fetched)
           }
         } catch (error) {
           if (!cancelled) {
@@ -120,35 +155,12 @@ const withFetchCalendarQuery = (
         return { entities: {}, total: null, statistics: {} }
       }
 
-      const { entities, summaries } = fetched
-      const released = entities.filter(entity => judge(summaries[entity.id], { ...refinements, with_credits_departments: '' }))
-      const kept = released.filter(entity => judge(summaries[entity.id], refinements))
-
-      kept.sort((a, b) => {
-        const [key, order] = (query?.params?.sort_by || 'primary_release_date.asc').split('.')
-
-        switch (key) {
-          case 'primary_release_date':
-            return order === 'desc' ? new Date(b.release_date).getTime() - new Date(a.release_date).getTime() : new Date(a.release_date).getTime() - new Date(b.release_date).getTime()
-          case 'popularity':
-          case 'vote_average':
-          case 'vote_count':
-            return order === 'desc' ? b[key] - a[key] : a[key] - b[key]
-          default:
-            return 0
-        }
-      })
-
-      const counts = released
-        .flatMap(entity => summaries[entity.id]?.departments || [])
-        .reduce((acc, department) => ({ ...acc, [department]: (acc[department] || 0) + 1 }), {})
+      const { entities, statistics } = refine(fetched, refinements, query?.params?.sort_by)
 
       return {
-        entities: kept.reduce((acc, entity, index) => ({ ...acc, [index]: entity }), {}),
-        total: kept.length,
-        statistics: {
-          with_credits_departments: Object.entries(counts).map(([_id, count]) => ({ _id, count })),
-        },
+        entities: entities.reduce((acc, entity, index) => ({ ...acc, [index]: entity }), {}),
+        total: entities.length,
+        statistics,
       }
     }, [fetched, refinements, query?.params?.sort_by])
 
