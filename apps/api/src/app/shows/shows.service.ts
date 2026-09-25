@@ -67,7 +67,6 @@ export class ShowsService {
   async handlePlexReset() {
     this.logger.log(`Handling plex.reset event`)
     await this.showModel.updateMany({}, { '$pull': { 'releases': { from: 'sync' } } })
-    await this.episodeModel.updateMany({}, { files: [] })
   }
 
   private async matchPolicies(changes: { [key: string]: ShowDTO }): Promise<{ [key: string]: ShowDTO }> {
