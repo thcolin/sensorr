@@ -173,6 +173,19 @@ export class MoviesService {
     return { upserted: Number(insertedCount + modifiedCount) }
   }
 
+  // Upserted: a release can be banned from the search of a movie not in the library yet
+  async banRelease(id: number, title: string): Promise<any> {
+    this.logger.log(`BanRelease "${id}", title="${title}"`)
+    const { modifiedCount, upsertedCount } = await this.movieModel.updateOne({ _id: id }, { $addToSet: { banned_releases: title } }, { upsert: true })
+    return { banned: modifiedCount + upsertedCount }
+  }
+
+  async unbanRelease(id: number, title: string): Promise<any> {
+    this.logger.log(`UnbanRelease "${id}", title="${title}"`)
+    const { modifiedCount } = await this.movieModel.updateOne({ _id: id }, { $pull: { banned_releases: title } })
+    return { unbanned: modifiedCount }
+  }
+
   async deleteMovie(movie: MovieDTO): Promise<any> {
     this.logger.log(`DeleteMovie "${movie?.id}"`)
     return this.movieModel.findByIdAndRemove(movie.id)

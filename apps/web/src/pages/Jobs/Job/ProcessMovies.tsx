@@ -2,6 +2,7 @@ import { Fragment, createContext, memo, useCallback, useContext, useEffect, useL
 import { Icon, Warning } from '@sensorr/ui'
 import { filesize, useResponsiveValue } from '@sensorr/utils'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import toast from 'react-hot-toast'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -130,7 +131,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const [znab, setZnab] = useState(null)
   const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
   const toggleSensorr = useRef() as any
-  const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
+  const { metadata: moviesMetadataContext, setMovieMetadata, banMovieRelease, unbanMovieRelease } = useMoviesMetadataContext() as any
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => !log.meta.group ? groups : {
     ...groups,
@@ -291,6 +292,8 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                         command={job.meta.command}
                         proposalOnly={!!job.meta.config?.proposalOnly}
                         setMovieMetadata={setMovieMetadata}
+                        banMovieRelease={banMovieRelease}
+                        unbanMovieRelease={unbanMovieRelease}
                         toggleSensorr={(e, movie) => toggleSensorr.current(e, movie)}
                         logsCache={logsCache}
                       />
@@ -362,7 +365,7 @@ UIProcessMoviesJob.styles = {
 
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
-const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, toggleSensorr, logsCache, done, error, ...props }) => {
+const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, banMovieRelease, unbanMovieRelease, toggleSensorr, logsCache, done, error, ...props }) => {
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -381,6 +384,11 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
     setOptimistic({ treated: true, choice })
     setMovieMetadata(movie?.id, 'proposal', release?.id ? { id: release.id, choice } : choice)
   }, [movie?.id, setMovieMetadata])
+
+  const banned = metadata?.banned_releases || []
+  const toggleBan = useCallback((title) => (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title).catch(() => {
+    toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release')
+  }), [movie?.id, banned, banMovieRelease, unbanMovieRelease])
 
   useEffect(() => {
     setOptimistic({ treated, choice })
@@ -472,7 +480,7 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
                 command={command}
                 release={release}
                 metadata={metadata}
-                setMetadata={(key, value) => setMovieMetadata(movie?.id, key, value)}
+                toggleBan={toggleBan}
               />
               {['refine', 'shrink', 'report'].includes(command) && movie?.releases?.map(release => (
                 <div sx={UIRecord.styles.release} key={release.id}>
@@ -494,14 +502,8 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
                       entity={{ from: command, job, ...release, ...optimistic }}
                       display='column'
                       proceed={proceed}
-                      banned={(metadata?.banned_releases || []).includes(release?.title)}
-                      ban={() => setMovieMetadata(
-                        movie?.id,
-                        'banned_releases',
-                        (metadata?.banned_releases || []).includes(release?.title) ?
-                          [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
-                          [...(metadata?.banned_releases || []), release?.title]
-                      )}
+                      banned={banned.includes(release?.title)}
+                      ban={() => toggleBan(release?.title)}
                     />
                   </div>
                 ) : (
@@ -509,14 +511,8 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
                     <Release
                       entity={{ ...(release || {}), ...optimistic }}
                       display='column'
-                      banned={(metadata?.banned_releases || []).includes(release?.title)}
-                      ban={() => setMovieMetadata(
-                        movie?.id,
-                        'banned_releases',
-                        (metadata?.banned_releases || []).includes(release?.title) ?
-                          [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
-                          [...(metadata?.banned_releases || []), release?.title]
-                      )}
+                      banned={banned.includes(release?.title)}
+                      ban={() => toggleBan(release?.title)}
                     />
                   </div>
                 )
@@ -606,7 +602,7 @@ UIRecord.styles = {
 
 const Record = memo(UIRecord)
 
-const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metadata, setMetadata }) => {
+const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metadata, toggleBan }) => {
   return (
     <div sx={UIRecordLogs.styles.element}>
       <div sx={UIRecordLogs.styles.container}>
@@ -664,12 +660,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMetadata(
-                                    'banned_releases',
-                                    (metadata?.banned_releases || []).includes(release) ?
-                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
-                                      [...(metadata?.banned_releases || []), release]
-                                  )}
+                                  onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>
@@ -692,12 +683,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMetadata(
-                                    'banned_releases',
-                                    (metadata?.banned_releases || []).includes(release) ?
-                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
-                                      [...(metadata?.banned_releases || []), release]
-                                  )}
+                                  onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>
@@ -720,12 +706,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
-                                  onClick={() => setMetadata(
-                                    'banned_releases',
-                                    (metadata?.banned_releases || []).includes(release) ?
-                                      [...(metadata?.banned_releases || [])].filter(r => r !== release) :
-                                      [...(metadata?.banned_releases || []), release]
-                                  )}
+                                  onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>

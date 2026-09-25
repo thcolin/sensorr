@@ -247,7 +247,10 @@ const UISensorr = compose(
     },
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, ...props }) => {
-  const { setMovieMetadata, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
+  const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
+  const banned = metadata?.banned_releases || []
+  const toggleBan = (title) => (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title)
+    .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))
   const statistics = useMemo(() => ({
     lowest: {
       score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,
@@ -283,14 +286,8 @@ const UISensorr = compose(
                   toast.error('Error while processing release')
                 }
               }}
-              banned={(metadata?.banned_releases || []).includes(release?.title)}
-              ban={() => setMovieMetadata(
-                movie?.id,
-                'banned_releases',
-                (metadata?.banned_releases || []).includes(release?.title) ?
-                  [...(metadata?.banned_releases || [])].filter(r => r !== release?.title) :
-                  [...(metadata?.banned_releases || []), release?.title]
-              )}
+              banned={banned.includes(release?.title)}
+              ban={() => toggleBan(release?.title)}
             />
           ))}
         </div>

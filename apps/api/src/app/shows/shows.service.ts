@@ -183,6 +183,12 @@ export class ShowsService {
     return { banned: modifiedCount }
   }
 
+  async unbanRelease(id: number, title: string): Promise<any> {
+    this.logger.log(`UnbanRelease "${id}", title="${title}"`)
+    const { modifiedCount } = await this.showModel.updateOne({ _id: id }, { $pull: { banned_releases: title } })
+    return { unbanned: modifiedCount }
+  }
+
   async updateRelease(id: number, release: string, fields: Partial<ShowReleaseDTO>): Promise<any> {
     this.logger.log(`UpdateRelease "${id}", release="${release}"`)
     const changes = Object.entries(fields).filter(([key]) => RELEASE_FIELDS.includes(key))

@@ -96,7 +96,7 @@ export const Provider = ({ ...props }) => {
 
   const setMovieMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | 'banned_releases' | null,
+    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | null,
     value: any,
     { silent = false } = {},
   ) => {
@@ -108,7 +108,7 @@ export const Provider = ({ ...props }) => {
         id: i,
         updated_at: new Date().getTime(),
         ...(
-          ['state', 'query', 'policy', 'refine', 'shrink', 'releases', 'banned_releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}, i) : value }
+          ['state', 'query', 'policy', 'refine', 'shrink', 'releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}, i) : value }
           : typeof value === 'function' ? value(initial[i] || {}, i) : {}
         ),
         ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) && initial[i]?.releases ? { releases: (initial[i]?.releases || []).filter(({ proposal }) => !proposal) } : {}),
@@ -194,6 +194,17 @@ export const Provider = ({ ...props }) => {
     (metadata) => (metadata?.releases || []).filter(r => r.id !== release.id)
   ), [])
 
+  // A ban goes through its own route, the list written whole would drop a ban made meanwhile
+  const banMovieRelease = useCallback(async (id: number, title: string) => {
+    const { uri, params, init } = api.query.movies.postMovieBannedRelease({ body: { title }, params: { id } })
+    await api.fetch(uri, params, init)
+  }, [])
+
+  const unbanMovieRelease = useCallback(async (id: number, title: string) => {
+    const { uri, params, init } = api.query.movies.deleteMovieBannedRelease({ body: { title }, params: { id } })
+    await api.fetch(uri, params, init)
+  }, [])
+
   return (
     <moviesMetadataContext.Provider
       {...props}
@@ -203,6 +214,8 @@ export const Provider = ({ ...props }) => {
         setMovieMetadata,
         enhanceMovieMetadata,
         removeMovieRelease,
+        banMovieRelease,
+        unbanMovieRelease,
       }}
     />
   )

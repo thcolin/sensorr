@@ -64,6 +64,11 @@ export class ShowsController {
     return this.showsService.banRelease(id, title)
   }
 
+  @Delete(':id/banned_releases')
+  async unbanRelease(@Param('id', ParseIntPipe) id: number, @Body() { title }: { title: string }) {
+    return this.showsService.unbanRelease(id, title)
+  }
+
   @Get(':id/episodes')
   async getShowEpisodes(@Param('id', ParseIntPipe) id: number): Promise<unknown> {
     return this.showsService.getShowEpisodes(id)

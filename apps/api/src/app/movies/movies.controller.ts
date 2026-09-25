@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Query, Post, Sse, Delete } from '@nestjs/common'
+import { Body, Controller, Get, Query, Post, Sse, Delete, Param, ParseIntPipe } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { MoviesService } from './movies.service'
 import { MovieDTO } from './movie.dto'
@@ -25,6 +25,16 @@ export class MoviesController {
   @Delete('bulk')
   async deleteMovies(@Body() changes: { [key: string]: MovieDTO }) {
     return this.moviesService.deleteMovies(changes)
+  }
+
+  @Post(':id/banned_releases')
+  async banRelease(@Param('id', ParseIntPipe) id: number, @Body() { title }: { title: string }) {
+    return this.moviesService.banRelease(id, title)
+  }
+
+  @Delete(':id/banned_releases')
+  async unbanRelease(@Param('id', ParseIntPipe) id: number, @Body() { title }: { title: string }) {
+    return this.moviesService.unbanRelease(id, title)
   }
 
   @Get()

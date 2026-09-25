@@ -119,6 +119,38 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      postMovieBannedRelease: (
+        { body, init = {}, params: { id } }: { body: { title: string }, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `movies/${id}/banned_releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      deleteMovieBannedRelease: (
+        { body, init = {}, params: { id } }: { body: { title: string }, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `movies/${id}/banned_releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       getMovies: (
         { init = {}, params: { page = 1, ...params } = {} }: { init?: any, params?: { page?: number, [key: string]: any } }
       ): { uri: string, params: {}, init: {} } => ({
@@ -273,6 +305,22 @@ export class API {
         init: {
           ...init,
           method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      deleteShowBannedRelease: (
+        { body, init = {}, params: { id } }: { body: { title: string }, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/banned_releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
           headers: {
             Authorization: `Bearer __ACCESS_TOKEN__`,
             Accept: 'application/json',

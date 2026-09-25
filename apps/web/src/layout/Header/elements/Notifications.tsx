@@ -284,7 +284,7 @@ const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poste
 
 const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { answerNotification } = useNotificationsContext() as any
-  const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata } = useMoviesMetadataContext() as any
+  const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata, banMovieRelease } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
 
   const choice = useMemo(() => {
@@ -387,11 +387,8 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     variant={!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'outline' : 'contain'}
                     color={(loading || (metadata.banned_releases || []).includes(meta?.release?.title)) ? 'gray' : 'primary'}
                     disabled={loading || (metadata.banned_releases || []).includes(meta?.release?.title)}
-                    onClick={() => setMovieMetadata(
-                      meta?.movie?.id,
-                      'banned_releases',
-                      [...(metadata?.banned_releases || []), meta?.release?.title]
-                    )}
+                    onClick={() => banMovieRelease(meta?.movie?.id, meta?.release?.title)
+                      .catch(() => toast.error('Error while banning the release'))}
                   >
                     {!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'Ban' : 'Banned'}
                   </Button>

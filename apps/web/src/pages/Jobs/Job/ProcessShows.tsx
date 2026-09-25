@@ -90,7 +90,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
   const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
-  const { metadata: showsMetadata, setShowMetadata } = useShowsMetadataContext() as any
+  const { metadata: showsMetadata, setShowMetadata, banShowRelease, unbanShowRelease } = useShowsMetadataContext() as any
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => (!log.meta.group || log.meta.type !== 'show') ? groups : {
     ...groups,
@@ -239,6 +239,8 @@ const UIProcessShowsJob = ({ job, logs }) => {
                     command={job.meta.command}
                     metadata={showsMetadata[record.show?.id] || {}}
                     setShowMetadata={setShowMetadata}
+                    banShowRelease={banShowRelease}
+                    unbanShowRelease={unbanShowRelease}
                     logsCache={logsCache}
                   />
                 </div>
@@ -302,7 +304,7 @@ UIProcessShowsJob.styles = {
 
 export const ProcessShowsJob = memo(UIProcessShowsJob)
 
-const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, logsCache, done, ...props }) => {
+const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, banShowRelease, unbanShowRelease, logsCache, done, ...props }) => {
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -310,13 +312,12 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
   const mobile = useResponsiveValue([true, false])
   const banned = metadata?.banned_releases || []
 
-  // `setShowMetadata` reverts on failure but tells nothing for a single show, so the record says it
-  const setMetadata = useCallback((key, value) => setShowMetadata(show?.id, key, value).catch(() => {
-    toast.error('Error while updating show metadata')
-  }), [show?.id, setShowMetadata])
   // The Policy and Auto fields handle their own failure
   const setSettings = useCallback((key, value) => setShowMetadata(show?.id, key, value), [show?.id, setShowMetadata])
-  const toggleBan = useCallback((title) => setMetadata('banned_releases', banned.includes(title) ? banned.filter(r => r !== title) : [...banned, title]), [banned, setMetadata])
+  // A ban goes through its own route: the list written whole would drop a ban a job made meanwhile
+  const toggleBan = useCallback((title) => (banned.includes(title) ? unbanShowRelease : banShowRelease)(show?.id, title).catch(() => {
+    toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release')
+  }), [show?.id, banned, banShowRelease, unbanShowRelease])
 
   const proceed = useCallback(({ treated, choice: _choice, ...release }, choice) => {
     setOptimistic(optimistic => ({ ...optimistic, [release.id]: { treated: true, choice } }))
@@ -389,7 +390,7 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
               logs={logs || summaryLogs}
               command={command}
               metadata={metadata}
-              setMetadata={setMetadata}
+              toggleBan={toggleBan}
             />
             {done && (releases.length ? (
               <div>

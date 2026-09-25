@@ -124,7 +124,7 @@ export const Provider = ({ ...props }) => {
 
   const setShowMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'releases' | 'banned_releases',
+    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'releases',
     value: any,
   ) => {
     const ids = Array.isArray(id) ? id : [id]
@@ -306,6 +306,11 @@ export const Provider = ({ ...props }) => {
     await api.fetch(uri, params, init)
   }, [])
 
+  const unbanShowRelease = useCallback(async (id: number, title: string) => {
+    const { uri, params, init } = api.query.shows.deleteShowBannedRelease({ body: { title }, params: { id } })
+    await api.fetch(uri, params, init)
+  }, [])
+
   // `removeShow` toasts its own failure, only a failed follow rejects
   const setShowState = useCallback(async (id: number, state: 'ignored' | 'unfollowed' | 'followed') => {
     if (state !== 'ignored') {
@@ -337,6 +342,7 @@ export const Provider = ({ ...props }) => {
         removeShow,
         setShowState,
         banShowRelease,
+        unbanShowRelease,
       }}
     />
   )
