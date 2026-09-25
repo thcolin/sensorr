@@ -1,5 +1,5 @@
 import fs from 'fs/promises'
-import { copyFileSync, readFileSync, writeFileSync } from 'fs'
+import { chmodSync, copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
@@ -37,7 +37,8 @@ export class ConfigService implements OnModuleInit {
     }
   }
 
-  // Runs before the file is loaded: convict would keep the old job keys next to the new ones
+  // Runs before the file is loaded: convict would keep the old job keys next to the new ones.
+  // Compose mounts config.json alone but .secrets/ whole, so the copy goes there to outlive the container.
   private migrate() {
     const raw = JSON.parse(readFileSync(this.file, 'utf8'))
     const migrated = migrateJobs(raw)
@@ -46,9 +47,12 @@ export class ConfigService implements OnModuleInit {
       return
     }
 
-    copyFileSync(this.file, `${this.file}.bak`)
+    const backup = path.join(path.dirname(this.file), '.secrets', 'config.json.bak')
+    mkdirSync(path.dirname(backup), { recursive: true })
+    copyFileSync(this.file, backup)
+    chmodSync(backup, 0o600)
     writeFileSync(this.file, JSON.stringify(migrated, null, 2))
-    this.logger.log(`Migrate jobs of "${this.file}" to jobs.<command>.<type>, previous file kept as "${this.file}.bak"`)
+    this.logger.log(`Migrate jobs of "${this.file}" to jobs.<command>.<type>, previous file kept as "${backup}"`)
   }
 
   async get() {

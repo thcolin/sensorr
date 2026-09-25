@@ -240,16 +240,18 @@ at `apps/api/src/app/config/config.service.ts:16`, serves it over `GET /api/conf
 rewrites it whole on every settings change (`:59-63`). It also writes a freshly generated
 Plex client identifier into it on first boot (`:31-38`), so booting the API against a
 checkout edits the file. Before loading it, a file that still holds the job keys of before
-`jobs.<command>.<type>` is copied to `config.json.bak` next to it and rewritten with every
-key moved, values kept (`:41-52`, `migrateJobs` in `apps/api/src/app/config/migrate.ts`).
-A migrated file is left alone. Under Compose only `config.json` is mounted, so the copy
-lands inside the container and goes with it: keep your own copy before the first boot. `config.default.json` is the tracked template, `config.json` is
+`jobs.<command>.<type>` is copied to `.secrets/config.json.bak`, readable by its owner only,
+and rewritten with every key moved, values kept (`migrate` in
+`apps/api/src/app/config/config.service.ts`, `migrateJobs` in `apps/api/src/app/config/migrate.ts`).
+A migrated file is left alone. Compose mounts `config.json` as a single file but `.secrets/`
+as a folder (`docker-compose.yml`), so the copy lands on the host, in `./.secrets/`, and
+outlives the container. `config.default.json` is the tracked template, `config.json` is
 gitignored. The field-by-field reference is [`docs/configuration.md`](configuration.md),
 generated from the schema. Do not restate it here.
 
 **`.secrets/`** holds files generated once and kept: the VAPID keypair for web push,
 created by `apps/api/docker-entrypoint.sh:3-6` and loaded into the environment at boot
-(`apps/api/src/main.ts:13-17`), and the Mongo replica set keyfile. Gitignored.
+(`apps/api/src/main.ts:13-17`), the Mongo replica set keyfile, and the copy of `config.json` taken before its jobs were migrated. Gitignored.
 
 What is actually secret: `NX_SENSORR_AUTH_SECRET`, which signs the 90-day JWT
 (`auth.module.ts:11-12`); the Mongo credentials; the TMDB key and every indexer key, which
