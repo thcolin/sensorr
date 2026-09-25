@@ -6,6 +6,7 @@ import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { ReleasesStyles } from '../../Details/components/Releases'
 import { Follow } from './Follow'
+import { Proposal } from './Proposals'
 import { fileMetaOf, sizeOf } from './fills'
 
 const THRESHOLD = 60
@@ -17,12 +18,16 @@ const pad = (number) => String(number).padStart(2, '0')
 const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em', '6.5em 10em 1.5em 1.5em']
 const GAP = [6, 4]
 
-const pendingOf = (proposals, season: number) => proposals.filter(({ coverage }) => (coverage || []).some(unit => unit.season === season))
+const pendingOf = (proposals, season: number) => proposals.filter(({ release }) => (release.coverage || []).some(unit => unit.season === season))
+
+const NONE = []
 
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
 
-const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followEpisodes, ...props }) => {
+// `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
+// atop its season's drawer, or in its episode's unfolded row
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -54,7 +59,28 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
   }, [episodes])
 
   // Episodes a pending proposal covers: on an owned one, the file it would replace is marked
-  const replaced = useMemo(() => new Set(proposals.flatMap(({ coverage }) => (coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
+  const replaced = useMemo(() => new Set(proposals.flatMap(({ release }) => (release.coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
+
+  // An episode or a season the page does not list sends its proposal one level up
+  const placed = useMemo(() => {
+    const numbers = new Set(seasons.map(({ number }) => number))
+    const known = new Set((episodes || []).map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
+    const placed = { show: [], seasons: {}, episodes: {} }
+
+    proposals.forEach(row => {
+      const { season, episode } = row.place
+
+      if (season === null || !numbers.has(season)) {
+        placed.show.push(row)
+      } else if (episode === null || !known.has(`${season}:${episode}`)) {
+        (placed.seasons[season] ||= []).push(row)
+      } else {
+        (placed.episodes[`${season}:${episode}`] ||= []).push(row)
+      }
+    })
+
+    return placed
+  }, [proposals, seasons, episodes])
 
   const regular = seasons.filter(({ number }) => number !== 0)
   const { hash, key: navigation } = useLocation()
@@ -71,12 +97,25 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
   }, [target, seasons])
 
   const [open, setOpen] = useState({})
+  // An episode a proposal waits on is unfolded until folded by hand
+  const [unfolded, setUnfolded] = useState({})
   const scrolled = useRef(null)
+  const openedOf = (number) => open[number] ?? defaults.has(number)
 
   // A new navigation, even to the same anchor, resets what was opened by hand
   useEffect(() => {
     setOpen({})
+    setUnfolded({})
   }, [entity?.id, navigation])
+
+  // The A and R keys answer the first proposal shown, its buttons announce them (Proposals.tsx)
+  const first = [
+    ...placed.show,
+    ...seasons.filter(({ number }) => openedOf(number)).flatMap(({ number, episodes }) => [
+      ...(placed.seasons[number] || []),
+      ...episodes.filter(({ id }) => unfolded[id] ?? true).flatMap(({ episode_number }) => placed.episodes[`${number}:${episode_number}`] || []),
+    ]),
+  ][0]?.release.id
 
   useEffect(() => {
     const key = `${entity?.id}${navigation}`
@@ -93,6 +132,7 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
   }
 
   const toggle = (number, opened) => (e) => !e.target.closest('[data-follow]') && setOpen(open => ({ ...open, [number]: !opened }))
+  const block = (row) => <Proposal key={row.release.id} row={row} policy={policy} answer={answer} shortcuts={row.release.id === first} reach={true} />
 
   if (!inLibrary) {
     const years = regular.map(({ year }) => year).filter(Boolean)
@@ -136,8 +176,9 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
               <span />
             </div>
           </div>
+          {placed.show.map(block)}
           {seasons.map(season => {
-            const opened = open[season.number] ?? defaults.has(season.number)
+            const opened = openedOf(season.number)
             const id = `season-${entity.id}-${season.number}`
             const specials = season.number === 0
 
@@ -189,6 +230,7 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
                     />
                   </div>
                 </div>
+                {opened && (placed.seasons[season.number] || NONE).map(block)}
                 {opened && (
                   <Episodes
                     id={id}
@@ -197,6 +239,12 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
                     replaced={replaced}
                     ready={ready}
                     followEpisodes={followEpisodes}
+                    unfolded={unfolded}
+                    setUnfolded={setUnfolded}
+                    placed={placed.episodes}
+                    policy={policy}
+                    answer={answer}
+                    first={first}
                   />
                 )}
               </div>
@@ -330,10 +378,9 @@ UISeasons.styles = {
 
 export const Seasons = memo(UISeasons)
 
-const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => {
+const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfolded, setUnfolded, placed, policy, answer, first }) => {
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
-  const [unfolded, setUnfolded] = useState({})
 
   const virtualizer = useVirtualizer({
     count: episodes.length,
@@ -352,9 +399,10 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => 
           const episode = episodes[index]
           const status = episodeStatus(episode)
           const synopsis = `synopsis-${show}-${episode.id}`
-          const foldable = !!episode.overview
-          const opened = foldable && !!unfolded[episode.id]
-          const toggle = () => setUnfolded(unfolded => ({ ...unfolded, [episode.id]: !unfolded[episode.id] }))
+          const proposals = placed[`${episode.season_number}:${episode.episode_number}`] || NONE
+          const foldable = !!episode.overview || !!proposals.length
+          const opened = foldable && (unfolded[episode.id] ?? !!proposals.length)
+          const toggle = () => setUnfolded(unfolded => ({ ...unfolded, [episode.id]: !opened }))
 
           return (
             <div
@@ -393,7 +441,10 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => 
               </div>
               {opened && (
                 <div id={synopsis} sx={UIEpisodes.styles.synopsis}>
-                  <p>{episode.overview}</p>
+                  {!!episode.overview && <p>{episode.overview}</p>}
+                  {proposals.map(row => (
+                    <Proposal key={row.release.id} row={row} policy={policy} answer={answer} shortcuts={row.release.id === first} />
+                  ))}
                 </div>
               )}
             </div>

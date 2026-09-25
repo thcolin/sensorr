@@ -13,9 +13,8 @@ import { withBody } from '../../layout/withLayout'
 import ShowChild from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
 import Details from '../Details/Details'
-import { isPending } from '../Proposals/queue'
 import { ShowActions } from './components/Actions'
-import { Proposals } from './components/Proposals'
+import { useProposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
 import { aggregateCredits } from './credits'
 
@@ -71,7 +70,7 @@ const Show = ({ ...props }) => {
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
 
-  const pending = useMemo(() => (metadata?.releases || []).filter(isPending), [metadata?.releases])
+  const proposals = useProposals({ entity: show.data, metadata, episodes: inLibrary ? (episodes || null) : null, proceedRelease, banRelease })
 
   // Only what waits on a gesture: owned over aired and the size are the "All seasons" pills below
   const summary = useMemo(() => {
@@ -79,23 +78,25 @@ const Show = ({ ...props }) => {
       return null
     }
 
+    const pending = proposals.rows.length
     const wanted = episodes.filter(episode => episodeStatus(episode) === 'wanted').length
+    // To the first proposal shown, in its season's drawer or its episode's row (Seasons.tsx)
     const toProposals = (e) => {
       e.preventDefault()
-      document.getElementById('proposals')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      document.querySelector('[data-proposal]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     }
 
     return [
-      !!pending.length && (
+      !!pending && (
         <span key='pending'>
-          <a href='#proposals' onClick={toProposals} title={`${pending.length} pending proposal${pending.length > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
-            {EpisodeStatusOptions.proposed.emoji} {pending.length}
+          <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
+            {EpisodeStatusOptions.proposed.emoji} {pending}
           </a>
         </span>
       ),
       !!wanted && <span key='wanted' title={`${wanted} wanted episode${wanted > 1 ? 's' : ''}`}>{EpisodeStatusOptions.wanted.emoji} {wanted}</span>,
     ].filter(Boolean)
-  }, [inLibrary, episodes, pending])
+  }, [inLibrary, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
     externals: {
@@ -194,10 +195,6 @@ const Show = ({ ...props }) => {
         />
       ) : null}
     >
-      {/* Before its episodes load, a swap would read as replacing nothing */}
-      {inLibrary && !!episodes && (
-        <Proposals entity={show.data} metadata={metadata} episodes={episodes} proceedRelease={proceedRelease} banRelease={banRelease} />
-      )}
       {episodesError ? (
         <Warning
           emoji='🚨'
@@ -208,7 +205,9 @@ const Show = ({ ...props }) => {
         <Seasons
           entity={show.data}
           episodes={inLibrary ? (episodes || []) : []}
-          proposals={pending}
+          proposals={proposals.rows}
+          policy={proposals.policy}
+          answer={proposals.answer}
           inLibrary={inLibrary && !!episodes}
           ready={actionsReady}
           followEpisodes={followEpisodes}

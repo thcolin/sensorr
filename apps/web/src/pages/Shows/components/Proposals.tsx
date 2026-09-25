@@ -1,13 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Link } from 'react-router-dom'
 import { Button, Icon } from '@sensorr/ui'
 import { coverageLabel, swapOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Release } from '../../../components/Sensorr/Release'
 import { Transition } from '../../../components/Sensorr/Proposal'
-import { ReleasesStyles, Swap } from '../../Details/components/Releases'
+import { Swap } from '../../Details/components/Releases'
 import { isPending, proposalDiff, scoreReleases, sizeStateOf } from '../../Proposals/queue'
 import { DELAY, usePendingVerdict } from '../../Proposals/pending'
 import { VERDICTS } from '../../Proposals/Card'
@@ -27,18 +26,35 @@ const reachOf = (fills, swap) => {
   return fills.total ? `fills ${partial ? fills.label : plural(fills.missing.length, 'episode')}` : null
 }
 
+// Where a proposal sits in the seasons block (Seasons.tsx): a single episode in its row, a single season atop
+// its drawer, anything wider under "All seasons"
+export const placeOf = ({ coverage = [], level = null }) => {
+  const seasons = [...new Set(coverage.map(({ season }) => season))]
+
+  if (seasons.length !== 1 || level === 'series') {
+    return { season: null, episode: null }
+  }
+
+  return { season: seasons[0], episode: coverage.length === 1 && level !== 'season' ? coverage[0].episode : null }
+}
+
 const without = (object, key) => {
   const { [key]: removed, ...rest } = object
   return rest
 }
 
-const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, ...props }) => {
-  const { device } = useDeviceContext()
+// The pending proposals of a show, each one answered with an Undo delay. `episodes` is null until they load:
+// before, a swap would read as replacing nothing
+export const useProposals = ({ entity, metadata, episodes, proceedRelease, banRelease }) => {
   const policy = useShowPolicy(entity, metadata)
   const [decided, setDecided] = useState({})
   const keys = useRef(null)
 
   const rows = useMemo(() => {
+    if (!episodes) {
+      return []
+    }
+
     const pending = (metadata?.releases || []).filter(isPending)
     const scored = scoreReleases(pending, policy)
 
@@ -48,6 +64,7 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
 
       return {
         release: proposal,
+        place: placeOf(release),
         fills: fillsOf(release.coverage || [], episodes, release.level),
         swap: release.swap ? swapOf(release.coverage || [], episodes) : null,
         diff: proposalDiff(owned, proposal, policy),
@@ -75,7 +92,7 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
   const notify = useCallback((release, verdict) => {
     const { emoji, icon, label, color } = VERDICTS[verdict] as any
     const message = (
-      <span sx={UIProposals.styles.pending}>
+      <span sx={styles.pending}>
         <span>
           <span>{entity?.name}</span>
           <small>{coverageLabel(release.coverage || [], release.level || undefined)}</small>
@@ -112,11 +129,7 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     notify(current.release, 'ban')
   }, [hold, notify])
 
-  keys.current = {
-    first: rows[0] ? (verdict) => answer(rows[0].release, verdict) : null,
-    undo,
-    ban,
-  }
+  keys.current = { rows, answer, undo, ban }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -127,9 +140,15 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
       const key = e.key.toLowerCase()
       const verdict = { a: 'accept', r: 'refuse' }[key]
 
-      if (verdict && keys.current.first) {
-        e.preventDefault()
-        keys.current.first(verdict)
+      if (verdict) {
+        // The proposal whose buttons announce the keys: the first one shown, a closed drawer hides its own
+        const id = document.querySelector('[data-proposal] [aria-keyshortcuts="A"]')?.closest('[data-proposal]')?.getAttribute('data-proposal')
+        const row = keys.current.rows.find(({ release }) => String(release.id) === id)
+
+        if (row) {
+          e.preventDefault()
+          keys.current.answer(row.release, verdict)
+        }
       } else if (key === 'z' && pending.current) {
         e.preventDefault()
         keys.current.undo()
@@ -143,62 +162,37 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  if (!rows.length) {
-    return null
-  }
+  return { rows, policy, answer }
+}
 
-  // Laid out like a movie's releases block (../../Details/components/Releases.tsx), one titled group per proposal
+// A pending proposal laid out like a movie's (../../Details/components/Releases.tsx): its release row, the
+// comparison centered under it, then its buttons. `reach` for a season or wider, an episode row says it already
+const UIProposal = ({ row: { release, fills, swap, diff }, policy, answer, shortcuts = false, reach = false }) => {
+  const { device } = useDeviceContext()
+  const label = reach && reachOf(fills, swap)
+
   return (
-    <section id='proposals' sx={ReleasesStyles.element} aria-label='Pending proposals'>
-      <div>
-        {rows.map(({ release, fills, swap, diff }, index) => {
-          const reach = reachOf(fills, swap)
-          const season = Math.min(...(release.coverage || []).map(({ season }) => season))
-
-          return (
-            <div key={release.id} role='group' aria-labelledby={`proposal-${release.id}`} sx={UIProposals.styles.proposal}>
-              <div sx={UIProposals.styles.head}>
-                <h2 id={`proposal-${release.id}`}>
-                  {/* To the season it qualifies, opened alone and scrolled to (Seasons.tsx) */}
-                  {Number.isFinite(season) ? (
-                    <Link to={`#season-${season}`} title={`Go to the episodes of season ${season}`}>
-                      {coverageLabel(release.coverage || [], release.level || undefined)}
-                    </Link>
-                  ) : coverageLabel(release.coverage || [], release.level || undefined)}
-                </h2>
-                {!!reach && <small title={fills.codes.join(' ')}>{reach}</small>}
-              </div>
-              <Release
-                entity={release}
-                proceed={proceedRelease}
-                display={device === 'mobile' ? 'column' : 'row'}
-                actions={false}
-              />
-              <Swap
-                rows={diff.rows}
-                policy={policy}
-                shortcuts={index === 0}
-                onGesture={verdict => answer(release, verdict)}
-              >
-                {/* The owned files of the covered episodes against the proposal, like a movie's size pill (Releases.tsx) */}
-                {!!swap && typeof release.size === 'number' && (
-                  <Transition
-                    axis='size'
-                    from={emojize('📦', filesize.stringify(swap.size))}
-                    to={filesize.stringify(release.size)}
-                    state={sizeStateOf(release.size - swap.size)}
-                  />
-                )}
-              </Swap>
-            </div>
-          )
-        })}
-      </div>
-    </section>
+    <div role='group' aria-label={`Pending proposal for ${coverageLabel(release.coverage || [], release.level || undefined)}`} data-proposal={release.id} sx={styles.proposal}>
+      <Release entity={release} display={device === 'mobile' ? 'column' : 'row'} actions={false} />
+      <Swap rows={diff.rows} policy={policy} shortcuts={shortcuts} onGesture={verdict => answer(release, verdict)}>
+        {/* The owned files of the covered episodes against the proposal, like a movie's size pill (Releases.tsx) */}
+        {!!swap && typeof release.size === 'number' && (
+          <Transition
+            axis='size'
+            from={emojize('📦', filesize.stringify(swap.size))}
+            to={filesize.stringify(release.size)}
+            state={sizeStateOf(release.size - swap.size)}
+          />
+        )}
+        {!!label && <small title={fills.codes.join(' ')} sx={styles.reach}>{label}</small>}
+      </Swap>
+    </div>
   )
 }
 
-UIProposals.styles = {
+export const Proposal = memo(UIProposal)
+
+const styles = {
   pending: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1fr)',
@@ -231,49 +225,14 @@ UIProposals.styles = {
     },
   },
   proposal: {
-    '&:not(:first-of-type)': {
-      marginTop: 2,
-    },
+    paddingBottom: 4,
   },
-  // At the release row's font size and inset (Release.tsx `wrapper`), so it spans the row and its divider
-  head: {
-    display: 'flex',
-    flexDirection: ['column', 'row'],
-    alignItems: ['center', 'baseline'],
-    justifyContent: 'space-between',
-    gap: [10, 4],
-    fontSize: 6,
-    paddingRight: [12, 0],
-    paddingLeft: [12, 2],
+  reach: {
     fontFamily: 'monospace',
+    fontSize: 6,
+    color: 'grayDarkest',
     fontVariantNumeric: 'tabular-nums',
-    '>h2': {
-      margin: 12,
-      fontFamily: 'monospace',
-      fontSize: 2,
-      fontWeight: 'semibold',
-      '>a': {
-        color: 'inherit',
-        textDecoration: 'none',
-        ':hover': {
-          textDecoration: 'underline',
-          textUnderlineOffset: '0.25em',
-        },
-        ':focus-visible': {
-          outline: '1px solid',
-          outlineColor: 'grayDarkest',
-          outlineOffset: '2px',
-        },
-      },
-    },
-    '>small': {
-      fontSize: 4,
-      lineHeight: 'body',
-      color: 'grayDarkest',
-      textAlign: ['center', 'right'],
-      textWrap: 'balance',
-    },
+    textAlign: 'center',
+    textWrap: 'balance',
   },
 }
-
-export const Proposals = memo(UIProposals)
