@@ -1,18 +1,9 @@
 import { memo, useState } from 'react'
-import { Badge, ShowStateOptions, State } from '@sensorr/ui'
+import { ShowStateOptions, State } from '@sensorr/ui'
 
 const OPTIONS = ShowStateOptions.filter(({ value }) => ['ignored', 'followed'].includes(value))
 
-// The round badge of the state is all a reader sees: the name goes to the label wrapping the select, hidden
-const UIBadge = ({ name, emoji, ...props }: { emoji: string, label: React.ReactNode, [prop: string]: any }) => (
-  <>
-    <Badge {...props} emoji={emoji} aria-hidden={true} />
-    <span sx={UIFollow.styles.name}>{name}</span>
-  </>
-)
-
-// Follows a season or an episode: the state select of a poster (`ShowState`), 🔕 Ignored or 📺 Followed. The
-// fieldset disables its select, which `State` only does while it loads
+// Follows a season or an episode: the state select of a poster (`ShowState`), 🔕 Ignored or 📺 Followed
 const UIFollow = ({ checked, onChange, disabled = false, name, title }) => {
   const [pending, setPending] = useState(false)
 
@@ -29,9 +20,8 @@ const UIFollow = ({ checked, onChange, disabled = false, name, title }) => {
         options={OPTIONS}
         onChange={handleChange}
         compact={true}
-        component={UIBadge}
         size='small'
-        name={name}
+        aria-label={name}
         title={title}
       />
     </fieldset>
@@ -77,14 +67,6 @@ UIFollow.styles = {
         cursor: 'progress',
       },
     },
-  },
-  name: {
-    position: 'absolute',
-    width: '1px',
-    height: '1px',
-    overflow: 'hidden',
-    clip: 'rect(0 0 0 0)',
-    whiteSpace: 'nowrap',
   },
 }
 

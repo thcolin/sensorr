@@ -7,7 +7,7 @@ export interface StateProps extends Omit<BadgeProps, 'emoji' | 'label' | 'onChan
   value: string
   onChange: (e?: string) => void
   options: { emoji: string; label: string; value: string; hide?: boolean; }[]
-  component: React.FunctionComponent<ChildProps>
+  component?: React.FunctionComponent<ChildProps>
   [prop: string]: any
 }
 
@@ -17,6 +17,8 @@ function UIState({
   options,
   compact = false,
   component: Component = Badge,
+  disabled = false,
+  'aria-label': ariaLabel,
   ...props
 }: StateProps) {
   const handleChange = useCallback((e) => onChange(e.target.value), [onChange])
@@ -30,7 +32,7 @@ function UIState({
   return (
     <label sx={UIState.styles.element} {...(props.title ? { title: props.title } : {})}>
       <Component {...props} emoji={option.emoji} label={!compact && option.label} />
-      <select value={option.value} onChange={handleChange} disabled={option.value === 'loading'}>
+      <select value={option.value} onChange={handleChange} disabled={disabled || option.value === 'loading'} aria-label={ariaLabel}>
         {options
           .filter((option) => !option.hide)
           .map((option) => (
