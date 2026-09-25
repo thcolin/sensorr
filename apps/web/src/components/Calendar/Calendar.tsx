@@ -806,6 +806,7 @@ UISentinel.styles = {
   },
   retry: {
     variant: 'button.reset',
+    minHeight: '2.5rem',
     paddingX: 6,
     paddingY: 8,
     borderRadius: '0.25em',
