@@ -47,6 +47,16 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
   return (
     <div sx={UIShowSettings.styles.container}>
+      <div sx={MetadataStyles.block}>
+        <span id={ids.policy}>Policy</span>
+        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
+          <PolicyInput
+            value={policy}
+            onChange={value => set('policy', value)}
+          />
+        </fieldset>
+        {help && <small title={helps.policy}>{helps.policy}</small>}
+      </div>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide }}>
         <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
@@ -66,16 +76,6 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </div>
         {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
       </div>
-      <div sx={MetadataStyles.block}>
-        <span id={ids.policy}>Policy</span>
-        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
-          <PolicyInput
-            value={policy}
-            onChange={value => set('policy', value)}
-          />
-        </fieldset>
-        {help && <small title={helps.policy}>{helps.policy}</small>}
-      </div>
       {children}
     </div>
   )
@@ -86,7 +86,8 @@ export const ShowSettings = memo(UIShowSettings)
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
   const [pending, setPending] = useState({})
   const ids = {
-    monitored: `show-follow-${entity.id}`,
+    follow: `show-follow-${entity.id}`,
+    monitored: `show-monitored-${entity.id}`,
     monitor_new_seasons: `show-new-seasons-${entity.id}`,
   }
 
@@ -96,33 +97,37 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
     setPending(pending => ({ ...pending, [key]: false }))
   }
 
+  const titles = {
+    monitored: metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes',
+    monitor_new_seasons: metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them',
+  }
+
   return (
     <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
-      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
-        <span id={ids.monitored}>Follow</span>
-        <OptionInput
-          id={ids.monitored}
-          value={!!metadata?.monitored}
-          disabled={!ready || !!pending['monitored']}
-          onChange={value => set('monitored', value)}
-          aria-labelledby={ids.monitored}
-          aria-describedby={`keep-up-to-date-${ids.monitored}-help`}
-        >
-          {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
-        </OptionInput>
-      </div>
-      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
-        <span id={ids.monitor_new_seasons}>Follow new seasons</span>
-        <OptionInput
-          id={ids.monitor_new_seasons}
-          value={!!metadata?.monitor_new_seasons}
-          disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
-          onChange={value => set('monitor_new_seasons', value)}
-          aria-labelledby={ids.monitor_new_seasons}
-          aria-describedby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
-        >
-          {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
-        </OptionInput>
+      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
+        <span id={ids.follow}>Follow</span>
+        <div title={titles.monitored} sx={UIShowSettings.styles.follow}>
+          <OptionInput
+            id={ids.monitored}
+            value={!!metadata?.monitored}
+            disabled={!ready || !!pending['monitored']}
+            onChange={value => set('monitored', value)}
+            aria-labelledby={`keep-up-to-date-${ids.monitored}-help`}
+          >
+            Followed episodes
+          </OptionInput>
+        </div>
+        <div title={titles.monitor_new_seasons} sx={UIShowSettings.styles.follow}>
+          <OptionInput
+            id={ids.monitor_new_seasons}
+            value={!!metadata?.monitor_new_seasons}
+            disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
+            onChange={value => set('monitor_new_seasons', value)}
+            aria-labelledby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
+          >
+            {metadata?.monitored ? 'New seasons as they appear' : 'Follow the show first'}
+          </OptionInput>
+        </div>
       </div>
     </ShowSettings>
   )
@@ -131,10 +136,24 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
-  // The second column is as wide as the policy help, so it reads whole, and Follow new seasons starts under Policy
+  // One row of content-wide columns, Policy first, stacked on mobile; each column spans the
+  // label, control and help rows of a subgrid, so the controls and the helps line up across columns
   container: {
-    ...MetadataStyles.container,
-    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(12em, max-content)'],
+    display: ['flex', 'grid'],
+    flexDirection: 'column',
+    gridTemplateColumns: '12em minmax(0, max-content) max-content',
+    columnGap: 0,
+    '>div': {
+      display: ['flex', 'grid'],
+      gridRow: 'span 3',
+      gridTemplateRows: 'subgrid',
+      alignItems: ['stretch', 'center'],
+    },
+  },
+  // Centered on mobile like the radios, so each box stays next to its label
+  follow: {
+    display: 'flex',
+    justifyContent: ['center', 'flex-start'],
   },
   fieldset: {
     minWidth: 0,
