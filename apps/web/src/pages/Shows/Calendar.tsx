@@ -267,7 +267,8 @@ UILine.styles = {
     paddingX: 8,
     paddingY: 8,
     color: 'text',
-    borderRadius: '0.25em',
+    // The poster's radius plus the padding around it
+    borderRadius: '0.75em',
     transition: 'background-color 200ms ease-in-out',
     ':hover': {
       backgroundColor: 'gray',
