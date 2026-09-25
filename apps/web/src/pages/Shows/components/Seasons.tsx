@@ -36,8 +36,9 @@ const bleed = {
     content: '""',
     position: 'absolute',
     zIndex: -1,
-    top: 0,
-    bottom: 0,
+    // In units: a bare 0 is the first step of the space scale, 2em
+    top: '0px',
+    bottom: '0px',
     left: '-100vmax',
     right: '-100vmax',
     transition: 'background-color 200ms ease-in-out',
