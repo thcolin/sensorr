@@ -145,7 +145,6 @@ export const Provider = ({ ...props }) => {
     const covered = key !== 'proposal' ? [] : ids.flatMap(i => changes[i].releases
       .filter(release => typeof release.choice === 'boolean' && !(initial[i].releases || []).find(r => r.id === release.id && typeof r.choice === 'boolean'))
       .map(release => ({ show: Number(i), release })))
-    // The release an episode moves to once the answer is given, `undefined` when it does not move
     const moved = (release, episode) => (
       release.choice && (release.coverage || []).some(({ season, episode: number }) => season === episode.season_number && number === episode.episode_number) ? release.id :
       !release.choice && episode.release === release.id ? null :
@@ -176,7 +175,6 @@ export const Provider = ({ ...props }) => {
         await api.fetch(uri, params, init)
         resolve(true)
       } catch (err) {
-        // A key the show did not have before the change is dropped, not kept with the value that failed
         const revert = (current, i) => Object.keys(changes[i]).filter(k => k !== 'id').reduce((acc, k) => {
           const { [k]: failed, ...rest } = acc
           return k in initial[i] ? { ...rest, [k]: initial[i][k] } : rest
@@ -197,7 +195,6 @@ export const Provider = ({ ...props }) => {
     })
 
     // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast.
-    // A bulk is told by its list of ids, even of one show
     if (silent || (!Array.isArray(id) && key !== 'policy')) {
       return promise
     }
@@ -224,7 +221,6 @@ export const Provider = ({ ...props }) => {
         await api.fetch(uri, params, init)
         resolve(true)
       } catch (err) {
-        // Only what this write changed goes back, a write made meanwhile on another episode stays
         setEpisodes(episodes => ({
           ...episodes,
           [show]: (episodes[show] || []).map(episode => changes[episode.id] ? { ...episode, [key]: initial.get(episode.id)?.[key] } : episode),
@@ -245,7 +241,6 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  // Followed, the show is followed whole, S00 aside; not followed, it is kept as a pinned movie is
   const addShow = useCallback(async (id: number, followed = true) => {
     const promise = (async () => {
       const { show, episodes: fetched } = await fetchShow(tmdb, id)
@@ -303,13 +298,11 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  // Listed in `banned_releases`, which the jobs exclude on: a refused release can come back, a banned one cannot
   const banShowRelease = useCallback(async (id: number, title: string) => {
     const { uri, params, init } = api.query.shows.postShowBannedRelease({ body: { title }, params: { id } })
     await api.fetch(uri, params, init)
   }, [])
 
-  // A show leaves the library from its state badge, as a movie does, but once confirmed: its episodes go with it.
   // `removeShow` toasts its own failure, only a failed follow rejects
   const setShowState = useCallback(async (id: number, state: 'ignored' | 'unfollowed' | 'followed') => {
     if (state !== 'ignored') {
@@ -354,7 +347,6 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, setShowState } = useShowsMetadataContext() as any
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
-    // `setShowMetadata` tells nothing for a single show, and `setShowState` toasts only a show it adds or removes
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
       .catch(() => toast.error('Error while answering the proposal')), [entity?.id])
     const setState = useCallback(state => setShowState(entity.id, state)

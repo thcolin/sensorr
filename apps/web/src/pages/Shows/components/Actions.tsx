@@ -12,7 +12,6 @@ export const DOWNLOADS = [
   { value: false, key: 'auto', label: 'At once' },
 ]
 
-// The fields of Details' Metadata, with labels that read at 60% instead of 40% lightness
 const block = {
   ...MetadataStyles.block,
   '>span': { ...MetadataStyles.block['>span'], color: 'grayDarkest' },
@@ -27,7 +26,6 @@ export const useShowPolicy = (entity, metadata) => {
 // `setShowMetadata` toasts a policy change, and nothing for the other fields of a single show
 const failed = (key) => key !== 'policy' && toast.error('Error while updating show metadata')
 
-// What decides the release a job picks for this show, also shown beside a show record in /jobs
 const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) => {
   const { config } = useConfigContext()
   const [pending, setPending] = useState({})
@@ -142,7 +140,6 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
-  // Its help wraps under the select instead of ending on an ellipsis
   policy: {
     flex: 0,
     minWidth: '12em',

@@ -6,7 +6,6 @@ export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
   value: 'loading' | 'ignored' | 'unfollowed' | 'followed'
 }
 
-// As a movie's: out of the library is 🔕, and a show kept without being followed is 📍, as a pinned movie
 export const ShowStateOptions = [
   {
     emoji: '⌛',
@@ -54,7 +53,6 @@ export interface EpisodeStatusProps extends Omit<BadgeProps, 'emoji' | 'label'> 
   value: 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
 }
 
-// Only the states that wait on something carry their label; the others are an emoji circle
 const LABELLED = ['wanted', 'proposed']
 
 const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProps) => {

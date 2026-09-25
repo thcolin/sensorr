@@ -23,11 +23,9 @@ const without = (object, key) => {
 const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, ...props }) => {
   const { device } = useDeviceContext()
   const policy = useShowPolicy(entity, metadata)
-  // The verdicts waiting in their toast or on their way, their proposal leaves the list meanwhile
   const [decided, setDecided] = useState({})
   const keys = useRef(null)
 
-  // Scored by the show's policy, as the Swaps screen scores a movie's releases, in the order they were stored
   const rows = useMemo(() => {
     const pending = (metadata?.releases || []).filter(isPending)
     const scored = scoreReleases(pending, policy)
@@ -44,7 +42,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     })
   }, [metadata?.releases, episodes, policy, decided])
 
-  // A ban is a refusal whose title the jobs will not propose again
   const send = useCallback(async ({ release, verdict }) => {
     try {
       if (verdict === 'ban') {
@@ -83,7 +80,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     ;({ accept: toast.success, refuse: toast.error, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
   }, [undo, entity?.name])
 
-  // The verdict waits in its toast before it is sent: an accepted release downloads at once, for good
   const answer = useCallback((release, verdict) => {
     flush()
     setDecided(decided => ({ ...decided, [release.id]: verdict }))
@@ -91,7 +87,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     notify(release, verdict)
   }, [flush, hold, notify])
 
-  // A refusal still waiting to be sent turns into a ban, as on the Swaps screen
   const ban = useCallback(() => {
     const current = pending.current
 
@@ -104,7 +99,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     notify(current.release, 'ban')
   }, [hold, notify])
 
-  // A and R answer the first proposal, as they answer the one on top of the Swaps queue, Z undoes and B bans
   keys.current = {
     first: rows[0] ? (verdict) => answer(rows[0].release, verdict) : null,
     undo,
@@ -186,7 +180,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
 }
 
 UIProposals.styles = {
-  // The toast of a verdict waiting to be sent, laid out as the Swaps screen's
   pending: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1fr)',

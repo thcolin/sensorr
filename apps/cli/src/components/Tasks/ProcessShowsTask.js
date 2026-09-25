@@ -336,7 +336,6 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             return (await api.fetch(uri, params, init)).modified
           }
 
-          // Another job may have taken some of these episodes since they were read: the release is downloaded only once they are all its own
           if (await moveRelease(null, raw.id) < ids.length) {
             await moveRelease(raw.id, null)
             state.logger.info({ message: `⏭️  Release ${release.title} skipped for ${label}, another job took its episodes meanwhile (${release.znab})`, metadata: { ...metadata, show: lighten.show(show), release: { id: release.id, title: release.title }, skipped: true } })

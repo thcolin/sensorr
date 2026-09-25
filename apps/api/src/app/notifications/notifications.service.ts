@@ -9,7 +9,6 @@ import { SubscriptionDTO } from './subscription.dto'
 import { Subscription as SubscriptionDocument } from './subscription.schema'
 import { pushOf } from './push'
 
-// The logs that notify, read as they are for the history, unseen for the badge count, and under `fullDocument.` for the change stream
 const NOTIFYING = [
   { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
   { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true } },

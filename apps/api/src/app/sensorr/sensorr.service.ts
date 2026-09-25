@@ -17,7 +17,6 @@ import { Metafile as MetafileDocument } from './metafile.schema'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../../../bin/sensorr`)
 
-// A show .torrent Sensorr cannot read, or without a video in it, never reaches the blackhole nor the cache
 const showTorrentOf = (buffer: Uint8Array): TorrentFiles => {
   let torrent: TorrentFiles
 
@@ -113,7 +112,6 @@ export class SensorrService {
       throw new NotFoundException(`Unknown Sensorr job "${name}"`)
     }
 
-    // A second run would search and download what the first one is about to
     if (this.running.has(name)) {
       this.logger.warn(`RunProcess "${name}" refused, it is already running` + (cron ? `, from cron "${cron}"` : ''))
       return Promise.reject(new ConflictException(`Sensorr job "${name}" is already running`))

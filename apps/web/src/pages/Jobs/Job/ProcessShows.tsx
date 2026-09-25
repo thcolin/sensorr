@@ -200,7 +200,6 @@ const UIProcessShowsJob = ({ job, logs }) => {
                     treated: records.reduce((sum, record: any) => sum + record.releases.filter(release => release.treated).length, 0),
                   }, true, job.meta.config).map(meta => ({
                     ...meta,
-                    // `wished` and `processed` count every record, so they only clear the filter
                     props: ['wished', 'processed'].includes(meta.key) ? {
                       style: {
                         cursor: 'pointer',
@@ -485,7 +484,6 @@ UIRecord.styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // One bounded block per release, headed by the episodes it covers
   release: {
     flexShrink: 0,
     paddingTop: 4,

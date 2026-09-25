@@ -30,7 +30,6 @@ export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by) => 
 
 export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
 
-// A release downloaded without a proposal is accepted when it is downloaded, so it can turn overdue as well
 export const showReleaseOf = (release, { from, job, proposal, level }, now) => ({
   id: release.id,
   title: release.title,
@@ -69,7 +68,7 @@ export const plexShowOf = (payload, library) => {
 
 export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
 
-// Plex decides, except for a file `import shows` linked that Plex has not scanned yet. Only a file Plex had seen is lost.
+// Plex decides, except for a file `import shows` linked that Plex has not scanned yet.
 export const plexFilesOf = (known = [], files) => {
   const kept = files.length ? files : known.filter(({ from }) => from === 'import')
 
@@ -106,7 +105,6 @@ const sonarrFileOf = (file) => {
 }
 
 // Sonarr only searches an episode whose series and season are monitored too, whatever the episode's own flag says.
-// An episode Sonarr has a file for is owned from the start, until `sync shows` reads it on Plex.
 export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = [], files = []) => {
   const keyOf = ({ season_number, episode_number }) => `${season_number}:${episode_number}`
   const numbered = new Map(sonarr.map((episode) => [`${episode.seasonNumber}:${episode.episodeNumber}`, episode]))
@@ -165,8 +163,6 @@ export const importLinksOf = (release, show, episodes, library) => {
   })
 }
 
-// A linked file marks its episodes owned at once, `sync shows` replaces it with the one Plex reads.
-// A covered episode left without a file is let go, so it reads wanted again.
 export const importedEpisodesOf = (release, episodes, links) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))

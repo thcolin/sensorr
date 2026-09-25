@@ -267,7 +267,6 @@ UIDetails.styles = {
       fontWeight: 'strong',
     },
   },
-  // A show's progress beside its year, a value per item
   summary: {
     display: 'inline-flex',
     flexWrap: 'wrap',

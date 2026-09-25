@@ -36,7 +36,7 @@ const UNFULFILLED = 'pinned|missing|ignored'
 // Movie filters `/api/shows` cannot apply: while one is set, the shows row would ignore it
 const MOVIE_ONLY = ['release_date', 'popularity', 'vote_average', 'runtime']
 
-// Shows keep no `updated_at` nor `revenue`: the first falls back to their refresh date, the second to the default sort
+// Shows keep no `updated_at` nor `revenue`
 const SHOW_SORTS = {
   updated_at: 'refreshed_at',
   popularity: 'popularity',

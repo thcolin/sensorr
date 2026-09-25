@@ -60,7 +60,6 @@ const UIShow = ({
       return {}
     }
 
-    // A show file lives on its episodes, so the owned releases of a movie become an episode count.
     const proposal = {
       releases: [],
       proposals: (metadata?.releases || []).filter(release => release.proposal && typeof release.choice !== 'boolean'),
@@ -109,8 +108,6 @@ const UIShow = ({
 
 export const Show = memo(UIShow)
 
-// One line under every show poster: the owned count and its bar, or the upcoming state
-// of a show with no aired episode yet.
 const ShowProgress = ({ owned, aired }: { owned: number, aired: number }) => (
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (

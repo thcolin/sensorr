@@ -12,7 +12,6 @@ const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-// The tracks a season head and the header share: count, bar, completion mark, follow column
 const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
 
 const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...props }) => {
@@ -47,7 +46,6 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
 
   const regular = seasons.filter(({ number }) => number !== 0)
   const initial = (regular[regular.length - 1] || seasons[0])?.number
-  // A link to `#season-N`, from a calendar row, opens that season and scrolls to it once the seasons are there
   const { hash } = useLocation()
   const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
   const targeted = Number.isInteger(target) ? { [target]: true } : {}
@@ -72,7 +70,6 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
     return null
   }
 
-  // Out of the library, a season has nothing to open or follow: the show is told in one line
   if (!inLibrary) {
     const years = regular.map(({ year }) => year).filter(Boolean)
 
@@ -468,7 +465,6 @@ UIEpisodes.styles = {
     },
   },
   synopsis: {
-    // Lined up with the title column: the code track, its gap and the row padding
     paddingLeft: ['3.75em', '5em'],
     paddingRight: 8,
     paddingBottom: 6,

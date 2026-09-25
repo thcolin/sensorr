@@ -72,7 +72,6 @@ const Show = ({ ...props }) => {
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
 
-  // Owned over aired and the size, then what the show waits on: pending proposals and wanted episodes
   const summary = useMemo(() => {
     if (!inLibrary || !episodes) {
       return null

@@ -3,10 +3,6 @@ import toast from 'react-hot-toast'
 
 export const DELAY = 5000
 
-// A verdict waits `DELAY` in the `proposal-pending` toast before `send` gets it, so it can be undone, or a
-// refusal turned into a ban. `hold` sets the one waiting, `flush` sends it now.
-// Leaving the page sends what is waiting rather than dropping it; closing the tab asks first, so the request
-// has time to leave.
 export const usePendingVerdict = ({ send, onUndo = null }: { send: (current: any) => any, onUndo?: (current: any) => void }) => {
   const pending = useRef(null)
 

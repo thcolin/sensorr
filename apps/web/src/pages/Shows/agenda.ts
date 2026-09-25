@@ -10,7 +10,6 @@ export const monthRange = (date: Date) => ({
   aired_before: day(new Date(date.getFullYear(), date.getMonth() + 1, 0)),
 })
 
-// Episodes of one show that air the same day in the same status make one entry: a season drop is one line
 export const groupByDay = (episodes: any[], shows: { [id: string]: { name?: string } }, now: Date | number = Date.now()) => Object.entries<any[]>(
   episodes
     .filter(episode => !!episode?.air_date)

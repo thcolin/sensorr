@@ -2,8 +2,7 @@ import { utils } from '@sensorr/tmdb'
 
 const episodesOf = (count: number) => `${count} episode${count > 1 ? 's' : ''}`
 
-// `aggregate_credits` gives one entry per person across every season, with their roles or jobs:
-// flattened into the `character` and `job` entries `sortCredits` merges, then told their episode count
+// `aggregate_credits` gives one entry per person across every season, with their roles or jobs
 export const aggregateCredits = (credits, priorized: string[], key: 'cast' | 'crew') => {
   const people = (credits?.[key] || []) as any[]
   const counts = people.reduce((acc, person) => ({ ...acc, [person.id]: person.total_episode_count }), {})

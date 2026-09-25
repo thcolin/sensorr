@@ -264,7 +264,6 @@ const Person = ({ ...props }) => {
       },
     }
 
-    // One entry per show: a person who acted in and worked on a show keeps both credits, the longest run first
     const join = (...values) => [...new Set(values.flatMap(value => (value || '').split(', ')).filter(Boolean))].join(', ') || null
     const shows = {
       id: `shows-${id}`,
@@ -293,7 +292,6 @@ const Person = ({ ...props }) => {
               gender: data.gender,
               character: entity.character || null,
               job: entity.job || null,
-              // Both roles in the caption, the way `sortCredits` writes them for a movie
               override: [entity.job, entity.character && `"${entity.character}"`].filter(Boolean).join(', ') || null,
             },
             state: metadata?.state || 'ignored',

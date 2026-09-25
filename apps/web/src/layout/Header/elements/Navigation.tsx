@@ -85,7 +85,6 @@ Secondary.styles = {
       display: 'none',
     },
     paddingX: 8,
-    // Fades the edges so a row wider than the screen shows it holds more
     maskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
     WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
     '>a': {

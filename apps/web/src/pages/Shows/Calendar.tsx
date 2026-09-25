@@ -60,7 +60,6 @@ const UIAgenda = ({ entities, shows, ready, error, controls, ...props }) => {
 
   const days = useMemo(() => groupByDay(Object.values(entities || {}), shows), [entities, shows])
 
-  // The shown month holds today: today gets its day head even when nothing airs, so the list has an anchor
   const list = useMemo(() => (current && !days.some(({ key }) => key === today))
     ? [...days, { key: today, date: new Date(`${today}T00:00:00`), entries: [] }].sort((a, b) => a.key.localeCompare(b.key))
     : days, [days, current, today])
@@ -168,7 +167,6 @@ UIAgenda.styles = {
     },
   },
   day: {
-    // Today scrolled to keeps the same space above its head as the first day of the list
     scrollMarginTop: 4,
     ':not(:first-of-type)': {
       marginTop: 4,
@@ -218,7 +216,6 @@ UIAgenda.styles = {
 
 const Agenda = memo(UIAgenda)
 
-// The widths of the name and episode bars of the loading rows, so they do not read as one block
 const PLACEHOLDERS: [string, string][] = [['40%', '25%'], ['55%', '35%'], ['30%', '45%'], ['50%', '20%'], ['35%', '40%'], ['45%', '30%']]
 
 const Placeholder = ({ width: [name, code] }: { width: [string, string] }) => (
@@ -267,7 +264,6 @@ UILine.styles = {
     paddingX: 8,
     paddingY: 8,
     color: 'text',
-    // The poster's radius plus the padding around it
     borderRadius: '0.75em',
     transition: 'background-color 200ms ease-in-out',
     ':hover': {

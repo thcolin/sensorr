@@ -41,7 +41,6 @@ const JobsSettings = ({ ...props }) => {
     })
   }, [])
 
-  // The report and sync jobs read from Plex
   const plex = {
     disabled: !config.get('plex.token'),
     warning: config.get('plex.token') ? null : (
@@ -491,7 +490,6 @@ JobSettings.styles = {
     '>h5': {
       display: 'flex',
       alignItems: 'center',
-      // Wider than the longest name, so every description starts on the same line; on a phone the description needs the room
       minWidth: [null, '12em'],
       margin: 12,
       paddingY: 12,

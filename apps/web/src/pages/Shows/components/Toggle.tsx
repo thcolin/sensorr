@@ -40,7 +40,6 @@ UIToggle.styles = {
     transition: 'color 200ms ease-in-out, opacity 200ms ease-in-out',
     '>label': {
       margin: 12,
-      // The box stays 1em, its hit area grows to 44px on mobile and 40px above
       '&::after': {
         content: '""',
         position: 'absolute',

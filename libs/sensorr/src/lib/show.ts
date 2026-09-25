@@ -22,7 +22,6 @@ type ShowEpisode = {
 const DAY = 24 * 60 * 60 * 1000
 export const ENDED = ['Ended', 'Canceled']
 
-// The TMDB `status` values of a show, grouped as the library filters them
 export const STATUS_GROUPS = {
   airing: ['Returning Series'],
   upcoming: ['In Production', 'Planned', 'Pilot'],
@@ -53,7 +52,6 @@ export const matchesUnit = (meta, category, unit: ShowUnit) => {
   const level = levelOf(meta, category)
 
   switch (unit.type) {
-    // A multi-season pack is the whole series only when it holds every season the unit wants
     case 'series':
       return level === 'series' && (!meta.seasons?.length || [...new Set(unit.episodes.map(({ season }) => season))].every(season => meta.seasons.includes(season)))
     case 'season':

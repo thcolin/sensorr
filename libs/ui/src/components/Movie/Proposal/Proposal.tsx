@@ -9,9 +9,7 @@ export interface ProposalProps {
   proposals: any[]
   releases: any[]
   proceed: (release: any, choice?: boolean) => void
-  // Stands in for the owned releases when the entity owns something else than releases
   summary?: React.ReactNode
-  // What each proposal covers, written above its release line
   labelize?: (proposal: any) => React.ReactNode
 }
 

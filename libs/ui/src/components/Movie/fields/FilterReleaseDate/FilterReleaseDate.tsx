@@ -41,7 +41,6 @@ const UIFilterReleaseDate = ({ display = 'range', statistics, ...props }) => {
 
 export const FilterReleaseDate = memo(UIFilterReleaseDate)
 
-// The month picker both calendars put in their controls bar, stretched between the title and the results count
 const UICalendarMonthPicker = ({ ...props }: FilterReleaseDateProps) => (
   <div sx={UICalendarMonthPicker.styles.element}>
     <FilterReleaseDate {...props as any} display='datePicker' />

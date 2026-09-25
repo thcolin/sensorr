@@ -149,7 +149,7 @@ export const Discover = compose(
       },
       without_genres: {
         ...fields.genres,
-        // Talk and news shows fill the first screen of a popularity sort, the movie calendar leaves documentaries out the same way
+        // Talk and news shows fill the first screen of a popularity sort
         initial: { values: [{ value: 10767, label: 'Talk' }, { value: 10763, label: 'News' }], behavior: 'or' },
         statistics: null,
         component: compose(

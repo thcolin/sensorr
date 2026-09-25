@@ -9,7 +9,6 @@ export interface CommandTab {
 
 interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   options: CommandTab[]
-  // Every item listed, those of a command without a tab included
   all: number
   value: string | null
   onChange: (value: string | null) => void

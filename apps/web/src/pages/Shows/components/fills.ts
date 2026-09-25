@@ -6,8 +6,6 @@ const SHOWN = 6
 
 type Episode = { season_number: number, episode_number: number, files?: any[] }
 
-// A release's `coverage` lists the wanted episodes it brings, its pack holds more: every episode of its
-// seasons, of the whole show for a series. Told as `E02 E04`, or `S03E02` when it spans several seasons
 export const fillsOf = (
   coverage: { season: number, episode: number }[],
   episodes: Episode[],
@@ -48,7 +46,6 @@ const filesOf = (episodes: Episode[]) => [...new Map(episodes.flatMap(({ files }
 
 export const sizeOf = (episodes: Episode[]) => filesOf(episodes).reduce((sum, file) => sum + (file.size || 0), 0)
 
-// The files a release is weighed against: those of the seasons it covers, else any the show has
 export const ownedFilesOf = (
   release: { coverage?: { season: number }[], level?: string },
   episodes: Episode[],

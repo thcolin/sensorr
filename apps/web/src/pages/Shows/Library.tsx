@@ -259,7 +259,6 @@ const Library = compose(
       const [counts, setCounts] = useState({})
       const [bulk, setBulk] = useState(null)
 
-      // The counts are over the whole library, whatever the filters, so they load once.
       useEffect(() => {
         const controller = new AbortController()
         const all = APIQuery.shows.getShows({ params: { fields: 'id|monitored|status|policy|requested_by', limit: '' }, init: { signal: controller.signal } })

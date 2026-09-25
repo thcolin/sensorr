@@ -156,7 +156,6 @@ export const CrewWithFocus = (args: any) => (
   />
 )
 
-// With no focus or reviews badge to cover it, the checkbox hides until hover or a selection
 export const Selectable = (args: any) => (
   <UIPoster {...args}
     details={details.movie}

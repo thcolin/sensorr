@@ -24,7 +24,6 @@ import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 
-// Keyed by `jobNameOf`, one entry per job the CLI can log
 const JOBS_UI: { [name: string]: { emoji: string, view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { emoji: '🔗', view: SyncJob, summary: summarySync },
   'refresh movies': { emoji: '🔌', view: RefreshJob, summary: summaryRefresh },
