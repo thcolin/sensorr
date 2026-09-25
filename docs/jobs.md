@@ -91,7 +91,7 @@ A watchlisted movie Sensorr does not know is created in state `ignored`, not `wi
 
 A guest whose token fails is flagged `plex_token_valid: false` rather than skipped silently, so the failure is visible instead of looking like an empty watchlist (`apps/cli/src/commands/keep-in-touch.js:214`).
 
-The shows of the watchlist are read in the same pass, with `type=2` (`apps/cli/src/commands/keep-in-touch.js:201`). A failure there is logged and skipped: the movies were read, so the token is fine (`:195`). A show is resolved to its TMDB id through the Plex metadata provider, and one Sensorr did not know is created `ignored`, unfollowed, every episode unfollowed (`requestedShowOf` in `apps/cli/src/utils/shows.js:28`), for the same reason as a movie: nothing reaches `record shows` until you follow it. Its Plex guid is kept on the show, so the next run skips the lookup.
+The shows of the watchlist are read in the same pass, with `type=2` (`apps/cli/src/commands/keep-in-touch.js:201`). A failure there is logged and skipped: the movies were read, so the token is fine (`:195`). A show is resolved to its TMDB id through the Plex metadata provider, and one Sensorr did not know is created `ignored`, unfollowed, every episode unfollowed (`requestedShowOf` in `apps/cli/src/utils/shows.js:28`), for the same reason as a movie: nothing reaches `record shows` until you follow it. Its Plex guid is kept on the show, so the next run skips the lookup. Its `requested_by` is the guests whose watchlist holds it on this run, as for a movie: a guest who takes it off theirs is no longer named, and `requested_at` keeps the date of the first request.
 
 ### `refresh`
 

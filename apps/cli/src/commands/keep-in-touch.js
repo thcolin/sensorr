@@ -448,12 +448,14 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
             }
           }
 
-          const guests = [...new Set([...(show.requested_by || []), ...requested_by])]
-          const added = guests.length > (show.requested_by || []).length
+          // The watchlists name the guests, as for a movie: a guest who took the show off theirs no longer requests it
+          const guests = [...new Set(requested_by)]
+          const added = guests.some(guest => !(show.requested_by || []).includes(guest))
+          const changed = added || guests.length !== (show.requested_by || []).length
           // Once dated, a request keeps its date: a guest joining it later does not make it newer
           const requested_at = show.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
 
-          if (added || show.plex_guid !== plex_guid || requested_at) {
+          if (changed || show.plex_guid !== plex_guid || requested_at) {
             const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}) } } })
             await api.fetch(uri, params, init)
           }
