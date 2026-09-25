@@ -328,8 +328,11 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
-    const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice }), [entity?.id])
-    const setState = useCallback(state => followShow(entity.id, state === 'followed').catch(() => null), [entity?.id, followShow])
+    // `setShowMetadata` tells nothing for a single show, and `followShow` toasts only a show it adds to the library
+    const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
+      .catch(() => toast.error('Error while answering the proposal')), [entity?.id])
+    const setState = useCallback(state => followShow(entity.id, state === 'followed')
+      .catch(() => metadata?.state && metadata.state !== 'ignored' && toast.error('Error while following the show')), [entity?.id, followShow, metadata?.state])
 
     return (
       <WrappedComponent
