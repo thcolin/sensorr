@@ -36,6 +36,10 @@ export const ShowPosterUnfollowed = () => <UIShow entity={entity} state='unfollo
 
 export const ShowPosterComplete = () => <UIShow entity={{ ...entity, progress: { owned: 73, aired: 73 } }} state='followed' />
 
+export const ShowPosterSelectable = () => <UIShow entity={entity} state='followed' selected={false} onSelectedChange={() => {}} />
+
+export const ShowPosterSelected = () => <UIShow entity={entity} state='followed' selected={true} selectedVisible={true} onSelectedChange={() => {}} />
+
 export const ShowPosterNotAired = () => <UIShow entity={{ ...entity, progress: { owned: 0, aired: 0 } }} state='followed' />
 
 export const ShowPosterWithProposal = () => <UIShow entity={entity} state='followed' metadata={{ releases: [proposal] }} proceedRelease={() => {}} />

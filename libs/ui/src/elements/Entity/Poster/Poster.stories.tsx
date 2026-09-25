@@ -155,3 +155,35 @@ export const CrewWithFocus = (args: any) => (
     badges={{ state: state.followed, focus: focus.popularity }}
   />
 )
+
+// With no focus or reviews badge to cover it, the checkbox hides until hover or a selection
+export const Selectable = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.wished }}
+    selected={false}
+    onSelectedChange={() => {}}
+  />
+)
+
+export const SelectableWithFocus = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.archived, focus: focus.vote_average }}
+    selected={false}
+    onSelectedChange={() => {}}
+  />
+)
+
+export const Selected = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.wished }}
+    selected={true}
+    selectedVisible={true}
+    onSelectedChange={() => {}}
+  />
+)
