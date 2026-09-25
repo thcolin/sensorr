@@ -221,7 +221,8 @@ export class ShowsService {
       leanWithId: false,
       ...(limit ? { limit } : { pagination: false }),
       ...(params.fields ? { select: params.fields.split('|') } : {}),
-      sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], id: 1 },
+      // A request older than `requested_at` has none: it comes after the dated ones, by `refreshed_at`
+      sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], ...(params.sort_by.startsWith('requested_at.') ? { refreshed_at: params.sort_by.split('.')[1] } : {}), id: 1 },
       customLabels: LABELS,
     })
 

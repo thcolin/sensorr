@@ -140,6 +140,10 @@ export class Show extends Document {
   @Prop(raw([String]))
   requested_by: Record<any, any>
 
+  // When the first guest watchlisted it, written once by `keep-in-touch`
+  @Prop()
+  requested_at: number
+
   @Prop(raw([String]))
   banned_releases: Record<any, any>
 

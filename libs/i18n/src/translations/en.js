@@ -94,6 +94,7 @@ export default {
       name: emojize('🔤', 'Name'),
       first_air_date: emojize('📅', 'First Air Date'),
       refreshed_at: emojize('🔄', 'Last Refresh'),
+      requested_at: emojize('🍻', 'Request Date'),
     },
   },
   items: {

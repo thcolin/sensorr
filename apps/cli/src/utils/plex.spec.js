@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -186,5 +186,27 @@ describe('episodeVersionsOf', () => {
 
     expect(versions['4:23'].map(({ id }) => id)).toEqual(['plex://episode/4-23#3'])
     expect(versions['4:24']).toEqual(versions['4:23'])
+  })
+})
+
+describe('requestedAtOf', () => {
+  const clientOf = (answer) => ({ query: jest.fn(async (uri) => {
+    if (answer instanceof Error) throw answer
+    return { MediaContainer: { UserState: answer } }
+  }) })
+
+  it('dates a request from the earliest guest who watchlisted it, in milliseconds', async () => {
+    const clients = { a: clientOf({ watchlistedAt: 1789763938 }), b: clientOf({ watchlistedAt: 1789331669 }) }
+    expect(await requestedAtOf(clients, 'plex://movie/5d776d86', ['a', 'b'])).toBe(1789331669000)
+    expect(clients.a.query).toHaveBeenCalledWith('/library/metadata/5d776d86/userState')
+  })
+
+  it('leaves out a guest whose state has no date', async () => {
+    expect(await requestedAtOf({ a: clientOf({}), b: clientOf({ watchlistedAt: 1789331669 }) }, 'plex://show/1', ['a', 'b'])).toBe(1789331669000)
+    expect(await requestedAtOf({ a: clientOf({}) }, 'plex://show/1', ['a'])).toBeNull()
+  })
+
+  it('gives no date when a guest could not be asked, so a later pass tries again', async () => {
+    expect(await requestedAtOf({ a: clientOf({ watchlistedAt: 1789331669 }), b: clientOf(new Error('503')) }, 'plex://movie/1', ['a', 'b'])).toBeNull()
   })
 })

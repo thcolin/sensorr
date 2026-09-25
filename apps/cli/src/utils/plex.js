@@ -187,3 +187,20 @@ export const showFilesOf = (episodes, items) => {
     unmatched: [...listed].filter((key) => !numbers.has(key)).length,
   }
 }
+
+// A watchlist lists no date: when a guest added an item is in its `userState`, one item a call.
+// The earliest guest makes the request date; without every guest's answer there is none yet.
+export const requestedAtOf = async (clients, plex_guid, guests) => {
+  const dates = []
+
+  for (const guest of guests) {
+    try {
+      const { MediaContainer: { UserState } } = await clients[guest].query(`/library/metadata/${plex_guid.split('/').pop()}/userState`)
+      UserState?.watchlistedAt && dates.push(UserState.watchlistedAt * 1000)
+    } catch (error) {
+      return null
+    }
+  }
+
+  return dates.length ? Math.min(...dates) : null
+}

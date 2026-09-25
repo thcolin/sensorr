@@ -115,13 +115,14 @@ const Requests = compose(
       },
       sort_by: {
         initial: {
-          value: 'updated_at',
+          value: 'requested_at',
           sort: true,
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
           label: i18n.t('ui.sorting'),
           options: [
+            { label: i18n.t('ui.sortings.requested_at'), value: 'requested_at' },
             { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
             { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
             { label: i18n.t('ui.sortings.primary_release_date'), value: 'release_date' },
@@ -258,13 +259,14 @@ export const ShowsRequests = compose(
       },
       sort_by: {
         initial: {
-          value: 'refreshed_at',
+          value: 'requested_at',
           sort: true,
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
           label: i18n.t('ui.sorting'),
           options: [
+            { label: i18n.t('ui.sortings.requested_at'), value: 'requested_at' },
             { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
             { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
             { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },

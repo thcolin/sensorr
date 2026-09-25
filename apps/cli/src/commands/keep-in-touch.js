@@ -8,6 +8,7 @@ import api from '../store/api'
 import { lighten } from '../store/logger'
 import command from '../utils/command'
 import { fetchSensorrShows, fetchShow, requestedShowOf } from '../utils/shows'
+import { requestedAtOf } from '../utils/plex'
 
 const meta = {
   command: 'keep-in-touch',
@@ -92,7 +93,7 @@ const FetchSensorrShowsTask = ({ onError, ...props }) => {
       setStatus('loading')
 
       try {
-        const shows = await fetchSensorrShows(api, { fields: 'id|name|state|genres|poster_path|vote_average|plex_guid|requested_by' })
+        const shows = await fetchSensorrShows(api, { fields: 'id|name|state|genres|poster_path|vote_average|plex_guid|requested_by|requested_at' })
         setState((state) => ({ ...state, shows }))
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{shows.length}</Text> shows found</Text> }))
         setStatus('done')
@@ -321,11 +322,13 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
                 .filter(({ type }) => type === 3)
                 .reduce((acc, raw) => acc.map(({ release_date }) => new Date(release_date).getFullYear()).includes(new Date(raw.release_date).getFullYear()) ? acc : [...acc, raw], [])
 
+              const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
               movie = {
                 ...body,
                 state: 'ignored',
                 plex_guid,
                 requested_by,
+                ...(requested_at ? { requested_at } : {}),
                 updated_at: new Date().getTime(),
               }
 
@@ -342,6 +345,9 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
           }
         }
 
+        // Once dated, a request keeps its date: a guest joining it later does not make it newer
+        const requested_at = movie.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
+
         if (!requested_by.every(guest => (movie.requested_by || []).includes(guest))) {
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" requested by ${requested_by.join(', ')} need to be synced with guests requesting it...` }))
           const { uri, params, init } = api.query.movies.postMovie({
@@ -349,6 +355,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
               id: movie.id,
               plex_guid,
               requested_by,
+              ...(requested_at ? { requested_at } : {}),
               updated_at: new Date().getTime(),
             },
           })
@@ -359,6 +366,11 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
           // `processed` is what turns this log into a request notification, and an archived movie leaves nothing to answer
           state.logger.info({ message: `Movie "${movie.title}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, type: 'movie', important: true, group: movie.id, movie: lighten.movie(movie), processed: movie.state !== 'archived', requested_by } })
         } else {
+          if (requested_at) {
+            const { uri, params, init } = api.query.movies.postMovie({ body: { id: movie.id, requested_at } })
+            await api.fetch(uri, params, init)
+          }
+
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" guests requests no need update` }))
           state.logger.info({ message: `Movie "${movie.title}" guests requests no need update`, metadata: { ...state.metadata, type: 'movie', important: true, group: movie.id, movie: lighten.movie(movie), processed: false, requested_by } })
         }
@@ -420,8 +432,9 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
             if (!show) {
               setTask((task) => ({ ...task, output: `Show "${plex_guid}" requested by ${requested_by.join(', ')} unknown from library, look up for his TMDB data with TMDB id "${tmdb_id}"...` }))
               const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by)
+              const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
 
-              const shows = api.query.shows.postShows({ body: { [requested.show.id]: { ...requested.show, refreshed_at: new Date() } } })
+              const shows = api.query.shows.postShows({ body: { [requested.show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
               await api.fetch(shows.uri, shows.params, shows.init)
 
               if (requested.episodes.length) {
@@ -437,9 +450,11 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
 
           const guests = [...new Set([...(show.requested_by || []), ...requested_by])]
           const added = guests.length > (show.requested_by || []).length
+          // Once dated, a request keeps its date: a guest joining it later does not make it newer
+          const requested_at = show.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
 
-          if (added || show.plex_guid !== plex_guid) {
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests } } })
+          if (added || show.plex_guid !== plex_guid || requested_at) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}) } } })
             await api.fetch(uri, params, init)
           }
 

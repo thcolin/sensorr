@@ -51,6 +51,7 @@ export class ShowDTO {
   readonly path: string
   readonly plex_guid: string
   readonly requested_by: string[]
+  readonly requested_at: number
   readonly banned_releases: string[]
   readonly releases: ShowReleaseDTO[]
   readonly query: {

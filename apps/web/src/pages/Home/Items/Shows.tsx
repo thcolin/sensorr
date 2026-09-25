@@ -101,19 +101,22 @@ export const AiringShows = compose(
   }),
 )(Entities)
 
-// Guests requests of both kinds not fulfilled yet, as `/movie/requests` and `/tv/requests` list them. A request
-// leaves no date of its own: a movie's `updated_at` and a show's `refreshed_at` are both written when it is made.
+// A request older than `requested_at` has no date of its own, only the last time its document was written
+const writtenAt = (entity) => new Date(entity.media_type === 'tv' ? entity.refreshed_at : entity.updated_at).getTime() || 0
+
+// Guests requests of both kinds not fulfilled yet, as `/movie/requests` and `/tv/requests` list them: the latest
+// request first, the undated ones after, as the API sorts each kind
 export const RequestedMoviesAndShows = compose(
   withFetchRow(async (api, init) => {
     const [movies, shows] = await Promise.all([
-      fetchResults(api, APIQuery.movies.getMovies({ params: { state: 'pinned|missing|ignored', 'requested_by.gte': 1, sort_by: 'updated_at.desc' }, init })),
-      fetchResults(api, APIQuery.shows.getShows({ params: { state: 'ignored', 'requested_by.gte': 1, sort_by: 'refreshed_at.desc' }, init })),
+      fetchResults(api, APIQuery.movies.getMovies({ params: { state: 'pinned|missing|ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc' }, init })),
+      fetchResults(api, APIQuery.shows.getShows({ params: { state: 'ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc' }, init })),
     ])
 
     return [
-      ...movies.map(movie => ({ ...movie, media_type: 'movie', requested_at: new Date(movie.updated_at).getTime() })),
-      ...shows.map(show => ({ ...show, media_type: 'tv', requested_at: new Date(show.refreshed_at).getTime() })),
-    ].sort((a, b) => (b.requested_at || 0) - (a.requested_at || 0))
+      ...movies.map(movie => ({ ...movie, media_type: 'movie' })),
+      ...shows.map(show => ({ ...show, media_type: 'tv' })),
+    ].sort((a, b) => (b.requested_at || 0) - (a.requested_at || 0) || writtenAt(b) - writtenAt(a))
   }),
 )(Entities)
 

@@ -381,7 +381,8 @@ export class MoviesService {
       // A caller that only needs a few fields pays 1.6 KB a movie instead of 4.9 KB,
       // which is what makes loading the whole proposal queue at once tenable.
       ...(params.fields ? { select: params.fields.split('|') } : {}),
-      sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], id: 1 },
+      // A request older than `requested_at` has none: it comes after the dated ones, by `updated_at`
+      sort: { [params.sort_by.split('.')[0]]: params.sort_by.split('.')[1], ...(params.sort_by.startsWith('requested_at.') ? { updated_at: params.sort_by.split('.')[1] } : {}), id: 1 },
       customLabels: { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' },
     })
 
