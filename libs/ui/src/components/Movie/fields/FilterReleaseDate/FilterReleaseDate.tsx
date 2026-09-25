@@ -47,11 +47,13 @@ const UICalendarMonthPicker = ({ ...props }: FilterReleaseDateProps) => (
   </div>
 )
 
+// On a desktop the months take no more than they need, so the picker keeps one width whatever the bar holds beside it
 UICalendarMonthPicker.styles = {
   element: {
     display: 'flex',
-    marginLeft: ['-2em', '3em'],
-    marginRight: ['0em', '3em'],
+    maxWidth: ['none', 'min-content'],
+    marginLeft: ['-2em', '2em'],
+    marginRight: ['0em', '2em'],
     '>*': {
       flex: 1,
     },

@@ -1,8 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { addMonths, addYears, subMonths, subYears } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useDevice } from '@sensorr/utils'
-import nanobounce from 'nanobounce'
 
 export interface DatePickerProps {
   label: string
@@ -15,19 +14,13 @@ export interface DatePickerProps {
 const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }: DatePickerProps) => {
   const { i18n } = useTranslation()
   const device = useDevice()
-  const debounce = useMemo(() => nanobounce(400), [])
   const [state, setState] = useState(value)
 
-  const handleDebounceChange = useCallback((value, direct = false) => {
+  // Straight through: a calendar moves on the click, and a page cancels the fetch a newer month replaces
+  const handleChange = useCallback((value) => {
     setState(value)
-
-    if (direct) {
-      onChange(value)
-      return
-    }
-
-    debounce(() => onChange(value))
-  }, [debounce])
+    onChange(value)
+  }, [onChange])
 
   useEffect(() => {
     setState(value)
@@ -37,7 +30,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
     <div sx={UIDatePicker.styles.element}>
       <div sx={UIDatePicker.styles.year}>
         <button
-          onClick={() => handleDebounceChange(subYears(state, 1))}
+          onClick={() => handleChange(subYears(state, 1))}
           disabled={state.getFullYear() === 1900}
           sx={UIDatePicker.styles.navigation}
         >
@@ -45,7 +38,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
         </button>
         <select
           value={state.getFullYear()}
-          onChange={(e) => handleDebounceChange(new Date(Number(e.target.value), state.getMonth(), state.getDate()), false)}
+          onChange={(e) => handleChange(new Date(Number(e.target.value), state.getMonth(), state.getDate()))}
         >
           {Array(new Date().getFullYear() + 8 - 1900)
             .fill(0)
@@ -56,7 +49,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
             ))}
         </select>
         <button
-          onClick={() => handleDebounceChange(addYears(state, 1))}
+          onClick={() => handleChange(addYears(state, 1))}
           disabled={new Date().getFullYear() + 7 === state.getFullYear()}
           sx={UIDatePicker.styles.navigation}
         >
@@ -65,7 +58,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
       </div>
       <div sx={UIDatePicker.styles.container}>
         <button
-          onClick={() => handleDebounceChange(subMonths(state, 1))}
+          onClick={() => handleChange(subMonths(state, 1))}
           disabled={state.getFullYear() === 1900 && state.getMonth() === 0}
           sx={UIDatePicker.styles.navigation}
         >
@@ -79,7 +72,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
             return (
               <button
                 key={index}
-                onClick={() => handleDebounceChange(new Date(state.getFullYear(), index, 1), true)}
+                onClick={() => handleChange(new Date(state.getFullYear(), index, 1))}
                 disabled={device === 'mobile' && (
                   (state.getFullYear() === 1900 && state.getMonth() <= 2 && index >= 10) ||
                   (new Date().getFullYear() + 7 === state.getFullYear() && state.getMonth() >= 10 && index <= 4)
@@ -102,7 +95,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
             )
           })}
         <button
-          onClick={() => handleDebounceChange(addMonths(state, 1))}
+          onClick={() => handleChange(addMonths(state, 1))}
           disabled={new Date().getFullYear() + 7 === state.getFullYear() && state.getMonth() === 11}
           sx={UIDatePicker.styles.navigation}
         >
@@ -165,7 +158,7 @@ UIDatePicker.styles = {
     paddingX: 8,
     paddingY: 6,
     overflow: 'hidden',
-    minWidth: '4.5em',
+    minWidth: '3.5em',
     ':disabled': {
       opacity: 0.5,
     },
