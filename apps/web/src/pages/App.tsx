@@ -29,7 +29,7 @@ import Library from './Library/Library'
 import Discover from './Discover/Discover'
 import Calendar from './Calendar/Calendar'
 import Theatres from './Theatres/Theatres'
-import Requests from './Requests/Requests'
+import Requests, { ShowsRequests } from './Requests/Requests'
 import Recommendations from './Recommendations/Recommendations'
 import Similar from './Similar/Similar'
 import Movie from './Movie/Movie'
@@ -116,7 +116,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='tv/discover' element={<ShowsDiscover />} />
         <Route path='tv/trending' element={<TrendingShows />} />
         <Route path='tv/search' element={<SearchShows />} />
-        <Route path='tv/requests' element={<Requests />} />
+        <Route path='tv/requests' element={<ShowsRequests />} />
         <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />

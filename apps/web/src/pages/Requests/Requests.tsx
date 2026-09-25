@@ -15,7 +15,7 @@ import {
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
-import { compose, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show from '../../components/Show/Show'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
@@ -31,75 +31,47 @@ const Movie = ({ ...props }) => (
   <MovieWithCreditsAndReviews {...props as any} />
 )
 
-const UNFULFILLED = 'pinned|missing|ignored'
+const code = { variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }
 
-// Movie filters `/api/shows` cannot apply: while one is set, the shows row would ignore it
-const MOVIE_ONLY = ['release_date', 'popularity', 'vote_average', 'runtime']
+const Head = ({ children }) => (
+  <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
+    <Warning emoji="🍻" title="Requests" subtitle={children} />
+  </div>
+)
 
-// Shows keep no `updated_at` nor `revenue`
-const SHOW_SORTS = {
-  updated_at: 'refreshed_at',
-  popularity: 'popularity',
-  release_date: 'first_air_date',
-  vote_average: 'vote_average',
-  vote_count: 'vote_count',
+const requested_by = {
+  initial: { values: [], behavior: 'or' },
+  serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : { [`${key}.gte`]: 1 },
+  component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
 }
 
-const RequestsEntities = ({ controls, ...props }) => {
-  const api = useAPI()
-  const { loading, metadata } = useShowsMetadataContext() as any
-  const [shows, setShows] = useState(null)
-  const [error, setError] = useState(null)
-  const unfulfilled = (controls?.values?.state ?? UNFULFILLED) === UNFULFILLED
-  const guests = controls?.values?.requested_by
-  const sort = controls?.values?.sort_by
-  const filtered = !!controls?.values?.genres?.values?.length || MOVIE_ONLY.some(key => (
-    typeof controls?.values?.[key] !== 'undefined' && JSON.stringify(controls.values[key]) !== JSON.stringify(fields[key].initial)
-  ))
-  const params = useMemo(() => ({
-    state: unfulfilled ? 'ignored' : 'ignored|wished|archived',
-    ...(guests?.values?.length ? { requested_by: guests.values.join({ or: '|', and: ',' }[guests.behavior]) } : { 'requested_by.gte': 1 }),
-    ...(SHOW_SORTS[sort?.value] ? { sort_by: `${SHOW_SORTS[sort.value]}.${sort.sort ? 'desc' : 'asc'}` } : {}),
-  }), [unfulfilled, JSON.stringify(guests), sort?.value, sort?.sort])
+const layout = (aside: string[]) => ({
+  nav: {
+    display: 'grid' as const,
+    gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content min-content'],
+    gridTemplateRows: 'auto',
+    gap: '2em',
+    gridTemplateAreas: [
+      `"results state toggle sort_by"`,
+      `"title results state toggle sort_by"`,
+    ],
+    '>h4': {
+      display: ['none', 'block'],
+    },
+  },
+  aside: {
+    display: 'grid' as const,
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gridTemplateRows: 'auto',
+    gap: '2em',
+    gridTemplateAreas: aside.map(area => `"${area}"`).join(' '),
+  },
+})
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const { uri, params: query, init } = APIQuery.shows.getShows({ params, init: { signal: controller.signal } })
-
-    setShows(null)
-    setError(null)
-    api.fetch(uri, { ...query, limit: '' }, init)
-      .then(({ results }) => setShows(results))
-      .catch((e) => {
-        if (e.name !== 'AbortError') {
-          console.warn(e)
-          setError(e)
-        }
-      })
-
-    return () => controller.abort()
-  }, [params])
-
-  const listed = useMemo(() => (shows || []).filter(show => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [shows, loading, unfulfilled, metadata])
-
-  return (
-    <>
-      {!filtered && (!!shows || !!error) && (
-        <Entities
-          id='requests-shows'
-          entities={listed}
-          length={listed.length}
-          error={error}
-          label={emojize('📺', 'Shows')}
-          display='row'
-          hide={!error}
-          empty={{ emoji: '📺', title: 'No show requests', subtitle: 'Your guests have not asked for a show yet' }}
-          child={Show as any}
-        />
-      )}
-      <Entities {...props as any} controls={controls} {...((!filtered && (listed.length || error)) ? { label: emojize('🎞️', 'Movies') } : {})} />
-    </>
-  )
+const components = {
+  toggle: withProps({
+    translateKey: 'ui.controls.more',
+  })(ControlsToggleButton),
 }
 
 const Requests = compose(
@@ -124,61 +96,20 @@ const Requests = compose(
     hooks: {
       onChange: () => scrollToTop(),
     },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results state toggle sort_by"`,
-          `"title results state toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: {
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: `
-          "head"
-          "requested_by"
-          "genres"
-          "release_date"
-          "popularity"
-          "vote_average"
-          "runtime"
-        `,
-      },
-    },
-    components: {
-      toggle: withProps({
-        translateKey: 'ui.controls.more',
-      })(ControlsToggleButton),
-    },
+    layout: layout(['head', 'requested_by', 'genres', 'release_date', 'popularity', 'vote_average', 'runtime']),
+    components,
     fields: {
       head: {
         initial: null,
-        component: ({ ...props }) => (
-          <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
-            <Warning
-              emoji="🍻"
-              title="Requests"
-              subtitle={(
-                <span>
-                  Explore your guests requested movies and shows
-                  <br/>
-                  <br/>
-                  <small><em>Change each requested movie state to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🍿 Wished</code> if you want to accept it, or <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔕 Ignored</code> if you want to refuse it</em></small>
-                  <br/>
-                  <small><em>Change a requested show to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>📺 Followed</code> to add it to your library</em></small>
-                </span>
-              )}
-            />
-          </div>
+        component: () => (
+          <Head>
+            <span>
+              Explore your guests requested movies
+              <br/>
+              <br/>
+              <small><em>Change each requested movie state to <code sx={code}>🍿 Wished</code> if you want to accept it, or <code sx={code}>🔕 Ignored</code> if you want to refuse it</em></small>
+            </span>
+          </Head>
         ),
       },
       sort_by: {
@@ -214,11 +145,7 @@ const Requests = compose(
           </Option>
         ),
       },
-      requested_by: {
-        initial: { values: [], behavior: 'or' },
-        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : { [`${key}.gte`]: 1 },
-        component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
-      },
+      requested_by,
       genres: {
         ...fields.genres,
         initial: { values: [], behavior: 'or' },
@@ -266,6 +193,127 @@ const Requests = compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
-)(RequestsEntities)
+)(Entities)
 
 export default Requests
+
+const SHOWS_UNFULFILLED = 'ignored'
+const SHOWS_ALL = 'ignored|wished|archived'
+
+const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {}))
+  .map(([_id, count]) => ({ _id, count }))
+
+// Every requested show comes in one page, so the one followed from its badge leaves the unfulfilled grid at once
+const withUnfulfilledShows = () => (WrappedComponent) => {
+  const withUnfulfilledShows = ({ entities, length, onMore, ...props }: any) => {
+    const { loading, metadata } = useShowsMetadataContext() as any
+    const unfulfilled = (props.controls?.values?.state ?? SHOWS_UNFULFILLED) === SHOWS_UNFULFILLED
+    const listed = useMemo(() => Object.values(entities || {}).filter((show: any) => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [entities, loading, unfulfilled, metadata])
+
+    return <WrappedComponent {...props} entities={listed} length={props.ready ? listed.length : length} />
+  }
+
+  return withUnfulfilledShows
+}
+
+export const ShowsRequests = compose(
+  withTitle(i18n.t('pages.shows.requests.title')),
+  withProps({
+    id: 'shows-requests',
+    display: 'grid',
+    child: Show,
+    empty: {
+      emoji: '🍻',
+      title: 'No requests found',
+      subtitle: (
+        <span>
+          Expand your search criteria or invite some more guests to sync their Plex Watchlist with your Sensorr !
+        </span>
+      ),
+    },
+  }),
+  withFetchQuery(APIQuery.shows.getShows({ params: { limit: '' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withUnfulfilledShows(),
+  withControls({
+    title: i18n.t('pages.requests.title'),
+    hooks: {
+      onChange: () => scrollToTop(),
+    },
+    layout: layout(['head', 'requested_by']),
+    components,
+    fields: {
+      head: {
+        initial: null,
+        component: () => (
+          <Head>
+            <span>
+              Explore your guests requested shows
+              <br/>
+              <br/>
+              <small><em>Change a requested show to <code sx={code}>📺 Followed</code> to add it to your library</em></small>
+            </span>
+          </Head>
+        ),
+      },
+      sort_by: {
+        initial: {
+          value: 'refreshed_at',
+          sort: true,
+        },
+        serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
+        component: withProps({
+          label: i18n.t('ui.sorting'),
+          options: [
+            { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
+            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
+            { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+            { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
+            { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+            { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
+          ]
+        })(Sorting)
+      },
+      // "Unfulfilled" is a show not added yet
+      state: {
+        initial: SHOWS_UNFULFILLED,
+        hideFromFiltersCount: true,
+        serialize: (key, raw) => ({ [key]: raw }),
+        component: ({ ...props }) => (
+          <Option
+            id='unfulfilled'
+            type='checkbox'
+            checked={props.value === SHOWS_UNFULFILLED}
+            onChange={(e: any) => props.onChange(e.target.checked ? SHOWS_UNFULFILLED : SHOWS_ALL)}
+          >
+            Unfulfilled
+          </Option>
+        ),
+      },
+      requested_by,
+    },
+    useStatistics: () => {
+      const api = useAPI()
+      const [statistics, setStatistics] = useState({})
+
+      useEffect(() => {
+        const controller = new AbortController()
+        const { uri, params, init } = APIQuery.shows.getShows({ params: { state: SHOWS_ALL, 'requested_by.gte': 1, fields: 'id|requested_by', limit: '' }, init: { signal: controller.signal } })
+
+        api.fetch(uri, params, init)
+          .then(({ results }) => setStatistics({ requested_by: countsOf(results.flatMap(show => show.requested_by || [])) }))
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              console.warn(e)
+              setStatistics({})
+            }
+          })
+
+        return () => controller.abort()
+      }, [])
+
+      return statistics
+    },
+  }),
+  withPlacehodersHistoryState(),
+  withBody(),
+)(Entities)

@@ -321,6 +321,9 @@ export default {
       search: {
         title: 'Shows · Search',
       },
+      requests: {
+        title: 'Shows · Requests',
+      },
     },
   },
 }
