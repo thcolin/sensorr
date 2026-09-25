@@ -119,7 +119,24 @@ describe('showFilesOf', () => {
     ])
   })
 
+  it('gives a file holding several episodes to each of them, as the same entry', () => {
+    const season = [4, 5, 6].map((number) => ({ id: number, season_number: 1, episode_number: number, files: [] }))
+    const { episodes: named } = showFilesOf(season, [item(1, 4, [media(4, 'Friends.S01E04-E05.720p.mkv')])])
+    const { episodes: listed } = showFilesOf(season, [item(1, 4, [media(4, 'Friends.S01E04.mkv')]), item(1, 5, [media(8, 'Friends.S01E04.mkv')])])
+
+    expect(named.map(({ files }) => files.map(({ id }) => id))).toEqual([['plex://episode/1-4#4'], ['plex://episode/1-4#4'], []])
+    expect(listed.map(({ files }) => files.map(({ id }) => id))).toEqual([['plex://episode/1-4#4'], ['plex://episode/1-4#4'], []])
+    expect(showFilesOf(season, [item(1, 4, [media(4, 'Friends.S01E04E05.mkv')]), item(1, 5, [media(8, 'Friends.S01E04E05.mkv')])]).episodes[1].files).toHaveLength(1)
+  })
+
+  it('trusts Plex over a file name that numbers other episodes', () => {
+    const { episodes: synced } = showFilesOf(episodes, [item(1, 1, [media(4, 'Friends.S01E02E03.mkv')])])
+
+    expect(synced.map(({ files }) => files.length)).toEqual([1, 0, 0])
+  })
+
   it('counts the Plex episodes no Sensorr episode numbers the same', () => {
     expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toBe(1)
+    expect(showFilesOf(episodes, [item(1, 3, [media(6, 'Friends.S01E03E04.mkv')])]).unmatched).toBe(0)
   })
 })

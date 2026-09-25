@@ -114,29 +114,41 @@ export const releaseOf = (payload, media) => {
   return { title: oleoo.stringify(meta, { flagged: true }), original: fallback.original }
 }
 
-export const filesOf = (item) => (item.Media || []).map((media) => {
-  const { generated, original } = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
+const nameOf = (media) => media.Part[0].file.split(/[\\/]/).pop()
 
-  return {
-    id: `${item.guid}#${media.id}`,
-    size: media.Part.reduce((acc, curr) => acc + curr.size, 0),
-    title: generated,
-    original,
-  }
+const fileOf = (item, media, { generated, original } = oleoo.parse(nameOf(media), { strict: false, flagged: true })) => ({
+  id: `${item.guid}#${media.id}`,
+  size: media.Part.reduce((acc, curr) => acc + curr.size, 0),
+  title: generated,
+  original,
 })
 
-// Plex numbers an episode by its season `parentIndex` and its own `index`
+export const filesOf = (item) => (item.Media || []).map((media) => fileOf(item, media))
+
+// Plex numbers an episode by its season `parentIndex` and its own `index`. A file holding several episodes is listed
+// under each of them, or under the first one only: its name then numbers the others, as long as it agrees with Plex.
 export const showFilesOf = (episodes, items) => {
-  const files = {}
+  const keyOf = (season, episode) => `${season}:${episode}`
+  const files = {}, entries = {}, listed = new Set()
 
   for (const item of items) {
-    files[`${item.parentIndex}:${item.index}`] = [...(files[`${item.parentIndex}:${item.index}`] || []), ...filesOf(item)]
+    listed.add(keyOf(item.parentIndex, item.index))
+
+    for (const media of item.Media || []) {
+      const parsed = oleoo.parse(nameOf(media), { strict: false, flagged: true })
+      const entry = entries[media.Part[0].file] = entries[media.Part[0].file] || fileOf(item, media, parsed)
+      const numbers = parsed.season === item.parentIndex && parsed.episodes.includes(item.index) ? parsed.episodes : [item.index]
+
+      for (const key of numbers.map((number) => keyOf(item.parentIndex, number))) {
+        files[key] = (files[key] || []).includes(entry) ? files[key] : [...(files[key] || []), entry]
+      }
+    }
   }
 
-  const numbers = new Set(episodes.map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
+  const numbers = new Set(episodes.map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
 
   return {
-    episodes: episodes.map((episode) => ({ ...episode, files: files[`${episode.season_number}:${episode.episode_number}`] || [] })),
-    unmatched: Object.keys(files).filter((key) => !numbers.has(key)).length,
+    episodes: episodes.map((episode) => ({ ...episode, files: files[keyOf(episode.season_number, episode.episode_number)] || [] })),
+    unmatched: [...listed].filter((key) => !numbers.has(key)).length,
   }
 }
