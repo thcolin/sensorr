@@ -1,19 +1,31 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom'
 import { Button, Icon } from '@sensorr/ui'
 import { coverageLabel, swapOf } from '@sensorr/sensorr'
-import { filesize } from '@sensorr/utils'
+import { emojize, filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Release } from '../../../components/Sensorr/Release'
-import { swapLabelOf } from '../../../components/Sensorr/Proposal'
+import { Transition } from '../../../components/Sensorr/Proposal'
 import { ReleasesStyles, Swap } from '../../Details/components/Releases'
-import { isPending, proposalDiff, scoreReleases } from '../../Proposals/queue'
+import { isPending, proposalDiff, scoreReleases, sizeStateOf } from '../../Proposals/queue'
 import { DELAY, usePendingVerdict } from '../../Proposals/pending'
 import { VERDICTS } from '../../Proposals/Card'
 import { useShowPolicy } from './Actions'
 import { fileMetaOf, fillsOf, ownedFilesOf } from './fills'
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
+
+// What the size pill does not say: the episodes it replaces, the ones it brings
+const reachOf = (fills, swap) => {
+  const partial = !!fills.missing.length && fills.missing.length < fills.total
+
+  if (swap) {
+    return [`replaces ${plural(swap.replaces, 'episode')}`, !!fills.missing.length && `fills ${fills.label}`].filter(Boolean).join(' · ')
+  }
+
+  return fills.total ? `fills ${partial ? fills.label : plural(fills.missing.length, 'episode')}` : null
+}
 
 const without = (object, key) => {
   const { [key]: removed, ...rest } = object
@@ -137,21 +149,24 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
 
   // Laid out like a movie's releases block (../../Details/components/Releases.tsx), one titled group per proposal
   return (
-    <section sx={ReleasesStyles.element} aria-label='Pending proposals'>
+    <section id='proposals' sx={ReleasesStyles.element} aria-label='Pending proposals'>
       <div>
         {rows.map(({ release, fills, swap, diff }, index) => {
-          const brings = fills.total ? plural(fills.missing.length, 'episode') : null
+          const reach = reachOf(fills, swap)
+          const season = Math.min(...(release.coverage || []).map(({ season }) => season))
 
           return (
             <div key={release.id} role='group' aria-labelledby={`proposal-${release.id}`} sx={UIProposals.styles.proposal}>
               <div sx={UIProposals.styles.head}>
-                <h2 id={`proposal-${release.id}`}>{coverageLabel(release.coverage || [], release.level || undefined)}</h2>
-                {(typeof release.size === 'number' || !!brings || !!swap) && (
-                  <small title={fills.codes.join(' ')}>
-                    {swap ? swapLabelOf(release.size, swap) : [typeof release.size === 'number' && filesize.stringify(release.size), brings && `for ${brings}`].filter(Boolean).join(' ')}
-                    {!!fills.missing.length && fills.missing.length < fills.total && ` · ${fills.label}`}
-                  </small>
-                )}
+                <h2 id={`proposal-${release.id}`}>
+                  {/* To the season it qualifies, opened alone and scrolled to (Seasons.tsx) */}
+                  {Number.isFinite(season) ? (
+                    <Link to={`#season-${season}`} title={`Go to the episodes of season ${season}`}>
+                      {coverageLabel(release.coverage || [], release.level || undefined)}
+                    </Link>
+                  ) : coverageLabel(release.coverage || [], release.level || undefined)}
+                </h2>
+                {!!reach && <small title={fills.codes.join(' ')}>{reach}</small>}
               </div>
               <Release
                 entity={release}
@@ -164,7 +179,17 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
                 policy={policy}
                 shortcuts={index === 0}
                 onGesture={verdict => answer(release, verdict)}
-              />
+              >
+                {/* The owned files of the covered episodes against the proposal, like a movie's size pill (Releases.tsx) */}
+                {!!swap && typeof release.size === 'number' && (
+                  <Transition
+                    axis='size'
+                    from={emojize('📦', filesize.stringify(swap.size))}
+                    to={filesize.stringify(release.size)}
+                    state={sizeStateOf(release.size - swap.size)}
+                  />
+                )}
+              </Swap>
             </div>
           )
         })}
@@ -227,6 +252,19 @@ UIProposals.styles = {
       fontFamily: 'monospace',
       fontSize: 2,
       fontWeight: 'semibold',
+      '>a': {
+        color: 'inherit',
+        textDecoration: 'none',
+        ':hover': {
+          textDecoration: 'underline',
+          textUnderlineOffset: '0.25em',
+        },
+        ':focus-visible': {
+          outline: '1px solid',
+          outlineColor: 'grayDarkest',
+          outlineOffset: '2px',
+        },
+      },
     },
     '>small': {
       fontSize: 4,
