@@ -37,7 +37,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will search for all selected terms on configured indexers">Sensorr will search for all selected terms on configured indexers</small>}
         </div>
-        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.narrow }}>
+        <div sx={UIMetadata.styles.block}>
           <span>Years</span>
           <QueryInput
             value={values.years}
@@ -50,7 +50,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will filter releases with selected years">Sensorr will filter releases with selected years</small>}
         </div>
-        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.narrow }}>
+        <div sx={UIMetadata.styles.block}>
           <span>Policy</span>
           <PolicyInput
             value={policy}
@@ -58,51 +58,46 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will apply selected policy to sort and select the best release">Sensorr will apply selected policy to sort and select the best release</small>}
         </div>
+        {help && (
+          <>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
+              <span>Refine for better release</span>
+              <OptionInput
+                id={`refine-${entity?.id}`}
+                children="Sensorr will regularly search for better release than the current archived one"
+                value={metadata?.refine}
+                onChange={value => setMetadata('refine', value)}
+              />
+            </div>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option, gridColumn: ['auto', '2 / -1'] }}>
+              <span>Shrink for smaller release</span>
+              <OptionInput
+                id={`shrink-${entity?.id}`}
+                children="Sensorr will regularly search for smaller release than the current archived one"
+                value={metadata?.shrink}
+                onChange={value => setMetadata('shrink', value)}
+              />
+            </div>
+          </>
+        )}
       </div>
-      {help && (
-        <div sx={UIMetadata.styles.container}>
-          <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
-            <span>Refine for better release</span>
-            <OptionInput
-              id={`refine-${entity?.id}`}
-              children="Sensorr will regularly search for better release than the current archived one"
-              value={metadata?.refine}
-              onChange={value => setMetadata('refine', value)}
-            />
-          </div>
-          <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
-            <span>Shrink for smaller release</span>
-            <OptionInput
-              id={`shrink-${entity?.id}`}
-              children="Sensorr will regularly search for smaller release than the current archived one"
-              value={metadata?.shrink}
-              onChange={value => setMetadata('shrink', value)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
 UIMetadata.styles = {
   container: {
-    display: 'flex',
-    flexDirection: ['column', 'row'],
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) 12em 12em'],
+    columnGap: '3em',
   },
   block: {
     display: 'flex',
     flexDirection: 'column',
-    flexBasis: '40rem',
+    minWidth: 0,
     paddingY: 8,
-    paddingX: [8, 2],
+    paddingX: [8, 12],
     whiteSpace: 'nowrap',
-    '&:first-of-type': {
-      paddingLeft: [8, 12],
-    },
-    '&:last-of-type': {
-      paddingRight: [8, 12],
-    },
     '>span': {
       fontWeight: 'semibold',
       fontSize: 7,
@@ -119,15 +114,9 @@ UIMetadata.styles = {
     },
   },
   wide: {
-    flex: 1,
     overflow: 'hidden',
   },
-  narrow: {
-    flex: 0,
-    minWidth: '12em',
-  },
   option: {
-    flexBasis: 0,
     whiteSpace: ['wrap', 'nowrap'],
   },
 }

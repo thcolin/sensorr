@@ -12,12 +12,6 @@ export const DOWNLOADS = [
   { value: false, key: 'auto', label: 'At once' },
 ]
 
-const block = {
-  ...MetadataStyles.block,
-  '>span': { ...MetadataStyles.block['>span'], color: 'grayDarkest' },
-  '>small': { ...MetadataStyles.block['>small'], color: 'grayDarkest' },
-}
-
 export const useShowPolicy = (entity, metadata) => {
   const sensorr = useSensorr()
   return useMemo(() => new Policy(metadata?.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies), [metadata?.policy, entity?.original_language, sensorr.policies])
@@ -26,7 +20,7 @@ export const useShowPolicy = (entity, metadata) => {
 // `setShowMetadata` toasts a policy change, and nothing for the other fields of a single show
 const failed = (key) => key !== 'policy' && toast.error('Error while updating show metadata')
 
-const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) => {
+const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, children = null }) => {
   const { config } = useConfigContext()
   const [pending, setPending] = useState({})
   const policy = useShowPolicy(entity, metadata)
@@ -52,8 +46,8 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
   }
 
   return (
-    <div sx={MetadataStyles.container}>
-      <div sx={{ ...block, ...MetadataStyles.wide }}>
+    <div sx={UIShowSettings.styles.container}>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide }}>
         <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
           {DOWNLOADS.map(({ value, key, label }) => (
@@ -72,7 +66,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
         </div>
         {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
       </div>
-      <div sx={{ ...block, ...MetadataStyles.narrow }}>
+      <div sx={MetadataStyles.block}>
         <span id={ids.policy}>Policy</span>
         <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
@@ -82,6 +76,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
         </fieldset>
         {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
+      {children}
     </div>
   )
 }
@@ -102,43 +97,45 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
   }
 
   return (
-    <div>
-      <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata} />
-      <div sx={MetadataStyles.container}>
-        <div sx={{ ...block, ...MetadataStyles.option }}>
-          <span id={ids.monitored}>Follow</span>
-          <OptionInput
-            id={ids.monitored}
-            value={!!metadata?.monitored}
-            disabled={!ready || !!pending['monitored']}
-            onChange={value => set('monitored', value)}
-            aria-labelledby={ids.monitored}
-            aria-describedby={`keep-up-to-date-${ids.monitored}-help`}
-          >
-            {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
-          </OptionInput>
-        </div>
-        <div sx={{ ...block, ...MetadataStyles.option }}>
-          <span id={ids.monitor_new_seasons}>Follow new seasons</span>
-          <OptionInput
-            id={ids.monitor_new_seasons}
-            value={!!metadata?.monitor_new_seasons}
-            disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
-            onChange={value => set('monitor_new_seasons', value)}
-            aria-labelledby={ids.monitor_new_seasons}
-            aria-describedby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
-          >
-            {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
-          </OptionInput>
-        </div>
+    <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
+        <span id={ids.monitored}>Follow</span>
+        <OptionInput
+          id={ids.monitored}
+          value={!!metadata?.monitored}
+          disabled={!ready || !!pending['monitored']}
+          onChange={value => set('monitored', value)}
+          aria-labelledby={ids.monitored}
+          aria-describedby={`keep-up-to-date-${ids.monitored}-help`}
+        >
+          {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
+        </OptionInput>
       </div>
-    </div>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
+        <span id={ids.monitor_new_seasons}>Follow new seasons</span>
+        <OptionInput
+          id={ids.monitor_new_seasons}
+          value={!!metadata?.monitor_new_seasons}
+          disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
+          onChange={value => set('monitor_new_seasons', value)}
+          aria-labelledby={ids.monitor_new_seasons}
+          aria-describedby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
+        >
+          {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+        </OptionInput>
+      </div>
+    </ShowSettings>
   )
 }
 
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
+  // The second column is as wide as the policy help, so it reads whole, and Follow new seasons starts under Policy
+  container: {
+    ...MetadataStyles.container,
+    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) minmax(12em, max-content)'],
+  },
   fieldset: {
     minWidth: 0,
     margin: 12,
