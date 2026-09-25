@@ -8,7 +8,7 @@ import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { showFilesOf } from '../utils/plex'
-import { fetchShow, fetchSensorrShows, syncedFilesOf } from '../utils/shows'
+import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf } from '../utils/shows'
 
 const meta = {
   command: 'sync',
@@ -189,16 +189,15 @@ const CheckSensorrShowsTask = ({ ...props }) => {
           }
 
           const synced = showFilesOf(episodes, items)
-          const changes = synced.episodes.filter((episode, index) => JSON.stringify(episode.files) !== JSON.stringify(episodes[index].files || []))
-          const lost = changes.filter(({ files }) => !files.length).length
+          const changes = synced.episodes.map((episode, index) => ({ id: episode.id, ...plexFilesOf(episodes[index].files, episode.files) })).filter(({ changed }) => changed)
+          const lost = changes.filter(({ lost }) => lost).length
           unmatched += synced.unmatched
 
           if (unknown || changes.length) {
             const { uri, params, init } = api.query.episodes.postEpisodes({
-              body: (unknown ? synced.episodes : changes).reduce((acc, episode) => ({
-                ...acc,
-                [episode.id]: unknown ? episode : syncedFilesOf(episode.files),
-              }), {}),
+              body: unknown
+                ? synced.episodes.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {})
+                : changes.reduce((acc, { id, files }) => ({ ...acc, [id]: syncedFilesOf(files) }), {}),
             })
             await api.fetch(uri, params, init)
             corrections.push(show.id)
@@ -253,18 +252,24 @@ const ComputeSensorrMissingEpisodesTask = ({ ...props }) => {
       setStatus('loading')
 
       for (const show of (state.library || []).filter(({ id }) => !(state.processed || []).includes(id))) {
-        const lost = (state.episodes?.[show.id] || []).filter(({ files }) => files?.length)
+        const changes = (state.episodes?.[show.id] || []).map(({ id, files }) => ({ id, ...plexFilesOf(files, []) })).filter(({ changed }) => changed)
+        const lost = changes.filter(({ lost }) => lost).length
 
-        if (!lost.length) {
+        if (!changes.length) {
           continue
         }
 
         try {
-          const { uri, params, init } = api.query.episodes.postEpisodes({ body: lost.reduce((acc, { id }) => ({ ...acc, [id]: syncedFilesOf([]) }), {}) })
+          const { uri, params, init } = api.query.episodes.postEpisodes({ body: changes.reduce((acc, { id, files }) => ({ ...acc, [id]: syncedFilesOf(files) }), {}) })
           await api.fetch(uri, params, init)
-          missing += lost.length
-          state.logger.warn({ message: `💊 ${lost.length} "${show.name}" episodes no longer on Plex`, metadata: { ...state.metadata, group: 'missings', show: lighten.show(show), missing: lost.length } })
-          setTask((task) => ({ ...task, output: <Text>Show <Text bold={true}>{show.name}</Text> not found on Plex, <Text bold={true}>{lost.length}</Text> episodes "missing"</Text> }))
+
+          if (!lost) {
+            continue
+          }
+
+          missing += lost
+          state.logger.warn({ message: `💊 ${lost} "${show.name}" episodes no longer on Plex`, metadata: { ...state.metadata, group: 'missings', show: lighten.show(show), missing: lost } })
+          setTask((task) => ({ ...task, output: <Text>Show <Text bold={true}>{show.name}</Text> not found on Plex, <Text bold={true}>{lost}</Text> episodes "missing"</Text> }))
         } catch (error) {
           setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
           state.logger.warn({ message: `⚠️ Error on "${show.name}" Plex show, "${error.message}"`, metadata: { ...state.metadata, group: 'missings', error, show: lighten.show(show) } })

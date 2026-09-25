@@ -6,7 +6,7 @@ import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { fetchSensorrShows, isImportable, isReleaseFinished, isReleaseOverdue, importLinksOf, showFolderOf, INCOMPLETE } from '../utils/shows'
+import { fetchSensorrShows, isImportable, isReleaseFinished, isReleaseOverdue, importLinksOf, importedEpisodesOf, showFolderOf, INCOMPLETE } from '../utils/shows'
 
 const meta = {
   command: 'import',
@@ -140,7 +140,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             }
 
             let retry = false
-            const linked = []
+            const linked = [], existing = []
 
             // A copy would double the space a hard link does not take: a failed link is only logged
             for (const link of importLinksOf(release, show, episodes, library)) {
@@ -150,15 +150,35 @@ const ImportShowsReleasesTask = ({ ...props }) => {
                 linked.push(link)
               } catch (error) {
                 retry = retry || error.code !== 'EEXIST'
+                if (error.code === 'EEXIST') {
+                  existing.push(link)
+                }
+
                 state.logger.warn({ message: `⚠️ Error on "${show.name}" import of "${link.source}", ${error.code || error.message}`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), release: { id: release.id, title: release.title }, link, error } })
                 warning++
               }
             }
 
             links += linked.length
+            const { owned, unlinked } = importedEpisodesOf(release, episodes, [...linked, ...existing])
+
+            if (owned.length) {
+              const { uri, params, init } = api.query.episodes.postEpisodes({ body: owned.reduce((acc, { id, files }) => ({ ...acc, [id]: { files } }), {}) })
+              await api.fetch(uri, params, init)
+              episodes = episodes.map((episode) => owned.find(({ id }) => id === episode.id) || episode)
+            }
 
             // An existing target is never replaced, any other failure is tried again on the next run
             if (!retry) {
+              if (unlinked.length) {
+                const numbers = unlinked.map(({ season_number, episode_number }) => `S${`${season_number}`.padStart(2, '0')}E${`${episode_number}`.padStart(2, '0')}`)
+                const { uri, params, init } = api.query.episodes.postEpisodes({ body: unlinked.reduce((acc, { id }) => ({ ...acc, [id]: { release: null } }), {}) })
+                await api.fetch(uri, params, init)
+                episodes = episodes.map((episode) => unlinked.some(({ id }) => id === episode.id) ? { ...episode, release: null } : episode)
+                state.logger.warn({ message: `⚠️ "${release.title}" of "${show.name}" holds no file for ${numbers.join(', ')}, searched again`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), release: { id: release.id, title: release.title }, unlinked: numbers } })
+                warning++
+              }
+
               done.push(release.id)
               imported++
               state.logger.info({ message: `📥 Import "${release.title}" into "${folder}", ${linked.length} files linked`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), release: { id: release.id, title: release.title }, links: linked.length } })

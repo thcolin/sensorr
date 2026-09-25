@@ -57,6 +57,17 @@ export const airingUnits =(units, episodes, since) => {
 
 export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
 
+// Plex decides, except for a file `import shows` linked that Plex has not scanned yet. Only a file Plex had seen is lost.
+export const plexFilesOf = (known = [], files) => {
+  const kept = files.length ? files : known.filter(({ from }) => from === 'import')
+
+  return {
+    files: kept,
+    changed: JSON.stringify(kept) !== JSON.stringify(known),
+    lost: !kept.length && known.some(({ from }) => !['import', 'sonarr'].includes(from)),
+  }
+}
+
 // GET /api/shows leaves ignored shows out unless asked for them
 export const fetchSensorrShows = async (api, params = {}) => {
   const shows = []
@@ -114,7 +125,7 @@ export const importLinksOf = (release, show, episodes, library) => {
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
   const missing = new Set(episodes.filter(({ files }) => !files?.length).map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
 
-  return release.torrent.files.flatMap(({ path: file }) => {
+  return release.torrent.files.flatMap(({ path: file, size }) => {
     if (!MEDIA.test(file) || /\bsamples?\b/i.test(file)) {
       return []
     }
@@ -122,6 +133,28 @@ export const importLinksOf = (release, show, episodes, library) => {
     const { season, episodes: numbers } = oleoo.parse(path.basename(file))
     const matched = typeof season === 'number' ? numbers.filter((number) => covered.has(keyOf(season, number)) && missing.has(keyOf(season, number))) : []
 
-    return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched }] : []
+    return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched, size }] : []
   })
+}
+
+// A linked file marks its episodes owned at once, `sync shows` replaces it with the one Plex reads.
+// A covered episode left without a file is let go, so it reads wanted again.
+export const importedEpisodesOf = (release, episodes, links) => {
+  const keyOf = (season, episode) => `${season}:${episode}`
+  const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
+  const files = links.reduce((acc, link) => {
+    const { generated, original } = oleoo.parse(path.basename(link.source), { strict: false, flagged: true })
+    const file = { id: `import:${link.source}`, size: link.size, title: generated, original, from: 'import' }
+    link.episodes.forEach((number) => acc.set(keyOf(link.season, number), [...(acc.get(keyOf(link.season, number)) || []), file]))
+    return acc
+  }, new Map())
+
+  return {
+    owned: episodes
+      .filter(({ season_number, episode_number }) => files.has(keyOf(season_number, episode_number)))
+      .map((episode) => ({ ...episode, files: files.get(keyOf(episode.season_number, episode.episode_number)) })),
+    unlinked: episodes.filter(({ season_number, episode_number, files: known, release: id }) => (
+      id === release.id && covered.has(keyOf(season_number, episode_number)) && !known?.length && !files.has(keyOf(season_number, episode_number))
+    )),
+  }
 }

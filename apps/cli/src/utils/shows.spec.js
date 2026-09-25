@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -115,6 +115,29 @@ describe('syncedFilesOf', () => {
   })
 })
 
+describe('plexFilesOf', () => {
+  const plex = [{ id: 'plex://episode/1#2', size: 10, title: 'S01E01', original: 'Show.S01E01.mkv' }]
+  const imported = [{ id: 'import:Show.S01/Show.S01E01.mkv', size: 10, title: 'S01E01', original: 'Show.S01E01.mkv', from: 'import' }]
+  const sonarr = [{ id: 'sonarr:12', size: 10, title: 'S01E01', original: 'Show.S01E01.mkv', from: 'sonarr' }]
+
+  it('takes the files Plex reads in place of any other, without a loss', () => {
+    expect(plexFilesOf(imported, plex)).toEqual({ files: plex, changed: true, lost: false })
+    expect(plexFilesOf(sonarr, plex)).toEqual({ files: plex, changed: true, lost: false })
+    expect(plexFilesOf(plex, plex)).toEqual({ files: plex, changed: false, lost: false })
+  })
+
+  it('loses a file Plex had seen, and drops one read from Sonarr without a loss', () => {
+    expect(plexFilesOf(plex, [])).toEqual({ files: [], changed: true, lost: true })
+    expect(plexFilesOf(sonarr, [])).toEqual({ files: [], changed: true, lost: false })
+    expect(plexFilesOf(undefined, [])).toEqual({ files: [], changed: false, lost: false })
+  })
+
+  it('keeps a file linked by the import until Plex has scanned it', () => {
+    expect(plexFilesOf(imported, [])).toEqual({ files: imported, changed: false, lost: false })
+    expect(plexFilesOf([...plex, ...imported], [])).toEqual({ files: imported, changed: true, lost: false })
+  })
+})
+
 describe('isImportable', () => {
   const torrent = { name: 'Show.S01E01.mkv', files: [{ path: 'Show.S01E01.mkv', size: 10 }] }
 
@@ -214,7 +237,7 @@ describe('importLinksOf', () => {
 
   it('links each file to the covered episodes without files it holds', () => {
     expect(importLinksOf(release, show, episodes, '/tvshows')).toEqual([
-      { source: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24E25.mkv', season: 3, episodes: [24, 25] },
+      { source: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24E25.mkv', season: 3, episodes: [24, 25], size: 2 },
     ])
   })
 
@@ -226,6 +249,31 @@ describe('importLinksOf', () => {
     const files = ['exe', 'lnk', 'rar', 'r00', 'nfo', 'srt', 'MKV'].map((extension, index) => ({ path: `The.Office.US.S03E24.${extension}`, size: index }))
 
     expect(importLinksOf({ ...release, torrent: { name: 'The.Office.US.S03E24', files } }, show, episodes, '/tvshows').map(({ source }) => source)).toEqual(['The.Office.US.S03E24.MKV'])
+  })
+})
+
+describe('importedEpisodesOf', () => {
+  const release = { id: 'r', coverage: [{ season: 3, episode: 23 }, { season: 3, episode: 24 }, { season: 3, episode: 25 }] }
+  const episodes = [
+    { id: 23, season_number: 3, episode_number: 23, files: [], release: 'r' },
+    { id: 24, season_number: 3, episode_number: 24, files: [], release: 'r' },
+    { id: 25, season_number: 3, episode_number: 25, files: [], release: 'r' },
+    { id: 26, season_number: 3, episode_number: 26, files: [], release: 'other' },
+  ]
+  const link = { source: 'The.Office.US.S03/The.Office.US.S03E24E25.1080p.WEB.x264-GRP.mkv', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24E25.1080p.WEB.x264-GRP.mkv', season: 3, episodes: [24, 25], size: 2 }
+
+  it('gives each linked episode its file, marked as coming from the import', () => {
+    const { owned } = importedEpisodesOf(release, episodes, [link])
+
+    expect(owned.map(({ id }) => id)).toEqual([24, 25])
+    expect(owned[0].files).toEqual([{ id: `import:${link.source}`, size: 2, title: 'The.Office.Us.S03E24-E25.1080p.WEB-DL.x264-GRP', original: 'The.Office.US.S03E24E25.1080p.WEB.x264-GRP', from: 'import' }])
+    expect(owned[1].files).toEqual(owned[0].files)
+  })
+
+  it('lets go a covered episode of the release left without a file, and nothing else', () => {
+    expect(importedEpisodesOf(release, episodes, [link]).unlinked.map(({ id }) => id)).toEqual([23])
+    expect(importedEpisodesOf(release, episodes, []).unlinked.map(({ id }) => id)).toEqual([23, 24, 25])
+    expect(importedEpisodesOf(release, episodes.map((episode) => ({ ...episode, files: [{ id: 'plex' }] })), []).unlinked).toEqual([])
   })
 })
 

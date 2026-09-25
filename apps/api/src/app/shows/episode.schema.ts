@@ -44,6 +44,7 @@ export class Episode extends Document {
       size: Number,
       title: String,
       original: String,
+      from: String,
     }
   ]))
   files: Record<any, any>

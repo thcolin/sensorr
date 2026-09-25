@@ -11,6 +11,6 @@ export class EpisodeDTO {
   readonly runtime: number
   readonly still_path: string
   readonly monitored: boolean
-  readonly files: { id: string, size: number, title: string, original: string }[]
+  readonly files: { id: string, size: number, title: string, original: string, from?: 'import' | 'sonarr' }[]
   readonly release: string | null
 }
