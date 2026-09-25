@@ -1,8 +1,7 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Icon, Warning } from '@sensorr/ui'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { useResponsiveValue } from '@sensorr/utils'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import toast from 'react-hot-toast'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
@@ -10,7 +9,7 @@ import { useAPI } from '../../../store/api'
 import Show from '../../../components/Show/Show'
 import { Release } from '../../../components/Sensorr/Release'
 import { Summary } from '../Summary'
-import { RecordLogs } from './ProcessMovies'
+import { RecordLogs, useRecordsVirtualizer } from './ProcessMovies'
 import { ShowSettings } from '../../Shows/components/Actions'
 
 export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning }, extended = true, config = {} as any) => [
@@ -88,13 +87,8 @@ const matches = (record: any, filter: string) => ({
 })[filter] ?? true
 
 const UIProcessShowsJob = ({ job, logs }) => {
-  const ref = useRef()
-  const listRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const logsCache = useRef(new Map<string, any[]>())
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
-  const [scrollMargin, setScrollMargin] = useState(0)
   const { metadata: showsMetadata, setShowMetadata } = useShowsMetadataContext() as any
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => (!log.meta.group || log.meta.type !== 'show') ? groups : {
@@ -129,42 +123,11 @@ const UIProcessShowsJob = ({ job, logs }) => {
     (!znab || record.releases.some(release => release.znab === znab))
   )), [records, filter, znab])
 
-  const rowVirtualizer = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => ref.current as any,
-    estimateSize: (index) => estimateRecordHeight(filtered[index]),
-    overscan: 8,
-    scrollMargin,
-  })
-
-  useLayoutEffect(() => {
-    const list = listRef.current
-    const scroller = ref.current as any
-
-    if (!list || !scroller) {
-      return
-    }
-
-    const compute = () => {
-      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
-      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
-    }
-
-    compute()
-    const observer = new ResizeObserver(compute)
-    observer.observe(scroller)
-
-    if (headerRef.current) {
-      observer.observe(headerRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [filtered.length])
+  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index]), job.job)
 
   useEffect(() => {
     setFilter(null)
     setZnab(null)
-    logsCache.current.clear()
   }, [job.job])
 
   return (
@@ -264,7 +227,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
                     command={job.meta.command}
                     metadata={showsMetadata[record.show?.id] || {}}
                     setShowMetadata={setShowMetadata}
-                    logsCache={logsCache.current}
+                    logsCache={logsCache}
                   />
                 </div>
               )

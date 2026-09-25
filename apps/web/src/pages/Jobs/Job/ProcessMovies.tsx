@@ -68,18 +68,66 @@ const RecordData = ({ index, sensorr = null, ...props }) => {
   return <Record {...record} {...props} sensorr={sensorr === record.movie?.id} />
 }
 
-const UIProcessMoviesJob = ({ job, logs, summary }) => {
-  const ref = useRef()
+// The virtualized records of a job page, shared by the movie and the show jobs. `ref` is the scroll container,
+// `headerRef` the job header that scrolls above the list inside it, `listRef` the list.
+export const useRecordsVirtualizer = (count: number, estimateSize: (index: number) => number, job: string) => {
+  const ref = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   // Per-group logs cache, kept OUTSIDE the row lifecycle. Virtualization unmounts
   // off-screen rows, so without this a re-mounted row would refetch (spinner → logs)
   // and re-measure taller, shifting every row below it — the "jumping" symptom.
   const logsCache = useRef(new Map<string, any[]>())
+  const [scrollMargin, setScrollMargin] = useState(0)
+
+  const rowVirtualizer = useVirtualizer({
+    count,
+    getScrollElement: () => ref.current,
+    estimateSize,
+    overscan: 8,
+    scrollMargin,
+  })
+
+  // The job header scrolls with the list inside the same scroll container, so the
+  // virtualized list starts at a non-zero offset. Keep `scrollMargin` in sync with
+  // that offset (equivalent to the old grid's `layout.top`), recomputed whenever the
+  // header height changes (summary badges, znab filters…) or the viewport resizes.
+  useLayoutEffect(() => {
+    const list = listRef.current
+    const scroller = ref.current
+
+    if (!list || !scroller) {
+      return
+    }
+
+    const compute = () => {
+      // scroll-invariant offset of the list from the top of the scroll container
+      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
+      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
+    }
+
+    compute()
+    const observer = new ResizeObserver(compute)
+    observer.observe(scroller)
+
+    if (headerRef.current) {
+      observer.observe(headerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [count])
+
+  useEffect(() => {
+    logsCache.current.clear()
+  }, [job])
+
+  return { ref, listRef, headerRef, logsCache: logsCache.current, rowVirtualizer }
+}
+
+const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
-  const [scrollMargin, setScrollMargin] = useState(0)
   const toggleSensorr = useRef() as any
   const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
 
@@ -120,46 +168,10 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     warning: record.warning && (!znab || (record.release?.valid && record.release?.znab === znab)),
   }[filter])), [filter, znab, records])
 
-  const rowVirtualizer = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => ref.current as any,
-    estimateSize: (index) => estimateRecordHeight(filtered[index], device),
-    overscan: 8,
-    scrollMargin,
-  })
-
-  // The job header scrolls with the list inside the same scroll container, so the
-  // virtualized list starts at a non-zero offset. Keep `scrollMargin` in sync with
-  // that offset (equivalent to the old grid's `layout.top`), recomputed whenever the
-  // header height changes (summary badges, znab filters…) or the viewport resizes.
-  useLayoutEffect(() => {
-    const list = listRef.current
-    const scroller = ref.current as any
-
-    if (!list || !scroller) {
-      return
-    }
-
-    const compute = () => {
-      // scroll-invariant offset of the list from the top of the scroll container
-      const offset = list.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
-      setScrollMargin((previous) => (Math.abs(previous - offset) > 1 ? offset : previous))
-    }
-
-    compute()
-    const observer = new ResizeObserver(compute)
-    observer.observe(scroller)
-
-    if (headerRef.current) {
-      observer.observe(headerRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [filtered.length])
+  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index], device), job.job)
 
   useEffect(() => {
     setFilter(null)
-    logsCache.current.clear()
   }, [job.job])
 
   useEffect(() => {
@@ -268,7 +280,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
                         proposalOnly={!!job.meta.config?.proposalOnly}
                         setMovieMetadata={setMovieMetadata}
                         toggleSensorr={(e, movie) => toggleSensorr.current(e, movie)}
-                        logsCache={logsCache.current}
+                        logsCache={logsCache}
                       />
                     </div>
                   )
