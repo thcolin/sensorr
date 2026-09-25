@@ -165,9 +165,9 @@ flowchart TD
 
   blackhole --> client["The download client saves the files into shows.staging"]
   client --> import["import shows, every 10 minutes: every file at its size, none ending in .!qB<br/>apps/cli/src/utils/shows.js:96"]
-  import --> link["Hard link into shows.library, Show (year)/Season NN/<br/>apps/cli/src/commands/import-shows.js:149"]
+  import --> link["Hard link into shows.library, Show (year)/Season NN/, the episode is owned<br/>apps/cli/src/commands/import-shows.js:149"]
   link --> plex["Plex scans the shows library"]
-  plex --> sync["sync shows reads the episode files, the episode is owned<br/>apps/cli/src/commands/sync-shows.js:192"]
+  plex --> sync["sync shows replaces the imported file with the one Plex reads<br/>apps/cli/src/commands/sync-shows.js:192"]
 ```
 
 Both a direct download and a proposal write the release id onto every episode it covers,
@@ -177,9 +177,9 @@ release onto the show (`ProcessShowsTask.js`), so the episodes read
 `libs/sensorr/src/lib/episode.ts:4`). Refusing clears that id and the episodes are `wanted`
 again, and so do two jobs: `import shows` for an accepted release still not imported a week
 later (`import-shows.js:169-182`), `sync shows` for an episode whose file left Plex
-(`sync-shows.js:201`). An episode is `owned` only once `sync shows` has seen its file on Plex: the import
-stamps the release `imported_at` and writes nothing else on the episodes
-(`import-shows.js:185-198`). Why each job selects what it does is in
+(`sync-shows.js:201`). An episode is `owned` as soon as the import links its file: the import
+writes that file on the episode, marked `from: 'import'`, and stamps the release `imported_at`;
+`sync shows` later replaces the entry with the file Plex reads (`import-shows.js`). Why each job selects what it does is in
 [jobs.md](jobs.md#series).
 
 ### One volume for the hard link
