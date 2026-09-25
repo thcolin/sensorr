@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
+import { useTMDBRequest } from '../../../store/tmdb'
 import { ReleasesStyles } from '../../Details/components/Releases'
 import { Follow } from './Follow'
 import { Proposal } from './Proposals'
@@ -131,33 +132,9 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
     return null
   }
 
+  const years = regular.map(({ year }) => year).filter(Boolean)
   const toggle = (number, opened) => (e) => !e.target.closest('[data-follow]') && setOpen(open => ({ ...open, [number]: !opened }))
   const block = (row) => <Proposal key={row.release.id} row={row} policy={policy} answer={answer} shortcuts={row.release.id === first} reach={true} />
-
-  if (!inLibrary) {
-    const years = regular.map(({ year }) => year).filter(Boolean)
-
-    return (
-      <section sx={ReleasesStyles.element} aria-labelledby={`seasons-${entity.id}`}>
-        <div>
-          <div sx={UISeasons.styles.list}>
-            <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
-              <div sx={UISeasons.styles.label}>
-                <h2 id={`seasons-${entity.id}`}>All seasons</h2>
-                <small>
-                  {[
-                    `${regular.length} season${regular.length > 1 ? 's' : ''}`,
-                    `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
-                    !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
-                  ].filter(Boolean).join(' · ')}
-                </small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
 
   return (
     <section sx={ReleasesStyles.element} aria-labelledby={`seasons-${entity.id}`}>
@@ -166,15 +143,29 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
           <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
             <div sx={UISeasons.styles.label}>
               <h2 id={`seasons-${entity.id}`}>All seasons</h2>
-              <small>{totals.count} episodes</small>
-              {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
+              {inLibrary ? (
+                <>
+                  <small>{totals.count} episodes</small>
+                  {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
+                </>
+              ) : (
+                <small>
+                  {[
+                    `${regular.length} season${regular.length > 1 ? 's' : ''}`,
+                    `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
+                    !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
+                  ].filter(Boolean).join(' · ')}
+                </small>
+              )}
             </div>
-            <div sx={UISeasons.styles.summary}>
-              <ProgressPill {...totals.progress} />
-              <Bar progress={totals.progress} />
-              <Complete progress={totals.progress} />
-              <span />
-            </div>
+            {inLibrary && (
+              <div sx={UISeasons.styles.summary}>
+                <ProgressPill {...totals.progress} />
+                <Bar progress={totals.progress} />
+                <Complete progress={totals.progress} />
+                <span />
+              </div>
+            )}
           </div>
           {placed.show.map(block)}
           {seasons.map(season => {
@@ -212,26 +203,29 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
                     )}
                   </button>
-                  <div sx={UISeasons.styles.summary}>
-                    {/* Specials are not followed by default: owned over aired would read as a gap */}
-                    {specials ? <><span /><span /><span /></> : (
-                      <>
-                        <ProgressPill {...season.progress} />
-                        <Bar progress={season.progress} />
-                        <Complete progress={season.progress} />
-                      </>
-                    )}
-                    <Follow
-                      checked={season.monitored}
-                      disabled={!ready || !season.episodes.length}
-                      title={season.monitored ? `Every episode of ${season.name} followed` : `Follow every episode of ${season.name}`}
-                      name={`Follow every episode of ${season.name}`}
-                      onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
-                    />
-                  </div>
+                  {/* Nothing is owned nor followed before the show is in the library */}
+                  {inLibrary && (
+                    <div sx={UISeasons.styles.summary}>
+                      {/* Specials are not followed by default: owned over aired would read as a gap */}
+                      {specials ? <><span /><span /><span /></> : (
+                        <>
+                          <ProgressPill {...season.progress} />
+                          <Bar progress={season.progress} />
+                          <Complete progress={season.progress} />
+                        </>
+                      )}
+                      <Follow
+                        checked={season.monitored}
+                        disabled={!ready || !season.episodes.length}
+                        title={season.monitored ? `Every episode of ${season.name} followed` : `Follow every episode of ${season.name}`}
+                        name={`Follow every episode of ${season.name}`}
+                        onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
+                      />
+                    </div>
+                  )}
                 </div>
                 {opened && (placed.seasons[season.number] || NONE).map(block)}
-                {opened && (
+                {opened && (inLibrary ? (
                   <Episodes
                     id={id}
                     show={entity.id}
@@ -246,7 +240,9 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                     answer={answer}
                     first={first}
                   />
-                )}
+                ) : (
+                  <RemoteEpisodes id={id} show={entity.id} season={season.number} unfolded={unfolded} setUnfolded={setUnfolded} />
+                ))}
               </div>
             )
           })}
@@ -378,7 +374,8 @@ UISeasons.styles = {
 
 export const Seasons = memo(UISeasons)
 
-const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfolded, setUnfolded, placed, policy, answer, first }) => {
+// `readonly` for a show out of the library: its episodes from TMDB, nothing owned nor followed
+const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false }) => {
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
 
@@ -397,9 +394,9 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfol
       <div style={virtual ? { position: 'relative', height: virtualizer.getTotalSize() } : {}}>
         {rows.map(({ index, start }) => {
           const episode = episodes[index]
-          const status = episodeStatus(episode)
+          const status = readonly ? null : episodeStatus(episode)
           const synopsis = `synopsis-${show}-${episode.id}`
-          const proposals = placed[`${episode.season_number}:${episode.episode_number}`] || NONE
+          const proposals = placed?.[`${episode.season_number}:${episode.episode_number}`] || NONE
           const foldable = !!episode.overview || !!proposals.length
           const opened = foldable && (unfolded[episode.id] ?? !!proposals.length)
           const toggle = () => setUnfolded(unfolded => ({ ...unfolded, [episode.id]: !opened }))
@@ -415,6 +412,7 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfol
               <div
                 sx={UIEpisodes.styles.row}
                 data-foldable={foldable}
+                data-readonly={readonly}
                 onClick={foldable ? (e: any) => !e.target.closest('[data-follow]') && toggle() : undefined}
               >
                 <code>E{pad(episode.episode_number)}</code>
@@ -425,19 +423,21 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfol
                 ) : (
                   <span data-title={true} title={episode.name}>{episode.name}</span>
                 )}
-                <File file={episode.files?.[0]} replaced={replaced.has(`${episode.season_number}:${episode.episode_number}`)} />
+                {!readonly && <File file={episode.files?.[0]} replaced={replaced.has(`${episode.season_number}:${episode.episode_number}`)} />}
                 <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
                   {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
                 </time>
                 {/* The follow already says an episode is not followed: the empty cell keeps the grid columns */}
-                {status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />}
-                <Follow
-                  checked={!!episode.monitored}
-                  disabled={!ready}
-                  title={episode.monitored ? `Episode ${pad(episode.episode_number)} followed` : `Follow episode ${pad(episode.episode_number)}`}
-                  name={`Follow episode ${pad(episode.episode_number)}`}
-                  onChange={value => followEpisodes([episode.id], value)}
-                />
+                {!readonly && (status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />)}
+                {!readonly && (
+                  <Follow
+                    checked={!!episode.monitored}
+                    disabled={!ready}
+                    title={episode.monitored ? `Episode ${pad(episode.episode_number)} followed` : `Follow episode ${pad(episode.episode_number)}`}
+                    name={`Follow episode ${pad(episode.episode_number)}`}
+                    onChange={value => followEpisodes([episode.id], value)}
+                  />
+                )}
               </div>
               {opened && (
                 <div id={synopsis} sx={UIEpisodes.styles.synopsis}>
@@ -454,6 +454,23 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes, unfol
     </div>
   )
 }
+
+// A season of a show out of the library, fetched from TMDB when its drawer opens
+const UIRemoteEpisodes = ({ id, show, season, unfolded, setUnfolded }) => {
+  const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
+
+  if (loading || error || !data.episodes?.length) {
+    return (
+      <p id={id} sx={UIEpisodes.styles.status}>
+        {loading ? 'Loading the episodes…' : error ? `Unable to load the episodes: ${error.message}` : 'No episode announced yet'}
+      </p>
+    )
+  }
+
+  return <Episodes id={id} show={show} episodes={data.episodes} unfolded={unfolded} setUnfolded={setUnfolded} readonly={true} />
+}
+
+const RemoteEpisodes = memo(UIRemoteEpisodes)
 
 const UIFile = ({ file, replaced = false }) => {
   const meta = useMemo(() => file ? fileMetaOf(file) : null, [file?.original, file?.title])
@@ -493,6 +510,14 @@ UIEpisodes.styles = {
       borderBottom: 'none',
     },
   },
+  status: {
+    margin: 12,
+    paddingX: 8,
+    paddingBottom: 4,
+    paddingLeft: ['3.75em', '5em'],
+    fontSize: 6,
+    color: 'grayDarkest',
+  },
   row: {
     display: 'grid',
     // The state is a round badge, compact on every size: its label is its title and its name
@@ -504,6 +529,10 @@ UIEpisodes.styles = {
     minHeight: '3em',
     paddingX: 8,
     transition: 'background-color 200ms ease-in-out',
+    // A row out of the library has neither file, state nor follow
+    '&[data-readonly="true"]': {
+      gridTemplateColumns: ['2.5em minmax(0, 1fr)', '3.5em minmax(0, 1fr) 6.5em'],
+    },
     '&[data-foldable="true"]': {
       cursor: 'pointer',
       ':hover': {
@@ -570,7 +599,7 @@ UIEpisodes.styles = {
         textAlign: 'center',
       },
     },
-    '>:nth-last-child(2), >:last-child': {
+    '&[data-readonly="false"] >:nth-last-child(2), >:last-child': {
       justifySelf: 'end',
     },
   },
