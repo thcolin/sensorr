@@ -33,6 +33,12 @@ const frenchOf = (stream) => (
   'FRENCH'
 )
 
+// Past this share of what Sensorr holds from Plex lost in one run, Plex was more likely read in part than emptied:
+// `sync` and `sync shows` log the losses and write none of them
+export const LOSS_CEILING = 0.25
+
+export const isMassLoss = (lost, held) => held > 0 && lost / held > LOSS_CEILING
+
 const REFINES = { MULTi: ['MULTi-VFF', 'MULTi-VFQ', 'MULTi-VF2'], FRENCH: ['TRUEFRENCH', 'VFQ'] }
 
 export const languageOf = (streams) => {

@@ -7,7 +7,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { showFilesOf, unreadItemsOf, episodeVersionsOf } from '../utils/plex'
+import { showFilesOf, unreadItemsOf, episodeVersionsOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
 import { settleSeasonSwaps, cleanedSpaceOf } from '../utils/swaps'
 import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf, plexShowOf, withdrawnProposalsOf } from '../utils/shows'
 
@@ -17,6 +17,9 @@ const meta = {
   desc: '🔗 Sync Sensorr shows with registered Plex server',
   builder: {},
 }
+
+// An episode left without a file reads `wanted` again, and `record shows` downloads it
+const isEmptied = ({ files, changed }) => changed && !files.length
 
 export default (job, handlers) => ({
   ...meta,
@@ -99,6 +102,7 @@ const FetchPlexShowsTask = ({ ...props }) => {
         const raw = await state.plex.query('/library/sections')
         const sections = raw.MediaContainer.Directory.filter((dir) => dir.type === 'show')
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{sections.length}</Text> section(s) found on Plex Server <Text bold={true}>{server}</Text></Text> }))
+        setState((state) => ({ ...state, sections: sections.length }))
 
         for (const section of sections) {
           const { MediaContainer: { Metadata: distant = [] } } = await state.plex.query(`/library/sections/${section.key}/all?includeGuids=1`)
@@ -127,7 +131,7 @@ const FetchPlexShowsTask = ({ ...props }) => {
 }
 
 const CheckSensorrShowsTask = ({ ...props }) => {
-  const { task, setTask, status, setStatus, ready, context: { state, setState } } = useTask({
+  const { task, setTask, status, setStatus, ready, context: { state, setState, handleError } } = useTask({
     id: 'check-sensorr-shows',
     title: '🔎 Check Sensorr shows...',
   },
@@ -141,9 +145,20 @@ const CheckSensorrShowsTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      const corrections = [], created = [], warning = [], cleanups = []
-      let missing = 0, unmatched = 0, withdrawals = 0, read = 0
+      const corrections = [], created = [], warning = [], cleanups = [], losses = []
+      let unmatched = 0, withdrawals = 0, read = 0
       setStatus('loading')
+
+      // Plex listing nothing is an unreachable library far more often than an emptied one
+      const held = Object.values(state.episodes || {}).flat().filter(({ files }) => isEmptied(plexFilesOf(files, []))).length
+
+      if (held && !(state.items || []).length) {
+        const error = new Error(`Plex lists no episode on its ${state.sections || 0} show section(s) while ${held} Sensorr episodes hold a file from it, sync stopped before losing them`)
+        setStatus('error')
+        setTask((task) => ({ ...task, error: error.message }))
+        handleError(error)
+        return
+      }
 
       // Plex may hold one TMDB show in several items, their episodes are read together
       const named = []
@@ -230,9 +245,14 @@ const CheckSensorrShowsTask = ({ ...props }) => {
           read += unread.length
           const synced = showFilesOf(episodes, listed.map((item) => streamed.get(item) || item))
           const settled = synced.episodes.map((episode, index) => ({ ...episode, ...plexFilesOf(episodes[index].files, episode.files) }))
-          const changes = settled.filter(({ changed }) => changed)
-          const lost = changes.filter(({ lost }) => lost).length
+          // An emptied episode waits for the next task, which writes the losses of the whole run or none
+          const changes = settled.filter(({ changed }) => changed).filter((change) => !isEmptied(change))
+          const emptied = settled.filter(isEmptied)
           unmatched += synced.unmatched
+
+          if (emptied.length) {
+            losses.push({ show, changes: emptied })
+          }
 
           if (unknown || changes.length) {
             const { uri, params, init } = api.query.episodes.postEpisodes({
@@ -253,11 +273,6 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             state.logger.info({ message: `🗑️ Withdraw "${release.title}" proposal of "${show.name}", all its episodes are on Plex`, metadata: { ...state.metadata, group: 'withdrawals', show: lighten.show(show), release: { id: release.id, title: release.title } } })
           }
 
-          if (lost) {
-            missing += lost
-            state.logger.warn({ message: `💊 ${lost} "${show.name}" episodes no longer on Plex`, metadata: { ...state.metadata, group: 'missings', show: lighten.show(show), missing: lost } })
-          }
-
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{show.name}</Text> - {changes.length} episodes files fixed</Text> }))
         } catch (error) {
           setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
@@ -266,7 +281,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
         }
       }
 
-      setState((state) => ({ ...state, missing }))
+      setState((state) => ({ ...state, held, losses }))
       await new Promise(resolve => setTimeout(resolve, 500))
       state.logger.info({ message: `🩹 ${corrections.length} Fixed shows with Plex metadata, ${read} episodes streams read`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length }, cleanups: { success: cleanups.length, ...cleanedSpaceOf(cleanups) }, created: created.length, unmatched, withdrawals, read } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{corrections.length}</Text> shows fixed with Plex metadata, <Text bold={true}>{created.length}</Text> added (<Text bold={true}>archived</Text>)</Text> }))
@@ -296,17 +311,28 @@ const ComputeSensorrMissingEpisodesTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      let missing = state.missing || 0
+      let missing = 0
       const warning = []
       setStatus('loading')
 
-      for (const show of (state.library || []).filter(({ id }) => !(state.processed || []).includes(id))) {
-        const changes = (state.episodes?.[show.id] || []).map(({ id, files }) => ({ id, ...plexFilesOf(files, []) })).filter(({ changed }) => changed)
-        const lost = changes.filter(({ lost }) => lost).length
+      const losses = [
+        ...(state.losses || []),
+        ...(state.library || []).filter(({ id }) => !(state.processed || []).includes(id)).map((show) => ({
+          show,
+          changes: (state.episodes?.[show.id] || []).map(({ id, files }) => ({ id, ...plexFilesOf(files, []) })).filter(({ changed }) => changed),
+        })),
+      ].filter(({ changes }) => changes.length)
+      const emptied = losses.reduce((acc, { changes }) => acc + changes.filter(isEmptied).length, 0)
 
-        if (!changes.length) {
-          continue
-        }
+      if (isMassLoss(emptied, state.held)) {
+        state.logger.warn({ message: `⚠️ ${emptied} of the ${state.held} Sensorr episodes holding a Plex file would lose it, more than ${LOSS_CEILING * 100}% in one run: none written, check what Plex lists`, metadata: { ...state.metadata, group: 'missings', emptied, held: state.held, summary: { missings: { success: 0, warning: 1 } } } })
+        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{emptied}</Text> episodes no longer on Plex, more than <Text bold={true}>{LOSS_CEILING * 100}%</Text>: none written</Text> }))
+        setStatus('warning')
+        return
+      }
+
+      for (const { show, changes } of losses) {
+        const lost = changes.filter(({ lost }) => lost).length
 
         try {
           const { uri, params, init } = api.query.episodes.postEpisodes({ body: changes.reduce((acc, { id, files }) => ({ ...acc, [id]: syncedFilesOf(files) }), {}) })
@@ -318,7 +344,7 @@ const ComputeSensorrMissingEpisodesTask = ({ ...props }) => {
 
           missing += lost
           state.logger.warn({ message: `💊 ${lost} "${show.name}" episodes no longer on Plex`, metadata: { ...state.metadata, group: 'missings', show: lighten.show(show), missing: lost } })
-          setTask((task) => ({ ...task, output: <Text>Show <Text bold={true}>{show.name}</Text> not found on Plex, <Text bold={true}>{lost}</Text> episodes "missing"</Text> }))
+          setTask((task) => ({ ...task, output: <Text>Show <Text bold={true}>{show.name}</Text>, <Text bold={true}>{lost}</Text> episodes no longer on Plex, now "missing"</Text> }))
         } catch (error) {
           setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
           state.logger.warn({ message: `⚠️ Error on "${show.name}" Plex show, "${error.message}"`, metadata: { ...state.metadata, group: 'missings', error, show: lighten.show(show) } })

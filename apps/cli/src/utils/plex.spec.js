@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, isMassLoss, LOSS_CEILING } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -208,5 +208,17 @@ describe('requestedAtOf', () => {
 
   it('gives no date when a guest could not be asked, so a later pass tries again', async () => {
     expect(await requestedAtOf({ a: clientOf({ watchlistedAt: 1789331669 }), b: clientOf(new Error('503')) }, 'plex://movie/1', ['a', 'b'])).toBeNull()
+  })
+})
+
+describe('isMassLoss', () => {
+  it('holds back a loss past the ceiling share of what Sensorr holds from Plex', () => {
+    expect(isMassLoss(26, 100)).toBe(true)
+    expect(isMassLoss(100 * LOSS_CEILING, 100)).toBe(false)
+    expect(isMassLoss(1, 100)).toBe(false)
+  })
+
+  it('has nothing to hold back when Sensorr holds nothing from Plex', () => {
+    expect(isMassLoss(0, 0)).toBe(false)
   })
 })

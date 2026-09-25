@@ -9,7 +9,7 @@ import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { settleSwaps, cleanedSpaceOf } from '../utils/swaps'
-import { releaseOf } from '../utils/plex'
+import { releaseOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
 
 const meta = {
   command: 'sync',
@@ -98,12 +98,13 @@ const FetchPlexMoviesTask = ({ ...props }) => {
         const raw = await state.plex.query('/library/sections')
         const sections = raw.MediaContainer.Directory.filter((dir) => dir.type === 'movie')
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{sections.length}</Text> section(s) found on Plex Server <Text bold={true}>{server}</Text></Text> }))
+        setState((state) => ({ ...state, sections: sections.length }))
 
         for (const section of sections) {
-          const payload = await state.plex.query(`/library/sections/${section.key}/all?includeGuids=1`)
-          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{payload.MediaContainer.Metadata.length}</Text> movies found on <Text bold={true}>{sections.length}</Text> section(s) on Plex Server <Text bold={true}>{server}</Text></Text> }))
-          setState((state) => ({ ...state, server, distant: [...(state.distant || []), ...payload.MediaContainer.Metadata] }))
-          total_results += payload.MediaContainer.Metadata.length
+          const { MediaContainer: { Metadata: distant = [] } } = await state.plex.query(`/library/sections/${section.key}/all?includeGuids=1`)
+          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{distant.length}</Text> movies found on <Text bold={true}>{sections.length}</Text> section(s) on Plex Server <Text bold={true}>{server}</Text></Text> }))
+          setState((state) => ({ ...state, server, distant: [...(state.distant || []), ...distant] }))
+          total_results += distant.length
         }
 
         setStatus('done')
@@ -124,7 +125,7 @@ const FetchPlexMoviesTask = ({ ...props }) => {
 }
 
 const CheckSensorrMoviesTask = ({ ...props }) => {
-  const { task, setTask, status, setStatus, ready, context: { state, setState } } = useTask({
+  const { task, setTask, status, setStatus, ready, context: { state, setState, handleError } } = useTask({
     id: 'check-sensorr-movies',
     title: '🔎 Check Sensorr movies...',
   },
@@ -141,7 +142,19 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
       const corrections = [], cleanups = [], warning = []
       setStatus('loading')
 
+      // Plex listing nothing is an unreachable library far more often than an emptied one
+      if ((state.library || []).length && !(state.distant || []).length) {
+        const error = new Error(`Plex lists no movie on its ${state.sections || 0} movie section(s) while ${state.library.length} Sensorr movies are archived from it, sync stopped before losing them`)
+        setStatus('error')
+        setTask((task) => ({ ...task, error: error.message }))
+        handleError(error)
+        return
+      }
+
       for (const payload of (state.distant || [])) {
+        const guids = (payload.Guid || []).map(({ id }) => id.split('://')).reduce((acc, [agent, id]) => ({ ...acc, [agent]: id }), {})
+        let movie = (state.library || []).find((movie) => `${movie.id}` === `${guids.tmdb}` || `${movie.imdb_id}` === `${guids.imdb}`)
+
         try {
           setTask((task) => ({
             ...task,
@@ -155,8 +168,6 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
             output: <Text><Text bold={true}>{payload.title}</Text> - Fetching full Plex data</Text>,
           }))
 
-          const guids = (payload.Guid || []).map(({ id }) => id.split('://')).reduce((acc, [agent, id]) => ({ ...acc, [agent]: id }), {})
-          let movie = (state.library || []).find((movie) => `${movie.id}` === `${guids.tmdb}` || `${movie.imdb_id}` === `${guids.imdb}`)
           const { MediaContainer: { Metadata: [{ Media: medias }] } } = await state.plex.query(payload.key)
           const versionsOf = (item, list) => list.map(media => ({ id: `${item.guid}#${media.id}`, size: media.Part.reduce((acc, curr) => acc + curr.size, 0) }))
           const swaps = settleSwaps(
@@ -258,6 +269,8 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           await api.fetch(uri, params, init)
           corrections.push(movie.id)
         } catch (error) {
+          // Plex still lists it: an error reading it is no reason to call it missing
+          setState((state) => ({ ...state, processed: [...(state.processed || []), ...(movie?.id ? [movie.id] : [])] }))
           setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
           state.logger.warn({ message: `⚠️ Error, ${error.message}`, metadata: { ...state.metadata, group: 'corrections', error, payload } })
           warning.push(payload.key)
@@ -295,29 +308,35 @@ const ComputeSensorrMissingMovies = ({ ...props }) => {
     const cb = async () => {
       const missings = [], warning = []
       setStatus('loading')
+      const lost = (state.library || []).filter((movie) => !(state.processed || []).includes(movie.id) && movie.state === 'archived')
 
-      for (const movie of (state.library || [])) {
-        if (!(state.processed || []).includes(movie.id) && movie.state === 'archived') {
-          try {
-            missings.push(movie.id)
-            state.logger.info({ message: `💊 "${movie.title}" movie available on Plex but "missing" on Sensorr`, metadata: { ...state.metadata, group: 'missings', movie: lighten.movie(movie) } })
-            setTask((task) => ({ ...task, output: <Text>Movie <Text bold={true}>{movie.title}</Text> not found on Plex, consider it as "missing"</Text> }))
-            const { uri, params, init } = api.query.movies.postMovie({
-              body: {
-                ...movie,
-                releases: (movie.releases || []).filter(release => release.from !== 'sync'),
-                state: 'missing',
-                updated_at: new Date().getTime(),
-              },
-            })
+      if (isMassLoss(lost.length, (state.library || []).length)) {
+        state.logger.warn({ message: `⚠️ ${lost.length} of the ${state.library.length} archived movies are no longer on Plex, more than ${LOSS_CEILING * 100}% in one run: none written, check what Plex lists`, metadata: { ...state.metadata, group: 'missings', lost: lost.length, held: state.library.length, summary: { missings: { success: 0, warning: 1 } } } })
+        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{lost.length}</Text> movies no longer on Plex, more than <Text bold={true}>{LOSS_CEILING * 100}%</Text>: none written</Text> }))
+        setStatus('warning')
+        return
+      }
 
-            await api.fetch(uri, params, init)
-          } catch (error) {
-            setStatus('error')
-            setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
-            state.logger.warn({ message: `⚠️ Error on "${movie.title}" Plex movie, "${error.message}"`, metadata: { ...state.metadata, group: 'missings', error, movie: lighten.movie(movie) } })
-            warning.push(movie.id)
-          }
+      for (const movie of lost) {
+        try {
+          missings.push(movie.id)
+          state.logger.info({ message: `💊 "${movie.title}" movie available on Plex but "missing" on Sensorr`, metadata: { ...state.metadata, group: 'missings', movie: lighten.movie(movie) } })
+          setTask((task) => ({ ...task, output: <Text>Movie <Text bold={true}>{movie.title}</Text> not found on Plex, consider it as "missing"</Text> }))
+          const { uri, params, init } = api.query.movies.postMovie({
+            body: {
+              ...movie,
+              releases: (movie.releases || []).filter(release => release.from !== 'sync'),
+              state: 'missing',
+              updated_at: new Date().getTime(),
+            },
+          })
+
+          await api.fetch(uri, params, init)
+        } catch (error) {
+          setStatus('error')
+          setTask((task) => ({ ...task, output: `⚠️  ${error.message}` }))
+          state.logger.warn({ message: `⚠️ Error on "${movie.title}" Plex movie, "${error.message}"`, metadata: { ...state.metadata, group: 'missings', error, movie: lighten.movie(movie) } })
+          warning.push(movie.id)
         }
       }
 
