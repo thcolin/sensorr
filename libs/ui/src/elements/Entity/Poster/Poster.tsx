@@ -415,7 +415,7 @@ UIPoster.styles = {
     },
   },
   footer: {
-    marginTop: 10,
+    marginTop: 8,
   },
   subtitle: {
     display: 'flex',

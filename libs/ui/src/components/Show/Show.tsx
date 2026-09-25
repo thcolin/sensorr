@@ -152,7 +152,6 @@ ShowProgress.styles = {
     gap: 6,
     // The height of a compact pill (0.75em at a normal line height of 1.2, plus its 0.25em paddings), so the upcoming line of a neighbour card sits on the same center
     minHeight: 'calc(0.75em * 1.2 + 0.375em)',
-    marginTop: 10,
     color: 'grayDarkest',
     whiteSpace: 'nowrap',
     '>time, >[data-upcoming]': {
