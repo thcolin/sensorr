@@ -70,6 +70,8 @@ const Library = compose(
     id: 'shows-library',
     display: 'grid',
     child: ShowWithBulk,
+    // The progress footer under each poster: its 0.5em margin and the 1.275em compact pill, so a row keeps the movie library's gap
+    extra: 28,
     empty: {
       emoji: '📺',
       title: "Oh no, your request didn't return results",
