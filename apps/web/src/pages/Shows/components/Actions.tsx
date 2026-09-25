@@ -20,9 +20,22 @@ export const useShowPolicy = (entity, metadata) => {
 // `setShowMetadata` toasts a policy change, and nothing for the other fields of a single show
 const failed = (key) => key !== 'policy' && toast.error('Error while updating show metadata')
 
+// A field is pending from its write to its answer, its control disabled meanwhile
+const usePendingMetadata = (setMetadata) => {
+  const [pending, setPending] = useState({})
+
+  const set = async (key, value) => {
+    setPending(pending => ({ ...pending, [key]: true }))
+    await setMetadata(key, value).catch(() => failed(key))
+    setPending(pending => ({ ...pending, [key]: false }))
+  }
+
+  return { pending, set }
+}
+
 const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, children = null }) => {
   const { config } = useConfigContext()
-  const [pending, setPending] = useState({})
+  const { pending, set } = usePendingMetadata(setMetadata)
   const policy = useShowPolicy(entity, metadata)
   const jobs = useMemo(() => ['record', 'airing']
     .map(command => `${command}: ${config?.get(`jobs.${command}.shows.proposalOnly`) ? 'ask first' : 'at once'}`)
@@ -34,12 +47,6 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
     auto: `show-auto-${entity?.id}`,
   }
 
-  const set = async (key, value) => {
-    setPending(pending => ({ ...pending, [key]: true }))
-    await setMetadata(key, value).catch(() => failed(key))
-    setPending(pending => ({ ...pending, [key]: false }))
-  }
-
   const helps = {
     policy: 'Sensorr will apply selected policy to sort and select the best release',
     auto: auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once',
@@ -49,7 +56,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
     <div sx={UIShowSettings.styles.container}>
       <div sx={MetadataStyles.block}>
         <span id={ids.policy}>Policy</span>
-        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
+        <fieldset disabled={!ready || !!pending['policy']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
             value={policy}
             onChange={value => set('policy', value)}
@@ -84,17 +91,11 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 export const ShowSettings = memo(UIShowSettings)
 
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
-  const [pending, setPending] = useState({})
+  const { pending, set } = usePendingMetadata(setMetadata)
   const ids = {
     follow: `show-follow-${entity.id}`,
     monitored: `show-monitored-${entity.id}`,
     monitor_new_seasons: `show-new-seasons-${entity.id}`,
-  }
-
-  const set = async (key, value) => {
-    setPending(pending => ({ ...pending, [key]: true }))
-    await setMetadata(key, value).catch(() => failed(key))
-    setPending(pending => ({ ...pending, [key]: false }))
   }
 
   const titles = {
