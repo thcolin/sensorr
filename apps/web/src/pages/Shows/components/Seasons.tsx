@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
-import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
+import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
 import { ReleasesStyles } from '../../Details/components/Releases'
 import { Follow } from './Follow'
@@ -414,7 +415,8 @@ const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, follow
           const status = readonly ? null : episodeStatus(episode)
           const synopsis = `synopsis-${show}-${episode.id}`
           const proposals = placed?.[`${episode.season_number}:${episode.episode_number}`] || NONE
-          const foldable = !!episode.overview || !!proposals.length
+          const files = readonly ? NONE : (episode.files || NONE)
+          const foldable = !!episode.overview || !!files.length || !!proposals.length
           const opened = foldable && (unfolded[episode.id] ?? !!proposals.length)
           const toggle = () => setUnfolded(unfolded => ({ ...unfolded, [episode.id]: !opened }))
 
@@ -460,6 +462,7 @@ const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, follow
               {opened && (
                 <div id={synopsis} sx={UIEpisodes.styles.synopsis}>
                   {!!episode.overview && <p>{episode.overview}</p>}
+                  {!!files.length && <Files files={files} policy={policy} />}
                   {proposals.map(row => (
                     <Proposal key={row.release.id} row={row} policy={policy} answer={answer} shortcuts={row.release.id === first} />
                   ))}
@@ -509,6 +512,31 @@ const UIFile = ({ file, replaced = false }) => {
 }
 
 const File = memo(UIFile)
+
+// The owned files of an unfolded episode, scored and laid out like the owned releases of a movie (Details/components/Releases.tsx)
+const UIFiles = ({ files, policy }) => {
+  const { device } = useDeviceContext()
+  const releases = useMemo(() => {
+    const read = files.map(file => ({ ...file, meta: fileMetaOf(file) }))
+    return policy ? policy.apply(read, null) : read
+  }, [files, policy])
+
+  return (
+    <>
+      {releases.map(release => (
+        <Release
+          key={release.id}
+          entity={{ ...release, valid: true, from: release.from || 'record' }}
+          compact={true}
+          display={device === 'mobile' ? 'column' : 'row'}
+          actions={false}
+        />
+      ))}
+    </>
+  )
+}
+
+const Files = memo(UIFiles)
 
 UIEpisodes.styles = {
   element: {
