@@ -22,7 +22,7 @@ export interface ShowProps extends Omit<
   link?: ((entity: any) => LinkProps)
   focus?: 'vote_average' | 'popularity' | 'vote_count'
   placeholder?: boolean
-  state?: 'loading' | 'unfollowed' | 'followed'
+  state?: 'loading' | 'ignored' | 'unfollowed' | 'followed'
   setState?: (state: string) => any
   metadata?: any
   setMetadata?: (key: string, value: any) => any

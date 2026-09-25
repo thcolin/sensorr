@@ -10,7 +10,7 @@ import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
-import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
+import { showStateOf, useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
@@ -478,7 +478,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
 
 const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { answerNotification } = useNotificationsContext() as any
-  const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
+  const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow, setShowState } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
   const [following, setFollowing] = useState(false)
   const label = useMemo(() => (
@@ -537,7 +537,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
     setFollowing(false)
   }
 
-  const toggleFollow = (state) => followShow(meta?.show?.id, state === 'followed').catch(followError)
+  const toggleFollow = (state) => setShowState(meta?.show?.id, state).catch(followError)
 
   const ban = () => setShowMetadata(meta?.show?.id, 'banned_releases', [...(metadata.banned_releases || []), meta?.release?.title])
     .catch(() => toast.error('Error while banning the release'))
@@ -561,7 +561,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
         <span sx={{ fontSize: 6, marginRight: 6 }}>
           <ShowState
-            value={loading ? 'loading' : metadata.monitored ? 'followed' : 'unfollowed'}
+            value={loading ? 'loading' : showStateOf(metadata)}
             onChange={toggleFollow}
             compact={true}
           />

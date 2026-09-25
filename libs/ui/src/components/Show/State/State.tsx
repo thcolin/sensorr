@@ -3,9 +3,10 @@ import { State as UIState, StateProps } from '../../../atoms/State/State'
 import { Badge, BadgeProps } from '../../../atoms/Badge/Badge'
 
 export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
-  value: 'loading' | 'unfollowed' | 'followed'
+  value: 'loading' | 'ignored' | 'unfollowed' | 'followed'
 }
 
+// As a movie's: out of the library is 🔕, and a show kept without being followed is 📍, as a pinned movie
 export const ShowStateOptions = [
   {
     emoji: '⌛',
@@ -15,6 +16,11 @@ export const ShowStateOptions = [
   },
   {
     emoji: '🔕',
+    label: 'Not in library',
+    value: 'ignored',
+  },
+  {
+    emoji: '📍',
     label: 'Not followed',
     value: 'unfollowed',
   },

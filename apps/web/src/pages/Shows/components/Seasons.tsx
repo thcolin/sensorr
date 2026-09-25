@@ -15,7 +15,7 @@ const pad = (number) => String(number).padStart(2, '0')
 // The tracks a season head and the header share: count, bar, completion mark, follow column
 const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
 
-const UISeasons = ({ entity, episodes, inLibrary, ready, followed, follow, followEpisodes, ...props }) => {
+const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -73,19 +73,6 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followed, follow, follo
     return null
   }
 
-  const show = (
-    <span sx={UISeasons.styles.follow}>
-      <label htmlFor={`follow-show-${entity.id}`}>Follow</label>
-      <Toggle
-        id={`follow-show-${entity.id}`}
-        checked={!!followed}
-        disabled={!ready}
-        title={`Follow ${entity.name}`}
-        onChange={follow}
-      />
-    </span>
-  )
-
   // Out of the library, a season has nothing to open or follow: the show is told in one line
   if (!inLibrary) {
     const years = regular.map(({ year }) => year).filter(Boolean)
@@ -103,12 +90,6 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followed, follow, follo
                   !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
                 ].filter(Boolean).join(' · ')}
               </small>
-            </div>
-            <div sx={UISeasons.styles.summary}>
-              <span />
-              <span />
-              <span />
-              {show}
             </div>
           </div>
         </div>
@@ -130,7 +111,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followed, follow, follo
             <Count progress={totals.progress} />
             <Bar progress={totals.progress} />
             <Complete progress={totals.progress} />
-            {show}
+            <span />
           </div>
         </div>
         {seasons.map(season => {
@@ -315,19 +296,6 @@ UISeasons.styles = {
     },
     '>:last-child': {
       justifySelf: 'end',
-    },
-  },
-  // The show's own follow heads the seasons' column, its label left of the box
-  follow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    '>label': {
-      fontSize: 7,
-      fontWeight: 'semibold',
-      color: 'grayDarkest',
-      whiteSpace: 'nowrap',
-      cursor: 'pointer',
     },
   },
 }

@@ -92,13 +92,16 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
 export const ShowSettings = memo(UIShowSettings)
 
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
-  const [pending, setPending] = useState(false)
-  const id = `show-new-seasons-${entity.id}`
+  const [pending, setPending] = useState({})
+  const ids = {
+    monitored: `show-follow-${entity.id}`,
+    monitor_new_seasons: `show-new-seasons-${entity.id}`,
+  }
 
-  const set = async (value) => {
-    setPending(true)
-    await setMetadata('monitor_new_seasons', value).catch(() => failed('monitor_new_seasons'))
-    setPending(false)
+  const set = async (key, value) => {
+    setPending(pending => ({ ...pending, [key]: true }))
+    await setMetadata(key, value).catch(() => failed(key))
+    setPending(pending => ({ ...pending, [key]: false }))
   }
 
   return (
@@ -106,14 +109,27 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
       <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata} />
       <div sx={MetadataStyles.container}>
         <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
-          <span id={id}>Follow new seasons</span>
+          <span id={ids.monitored}>Follow</span>
           <OptionInput
-            id={id}
+            id={ids.monitored}
+            value={!!metadata?.monitored}
+            disabled={!ready || !!pending['monitored']}
+            onChange={value => set('monitored', value)}
+            aria-labelledby={ids.monitored}
+            aria-describedby={`keep-up-to-date-${ids.monitored}-help`}
+          >
+            {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
+          </OptionInput>
+        </div>
+        <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <span id={ids.monitor_new_seasons}>Follow new seasons</span>
+          <OptionInput
+            id={ids.monitor_new_seasons}
             value={!!metadata?.monitor_new_seasons}
-            disabled={!ready || !metadata?.monitored || pending}
-            onChange={set}
-            aria-labelledby={id}
-            aria-describedby={`keep-up-to-date-${id}-help`}
+            disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
+            onChange={value => set('monitor_new_seasons', value)}
+            aria-labelledby={ids.monitor_new_seasons}
+            aria-describedby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
           >
             {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
           </OptionInput>
@@ -124,39 +140,6 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 }
 
 export const ShowActions = memo(UIShowActions)
-
-// Below the seasons, away from the settings a show gets once
-const UIShowRemove = ({ entity, episodes, ready, removeShow, ...props }) => {
-  const [removing, setRemoving] = useState(false)
-  const id = `show-library-${entity.id}`
-
-  return (
-    <section sx={UIShowRemove.styles.element} aria-labelledby={id}>
-      <div sx={{ ...block, '&:first-of-type': { paddingX: 8 } }}>
-        <span id={id}>Library</span>
-        <button
-          type='button'
-          sx={UIShowRemove.styles.remove}
-          disabled={!ready || removing}
-          aria-busy={removing}
-          aria-describedby={`${id}-help`}
-          onClick={async () => {
-            if (!confirm(`Do you want to remove "${entity?.name}" and its ${(episodes || []).length} episodes from the library ? Their files stay on disk`)) {
-              return
-            }
-
-            setRemoving(true)
-            await removeShow().catch(() => null)
-            setRemoving(false)
-          }}
-        >
-          {removing ? 'Removing...' : 'Remove from library'}
-        </button>
-        <small id={`${id}-help`}>Sensorr forgets the show and its episodes, their files stay on disk</small>
-      </div>
-    </section>
-  )
-}
 
 UIShowSettings.styles = {
   // Its help wraps under the select instead of ending on an ellipsis
@@ -202,42 +185,3 @@ UIShowSettings.styles = {
     },
   },
 }
-
-UIShowRemove.styles = {
-  element: {
-    display: 'flex',
-    justifyContent: 'center',
-    paddingX: [4, '5em'],
-    marginY: 4,
-    textAlign: ['center', 'left'],
-    '>div': {
-      width: '100%',
-      maxWidth: '95em',
-    },
-  },
-  remove: {
-    variant: 'button.reset',
-    alignSelf: ['center', 'flex-start'],
-    marginY: 10,
-    fontSize: 6,
-    color: 'grayDarkest',
-    textDecoration: 'underline',
-    textUnderlineOffset: '0.25em',
-    cursor: 'pointer',
-    transition: 'color 200ms ease-in-out',
-    ':hover:not(:disabled)': {
-      color: 'error',
-    },
-    ':disabled': {
-      cursor: 'progress',
-      opacity: 0.5,
-    },
-    ':focus-visible': {
-      outline: '1px solid',
-      outlineColor: 'grayDarkest',
-      outlineOffset: '2px',
-    },
-  },
-}
-
-export const ShowRemove = memo(UIShowRemove)

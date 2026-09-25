@@ -17,6 +17,7 @@ State.argTypes = {
       type: 'select',
       options: {
         loading: 'loading',
+        ignored: 'ignored',
         unfollowed: 'unfollowed',
         followed: 'followed',
       },
@@ -30,6 +31,7 @@ State.argTypes = {
 }
 
 export const Loading = (args: any) => <State {...args} value='loading' />
+export const Ignored = (args: any) => <State {...args} value='ignored' />
 export const Unfollowed = (args: any) => <State {...args} value='unfollowed' />
 export const Followed = (args: any) => <State {...args} value='followed' />
 

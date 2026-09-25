@@ -6,7 +6,7 @@ import { filesize, useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
-import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
+import { showStateOf, useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import { withBody } from '../../layout/withLayout'
@@ -14,7 +14,7 @@ import ShowChild from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
 import Details from '../Details/Details'
 import { isPending } from '../Proposals/queue'
-import { ShowActions, ShowRemove } from './components/Actions'
+import { ShowActions } from './components/Actions'
 import { Proposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
@@ -32,8 +32,7 @@ const Show = ({ ...props }) => {
     loadEpisodes,
     setShowMetadata,
     setEpisodesMetadata,
-    followShow,
-    removeShow,
+    setShowState,
   } = useShowsMetadataContext() as any
   const [episodesError, setEpisodesError] = useState(null)
 
@@ -65,13 +64,11 @@ const Show = ({ ...props }) => {
 
   const setMetadata = useCallback((key, value) => setShowMetadata(Number(id), key, value), [id])
   const proceedRelease = useCallback((release, choice) => setShowMetadata(Number(id), 'proposal', { id: release.id, choice }), [id])
-  // `followShow` toasts a show it adds to the library, `setShowMetadata` nothing for one already there
-  const setState = useCallback(state => followShow(Number(id), state === 'followed').catch(() => inLibrary && toast.error('Error while following the show')), [id, followShow, inLibrary])
-  const follow = useCallback(value => setState(value ? 'followed' : 'unfollowed'), [setState])
+  // `setShowState` toasts a show it adds to or removes from the library, `setShowMetadata` nothing for a follow
+  const setState = useCallback(state => setShowState(Number(id), state).catch(() => inLibrary && toast.error('Error while following the show')), [id, setShowState, inLibrary])
   // A season is a bulk and toasts its own outcome, a single episode does not
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
-  const remove = useCallback(() => removeShow(Number(id)), [id])
 
   // Owned over aired and the size, then what the show waits on: pending proposals and wanted episodes
   const summary = useMemo(() => {
@@ -174,7 +171,7 @@ const Show = ({ ...props }) => {
       additional={additional}
       metadata={metadata}
       behavior='tv'
-      state={metadataLoading ? 'loading' : metadata?.monitored ? 'followed' : 'unfollowed'}
+      state={metadataLoading ? 'loading' : showStateOf(metadata)}
       setState={setState}
       summary={summary}
       tabs={tabs}
@@ -204,13 +201,8 @@ const Show = ({ ...props }) => {
           episodes={inLibrary ? (episodes || []) : []}
           inLibrary={inLibrary && !!episodes}
           ready={actionsReady}
-          followed={!!metadata?.monitored}
-          follow={follow}
           followEpisodes={followEpisodes}
         />
-      )}
-      {inLibrary && (
-        <ShowRemove entity={show.data} episodes={episodes} ready={actionsReady} removeShow={remove} />
       )}
     </Details>
   )

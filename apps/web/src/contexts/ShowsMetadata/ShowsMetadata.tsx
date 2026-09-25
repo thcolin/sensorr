@@ -245,11 +245,12 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  const addShow = useCallback(async (id: number) => {
+  // Followed, the show is followed whole, S00 aside; not followed, it is kept as a pinned movie is
+  const addShow = useCallback(async (id: number, followed = true) => {
     const promise = (async () => {
       const { show, episodes: fetched } = await fetchShow(tmdb, id)
-      const body = { [show.id]: { ...show, state: 'wished', monitored: true, monitor_new_seasons: true, refreshed_at: new Date() } }
-      const added = fetched.map(episode => ({ ...episode, monitored: episode.season_number !== 0 }))
+      const body = { [show.id]: { ...show, state: 'wished', monitored: followed, monitor_new_seasons: followed, refreshed_at: new Date() } }
+      const added = fetched.map(episode => ({ ...episode, monitored: followed && episode.season_number !== 0 }))
 
       // The episodes go first, their upsert can run again: a show posted without them would stay in the library with none
       if (added.length) {
@@ -281,9 +282,7 @@ export const Provider = ({ ...props }) => {
       return setShowMetadata(id, 'monitored', followed)
     }
 
-    if (followed) {
-      return addShow(id)
-    }
+    return addShow(id, followed)
   }, [setShowMetadata, addShow])
 
   const removeShow = useCallback(async (id: number) => {
@@ -304,6 +303,23 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
+  // A show leaves the library from its state badge, as a movie does, but once confirmed: its episodes go with it.
+  // `removeShow` toasts its own failure, only a failed follow rejects
+  const setShowState = useCallback(async (id: number, state: 'ignored' | 'unfollowed' | 'followed') => {
+    if (state !== 'ignored') {
+      return followShow(id, state === 'followed')
+    }
+
+    const show = ref.current[id]
+    const count = episodesRef.current[id]?.length
+
+    if (!show || !confirm(`Do you want to remove "${show.name}"${typeof count === 'number' ? ` and its ${count} episodes` : ''} from the library ? Their files stay on disk`)) {
+      return
+    }
+
+    return removeShow(id).catch(() => null)
+  }, [followShow, removeShow])
+
   return (
     <showsMetadataContext.Provider
       {...props}
@@ -317,6 +333,7 @@ export const Provider = ({ ...props }) => {
         addShow,
         followShow,
         removeShow,
+        setShowState,
       }}
     />
   )
@@ -324,21 +341,23 @@ export const Provider = ({ ...props }) => {
 
 export const useShowsMetadataContext = () => useContext(showsMetadataContext)
 
+export const showStateOf = (metadata) => (!metadata?.state || metadata.state === 'ignored') ? 'ignored' : metadata.monitored ? 'followed' : 'unfollowed'
+
 export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
-    const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
+    const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, setShowState } = useShowsMetadataContext() as any
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
-    // `setShowMetadata` tells nothing for a single show, and `followShow` toasts only a show it adds to the library
+    // `setShowMetadata` tells nothing for a single show, and `setShowState` toasts only a show it adds or removes
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
       .catch(() => toast.error('Error while answering the proposal')), [entity?.id])
-    const setState = useCallback(state => followShow(entity.id, state === 'followed')
-      .catch(() => metadata?.state && metadata.state !== 'ignored' && toast.error('Error while following the show')), [entity?.id, followShow, metadata?.state])
+    const setState = useCallback(state => setShowState(entity.id, state)
+      .catch(() => metadata?.state && metadata.state !== 'ignored' && toast.error('Error while following the show')), [entity?.id, setShowState, metadata?.state])
 
     return (
       <WrappedComponent
         {...props}
         entity={entity}
-        state={loading ? 'loading' : (metadata?.monitored ? 'followed' : 'unfollowed')}
+        state={loading ? 'loading' : showStateOf(metadata)}
         setState={setState}
         metadata={metadata}
         setMetadata={setMetadata}
