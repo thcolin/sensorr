@@ -89,7 +89,7 @@ UIMetadata.styles = {
   container: {
     display: 'grid',
     gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) 12em 12em'],
-    columnGap: '3em',
+    columnGap: 0,
   },
   block: {
     display: 'flex',
