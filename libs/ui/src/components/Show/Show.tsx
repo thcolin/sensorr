@@ -2,9 +2,11 @@ import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
 import { ENDED, coverageLabel } from '@sensorr/sensorr'
+import { utils as tmdb, fields } from '@sensorr/tmdb'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Link } from '../../atoms/Link/Link'
+import { Icon } from '../../atoms/Icon/Icon'
 import { Progress } from '../../atoms/Progress/Progress'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Card } from '../../elements/Entity/Card/Card'
@@ -244,6 +246,21 @@ export const transformShowDetails = (entity) => {
           <span sx={{ whiteSpace: 'nowrap' }}>{emojize('💬', language.name[0])}</span>
         )
       } : null,
+      vote_average: typeof entity.vote_average !== 'undefined' ? () => (
+        <Link
+          title={`Discover more "${tmdb.judge(entity)}" shows${!!entity?.vote_count ? ` (${fields.vote_count.humanize(entity)} users rating)` : ''}`}
+          sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
+          to='/tv/discover'
+          state={{
+            controls: {
+              vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
+            },
+          }}
+        >
+          <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
+          {Math.round(entity.vote_average * 10)}%
+        </Link>
+      ) : null,
       vote_count: !!entity.vote_count ? () => (
         <span title='Vote count' sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
       ) : null,

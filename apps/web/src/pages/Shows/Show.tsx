@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { EpisodeStatusOptions, Icon, Link, transformShowDetails, Warning } from '@sensorr/ui'
+import { EpisodeStatusOptions, transformShowDetails, Warning } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
-import { fields, utils as tmdb } from '@sensorr/tmdb'
 import { filesize, useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -20,33 +19,6 @@ import { Proposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
-
-// The TMDB rating that heads the externals line, drawn like the movie's in `transformMovieDetails` (libs/ui/src/components/Movie/Movie.tsx)
-const transformDetails = (entity) => {
-  const details = transformShowDetails(entity)
-
-  return {
-    ...details,
-    meaningful: {
-      ...details.meaningful,
-      vote_average: typeof entity.vote_average !== 'undefined' ? () => (
-        <Link
-          title={`Discover more "${tmdb.judge(entity)}" shows${entity.vote_count ? ` (${fields.vote_count.humanize(entity)} users rating)` : ''}`}
-          sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
-          to='/tv/discover'
-          state={{
-            controls: {
-              vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
-            },
-          }}
-        >
-          <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
-          {Math.round(entity.vote_average * 10)}%
-        </Link>
-      ) : null,
-    },
-  }
-}
 
 const Show = ({ ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
@@ -68,7 +40,7 @@ const Show = ({ ...props }) => {
   const show = useTMDBRequest(`tv/${id}`, {
     append_to_response: 'videos,external_ids,aggregate_credits,recommendations,similar,watch/providers',
     include_image_language: 'en,null',
-  }, { transform: transformDetails })
+  }, { transform: transformShowDetails })
 
   const inLibrary = !!metadata && metadata.state !== 'ignored'
   const ready = !show.loading && !!(show.data?.id || show.error)
