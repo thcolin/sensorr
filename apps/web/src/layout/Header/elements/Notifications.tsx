@@ -507,12 +507,15 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
     return stored?.proposal ? null : stored ? true : false
   }, [meta?.choice, meta?.command, loading, metadata.state, stored])
 
+  // Answered before the write, as a movie card, so a second click cannot send the other verdict.
   // `setShowMetadata` reverts on failure but tells nothing for a single show, so the card says it
   const answer = async (choice) => {
+    answerNotification(_id, choice)
+
     try {
       await setShowMetadata(meta?.show?.id, 'proposal', { id: meta?.release?.id, choice })
-      answerNotification(_id, choice)
     } catch {
+      answerNotification(_id, undefined)
       toast.error('Error while answering the proposal')
     }
   }
