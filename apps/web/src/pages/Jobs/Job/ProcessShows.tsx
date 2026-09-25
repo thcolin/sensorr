@@ -89,6 +89,7 @@ const matches = (record: any, filter: string) => ({
 const UIProcessShowsJob = ({ job, logs }) => {
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
+  const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
   const { metadata: showsMetadata, setShowMetadata } = useShowsMetadataContext() as any
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => (!log.meta.group || log.meta.type !== 'show') ? groups : {
@@ -185,7 +186,18 @@ const UIProcessShowsJob = ({ job, logs }) => {
               </span>
               <span sx={UIProcessShowsJob.styles.summary}>
                 {Object.entries(znabs).map(([z, count]) => (
-                  <span key={z} onClick={() => setZnab(znab => znab === z ? null : z)} sx={UIProcessShowsJob.styles.link} style={{ opacity: !znab || znab === z ? 1 : 0.5 }}>{z} ({count as number})</span>
+                  <span
+                    key={z}
+                    role='button'
+                    tabIndex={0}
+                    aria-pressed={znab === z}
+                    onClick={() => toggleZnab(z)}
+                    onKeyDown={(e) => ['Enter', ' '].includes(e.key) && (e.preventDefault(), toggleZnab(z))}
+                    sx={UIProcessShowsJob.styles.link}
+                    style={{ opacity: !znab || znab === z ? 1 : 0.5 }}
+                  >
+                    {z} ({count as number})
+                  </span>
                 ))}
               </span>
             </span>

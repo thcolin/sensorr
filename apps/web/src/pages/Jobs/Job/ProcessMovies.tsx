@@ -128,6 +128,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
   const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
+  const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
   const toggleSensorr = useRef() as any
   const { metadata: moviesMetadataContext, setMovieMetadata } = useMoviesMetadataContext() as any
 
@@ -233,7 +234,18 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
               </span>
               <span sx={UIProcessMoviesJob.styles.summary}>
                 {Object.entries(znabs).map(([z, count]) => (
-                  <span key={z} onClick={() => setZnab(znab => znab === z ? null : z)} sx={UIProcessMoviesJob.styles.link} style={{ opacity: !znab || znab === z ? 1 : 0.5 }}>{z} ({count})</span>
+                  <span
+                    key={z}
+                    role='button'
+                    tabIndex={0}
+                    aria-pressed={znab === z}
+                    onClick={() => toggleZnab(z)}
+                    onKeyDown={(e) => ['Enter', ' '].includes(e.key) && (e.preventDefault(), toggleZnab(z))}
+                    sx={UIProcessMoviesJob.styles.link}
+                    style={{ opacity: !znab || znab === z ? 1 : 0.5 }}
+                  >
+                    {z} ({count})
+                  </span>
                 ))}
               </span>
             </span>
