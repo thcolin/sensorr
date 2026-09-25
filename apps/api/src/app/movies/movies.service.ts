@@ -104,7 +104,27 @@ export class MoviesService {
 
         if (release.proposal && choice !== undefined) {
           if (choice) {
-            await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs')
+            // Reserved before the download: a second answer to the same proposal finds nothing left to accept,
+            // and writes the release as the database holds it
+            if (release.job !== 'manual') {
+              const { modifiedCount } = await this.movieModel.updateOne({ _id: id, releases: { $elemMatch: { id: release.id, proposal: true } } }, { $set: { 'releases.$.proposal': false } })
+
+              if (modifiedCount !== 1) {
+                const current = (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0]
+                changes[id] = { ...changes[id], releases: changes[id].releases.flatMap(posted => posted.id === release.id ? (current ? [current] : []) : [posted]) }
+                continue
+              }
+            }
+
+            try {
+              await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs')
+            } catch (error) {
+              if (release.job !== 'manual') {
+                await this.movieModel.updateOne({ _id: id, 'releases.id': release.id }, { $set: { 'releases.$.proposal': true } })
+              }
+
+              throw error
+            }
 
             if (release.job !== 'manual') {
               const files = releases.filter(({ from }) => from === 'sync')

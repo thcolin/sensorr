@@ -109,17 +109,35 @@ export class ShowsService {
 
         if (posted.choice) {
           const { choice, ...picked } = (manual ? posted : release) as ShowReleaseDTO & { choice?: boolean }
-          const torrent = await this.sensorrService.downloadRelease(picked, manual ? 'enclosure' : 'cache', 'fs', 'show')
-          const accepted = { proposal: false, accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
+          // Reserved before the download: a second answer to the same proposal finds nothing left to accept
+          const { modifiedCount } = manual
+            ? await this.showModel.updateOne({ _id: id, 'releases.id': { $ne: picked.id } }, { $push: { releases: { ...picked, proposal: false } } })
+            : await this.showModel.updateOne({ _id: id, releases: { $elemMatch: { id: picked.id, proposal: true } } }, { $set: { 'releases.$.proposal': false } })
+
+          if (modifiedCount !== 1) {
+            continue
+          }
+
+          let torrent
+
+          try {
+            torrent = await this.sensorrService.downloadRelease(picked, manual ? 'enclosure' : 'cache', 'fs', 'show')
+          } catch (error) {
+            await (manual
+              ? this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: picked.id } } })
+              : this.updateRelease(id, picked.id, { proposal: true }))
+            throw error
+          }
+
+          const accepted = { accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
 
           if (picked.coverage?.length) {
             await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
           }
 
-          if (manual) {
-            await this.pushRelease(id, { ...picked, ...accepted })
-          } else {
-            await this.updateRelease(id, picked.id, accepted)
+          await this.updateRelease(id, picked.id, accepted)
+
+          if (!manual) {
             await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
           }
         } else if (!manual) {
