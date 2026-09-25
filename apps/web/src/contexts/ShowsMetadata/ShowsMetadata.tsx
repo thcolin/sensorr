@@ -126,16 +126,16 @@ export const Provider = ({ ...props }) => {
     id: number | number[],
     key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'releases' | 'banned_releases',
     value: any,
-    { silent = false } = {},
   ) => {
     const ids = Array.isArray(id) ? id : [id]
     const initial = ids.reduce((acc, i) => ({ ...acc, [i]: ref.current[i] || {} }), {})
+    const answered = (release) => release.proposal && (typeof value !== 'object' || release.id === value.id)
     const changes = ids.reduce((acc, i) => ({
       ...acc,
       [i]: {
         id: Number(i),
         ...(key === 'proposal' ? {
-          releases: (initial[i].releases || []).map(r => (r.proposal && (typeof value !== 'object' || r.id === value.id)) ? { ...r, choice: typeof value === 'object' ? value.choice : value } : r),
+          releases: (initial[i].releases || []).map(r => answered(r) ? { ...r, choice: typeof value === 'object' ? value.choice : value } : r),
         } : {
           [key]: typeof value === 'function' ? value(initial[i], i) : value,
         }),
@@ -170,8 +170,11 @@ export const Provider = ({ ...props }) => {
         }, episodes))
       }
 
+      // An answer posts only the releases it answers: the others may still hold the choice of an answer in flight
+      const body = key !== 'proposal' ? changes : ids.reduce((acc, i) => ({ ...acc, [i]: { id: Number(i), releases: changes[i].releases.filter(answered) } }), {})
+
       try {
-        const { uri, params, init } = api.query.shows.postShows({ body: changes })
+        const { uri, params, init } = api.query.shows.postShows({ body })
         await api.fetch(uri, params, init)
         resolve(true)
       } catch (err) {
@@ -195,7 +198,7 @@ export const Provider = ({ ...props }) => {
     })
 
     // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast.
-    if (silent || (!Array.isArray(id) && key !== 'policy')) {
+    if (!Array.isArray(id) && key !== 'policy') {
       return promise
     }
 
@@ -235,9 +238,9 @@ export const Provider = ({ ...props }) => {
     }
 
     await toast.promise(promise, {
-      loading: ids.length === 1 ? `Updating episode...` : `Updating **${ids.length}** episodes...`,
-      success: () => ids.length === 1 ? `Episode updated` : `Updated **${ids.length}** episodes`,
-      error: () => ids.length === 1 ? `Error while updating episode` : `Error while updating **${ids.length}** episodes`,
+      loading: `Updating **${ids.length}** episodes...`,
+      success: () => `Updated **${ids.length}** episodes`,
+      error: () => `Error while updating **${ids.length}** episodes`,
     })
   }, [])
 

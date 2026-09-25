@@ -479,7 +479,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
 
 const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { answerNotification } = useNotificationsContext() as any
-  const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow, setShowState } = useShowsMetadataContext() as any
+  const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow, setShowState, banShowRelease } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
   const [following, setFollowing] = useState(false)
   const label = useMemo(() => (
@@ -539,7 +539,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
 
   const toggleFollow = (state) => setShowState(meta?.show?.id, state).catch(followError)
 
-  const ban = () => setShowMetadata(meta?.show?.id, 'banned_releases', [...(metadata.banned_releases || []), meta?.release?.title])
+  const ban = () => banShowRelease(meta?.show?.id, meta?.release?.title)
     .catch(() => toast.error('Error while banning the release'))
 
   return (
