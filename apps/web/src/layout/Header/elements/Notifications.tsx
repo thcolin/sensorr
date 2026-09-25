@@ -655,7 +655,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                 aria-busy={following}
                 onClick={follow}
               >
-                {following ? 'Following...' : choice === null ? 'Follow' : metadata.monitored ? 'Followed' : 'In library'}
+                {following ? 'Following...' : choice === null ? 'Follow' : metadata.monitored ? 'Followed' : 'Pinned'}
               </Button>
             )}
             {(choice === null || choice === false) && (

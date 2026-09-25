@@ -87,7 +87,7 @@ const JobsSettings = ({ ...props }) => {
             If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
           </p>
           <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
-            For shows, the <code>📹 Record shows</code> job looks for the wanted episodes of <code>🔖 Followed</code> shows, by whole series, then season packs, then episodes; <code>📡 Airing shows</code> looks for episodes aired in the last 7 days.{' '}
+            For shows, the <code>📹 Record shows</code> job looks for the wanted episodes of <code>📺 Followed</code> shows, by whole series, then season packs, then episodes; <code>📡 Airing shows</code> looks for episodes aired in the last 7 days.{' '}
             <code>📥 Import shows</code> hard links finished files from staging into the library and marks those episodes <code>📼 Owned</code>.
           </p>
           <h2>Jobs</h2>

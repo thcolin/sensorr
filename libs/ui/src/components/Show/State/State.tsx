@@ -15,18 +15,18 @@ export const ShowStateOptions = [
   },
   {
     emoji: '🔕',
-    label: 'Not in library',
+    label: 'Ignored',
     value: 'ignored',
   },
   {
     emoji: '📍',
-    label: 'Not followed',
+    label: 'Pinned',
     value: 'unfollowed',
   },
   {
-    // Not a bell, the 🛎 of a pending proposal sits right under this badge on a poster,
-    // and not 📹, the record job beside it in a notification
-    emoji: '🔖',
+    // A television, it says TV. Not a bell, the 🛎️ of a pending proposal sits right under
+    // this badge on a poster, and not 📹, the record job beside it in a notification
+    emoji: '📺',
     label: 'Followed',
     value: 'followed',
   },
@@ -40,31 +40,40 @@ const UIShowState = ({
 
 export const ShowState = memo(UIShowState)
 
-// Keyed by the values of `episodeStatus` from @sensorr/sensorr
-export const EpisodeStatusOptions = {
+// A state that is off, like an episode or a season not followed: its emoji without its colors
+export const INACTIVE = {
+  filter: 'grayscale(1)',
+  opacity: 0.4,
+}
+
+type EpisodeStatusValue = 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
+
+// Keyed by the values of `episodeStatus` from @sensorr/sensorr. Not followed is the 📺 of a followed show, turned off
+export const EpisodeStatusOptions: Record<EpisodeStatusValue, { emoji: string, label: string, inactive?: boolean }> = {
   upcoming: { emoji: '📅', label: 'Upcoming' },
-  unmonitored: { emoji: '🔕', label: 'Not followed' },
+  unmonitored: { emoji: '📺', label: 'Not followed', inactive: true },
   wanted: { emoji: '🍿', label: 'Wanted' },
   proposed: { emoji: '🛎️', label: 'Proposed' },
   owned: { emoji: '📼', label: 'Owned' },
 }
 
 export interface EpisodeStatusProps extends Omit<BadgeProps, 'emoji' | 'label'> {
-  value: 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
+  value: EpisodeStatusValue
 }
 
 const LABELLED = ['wanted', 'proposed']
 
 const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProps) => {
-  const label = !compact && LABELLED.includes(value) ? EpisodeStatusOptions[value]?.label : null
+  const option = EpisodeStatusOptions[value]
+  const label = !compact && LABELLED.includes(value) ? option?.label : null
 
   return (
     <Badge
       {...props}
       compact={!!label}
-      emoji={EpisodeStatusOptions[value]?.emoji}
+      emoji={option?.inactive ? <span sx={INACTIVE}>{option.emoji}</span> : option?.emoji}
       label={label}
-      title={EpisodeStatusOptions[value]?.label}
+      title={option?.label}
     />
   )
 }
