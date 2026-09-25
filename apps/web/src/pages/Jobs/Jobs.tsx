@@ -7,7 +7,7 @@ import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
-import { jobNameOf } from '@sensorr/sensorr'
+import { JOB_EMOJIS, jobNameOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { RecordJob, summary as summaryRecord } from './Job/Record'
@@ -24,24 +24,22 @@ import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 
-const JOBS_UI: { [name: string]: { emoji: string, view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
-  'sync movies': { emoji: '🔗', view: SyncJob, summary: summarySync },
-  'refresh movies': { emoji: '🔌', view: RefreshJob, summary: summaryRefresh },
-  'record movies': { emoji: '📹', view: RecordJob, summary: summaryRecord },
-  'refine movies': { emoji: '✨', view: RefineJob, summary: summaryRefine },
-  'shrink movies': { emoji: '✂️', view: ShrinkJob, summary: summaryShrink },
-  'report movies': { emoji: '🚩', view: ReportJob, summary: summaryReport },
-  'keep-in-touch': { emoji: '🍻', view: KeepInTouchJob, summary: summaryKeepInTouch },
-  'migrate': { emoji: '🚚', view: MigrateJob, summary: summaryMigrate },
-  'refresh shows': { emoji: '🔌', view: ShowsJob, summary: summaryRefreshShows },
-  'sync shows': { emoji: '🔗', view: ShowsJob, summary: summarySyncShows },
-  'import shows': { emoji: '📥', view: ShowsJob, summary: summaryImportShows },
-  'record shows': { emoji: '📹', view: ProcessShowsJob, summary: summaryProcessShows },
-  'airing shows': { emoji: '📡', view: ProcessShowsJob, summary: summaryProcessShows },
-  'migrate sonarr': { emoji: '🚚', view: ShowsJob, summary: summaryMigrateSonarr },
+const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
+  'sync movies': { view: SyncJob, summary: summarySync },
+  'refresh movies': { view: RefreshJob, summary: summaryRefresh },
+  'record movies': { view: RecordJob, summary: summaryRecord },
+  'refine movies': { view: RefineJob, summary: summaryRefine },
+  'shrink movies': { view: ShrinkJob, summary: summaryShrink },
+  'report movies': { view: ReportJob, summary: summaryReport },
+  'keep-in-touch': { view: KeepInTouchJob, summary: summaryKeepInTouch },
+  'migrate': { view: MigrateJob, summary: summaryMigrate },
+  'refresh shows': { view: ShowsJob, summary: summaryRefreshShows },
+  'sync shows': { view: ShowsJob, summary: summarySyncShows },
+  'import shows': { view: ShowsJob, summary: summaryImportShows },
+  'record shows': { view: ProcessShowsJob, summary: summaryProcessShows },
+  'airing shows': { view: ProcessShowsJob, summary: summaryProcessShows },
+  'migrate sonarr': { view: ShowsJob, summary: summaryMigrateSonarr },
 }
-
-export const JOB_EMOJIS = Object.fromEntries(Object.entries(JOBS_UI).map(([name, { emoji }]) => [name, emoji]))
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -177,7 +175,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   }, {}), [jobs, filter])
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
-    .map(name => ({ value: name, emoji: JOBS_UI[name].emoji, label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
+    .map(name => ({ value: name, emoji: JOB_EMOJIS[name], label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -192,7 +190,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
-              {(active && JOBS_UI[jobNameOf(active.meta)]?.emoji) || '⌛'}
+              {(active && JOB_EMOJIS[jobNameOf(active.meta)]) || '⌛'}
             </span>
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
@@ -227,7 +225,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                   {jobs.map(j => (
                     <Job
                       key={j.job}
-                      emoji={JOBS_UI[jobNameOf(j.meta)]?.emoji}
+                      emoji={JOB_EMOJIS[jobNameOf(j.meta)]}
                       selected={j.job === job}
                       {...j}
                       summary={(JOBS_UI[jobNameOf(j.meta)]?.summary || (() => []))(j.meta.summary, false, j.meta.config)}

@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { Option, Icon, Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
+import { JOB_EMOJIS } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -10,7 +11,6 @@ import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
-import { JOB_EMOJIS } from '../Jobs/Jobs'
 
 const JobsSettings = ({ ...props }) => {
   useTitle('Settings - Jobs')

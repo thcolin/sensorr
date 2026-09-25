@@ -12,6 +12,24 @@ export const JOBS: { [command: string]: JobType[] } = {
   'keep-in-touch': [],
 }
 
+// The emoji of each job, keyed by `jobNameOf`
+export const JOB_EMOJIS: { [name: string]: string } = {
+  'sync movies': '🔗',
+  'refresh movies': '🔌',
+  'record movies': '📹',
+  'refine movies': '✨',
+  'shrink movies': '✂️',
+  'report movies': '🚩',
+  'keep-in-touch': '🍻',
+  'migrate': '🚚',
+  'refresh shows': '🔌',
+  'sync shows': '🔗',
+  'import shows': '📥',
+  'record shows': '📹',
+  'airing shows': '📡',
+  'migrate sonarr': '🚚',
+}
+
 // JOBS is an object literal: `toString` or `__proto__` would be read from its prototype
 const typesOf = (command: unknown): JobType[] | undefined => typeof command === 'string' && Object.hasOwn(JOBS, command) ? JOBS[command] : undefined
 
