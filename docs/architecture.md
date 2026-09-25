@@ -77,7 +77,10 @@ the sources.
 
 The handshake between them is one line of stdout. When stdin is not a TTY the CLI prints
 `{"job":"<nanoid>"}` before anything else (`apps/cli/src/main.js:40-42`), and the API parses
-that first line to learn the job id (`sensorr.service.ts:109-115`). After that the two never
+that first line to learn the job id (`runProcess` in `sensorr.service.ts`). A spawn that fails, a missing
+bundle among them, or a child that exits before that line, rejects the request instead of leaving it
+open. One run per command at a time: a second one is refused with a 409 while the first one runs
+(`lockOf`, `apps/api/src/app/sensorr/lock.ts`). After that the two never
 speak over the pipe again: the CLI reports through the `log` collection in Mongo and acts
 through the HTTP API, exactly like the browser does. The API keeps the child only to expose
 progress (`jobs.controller.ts:26`) and to kill it (`sensorr.service.ts:139`).

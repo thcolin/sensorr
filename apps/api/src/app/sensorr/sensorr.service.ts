@@ -13,6 +13,7 @@ import { isJob, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
+import { lockOf } from './lock'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../../../bin/sensorr`)
@@ -112,12 +113,12 @@ export class SensorrService {
       throw new NotFoundException(`Unknown Sensorr job "${name}"`)
     }
 
-    if (this.running.has(name)) {
+    const unlock = lockOf(this.running, name)
+
+    if (!unlock) {
       this.logger.warn(`RunProcess "${name}" refused, it is already running` + (cron ? `, from cron "${cron}"` : ''))
       return Promise.reject(new ConflictException(`Sensorr job "${name}" is already running`))
     }
-
-    this.running.add(name)
 
     return new Promise((resolve, reject) => {
       let job
@@ -143,13 +144,25 @@ export class SensorrService {
         }
       })
       child.stderr.on('data', (data) => this.logger.error(`Command "${name}": ${data}`))
+      // A spawn that fails, or a process that ends before naming its job, rejects instead of leaving the request hanging
       child.on('error', (err) => {
         this.logger.log(`Command "${name}" error (${err})`)
-        this.running.delete(name)
+        unlock()
+
+        if (!fulfilled) {
+          fulfilled = true
+          reject(err)
+        }
       })
       child.on('close', code => {
         this.logger.log(`Command "${name}" exit (${code})`)
-        this.running.delete(name)
+        unlock()
+
+        if (!fulfilled) {
+          fulfilled = true
+          reject(new Error(`Sensorr job "${name}" exited (${code}) before it started`))
+        }
+
         delete this.process[job]
         this.processObservable.next({ data: this.process } as MessageEvent)
       })

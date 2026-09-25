@@ -53,7 +53,7 @@ bin/sensorr record movies
 
 `bin/sensorr:3` runs `node --experimental-specifier-resolution=node`, and the bundle keeps extensionless imports of packages that have no `exports` map, `stream-json/jsonl/Parser` from `apps/cli/src/commands/migrate.js` among them. Node 19 removed what that flag did. Node 24 still accepts the flag and ignores it, so every command fails at load, before its first line, with `ERR_MODULE_NOT_FOUND` and `Did you mean to import "stream-json/jsonl/Parser.js"?`. Run the CLI on Node 18, like the images.
 
-A local API spawns the same wrapper, so on Node 24 its jobs fail the same way, and `POST /api/jobs` never answers: the child exits without printing the job id, and nothing rejects (`apps/api/src/app/sensorr/sensorr.service.ts:123-129`).
+A local API spawns the same wrapper, so on Node 24 its jobs fail the same way: the child exits without printing the job id, and `POST /api/jobs` fails with `exited (1) before it started` (`runProcess` in `apps/api/src/app/sensorr/sensorr.service.ts`).
 
 ### The component gallery
 
