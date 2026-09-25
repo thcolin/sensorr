@@ -6,16 +6,33 @@ import cp from 'child_process'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Observable, Subject, merge, of, tap } from 'rxjs'
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { isJob, torrentFiles, TorrentFiles } from '@sensorr/sensorr'
+import { isJob, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../../../bin/sensorr`)
+
+// A show .torrent Sensorr cannot read, or without a video in it, never reaches the blackhole nor the cache
+const showTorrentOf = (buffer: Uint8Array): TorrentFiles => {
+  let torrent: TorrentFiles
+
+  try {
+    torrent = torrentFiles(buffer)
+  } catch (error) {
+    throw new UnprocessableEntityException(error.message)
+  }
+
+  if (!torrent.files.some(({ path }) => MEDIA.test(path))) {
+    throw new UnprocessableEntityException('Invalid .torrent, no video file')
+  }
+
+  return torrent
+}
 
 @Injectable()
 export class SensorrService {
@@ -54,7 +71,7 @@ export class SensorrService {
         break
     }
 
-    const torrent = kind === 'show' ? torrentFiles(buffer) : undefined
+    const torrent = kind === 'show' ? showTorrentOf(buffer) : undefined
 
     switch (destination) {
       case 'fs':

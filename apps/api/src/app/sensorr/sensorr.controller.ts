@@ -20,7 +20,7 @@ export class SensorrController {
       return { success: true, ...(torrent ? { torrent } : {}) }
     } catch (err) {
       this.logger.error(err)
-      throw new HttpException(err, 500)
+      throw err instanceof HttpException ? err : new HttpException(err, 500)
     }
   }
 

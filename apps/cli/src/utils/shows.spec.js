@@ -221,6 +221,12 @@ describe('importLinksOf', () => {
   it('links nothing for a release covering episodes that all have files', () => {
     expect(importLinksOf(release, show, episodes.map((episode) => ({ ...episode, files: [{ id: '1' }] })), '/tvshows')).toEqual([])
   })
+
+  it('links only a video, never an executable, an archive or a text file named after the episode', () => {
+    const files = ['exe', 'lnk', 'rar', 'r00', 'nfo', 'srt', 'MKV'].map((extension, index) => ({ path: `The.Office.US.S03E24.${extension}`, size: index }))
+
+    expect(importLinksOf({ ...release, torrent: { name: 'The.Office.US.S03E24', files } }, show, episodes, '/tvshows').map(({ source }) => source)).toEqual(['The.Office.US.S03E24.MKV'])
+  })
 })
 
 describe('requestedShowOf', () => {

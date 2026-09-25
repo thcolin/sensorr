@@ -54,6 +54,11 @@ export class ShowsController {
     return this.showsService.updateRelease(id, release, fields)
   }
 
+  @Post(':id/banned_releases')
+  async banRelease(@Param('id', ParseIntPipe) id: number, @Body() { title }: { title: string }) {
+    return this.showsService.banRelease(id, title)
+  }
+
   @Get(':id/episodes')
   async getShowEpisodes(@Param('id', ParseIntPipe) id: number): Promise<unknown> {
     return this.showsService.getShowEpisodes(id)

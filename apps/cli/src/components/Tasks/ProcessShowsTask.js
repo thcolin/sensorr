@@ -329,7 +329,22 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
-          const { torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
+          let torrent
+
+          try {
+            ({ torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init))
+          } catch (error) {
+            // The API refuses a .torrent it cannot read or without a video in it: banned, the next run picks another one
+            if (error.status !== 422) {
+              throw error
+            }
+
+            const ban = api.query.shows.postShowBannedRelease({ params: { id: show.id }, body: { title: release.title } })
+            await api.fetch(ban.uri, ban.params, ban.init)
+            state.logger.warn({ message: `🚫 Release ${release.title} banned, its .torrent was refused for ${label} (${release.znab})`, metadata: { ...metadata, show: lighten.show(show), release: { id: release.id, title: release.title }, banned: true } })
+            continue
+          }
+
           const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: { ...raw, ...(torrent ? { torrent } : {}) } })
           await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)
 

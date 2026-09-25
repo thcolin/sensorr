@@ -10,7 +10,7 @@ module.exports = {
   transform: {
     '^.+\\.[tj]sx?$': 'ts-jest',
   },
-  transformIgnorePatterns: ['node_modules/(?!(oleoo|query-string|decode-uri-component|filter-obj|split-on-first)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(oleoo|nanoid|query-string|decode-uri-component|filter-obj|split-on-first)/)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/cli',
 }

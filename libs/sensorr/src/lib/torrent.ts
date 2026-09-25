@@ -2,6 +2,8 @@ export type TorrentFiles = { name: string, files: { path: string, size: number }
 
 export const MAX_TORRENT_FILES = 20000
 
+export const MEDIA = /\.(mkv|mp4|m4v|avi|ts|webm)$/i
+
 const text = (buffer: Uint8Array, start: number, end: number) => new TextDecoder().decode(buffer.subarray(start, end))
 
 // Byte strings are read as UTF-8, which garbles `pieces` and nothing else that is read here

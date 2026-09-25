@@ -263,6 +263,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      postShowBannedRelease: (
+        { body, init = {}, params: { id } }: { body: { title: string }, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/banned_releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       getShowEpisodes: (
         { init = {}, params: { id } }: { init?: any, params: { id: number } }
       ): { uri: string, params: {}, init: {} } => ({
@@ -727,7 +743,7 @@ export class API {
       if (options?.rawError) {
         throw res
       } else {
-        throw new Error(`[API] ${res.status} (${res.statusText}): ${res.url}`)
+        throw Object.assign(new Error(`[API] ${res.status} (${res.statusText}): ${res.url}`), { status: res.status })
       }
     }
 

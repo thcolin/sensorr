@@ -1,6 +1,7 @@
 import path from 'node:path'
 import oleoo from 'oleoo'
 import sanitizeFilename from 'sanitize-filename'
+import { MEDIA } from '@sensorr/sensorr'
 import { OVERDUE_AFTER } from './swaps'
 export { fetchShow } from '@sensorr/tmdb'
 
@@ -114,7 +115,7 @@ export const importLinksOf = (release, show, episodes, library) => {
   const missing = new Set(episodes.filter(({ files }) => !files?.length).map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
 
   return release.torrent.files.flatMap(({ path: file }) => {
-    if (/\bsamples?\b/i.test(file)) {
+    if (!MEDIA.test(file) || /\bsamples?\b/i.test(file)) {
       return []
     }
 
