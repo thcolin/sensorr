@@ -11,6 +11,7 @@ import { Progress } from '../../atoms/Progress/Progress'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
+import { Pretty } from '../../elements/Entity/Pretty/Pretty'
 import { Proposal } from '../Movie/Proposal/Proposal'
 import { Guests } from '../Movie/Guests/Guests'
 import { ReviewsBadge } from '../Movie/Badges/ReviewsBadge'
@@ -22,7 +23,7 @@ export interface ShowProps extends Omit<
   'link' | 'state' | 'focus' | 'placeholder' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty' | 'footer'
 > {
   entity: any
-  display?: 'poster' | 'card'
+  display?: 'poster' | 'card' | 'pretty'
   link?: ((entity: any) => LinkProps)
   focus?: 'vote_average' | 'popularity' | 'vote_count'
   placeholder?: boolean
@@ -84,6 +85,19 @@ const UIShow = ({
   if (display === 'card') {
     return (
       <Card
+        {...props}
+        details={details}
+        link={link}
+        ready={typeof entity?.id === 'number' && !placeholder && ready}
+        empty={Empty.tv}
+        badges={badges}
+      />
+    )
+  }
+
+  if (display === 'pretty') {
+    return (
+      <Pretty
         {...props}
         details={details}
         link={link}

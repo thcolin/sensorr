@@ -56,6 +56,10 @@ export const ShowPosterManySeasons = () => (
   />
 )
 
+export const ShowPrettyLoading = () => <UIShow entity={null} display='pretty' placeholder={true} />
+
+export const ShowPretty = () => <UIShow entity={entity} display='pretty' state='followed' />
+
 export const ShowPosterSelectable = () => <UIShow entity={entity} state='followed' selected={false} onSelectedChange={() => {}} />
 
 export const ShowPosterSelected = () => <UIShow entity={entity} state='followed' selected={true} selectedVisible={true} onSelectedChange={() => {}} />

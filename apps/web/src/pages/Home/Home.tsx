@@ -45,6 +45,7 @@ const Home = ({ ...props }) => {
         display='row'
         child={Show}
         limit={20}
+        props={pretty}
         more={{
           title: t('items.shows.trending.more'),
           to: '/tv/trending',
@@ -170,6 +171,7 @@ const Home = ({ ...props }) => {
         display='row'
         child={Show}
         limit={20}
+        props={pretty}
         more={{
           title: t('items.shows.discover.more'),
           to: '/tv/discover',
