@@ -149,6 +149,7 @@ export class ShowsService {
       }
     }
 
+    // Only a whole show, named and in a state, creates one: a partial write on a show deleted meanwhile would bring it back stateless
     const { insertedCount, modifiedCount, upsertedCount } = await this.showModel.bulkWrite(Object.keys(changes).map(i => {
       const { releases, ...fields } = changes[i]
 
@@ -156,7 +157,7 @@ export class ShowsService {
         updateOne: {
           filter: { _id: i },
           update: { _id: i, ...fields },
-          upsert: true,
+          upsert: !!(fields.name && fields.state),
         },
       }
     }))
