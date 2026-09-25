@@ -50,7 +50,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
       )}
       <div sx={UIPoster.styles.guests}>
         {!!requested_by?.length && (
-          <Guests guests={guests} display='poster' compact={false} />
+          <Guests guests={guests} display='poster' compact={false} to={behavior === 'tv' ? '/tv/requests' : '/movie/requests'} />
         )}
       </div>
     </div>

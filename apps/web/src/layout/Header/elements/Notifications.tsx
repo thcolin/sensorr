@@ -640,6 +640,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
         <div sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: 8, fontSize: '1rem' }}>
           <div sx={{ flex: 1, marginRight: 4, marginBottom: 3, fontSize: 9 }}>
             <Guests
+              to='/tv/requests'
               childProps={{ onClick: () => closePortal() }}
               guests={(meta?.requested_by || []).filter(guest => guests[guest]).map(guest => ({
                 entity: { id: 0, name: guests[guest].name, override: guests[guest].email, profile_path: guests[guest].avatar }
