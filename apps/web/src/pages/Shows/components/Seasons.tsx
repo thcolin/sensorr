@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import oleoo from 'oleoo'
 import { EpisodeStatus, EpisodeStatusOptions, Icon, Progress } from '@sensorr/ui'
@@ -49,11 +50,26 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
   // The first season that waits on something opens, else the last one
   const regular = seasons.filter(({ number }) => number !== 0)
   const initial = (regular.find(({ proposed, wanted }) => proposed || wanted) || regular[regular.length - 1] || seasons[0])?.number
-  const [open, setOpen] = useState({})
+  // A link to `#season-N`, from a calendar row, opens that season and scrolls to it once the seasons are there
+  const { hash } = useLocation()
+  const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
+  const targeted = Number.isInteger(target) ? { [target]: true } : {}
+  const [open, setOpen] = useState(targeted)
+  const scrolled = useRef(null)
 
   useEffect(() => {
-    setOpen({})
-  }, [entity?.id])
+    setOpen(targeted)
+  }, [entity?.id, hash])
+
+  useEffect(() => {
+    const key = `${entity?.id}${hash}`
+
+    if (Number.isInteger(target) && ready && scrolled.current !== key && seasons.some(({ number }) => number === target)) {
+      // Two frames: the page restores its saved scroll position on the next one, after this effect
+      requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(`season-${target}`)?.scrollIntoView({ block: 'start' })))
+      scrolled.current = key
+    }
+  }, [entity?.id, hash, ready, seasons])
 
   if (!seasons.length) {
     return null
@@ -86,7 +102,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
           const Head = inLibrary ? 'button' : 'div'
 
           return (
-            <div key={season.number} sx={UISeasons.styles.season}>
+            <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season}>
               <div sx={UISeasons.styles.head}>
                 <Head
                   {...(inLibrary ? {
