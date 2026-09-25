@@ -2,12 +2,15 @@ import { ReactNode, createContext, forwardRef, memo, useCallback, useContext, us
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import { keyframes } from '@emotion/react'
 import { ControlsSelect, Icon, Link, Picture, Warning } from '@sensorr/ui'
 import { emojize, useResponsiveValue } from '@sensorr/utils'
 import { dateOf, day, monthRange, monthWeeks, originOf } from './agenda'
 
 // Height of a list line, which the date beside it takes to sit on the same axis
 const ROW = '4em'
+
+const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 const VIEWS = [
   { value: 'grid', label: emojize('🖼️', 'Grid') },
@@ -252,6 +255,13 @@ const UIMonth = ({ month, days, ready, error, fallback, label, render, keyOf }: 
   const [key] = monthRange(month)
   const weeks = useMemo(() => monthWeeks(dateOf(key)), [key])
 
+  // The month in view and where it comes from: a later one enters from the right, an earlier one from the left
+  const [shown, setShown] = useState({ key, direction: null })
+
+  if (shown.key !== key) {
+    setShown({ key, direction: key > shown.key ? 'next' : 'previous' })
+  }
+
   if (error) {
     return (
       <UIFailure error={error} fallback={fallback} />
@@ -265,7 +275,7 @@ const UIMonth = ({ month, days, ready, error, fallback, label, render, keyOf }: 
           <span key={key}>{date.toLocaleDateString(language, { weekday: 'short' })}</span>
         ))}
       </div>
-      <ol sx={UIMonth.styles.grid}>
+      <ol key={shown.key} sx={UIMonth.styles.grid} data-direction={shown.direction}>
         {weeks.flat().map(({ key, date, outside }) => {
           const entries = days.get(key) || []
 
@@ -295,6 +305,13 @@ const UIMonth = ({ month, days, ready, error, fallback, label, render, keyOf }: 
   )
 }
 
+// The fade is done halfway, so the grid is in sight while it covers the last of the way
+const MONTH = {
+  next: keyframes`from { opacity: 0; transform: translateX(2.5rem); } 50% { opacity: 1; }`,
+  previous: keyframes`from { opacity: 0; transform: translateX(-2.5rem); } 50% { opacity: 1; }`,
+  fade: keyframes`from { opacity: 0; }`,
+}
+
 UIMonth.styles = {
   element: {
     flex: 1,
@@ -303,6 +320,7 @@ UIMonth.styles = {
     flexDirection: 'column',
     paddingX: 0,
     paddingY: 4,
+    overflowX: 'clip',
   },
   weekdays: {
     display: 'grid',
@@ -328,6 +346,18 @@ UIMonth.styles = {
     borderTop: '1px solid',
     borderLeft: '1px solid',
     borderColor: 'gray',
+    // A new month slides a short way in from the side it comes from while it fades in, the weekdays above it stay
+    '&[data-direction="next"]': {
+      animation: `${MONTH.next} 250ms ${EASING} both`,
+    },
+    '&[data-direction="previous"]': {
+      animation: `${MONTH.previous} 250ms ${EASING} both`,
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      '&[data-direction]': {
+        animationName: `${MONTH.fade}`,
+      },
+    },
   },
   cell: {
     display: 'flex',
@@ -350,6 +380,7 @@ UIMonth.styles = {
       textAlign: 'center',
       fontVariantNumeric: 'tabular-nums',
     },
+    // The entries of a month come after its grid: they fade in where they land instead of popping
     '>ul': {
       flex: 1,
       minHeight: 0,
@@ -362,6 +393,7 @@ UIMonth.styles = {
       overflowY: 'auto',
       scrollbarWidth: 'thin',
       scrollbarColor: 'grayDark transparent',
+      animation: `${MONTH.fade} 400ms ease-in-out both`,
     },
     '&[data-outside="true"]': {
       '>time, >ul': {
