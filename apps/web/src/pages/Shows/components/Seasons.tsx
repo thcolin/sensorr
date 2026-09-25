@@ -581,6 +581,8 @@ UIEpisodes.styles = {
   virtual: {
     maxHeight: '32em',
     overflowY: 'auto',
+    // Else computed `auto` too, and the rows' hover (`bleed`) scrolls it sideways: it spans the box instead
+    overflowX: 'hidden',
     overscrollBehavior: 'contain',
     borderTop: '1px solid',
     borderColor: 'grayLighter',
