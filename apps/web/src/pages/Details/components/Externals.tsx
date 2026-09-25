@@ -3,30 +3,33 @@ import { Icon } from '@sensorr/ui'
 
 const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => (
   <div sx={UIExternals.styles.element}>
-    <div>
-      {meaningful?.vote_average && <meaningful.vote_average />}
-      {(additional?.reviews || [])?.map(review => (
-        <a
-          href={review.external}
-          target='_blank'
-          rel='noreferrer noopener'
-          key={review.source}
-          sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-          title={{
-            'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
-            'Metacritic': `Metascrore based on ${review.count} critic reviews`,
-          }[review.source]}
-        >
-          <Icon
-            value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
-            height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-            width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-            sx={{ marginRight: 8 }}
-          />
-          {Math.round(review.score * 100)}%
-        </a>
-      ))}
-    </div>
+    {/* An empty group would still carry the margin that separates it from the next one */}
+    {(!!meaningful?.vote_average || !!additional?.reviews?.length) && (
+      <div>
+        {meaningful?.vote_average && <meaningful.vote_average />}
+        {(additional?.reviews || [])?.map(review => (
+          <a
+            href={review.external}
+            target='_blank'
+            rel='noreferrer noopener'
+            key={review.source}
+            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+            title={{
+              'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
+              'Metacritic': `Metascrore based on ${review.count} critic reviews`,
+            }[review.source]}
+          >
+            <Icon
+              value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
+              height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+              width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+              sx={{ marginRight: 8 }}
+            />
+            {Math.round(review.score * 100)}%
+          </a>
+        ))}
+      </div>
+    )}
     {(!!metadata?.plex_url || !!((entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.flatrate || [])?.length) && (
       <div>
         {!!metadata?.plex_url && (
