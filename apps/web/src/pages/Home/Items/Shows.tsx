@@ -94,10 +94,16 @@ export const AiringShows = compose(
     const first = new Map()
     episodes.forEach(episode => first.has(episode.show_id) || first.set(episode.show_id, episode))
 
-    const { init: authorized } = APIQuery.shows.getShows({ init })
-    const shows = await Promise.all([...first.keys()].map(id => api.fetch(`shows/${id}`, {}, authorized)))
+    if (!first.size) {
+      return []
+    }
 
-    return shows.map(show => ({ ...show, release_date: first.get(show.id).air_date }))
+    // The followed shows in one request, joined on the episodes: the API filters shows by no id
+    const shows = new Map<number, any>((await fetchResults(api, APIQuery.shows.getShows({ params: { monitored: 'true', limit: '' }, init }))).map(show => [show.id, show]))
+
+    return [...first.values()]
+      .filter(episode => shows.has(episode.show_id))
+      .map(episode => ({ ...shows.get(episode.show_id), release_date: episode.air_date }))
   }),
 )(Entities)
 
