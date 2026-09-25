@@ -2,11 +2,11 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button, Icon } from '@sensorr/ui'
 import { coverageLabel, swapOf } from '@sensorr/sensorr'
-import { emojize, filesize } from '@sensorr/utils'
+import { filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
-import { Gestures } from '../../../components/Sensorr/Gestures'
 import { Release } from '../../../components/Sensorr/Release'
-import { Transition, swapLabelOf } from '../../../components/Sensorr/Proposal'
+import { swapLabelOf } from '../../../components/Sensorr/Proposal'
+import { ReleasesStyles, Swap } from '../../Details/components/Releases'
 import { isPending, proposalDiff, scoreReleases } from '../../Proposals/queue'
 import { DELAY, usePendingVerdict } from '../../Proposals/pending'
 import { VERDICTS } from '../../Proposals/Card'
@@ -135,17 +135,17 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     return null
   }
 
+  // Laid out like a movie's releases block (../../Details/components/Releases.tsx), one titled group per proposal
   return (
-    <section sx={UIProposals.styles.element} aria-labelledby='pending-proposals'>
+    <section sx={ReleasesStyles.element} aria-label='Pending proposals'>
       <div>
-        <h2 id='pending-proposals' sx={UIProposals.styles.title}>{emojize('🛎️', 'Pending proposals')}</h2>
         {rows.map(({ release, fills, swap, diff }, index) => {
           const brings = fills.total ? plural(fills.missing.length, 'episode') : null
 
           return (
-            <div key={release.id} sx={UIProposals.styles.row}>
-              <div sx={UIProposals.styles.coverage}>
-                <strong>{coverageLabel(release.coverage || [], release.level || undefined)}</strong>
+            <div key={release.id} role='group' aria-labelledby={`proposal-${release.id}`} sx={UIProposals.styles.proposal}>
+              <div sx={UIProposals.styles.head}>
+                <h2 id={`proposal-${release.id}`}>{coverageLabel(release.coverage || [], release.level || undefined)}</h2>
                 {(typeof release.size === 'number' || !!brings || !!swap) && (
                   <small title={fills.codes.join(' ')}>
                     {swap ? swapLabelOf(release.size, swap) : [typeof release.size === 'number' && filesize.stringify(release.size), brings && `for ${brings}`].filter(Boolean).join(' ')}
@@ -153,22 +153,15 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
                   </small>
                 )}
               </div>
-              <div sx={UIProposals.styles.release}>
-                <Release
-                  entity={release}
-                  proceed={proceedRelease}
-                  display={device === 'mobile' ? 'column' : 'row'}
-                  actions={false}
-                />
-                {!!diff.listed.length && (
-                  <div sx={UIProposals.styles.pills}>
-                    {diff.listed.map(({ axis, from, to }) => (
-                      <Transition key={axis} axis={axis} from={from} to={to} policy={policy} compact={true} />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Gestures
+              <Release
+                entity={release}
+                proceed={proceedRelease}
+                display={device === 'mobile' ? 'column' : 'row'}
+                actions={false}
+              />
+              <Swap
+                rows={diff.rows}
+                policy={policy}
                 shortcuts={index === 0}
                 onGesture={verdict => answer(release, verdict)}
               />
@@ -212,74 +205,36 @@ UIProposals.styles = {
       whiteSpace: 'nowrap',
     },
   },
-  element: {
-    display: 'flex',
-    justifyContent: 'center',
-    backgroundColor: 'grayLighter',
-    borderTop: '1px solid',
-    borderBottom: '1px solid',
-    borderColor: 'grayDark',
-    paddingX: [4, '5em'],
-    paddingY: '1.5em',
-    marginY: 4,
-    '>div': {
-      width: '100%',
-      maxWidth: '95em',
+  proposal: {
+    '&:not(:first-of-type)': {
+      marginTop: 2,
     },
   },
-  title: {
-    margin: 12,
-    marginBottom: 6,
-    fontSize: 3,
-  },
-  row: {
+  // At the release row's font size and inset (Release.tsx `wrapper`), so it spans the row and its divider
+  head: {
     display: 'flex',
     flexDirection: ['column', 'row'],
-    alignItems: ['stretch', 'center'],
-    gap: [8, 4],
-    paddingY: 8,
-    borderBottom: '1px solid',
-    borderColor: 'gray',
-    '&:last-of-type': {
-      borderBottom: 'none',
-    },
-  },
-  coverage: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: ['center', 'flex-start'],
-    gap: 10,
-    flexShrink: 0,
-    width: ['auto', '14em'],
+    alignItems: ['center', 'baseline'],
+    justifyContent: 'space-between',
+    gap: [10, 4],
+    fontSize: 6,
+    paddingRight: [12, 0],
+    paddingLeft: [12, 2],
     fontFamily: 'monospace',
     fontVariantNumeric: 'tabular-nums',
-    '>strong': {
-      fontSize: 4,
+    '>h2': {
+      margin: 12,
+      fontFamily: 'monospace',
+      fontSize: 2,
       fontWeight: 'semibold',
-      color: 'text',
     },
     '>small': {
-      maxWidth: '100%',
-      fontSize: 6,
+      fontSize: 4,
       lineHeight: 'body',
       color: 'grayDarkest',
+      textAlign: ['center', 'right'],
+      textWrap: 'balance',
     },
-  },
-  release: {
-    flex: 1,
-    minWidth: 0,
-    // The release row draws its own divider, the proposal row already has one
-    '>div>div>div>div': {
-      borderBottom: 'none',
-    },
-  },
-  pills: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: ['center', 'flex-start'],
-    gap: 8,
-    paddingX: [12, 2],
-    paddingBottom: 8,
   },
 }
 

@@ -54,24 +54,16 @@ const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, 
             />
           ))}
           {swaps.map(({ release, diff }) => (
-            <div key={release.id} sx={UIReleases.styles.swap}>
-              {(!!diff.rows.length || typeof diff.size === 'number') && (
-                <div sx={UIReleases.styles.pills}>
-                  {diff.rows.map(({ axis, from, to }) => (
-                    <Transition key={axis} axis={axis} from={from} to={to} policy={policy} />
-                  ))}
-                  {typeof diff.size === 'number' && (
-                    <Transition
-                      axis='size'
-                      from={emojize('📦', filesize.stringify((release.size || 0) - diff.size))}
-                      to={filesize.stringify(release.size || 0)}
-                      state={sizeStateOf(diff.size)}
-                    />
-                  )}
-                </div>
+            <Swap key={release.id} rows={diff.rows} policy={policy} onGesture={(verdict) => proceedRelease(release, verdict === 'accept')}>
+              {typeof diff.size === 'number' && (
+                <Transition
+                  axis='size'
+                  from={emojize('📦', filesize.stringify((release.size || 0) - diff.size))}
+                  to={filesize.stringify(release.size || 0)}
+                  state={sizeStateOf(diff.size)}
+                />
               )}
-              <Gestures onGesture={(verdict) => proceedRelease(release, verdict === 'accept')} shortcuts={false} />
-            </div>
+            </Swap>
           ))}
         </div>
       )}
@@ -120,3 +112,24 @@ UIReleases.styles = {
 }
 
 export const Releases = memo(UIReleases)
+
+// Also the block of a show's pending proposals, so both pages lay it out alike
+export const ReleasesStyles = UIReleases.styles
+
+// A pending proposal's comparison, centered under the release rows, then its buttons.
+// `children` are extra pills after the axes, like the size.
+const UISwap = ({ rows, policy, onGesture, shortcuts = false, children = null }) => (
+  <div sx={UIReleases.styles.swap}>
+    {(!!rows.length || !!children) && (
+      <div sx={UIReleases.styles.pills}>
+        {rows.map(({ axis, from, to }) => (
+          <Transition key={axis} axis={axis} from={from} to={to} policy={policy} />
+        ))}
+        {children}
+      </div>
+    )}
+    <Gestures onGesture={onGesture} shortcuts={shortcuts} />
+  </div>
+)
+
+export const Swap = memo(UISwap)

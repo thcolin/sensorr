@@ -187,8 +187,9 @@ const Show = ({ ...props }) => {
         />
       ) : null}
     >
-      {inLibrary && (
-        <Proposals entity={show.data} metadata={metadata} episodes={episodes || []} proceedRelease={proceedRelease} banRelease={banRelease} />
+      {/* Before its episodes load, a swap would read as replacing nothing */}
+      {inLibrary && !!episodes && (
+        <Proposals entity={show.data} metadata={metadata} episodes={episodes} proceedRelease={proceedRelease} banRelease={banRelease} />
       )}
       {episodesError ? (
         <Warning
