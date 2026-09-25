@@ -73,6 +73,7 @@ const TrendingShows = Trending('shows')
 
 const SearchMovies = Search('movies')
 const SearchPersons = Search('persons')
+const SearchShows = Search('shows')
 
 const SettingsRedirector = ({ ...props }) => {
   useTitle('Settings')
@@ -114,6 +115,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='tv/calendar' element={<ShowsCalendar />} />
         <Route path='tv/discover' element={<ShowsDiscover />} />
         <Route path='tv/trending' element={<TrendingShows />} />
+        <Route path='tv/search' element={<SearchShows />} />
         <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />

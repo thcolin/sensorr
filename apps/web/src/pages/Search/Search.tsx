@@ -6,6 +6,7 @@ import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
+import Show from '../../components/Show/Show'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
@@ -14,11 +15,11 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 
 export const Search = (resource) => compose(
-  withTitle(`${i18n.t('pages.search.title')} ${resource}`),
+  withTitle(resource === 'shows' ? i18n.t('pages.shows.search.title') : `${i18n.t('pages.search.title')} ${resource}`),
   withProps({
     id: 'search',
     display: 'grid',
-    child: { movies: MovieWithCreditsAndReviews, persons: Person }[resource],
+    child: { movies: MovieWithCreditsAndReviews, persons: Person, shows: Show }[resource],
     empty: {
       movies: {
         emoji: '🍿',
@@ -38,9 +39,18 @@ export const Search = (resource) => compose(
           </span>
         ),
       },
+      shows: {
+        emoji: '📺',
+        title: "Oh no, your request didn't return results",
+        subtitle: (
+          <span>
+            Try something more familiar, like <em>Friends</em> ?
+          </span>
+        ),
+      },
     }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person', shows: 'search/tv' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t('pages.search.title'),
     useStatistics,

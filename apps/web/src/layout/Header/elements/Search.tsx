@@ -302,6 +302,11 @@ export const Results = ({ ...props }) => {
                   props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
                   display={device !== 'mobile' ? 'column' : 'row'}
                   stack={true}
+                  more={{
+                    title: `More results for ${query}`,
+                    to: `/tv/search`,
+                    state: { controls: { query } },
+                  }}
                 />
               )}
               {!!results.collections?.results?.length && (
