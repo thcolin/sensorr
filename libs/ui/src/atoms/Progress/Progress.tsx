@@ -3,11 +3,9 @@ import { memo } from 'react'
 export interface ProgressProps extends React.ProgressHTMLAttributes<HTMLProgressElement> {
   value: number
   max: number
-  // Splits the bar into parts sized by their `max`, each filled with its own `value`
+  // Splits the bar into one pill per part, sized by its `max` and filled with its own `value`
   segments?: { value: number, max: number }[]
 }
-
-const DENSE = 1 / 24
 
 const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   if (!(max > 0)) {
@@ -17,20 +15,15 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   const parts = (segments || []).filter(segment => segment.max > 0)
 
   if (parts.length > 1) {
-    const total = parts.reduce((sum, segment) => sum + segment.max, 0)
-    // Past a 24th of the bar, a hairline between every part draws a barcode: the parts touch, each one still fills on its own
-    const dense = parts.some(segment => segment.max / total < DENSE)
-
     return (
       <div
         className={props.className}
-        style={props.style}
+        style={{ ...props.style, '--parts': parts.length } as React.CSSProperties}
         title={props.title}
         role='progressbar'
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.min(value, max)}
-        data-dense={dense || undefined}
         sx={UIProgress.styles.segments}
       >
         {parts.map((segment, index) => (
@@ -70,24 +63,20 @@ UIProgress.styles = {
       backgroundColor: 'primary',
     },
   },
-  // Same bar as `element`, a hairline gap lets the background through between two parts
+  // One pill per part, each with the track and the fill of `element`
   segments: {
     display: 'flex',
-    gap: '1px',
-    '@media (min-resolution: 2dppx)': {
-      gap: '0.5px',
-    },
-    '&[data-dense]': {
-      gap: 12,
-    },
+    // A fifth of an average part, from 2px on a 5 seasons card down to half a pixel past 30 seasons
+    gap: 'clamp(0.5px, calc(100% / var(--parts) / 5), 0.125em)',
     width: '100%',
     height: '0.25em',
     margin: 12,
-    borderRadius: '2em',
-    overflow: 'hidden',
     '>span': {
       flexBasis: 0,
       minWidth: 0,
+      // Round ends while a pill is twice as wide as tall, flatter ends below so a narrow one does not shrink to a dot
+      borderRadius: 'min(0.125em, 25%) / 0.125em',
+      overflow: 'hidden',
       backgroundColor: 'grayDarker',
       '>span': {
         display: 'block',

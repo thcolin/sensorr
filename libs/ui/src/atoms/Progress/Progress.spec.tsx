@@ -17,11 +17,10 @@ describe('Progress', () => {
     expect(fills).toEqual(['scaleX(1)', 'scaleX(0.25)', 'scaleX(0)'])
   })
 
-  it('drops the hairlines once a part falls under a 24th of the bar', () => {
-    const parts = (count) => Array(count).fill(10).map(max => ({ value: max, max }))
+  it('sizes the gap between the pills from their count', () => {
+    const parts = Array(18).fill(10).map(max => ({ value: max, max }))
 
-    expect(render(<Progress value={240} max={240} segments={parts(24)} />).container.querySelector('[data-dense]')).toBeNull()
-    expect(render(<Progress value={250} max={250} segments={parts(25)} />).container.querySelector('[data-dense]')).toBeTruthy()
+    expect((render(<Progress value={180} max={180} segments={parts} />).container.querySelector('[role="progressbar"]') as HTMLElement).style.getPropertyValue('--parts')).toBe('18')
   })
 
   it('renders nothing when nothing aired', () => {
