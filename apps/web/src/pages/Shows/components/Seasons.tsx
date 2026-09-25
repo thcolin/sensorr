@@ -80,9 +80,9 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
   // Episodes a pending proposal covers: on an owned one, the file it would replace is marked
   const replaced = useMemo(() => new Set(proposals.flatMap(({ release }) => (release.coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
 
-  // An episode or a season the page does not list sends its proposal one level up
+  // An episode or a season the page does not list, or lists without an episode, sends its proposal one level up
   const placed = useMemo(() => {
-    const numbers = new Set(seasons.map(({ number }) => number))
+    const numbers = new Set(seasons.filter(({ count }) => count).map(({ number }) => number))
     const known = new Set((episodes || []).map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
     const placed = { show: [], seasons: {}, episodes: {} }
 
@@ -105,21 +105,23 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
   const { hash, key: navigation } = useLocation()
   const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
 
-  // The targeted season alone, else the ones waiting on something, else the last one
+  // The targeted season alone, else the ones waiting on something, else the last one with episodes
   const defaults = useMemo(() => {
     if (Number.isInteger(target)) {
       return new Set([target])
     }
 
     const waiting = seasons.filter(({ proposed, wanted }) => proposed || wanted).map(({ number }) => number)
-    return new Set(waiting.length ? waiting : [(regular[regular.length - 1] || seasons[0])?.number])
+    const filled = seasons.filter(({ count }) => count)
+    return new Set(waiting.length ? waiting : [(filled.filter(({ number }) => number !== 0).pop() || filled[0])?.number])
   }, [target, seasons])
 
   const [open, setOpen] = useState({})
   // An episode a proposal waits on is unfolded until folded by hand
   const [unfolded, setUnfolded] = useState({})
   const scrolled = useRef(null)
-  const openedOf = (number) => open[number] ?? defaults.has(number)
+  // A season without an episode has no drawer
+  const openedOf = ({ number, count }) => !!count && (open[number] ?? defaults.has(number))
 
   // A new navigation, even to the same anchor, resets what was opened by hand
   useEffect(() => {
@@ -130,7 +132,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
   // The A and R keys answer the first proposal shown, its buttons announce them (Proposals.tsx)
   const first = [
     ...placed.show,
-    ...seasons.filter(({ number }) => openedOf(number)).flatMap(({ number, episodes }) => [
+    ...seasons.filter(openedOf).flatMap(({ number, episodes }) => [
       ...(placed.seasons[number] || []),
       ...episodes.filter(({ id }) => unfolded[id] ?? true).flatMap(({ episode_number }) => placed.episodes[`${number}:${episode_number}`] || []),
     ]),
@@ -187,45 +189,56 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
           </div>
           {placed.show.map(block)}
           {seasons.map(season => {
-            const opened = openedOf(season.number)
+            const opened = openedOf(season)
             const id = `season-${entity.id}-${season.number}`
             const specials = season.number === 0
+            const empty = !season.count
+            const title = (
+              <>
+                <Icon
+                  value='chevron'
+                  direction={false}
+                  width='0.75em'
+                  height='0.75em'
+                  sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)', visibility: empty ? 'hidden' : 'visible' }}
+                />
+                <strong>{season.name}</strong>
+                {/* Announced without an episode: the status a poster gives a show that has not aired (ShowProgress) */}
+                <small>
+                  {empty ? EpisodeStatusOptions.upcoming.label : `${season.count} episodes`}{season.year ? ` · ${season.year}` : ''}
+                  {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
+                </small>
+                {!!season.proposed && (
+                  <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
+                )}
+                {!!season.wanted && (
+                  <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
+                )}
+              </>
+            )
 
             return (
               <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season} data-opened={opened}>
                 {/* The whole row opens the drawer, but its follow: a click on the title button bubbles up to it */}
-                <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.drawer }} onClick={toggle(season.number, opened)}>
-                  <button
-                    type='button'
-                    aria-expanded={opened}
-                    aria-controls={id}
-                    sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
-                    data-specials={specials}
-                  >
-                    <Icon
-                      value='chevron'
-                      direction={false}
-                      width='0.75em'
-                      height='0.75em'
-                      sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-                    />
-                    <strong>{season.name}</strong>
-                    <small>
-                      {season.count} episodes{season.year ? ` · ${season.year}` : ''}
-                      {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
-                    </small>
-                    {!!season.proposed && (
-                      <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
-                    )}
-                    {!!season.wanted && (
-                      <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
-                    )}
-                  </button>
+                <div sx={{ ...UISeasons.styles.head, ...(empty ? {} : UISeasons.styles.drawer) }} onClick={empty ? undefined : toggle(season.number, opened)}>
+                  {empty ? (
+                    <div sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle, cursor: 'default' }} data-specials={specials}>{title}</div>
+                  ) : (
+                    <button
+                      type='button'
+                      aria-expanded={opened}
+                      aria-controls={id}
+                      sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
+                      data-specials={specials}
+                    >
+                      {title}
+                    </button>
+                  )}
                   {/* Nothing is owned nor followed before the show is in the library */}
                   {inLibrary && (
                     <div sx={UISeasons.styles.summary}>
-                      {/* Specials are not followed by default: owned over aired would read as a gap */}
-                      {specials ? <><span /><span /><span /></> : (
+                      {/* Specials are not followed by default: owned over aired would read as a gap. An empty season has nothing to count */}
+                      {(specials || empty) ? <><span /><span /><span /></> : (
                         <>
                           <ProgressPill {...season.progress} />
                           <Bar progress={season.progress} />
