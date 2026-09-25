@@ -466,6 +466,7 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
               ref={virtual ? virtualizer.measureElement : null}
               sx={UIEpisodes.styles.item}
               data-foldable={foldable}
+              data-last={index === episodes.length - 1}
               style={virtual ? { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` } : {}}
             >
               <div
@@ -593,7 +594,8 @@ UIEpisodes.styles = {
     ...bleed,
     borderBottom: '1px solid',
     borderColor: 'grayLighter',
-    '&:last-of-type': {
+    // By index: a virtualized season renders a window of its rows, whose last one sits in the middle
+    '&[data-last="true"]': {
       borderBottom: 'none',
     },
     '&[data-foldable="true"]:hover::before': {
