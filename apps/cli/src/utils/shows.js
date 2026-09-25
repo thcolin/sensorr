@@ -55,6 +55,18 @@ export const airingUnits =(units, episodes, since) => {
   return units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
 }
 
+// A "Fix match" in Plex can drop the tmdb:// guid of a show: its tvdb:// or imdb:// guid still names it, and its title and year
+// at least keep its files from being read as lost
+export const plexShowOf = (payload, library) => {
+  const guidOf = (scheme) => ((payload.Guid || []).find(({ id }) => id.startsWith(`${scheme}://`))?.id || '').replace(`${scheme}://`, '')
+  const [tmdb, tvdb, imdb] = ['tmdb', 'tvdb', 'imdb'].map(guidOf)
+  const title = (value) => `${value || ''}`.toLowerCase().trim()
+  const matched = (tvdb && library.find(({ external_ids }) => `${external_ids?.tvdb_id || ''}` === tvdb)) || (imdb && library.find(({ external_ids }) => external_ids?.imdb_id === imdb))
+  const named = library.find((show) => title(show.name) === title(payload.title) && (!payload.year || !show.first_air_date || new Date(show.first_air_date).getUTCFullYear() === Number(payload.year)))
+
+  return tmdb ? { id: Number(tmdb), exact: true } : matched ? { id: matched.id, exact: true } : named ? { id: named.id, exact: false } : null
+}
+
 export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
 
 // Plex decides, except for a file `import shows` linked that Plex has not scanned yet. Only a file Plex had seen is lost.

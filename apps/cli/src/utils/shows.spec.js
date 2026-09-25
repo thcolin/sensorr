@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -122,6 +122,28 @@ describe('syncedFilesOf', () => {
 
   it('drops the release of an episode Plex no longer has, so it is searched again', () => {
     expect(syncedFilesOf([])).toEqual({ files: [], release: null })
+  })
+})
+
+describe('plexShowOf', () => {
+  const library = [
+    { id: 2316, name: 'The Office', first_air_date: '2005-03-24', external_ids: { tvdb_id: 73244, imdb_id: 'tt0386676' } },
+    { id: 2996, name: 'The Office', first_air_date: '2001-07-09', external_ids: { tvdb_id: 78107, imdb_id: 'tt0290978' } },
+  ]
+  const payload = { title: 'The Office', year: 2005 }
+
+  it('ties a Plex show by its tmdb guid first', () => {
+    expect(plexShowOf({ ...payload, Guid: [{ id: 'imdb://tt0290978' }, { id: 'tmdb://2316' }] }, library)).toEqual({ id: 2316, exact: true })
+  })
+
+  it('ties a Plex show without a tmdb guid by its tvdb, then its imdb guid', () => {
+    expect(plexShowOf({ ...payload, Guid: [{ id: 'tvdb://78107' }] }, library)).toEqual({ id: 2996, exact: true })
+    expect(plexShowOf({ ...payload, Guid: [{ id: 'imdb://tt0386676' }] }, library)).toEqual({ id: 2316, exact: true })
+  })
+
+  it('names a Plex show without any known guid by its title and year, as not exact', () => {
+    expect(plexShowOf({ title: 'the office ', year: 2001, Guid: [{ id: 'tvdb://1' }] }, library)).toEqual({ id: 2996, exact: false })
+    expect(plexShowOf({ title: 'Friends', year: 1994 }, library)).toBe(null)
   })
 })
 

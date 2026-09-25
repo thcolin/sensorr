@@ -8,7 +8,7 @@ import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { showFilesOf } from '../utils/plex'
-import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf } from '../utils/shows'
+import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf, plexShowOf } from '../utils/shows'
 
 const meta = {
   command: 'sync',
@@ -59,7 +59,7 @@ const FetchSensorrShowsTask = ({ ...props }) => {
       setStatus('loading')
 
       try {
-        const library = await fetchSensorrShows(api, { fields: 'id|name|genres|poster_path|vote_average' })
+        const library = await fetchSensorrShows(api, { fields: 'id|name|first_air_date|external_ids|genres|poster_path|vote_average' })
         const { uri, params, init } = api.query.episodes.getEpisodes({ params: { fields: 'id|show_id|season_number|episode_number|files' } })
         const { results } = await api.fetch(uri, { ...params, limit: '' }, init)
         const episodes = results.reduce((acc, episode) => ({ ...acc, [episode.show_id]: [...(acc[episode.show_id] || []), episode] }), {})
@@ -145,19 +145,21 @@ const CheckSensorrShowsTask = ({ ...props }) => {
       setStatus('loading')
 
       // Plex may hold one TMDB show in several items, their episodes are read together
+      const named = []
       const distant = (state.distant || []).reduce((acc, payload) => {
-        const tmdb = ((payload.Guid || []).find(({ id }) => id.startsWith('tmdb://'))?.id || '').replace('tmdb://', '')
+        const match = plexShowOf(payload, state.library || [])
 
-        if (!tmdb) {
-          state.logger.warn({ message: `⚠️ Error, Plex show "${payload.title}" without TMDB id, not associatable`, metadata: { ...state.metadata, group: 'corrections', payload } })
+        if (!match?.exact) {
+          state.logger.warn({ message: match ? `⚠️ Error, Plex show "${payload.title}" without TMDB id, its files left as they are` : `⚠️ Error, Plex show "${payload.title}" without TMDB id, not associatable`, metadata: { ...state.metadata, group: 'corrections', payload } })
           warning.push(payload.key)
+          named.push(...(match ? [match.id] : []))
           return acc
         }
 
-        return { ...acc, [tmdb]: { title: payload.title, keys: [...(acc[tmdb]?.keys || []), `${payload.ratingKey}`] } }
+        return { ...acc, [match.id]: { title: payload.title, keys: [...(acc[match.id]?.keys || []), `${payload.ratingKey}`] } }
       }, {})
 
-      setState((state) => ({ ...state, processed: Object.keys(distant).map(Number) }))
+      setState((state) => ({ ...state, processed: [...Object.keys(distant).map(Number), ...named] }))
 
       for (const [tmdb, { title, keys }] of Object.entries(distant)) {
         try {
