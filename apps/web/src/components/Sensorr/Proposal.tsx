@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { TransitionPill } from '@sensorr/ui'
 import { filesize } from '@sensorr/utils'
 import { transitionOf } from '../../pages/Proposals/queue'
 import { logos } from './Release'
@@ -36,85 +37,23 @@ UIValue.styles = {
 
 const Value = memo(UIValue)
 
-// The new value sits on top of the old one, one tint brighter in the same hue.
+// The pill of `@sensorr/ui`, colored by what the policy thinks of the new value.
 // `state` overrides the policy for a comparison no policy covers, like the size.
 const UITransition = ({ axis = '', from = null, to = null, policy = null, compact = false, state: forced = null, ...props }) => {
   const { state: computed, separator } = useMemo(() => transitionOf(axis, from, to, policy), [axis, from, to, policy])
   const state = forced || computed
-  const side = UITransition.styles.side
-  const element = { ...UITransition.styles.element, fontSize: compact ? 6 : 5 }
-  const { quiet } = UITransition.styles.tints
-  const tint = UITransition.styles.tints[state] || quiet
-  // An unknown value carries no verdict: its side stays gray whatever the axis did.
-  const before = from ? tint.before : quiet.before
-  const after = to ? tint.after : quiet.after
-
-  if (state === 'same') {
-    return (
-      <span {...props} sx={{ ...element, opacity: compact ? 1 : 0.3 }} title={`${axis}: ${to}`}>
-        <span sx={{ ...side, ...after }}>
-          <Value axis={axis} value={to} compact={compact} />
-        </span>
-      </span>
-    )
-  }
 
   return (
-    <span {...props} sx={element} title={`${axis}: ${from} ${separator} ${to}`}>
-      <span sx={{ ...side, ...UITransition.styles.before, ...before }}>
-        <Value axis={axis} value={from} compact={compact} />
-      </span>
-      <span sx={{ ...side, ...UITransition.styles.after, ...after }}>
-        <Value axis={axis} value={to} compact={compact} />
-      </span>
-    </span>
+    <TransitionPill
+      {...props}
+      from={<Value axis={axis} value={from} compact={compact} />}
+      to={<Value axis={axis} value={to} compact={compact} />}
+      state={state}
+      compact={compact}
+      unknown={{ from: !from, to: !to }}
+      title={state === 'same' ? `${axis}: ${to}` : `${axis}: ${from} ${separator} ${to}`}
+    />
   )
-}
-
-UITransition.styles = {
-  element: {
-    display: 'inline-flex',
-    alignItems: 'stretch',
-    maxWidth: '100%',
-    fontFamily: 'monospace',
-    whiteSpace: 'nowrap',
-    lineHeight: 'normal',
-    fontWeight: 'normal',
-  },
-  side: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    borderRadius: '1em',
-    paddingX: 6,
-    paddingY: 10,
-  },
-  // Square under the new value, so its rounded end sits on a full fill.
-  before: {
-    borderTopRightRadius: '0em',
-    borderBottomRightRadius: '0em',
-    marginRight: '-1em',
-    paddingRight: '1.75em',
-  },
-  after: {
-    position: 'relative',
-  },
-  tints: {
-    held: {
-      before: { backgroundColor: 'accentDarkest', color: 'primaryLightest' },
-      after: { backgroundColor: 'primaryDarkest', color: 'whitePure' },
-    },
-    broken: {
-      before: { backgroundColor: 'errorDarkest', color: 'text' },
-      after: { backgroundColor: 'errorDark', color: 'whitePure' },
-    },
-    quiet: {
-      before: { backgroundColor: 'gray', color: 'grayDarkest' },
-      after: { backgroundColor: 'grayDark', color: 'text' },
-    },
-  },
 }
 
 // "14.9 GB replaces 19 episodes (6.1 GB) and fills 1", with the counts of `swapOf` (libs/sensorr/src/lib/show.ts)

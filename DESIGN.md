@@ -232,7 +232,8 @@ what that policy did — which axis held, which one broke, what a swap would cos
 Swaps screen is where the product is most itself: five axes (`resolution`, `source`,
 `encoding`, `dub`, `language`) rendered as an old value tucked under the new one, green when the policy
 still holds, red when it breaks
-(`apps/web/src/components/Sensorr/Proposal.tsx:38-118`). `Followed`,
+(`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx`, colored by the policy in
+`apps/web/src/components/Sensorr/Proposal.tsx`). `Followed`,
 `KeepInTouch`, `Person` and `Calendar` are discovery paths — the part Radarr does not
 have — but they feed the wishlist; they are not the subject.
 
@@ -578,7 +579,8 @@ advance.
 ### Transition Pill (signature)
 The Swaps screen renders each policy axis as two overlapping pills: the old value
 underneath, the new value on top of it, `0.75em` over its right end
-(`apps/web/src/components/Sensorr/Proposal.tsx`). Each pill takes a `1em` radius, no border, one hue
+(`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx`, which `Transition` in
+`apps/web/src/components/Sensorr/Proposal.tsx` colors by the policy). Each pill takes a `1em` radius, no border, one hue
 stepped down in lightness. The new value carries the state, the old one takes a darker
 tint of the same hue. Both halves are set in regular weight:
 - `held` (the new value satisfies `require`): `primaryDarkest` over `accentDarkest`,
@@ -592,6 +594,9 @@ tint of the same hue. Both halves are set in regular weight:
 - The card header and the list rows draw the size the same way, lightest owned release under the proposed
   one, with a forced `state`: `held` when lighter, `broken` when heavier, `quiet` below the
   "Same size below" threshold.
+- A show's owned episodes over its aired ones take the same pill, `ProgressPill`
+  (`libs/ui/src/components/Show/ProgressPill/ProgressPill.tsx`): `held` once every aired episode is
+  owned, `quiet` otherwise.
 
 There is no separator: the overlap says "becomes", the hue says what the policy thinks,
 and the `title` still spells `x264 ~ x265` for the tooltip. The policy marks (`*`, `!`, the
