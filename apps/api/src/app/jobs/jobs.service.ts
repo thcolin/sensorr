@@ -98,11 +98,4 @@ export class JobsService {
     job.start()
     this.logger.log(`SetupCron "${name}" at "${cron}"`)
   }
-
-  editCron(command: string, type: string | undefined, cron: string) {
-    const name = [command, type].filter(Boolean).join(' ')
-    this.schedulerRegistry.deleteCronJob(name)
-    this.logger.log(`EditCron "${name}", cron="${cron}"`)
-    this.setupCron(command, type, cron)
-  }
 }
