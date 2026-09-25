@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useThemeUI } from '@theme-ui/core'
 import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
@@ -14,6 +15,7 @@ import ShowChild from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
 import { ReleaseSize } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
+import { Skeleton } from '../Details/components/Skeleton'
 import { ShowActions } from './components/Actions'
 import { useProposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
@@ -24,6 +26,7 @@ const Show = ({ ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
   const { id } = useParams() as any
   const { t } = useTranslation()
+  const { theme } = useThemeUI() as any
   const { metadata: persons } = usePersonsMetadataContext() as any
   const {
     loading: metadataLoading,
@@ -179,7 +182,10 @@ const Show = ({ ...props }) => {
     )
   }
 
-  const actionsReady = ready && !metadataLoading && (!inLibrary || !!episodes)
+  // Until the metadata tells whether the show is in the library, and its episodes load if it is, the seasons are
+  // unknown: out of the library, their drawers would fetch TMDB for nothing
+  const seasonsReady = !metadataLoading && (!inLibrary || !!episodes)
+  const actionsReady = ready && seasonsReady
 
   return (
     <Details
@@ -210,16 +216,20 @@ const Show = ({ ...props }) => {
           subtitle={episodesError.message}
         />
       ) : (
-        <Seasons
-          entity={show.data}
-          episodes={inLibrary ? (episodes || []) : []}
-          proposals={proposals.rows}
-          policy={proposals.policy}
-          answer={proposals.answer}
-          inLibrary={inLibrary && !!episodes}
-          ready={actionsReady}
-          followEpisodes={followEpisodes}
-        />
+        // The page's skeleton, in the palette Details starts from. Under it, a library row per season without an
+        // episode: the block's height, no drawer to open
+        <Skeleton palette={{ backgroundColor: theme.rawColors.grayLight }} ready={seasonsReady} placeholder={false}>
+          <Seasons
+            entity={show.data}
+            episodes={(seasonsReady && inLibrary) ? episodes : []}
+            proposals={proposals.rows}
+            policy={proposals.policy}
+            answer={proposals.answer}
+            inLibrary={!seasonsReady || inLibrary}
+            ready={actionsReady}
+            followEpisodes={followEpisodes}
+          />
+        </Skeleton>
       )}
     </Details>
   )
