@@ -68,6 +68,11 @@ export const plexShowOf = (payload, library) => {
 
 export const syncedFilesOf = (files) => files.length ? { files } : { files, release: null }
 
+export const withdrawnProposalsOf = (releases = [], episodes) => {
+  const owned = new Set(episodes.filter(({ files }) => files?.length).map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
+  return releases.filter(({ proposal, coverage }) => proposal && coverage?.length && coverage.every(({ season, episode }) => owned.has(`${season}:${episode}`)))
+}
+
 // Plex decides, except for a file `import shows` linked that Plex has not scanned yet.
 export const plexFilesOf = (known = [], files) => {
   const kept = files.length ? files : known.filter(({ from }) => from === 'import')

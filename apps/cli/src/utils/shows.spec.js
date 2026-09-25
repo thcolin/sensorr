@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -131,6 +131,30 @@ describe('syncedFilesOf', () => {
 
   it('drops the release of an episode Plex no longer has, so it is searched again', () => {
     expect(syncedFilesOf([])).toEqual({ files: [], release: null })
+  })
+})
+
+describe('withdrawnProposalsOf', () => {
+  const episodes = [
+    { season_number: 4, episode_number: 1, files: [{ id: 'a' }] },
+    { season_number: 4, episode_number: 2, files: [{ id: 'a' }] },
+    { season_number: 4, episode_number: 3, files: [] },
+  ]
+  const proposal = (id, coverage, fields = {}) => ({ id, proposal: true, coverage, ...fields })
+
+  it('withdraws a pending proposal whose covered episodes are all owned', () => {
+    const releases = [
+      proposal('owned', [{ season: 4, episode: 1 }, { season: 4, episode: 2 }]),
+      proposal('fills', [{ season: 4, episode: 2 }, { season: 4, episode: 3 }]),
+      proposal('unknown', [{ season: 4, episode: 4 }]),
+    ]
+
+    expect(withdrawnProposalsOf(releases, episodes).map(({ id }) => id)).toEqual(['owned'])
+  })
+
+  it('leaves an accepted release and a proposal without coverage', () => {
+    expect(withdrawnProposalsOf([proposal('accepted', [{ season: 4, episode: 1 }], { proposal: false }), proposal('empty', [])], episodes)).toEqual([])
+    expect(withdrawnProposalsOf(undefined, episodes)).toEqual([])
   })
 })
 
