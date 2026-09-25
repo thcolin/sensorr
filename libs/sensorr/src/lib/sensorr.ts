@@ -69,7 +69,7 @@ export class Sensorr {
   }
 
   getShowQuery(show, query = null, banned_releases = []) {
-    const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, ['FR', 'US', 'GB'])
+    const titles = titlesOf([show?.name, show?.original_name], show?.alternative_titles?.results, ['US', 'GB', this.region.slice(-2)])
     const terms = termsOf(titles)
     const latin = terms.filter(isLatin)
     const first = show?.first_air_date ? new Date(show.first_air_date).getFullYear() : null

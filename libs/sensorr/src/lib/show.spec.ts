@@ -100,7 +100,14 @@ describe('Sensorr.getShowQuery', () => {
     expect(sensorr.getShowQuery({ name: 'Pilot' }).years).toEqual([])
   })
 
-  it('searches the names and the FR, US and GB titles once each, and a term in another script only when it is the only one', () => {
+  it('keeps the US, GB and region titles, as a movie does', () => {
+    const show = { name: 'Dark', alternative_titles: { results: [{ iso_3166_1: 'DE', title: 'Dunkel', type: '' }, { iso_3166_1: 'FR', title: 'Sombre', type: '' }] } }
+
+    expect(new Sensorr({ region: 'de-DE' }).getShowQuery(show).titles).toEqual(['dark', 'dunkel'])
+    expect(sensorr.getShowQuery(show).titles).toEqual(['dark', 'sombre'])
+  })
+
+  it('searches the names and the region (here FR), US and GB titles once each, and a term in another script only when it is the only one', () => {
     const query = sensorr.getShowQuery(cats)
 
     expect(query.terms).toEqual(['samourai pizza cats', 'samurai pizza cats'])
