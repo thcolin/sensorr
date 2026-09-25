@@ -1,21 +1,18 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { utils as tmdb, fields } from '@sensorr/tmdb'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
-import { Icon } from '../../atoms/Icon/Icon'
-import { Link } from '../../atoms/Link/Link'
 import { Progress } from '../../atoms/Progress/Progress'
 import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Proposal } from '../Movie/Proposal/Proposal'
 import { Guests } from '../Movie/Guests/Guests'
-import { ShowState } from './State/State'
+import { EpisodeStatusOptions, ShowState } from './State/State'
 
 export interface ShowProps extends Omit<
   PosterProps,
-  'link' | 'state' | 'focus' | 'placeholder' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty'
+  'link' | 'state' | 'focus' | 'placeholder' | 'details' | 'overrides' | 'size' | 'relations' | 'onReady' | 'palette' | 'empty' | 'footer'
 > {
   entity: any
   display?: 'poster' | 'card'
@@ -51,6 +48,7 @@ const UIShow = ({
   const entity = useMemo(() => (!placeholder && data) || { poster_path: false, id: null }, [data, placeholder])
   const details = useMemo(() => transformShowDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/tv/${entity.id}` }))(entity), [entity, props.link])
+  const progress = !placeholder && entity?.progress
 
   const badges = useMemo(() => {
     if (entity?.id === null) {
@@ -70,8 +68,6 @@ const UIShow = ({
     }
   }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease])
 
-  const progress = !placeholder && entity?.progress
-
   if (display === 'card') {
     return (
       <Card
@@ -86,60 +82,60 @@ const UIShow = ({
   }
 
   return (
-    <div sx={UIShow.styles.element}>
-      <Poster
-        {...props}
-        details={details}
-        link={link}
-        interactive={device === 'mobile'}
-        ready={typeof entity?.id === 'number' && !placeholder && ready}
-        empty={Empty.tv}
-        badges={badges}
-        selected={selected}
-        selectedVisible={selectedVisible}
-        onSelectedChange={onSelectedChange}
-      />
-      {!!progress && (
-        <div sx={UIShow.styles.progress}>
-          <Progress
-            value={progress.owned}
-            max={progress.aired}
-            title={`${progress.owned} of ${progress.aired} aired episodes owned`}
-          />
-          {progress.aired > 0 && progress.owned >= progress.aired && (
-            <span sx={UIShow.styles.complete} title='Every aired episode owned'>✓</span>
-          )}
-        </div>
-      )}
-    </div>
+    <Poster
+      {...props}
+      details={details}
+      link={link}
+      interactive={device === 'mobile'}
+      ready={typeof entity?.id === 'number' && !placeholder && ready}
+      empty={Empty.tv}
+      badges={badges}
+      selected={selected}
+      selectedVisible={selectedVisible}
+      onSelectedChange={onSelectedChange}
+      footer={!!progress && <ShowProgress {...progress} />}
+    />
   )
 }
 
-UIShow.styles = {
+export const Show = memo(UIShow)
+
+// One line under every show poster: the owned count and its bar, or the upcoming state
+// of a show with no aired episode yet.
+const ShowProgress = ({ owned, aired }: { owned: number, aired: number }) => (
+  <div sx={ShowProgress.styles.element}>
+    {aired > 0 ? (
+      <>
+        <code title={`${owned} of ${aired} aired episodes owned`}>{`${owned}/${aired}`}</code>
+        <Progress value={owned} max={aired} title={`${owned} of ${aired} aired episodes owned`} />
+      </>
+    ) : (
+      <span>{emojize(EpisodeStatusOptions.upcoming.emoji, EpisodeStatusOptions.upcoming.label)}</span>
+    )}
+  </div>
+)
+
+ShowProgress.styles = {
   element: {
     display: 'flex',
-    flexDirection: 'column',
-  },
-  progress: {
-    display: 'flex',
     alignItems: 'center',
-    gap: 9,
-    height: '1em',
-    paddingRight: [4, 2],
-    paddingLeft: [8, 4],
-    marginTop: 10,
+    gap: 6,
+    color: 'grayDarkest',
+    whiteSpace: 'nowrap',
+    '>code': {
+      fontFamily: 'monospace',
+      fontSize: 7,
+      fontVariantNumeric: 'tabular-nums',
+    },
+    '>span': {
+      fontSize: 7,
+      fontWeight: 'semibold',
+    },
     '>progress': {
       flex: 1,
     },
   },
-  complete: {
-    fontSize: 6,
-    lineHeight: 'reset',
-    color: 'primary',
-  },
 }
-
-export const Show = memo(UIShow)
 
 const ENDED = ['Ended', 'Canceled']
 
@@ -161,8 +157,8 @@ export const transformShowDetails = (entity) => {
         <span sx={{ whiteSpace: 'nowrap' }}>{first}</span>
       ) : null,
       release_dates_range: first ? () => (
-        <span sx={{ whiteSpace: 'nowrap' }}>
-          {emojize('📆', ENDED.includes(entity.status) ? `${(!last || last === first) ? first : `${first} - ${last}`} · ${entity.status}` : `${first} - Airing`)}
+        <span title={entity.status} sx={{ whiteSpace: 'nowrap' }}>
+          {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : `${first} - Airing`)}
         </span>
       ) : null,
       runtime: !!entity.episode_run_time?.length ? () => (
@@ -187,21 +183,6 @@ export const transformShowDetails = (entity) => {
           <span sx={{ whiteSpace: 'nowrap' }}>{emojize('💬', language.name[0])}</span>
         )
       } : null,
-      vote_average: (typeof entity.vote_average === 'number' && !!entity.vote_count) ? () => (
-        <Link
-          title={`Discover more "${tmdb.judge(entity)}" shows${!!entity?.vote_count ? ` (${fields.vote_count.humanize(entity as any)} users rating)` : ''}`}
-          sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
-          to='/tv/discover'
-          state={{
-            controls: {
-              vote_average: [Math.floor(entity.vote_average), Math.ceil(entity.vote_average)],
-            },
-          }}
-        >
-          <Icon value='tmdb' height='1em' width='1.75em' sx={{ marginRight: 8 }} />
-          {Math.round(entity.vote_average * 10)}%
-        </Link>
-      ) : null,
       vote_count: !!entity.vote_count ? () => (
         <span title='Vote count' sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
       ) : null,

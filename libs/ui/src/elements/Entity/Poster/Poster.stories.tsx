@@ -187,3 +187,12 @@ export const Selected = (args: any) => (
     onSelectedChange={() => {}}
   />
 )
+
+export const WithFooter = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.wished }}
+    footer={<small>Footer</small>}
+  />
+)

@@ -19,10 +19,10 @@ UIProgress.styles = {
     border: 'none',
     borderRadius: '2em',
     overflow: 'hidden',
-    backgroundColor: 'grayDark',
+    backgroundColor: 'grayDarker',
     color: 'primary',
     '::-webkit-progress-bar': {
-      backgroundColor: 'grayDark',
+      backgroundColor: 'grayDarker',
     },
     '::-webkit-progress-value': {
       backgroundColor: 'primary',

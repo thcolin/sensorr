@@ -30,6 +30,7 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
   onReady?: () => void
   loadExternals?: () => void
   opacity?: number
+  footer?: React.ReactNode
 }
 
 const UIPoster = ({
@@ -46,6 +47,7 @@ const UIPoster = ({
   onSelectedChange,
   loadExternals,
   opacity = 1,
+  footer = null,
   ...props
 }: PosterProps) => {
   const ref = useRef()
@@ -295,6 +297,9 @@ const UIPoster = ({
               </small>
             )}
           </div>
+          {!!footer && (
+            <div sx={UIPoster.styles.footer}>{footer}</div>
+          )}
         </div>
       )}
     </div>
@@ -405,6 +410,9 @@ UIPoster.styles = {
     '>a': {
       lineHeight: 'normal',
     },
+  },
+  footer: {
+    marginTop: 10,
   },
   subtitle: {
     display: 'flex',
