@@ -34,6 +34,7 @@ const UIDetails = ({
   removeRelease,
   tabs,
   actions = null,
+  summary = null,
   children = null,
   ...props
 }) => {
@@ -146,14 +147,14 @@ const UIDetails = ({
                       <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? true}>
                         <summary>
                           <span />
-                          <ShowSubtitle entity={entity} title={title} meaningful={meaningful} />
+                          <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
                         </summary>
                         <div>
                           {actions}
                         </div>
                       </details>
                     ) : (
-                      <ShowSubtitle entity={entity} title={title} meaningful={meaningful} />
+                      <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
                     )}
                   </Skeleton>
                   <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
@@ -266,6 +267,23 @@ UIDetails.styles = {
       fontWeight: 'strong',
     },
   },
+  // A show's progress beside its year, a value per item
+  summary: {
+    display: 'inline-flex',
+    flexWrap: 'wrap',
+    justifyContent: ['center', 'flex-start'],
+    columnGap: 6,
+    marginLeft: 6,
+    fontFamily: 'monospace',
+    fontSize: 5,
+    color: 'grayDarkest',
+    fontVariantNumeric: 'tabular-nums',
+    whiteSpace: 'nowrap',
+    '>span:not(:first-of-type)::before': {
+      content: '"·"',
+      marginRight: 6,
+    },
+  },
   metadata: {
     '>summary': {
       position: 'relative',
@@ -336,12 +354,15 @@ UIDetails.styles = {
 
 const Details = memo(UIDetails)
 
-const ShowSubtitle = ({ entity, title, meaningful }) => (
-  <h4 sx={UIDetails.styles.subtitle}>
-    {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
-    {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
-    {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
-  </h4>
+const ShowSubtitle = ({ entity, title, meaningful, summary = null }) => (
+  <>
+    <h4 sx={UIDetails.styles.subtitle}>
+      {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
+      {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
+      {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+    </h4>
+    {!!summary?.length && <code sx={UIDetails.styles.summary}>{summary}</code>}
+  </>
 )
 
 const UIDetailsWrapper = ({ ...props }) => (

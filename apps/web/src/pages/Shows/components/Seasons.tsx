@@ -1,12 +1,12 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import oleoo from 'oleoo'
 import { EpisodeStatus, EpisodeStatusOptions, Icon, Progress } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Toggle } from './Toggle'
+import { fileMetaOf } from './fills'
 
 const THRESHOLD = 60
 
@@ -15,9 +15,9 @@ const pad = (number) => String(number).padStart(2, '0')
 const sizeOf = (episodes) => episodes.reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0)
 
 // The tracks a season head and the header share: count, bar, completion mark, follow column
-const SUMMARY = ['4em minmax(0, 1fr) 1em 2.5em', '5.5em 10em 1em 2.5em']
+const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
 
-const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ...props }) => {
+const UISeasons = ({ entity, episodes, inLibrary, ready, followed, follow, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -31,7 +31,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
       return {
         number,
         name: summary.name || (number === 0 ? 'Specials' : `Season ${number}`),
-        year: (summary.air_date || list[0]?.air_date) ? new Date(summary.air_date || list[0]?.air_date).getFullYear() : null,
+        year: number !== 0 && (summary.air_date || list[0]?.air_date) ? new Date(summary.air_date || list[0]?.air_date).getFullYear() : null,
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
         progress: progressOf(list),
@@ -75,75 +75,115 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
     return null
   }
 
-  return (
-    <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
-      <div>
-        {inLibrary ? (
+  const show = (
+    <span sx={UISeasons.styles.follow}>
+      <label htmlFor={`follow-show-${entity.id}`}>Follow</label>
+      <Toggle
+        id={`follow-show-${entity.id}`}
+        checked={!!followed}
+        disabled={!ready}
+        title={`Follow ${entity.name}`}
+        onChange={follow}
+      />
+    </span>
+  )
+
+  // Out of the library, a season has nothing to open or follow: the show is told in one line
+  if (!inLibrary) {
+    const years = regular.map(({ year }) => year).filter(Boolean)
+
+    return (
+      <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
+        <div>
           <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
             <div sx={UISeasons.styles.label}>
               <h2 id={`seasons-${entity.id}`}>All seasons</h2>
               <small>
-                {totals.count} episodes{!!totals.size && ` · ${filesize.stringify(totals.size)}`}
+                {[
+                  `${regular.length} season${regular.length > 1 ? 's' : ''}`,
+                  `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
+                  !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
+                ].filter(Boolean).join(' · ')}
               </small>
             </div>
             <div sx={UISeasons.styles.summary}>
-              <Count progress={totals.progress} />
-              <Bar progress={totals.progress} />
-              <Complete progress={totals.progress} />
-              <span aria-hidden={true}>Follow</span>
+              <span />
+              <span />
+              <span />
+              {show}
             </div>
           </div>
-        ) : (
-          <h2 id={`seasons-${entity.id}`} sx={UISeasons.styles.hidden}>Seasons</h2>
-        )}
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
+      <div>
+        <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
+          <div sx={UISeasons.styles.label}>
+            <h2 id={`seasons-${entity.id}`}>All seasons</h2>
+            <small>
+              {totals.count} episodes{!!totals.size && ` · ${filesize.stringify(totals.size)}`}
+            </small>
+          </div>
+          <div sx={UISeasons.styles.summary}>
+            <Count progress={totals.progress} />
+            <Bar progress={totals.progress} />
+            <Complete progress={totals.progress} />
+            {show}
+          </div>
+        </div>
         {seasons.map(season => {
-          const opened = inLibrary && (open[season.number] ?? season.number === initial)
+          const opened = open[season.number] ?? season.number === initial
           const id = `season-${entity.id}-${season.number}`
-          const Head = inLibrary ? 'button' : 'div'
+          const specials = season.number === 0
 
           return (
             <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season}>
               <div sx={UISeasons.styles.head}>
-                <Head
-                  {...(inLibrary ? {
-                    type: 'button',
-                    'aria-expanded': opened,
-                    'aria-controls': id,
-                    onClick: () => setOpen(open => ({ ...open, [season.number]: !opened })),
-                  } : {})}
+                <button
+                  type='button'
+                  aria-expanded={opened}
+                  aria-controls={id}
+                  onClick={() => setOpen(open => ({ ...open, [season.number]: !opened }))}
                   sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
+                  data-specials={specials}
                 >
-                  {inLibrary && (
-                    <Icon
-                      value='chevron'
-                      direction={false}
-                      width='0.75em'
-                      height='0.75em'
-                      sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-                    />
-                  )}
+                  <Icon
+                    value='chevron'
+                    direction={false}
+                    width='0.75em'
+                    height='0.75em'
+                    sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                  />
                   <strong>{season.name}</strong>
                   <small>
                     {season.count} episodes{season.year ? ` · ${season.year}` : ''}
+                    {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
                     {!!season.proposed && <span title={`${season.proposed} proposed`}> · {EpisodeStatusOptions.proposed.emoji} {season.proposed}</span>}
                     {!!season.wanted && <span title={`${season.wanted} wanted`}> · {EpisodeStatusOptions.wanted.emoji} {season.wanted}</span>}
                   </small>
-                </Head>
-                {inLibrary && (
-                  <div sx={UISeasons.styles.summary}>
-                    <Count progress={season.progress} />
-                    <Bar progress={season.progress} />
-                    <Complete progress={season.progress} />
-                    <Toggle
-                      id={`follow-${id}`}
-                      checked={season.monitored}
-                      disabled={!ready || !season.episodes.length}
-                      title={`Follow every episode of ${season.name}`}
-                      aria-label={`Follow every episode of ${season.name}`}
-                      onChange={value => setEpisodesMetadata(entity.id, season.episodes.map(({ id }) => id), 'monitored', value)}
-                    />
-                  </div>
-                )}
+                </button>
+                <div sx={UISeasons.styles.summary}>
+                  {/* Specials are not followed by default: owned over aired would read as a gap */}
+                  {specials ? <><span /><span /><span /></> : (
+                    <>
+                      <Count progress={season.progress} />
+                      <Bar progress={season.progress} />
+                      <Complete progress={season.progress} />
+                    </>
+                  )}
+                  <Toggle
+                    id={`follow-${id}`}
+                    checked={season.monitored}
+                    disabled={!ready || !season.episodes.length}
+                    title={`Follow every episode of ${season.name}`}
+                    aria-label={`Follow every episode of ${season.name}`}
+                    onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
+                  />
+                </div>
               </div>
               {opened && (
                 <Episodes
@@ -151,7 +191,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
                   show={entity.id}
                   episodes={season.episodes}
                   ready={ready}
-                  setEpisodesMetadata={setEpisodesMetadata}
+                  followEpisodes={followEpisodes}
                 />
               )}
             </div>
@@ -186,14 +226,6 @@ UISeasons.styles = {
       width: '100%',
       maxWidth: '95em',
     },
-  },
-  hidden: {
-    position: 'absolute',
-    width: '1px',
-    height: '1px',
-    overflow: 'hidden',
-    clip: 'rect(0 0 0 0)',
-    whiteSpace: 'nowrap',
   },
   season: {
     borderBottom: '1px solid',
@@ -234,6 +266,10 @@ UISeasons.styles = {
       color: 'grayDarkest',
       whiteSpace: 'nowrap',
       fontVariantNumeric: 'tabular-nums',
+    },
+    '&[data-specials="true"] >strong': {
+      fontWeight: 'semibold',
+      color: 'grayDarkest',
     },
   },
   toggle: {
@@ -282,18 +318,25 @@ UISeasons.styles = {
     '>:last-child': {
       justifySelf: 'end',
     },
-    '>span[aria-hidden]': {
+  },
+  // The show's own follow heads the seasons' column, its label left of the box
+  follow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    '>label': {
       fontSize: 7,
       fontWeight: 'semibold',
-      color: 'gray-600',
+      color: 'grayDarkest',
       whiteSpace: 'nowrap',
+      cursor: 'pointer',
     },
   },
 }
 
 export const Seasons = memo(UISeasons)
 
-const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
+const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
   const { device } = useDeviceContext()
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
@@ -352,7 +395,7 @@ const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
                   disabled={!ready}
                   title={`Follow episode ${pad(episode.episode_number)}`}
                   aria-label={`Follow episode ${pad(episode.episode_number)}`}
-                  onChange={value => setEpisodesMetadata(show, [episode.id], 'monitored', value)}
+                  onChange={value => followEpisodes([episode.id], value)}
                 />
               </div>
               {opened && (
@@ -369,7 +412,7 @@ const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
 }
 
 const UIFile = ({ file }) => {
-  const meta = useMemo(() => file?.title ? oleoo.parse(file.title, { strict: false, flagged: true }) : null, [file?.title])
+  const meta = useMemo(() => file ? fileMetaOf(file) : null, [file?.original, file?.title])
 
   if (!file) {
     return <small data-file={true} />

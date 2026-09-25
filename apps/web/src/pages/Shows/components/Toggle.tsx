@@ -14,7 +14,7 @@ const UIToggle = ({ id, checked, onChange, disabled = false, children = null, ..
     <span
       sx={{
         ...UIToggle.styles.element,
-        color: checked ? 'accentDark' : 'gray-550',
+        color: checked ? 'accentDark' : 'grayDarkest',
         opacity: disabled ? 0.5 : 1,
       }}
       aria-busy={pending}
