@@ -162,9 +162,15 @@ export const Provider = ({ ...props }) => {
         await api.fetch(uri, params, init)
         resolve(true)
       } catch (err) {
+        // A key the show did not have before the change is dropped, not kept with the value that failed
+        const revert = (current, i) => Object.keys(changes[i]).filter(k => k !== 'id').reduce((acc, k) => {
+          const { [k]: failed, ...rest } = acc
+          return k in initial[i] ? { ...rest, [k]: initial[i][k] } : rest
+        }, current || {})
+
         setMetadata(metadata => ({
           ...metadata,
-          ...Object.keys(changes).reduce((acc, i) => ({ ...acc, [i]: { ...(metadata[i] || {}), ...initial[i] } }), {}),
+          ...Object.keys(changes).reduce((acc, i) => ({ ...acc, [i]: revert(metadata[i], i) }), {}),
         }))
         setEpisodes(episodes => ({ ...episodes, ...episodesInitial }))
 
