@@ -138,7 +138,18 @@ export const Provider = ({ ...props }) => {
     const covered = key !== 'proposal' ? [] : ids.flatMap(i => changes[i].releases
       .filter(release => typeof release.choice === 'boolean' && !(initial[i].releases || []).find(r => r.id === release.id && typeof r.choice === 'boolean'))
       .map(release => ({ show: Number(i), release })))
-    const episodesInitial = covered.reduce((acc, { show }) => ({ ...acc, [show]: episodesRef.current[show] }), {})
+    // The release an episode moves to once the answer is given, `undefined` when it does not move
+    const moved = (release, episode) => (
+      release.choice && (release.coverage || []).some(({ season, episode: number }) => season === episode.season_number && number === episode.episode_number) ? release.id :
+      !release.choice && episode.release === release.id ? null :
+      undefined
+    )
+    const previous = covered.reduce((acc, { show, release }) => ({
+      ...acc,
+      [show]: new Map([...(acc[show] || []), ...(episodesRef.current[show] || [])
+        .filter(episode => moved(release, episode) !== undefined)
+        .map(episode => [episode.id, episode.release])]),
+    }), {})
 
     const promise = new Promise(async (resolve, reject) => {
       setMetadata(metadata => ({
@@ -149,11 +160,7 @@ export const Provider = ({ ...props }) => {
       if (covered.length) {
         setEpisodes(episodes => covered.reduce((acc, { show, release }) => !acc[show] ? acc : {
           ...acc,
-          [show]: acc[show].map(episode => (
-            release.choice && (release.coverage || []).some(({ season, episode: number }) => season === episode.season_number && number === episode.episode_number) ? { ...episode, release: release.id } :
-            !release.choice && episode.release === release.id ? { ...episode, release: null } :
-            episode
-          )),
+          [show]: acc[show].map(episode => moved(release, episode) === undefined ? episode : { ...episode, release: moved(release, episode) }),
         }, episodes))
       }
 
@@ -172,7 +179,10 @@ export const Provider = ({ ...props }) => {
           ...metadata,
           ...Object.keys(changes).reduce((acc, i) => ({ ...acc, [i]: revert(metadata[i], i) }), {}),
         }))
-        setEpisodes(episodes => ({ ...episodes, ...episodesInitial }))
+        setEpisodes(episodes => Object.keys(previous).reduce((acc, show) => !acc[show] ? acc : {
+          ...acc,
+          [show]: acc[show].map(episode => previous[show].has(episode.id) ? { ...episode, release: previous[show].get(episode.id) } : episode),
+        }, episodes))
 
         console.warn(err)
         reject(new Error())
@@ -192,7 +202,7 @@ export const Provider = ({ ...props }) => {
   }, [])
 
   const setEpisodesMetadata = useCallback(async (show: number, ids: number[], key: 'monitored', value: any) => {
-    const initial = episodesRef.current[show]
+    const initial = new Map((episodesRef.current[show] || []).map(episode => [episode.id, episode]))
     const changes = ids.reduce((acc, i) => ({ ...acc, [i]: { id: i, [key]: value } }), {})
 
     const promise = new Promise(async (resolve, reject) => {
@@ -206,7 +216,11 @@ export const Provider = ({ ...props }) => {
         await api.fetch(uri, params, init)
         resolve(true)
       } catch (err) {
-        setEpisodes(episodes => ({ ...episodes, [show]: initial }))
+        // Only what this write changed goes back, a write made meanwhile on another episode stays
+        setEpisodes(episodes => ({
+          ...episodes,
+          [show]: (episodes[show] || []).map(episode => changes[episode.id] ? { ...episode, [key]: initial.get(episode.id)?.[key] } : episode),
+        }))
         console.warn(err)
         reject(new Error())
       }
