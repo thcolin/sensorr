@@ -311,6 +311,13 @@ describe('importLinksOf', () => {
     ])
   })
 
+  it('links every episode of a swap, the ones with files included', () => {
+    expect(importLinksOf({ ...release, swap: true }, show, episodes, '/tvshows').map(({ source, episodes }) => [source, episodes])).toEqual([
+      ['The.Office.US.S03/The.Office.US.S03E23.mkv', [23]],
+      ['The.Office.US.S03/The.Office.US.S03E24E25.mkv', [24, 25]],
+    ])
+  })
+
   it('links nothing for a release covering episodes that all have files', () => {
     expect(importLinksOf(release, show, episodes.map((episode) => ({ ...episode, files: [{ id: '1' }] })), '/tvshows')).toEqual([])
   })
@@ -355,6 +362,13 @@ describe('importedEpisodesOf', () => {
     expect(owned.map(({ id }) => id)).toEqual([24, 25])
     expect(owned[0].files).toEqual([{ id: `import:${link.source}`, size: 2, title: 'The.Office.Us.S03E24-E25.1080p.WEB-DL.x264-GRP', original: 'The.Office.US.S03E24E25.1080p.WEB.x264-GRP', from: 'import' }])
     expect(owned[1].files).toEqual(owned[0].files)
+  })
+
+  it('adds the linked file next to the ones an episode of a swap already has', () => {
+    const plex = { id: 'plex://episode/3-24#1', size: 1, from: 'sync' }
+    const { owned } = importedEpisodesOf({ ...release, swap: true }, episodes.map((episode) => episode.id === 24 ? { ...episode, files: [plex] } : episode), [link])
+
+    expect(owned[0].files.map(({ id }) => id)).toEqual([plex.id, `import:${link.source}`])
   })
 
   it('lets go a covered episode of the release left without a file, and nothing else', () => {

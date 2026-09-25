@@ -154,7 +154,8 @@ export const importTargetOf = (library, show, season, file) => path.join(library
 
 const SUBTITLE = /\.(srt|ass|ssa|sub|idx|vtt)$/i
 
-// A subtitle holds no episode: it follows a video it numbers the same, into its Season folder
+// A subtitle holds no episode: it follows a video it numbers the same, into its Season folder.
+// A swap links the episodes you own too, it replaces them.
 export const importLinksOf = (release, show, episodes, library) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
@@ -166,7 +167,7 @@ export const importLinksOf = (release, show, episodes, library) => {
     }
 
     const { season, episodes: numbers } = oleoo.parse(path.basename(file))
-    const matched = typeof season === 'number' ? numbers.filter((number) => covered.has(keyOf(season, number)) && missing.has(keyOf(season, number))) : []
+    const matched = typeof season === 'number' ? numbers.filter((number) => covered.has(keyOf(season, number)) && (release.swap || missing.has(keyOf(season, number)))) : []
 
     return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched, size }] : []
   })
@@ -194,7 +195,10 @@ export const importedEpisodesOf = (release, episodes, links) => {
   return {
     owned: episodes
       .filter(({ season_number, episode_number }) => files.has(keyOf(season_number, episode_number)))
-      .map((episode) => ({ ...episode, files: files.get(keyOf(episode.season_number, episode.episode_number)) })),
+      .map((episode) => {
+        const linked = files.get(keyOf(episode.season_number, episode.episode_number))
+        return { ...episode, files: [...(episode.files || []).filter(({ id }) => !linked.some((file) => file.id === id)), ...linked] }
+      }),
     unlinked: episodes.filter(({ season_number, episode_number, files: known, release: id }) => (
       id === release.id && covered.has(keyOf(season_number, episode_number)) && !known?.length && !files.has(keyOf(season_number, episode_number))
     )),
