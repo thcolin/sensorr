@@ -24,6 +24,7 @@ const COMMANDS = {
   'keep-in-touch': { emoji: '🍺', label: 'request' },
   'record shows': { emoji: '📹', label: 'record shows' },
   'airing shows': { emoji: '📡', label: 'airing shows' },
+  'sync shows': { emoji: '💊', label: 'missing episodes' },
 }
 
 const UINotifications = ({ ...props }) => {
@@ -522,6 +523,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       heading={{
         'record': meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
         'airing': meta?.release?.proposal ? `Airing episode proposal` : `Airing episode recorded`,
+        'sync': `Episodes missing from your Plex Server`,
         'keep-in-touch': `Show request`,
       }[meta?.command]}
     >
@@ -543,6 +545,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
           {{
             'record': meta?.release?.proposal ? `Release proposal` : `Release`,
             'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'sync': `${meta?.missing} episodes no longer on Plex`,
             'keep-in-touch': `Requested by`,
           }[meta?.command]}
         </span>

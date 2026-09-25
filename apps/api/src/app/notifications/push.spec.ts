@@ -54,6 +54,15 @@ describe('pushOf', () => {
     })
   })
 
+  it('counts the episodes of a show no longer on Plex, with nothing to answer', () => {
+    expect(pushOf({ command: 'sync', type: 'show', group: 'missings', show: { id: 2316, name: 'The Office', poster_path: '/office.jpg' }, missing: 20 })).toEqual({
+      title: 'The Office',
+      body: '💊 20 episodes missing from your Plex Server',
+      image: 'https://image.tmdb.org/t/p/w185/office.jpg',
+      actions: [],
+    })
+  })
+
   it('names a show request by the show alone', () => {
     expect(pushOf({ command: 'keep-in-touch', type: 'show', show: { id: 1668, name: 'Friends', poster_path: '/friends.jpg' }, requested_by: ['a@example.com'], processed: true })).toEqual({
       title: 'Friends',

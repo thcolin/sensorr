@@ -56,6 +56,7 @@ const showPushOf = (meta) => ({
   body: {
     'record': `📹 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
     'airing': `📡 ${meta?.release?.znab}, ${filesize.stringify(meta?.release?.size || 0)}, ${meta?.release?.peers} peers\n${meta?.release?.title}`,
+    'sync': `💊 ${meta?.missing} episodes missing from your Plex Server`,
     'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
   }[meta?.command],
   image: `https://image.tmdb.org/t/p/w185${meta?.show?.poster_path}`,
@@ -68,6 +69,7 @@ const showPushOf = (meta) => ({
       { action: 'accept', title: 'Accept' },
       { action: 'refuse', title: 'Refuse' },
     ] : [],
+    'sync': [],
     'keep-in-touch': [
       { action: 'wish-it', title: '"Wish" it' },
       { action: 'ignore', title: 'Ignore' },

@@ -1,23 +1,52 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { from, merge, Observable } from 'rxjs'
-import { catchError, filter, map, mergeMap, tap } from 'rxjs/operators'
+import { defer, from, fromEventPattern, merge, Observable } from 'rxjs'
+import { catchError, finalize, map, mergeMap, share, tap } from 'rxjs/operators'
 import webpush from 'web-push'
 import { Log as LogDocument } from '../logs/log.schema'
-import { LogsService } from '../logs/logs.service'
 import { SubscriptionDTO } from './subscription.dto'
 import { Subscription as SubscriptionDocument } from './subscription.schema'
 import { pushOf } from './push'
+
+// The logs that notify, read as they are for the history, unseen for the badge count, and under `fullDocument.` for the change stream
+const NOTIFYING = [
+  { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+  { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+  { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+  { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
+  { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
+  { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
+  { "meta.command": "record", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+  { "meta.command": "airing", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
+  { "meta.command": "sync", "meta.type": "show", "meta.group": "missings", "meta.missing": { $gt: 0 }, "meta.show.id": { $exists: true } },
+  { "meta.command": "keep-in-touch", "meta.type": "show", "meta.processed": true, "meta.show.id": { $exists: true } },
+]
+
+const prefixWith = (prefix: string) => (filter: { [key: string]: any }) => Object.fromEntries(Object.entries(filter).map(([key, value]) => [`${prefix}${key}`, value]))
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name)
 
+  private readonly changes$: Observable<any> = defer(() => {
+    this.logger.log('Changes, opened')
+    const stream = this.logModel.watch([{ $match: { operationType: 'insert', $or: NOTIFYING.map(prefixWith('fullDocument.')) } }])
+
+    return fromEventPattern(
+      (handler) => stream.on('change', handler),
+      (handler) => stream.removeListener('change', handler),
+    ).pipe(
+      finalize(() => {
+        this.logger.log('Changes, closed')
+        stream.close()
+      }),
+    )
+  }).pipe(share())
+
   constructor(
     @InjectModel(LogDocument.name) private readonly logModel: Model<LogDocument>,
     @InjectModel(SubscriptionDocument.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
-    private logsService: LogsService,
   ) {}
 
   listenNotifications(history = true): Observable<MessageEvent> {
@@ -25,34 +54,11 @@ export class NotificationsService {
 
     return merge(...[
       ...(history ? [
-        from(this.logModel.find({
-          $or: [
-            { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true } },
-            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true } },
-            { "meta.command": "record", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
-            { "meta.command": "airing", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true } },
-            { "meta.command": "keep-in-touch", "meta.type": "show", "meta.processed": true, "meta.show.id": { $exists: true } },
-          ]
-        }).sort({ timestamp: -1 }).lean().exec()).pipe(
+        from(this.logModel.find({ $or: NOTIFYING }).sort({ timestamp: -1 }).lean().exec()).pipe(
           map(data => ({ data } as MessageEvent)),
         ),
       ] : []),
-      this.logsService.changes$.pipe(
-        filter((change: any) => change?.ns?.coll === 'log' && change.operationType === 'insert' && (
-          (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'refine' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'shrink' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'report' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'sync' && change.fullDocument?.meta?.group === 'missings' && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.movie?.id) ||
-          (change.fullDocument?.meta?.command === 'record' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
-          (change.fullDocument?.meta?.command === 'airing' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.release?.valid && change.fullDocument?.meta?.show?.id) ||
-          (change.fullDocument?.meta?.command === 'keep-in-touch' && change.fullDocument?.meta?.type === 'show' && change.fullDocument?.meta?.processed && change.fullDocument?.meta?.show?.id)
-        )),
+      this.changes$.pipe(
         map(({ fullDocument: data }) => ({ data } as MessageEvent)),
         tap(() => this.logger.log(`ListenNotifications, message=""`)),
       )
@@ -86,17 +92,7 @@ export class NotificationsService {
       .pipe(
         map(({ data: { meta } }) => pushOf(meta)),
         mergeMap(notification => from(this.logModel.find({
-          $or: [
-            { "meta.command": "record", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "refine", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "shrink", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "report", "meta.release.valid": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "sync", "meta.group": "missings", "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "keep-in-touch", "meta.processed": true, "meta.movie.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "record", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "airing", "meta.type": "show", "meta.release.valid": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
-            { "meta.command": "keep-in-touch", "meta.type": "show", "meta.processed": true, "meta.show.id": { $exists: true }, "meta.seen": { $exists: false } },
-          ]
+          $or: NOTIFYING.map(filter => ({ ...filter, "meta.seen": { $exists: false } })),
         }).lean().exec()).pipe(
           map(unread => ({ notification, unread: unread.length })),
         )),
