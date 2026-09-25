@@ -127,19 +127,21 @@ export const pickReleases = (unitsWithResults: { unit: ShowUnit, results: any[] 
     }
 
     const release = (results || []).find(({ valid }) => valid)
-    const coverage = release ? coverageOf(release.meta, null, episodes).filter(covered => wanted.has(keyOf(covered))) : []
+    const held = release ? coverageOf(release.meta, null, episodes) : []
+    const fills = held.filter(covered => wanted.has(keyOf(covered)))
 
-    if (!coverage.length) {
+    if (!fills.length) {
       continue
     }
 
-    coverage.forEach(covered => wanted.delete(keyOf(covered)))
+    fills.forEach(covered => wanted.delete(keyOf(covered)))
 
     if (unit.type === 'episode') {
       found.add(unit.season)
     }
 
-    picked.push({ ...release, coverage })
+    // The last resort pack replaces the episodes of its season already owned: a swap covers all it holds
+    picked.push(unit.fallback ? { ...release, coverage: held, swap: true } : { ...release, coverage: fills })
   }
 
   return picked
@@ -151,6 +153,18 @@ export const isUnitCovered = (unit: ShowUnit, picks: { coverage: Coverage[] }[])
   return unit.fallback
     ? covered.some(({ season }) => season === unit.season)
     : unit.episodes.every(({ season, episode }) => covered.some(c => c.season === season && c.episode === episode))
+}
+
+export const swapOf = (coverage: Coverage[], episodes: ShowEpisode[]) => {
+  const covered = new Set(coverage.map(({ season, episode }) => `${season}:${episode}`))
+  const owned = episodes.filter(({ season_number, episode_number, files }) => covered.has(`${season_number}:${episode_number}`) && files?.length)
+  const files = new Map(owned.flatMap(({ files }) => files).map(file => [file.id, file]))
+
+  return {
+    fills: coverage.length - owned.length,
+    replaces: owned.length,
+    size: [...files.values()].reduce((sum, file) => sum + (file.size || 0), 0),
+  }
 }
 
 export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = coverage.length === 1 ? 'episode' : 'season') => {

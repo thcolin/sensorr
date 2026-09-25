@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchShowUnits, searchUnits, ShowUnit } from './show'
+import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchShowUnits, searchUnits, ShowUnit, swapOf } from './show'
 import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
@@ -360,9 +360,19 @@ describe('pickReleases', () => {
       ['Friends.S10.MULTi.1080p.BluRay.x264-GRP', 18],
       ['Friends.S07E01E02.MULTi.1080p.BluRay.x264-GRP', 2],
       ['Friends.S07E03.MULTi.1080p.BluRay.x264-GRP', 1],
-      ['Friends.S05.MULTi.1080p.BluRay.x264-GRP', 23],
+      ['Friends.S05.MULTi.1080p.BluRay.x264-GRP', 24],
     ])
-    expect(picks.flatMap(({ coverage }) => coverage).some(({ season, episode }) => season === 5 && episode === 3)).toBe(false)
+    expect(picks.filter(({ swap }) => swap).map(({ original }) => original)).toEqual(['Friends.S05.MULTi.1080p.BluRay.x264-GRP'])
+  })
+
+  it('makes the last resort pack a swap covering every episode of its season, owned ones included', () => {
+    const episodes = own(own(friendsEpisodes(), 5, 3), 5, 4)
+    const units = searchUnits(friends, episodes, now).filter(({ season }) => season === 5)
+    const [swap] = pickReleases(search(units, { 'season:5:true': ['Friends.S05.MULTi.1080p.BluRay.x264-GRP'] }), episodes)
+
+    expect(swap.swap).toBe(true)
+    expect(swap.coverage).toHaveLength(24)
+    expect(swap.coverage).toEqual(expect.arrayContaining([{ season: 5, episode: 3 }, { season: 5, episode: 4 }]))
   })
 
   it('skips the last resort pack of a season one of whose episodes was found', () => {
@@ -492,6 +502,21 @@ describe('isUnitCovered', () => {
 
     expect(units.filter(unit => !isUnitCovered(unit, picks)).map(({ episode }) => episode).slice(0, 2)).toEqual([4, 5])
     expect(isUnitCovered(units[units.length - 1], picks)).toBe(true)
+  })
+})
+
+describe('swapOf', () => {
+  it('counts what a swap fills and what it replaces, a file holding two episodes weighed once', () => {
+    const double = { id: 'b', size: 700 }
+    const episodes = [
+      { season_number: 4, episode_number: 1, files: [{ id: 'a', size: 350 }] },
+      { season_number: 4, episode_number: 2, files: [double] },
+      { season_number: 4, episode_number: 3, files: [double] },
+      { season_number: 4, episode_number: 4, files: [] },
+      { season_number: 5, episode_number: 1, files: [{ id: 'c', size: 900 }] },
+    ]
+
+    expect(swapOf([1, 2, 3, 4].map(episode => ({ season: 4, episode })), episodes)).toEqual({ fills: 1, replaces: 3, size: 1050 })
   })
 })
 

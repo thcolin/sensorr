@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Policy, matchPolicy, searchUnits, searchShowUnits, levelOf, coverageLabel } from '@sensorr/sensorr'
+import { Policy, matchPolicy, searchUnits, searchShowUnits, levelOf, coverageLabel, swapOf } from '@sensorr/sensorr'
 import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
@@ -320,16 +320,16 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
           return
         }
 
-        const proposal = proposalOnlyOf(show, proposalOnly)
-
         for (const release of picks) {
+          // A swap replaces files you own, it waits for your answer whatever the show says
+          const proposal = !!release.swap || proposalOnlyOf(show, proposalOnly)
           const level = levelOf(release.meta, release.category)
           const label = coverageLabel(release.coverage, level)
           const raw = showReleaseOf(release, { from: state.metadata.command, job: state.metadata.job, proposal, level }, Date.now())
 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))
           const ids = episodes
-            .filter(({ season_number, episode_number }) => release.coverage.some(({ season, episode }) => season === season_number && episode === episode_number))
+            .filter(({ season_number, episode_number, files }) => !files?.length && release.coverage.some(({ season, episode }) => season === season_number && episode === episode_number))
             .map(({ id }) => id)
           const moveRelease = async (from, to) => {
             const { uri, params, init } = api.query.episodes.patchEpisodesRelease({ body: { ids, from, to } })
@@ -362,10 +362,11 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
           }
 
           picked.push({ ...raw, label })
-          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposal]} for ${label} (${release.znab})`, metadata: { ...metadata, important: true, show: lighten.show(show), release: { ...release, proposal, level } } })
+          state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposal]} for ${label} (${release.znab})`, metadata: { ...metadata, important: true, show: lighten.show(show), release: { ...release, proposal, level }, ...(release.swap ? { swap: swapOf(release.coverage, episodes) } : {}) } })
         }
 
         setState((state) => ({ ...state, shows: { ...state.shows, [show.id]: { ...show, query, units: searched.size, picks: picked } } }))
+        const proposal = picked.every(({ proposal }) => proposal)
         state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${picked.length} releases ${{ false: 'recorded', true: 'proposed' }[proposal]} for "${show.name}"`, metadata: { ...metadata, important: true, done: true } })
         await new Promise(resolve => setTimeout(resolve, 600))
         setStatus('done')

@@ -177,6 +177,7 @@ export class Show extends Document {
         ],
       },
       imported_at: Number,
+      swap: Boolean,
     }
   ]))
   releases: Record<any, any>

@@ -240,6 +240,11 @@ describe('showReleaseOf', () => {
     expect(isReleaseOverdue(raw, now + OVERDUE_AFTER + 1)).toBe(true)
   })
 
+  it('keeps a swap marked as one', () => {
+    expect(showReleaseOf({ ...release, swap: true }, { from: 'record', job: 'j', proposal: true, level: 'season' }, now).swap).toBe(true)
+    expect(showReleaseOf(release, { from: 'record', job: 'j', proposal: true, level: 'episode' }, now)).not.toHaveProperty('swap')
+  })
+
   it('leaves the acceptance of a proposal to its Accept', () => {
     expect(showReleaseOf(release, { from: 'airing', job: 'j', proposal: true, level: 'episode' }, now)).not.toHaveProperty('accepted_at')
   })

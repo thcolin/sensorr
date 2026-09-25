@@ -6,6 +6,7 @@ export class ShowReleaseDTO extends ReleaseDTO {
   level?: 'series' | 'season' | 'episode'
   torrent?: TorrentFiles
   imported_at?: number
+  swap?: boolean
 }
 
 export class ShowDTO {

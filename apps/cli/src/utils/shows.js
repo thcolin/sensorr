@@ -43,6 +43,7 @@ export const showReleaseOf = (release, { from, job, proposal, level }, now) => (
   size: release.size,
   coverage: release.coverage,
   level,
+  ...(release.swap ? { swap: true } : {}),
   ...(proposal ? {} : { accepted_at: now }),
 })
 
