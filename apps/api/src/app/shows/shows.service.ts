@@ -227,25 +227,36 @@ export class ShowsService {
 
     if (`${params.progress}` === 'true') {
       const progress = await this.getProgress((res.results as any[]).map(({ _id }) => _id))
-      res.results = (res.results as any[]).map(show => ({ ...show, progress: progress[show._id] || { owned: 0, aired: 0 } })) as any
+      res.results = (res.results as any[]).map(show => ({ ...show, progress: progress[show._id] || { owned: 0, aired: 0, seasons: [] } })) as any
     }
 
     return res
   }
 
-  async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number } }> {
+  // Specials are left out, like everywhere else progress is counted
+  async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number, seasons: { season_number: number, owned: number, aired: number }[] } }> {
     const counts = await this.episodeModel.aggregate([
       { $match: { show_id: { $in: ids }, season_number: { $ne: 0 } } },
       {
         $group: {
-          _id: '$show_id',
+          _id: { show_id: '$show_id', season_number: '$season_number' },
           owned: { $sum: { $cond: [{ $gt: [{ $size: { $ifNull: ['$files', []] } }, 0] }, 1, 0] } },
           aired: { $sum: { $cond: [{ $and: [{ $gt: ['$air_date', null] }, { $lte: ['$air_date', new Date()] }] }, 1, 0] } },
         },
       },
+      { $sort: { '_id.show_id': 1, '_id.season_number': 1 } },
     ])
 
-    return counts.reduce((acc, { _id, owned, aired }) => ({ ...acc, [_id]: { owned, aired } }), {})
+    const progress = {}
+
+    for (const { _id: { show_id, season_number }, owned, aired } of counts) {
+      progress[show_id] = progress[show_id] || { owned: 0, aired: 0, seasons: [] }
+      progress[show_id].owned += owned
+      progress[show_id].aired += aired
+      progress[show_id].seasons.push({ season_number, owned, aired })
+    }
+
+    return progress
   }
 
   async getShow(id: number) {
