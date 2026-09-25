@@ -33,13 +33,13 @@ function UIState({
     <label sx={UIState.styles.element} {...(props.title ? { title: props.title } : {})}>
       <Component {...props} emoji={option.emoji} label={!compact && option.label} />
       <select value={option.value} onChange={handleChange} disabled={disabled || option.value === 'loading'} aria-label={ariaLabel}>
-        {options
-          .filter((option) => !option.hide)
-          .map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.emoji} - {option.label}
-            </option>
-          ))}
+        {/* A hidden option stays in the list, out of reach: without it, React selects the first option, which
+        then fires no change when chosen */}
+        {options.map((option) => (
+          <option key={option.value} value={option.value} hidden={option.hide} disabled={option.hide}>
+            {option.emoji} - {option.label}
+          </option>
+        ))}
       </select>
     </label>
   )

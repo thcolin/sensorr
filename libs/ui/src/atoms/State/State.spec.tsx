@@ -24,4 +24,19 @@ describe('State', () => {
     )
     expect(baseElement).toBeTruthy()
   })
+
+  // Selected elsewhere, the first option would fire no change when chosen
+  it('should keep a hidden value selected', () => {
+    const { getByRole } = render(
+      <State
+        options={[
+          { emoji: '🔕', label: 'Ignored', value: 'ignored' },
+          { emoji: '📺', label: 'Partly followed', value: 'partial', hide: true },
+        ]}
+        value='partial'
+        onChange={() => {}}
+      />,
+    )
+    expect((getByRole('combobox') as HTMLSelectElement).value).toBe('partial')
+  })
 })
