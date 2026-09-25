@@ -734,10 +734,9 @@ const UICell = ({ entry, show }) => {
         <Picture path={show?.poster_path} size='w92' empty={Empty.tv} />
       </span>
       <strong>{name}</strong>
-      <span>
-        <code>{code}</code>
-        <EpisodeStatus value={entry.status} size='normal' compact={true} />
-      </span>
+      <code>{code}</code>
+      {/* On the right, centered on the name and the code together */}
+      <EpisodeStatus value={entry.status} size='normal' compact={true} />
     </Link>
   )
 }
@@ -746,7 +745,7 @@ UICell.styles = {
   element: {
     variant: 'link.reset',
     display: 'grid',
-    gridTemplateColumns: 'auto minmax(0, 1fr)',
+    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     gridTemplateRows: 'auto auto',
     alignItems: 'center',
     columnGap: 8,
@@ -770,19 +769,18 @@ UICell.styles = {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     },
-    '>span:last-of-type': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 9,
-      minWidth: 0,
-      '>code': {
-        fontFamily: 'monospace',
-        color: 'grayDarkest',
-        fontVariantNumeric: 'tabular-nums',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      },
+    '>code': {
+      gridColumn: 2,
+      fontFamily: 'monospace',
+      color: 'grayDarkest',
+      fontVariantNumeric: 'tabular-nums',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+    '>[role="img"]': {
+      gridColumn: 3,
+      gridRow: '1 / span 2',
     },
   },
   poster: {
