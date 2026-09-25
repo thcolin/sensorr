@@ -1,5 +1,5 @@
 import { ColorModeWrapper } from '../../../../helpers'
-import { FilterReleaseDate as UIFilterReleaseDate } from './FilterReleaseDate'
+import { FilterReleaseDate as UIFilterReleaseDate, CalendarMonthPicker as UICalendarMonthPicker } from './FilterReleaseDate'
 
 export default { component: UIFilterReleaseDate, title: 'Components / Movie / filters / Release Date' }
 
@@ -42,4 +42,15 @@ FilterReleaseDate.argTypes = {
   statistics: {
     control: null,
   },
+}
+
+export const CalendarMonthPicker = (args: any) => (
+  <ColorModeWrapper value='primary'>
+    <UICalendarMonthPicker {...args} />
+  </ColorModeWrapper>
+)
+
+CalendarMonthPicker.args = {
+  value: new Date(2026, 8, 1),
+  onChange: () => {},
 }

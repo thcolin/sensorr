@@ -1,6 +1,6 @@
 import {
   Sorting,
-  FilterReleaseDate,
+  CalendarMonthPicker,
   FilterReleaseType,
   FilterGenres,
   FilterCompanies,
@@ -165,7 +165,6 @@ export const Calendar = compose(
           [`${key}.lte`]: new Date(raw.getFullYear(), raw.getMonth() + 1, 1).toISOString().substring(0, 10),
         }),
         component: withProps({
-          display: 'datePicker',
           getOptions: (value) => [
             new Date(value.getFullYear(), value.getMonth() - 2, 2),
             new Date(value.getFullYear(), value.getMonth() - 1, 2),
@@ -173,11 +172,7 @@ export const Calendar = compose(
             new Date(value.getFullYear(), value.getMonth() + 1, 2),
             new Date(value.getFullYear(), value.getMonth() + 2, 2),
           ],
-        })(({ ...props }) => (
-          <div sx={{ display: 'flex', marginLeft: ['-2em', '3em'], marginRight: ['0em', '3em'], '>*': { flex: 1 } }}>
-            <FilterReleaseDate {...props as any} />
-          </div>
-        ))
+        })(CalendarMonthPicker)
       },
       with_release_type: {
         ...fields.release_type,
