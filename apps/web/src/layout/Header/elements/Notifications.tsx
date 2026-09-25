@@ -576,7 +576,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
           {{
             'record': meta?.swap ? swapLabelOf(meta?.release?.size, meta.swap) : meta?.release?.proposal ? `Release proposal` : `Release`,
             'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'sync': `${meta?.missing} episodes no longer on Plex`,
+            'sync': `${label} no longer on Plex`,
             'keep-in-touch': `Requested by`,
           }[meta?.command]}
         </span>
