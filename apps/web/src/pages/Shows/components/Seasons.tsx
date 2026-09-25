@@ -12,7 +12,11 @@ const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-const sizeOf = (episodes) => episodes.reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0)
+// A file holding several episodes sits on each of them, it only weighs once
+const sizeOf = (episodes) => {
+  const seen = new Set()
+  return episodes.flatMap(({ files }) => files || []).filter(({ id }) => !seen.has(id) && seen.add(id)).reduce((sum, file) => sum + (file.size || 0), 0)
+}
 
 // The tracks a season head and the header share: count, bar, completion mark, follow column
 const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
