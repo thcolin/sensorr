@@ -12,6 +12,7 @@ import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Proposal } from '../Movie/Proposal/Proposal'
 import { Guests } from '../Movie/Guests/Guests'
 import { EpisodeStatusOptions, ShowState } from './State/State'
+import { ProgressPill } from './ProgressPill/ProgressPill'
 
 export interface ShowProps extends Omit<
   PosterProps,
@@ -121,7 +122,7 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (
       <>
-        <code title={`${owned} of ${aired} aired episodes owned`}>{`${owned}/${aired}`}</code>
+        <ProgressPill owned={owned} aired={aired} />
         <Progress
           value={owned}
           max={aired}
@@ -131,7 +132,7 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
       </>
     ) : (
       <>
-        <span title={EpisodeStatusOptions.upcoming.label}>
+        <span data-upcoming={true} title={EpisodeStatusOptions.upcoming.label}>
           <span role='img' aria-label={EpisodeStatusOptions.upcoming.label}>{EpisodeStatusOptions.upcoming.emoji}</span>
           {!compact && <span aria-hidden={true}>{EpisodeStatusOptions.upcoming.label}</span>}
         </span>
@@ -149,18 +150,20 @@ ShowProgress.styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 6,
+    // The height of a compact pill (0.75em at a normal line height of 1.2, plus its 0.25em paddings), so the upcoming line of a neighbour card sits on the same center
+    minHeight: 'calc(0.75em * 1.2 + 0.375em)',
     marginTop: 10,
     color: 'grayDarkest',
     whiteSpace: 'nowrap',
-    '>code, >time, >span': {
+    '>time, >[data-upcoming]': {
       fontSize: 7,
       lineHeight: 'normal',
     },
-    '>code, >time': {
+    '>time': {
       fontFamily: 'monospace',
       fontVariantNumeric: 'tabular-nums',
     },
-    '>span': {
+    '>[data-upcoming]': {
       display: 'flex',
       alignItems: 'center',
       gap: 10,
