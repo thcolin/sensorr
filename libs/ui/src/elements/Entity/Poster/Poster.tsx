@@ -216,9 +216,9 @@ const UIPoster = ({
             to={link?.to}
             state={link?.state}
             disabled={!link?.to}
-            interactive={interactive}
+            interactive={interactive && typeof onLongPress === 'function'}
             onTouchStart={loadExternals}
-            onLongPress={() => onLongPress({ details, link, palette })}
+            onLongPress={typeof onLongPress === 'function' ? () => onLongPress({ details, link, palette }) : null}
             palette={palette}
           >
             <Picture
