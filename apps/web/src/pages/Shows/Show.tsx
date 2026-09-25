@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { EpisodeStatusOptions, transformShowDetails, Warning } from '@sensorr/ui'
-import { episodeStatus } from '@sensorr/sensorr'
+import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
+import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -12,10 +12,12 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import { withBody } from '../../layout/withLayout'
 import ShowChild from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
+import { ReleaseSize } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
 import { ShowActions } from './components/Actions'
 import { useProposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
+import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 const Show = ({ ...props }) => {
@@ -72,12 +74,14 @@ const Show = ({ ...props }) => {
 
   const proposals = useProposals({ entity: show.data, metadata, episodes: inLibrary ? (episodes || null) : null, proceedRelease, banRelease })
 
-  // Only what waits on a gesture: owned over aired and the size are the "All seasons" pills below
+  // In the pills of the "All seasons" row: owned over aired, the size, then what waits on a gesture
   const summary = useMemo(() => {
     if (!inLibrary || !episodes) {
       return null
     }
 
+    const progress = progressOf(episodes.filter(({ season_number }) => season_number !== 0))
+    const size = sizeOf(episodes)
     const pending = proposals.rows.length
     const wanted = episodes.filter(episode => episodeStatus(episode) === 'wanted').length
     // To the first proposal shown, in its season's drawer or its episode's row (Seasons.tsx)
@@ -87,15 +91,19 @@ const Show = ({ ...props }) => {
     }
 
     return [
-      !!pending && (
-        <span key='pending'>
+      <span key='pills' sx={Show.styles.pills}>
+        <ProgressPill {...progress} />
+        {!!size && <ReleaseSize size={size} data-size={true} />}
+        {!!pending && (
           <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
-            {EpisodeStatusOptions.proposed.emoji} {pending}
+            <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={pending} compact={true} size='small' />
           </a>
-        </span>
-      ),
-      !!wanted && <span key='wanted' title={`${wanted} wanted episode${wanted > 1 ? 's' : ''}`}>{EpisodeStatusOptions.wanted.emoji} {wanted}</span>,
-    ].filter(Boolean)
+        )}
+        {!!wanted && (
+          <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={wanted} compact={true} size='small' title={`${wanted} wanted episode${wanted > 1 ? 's' : ''}`} />
+        )}
+      </span>,
+    ]
   }, [inLibrary, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
@@ -218,12 +226,27 @@ const Show = ({ ...props }) => {
 }
 
 Show.styles = {
+  // The pills of the "All seasons" row (Seasons.tsx), at the size of its release tags
+  pills: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    '>[data-size]': {
+      fontSize: 6,
+      whiteSpace: 'nowrap',
+    },
+  },
   anchor: {
+    display: 'flex',
     color: 'inherit',
     textDecoration: 'none',
-    ':hover': {
-      textDecoration: 'underline',
-      textUnderlineOffset: '0.25em',
+    borderRadius: '2em',
+    '>span': {
+      transition: 'background-color 200ms ease-in-out',
+    },
+    ':hover >span': {
+      backgroundColor: 'grayDark',
     },
     ':focus-visible': {
       outline: '1px solid',
