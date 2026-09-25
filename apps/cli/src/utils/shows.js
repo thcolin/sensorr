@@ -88,15 +88,31 @@ export const sonarrShowOf = (series) => (!series.monitored && !series.statistics
   path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
 }
 
+const sonarrFileOf = (file) => {
+  const { generated, original } = oleoo.parse((file.relativePath || file.path || '').split(/[\\/]/).pop(), { strict: false, flagged: true })
+  return { id: `sonarr:${file.id}`, size: file.size, title: generated, original, from: 'sonarr' }
+}
+
 // Sonarr only searches an episode whose series and season are monitored too, whatever the episode's own flag says.
-export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = []) => {
+// An episode Sonarr has a file for is owned from the start, until `sync shows` reads it on Plex.
+export const sonarrEpisodesOf = (episodes, sonarr, show, seasons = [], files = []) => {
   const keyOf = ({ season_number, episode_number }) => `${season_number}:${episode_number}`
   const numbered = new Map(sonarr.map((episode) => [`${episode.seasonNumber}:${episode.episodeNumber}`, episode]))
   const unmonitored = new Set(seasons.filter(({ monitored }) => !monitored).map(({ seasonNumber }) => seasonNumber))
   const numbers = new Set(episodes.map(keyOf))
+  const filed = new Map(files.map((file) => [file.id, file]))
   const known = episodes
     .filter((episode) => numbered.has(keyOf(episode)))
-    .map((episode) => ({ ...episode, monitored: !!show.monitored && !unmonitored.has(episode.season_number) && !!numbered.get(keyOf(episode)).monitored }))
+    .map((episode) => {
+      const { monitored, hasFile, episodeFileId } = numbered.get(keyOf(episode))
+      const file = hasFile && filed.get(episodeFileId)
+
+      return {
+        ...episode,
+        monitored: !!show.monitored && !unmonitored.has(episode.season_number) && !!monitored,
+        ...(file ? { files: [sonarrFileOf(file)] } : {}),
+      }
+    })
   const copied = new Map(known.map((episode) => [episode.id, episode]))
 
   return {

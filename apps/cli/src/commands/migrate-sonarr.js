@@ -107,7 +107,7 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      const counts = { wished: 0, archived: 0, skipped: 0, untracked: 0, unmatched: 0, warning: 0 }
+      const counts = { wished: 0, archived: 0, skipped: 0, untracked: 0, unmatched: 0, files: 0, warning: 0 }
       setStatus('loading')
 
       for (const series of (state.series || [])) {
@@ -138,7 +138,9 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
           }
 
           const { show, episodes: fetched } = await fetchShow(state.tmdb, series.tmdbId)
-          const { episodes, unmatched } = sonarrEpisodesOf(fetched, await state.sonarr('episode', { seriesId: series.id }), fields, series.seasons)
+          const files = series.statistics?.episodeFileCount ? await state.sonarr('episodefile', { seriesId: series.id }) : []
+          const { episodes, unmatched } = sonarrEpisodesOf(fetched, await state.sonarr('episode', { seriesId: series.id }), fields, series.seasons, files)
+          counts.files += episodes.filter(({ files }) => files?.length).length
 
           if (unmatched.length) {
             const numbers = unmatched.map(({ seasonNumber, episodeNumber }) => `S${`${seasonNumber}`.padStart(2, '0')}E${`${episodeNumber}`.padStart(2, '0')}`)
@@ -165,7 +167,7 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
         }
       }
 
-      const summary = `${counts.wished} wished, ${counts.archived} archived, ${counts.skipped} skipped without monitoring nor file, ${counts.untracked} without TMDB id, ${counts.unmatched} episodes unknown to TMDB, ${counts.warning} errors`
+      const summary = `${counts.wished} wished, ${counts.archived} archived, ${counts.skipped} skipped without monitoring nor file, ${counts.untracked} without TMDB id, ${counts.unmatched} episodes unknown to TMDB, ${counts.files} episodes owned, ${counts.warning} errors`
       state.logger.info({ message: `🚚 ${state.dry ? 'Would migrate' : 'Migrated'} ${counts.wished + counts.archived} Sonarr series: ${summary}`, metadata: { ...state.metadata, summary: { shows: counts } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{counts.wished + counts.archived}</Text> series {state.dry ? 'to migrate' : 'migrated'}: {summary}</Text> }))
