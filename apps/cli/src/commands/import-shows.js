@@ -202,7 +202,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             }
           }
 
-          for (const [id, fields] of [...done.map((id) => [id, { imported_at: now }]), ...overdue.map(({ id }) => [id, { overdue: true }])]) {
+          for (const [id, fields] of [...done.map((id) => [id, { imported_at: now, overdue: false }]), ...overdue.map(({ id }) => [id, { overdue: true }])]) {
             const { uri, params, init } = api.query.shows.patchShowRelease({ params: { id: show.id }, body: { id, ...fields } })
             await api.fetch(uri, params, init)
           }
