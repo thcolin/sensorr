@@ -249,6 +249,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      deleteShowRelease: (
+        { body, init = {}, params: { id } }: { body: { id: string }, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       postShowBannedRelease: (
         { body, init = {}, params: { id } }: { body: { title: string }, init?: any, params: { id: number } }
       ): { uri: string, params: {}, init: {} } => ({

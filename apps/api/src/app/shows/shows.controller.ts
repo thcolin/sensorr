@@ -54,6 +54,11 @@ export class ShowsController {
     return this.showsService.updateRelease(id, release, fields)
   }
 
+  @Delete(':id/releases')
+  async pullRelease(@Param('id', ParseIntPipe) id: number, @Body() { id: release }: { id: string }) {
+    return this.showsService.pullRelease(id, release)
+  }
+
   @Post(':id/banned_releases')
   async banRelease(@Param('id', ParseIntPipe) id: number, @Body() { title }: { title: string }) {
     return this.showsService.banRelease(id, title)

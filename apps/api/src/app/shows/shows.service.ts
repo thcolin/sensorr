@@ -176,6 +176,12 @@ export class ShowsService {
     return { pushed: modifiedCount }
   }
 
+  async pullRelease(id: number, release: string): Promise<any> {
+    this.logger.log(`PullRelease "${id}", release="${release}"`)
+    const { modifiedCount } = await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release } } })
+    return { pulled: modifiedCount }
+  }
+
   async banRelease(id: number, title: string): Promise<any> {
     this.logger.log(`BanRelease "${id}", title="${title}"`)
     const { modifiedCount } = await this.showModel.updateOne({ _id: id }, { $addToSet: { banned_releases: title } })

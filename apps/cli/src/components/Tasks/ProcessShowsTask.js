@@ -342,13 +342,21 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             continue
           }
 
+          // Pushed before the download: no .torrent reaches the blackhole without its release on the show
+          let pushed = 0, torrent
+
           try {
+            const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: raw })
+            pushed = (await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)).pushed
             const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
-            const { torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
-            const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: { ...raw, ...(torrent ? { torrent } : {}) } })
-            await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)
+            torrent = (await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)).torrent
           } catch (error) {
             await moveRelease(raw.id, null)
+
+            if (pushed) {
+              const pullShowRelease = api.query.shows.deleteShowRelease({ params: { id: show.id }, body: { id: raw.id } })
+              await api.fetch(pullShowRelease.uri, pullShowRelease.params, pullShowRelease.init)
+            }
 
             // The API refuses a .torrent it cannot read or without a video in it: banned, the next run picks another one
             if (error.status !== 422) {
@@ -359,6 +367,11 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             await api.fetch(ban.uri, ban.params, ban.init)
             state.logger.warn({ message: `🚫 Release ${release.title} banned, its .torrent was refused for ${label} (${release.znab})`, metadata: { ...metadata, show: lighten.show(show), release: { id: release.id, title: release.title }, banned: true } })
             continue
+          }
+
+          if (torrent) {
+            const patchShowRelease = api.query.shows.patchShowRelease({ params: { id: show.id }, body: { id: raw.id, torrent } })
+            await api.fetch(patchShowRelease.uri, patchShowRelease.params, patchShowRelease.init)
           }
 
           picked.push({ ...raw, label })
