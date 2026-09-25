@@ -15,6 +15,7 @@ import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
 import { safeUrl } from '../../../components/Sensorr/Release'
+import { swapLabelOf } from '../../../components/Sensorr/Proposal'
 
 // Keyed by `jobNameOf`
 const COMMANDS = {
@@ -551,7 +552,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       to={`/tv/${meta?.show?.id}`}
       poster={meta?.show?.poster_path}
       heading={{
-        'record': meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
+        'record': meta?.release?.swap ? `Season swap proposal` : meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
         'airing': meta?.release?.proposal ? `Airing episode proposal` : `Airing episode recorded`,
         'sync': `Episodes missing from your Plex Server`,
         'keep-in-touch': `Show request`,
@@ -573,7 +574,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
         <span sx={{ fontSize: 6 }}>
           {{
-            'record': meta?.release?.proposal ? `Release proposal` : `Release`,
+            'record': meta?.swap ? swapLabelOf(meta?.release?.size, meta.swap) : meta?.release?.proposal ? `Release proposal` : `Release`,
             'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
             'sync': `${meta?.missing} episodes no longer on Plex`,
             'keep-in-touch': `Requested by`,

@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { filesize } from '@sensorr/utils'
 import { transitionOf } from '../../pages/Proposals/queue'
 import { logos } from './Release'
 
@@ -115,6 +116,13 @@ UITransition.styles = {
     },
   },
 }
+
+// "14.9 GB replaces 19 episodes (6.1 GB) and fills 1", with the counts of `swapOf` (libs/sensorr/src/lib/show.ts)
+export const swapLabelOf = (size: number | undefined, swap: { fills: number, replaces: number, size: number }) => [
+  typeof size === 'number' && filesize.stringify(size),
+  `replaces ${swap.replaces} episode${swap.replaces > 1 ? 's' : ''} (${filesize.stringify(swap.size)})`,
+  swap.fills > 0 && `and fills ${swap.fills}`,
+].filter(Boolean).join(' ')
 
 export const Transition = memo(UITransition)
 

@@ -1,12 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button, Icon } from '@sensorr/ui'
-import { coverageLabel } from '@sensorr/sensorr'
+import { coverageLabel, swapOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Gestures } from '../../../components/Sensorr/Gestures'
 import { Release } from '../../../components/Sensorr/Release'
-import { Transition } from '../../../components/Sensorr/Proposal'
+import { Transition, swapLabelOf } from '../../../components/Sensorr/Proposal'
 import { isPending, proposalDiff, scoreReleases } from '../../Proposals/queue'
 import { DELAY, usePendingVerdict } from '../../Proposals/pending'
 import { VERDICTS } from '../../Proposals/Card'
@@ -37,6 +37,7 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
       return {
         release: proposal,
         fills: fillsOf(release.coverage || [], episodes, release.level),
+        swap: release.swap ? swapOf(release.coverage || [], episodes) : null,
         diff: proposalDiff(owned, proposal, policy),
       }
     })
@@ -138,16 +139,16 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, .
     <section sx={UIProposals.styles.element} aria-labelledby='pending-proposals'>
       <div>
         <h2 id='pending-proposals' sx={UIProposals.styles.title}>{emojize('🛎️', 'Pending proposals')}</h2>
-        {rows.map(({ release, fills, diff }, index) => {
+        {rows.map(({ release, fills, swap, diff }, index) => {
           const brings = fills.total ? plural(fills.missing.length, 'episode') : null
 
           return (
             <div key={release.id} sx={UIProposals.styles.row}>
               <div sx={UIProposals.styles.coverage}>
                 <strong>{coverageLabel(release.coverage || [], release.level || undefined)}</strong>
-                {(typeof release.size === 'number' || !!brings) && (
+                {(typeof release.size === 'number' || !!brings || !!swap) && (
                   <small title={fills.codes.join(' ')}>
-                    {[typeof release.size === 'number' && filesize.stringify(release.size), brings && `for ${brings}`].filter(Boolean).join(' ')}
+                    {swap ? swapLabelOf(release.size, swap) : [typeof release.size === 'number' && filesize.stringify(release.size), brings && `for ${brings}`].filter(Boolean).join(' ')}
                     {!!fills.missing.length && fills.missing.length < fills.total && ` · ${fills.label}`}
                   </small>
                 )}
