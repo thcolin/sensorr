@@ -84,10 +84,9 @@ instance is already serving. The mechanism is in
 
 **`bin/sensorr` runs `dist/apps/cli/main.js`, not the sources.**
 So every job the API starts runs the last `nx build cli`, not what you just edited in
-`apps/cli/src` ([architecture.md](docs/architecture.md#how-the-api-runs-the-cli)). Worse
-when the bundle is absent: `apps/api/src/app/sensorr/sensorr.service.ts:124` only logs the
-spawn error, nothing rejects, and the `runProcess` promise never settles, so
-`POST /api/jobs` hangs instead of failing.
+`apps/cli/src` ([architecture.md](docs/architecture.md#how-the-api-runs-the-cli)). When the
+bundle is absent, the child exits before printing its job id and `POST /api/jobs` fails with
+`exited (1) before it started` (`runProcess` in `apps/api/src/app/sensorr/sensorr.service.ts`).
 
 **The CLI is not standalone.**
 Every command logs into the API and loads the configuration from it before its body runs,
