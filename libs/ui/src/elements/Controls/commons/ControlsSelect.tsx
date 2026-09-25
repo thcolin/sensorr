@@ -6,13 +6,23 @@ export interface ControlsSelectProps {
   options: { value: string, label: string }[]
   onChange: (value: string) => void
   label?: ReactNode
+  // The label keeps the width of the longest option, so the bar does not move when the value changes
+  fixedWidth?: boolean
   style?: { [key: string]: any }
 }
 
 // A native select laid invisible over the label of its value, so the bar shows a word and the platform shows the list
-const UIControlsSelect = ({ id, value, options, onChange, label, style }: ControlsSelectProps) => (
+const UIControlsSelect = ({ id, value, options, onChange, label, fixedWidth = false, style }: ControlsSelectProps) => (
   <div sx={{ ...style, ...UIControlsSelect.styles.element }}>
-    <label htmlFor={id}>{label ?? options.find(option => option.value === value)?.label}</label>
+    {fixedWidth ? (
+      <label htmlFor={id} data-fixed={true}>
+        {options.map(option => (
+          <span key={option.value} data-current={option.value === value}>{option.label}</span>
+        ))}
+      </label>
+    ) : (
+      <label htmlFor={id}>{label ?? options.find(option => option.value === value)?.label}</label>
+    )}
     <select id={id} value={value} onChange={e => onChange(e.target.value)}>
       {options.map(option => (
         <option key={option.value} value={option.value}>{option.label}</option>
@@ -40,6 +50,16 @@ UIControlsSelect.styles = {
       fontSize: 4,
       fontWeight: 'semibold',
       whiteSpace: 'nowrap',
+    },
+    // Every option in the same cell, only the current one in sight
+    '>label[data-fixed]': {
+      display: 'grid',
+      '>span': {
+        gridArea: '1 / 1',
+      },
+      '>span[data-current="false"]': {
+        visibility: 'hidden',
+      },
     },
     '>select': {
       variant: 'select.reset',
