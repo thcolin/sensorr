@@ -311,9 +311,26 @@ describe('importLinksOf', () => {
   })
 
   it('links only a video, never an executable, an archive or a text file named after the episode', () => {
-    const files = ['exe', 'lnk', 'rar', 'r00', 'nfo', 'srt', 'MKV'].map((extension, index) => ({ path: `The.Office.US.S03E24.${extension}`, size: index }))
+    const files = ['exe', 'lnk', 'rar', 'r00', 'nfo', 'MKV'].map((extension, index) => ({ path: `The.Office.US.S03E24.${extension}`, size: index }))
 
     expect(importLinksOf({ ...release, torrent: { name: 'The.Office.US.S03E24', files } }, show, episodes, '/tvshows').map(({ source }) => source)).toEqual(['The.Office.US.S03E24.MKV'])
+  })
+
+  it('links a subtitle next to the video it numbers the same, and no other', () => {
+    const files = [
+      { path: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', size: 2 },
+      ...['srt', 'ass', 'ssa', 'sub', 'idx', 'VTT'].map((extension) => ({ path: `The.Office.US.S03/Subs/The.Office.US.S03E24.FRENCH.${extension}`, size: 1 })),
+      { path: 'The.Office.US.S03/The.Office.US.S03E23.srt', size: 1 },
+      { path: 'The.Office.US.S03/Subs/2_English.srt', size: 1 },
+    ]
+    const links = importLinksOf({ ...release, torrent: { name: 'The.Office.US.S03', files } }, show, episodes, '/tvshows')
+
+    expect(links.map(({ source }) => source)).toEqual(files.slice(0, 7).map(({ path }) => path))
+    expect(links[1]).toEqual({ source: 'The.Office.US.S03/Subs/The.Office.US.S03E24.FRENCH.srt', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24.FRENCH.srt', season: 3, episodes: [], size: 1 })
+    expect(importedEpisodesOf(release, episodes.map((episode, index) => ({ ...episode, id: index })), links).owned.map(({ files }) => files.map(({ id }) => id))).toEqual([
+      ['import:The.Office.US.S03/The.Office.US.S03E24E25.mkv'],
+      ['import:The.Office.US.S03/The.Office.US.S03E24E25.mkv'],
+    ])
   })
 })
 

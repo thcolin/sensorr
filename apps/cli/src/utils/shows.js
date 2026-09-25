@@ -151,12 +151,15 @@ export const showFolderOf = (show) => show.path || sanitizeFilename(show.first_a
 
 export const importTargetOf = (library, show, season, file) => path.join(library, showFolderOf(show), `Season ${`${season}`.padStart(2, '0')}`, path.basename(file))
 
+const SUBTITLE = /\.(srt|ass|ssa|sub|idx|vtt)$/i
+
+// A subtitle holds no episode: it follows a video it numbers the same, into its Season folder
 export const importLinksOf = (release, show, episodes, library) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
   const missing = new Set(episodes.filter(({ files }) => !files?.length).map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
 
-  return release.torrent.files.flatMap(({ path: file, size }) => {
+  const videos = release.torrent.files.flatMap(({ path: file, size }) => {
     if (!MEDIA.test(file) || /\bsamples?\b/i.test(file)) {
       return []
     }
@@ -166,6 +169,15 @@ export const importLinksOf = (release, show, episodes, library) => {
 
     return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched, size }] : []
   })
+
+  const subtitles = release.torrent.files.filter(({ path: file }) => SUBTITLE.test(file)).flatMap(({ path: file, size }) => {
+    const { season, episodes: numbers } = oleoo.parse(path.basename(file))
+    const followed = videos.some((video) => video.season === season && video.episodes.some((number) => numbers.includes(number)))
+
+    return followed ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: [], size }] : []
+  })
+
+  return [...videos, ...subtitles]
 }
 
 export const importedEpisodesOf = (release, episodes, links) => {
