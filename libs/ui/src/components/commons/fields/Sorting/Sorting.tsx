@@ -8,7 +8,8 @@ export interface SortingProps {
   display?: 'default' | 'radio' | 'select'
   value: any
   onChange: any
-  options: { value: string, label: string }[]
+  // `sort` is the direction an option starts in, `true` for descending: a name reads from A
+  options: { value: string, label: string, sort?: boolean }[]
 }
 
 const UISorting = ({ display = 'default', options, value, onChange, ...props }: SortingProps) => {
@@ -21,7 +22,7 @@ const UISorting = ({ display = 'default', options, value, onChange, ...props }: 
           {...props as any}
           options={options}
           value={value?.value}
-          onChange={next => onChange({ ...value, value: next })}
+          onChange={next => onChange({ ...value, value: next, sort: options.find(option => option.value === next)?.sort ?? value?.sort })}
           sort={value?.sort}
           onSort={sort => onChange({ ...value, sort })}
         />
@@ -43,7 +44,7 @@ const UISorting = ({ display = 'default', options, value, onChange, ...props }: 
       return (
         <div sx={UISorting.styles.default}>
           <label htmlFor='sorting'>{t('ui.sorting')}</label>
-          <button onClick={() => onChange({ ...value, sort: !value?.sort })}>
+          <button aria-label={value?.sort ? 'Sort ascending' : 'Sort descending'} onClick={() => onChange({ ...value, sort: !value?.sort })}>
             <Icon value='sort' direction={value?.sort} />
           </button>
           <div>
@@ -51,7 +52,7 @@ const UISorting = ({ display = 'default', options, value, onChange, ...props }: 
             <select
               id='sorting'
               value={value?.value}
-              onChange={e => onChange({ ...value, value: e.target.value })}
+              onChange={e => onChange({ ...value, value: e.target.value, sort: options.find(option => option.value === e.target.value)?.sort ?? value?.sort })}
             >
               {options.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>

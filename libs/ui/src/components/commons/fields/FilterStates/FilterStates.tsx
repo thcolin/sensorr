@@ -2,10 +2,11 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MovieStateOptions } from '../../../../components/Movie/State/State'
 import { PersonStateOptions } from '../../../../components/Person/State/State'
+import { ShowStateOptions } from '../../../../components/Show/State/State'
 import { Checkbox, CheckboxProps } from '../../../../inputs/Checkbox/Checkbox'
 
 export interface FilterStatesProps extends Omit<CheckboxProps, 'label' | 'options'> {
-  type: 'movie' | 'person'
+  type: 'movie' | 'person' | 'show'
   statistics: { _id: any, count: number }[]
   ignoreOptions: string[]
 }
@@ -13,11 +14,12 @@ export interface FilterStatesProps extends Omit<CheckboxProps, 'label' | 'option
 const UIFilterStates = ({ type, statistics, ignoreOptions = ['loading', 'ignored'], ...props }: FilterStatesProps) => {
   const { t } = useTranslation()
   const options = useMemo(() => (
-    ({ movie: MovieStateOptions, person: PersonStateOptions }[type])
+    ({ movie: MovieStateOptions, person: PersonStateOptions, show: ShowStateOptions }[type])
       .filter(option => !ignoreOptions.includes(option.value))
       .map(option => ({
         ...option,
-        label: t(`state.${option.value}`),
+        // A show's `unfollowed` has no key of its own, it reads as its option says: Pinned
+        label: t(`state.${option.value}`, option.label),
         count: statistics?.find(obj => obj._id === option.value)?.count || 0,
       }))
       .reverse()

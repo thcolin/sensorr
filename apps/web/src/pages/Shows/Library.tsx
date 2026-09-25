@@ -5,6 +5,7 @@ import {
   withControls,
   FilterStatistics,
   FilterProposal,
+  FilterStates,
   Sorting,
   Warning,
   Checkbox,
@@ -109,7 +110,7 @@ const Library = compose(
         gap: '2em',
         gridTemplateAreas: `
           "head_main"
-          "monitored"
+          "state"
           "status"
           "proposal"
           "policy"
@@ -176,13 +177,13 @@ const Library = compose(
                 actions={[
                   {
                     key: 'monitored',
-                    icon: FOLLOWED.emoji,
-                    label: 'Follow',
+                    icon: '📚',
+                    label: 'State',
                     options: [
-                      { value: true, icon: FOLLOWED.emoji, label: 'Follow' },
-                      { value: false, icon: UNFOLLOWED.emoji, label: 'Unfollow' },
+                      { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
+                      { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
                     ],
-                    onChange: ({ value }) => apply('monitored', value, `Do you want to ${value ? 'follow' : 'unfollow'} ${shows(selected.length)}?`),
+                    onChange: ({ value, label }) => apply('monitored', value, `Do you want to change the state of ${shows(selected.length)} to "${label}"?`),
                   },
                   {
                     key: 'policy',
@@ -214,18 +215,19 @@ const Library = compose(
           label: i18n.t('ui.sorting'),
           options: [
             { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
-            { label: i18n.t('ui.sortings.name'), value: 'name' },
+            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
             { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+            { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
+            { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+            { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
           ]
         })(Sorting)
       },
-      monitored: {
-        initial: { values: [] },
-        serialize: (key, raw) => raw?.values?.length === 1 ? { [key]: `${raw.values[0] === 'followed'}` } : {},
-        component: withProps({
-          label: emojize(FOLLOWED.emoji, 'Follow'),
-          options: [FOLLOWED, UNFOLLOWED].map(({ value, emoji, label }) => ({ value, label: emojize(emoji, label) })),
-        })(OneOf),
+      // Named as the movie's, a show's state is its `monitored` flag
+      state: {
+        initial: [],
+        serialize: (key, raw) => raw?.length === 1 ? { monitored: `${raw[0] === 'followed'}` } : {},
+        component: withProps({ type: 'show' })(FilterStates),
       },
       status: {
         initial: { values: [] },
@@ -267,7 +269,7 @@ const Library = compose(
 
         api.fetch(all.uri, all.params, all.init)
           .then(({ results: shows }) => setCounts({
-            monitored: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
+            state: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
             status: countsOf(shows.map(({ status }) => Object.keys(STATUS_GROUPS).find(group => STATUS_GROUPS[group].includes(status))).filter(Boolean)),
             policy: countsOf(shows.map(({ policy }) => policy).filter(Boolean)),
             requested_by: countsOf(shows.flatMap(({ requested_by }) => requested_by || [])),
