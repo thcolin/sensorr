@@ -148,9 +148,10 @@ const UIEpisodeCard = ({ entity, ...props }) => {
   )
 }
 
-// The episodes of the month in one card per show, day and status, in the order they air
+// The episodes of the month in one card per show, day and status, in the order they air. The month comes whole
+// (`limit: ''`): no `onMore`, or the grid asks for a next page at its 20th card and gets the same month again
 const withEpisodeCards = () => (WrappedComponent) => {
-  const withEpisodeCards = ({ entities, shows, ...props }) => {
+  const withEpisodeCards = ({ entities, shows, onMore, ...props }) => {
     const cards = useMemo(() => groupByDay(Object.values(entities || {}), shows)
       .flatMap(({ key, entries }) => entries.map(entry => ({ ...entry, key, id: keyOf(entry), show: shows[entry.show_id] }))), [entities, shows])
 
