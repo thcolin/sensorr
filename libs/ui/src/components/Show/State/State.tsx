@@ -19,7 +19,8 @@ export const ShowStateOptions = [
     value: 'unfollowed',
   },
   {
-    emoji: '🔔',
+    // Not a bell: the 🛎 of a pending proposal sits right under this badge on a poster
+    emoji: '📹',
     label: 'Followed',
     value: 'followed',
   },
