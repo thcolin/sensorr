@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
+import { ReleasesStyles } from '../../Details/components/Releases'
 import { Toggle } from './Toggle'
 import { fileMetaOf, sizeOf } from './fills'
 
@@ -91,22 +92,26 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
     return null
   }
 
+  const toggle = (number, opened) => (e) => !e.target.closest('[aria-pressed]') && setOpen(open => ({ ...open, [number]: !opened }))
+
   if (!inLibrary) {
     const years = regular.map(({ year }) => year).filter(Boolean)
 
     return (
-      <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
+      <section sx={ReleasesStyles.element} aria-labelledby={`seasons-${entity.id}`}>
         <div>
-          <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
-            <div sx={UISeasons.styles.label}>
-              <h2 id={`seasons-${entity.id}`}>All seasons</h2>
-              <small>
-                {[
-                  `${regular.length} season${regular.length > 1 ? 's' : ''}`,
-                  `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
-                  !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
-                ].filter(Boolean).join(' · ')}
-              </small>
+          <div sx={UISeasons.styles.list}>
+            <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
+              <div sx={UISeasons.styles.label}>
+                <h2 id={`seasons-${entity.id}`}>All seasons</h2>
+                <small>
+                  {[
+                    `${regular.length} season${regular.length > 1 ? 's' : ''}`,
+                    `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
+                    !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
+                  ].filter(Boolean).join(' · ')}
+                </small>
+              </div>
             </div>
           </div>
         </div>
@@ -115,88 +120,90 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
   }
 
   return (
-    <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
+    <section sx={ReleasesStyles.element} aria-labelledby={`seasons-${entity.id}`}>
       <div>
-        <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
-          <div sx={UISeasons.styles.label}>
-            <h2 id={`seasons-${entity.id}`}>All seasons</h2>
-            <small>{totals.count} episodes</small>
-            {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
-          </div>
-          <div sx={UISeasons.styles.summary}>
-            <ProgressPill {...totals.progress} />
-            <Bar progress={totals.progress} />
-            <Complete progress={totals.progress} />
-            <span />
-          </div>
-        </div>
-        {seasons.map(season => {
-          const opened = open[season.number] ?? defaults.has(season.number)
-          const id = `season-${entity.id}-${season.number}`
-          const specials = season.number === 0
-
-          return (
-            <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season}>
-              <div sx={UISeasons.styles.head}>
-                <button
-                  type='button'
-                  aria-expanded={opened}
-                  aria-controls={id}
-                  onClick={() => setOpen(open => ({ ...open, [season.number]: !opened }))}
-                  sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
-                  data-specials={specials}
-                >
-                  <Icon
-                    value='chevron'
-                    direction={false}
-                    width='0.75em'
-                    height='0.75em'
-                    sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-                  />
-                  <strong>{season.name}</strong>
-                  <small>
-                    {season.count} episodes{season.year ? ` · ${season.year}` : ''}
-                    {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
-                  </small>
-                  {!!season.proposed && (
-                    <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
-                  )}
-                  {!!season.wanted && (
-                    <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
-                  )}
-                </button>
-                <div sx={UISeasons.styles.summary}>
-                  {/* Specials are not followed by default: owned over aired would read as a gap */}
-                  {specials ? <><span /><span /><span /></> : (
-                    <>
-                      <ProgressPill {...season.progress} />
-                      <Bar progress={season.progress} />
-                      <Complete progress={season.progress} />
-                    </>
-                  )}
-                  <Toggle
-                    id={`follow-${id}`}
-                    checked={season.monitored}
-                    disabled={!ready || !season.episodes.length}
-                    title={season.monitored ? `Stop following every episode of ${season.name}` : `Follow every episode of ${season.name}`}
-                    aria-label={`Follow every episode of ${season.name}`}
-                    onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
-                  />
-                </div>
-              </div>
-              {opened && (
-                <Episodes
-                  id={id}
-                  show={entity.id}
-                  episodes={season.episodes}
-                  replaced={replaced}
-                  ready={ready}
-                  followEpisodes={followEpisodes}
-                />
-              )}
+        <div sx={UISeasons.styles.list}>
+          <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
+            <div sx={UISeasons.styles.label}>
+              <h2 id={`seasons-${entity.id}`}>All seasons</h2>
+              <small>{totals.count} episodes</small>
+              {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
             </div>
-          )
-        })}
+            <div sx={UISeasons.styles.summary}>
+              <ProgressPill {...totals.progress} />
+              <Bar progress={totals.progress} />
+              <Complete progress={totals.progress} />
+              <span />
+            </div>
+          </div>
+          {seasons.map(season => {
+            const opened = open[season.number] ?? defaults.has(season.number)
+            const id = `season-${entity.id}-${season.number}`
+            const specials = season.number === 0
+
+            return (
+              <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season}>
+                {/* The whole row opens the drawer, but its follow: a click on the title button bubbles up to it */}
+                <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.drawer }} onClick={toggle(season.number, opened)}>
+                  <button
+                    type='button'
+                    aria-expanded={opened}
+                    aria-controls={id}
+                    sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
+                    data-specials={specials}
+                  >
+                    <Icon
+                      value='chevron'
+                      direction={false}
+                      width='0.75em'
+                      height='0.75em'
+                      sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                    />
+                    <strong>{season.name}</strong>
+                    <small>
+                      {season.count} episodes{season.year ? ` · ${season.year}` : ''}
+                      {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
+                    </small>
+                    {!!season.proposed && (
+                      <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
+                    )}
+                    {!!season.wanted && (
+                      <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
+                    )}
+                  </button>
+                  <div sx={UISeasons.styles.summary}>
+                    {/* Specials are not followed by default: owned over aired would read as a gap */}
+                    {specials ? <><span /><span /><span /></> : (
+                      <>
+                        <ProgressPill {...season.progress} />
+                        <Bar progress={season.progress} />
+                        <Complete progress={season.progress} />
+                      </>
+                    )}
+                    <Toggle
+                      id={`follow-${id}`}
+                      checked={season.monitored}
+                      disabled={!ready || !season.episodes.length}
+                      title={season.monitored ? `Stop following every episode of ${season.name}` : `Follow every episode of ${season.name}`}
+                      aria-label={`Follow every episode of ${season.name}`}
+                      onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
+                    />
+                  </div>
+                </div>
+                {opened && (
+                  <Episodes
+                    id={id}
+                    show={entity.id}
+                    episodes={season.episodes}
+                    replaced={replaced}
+                    ready={ready}
+                    followEpisodes={followEpisodes}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
@@ -215,15 +222,11 @@ const Complete = ({ progress }) => (progress.aired > 0 && progress.owned >= prog
 ) : <span />
 
 UISeasons.styles = {
-  element: {
-    display: 'flex',
-    justifyContent: 'center',
-    paddingX: [4, '5em'],
-    marginY: 4,
-    '>div': {
-      width: '100%',
-      maxWidth: '95em',
-    },
+  // Inside the movie's releases block (ReleasesStyles), the rows start and end where a release row does: its
+  // inset (Release.tsx `wrapper`) is 1.5em and 2em at its font size 6, 0.75em
+  list: {
+    paddingLeft: [12, '1.125em'],
+    paddingRight: [12, '1.5em'],
   },
   season: {
     borderBottom: '1px solid',
@@ -237,10 +240,17 @@ UISeasons.styles = {
     paddingY: 8,
   },
   header: {
-    borderBottom: '1px solid',
-    borderColor: 'grayDark',
+    marginBottom: 4,
     '>div:first-of-type': {
       paddingX: 8,
+    },
+  },
+  // Hovered across the whole row, like a release row (Release.tsx `wrapper`)
+  drawer: {
+    cursor: 'pointer',
+    transition: 'background-color 200ms ease-in-out',
+    ':hover': {
+      backgroundColor: 'grayLightest',
     },
   },
   label: {
@@ -286,17 +296,11 @@ UISeasons.styles = {
     textAlign: 'left',
     color: 'text',
     borderRadius: '0.25em',
-    transition: 'background-color 200ms ease-in-out',
-    '&:is(button)': {
-      cursor: 'pointer',
-      ':hover': {
-        backgroundColor: 'grayLighter',
-      },
-      ':focus-visible': {
-        outline: '1px solid',
-        outlineColor: 'grayDarkest',
-        outlineOffset: '2px',
-      },
+    cursor: 'pointer',
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+      outlineOffset: '2px',
     },
   },
   chevron: {
@@ -450,8 +454,12 @@ UIEpisodes.styles = {
     paddingY: [8, 12],
     minHeight: '3em',
     paddingX: 8,
+    transition: 'background-color 200ms ease-in-out',
     '&[data-foldable="true"]': {
       cursor: 'pointer',
+      ':hover': {
+        backgroundColor: 'grayLightest',
+      },
       ':hover >button[data-title]': {
         textDecoration: 'underline',
         textUnderlineOffset: '0.25em',
