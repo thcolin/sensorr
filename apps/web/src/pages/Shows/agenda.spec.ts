@@ -2,7 +2,9 @@ import { groupByDay, monthRange } from './agenda'
 
 const shows = { 1668: { name: 'Friends' }, 1399: { name: 'Game of Thrones' } }
 
-const episode = (id, show_id, air_date, season_number = 1, episode_number = 1) => ({ id, show_id, air_date, season_number, episode_number })
+const NOW = new Date('2026-09-25T12:00:00.000Z')
+
+const episode = (id, show_id, air_date, season_number = 1, episode_number = 1, extra = {}) => ({ id, show_id, air_date, season_number, episode_number, monitored: true, ...extra })
 
 describe('agenda', () => {
   it('bounds a month on its first and last day, February and December included', () => {
@@ -16,21 +18,39 @@ describe('agenda', () => {
       episode(3, 1399, '2026-09-24T00:00:00.000Z', 8, 1),
       episode(1, 1668, '2026-09-24T00:00:00.000Z', 4, 24),
       episode(2, 1668, '2026-09-02T00:00:00.000Z', 4, 23),
-    ], shows)
+    ], shows, NOW)
 
     expect(days.map(({ key }) => key)).toEqual(['2026-09-02', '2026-09-24'])
-    expect(days[1].episodes.map(({ id }) => id)).toEqual([1, 3])
+    expect(days[1].entries.map(({ show_id }) => show_id)).toEqual([1668, 1399])
     expect(days[1].date.getDate()).toBe(24)
   })
 
-  it('keeps two episodes of one show on the same day as two lines, and leaves undated ones out', () => {
+  it('makes one entry of the episodes a show drops the same day in the same status, and leaves undated ones out', () => {
     const days = groupByDay([
       episode(2, 1668, '2026-09-24T00:00:00.000Z', 4, 25),
       episode(1, 1668, '2026-09-24T00:00:00.000Z', 4, 24),
+      episode(3, 1668, '2026-09-24T00:00:00.000Z', 4, 26),
       episode(4, 1668, null),
-    ], shows)
+    ], shows, NOW)
 
     expect(days).toHaveLength(1)
-    expect(days[0].episodes.map(({ episode_number }) => episode_number)).toEqual([24, 25])
+    expect(days[0].entries).toHaveLength(1)
+    expect(days[0].entries[0].status).toBe('wanted')
+    expect(days[0].entries[0].episodes.map(({ episode_number }) => episode_number)).toEqual([24, 25, 26])
+  })
+
+  it('splits a drop where the status changes, so each line keeps one status', () => {
+    const days = groupByDay([
+      episode(1, 1668, '2026-09-24T00:00:00.000Z', 4, 24, { files: [{ size: 1 }] }),
+      episode(2, 1668, '2026-09-24T00:00:00.000Z', 4, 25, { files: [{ size: 1 }] }),
+      episode(3, 1668, '2026-09-24T00:00:00.000Z', 4, 26),
+      episode(4, 1668, '2026-09-24T00:00:00.000Z', 4, 27, { files: [{ size: 1 }] }),
+    ], shows, NOW)
+
+    expect(days[0].entries.map(({ status, episodes }) => [status, episodes.map(({ id }) => id)])).toEqual([
+      ['owned', [1, 2]],
+      ['wanted', [3]],
+      ['owned', [4]],
+    ])
   })
 })
