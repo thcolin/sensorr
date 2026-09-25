@@ -1,4 +1,4 @@
-import { fileMetaOf, fillsOf, ownedFilesOf } from './fills'
+import { fileMetaOf, fillsOf, ownedFilesOf, sizeOf } from './fills'
 
 describe('fillsOf', () => {
   const files = [{ id: '1' }]
@@ -63,5 +63,19 @@ describe('ownedFilesOf', () => {
 
   it('falls back on every file of the show when the seasons have none', () => {
     expect(ownedFilesOf({ coverage: [{ season: 3 }], level: 'episode' }, episodes).map(({ id }) => id)).toEqual(['a', 'b'])
+  })
+})
+
+describe('sizeOf', () => {
+  it('weighs a file holding several episodes once', () => {
+    const double = { id: 'S04E23E24', size: 700 }
+    const episodes = [
+      { season_number: 4, episode_number: 22, files: [{ id: 'S04E22', size: 350 }] },
+      { season_number: 4, episode_number: 23, files: [double] },
+      { season_number: 4, episode_number: 24, files: [double] },
+      { season_number: 4, episode_number: 25 },
+    ]
+
+    expect(sizeOf(episodes)).toBe(1050)
   })
 })

@@ -43,13 +43,17 @@ export const fileMetaOf = (file: { title?: string, original?: string }) => {
   return read ? meta : { ...meta, language: null }
 }
 
+// A file holding several episodes sits on each of them, it is listed once
+const filesOf = (episodes: Episode[]) => [...new Map(episodes.flatMap(({ files }) => files || []).map(file => [file.id, file])).values()]
+
+export const sizeOf = (episodes: Episode[]) => filesOf(episodes).reduce((sum, file) => sum + (file.size || 0), 0)
+
 // The files a release is weighed against: those of the seasons it covers, else any the show has
 export const ownedFilesOf = (
   release: { coverage?: { season: number }[], level?: string },
   episodes: Episode[],
 ) => {
   const seasons = new Set((release.coverage || []).map(({ season }) => season))
-  const filesOf = (list: Episode[]) => [...new Map(list.flatMap(({ files }) => files || []).map(file => [file.id, file])).values()]
   const scoped = filesOf(episodes.filter(({ season_number }) => release.level === 'series' ? season_number !== 0 : seasons.has(season_number)))
 
   return scoped.length ? scoped : filesOf(episodes)

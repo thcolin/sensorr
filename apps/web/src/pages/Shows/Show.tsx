@@ -17,6 +17,7 @@ import { isPending } from '../Proposals/queue'
 import { ShowActions, ShowRemove } from './components/Actions'
 import { Proposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
+import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 const Show = ({ ...props }) => {
@@ -79,7 +80,7 @@ const Show = ({ ...props }) => {
     }
 
     const progress = progressOf(episodes.filter(({ season_number }) => season_number !== 0))
-    const size = episodes.reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0)
+    const size = sizeOf(episodes)
     const pending = (metadata?.releases || []).filter(isPending).length
     const wanted = episodes.filter(episode => episodeStatus(episode) === 'wanted').length
 

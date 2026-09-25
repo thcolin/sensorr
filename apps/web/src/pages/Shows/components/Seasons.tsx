@@ -6,17 +6,11 @@ import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Toggle } from './Toggle'
-import { fileMetaOf } from './fills'
+import { fileMetaOf, sizeOf } from './fills'
 
 const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
-
-// A file holding several episodes sits on each of them, it only weighs once
-const sizeOf = (episodes) => {
-  const seen = new Set()
-  return episodes.flatMap(({ files }) => files || []).filter(({ id }) => !seen.has(id) && seen.add(id)).reduce((sum, file) => sum + (file.size || 0), 0)
-}
 
 // The tracks a season head and the header share: count, bar, completion mark, follow column
 const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
