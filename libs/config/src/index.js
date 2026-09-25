@@ -155,6 +155,11 @@ const config = convict({
           format: 'Boolean',
           default: true,
         },
+        cleanup: {
+          doc: 'Sync shows job deletes from Plex the episode versions an accepted season swap replaces, once every episode of the swap has landed',
+          format: 'Boolean',
+          default: false,
+        },
       },
     },
     'keep-in-touch': {

@@ -52,6 +52,38 @@ export const settleSwaps = (releases, { here, all }, { cleanup, now }) => {
   }
 }
 
+// A season swap has landed once every episode it covers has a Plex version it does not replace, and that version is
+// one of the files of its torrent: `import shows` links them under their own name. `versions` holds the Plex versions
+// of each episode of the show, keyed `season:episode`. Until it lands, the versions it replaces are the only copy.
+export const settleSeasonSwaps = (releases = [], versions, { cleanup, now }) => {
+  const nameOf = (file) => file.split(/[\\/]/).pop()
+  const current = [...new Set(Object.values(versions).flat())]
+  const settled = [], remove = []
+
+  for (const release of releases.filter(({ swap, replaces }) => swap && replaces?.length)) {
+    const files = new Set((release.torrent?.files || []).map(({ path, size }) => `${nameOf(path)}:${size}`))
+    const arrived = (release.coverage || []).map(({ season, episode }) => (versions[`${season}:${episode}`] || []).find(({ id, name, size }) => (
+      !release.replaces.includes(id) && files.has(`${name}:${size}`)
+    )))
+
+    if (!arrived.length || !arrived.every(Boolean)) {
+      if (!release.overdue && now - (release.accepted_at || now) > OVERDUE_AFTER) {
+        settled.push({ release, fields: { overdue: true } })
+      }
+
+      continue
+    }
+
+    const size = [...new Set(arrived)].reduce((sum, version) => sum + version.size, 0)
+    const replaced = cleanup ? current.filter(({ id }) => release.replaces.includes(id)) : []
+
+    remove.push(...replaced.map((version) => ({ version, landed: { release: release.id, size } })))
+    settled.push({ release, fields: { replaces: [], overdue: false } })
+  }
+
+  return { settled, remove }
+}
+
 // Counted as the Swaps gauge counts it (apps/web/src/pages/Proposals/queue.ts, balanceOf): only
 // the Plex files exist on disk.
 export const proposedSpaceOf = (movies) => {

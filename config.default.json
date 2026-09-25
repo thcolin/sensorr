@@ -33,7 +33,8 @@
       },
       "shows": {
         "cron": "0 2 * * *",
-        "paused": true
+        "paused": true,
+        "cleanup": false
       }
     },
     "refresh": {

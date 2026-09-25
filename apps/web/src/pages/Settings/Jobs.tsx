@@ -173,7 +173,7 @@ const JobsSettings = ({ ...props }) => {
                     type: 'shows',
                     description: 'Sync Sensorr shows with registered Plex server',
                     ...plex,
-                    options: ['cron'],
+                    options: ['cron', 'cleanup'],
                   },
                 ],
               },

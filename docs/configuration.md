@@ -43,6 +43,7 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.sync.movies.cleanup` | `boolean` | `false` | Sync movies job deletes from Plex the versions an accepted swap replaces, once the swap has landed |
 | `jobs.sync.shows.cron` | `string` | `0 2 * * *` | Sync shows job cron |
 | `jobs.sync.shows.paused` | `boolean` | `true` | Pause Sync shows job |
+| `jobs.sync.shows.cleanup` | `boolean` | `false` | Sync shows job deletes from Plex the episode versions an accepted season swap replaces, once every episode of the swap has landed |
 | `jobs.keep-in-touch.cron` | `string` | `0 3 * * 0` | Keep-in-touch job cron |
 | `jobs.keep-in-touch.paused` | `boolean` | `false` | Pause Keep-in-touch job |
 | `jobs.refine.movies.cron` | `string` | `0 5 * * 0` | Refine movies job cron |

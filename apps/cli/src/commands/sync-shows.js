@@ -7,7 +7,8 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { showFilesOf, unreadItemsOf } from '../utils/plex'
+import { showFilesOf, unreadItemsOf, episodeVersionsOf } from '../utils/plex'
+import { settleSeasonSwaps, cleanedSpaceOf } from '../utils/swaps'
 import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf, plexShowOf, withdrawnProposalsOf } from '../utils/shows'
 
 const meta = {
@@ -36,7 +37,7 @@ export default (job, handlers) => ({
     await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, plex, tmdb }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, plex, tmdb, cleanup: config.get('jobs.sync.shows.cleanup') }}>
         <FetchSensorrShowsTask />
         <FetchPlexShowsTask />
         <CheckSensorrShowsTask />
@@ -140,7 +141,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      const corrections = [], created = [], warning = []
+      const corrections = [], created = [], warning = [], cleanups = []
       let missing = 0, unmatched = 0, withdrawals = 0, read = 0
       setStatus('loading')
 
@@ -175,7 +176,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             output: <Text><Text bold={true}>{title}</Text> - Match Plex episodes files</Text>,
           }))
 
-          const listed = (state.items || []).filter((item) => keys.includes(`${item.grandparentRatingKey}`))
+          let listed = (state.items || []).filter((item) => keys.includes(`${item.grandparentRatingKey}`))
           let show = (state.library || []).find((show) => `${show.id}` === tmdb)
           const unknown = !show
           let episodes = state.episodes?.[tmdb] || []
@@ -189,6 +190,33 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             state.logger.info({ message: `🩹 Add "${show.name}" show from Plex (archived)`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
             created.push(show.id)
           }
+
+          // A swap whose deletion failed stays pending, it is tried again on the next run
+          const swaps = settleSeasonSwaps(show.releases, episodeVersionsOf(listed), { cleanup: state.cleanup, now: Date.now() })
+          const deleted = new Set(), failed = new Set()
+
+          for (const { version, landed } of swaps.remove) {
+            try {
+              await state.plex.deleteQuery(`/library/metadata/${version.ratingKey}/media/${version.media}`)
+              deleted.add(version.file)
+              cleanups.push({ size: version.size, landed })
+              state.logger.info({ message: `🧹 Delete "${version.name}" from Plex, replaced by an accepted swap of "${show.name}"`, metadata: { ...state.metadata, group: 'cleanups', show: lighten.show(show), file: version.file, size: version.size, landed } })
+            } catch (error) {
+              failed.add(landed.release)
+              state.logger.warn({ message: `⚠️ Error on "${show.name}" cleanup of "${version.name}", ${error.message}`, metadata: { ...state.metadata, group: 'corrections', error, tmdb } })
+            }
+          }
+
+          if (failed.size) {
+            warning.push(tmdb)
+          }
+
+          for (const { release, fields } of swaps.settled.filter(({ release }) => !failed.has(release.id))) {
+            const { uri, params, init } = api.query.shows.patchShowRelease({ params: { id: show.id }, body: { id: release.id, ...fields } })
+            await api.fetch(uri, params, init)
+          }
+
+          listed = listed.map((item) => ({ ...item, Media: (item.Media || []).filter((media) => !deleted.has(media.Part[0].file)) }))
 
           // A section listing carries no streams, each new file is read from its episode's metadata
           const unread = unreadItemsOf(episodes, listed)
@@ -240,7 +268,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
 
       setState((state) => ({ ...state, missing }))
       await new Promise(resolve => setTimeout(resolve, 500))
-      state.logger.info({ message: `🩹 ${corrections.length} Fixed shows with Plex metadata, ${read} episodes streams read`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length }, created: created.length, unmatched, withdrawals, read } } })
+      state.logger.info({ message: `🩹 ${corrections.length} Fixed shows with Plex metadata, ${read} episodes streams read`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length }, cleanups: { success: cleanups.length, ...cleanedSpaceOf(cleanups) }, created: created.length, unmatched, withdrawals, read } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{corrections.length}</Text> shows fixed with Plex metadata, <Text bold={true}>{created.length}</Text> added (<Text bold={true}>archived</Text>)</Text> }))
       setStatus('done')
     }

@@ -1,10 +1,10 @@
 import { memo, useMemo } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
+import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Show from '../../../components/Show/Show'
-import { Summary } from '../Summary'
+import { Summary, freed, freedLabel } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summaryRefreshShows = ({ due = 0, show }, extended = true) => [
@@ -34,7 +34,7 @@ export const summaryRefreshShows = ({ due = 0, show }, extended = true) => [
   }] : []),
 ]
 
-export const summarySyncShows = ({ shows = 0, plex, corrections, missings }, extended = true) => [
+export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missings }, extended = true) => [
   ...(extended ? [{
     key: 'shows',
     emoji: '🗄️',
@@ -53,6 +53,18 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, missings }, ext
     title: <span><strong>{corrections?.success || 0}</strong> Fixed shows with Plex metadata</span>,
     length: corrections?.success || 0,
   },
+  ...(cleanups?.success > 0 ? [{
+    key: 'cleanups',
+    emoji: '🧹',
+    title: <span><strong>{cleanups.success}</strong> Replaced episode versions deleted from Plex</span>,
+    length: cleanups.success,
+  }] : []),
+  ...((cleanups?.success > 0 && typeof cleanups?.deleted === 'number' && typeof cleanups?.arrived === 'number') ? [{
+    key: 'space',
+    emoji: cleanups.arrived > cleanups.deleted ? '📈' : '📉',
+    title: <span><strong>{freed(cleanups.arrived - cleanups.deleted)}</strong> {freedLabel(cleanups.arrived - cleanups.deleted)}, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
+    length: freed(cleanups.arrived - cleanups.deleted),
+  }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',
     emoji: '💊',

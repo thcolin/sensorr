@@ -1,4 +1,4 @@
-import { settleSwaps, proposedSpaceOf, cleanedSpaceOf, OVERDUE_AFTER } from './swaps'
+import { settleSwaps, settleSeasonSwaps, proposedSpaceOf, cleanedSpaceOf, OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
 const old = { id: 'plex://movie/a#1', size: 5864708518 }
@@ -75,6 +75,61 @@ describe('settleSwaps', () => {
 
     expect(overdue.overdue).toBe(true)
     expect(settleSwaps([overdue], both, { cleanup: true, now }).releases[0]).not.toHaveProperty('overdue')
+  })
+})
+
+describe('settleSeasonSwaps', () => {
+  const version = (id, name, size, extra = {}) => ({ id, file: `/data/tvshows/Friends/Season 05/${name}`, name, size, ratingKey: id, media: 1, ...extra })
+  const olds = [1, 2].map((episode) => version(`plex://episode/5-${episode}#1`, `Friends.S05E0${episode}.720p.mkv`, 300))
+  const news = [1, 2].map((episode) => version(`plex://episode/5-${episode}#2`, `Friends.S05E0${episode}.1080p.mkv`, 700))
+  const swap = {
+    id: 'https://indexer/2',
+    swap: true,
+    size: 1500,
+    coverage: [{ season: 5, episode: 1 }, { season: 5, episode: 2 }],
+    replaces: olds.map(({ id }) => id),
+    accepted_at: now - 1000,
+    torrent: { name: 'Friends.S05', files: [1, 2].map((episode) => ({ path: `Friends.S05/Friends.S05E0${episode}.1080p.mkv`, size: 700 })) },
+  }
+  const landed = { '5:1': [olds[0], news[0]], '5:2': [olds[1], news[1]] }
+
+  it('deletes the replaced versions once every covered episode has one of its files on Plex, and ends the swap', () => {
+    const { settled, remove } = settleSeasonSwaps([swap], landed, { cleanup: true, now })
+
+    expect(remove).toEqual(olds.map((version) => ({ version, landed: { release: swap.id, size: 1400 } })))
+    expect(settled).toEqual([{ release: swap, fields: { replaces: [], overdue: false } }])
+  })
+
+  it('deletes nothing while one covered episode still waits for its file', () => {
+    const { settled, remove } = settleSeasonSwaps([swap], { ...landed, '5:2': [olds[1]] }, { cleanup: true, now })
+
+    expect(remove).toEqual([])
+    expect(settled).toEqual([])
+  })
+
+  it('reads a version as the swap only when it is a file of its torrent, not a same sized one', () => {
+    const other = version('plex://episode/5-2#3', 'Friends.S05E02.WEB.mkv', 700)
+
+    expect(settleSeasonSwaps([swap], { ...landed, '5:2': [olds[1], other] }, { cleanup: true, now }).remove).toEqual([])
+  })
+
+  it('ends a landed swap without deleting anything when cleanup is off', () => {
+    const { settled, remove } = settleSeasonSwaps([swap], landed, { cleanup: false, now })
+
+    expect(remove).toEqual([])
+    expect(settled[0].fields).toEqual({ replaces: [], overdue: false })
+  })
+
+  it('marks overdue a swap that has not landed a week after it was accepted, once', () => {
+    const late = { ...swap, accepted_at: now - OVERDUE_AFTER - 1 }
+
+    expect(settleSeasonSwaps([late], { '5:1': [olds[0]], '5:2': [olds[1]] }, { cleanup: true, now }).settled).toEqual([{ release: late, fields: { overdue: true } }])
+    expect(settleSeasonSwaps([{ ...late, overdue: true }], { '5:1': [olds[0]], '5:2': [olds[1]] }, { cleanup: true, now }).settled).toEqual([])
+  })
+
+  it('leaves an ended swap and a release that is not a swap', () => {
+    expect(settleSeasonSwaps([{ ...swap, replaces: [] }, { ...swap, swap: undefined }], landed, { cleanup: true, now })).toEqual({ settled: [], remove: [] })
+    expect(settleSeasonSwaps(undefined, landed, { cleanup: true, now })).toEqual({ settled: [], remove: [] })
   })
 })
 

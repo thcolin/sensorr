@@ -141,6 +141,25 @@ export const unreadItemsOf = (episodes, items) => {
   }).length)
 }
 
+// The versions of each episode, numbered as `showFilesOf` numbers them, with the item a deletion goes through
+export const episodeVersionsOf = (items) => {
+  const versions = {}, entries = {}
+
+  for (const item of items) {
+    for (const media of item.Media || []) {
+      const file = media.Part[0].file
+      const entry = entries[file] = entries[file] || { id: idOf(item, media), file, name: nameOf(media), size: media.Part.reduce((acc, curr) => acc + curr.size, 0), ratingKey: item.ratingKey, media: media.id }
+
+      for (const number of numbersOf(item, oleoo.parse(nameOf(media), { strict: false, flagged: true }))) {
+        const key = `${item.parentIndex}:${number}`
+        versions[key] = (versions[key] || []).includes(entry) ? versions[key] : [...(versions[key] || []), entry]
+      }
+    }
+  }
+
+  return versions
+}
+
 // Plex numbers an episode by its season `parentIndex` and its own `index`.
 // A file already read keeps the name built from its streams.
 export const showFilesOf = (episodes, items) => {

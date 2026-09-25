@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -165,5 +165,26 @@ describe('showFilesOf', () => {
   it('counts the Plex episodes no Sensorr episode numbers the same', () => {
     expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toBe(1)
     expect(showFilesOf(episodes, [item(1, 3, [media(6, 'Friends.S01E03E04.mkv')])]).unmatched).toBe(0)
+  })
+})
+
+describe('episodeVersionsOf', () => {
+  const media = (id, file, sizes = [1000]) => ({ id, Part: sizes.map((size) => ({ file, size })) })
+  const item = (parentIndex, index, Media) => ({ ratingKey: `${parentIndex}${index}`, guid: `plex://episode/${parentIndex}-${index}`, parentIndex, index, Media })
+
+  it('lists the versions of each episode with the item a deletion goes through', () => {
+    const versions = episodeVersionsOf([item(5, 1, [media(1, '/tv/Friends/Season 05/Friends.S05E01.720p.mkv', [200, 100]), media(2, '/tv/Friends/Season 05/Friends.S05E01.1080p.mkv')])])
+
+    expect(versions['5:1']).toEqual([
+      { id: 'plex://episode/5-1#1', file: '/tv/Friends/Season 05/Friends.S05E01.720p.mkv', name: 'Friends.S05E01.720p.mkv', size: 300, ratingKey: '51', media: 1 },
+      { id: 'plex://episode/5-1#2', file: '/tv/Friends/Season 05/Friends.S05E01.1080p.mkv', name: 'Friends.S05E01.1080p.mkv', size: 1000, ratingKey: '51', media: 2 },
+    ])
+  })
+
+  it('puts a file holding two episodes on both, as the version of the first item listing it', () => {
+    const versions = episodeVersionsOf([item(4, 23, [media(3, 'Friends.S04E23E24.mkv')]), item(4, 24, [media(7, 'Friends.S04E23E24.mkv')])])
+
+    expect(versions['4:23'].map(({ id }) => id)).toEqual(['plex://episode/4-23#3'])
+    expect(versions['4:24']).toEqual(versions['4:23'])
   })
 })
