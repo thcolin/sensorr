@@ -423,13 +423,12 @@ const withMoviesAgenda = () => (WrappedComponent) => {
     const fetchPage = useCallback(async (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => {
       const { with_release_type, with_credits_departments, ...params } = JSON.parse(filters)
       const refinements = { with_release_type, with_credits_departments }
-      const cancelled = () => signal.aborted
       const { month, gte, lte } = pageRange(origin, stream, page)
-      const discovered = await discoverCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, cancelled)
+      const discovered = await discoverCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, signal)
       const entities = [...discovered].sort((a, b) => (stream === 'past' ? -1 : 1) * (a.release_date || '').localeCompare(b.release_date || ''))
       let shown = 0
 
-      const summaries = await summarizeCalendar(tmdb, entities, persons.metadata, cancelled, (summaries) => {
+      const summaries = await summarizeCalendar(tmdb, entities, persons.metadata, signal, (summaries) => {
         let judged = 0
 
         while (judged < entities.length && entities[judged].id in summaries) {

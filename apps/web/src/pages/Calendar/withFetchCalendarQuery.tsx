@@ -7,22 +7,54 @@ import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/Person
 import { ControlsContext } from '../../components/Calendar/Calendar'
 import { judge, summarize } from './refine'
 
+// The requests a calendar keeps out at once, its discover pages as the details of its movies
+const POOL = 20
+
+// Runs `task` on each item in the order given, POOL at a time, until the signal aborts
+const pool = async <T,>(items: T[], signal: AbortSignal, task: (item: T, index: number) => Promise<void>) => {
+  let next = 0
+
+  const work = async () => {
+    while (next < items.length && !signal.aborted) {
+      const index = next++
+      await task(items[index], index)
+    }
+  }
+
+  await Promise.all(Array.from({ length: POOL }, work))
+}
+
+// A request TMDB refuses, as a 429 when too many went out at once, is asked again once a second later
+const retry = (request: () => Promise<any>, signal: AbortSignal): Promise<any> => request().catch(error => signal.aborted
+  ? Promise.reject(error)
+  : new Promise(resolve => setTimeout(resolve, 1000)).then(request))
+
 // Every movie a followed person has in a TMDB discover query. TMDB takes 500 people at most a request: the first
-// page of each slice says how many it has, then all the others go out at once. The movies keep the order the
-// pages had when they were read one after the other, page by page and a slice after the other within a page.
-export const discoverCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
+// page of each slice says how many it has, then the others go out through the pool. A first page is what the
+// month needs and fails it, any other page that fails again is left out with a warning. The movies keep the order
+// the pages had when they were read one after the other, page by page and a slice after the other within a page.
+export const discoverCalendar = async (tmdb, followed, params, signal: AbortSignal) => {
   const ids = Object.keys(followed)
   const slices = Array.from({ length: Math.ceil(ids.length / 500) }, (_, i) => ids.slice(i * 500, (i + 1) * 500).join('|'))
-  const discover = (with_people: string, page: number) => tmdb.fetch('discover/movie', { ...params, page, with_people })
+  const discover = (with_people: string, page: number) => retry(() => tmdb.fetch('discover/movie', { ...params, page, with_people }, { signal }), signal)
   const firsts = await Promise.all(slices.map(with_people => discover(with_people, 1)))
 
-  if (cancelled()) {
+  if (signal.aborted) {
     return []
   }
 
-  const rests = await Promise.all(slices.map((with_people, i) => Promise.all(
-    Array.from({ length: Math.min(firsts[i].total_pages || 1, 500) - 1 }, (_, page) => discover(with_people, page + 2)),
-  )))
+  const rests = slices.map((_, i) => Array.from({ length: Math.min(firsts[i].total_pages || 1, 500) - 1 }, () => null))
+  const pages = rests.flatMap((rest, i) => rest.map((_, page) => ({ slice: i, page: page + 2 })))
+
+  await pool(pages, signal, async ({ slice, page }) => {
+    rests[slice][page - 2] = await discover(slices[slice], page).catch((error) => {
+      if (!signal.aborted) {
+        console.warn(`Calendar page ${page} left out, it failed`, error)
+      }
+
+      return null
+    })
+  })
 
   const seen = new Set<number>()
   const entities = []
@@ -39,32 +71,32 @@ export const discoverCalendar = async (tmdb, followed, params, cancelled: () => 
   return entities
 }
 
-// What the refinements are judged on, the details of 20 movies at a time in the order given. `onSummary` hears of
+// What the refinements are judged on, the details of the movies through the pool in the order given. `onSummary` hears of
 // each one as it lands, with every summary so far.
-export const summarizeCalendar = async (tmdb, entities, followed, cancelled: () => boolean, onSummary = (summaries) => null) => {
+export const summarizeCalendar = async (tmdb, entities, followed, signal: AbortSignal, onSummary = (summaries) => null) => {
   const summaries = {}
-  let next = 0
 
-  const work = async () => {
-    while (next < entities.length && !cancelled()) {
-      const entity = entities[next++]
-      const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => {
+  await pool(entities, signal, async (entity: any) => {
+    const details = await retry(() => tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }, { signal }), signal).catch(() => {
+      if (!signal.aborted) {
         console.warn(`Movie ${entity.id} kept unfiltered, its details failed`)
-        return null
-      })
+      }
 
+      return null
+    })
+
+    if (!signal.aborted) {
       summaries[entity.id] = details && summarize(details, followed)
       onSummary(summaries)
     }
-  }
+  })
 
-  await Promise.all(Array.from({ length: 20 }, work))
   return summaries
 }
 
-export const fetchCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
-  const entities = await discoverCalendar(tmdb, followed, params, cancelled)
-  return { entities, summaries: await summarizeCalendar(tmdb, entities, followed, cancelled) }
+export const fetchCalendar = async (tmdb, followed, params, signal: AbortSignal) => {
+  const entities = await discoverCalendar(tmdb, followed, params, signal)
+  return { entities, summaries: await summarizeCalendar(tmdb, entities, followed, signal) }
 }
 
 // What the refinements keep of a fetch, sorted, and the departments the followed people hold in it
@@ -143,29 +175,29 @@ const withFetchCalendarQuery = (
         return
       }
 
-      let cancelled = false
+      // A newer query aborts the requests of the one it replaces
+      const controller = new AbortController()
+      const { signal } = controller
 
       debouncer(async () => {
         try {
-          const fetched = await fetchCalendar(tmdb, persons.metadata, query.params, () => cancelled)
+          const fetched = await fetchCalendar(tmdb, persons.metadata, query.params, signal)
 
-          if (!cancelled) {
+          if (!signal.aborted) {
             setFetched(fetched)
           }
         } catch (error) {
-          if (!cancelled) {
+          if (!signal.aborted) {
             setError(error)
           }
         } finally {
-          if (!cancelled) {
+          if (!signal.aborted) {
             setLoading(false)
           }
         }
       })
 
-      return () => {
-        cancelled = true
-      }
+      return () => controller.abort()
     }, [query, (props as any).ready, (props as any).loading, (props as any).error, persons.loading])
 
     const refined = useMemo(() => {
