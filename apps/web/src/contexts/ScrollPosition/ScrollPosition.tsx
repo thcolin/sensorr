@@ -1,5 +1,6 @@
 import { MutableRefObject, createContext, useCallback, useContext, useEffect, useRef } from 'react'
 import { useBlocker, useLocation, useNavigationType } from 'react-router-dom'
+import { historyEntryOf } from '@sensorr/utils'
 import { useDeviceContext } from '../Device/Device'
 import { useDetailsDrawerContext } from '../DetailsDrawer/DetailsDrawer'
 
@@ -20,7 +21,7 @@ export const Provider = ({ ...props }) => {
 
     detailsDrawer.close()
 
-    sessionStorage.setItem(`${location.key}-scroll`, (ref.current as any).scrollTop)
+    sessionStorage.setItem(`${historyEntryOf(location)}-scroll`, (ref.current as any).scrollTop)
     setHistoryIndex(curr => ({ POP: curr - 1, PUSH: curr + 1, REPLACE: curr }[historyAction]))
 
     // routes mounted outside `withLayout` have no `#main` to carry the view transition
@@ -64,7 +65,7 @@ export const Provider = ({ ...props }) => {
     // PUSH (new key, no saved value → 0) and POP (restore saved value) both delegate to the shared
     // restoration helper.
     if (navigationType === 'REPLACE') {
-      sessionStorage.setItem(`${location.key}-scroll`, (ref.current as any).scrollTop)
+      sessionStorage.setItem(`${historyEntryOf(location)}-scroll`, (ref.current as any).scrollTop)
       return
     }
 
@@ -72,7 +73,7 @@ export const Provider = ({ ...props }) => {
   }, [location.key, navigationType])
 
   const restoreScrollPosition = useCallback(() => {
-    const top = Number(sessionStorage.getItem(`${location.key}-scroll`)) || 0
+    const top = Number(sessionStorage.getItem(`${historyEntryOf(location)}-scroll`)) || 0
 
     // Apply immediately, then re-apply on the next frame: when a <VirtualGrid /> mounts, its full
     // scroll height may only settle after the first paint, so a single synchronous set can be clamped.

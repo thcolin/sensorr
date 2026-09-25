@@ -10,7 +10,7 @@ function reviver(key, value) {
 }
 
 // Every entry opened by a full page load, typed URL or new tab, has the `default` key, whatever its page: its pathname tells them apart
-const entryOf = (location) => location.key === 'default' ? location.pathname : location.key
+export const historyEntryOf = (location: { key: string, pathname: string }) => location.key === 'default' ? location.pathname : location.key
 
 export const useHistoryState = (key, defaultValue, {
   enabled = true,
@@ -28,7 +28,7 @@ export const useHistoryState = (key, defaultValue, {
   const getHistoryState = useRef(null)
   getHistoryState.current = () => {
     const hydratableFromLocationState = hydrateFromLocationState && typeof (location.state || {})[key] !== 'undefined'
-    const value = sessionStorage.getItem(`${entryOf(location)}-${key}`)
+    const value = sessionStorage.getItem(`${historyEntryOf(location)}-${key}`)
 
     if (value === null) {
       if (hydratableFromLocationState) {
@@ -67,7 +67,7 @@ export const useHistoryState = (key, defaultValue, {
     }
 
     setLocalState(value)
-    sessionStorage.setItem(`${entryOf(location)}-${key}`, JSON.stringify(value))
+    sessionStorage.setItem(`${historyEntryOf(location)}-${key}`, JSON.stringify(value))
   }, [location.key, location.pathname, key])
 
   // transferStateOnSamePathnameLocationReplace
@@ -80,8 +80,8 @@ export const useHistoryState = (key, defaultValue, {
       return
     }
 
-    sessionStorage.setItem(`${entryOf(location)}-${key}`, sessionStorage.getItem(`${entryOf(previousLocation.current)}-${key}`))
-    sessionStorage.removeItem(`${entryOf(previousLocation.current)}-${key}`)
+    sessionStorage.setItem(`${historyEntryOf(location)}-${key}`, sessionStorage.getItem(`${historyEntryOf(previousLocation.current)}-${key}`))
+    sessionStorage.removeItem(`${historyEntryOf(previousLocation.current)}-${key}`)
   }, [location.key])
 
   useEffect(() => {

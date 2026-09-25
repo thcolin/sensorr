@@ -1,7 +1,7 @@
 import React from 'react'
 import { act, cleanup, render } from '@testing-library/react'
 import { MemoryRouter, useNavigate } from 'react-router-dom'
-import { useHistoryState } from './useHistoryState'
+import { historyEntryOf, useHistoryState } from './useHistoryState'
 
 let current = null
 
@@ -16,6 +16,13 @@ const load = (pathname) => {
   cleanup()
   render(<MemoryRouter initialEntries={[pathname]}><Probe /></MemoryRouter>)
 }
+
+describe('historyEntryOf', () => {
+  it('names an entry by its key, or by its pathname when the key is default', () => {
+    expect(historyEntryOf({ key: 'amjayxsh', pathname: '/tv/library' })).toBe('amjayxsh')
+    expect(historyEntryOf({ key: 'default', pathname: '/tv/library' })).toBe('/tv/library')
+  })
+})
 
 describe('useHistoryState', () => {
   beforeEach(() => sessionStorage.clear())
