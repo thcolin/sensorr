@@ -15,7 +15,7 @@ import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
 export const Trending = (resource) => compose(
-  withTitle(`${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource])} ${resource}`),
+  withTitle(resource === 'shows' ? i18n.t('pages.shows.trending.title') : `${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
   withProps({
     id: 'trending',
     display: 'grid',

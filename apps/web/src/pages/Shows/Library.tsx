@@ -64,7 +64,7 @@ const ShowWithBulk = ({ entity, ...props }) => {
 }
 
 const Library = compose(
-  withTitle('Shows Library'),
+  withTitle(i18n.t('pages.shows.library.title')),
   withProps({
     id: 'shows-library',
     display: 'grid',

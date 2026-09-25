@@ -32,6 +32,13 @@ FilterRuntime.args = {
   disabled: false,
 }
 
+// The episode length `discover/tv` filters on, bounded at two hours
+export const FilterEpisodeRuntime = (args: any) => (
+  <ColorModeWrapper value='primary'>
+    <UIFilterRuntime {...args} field='episode_runtime' label='🕒 Episode Duration' value={null} onChange={() => {}} statistics={null} />
+  </ColorModeWrapper>
+)
+
 FilterRuntime.argTypes = {
   value: {
     control: null,

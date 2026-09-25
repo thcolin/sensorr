@@ -171,6 +171,12 @@ export const fields = {
       return [hours > 0 ? `${hours}h` : '', !hours || minutes ? `${minutes}m` : ''].join(' ')
     },
   },
+  // `discover/tv` filters `with_runtime` on the length of an episode, which rarely passes two hours
+  episode_runtime: {
+    initial: [0, 120],
+    boundaries: Array(13).fill(null).map((foo, i) => i * 10), // 0-10-20...120 (= 2h)
+    serialize: serializers.range(120),
+  },
   known_for_department: {
     initial: { values: [], behavior: 'or' },
     serialize: serializers.select('multi'),

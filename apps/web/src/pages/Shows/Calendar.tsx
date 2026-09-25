@@ -322,7 +322,7 @@ UILine.styles = {
 const Line = memo(UILine)
 
 export const Calendar = compose(
-  withTitle('Shows Calendar'),
+  withTitle(i18n.t('pages.shows.calendar.title')),
   withFollowedShows(),
   withFetchQuery(APIQuery.episodes.getEpisodes({ params: { limit: '' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({

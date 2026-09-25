@@ -63,6 +63,7 @@ export default {
       vote_count: emojize('🗳', 'Vote Count'),
       budget: emojize('💸', 'Budget'),
       runtime: emojize('🕒', 'Duration'),
+      episode_runtime: emojize('🕒', 'Episode Duration'),
       people: emojize('⭐️', 'People'),
       crew: emojize('🎬', 'Crew'),
       cast: emojize('🤵', 'Cast'),
@@ -273,6 +274,23 @@ export default {
     },
     search: {
       title: 'Search',
+    },
+    shows: {
+      library: {
+        title: 'Shows · Library',
+      },
+      calendar: {
+        title: 'Shows · Calendar',
+      },
+      discover: {
+        title: 'Shows · Discover',
+      },
+      trending: {
+        title: 'Shows · Trending',
+      },
+      search: {
+        title: 'Shows · Search',
+      },
     },
   },
 }

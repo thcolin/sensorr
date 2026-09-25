@@ -6,17 +6,19 @@ import { Range, RangeProps } from '../../../../inputs/Range/Range'
 
 export interface FilterRuntimeProps extends Omit<RangeProps, 'label' | 'labelize' | 'step' | 'data'> {
   statistics: { _id: any, count: number }[]
+  field?: 'runtime' | 'episode_runtime'
+  label?: string
 }
 
-const UIFilterRuntime = ({ statistics, ...props }: FilterRuntimeProps) => {
+const UIFilterRuntime = ({ statistics, field: key = 'runtime', label, ...props }: FilterRuntimeProps) => {
   const { t } = useTranslation()
-  const field = useFieldComputedRangeProps('runtime', statistics)
+  const field = useFieldComputedRangeProps(key, statistics)
 
   return (
     <Range
       {...props as any}
       {...field}
-      label={t('ui.filters.runtime')}
+      label={label || t('ui.filters.runtime')}
       labelize={(value) => humanize.time(value as string).replace(/ /, '')}
       value={props.value || [field.min, field.max]}
       step={null}

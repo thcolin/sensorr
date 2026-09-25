@@ -12,7 +12,7 @@ import {
   Warning,
   Option,
 } from '@sensorr/ui'
-import { compose, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import Show from '../../components/Show/Show'
@@ -27,7 +27,7 @@ import { EntitiesHideable } from '../../components/Entities/Hideable'
 
 // The filters of the movies Discover that `discover/tv` also takes, people and release types aside
 export const Discover = compose(
-  withTitle('Discover shows'),
+  withTitle(i18n.t('pages.shows.discover.title')),
   withProps({
     display: 'grid',
     child: Show,
@@ -149,6 +149,8 @@ export const Discover = compose(
       },
       without_genres: {
         ...fields.genres,
+        // Talk and news shows fill the first screen of a popularity sort, the movie calendar leaves documentaries out the same way
+        initial: { values: [{ value: 10767, label: 'Talk' }, { value: 10763, label: 'News' }], behavior: 'or' },
         statistics: null,
         component: compose(
           withProps({
@@ -162,7 +164,7 @@ export const Discover = compose(
       first_air_date: {
         ...fields.release_date,
         statistics: (entities, field) => fields.release_date.statistics(entities.map(entity => ({ release_date: entity.first_air_date })), field),
-        component: withProps({ label: emojize('📅', 'First Air Date') })(FilterReleaseDate),
+        component: withProps({ label: i18n.t('ui.sortings.first_air_date') })(FilterReleaseDate),
       },
       vote_average: {
         ...fields.vote_average,
@@ -174,8 +176,9 @@ export const Discover = compose(
         component: FilterVoteCount,
       },
       with_runtime: {
-        ...fields.runtime,
-        component: FilterRuntime,
+        ...fields.episode_runtime,
+        statistics: null,
+        component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
       },
       with_companies: {
         ...fields.companies,
