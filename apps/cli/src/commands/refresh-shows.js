@@ -5,7 +5,7 @@ import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { fetchShow, fetchSensorrShows, isRefreshDue, monitoredOf } from '../utils/shows'
+import { fetchShow, fetchSensorrShows, isRefreshDue, monitoredOf, goneEpisodesOf } from '../utils/shows'
 
 const meta = {
   command: 'refresh',
@@ -114,17 +114,28 @@ const FetchTMDBShowsChangesTask = ({ ...props }) => {
           const shows = api.query.shows.postShows({ body: { [entity.id]: { ...show, refreshed_at: new Date() } } })
           await api.fetch(shows.uri, shows.params, shows.init)
 
+          const gone = fetched.length ? goneEpisodesOf(known, fetched, show.seasons) : { removed: [], unfollowed: [] }
+
           if (fetched.length) {
             const { uri, params, init } = api.query.episodes.postEpisodes({
-              body: fetched.reduce((acc, episode) => ({
-                ...acc,
-                [episode.id]: ids.has(episode.id) ? episode : { ...episode, monitored: monitoredOf(episode, entity, known) },
-              }), {}),
+              body: {
+                ...fetched.reduce((acc, episode) => ({
+                  ...acc,
+                  [episode.id]: ids.has(episode.id) ? episode : { ...episode, monitored: monitoredOf(episode, entity, known) },
+                }), {}),
+                ...gone.unfollowed.reduce((acc, id) => ({ ...acc, [id]: { monitored: false } }), {}),
+              },
             })
             await api.fetch(uri, params, init)
           }
 
-          state.logger.info({ message: `Refresh "${title}" data${added.length ? `, ${added.length} new episodes` : ''}`, metadata: { ...state.metadata, group: entity.id, type: 'show', entity: lighten.show(show), added: added.length } })
+          if (gone.removed.length) {
+            const { uri, params, init } = api.query.episodes.deleteEpisodes({ body: { ids: gone.removed } })
+            await api.fetch(uri, params, init)
+          }
+
+          const dropped = gone.removed.length + gone.unfollowed.length
+          state.logger.info({ message: `Refresh "${title}" data${added.length ? `, ${added.length} new episodes` : ''}${dropped ? `, ${dropped} episodes gone from TMDB` : ''}`, metadata: { ...state.metadata, group: entity.id, type: 'show', entity: lighten.show(show), added: added.length, removed: gone.removed.length, unfollowed: gone.unfollowed.length } })
           episodes += added.length
           success++
         } catch (error) {

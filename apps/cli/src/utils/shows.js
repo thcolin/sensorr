@@ -74,6 +74,20 @@ export const withdrawnProposalsOf = (releases = [], episodes) => {
   return releases.filter(({ proposal, coverage }) => proposal && coverage?.length && coverage.every(({ season, episode }) => owned.has(`${season}:${episode}`)))
 }
 
+// An episode TMDB dropped or renumbered leaves the show, deleted, or unfollowed when it holds a file or a release.
+// A season TMDB still lists but did not answer for says nothing of its episodes.
+export const goneEpisodesOf = (known, fetched, seasons = []) => {
+  const ids = new Set(fetched.map(({ id }) => id))
+  const answered = new Set(fetched.map(({ season_number }) => season_number))
+  const listed = new Set(seasons.map(({ season_number }) => season_number))
+  const gone = known.filter(({ id, season_number }) => !ids.has(id) && (answered.has(season_number) || !listed.has(season_number)))
+
+  return {
+    removed: gone.filter(({ files, release }) => !files?.length && !release).map(({ id }) => id),
+    unfollowed: gone.filter(({ files, release, monitored }) => (files?.length || release) && monitored).map(({ id }) => id),
+  }
+}
+
 // Plex decides, except for a file `import shows` linked that Plex has not scanned yet.
 export const plexFilesOf = (known = [], files) => {
   const kept = files.length ? files : known.filter(({ from }) => from === 'import')

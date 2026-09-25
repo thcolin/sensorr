@@ -337,6 +337,13 @@ export class ShowsService {
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
   }
 
+  // An episode holding a file or a release stays: a job may have taken it since the caller read it
+  async deleteEpisodes(ids: number[]): Promise<any> {
+    this.logger.log(`DeleteEpisodes "${ids.length}"`)
+    const { deletedCount } = await this.episodeModel.deleteMany({ _id: { $in: ids }, 'files.0': { $exists: false }, release: null })
+    return { deleted: deletedCount }
+  }
+
   // Only the episodes whose release is still `from` move, so two jobs never both take one
   async moveEpisodesRelease(ids: number[], from: string | null, to: string | null): Promise<any> {
     this.logger.log(`MoveEpisodesRelease "${ids.length}", from="${from}", to="${to}"`)

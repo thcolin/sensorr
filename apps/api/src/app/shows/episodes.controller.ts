@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Query, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Patch, Query, Post } from '@nestjs/common'
 import { ShowsService } from './shows.service'
 import { EpisodeDTO } from './episode.dto'
 
@@ -9,6 +9,11 @@ export class EpisodesController {
   @Post()
   async upsertEpisodes(@Body() changes: { [key: string]: EpisodeDTO }) {
     return this.showsService.upsertEpisodes(changes)
+  }
+
+  @Delete()
+  async deleteEpisodes(@Body() { ids }: { ids: number[] }) {
+    return this.showsService.deleteEpisodes(ids)
   }
 
   @Patch('release')

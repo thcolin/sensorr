@@ -174,6 +174,8 @@ A show still airing, TMDB `status` `Returning Series`, `In Production`, `Planned
 
 It writes TMDB fields and `refreshed_at` only (`apps/cli/src/commands/refresh-shows.js:114`), so the Sensorr fields survive, as with `refresh`. A known episode gets its TMDB fields only. A new one is followed by the rule of a new episode (`monitoredOf`, `apps/cli/src/utils/shows.js:18`): like its season when the season already has a followed episode, like `monitor_new_seasons` when the season is new, never on an unfollowed show, and never for a special, which you follow by hand.
 
+An episode TMDB no longer has, dropped or renumbered, is deleted when it holds neither a file nor a release, and unfollowed otherwise, so no job searches it again (`goneEpisodesOf`, `apps/cli/src/utils/shows.js`). The API deletes it only if it still holds neither, a job may have taken it meanwhile (`deleteEpisodes` in `apps/api/src/app/shows/shows.service.ts`). A season TMDB still lists but left out of its answer says nothing of its episodes: they stay as they are until a run reads it.
+
 ### `migrate sonarr`
 
 Take over the series Sonarr follows, once.

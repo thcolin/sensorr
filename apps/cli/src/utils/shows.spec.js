@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -429,5 +429,22 @@ describe('airingUnits', () => {
 
   it('keeps the single episodes aired since the given date, and no pack', () => {
     expect(airingUnits(units, episodes, since).map(({ type, episode }) => `${type}:${episode}`)).toEqual(['episode:2', 'episode:3'])
+  })
+})
+
+describe('goneEpisodesOf', () => {
+  const episode = (id, season_number, fields = {}) => ({ id, season_number, monitored: true, files: [], release: null, ...fields })
+  const seasons = [{ season_number: 1 }, { season_number: 2 }]
+
+  it('deletes an episode TMDB dropped from a season it answered for, and unfollows one holding a file or a release', () => {
+    const known = [episode(1, 1), episode(2, 1), episode(3, 1, { files: [{ id: 'plex://episode/3#1' }] }), episode(4, 1, { release: 'abc' }), episode(5, 1, { release: 'def', monitored: false })]
+
+    expect(goneEpisodesOf(known, [episode(1, 1)], seasons)).toEqual({ removed: [2], unfollowed: [3, 4] })
+  })
+
+  it('leaves the episodes of a season TMDB lists but did not answer for, and drops those of a season it no longer lists', () => {
+    const known = [episode(1, 1), episode(2, 2), episode(3, 3)]
+
+    expect(goneEpisodesOf(known, [episode(1, 1)], seasons)).toEqual({ removed: [3], unfollowed: [] })
   })
 })

@@ -329,6 +329,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      deleteEpisodes: (
+        { body, init = {} }: { body: { ids: number[] }, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'episodes',
+        params: {},
+        init: {
+          ...init,
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       patchEpisodesRelease: (
         { body, init = {} }: { body: { ids: number[], from: string | null, to: string | null }, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
