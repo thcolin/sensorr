@@ -33,6 +33,7 @@ const Show = ({ ...props }) => {
     setShowMetadata,
     setEpisodesMetadata,
     setShowState,
+    banShowRelease,
   } = useShowsMetadataContext() as any
   const [episodesError, setEpisodesError] = useState(null)
 
@@ -64,6 +65,7 @@ const Show = ({ ...props }) => {
 
   const setMetadata = useCallback((key, value) => setShowMetadata(Number(id), key, value), [id])
   const proceedRelease = useCallback((release, choice) => setShowMetadata(Number(id), 'proposal', { id: release.id, choice }), [id])
+  const banRelease = useCallback((release) => banShowRelease(Number(id), release.title), [id])
   // `setShowState` toasts a show it adds to or removes from the library, `setShowMetadata` nothing for a follow
   const setState = useCallback(state => setShowState(Number(id), state).catch(() => inLibrary && toast.error('Error while following the show')), [id, setShowState, inLibrary])
   // A season is a bulk and toasts its own outcome, a single episode does not
@@ -187,7 +189,7 @@ const Show = ({ ...props }) => {
       ) : null}
     >
       {inLibrary && (
-        <Proposals entity={show.data} metadata={metadata} episodes={episodes || []} proceedRelease={proceedRelease} />
+        <Proposals entity={show.data} metadata={metadata} episodes={episodes || []} proceedRelease={proceedRelease} banRelease={banRelease} />
       )}
       {episodesError ? (
         <Warning

@@ -1,5 +1,6 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Button, Icon } from '@sensorr/ui'
 import { coverageLabel } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -7,22 +8,31 @@ import { Gestures } from '../../../components/Sensorr/Gestures'
 import { Release } from '../../../components/Sensorr/Release'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { isPending, proposalDiff, scoreReleases } from '../../Proposals/queue'
+import { DELAY, usePendingVerdict } from '../../Proposals/pending'
+import { VERDICTS } from '../../Proposals/Card'
 import { useShowPolicy } from './Actions'
 import { fileMetaOf, fillsOf, ownedFilesOf } from './fills'
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
 
-const UIProposals = ({ entity, metadata, episodes, proceedRelease, ...props }) => {
+const without = (object, key) => {
+  const { [key]: removed, ...rest } = object
+  return rest
+}
+
+const UIProposals = ({ entity, metadata, episodes, proceedRelease, banRelease, ...props }) => {
   const { device } = useDeviceContext()
   const policy = useShowPolicy(entity, metadata)
-  const [sending, setSending] = useState({})
+  // The verdicts waiting in their toast or on their way, their proposal leaves the list meanwhile
+  const [decided, setDecided] = useState({})
+  const keys = useRef(null)
 
   // Scored by the show's policy, as the Swaps screen scores a movie's releases, in the order they were stored
   const rows = useMemo(() => {
     const pending = (metadata?.releases || []).filter(isPending)
     const scored = scoreReleases(pending, policy)
 
-    return pending.map(release => {
+    return pending.filter(release => !decided[release.id]).map(release => {
       const proposal = scored.find(({ id }) => id === release.id)
       const owned = policy.apply(ownedFilesOf(release, episodes).map(file => ({ ...file, meta: fileMetaOf(file) })), null)
 
@@ -32,23 +42,74 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, ...props }) =
         diff: proposalDiff(owned, proposal, policy),
       }
     })
-  }, [metadata?.releases, episodes, policy])
+  }, [metadata?.releases, episodes, policy, decided])
 
-  const answer = async (release, verdict) => {
-    setSending(sending => ({ ...sending, [release.id]: true }))
-
+  // A ban is a refusal whose title the jobs will not propose again
+  const send = useCallback(async ({ release, verdict }) => {
     try {
+      if (verdict === 'ban') {
+        await banRelease(release)
+      }
+
       await proceedRelease(release, verdict === 'accept')
     } catch {
-      toast.error('Error while answering the proposal')
+      toast.error(`Error while sending **${VERDICTS[verdict].label}** for **${coverageLabel(release.coverage || [], release.level || undefined)}**`)
     }
 
-    setSending(sending => ({ ...sending, [release.id]: false }))
-  }
+    setDecided(decided => without(decided, release.id))
+  }, [proceedRelease, banRelease])
 
-  // A and R answer the first proposal, as they answer the one on top of the Swaps queue
-  const first = useRef(null)
-  first.current = rows[0] && !sending[rows[0].release.id] ? (verdict) => answer(rows[0].release, verdict) : null
+  const onUndo = useCallback(({ release }) => setDecided(decided => without(decided, release.id)), [])
+  const { pending, hold, flush, undo } = usePendingVerdict({ send, onUndo })
+
+  const notify = useCallback((release, verdict) => {
+    const { emoji, icon, label, color } = VERDICTS[verdict] as any
+    const message = (
+      <span sx={UIProposals.styles.pending}>
+        <span>
+          <span>{entity?.name}</span>
+          <small>{coverageLabel(release.coverage || [], release.level || undefined)}</small>
+        </span>
+        <code>{release.title}</code>
+      </span>
+    )
+    const actions = (
+      <>
+        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
+        {verdict === 'refuse' && <Button variant='outline' color='error' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
+      </>
+    )
+
+    ;({ accept: toast.success, refuse: toast.error, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
+  }, [undo, entity?.name])
+
+  // The verdict waits in its toast before it is sent: an accepted release downloads at once, for good
+  const answer = useCallback((release, verdict) => {
+    flush()
+    setDecided(decided => ({ ...decided, [release.id]: verdict }))
+    hold({ release, verdict })
+    notify(release, verdict)
+  }, [flush, hold, notify])
+
+  // A refusal still waiting to be sent turns into a ban, as on the Swaps screen
+  const ban = useCallback(() => {
+    const current = pending.current
+
+    if (!current || current.verdict !== 'refuse') {
+      return
+    }
+
+    setDecided(decided => ({ ...decided, [current.release.id]: 'ban' }))
+    hold({ ...current, verdict: 'ban' })
+    notify(current.release, 'ban')
+  }, [hold, notify])
+
+  // A and R answer the first proposal, as they answer the one on top of the Swaps queue, Z undoes and B bans
+  keys.current = {
+    first: rows[0] ? (verdict) => answer(rows[0].release, verdict) : null,
+    undo,
+    ban,
+  }
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -56,11 +117,18 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, ...props }) =
         return
       }
 
-      const verdict = { a: 'accept', r: 'refuse' }[e.key.toLowerCase()]
+      const key = e.key.toLowerCase()
+      const verdict = { a: 'accept', r: 'refuse' }[key]
 
-      if (verdict && first.current) {
+      if (verdict && keys.current.first) {
         e.preventDefault()
-        first.current(verdict)
+        keys.current.first(verdict)
+      } else if (key === 'z' && pending.current) {
+        e.preventDefault()
+        keys.current.undo()
+      } else if (key === 'b' && pending.current?.verdict === 'refuse') {
+        e.preventDefault()
+        keys.current.ban()
       }
     }
 
@@ -107,7 +175,6 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, ...props }) =
               </div>
               <Gestures
                 shortcuts={index === 0}
-                disabled={!!sending[release.id]}
                 onGesture={verdict => answer(release, verdict)}
               />
             </div>
@@ -119,6 +186,38 @@ const UIProposals = ({ entity, metadata, episodes, proceedRelease, ...props }) =
 }
 
 UIProposals.styles = {
+  // The toast of a verdict waiting to be sent, laid out as the Swaps screen's
+  pending: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: 10,
+    width: '22em',
+    maxWidth: '100%',
+    '>span': {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8,
+      '>span': {
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      '>small': {
+        flexShrink: 0,
+        color: 'grayDarker',
+        fontFamily: 'monospace',
+        fontSize: 6,
+      },
+    },
+    '>code': {
+      fontSize: 6,
+      color: 'grayDarkest',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  },
   element: {
     display: 'flex',
     justifyContent: 'center',

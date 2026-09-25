@@ -303,6 +303,12 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
+  // Listed in `banned_releases`, which the jobs exclude on: a refused release can come back, a banned one cannot
+  const banShowRelease = useCallback(async (id: number, title: string) => {
+    const { uri, params, init } = api.query.shows.postShowBannedRelease({ body: { title }, params: { id } })
+    await api.fetch(uri, params, init)
+  }, [])
+
   // A show leaves the library from its state badge, as a movie does, but once confirmed: its episodes go with it.
   // `removeShow` toasts its own failure, only a failed follow rejects
   const setShowState = useCallback(async (id: number, state: 'ignored' | 'unfollowed' | 'followed') => {
@@ -334,6 +340,7 @@ export const Provider = ({ ...props }) => {
         followShow,
         removeShow,
         setShowState,
+        banShowRelease,
       }}
     />
   )
