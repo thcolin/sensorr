@@ -101,22 +101,44 @@ const UIShow = ({
       selected={selected}
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
-      footer={!!progress && <ShowProgress {...progress} />}
+      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} compact={device === 'mobile'} />}
     />
   )
 }
 
 export const Show = memo(UIShow)
 
-const ShowProgress = ({ owned, aired }: { owned: number, aired: number }) => (
+interface ShowProgressProps {
+  owned: number
+  aired: number
+  seasons?: { owned: number, aired: number }[]
+  first_air_date?: string | Date | null
+  compact?: boolean
+}
+
+// The owned count or the upcoming status on the left, the bar or the first air date on the right, so neighbour cards line up
+const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowProgressProps) => (
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (
       <>
         <code title={`${owned} of ${aired} aired episodes owned`}>{`${owned}/${aired}`}</code>
-        <Progress value={owned} max={aired} title={`${owned} of ${aired} aired episodes owned`} />
+        <Progress
+          value={owned}
+          max={aired}
+          segments={seasons?.map(season => ({ value: season.owned, max: season.aired }))}
+          title={`${owned} of ${aired} aired episodes owned`}
+        />
       </>
     ) : (
-      <span>{emojize(EpisodeStatusOptions.upcoming.emoji, EpisodeStatusOptions.upcoming.label)}</span>
+      <>
+        <span title={EpisodeStatusOptions.upcoming.label}>
+          <span role='img' aria-label={EpisodeStatusOptions.upcoming.label}>{EpisodeStatusOptions.upcoming.emoji}</span>
+          {!compact && <span aria-hidden={true}>{EpisodeStatusOptions.upcoming.label}</span>}
+        </span>
+        <time title='First episode air date' dateTime={first_air_date ? new Date(first_air_date).toISOString().slice(0, 10) : undefined}>
+          {first_air_date ? new Date(first_air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
+        </time>
+      </>
     )}
   </div>
 )
@@ -125,19 +147,26 @@ ShowProgress.styles = {
   element: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 6,
+    marginTop: 10,
     color: 'grayDarkest',
     whiteSpace: 'nowrap',
-    '>code': {
-      fontFamily: 'monospace',
+    '>code, >time, >span': {
       fontSize: 7,
+      lineHeight: 'normal',
+    },
+    '>code, >time': {
+      fontFamily: 'monospace',
       fontVariantNumeric: 'tabular-nums',
     },
     '>span': {
-      fontSize: 7,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
       fontWeight: 'semibold',
     },
-    '>progress': {
+    '>progress, >[role="progressbar"]': {
       flex: 1,
     },
   },
