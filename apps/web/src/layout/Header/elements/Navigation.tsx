@@ -151,7 +151,7 @@ const Navigation = ({ display = 'web', ...props }) => {
         </RippleNavLink>
         <RippleNavLink to='/tv/library' viewTransition onClick={location.pathname === '/tv/library' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/tv') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.5 18 8.5l6.5-6"/><path fill="currentColor" fillRule="evenodd" d="M5 9h26a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3zm2 3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16.5a2 2 0 0 0 2-2V14a2 2 0 0 0-2-2zm1 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14.5a1 1 0 0 0 1-1V15a1 1 0 0 0-1-1zm21.75 1.25a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zm0 6a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zM8 31h4v2.5H8zm16 0h4v2.5h-4z"/></svg>
-          <span>Shows</span>
+          <span>TV</span>
         </RippleNavLink>
         <RippleNavLink to='/person/followed' viewTransition onClick={location.pathname === '/person/followed' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M13.4 17.9c-1.1 1.1-2.6 1.8-4.2 1.8-3.2-.1-5.7-2.7-5.7-5.9C3.6 10.7 6 8.2 9 8.1c-.8 3.8 1 7.8 4.4 9.8zM32.6 13.8c0 3.2-2.6 5.8-5.8 5.8-1.6 0-3.1-.7-4.2-1.8 3.4-2 5.2-5.9 4.4-9.8 3.1.2 5.6 2.7 5.6 5.8zM7.8 23.9c-.6 1.2-.9 2.5-.9 3.9v6.1H2V30c0-3.3 2.6-6 5.8-6.1zM34 30v3.9h-4.9v-6.1c0-1.3-.3-2.7-.9-3.9 3.2.1 5.8 2.8 5.8 6.1zM24.8 9.9c0 3.7-3 6.8-6.8 6.8-3.7 0-6.8-3-6.8-6.8s3-6.8 6.8-6.8c3.7 0 6.7 3.1 6.8 6.8zM26.6 27.7v6.1H9.4v-6.1c0-1.4.5-2.8 1.4-3.9.3-.4.7-.8 1.1-1.1.3-.3.7-.5 1.1-.6.8-.4 1.7-.6 2.6-.5h4.9c.9 0 1.8.2 2.6.5.4.2.7.4 1.1.6.4.3.8.7 1.1 1.1.8 1.1 1.3 2.5 1.3 3.9z"/></svg>
@@ -180,7 +180,7 @@ const Navigation = ({ display = 'web', ...props }) => {
           <NavLink onClick={handleWebNavigation} to="/" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Home</NavLink>
           <NavLink onClick={handleWebNavigation} to="/movie/library" viewTransition style={(location.pathname.startsWith('/movie') || location.pathname.startsWith('/collection')) ? Navigation.styles.web.active : {}}>Movies</NavLink>
           {renderSecondary('/movie')}
-          <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={location.pathname.startsWith('/tv') ? Navigation.styles.web.active : {}}>Shows</NavLink>
+          <NavLink onClick={handleWebNavigation} to="/tv/library" viewTransition style={location.pathname.startsWith('/tv') ? Navigation.styles.web.active : {}}>TV</NavLink>
           {renderSecondary('/tv')}
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>
           {renderSecondary('/person')}
