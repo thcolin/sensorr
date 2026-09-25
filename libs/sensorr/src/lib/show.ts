@@ -167,6 +167,16 @@ export const swapOf = (coverage: Coverage[], episodes: ShowEpisode[]) => {
   }
 }
 
+// Only a file Plex read can be deleted through Plex
+export const swapReplacesOf = (coverage: Coverage[], episodes: ShowEpisode[]) => {
+  const seasons = new Set(coverage.map(({ season }) => season))
+  return [...new Set(episodes
+    .filter(({ season_number }) => seasons.has(season_number))
+    .flatMap(({ files }) => files || [])
+    .filter(({ from }) => from === 'sync')
+    .map(({ id }) => id))]
+}
+
 export const coverageLabel = (coverage: Coverage[], level: ShowUnit['type'] = coverage.length === 1 ? 'episode' : 'season') => {
   const pad = (value: number) => String(value).padStart(2, '0')
   const seasons = [...new Set(coverage.map(({ season }) => season))].sort((a, b) => a - b)

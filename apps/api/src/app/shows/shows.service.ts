@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
-import { entryPolicy } from '@sensorr/sensorr'
+import { entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { LogsService } from '../logs/logs.service'
@@ -15,7 +15,7 @@ import { Episode as EpisodeDocument } from './episode.schema'
 
 const METADATA_FIELDS = ['name', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'releases', 'banned_releases', 'requested_by']
 
-const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent']
+const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent', 'replaces']
 
 const LABELS ={ totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' }
 
@@ -110,7 +110,7 @@ export class ShowsService {
         if (posted.choice) {
           const { choice, ...picked } = (manual ? posted : release) as ShowReleaseDTO & { choice?: boolean }
           const torrent = await this.sensorrService.downloadRelease(picked, manual ? 'enclosure' : 'cache', 'fs', 'show')
-          const accepted = { proposal: false, accepted_at: Date.now(), ...(torrent ? { torrent } : {}) }
+          const accepted = { proposal: false, accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
 
           if (picked.coverage?.length) {
             await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
@@ -144,6 +144,12 @@ export class ShowsService {
     }))
 
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
+  }
+
+  // An accepted swap names the Plex files of its seasons, for `sync shows` to delete once it lands
+  private async replacedFilesOf(id: number, coverage: { season: number, episode: number }[]): Promise<string[]> {
+    const episodes = await this.episodeModel.find({ show_id: id, season_number: { $in: [...new Set(coverage.map(({ season }) => season))] } }, { season_number: 1, episode_number: 1, files: 1 }).lean()
+    return swapReplacesOf(coverage, episodes as any[])
   }
 
   async pushRelease(id: number, release: ShowReleaseDTO): Promise<any> {
