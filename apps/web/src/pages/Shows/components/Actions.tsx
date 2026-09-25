@@ -46,21 +46,14 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
     setPending(pending => ({ ...pending, [key]: false }))
   }
 
+  const helps = {
+    policy: 'Sensorr will apply selected policy to sort and select the best release',
+    auto: auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once',
+  }
+
   return (
     <div sx={MetadataStyles.container}>
-      <div sx={{ ...block, ...UIShowSettings.styles.policy }}>
-        <span id={ids.policy}>Policy</span>
-        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
-          <PolicyInput
-            value={policy}
-            onChange={value => set('policy', value)}
-          />
-        </fieldset>
-        {help && (
-          <small>Sensorr will apply selected policy to sort and select the best release for each episode</small>
-        )}
-      </div>
-      <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+      <div sx={{ ...block, ...MetadataStyles.wide }}>
         <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
           {DOWNLOADS.map(({ value, key, label }) => (
@@ -77,11 +70,17 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
             </Option>
           ))}
         </div>
-        {help && (
-          <small id={`${ids.auto}-help`}>
-            {auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once'}
-          </small>
-        )}
+        {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
+      </div>
+      <div sx={{ ...block, ...MetadataStyles.narrow }}>
+        <span id={ids.policy}>Policy</span>
+        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
+          <PolicyInput
+            value={policy}
+            onChange={value => set('policy', value)}
+          />
+        </fieldset>
+        {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
     </div>
   )
@@ -106,7 +105,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
     <div>
       <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata} />
       <div sx={MetadataStyles.container}>
-        <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+        <div sx={{ ...block, ...MetadataStyles.option }}>
           <span id={ids.monitored}>Follow</span>
           <OptionInput
             id={ids.monitored}
@@ -119,7 +118,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
             {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
           </OptionInput>
         </div>
-        <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+        <div sx={{ ...block, ...MetadataStyles.option }}>
           <span id={ids.monitor_new_seasons}>Follow new seasons</span>
           <OptionInput
             id={ids.monitor_new_seasons}
@@ -140,15 +139,6 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
-  policy: {
-    flex: 0,
-    minWidth: '12em',
-    '>small': {
-      ...block['>small'],
-      whiteSpace: 'normal',
-      lineHeight: 'body',
-    },
-  },
   fieldset: {
     minWidth: 0,
     margin: 12,
@@ -160,6 +150,7 @@ UIShowSettings.styles = {
     },
   },
   radios: {
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: ['center', 'flex-start'],

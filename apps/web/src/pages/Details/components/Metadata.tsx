@@ -24,7 +24,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
   return (
     <div>
       <div sx={UIMetadata.styles.container}>
-        <div sx={{ ...UIMetadata.styles.block, flex: 1, overflow: 'hidden' }}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide }}>
           <span>Terms</span>
           <QueryInput
             value={values.terms}
@@ -37,7 +37,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will search for all selected terms on configured indexers">Sensorr will search for all selected terms on configured indexers</small>}
         </div>
-        <div sx={{ ...UIMetadata.styles.block, flex: 0, minWidth: '12em' }}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.narrow }}>
           <span>Years</span>
           <QueryInput
             value={values.years}
@@ -50,7 +50,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will filter releases with selected years">Sensorr will filter releases with selected years</small>}
         </div>
-        <div sx={{ ...UIMetadata.styles.block, flex: 0, minWidth: '12em' }}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.narrow }}>
           <span>Policy</span>
           <PolicyInput
             value={policy}
@@ -61,7 +61,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
       </div>
       {help && (
         <div sx={UIMetadata.styles.container}>
-          <div sx={{ ...UIMetadata.styles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
             <span>Refine for better release</span>
             <OptionInput
               id={`refine-${entity?.id}`}
@@ -70,7 +70,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
               onChange={value => setMetadata('refine', value)}
             />
           </div>
-          <div sx={{ ...UIMetadata.styles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
             <span>Shrink for smaller release</span>
             <OptionInput
               id={`shrink-${entity?.id}`}
@@ -117,7 +117,19 @@ UIMetadata.styles = {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     },
-  }
+  },
+  wide: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  narrow: {
+    flex: 0,
+    minWidth: '12em',
+  },
+  option: {
+    flexBasis: 0,
+    whiteSpace: ['wrap', 'nowrap'],
+  },
 }
 
 export const Metadata = memo(UIMetadata)
@@ -386,6 +398,7 @@ const UIOptionInput = ({ id, value, onChange, children, disabled = false, ...pro
         transition: 'color 200ms ease-in-out',
       },
       '>small': {
+        flex: 1,
         fontSize: 7,
         color: 'gray-500',
       },
