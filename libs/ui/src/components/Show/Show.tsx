@@ -13,6 +13,7 @@ import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Proposal } from '../Movie/Proposal/Proposal'
 import { Guests } from '../Movie/Guests/Guests'
+import { ReviewsBadge } from '../Movie/Badges/ReviewsBadge'
 import { EpisodeStatusOptions, ShowState } from './State/State'
 import { ProgressPill } from './ProgressPill/ProgressPill'
 
@@ -73,11 +74,12 @@ const UIShow = ({
 
     return {
       state: { component: ShowState, props: { value: state, onChange: setState, compact: true } },
+      reviews: { component: ReviewsBadge, props: { entity, display } },
       ...(!proposal.proposals.length ? {} : { proposal: { component: Proposal, props: proposal } }),
-      ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).filter(Boolean).map(guest => ({ entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } })) } } } : {}),
+      ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { to: '/tv/requests', guests: (metadata?.requested_by || []).filter(Boolean).map(guest => ({ entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } })) } } } : {}),
       ...(focus ? { focus: { component: Focus, props: { entity, property: focus, compact: true, size: 'small' } } } : {}),
     }
-  }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease, progress?.owned, progress?.aired, focus])
+  }, [entity?.id, display, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease, progress?.owned, progress?.aired, focus])
 
   if (display === 'card') {
     return (
@@ -124,7 +126,10 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (
       <>
-        <ProgressPill owned={owned} aired={aired} />
+        {/* On a 96px mobile card the pill steps down with the title, so it stays lighter than it */}
+        <span sx={ShowProgress.styles.pill}>
+          <ProgressPill owned={owned} aired={aired} />
+        </span>
         {/* A 96px mobile card leaves the bar 5px to 19px beside the pill: the pill alone says it there */}
         {!compact && (
           <Progress
@@ -142,7 +147,7 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
           {!compact && <span aria-hidden={true}>{EpisodeStatusOptions.upcoming.label}</span>}
         </span>
         <time title='First episode air date' dateTime={first_air_date ? new Date(first_air_date).toISOString().slice(0, 10) : undefined}>
-          {first_air_date ? new Date(first_air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
+          {first_air_date ? new Date(first_air_date).toLocaleDateString((global as any)?.config?.region || 'fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
         </time>
       </>
     )}
@@ -176,6 +181,10 @@ ShowProgress.styles = {
     '>progress, >[role="progressbar"]': {
       flex: 1,
     },
+  },
+  pill: {
+    display: 'flex',
+    fontSize: [5, 4],
   },
 }
 

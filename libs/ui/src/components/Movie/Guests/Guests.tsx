@@ -3,7 +3,7 @@ import { useDevice } from '@sensorr/utils'
 import { List } from '../../../elements/List/List'
 import { Person } from '../../Person/Person'
 
-const Guest = ({ index, entities, ...props }) => (
+const Guest = ({ index, entities, to, ...props }) => (
   <div sx={{ position: 'relative', zIndex: 0, '&:hover': { zIndex: 1 } }}>
     <Person
       {...props}
@@ -11,7 +11,7 @@ const Guest = ({ index, entities, ...props }) => (
       entity={entities[index]?.entity}
       compact={false}
       link={() => ({
-        to: '/movie/requests',
+        to,
         state: {
           controls: {
             state: 'archived|wished|pinned|missing|ignored',
@@ -23,7 +23,7 @@ const Guest = ({ index, entities, ...props }) => (
   </div>
 )
 
-const CompactGuest = ({ index, entities, ...props }) => (
+const CompactGuest = ({ index, entities, to, ...props }) => (
   <div sx={{ position: 'relative', zIndex: 0, '&:hover': { zIndex: 1 } }}>
     <Person
       {...props}
@@ -31,7 +31,7 @@ const CompactGuest = ({ index, entities, ...props }) => (
       entity={entities[index]?.entity}
       compact={true}
       link={() => ({
-        to: '/movie/requests',
+        to,
         state: {
           controls: {
             state: 'archived|wished|pinned|missing|ignored',
@@ -43,7 +43,8 @@ const CompactGuest = ({ index, entities, ...props }) => (
   </div>
 )
 
-const UIGuests = ({ guests, compact = true, hidden = false, space = null, ...props }) => {
+// `to` is the requests page of the entity's branch, the movies one unless a show says otherwise
+const UIGuests = ({ guests, compact = true, hidden = false, space = null, to = '/movie/requests', ...props }) => {
   const device = useDevice()
 
   return (
@@ -51,7 +52,7 @@ const UIGuests = ({ guests, compact = true, hidden = false, space = null, ...pro
       id='guests'
       length={Math.min(5, guests?.length)}
       child={compact ? CompactGuest : Guest}
-      childProps={{ ...props?.childProps, entities: guests }}
+      childProps={{ ...props?.childProps, entities: guests, to }}
       entities={guests}
       compact={true}
       space={space || (device === 'mobile' ? 2 : 3)}

@@ -9,6 +9,8 @@ export interface ProgressPillProps extends Omit<TransitionPillProps, 'from' | 't
 // The owned episodes over the aired ones, in the pill of a proposal's comparison: green once every aired episode is owned
 const UIProgressPill = ({ owned, aired, compact = true, ...props }: ProgressPillProps) => (
   <TransitionPill
+    role='img'
+    aria-label={`${owned} of ${aired} aired episodes owned`}
     {...props}
     from={owned}
     to={aired}
