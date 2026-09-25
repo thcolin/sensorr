@@ -1,13 +1,20 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { EpisodeStatus, Icon, Progress } from '@sensorr/ui'
+import oleoo from 'oleoo'
+import { EpisodeStatus, EpisodeStatusOptions, Icon, Progress } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
+import { filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Toggle } from './Toggle'
 
 const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
+
+const sizeOf = (episodes) => episodes.reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0)
+
+// The tracks a season head and the header share: count, bar, completion mark, follow column
+const SUMMARY = ['4em minmax(0, 1fr) 1em 2.5em', '5.5em 10em 1em 2.5em']
 
 const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ...props }) => {
   const seasons = useMemo(() => {
@@ -18,6 +25,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
     return numbers.map(number => {
       const summary = summaries.find(({ season_number }) => season_number === number) || {}
       const list = (episodes || []).filter(({ season_number }) => season_number === number).sort((a, b) => a.episode_number - b.episode_number)
+      const statuses = list.map(episode => episodeStatus(episode))
 
       return {
         number,
@@ -26,12 +34,21 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
         progress: progressOf(list),
+        proposed: statuses.filter(status => status === 'proposed').length,
+        wanted: statuses.filter(status => status === 'wanted').length,
         monitored: !!list.length && list.every(({ monitored }) => monitored),
       }
     })
   }, [entity?.seasons, episodes, inLibrary])
 
-  const last = seasons.filter(({ number }) => number !== 0).pop()?.number ?? seasons[0]?.number
+  const totals = useMemo(() => {
+    const list = (episodes || []).filter(({ season_number }) => season_number !== 0)
+    return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
+  }, [episodes])
+
+  // The first season that waits on something opens, else the last one
+  const regular = seasons.filter(({ number }) => number !== 0)
+  const initial = (regular.find(({ proposed, wanted }) => proposed || wanted) || regular[regular.length - 1] || seasons[0])?.number
   const [open, setOpen] = useState({})
 
   useEffect(() => {
@@ -43,10 +60,28 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
   }
 
   return (
-    <section sx={UISeasons.styles.element} aria-label='Seasons'>
+    <section sx={UISeasons.styles.element} aria-labelledby={`seasons-${entity.id}`}>
       <div>
+        {inLibrary ? (
+          <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
+            <div sx={UISeasons.styles.label}>
+              <h2 id={`seasons-${entity.id}`}>All seasons</h2>
+              <small>
+                {totals.count} episodes{!!totals.size && ` · ${filesize.stringify(totals.size)}`}
+              </small>
+            </div>
+            <div sx={UISeasons.styles.summary}>
+              <Count progress={totals.progress} />
+              <Bar progress={totals.progress} />
+              <Complete progress={totals.progress} />
+              <span aria-hidden={true}>Follow</span>
+            </div>
+          </div>
+        ) : (
+          <h2 id={`seasons-${entity.id}`} sx={UISeasons.styles.hidden}>Seasons</h2>
+        )}
         {seasons.map(season => {
-          const opened = inLibrary && (open[season.number] ?? season.number === last)
+          const opened = inLibrary && (open[season.number] ?? season.number === initial)
           const id = `season-${entity.id}-${season.number}`
           const Head = inLibrary ? 'button' : 'div'
 
@@ -60,18 +95,29 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
                     'aria-controls': id,
                     onClick: () => setOpen(open => ({ ...open, [season.number]: !opened })),
                   } : {})}
-                  sx={UISeasons.styles.toggle}
+                  sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle }}
                 >
-                  {inLibrary && <Icon value='chevron' direction={opened} width='0.75em' height='0.75em' />}
+                  {inLibrary && (
+                    <Icon
+                      value='chevron'
+                      direction={false}
+                      width='0.75em'
+                      height='0.75em'
+                      sx={{ ...UISeasons.styles.chevron, transform: opened ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                    />
+                  )}
                   <strong>{season.name}</strong>
-                  <small>{season.count} episodes{season.year ? ` · ${season.year}` : ''}</small>
+                  <small>
+                    {season.count} episodes{season.year ? ` · ${season.year}` : ''}
+                    {!!season.proposed && <span title={`${season.proposed} proposed`}> · {EpisodeStatusOptions.proposed.emoji} {season.proposed}</span>}
+                    {!!season.wanted && <span title={`${season.wanted} wanted`}> · {EpisodeStatusOptions.wanted.emoji} {season.wanted}</span>}
+                  </small>
                 </Head>
                 {inLibrary && (
                   <div sx={UISeasons.styles.summary}>
-                    <code title={`${season.progress.owned} of ${season.progress.aired} aired episodes owned`}>{season.progress.owned}/{season.progress.aired}</code>
-                    <div>
-                      <Progress value={season.progress.owned} max={season.progress.aired} />
-                    </div>
+                    <Count progress={season.progress} />
+                    <Bar progress={season.progress} />
+                    <Complete progress={season.progress} />
                     <Toggle
                       id={`follow-${id}`}
                       checked={season.monitored}
@@ -100,6 +146,20 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, setEpisodesMetadata, ..
   )
 }
 
+const Count = ({ progress }) => (
+  <code title={`${progress.owned} of ${progress.aired} aired episodes owned`}>{progress.owned}/{progress.aired}</code>
+)
+
+const Bar = ({ progress }) => (
+  <div>
+    <Progress value={progress.owned} max={progress.aired} />
+  </div>
+)
+
+const Complete = ({ progress }) => (progress.aired > 0 && progress.owned >= progress.aired) ? (
+  <span title='Every aired episode owned' data-complete={true}>✓</span>
+) : <span />
+
 UISeasons.styles = {
   element: {
     display: 'flex',
@@ -111,6 +171,14 @@ UISeasons.styles = {
       maxWidth: '95em',
     },
   },
+  hidden: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    overflow: 'hidden',
+    clip: 'rect(0 0 0 0)',
+    whiteSpace: 'nowrap',
+  },
   season: {
     borderBottom: '1px solid',
     borderColor: 'grayDark',
@@ -119,16 +187,41 @@ UISeasons.styles = {
     display: 'flex',
     flexDirection: ['column', 'row'],
     alignItems: ['stretch', 'center'],
-    gap: [8, 4],
+    gap: [10, 4],
     paddingY: 8,
   },
-  toggle: {
-    variant: 'button.reset',
+  header: {
+    borderBottom: '1px solid',
+    borderColor: 'grayDark',
+    '>div:first-of-type': {
+      paddingX: 8,
+    },
+  },
+  label: {
     flex: 1,
     display: 'flex',
     alignItems: 'baseline',
     gap: 8,
     minWidth: 0,
+    '>h2, >strong': {
+      margin: 12,
+      fontFamily: 'heading',
+      fontWeight: 'strong',
+      fontSize: 4,
+      lineHeight: 'body',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+    '>small': {
+      fontSize: 6,
+      color: 'grayDarkest',
+      whiteSpace: 'nowrap',
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+  toggle: {
+    variant: 'button.reset',
     paddingY: 8,
     paddingX: 8,
     textAlign: 'left',
@@ -146,39 +239,38 @@ UISeasons.styles = {
         outlineOffset: '2px',
       },
     },
-    '>svg': {
-      flexShrink: 0,
-      alignSelf: 'center',
-    },
-    '>strong': {
-      fontFamily: 'heading',
-      fontWeight: 'strong',
-      fontSize: 4,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    },
-    '>small': {
-      fontSize: 6,
-      color: 'grayDarkest',
-      whiteSpace: 'nowrap',
-    },
+  },
+  chevron: {
+    flexShrink: 0,
+    alignSelf: 'center',
+    transition: 'transform 200ms ease-in-out',
   },
   summary: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: SUMMARY,
     alignItems: 'center',
-    gap: 6,
+    columnGap: 6,
     paddingX: 8,
     '>code': {
       fontFamily: 'monospace',
       fontSize: 6,
       color: 'text',
       fontVariantNumeric: 'tabular-nums',
-      minWidth: '5.5em',
       textAlign: 'right',
     },
-    '>div': {
-      flex: ['1', '0 0 10em'],
+    '>[data-complete]': {
+      fontSize: 6,
+      lineHeight: 'reset',
+      color: 'primary',
+    },
+    '>:last-child': {
+      justifySelf: 'end',
+    },
+    '>span[aria-hidden]': {
+      fontSize: 7,
+      fontWeight: 'semibold',
+      color: 'gray-600',
+      whiteSpace: 'nowrap',
     },
   },
 }
@@ -189,6 +281,7 @@ const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
   const { device } = useDeviceContext()
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
+  const [unfolded, setUnfolded] = useState({})
 
   const virtualizer = useVirtualizer({
     count: episodes.length,
@@ -206,29 +299,51 @@ const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
         {rows.map(({ index, start }) => {
           const episode = episodes[index]
           const status = episodeStatus(episode)
+          const synopsis = `synopsis-${show}-${episode.id}`
+          const foldable = !!episode.overview
+          const opened = foldable && !!unfolded[episode.id]
+          const toggle = () => setUnfolded(unfolded => ({ ...unfolded, [episode.id]: !unfolded[episode.id] }))
 
           return (
             <div
               key={episode.id}
               data-index={index}
               ref={virtual ? virtualizer.measureElement : null}
-              sx={UIEpisodes.styles.row}
+              sx={UIEpisodes.styles.item}
               style={virtual ? { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` } : {}}
             >
-              <code>E{pad(episode.episode_number)}</code>
-              <span title={episode.name}>{episode.name}</span>
-              <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
-                {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
-              </time>
-              <EpisodeStatus value={status} size='small' compact={device === 'mobile'} />
-              <Toggle
-                id={`follow-episode-${show}-${episode.id}`}
-                checked={!!episode.monitored}
-                disabled={!ready}
-                title={`Follow episode ${pad(episode.episode_number)}`}
-                aria-label={`Follow episode ${pad(episode.episode_number)}`}
-                onChange={value => setEpisodesMetadata(show, [episode.id], 'monitored', value)}
-              />
+              <div
+                sx={UIEpisodes.styles.row}
+                data-foldable={foldable}
+                onClick={foldable ? (e: any) => !e.target.closest('label, input') && toggle() : undefined}
+              >
+                <code>E{pad(episode.episode_number)}</code>
+                {foldable ? (
+                  <button type='button' data-title={true} aria-expanded={opened} aria-controls={synopsis} title={episode.name}>
+                    {episode.name}
+                  </button>
+                ) : (
+                  <span data-title={true} title={episode.name}>{episode.name}</span>
+                )}
+                <File file={device !== 'mobile' && episode.files?.[0]} />
+                <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
+                  {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
+                </time>
+                <EpisodeStatus value={status} size='small' compact={device === 'mobile'} />
+                <Toggle
+                  id={`follow-episode-${show}-${episode.id}`}
+                  checked={!!episode.monitored}
+                  disabled={!ready}
+                  title={`Follow episode ${pad(episode.episode_number)}`}
+                  aria-label={`Follow episode ${pad(episode.episode_number)}`}
+                  onChange={value => setEpisodesMetadata(show, [episode.id], 'monitored', value)}
+                />
+              </div>
+              {opened && (
+                <div id={synopsis} sx={UIEpisodes.styles.synopsis}>
+                  <p>{episode.overview}</p>
+                </div>
+              )}
             </div>
           )
         })}
@@ -236,6 +351,22 @@ const UIEpisodes = ({ id, show, episodes, ready, setEpisodesMetadata }) => {
     </div>
   )
 }
+
+const UIFile = ({ file }) => {
+  const meta = useMemo(() => file?.title ? oleoo.parse(file.title, { strict: false, flagged: true }) : null, [file?.title])
+
+  if (!file) {
+    return <small data-file={true} />
+  }
+
+  const parts = [meta?.resolution, meta?.language, !!file.size && filesize.stringify(file.size)].filter(Boolean)
+
+  return (
+    <small data-file={true} title={file.original || file.title}>{parts.join(' · ')}</small>
+  )
+}
+
+const File = memo(UIFile)
 
 UIEpisodes.styles = {
   element: {
@@ -248,44 +379,82 @@ UIEpisodes.styles = {
     borderTop: '1px solid',
     borderColor: 'gray',
   },
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: [6, 4],
-    minHeight: '3em',
-    paddingX: 8,
+  item: {
     borderBottom: '1px solid',
     borderColor: 'gray',
-    transition: 'background-color 200ms ease-in-out',
-    ':hover': {
-      backgroundColor: 'grayLighter',
-    },
     '&:last-of-type': {
       borderBottom: 'none',
     },
+  },
+  row: {
+    display: 'grid',
+    gridTemplateColumns: ['2.5em minmax(0, 1fr) auto 1em', '3.5em minmax(0, 1fr) auto 6.5em 7em 1em'],
+    alignItems: 'center',
+    columnGap: [6, 4],
+    minHeight: '3em',
+    paddingX: 8,
+    '&[data-foldable="true"]': {
+      cursor: 'pointer',
+      ':hover >button': {
+        textDecoration: 'underline',
+        textUnderlineOffset: '0.25em',
+      },
+    },
     '>code': {
-      flexShrink: 0,
-      minWidth: '3.5em',
       fontFamily: 'monospace',
       fontSize: 6,
       color: 'grayDarkest',
       fontVariantNumeric: 'tabular-nums',
     },
-    '>span': {
-      flex: 1,
+    '>[data-title]': {
       minWidth: 0,
       fontSize: 5,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     },
-    '>time': {
-      flexShrink: 0,
+    '>button': {
+      variant: 'button.reset',
+      justifySelf: 'start',
+      maxWidth: '100%',
+      textAlign: 'left',
+      color: 'text',
+      cursor: 'pointer',
+      ':focus-visible': {
+        outline: '1px solid',
+        outlineColor: 'grayDarkest',
+        outlineOffset: '2px',
+      },
+    },
+    '>[data-file], >time': {
       display: ['none', 'block'],
       fontFamily: 'monospace',
       fontSize: 6,
       color: 'grayDarkest',
       fontVariantNumeric: 'tabular-nums',
+      whiteSpace: 'nowrap',
+      textAlign: 'right',
+    },
+    '>[data-file]': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+    '>:nth-last-child(2), >:last-child': {
+      justifySelf: 'end',
+    },
+  },
+  synopsis: {
+    // Lined up with the title column: the code track, its gap and the row padding
+    paddingLeft: ['3.75em', '5em'],
+    paddingRight: 8,
+    paddingBottom: 6,
+    '>p': {
+      maxWidth: '65ch',
+      margin: 12,
+      fontSize: 6,
+      lineHeight: 'body',
+      color: 'grayDarkest',
+      textWrap: 'pretty',
     },
   },
 }

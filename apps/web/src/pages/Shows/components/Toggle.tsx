@@ -14,7 +14,7 @@ const UIToggle = ({ id, checked, onChange, disabled = false, children = null, ..
     <span
       sx={{
         ...UIToggle.styles.element,
-        color: checked ? 'primary' : 'grayDarkest',
+        color: checked ? 'accentDark' : 'gray-550',
         opacity: disabled ? 0.5 : 1,
       }}
       aria-busy={pending}
@@ -40,6 +40,12 @@ UIToggle.styles = {
     transition: 'color 200ms ease-in-out, opacity 200ms ease-in-out',
     '>label': {
       margin: 12,
+      // The box stays 1em, its hit area grows to 44px on mobile and 40px above
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: ['-0.875em', '-0.75em'],
+      },
     },
     '&[aria-busy="true"] >label': {
       cursor: 'progress',
