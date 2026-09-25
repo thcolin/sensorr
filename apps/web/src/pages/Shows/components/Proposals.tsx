@@ -1,10 +1,14 @@
 import { memo, useMemo, useState } from 'react'
 import { coverageLabel } from '@sensorr/sensorr'
-import { emojize, filesize } from '@sensorr/utils'
+import { emojize } from '@sensorr/utils'
+import { useDeviceContext } from '../../../contexts/Device/Device'
 import { Gestures } from '../../../components/Sensorr/Gestures'
+import { Release } from '../../../components/Sensorr/Release'
 import { isPending } from '../../Proposals/queue'
+import { fillsOf } from './fills'
 
-const UIProposals = ({ metadata, proceedRelease, ...props }) => {
+const UIProposals = ({ metadata, episodes, proceedRelease, ...props }) => {
+  const { device } = useDeviceContext()
   const pending = useMemo(() => (metadata?.releases || []).filter(isPending), [metadata?.releases])
   const [sending, setSending] = useState({})
 
@@ -15,25 +19,40 @@ const UIProposals = ({ metadata, proceedRelease, ...props }) => {
   return (
     <section sx={UIProposals.styles.element} aria-labelledby='pending-proposals'>
       <div>
-        <h4 id='pending-proposals' sx={UIProposals.styles.title}>{emojize('🛎️', 'Pending proposals')}</h4>
-        {pending.map(release => (
-          <div key={release.id} sx={UIProposals.styles.row}>
-            <div sx={UIProposals.styles.release}>
-              <strong>{coverageLabel(release.coverage || [], release.level || undefined)}</strong>
-              <code title={[release.title, release.znab].filter(Boolean).join(' - ')}>{release.title}</code>
-              <span>{filesize.stringify(release.size || 0)}</span>
+        <h2 id='pending-proposals' sx={UIProposals.styles.title}>{emojize('🛎️', 'Pending proposals')}</h2>
+        {pending.map(release => {
+          const fills = fillsOf(release.coverage || [], episodes, release.level)
+
+          return (
+            <div key={release.id} sx={UIProposals.styles.row}>
+              <div sx={UIProposals.styles.coverage}>
+                <strong>{coverageLabel(release.coverage || [], release.level || undefined)}</strong>
+                {!!fills.total && (
+                  <small title={fills.codes.join(' ')}>
+                    fills {fills.missing.length} of {fills.total}{!!fills.missing.length && fills.missing.length < fills.total && ` · ${fills.label}`}
+                  </small>
+                )}
+              </div>
+              <div sx={UIProposals.styles.release}>
+                <Release
+                  entity={{ ...release, valid: true }}
+                  proceed={proceedRelease}
+                  display={device === 'mobile' ? 'column' : 'row'}
+                  actions={false}
+                />
+              </div>
+              <Gestures
+                shortcuts={false}
+                disabled={!!sending[release.id]}
+                onGesture={async (verdict) => {
+                  setSending(sending => ({ ...sending, [release.id]: true }))
+                  await proceedRelease(release, verdict === 'accept').catch(() => null)
+                  setSending(sending => ({ ...sending, [release.id]: false }))
+                }}
+              />
             </div>
-            <Gestures
-              shortcuts={false}
-              disabled={!!sending[release.id]}
-              onGesture={async (verdict) => {
-                setSending(sending => ({ ...sending, [release.id]: true }))
-                await proceedRelease(release, verdict === 'accept').catch(() => null)
-                setSending(sending => ({ ...sending, [release.id]: false }))
-              }}
-            />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
@@ -58,51 +77,47 @@ UIProposals.styles = {
   title: {
     margin: 12,
     marginBottom: 6,
+    fontSize: 3,
   },
   row: {
     display: 'flex',
     flexDirection: ['column', 'row'],
     alignItems: ['stretch', 'center'],
-    gap: 6,
-    paddingY: 6,
-    paddingX: 8,
+    gap: [8, 4],
+    paddingY: 8,
     borderBottom: '1px solid',
     borderColor: 'gray',
-    transition: 'background-color 200ms ease-in-out',
-    ':hover': {
-      backgroundColor: 'grayLight',
-    },
     '&:last-of-type': {
       borderBottom: 'none',
     },
   },
-  release: {
-    flex: 1,
+  coverage: {
     display: 'flex',
-    alignItems: 'baseline',
-    gap: 6,
-    minWidth: 0,
+    flexDirection: 'column',
+    alignItems: ['center', 'flex-start'],
+    gap: 10,
+    flexShrink: 0,
+    width: ['auto', '14em'],
     fontFamily: 'monospace',
     fontVariantNumeric: 'tabular-nums',
     '>strong': {
-      flexShrink: 0,
-      fontSize: 5,
+      fontSize: 4,
       fontWeight: 'semibold',
       color: 'text',
     },
-    '>code': {
-      flex: 1,
-      minWidth: 0,
+    '>small': {
+      maxWidth: '100%',
       fontSize: 6,
+      lineHeight: 'body',
       color: 'grayDarkest',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     },
-    '>span': {
-      flexShrink: 0,
-      fontSize: 6,
-      color: 'text',
+  },
+  release: {
+    flex: 1,
+    minWidth: 0,
+    // The release row draws its own divider, the proposal row already has one
+    '>div>div>div>div': {
+      borderBottom: 'none',
     },
   },
 }
