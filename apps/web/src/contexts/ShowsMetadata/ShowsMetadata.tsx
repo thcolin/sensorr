@@ -189,8 +189,9 @@ export const Provider = ({ ...props }) => {
       }
     })
 
-    // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast
-    if (silent || (ids.length === 1 && key !== 'policy')) {
+    // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast.
+    // A bulk is told by its list of ids, even of one show
+    if (silent || (!Array.isArray(id) && key !== 'policy')) {
       return promise
     }
 
