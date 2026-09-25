@@ -123,8 +123,11 @@ const UIPoster = ({
                 position: 'fixed',
                 left: '1em',
                 zIndex: 1,
-                // Hidden at rest: a poster without a focus badge has nothing to cover it
-                opacity: (selected || selectedVisible) ? 1 : 0,
+                // Hidden at rest where a hover shows it: a poster without a focus badge has nothing to cover it,
+                // and on a touch screen a hidden pill would still take the touch
+                '@media (hover: hover)': {
+                  opacity: (selected || selectedVisible) ? 1 : 0,
+                },
                 transition: 'opacity 150ms ease-in-out',
                 backgroundColor: selected ? 'primary' : 'gray',
                 width: '2em',
