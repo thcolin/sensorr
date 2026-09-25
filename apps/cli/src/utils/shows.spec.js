@@ -111,6 +111,15 @@ describe('sonarrEpisodesOf', () => {
     expect(migrated[1].files[0]).toMatchObject({ id: 'sonarr:7', size: 734003200, original: 'Show.S01E02.1080p.WEB.x264-GRP', from: 'sonarr' })
     expect(migrated[0]).not.toHaveProperty('files')
   })
+
+  it('gives a Sonarr file holding several episodes to each of them, as the same entry', () => {
+    const filed = sonarr.map((episode, index) => index < 2 ? { ...episode, hasFile: true, episodeFileId: 7 } : { ...episode, hasFile: false, episodeFileId: 0 })
+    const files = [{ id: 7, size: 1468006400, relativePath: 'Season 01/Show.S01E01E02.1080p.WEB.x264-GRP.mkv' }]
+    const { episodes: migrated } = sonarrEpisodesOf(episodes, filed, show, [], files)
+
+    expect(migrated.map(({ files }) => files?.length || 0)).toEqual([1, 1, 0, 0])
+    expect(migrated[1].files).toEqual(migrated[0].files)
+  })
 })
 
 describe('syncedFilesOf', () => {
