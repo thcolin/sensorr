@@ -83,6 +83,12 @@ const UIPoster = ({
             },
           } : {}),
         },
+        ':hover [data-select]': {
+          opacity: 1,
+        },
+        ':focus-within [data-select]': {
+          opacity: 1,
+        },
       }}
     >
       <div sx={UIPoster.styles.wrapper}>
@@ -110,10 +116,14 @@ const UIPoster = ({
         >
           {selected !== null && (
             <div
+              data-select={true}
               sx={{
                 position: 'fixed',
                 left: '1em',
                 zIndex: 1,
+                // Hidden at rest: a poster without a focus badge has nothing to cover it
+                opacity: (selected || selectedVisible) ? 1 : 0,
+                transition: 'opacity 150ms ease-in-out',
                 backgroundColor: selected ? 'primary' : 'gray',
                 width: '2em',
                 height: '2em',
@@ -315,6 +325,7 @@ UIPoster.styles = {
     flexDirection: 'row',
     alignItems: 'flex-end',
     top: '-1em',
+    minHeight: '2em',
     fontSize: [5, 4],
     zIndex: 3,
   },

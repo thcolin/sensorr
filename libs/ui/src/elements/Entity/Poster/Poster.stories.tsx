@@ -88,6 +88,26 @@ export const MovieWithFocus = (args: any) => (
   />
 )
 
+export const MovieSelectable = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.wished }}
+    selected={false}
+    onSelectedChange={() => {}}
+  />
+)
+
+export const MovieSelected = (args: any) => (
+  <UIPoster {...args}
+    details={details.movie}
+    link={'/movie/1'}
+    badges={{ state: state.wished }}
+    selected={true}
+    onSelectedChange={() => {}}
+  />
+)
+
 export const Person = (args: any) => (
   <UIPoster {...args}
     details={details.person}
