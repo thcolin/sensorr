@@ -1,10 +1,10 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { EpisodeStatus, EpisodeStatusOptions, Icon, Progress } from '@sensorr/ui'
+import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
-import { filesize } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
+import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { Toggle } from './Toggle'
 import { fileMetaOf, sizeOf } from './fills'
 
@@ -12,7 +12,11 @@ const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-const SUMMARY = ['4em minmax(0, 1fr) 1em 4.5em', '5.5em 10em 1em 4.5em']
+// Wide enough for a pill of four digits on each side
+const SUMMARY = ['5.5em minmax(0, 1fr) 1em 4.5em', '6.5em 10em 1em 4.5em']
+
+// Of the axes a release row tags, the ones an episode row has room for
+const FILED = ['encoding', 'resolution', 'language']
 
 const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
@@ -99,12 +103,11 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
         <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
           <div sx={UISeasons.styles.label}>
             <h2 id={`seasons-${entity.id}`}>All seasons</h2>
-            <small>
-              {totals.count} episodes{!!totals.size && ` · ${filesize.stringify(totals.size)}`}
-            </small>
+            <small>{totals.count} episodes</small>
+            {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
           </div>
           <div sx={UISeasons.styles.summary}>
-            <Count progress={totals.progress} />
+            <ProgressPill {...totals.progress} />
             <Bar progress={totals.progress} />
             <Complete progress={totals.progress} />
             <span />
@@ -137,15 +140,19 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
                   <small>
                     {season.count} episodes{season.year ? ` · ${season.year}` : ''}
                     {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
-                    {!!season.proposed && <span title={`${season.proposed} proposed`}> · {EpisodeStatusOptions.proposed.emoji} {season.proposed}</span>}
-                    {!!season.wanted && <span title={`${season.wanted} wanted`}> · {EpisodeStatusOptions.wanted.emoji} {season.wanted}</span>}
                   </small>
+                  {!!season.proposed && (
+                    <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} proposed`} data-count={true} />
+                  )}
+                  {!!season.wanted && (
+                    <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
+                  )}
                 </button>
                 <div sx={UISeasons.styles.summary}>
                   {/* Specials are not followed by default: owned over aired would read as a gap */}
                   {specials ? <><span /><span /><span /></> : (
                     <>
-                      <Count progress={season.progress} />
+                      <ProgressPill {...season.progress} />
                       <Bar progress={season.progress} />
                       <Complete progress={season.progress} />
                     </>
@@ -154,7 +161,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
                     id={`follow-${id}`}
                     checked={season.monitored}
                     disabled={!ready || !season.episodes.length}
-                    title={`Follow every episode of ${season.name}`}
+                    title={season.monitored ? `Stop following every episode of ${season.name}` : `Follow every episode of ${season.name}`}
                     aria-label={`Follow every episode of ${season.name}`}
                     onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
                   />
@@ -177,10 +184,6 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
   )
 }
 
-const Count = ({ progress }) => (
-  <code title={`${progress.owned} of ${progress.aired} aired episodes owned`}>{progress.owned}/{progress.aired}</code>
-)
-
 const Bar = ({ progress }) => (
   <div>
     <Progress value={progress.owned} max={progress.aired} />
@@ -188,7 +191,9 @@ const Bar = ({ progress }) => (
 )
 
 const Complete = ({ progress }) => (progress.aired > 0 && progress.owned >= progress.aired) ? (
-  <span title='Every aired episode owned' data-complete={true}>✓</span>
+  <span title='Every aired episode owned' data-complete={true}>
+    <Icon value='check' width='1em' height='1em' />
+  </span>
 ) : <span />
 
 UISeasons.styles = {
@@ -242,6 +247,15 @@ UISeasons.styles = {
       whiteSpace: 'nowrap',
       fontVariantNumeric: 'tabular-nums',
     },
+    // At the size of a release row, whose tags it is
+    '>[data-size]': {
+      fontSize: 6,
+      whiteSpace: 'nowrap',
+    },
+    '>[data-count]': {
+      alignSelf: 'center',
+      flexShrink: 0,
+    },
     '&[data-specials="true"] >strong': {
       fontWeight: 'semibold',
       color: 'grayDarkest',
@@ -278,17 +292,13 @@ UISeasons.styles = {
     alignItems: 'center',
     columnGap: 6,
     paddingX: 8,
-    '>code': {
-      fontFamily: 'monospace',
-      fontSize: 6,
-      color: 'text',
+    '>:first-child': {
+      justifySelf: 'end',
       fontVariantNumeric: 'tabular-nums',
-      textAlign: 'right',
     },
     '>[data-complete]': {
-      fontSize: 6,
-      lineHeight: 'reset',
-      color: 'primary',
+      display: 'flex',
+      color: 'success',
     },
     '>:last-child': {
       justifySelf: 'end',
@@ -336,7 +346,7 @@ const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
               <div
                 sx={UIEpisodes.styles.row}
                 data-foldable={foldable}
-                onClick={foldable ? (e: any) => !e.target.closest('label, input') && toggle() : undefined}
+                onClick={foldable ? (e: any) => !e.target.closest('[aria-pressed]') && toggle() : undefined}
               >
                 <code>E{pad(episode.episode_number)}</code>
                 {foldable ? (
@@ -355,7 +365,7 @@ const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
                   id={`follow-episode-${show}-${episode.id}`}
                   checked={!!episode.monitored}
                   disabled={!ready}
-                  title={`Follow episode ${pad(episode.episode_number)}`}
+                  title={episode.monitored ? `Stop following episode ${pad(episode.episode_number)}` : `Follow episode ${pad(episode.episode_number)}`}
                   aria-label={`Follow episode ${pad(episode.episode_number)}`}
                   onChange={value => followEpisodes([episode.id], value)}
                 />
@@ -377,13 +387,14 @@ const UIFile = ({ file }) => {
   const meta = useMemo(() => file ? fileMetaOf(file) : null, [file?.original, file?.title])
 
   if (!file) {
-    return <small data-file={true} />
+    return <span data-file={true} />
   }
 
-  const parts = [meta?.resolution, meta?.language, !!file.size && filesize.stringify(file.size)].filter(Boolean)
-
   return (
-    <small data-file={true} title={file.original || file.title}>{parts.join(' · ')}</small>
+    <span data-file={true} title={file.original || file.title}>
+      {FILED.map(axis => !!meta?.[axis] && <ReleaseAxis key={axis} axis={axis} value={meta[axis]} />)}
+      {!!file.size && <ReleaseSize size={file.size} />}
+    </span>
   )
 }
 
@@ -409,14 +420,14 @@ UIEpisodes.styles = {
   },
   row: {
     display: 'grid',
-    gridTemplateColumns: ['2.5em minmax(0, 1fr) auto 1em', '3.5em minmax(0, 1fr) auto 6.5em 7em 1em'],
+    gridTemplateColumns: ['2.5em minmax(0, 1fr) auto 1.25em', '3.5em minmax(0, 1fr) auto 6.5em 7em 1.5em'],
     alignItems: 'center',
     columnGap: [6, 4],
     minHeight: '3em',
     paddingX: 8,
     '&[data-foldable="true"]': {
       cursor: 'pointer',
-      ':hover >button': {
+      ':hover >button[data-title]': {
         textDecoration: 'underline',
         textUnderlineOffset: '0.25em',
       },
@@ -447,7 +458,7 @@ UIEpisodes.styles = {
         outlineOffset: '2px',
       },
     },
-    '>[data-file], >time': {
+    '>time': {
       display: ['none', 'block'],
       fontFamily: 'monospace',
       fontSize: 6,
@@ -456,9 +467,14 @@ UIEpisodes.styles = {
       whiteSpace: 'nowrap',
       textAlign: 'right',
     },
+    // The tags of a release row, at its size and spacing
     '>[data-file]': {
+      display: ['none', 'flex'],
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 6,
+      fontSize: 6,
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
     },
     '>:nth-last-child(2), >:last-child': {
       justifySelf: 'end',

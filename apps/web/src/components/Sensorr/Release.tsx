@@ -114,49 +114,21 @@ const UIRelease = ({
             {!!entity?.title && (
               <div sx={UIRelease.styles.metadata}>
                 <div sx={UIRelease.styles.tags}>
-                  {!!meta.source && (
-                    <span title={`Source: ${meta.source}${(entity?.account?.source || {})[meta.source] ? ` (+${(entity?.account?.source || {})[meta.source]})` : ''}`}>
-                      {logos.source[meta.source] || <code>{meta.source}</code>}
-                    </span>
-                  )}
-                  {!!meta.encoding && (
-                    <span title={`Encoding: ${meta.encoding}${(entity?.account?.encoding || {})[meta.encoding] ? ` (+${(entity?.account?.encoding || {})[meta.encoding]})` : ''}`}>
-                      {logos.encoding[meta.encoding] || <code>{meta.encoding}</code>}
-                    </span>
-                  )}
-                  {!!meta.resolution && (
-                    <span title={`Resolution: ${meta.resolution}${(entity?.account?.resolution || {})[meta.resolution] ? ` (+${(entity?.account?.resolution || {})[meta.resolution]})` : ''}`}>
-                      {logos.resolution[meta.resolution] || <code>{meta.resolution}</code>}
-                    </span>
-                  )}
-                  {!!meta.dub && (
-                    <span title={`Dub: ${meta.dub}${(entity?.account?.dub || {})[meta.dub] ? ` (+${(entity?.account?.dub || {})[meta.dub]})` : ''}`}>
-                      {logos.dub[meta.dub] || <code>{meta.dub}</code>}
-                    </span>
-                  )}
-                  {!!meta.language && (
-                    <span title={`Language: ${meta.language}${(entity?.account?.language || {})[meta.language] ? ` (+${(entity?.account?.language || {})[meta.language]})` : ''}`}>
-                      {logos.language[meta.language] || <code>{meta.language}</code>}
-                    </span>
-                  )}
-                  {(meta.flags || []).map(flag => <span key={flag} title={`Flag: ${flag}${(entity?.account?.flags || {})[flag] ? ` (+${(entity?.account?.flags || {})[flag]})` : ''}`}>{logos.flags[flag] || <code>{flag}</code>}</span>)}
+                  {TAGGED.map(axis => !!meta[axis] && <ReleaseAxis key={axis} axis={axis} value={meta[axis]} account={entity?.account} />)}
+                  {(meta.flags || []).map(flag => <ReleaseAxis key={flag} axis='flags' value={flag} account={entity?.account} />)}
                 </div>
                 {!downloadable ? (
                   <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
                     {typeof entity?.peers !== 'undefined' && (
-                      <span title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
+                      <ReleaseTag title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
                         <code>{emojize('🌍 ', entity?.peers || 0)}</code>
-                      </span>
+                      </ReleaseTag>
                     )}
-                    {typeof entity?.size !== 'undefined' && (
-                      <span title={`Size (${filesize.stringify(entity?.size)})`}>
-                        <code>{emojize('📦 ', filesize.stringify(entity?.size || 0))}</code>
-                      </span>
-                    )}
+                    {typeof entity?.size !== 'undefined' && <ReleaseSize size={entity?.size} />}
                     {typeof entity?.score !== 'undefined' && (
-                      <span title={`Score (${entity?.score})`}>
+                      <ReleaseTag title={`Score (${entity?.score})`}>
                         <code>{emojize('💯 ', entity?.score || 0)}</code>
-                      </span>
+                      </ReleaseTag>
                     )}
                   </div>
                 ) : (
@@ -286,24 +258,6 @@ UIRelease.styles = {
     marginBottom: [4, 12],
     '>span': {
       marginRight: 6,
-      '>code': {
-        paddingX: 4,
-        paddingY: 8,
-        backgroundColor: 'gray',
-        borderRadius: '0.25em',
-        color: 'text',
-        fontWeight: 600,
-        fontSize: 5,
-        whiteSpace: 'nowrap',
-      },
-      '>abbr': {
-        fontSize: 0,
-      },
-      '>svg': {
-        display: 'inline',
-        height: '1.5em',
-        color: 'black',
-      },
     },
   },
   statistics: {
@@ -358,6 +312,58 @@ const UIReleaseState = ({ entity = null }) => (
 )
 
 export const ReleaseState = memo(UIReleaseState)
+
+// One tag of a release row: a logo, or a value in a gray code box
+const UIReleaseTag = ({ children, ...props }) => (
+  <span {...props} sx={UIReleaseTag.styles.element}>{children}</span>
+)
+
+UIReleaseTag.styles = {
+  element: {
+    '>code': {
+      paddingX: 4,
+      paddingY: 8,
+      backgroundColor: 'gray',
+      borderRadius: '0.25em',
+      color: 'text',
+      fontWeight: 600,
+      fontSize: 5,
+      whiteSpace: 'nowrap',
+    },
+    '>abbr': {
+      fontSize: 0,
+    },
+    '>svg': {
+      display: 'inline',
+      height: '1.5em',
+      color: 'black',
+    },
+  },
+}
+
+export const ReleaseTag = memo(UIReleaseTag)
+
+// The axes a release row tags, in this order, then its flags
+const TAGGED = ['source', 'encoding', 'resolution', 'dub', 'language']
+
+const NAMES = { source: 'Source', encoding: 'Encoding', resolution: 'Resolution', dub: 'Dub', language: 'Language', flags: 'Flag' }
+
+// `account` holds the score points the policy's `prefer` gave each value, shown in the title
+const UIReleaseAxis = ({ axis, value, account = null }) => (
+  <ReleaseTag title={`${NAMES[axis]}: ${value}${(account?.[axis] || {})[value] ? ` (+${account[axis][value]})` : ''}`}>
+    {logos[axis]?.[value] || <code>{value}</code>}
+  </ReleaseTag>
+)
+
+export const ReleaseAxis = memo(UIReleaseAxis)
+
+const UIReleaseSize = ({ size, ...props }) => (
+  <ReleaseTag {...props} title={`Size (${filesize.stringify(size)})`}>
+    <code>{emojize('📦 ', filesize.stringify(size || 0))}</code>
+  </ReleaseTag>
+)
+
+export const ReleaseSize = memo(UIReleaseSize)
 
 const UIStatistic = ({ emoji, title, ratio, valid = true, children }) => {
   const { theme } = useThemeUI()
