@@ -48,3 +48,13 @@ export const withToday = <T extends { key: string, date: Date, entries: any[] }>
     ? days
     : [...days, { key: today, date: dateOf(today), entries: [] } as T].sort((a, b) => a.key.localeCompare(b.key))
 }
+
+// A stream stops on its own after this many pages in a row with nothing to show: a short list, as a filter leaves,
+// would otherwise read every month out to the end of its range. It loads the next ones when asked.
+export const EMPTY_PAGES = 6
+
+// Where a stream stands once a page lands, from the empty pages in a row it had before it
+export const settle = (empties: number, items: any[], done: boolean) => {
+  const next = items.length ? 0 : empties + 1
+  return { empties: next, paused: !done && next >= EMPTY_PAGES }
+}

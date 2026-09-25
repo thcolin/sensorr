@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { keyframes } from '@emotion/react'
 import { ControlsSelect, Icon, Link, Picture, Warning } from '@sensorr/ui'
 import { emojize, useResponsiveValue } from '@sensorr/utils'
-import { dateOf, day, monthRange, monthWeeks, originOf } from './agenda'
+import { dateOf, day, monthRange, monthWeeks, originOf, settle } from './agenda'
 
 // Height of a list line, which the date beside it takes to sit on the same axis
 const ROW = '4em'
@@ -411,8 +411,9 @@ export const Month = memo(UIMonth)
 
 export type Stream = 'past' | 'future'
 
-// `partial` is a page still loading that already put its first days out
-export const EMPTY = { items: [], page: 0, total: null, done: false, loading: false, failed: false, partial: false }
+// `partial` is a page still loading that already put its first days out, `empties` the pages in a row with nothing
+// to show, and `paused` a stream that stopped on them until asked for more
+export const EMPTY = { items: [], page: 0, total: null, done: false, loading: false, failed: false, partial: false, empties: 0, paused: false }
 
 export type Streams = { past: typeof EMPTY, future: typeof EMPTY }
 
@@ -448,15 +449,17 @@ export const useStreams = (
     const before = current.items
     const emit = (items: any[]) => !signal.aborted && update(stream, () => ({ items: [...before, ...items], partial: true }))
 
-    update(stream, () => ({ loading: true, failed: false }))
+    // Only a click loads a paused stream, and its empty pages count again from there
+    update(stream, () => ({ loading: true, failed: false, paused: false, ...(current.paused ? { empties: 0 } : {}) }))
     fetcher.current(stream, page, signal, emit)
-      .then(({ items, total = null, done }) => !signal.aborted && update(stream, () => ({
+      .then(({ items, total = null, done }) => !signal.aborted && update(stream, (current) => ({
         items: [...before, ...items],
         page,
         total,
         done,
         loading: false,
         partial: false,
+        ...settle(current.empties, items, done),
       })))
       .catch((error) => {
         if (signal.aborted) {
@@ -643,7 +646,7 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
   useEffect(() => {
     if (ready) {
       (['past', 'future'] as Stream[])
-        .filter(stream => visible[stream] && !streams[stream].loading && !streams[stream].done && !streams[stream].failed)
+        .filter(stream => visible[stream] && !streams[stream].loading && !streams[stream].done && !streams[stream].failed && !streams[stream].paused)
         .forEach(onMore)
     }
   }, [ready, visible, streams, onMore])
@@ -675,16 +678,13 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
     )
   }
 
-  if (!days.some(({ entries }) => entries.length) && streams.past.done && streams.future.done) {
-    return (
-      <Warning {...empty} />
-    )
-  }
+  // Nothing to show once both streams stopped, at the end of their range or paused on their empty pages
+  const nothing = !days.some(({ entries }) => entries.length) && [streams.past, streams.future].every(({ done, paused }) => done || paused)
 
   return (
     <section sx={UIAgenda.styles.element} aria-label={name}>
       <Sentinel ref={past} stream='past' state={streams.past} noun={noun} onMore={onMore} />
-      {days.map(({ key, date, entries }) => (
+      {nothing ? <Warning {...empty} /> : days.map(({ key, date, entries }) => (
         <section key={key} id={`day-${key}`} data-day={key} sx={UIAgenda.styles.day} aria-labelledby={`day-${key}-date`}>
           <h5 id={`day-${key}-date`} sx={{ ...UIAgenda.styles.date, ...(key < today ? UIAgenda.styles.past : {}) }}>
             <time dateTime={key}>{label(date, language)}</time>
@@ -791,6 +791,11 @@ const UISentinel = ({ stream, state, noun, onMore }, ref) => (
     {state.failed && (
       <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
         Unable to load the {stream === 'past' ? 'previous' : 'next'} {noun}, retry
+      </button>
+    )}
+    {state.paused && (
+      <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
+        Load {stream === 'past' ? 'older' : 'later'} {noun}
       </button>
     )}
   </div>

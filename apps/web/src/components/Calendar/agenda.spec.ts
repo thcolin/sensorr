@@ -1,4 +1,4 @@
-import { dateOf, monthRange, monthWeeks, originOf, withToday } from './agenda'
+import { EMPTY_PAGES, dateOf, monthRange, monthWeeks, originOf, settle, withToday } from './agenda'
 
 const days = (...keys: string[]) => keys.map(key => ({ key, date: dateOf(key), entries: [{}] }))
 
@@ -55,6 +55,18 @@ describe('calendar agenda', () => {
 
     it('does not add today twice', () => {
       expect(withToday(days('2026-09-25'), '2026-09-25', '2026-09-25', open)).toHaveLength(1)
+    })
+  })
+
+  describe('settle', () => {
+    it('pauses a stream after EMPTY_PAGES empty pages in a row, and counts again from a page with something', () => {
+      expect(settle(EMPTY_PAGES - 2, [], false)).toEqual({ empties: EMPTY_PAGES - 1, paused: false })
+      expect(settle(EMPTY_PAGES - 1, [], false)).toEqual({ empties: EMPTY_PAGES, paused: true })
+      expect(settle(EMPTY_PAGES - 1, [{}], false)).toEqual({ empties: 0, paused: false })
+    })
+
+    it('does not pause a stream that reached its end', () => {
+      expect(settle(EMPTY_PAGES - 1, [], true).paused).toBe(false)
     })
   })
 })
