@@ -380,7 +380,7 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
     const controller = new AbortController()
 
     const cb = async () => {
-      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { controller }, params: { job, group } })
+      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { signal: controller.signal }, params: { job, group } })
 
       try {
         const result = await api.fetch(uri, params, init)
@@ -388,6 +388,10 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
         setLogs(result)
         // if not done should listen to eventSource and close when done
       } catch (e) {
+        if (controller.signal.aborted) {
+          return
+        }
+
         console.warn(e)
         setLogs([])
       }
