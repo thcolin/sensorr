@@ -8,20 +8,19 @@ import {
   FilterStates,
   Sorting,
   Warning,
-  Checkbox,
   Option,
   Bulk,
   ShowStateOptions,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
-import { STATUS_GROUPS } from '@sensorr/sensorr'
-import { compose, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useLocation } from 'react-router-dom'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import Show from '../../components/Show/Show'
+import { status, statusGroupOf } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -36,16 +35,6 @@ const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
 
 const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {}))
   .map(([_id, count]) => ({ _id, count }))
-
-const OneOf = ({ label, options, statistics, ...props }) => (
-  <Checkbox
-    {...props as any}
-    label={label}
-    options={options.map(option => ({ ...option, count: statistics?.find(({ _id }) => _id === option.value)?.count || 0 }))}
-    value={props.value.values}
-    onChange={values => props.onChange({ ...props.value, values })}
-  />
-)
 
 const ShowWithBulk = ({ entity, ...props }) => {
   const { selection, setSelection } = useBulkContext()
@@ -229,18 +218,7 @@ const Library = compose(
         serialize: (key, raw) => raw?.length === 1 ? { monitored: `${raw[0] === 'followed'}` } : {},
         component: withProps({ type: 'show' })(FilterStates),
       },
-      status: {
-        initial: { values: [] },
-        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.flatMap(value => STATUS_GROUPS[value]).join('|') } : {},
-        component: withProps({
-          label: emojize('🚦', 'Status'),
-          options: [
-            { value: 'airing', label: emojize('📡', 'Airing') },
-            { value: 'upcoming', label: emojize('📅', 'Upcoming') },
-            { value: 'ended', label: emojize('🏁', 'Ended') },
-          ],
-        })(OneOf),
-      },
+      status,
       proposal: {
         initial: { values: [] },
         serialize: (key, raw) => (!raw?.values?.length || raw?.values?.length === 2) ? {} : { 'releases.proposal': raw?.values[0] },
@@ -270,7 +248,7 @@ const Library = compose(
         api.fetch(all.uri, all.params, all.init)
           .then(({ results: shows }) => setCounts({
             state: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
-            status: countsOf(shows.map(({ status }) => Object.keys(STATUS_GROUPS).find(group => STATUS_GROUPS[group].includes(status))).filter(Boolean)),
+            status: countsOf(shows.map(({ status }) => statusGroupOf(status)).filter(Boolean)),
             policy: countsOf(shows.map(({ policy }) => policy).filter(Boolean)),
             requested_by: countsOf(shows.flatMap(({ requested_by }) => requested_by || [])),
           }))
