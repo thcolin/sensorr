@@ -106,13 +106,14 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
   const { hash, key: navigation } = useLocation()
   const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
 
-  // The targeted season alone, else the ones waiting on something, else the last one with episodes
+  // The targeted season alone, else the ones with a pending proposal, else the last one with episodes. A wanted
+  // episode alone opens nothing
   const defaults = useMemo(() => {
     if (Number.isInteger(target)) {
       return new Set([target])
     }
 
-    const waiting = seasons.filter(({ proposed, wanted }) => proposed || wanted).map(({ number }) => number)
+    const waiting = seasons.filter(({ proposed }) => proposed).map(({ number }) => number)
     const filled = seasons.filter(({ count }) => count)
     return new Set(waiting.length ? waiting : [(filled.filter(({ number }) => number !== 0).pop() || filled[0])?.number])
   }, [target, seasons])
