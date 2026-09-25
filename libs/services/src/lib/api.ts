@@ -327,6 +327,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      patchEpisodesRelease: (
+        { body, init = {} }: { body: { ids: number[], from: string | null, to: string | null }, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'episodes/release',
+        params: {},
+        init: {
+          ...init,
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       getEpisodes: (
         { init = {}, params: { page = 1, ...params } = {} }: { init?: any, params?: { page?: number, [key: string]: any } }
       ): { uri: string, params: {}, init: {} } => ({

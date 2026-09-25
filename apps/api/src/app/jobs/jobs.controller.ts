@@ -39,7 +39,7 @@ export class JobsController implements OnApplicationBootstrap {
       return { success: true, job }
     } catch (err) {
       this.logger.error(err)
-      throw new HttpException(err, 500)
+      throw err instanceof HttpException ? err : new HttpException(err, 500)
     }
   }
 

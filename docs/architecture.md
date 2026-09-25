@@ -170,8 +170,9 @@ flowchart TD
   plex --> sync["sync shows reads the episode files, the episode is owned<br/>apps/cli/src/commands/sync-shows.js:192"]
 ```
 
-Both a direct download and a proposal write the release onto the show and the release id
-onto every episode it covers (`ProcessShowsTask.js:351-357`), so the episodes read
+Both a direct download and a proposal write the release id onto every episode it covers,
+before the download and only on the episodes whose `release` is still empty, then push the
+release onto the show (`ProcessShowsTask.js`), so the episodes read
 `proposed` from then on and no later run searches them again (`episodeStatus`,
 `libs/sensorr/src/lib/episode.ts:4`). Refusing clears that id and the episodes are `wanted`
 again, and so do two jobs: `import shows` for an accepted release still not imported a week

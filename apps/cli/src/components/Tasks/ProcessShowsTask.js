@@ -328,12 +328,29 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
           const raw = showReleaseOf(release, { from: state.metadata.command, job: state.metadata.job, proposal, level }, Date.now())
 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))
-          const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
-          let torrent
+          const ids = episodes
+            .filter(({ season_number, episode_number }) => release.coverage.some(({ season, episode }) => season === season_number && episode === episode_number))
+            .map(({ id }) => id)
+          const moveRelease = async (from, to) => {
+            const { uri, params, init } = api.query.episodes.patchEpisodesRelease({ body: { ids, from, to } })
+            return (await api.fetch(uri, params, init)).modified
+          }
+
+          // Another job may have taken some of these episodes since they were read: the release is downloaded only once they are all its own
+          if (await moveRelease(null, raw.id) < ids.length) {
+            await moveRelease(raw.id, null)
+            state.logger.info({ message: `⏭️  Release ${release.title} skipped for ${label}, another job took its episodes meanwhile (${release.znab})`, metadata: { ...metadata, show: lighten.show(show), release: { id: release.id, title: release.title }, skipped: true } })
+            continue
+          }
 
           try {
-            ({ torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init))
+            const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
+            const { torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
+            const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: { ...raw, ...(torrent ? { torrent } : {}) } })
+            await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)
           } catch (error) {
+            await moveRelease(raw.id, null)
+
             // The API refuses a .torrent it cannot read or without a video in it: banned, the next run picks another one
             if (error.status !== 422) {
               throw error
@@ -344,13 +361,6 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
             state.logger.warn({ message: `🚫 Release ${release.title} banned, its .torrent was refused for ${label} (${release.znab})`, metadata: { ...metadata, show: lighten.show(show), release: { id: release.id, title: release.title }, banned: true } })
             continue
           }
-
-          const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: { ...raw, ...(torrent ? { torrent } : {}) } })
-          await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)
-
-          const covered = episodes.filter(({ season_number, episode_number }) => release.coverage.some(({ season, episode }) => season === season_number && episode === episode_number))
-          const postEpisodes = api.query.episodes.postEpisodes({ body: covered.reduce((acc, episode) => ({ ...acc, [episode.id]: { release: raw.id } }), {}) })
-          await api.fetch(postEpisodes.uri, postEpisodes.params, postEpisodes.init)
 
           picked.push({ ...raw, label })
           state.logger.info({ message: `${{ false: '📼', true: '🛎️ ' }[proposal]} Release ${release.title} ${{ false: 'recorded', true: 'proposed' }[proposal]} for ${label} (${release.znab})`, metadata: { ...metadata, important: true, show: lighten.show(show), release: { ...release, proposal, level } } })

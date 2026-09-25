@@ -6,7 +6,7 @@ import cp from 'child_process'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Observable, Subject, merge, of, tap } from 'rxjs'
-import { Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
+import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { isJob, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
@@ -39,6 +39,7 @@ export class SensorrService {
   private readonly logger = new Logger(SensorrService.name)
   public process = {}
   public processObservable = new Subject<MessageEvent>()
+  private readonly running = new Set<string>()
 
   constructor(
     @InjectModel(MetafileDocument.name) private readonly metafileModel: Model<MetafileDocument>,
@@ -112,6 +113,14 @@ export class SensorrService {
       throw new NotFoundException(`Unknown Sensorr job "${name}"`)
     }
 
+    // A second run would search and download what the first one is about to
+    if (this.running.has(name)) {
+      this.logger.warn(`RunProcess "${name}" refused, it is already running` + (cron ? `, from cron "${cron}"` : ''))
+      return Promise.reject(new ConflictException(`Sensorr job "${name}" is already running`))
+    }
+
+    this.running.add(name)
+
     return new Promise((resolve, reject) => {
       let job
       let fulfilled = false
@@ -136,9 +145,13 @@ export class SensorrService {
         }
       })
       child.stderr.on('data', (data) => this.logger.error(`Command "${name}": ${data}`))
-      child.on('error', (err) => this.logger.log(`Command "${name}" error (${err})`))
+      child.on('error', (err) => {
+        this.logger.log(`Command "${name}" error (${err})`)
+        this.running.delete(name)
+      })
       child.on('close', code => {
         this.logger.log(`Command "${name}" exit (${code})`)
+        this.running.delete(name)
         delete this.process[job]
         this.processObservable.next({ data: this.process } as MessageEvent)
       })

@@ -294,6 +294,13 @@ export class ShowsService {
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
   }
 
+  // Only the episodes whose release is still `from` move, so two jobs never both take one
+  async moveEpisodesRelease(ids: number[], from: string | null, to: string | null): Promise<any> {
+    this.logger.log(`MoveEpisodesRelease "${ids.length}", from="${from}", to="${to}"`)
+    const { modifiedCount } = await this.episodeModel.updateMany({ _id: { $in: ids }, release: from }, { release: to })
+    return { modified: modifiedCount }
+  }
+
   async getEpisodes(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<EpisodeDocument>> {
     this.logger.log(`GetEpisodes, params=${JSON.stringify(params)}, page=${page}`)
     return this.episodeModel.paginate({

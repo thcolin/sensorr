@@ -90,8 +90,9 @@ export class JobsService {
 
   setupCron(command: string, type: string | undefined, cron: string) {
     const name = [command, type].filter(Boolean).join(' ')
+    // runProcess logs why a run did not start
     const job = new CronJob(cron, () => {
-      this.sensorrService.runProcess(command, type, cron)
+      this.sensorrService.runProcess(command, type, cron).catch(() => null)
     })
     this.schedulerRegistry.addCronJob(name, job)
     job.start()
