@@ -60,21 +60,8 @@ const showPushOf = (meta) => ({
     'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
   }[meta?.command],
   image: `https://image.tmdb.org/t/p/w185${meta?.show?.poster_path}`,
-  actions: {
-    'record': meta?.release?.proposal ? [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ] : [],
-    'airing': meta?.release?.proposal ? [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ] : [],
-    'sync': [],
-    'keep-in-touch': [
-      { action: 'wish-it', title: '"Wish" it' },
-      { action: 'ignore', title: 'Ignore' },
-    ],
-  }[meta?.command],
+  // The service worker handles no `notificationclick`: an action would do nothing
+  actions: [],
 })
 
 export const pushOf = (meta) => meta?.type === 'show' ? showPushOf(meta) : moviePushOf(meta)
