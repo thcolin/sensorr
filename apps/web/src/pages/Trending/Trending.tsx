@@ -46,7 +46,7 @@ export const Trending = (resource) => compose(
         subtitle: 'themoviedb.org lists no trending show today, try again later',
       },
     }[resource],
-    props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }) }[resource],
+    props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }), shows: () => ({ focus: 'vote_average' }) }[resource],
   }),
   withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day', shows: 'trending/tv/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({

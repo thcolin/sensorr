@@ -32,6 +32,7 @@ export const Discover = compose(
     display: 'grid',
     child: Show,
     useMetadataContext: useShowsMetadataContext,
+    props: () => ({ focus: 'vote_average' }),
     empty: {
       emoji: '📺',
       title: "Oh no, your request didn't return results",

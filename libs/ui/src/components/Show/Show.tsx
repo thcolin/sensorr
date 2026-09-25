@@ -6,6 +6,7 @@ import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Link } from '../../atoms/Link/Link'
 import { Progress } from '../../atoms/Progress/Progress'
+import { Focus } from '../../atoms/Focus/Focus'
 import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Proposal } from '../Movie/Proposal/Proposal'
@@ -19,10 +20,12 @@ export interface ShowProps extends Omit<
   entity: any
   display?: 'poster' | 'card'
   link?: ((entity: any) => LinkProps)
+  focus?: 'vote_average' | 'popularity' | 'vote_count'
   placeholder?: boolean
   state?: 'loading' | 'unfollowed' | 'followed'
   setState?: (state: string) => any
   metadata?: any
+  setMetadata?: (key: string, value: any) => any
   proceedRelease?: (release: any, choice?: boolean) => void
   ready?: boolean
   selected?: boolean | null
@@ -33,10 +36,12 @@ export interface ShowProps extends Omit<
 const UIShow = ({
   entity: data,
   display = 'poster',
+  focus,
   placeholder,
   state,
   setState,
   metadata,
+  setMetadata,
   proceedRelease,
   ready = true,
   selected = null,
@@ -68,8 +73,9 @@ const UIShow = ({
       state: { component: ShowState, props: { value: state, onChange: setState, compact: true } },
       ...(!proposal.proposals.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).filter(Boolean).map(guest => ({ entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } })) } } } : {}),
+      ...(focus ? { focus: { component: Focus, props: { entity, property: focus, compact: true, size: 'small' } } } : {}),
     }
-  }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease, progress?.owned, progress?.aired])
+  }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease, progress?.owned, progress?.aired, focus])
 
   if (display === 'card') {
     return (

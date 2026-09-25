@@ -33,6 +33,8 @@ Show.argTypes = {
 
 export const ShowPosterLoading = () => <UIShow entity={null} placeholder={true} />
 
+export const ShowPosterWithFocus = () => <UIShow entity={entity} state='unfollowed' focus='vote_average' />
+
 export const ShowPosterUnfollowed = () => <UIShow entity={entity} state='unfollowed' />
 
 export const ShowPosterComplete = () => <UIShow entity={{ ...entity, progress: { owned: 73, aired: 73 } }} state='followed' />
