@@ -321,7 +321,6 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
         }
 
         const proposal = proposalOnlyOf(show, proposalOnly)
-        const stored = [...(show.releases || [])]
 
         for (const release of picks) {
           const level = levelOf(release.meta, release.category)
@@ -344,9 +343,8 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
           const { torrent } = await api.fetch(downloadRelease.uri, downloadRelease.params, downloadRelease.init)
-          stored.push({ ...raw, ...(torrent ? { torrent } : {}) })
-          const postShows = api.query.shows.postShows({ body: { [show.id]: { releases: stored } } })
-          await api.fetch(postShows.uri, postShows.params, postShows.init)
+          const postShowRelease = api.query.shows.postShowRelease({ params: { id: show.id }, body: { ...raw, ...(torrent ? { torrent } : {}) } })
+          await api.fetch(postShowRelease.uri, postShowRelease.params, postShowRelease.init)
 
           const covered = episodes.filter(({ season_number, episode_number }) => release.coverage.some(({ season, episode }) => season === season_number && episode === episode_number))
           const postEpisodes = api.query.episodes.postEpisodes({ body: covered.reduce((acc, episode) => ({ ...acc, [episode.id]: { release: raw.id } }), {}) })

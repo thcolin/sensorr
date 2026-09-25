@@ -15,7 +15,9 @@ import { Episode as EpisodeDocument } from './episode.schema'
 
 const METADATA_FIELDS = ['name', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'releases', 'banned_releases', 'requested_by']
 
-const LABELS = { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' }
+const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent']
+
+const LABELS ={ totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' }
 
 const monitored = (value) => ({
   true: { monitored: true },
@@ -84,63 +86,83 @@ export class ShowsService {
     }, changes)
   }
 
+  // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
-    const torrents = new Map()
 
     for (const [i, { releases }] of Object.entries(changes)) {
       const id = Number(i)
 
-      for (const release of (releases || []) as (ShowReleaseDTO & { choice?: boolean })[]) {
-        if (!release.proposal || release.choice === undefined) {
+      for (const posted of (releases || []) as (ShowReleaseDTO & { choice?: boolean })[]) {
+        if (!posted.proposal || typeof posted.choice !== 'boolean') {
           continue
         }
 
-        const log = { 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }
+        const release = (await this.showModel.findOne({ _id: id }, { releases: { $elemMatch: { id: posted.id } } }).lean())?.releases?.[0] as ShowReleaseDTO
+        const manual = posted.job === 'manual' && !release
 
-        if (release.choice) {
-          torrents.set(release.id, await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs', 'show'))
+        if (!manual && !release?.proposal) {
+          continue
+        }
 
-          if (release.coverage?.length) {
-            await this.episodeModel.updateMany({ show_id: id, $or: release.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: release.id })
+        const log = { 'meta.job': posted.job, 'meta.group': id, 'meta.release.id': posted.id, 'meta.release.proposal': true }
+
+        if (posted.choice) {
+          const { choice, ...picked } = (manual ? posted : release) as ShowReleaseDTO & { choice?: boolean }
+          const torrent = await this.sensorrService.downloadRelease(picked, manual ? 'enclosure' : 'cache', 'fs', 'show')
+          const accepted = { proposal: false, accepted_at: Date.now(), ...(torrent ? { torrent } : {}) }
+
+          if (picked.coverage?.length) {
+            await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
           }
 
-          if (release.job !== 'manual') {
+          if (manual) {
+            await this.pushRelease(id, { ...picked, ...accepted })
+          } else {
+            await this.updateRelease(id, picked.id, accepted)
             await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
           }
-        } else {
+        } else if (!manual) {
           await this.sensorrService.removeRelease(release)
           await this.episodeModel.updateMany({ show_id: id, release: release.id }, { release: null })
-
-          if (release.job !== 'manual') {
-            await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
-          }
+          await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id } } })
+          await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
         }
       }
     }
 
-    const { insertedCount, modifiedCount, upsertedCount } = await this.showModel.bulkWrite(Object.keys(changes).map(i => ({
-      updateOne: {
-        filter: { _id: i },
-        update: {
-          _id: i,
-          ...changes[i],
-          ...(changes[i].releases ? {
-            releases: (changes[i].releases as (ShowReleaseDTO & { choice?: boolean })[])
-              .filter(release => !release.proposal || release.choice !== false)
-              .map(({ proposal, choice, ...release }) => ({
-                ...release,
-                ...(proposal && choice === undefined ? { proposal: true } : {}),
-                ...(proposal && choice === true ? { torrent: torrents.get(release.id) || release.torrent, accepted_at: Date.now() } : {}),
-              })),
-          } : {}),
+    const { insertedCount, modifiedCount, upsertedCount } = await this.showModel.bulkWrite(Object.keys(changes).map(i => {
+      const { releases, ...fields } = changes[i]
+
+      return {
+        updateOne: {
+          filter: { _id: i },
+          update: { _id: i, ...fields },
+          upsert: true,
         },
-        upsert: true,
-      },
-    })))
+      }
+    }))
 
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
+  }
+
+  async pushRelease(id: number, release: ShowReleaseDTO): Promise<any> {
+    this.logger.log(`PushRelease "${id}", release="${release.id}"`)
+    const { modifiedCount } = await this.showModel.updateOne({ _id: id, 'releases.id': { $ne: release.id } }, { $push: { releases: release } })
+    return { pushed: modifiedCount }
+  }
+
+  async updateRelease(id: number, release: string, fields: Partial<ShowReleaseDTO>): Promise<any> {
+    this.logger.log(`UpdateRelease "${id}", release="${release}"`)
+    const changes = Object.entries(fields).filter(([key]) => RELEASE_FIELDS.includes(key))
+
+    if (!changes.length) {
+      return { updated: 0 }
+    }
+
+    const { modifiedCount } = await this.showModel.updateOne({ _id: id, 'releases.id': release }, { $set: Object.fromEntries(changes.map(([key, value]) => [`releases.$.${key}`, value])) })
+    return { updated: modifiedCount }
   }
 
   async deleteShows(changes: { [key: string]: ShowDTO }): Promise<any> {

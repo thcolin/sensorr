@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Query, Post, Sse, Delete, Param, ParseIntPipe } from '@nestjs/common'
+import { Body, Controller, Get, Query, Post, Patch, Sse, Delete, Param, ParseIntPipe } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { ShowsService } from './shows.service'
-import { ShowDTO } from './show.dto'
+import { ShowDTO, ShowReleaseDTO } from './show.dto'
 
 @Controller('shows')
 export class ShowsController {
@@ -42,6 +42,16 @@ export class ShowsController {
   @Get(':id')
   async getShow(@Param('id', ParseIntPipe) id: number): Promise<unknown> {
     return this.showsService.getShow(id)
+  }
+
+  @Post(':id/releases')
+  async pushRelease(@Param('id', ParseIntPipe) id: number, @Body() release: ShowReleaseDTO) {
+    return this.showsService.pushRelease(id, release)
+  }
+
+  @Patch(':id/releases')
+  async updateRelease(@Param('id', ParseIntPipe) id: number, @Body() { id: release, ...fields }: ShowReleaseDTO) {
+    return this.showsService.updateRelease(id, release, fields)
   }
 
   @Get(':id/episodes')

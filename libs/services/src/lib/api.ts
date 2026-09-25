@@ -231,6 +231,38 @@ export class API {
           },
         }
       }),
+      postShowRelease: (
+        { body, init = {}, params: { id } }: { body: any, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      patchShowRelease: (
+        { body, init = {}, params: { id } }: { body: any, init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/releases`,
+        params: {},
+        init: {
+          ...init,
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       getShowEpisodes: (
         { init = {}, params: { id } }: { init?: any, params: { id: number } }
       ): { uri: string, params: {}, init: {} } => ({

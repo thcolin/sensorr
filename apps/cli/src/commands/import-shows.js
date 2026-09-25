@@ -182,19 +182,13 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             }
           }
 
-          if (done.length || overdue.length) {
-            const { uri, params, init } = api.query.shows.postShows({
-              body: {
-                [show.id]: {
-                  ...(!show.path && done.length ? { path: folder } : {}),
-                  releases: show.releases.map(({ overdue: mark, ...release }) => (
-                    done.includes(release.id) ? { ...release, imported_at: now } :
-                    (mark || overdue.some(({ id }) => id === release.id)) ? { ...release, overdue: true } :
-                    release
-                  )),
-                },
-              },
-            })
+          for (const [id, fields] of [...done.map((id) => [id, { imported_at: now }]), ...overdue.map(({ id }) => [id, { overdue: true }])]) {
+            const { uri, params, init } = api.query.shows.patchShowRelease({ params: { id: show.id }, body: { id, ...fields } })
+            await api.fetch(uri, params, init)
+          }
+
+          if (!show.path && done.length) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { path: folder } } })
             await api.fetch(uri, params, init)
           }
         } catch (error) {
