@@ -125,12 +125,15 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
     {aired > 0 ? (
       <>
         <ProgressPill owned={owned} aired={aired} />
-        <Progress
-          value={owned}
-          max={aired}
-          segments={seasons?.map(season => ({ value: season.owned, max: season.aired }))}
-          title={`${owned} of ${aired} aired episodes owned`}
-        />
+        {/* A 96px mobile card leaves the bar 5px to 19px beside the pill: the pill alone says it there */}
+        {!compact && (
+          <Progress
+            value={owned}
+            max={aired}
+            segments={seasons?.map(season => ({ value: season.owned, max: season.aired }))}
+            title={`${owned} of ${aired} aired episodes owned`}
+          />
+        )}
       </>
     ) : (
       <>
