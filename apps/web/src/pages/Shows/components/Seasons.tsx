@@ -5,7 +5,7 @@ import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPil
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
 import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { ReleasesStyles } from '../../Details/components/Releases'
-import { Toggle } from './Toggle'
+import { Follow } from './Follow'
 import { fileMetaOf, sizeOf } from './fills'
 
 const THRESHOLD = 60
@@ -13,7 +13,7 @@ const THRESHOLD = 60
 const pad = (number) => String(number).padStart(2, '0')
 
 // Wide enough for a pill of four digits on each side. The last two columns, the gap between them and the
-// right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the toggles align
+// right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the follows align
 const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em', '6.5em 10em 1.5em 1.5em']
 const GAP = [6, 4]
 
@@ -92,7 +92,7 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
     return null
   }
 
-  const toggle = (number, opened) => (e) => !e.target.closest('[aria-pressed]') && setOpen(open => ({ ...open, [number]: !opened }))
+  const toggle = (number, opened) => (e) => !e.target.closest('[data-follow]') && setOpen(open => ({ ...open, [number]: !opened }))
 
   if (!inLibrary) {
     const years = regular.map(({ year }) => year).filter(Boolean)
@@ -180,12 +180,11 @@ const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followE
                         <Complete progress={season.progress} />
                       </>
                     )}
-                    <Toggle
-                      id={`follow-${id}`}
+                    <Follow
                       checked={season.monitored}
                       disabled={!ready || !season.episodes.length}
-                      title={season.monitored ? `Stop following every episode of ${season.name}` : `Follow every episode of ${season.name}`}
-                      aria-label={`Follow every episode of ${season.name}`}
+                      title={season.monitored ? `Every episode of ${season.name} followed` : `Follow every episode of ${season.name}`}
+                      name={`Follow every episode of ${season.name}`}
                       onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
                     />
                   </div>
@@ -368,7 +367,7 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => 
               <div
                 sx={UIEpisodes.styles.row}
                 data-foldable={foldable}
-                onClick={foldable ? (e: any) => !e.target.closest('[aria-pressed]') && toggle() : undefined}
+                onClick={foldable ? (e: any) => !e.target.closest('[data-follow]') && toggle() : undefined}
               >
                 <code>E{pad(episode.episode_number)}</code>
                 {foldable ? (
@@ -382,14 +381,13 @@ const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => 
                 <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
                   {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
                 </time>
-                {/* The follow toggle already says an episode is not followed: the empty cell keeps the grid columns */}
+                {/* The follow already says an episode is not followed: the empty cell keeps the grid columns */}
                 {status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />}
-                <Toggle
-                  id={`follow-episode-${show}-${episode.id}`}
+                <Follow
                   checked={!!episode.monitored}
                   disabled={!ready}
-                  title={episode.monitored ? `Stop following episode ${pad(episode.episode_number)}` : `Follow episode ${pad(episode.episode_number)}`}
-                  aria-label={`Follow episode ${pad(episode.episode_number)}`}
+                  title={episode.monitored ? `Episode ${pad(episode.episode_number)} followed` : `Follow episode ${pad(episode.episode_number)}`}
+                  name={`Follow episode ${pad(episode.episode_number)}`}
                   onChange={value => followEpisodes([episode.id], value)}
                 />
               </div>
