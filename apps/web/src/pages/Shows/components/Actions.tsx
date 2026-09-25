@@ -57,7 +57,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </fieldset>
         {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
-      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide }}>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...UIShowSettings.styles.spaced }}>
         <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
           {DOWNLOADS.map(({ value, key, label }) => (
@@ -104,7 +104,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 
   return (
     <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
-      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
+      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option, ...UIShowSettings.styles.spaced }}>
         <span id={ids.follow}>Follow</span>
         <div title={titles.monitored} sx={UIShowSettings.styles.option}>
           <OptionInput
@@ -137,16 +137,26 @@ export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
   // One row as wide as the movie settings: Policy stretches like Terms, the other columns take
-  // the width of their content, and the last one ends on the right edge. Columns align on their
-  // top, so each keeps the label, control and help gaps of the movie Policy
+  // the width of their content, and the last one ends on the right edge
   container: {
     display: ['flex', 'grid'],
     flexDirection: 'column',
     gridTemplateColumns: 'minmax(0, 1fr)',
     gridAutoFlow: 'column',
     gridAutoColumns: 'max-content',
-    alignItems: ['stretch', 'start'],
     columnGap: MetadataStyles.container.columnGap,
+  },
+  // Radios and boxes are shorter than the select: their label keeps them off it, which puts them
+  // level with the select, and the help drops to the bottom of the row, on the Policy help line
+  spaced: {
+    '>span': {
+      ...MetadataStyles.block['>span'],
+      paddingBottom: 4,
+    },
+    '>small': {
+      ...MetadataStyles.block['>small'],
+      marginTop: [10, 'auto'],
+    },
   },
   // The first box sits under its label like a control, the second one the gap `Option` keeps
   // between two options; centered on mobile like the radios
@@ -172,7 +182,6 @@ UIShowSettings.styles = {
     },
   },
   radios: {
-    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: ['center', 'flex-start'],
