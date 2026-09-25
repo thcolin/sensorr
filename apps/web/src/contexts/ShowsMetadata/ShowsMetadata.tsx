@@ -173,7 +173,8 @@ export const Provider = ({ ...props }) => {
       }
     })
 
-    if (silent) {
+    // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast
+    if (silent || (ids.length === 1 && key !== 'policy')) {
       return promise
     }
 
@@ -204,6 +205,10 @@ export const Provider = ({ ...props }) => {
         reject(new Error())
       }
     })
+
+    if (ids.length === 1) {
+      return promise
+    }
 
     await toast.promise(promise, {
       loading: ids.length === 1 ? `Updating episode...` : `Updating **${ids.length}** episodes...`,
