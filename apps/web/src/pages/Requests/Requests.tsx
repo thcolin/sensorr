@@ -157,7 +157,7 @@ const Requests = compose(
                   <br/>
                   <small><em>Change each requested movie state to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🍿 Wished</code> if you want to accept it, or <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔕 Ignored</code> if you want to refuse it</em></small>
                   <br/>
-                  <small><em>Change a requested show to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>📹 Followed</code> to add it to your library</em></small>
+                  <small><em>Change a requested show to <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔖 Followed</code> to add it to your library</em></small>
                 </span>
               )}
             />

@@ -19,8 +19,9 @@ export const ShowStateOptions = [
     value: 'unfollowed',
   },
   {
-    // Not a bell: the 🛎 of a pending proposal sits right under this badge on a poster
-    emoji: '📹',
+    // Not a bell, the 🛎 of a pending proposal sits right under this badge on a poster,
+    // and not 📹, the record job beside it in a notification
+    emoji: '🔖',
     label: 'Followed',
     value: 'followed',
   },
