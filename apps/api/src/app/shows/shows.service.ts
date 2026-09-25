@@ -63,12 +63,6 @@ export class ShowsService {
     await this.showModel.updateMany({ policy: oldName }, { policy: newName })
   }
 
-  @OnEvent('plex.reset')
-  async handlePlexReset() {
-    this.logger.log(`Handling plex.reset event`)
-    await this.showModel.updateMany({}, { '$pull': { 'releases': { from: 'sync' } } })
-  }
-
   private async matchPolicies(changes: { [key: string]: ShowDTO }): Promise<{ [key: string]: ShowDTO }> {
     const policies = this.configService.config.get('policies') || []
     const candidates = Object.keys(changes).filter(id => changes[id].state && changes[id].state !== 'ignored' && !changes[id].policy)
