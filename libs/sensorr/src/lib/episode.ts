@@ -8,7 +8,11 @@ export const episodeStatus = (
     return 'owned'
   }
 
-  if (!episode.air_date || new Date(episode.air_date).getTime() > new Date(now).getTime()) {
+  if (!episode.air_date) {
+    return episode.monitored ? 'upcoming' : 'unmonitored'
+  }
+
+  if (new Date(episode.air_date).getTime() > new Date(now).getTime()) {
     return 'upcoming'
   }
 

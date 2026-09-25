@@ -9,9 +9,14 @@ describe('episodeStatus', () => {
     expect(episodeStatus({ ...aired, air_date: new Date('2026-09-24T13:00:00Z') }, now)).toBe('upcoming')
   })
 
-  it('gives upcoming to an episode without an air date', () => {
+  it('gives upcoming to a followed episode without an air date', () => {
     expect(episodeStatus({ ...aired, air_date: null }, now)).toBe('upcoming')
     expect(episodeStatus({ monitored: true }, now)).toBe('upcoming')
+  })
+
+  it('gives unmonitored to an episode without an air date nobody follows', () => {
+    expect(episodeStatus({ ...aired, air_date: null, monitored: false }, now)).toBe('unmonitored')
+    expect(episodeStatus({}, now)).toBe('unmonitored')
   })
 
   it('gives unmonitored to an aired episode nobody follows', () => {
