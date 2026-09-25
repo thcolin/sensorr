@@ -376,13 +376,17 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
     const controller = new AbortController()
 
     const cb = async () => {
-      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { controller }, params: { job, group } })
+      const { uri, params, init } = api.query.logs.getJobGroupLogs({ init: { signal: controller.signal }, params: { job, group } })
 
       try {
         const result = await api.fetch(uri, params, init)
         logsCache?.set(cacheKey, result)
         setLogs(result)
       } catch (e) {
+        if (controller.signal.aborted) {
+          return
+        }
+
         console.warn(e)
         setLogs([])
       }
