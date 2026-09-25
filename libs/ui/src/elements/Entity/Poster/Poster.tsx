@@ -300,8 +300,17 @@ const UIPoster = ({
               </small>
             )}
           </div>
+          {/* Out of sight while the skeleton covers the card, like the badges: a positioned pill would sit over it */}
           {!!footer && (
-            <div sx={UIPoster.styles.footer}>{footer}</div>
+            <div
+              sx={{
+                ...UIPoster.styles.footer,
+                opacity: ready ? 1 : 0,
+                transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+              }}
+            >
+              {footer}
+            </div>
           )}
         </div>
       )}
