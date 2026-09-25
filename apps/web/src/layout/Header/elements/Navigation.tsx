@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
-import { Empty } from '@sensorr/ui'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 
 const Chevron = ({ ...props }) => (
@@ -33,6 +32,7 @@ const SECONDARY = {
     { to: '/tv/discover', label: 'Discover' },
     { to: '/tv/calendar', label: 'Calendar' },
     { to: '/tv/trending', label: 'Trending' },
+    { to: '/tv/requests', label: 'Requests' },
   ],
   '/person': [
     { to: '/person/followed', label: 'Followed' },
@@ -85,10 +85,16 @@ Secondary.styles = {
       display: 'none',
     },
     paddingX: 8,
+    // Fades the edges so a row wider than the screen shows it holds more
+    maskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
+    WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
     '>a': {
       variant: 'link.reset',
       flexShrink: 0,
-      padding: 4,
+      display: 'inline-flex',
+      alignItems: 'center',
+      minHeight: '44px',
+      paddingX: 4,
       fontWeight: 600,
       fontSize: 6,
       color: 'text',
@@ -145,7 +151,7 @@ const Navigation = ({ display = 'web', ...props }) => {
           <span>Movies</span>
         </RippleNavLink>
         <RippleNavLink to='/tv/library' viewTransition onClick={location.pathname === '/tv/library' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/tv') ? Navigation.styles.app.active : {}}>
-          <Empty.tv />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.5 18 8.5l6.5-6"/><path fill="currentColor" fillRule="evenodd" d="M5 9h26a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3zm2 3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16.5a2 2 0 0 0 2-2V14a2 2 0 0 0-2-2zm1 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14.5a1 1 0 0 0 1-1V15a1 1 0 0 0-1-1zm21.75 1.25a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zm0 6a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zM8 31h4v2.5H8zm16 0h4v2.5h-4z"/></svg>
           <span>Shows</span>
         </RippleNavLink>
         <RippleNavLink to='/person/followed' viewTransition onClick={location.pathname === '/person/followed' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>

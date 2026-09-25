@@ -116,6 +116,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='tv/discover' element={<ShowsDiscover />} />
         <Route path='tv/trending' element={<TrendingShows />} />
         <Route path='tv/search' element={<SearchShows />} />
+        <Route path='tv/requests' element={<Requests />} />
         <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />
