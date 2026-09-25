@@ -1,4 +1,5 @@
 import oleoo from 'oleoo'
+import { scoredTitle } from '@sensorr/sensorr'
 
 const pad = (number: number) => String(number).padStart(2, '0')
 
@@ -32,9 +33,10 @@ export const fillsOf = (
 }
 
 // oleoo names a file MULTi whenever it reads two languages, even two that disagree: `VOST-FR-EN` reads as
-// VOSTFR and as FR-EN. Only a single language, or a MULTi the name spells out without a VOST, is kept
-export const fileMetaOf = (file: { title?: string, original?: string }) => {
-  const meta = oleoo.parse(file?.original || file?.title || '', { strict: false, flagged: true })
+// VOSTFR and as FR-EN. Only a single language, or a MULTi the name spells out without a VOST, is kept.
+// A Plex file is read on the name sync built from its streams.
+export const fileMetaOf = (file: { title?: string, original?: string, from?: string }) => {
+  const meta = oleoo.parse((file && scoredTitle(file)) || file?.title || '', { strict: false, flagged: true })
   const languages = meta.languages || []
   const read = languages.length <= 1 || (languages.includes('MULTi') && !languages.some(language => language.startsWith('VOST')))
 

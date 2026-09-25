@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, filesOf, showFilesOf } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -86,24 +86,51 @@ describe('releaseOf', () => {
     expect(() => releaseOf(payload, { videoResolution: '4k', Part: [{ file: 'Movie.2020.mkv' }] })).not.toThrow()
     expect(oleoo.parse(releaseOf(payload, { videoResolution: '4k', Part: [{ file: 'Movie.2020.mkv' }] }).title, { strict: false }).resolution).toBe('2160p')
   })
+
+  it('names an episode after its show, with the episodes its file holds', () => {
+    const episode = { type: 'episode', title: 'Fun Run', year: 2007, grandparentTitle: 'The Office (US)', parentIndex: 4, index: 1 }
+    const read = (file) => oleoo.parse(releaseOf(episode, { videoCodec: 'hevc', videoResolution: '720', audioCodec: 'eac3', audioChannels: 6, Part: [{ file, Stream: [video, audio('fr-FR'), audio('en')] }] }).title, { strict: false, flagged: true })
+
+    expect(read('/tvshows/The Office (US)/Season 04/The Office (US) - S04E01-E02 - Fun Run.mkv')).toMatchObject({ type: 'tvshow', title: 'The Office Us', year: null, season: 4, episodes: [1, 2], resolution: '720p', encoding: 'x265', dub: 'EAC3-5.1', language: 'MULTi-VFF' })
+    expect(read('/tvshows/The Office (US)/Season 04/Fun Run.mkv')).toMatchObject({ season: 4, episodes: [1] })
+  })
 })
 
 describe('showFilesOf', () => {
-  const media = (id, file, sizes = [1000]) => ({ id, Part: sizes.map((size) => ({ file, size })) })
-  const item = (parentIndex, index, Media) => ({ guid: `plex://episode/${parentIndex}-${index}`, parentIndex, index, Media })
+  const media = (id, file, sizes = [1000]) => ({ id, videoResolution: '1080', Part: sizes.map((size) => ({ file, size })) })
+  const item = (parentIndex, index, Media) => ({ type: 'episode', grandparentTitle: 'Friends', guid: `plex://episode/${parentIndex}-${index}`, parentIndex, index, Media })
   const episodes = [
     { id: 11, season_number: 1, episode_number: 1, files: [] },
     { id: 12, season_number: 1, episode_number: 2, files: [{ id: 'plex://episode/1-2#9', size: 1000, title: 'Old', original: 'Old' }] },
     { id: 13, season_number: 1, episode_number: 3 },
   ]
 
-  it('names a file as oleoo reads its file name, and sums the size of its parts', () => {
-    expect(filesOf(item(1, 1, [media(4, '/tvshows/Friends/Season 01/Friends.S01E01.1080p.WEB-DL.x264-GRP.mkv', [700, 300])]))).toEqual([{
+  it('names a new file from what Plex read, and sums the size of its parts', () => {
+    expect(showFilesOf(episodes, [item(1, 1, [media(4, '/tvshows/Friends/Season 01/Friends.S01E01.720p.WEB-DL.x264-GRP.mkv', [700, 300])])]).episodes[0].files).toEqual([{
       id: 'plex://episode/1-1#4',
       size: 1000,
       title: 'Friends.S01E01.1080p.WEB-DL.x264-GRP',
-      original: 'Friends.S01E01.1080p.WEB-DL.x264-GRP',
+      original: 'Friends.S01E01.720p.WEB-DL.x264-GRP',
+      from: 'sync',
     }])
+  })
+
+  it('keeps the name of a file already read, and reads again one named before sync read streams', () => {
+    const read = { id: 'plex://episode/1-2#9', size: 1000, title: 'Friends.S01E02.MULTi.1080p-GRP', original: 'Friends.S01E02', from: 'sync' }
+    const named = [{ ...episodes[1], files: [read] }, { id: 13, season_number: 1, episode_number: 3, files: [{ id: 'plex://episode/1-3#6', size: 1000, title: 'Old', original: 'Old' }] }]
+    const items = [item(1, 2, [media(9, 'Friends.S01E02.mkv', [1000])]), item(1, 3, [media(6, 'Friends.S01E03.mkv')])]
+
+    expect(showFilesOf(named, items).episodes.map(({ files }) => files[0].title)).toEqual(['Friends.S01E02.MULTi.1080p-GRP', 'Friends.S01E03.1080p-NOTEAM'])
+    expect(unreadItemsOf(named, items)).toEqual([items[1]])
+  })
+
+  it('reads a file listed under several episodes once, from the first of them', () => {
+    const season = [4, 5].map((number) => ({ id: number, season_number: 1, episode_number: number, files: [] }))
+    const items = [item(1, 4, [media(4, 'Friends.S01E04E05.mkv')]), item(1, 5, [media(8, 'Friends.S01E04E05.mkv')])]
+    const synced = showFilesOf(season, items).episodes
+
+    expect(unreadItemsOf(season, items)).toEqual([items[0]])
+    expect(unreadItemsOf(synced, items)).toEqual([])
   })
 
   it('gives each episode the files of the Plex episode with the same season and episode number', () => {

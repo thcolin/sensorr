@@ -76,14 +76,21 @@ export const settleLanguage = (fromName, fromPlex) => (
   fromName
 )
 
+const nameOf = (media) => media.Part[0].file.split(/[\\/]/).pop()
+
+// A file holding several episodes is listed under each of them, or under the first one only: its name then numbers
+// the others, as long as it agrees with Plex.
+const numbersOf = (item, parsed) => parsed.season === item.parentIndex && parsed.episodes.includes(item.index) ? parsed.episodes : [item.index]
+
 export const releaseOf = (payload, media) => {
   const streams = media.Part[0].Stream || []
-  const fallback = oleoo.parse(media.Part[0].file.split(/[\\/]/).pop(), { strict: false, flagged: true })
+  const fallback = oleoo.parse(nameOf(media), { strict: false, flagged: true })
   const { dub, flags } = dubOf(media)
+  const episode = payload.type === 'episode'
 
   const meta = {
-    type: 'movie',
-    title: (payload.title)
+    type: episode ? 'tvshow' : 'movie',
+    title: (episode ? payload.grandparentTitle : payload.title)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -93,7 +100,7 @@ export const releaseOf = (payload, media) => {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' '),
-    year: payload.year,
+    year: episode ? null : payload.year,
     language: settleLanguage(fallback.language, languageOf(streams)),
     source: fallback.source,
     encoding: (
@@ -106,38 +113,47 @@ export const releaseOf = (payload, media) => {
     dub: dub || (DUB_FLAGS[media.audioCodec] ? null : fallback.dub),
     flags: [...new Set([...(fallback.flags || []).filter(flag => !(media.audioChannels && CHANNEL_FLAGS.includes(flag))), ...flags])],
     group: fallback.group,
-    season: null,
+    season: episode ? payload.parentIndex : null,
     episode: null,
-    episodes: [],
+    episodes: episode ? numbersOf(payload, fallback) : [],
   }
 
   return { title: oleoo.stringify(meta, { flagged: true }), original: fallback.original }
 }
 
-const nameOf = (media) => media.Part[0].file.split(/[\\/]/).pop()
+const idOf = (item, media) => `${item.guid}#${media.id}`
 
-const fileOf = (item, media, { generated, original } = oleoo.parse(nameOf(media), { strict: false, flagged: true })) => ({
-  id: `${item.guid}#${media.id}`,
-  size: media.Part.reduce((acc, curr) => acc + curr.size, 0),
-  title: generated,
-  original,
-})
+const fileOf = (item, media, read) => {
+  const { title, original } = read.get(idOf(item, media)) || releaseOf(item, media)
+  return { id: idOf(item, media), size: media.Part.reduce((acc, curr) => acc + curr.size, 0), title, original, from: 'sync' }
+}
 
-export const filesOf = (item) => (item.Media || []).map((media) => fileOf(item, media))
+const readOf = (episodes) => new Map(episodes.flatMap(({ files }) => files || []).filter(({ from }) => from === 'sync').map((file) => [file.id, file]))
 
-// Plex numbers an episode by its season `parentIndex` and its own `index`. A file holding several episodes is listed
-// under each of them, or under the first one only: its name then numbers the others, as long as it agrees with Plex.
+// A file listed under several episodes is named by the first one only
+export const unreadItemsOf = (episodes, items) => {
+  const read = readOf(episodes), seen = new Set()
+
+  return items.filter((item) => (item.Media || []).filter((media) => {
+    const first = !seen.has(media.Part[0].file)
+    seen.add(media.Part[0].file)
+    return first && !read.has(idOf(item, media))
+  }).length)
+}
+
+// Plex numbers an episode by its season `parentIndex` and its own `index`.
+// A file already read keeps the name built from its streams.
 export const showFilesOf = (episodes, items) => {
   const keyOf = (season, episode) => `${season}:${episode}`
+  const read = readOf(episodes)
   const files = {}, entries = {}, listed = new Set()
 
   for (const item of items) {
     listed.add(keyOf(item.parentIndex, item.index))
 
     for (const media of item.Media || []) {
-      const parsed = oleoo.parse(nameOf(media), { strict: false, flagged: true })
-      const entry = entries[media.Part[0].file] = entries[media.Part[0].file] || fileOf(item, media, parsed)
-      const numbers = parsed.season === item.parentIndex && parsed.episodes.includes(item.index) ? parsed.episodes : [item.index]
+      const entry = entries[media.Part[0].file] = entries[media.Part[0].file] || fileOf(item, media, read)
+      const numbers = numbersOf(item, oleoo.parse(nameOf(media), { strict: false, flagged: true }))
 
       for (const key of numbers.map((number) => keyOf(item.parentIndex, number))) {
         files[key] = (files[key] || []).includes(entry) ? files[key] : [...(files[key] || []), entry]

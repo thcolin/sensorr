@@ -7,7 +7,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { showFilesOf } from '../utils/plex'
+import { showFilesOf, unreadItemsOf } from '../utils/plex'
 import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf, plexShowOf, withdrawnProposalsOf } from '../utils/shows'
 
 const meta = {
@@ -141,7 +141,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
 
     const cb = async () => {
       const corrections = [], created = [], warning = []
-      let missing = 0, unmatched = 0, withdrawals = 0
+      let missing = 0, unmatched = 0, withdrawals = 0, read = 0
       setStatus('loading')
 
       // Plex may hold one TMDB show in several items, their episodes are read together
@@ -175,7 +175,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             output: <Text><Text bold={true}>{title}</Text> - Match Plex episodes files</Text>,
           }))
 
-          const items = (state.items || []).filter((item) => keys.includes(`${item.grandparentRatingKey}`))
+          const listed = (state.items || []).filter((item) => keys.includes(`${item.grandparentRatingKey}`))
           let show = (state.library || []).find((show) => `${show.id}` === tmdb)
           const unknown = !show
           let episodes = state.episodes?.[tmdb] || []
@@ -190,7 +190,17 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             created.push(show.id)
           }
 
-          const synced = showFilesOf(episodes, items)
+          // A section listing carries no streams, each new file is read from its episode's metadata
+          const unread = unreadItemsOf(episodes, listed)
+          const streamed = new Map()
+
+          for (const item of unread) {
+            const { MediaContainer: { Metadata: [{ Media }] } } = await state.plex.query(item.key)
+            streamed.set(item, { ...item, Media })
+          }
+
+          read += unread.length
+          const synced = showFilesOf(episodes, listed.map((item) => streamed.get(item) || item))
           const settled = synced.episodes.map((episode, index) => ({ ...episode, ...plexFilesOf(episodes[index].files, episode.files) }))
           const changes = settled.filter(({ changed }) => changed)
           const lost = changes.filter(({ lost }) => lost).length
@@ -204,7 +214,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             })
             await api.fetch(uri, params, init)
             corrections.push(show.id)
-            state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched } })
+            state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata, ${unread.length} read`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched, read: unread.length } })
           }
 
           // Refused, never banned: the proposal brings nothing Plex does not already hold
@@ -230,7 +240,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
 
       setState((state) => ({ ...state, missing }))
       await new Promise(resolve => setTimeout(resolve, 500))
-      state.logger.info({ message: `🩹 ${corrections.length} Fixed shows with Plex metadata`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length }, created: created.length, unmatched, withdrawals } } })
+      state.logger.info({ message: `🩹 ${corrections.length} Fixed shows with Plex metadata, ${read} episodes streams read`, metadata: { ...state.metadata, summary: { corrections: { success: corrections.length, warning: warning.length }, created: created.length, unmatched, withdrawals, read } } })
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{corrections.length}</Text> shows fixed with Plex metadata, <Text bold={true}>{created.length}</Text> added (<Text bold={true}>archived</Text>)</Text> }))
       setStatus('done')
     }

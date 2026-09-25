@@ -46,6 +46,10 @@ describe('fileMetaOf', () => {
   it('reads the original name before the one oleoo generated', () => {
     expect(fileMetaOf({ title: 'The.Office.S04E01.MULTi.720p-NOTEAM', original: 'the_office_us_s04e01_VOST-FR-EN_720p' }).language).toBeNull()
   })
+
+  it('reads a Plex file on the name sync built from its streams', () => {
+    expect(fileMetaOf({ from: 'sync', title: 'The.Office.Us.S04E01-E02.MULTi-VFF.1080p.WEB-DL.x264.EAC3-GRP', original: 'The Office (US) - S04E01-E02 - Fun Run' })).toMatchObject({ language: 'MULTi-VFF', resolution: '1080p', encoding: 'x264' })
+  })
 })
 
 describe('ownedFilesOf', () => {
