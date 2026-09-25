@@ -7,6 +7,8 @@ export interface ProgressProps extends React.ProgressHTMLAttributes<HTMLProgress
   segments?: { value: number, max: number }[]
 }
 
+const DENSE = 1 / 24
+
 const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   if (!(max > 0)) {
     return null
@@ -15,6 +17,10 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   const parts = (segments || []).filter(segment => segment.max > 0)
 
   if (parts.length > 1) {
+    const total = parts.reduce((sum, segment) => sum + segment.max, 0)
+    // Past a 24th of the bar, a hairline between every part draws a barcode: the parts touch, each one still fills on its own
+    const dense = parts.some(segment => segment.max / total < DENSE)
+
     return (
       <div
         className={props.className}
@@ -24,6 +30,7 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.min(value, max)}
+        data-dense={dense || undefined}
         sx={UIProgress.styles.segments}
       >
         {parts.map((segment, index) => (
@@ -69,6 +76,9 @@ UIProgress.styles = {
     gap: '1px',
     '@media (min-resolution: 2dppx)': {
       gap: '0.5px',
+    },
+    '&[data-dense]': {
+      gap: 12,
     },
     width: '100%',
     height: '0.25em',
