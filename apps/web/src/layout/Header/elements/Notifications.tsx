@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
+import toast from 'react-hot-toast'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
@@ -479,7 +480,10 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
   const [following, setFollowing] = useState(false)
-  const label = useMemo(() => meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : '', [meta?.release])
+  const label = useMemo(() => (
+    meta?.command === 'sync' ? `${meta?.missing} episode${meta?.missing > 1 ? 's' : ''}` :
+    meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : ''
+  ), [meta?.command, meta?.missing, meta?.release])
   const stored = (metadata.releases || []).find(release => release.id === meta?.release?.id)
   const banned = (metadata.banned_releases || []).includes(meta?.release?.title)
 
@@ -496,20 +500,43 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       return (metadata.state === 'wished' || metadata.state === 'archived') ? true : null
     }
 
+    if (meta?.command === 'sync') {
+      return null
+    }
+
     return stored?.proposal ? null : stored ? true : false
   }, [meta?.choice, meta?.command, loading, metadata.state, stored])
 
-  const answer = (choice) => {
-    setShowMetadata(meta?.show?.id, 'proposal', { id: meta?.release?.id, choice }).catch(() => null)
-    answerNotification(_id, choice)
+  // `setShowMetadata` reverts on failure but tells nothing for a single show, so the card says it
+  const answer = async (choice) => {
+    try {
+      await setShowMetadata(meta?.show?.id, 'proposal', { id: meta?.release?.id, choice })
+      answerNotification(_id, choice)
+    } catch {
+      toast.error('Error while answering the proposal')
+    }
   }
+
+  // `followShow` toasts a show it adds to the library, not one already there
+  const followError = () => (metadata.state && metadata.state !== 'ignored') && toast.error('Error while following the show')
 
   const follow = async () => {
     setFollowing(true)
-    await followShow(meta?.show?.id, true).catch(() => null)
+
+    try {
+      await followShow(meta?.show?.id, true)
+      answerNotification(_id, true)
+    } catch {
+      followError()
+    }
+
     setFollowing(false)
-    answerNotification(_id, true)
   }
+
+  const toggleFollow = (state) => followShow(meta?.show?.id, state === 'followed').catch(followError)
+
+  const ban = () => setShowMetadata(meta?.show?.id, 'banned_releases', [...(metadata.banned_releases || []), meta?.release?.title])
+    .catch(() => toast.error('Error while banning the release'))
 
   return (
     <NotificationFrame
@@ -531,7 +558,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
         <span sx={{ fontSize: 6, marginRight: 6 }}>
           <ShowState
             value={loading ? 'loading' : metadata.monitored ? 'followed' : 'unfollowed'}
-            onChange={state => followShow(meta?.show?.id, state === 'followed').catch(() => null)}
+            onChange={toggleFollow}
             compact={true}
           />
         </span>
@@ -581,7 +608,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
                     variant={!banned ? 'outline' : 'contain'}
                     color={(loading || banned) ? 'gray' : 'primary'}
                     disabled={loading || banned}
-                    onClick={() => setShowMetadata(meta?.show?.id, 'banned_releases', [...(metadata.banned_releases || []), meta?.release?.title]).catch(() => null)}
+                    onClick={ban}
                   >
                     {!banned ? 'Ban' : 'Banned'}
                   </Button>
@@ -591,6 +618,18 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
               <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
             )}
           </div>
+        </div>
+      )}
+      {meta?.command === 'sync' && (
+        <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1 } }}>
+          <Button
+            variant={choice === null ? 'outline' : 'contain'}
+            color={(loading || choice !== null) ? 'gray' : 'primary'}
+            disabled={loading || choice !== null}
+            onClick={() => answerNotification(_id, false)}
+          >
+            {choice === null ? 'Ignore' : 'Ignored'}
+          </Button>
         </div>
       )}
       {meta?.command === 'keep-in-touch' && (
