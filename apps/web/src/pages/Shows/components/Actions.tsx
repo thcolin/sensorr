@@ -47,7 +47,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
   return (
     <div sx={UIShowSettings.styles.container}>
-      <div sx={{ ...MetadataStyles.block, ...UIShowSettings.styles.column }}>
+      <div sx={MetadataStyles.block}>
         <span id={ids.policy}>Policy</span>
         <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
@@ -57,7 +57,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </fieldset>
         {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
-      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...UIShowSettings.styles.column }}>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide }}>
         <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
           {DOWNLOADS.map(({ value, key, label }) => (
@@ -104,7 +104,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 
   return (
     <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
-      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option, ...UIShowSettings.styles.follow }}>
+      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option }}>
         <span id={ids.follow}>Follow</span>
         <div title={titles.monitored} sx={UIShowSettings.styles.option}>
           <OptionInput
@@ -137,26 +137,16 @@ export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
   // One row as wide as the movie settings: Policy stretches like Terms, the other columns take
-  // the width of their content, and the last one ends on the right edge
+  // the width of their content, and the last one ends on the right edge. Columns align on their
+  // top, so each keeps the label, control and help gaps of the movie Policy
   container: {
     display: ['flex', 'grid'],
     flexDirection: 'column',
     gridTemplateColumns: 'minmax(0, 1fr)',
-    gridTemplateRows: 'repeat(3, auto)',
     gridAutoFlow: 'column',
     gridAutoColumns: 'max-content',
+    alignItems: ['stretch', 'start'],
     columnGap: MetadataStyles.container.columnGap,
-  },
-  // Label, control and help rows shared across columns, so controls and helps line up
-  column: {
-    display: ['flex', 'grid'],
-    gridRow: 'span 3',
-    gridTemplateRows: 'subgrid',
-    alignItems: ['stretch', 'center'],
-  },
-  // Out of the subgrid, so the two boxes stack tight from the top of the controls
-  follow: {
-    gridRow: 'span 3',
   },
   // The first box sits under its label like a control, the second one the gap `Option` keeps
   // between two options; centered on mobile like the radios
