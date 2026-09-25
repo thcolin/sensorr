@@ -18,6 +18,7 @@ import { fields } from '@sensorr/tmdb'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show from '../../components/Show/Show'
+import { status, statusGroupOf } from '../../components/Show/fields'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
@@ -239,7 +240,7 @@ export const ShowsRequests = compose(
     hooks: {
       onChange: () => scrollToTop(),
     },
-    layout: layout(['head', 'requested_by']),
+    layout: layout(['head', 'status', 'requested_by']),
     components,
     fields: {
       head: {
@@ -289,6 +290,7 @@ export const ShowsRequests = compose(
           </Option>
         ),
       },
+      status,
       requested_by,
     },
     useStatistics: () => {
@@ -297,10 +299,13 @@ export const ShowsRequests = compose(
 
       useEffect(() => {
         const controller = new AbortController()
-        const { uri, params, init } = APIQuery.shows.getShows({ params: { state: SHOWS_ALL, 'requested_by.gte': 1, fields: 'id|requested_by', limit: '' }, init: { signal: controller.signal } })
+        const { uri, params, init } = APIQuery.shows.getShows({ params: { state: SHOWS_ALL, 'requested_by.gte': 1, fields: 'id|status|requested_by', limit: '' }, init: { signal: controller.signal } })
 
         api.fetch(uri, params, init)
-          .then(({ results }) => setStatistics({ requested_by: countsOf(results.flatMap(show => show.requested_by || [])) }))
+          .then(({ results }) => setStatistics({
+            status: countsOf(results.map(show => statusGroupOf(show.status)).filter(Boolean)),
+            requested_by: countsOf(results.flatMap(show => show.requested_by || [])),
+          }))
           .catch((e) => {
             if (e.name !== 'AbortError') {
               console.warn(e)
