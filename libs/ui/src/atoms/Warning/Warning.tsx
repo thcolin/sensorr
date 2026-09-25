@@ -47,6 +47,7 @@ UIWarning.styles = {
     padding: 12,
     margin: 12,
     lineHeight: 'body',
+    overflowWrap: 'anywhere',
   }
 }
 

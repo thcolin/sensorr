@@ -39,7 +39,7 @@ const withFollowedShows = () => (WrappedComponent) => {
       <WrappedComponent
         {...props}
         shows={shows || {}}
-        query={{ uri: 'episodes', params: { show: ids.join('|'), limit: '' } }}
+        query={{ uri: 'episodes', params: { show: ids.join('|') } }}
         ready={!!shows}
         error={error || ((shows && !ids.length) ? {
           emoji: '📺',
@@ -61,12 +61,18 @@ const UIAgenda = ({ entities, shows, ready, error, controls, ...props }) => {
 
   const days = useMemo(() => groupByDay(Object.values(entities || {}), shows), [entities, shows])
 
+  useEffect(() => {
+    if (error && !error.subtitle) {
+      console.warn(error)
+    }
+  }, [error])
+
   if (error) {
     return (
       <Warning
         emoji={error.emoji || '💢'}
         title={error.title || 'Sorry, unable to display episodes...'}
-        subtitle={error.subtitle || error.message}
+        subtitle={error.subtitle || 'The API did not answer the episodes request, try again or log in again'}
       />
     )
   }
@@ -252,7 +258,7 @@ const Line = memo(UILine)
 export const Calendar = compose(
   withTitle('Shows Calendar'),
   withFollowedShows(),
-  withFetchQuery({ uri: 'episodes', params: { limit: '' } }, 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery(APIQuery.episodes.getEpisodes({ params: { limit: '' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t('pages.calendar.title'),
     useStatistics: () => STATISTICS,
