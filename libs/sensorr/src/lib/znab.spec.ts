@@ -96,3 +96,32 @@ describe('Znab.searchShow', () => {
     ])
   })
 })
+
+describe('Znab.request', () => {
+  afterEach(() => delete (global as any).fetch)
+
+  const refuse = () => {
+    (global as any).fetch = jest.fn(async (url: string) => ({ ok: false, status: 401, statusText: 'Unauthorized', url }))
+  }
+
+  it('masks the key in the error of a movie and of a show search', async () => {
+    refuse()
+    const znab = new Znab({ name: 'C411', url: 'https://c411.example/api', key: 's3cr3t', disabled: false }, {})
+    znab.caps = { tvsearch: [] }
+
+    for (const search of [() => znab.search('Heat'), () => znab.searchShow('Friends', { season: 3 })]) {
+      const error = await search().catch((error) => error)
+      expect(error.message).toContain('apikey=***')
+      expect(error.message).not.toContain('s3cr3t')
+    }
+  })
+
+  it('masks the key encoded in the target of a proxied request', async () => {
+    refuse()
+    const znab = new Znab({ name: 'C411', url: 'https://c411.example/api', key: 'a+b/c', disabled: false }, { proxify: true })
+    const error = await znab.search('Heat').catch((error) => error)
+
+    expect(error.message).toContain('apikey%3D***')
+    expect(error.message).not.toContain(encodeURIComponent(encodeURIComponent('a+b/c')))
+  })
+})

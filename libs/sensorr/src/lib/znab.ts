@@ -45,8 +45,9 @@ export class Znab {
 
     const res = await fetch(resource, { ...initial, ...init } as any)
 
+    // The message ends up in the `log` collection, shown on /jobs: the key never goes with it
     if (!res.ok) {
-      throw new Error(`[ZNAB][${this.name}] ${res.status} (${res.statusText}): ${res.url}`)
+      throw new Error(`[ZNAB][${this.name}] ${res.status} (${res.statusText}): ${masked(res.url, this.key)}`)
     }
 
     const body = await res.text()
@@ -104,6 +105,11 @@ export class Znab {
 
     return transform(raw.items, { term: q, znab: this.name }).map((release: any) => ({ ...release, category: categories.get(release.link) }))
   }
+}
+
+// The key sits in the URL as it is, encoded once, or twice behind /api/proxy
+function masked(url: string, key: string) {
+  return key ? [key, encodeURIComponent(key), encodeURIComponent(encodeURIComponent(key))].reduce((acc, value) => acc.split(value).join('***'), url) : url
 }
 
 // xml2json-light names the `tv-search` element `tv`
