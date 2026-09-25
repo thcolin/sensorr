@@ -78,8 +78,9 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
     return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
   }, [episodes])
 
-  // Episodes a pending proposal covers: on an owned one, the file it would replace is marked
-  const replaced = useMemo(() => new Set(proposals.flatMap(({ release }) => (release.coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
+  // Episodes a pending swap covers: on an owned one, the file it would replace is marked. Any other proposal only
+  // fills the missing ones (`importLinksOf`, apps/cli/src/utils/shows.js)
+  const replaced = useMemo(() => new Set(proposals.filter(({ release }) => release.swap).flatMap(({ release }) => (release.coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
 
   // An episode or a season the page does not list, or lists without an episode, sends its proposal one level up
   const placed = useMemo(() => {
