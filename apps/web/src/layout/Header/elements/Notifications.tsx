@@ -14,6 +14,7 @@ import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMe
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
+import { safeUrl } from '../../../components/Sensorr/Release'
 
 // Keyed by `jobNameOf`
 const COMMANDS = {
@@ -756,9 +757,9 @@ const NotificationRelease = ({ release }) => (
           },
         }}
       >
-        <a href={release?.link} target='_blank' rel='norefer noopener' sx={{ color: 'primary' }}><code><small>({release?.znab})</small></code></a>
+        <a href={safeUrl(release?.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({release?.znab})</small></code></a>
         <span>&nbsp;&nbsp;&nbsp;</span>
-        <a href={release?.enclosure} target='_blank' rel='norefer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+        <a href={safeUrl(release?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
       </div>
     </div>
   </>

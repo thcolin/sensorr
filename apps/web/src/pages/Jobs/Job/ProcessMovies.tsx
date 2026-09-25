@@ -8,7 +8,7 @@ import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useAPI } from '../../../store/api'
 import Movie from '../../../components/Movie/Movie'
 import { SensorrSingleton } from '../../../components/Sensorr'
-import { Release, reportOleoo } from '../../../components/Sensorr/Release'
+import { Release, reportOleoo, safeUrl } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
 import { Summary, freed, freedLabel } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
@@ -646,11 +646,11 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                   ⊘
                                 </i>
                                 <i title="Report release parsing issue">
-                                  <a target='_blank' rel='norefer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
+                                  <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
-                                <a href={link} target='_blank' rel='norefer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
+                                <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
                                 <span> score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
                               </code>
                             ))}
@@ -674,11 +674,11 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                   ⊘
                                 </i>
                                 <i title="Report release parsing issue">
-                                  <a target='_blank' rel='norefer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
+                                  <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
-                                <a href={link} target='_blank' rel='norefer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
+                                <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
                                 <span> {reason}, score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
                               </code>
                             ))}
@@ -702,11 +702,11 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                   ⊘
                                 </i>
                                 <i title="Report release parsing issue">
-                                  <a target='_blank' rel='norefer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
+                                  <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
-                                <a href={link} target='_blank' rel='norefer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
+                                <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
                                 <span> {reason}, score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
                               </code>
                             ))}
