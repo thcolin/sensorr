@@ -313,9 +313,9 @@ const UIReleaseState = ({ entity = null }) => (
 
 export const ReleaseState = memo(UIReleaseState)
 
-// One tag of a release row: a logo, or a value in a gray code box
-const UIReleaseTag = ({ children, ...props }) => (
-  <span {...props} sx={UIReleaseTag.styles.element}>{children}</span>
+// One tag of a release row: a logo, or a value in a gray code box, at the `fontSize` of where it sits
+const UIReleaseTag = ({ children, fontSize = 5, ...props }) => (
+  <span {...props} sx={{ ...UIReleaseTag.styles.element, '>code': { ...UIReleaseTag.styles.element['>code'], fontSize } }}>{children}</span>
 )
 
 UIReleaseTag.styles = {

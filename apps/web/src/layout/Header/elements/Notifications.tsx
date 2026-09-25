@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
 import toast from 'react-hot-toast'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
-import { emojize, filesize } from '@sensorr/utils'
+import { emojize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
@@ -14,7 +14,7 @@ import { showStateOf, useShowsMetadataContext } from '../../../contexts/ShowsMet
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
-import { safeUrl } from '../../../components/Sensorr/Release'
+import { ReleaseSize, ReleaseTag, safeUrl } from '../../../components/Sensorr/Release'
 import { swapLabelOf } from '../../../components/Sensorr/Proposal'
 
 // Keyed by `jobNameOf`
@@ -702,46 +702,27 @@ const NotificationRelease = ({ release }) => (
           overflowX: 'auto',
           overflowY: 'hidden',
           marginBottom: [10, 12],
+          // A block box, so the scrolling row does not clip the padding of the tags
           '>span': {
             ':not(:last-of-type)': {
               marginRight: 6,
             },
             '>code': {
               display: 'block',
-              paddingX: 4,
-              paddingY: 8,
-              backgroundColor: 'gray',
-              borderRadius: '0.25em',
-              color: 'text',
-              fontWeight: 600,
-              fontSize: 7,
-              whiteSpace: 'nowrap',
-            },
-            '>abbr': {
-              fontSize: 0,
-            },
-            '>svg': {
-              display: 'inline',
-              height: '1.5em',
-              color: 'black',
             },
           },
         }}
       >
         {typeof release?.peers !== 'undefined' && (
-          <span title={`Peers (${release?.seeders}/${release?.peers})`}>
+          <ReleaseTag title={`Peers (${release?.seeders}/${release?.peers})`} fontSize={7}>
             <code>{emojize('🌍 ', release?.peers || 0)}</code>
-          </span>
+          </ReleaseTag>
         )}
-        {typeof release?.size !== 'undefined' && (
-          <span title={`Size (${filesize.stringify(release?.size)})`}>
-            <code>{emojize('📦 ', filesize.stringify(release?.size || 0))}</code>
-          </span>
-        )}
+        {typeof release?.size !== 'undefined' && <ReleaseSize size={release?.size} fontSize={7} />}
         {typeof release?.score !== 'undefined' && (
-          <span title={`Score (${release?.score})`}>
+          <ReleaseTag title={`Score (${release?.score})`} fontSize={7}>
             <code>{emojize('💯 ', release?.score || 0)}</code>
-          </span>
+          </ReleaseTag>
         )}
       </div>
       <div
