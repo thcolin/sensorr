@@ -11,7 +11,6 @@ import withProps from '../../components/enhancers/withProps'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show from '../../components/Show/Show'
-import { SELF } from '../Calendar/refine'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import { withBody } from '../../layout/withLayout'
 
@@ -265,15 +264,42 @@ const Person = ({ ...props }) => {
       },
     }
 
+    // One entry per show: a person who acted in and worked on a show keeps both credits, the longest run first
+    const join = (...values) => [...new Set(values.flatMap(value => (value || '').split(', ')).filter(Boolean))].join(', ') || null
     const shows = {
       id: `shows-${id}`,
-      label: emojize('📺', 'Shows'),
-      entities: [...(tv.data?.cast || []).filter(credit => !SELF.test(credit.character || '')), ...(tv.data?.crew || [])]
-        .filter((credit, index, credits) => credits.findIndex(({ id }) => id === credit.id) === index)
-        .sort((a, b) => new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime()),
+      label: t('items.persons.shows.label'),
+      entities: Object.values([...(tv.data?.cast || []).filter(credit => !utils.SELF.test(credit.character || '')), ...(tv.data?.crew || [])]
+        .reduce((acc, credit) => ({
+          ...acc,
+          [credit.id]: acc[credit.id] ? {
+            ...acc[credit.id],
+            character: join(acc[credit.id].character, credit.character),
+            job: join(acc[credit.id].job, credit.job),
+            episode_count: Math.max(acc[credit.id].episode_count || 0, credit.episode_count || 0),
+          } : credit,
+        }), {}) as { [id: number]: any })
+        .sort((a, b) => ((b.episode_count || 0) - (a.episode_count || 0)) || (new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime())),
       child: Show,
       ready: ready && !tv.loading,
       error: tv.error,
+      props: ({ entity }) => ({
+        credits: data ? [
+          {
+            entity: {
+              id: data.id,
+              name: data.name,
+              profile_path: data.profile_path,
+              gender: data.gender,
+              character: entity.character || null,
+              job: entity.job || null,
+              // Both roles in the caption, the way `sortCredits` writes them for a movie
+              override: [entity.job, entity.character && `"${entity.character}"`].filter(Boolean).join(', ') || null,
+            },
+            state: metadata?.state || 'ignored',
+          },
+        ] : [],
+      }),
     }
 
     const showsTabs = (!ready || tv.loading || tv.error || shows.entities.length) ? [{ id: 'shows', tabs: [shows] }] : []

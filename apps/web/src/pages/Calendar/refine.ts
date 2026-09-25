@@ -1,5 +1,8 @@
+import { utils } from '@sensorr/tmdb'
+
+const { SELF } = utils
+
 // TMDB discover can filter neither on the job of a person nor, with `primary_release_date`, on the release type
-export const SELF = /^(self|himself|herself|themselves)\b|\(archive/i
 
 export const summarize = (details, followed) => ({
   runtime: details.runtime || 0,

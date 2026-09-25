@@ -222,6 +222,10 @@ export default {
         // title: 'All your archived movies',
         // more: 'More of your archived movies',
       },
+      shows: {
+        emoji: '📺',
+        label: emojize('📺', 'Shows'),
+      },
     },
   },
   pages: {

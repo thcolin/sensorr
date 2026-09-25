@@ -33,7 +33,11 @@ const sortCredits = (credits, priorized = [], includes: ('crew' | 'cast')[] = ['
   }))
   .filter((a, index, self) => index === self.findIndex(b => a.id === b.id))
 
+// A credit where the person plays themselves, or appears through archive footage
+const SELF = /^(self|himself|herself|themselves)\b|\(archive/i
+
 export default {
   judge,
   sortCredits,
+  SELF,
 }
