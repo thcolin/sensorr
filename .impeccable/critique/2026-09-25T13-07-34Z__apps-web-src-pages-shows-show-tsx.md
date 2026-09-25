@@ -10,6 +10,7 @@ target_fingerprint: "sha256:bb2c45a8f61c7f7801686824d69ce33f398334ced7498a87a560
 target_path: /Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx
 timestamp: 2026-09-25T13-07-34Z
 slug: apps-web-src-pages-shows-show-tsx
+closed: true
 ---
 Method: dual-agent (Assessment A et B : deux sous-agents isolés, workflow)
 
