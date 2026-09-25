@@ -261,7 +261,7 @@ const withShowsAgenda = () => (WrappedComponent) => {
         onMore={more}
         onOrigin={setOrigin}
         onMonth={onMonth}
-        length={loaded ? streams.past.total + streams.future.total : null}
+        length={(streams.past.page && streams.future.page) ? streams.past.total + streams.future.total : null}
         ready={ready && loaded}
         error={error || failure}
       />

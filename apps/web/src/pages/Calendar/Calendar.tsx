@@ -34,7 +34,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { Agenda, Cell, ControlsContext, Line, Month, Stream, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
 import { dateOf, day, monthRange, monthWeeks, originOf, withToday } from '../../components/Calendar/agenda'
-import withFetchCalendarQuery, { fetchCalendar, refine } from './withFetchCalendarQuery'
+import withFetchCalendarQuery, { discoverCalendar, refine, summarizeCalendar } from './withFetchCalendarQuery'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
@@ -392,7 +392,22 @@ const MonthCalendar = compose(
 const FIRST = new Date(1900, 0, 1)
 const LAST = new Date(new Date().getFullYear() + 7, 11, 1)
 
-// The list reads a month a page, out from the month of its origin: the past from the month before, the future from it
+// A page of the list is a month, cut at the origin: the future reads from it to the end of its month, the past from
+// the first of that month to the day before, then both go on a month a page
+const pageRange = (origin: string, stream: Stream, page: number) => {
+  const start = dateOf(origin)
+  const cut = start.getDate() > 1
+  const month = new Date(start.getFullYear(), start.getMonth() + (stream === 'future' ? page - 1 : cut ? 1 - page : -page), 1)
+  const [first, last] = monthRange(month)
+
+  return {
+    month,
+    gte: (stream === 'future' && page === 1) ? origin : first,
+    lte: (stream === 'past' && cut && page === 1) ? day(new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1)) : last,
+  }
+}
+
+// The movies of a page go out a day at a time, from the origin outwards, once every movie of the day is judged
 const withMoviesAgenda = () => (WrappedComponent) => {
   const withMoviesAgenda = ({ ...props }) => {
     const tmdb = useTMDB()
@@ -405,15 +420,32 @@ const withMoviesAgenda = () => (WrappedComponent) => {
     const nobody = !persons.loading && !Object.keys(persons.metadata).length
     const key = (query?.ready && !persons.loading && !nobody) ? `${origin} ${filters}` : null
 
-    const fetchPage = useCallback(async (stream: Stream, page: number, signal: AbortSignal) => {
+    const fetchPage = useCallback(async (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => {
       const { with_release_type, with_credits_departments, ...params } = JSON.parse(filters)
-      const start = dateOf(origin)
-      const month = new Date(start.getFullYear(), start.getMonth() + (stream === 'past' ? -page : page - 1), 1)
-      const [gte, lte] = monthRange(month)
-      const fetched = await fetchCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, () => signal.aborted)
+      const refinements = { with_release_type, with_credits_departments }
+      const cancelled = () => signal.aborted
+      const { month, gte, lte } = pageRange(origin, stream, page)
+      const discovered = await discoverCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, cancelled)
+      const entities = [...discovered].sort((a, b) => (stream === 'past' ? -1 : 1) * (a.release_date || '').localeCompare(b.release_date || ''))
+      let shown = 0
+
+      const summaries = await summarizeCalendar(tmdb, entities, persons.metadata, cancelled, (summaries) => {
+        let judged = 0
+
+        while (judged < entities.length && entities[judged].id in summaries) {
+          judged++
+        }
+
+        const count = judged === entities.length ? judged : entities.findIndex(({ release_date }) => release_date === entities[judged].release_date)
+
+        if (count > shown) {
+          shown = count
+          emit(refine({ entities: entities.slice(0, count), summaries }, refinements).entities)
+        }
+      })
 
       return {
-        items: refine(fetched, { with_release_type, with_credits_departments }).entities,
+        items: refine({ entities, summaries }, refinements).entities,
         done: stream === 'past' ? month <= FIRST : month >= LAST,
       }
     }, [tmdb, persons.metadata, origin, filters])

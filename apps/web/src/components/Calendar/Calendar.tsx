@@ -411,14 +411,17 @@ export const Month = memo(UIMonth)
 
 export type Stream = 'past' | 'future'
 
-export const EMPTY = { items: [], page: 0, total: null, done: false, loading: false, failed: false }
+// `partial` is a page still loading that already put its first days out
+export const EMPTY = { items: [], page: 0, total: null, done: false, loading: false, failed: false, partial: false }
 
 export type Streams = { past: typeof EMPTY, future: typeof EMPTY }
 
 // The two streams of a list, read page by page out from its origin. A new key starts both over, and `null` waits.
+// A page can put its first items out before it is done, through `emit`. The list opens once the future stream,
+// which holds the origin, has something: the past loads above it.
 export const useStreams = (
   key: string | null,
-  fetchPage: (stream: Stream, page: number, signal: AbortSignal) => Promise<{ items: any[], total?: number, done: boolean }>,
+  fetchPage: (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => Promise<{ items: any[], total?: number, done: boolean }>,
   noun: string,
 ) => {
   const [streams, setStreams] = useState({ key: null, past: EMPTY, future: EMPTY })
@@ -442,22 +445,25 @@ export const useStreams = (
 
     const page = current.page + 1
     const { signal } = controller.current
+    const before = current.items
+    const emit = (items: any[]) => !signal.aborted && update(stream, () => ({ items: [...before, ...items], partial: true }))
 
     update(stream, () => ({ loading: true, failed: false }))
-    fetcher.current(stream, page, signal)
-      .then(({ items, total = null, done }) => !signal.aborted && update(stream, (current) => ({
-        items: [...current.items, ...items],
+    fetcher.current(stream, page, signal, emit)
+      .then(({ items, total = null, done }) => !signal.aborted && update(stream, () => ({
+        items: [...before, ...items],
         page,
         total,
         done,
         loading: false,
+        partial: false,
       })))
       .catch((error) => {
         if (signal.aborted) {
           return
         }
 
-        update(stream, () => ({ loading: false, failed: true }))
+        update(stream, () => ({ items: before, loading: false, failed: true, partial: false }))
 
         if (page === 1) {
           setFailure(error)
@@ -488,7 +494,7 @@ export const useStreams = (
     streams: streams as Streams,
     more,
     failure,
-    ready: streams.key === key && !!streams.past.page && !!streams.future.page,
+    ready: streams.key === key && (!!streams.future.page || streams.future.partial),
   }
 }
 
@@ -520,10 +526,11 @@ const label = (date: Date, language: string) => date.toLocaleDateString(language
 
 const scroller = () => document.getElementById('body')
 
+// Where the content of a day starts, under the border it takes once another day comes above it
 const offset = (key: string) => {
   const element = document.getElementById(`day-${key}`)
   const body = scroller()
-  return (element && body) ? element.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop : null
+  return (element && body) ? element.getBoundingClientRect().top + element.clientTop - body.getBoundingClientRect().top + body.scrollTop : null
 }
 
 const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMonth, ready, error, fallback, empty, noun, label: name, render, keyOf }: AgendaProps) => {
@@ -531,11 +538,12 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
   const past = useRef<HTMLDivElement>(null)
   const future = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState({ past: false, future: false })
-  const anchor = useRef<{ origin: string, key: string, y: number }>(null)
+  const anchor = useRef<{ origin: string, key: string, y: number, short: boolean }>(null)
   // The month the list last put in the picker: a picker on any other one is a jump
   const reported = useRef(monthRange(month)[0])
 
-  // Opens on its origin, then holds the first day in place while older days load above it
+  // Opens on its origin, then holds the first day in place while older days load above it. A list still too short
+  // to bring its origin to the top, as while the first days come in, tries again as the next ones land.
   useLayoutEffect(() => {
     const body = scroller()
 
@@ -543,14 +551,18 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
       return
     }
 
-    if (anchor.current?.origin !== origin) {
+    let short = false
+
+    if (anchor.current?.origin !== origin || anchor.current.short) {
       const target = days.find(({ key }) => key >= origin)
-      body.scrollTop = target ? offset(target.key) : body.scrollHeight
+      const top = target ? offset(target.key) : body.scrollHeight
+      body.scrollTop = top
+      short = !!target && body.scrollTop < top - 1
     } else if (anchor.current.key !== days[0].key && offset(anchor.current.key) !== null) {
       body.scrollTop += offset(anchor.current.key) - anchor.current.y
     }
 
-    anchor.current = { origin, key: days[0].key, y: offset(days[0].key) }
+    anchor.current = { origin, key: days[0].key, y: offset(days[0].key), short }
   }, [days, origin])
 
   // A month picked out of what the list holds is scrolled to, any other one opens the list again on it

@@ -7,51 +7,64 @@ import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/Person
 import { ControlsContext } from '../../components/Calendar/Calendar'
 import { judge, summarize } from './refine'
 
-// Every movie a followed person has in a TMDB discover query, with what its refinements are judged on. TMDB takes
-// 500 people at most a request: the pages of each slice are merged, until a page adds nothing new.
-export const fetchCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
+// Every movie a followed person has in a TMDB discover query. TMDB takes 500 people at most a request: the first
+// page of each slice says how many it has, then all the others go out at once. The movies keep the order the
+// pages had when they were read one after the other, page by page and a slice after the other within a page.
+export const discoverCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
   const ids = Object.keys(followed)
+  const slices = Array.from({ length: Math.ceil(ids.length / 500) }, (_, i) => ids.slice(i * 500, (i + 1) * 500).join('|'))
+  const discover = (with_people: string, page: number) => tmdb.fetch('discover/movie', { ...params, page, with_people })
+  const firsts = await Promise.all(slices.map(with_people => discover(with_people, 1)))
+
+  if (cancelled()) {
+    return []
+  }
+
+  const rests = await Promise.all(slices.map((with_people, i) => Promise.all(
+    Array.from({ length: Math.min(firsts[i].total_pages || 1, 500) - 1 }, (_, page) => discover(with_people, page + 2)),
+  )))
+
   const seen = new Set<number>()
   const entities = []
 
-  for (let page = 1; !cancelled(); page++) {
-    const results = []
-
-    for (let i = 0; i < Math.ceil(ids.length / 500); i++) {
-      const raw = await tmdb.fetch('discover/movie', {
-        ...params,
-        page,
-        with_people: ids.slice(i * 500, (i + 1) * 500).join('|'),
-      })
-
-      raw.results.forEach(entity => {
-        if (!seen.has(entity.id)) {
-          seen.add(entity.id)
-          results.push(entity)
-        }
-      })
-    }
-
-    if (!results.length) {
-      break
-    }
-
-    entities.push(...results)
+  for (let page = 0; page < Math.max(1, ...rests.map(rest => rest.length + 1)); page++) {
+    slices.forEach((_, i) => ((page ? rests[i][page - 1] : firsts[i])?.results || []).forEach(entity => {
+      if (!seen.has(entity.id)) {
+        seen.add(entity.id)
+        entities.push(entity)
+      }
+    }))
   }
 
-  const summaries = {}
+  return entities
+}
 
-  for (let i = 0; i < entities.length && !cancelled(); i += 20) {
-    await Promise.all(entities.slice(i, i + 20).map(async (entity) => {
+// What the refinements are judged on, the details of 20 movies at a time in the order given. `onSummary` hears of
+// each one as it lands, with every summary so far.
+export const summarizeCalendar = async (tmdb, entities, followed, cancelled: () => boolean, onSummary = (summaries) => null) => {
+  const summaries = {}
+  let next = 0
+
+  const work = async () => {
+    while (next < entities.length && !cancelled()) {
+      const entity = entities[next++]
       const details = await tmdb.fetch(`movie/${entity.id}`, { append_to_response: 'credits,release_dates' }).catch(() => {
         console.warn(`Movie ${entity.id} kept unfiltered, its details failed`)
         return null
       })
+
       summaries[entity.id] = details && summarize(details, followed)
-    }))
+      onSummary(summaries)
+    }
   }
 
-  return { entities, summaries }
+  await Promise.all(Array.from({ length: 20 }, work))
+  return summaries
+}
+
+export const fetchCalendar = async (tmdb, followed, params, cancelled: () => boolean) => {
+  const entities = await discoverCalendar(tmdb, followed, params, cancelled)
+  return { entities, summaries: await summarizeCalendar(tmdb, entities, followed, cancelled) }
 }
 
 // What the refinements keep of a fetch, sorted, and the departments the followed people hold in it
