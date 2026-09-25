@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { EpisodeStatusOptions, transformShowDetails, Warning } from '@sensorr/ui'
-import { episodeStatus, progressOf } from '@sensorr/sensorr'
-import { filesize, useTitle } from '@sensorr/utils'
+import { episodeStatus } from '@sensorr/sensorr'
+import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
@@ -17,7 +17,6 @@ import { isPending } from '../Proposals/queue'
 import { ShowActions } from './components/Actions'
 import { Proposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
-import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 const Show = ({ ...props }) => {
@@ -72,23 +71,31 @@ const Show = ({ ...props }) => {
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
 
+  const pending = useMemo(() => (metadata?.releases || []).filter(isPending), [metadata?.releases])
+
+  // Only what waits on a gesture: owned over aired and the size are the "All seasons" pills below
   const summary = useMemo(() => {
     if (!inLibrary || !episodes) {
       return null
     }
 
-    const progress = progressOf(episodes.filter(({ season_number }) => season_number !== 0))
-    const size = sizeOf(episodes)
-    const pending = (metadata?.releases || []).filter(isPending).length
     const wanted = episodes.filter(episode => episodeStatus(episode) === 'wanted').length
+    const toProposals = (e) => {
+      e.preventDefault()
+      document.getElementById('proposals')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    }
 
     return [
-      <span key='owned' title={`${progress.owned} of ${progress.aired} aired episodes owned`}>{progress.owned}/{progress.aired}</span>,
-      !!size && <span key='size' title='Size of the owned files'>{filesize.stringify(size)}</span>,
-      !!pending && <span key='pending' title={`${pending} pending proposal${pending > 1 ? 's' : ''}`}>{EpisodeStatusOptions.proposed.emoji} {pending}</span>,
+      !!pending.length && (
+        <span key='pending'>
+          <a href='#proposals' onClick={toProposals} title={`${pending.length} pending proposal${pending.length > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
+            {EpisodeStatusOptions.proposed.emoji} {pending.length}
+          </a>
+        </span>
+      ),
       !!wanted && <span key='wanted' title={`${wanted} wanted episode${wanted > 1 ? 's' : ''}`}>{EpisodeStatusOptions.wanted.emoji} {wanted}</span>,
     ].filter(Boolean)
-  }, [inLibrary, episodes, metadata?.releases])
+  }, [inLibrary, episodes, pending])
 
   const additional = useMemo(() => ({
     externals: {
@@ -201,6 +208,7 @@ const Show = ({ ...props }) => {
         <Seasons
           entity={show.data}
           episodes={inLibrary ? (episodes || []) : []}
+          proposals={pending}
           inLibrary={inLibrary && !!episodes}
           ready={actionsReady}
           followEpisodes={followEpisodes}
@@ -208,6 +216,22 @@ const Show = ({ ...props }) => {
       )}
     </Details>
   )
+}
+
+Show.styles = {
+  anchor: {
+    color: 'inherit',
+    textDecoration: 'none',
+    ':hover': {
+      textDecoration: 'underline',
+      textUnderlineOffset: '0.25em',
+    },
+    ':focus-visible': {
+      outline: '1px solid',
+      outlineColor: 'grayDarkest',
+      outlineOffset: '2px',
+    },
+  },
 }
 
 export default withBody({ overlayScrollbars: true })(Show)

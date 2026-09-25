@@ -69,6 +69,8 @@ const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProp
 
   return (
     <Badge
+      role='img'
+      aria-label={option?.label}
       {...props}
       compact={!!label}
       emoji={option?.inactive ? <span sx={INACTIVE}>{option.emoji}</span> : option?.emoji}

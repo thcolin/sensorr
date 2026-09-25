@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf } from '@sensorr/sensorr'
-import { useDeviceContext } from '../../../contexts/Device/Device'
 import { ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { Toggle } from './Toggle'
 import { fileMetaOf, sizeOf } from './fills'
@@ -12,13 +11,17 @@ const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-// Wide enough for a pill of four digits on each side
-const SUMMARY = ['5.5em minmax(0, 1fr) 1em 4.5em', '6.5em 10em 1em 4.5em']
+// Wide enough for a pill of four digits on each side. The last two columns, the gap between them and the
+// right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the toggles align
+const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em', '6.5em 10em 1.5em 1.5em']
+const GAP = [6, 4]
+
+const pendingOf = (proposals, season: number) => proposals.filter(({ coverage }) => (coverage || []).some(unit => unit.season === season))
 
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
 
-const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...props }) => {
+const UISeasons = ({ entity, episodes, proposals = [], inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -36,39 +39,53 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
         progress: progressOf(list),
-        proposed: statuses.filter(status => status === 'proposed').length,
+        // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
+        proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
         monitored: !!list.length && list.every(({ monitored }) => monitored),
       }
     })
-  }, [entity?.seasons, episodes, inLibrary])
+  }, [entity?.seasons, episodes, proposals, inLibrary])
 
   const totals = useMemo(() => {
     const list = (episodes || []).filter(({ season_number }) => season_number !== 0)
     return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
   }, [episodes])
 
+  // Episodes a pending proposal covers: on an owned one, the file it would replace is marked
+  const replaced = useMemo(() => new Set(proposals.flatMap(({ coverage }) => (coverage || []).map(({ season, episode }) => `${season}:${episode}`))), [proposals])
+
   const regular = seasons.filter(({ number }) => number !== 0)
-  const initial = (regular[regular.length - 1] || seasons[0])?.number
-  const { hash } = useLocation()
+  const { hash, key: navigation } = useLocation()
   const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
-  const targeted = Number.isInteger(target) ? { [target]: true } : {}
-  const [open, setOpen] = useState(targeted)
+
+  // The targeted season alone, else the ones waiting on something, else the last one
+  const defaults = useMemo(() => {
+    if (Number.isInteger(target)) {
+      return new Set([target])
+    }
+
+    const waiting = seasons.filter(({ proposed, wanted }) => proposed || wanted).map(({ number }) => number)
+    return new Set(waiting.length ? waiting : [(regular[regular.length - 1] || seasons[0])?.number])
+  }, [target, seasons])
+
+  const [open, setOpen] = useState({})
   const scrolled = useRef(null)
 
+  // A new navigation, even to the same anchor, resets what was opened by hand
   useEffect(() => {
-    setOpen(targeted)
-  }, [entity?.id, hash])
+    setOpen({})
+  }, [entity?.id, navigation])
 
   useEffect(() => {
-    const key = `${entity?.id}${hash}`
+    const key = `${entity?.id}${navigation}`
 
     if (Number.isInteger(target) && ready && scrolled.current !== key && seasons.some(({ number }) => number === target)) {
       // Two frames: the page restores its saved scroll position on the next one, after this effect
       requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(`season-${target}`)?.scrollIntoView({ block: 'start' })))
       scrolled.current = key
     }
-  }, [entity?.id, hash, ready, seasons])
+  }, [entity?.id, navigation, ready, seasons])
 
   if (!seasons.length) {
     return null
@@ -114,7 +131,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
           </div>
         </div>
         {seasons.map(season => {
-          const opened = open[season.number] ?? season.number === initial
+          const opened = open[season.number] ?? defaults.has(season.number)
           const id = `season-${entity.id}-${season.number}`
           const specials = season.number === 0
 
@@ -142,7 +159,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
                     {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
                   </small>
                   {!!season.proposed && (
-                    <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} proposed`} data-count={true} />
+                    <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
                   )}
                   {!!season.wanted && (
                     <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
@@ -172,6 +189,7 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
                   id={id}
                   show={entity.id}
                   episodes={season.episodes}
+                  replaced={replaced}
                   ready={ready}
                   followEpisodes={followEpisodes}
                 />
@@ -290,7 +308,7 @@ UISeasons.styles = {
     display: 'grid',
     gridTemplateColumns: SUMMARY,
     alignItems: 'center',
-    columnGap: 6,
+    columnGap: GAP,
     paddingX: 8,
     '>:first-child': {
       justifySelf: 'end',
@@ -298,6 +316,7 @@ UISeasons.styles = {
     },
     '>[data-complete]': {
       display: 'flex',
+      justifySelf: 'center',
       color: 'success',
     },
     '>:last-child': {
@@ -308,8 +327,7 @@ UISeasons.styles = {
 
 export const Seasons = memo(UISeasons)
 
-const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
-  const { device } = useDeviceContext()
+const UIEpisodes = ({ id, show, episodes, replaced, ready, followEpisodes }) => {
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
   const [unfolded, setUnfolded] = useState({})
@@ -356,12 +374,12 @@ const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
                 ) : (
                   <span data-title={true} title={episode.name}>{episode.name}</span>
                 )}
-                <File file={device !== 'mobile' && episode.files?.[0]} />
+                <File file={episode.files?.[0]} replaced={replaced.has(`${episode.season_number}:${episode.episode_number}`)} />
                 <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
                   {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
                 </time>
                 {/* The follow toggle already says an episode is not followed: the empty cell keeps the grid columns */}
-                {status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={device === 'mobile'} />}
+                {status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />}
                 <Toggle
                   id={`follow-episode-${show}-${episode.id}`}
                   checked={!!episode.monitored}
@@ -384,7 +402,7 @@ const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
   )
 }
 
-const UIFile = ({ file }) => {
+const UIFile = ({ file, replaced = false }) => {
   const meta = useMemo(() => file ? fileMetaOf(file) : null, [file?.original, file?.title])
 
   if (!file) {
@@ -393,8 +411,11 @@ const UIFile = ({ file }) => {
 
   return (
     <span data-file={true} title={file.original || file.title}>
+      {replaced && (
+        <Badge emoji={EpisodeStatusOptions.proposed.emoji} size='normal' role='img' aria-label='Replaced by a pending proposal' title='Replaced by a pending proposal' />
+      )}
       {FILED.map(axis => !!meta?.[axis] && <ReleaseAxis key={axis} axis={axis} value={meta[axis]} />)}
-      {!!file.size && <ReleaseSize size={file.size} />}
+      {!!file.size && <ReleaseSize size={file.size} data-size={true} />}
     </span>
   )
 }
@@ -421,9 +442,12 @@ UIEpisodes.styles = {
   },
   row: {
     display: 'grid',
-    gridTemplateColumns: ['2.5em minmax(0, 1fr) auto 1.25em', '3.5em minmax(0, 1fr) auto 6.5em 7em 1.5em'],
+    // The state is a round badge, compact on every size: its label is its title and its name
+    gridTemplateColumns: ['2.5em minmax(0, 1fr) 1.25em 1.25em', '3.5em minmax(0, 1fr) auto 6.5em 1.5em 1.5em'],
     alignItems: 'center',
-    columnGap: [6, 4],
+    columnGap: GAP,
+    rowGap: 8,
+    paddingY: [8, 12],
     minHeight: '3em',
     paddingX: 8,
     '&[data-foldable="true"]': {
@@ -468,14 +492,26 @@ UIEpisodes.styles = {
       whiteSpace: 'nowrap',
       textAlign: 'right',
     },
-    // The tags of a release row, at its size and spacing
+    // The tags of a release row, at its size and spacing. On a phone, a line of their own under the title,
+    // like a movie's release in `display='column'`
     '>[data-file]': {
-      display: ['none', 'flex'],
+      display: 'flex',
+      gridColumn: ['2 / -1', 'auto'],
+      gridRow: [2, 'auto'],
       alignItems: 'center',
-      justifyContent: 'flex-end',
+      justifyContent: ['flex-start', 'flex-end'],
       gap: 6,
       fontSize: 6,
-      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      '&:empty': {
+        display: ['none', 'flex'],
+      },
+      // One width for every size up to `999.99 MB`, so the tags before it stay in columns from a row to the next
+      '>[data-size] >code': {
+        display: 'inline-block',
+        minWidth: '9.75em',
+        textAlign: 'center',
+      },
     },
     '>:nth-last-child(2), >:last-child': {
       justifySelf: 'end',
