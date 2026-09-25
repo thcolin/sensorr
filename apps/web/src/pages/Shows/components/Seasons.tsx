@@ -360,7 +360,8 @@ const UIEpisodes = ({ id, show, episodes, ready, followEpisodes }) => {
                 <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
                   {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
                 </time>
-                <EpisodeStatus value={status} size='small' compact={device === 'mobile'} />
+                {/* The follow toggle already says an episode is not followed: the empty cell keeps the grid columns */}
+                {status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={device === 'mobile'} />}
                 <Toggle
                   id={`follow-episode-${show}-${episode.id}`}
                   checked={!!episode.monitored}
