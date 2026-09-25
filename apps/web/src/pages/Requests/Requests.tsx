@@ -33,6 +33,18 @@ const Movie = ({ ...props }) => (
 
 const UNFULFILLED = 'pinned|missing|ignored'
 
+// Movie filters `/api/shows` cannot apply: while one is set, the shows row would ignore it
+const MOVIE_ONLY = ['release_date', 'popularity', 'vote_average', 'runtime']
+
+// Shows keep no `updated_at` nor `revenue`: the first falls back to their refresh date, the second to the default sort
+const SHOW_SORTS = {
+  updated_at: 'refreshed_at',
+  popularity: 'popularity',
+  release_date: 'first_air_date',
+  vote_average: 'vote_average',
+  vote_count: 'vote_count',
+}
+
 const RequestsEntities = ({ controls, ...props }) => {
   const api = useAPI()
   const { loading, metadata } = useShowsMetadataContext() as any
@@ -40,10 +52,15 @@ const RequestsEntities = ({ controls, ...props }) => {
   const [error, setError] = useState(null)
   const unfulfilled = (controls?.values?.state ?? UNFULFILLED) === UNFULFILLED
   const guests = controls?.values?.requested_by
+  const sort = controls?.values?.sort_by
+  const filtered = !!controls?.values?.genres?.values?.length || MOVIE_ONLY.some(key => (
+    typeof controls?.values?.[key] !== 'undefined' && JSON.stringify(controls.values[key]) !== JSON.stringify(fields[key].initial)
+  ))
   const params = useMemo(() => ({
     state: unfulfilled ? 'ignored' : 'ignored|wished|archived',
     ...(guests?.values?.length ? { requested_by: guests.values.join({ or: '|', and: ',' }[guests.behavior]) } : { 'requested_by.gte': 1 }),
-  }), [unfulfilled, JSON.stringify(guests)])
+    ...(SHOW_SORTS[sort?.value] ? { sort_by: `${SHOW_SORTS[sort.value]}.${sort.sort ? 'desc' : 'asc'}` } : {}),
+  }), [unfulfilled, JSON.stringify(guests), sort?.value, sort?.sort])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -67,7 +84,7 @@ const RequestsEntities = ({ controls, ...props }) => {
 
   return (
     <>
-      {(!!shows || !!error) && (
+      {!filtered && (!!shows || !!error) && (
         <Entities
           id='requests-shows'
           entities={listed}
@@ -80,7 +97,7 @@ const RequestsEntities = ({ controls, ...props }) => {
           child={Show as any}
         />
       )}
-      <Entities {...props as any} controls={controls} {...((listed.length || error) ? { label: emojize('🎞️', 'Movies') } : {})} />
+      <Entities {...props as any} controls={controls} {...((!filtered && (listed.length || error)) ? { label: emojize('🎞️', 'Movies') } : {})} />
     </>
   )
 }
