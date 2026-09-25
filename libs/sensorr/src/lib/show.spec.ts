@@ -137,6 +137,20 @@ describe('Policy.apply on a show', () => {
     })
   })
 
+  it('takes a multi-season pack for the whole series only when it holds every season the series wants', () => {
+    const unit = { type: 'series', episodes: Array.from({ length: 10 }, (_, index) => ({ season: index + 1, episode: 1 })) }
+
+    expect(validOf(unit, [
+      release('Friends.S01-S03.1080p.BluRay.x264-GRP'),
+      release('Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP'),
+      release('Friends.Complete.Series.1080p.BluRay.x264-GRP'),
+    ])).toEqual({
+      'Friends.S01-S03.1080p.BluRay.x264-GRP': false,
+      'Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP': true,
+      'Friends.Complete.Series.1080p.BluRay.x264-GRP': true,
+    })
+  })
+
   it('takes only a pack of that season for a season, and only that episode for an episode', () => {
     const releases = [
       release('Friends.S02.MULTi.1080p.BluRay.x264-GRP'),

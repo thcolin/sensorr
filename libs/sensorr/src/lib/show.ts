@@ -53,8 +53,9 @@ export const matchesUnit = (meta, category, unit: ShowUnit) => {
   const level = levelOf(meta, category)
 
   switch (unit.type) {
+    // A multi-season pack is the whole series only when it holds every season the unit wants
     case 'series':
-      return level === 'series'
+      return level === 'series' && (!meta.seasons?.length || [...new Set(unit.episodes.map(({ season }) => season))].every(season => meta.seasons.includes(season)))
     case 'season':
       return level === 'season' && meta.seasons[0] === unit.season
     case 'episode':
