@@ -1,10 +1,14 @@
 import { memo, useState } from 'react'
 import { ShowStateOptions, State } from '@sensorr/ui'
 
-const OPTIONS = ShowStateOptions.filter(({ value }) => ['ignored', 'followed'].includes(value))
+const OPTIONS = [
+  ...ShowStateOptions.filter(({ value }) => ['ignored', 'followed'].includes(value)),
+  // A season with some of its episodes followed: shown, never chosen, either choice writes the whole season
+  { emoji: '📺', label: 'Partly followed', value: 'partial', hide: true },
+]
 
 // Follows a season or an episode: the state select of a poster (`ShowState`), 🔕 Ignored or 📺 Followed
-const UIFollow = ({ checked, onChange, disabled = false, name, title }) => {
+const UIFollow = ({ checked, partial = false, onChange, disabled = false, name, title }) => {
   const [pending, setPending] = useState(false)
 
   const handleChange = async (value) => {
@@ -14,9 +18,9 @@ const UIFollow = ({ checked, onChange, disabled = false, name, title }) => {
   }
 
   return (
-    <fieldset disabled={disabled || pending} aria-busy={pending} data-follow={true} sx={UIFollow.styles.element}>
+    <fieldset disabled={disabled || pending} aria-busy={pending} data-follow={true} data-partial={partial} sx={UIFollow.styles.element}>
       <State
-        value={checked ? 'followed' : 'ignored'}
+        value={partial ? 'partial' : checked ? 'followed' : 'ignored'}
         options={OPTIONS}
         onChange={handleChange}
         compact={true}
@@ -54,6 +58,10 @@ UIFollow.styles = {
     },
     '&:not(:disabled) >label:hover >span': {
       backgroundColor: 'grayDark',
+    },
+    // The 📺 of Followed, half turned off like an episode not followed (`INACTIVE`)
+    '&[data-partial="true"] >label >span >span': {
+      maskImage: 'linear-gradient(90deg, #000 50%, rgba(0, 0, 0, 0.4) 50%)',
     },
     ':disabled': {
       opacity: 0.5,

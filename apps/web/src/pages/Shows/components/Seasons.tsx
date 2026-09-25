@@ -57,6 +57,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
       const summary = summaries.find(({ season_number }) => season_number === number) || {}
       const list = (episodes || []).filter(({ season_number }) => season_number === number).sort((a, b) => a.episode_number - b.episode_number)
       const statuses = list.map(episode => episodeStatus(episode))
+      const followed = list.filter(({ monitored }) => monitored).length
 
       return {
         number,
@@ -68,7 +69,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
         proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
-        monitored: !!list.length && list.every(({ monitored }) => monitored),
+        followed,
+        monitored: !!list.length && followed === list.length,
       }
     })
   }, [entity?.seasons, episodes, proposals, inLibrary])
@@ -250,8 +252,13 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       )}
                       <Follow
                         checked={season.monitored}
+                        partial={!!season.followed && !season.monitored}
                         disabled={!ready || !season.episodes.length}
-                        title={season.monitored ? `Every episode of ${season.name} followed` : `Follow every episode of ${season.name}`}
+                        title={
+                          season.monitored ? `Every episode of ${season.name} followed`
+                            : season.followed ? `${season.followed} of ${season.count} episodes of ${season.name} followed`
+                            : `Follow every episode of ${season.name}`
+                        }
                         name={`Follow every episode of ${season.name}`}
                         onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
                       />
