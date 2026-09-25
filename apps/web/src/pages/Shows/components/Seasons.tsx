@@ -192,7 +192,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             const specials = season.number === 0
 
             return (
-              <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season}>
+              <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season} data-opened={opened}>
                 {/* The whole row opens the drawer, but its follow: a click on the title button bubbles up to it */}
                 <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.drawer }} onClick={toggle(season.number, opened)}>
                   <button
@@ -242,25 +242,28 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                     </div>
                   )}
                 </div>
-                {opened && (placed.seasons[season.number] || NONE).map(block)}
-                {opened && (inLibrary ? (
-                  <Episodes
-                    id={id}
-                    show={entity.id}
-                    episodes={season.episodes}
-                    replaced={replaced}
-                    ready={ready}
-                    followEpisodes={followEpisodes}
-                    unfolded={unfolded}
-                    setUnfolded={setUnfolded}
-                    placed={placed.episodes}
-                    policy={policy}
-                    answer={answer}
-                    first={first}
-                  />
-                ) : (
-                  <RemoteEpisodes id={id} show={entity.id} season={season.number} unfolded={unfolded} setUnfolded={setUnfolded} />
-                ))}
+                {opened && (
+                  <div id={id} sx={UISeasons.styles.opened}>
+                    {(placed.seasons[season.number] || NONE).map(block)}
+                    {inLibrary ? (
+                      <Episodes
+                        show={entity.id}
+                        episodes={season.episodes}
+                        replaced={replaced}
+                        ready={ready}
+                        followEpisodes={followEpisodes}
+                        unfolded={unfolded}
+                        setUnfolded={setUnfolded}
+                        placed={placed.episodes}
+                        policy={policy}
+                        answer={answer}
+                        first={first}
+                      />
+                    ) : (
+                      <RemoteEpisodes show={entity.id} season={season.number} unfolded={unfolded} setUnfolded={setUnfolded} />
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -289,9 +292,22 @@ UISeasons.styles = {
     paddingLeft: [12, '1.125em'],
     paddingRight: [12, '1.5em'],
   },
+  // A filet a step off the block between closed seasons; an opened one ends on its drawer
   season: {
     borderBottom: '1px solid',
-    borderColor: 'grayDark',
+    borderColor: 'grayLight',
+    '&[data-opened="true"]': {
+      borderColor: 'transparent',
+    },
+  },
+  // The drawer of an opened season, its proposals and its episodes: a step darker than the block, edge to edge
+  opened: {
+    ...bleed,
+    paddingBottom: 8,
+    '::before': {
+      ...bleed['::before'],
+      backgroundColor: 'grayLightest',
+    },
   },
   head: {
     display: 'flex',
@@ -393,7 +409,7 @@ UISeasons.styles = {
 export const Seasons = memo(UISeasons)
 
 // `readonly` for a show out of the library: its episodes from TMDB, nothing owned nor followed
-const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false }) => {
+const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false }) => {
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
 
@@ -408,7 +424,7 @@ const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, follow
   const rows = virtual ? virtualizer.getVirtualItems() : episodes.map((episode, index) => ({ index, start: 0 }))
 
   return (
-    <div id={id} ref={ref} sx={{ ...UIEpisodes.styles.element, ...(virtual ? UIEpisodes.styles.virtual : {}) }}>
+    <div ref={ref} sx={virtual ? UIEpisodes.styles.virtual : undefined}>
       <div style={virtual ? { position: 'relative', height: virtualizer.getTotalSize() } : {}}>
         {rows.map(({ index, start }) => {
           const episode = episodes[index]
@@ -477,18 +493,18 @@ const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, follow
 }
 
 // A season of a show out of the library, fetched from TMDB when its drawer opens
-const UIRemoteEpisodes = ({ id, show, season, unfolded, setUnfolded }) => {
+const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded }) => {
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
   if (loading || error || !data.episodes?.length) {
     return (
-      <p id={id} sx={UIEpisodes.styles.status}>
+      <p sx={UIEpisodes.styles.status}>
         {loading ? 'Loading the episodes…' : error ? `Unable to load the episodes: ${error.message}` : 'No episode announced yet'}
       </p>
     )
   }
 
-  return <Episodes id={id} show={show} episodes={data.episodes} unfolded={unfolded} setUnfolded={setUnfolded} readonly={true} />
+  return <Episodes show={show} episodes={data.episodes} unfolded={unfolded} setUnfolded={setUnfolded} readonly={true} />
 }
 
 const RemoteEpisodes = memo(UIRemoteEpisodes)
@@ -539,26 +555,24 @@ const UIFiles = ({ files, policy }) => {
 const Files = memo(UIFiles)
 
 UIEpisodes.styles = {
-  element: {
-    paddingBottom: 8,
-  },
   virtual: {
     maxHeight: '32em',
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     borderTop: '1px solid',
-    borderColor: 'gray',
+    borderColor: 'grayLighter',
   },
-  // Hovered whole, its synopsis and releases with its row, the row alone folds it
+  // On the drawer, a filet of the block's tone. Hovered whole, its synopsis and releases with its row, a step
+  // darker again; the row alone folds it
   item: {
     ...bleed,
     borderBottom: '1px solid',
-    borderColor: 'gray',
+    borderColor: 'grayLighter',
     '&:last-of-type': {
       borderBottom: 'none',
     },
     '&[data-foldable="true"]:hover::before': {
-      backgroundColor: 'grayLightest',
+      backgroundColor: 'white',
     },
   },
   status: {
