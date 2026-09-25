@@ -10,6 +10,7 @@ import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
+import { JOB_EMOJIS } from '../Jobs/Jobs'
 
 const JobsSettings = ({ ...props }) => {
   useTitle('Settings - Jobs')
@@ -39,6 +40,16 @@ const JobsSettings = ({ ...props }) => {
       },
     })
   }, [])
+
+  // The report and sync jobs read from Plex
+  const plex = {
+    disabled: !config.get('plex.token'),
+    warning: config.get('plex.token') ? null : (
+      <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+        <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
+      </span>
+    ),
+  }
 
   const stopJob = useCallback(async (name, job) => {
     if (!confirm(`Do you really want to stop ${name} job "${job}" ?`)) {
@@ -76,6 +87,10 @@ const JobsSettings = ({ ...props }) => {
           <p sx={{ paddingBottom: 4 }}>
             If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
           </p>
+          <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
+            For shows, the <code>📹 Record shows</code> job looks for the wanted episodes of <code>🔖 Followed</code> shows, by whole series, then season packs, then episodes; <code>📡 Airing shows</code> looks for episodes aired in the last 7 days.{' '}
+            <code>📥 Import shows</code> hard links finished files from staging into the library and marks those episodes <code>📼 Owned</code>.
+          </p>
           <h2>Jobs</h2>
           <p>
             Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
@@ -85,116 +100,110 @@ const JobsSettings = ({ ...props }) => {
           <form onSubmit={form.handleSubmit(onSave)} >
             {[
               {
-                command: 'record',
-                type: 'movies',
-                emoji: '📹',
-                description: 'Record Sensorr wished movies',
-                options: ['cron', 'proposalOnly'],
+                label: 'Movies',
+                jobs: [
+                  {
+                    command: 'record',
+                    type: 'movies',
+                    description: 'Record Sensorr wished movies',
+                    options: ['cron', 'proposalOnly'],
+                  },
+                  {
+                    command: 'refine',
+                    type: 'movies',
+                    description: 'Refine archived movies with better fitting release',
+                    options: ['cron', 'proposalOnly'],
+                  },
+                  {
+                    command: 'shrink',
+                    type: 'movies',
+                    description: 'Shrink refined movies with smallest release available',
+                    options: ['cron', 'proposalOnly', 'threshold'],
+                  },
+                  {
+                    command: 'report',
+                    type: 'movies',
+                    description: 'Replace archived movies reported from Plex with their best release',
+                    ...plex,
+                    options: ['cron', 'proposalOnly'],
+                  },
+                  {
+                    command: 'refresh',
+                    type: 'movies',
+                    description: 'Refresh Sensorr movies and persons with TMDB changes',
+                    options: ['cron'],
+                  },
+                  {
+                    command: 'sync',
+                    type: 'movies',
+                    description: 'Sync Sensorr library with registered Plex server',
+                    ...plex,
+                    options: ['cron', 'cleanup'],
+                  },
+                ],
               },
               {
-                command: 'refine',
-                type: 'movies',
-                emoji: '✨',
-                description: 'Refine archived movies with better fitting release',
-                options: ['cron', 'proposalOnly'],
+                label: 'Shows',
+                jobs: [
+                  {
+                    command: 'record',
+                    type: 'shows',
+                    description: 'Record wished shows by whole series, season packs and episodes',
+                    options: ['cron', 'proposalOnly'],
+                  },
+                  {
+                    command: 'airing',
+                    type: 'shows',
+                    description: 'Record wanted episodes aired in the last 7 days',
+                    options: ['cron', 'proposalOnly'],
+                  },
+                  {
+                    command: 'import',
+                    type: 'shows',
+                    description: 'Import finished show releases from the staging folder into the library',
+                    options: ['cron'],
+                  },
+                  {
+                    command: 'refresh',
+                    type: 'shows',
+                    description: 'Refresh Sensorr shows and their episodes with TMDB changes',
+                    options: ['cron'],
+                  },
+                  {
+                    command: 'sync',
+                    type: 'shows',
+                    description: 'Sync Sensorr shows with registered Plex server',
+                    ...plex,
+                    options: ['cron'],
+                  },
+                ],
               },
               {
-                command: 'shrink',
-                type: 'movies',
-                emoji: '✂️',
-                description: 'Shrink refined movies with smallest release available',
-                options: ['cron', 'proposalOnly', 'threshold'],
+                label: 'Friends',
+                jobs: [
+                  {
+                    command: 'keep-in-touch',
+                    description: 'Goes through guests Plex watchlist: requested movies become wished, requested shows arrive not followed',
+                    options: ['cron'],
+                  },
+                ],
               },
-              {
-                command: 'report',
-                type: 'movies',
-                emoji: '🚩',
-                description: 'Replace archived movies reported from Plex with their best release',
-                disabled: !config.get('plex.token'),
-                warning: config.get('plex.token') ? null : (
-                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
-                  </span>
-                ),
-                options: ['cron', 'proposalOnly'],
-              },
-              {
-                command: 'refresh',
-                type: 'movies',
-                emoji: '🔌',
-                description: 'Refresh Sensorr movies and persons with TMDB changes',
-                options: ['cron'],
-              },
-              {
-                command: 'sync',
-                type: 'movies',
-                emoji: '🔗',
-                description: 'Sync Sensorr library with registered Plex server',
-                disabled: !config.get('plex.token'),
-                warning: config.get('plex.token') ? null : (
-                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
-                  </span>
-                ),
-                options: ['cron', 'cleanup'],
-              },
-              {
-                command: 'keep-in-touch',
-                emoji: '🍻',
-                description: 'Goes through guests Plex watchlist and sync wished movies and shows',
-                options: ['cron'],
-              },
-              {
-                command: 'record',
-                type: 'shows',
-                emoji: '📹',
-                description: 'Record wished shows by whole series, season packs and episodes',
-                options: ['cron', 'proposalOnly'],
-              },
-              {
-                command: 'airing',
-                type: 'shows',
-                emoji: '📡',
-                description: 'Record wanted episodes aired in the last 7 days',
-                options: ['cron', 'proposalOnly'],
-              },
-              {
-                command: 'import',
-                type: 'shows',
-                emoji: '📥',
-                description: 'Import finished show releases from the staging folder into the library',
-                options: ['cron'],
-              },
-              {
-                command: 'refresh',
-                type: 'shows',
-                emoji: '🔌',
-                description: 'Refresh Sensorr shows and their episodes with TMDB changes',
-                options: ['cron'],
-              },
-              {
-                command: 'sync',
-                type: 'shows',
-                emoji: '🔗',
-                description: 'Sync Sensorr shows with registered Plex server',
-                disabled: !config.get('plex.token'),
-                warning: config.get('plex.token') ? null : (
-                  <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-                    <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
-                  </span>
-                ),
-                options: ['cron'],
-              },
-            ].map(value => (
-              <JobSettings
-                {...value}
-                running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
-                disabled={value.disabled || ongoing.includes([value.command, value.type].filter(Boolean).join(' '))}
-                runJob={runJob}
-                stopJob={stopJob}
-                control={form.control}
-                watch={form.watch}
-              />
+            ].map(({ label, jobs }) => (
+              <React.Fragment key={label}>
+                <h3>{label}</h3>
+                {jobs.map((value: any) => (
+                  <JobSettings
+                    key={[value.command, value.type].filter(Boolean).join(' ')}
+                    {...value}
+                    running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
+                    disabled={value.disabled || ongoing.includes([value.command, value.type].filter(Boolean).join(' '))}
+                    runJob={runJob}
+                    stopJob={stopJob}
+                    control={form.control}
+                    watch={form.watch}
+                  />
+                ))}
+              </React.Fragment>
             ))}
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
@@ -233,8 +242,9 @@ JobsSettings.styles = {
 
 export default JobsSettings
 
-const JobSettings = ({ command, type = undefined, emoji, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
+const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
   const name = [command, type].filter(Boolean).join(' ')
+  const emoji = JOB_EMOJIS[name]
   const key = ['jobs', command, type].filter(Boolean).join('.')
   const cronValue = watch(`${key}.cron`)
   const paused = watch(`${key}.paused`)
@@ -263,6 +273,8 @@ const JobSettings = ({ command, type = undefined, emoji, description, warning = 
           <button
             type='button'
             sx={JobSettings.styles.run}
+            aria-label={running ? `Stop ${name}` : `Run ${name}`}
+            title={running ? `Stop ${name}` : `Run ${name}`}
             onClick={() => (running ? stopJob(name, running.job) : runJob(command, type))}
             disabled={disabled}
           >
@@ -479,6 +491,8 @@ JobSettings.styles = {
     '>h5': {
       display: 'flex',
       alignItems: 'center',
+      // Wider than the longest name, so every description starts on the same line; on a phone the description needs the room
+      minWidth: [null, '12em'],
       margin: 12,
       paddingY: 12,
       paddingX: 6,
@@ -503,6 +517,11 @@ JobSettings.styles = {
   },
   run: {
     variant: 'button.reset',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '2.5rem',
+    minHeight: '2.5rem',
     paddingY: 8,
     paddingX: 6,
     fontSize: 5,

@@ -20,6 +20,7 @@ const Blackhole = ({ ...props }) => {
             Sensorr will download releases <code>.torrent</code> or <code>.nzb</code> files to your defined blackhole directory, then on your own, configure your download client to watch this directory and automatically download the releases
           </p>
           <form onSubmit={form.handleSubmit(onSave)}>
+            <h3>Movies</h3>
             <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
               <Controller
                 name='blackhole'
@@ -33,7 +34,7 @@ const Blackhole = ({ ...props }) => {
                 )}
               />
               {config.get('docker') && (
-                <small sx={{ disply: 'block', marginTop: 6 }}>Sensorr is currently running from <strong>Docker</strong> images, to configure blackhole you need to edit your <code>SENSORR_BLACKHOLE</code> environment variable from your <code>.env</code> file</small>
+                <small sx={{ display: 'block', marginTop: 6 }}>Sensorr is currently running from <strong>Docker</strong> images, to configure blackhole you need to edit your <code>SENSORR_BLACKHOLE</code> environment variable from your <code>.env</code> file</small>
               )}
             </div>
             <h3>Shows</h3>
@@ -42,9 +43,9 @@ const Blackhole = ({ ...props }) => {
             </p>
             <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
               {[
-                { name: 'shows.library', label: 'Library directory' },
                 { name: 'shows.blackhole', label: 'Blackhole directory' },
                 { name: 'shows.staging', label: 'Staging directory' },
+                { name: 'shows.library', label: 'Library directory' },
               ].map(({ name, label }) => (
                 <Controller
                   key={name}
