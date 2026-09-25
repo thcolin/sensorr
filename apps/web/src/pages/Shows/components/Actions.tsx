@@ -11,11 +11,11 @@ const AUTO = [
   { value: false, label: 'Auto' },
 ]
 
-const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetadata, ...props }) => {
+// What decides the release a job picks for this show, also shown beside a show record in /jobs
+const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) => {
   const sensorr = useSensorr()
   const { config } = useConfigContext()
   const [pending, setPending] = useState({})
-  const [removing, setRemoving] = useState(false)
   const policy = useMemo(() => new Policy(metadata?.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies), [metadata?.policy, entity?.original_language, sensorr.policies])
   const jobs = useMemo(() => ['record', 'airing']
     .map(command => `${command}: ${config?.get(`jobs.${command}.shows.proposalOnly`) ? 'ask' : 'auto'}`)
@@ -23,8 +23,65 @@ const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetad
 
   const auto = typeof metadata?.proposal_only === 'boolean' ? metadata.proposal_only : null
   const ids = {
-    policy: `show-policy-${entity.id}`,
-    auto: `show-auto-${entity.id}`,
+    policy: `show-policy-${entity?.id}`,
+    auto: `show-auto-${entity?.id}`,
+  }
+
+  const set = async (key, value) => {
+    setPending(pending => ({ ...pending, [key]: true }))
+    await setMetadata(key, value).catch(() => null)
+    setPending(pending => ({ ...pending, [key]: false }))
+  }
+
+  return (
+    <div sx={MetadataStyles.container}>
+      <div sx={{ ...MetadataStyles.block, flex: 0, minWidth: '12em', whiteSpace: ['wrap', 'nowrap'] }}>
+        <span id={ids.policy}>Policy</span>
+        <fieldset disabled={!ready} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
+          <PolicyInput
+            value={policy}
+            onChange={value => set('policy', value)}
+          />
+        </fieldset>
+        {help && (
+          <small title='Sensorr will apply selected policy to sort and select the best release for each episode'>
+            Sensorr will apply selected policy to sort and select the best release for each episode
+          </small>
+        )}
+      </div>
+      <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+        <span id={ids.auto}>Auto</span>
+        <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
+          {AUTO.map(({ value, label }) => (
+            <Option
+              key={label}
+              id={`${ids.auto}-${label.toLowerCase()}`}
+              name={ids.auto}
+              type='radio'
+              checked={auto === value}
+              disabled={!ready || !!pending['proposal_only']}
+              onChange={() => set('proposal_only', value)}
+            >
+              <span>{label}</span>
+            </Option>
+          ))}
+        </div>
+        {help && (
+          <small id={`${ids.auto}-help`}>
+            {auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once'}
+          </small>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export const ShowSettings = memo(UIShowSettings)
+
+const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetadata, ...props }) => {
+  const [pending, setPending] = useState({})
+  const [removing, setRemoving] = useState(false)
+  const ids = {
     seasons: `show-new-seasons-${entity.id}`,
     library: `show-library-${entity.id}`,
   }
@@ -37,41 +94,7 @@ const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetad
 
   return (
     <div>
-      <div sx={MetadataStyles.container}>
-        <div sx={{ ...MetadataStyles.block, flex: 0, minWidth: '12em', whiteSpace: ['wrap', 'nowrap'] }}>
-          <span id={ids.policy}>Policy</span>
-          <fieldset disabled={!ready} sx={UIShowActions.styles.fieldset} aria-labelledby={ids.policy}>
-            <PolicyInput
-              value={policy}
-              onChange={value => set('policy', value)}
-            />
-          </fieldset>
-          <small title='Sensorr will apply selected policy to sort and select the best release for each episode'>
-            Sensorr will apply selected policy to sort and select the best release for each episode
-          </small>
-        </div>
-        <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
-          <span id={ids.auto}>Auto</span>
-          <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={`${ids.auto}-help`} sx={UIShowActions.styles.radios}>
-            {AUTO.map(({ value, label }) => (
-              <Option
-                key={label}
-                id={`${ids.auto}-${label.toLowerCase()}`}
-                name={ids.auto}
-                type='radio'
-                checked={auto === value}
-                disabled={!ready || !!pending['proposal_only']}
-                onChange={() => set('proposal_only', value)}
-              >
-                <span>{label}</span>
-              </Option>
-            ))}
-          </div>
-          <small id={`${ids.auto}-help`}>
-            {auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once'}
-          </small>
-        </div>
-      </div>
+      <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata} />
       <div sx={MetadataStyles.container}>
         <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
           <span id={ids.seasons}>Follow new seasons</span>
@@ -113,7 +136,7 @@ const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetad
   )
 }
 
-UIShowActions.styles = {
+UIShowSettings.styles = {
   fieldset: {
     minWidth: 0,
     margin: 12,
@@ -146,6 +169,9 @@ UIShowActions.styles = {
       },
     },
   },
+}
+
+UIShowActions.styles = {
   remove: {
     variant: 'button.reset',
     alignSelf: ['center', 'flex-start'],

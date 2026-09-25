@@ -120,7 +120,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
               id={`keep-in-touch-shows-${job.id}`}
               entities={shows}
               length={shows.length}
-              label={emojize('📺', 'Show requests')}
+              label={emojize('📺', 'Shows')}
               display='grid'
               hide={true}
               child={Show as any}
@@ -130,7 +130,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 id={`keep-in-touch-${job.id}`}
                 entities={entities}
                 length={entities?.length}
-                label={emojize('🍺', 'Requests')}
+                label={shows.length ? emojize('🎞️', 'Movies') : emojize('🍺', 'Requests')}
                 display='grid'
                 hide={true}
                 child={Movie}
@@ -142,7 +142,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 })}
               />
             ) : job.meta.done ? (
-              <Warning emoji={job.meta.error ? '💢' : '🍺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No processed requestes during this job'} />
+              <Warning emoji={job.meta.error ? '💢' : '🍺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No processed requests during this job'} />
             ) : (
               <Warning emoji='⏳' title='Loading' subtitle='Waiting for entities fix...' />
             )}

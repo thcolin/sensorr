@@ -39,5 +39,10 @@ Summary.styles = {
       paddingY: 9,
       transition: 'all ease 100ms',
     },
+    '>span[role=button]:focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'text',
+      outlineOffset: '2px',
+    },
   },
 }
