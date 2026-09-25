@@ -14,15 +14,22 @@ export const Provider = ({ ...props }) => {
   const { authenticated } = useAuthContext()
   const ref = useRef() as any
   const episodesRef = useRef({}) as any
+  const sequences = useRef({}) as any
   const refreshTime = useRef() as any
   const [loading, setLoading] = useState(true)
   const [metadata, setMetadata] = useState({})
   const [episodes, setEpisodes] = useState({})
 
+  // SSE messages can reload a show's episodes several times over, only the last load asked for is kept
   const loadEpisodes = useCallback(async (id: number) => {
+    const load = sequences.current[id] = (sequences.current[id] || 0) + 1
     const { uri, params, init } = api.query.shows.getShowEpisodes({ params: { id } })
     const results = await api.fetch(uri, params, init)
-    setEpisodes(episodes => ({ ...episodes, [id]: results }))
+
+    if (load === sequences.current[id]) {
+      setEpisodes(episodes => ({ ...episodes, [id]: results }))
+    }
+
     return results
   }, [])
 
