@@ -20,6 +20,7 @@ import { Gestures } from '../../components/Sensorr/Gestures'
 import { SensorrSingleton } from '../../components/Sensorr'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 import { FILTERS, GROUPS, SIZE_MAX, Verdict, arrange, balanceOf, decide, isOverdue, itemOf, matches, proposalDiff } from './queue'
+import { DELAY, usePendingVerdict } from './pending'
 
 const MB = 1024 * 1024
 
@@ -51,8 +52,6 @@ const LABELS = {
   rest: 'ignored',
   overdue: 'overdue',
 }
-
-const DELAY = 5000
 
 // The groups a title can select whole. The ignored group holds swaps that bring a language
 // for more disk, and the overdue and report ones are decided swap by swap.
@@ -505,7 +504,6 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0, retry: 0, drop: 0, replace: 0 })
   const [overdue, setOverdue] = useState([])
   const toggleSensorr = useRef(null)
-  const pending = useRef(null)
   const keys = useRef(null)
   const decidedRef = useRef({})
   const lastIndex = useRef(0)
@@ -670,28 +668,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }
   }, [setMovieMetadata, search, setSelected])
 
-  const flush = useCallback(() => {
-    const current = pending.current
-
-    if (!current) {
-      return
-    }
-
-    clearTimeout(current.timer)
-    pending.current = null
-    send(current)
-  }, [send])
-
-  const undo = useCallback(() => {
-    const current = pending.current
-
-    if (!current) {
-      return
-    }
-
-    clearTimeout(current.timer)
-    pending.current = null
-    toast.dismiss('proposal-pending')
+  const onUndo = useCallback((current) => {
     decidedRef.current = omit(decidedRef.current, current.targets.map(({ id }) => id))
     setDecided(decided => omit(decided, current.targets.map(({ id }) => id)))
     keys.current.morph(() => {
@@ -703,21 +680,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
     }, current.targets[0].id)
   }, [])
 
-  // Leaving the page sends what is waiting rather than dropping it; closing the tab
-  // asks first, so the request has time to leave.
-  useEffect(() => () => flush(), [flush])
-
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      if (pending.current) {
-        flush()
-        e.preventDefault()
-      }
-    }
-
-    window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [flush])
+  const { pending, hold, flush, undo } = usePendingVerdict({ send, onUndo })
 
   const notify = useCallback((targets, verdict: Verdict) => {
     const { emoji, icon, label, color } = VERDICTS[verdict] as any
@@ -770,9 +733,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       }, next), LEAVE)
     }
 
-    pending.current = { targets, verdict, selection, timer: setTimeout(flush, DELAY) }
+    hold({ targets, verdict, selection })
     notify(targets, verdict)
-  }, [connected, flush, notify])
+  }, [connected, flush, hold, notify])
 
   // A refusal still waiting to be sent turns into a ban, as in the notifications.
   const ban = useCallback(() => {
@@ -782,13 +745,12 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       return
     }
 
-    clearTimeout(current.timer)
     const ids = current.targets.map(({ id }) => id)
     decidedRef.current = { ...decidedRef.current, ...ids.reduce((acc, id) => ({ ...acc, [id]: 'ban' }), {}) }
     setDecided(decided => ({ ...decided, ...ids.reduce((acc, id) => ({ ...acc, [id]: 'ban' }), {}) }))
-    pending.current = { ...current, verdict: 'ban', timer: setTimeout(flush, DELAY) }
+    hold({ ...current, verdict: 'ban' })
     notify(current.targets, 'ban')
-  }, [flush, notify])
+  }, [hold, notify])
 
   const onGesture = useCallback((gesture) => {
     if (!active) {
