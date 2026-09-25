@@ -90,6 +90,9 @@ export default {
       vote_average: emojize('💯', 'Vote Average'),
       vote_count: emojize('🗳', 'Vote Count'),
       budget: emojize('💸', 'Budget'),
+      name: emojize('🔤', 'Name'),
+      first_air_date: emojize('📅', 'First Air Date'),
+      refreshed_at: emojize('🔄', 'Last Refresh'),
     },
   },
   items: {

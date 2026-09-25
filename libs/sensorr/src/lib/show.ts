@@ -20,7 +20,14 @@ type ShowEpisode = {
 }
 
 const DAY = 24 * 60 * 60 * 1000
-const ENDED = ['Ended', 'Canceled']
+export const ENDED = ['Ended', 'Canceled']
+
+// The TMDB `status` values of a show, grouped as the library filters them
+export const STATUS_GROUPS = {
+  airing: ['Returning Series'],
+  upcoming: ['In Production', 'Planned', 'Pilot'],
+  ended: ENDED,
+}
 
 export const isTvCategory = (category) => [].concat(category ?? []).some(value => Math.floor(Number(value) / 1000) === 5)
 

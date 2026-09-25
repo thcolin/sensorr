@@ -131,8 +131,8 @@ export const Discover = compose(
           label: i18n.t('ui.sorting'),
           options: [
             { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-            { label: emojize('📅', 'First Air Date'), value: 'first_air_date' },
-            { label: emojize('🔤', 'Name'), value: 'name' },
+            { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+            { label: i18n.t('ui.sortings.name'), value: 'name' },
             { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
             { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
           ]

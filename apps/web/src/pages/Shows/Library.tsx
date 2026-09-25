@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import {
   Entities,
   withControls,
   FilterStatistics,
-  FilterStates,
+  FilterProposal,
   Sorting,
   Warning,
   Checkbox,
   Option,
   Bulk,
+  ShowStateOptions,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
-import { fields } from '@sensorr/tmdb'
+import { STATUS_GROUPS } from '@sensorr/sensorr'
 import { compose, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useLocation } from 'react-router-dom'
 import { useAPI, query as APIQuery } from '../../store/api'
@@ -25,8 +27,10 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 
-const ENDED = ['Ended', 'Canceled']
-const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
+const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
+const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
+
+const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
 
 const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {}))
   .map(([_id, count]) => ({ _id, count }))
@@ -102,9 +106,10 @@ const Library = compose(
         gap: '2em',
         gridTemplateAreas: `
           "head_main"
-          "state"
           "monitored"
           "status"
+          "proposal"
+          "policy"
           "requested_by"
         `,
       },
@@ -119,7 +124,7 @@ const Library = compose(
               title="Library"
               subtitle={(
                 <span>
-                  Explore shows from your library with filters on their <strong>state</strong>, whether you <strong>follow</strong> them, whether they still <strong>air</strong>, and who <strong>requested</strong> them
+                  Explore shows from your library with filters on whether you <strong>follow</strong> them, whether they still <strong>air</strong>, their pending <strong>proposals</strong>, their <strong>policy</strong>, and who <strong>requested</strong> them
                 </span>
               )}
             />
@@ -168,20 +173,20 @@ const Library = compose(
                 actions={[
                   {
                     key: 'monitored',
-                    icon: '🔔',
+                    icon: FOLLOWED.emoji,
                     label: 'Follow',
                     options: [
-                      { value: true, icon: '🔔', label: 'Follow' },
-                      { value: false, icon: '🔕', label: 'Unfollow' },
+                      { value: true, icon: FOLLOWED.emoji, label: 'Follow' },
+                      { value: false, icon: UNFOLLOWED.emoji, label: 'Unfollow' },
                     ],
-                    onChange: ({ value }) => apply('monitored', value, `Do you want to ${value ? 'follow' : 'unfollow'} ${selected.length} shows ?`),
+                    onChange: ({ value }) => apply('monitored', value, `Do you want to ${value ? 'follow' : 'unfollow'} ${shows(selected.length)}?`),
                   },
                   {
                     key: 'policy',
                     icon: '🚨',
                     label: 'Policy',
                     options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
-                    onChange: ({ value }) => apply('policy', value, `Do you want to change ${selected.length} shows policies to ${value} ?`),
+                    onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
                   },
                   {
                     key: 'proposal_only',
@@ -193,8 +198,8 @@ const Library = compose(
                       { value: null, label: 'Job setting' },
                     ],
                     onChange: ({ value }) => apply('proposal_only', value, value === null ?
-                      `Do you want ${selected.length} shows to follow the job setting again ?` :
-                      `Do you want ${selected.length} shows to ${value ? 'only propose' : 'download'} the releases found ?`
+                      `Do you want ${shows(selected.length)} to follow the job setting again?` :
+                      `Do you want ${shows(selected.length)} to ${value ? 'only propose' : 'download'} the releases found?`
                     ),
                   },
                 ]}
@@ -205,44 +210,48 @@ const Library = compose(
       },
       sort_by: {
         initial: {
-          value: 'name',
-          sort: false,
+          value: 'refreshed_at',
+          sort: true,
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
           label: i18n.t('ui.sorting'),
           options: [
-            { label: emojize('🔤', 'Name'), value: 'name' },
-            { label: emojize('📅', 'First Air Date'), value: 'first_air_date' },
-            { label: emojize('🔄', 'Last Refresh'), value: 'refreshed_at' },
+            { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
+            { label: i18n.t('ui.sortings.name'), value: 'name' },
+            { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
           ]
         })(Sorting)
-      },
-      state: {
-        ...fields.state,
-        component: withProps({ type: 'movie', ignoreOptions: ['loading', 'ignored', 'missing', 'pinned'] })(FilterStates),
       },
       monitored: {
         initial: { values: [] },
         serialize: (key, raw) => raw?.values?.length === 1 ? { [key]: `${raw.values[0] === 'followed'}` } : {},
         component: withProps({
-          label: emojize('🔔', 'Follow'),
-          options: [
-            { value: 'followed', label: emojize('🔔', 'Followed') },
-            { value: 'unfollowed', label: emojize('🔕', 'Not followed') },
-          ],
+          label: emojize(FOLLOWED.emoji, 'Follow'),
+          options: [FOLLOWED, UNFOLLOWED].map(({ value, emoji, label }) => ({ value, label: emojize(emoji, label) })),
         })(OneOf),
       },
       status: {
         initial: { values: [] },
-        serialize: (key, raw) => raw?.values?.length === 1 ? { [key]: ({ ended: ENDED, airing: AIRING }[raw.values[0]]).join('|') } : {},
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.flatMap(value => STATUS_GROUPS[value]).join('|') } : {},
         component: withProps({
-          label: emojize('📡', 'Status'),
+          label: emojize('🚦', 'Status'),
           options: [
             { value: 'airing', label: emojize('📡', 'Airing') },
+            { value: 'upcoming', label: emojize('📅', 'Upcoming') },
             { value: 'ended', label: emojize('🏁', 'Ended') },
           ],
         })(OneOf),
+      },
+      proposal: {
+        initial: { values: [] },
+        serialize: (key, raw) => (!raw?.values?.length || raw?.values?.length === 2) ? {} : { 'releases.proposal': raw?.values[0] },
+        component: FilterProposal,
+      },
+      policy: {
+        initial: { values: [] },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
+        component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
       },
       requested_by: {
         initial: { values: [], behavior: 'or' },
@@ -252,43 +261,53 @@ const Library = compose(
     },
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
-      const [statistics, setStatistics] = useState({})
+
+      const [counts, setCounts] = useState({})
+      const [bulk, setBulk] = useState(null)
+
+      // The counts are over the whole library, whatever the filters, so they load once.
+      useEffect(() => {
+        const controller = new AbortController()
+        const all = APIQuery.shows.getShows({ params: { fields: 'id|monitored|status|policy|requested_by', limit: '' }, init: { signal: controller.signal } })
+
+        api.fetch(all.uri, all.params, all.init)
+          .then(({ results: shows }) => setCounts({
+            monitored: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
+            status: countsOf(shows.map(({ status }) => Object.keys(STATUS_GROUPS).find(group => STATUS_GROUPS[group].includes(status))).filter(Boolean)),
+            policy: countsOf(shows.map(({ policy }) => policy).filter(Boolean)),
+            requested_by: countsOf(shows.flatMap(({ requested_by }) => requested_by || [])),
+          }))
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              console.warn(e)
+              toast.error('Error while loading library statistics')
+            }
+          })
+
+        return () => controller.abort()
+      }, [])
 
       useEffect(() => {
         // The ids of the previous filters must not stand in for the current ones.
-        setStatistics({})
+        setBulk(null)
 
         const controller = new AbortController()
         const { sort_by, ...filters } = state as any
-        const cb = async () => {
-          try {
-            const all = APIQuery.shows.getShows({ params: { fields: 'id|state|monitored|status|requested_by', limit: '' }, init: { signal: controller.signal } })
-            const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
-            const [{ results: shows }, { results: ids }] = await Promise.all([
-              api.fetch(all.uri, all.params, all.init),
-              api.fetch(matching.uri, matching.params, matching.init),
-            ])
+        const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
 
-            setStatistics({
-              state: countsOf(shows.map(({ state }) => state)),
-              monitored: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
-              status: countsOf(shows.filter(({ status }) => [...ENDED, ...AIRING].includes(status)).map(({ status }) => ENDED.includes(status) ? 'ended' : 'airing')),
-              requested_by: countsOf(shows.flatMap(({ requested_by }) => requested_by || [])),
-              bulk: [{ entities: ids.map(({ id }) => id) }],
-            })
-          } catch (e) {
+        api.fetch(matching.uri, matching.params, matching.init)
+          .then(({ results: ids }) => setBulk([{ entities: ids.map(({ id }) => id) }]))
+          .catch((e) => {
             if (e.name !== 'AbortError') {
               console.warn(e)
-              setStatistics({})
+              toast.error('Error while loading library statistics')
             }
-          }
-        }
+          })
 
-        cb()
         return () => controller.abort()
       }, [JSON.stringify(state)])
 
-      return statistics
+      return useMemo(() => ({ ...counts, ...(bulk ? { bulk } : {}) }), [counts, bulk])
     },
   }),
   withPlacehodersHistoryState(),
