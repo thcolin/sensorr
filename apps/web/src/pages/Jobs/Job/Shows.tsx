@@ -100,7 +100,53 @@ export const summaryImportShows = ({ shows = 0, releases = 0, imports }, extende
   }] : []),
 ]
 
+// `shows` is the count object the CLI logs once done, `migrated` the live count while it runs
+export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated = undefined }, extended = true) => [
+  ...(extended ? [{
+    key: 'sonarr',
+    emoji: '🗄️',
+    title: <span><strong>{sonarr}</strong> Series found on Sonarr</span>,
+    length: sonarr,
+  }] : []),
+  {
+    key: 'migrated',
+    emoji: '🚚',
+    title: <span><strong>{migrated ?? ((shows.wished || 0) + (shows.archived || 0))}</strong> Migrated series (<strong>{shows.wished || 0}</strong> wished, <strong>{shows.archived || 0}</strong> archived)</span>,
+    length: migrated ?? ((shows.wished || 0) + (shows.archived || 0)),
+  },
+  ...(extended && ((shows.skipped || 0) + (shows.untracked || 0)) > 0 ? [{
+    key: 'skipped',
+    emoji: '🗑️ ',
+    title: <span><strong>{(shows.skipped || 0) + (shows.untracked || 0)}</strong> Skipped series (<strong>{shows.skipped || 0}</strong> without monitoring nor file, <strong>{shows.untracked || 0}</strong> without TMDB id)</span>,
+    length: (shows.skipped || 0) + (shows.untracked || 0),
+  }] : []),
+  ...(((shows.warning || 0) + (shows.unmatched || 0)) > 0 ? [{
+    key: 'warning',
+    emoji: '⚠️',
+    title: <span><strong>{shows.warning || 0}</strong> Series not migrated, <strong>{shows.unmatched || 0}</strong> episodes unknown to TMDB</span>,
+    length: (shows.warning || 0) + (shows.unmatched || 0),
+  }] : []),
+]
+
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+
+const UIMissingShow = ({ entity, ...props }) => (
+  <div sx={UIMissingShow.styles.element}>
+    <Show entity={entity} {...props} />
+    <code>{emojize('💊', `${entity.missing} episode${entity.missing > 1 ? 's' : ''}`)}</code>
+  </div>
+)
+
+UIMissingShow.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+}
+
+const MissingShow = memo(UIMissingShow)
 
 const showsOf = (logs, test) => logs
   .filter(test)
@@ -130,7 +176,7 @@ const COMMANDS = {
     // A show whose episodes left Plex is logged as a warning too, with its count
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
-      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number' },
+      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', child: MissingShow, extra: 36 },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
     ],
     empty: 'No fixed shows during this job',
@@ -144,6 +190,16 @@ const COMMANDS = {
       { key: 'imported', label: emojize('📥', 'Imported'), test: (log) => log.level === 'info' && log.meta.show && typeof log.meta.links === 'number' },
     ],
     empty: 'No imported releases during this job',
+  },
+  'migrate sonarr': {
+    emoji: '🚚',
+    summary: summaryMigrateSonarr,
+    live: (sections) => ({ migrated: sections.migrated.length }),
+    warnings: (log) => log.level === 'warn',
+    sections: [
+      { key: 'migrated', label: emojize('🚚', 'Migrated'), test: (log) => log.level === 'info' && log.meta.type === 'show' && log.meta.entity },
+    ],
+    empty: 'No migrated series during this job',
   },
 }
 
@@ -207,7 +263,7 @@ const UIShowsJob = ({ job, logs }) => {
         ) : !empty ? (
           <div sx={UIShowsJob.styles.entities}>
             <Warnings logs={warnings} />
-            {command.sections.map(({ key, label }) => (
+            {command.sections.map(({ key, label, child = Show, extra = undefined }) => (
               <Entities
                 key={key}
                 id={`${job.meta.command}-${key}-${job.job}`}
@@ -216,7 +272,8 @@ const UIShowsJob = ({ job, logs }) => {
                 label={label}
                 display='grid'
                 hide={true}
-                child={Show as any}
+                child={child as any}
+                {...(extra ? { extra } : {})}
               />
             ))}
           </div>

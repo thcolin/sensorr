@@ -94,7 +94,7 @@ const UINotifications = ({ ...props }) => {
               </button>
             </span>
             <div ref={ref} sx={UINotifications.styles.container}>
-              <CommandTabs options={options} value={filter} onChange={setFilter} />
+              <CommandTabs options={options} all={notifications.length} value={filter} onChange={setFilter} />
               {filtered.length ? (
                 <div>
                   <ResponsiveVirtualGrid

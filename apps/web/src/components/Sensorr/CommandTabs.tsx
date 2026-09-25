@@ -9,14 +9,16 @@ export interface CommandTab {
 
 interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   options: CommandTab[]
+  // Every item listed, those of a command without a tab included
+  all: number
   value: string | null
   onChange: (value: string | null) => void
 }
 
 // One command at a time, `null` shows them all. Sits flush under a `primary` head.
-const UICommandTabs = ({ options, value, onChange, ...props }: CommandTabsProps) => {
+const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsProps) => {
   const tabs = [
-    { value: null, emoji: '📼', label: 'all', count: options.reduce((total, option) => total + option.count, 0) },
+    { value: null, emoji: '📼', label: 'all', count: all },
     ...options,
   ]
 

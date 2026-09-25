@@ -19,43 +19,30 @@ import { RefineJob, summary as summaryRefine } from './Job/Refine'
 import { ReportJob, summary as summaryReport } from './Job/Report'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { ProcessShowsJob, summary as summaryProcessShows } from './Job/ProcessShows'
-import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows } from './Job/Shows'
+import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows, summaryMigrateSonarr } from './Job/Shows'
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 
-// Keyed by `jobNameOf`
-const EMOJIS = {
-  'sync movies': '🔗',
-  'refresh movies': '🔌',
-  'record movies': '📹',
-  'refine movies': '✨',
-  'shrink movies': '✂️',
-  'report movies': '🚩',
-  'keep-in-touch': '🍻',
-  'migrate': '🚚',
-  'refresh shows': '🔌',
-  'sync shows': '🔗',
-  'import shows': '📥',
-  'record shows': '📹',
-  'airing shows': '📡',
+// Keyed by `jobNameOf`, one entry per job the CLI can log
+const JOBS_UI: { [name: string]: { emoji: string, view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
+  'sync movies': { emoji: '🔗', view: SyncJob, summary: summarySync },
+  'refresh movies': { emoji: '🔌', view: RefreshJob, summary: summaryRefresh },
+  'record movies': { emoji: '📹', view: RecordJob, summary: summaryRecord },
+  'refine movies': { emoji: '✨', view: RefineJob, summary: summaryRefine },
+  'shrink movies': { emoji: '✂️', view: ShrinkJob, summary: summaryShrink },
+  'report movies': { emoji: '🚩', view: ReportJob, summary: summaryReport },
+  'keep-in-touch': { emoji: '🍻', view: KeepInTouchJob, summary: summaryKeepInTouch },
+  'migrate': { emoji: '🚚', view: MigrateJob, summary: summaryMigrate },
+  'refresh shows': { emoji: '🔌', view: ShowsJob, summary: summaryRefreshShows },
+  'sync shows': { emoji: '🔗', view: ShowsJob, summary: summarySyncShows },
+  'import shows': { emoji: '📥', view: ShowsJob, summary: summaryImportShows },
+  'record shows': { emoji: '📹', view: ProcessShowsJob, summary: summaryProcessShows },
+  'airing shows': { emoji: '📡', view: ProcessShowsJob, summary: summaryProcessShows },
+  'migrate sonarr': { emoji: '🚚', view: ShowsJob, summary: summaryMigrateSonarr },
 }
 
-const VIEWS = {
-  'record movies': RecordJob,
-  'refine movies': RefineJob,
-  'shrink movies': ShrinkJob,
-  'report movies': ReportJob,
-  'refresh movies': RefreshJob,
-  'sync movies': SyncJob,
-  'keep-in-touch': KeepInTouchJob,
-  'migrate': MigrateJob,
-  'record shows': ProcessShowsJob,
-  'airing shows': ProcessShowsJob,
-  'refresh shows': ShowsJob,
-  'sync shows': ShowsJob,
-  'import shows': ShowsJob,
-}
+export const JOB_EMOJIS = Object.fromEntries(Object.entries(JOBS_UI).map(([name, { emoji }]) => [name, emoji]))
 
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
@@ -64,7 +51,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   const { jobs, loading } = useJobsContext() as any
   const { job } = useParams() as any
   const active = jobs.find(j => j.job === job)
-  const View = active && VIEWS[jobNameOf(active.meta)]
+  const View = active && JOBS_UI[jobNameOf(active.meta)]?.view
   useTitle(['Jobs', active && jobNameOf(active.meta)].filter(part => part).join(' - '))
   const store = useRef(null)
   const [logs, setLogs] = useState(null)
@@ -189,9 +176,9 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
       ].sort((a, b) => b.start - a.start),
     }
   }, {}), [jobs, filter])
-  const options = useMemo(() => Object.keys(EMOJIS)
+  const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
-    .map(name => ({ value: name, emoji: EMOJIS[name], label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
+    .map(name => ({ value: name, emoji: JOBS_UI[name].emoji, label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -206,7 +193,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
-              {EMOJIS[active && jobNameOf(active.meta)] || '⌛'}
+              {(active && JOBS_UI[jobNameOf(active.meta)]?.emoji) || '⌛'}
             </span>
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
@@ -232,7 +219,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <CommandTabs options={options} value={filter} onChange={setFilter} />
+          <CommandTabs options={options} all={jobs.length} value={filter} onChange={setFilter} />
           <div sx={UISidebar.styles.jobs}>
             {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
@@ -241,24 +228,10 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                   {jobs.map(j => (
                     <Job
                       key={j.job}
-                      emoji={EMOJIS[jobNameOf(j.meta)]}
+                      emoji={JOBS_UI[jobNameOf(j.meta)]?.emoji}
                       selected={j.job === job}
                       {...j}
-                      summary={({
-                        'sync movies': summarySync,
-                        'refresh movies': summaryRefresh,
-                        'record movies': summaryRecord,
-                        'refine movies': summaryRefine,
-                        'shrink movies': summaryShrink,
-                        'report movies': summaryReport,
-                        'keep-in-touch': summaryKeepInTouch,
-                        'migrate': summaryMigrate,
-                        'refresh shows': summaryRefreshShows,
-                        'sync shows': summarySyncShows,
-                        'import shows': summaryImportShows,
-                        'record shows': summaryProcessShows,
-                        'airing shows': summaryProcessShows,
-                      }[jobNameOf(j.meta)] || (() => []))(j.meta.summary, false, j.meta.config)}
+                      summary={(JOBS_UI[jobNameOf(j.meta)]?.summary || (() => []))(j.meta.summary, false, j.meta.config)}
                     />
                   ))}
                 </div>
