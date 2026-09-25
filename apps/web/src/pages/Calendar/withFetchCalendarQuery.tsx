@@ -107,7 +107,12 @@ const withFetchCalendarQuery = (
     const debouncer = useMemo(() => nanobounce(0), [])
 
     // Wait for first controlsQuery hydration by serializing initial state
-    const useControlsValues = useCallback(() => useContext(ControlsContext), [])
+    // A calendar page holds its controls in its context; a row of the home has none and keeps its own
+    const useControlsValues = useCallback(() => {
+      const context = useContext(ControlsContext)
+      const local = useState({ uri: '', params: {} })
+      return context || local
+    }, [])
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
 
     const [query, refinements] = useMemo(() => {
