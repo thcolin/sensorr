@@ -229,13 +229,14 @@ export const Provider = ({ ...props }) => {
       const body = { [show.id]: { ...show, state: 'wished', monitored: true, monitor_new_seasons: true, refreshed_at: new Date() } }
       const added = fetched.map(episode => ({ ...episode, monitored: episode.season_number !== 0 }))
 
-      const shows = api.query.shows.postShows({ body })
-      await api.fetch(shows.uri, shows.params, shows.init)
-
+      // The episodes go first, their upsert can run again: a show posted without them would stay in the library with none
       if (added.length) {
         const { uri, params, init } = api.query.episodes.postEpisodes({ body: added.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {}) })
         await api.fetch(uri, params, init)
       }
+
+      const shows = api.query.shows.postShows({ body })
+      await api.fetch(shows.uri, shows.params, shows.init)
 
       setMetadata(metadata => ({ ...metadata, [show.id]: { ...(metadata[show.id] || {}), ...body[show.id] } }))
       setEpisodes(episodes => ({ ...episodes, [show.id]: added }))
