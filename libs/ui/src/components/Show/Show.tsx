@@ -1,6 +1,7 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
+import { coverageLabel } from '@sensorr/sensorr'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Progress } from '../../atoms/Progress/Progress'
@@ -55,10 +56,13 @@ const UIShow = ({
       return {}
     }
 
+    // A show file lives on its episodes, so the owned releases of a movie become an episode count.
     const proposal = {
-      releases: (metadata?.releases || []).filter(release => !release.proposal),
+      releases: [],
       proposals: (metadata?.releases || []).filter(release => release.proposal && typeof release.choice !== 'boolean'),
       proceed: proceedRelease,
+      summary: progress ? emojize('📼', `${progress.owned}/${progress.aired} aired episodes owned`) : null,
+      labelize: (release) => coverageLabel(release.coverage || [], release.level || undefined),
     }
 
     return {
@@ -66,7 +70,7 @@ const UIShow = ({
       ...(!proposal.proposals.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).filter(Boolean).map(guest => ({ entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } })) } } } : {}),
     }
-  }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease])
+  }, [entity?.id, state, setState, metadata?.releases, metadata?.requested_by, proceedRelease, progress?.owned, progress?.aired])
 
   if (display === 'card') {
     return (

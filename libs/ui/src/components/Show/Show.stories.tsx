@@ -11,7 +11,8 @@ const proposal = {
   size: 41e9,
   znab: 'C411',
   proposal: true,
-  coverage: [{ season: 8, episode: 1 }],
+  coverage: [1, 2, 3, 4, 5, 6].map(episode => ({ season: 8, episode })),
+  level: 'season',
 }
 
 export const Show = (args: any) => <UIShow {...args} />

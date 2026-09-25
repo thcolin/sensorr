@@ -5,7 +5,17 @@ import { emojize, filesize } from '@sensorr/utils'
 import { Icon } from '../../../atoms/Icon/Icon'
 import { Badge } from '../../../atoms/Badge/Badge'
 
-const UIProposal = ({ proposals, releases, proceed, ...props }) => {
+export interface ProposalProps {
+  proposals: any[]
+  releases: any[]
+  proceed: (release: any, choice?: boolean) => void
+  // Stands in for the owned releases when the entity owns something else than releases
+  summary?: React.ReactNode
+  // What each proposal covers, written above its release line
+  labelize?: (proposal: any) => React.ReactNode
+}
+
+const UIProposal = ({ proposals, releases, proceed, summary = null, labelize = null }: ProposalProps) => {
   const maxWidth = useResponsiveValue(['100vw', '80vw'])
 
   return (
@@ -17,10 +27,11 @@ const UIProposal = ({ proposals, releases, proceed, ...props }) => {
       appendTo={document.body}
       content={(
         <div sx={UIProposal.styles.content}>
-          {releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
-          {!!releases.length && <hr/>}
+          {!!summary ? <small><code>{summary}</code></small> : releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
+          {(!!summary || !!releases.length) && <hr/>}
           {proposals.map(proposal => (
             <Fragment key={proposal.id}>
+              {!!labelize?.(proposal) && <strong>{labelize(proposal)}</strong>}
               <small><code>{emojize('🛎', `${proposal.title} (${filesize.stringify(proposal.size)}) - ${proposal.znab}`)}</code></small>
               <div sx={UIProposal.styles.buttons}>
                 <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, true)}>
@@ -59,6 +70,12 @@ UIProposal.styles = {
     display: 'flex',
     flexDirection: 'column',
     padding: 10,
+    '>strong': {
+      fontFamily: 'monospace',
+      fontSize: 5,
+      fontWeight: 'semibold',
+      marginBottom: 10,
+    },
     '>hr': {
       width: '100%',
       border: 'none',
