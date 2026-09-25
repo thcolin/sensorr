@@ -29,7 +29,24 @@ export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by) => 
 
 export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
 
-export const airingUnits = (units, episodes, since) => {
+// A release downloaded without a proposal is accepted when it is downloaded, so it can turn overdue as well
+export const showReleaseOf = (release, { from, job, proposal, level }, now) => ({
+  id: release.id,
+  title: release.title,
+  original: release.original,
+  from,
+  job,
+  proposal,
+  znab: release.znab,
+  link: release.link,
+  enclosure: release.enclosure,
+  size: release.size,
+  coverage: release.coverage,
+  level,
+  ...(proposal ? {} : { accepted_at: now }),
+})
+
+export const airingUnits =(units, episodes, since) => {
   const aired = new Set(episodes
     .filter(({ air_date }) => air_date && new Date(air_date).getTime() >= since)
     .map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))

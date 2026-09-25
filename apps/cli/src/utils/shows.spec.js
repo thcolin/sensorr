@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, isReleaseOverdue, showReleaseOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -139,6 +139,21 @@ describe('isReleaseOverdue', () => {
 
   it('never marks a release without an acceptance date', () => {
     expect(isReleaseOverdue({}, now)).toBe(false)
+  })
+})
+
+describe('showReleaseOf', () => {
+  const release = { id: 'guid', title: 'Friends.S03E05.1080p.WEB-GRP', original: 'Friends.S03E05.1080p.WEB-GRP', znab: 'C411', link: 'l', enclosure: 'e', size: 1, coverage: [{ season: 3, episode: 5 }], valid: true, score: 3 }
+
+  it('accepts a release downloaded without a proposal when it is downloaded, so it can turn overdue', () => {
+    const raw = showReleaseOf(release, { from: 'record', job: 'j', proposal: false, level: 'episode' }, now)
+
+    expect(raw).toEqual({ id: 'guid', title: release.title, original: release.original, from: 'record', job: 'j', proposal: false, znab: 'C411', link: 'l', enclosure: 'e', size: 1, coverage: release.coverage, level: 'episode', accepted_at: now })
+    expect(isReleaseOverdue(raw, now + OVERDUE_AFTER + 1)).toBe(true)
+  })
+
+  it('leaves the acceptance of a proposal to its Accept', () => {
+    expect(showReleaseOf(release, { from: 'airing', job: 'j', proposal: true, level: 'episode' }, now)).not.toHaveProperty('accepted_at')
   })
 })
 

@@ -4,7 +4,7 @@ import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
 import { lighten } from '../../store/logger'
-import { proposalOnlyOf, airingUnits } from '../../utils/shows'
+import { proposalOnlyOf, airingUnits, showReleaseOf } from '../../utils/shows'
 
 const TITLES = {
   record: `📹 Record wished shows`,
@@ -325,20 +325,7 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
         for (const release of picks) {
           const level = levelOf(release.meta, release.category)
           const label = coverageLabel(release.coverage, level)
-          const raw = {
-            id: release.id,
-            title: release.title,
-            original: release.original,
-            from: state.metadata.command,
-            job: state.metadata.job,
-            proposal,
-            znab: release.znab,
-            link: release.link,
-            enclosure: release.enclosure,
-            size: release.size,
-            coverage: release.coverage,
-            level,
-          }
+          const raw = showReleaseOf(release, { from: state.metadata.command, job: state.metadata.job, proposal, level }, Date.now())
 
           setTask((task) => ({ ...task, output: `${{ false: '📼', true: '🛎️ ' }[proposal]} ${label} ${release.title}` }))
           const downloadRelease = api.query.sensorr.downloadRelease({ body: raw, params: { source: 'enclosure', destination: proposal ? 'cache' : 'fs', kind: 'show' } })
