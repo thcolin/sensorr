@@ -151,8 +151,8 @@ export default {
       requests: {
         emoji: '🍻',
         label: emojize('🍻', 'Requests'),
-        title: 'Requested movies from your friends',
-        more: 'More requested movies from your friends',
+        title: 'Requested movies and shows from your friends',
+        more: 'More requested movies and shows from your friends',
       },
       library: {
         emoji: '📚',
@@ -183,6 +183,32 @@ export default {
         label: emojize('👯‍♀️', 'Similar'),
         // title: 'All your archived movies',
         // more: 'More of your archived movies',
+      },
+    },
+    shows: {
+      airing: {
+        emoji: '📅',
+        label: emojize('📅', 'Airing'),
+        title: 'Episodes of your followed shows airing this week',
+        more: 'More episodes of your followed shows',
+      },
+      trending: {
+        emoji: '📣',
+        label: emojize('📣', 'Trending Shows'),
+        title: 'Trending shows from themoviedb.org',
+        more: 'More trending shows from themoviedb.org',
+      },
+      library: {
+        emoji: '📚',
+        label: emojize('📚', 'Library Shows'),
+        title: 'All the shows of your library',
+        more: 'More shows of your library',
+      },
+      discover: {
+        emoji: '👀',
+        label: emojize('👀', 'Discover Shows'),
+        title: 'Discover shows from themoviedb.org',
+        more: 'Discover more shows from themoviedb.org',
       },
     },
     persons: {

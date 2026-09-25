@@ -1,13 +1,15 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTitle } from '@sensorr/utils'
-import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, RequestedMovies, LibraryMovies } from '../../components/Entities/Movies'
+import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
+import Show from '../../components/Show/Show'
+import { TrendingShows, LibraryShows, AiringShows, DiscoverShows, RequestedMoviesAndShows, MovieOrShow } from './Items/Shows'
 
 const Home = ({ ...props }) => {
   useTitle('Home')
@@ -30,6 +32,22 @@ const Home = ({ ...props }) => {
         more={{
           title: t('items.movies.trending.more'),
           to: '/movie/trending',
+        }}
+        empty={{
+          emoji: '',
+          title: '',
+          subtitle: '',
+        }}
+      />
+      <TrendingShows
+        id='trending_shows'
+        label={t('items.shows.trending.label')}
+        display='row'
+        child={Show}
+        limit={20}
+        more={{
+          title: t('items.shows.trending.more'),
+          to: '/tv/trending',
         }}
         empty={{
           emoji: '',
@@ -68,6 +86,18 @@ const Home = ({ ...props }) => {
           }}
         />
       )}
+      <LibraryShows
+        id='library_shows'
+        label={t('items.shows.library.label')}
+        display='row'
+        child={Show}
+        limit={20}
+        hide={true}
+        more={{
+          title: t('items.shows.library.more'),
+          to: '/tv/library',
+        }}
+      />
       <CalendarMovies
         id='calendar'
         dateMax={new Date(new Date().setMonth(new Date().getMonth() + 2))}
@@ -85,12 +115,27 @@ const Home = ({ ...props }) => {
           to: '/movie/calendar',
         }}
       />
-      <RequestedMovies
+      <AiringShows
+        id='airing'
+        label={t('items.shows.airing.label')}
+        display='row'
+        child={Show}
+        limit={20}
+        hide={true}
+        props={() => ({
+          focus: 'release_date_full',
+        })}
+        more={{
+          title: t('items.shows.airing.more'),
+          to: '/tv/calendar',
+        }}
+      />
+      <RequestedMoviesAndShows
         id='requests'
         label={t('items.movies.requests.label')}
         // title={t('items.movies.requests.title')}
         display='row'
-        child={MovieWithCreditsAndReviews}
+        child={MovieOrShow}
         limit={20}
         hide={true}
         // props={() => ({
@@ -112,6 +157,22 @@ const Home = ({ ...props }) => {
         more={{
           title: t('items.movies.discover.more'),
           to: '/movie/discover',
+        }}
+        empty={{
+          emoji: '',
+          title: '',
+          subtitle: '',
+        }}
+      />
+      <DiscoverShows
+        id='discover_shows'
+        label={t('items.shows.discover.label')}
+        display='row'
+        child={Show}
+        limit={20}
+        more={{
+          title: t('items.shows.discover.more'),
+          to: '/tv/discover',
         }}
         empty={{
           emoji: '',
