@@ -303,9 +303,17 @@ export class ShowsService {
 
   async getEpisodes(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<EpisodeDocument>> {
     this.logger.log(`GetEpisodes, params=${JSON.stringify(params)}, page=${page}`)
+
+    // `monitored_show=true` keeps the episodes of the followed shows, resolved here so the client does not send every id
+    const followed = `${params.monitored_show}` === 'true'
+      ? (await this.showModel.find(monitored(true), { _id: 1 }).lean()).map(({ _id }) => Number(_id))
+      : null
+    const requested = params.show ? `${params.show}`.split('|').map(Number) : null
+    const shows = (followed && requested) ? requested.filter(id => followed.includes(id)) : (followed || requested)
+
     return this.episodeModel.paginate({
-      ...(params.show ? {
-        show_id: { $in: `${params.show}`.split('|').map(Number) }
+      ...(shows ? {
+        show_id: { $in: shows }
       } : {}),
       ...monitored(params.monitored),
       ...((params.aired_after || params.aired_before || `${params.wanted}` === 'true') ? {

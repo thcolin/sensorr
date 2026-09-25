@@ -30,15 +30,13 @@ const withFollowedShows = () => (WrappedComponent) => {
       return () => controller.abort()
     }, [])
 
-    const ids = useMemo(() => Object.keys(shows || {}), [shows])
-
     return (
       <WrappedComponent
         {...props}
         shows={shows || {}}
-        query={{ uri: 'episodes', params: { show: ids.join('|') } }}
+        query={{ uri: 'episodes', params: { monitored_show: 'true' } }}
         ready={!!shows}
-        error={error || ((shows && !ids.length) ? {
+        error={error || ((shows && !Object.keys(shows).length) ? {
           emoji: '📺',
           title: 'Try to follow some shows first',
           subtitle: 'The calendar lists the episodes of the shows you follow, follow one from its page or from your library',
