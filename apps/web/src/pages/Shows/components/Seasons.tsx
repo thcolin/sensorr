@@ -26,6 +26,23 @@ const NONE = []
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
 
+// A background from edge to edge of the releases block, whose `overflow: hidden` clips it, whatever the insets
+// of the list. A virtualized season clips it to its own scroll box
+const bleed = {
+  position: 'relative',
+  isolation: 'isolate',
+  '::before': {
+    content: '""',
+    position: 'absolute',
+    zIndex: -1,
+    top: 0,
+    bottom: 0,
+    left: '-100vmax',
+    right: '-100vmax',
+    transition: 'background-color 200ms ease-in-out',
+  },
+}
+
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
 // atop its season's drawer, or in its episode's unfolded row
 const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, inLibrary, ready, followEpisodes, ...props }) => {
@@ -288,11 +305,11 @@ UISeasons.styles = {
       paddingX: 8,
     },
   },
-  // Hovered across the whole row, like a release row (Release.tsx `wrapper`)
+  // Hovered across the whole block, a step darker like a release row (Release.tsx `wrapper`)
   drawer: {
+    ...bleed,
     cursor: 'pointer',
-    transition: 'background-color 200ms ease-in-out',
-    ':hover': {
+    '&:hover::before': {
       backgroundColor: 'grayLightest',
     },
   },
@@ -407,6 +424,7 @@ const UIEpisodes = ({ id, show, episodes, replaced = null, ready = false, follow
               data-index={index}
               ref={virtual ? virtualizer.measureElement : null}
               sx={UIEpisodes.styles.item}
+              data-foldable={foldable}
               style={virtual ? { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` } : {}}
             >
               <div
@@ -503,11 +521,16 @@ UIEpisodes.styles = {
     borderTop: '1px solid',
     borderColor: 'gray',
   },
+  // Hovered whole, its synopsis and releases with its row, the row alone folds it
   item: {
+    ...bleed,
     borderBottom: '1px solid',
     borderColor: 'gray',
     '&:last-of-type': {
       borderBottom: 'none',
+    },
+    '&[data-foldable="true"]:hover::before': {
+      backgroundColor: 'grayLightest',
     },
   },
   status: {
@@ -528,16 +551,12 @@ UIEpisodes.styles = {
     paddingY: [8, 12],
     minHeight: '3em',
     paddingX: 8,
-    transition: 'background-color 200ms ease-in-out',
     // A row out of the library has neither file, state nor follow
     '&[data-readonly="true"]': {
       gridTemplateColumns: ['2.5em minmax(0, 1fr)', '3.5em minmax(0, 1fr) 6.5em'],
     },
     '&[data-foldable="true"]': {
       cursor: 'pointer',
-      ':hover': {
-        backgroundColor: 'grayLightest',
-      },
       ':hover >button[data-title]': {
         textDecoration: 'underline',
         textUnderlineOffset: '0.25em',
