@@ -45,9 +45,8 @@ const UISeasons = ({ entity, episodes, inLibrary, ready, followEpisodes, ...prop
     return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
   }, [episodes])
 
-  // The first season that waits on something opens, else the last one
   const regular = seasons.filter(({ number }) => number !== 0)
-  const initial = (regular.find(({ proposed, wanted }) => proposed || wanted) || regular[regular.length - 1] || seasons[0])?.number
+  const initial = (regular[regular.length - 1] || seasons[0])?.number
   // A link to `#season-N`, from a calendar row, opens that season and scrolls to it once the seasons are there
   const { hash } = useLocation()
   const target = Number(/^#season-(\d+)$/.exec(hash)?.[1] ?? NaN)
