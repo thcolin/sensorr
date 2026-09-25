@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/calendar-roles/apps/web/src/pages/Calendar/Calendar.tsx"
+target_identity: "file:apps/web/src/pages/Calendar/Calendar.tsx"
 target_fingerprint: "sha256:8a9bfe1cfdcfa1fdd2240879585edb7808ccbbfa358a11d522d2175d3d19f35b"
-target_path: /Users/thcolin/orca/workspaces/sensorr/calendar-roles/apps/web/src/pages/Calendar/Calendar.tsx
+target_path: apps/web/src/pages/Calendar/Calendar.tsx
 timestamp: 2026-09-23T21-15-50Z
 slug: apps-web-src-pages-calendar-calendar-tsx
 ---

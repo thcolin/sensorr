@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/swaps-cleanup/apps/web/src/pages/Proposals/Card.tsx"
+target_identity: "file:apps/web/src/pages/Proposals/Card.tsx"
 target_fingerprint: "sha256:208296b7784808407bee2f837fb8fed735cef00dd12bf6744e954c84eb9ed471"
-target_path: /Users/thcolin/orca/workspaces/sensorr/swaps-cleanup/apps/web/src/pages/Proposals/Card.tsx
+target_path: apps/web/src/pages/Proposals/Card.tsx
 timestamp: 2026-09-23T22-34-15Z
 slug: apps-web-src-pages-proposals-card-tsx
 closed: true

@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 3
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Calendar.tsx"
+target_identity: "file:apps/web/src/pages/Shows/Calendar.tsx"
 target_fingerprint: "sha256:5510cfe7c9d86be5c7c1415ec3be82b95b3fdbd0148d933286c96ab10a9c5fce"
-target_path: /Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Calendar.tsx
+target_path: apps/web/src/pages/Shows/Calendar.tsx
 timestamp: 2026-09-25T13-02-46Z
 slug: apps-web-src-pages-shows-calendar-tsx
 ---

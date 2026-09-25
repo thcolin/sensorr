@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/swaps-filters/apps/web/src/pages/Proposals/Proposals.tsx"
+target_identity: "file:apps/web/src/pages/Proposals/Proposals.tsx"
 target_fingerprint: "sha256:9a9dd2c0d4ca8bb4c5bf1919a348ce2616255e75cb8e5fdfd9aa9155a5e3a8cd"
-target_path: /Users/thcolin/orca/workspaces/sensorr/swaps-filters/apps/web/src/pages/Proposals/Proposals.tsx
+target_path: apps/web/src/pages/Proposals/Proposals.tsx
 timestamp: 2026-09-24T09-25-47Z
 slug: apps-web-src-pages-proposals-proposals-tsx
 ---

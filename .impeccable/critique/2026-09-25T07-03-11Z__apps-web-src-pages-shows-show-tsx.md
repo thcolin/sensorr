@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 3
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx"
+target_identity: "file:apps/web/src/pages/Shows/Show.tsx"
 target_fingerprint: "sha256:e55ce61a09d35f207c680038213dbe464b90a42aa36f8de42296be03cf185dfa"
-target_path: /Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx
+target_path: apps/web/src/pages/Shows/Show.tsx
 timestamp: 2026-09-25T07-03-11Z
 slug: apps-web-src-pages-shows-show-tsx
 ---
@@ -146,13 +146,13 @@ Three checklist items fail and one partly fails: moderate load.
 - For a show not yet followed, is a list of 38 seasons useful, or should the page lead with Follow and a one-line summary?
 
 Files reviewed:
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/components/Proposals.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/components/Seasons.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/components/Actions.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/components/Toggle.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Details/Details.tsx`
-- `/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/contexts/ShowsMetadata/ShowsMetadata.tsx`
+- `apps/web/src/pages/Shows/Show.tsx`
+- `apps/web/src/pages/Shows/components/Proposals.tsx`
+- `apps/web/src/pages/Shows/components/Seasons.tsx`
+- `apps/web/src/pages/Shows/components/Actions.tsx`
+- `apps/web/src/pages/Shows/components/Toggle.tsx`
+- `apps/web/src/pages/Details/Details.tsx`
+- `apps/web/src/contexts/ShowsMetadata/ShowsMetadata.tsx`
 
 ## Assessment B
 Assessment B for `/tv/:id`: the source detector found nothing, and the browser detector found 1,711 to 2,691 issues per page. About 90% of the browser findings come from the cast credits wall, and the rest are shared layout, not `Show.tsx` itself. The detector ran in the page on all three pages, and the overlays stayed on `/tv/1668` in tab 43, titled `[Human] Sensorr - Friends (1994)`. The live server is stopped.
@@ -277,4 +277,4 @@ What this page adds, all in the proposals panel:
 - **Nothing clicked**: no page element was clicked.
 - **Tab 9**: it shares the `critique-b-show` context name but was not opened by this run, and I did not touch it.
 
-Raw console dumps are in `/private/tmp/claude-501/-Users-thcolin-orca-workspaces-sensorr-feat-tvshows/b7ea9fc7-9e35-472d-b342-4176a0740a4b/scratchpad/`: `c1668.txt`, `c456.txt`, `c2316.txt`.
+Raw console dumps were kept in the session scratchpad: `c1668.txt`, `c456.txt`, `c2316.txt`.

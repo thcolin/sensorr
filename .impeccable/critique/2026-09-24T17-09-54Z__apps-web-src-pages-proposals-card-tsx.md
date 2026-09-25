@@ -5,9 +5,9 @@ max_score: 36
 na_heuristics: 9
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/plex-reports/apps/web/src/pages/Proposals/Card.tsx"
+target_identity: "file:apps/web/src/pages/Proposals/Card.tsx"
 target_fingerprint: "sha256:45f512abc823c4e65d3c69ea2c574bda63f0a8ebd6698da693a4597865bfc2a5"
-target_path: /Users/thcolin/orca/workspaces/sensorr/plex-reports/apps/web/src/pages/Proposals/Card.tsx
+target_path: apps/web/src/pages/Proposals/Card.tsx
 timestamp: 2026-09-24T17-09-54Z
 slug: apps-web-src-pages-proposals-card-tsx
 closed: true

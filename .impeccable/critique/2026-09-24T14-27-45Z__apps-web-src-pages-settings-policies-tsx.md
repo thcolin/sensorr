@@ -5,9 +5,9 @@ max_score: 36
 na_heuristics: 9
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/policy-match/apps/web/src/pages/Settings/Policies.tsx"
+target_identity: "file:apps/web/src/pages/Settings/Policies.tsx"
 target_fingerprint: "sha256:e664ef66bc14b52870f925ddb02b8cb8c32fc3bcb586e8d4d872f3e17bf34e6b"
-target_path: /Users/thcolin/orca/workspaces/sensorr/policy-match/apps/web/src/pages/Settings/Policies.tsx
+target_path: apps/web/src/pages/Settings/Policies.tsx
 timestamp: 2026-09-24T14-27-45Z
 slug: apps-web-src-pages-settings-policies-tsx
 closed: true

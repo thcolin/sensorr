@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 1
 p1_count: 2
-target_identity: "file:/Users/thcolin/Projects/perso/sensorr/apps/web/src/pages/Proposals/Proposals.tsx"
+target_identity: "file:apps/web/src/pages/Proposals/Proposals.tsx"
 target_fingerprint: "sha256:27c9f941a6aa178bdc42203bd37680bcdbdf76294511203578c4777d9b3a14f6"
-target_path: /Users/thcolin/Projects/perso/sensorr/apps/web/src/pages/Proposals/Proposals.tsx
+target_path: apps/web/src/pages/Proposals/Proposals.tsx
 timestamp: 2026-09-23T11-30-24Z
 slug: apps-web-src-pages-proposals-proposals-tsx
 ---

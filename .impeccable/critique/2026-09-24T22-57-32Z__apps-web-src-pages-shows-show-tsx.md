@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 3
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx"
+target_identity: "file:apps/web/src/pages/Shows/Show.tsx"
 target_fingerprint: "sha256:acdc4b6f1792df31d31fb1c614d40a4ca3b3500e8104d8e810a5c2f28d3e5960"
-target_path: /Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Show.tsx
+target_path: apps/web/src/pages/Shows/Show.tsx
 timestamp: 2026-09-24T22-57-32Z
 slug: apps-web-src-pages-shows-show-tsx
 ---
@@ -248,4 +248,4 @@ Captures were taken at desktop 1440×900 and mobile 390×844 with the overlay on
 
 - **The Simpsons is not in the library.** Its owned state (38 seasons) could not be examined. Only the `Add to library` state was scanned.
 - **Mobile overlay capture.** Once scrolled, the overlay labels drift away from their elements because the live server was already stopped. Positions in that capture are not reliable.
-- **Files kept in the scratchpad.** Only the detector JSON was saved there (`detect-pages.json`, `detect-ui.json` under `/private/tmp/claude-501/-Users-thcolin-orca-workspaces-sensorr-feat-tvshows/b7ea9fc7-9e35-472d-b342-4176a0740a4b/scratchpad/`). Screenshots could not be written to disk.
+- **Files kept in the scratchpad.** Only the detector JSON was saved there (`detect-pages.json`, `detect-ui.json` in the session scratchpad). Screenshots could not be written to disk.

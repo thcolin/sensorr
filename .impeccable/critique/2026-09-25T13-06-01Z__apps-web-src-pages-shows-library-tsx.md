@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 1
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Library.tsx"
+target_identity: "file:apps/web/src/pages/Shows/Library.tsx"
 target_fingerprint: "sha256:2425d6010309ba73287c1244fad01836634a44f806f4877595aef779cd43f04d"
-target_path: /Users/thcolin/orca/workspaces/sensorr/feat-tvshows/apps/web/src/pages/Shows/Library.tsx
+target_path: apps/web/src/pages/Shows/Library.tsx
 timestamp: 2026-09-25T13-06-01Z
 slug: apps-web-src-pages-shows-library-tsx
 closed: true

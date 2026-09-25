@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 1
 p1_count: 2
-target_identity: "file:/Users/thcolin/Projects/perso/sensorr/apps/web/src/pages/Jobs/Jobs.tsx"
+target_identity: "file:apps/web/src/pages/Jobs/Jobs.tsx"
 target_fingerprint: "sha256:3bc57246c01c1b22da8c3ba90c87d33faa3521d572450ea5d6c904b98e0d1702"
-target_path: /Users/thcolin/Projects/perso/sensorr/apps/web/src/pages/Jobs/Jobs.tsx
+target_path: apps/web/src/pages/Jobs/Jobs.tsx
 timestamp: 2026-09-23T16-23-55Z
 slug: src-pages-jobs-jobs-tsx
 ---
