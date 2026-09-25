@@ -26,6 +26,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
+import { DOWNLOADS } from './components/Actions'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
@@ -192,15 +193,8 @@ const Library = compose(
                     key: 'proposal_only',
                     icon: '🤖',
                     label: 'Auto',
-                    options: [
-                      { value: false, label: 'Download' },
-                      { value: true, label: 'Propose' },
-                      { value: null, label: 'Job setting' },
-                    ],
-                    onChange: ({ value }) => apply('proposal_only', value, value === null ?
-                      `Do you want ${shows(selected.length)} to follow the job setting again?` :
-                      `Do you want ${shows(selected.length)} to ${value ? 'only propose' : 'download'} the releases found?`
-                    ),
+                    options: DOWNLOADS.map(({ value, label }) => ({ value, label })),
+                    onChange: ({ value, label }) => apply('proposal_only', value, `Do you want to set Auto to "${label}" for ${shows(selected.length)}?`),
                   },
                 ]}
               />

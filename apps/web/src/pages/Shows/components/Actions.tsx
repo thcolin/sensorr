@@ -6,7 +6,7 @@ import { useSensorr } from '../../../store/sensorr'
 import { useConfigContext } from '../../../contexts/Config/Config'
 import { MetadataStyles, OptionInput, PolicyInput } from '../../Details/components/Metadata'
 
-const DOWNLOADS = [
+export const DOWNLOADS = [
   { value: null, key: 'jobs', label: 'As jobs' },
   { value: true, key: 'ask', label: 'Ask first' },
   { value: false, key: 'auto', label: 'At once' },
@@ -63,7 +63,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true }) =
         )}
       </div>
       <div sx={{ ...block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
-        <span id={ids.auto}>Downloads</span>
+        <span id={ids.auto}>Auto</span>
         <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
           {DOWNLOADS.map(({ value, key, label }) => (
             <Option
