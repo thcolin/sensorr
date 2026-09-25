@@ -14,6 +14,16 @@ describe('isJob', () => {
     expect(isJob('record-shows')).toBe(false)
     expect(isJob('migrate')).toBe(false)
   })
+
+  it('refuses what JOBS only holds through its prototype, and a command that is not a string', () => {
+    for (const command of ['toString', 'valueOf', '__proto__', 'constructor', 'hasOwnProperty']) {
+      expect(isJob(command)).toBe(false)
+      expect(isJob(command, 'movies')).toBe(false)
+    }
+
+    expect(isJob(['record'], 'movies')).toBe(false)
+    expect(jobNameOf({ command: 'constructor' })).toBe('constructor')
+  })
 })
 
 describe('jobNameOf', () => {
