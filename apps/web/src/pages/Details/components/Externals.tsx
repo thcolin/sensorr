@@ -1,88 +1,95 @@
 import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
+import { platformsOf } from './platforms'
 
-const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => (
-  <div sx={UIExternals.styles.element}>
-    {/* An empty group would still carry the margin that separates it from the next one */}
-    {(!!meaningful?.vote_average || !!additional?.reviews?.length) && (
-      <div>
-        {meaningful?.vote_average && <meaningful.vote_average />}
-        {(additional?.reviews || [])?.map(review => (
-          <a
-            href={review.external}
-            target='_blank'
-            rel='noreferrer noopener'
-            key={review.source}
-            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-            title={{
-              'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
-              'Metacritic': `Metascrore based on ${review.count} critic reviews`,
-            }[review.source]}
-          >
-            <Icon
-              value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
-              height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-              width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
-              sx={{ marginRight: 8 }}
-            />
-            {Math.round(review.score * 100)}%
-          </a>
-        ))}
-      </div>
-    )}
-    {(!!metadata?.plex_url || !!((entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.flatrate || [])?.length) && (
-      <div>
-        {!!metadata?.plex_url && (
-          <a
-            href={metadata?.plex_url}
-            target='_blank'
-            rel='noopener noreferrer'
-            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-            title={`Available on your own Plex server`}
-          >
-            <span sx={{ display: 'flex', justifyContent: 'center', fontSize: '1.7em', width: '0.75em', color: 'plex' }}>
-              ❯
-            </span>
-          </a>
-        )}
-        {((entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.flatrate || []).map(provider => (
-          <a
-            href={(entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]?.link}
-            target='_blank'
-            rel='noreferrer noopener'
-            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-            title={`Available for streaming on "${provider.provider_name}" (source JustWatch)`}
-          >
-            <img src={`https://image.tmdb.org/t/p/w92/${provider.logo_path}`} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
-          </a>
-        ))}
-      </div>
-    )}
-    {links && !!Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).length && (
-      <div>
-        {Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).map(external => (
-          <a
-            href={additional?.externals[external]}
-            target='_blank'
-            rel='noreferrer noopener'
-            key={external}
-            sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-            title={{
-              letterbox: 'Letterboxd',
-              senscritique: 'SensCritique',
-              allocine: 'AlloCiné',
-              imdb: 'IMDb',
-              mubi: 'Mubi',
-              plex: 'Plex',
-            }[external]}
-          >
-            <Icon value={external as any} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
-          </a>
-        ))}
-      </div>
-    )}
-  </div>
-)
+const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => {
+  const watch = (entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]
+  const platforms = platformsOf(watch?.flatrate)
+
+  return (
+    <div sx={UIExternals.styles.element}>
+      {/* An empty group would still carry the margin that separates it from the next one */}
+      {(!!meaningful?.vote_average || !!additional?.reviews?.length) && (
+        <div>
+          {meaningful?.vote_average && <meaningful.vote_average />}
+          {(additional?.reviews || [])?.map(review => (
+            <a
+              href={review.external}
+              target='_blank'
+              rel='noreferrer noopener'
+              key={review.source}
+              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+              title={{
+                'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
+                'Metacritic': `Metascrore based on ${review.count} critic reviews`,
+              }[review.source]}
+            >
+              <Icon
+                value={{ 'Rotten Tomatoes': 'rottentomatoes', 'Metacritic': 'metacritic' }[review.source]}
+                height={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                width={{ 'Rotten Tomatoes': '1em', 'Metacritic': '1.2em' }[review.source]}
+                sx={{ marginRight: 8 }}
+              />
+              {Math.round(review.score * 100)}%
+            </a>
+          ))}
+        </div>
+      )}
+      {(!!metadata?.plex_url || !!platforms.length) && (
+        <div>
+          {!!metadata?.plex_url && (
+            <a
+              href={metadata?.plex_url}
+              target='_blank'
+              rel='noopener noreferrer'
+              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+              title={`Available on your own Plex server`}
+            >
+              <span sx={{ display: 'flex', justifyContent: 'center', fontSize: '1.7em', width: '0.75em', color: 'plex' }}>
+                ❯
+              </span>
+            </a>
+          )}
+          {platforms.map(([provider, ...offers]) => (
+            <a
+              href={watch?.link}
+              target='_blank'
+              rel='noreferrer noopener'
+              key={provider.provider_id}
+              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+              title={`Available for streaming on ${new Intl.ListFormat('en').format([provider, ...offers].map(({ provider_name }) => `"${provider_name}"`))} (source JustWatch)`}
+            >
+              <img src={`https://image.tmdb.org/t/p/w92/${provider.logo_path}`} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
+            </a>
+          ))}
+        </div>
+      )}
+      {links && !!Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).length && (
+        <div>
+          {Object.keys(additional?.externals || {}).filter(key => !['rottentomatoes', 'metacritic'].includes(key)).map(external => (
+            <a
+              href={additional?.externals[external]}
+              target='_blank'
+              rel='noreferrer noopener'
+              key={external}
+              sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
+              title={{
+                letterbox: 'Letterboxd',
+                senscritique: 'SensCritique',
+                allocine: 'AlloCiné',
+                imdb: 'IMDb',
+                mubi: 'Mubi',
+                plex: 'Plex',
+              }[external]}
+            >
+              <Icon value={external as any} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 UIExternals.styles = {
   element: {
