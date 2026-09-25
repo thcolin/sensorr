@@ -6,7 +6,7 @@ const GESTURES = [
   { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline' },
 ] as const
 
-// `shortcuts` announces the A and R keys, which only the Swaps screen listens to.
+// `shortcuts` announces the A and R keys, which the Swaps screen and a show's page listen to.
 const UIGestures = ({ onGesture, disabled = false, shortcuts = true, ...props }) => (
   <div {...props} sx={UIGestures.styles.element}>
     {GESTURES.map(({ verdict, key, label, variant }) => (
