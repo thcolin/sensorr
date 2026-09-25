@@ -3,7 +3,7 @@ import { Icon } from '@sensorr/ui'
 import { useTMDB } from '../../../store/tmdb'
 import { useExpandContext } from '../contexts/Expand'
 
-const UIPlayer = ({ entity, ready, ...props }) => {
+const UIPlayer = ({ entity, behavior = 'movie', ready, ...props }) => {
   const tmdb = useTMDB()
 
   const node = useRef(null)
@@ -57,7 +57,7 @@ const UIPlayer = ({ entity, ready, ...props }) => {
   }, [sdkReady])
 
   useEffect(() => {
-    if (!entity.id || !entity.title || tmdb.region === 'en-US') {
+    if (!entity.id || !(entity.title || entity.name) || tmdb.region === 'en-US') {
       return
     }
 
@@ -67,7 +67,7 @@ const UIPlayer = ({ entity, ready, ...props }) => {
       try {
         setFallback(null)
         setPlaylistReady(false)
-        const fallback = await tmdb.fetch(`movie/${entity.id}/videos`, { language: 'en-US' }, { signal: controller.signal })
+        const fallback = await tmdb.fetch(`${behavior}/${entity.id}/videos`, { language: 'en-US' }, { signal: controller.signal })
         setFallback(fallback.results)
       } catch (e) {
         setFallback([])

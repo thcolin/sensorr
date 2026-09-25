@@ -1,164 +1,120 @@
 import { memo, useMemo, useState } from 'react'
-import { Button, Progress } from '@sensorr/ui'
-import { entryPolicy, Policy, progressOf } from '@sensorr/sensorr'
-import { filesize } from '@sensorr/utils'
+import { Option } from '@sensorr/ui'
+import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
-import { PolicyInput } from '../../Details/components/Metadata'
-import { Toggle } from './Toggle'
+import { useConfigContext } from '../../../contexts/Config/Config'
+import { MetadataStyles, OptionInput, PolicyInput } from '../../Details/components/Metadata'
 
-const UIShowActions = ({ entity, metadata, episodes, inLibrary, ready, addShow, removeShow, setMetadata, ...props }) => {
+const AUTO = [
+  { value: null, label: 'Jobs' },
+  { value: true, label: 'Ask' },
+  { value: false, label: 'Auto' },
+]
+
+const UIShowActions = ({ entity, metadata, episodes, ready, removeShow, setMetadata, ...props }) => {
   const sensorr = useSensorr()
-  const [adding, setAdding] = useState(false)
+  const { config } = useConfigContext()
+  const [pending, setPending] = useState({})
   const [removing, setRemoving] = useState(false)
   const policy = useMemo(() => new Policy(metadata?.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies), [metadata?.policy, entity?.original_language, sensorr.policies])
-  const progress = useMemo(() => progressOf((episodes || []).filter(({ season_number }) => season_number !== 0)), [episodes])
-  const size = useMemo(() => (episodes || []).reduce((acc, { files }) => acc + (files || []).reduce((sum, file) => sum + (file.size || 0), 0), 0), [episodes])
+  const jobs = useMemo(() => ['record', 'airing']
+    .map(command => `${command}: ${config?.get(`jobs.${command}.shows.proposalOnly`) ? 'ask' : 'auto'}`)
+    .join(' · '), [config])
 
-  if (!inLibrary) {
-    return (
-      <div sx={UIShowActions.styles.element}>
-        <Button
-          variant='contain'
-          color='primary'
-          disabled={!ready || adding}
-          aria-busy={adding}
-          onClick={async () => {
-            setAdding(true)
-            await addShow().catch(() => null)
-            setAdding(false)
-          }}
-        >
-          {adding ? 'Adding...' : 'Add to library'}
-        </Button>
-        <small sx={UIShowActions.styles.help}>Follows every season but the specials, and the seasons to come</small>
-      </div>
-    )
+  const auto = typeof metadata?.proposal_only === 'boolean' ? metadata.proposal_only : null
+  const ids = {
+    policy: `show-policy-${entity.id}`,
+    auto: `show-auto-${entity.id}`,
+    seasons: `show-new-seasons-${entity.id}`,
+    library: `show-library-${entity.id}`,
+  }
+
+  const set = async (key, value) => {
+    setPending(pending => ({ ...pending, [key]: true }))
+    await setMetadata(key, value).catch(() => null)
+    setPending(pending => ({ ...pending, [key]: false }))
   }
 
   return (
-    <div sx={UIShowActions.styles.element}>
-      <div sx={UIShowActions.styles.block}>
-        <span>Follow</span>
-        <Toggle
-          id={`follow-${entity.id}`}
-          checked={!!metadata?.monitored}
-          disabled={!ready}
-          onChange={value => setMetadata('monitored', value)}
-        >
-          <small sx={UIShowActions.styles.help}>
-            {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches nothing for this show'}
+    <div>
+      <div sx={MetadataStyles.container}>
+        <div sx={{ ...MetadataStyles.block, flex: 0, minWidth: '12em', whiteSpace: ['wrap', 'nowrap'] }}>
+          <span id={ids.policy}>Policy</span>
+          <fieldset disabled={!ready} sx={UIShowActions.styles.fieldset} aria-labelledby={ids.policy}>
+            <PolicyInput
+              value={policy}
+              onChange={value => set('policy', value)}
+            />
+          </fieldset>
+          <small title='Sensorr will apply selected policy to sort and select the best release for each episode'>
+            Sensorr will apply selected policy to sort and select the best release for each episode
           </small>
-        </Toggle>
-        <Toggle
-          id={`new-seasons-${entity.id}`}
-          checked={!!metadata?.monitor_new_seasons}
-          disabled={!ready || !metadata?.monitored}
-          onChange={value => setMetadata('monitor_new_seasons', value)}
-        >
-          <span sx={UIShowActions.styles.option}>
-            Follow new seasons
-            <small sx={UIShowActions.styles.help}>
-              {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
-            </small>
-          </span>
-        </Toggle>
-      </div>
-      <div sx={UIShowActions.styles.block}>
-        <span>Policy</span>
-        <fieldset disabled={!ready} sx={UIShowActions.styles.fieldset}>
-          <PolicyInput
-            value={policy}
-            onChange={value => setMetadata('policy', value).catch(() => null)}
-          />
-        </fieldset>
-      </div>
-      <div sx={UIShowActions.styles.block}>
-        <span>Auto</span>
-        <Toggle
-          id={`auto-${entity.id}`}
-          checked={metadata?.proposal_only === false}
-          disabled={!ready}
-          onChange={value => setMetadata('proposal_only', !value)}
-        >
-          <small sx={UIShowActions.styles.help}>
-            {typeof metadata?.proposal_only !== 'boolean' ? 'Follows the job setting' : metadata.proposal_only ? 'Releases found wait for your answer' : 'Releases found download at once'}
+        </div>
+        <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <span id={ids.auto}>Auto</span>
+          <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={`${ids.auto}-help`} sx={UIShowActions.styles.radios}>
+            {AUTO.map(({ value, label }) => (
+              <Option
+                key={label}
+                id={`${ids.auto}-${label.toLowerCase()}`}
+                name={ids.auto}
+                type='radio'
+                checked={auto === value}
+                disabled={!ready || !!pending['proposal_only']}
+                onChange={() => set('proposal_only', value)}
+              >
+                <span>{label}</span>
+              </Option>
+            ))}
+          </div>
+          <small id={`${ids.auto}-help`}>
+            {auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once'}
           </small>
-        </Toggle>
-        {typeof metadata?.proposal_only === 'boolean' && (
-          <button type='button' sx={UIShowActions.styles.reset} disabled={!ready} onClick={() => setMetadata('proposal_only', null).catch(() => null)}>
-            Use the job setting
-          </button>
-        )}
+        </div>
       </div>
-      <div sx={UIShowActions.styles.block}>
-        <span>Episodes</span>
-        <p sx={UIShowActions.styles.progress}>
-          <code>{progress.owned}/{progress.aired}</code> aired owned, <code>{filesize.stringify(size)}</code>
-        </p>
-        <Progress value={progress.owned} max={progress.aired} title={`${progress.owned} of ${progress.aired} aired episodes owned`} />
-      </div>
-      <div sx={UIShowActions.styles.block}>
-        <Button
-          variant='outline'
-          color='error'
-          disabled={!ready || removing}
-          aria-busy={removing}
-          onClick={async () => {
-            if (!confirm(`Do you want to remove "${entity?.name}" and its ${(episodes || []).length} episodes from the library ? Their files stay on disk`)) {
-              return
-            }
+      <div sx={MetadataStyles.container}>
+        <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <span id={ids.seasons}>Follow new seasons</span>
+          <OptionInput
+            id={ids.seasons}
+            value={!!metadata?.monitor_new_seasons}
+            disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
+            onChange={value => set('monitor_new_seasons', value)}
+            aria-labelledby={ids.seasons}
+            aria-describedby={`keep-up-to-date-${ids.seasons}-help`}
+          >
+            {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+          </OptionInput>
+        </div>
+        <div sx={{ ...MetadataStyles.block, flexBasis: 0, whiteSpace: ['wrap', 'nowrap'] }}>
+          <span id={ids.library}>Library</span>
+          <button
+            type='button'
+            sx={UIShowActions.styles.remove}
+            disabled={!ready || removing}
+            aria-busy={removing}
+            aria-describedby={`${ids.library}-help`}
+            onClick={async () => {
+              if (!confirm(`Do you want to remove "${entity?.name}" and its ${(episodes || []).length} episodes from the library ? Their files stay on disk`)) {
+                return
+              }
 
-            setRemoving(true)
-            await removeShow().catch(() => null)
-            setRemoving(false)
-          }}
-        >
-          {removing ? 'Removing...' : 'Remove from library'}
-        </Button>
-        <small sx={UIShowActions.styles.help}>Sensorr forgets the show and its episodes, their files stay on disk</small>
+              setRemoving(true)
+              await removeShow().catch(() => null)
+              setRemoving(false)
+            }}
+          >
+            {removing ? 'Removing...' : 'Remove from library'}
+          </button>
+          <small id={`${ids.library}-help`}>Sensorr forgets the show and its episodes, their files stay on disk</small>
+        </div>
       </div>
     </div>
   )
 }
 
 UIShowActions.styles = {
-  element: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    width: '100%',
-    maxWidth: ['17em', 'unset'],
-    marginTop: ['2em', '4em'],
-    marginBottom: ['1em', '2em'],
-    textAlign: 'left',
-    'button:focus-visible': {
-      outline: '1px solid',
-      outlineColor: 'grayDarkest',
-      outlineOffset: '2px',
-    },
-  },
-  block: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    paddingY: 8,
-    borderBottom: '1px solid',
-    borderColor: 'gray',
-    '&:last-of-type': {
-      borderBottom: 'none',
-    },
-    '>span': {
-      fontWeight: 'semibold',
-      fontSize: 7,
-      color: 'grayDarkest',
-      marginBottom: 10,
-    },
-    '>label': {
-      alignSelf: 'stretch',
-    },
-  },
   fieldset: {
-    alignSelf: 'stretch',
     minWidth: 0,
     margin: 12,
     padding: 12,
@@ -168,44 +124,49 @@ UIShowActions.styles = {
       opacity: 0.5,
     },
   },
-  option: {
+  radios: {
     display: 'flex',
-    flexDirection: 'column',
-    color: 'text',
+    alignItems: 'center',
+    justifyContent: ['center', 'flex-start'],
+    gap: 4,
+    marginY: 10,
+    '>label': {
+      marginY: 12,
+      color: 'gray-550',
+      transition: 'color 200ms ease-in-out, opacity 200ms ease-in-out',
+      ':has(input:checked)': {
+        color: 'accentDark',
+      },
+      ':has(input:disabled)': {
+        opacity: 0.5,
+      },
+      '>span': {
+        fontSize: 6,
+        color: 'text',
+      },
+    },
   },
-  help: {
-    display: 'block',
-    marginTop: 10,
-    fontSize: 7,
-    color: 'grayDarkest',
-    lineHeight: 'body',
-  },
-  reset: {
+  remove: {
     variant: 'button.reset',
-    marginTop: 10,
-    fontSize: 7,
+    alignSelf: ['center', 'flex-start'],
+    marginY: 10,
+    fontSize: 6,
     color: 'grayDarkest',
     textDecoration: 'underline',
     textUnderlineOffset: '0.25em',
     cursor: 'pointer',
     transition: 'color 200ms ease-in-out',
     ':hover:not(:disabled)': {
-      color: 'text',
+      color: 'error',
+    },
+    ':disabled': {
+      cursor: 'progress',
+      opacity: 0.5,
     },
     ':focus-visible': {
       outline: '1px solid',
       outlineColor: 'grayDarkest',
       outlineOffset: '2px',
-    },
-  },
-  progress: {
-    margin: 12,
-    marginBottom: 8,
-    fontSize: 6,
-    color: 'text',
-    fontVariantNumeric: 'tabular-nums',
-    '>code': {
-      fontFamily: 'monospace',
     },
   },
 }

@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 
-interface OptionProps extends React.HTMLAttributes<HTMLInputElement> {
+interface OptionProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string
   type: 'radio' | 'checkbox'
   children?: React.ReactNode

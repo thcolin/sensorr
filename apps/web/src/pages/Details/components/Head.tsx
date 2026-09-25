@@ -3,7 +3,7 @@ import { Billboard, Icon } from '@sensorr/ui'
 import { useExpandContext } from '../contexts/Expand'
 import { Player } from './Player'
 
-const UIHead = ({ billboard, palette, entity, ready, onReady, ...props }) => {
+const UIHead = ({ billboard, palette, entity, behavior = 'movie', ready, onReady, ...props }) => {
   const { expanded, setExpanded } = useExpandContext() as any
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const UIHead = ({ billboard, palette, entity, ready, onReady, ...props }) => {
       <div sx={UIHead.styles.container} style={{ height: expanded ? '40vw' : '25vw' }}>
         <Billboard path={billboard} palette={palette} ready={ready} onReady={onReady} lazy={false} size='original' fade={0.25} blur={4} />
         <div sx={UIHead.styles.player} style={{ color: palette.color }}>
-          <Player entity={entity} ready={ready} />
+          <Player entity={entity} behavior={behavior} ready={ready} />
         </div>
       </div>
       <button onClick={() => setExpanded(false)} disabled={!expanded} sx={UIHead.styles.reduce} style={{ opacity: expanded ? 1 : 0 }}>

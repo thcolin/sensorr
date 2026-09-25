@@ -38,7 +38,8 @@ const UIDetails = ({
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
-  const [metadataState, setMetadataState] = useHistoryState('metadata', ['wished', 'archived', 'missing'].includes(state))
+  // A show opens its settings once it is in the library, which is known only once its metadata loads
+  const [metadataState, setMetadataState] = useHistoryState('metadata', behavior === 'tv' ? null : ['wished', 'archived', 'missing'].includes(state))
   const [meaningfulState, setMeaningfulState] = useHistoryState('meaningful', false)
 
   const toggleSensorr = useRef() as any
@@ -71,7 +72,7 @@ const UIDetails = ({
 
   return (
     <div sx={UIDetails.styles.element}>
-      <Head billboard={billboard} palette={palette.palette} entity={entity} ready={ready} onReady={onReady.billboard} />
+      <Head billboard={billboard} palette={palette.palette} entity={entity} behavior={behavior} ready={ready} onReady={onReady.billboard} />
       <div sx={UIDetails.styles.body}>
         <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
           <Poster
@@ -105,7 +106,6 @@ const UIDetails = ({
               />
             </div>
           )}
-          {actions}
         </div>
         <div sx={{ ...UIDetails.styles.wrapper, marginTop: ['0em', expanded ? '1em' : '-2em'] }}>
           <div sx={UIDetails.styles.container}>
@@ -140,13 +140,26 @@ const UIDetails = ({
                 </React.Fragment>
               )}
               {behavior === 'tv' && (
-                <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                  <h4 sx={UIDetails.styles.subtitle}>
-                    {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
-                    {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
-                    {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
-                  </h4>
-                </Skeleton>
+                <React.Fragment>
+                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+                    {actions ? (
+                      <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? true}>
+                        <summary>
+                          <span />
+                          <ShowSubtitle entity={entity} title={title} meaningful={meaningful} />
+                        </summary>
+                        <div>
+                          {actions}
+                        </div>
+                      </details>
+                    ) : (
+                      <ShowSubtitle entity={entity} title={title} meaningful={meaningful} />
+                    )}
+                  </Skeleton>
+                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+                    <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} />
+                  </Skeleton>
+                </React.Fragment>
               )}
               <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
                 <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
@@ -322,6 +335,14 @@ UIDetails.styles = {
 }
 
 const Details = memo(UIDetails)
+
+const ShowSubtitle = ({ entity, title, meaningful }) => (
+  <h4 sx={UIDetails.styles.subtitle}>
+    {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
+    {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
+    {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+  </h4>
+)
 
 const UIDetailsWrapper = ({ ...props }) => (
   <ExpandProvider>

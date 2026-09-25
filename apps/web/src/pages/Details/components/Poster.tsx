@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { Picture, Empty, Guests, MovieState, PersonState } from '@sensorr/ui'
+import { Picture, Empty, Guests, MovieState, PersonState, ShowState } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
 const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], ...props }) => {
@@ -24,6 +24,15 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
       {behavior === 'movie' && (
         <div sx={UIPoster.styles.state}>
           <MovieState
+            value={ready ? state : 'loading'}
+            onChange={setState}
+            compact={true}
+          />
+        </div>
+      )}
+      {behavior === 'tv' && (
+        <div sx={UIPoster.styles.state}>
+          <ShowState
             value={ready ? state : 'loading'}
             onChange={setState}
             compact={true}

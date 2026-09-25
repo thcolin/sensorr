@@ -122,6 +122,8 @@ UIMetadata.styles = {
 
 export const Metadata = memo(UIMetadata)
 
+export const MetadataStyles = UIMetadata.styles
+
 const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
   const { theme } = useThemeUI()
 
@@ -371,12 +373,13 @@ UIPolicyInput.styles = {
 
 export const PolicyInput = memo(UIPolicyInput)
 
-const UIOptionInput = ({ id, value, onChange, children, ...props }) => {
+const UIOptionInput = ({ id, value, onChange, children, disabled = false, ...props }) => {
   const styles = useMemo(() => ({
     element: {
       display: 'flex',
       alignItems: 'center',
       marginY: 10,
+      ...(disabled ? { opacity: 0.5 } : {}),
       '>label': {
         marginRight: 8,
         color: value ? 'accentDark' : 'gray-550',
@@ -387,17 +390,19 @@ const UIOptionInput = ({ id, value, onChange, children, ...props }) => {
         color: 'gray-500',
       },
     },
-  }), [value])
+  }), [value, disabled])
 
   return (
     <div sx={styles.element}>
       <Option
+        {...props}
         id={`keep-up-to-date-${id}`}
         type='checkbox'
         checked={value}
+        disabled={disabled}
         onChange={(e: any) => onChange(!!e.target.checked)}
       />
-      <small>{children}</small>
+      <small id={`keep-up-to-date-${id}-help`}>{children}</small>
     </div>
   )
 }
