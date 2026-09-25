@@ -38,4 +38,4 @@ export const EpisodeUnmonitored = () => <UIEpisodeStatus value='unmonitored' siz
 export const EpisodeWanted = () => <UIEpisodeStatus value='wanted' size='small' />
 export const EpisodeProposed = () => <UIEpisodeStatus value='proposed' size='small' />
 export const EpisodeOwned = () => <UIEpisodeStatus value='owned' size='small' />
-export const EpisodeOwnedCompact = () => <UIEpisodeStatus value='owned' size='small' compact={true} />
+export const EpisodeProposedCompact = () => <UIEpisodeStatus value='proposed' size='small' compact={true} />

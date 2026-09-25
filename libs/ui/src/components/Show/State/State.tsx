@@ -46,13 +46,21 @@ export interface EpisodeStatusProps extends Omit<BadgeProps, 'emoji' | 'label'> 
   value: 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
 }
 
-const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProps) => (
-  <Badge
-    {...props}
-    emoji={EpisodeStatusOptions[value]?.emoji}
-    label={!compact && EpisodeStatusOptions[value]?.label}
-    title={EpisodeStatusOptions[value]?.label}
-  />
-)
+// Only the states that wait on something carry their label; the others are an emoji circle
+const LABELLED = ['wanted', 'proposed']
+
+const UIEpisodeStatus = ({ value, compact = false, ...props }: EpisodeStatusProps) => {
+  const label = !compact && LABELLED.includes(value) ? EpisodeStatusOptions[value]?.label : null
+
+  return (
+    <Badge
+      {...props}
+      compact={!!label}
+      emoji={EpisodeStatusOptions[value]?.emoji}
+      label={label}
+      title={EpisodeStatusOptions[value]?.label}
+    />
+  )
+}
 
 export const EpisodeStatus = memo(UIEpisodeStatus)
