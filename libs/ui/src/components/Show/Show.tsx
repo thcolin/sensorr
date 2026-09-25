@@ -1,9 +1,10 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { coverageLabel } from '@sensorr/sensorr'
+import { ENDED, coverageLabel } from '@sensorr/sensorr'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
+import { Link } from '../../atoms/Link/Link'
 import { Progress } from '../../atoms/Progress/Progress'
 import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
@@ -22,7 +23,6 @@ export interface ShowProps extends Omit<
   state?: 'loading' | 'unfollowed' | 'followed'
   setState?: (state: string) => any
   metadata?: any
-  setMetadata?: (key: string, value: any) => any
   proceedRelease?: (release: any, choice?: boolean) => void
   ready?: boolean
   selected?: boolean | null
@@ -37,7 +37,6 @@ const UIShow = ({
   state,
   setState,
   metadata,
-  setMetadata,
   proceedRelease,
   ready = true,
   selected = null,
@@ -141,8 +140,6 @@ ShowProgress.styles = {
   },
 }
 
-const ENDED = ['Ended', 'Canceled']
-
 export const transformShowDetails = (entity) => {
   const first = !!entity.first_air_date && new Date(entity.first_air_date).getFullYear()
   const last = !!entity.last_air_date && new Date(entity.last_air_date).getFullYear()
@@ -157,8 +154,20 @@ export const transformShowDetails = (entity) => {
     poster: entity.poster_path,
     billboard: entity.backdrop_path,
     meaningful: {
-      year: first ? () => (
-        <span sx={{ whiteSpace: 'nowrap' }}>{first}</span>
+      year: first ? ({ disabled = false } = {}) => (
+        <Link
+          title={`Discover more shows from ${first}`}
+          sx={{ whiteSpace: 'nowrap' }}
+          disabled={disabled}
+          to='/tv/discover'
+          state={{
+            controls: {
+              first_air_date: [new Date(`${first}-01-01`), new Date(`${first}-12-31`)],
+            },
+          }}
+        >
+          {first}
+        </Link>
       ) : null,
       release_dates_range: first ? () => (
         <span title={entity.status} sx={{ whiteSpace: 'nowrap' }}>
@@ -170,11 +179,25 @@ export const transformShowDetails = (entity) => {
           {emojize('🕙', humanize.time(`${entity.episode_run_time[0]}`))}
         </span>
       ) : null,
-      genres: !!entity.genres?.length ? ({ emoji = true } = {}) => (
+      genres: !!entity.genres?.length ? ({ emoji = true, disabled = false } = {}) => (
         <span>
           {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>
-              {genre.name}
+              <Link
+                title={`Discover more "${genre.name}" shows`}
+                disabled={disabled}
+                to='/tv/discover'
+                state={{
+                  controls: {
+                    with_genres: {
+                      behavior: 'or',
+                      values: [{ value: genre.id, label: genre.name }],
+                    },
+                  },
+                }}
+              >
+                {genre.name}
+              </Link>
               {index === arr.length - 1 ? '' : ', '}
             </Fragment>
           ))}
