@@ -56,8 +56,9 @@ const UIPlayer = ({ entity, behavior = 'movie', ready, ...props }) => {
     })
   }, [sdkReady])
 
+  // TMDB has videos for a movie or a show only, a person or a collection answers 404
   useEffect(() => {
-    if (!entity.id || !(entity.title || entity.name) || tmdb.region === 'en-US') {
+    if (!['movie', 'tv'].includes(behavior) || !entity.id || !(entity.title || entity.name) || tmdb.region === 'en-US') {
       return
     }
 
