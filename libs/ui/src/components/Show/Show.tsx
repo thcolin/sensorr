@@ -121,7 +121,7 @@ const UIShow = ({
       selected={selected}
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
-      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} detail={diffusion.detail} compact={device === 'mobile'} />}
+      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.detail} compact={device === 'mobile'} />}
     />
   )
 }
@@ -133,21 +133,22 @@ interface ShowProgressProps {
   aired: number
   seasons?: { owned: number, aired: number }[]
   first_air_date?: string | Date | null
-  // The series still airs: the pill takes the airing tint
+  // The series still airs: the pill takes the airing tint, or its hollow ring when Sensorr does not follow it
   airing?: boolean
+  followed?: boolean
   // After the counts in the titles, like "next episode on 29/09"
   detail?: string
   compact?: boolean
 }
 
 // The owned count or the upcoming status on the left, the bar or the first air date on the right, so neighbour cards line up
-const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, detail, compact }: ShowProgressProps) => (
+const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, followed, detail, compact }: ShowProgressProps) => (
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (
       <>
         {/* On a 96px mobile card the pill steps down with the title, so it stays lighter than it */}
         <span sx={ShowProgress.styles.pill}>
-          <ProgressPill owned={owned} aired={aired} airing={airing} detail={detail} />
+          <ProgressPill owned={owned} aired={aired} airing={airing} followed={followed} detail={detail} />
         </span>
         {/* A 96px mobile card leaves the bar 5px to 19px beside the pill: the pill alone says it there */}
         {!compact && (

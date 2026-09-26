@@ -46,6 +46,9 @@ const Show = ({ ...props }) => {
   }, { transform: transformShowDetails })
 
   const inLibrary = !!metadata && metadata.state !== 'ignored'
+  const state = metadataLoading ? 'loading' : showStateOf(metadata)
+  // An airing show Sensorr does not follow, pinned or out of the library, draws its violet as a hollow ring
+  const followed = state === 'followed'
   const ready = !show.loading && !!(show.data?.id || show.error)
 
   useTitle(ready && [show.details.title, show.details.year && `(${show.details.year})`].filter(part => part).join(' '))
@@ -70,7 +73,7 @@ const Show = ({ ...props }) => {
   const proceedRelease = useCallback((release, choice) => setShowMetadata(Number(id), 'proposal', { id: release.id, choice }), [id])
   const banRelease = useCallback((release) => banShowRelease(Number(id), release.title), [id])
   // `setShowState` toasts a show it adds to or removes from the library, `setShowMetadata` nothing for a follow
-  const setState = useCallback(state => setShowState(Number(id), state).catch(() => inLibrary && toast.error('Error while following the show')), [id, setShowState, inLibrary])
+  const setState = useCallback(value => setShowState(Number(id), value).catch(() => inLibrary && toast.error('Error while following the show')), [id, setShowState, inLibrary])
   // A season is a bulk and toasts its own outcome, a single episode does not
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
@@ -97,7 +100,7 @@ const Show = ({ ...props }) => {
     }
 
     const tag = !!diffusion.label && (
-      <ReleaseTag title={show.data.status} data-diffusion={true} data-airing={diffusion.airing}>
+      <ReleaseTag title={show.data.status} data-diffusion={true} data-airing={diffusion.airing} data-followed={followed}>
         <code>{diffusion.label}</code>
       </ReleaseTag>
     )
@@ -117,7 +120,7 @@ const Show = ({ ...props }) => {
 
     return [
       <span key='pills' sx={Show.styles.pills}>
-        <ProgressPill {...progress} airing={diffusion.airing} detail={diffusion.detail} />
+        <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.detail} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
         {tag}
         {!!pending && (
@@ -130,7 +133,7 @@ const Show = ({ ...props }) => {
         )}
       </span>,
     ]
-  }, [show.data, diffusion, progress, inLibrary, episodes, proposals.rows.length, id])
+  }, [show.data, diffusion, progress, inLibrary, followed, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
     externals: {
@@ -219,7 +222,7 @@ const Show = ({ ...props }) => {
       additional={additional}
       metadata={metadata}
       behavior='tv'
-      state={metadataLoading ? 'loading' : showStateOf(metadata)}
+      state={state}
       setState={setState}
       summary={summary}
       tabs={tabs}
@@ -251,6 +254,7 @@ const Show = ({ ...props }) => {
             policy={proposals.policy}
             answer={proposals.answer}
             diffusion={diffusion}
+            followed={followed}
             inLibrary={!seasonsReady || inLibrary}
             ready={actionsReady}
             followEpisodes={followEpisodes}
@@ -272,9 +276,11 @@ Show.styles = {
       fontSize: 6,
       whiteSpace: 'nowrap',
     },
-    // The tints of a transition pill's new side: `airing` while the series airs, `quiet` otherwise
+    // The tints of a transition pill's new side: `airing` while the series airs, `unfollowed` when Sensorr does not
+    // follow it, `quiet` otherwise
     '>[data-diffusion] >code': TransitionPillStyles.tints.quiet.after,
     '>[data-diffusion][data-airing="true"] >code': TransitionPillStyles.tints.airing.after,
+    '>[data-diffusion][data-airing="true"][data-followed="false"] >code': TransitionPillStyles.tints.unfollowed.after,
   },
   anchor: {
     display: 'flex',

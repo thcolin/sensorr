@@ -48,8 +48,9 @@ const bleed = {
 }
 
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
-// atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx)
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, inLibrary, ready, followEpisodes, ...props }) => {
+// atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
+// and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -59,7 +60,6 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
       const summary = summaries.find(({ season_number }) => season_number === number) || {}
       const list = (episodes || []).filter(({ season_number }) => season_number === number).sort((a, b) => a.episode_number - b.episode_number)
       const statuses = list.map(episode => episodeStatus(episode))
-      const followed = list.filter(({ monitored }) => monitored).length
 
       return {
         number,
@@ -73,8 +73,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
         proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
-        followed,
-        monitored: !!list.length && followed === list.length,
+        followed: list.filter(({ monitored }) => monitored).length,
+        monitored: !!list.length && list.every(({ monitored }) => monitored),
       }
     })
   }, [entity?.seasons, entity?.status, episodes, proposals, inLibrary])
@@ -189,7 +189,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             </div>
             {inLibrary && (
               <div sx={UISeasons.styles.summary}>
-                <ProgressPill {...totals.progress} airing={diffusion?.airing} detail={diffusion?.detail} />
+                <ProgressPill {...totals.progress} airing={diffusion?.airing} followed={followed} detail={diffusion?.detail} />
                 <Bar progress={totals.progress} />
                 <Complete progress={totals.progress} />
                 <span />
@@ -249,7 +249,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       {/* Specials are not followed by default: owned over aired would read as a gap. An empty season has nothing to count */}
                       {(specials || empty) ? <><span /><span /><span /></> : (
                         <>
-                          <ProgressPill {...season.progress} airing={season.diffusion.airing} detail={season.diffusion.detail} />
+                          <ProgressPill {...season.progress} airing={season.diffusion.airing} followed={followed} detail={season.diffusion.detail} />
                           <Bar progress={season.progress} />
                           <Complete progress={season.progress} />
                         </>
