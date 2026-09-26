@@ -89,7 +89,7 @@ Two commands are the gate, `lint` and `test`. Neither exits 0 today, and every r
 npx nx run-many --target=lint --all
 ```
 
-Read the `Successfully ran target lint for 14 projects` line, **not** the exit code. Once the lint work is done the command exits 1 on `Cannot read properties of undefined (reading 'hashCommand')`, raised at `node_modules/@nrwl/linter/src/executors/eslint/hasher.js:12`. That is `@nrwl/linter@12.10.1` failing against `nx@18.3.5`, not a lint error.
+Read the `Successfully ran target lint for 15 projects` line, **not** the exit code. Once the lint work is done the command exits 1 on `Cannot read properties of undefined (reading 'hashCommand')`, raised at `node_modules/@nrwl/linter/src/executors/eslint/hasher.js:12`. That is `@nrwl/linter@12.10.1` failing against `nx@18.3.5`, not a lint error.
 
 ### Test
 
