@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageLabel, coverageOf, diffusionOf, isAiring, isUnitCovered, pickReleases, progressOfDetails, searchShowUnits, searchUnits, ShowUnit, swapOf, swapReplacesOf } from './show'
+import { coverageLabel, coverageOf, diffusionOf, isAiring, isUnitCovered, nextAirDateOf, pickReleases, progressOfDetails, searchShowUnits, searchUnits, seasonDiffusionOf, ShowUnit, swapOf, swapReplacesOf } from './show'
 import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
@@ -575,7 +575,7 @@ describe('progressOfDetails', () => {
     const tedLasso = {
       seasons: seasons([1, 10], [2, 12], [3, 12], [4, 10]),
       last_episode_to_air: { season_number: 4, episode_number: 8 },
-      next_episode_to_air: { air_date: '2026-09-29' },
+      next_episode_to_air: { season_number: 4, episode_number: 9, air_date: '2026-09-29' },
     }
 
     expect(progressOfDetails(tedLasso)).toEqual({
@@ -604,7 +604,7 @@ describe('progressOfDetails', () => {
   })
 
   it('counts nothing aired before a first episode, and nothing without details', () => {
-    const upcoming = { seasons: seasons([1, 8]), last_episode_to_air: null, next_episode_to_air: { air_date: '2026-11-25' } }
+    const upcoming = { seasons: seasons([1, 8]), last_episode_to_air: null, next_episode_to_air: { season_number: 1, episode_number: 1, air_date: '2026-11-25' } }
 
     expect(progressOfDetails(upcoming)).toEqual({ owned: 0, aired: 0, next: '2026-11-25', seasons: [{ season_number: 1, owned: 0, aired: 0 }] })
     expect(progressOfDetails(undefined)).toEqual({ owned: 0, aired: 0, next: null, seasons: [] })
@@ -615,6 +615,90 @@ describe('progressOfDetails', () => {
 
     expect(progressOfDetails(details).seasons).toEqual([{ season_number: 1, owned: 0, aired: 10 }, { season_number: 2, owned: 0, aired: 6 }])
     expect(progressOfDetails(details).aired).toBe(16)
+  })
+
+  it('places a special aired last by the next regular episode, and leaves out a special to come', () => {
+    const details = {
+      seasons: seasons([0, 2], [1, 10], [2, 10], [3, 10], [4, 10]),
+      last_episode_to_air: { season_number: 0, episode_number: 2 },
+      next_episode_to_air: { season_number: 3, episode_number: 5, air_date: '2026-09-29' },
+    }
+
+    expect(progressOfDetails(details)).toEqual({
+      owned: 0,
+      aired: 24,
+      next: '2026-09-29',
+      seasons: [
+        { season_number: 1, owned: 0, aired: 10 },
+        { season_number: 2, owned: 0, aired: 10 },
+        { season_number: 3, owned: 0, aired: 4 },
+        { season_number: 4, owned: 0, aired: 0 },
+      ],
+    })
+
+    const special = { ...details, last_episode_to_air: { season_number: 3, episode_number: 4 }, next_episode_to_air: { season_number: 0, episode_number: 3, air_date: '2026-12-24' } }
+    expect(progressOfDetails(special).next).toBe(null)
+    expect(progressOfDetails(special).aired).toBe(24)
+  })
+
+  it('counts every season started by now whole when the last episode aired is a special and no regular one is to come', () => {
+    const details = {
+      seasons: [
+        { season_number: 0, episode_count: 3, air_date: '2020-12-24' },
+        { season_number: 1, episode_count: 10, air_date: '2019-01-01' },
+        { season_number: 2, episode_count: 12, air_date: '2026-09-24' },
+        { season_number: 3, episode_count: 8, air_date: '2027-01-01' },
+        { season_number: 4, episode_count: 6, air_date: null },
+      ],
+      last_episode_to_air: { season_number: 0, episode_number: 3 },
+    }
+
+    expect(progressOfDetails(details, now)).toEqual({
+      owned: 0,
+      aired: 22,
+      next: null,
+      seasons: [
+        { season_number: 1, owned: 0, aired: 10 },
+        { season_number: 2, owned: 0, aired: 12 },
+        { season_number: 3, owned: 0, aired: 0 },
+        { season_number: 4, owned: 0, aired: 0 },
+      ],
+    })
+    expect(progressOfDetails(details, new Date('2026-09-23T12:00:00Z')).aired).toBe(10)
+  })
+})
+
+describe('nextAirDateOf', () => {
+  it('gives the earliest air date still to come, whatever the order of the episodes', () => {
+    expect(nextAirDateOf(airingEpisodes(), now)).toEqual(new Date('2026-10-01'))
+    expect(nextAirDateOf(airingEpisodes().reverse(), now)).toEqual(new Date('2026-10-01'))
+  })
+
+  it('leaves out the specials and the episodes without air date, and gives null when nothing is to come', () => {
+    const special = { season_number: 0, episode_number: 1, air_date: '2026-09-25' }
+    const undated = { season_number: 4, episode_number: 1, air_date: null }
+
+    expect(nextAirDateOf([...airingEpisodes(), special, undated], now)).toEqual(new Date('2026-10-01'))
+    expect(nextAirDateOf([special, undated], now)).toBe(null)
+    expect(nextAirDateOf(friendsEpisodes(), now)).toBe(null)
+    expect(nextAirDateOf([], now)).toBe(null)
+  })
+})
+
+describe('seasonDiffusionOf', () => {
+  const season = (number: number) => airingEpisodes().filter(({ season_number }) => season_number === number)
+
+  it('says a season of a show still airing airs while one of its episodes is to come, and when the next one does', () => {
+    expect(seasonDiffusionOf('Returning Series', season(3), now, 'fr-FR')).toEqual({ airing: true, detail: 'next episode on 01/10' })
+    expect(seasonDiffusionOf('In Production', [...season(2), { season_number: 2, episode_number: 9, air_date: null }], now, 'fr-FR')).toEqual({ airing: true, detail: 'still airing' })
+  })
+
+  it('never tints a season fully aired, one of an ended show, one of a show without status, nor the specials', () => {
+    expect(seasonDiffusionOf('Returning Series', season(2), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(seasonDiffusionOf('Ended', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(seasonDiffusionOf('Canceled', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(seasonDiffusionOf(null, season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(seasonDiffusionOf('Returning Series', [{ season_number: 0, episode_number: 1, air_date: null }], now, 'fr-FR')).toEqual({ airing: false, detail: '' })
   })
 })
 
@@ -631,6 +715,11 @@ describe('diffusionOf', () => {
     expect(diffusionOf({ status: 'Ended' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, label: 'Ended', detail: 'ended' })
     expect(diffusionOf({ status: 'Canceled', last_air_date: new Date('2019-01-01') }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, label: 'Canceled · 2019', detail: 'canceled in 2019' })
     expect(diffusionOf({ status: 'Canceled' }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, label: 'Canceled', detail: 'canceled' })
+  })
+
+  it('says an ended or canceled show stopped even when none of its episodes is counted aired', () => {
+    expect(diffusionOf({ status: 'Ended', first_air_date: '2011-04-17', last_air_date: '2017-05-19' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: false, label: 'Ended · 2017', detail: 'ended in 2017' })
+    expect(diffusionOf({ status: 'Canceled', last_air_date: '2019-03-01' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: false, label: 'Canceled · 2019', detail: 'canceled in 2019' })
   })
 
   it('gives the next episode of a show still airing, by day and month', () => {

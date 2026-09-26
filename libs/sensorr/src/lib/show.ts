@@ -29,59 +29,91 @@ export const STATUS_GROUPS = {
 }
 
 type ShowDetails = {
-  seasons?: { season_number: number, episode_count?: number }[],
+  seasons?: { season_number: number, episode_count?: number, air_date?: string | null }[],
   last_episode_to_air?: { season_number: number, episode_number: number } | null,
-  next_episode_to_air?: { air_date?: string | null } | null,
+  next_episode_to_air?: { season_number: number, episode_number: number, air_date?: string | null } | null,
 }
 
 export const isAiring = (status?: string | null): boolean => !!status && !ENDED.includes(status)
 
-// TMDB only names the last episode aired: the seasons before it aired whole, the ones after it not at all
-export const progressOfDetails = (details: ShowDetails) => {
-  const last = details?.last_episode_to_air
+// TMDB dates are days, read at UTC midnight: formatted in UTC so no timezone moves them to the day before
+const formatDay = (value: string | Date, region: string, options: Intl.DateTimeFormatOptions) => new Date(value).toLocaleDateString(region, { ...options, timeZone: 'UTC' })
+
+// TMDB only names the last episode aired and the next one: the seasons before it aired whole, the ones after it not at all
+export const progressOfDetails = (details: ShowDetails, now: Date | number = Date.now()) => {
+  // A special to come is left out, like `next` in the API's progress
+  const next = details?.next_episode_to_air?.season_number === 0 ? null : details?.next_episode_to_air
+  // A special sits in none of the seasons: the regular episode before the next one places the progress instead
+  const last = (details?.last_episode_to_air?.season_number === 0 && next?.season_number)
+    ? { season_number: next.season_number, episode_number: next.episode_number - 1 }
+    : details?.last_episode_to_air
   const seasons = (details?.seasons || [])
     .filter(({ season_number, episode_count }) => season_number !== 0 && episode_count > 0)
     .sort((a, b) => a.season_number - b.season_number)
-    .map(({ season_number, episode_count }) => ({
+    .map(({ season_number, episode_count, air_date }) => ({
       season_number,
       owned: 0,
-      aired: (!last || season_number > last.season_number) ? 0 : season_number < last.season_number ? episode_count : Math.min(last.episode_number, episode_count),
+      // Without a regular episode to come, a special places nothing: each season started by now is counted whole
+      aired: last?.season_number === 0 ? ((air_date && new Date(air_date).getTime() <= new Date(now).getTime()) ? episode_count : 0)
+        : (!last || season_number > last.season_number) ? 0 : season_number < last.season_number ? episode_count : Math.min(last.episode_number, episode_count),
     }))
 
   return {
     owned: 0,
     aired: seasons.reduce((sum, { aired }) => sum + aired, 0),
-    next: details?.next_episode_to_air?.air_date || null,
+    next: next?.air_date || null,
     seasons,
   }
 }
 
-// TMDB dates are days, read at UTC midnight: formatted in UTC so no timezone moves them to the day before
+// The earliest air date still to come among the episodes outside season 0, like `next` in the API's progress
+export const nextAirDateOf = (episodes: ShowEpisode[], now: Date | number = Date.now()): Date | null => episodes
+  .filter(({ season_number, air_date }) => season_number !== 0 && !!air_date && new Date(air_date).getTime() > new Date(now).getTime())
+  .map(({ air_date }) => new Date(air_date))
+  .sort((a, b) => a.getTime() - b.getTime())[0] || null
+
 export const diffusionOf = (
   show: { status?: string | null, first_air_date?: string | Date | null, last_air_date?: string | Date | null },
   { aired, next }: { aired: number, next?: string | Date | null },
   region = 'fr-FR',
 ): { airing: boolean, label: string, detail: string } => {
-  const format = (value: string | Date, options: Intl.DateTimeFormatOptions) => new Date(value).toLocaleDateString(region, { ...options, timeZone: 'UTC' })
   const year = show?.last_air_date ? new Date(show.last_air_date).getUTCFullYear() : null
 
-  if (aired === 0) {
-    const first = next || show?.first_air_date
-    const date = first ? format(first, { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-    return { airing: isAiring(show?.status), label: `Upcoming · ${date || 'TBA'}`, detail: date ? `first episode on ${date}` : 'first episode to be announced' }
-  }
-
+  // Before the episode count: an ended show whose episodes are unknown still ended
   if (ENDED.includes(show?.status)) {
     const word = show.status
     return { airing: false, label: year ? `${word} · ${year}` : word, detail: year ? `${word.toLowerCase()} in ${year}` : word.toLowerCase() }
   }
 
+  if (aired === 0) {
+    const first = next || show?.first_air_date
+    const date = first ? formatDay(first, region, { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+    return { airing: isAiring(show?.status), label: `Upcoming · ${date || 'TBA'}`, detail: date ? `first episode on ${date}` : 'first episode to be announced' }
+  }
+
   if (isAiring(show?.status)) {
-    const date = next ? format(next, { day: '2-digit', month: '2-digit' }) : null
+    const date = next ? formatDay(next, region, { day: '2-digit', month: '2-digit' }) : null
     return { airing: true, label: date ? `Airing · next ${date}` : 'Airing', detail: date ? `next episode on ${date}` : 'still airing' }
   }
 
   return { airing: false, label: '', detail: '' }
+}
+
+// A season airs while its series does and one of its episodes outside season 0 has not aired yet, dated or not
+export const seasonDiffusionOf = (
+  status: string | null | undefined,
+  episodes: ShowEpisode[],
+  now: Date | number = Date.now(),
+  region = 'fr-FR',
+): { airing: boolean, detail: string } => {
+  const airing = isAiring(status) && episodes.some(({ season_number, air_date }) => season_number !== 0 && (!air_date || new Date(air_date).getTime() > new Date(now).getTime()))
+
+  if (!airing) {
+    return { airing: false, detail: '' }
+  }
+
+  const next = nextAirDateOf(episodes, now)
+  return { airing: true, detail: next ? `next episode on ${formatDay(next, region, { day: '2-digit', month: '2-digit' })}` : 'still airing' }
 }
 
 export const isTvCategory = (category) => [].concat(category ?? []).some(value => Math.floor(Number(value) / 1000) === 5)
