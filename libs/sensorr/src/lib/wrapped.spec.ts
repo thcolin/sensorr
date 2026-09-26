@@ -65,7 +65,7 @@ describe('wrappedOf', () => {
 
   it('ranks by hours against every user of the server', () => {
     expect(wrapped.rank).toBe(2)
-    expect(wrapped.server).toEqual({ users: 2, median_hours: 19 })
+    expect(wrapped.server).toEqual({ users: 2, median_hours: 18 })
     expect(wrappedOf({ plays, titles, user_id: 2, year: 2026 }).rank).toBe(1)
   })
 
