@@ -13,11 +13,13 @@ export const withSensorrRequest = () => (WrappedComponent) => {
     const query = useMemo(() => unit ? { ...serialized.query, unit } : serialized.query, [serialized.query, unit])
     const applied = { ...query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases, ...(unit ? { reach: true } : {}) }
     const reached = (list) => unit ? list.filter(({ meta, category }) => reachesUnit(meta, category, unit)) : list
-    // The level searched first, then the levels above it, the policy's order inside each, a valid release before any other
+    // A valid release before any other, then the level searched and the levels above it, each by its first season like
+    // the seasons of the page, the policy's order inside a season
     const levels = !unit ? [] : unit.type === 'episode' ? ['episode', 'season', 'series'] : unit.type === 'season' ? ['season', 'series'] : ['series', 'season']
     const ranked = (list) => !unit ? list : [...list].sort((a, b) => (
       (Number(a.valid === false) - Number(b.valid === false)) ||
-      (levels.indexOf(levelOf(a.meta, a.category)) - levels.indexOf(levelOf(b.meta, b.category)))
+      (levels.indexOf(levelOf(a.meta, a.category)) - levels.indexOf(levelOf(b.meta, b.category))) ||
+      ((a.meta?.seasons?.[0] ?? 0) - (b.meta?.seasons?.[0] ?? 0))
     ))
 
     const entities = useMemo(
