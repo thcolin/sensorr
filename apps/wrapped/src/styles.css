@@ -96,7 +96,6 @@ ol {
   white-space: nowrap;
 }
 
-/* The wall the posters hang on: on a phone a sheet fills the screen, wider screens show its neighbours */
 .wall {
   position: relative;
   display: flex;
@@ -267,7 +266,6 @@ ol {
   stroke-linecap: round;
 }
 
-/* A backdrop bleeds off the top and the sides of its sheet */
 .backdrop {
   aspect-ratio: 4 / 5;
   margin: calc(var(--u) * -9) -7cqi 0;
@@ -420,7 +418,6 @@ ol {
   gap: 7cqi;
 }
 
-/* The longest cycle leads with its poster at scale */
 .cycle:first-child {
   grid-template-columns: 50cqi 1fr;
 }
@@ -581,7 +578,6 @@ ol {
   gap: 6cqi;
 }
 
-/* Answers alternate sides, like lines pasted across a bill */
 .profile > div:nth-child(even) {
   align-self: flex-end;
   text-align: right;
@@ -683,7 +679,6 @@ ol {
   margin-left: 0.04em;
 }
 
-/* One stroke per spectator, ranked from the left; the visitor's is the red one */
 .crowd {
   display: flex;
   flex-wrap: wrap;

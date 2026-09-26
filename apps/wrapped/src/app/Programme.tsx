@@ -200,7 +200,6 @@ const Year = ({ months, frozen }: { months: number[], frozen: boolean }) => {
   const { scrollYProgress } = useScroll({ target: track, offset: ['start start', 'end end'] })
   const drawn = useTransform(scrollYProgress, [0, 0.8], [0, 1], { clamp: true })
   const month = new Date().toLocaleDateString('en-US', { month: 'numeric', timeZone: TIME_ZONE })
-  // Months still to come stay bare paper while the edition is open
   const elapsed = frozen ? 12 : (Number(month) % 12) + 1
   const max = Math.max(...months, 1)
   const peak = months.indexOf(Math.max(...months))

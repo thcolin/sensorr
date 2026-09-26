@@ -1,12 +1,3 @@
-# This file is used by:
-# 1. autoprefixer to adjust CSS to support the below specified browsers
-# 2. babel preset-env to adjust included polyfills
-#
-# For additional information regarding the format and rule options, please see:
-# https://github.com/browserslist/browserslist#queries
-#
-# If you need to support different browsers in production, you may tweak the list below.
-
 last 1 Chrome version
 last 1 Firefox version
 last 2 Edge major versions
