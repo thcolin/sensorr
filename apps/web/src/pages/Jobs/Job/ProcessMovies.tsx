@@ -614,7 +614,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
             const release = typeof recordRelease === 'undefined' ? log.meta?.release : recordRelease
 
             return (
-            <div key={index}>
+            <div key={log._id ?? index}>
               <RecordLog
                 {...log}
                 line={index + 1}
@@ -800,7 +800,7 @@ const RecordLog = ({ line, message, meta = {}, children = null, timestamp = null
   return (
     <details
       open={forceOpen || open}
-      onToggle={() => setOpen(open => !open)}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
       data-disabled={!expandable}
       sx={RecordLog.styles.element}
     >
