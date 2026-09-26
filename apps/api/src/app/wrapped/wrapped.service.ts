@@ -20,7 +20,7 @@ export class WrappedService {
 
   async upsertViewers(viewers: { user_id: number, email: string, username: string, friendly_name: string }[]) {
     this.logger.log(`UpsertViewers "${viewers.length}"`)
-    const { upsertedCount, modifiedCount } = await this.viewerModel.bulkWrite(viewers.map(({ user_id, ...viewer }) => ({
+    const { upsertedCount, modifiedCount } = await this.viewerModel.bulkWrite(viewers.filter(({ user_id }) => Number.isInteger(user_id)).map(({ user_id, ...viewer }) => ({
       updateOne: { filter: { _id: user_id }, update: { _id: user_id, ...viewer, email: viewer.email?.toLowerCase() }, upsert: true },
     })))
     return { upserted: upsertedCount, modified: modifiedCount }
@@ -28,14 +28,14 @@ export class WrappedService {
 
   async upsertPlays(plays: WrappedPlay[]) {
     this.logger.log(`UpsertPlays "${plays.length}"`)
-    const { upsertedCount, modifiedCount } = await this.playModel.bulkWrite(plays.map(({ id, ...play }) => ({
+    const { upsertedCount, modifiedCount } = await this.playModel.bulkWrite(plays.filter(({ id }) => Number.isInteger(id)).map(({ id, ...play }) => ({
       updateOne: { filter: { _id: id }, update: { _id: id, ...play }, upsert: true },
     })))
     return { upserted: upsertedCount, modified: modifiedCount }
   }
 
   async prunePlays(seen: string) {
-    if (!seen || !(await this.playModel.exists({ seen }))) {
+    if (typeof seen !== 'string' || !(await this.playModel.exists({ seen }))) {
       throw new BadRequestException(`No play seen by run "${seen}", nothing pruned`)
     }
 
@@ -55,7 +55,7 @@ export class WrappedService {
 
   async upsertTitles(titles: WrappedTitle[]) {
     this.logger.log(`UpsertTitles "${titles.length}"`)
-    const { upsertedCount, modifiedCount } = await this.titleModel.bulkWrite(titles.map(({ key, ...title }) => ({
+    const { upsertedCount, modifiedCount } = await this.titleModel.bulkWrite(titles.filter(({ key }) => typeof key === 'string').map(({ key, ...title }) => ({
       updateOne: { filter: { _id: key }, update: { _id: key, ...title }, upsert: true },
     })))
     return { upserted: upsertedCount, modified: modifiedCount }
@@ -136,6 +136,10 @@ export class WrappedService {
   }
 
   async renewToken(email: string) {
+    if (typeof email !== 'string') {
+      throw new BadRequestException('An email is required')
+    }
+
     this.logger.log(`RenewToken "${email}"`)
     const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_token: crypto.randomBytes(18).toString('base64url') }, { new: true }).lean()
 
