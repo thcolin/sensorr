@@ -149,13 +149,14 @@ export const matchesUnit = (meta, category, unit: ShowUnit) => {
   }
 }
 
-// A manual search shows the level searched and the levels above it that hold its target
+// A manual search shows the level searched and the levels above it that hold its target. The whole series shows its
+// packs, even partial, and every season pack: a series rarely has a pack of all its seasons
 export const reachesUnit = (meta, category, unit: ShowUnit) => {
   switch (levelOf(meta, category)) {
     case 'series':
-      return unit.type === 'series' ? matchesUnit(meta, category, unit) : (!meta.seasons?.length || meta.seasons.includes(unit.season))
+      return unit.type === 'series' || !meta.seasons?.length || meta.seasons.includes(unit.season)
     case 'season':
-      return unit.type !== 'series' && meta.seasons[0] === unit.season
+      return unit.type === 'series' || meta.seasons[0] === unit.season
     case 'episode':
       return unit.type === 'episode' && matchesUnit(meta, category, unit)
     default:

@@ -93,14 +93,12 @@ const Show = ({ ...props }) => {
     banned_releases: metadata?.banned_releases || [],
   }), [sensorr, show.data, metadata?.query, metadata?.banned_releases, policy])
 
-  // The seasons TMDB announces, for a whole series pack to hold them all
-  const openSearch = useCallback((e, target: { type: string, season?: number, episode?: number } = { type: 'series' }, label = 'the whole series') => {
-    const seasons = (show.data?.seasons || []).filter(({ season_number, episode_count }) => season_number !== 0 && episode_count)
+  const openSearch = useCallback((e, target: { type: 'series' | 'season' | 'episode', season?: number, episode?: number } = { type: 'series' }, label = 'the whole series') => {
     const covers = ({ season, episode }) => (target.season === undefined || season === target.season) && (target.episode === undefined || episode === target.episode)
-    const proposal = (metadata?.releases || []).find(release => isPending(release) && (target.type !== 'series' || release.level === 'series') && (release.coverage || []).some(covers)) || null
-    setSearch({ unit: { ...target, episodes: seasons.map(({ season_number }) => ({ season: season_number, episode: 1 })) }, title: `Releases for ${label}`, proposal })
+    const proposal = (metadata?.releases || []).find(release => isPending(release) && (target.type !== 'series' || release.level !== 'episode') && (release.coverage || []).some(covers)) || null
+    setSearch({ unit: { ...target, episodes: [] }, title: `Releases for ${label}`, proposal })
     toggleSearch.current(e)
-  }, [show.data, metadata?.releases])
+  }, [metadata?.releases])
 
   // A pick out of the library adds the show first, unfollowed: its episodes are where the import links the files
   const pickRelease = useCallback(async (release) => {

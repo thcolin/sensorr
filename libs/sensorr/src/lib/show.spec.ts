@@ -237,7 +237,7 @@ describe('reachesUnit', () => {
     ])
   })
 
-  it('shows no episode for a season, and only whole series packs for the series', () => {
+  it('shows no episode for a season, and every series and season pack for the series', () => {
     expect(reached({ type: 'season', season: 3, episodes: [] })).toEqual([
       'Friends.S03.MULTi.1080p.BluRay.x264-GRP',
       'Friends.S01-S03.MULTi.1080p.BluRay.x264-GRP',
@@ -245,6 +245,9 @@ describe('reachesUnit', () => {
       'Friends.Complete.Series.1080p.BluRay.x264-GRP',
     ])
     expect(reached(series)).toEqual([
+      'Friends.S02.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S03.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S01-S03.MULTi.1080p.BluRay.x264-GRP',
       'Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP',
       'Friends.Complete.Series.1080p.BluRay.x264-GRP',
     ])

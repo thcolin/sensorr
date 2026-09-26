@@ -26,7 +26,7 @@ export const withSensorrRequest = () => (WrappedComponent) => {
       ongoing: tasks.find(({ releases, ...task }) => task.ongoing),
       tasks: tasks.map(task => ({
         ...task,
-        releases: reached(serialized.policy.apply(task.releases || [], applied)),
+        releases: serialized.policy.apply(task.releases || [], applied),
       })),
     }), [id, loading, done, tasks, query, serialized.policy, metadata.banned_releases, metadata.query?.titles])
 
