@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
 import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
-import { diffusionOf, episodeStatus, nextAirDateOf, progressOf } from '@sensorr/sensorr'
+import { diffusionOf, episodeStatus, manualPickOf, nextAirDateOf, progressOf } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
+import { useSensorr } from '../../store/sensorr'
 import { showStateOf, useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
@@ -14,9 +15,10 @@ import { withBody } from '../../layout/withLayout'
 import ShowChild, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
 import { ReleaseSize } from '../../components/Sensorr/Release'
+import { Sensorr } from '../../components/Sensorr'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
-import { ShowActions } from './components/Actions'
+import { ShowActions, useShowPolicy } from './components/Actions'
 import { useProposals } from './components/Proposals'
 import { Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
@@ -37,11 +39,14 @@ const Show = ({ ...props }) => {
     setEpisodesMetadata,
     setShowState,
     banShowRelease,
+    unbanShowRelease,
+    addShow,
   } = useShowsMetadataContext() as any
+  const sensorr = useSensorr()
   const [episodesError, setEpisodesError] = useState(null)
 
   const show = useTMDBRequest(`tv/${id}`, {
-    append_to_response: 'videos,external_ids,aggregate_credits,recommendations,similar,watch/providers',
+    append_to_response: 'videos,external_ids,alternative_titles,aggregate_credits,recommendations,similar,watch/providers',
     include_image_language: 'en,null',
   }, { transform: transformShowDetails })
 
@@ -77,6 +82,32 @@ const Show = ({ ...props }) => {
   // A season is a bulk and toasts its own outcome, a single episode does not
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
+
+  // One release search for the whole page, opened on the series, a season or an episode (Seasons.tsx)
+  const [search, setSearch] = useState({ unit: null, title: 'Releases' })
+  const toggleSearch = useRef((e) => null)
+  const policy = useShowPolicy(show.data, metadata)
+  const searched = useMemo(() => ({
+    query: sensorr.getShowQuery(show.data, metadata?.query, metadata?.banned_releases || []),
+    policy,
+    banned_releases: metadata?.banned_releases || [],
+  }), [sensorr, show.data, metadata?.query, metadata?.banned_releases, policy])
+
+  // The seasons TMDB announces, for a whole series pack to hold them all
+  const openSearch = useCallback((e, target = { type: 'series' }, label = 'the whole series') => {
+    const seasons = (show.data?.seasons || []).filter(({ season_number, episode_count }) => season_number !== 0 && episode_count)
+    setSearch({ unit: { ...target, episodes: seasons.map(({ season_number }) => ({ season: season_number, episode: 1 })) }, title: `Releases for ${label}` })
+    toggleSearch.current(e)
+  }, [show.data])
+
+  // A pick out of the library adds the show first, unfollowed: its episodes are where the import links the files
+  const pickRelease = useCallback(async (release) => {
+    const listed = inLibrary ? episodes : await addShow(Number(id), false)
+    const { releases = [] } = inLibrary ? metadata : {}
+    await setShowMetadata(Number(id), 'releases', [...releases, { ...release, ...manualPickOf(release, listed), from: 'record', job: 'manual', proposal: true, choice: true }])
+  }, [id, inLibrary, episodes, metadata, addShow])
+
+  const toggleBan = useCallback((title, banned) => (banned ? unbanShowRelease : banShowRelease)(Number(id), title), [id])
 
   const proposals = useProposals({ entity: show.data, metadata, episodes: inLibrary ? (episodes || null) : null, proceedRelease, banRelease })
 
@@ -215,6 +246,7 @@ const Show = ({ ...props }) => {
       tabs={tabs}
       loading={show.loading}
       ready={ready}
+      search={openSearch}
       actions={inLibrary ? (
         <ShowActions
           entity={show.data}
@@ -245,9 +277,21 @@ const Show = ({ ...props }) => {
             inLibrary={!seasonsReady || inLibrary}
             ready={actionsReady}
             followEpisodes={followEpisodes}
+            search={openSearch}
           />
         </Skeleton>
       )}
+      <Sensorr
+        entity={show.data || {}}
+        loading={!actionsReady}
+        metadata={searched}
+        unit={search.unit}
+        title={search.title}
+        onPick={pickRelease}
+        banned={searched.banned_releases}
+        onBan={toggleBan}
+        setPortalToggle={(toggleOpen) => toggleSearch.current = (e) => toggleOpen(e)}
+      />
     </Details>
   )
 }

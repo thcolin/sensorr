@@ -54,24 +54,11 @@ const animations = {
   `,
 }
 
-const UIMovieActions = ({
-  entity,
-  metadata,
-  setMetadata = null,
-  ready,
-  toggleSensorr,
-  palette = null,
-  ...props
-}) => {
+// The poster palette, turned around when it would vanish on the page background of the color mode
+export const useModePalette = (palette) => {
   const { colorMode } = useThemeUI()
-  const [hover, setHover] = useState(false)
-  const [expanded, setExpanded] = useState(false)
 
-  useEffect(() => {
-    setExpanded(false)
-  }, [entity?.id])
-
-  const modePalette = useMemo(() => {
+  return useMemo(() => {
     if (!palette) {
       return null
     }
@@ -92,6 +79,25 @@ const UIMovieActions = ({
       color: palette?.backgroundColor,
     }
   }, [palette, colorMode])
+}
+
+const UIMovieActions = ({
+  entity,
+  metadata,
+  setMetadata = null,
+  ready,
+  toggleSensorr,
+  palette = null,
+  ...props
+}) => {
+  const [hover, setHover] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    setExpanded(false)
+  }, [entity?.id])
+
+  const modePalette = useModePalette(palette)
 
   return (
     <div sx={UIMovieActions.styles.element}>
@@ -129,6 +135,23 @@ UIMovieActions.styles = {
 
 export const MovieActions = memo(UIMovieActions)
 
+// The ticket of a show: the search alone, a show sets its preferences elsewhere
+const UIShowTicket = ({ palette = null, ...props }) => (
+  <div sx={UIMovieActions.styles.element}>
+    <Ticket
+      {...props as any}
+      palette={useModePalette(palette)}
+      title='Search releases for this show from your indexers'
+      expandable={false}
+      expanded={false}
+      setExpanded={() => null}
+      setHover={() => null}
+    />
+  </div>
+)
+
+export const ShowTicket = memo(UIShowTicket)
+
 const UITicket = ({
   entity,
   metadata,
@@ -139,6 +162,7 @@ const UITicket = ({
   setExpanded,
   setHover,
   toggleSensorr,
+  title = 'Search releases for this movie from your indexers',
   ...props
 }) => {
   return (
@@ -168,7 +192,7 @@ const UITicket = ({
           </span>
           <span sx={UITicket.styles.center}>
             <button
-              title={`Search releases for this movie from your indexers`}
+              title={title}
               disabled={!ready}
               onClick={(e) => toggleSensorr(e)}
               sx={{
@@ -339,7 +363,7 @@ UITicket.styles = {
   },
 }
 
-const Ticket = memo(UITicket)
+export const Ticket = memo(UITicket)
 
 const UIPreferences = ({
   entity,

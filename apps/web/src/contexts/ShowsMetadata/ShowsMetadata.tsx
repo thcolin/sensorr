@@ -261,9 +261,10 @@ export const Provider = ({ ...props }) => {
 
       setMetadata(metadata => ({ ...metadata, [show.id]: { ...(metadata[show.id] || {}), ...body[show.id] } }))
       setEpisodes(episodes => ({ ...episodes, [show.id]: added }))
+      return added
     })()
 
-    await toast.promise(promise, {
+    return toast.promise(promise, {
       loading: `Adding show to the library...`,
       success: () => `Show added to the library`,
       error: (err) => {

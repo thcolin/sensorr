@@ -8,7 +8,7 @@ import { Poster } from './components/Poster'
 import { Overview } from './components/Overview'
 import { Skeleton } from './components/Skeleton'
 import { Tabs } from '../../components/Entities/Tabs'
-import { MovieActions, OptionInput } from './components/Actions'
+import { MovieActions, OptionInput, ShowTicket } from './components/Actions'
 import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
 import { Metadata } from './components/Metadata'
@@ -34,6 +34,7 @@ const UIDetails = ({
   removeRelease,
   tabs,
   actions = null,
+  search = null,
   summary = null,
   children = null,
   ...props
@@ -89,8 +90,18 @@ const UIDetails = ({
           <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
             Contribute to TheMovieDB
           </a>
+          {behavior === 'tv' && !!search && (
+            <div sx={UIDetails.styles.ticket}>
+              <ShowTicket
+                palette={!palette.loading && !palette.initial ? palette.palette : null}
+                ready={ready && state !== 'loading'}
+                entity={entity}
+                toggleSensorr={search}
+              />
+            </div>
+          )}
           {behavior === 'movie' && (
-            <div sx={{ width: '100%', maxWidth: ['17em', 'unset'], marginTop: ['2em', '4em'], marginBottom: ['1em', '2em'], marginRight: ['-1em', '0em'] }}>
+            <div sx={UIDetails.styles.ticket}>
               <MovieActions
                 palette={!palette.loading && !palette.initial ? palette.palette : null}
                 ready={ready && state !== 'loading'}
@@ -198,6 +209,13 @@ const UIDetails = ({
 }
 
 UIDetails.styles = {
+  ticket: {
+    width: '100%',
+    maxWidth: ['17em', 'unset'],
+    marginTop: ['2em', '4em'],
+    marginBottom: ['1em', '2em'],
+    marginRight: ['-1em', '0em'],
+  },
   element: {
     flex: 1,
     display: 'flex',

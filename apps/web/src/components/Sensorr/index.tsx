@@ -246,10 +246,11 @@ const UISensorr = compose(
       },
     },
   }),
-)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, ...props }) => {
+)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, ...props }) => {
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
-  const banned = metadata?.banned_releases || []
-  const toggleBan = (title) => (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title)
+  // A show bans through `onBan`, its bans in its own metadata
+  const banned = (onBan ? props.banned : metadata?.banned_releases) || []
+  const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
     .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))
   const statistics = useMemo(() => ({
     lowest: {
@@ -296,7 +297,7 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, button = null, loading = false, portal = null, ...props }) => {
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, button = null, loading = false, portal = null, ...props }) => {
   const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
@@ -321,6 +322,9 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
               onChange={onChange}
               onPick={onPick}
               proposal={proposal}
+              unit={unit}
+              banned={banned}
+              onBan={onBan}
               entity={!loading && entity?.id ? entity : {}}
               ready={!loading && entity?.id}
               toggle={togglePortal}

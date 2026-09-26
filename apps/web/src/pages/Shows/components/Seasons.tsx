@@ -8,6 +8,7 @@ import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
 import { ReleasesStyles } from '../../Details/components/Releases'
 import { Follow } from './Follow'
+import { Search } from './Search'
 import { Proposal } from './Proposals'
 import { fileMetaOf, sizeOf } from './fills'
 
@@ -17,7 +18,7 @@ const pad = (number) => String(number).padStart(2, '0')
 
 // Wide enough for a pill of four digits on each side. The last two columns, the gap between them and the
 // right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the follows align
-const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em', '6.5em 10em 1.5em 1.5em']
+const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em 1.25em', '6.5em 10em 1.5em 1.5em 1.5em']
 const GAP = [6, 4]
 
 const pendingOf = (proposals, season: number) => proposals.filter(({ release }) => (release.coverage || []).some(unit => unit.season === season))
@@ -50,7 +51,7 @@ const bleed = {
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
 // atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
 // and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, ...props }) => {
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -162,7 +163,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
   }
 
   const years = regular.map(({ year }) => year).filter(Boolean)
-  const toggle = (number, opened) => (e) => !e.target.closest('[data-follow]') && setOpen(open => ({ ...open, [number]: !opened }))
+  const toggle = (number, opened) => (e) => !e.target.closest('[data-follow], [data-search]') && setOpen(open => ({ ...open, [number]: !opened }))
   const block = (row) => <Proposal key={row.release.id} row={row} policy={policy} answer={answer} shortcuts={row.release.id === first} reach={true} />
 
   return (
@@ -228,7 +229,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
 
             return (
               <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season} data-opened={opened}>
-                {/* The whole row opens the drawer, but its follow: a click on the title button bubbles up to it */}
+                {/* The whole row opens the drawer, but its follow and search: a click on the title button bubbles up to it */}
                 <div sx={{ ...UISeasons.styles.head, ...(empty ? {} : UISeasons.styles.drawer) }} onClick={empty ? undefined : toggle(season.number, opened)}>
                   {empty ? (
                     <div sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle, cursor: 'default' }} data-specials={specials}>{title}</div>
@@ -243,8 +244,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       {title}
                     </button>
                   )}
-                  {/* Nothing is owned nor followed before the show is in the library */}
-                  {inLibrary && (
+                  {/* Nothing is owned nor followed before the show is in the library, only searched */}
+                  {inLibrary ? (
                     <div sx={UISeasons.styles.summary}>
                       {/* Specials are not followed by default: owned over aired would read as a gap. An empty season has nothing to count */}
                       {(specials || empty) ? <><span /><span /><span /></> : (
@@ -254,6 +255,11 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                           <Complete progress={season.progress} />
                         </>
                       )}
+                      <Search
+                        disabled={!ready}
+                        title={`Search releases for ${season.name}`}
+                        onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
+                      />
                       <Follow
                         checked={season.monitored}
                         partial={!!season.followed && !season.monitored}
@@ -265,6 +271,14 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                         }
                         name={`Follow every episode of ${season.name}`}
                         onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
+                      />
+                    </div>
+                  ) : (
+                    <div sx={UISeasons.styles.remote}>
+                      <Search
+                        disabled={!ready}
+                        title={`Search releases for ${season.name}`}
+                        onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
                       />
                     </div>
                   )}
@@ -285,9 +299,10 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                         policy={policy}
                         answer={answer}
                         first={first}
+                        search={search}
                       />
                     ) : (
-                      <RemoteEpisodes show={entity.id} season={season.number} unfolded={unfolded} setUnfolded={setUnfolded} />
+                      <RemoteEpisodes show={entity.id} season={season.number} unfolded={unfolded} setUnfolded={setUnfolded} ready={ready} search={search} />
                     )}
                   </div>
                 )}
@@ -412,6 +427,12 @@ UISeasons.styles = {
     alignSelf: 'center',
     transition: 'transform 200ms ease-in-out',
   },
+  // Out of the library, the search alone ends the row where a season's follow does
+  remote: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    paddingX: 8,
+  },
   summary: {
     display: 'grid',
     gridTemplateColumns: SUMMARY,
@@ -436,7 +457,7 @@ UISeasons.styles = {
 export const Seasons = memo(UISeasons)
 
 // `readonly` for a show out of the library: its episodes from TMDB, nothing owned nor followed
-const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false }) => {
+const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false, search = null }) => {
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
 
@@ -477,7 +498,7 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
                 sx={UIEpisodes.styles.row}
                 data-foldable={foldable}
                 data-readonly={readonly}
-                onClick={foldable ? (e: any) => !e.target.closest('[data-follow]') && toggle() : undefined}
+                onClick={foldable ? (e: any) => !e.target.closest('[data-follow], [data-search]') && toggle() : undefined}
               >
                 <code>E{pad(episode.episode_number)}</code>
                 {foldable ? (
@@ -493,6 +514,11 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
                 </time>
                 {/* The follow already says an episode is not followed: the empty cell keeps the grid columns */}
                 {!readonly && (status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />)}
+                <Search
+                  disabled={!ready}
+                  title={`Search releases for S${pad(episode.season_number)}E${pad(episode.episode_number)}`}
+                  onClick={e => search(e, { type: 'episode', season: episode.season_number, episode: episode.episode_number }, `S${pad(episode.season_number)}E${pad(episode.episode_number)}`)}
+                />
                 {!readonly && (
                   <Follow
                     checked={!!episode.monitored}
@@ -521,7 +547,7 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
 }
 
 // A season of a show out of the library, fetched from TMDB when its drawer opens
-const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded }) => {
+const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, search = null }) => {
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
   if (loading || error || !data.episodes?.length) {
@@ -532,7 +558,7 @@ const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded }) => {
     )
   }
 
-  return <Episodes show={show} episodes={data.episodes} unfolded={unfolded} setUnfolded={setUnfolded} readonly={true} />
+  return <Episodes show={show} episodes={data.episodes} unfolded={unfolded} setUnfolded={setUnfolded} ready={ready} readonly={true} search={search} />
 }
 
 const RemoteEpisodes = memo(UIRemoteEpisodes)
@@ -617,16 +643,16 @@ UIEpisodes.styles = {
   row: {
     display: 'grid',
     // The state is a round badge, compact on every size: its label is its title and its name
-    gridTemplateColumns: ['2.5em minmax(0, 1fr) 1.25em 1.25em', '3.5em minmax(0, 1fr) auto 6.5em 1.5em 1.5em'],
+    gridTemplateColumns: ['2.5em minmax(0, 1fr) 1.25em 1.25em 1.25em', '3.5em minmax(0, 1fr) auto 6.5em 1.5em 1.5em 1.5em'],
     alignItems: 'center',
     columnGap: GAP,
     rowGap: 8,
     paddingY: [8, 12],
     minHeight: '3em',
     paddingX: 8,
-    // A row out of the library has neither file, state nor follow
+    // A row out of the library has neither file, state nor follow, only its search
     '&[data-readonly="true"]': {
-      gridTemplateColumns: ['2.5em minmax(0, 1fr)', '3.5em minmax(0, 1fr) 6.5em'],
+      gridTemplateColumns: ['2.5em minmax(0, 1fr) 1.25em', '3.5em minmax(0, 1fr) 6.5em 1.5em'],
     },
     '&[data-foldable="true"]': {
       cursor: 'pointer',

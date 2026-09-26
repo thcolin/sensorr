@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControlsState, Warning } from '@sensorr/ui'
-import { Policy } from '@sensorr/sensorr'
+import { Policy, reachesUnit } from '@sensorr/sensorr'
 import { useSensorrRequest } from '../../store/sensorr'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
-  const withSensorrRequest = ({ entity, metadata, onChange, ready, ...props }) => {
+  // `unit` searches a show from that level up to the whole series, and keeps only the releases that hold it
+  const withSensorrRequest = ({ entity, metadata, onChange, ready, unit = null, ...props }) => {
     const [serialized, state] = useSensorrControlsState(metadata)
     const { call, reset, id, loading, done, tasks, releases } = useSensorrRequest() as any
     const request = useRef(null)
 
+    const query = useMemo(() => unit ? { ...serialized.query, unit } : serialized.query, [serialized.query, unit])
+    const applied = { ...query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases, ...(unit ? { reach: true } : {}) }
+    const reached = (list) => unit ? list.filter(({ meta, category }) => reachesUnit(meta, category, unit)) : list
+
     const entities = useMemo(
-      () => (serialized.policy?.apply && serialized.policy.apply(releases || [], { ...serialized.query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases })) || (releases || []),
-      [releases, serialized.query, serialized.policy, metadata.banned_releases, metadata.query?.titles]
+      () => reached((serialized.policy?.apply && serialized.policy.apply(releases || [], applied)) || (releases || [])),
+      [releases, query, serialized.policy, metadata.banned_releases, metadata.query?.titles]
     )
 
     const progress = useMemo(() => ({
@@ -21,33 +26,33 @@ export const withSensorrRequest = () => (WrappedComponent) => {
       ongoing: tasks.find(({ releases, ...task }) => task.ongoing),
       tasks: tasks.map(task => ({
         ...task,
-        releases: serialized.policy.apply(task.releases || [], { ...serialized.query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases }),
+        releases: reached(serialized.policy.apply(task.releases || [], applied)),
       })),
-    }), [id, loading, done, tasks, serialized.query, serialized.policy, metadata.banned_releases, metadata.query?.titles])
+    }), [id, loading, done, tasks, query, serialized.policy, metadata.banned_releases, metadata.query?.titles])
 
     const controls = useMemo(() => ({
       ...state,
       props: {
         ongoing: progress?.loading,
-        refresh: () => call(serialized.query, serialized.policy?.avoid?.znab || []),
+        refresh: () => call(query, serialized.policy?.avoid?.znab || []),
       },
-    }), [state, progress?.loading, call, serialized.query, JSON.stringify(serialized.policy?.avoid?.znab)])
+    }), [state, progress?.loading, call, query, JSON.stringify(serialized.policy?.avoid?.znab)])
 
     useEffect(() => {
-      if (!serialized.query?.terms?.length) {
+      if (!query?.terms?.length) {
         return
       }
 
-      if (ready && serialized.query !== request.current) {
-        request.current = serialized.query
-        call(serialized.query, serialized.policy?.avoid?.znab || [])
+      if (ready && query !== request.current) {
+        request.current = query
+        call(query, serialized.policy?.avoid?.znab || [])
         return
       }
 
-      if (serialized.query !== request.current) {
+      if (query !== request.current) {
         reset()
       }
-    }, [ready, JSON.stringify(serialized.query), JSON.stringify(serialized.policy?.avoid?.znab)])
+    }, [ready, JSON.stringify(query), JSON.stringify(serialized.policy?.avoid?.znab)])
 
     return (
       <WrappedComponent
@@ -62,15 +67,15 @@ export const withSensorrRequest = () => (WrappedComponent) => {
             <Warning
               emoji="🎟"
               title="Setting up Sensorr"
-              subtitle="Loading movie data and custom preferences, please wait a few moments..."
+              subtitle="Loading data and custom preferences, please wait a few moments..."
             />
           </div>
         ) : (!releases.length && (loading || !done)) ? (
           <div sx={styles.empty}>
             <Warning
               emoji="🎟"
-              title="Searching for movie releases on ZNABS"
-              subtitle={!progress.ongoing ? 'Setting up Sensorr with movie data and custom preferences, please wait a few moments...' : (
+              title="Searching for releases on ZNABS"
+              subtitle={!progress.ongoing ? 'Setting up Sensorr with data and custom preferences, please wait a few moments...' : (
                 <span>
                   Using <em>"{progress.ongoing?.term}"</em> term on <strong>{progress.ongoing?.znab?.name}</strong>...
                 </span>
