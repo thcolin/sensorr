@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { PlexModule } from './plex/plex.module'
 import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
+import { WrappedModule } from './wrapped/wrapped.module'
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SensorrModule } from './sensorr/sensorr.module'
     PlexModule,
     ConfigModule,
     SensorrModule,
+    WrappedModule,
   ],
 })
 export class AppModule {}

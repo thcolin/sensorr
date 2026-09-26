@@ -1,0 +1,98 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import mongoose, { Document } from 'mongoose'
+
+// One grouped row of the Tautulli history, `_id` is its Tautulli reference id
+@Schema({ collection: 'plays' })
+export class Play extends Document {
+  declare _id: number
+
+  @Prop({ required: true, index: true })
+  user_id: number
+
+  @Prop({ required: true })
+  media_type: string
+
+  @Prop({ required: true })
+  title: string
+
+  @Prop({ required: true, index: true })
+  started: number
+
+  @Prop()
+  stopped: number
+
+  @Prop()
+  play_duration: number
+}
+
+export const PlaySchema = SchemaFactory.createForClass(Play)
+
+// A Tautulli user, `_id` is its Tautulli user id
+@Schema({ collection: 'viewers' })
+export class Viewer extends Document {
+  declare _id: number
+
+  @Prop({ index: true })
+  email: string
+
+  @Prop()
+  username: string
+
+  @Prop()
+  friendly_name: string
+}
+
+export const ViewerSchema = SchemaFactory.createForClass(Viewer)
+
+// A movie or a show watched on Plex, `_id` is the `title` of its plays
+@Schema({ collection: 'titles' })
+export class Title extends Document {
+  declare _id: string
+
+  @Prop({ required: true })
+  media_type: string
+
+  @Prop()
+  title: string
+
+  @Prop()
+  year: number
+
+  @Prop({ type: [String] })
+  genres: string[]
+
+  @Prop({ type: [String] })
+  directors: string[]
+
+  @Prop()
+  tmdb_id: number
+
+  @Prop()
+  thumb: string
+
+  @Prop()
+  art: string
+}
+
+export const TitleSchema = SchemaFactory.createForClass(Title)
+
+// An edition frozen on 1 December, never recomputed
+@Schema({ collection: 'editions' })
+export class Edition extends Document {
+  declare _id: mongoose.Types.ObjectId
+
+  @Prop({ required: true })
+  year: number
+
+  @Prop({ required: true })
+  user_id: number
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  wrapped: any
+
+  @Prop()
+  frozen_at: number
+}
+
+export const EditionSchema = SchemaFactory.createForClass(Edition)
+EditionSchema.index({ year: 1, user_id: 1 }, { unique: true })
