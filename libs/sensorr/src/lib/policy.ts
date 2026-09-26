@@ -2,7 +2,7 @@ import { compareTwoStrings as similarity } from 'string-similarity'
 import oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
-import { ShowUnit, levelOf, matchesUnit, unitLabel } from './show'
+import { ShowUnit, levelOf, matchesUnit, reachesUnit, unitLabel } from './show'
 
 const MINIMUM_SIMILARITY = 0.6
 
@@ -121,6 +121,7 @@ export class Policy {
       titles: string[],
       banned_releases: string[],
       unit?: ShowUnit,
+      reach?: boolean,
     } = null,
     strict = false
   ) {
@@ -130,7 +131,7 @@ export class Policy {
     return releases
       .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
       .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
-      .map(release => unit ? Policy.normalizers.showReleaseUnit(release, unit) : Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
+      .map(release => unit ? Policy.normalizers.showReleaseUnit(release, unit, query.reach) : Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
       .map(release => unit ? release : Policy.normalizers.releasePublishDate(release, query?.years, ignore))
       .map(release => unit ? Policy.normalizers.showReleaseYears(release, query?.years) : Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
       .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
@@ -214,12 +215,12 @@ export class Policy {
         warning: valid ? 0 : 40,
       }
     },
-    showReleaseUnit: (release, unit: ShowUnit) => {
+    showReleaseUnit: (release, unit: ShowUnit, reach = false) => {
       if (!release.valid) {
         return release
       }
 
-      const valid = matchesUnit(release.meta, release.category, unit)
+      const valid = (reach ? reachesUnit : matchesUnit)(release.meta, release.category, unit)
 
       return {
         ...release,

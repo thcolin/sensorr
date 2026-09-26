@@ -1,6 +1,7 @@
 import { Znab as ZnabInterface } from './interfaces'
 import { nanoid, clean } from './utils'
 import { Znab } from './znab'
+import { ShowUnit, reachParamsOf } from './show'
 
 const titlesOf = (names: string[], alternatives: { title: string, type?: string, iso_3166_1: string }[] = [], countries: string[]) => [...new Set(
   [
@@ -88,7 +89,8 @@ export class Sensorr {
   }
 
   async *call(
-    query: { terms: string[], [key: string]: any },
+    // With a show unit, each term is searched on TV from that unit's level up to the whole series
+    query: { terms: string[], unit?: ShowUnit, [key: string]: any },
     excludedZnabs: string[] = [],
     onTasksChange: ({}: any) => void,
     signal?: any,
@@ -100,7 +102,7 @@ export class Sensorr {
       .filter(znab => !znab.disabled && !excludedZnabs.includes(znab.name))
       .reduce((tasks, znab) => [
         ...tasks,
-        ...query.terms.map(term => ({ id, znab, term, releases: null, ongoing: false, done: false })),
+        ...query.terms.flatMap(term => (query.unit ? reachParamsOf(query.unit) : [null]).map(params => ({ id, znab, term, params, releases: null, ongoing: false, done: false }))),
       ], [])
 
     handleTasksChange(tasks)
@@ -111,10 +113,12 @@ export class Sensorr {
         signal?.throwIfAborted?.()
         tasks[index].ongoing = true
         handleTasksChange(tasks)
-        tasks[index].releases = await new Znab(task.znab, this.options).search(task.term, {
+        const znab = new Znab(task.znab, this.options)
+        const initial = {
           ...(this.options.access_token ? { headers: { Authorization: `Bearer ${this.options.access_token}` } } : {}),
           signal,
-        })
+        }
+        tasks[index].releases = await (task.params ? znab.searchShow(task.term, task.params, initial) : znab.search(task.term, initial))
         tasks[index].ongoing = false
         tasks[index].done = true
         signal?.throwIfAborted?.()

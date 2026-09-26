@@ -149,6 +149,27 @@ export const matchesUnit = (meta, category, unit: ShowUnit) => {
   }
 }
 
+// A manual search shows the level searched and the levels above it that hold its target
+export const reachesUnit = (meta, category, unit: ShowUnit) => {
+  switch (levelOf(meta, category)) {
+    case 'series':
+      return unit.type === 'series' ? matchesUnit(meta, category, unit) : (!meta.seasons?.length || meta.seasons.includes(unit.season))
+    case 'season':
+      return unit.type !== 'series' && meta.seasons[0] === unit.season
+    case 'episode':
+      return unit.type === 'episode' && matchesUnit(meta, category, unit)
+    default:
+      return false
+  }
+}
+
+// The searches a manual search runs, from its own level up to the whole series
+export const reachParamsOf = (unit: ShowUnit): { season?: number, episode?: number }[] => [
+  ...(unit.type === 'episode' ? [{ season: unit.season, episode: unit.episode }] : []),
+  ...(unit.type !== 'series' ? [{ season: unit.season }] : []),
+  {},
+]
+
 export const unitLabel = (unit: ShowUnit) => unit.type === 'series' ? 'whole series' : [
   `S${String(unit.season).padStart(2, '0')}`,
   unit.type === 'episode' ? `E${String(unit.episode).padStart(2, '0')}` : ' pack',
@@ -252,6 +273,17 @@ export const swapOf = (coverage: Coverage[], episodes: ShowEpisode[]) => {
     fills: coverage.length - owned.length,
     replaces: owned.length,
     size: [...files.values()].reduce((sum, file) => sum + (file.size || 0), 0),
+  }
+}
+
+// A manual pick covers all its release holds, followed or not, and replaces the files of the episodes already owned
+export const manualPickOf = (release, episodes: ShowEpisode[]) => {
+  const coverage = coverageOf(release.meta, null, episodes)
+
+  return {
+    coverage,
+    level: levelOf(release.meta, release.category),
+    ...(swapOf(coverage, episodes).replaces ? { swap: true } : {}),
   }
 }
 

@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageLabel, coverageOf, diffusionOf, isAiring, isUnitCovered, nextAirDateOf, pickReleases, progressOfDetails, searchShowUnits, searchUnits, seasonDiffusionOf, ShowUnit, swapOf, swapReplacesOf } from './show'
+import { coverageLabel, coverageOf, diffusionOf, isAiring, isUnitCovered, manualPickOf, nextAirDateOf, pickReleases, progressOfDetails, reachesUnit, reachParamsOf, searchShowUnits, searchUnits, seasonDiffusionOf, ShowUnit, swapOf, swapReplacesOf } from './show'
 import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
@@ -210,6 +210,80 @@ describe('Policy.apply on a show', () => {
 
     expect(collection.valid).toBe(false)
     expect(collection.reason).toBe('📚 COLLECTION release')
+  })
+})
+
+describe('reachesUnit', () => {
+  const releases = [
+    release('Friends.S02E05.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.S02E06.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.S02.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.S03.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.S01-S03.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP'),
+    release('Friends.Complete.Series.1080p.BluRay.x264-GRP'),
+    release('Friends.1994.MULTi.1080p.BluRay.x264-GRP'),
+  ]
+  const series = { type: 'series', episodes: Array.from({ length: 10 }, (_, index) => ({ season: index + 1, episode: 1 })) } as ShowUnit
+  const reached = (unit: ShowUnit) => releases.filter(({ meta, category }) => reachesUnit(meta, category, unit)).map(({ original }) => original)
+
+  it('shows an episode, the pack of its season and the series packs that hold it for an episode', () => {
+    expect(reached({ type: 'episode', season: 2, episode: 5, episodes: [] })).toEqual([
+      'Friends.S02E05.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S02.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S01-S03.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.Complete.Series.1080p.BluRay.x264-GRP',
+    ])
+  })
+
+  it('shows no episode for a season, and only whole series packs for the series', () => {
+    expect(reached({ type: 'season', season: 3, episodes: [] })).toEqual([
+      'Friends.S03.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S01-S03.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.Complete.Series.1080p.BluRay.x264-GRP',
+    ])
+    expect(reached(series)).toEqual([
+      'Friends.S01-S10.COMPLETE.MULTi.1080p.BluRay.x264-GRP',
+      'Friends.Complete.Series.1080p.BluRay.x264-GRP',
+    ])
+  })
+
+  it('keeps a pack valid for an episode in a manual search only', () => {
+    const policy = new Policy(SENSORR_POLICY_FALLBACK as any)
+    const query = new Sensorr({ region: 'fr-FR' }).getShowQuery(friends)
+    const unit = { type: 'episode', season: 2, episode: 5, episodes: [] } as ShowUnit
+    const pack = [release('Friends.S02.MULTi.1080p.BluRay.x264-GRP')]
+
+    expect(policy.apply(pack, { ...query, unit, reach: true } as any)[0].valid).toBe(true)
+    expect(policy.apply(pack, { ...query, unit } as any)[0].valid).toBe(false)
+  })
+})
+
+describe('reachParamsOf', () => {
+  it('searches from the level of the unit up to the whole series', () => {
+    expect(reachParamsOf({ type: 'episode', season: 2, episode: 5, episodes: [] })).toEqual([{ season: 2, episode: 5 }, { season: 2 }, {}])
+    expect(reachParamsOf({ type: 'season', season: 0, episodes: [] })).toEqual([{ season: 0 }, {}])
+    expect(reachParamsOf({ type: 'series', episodes: [] })).toEqual([{}])
+  })
+})
+
+describe('manualPickOf', () => {
+  it('covers all a pack holds, followed or not, without a swap when nothing is owned', () => {
+    const episodes = friendsEpisodes().map(episode => ({ ...episode, monitored: false }))
+
+    expect(manualPickOf(release('Friends.S03.MULTi.1080p.BluRay.x264-GRP'), episodes)).toEqual({
+      coverage: Array.from({ length: 25 }, (_, index) => ({ season: 3, episode: index + 1 })),
+      level: 'season',
+    })
+  })
+
+  it('is a swap as soon as it covers an owned episode', () => {
+    const episodes = own(friendsEpisodes(), 3, 7)
+
+    expect(manualPickOf(release('Friends.S03.MULTi.1080p.BluRay.x264-GRP'), episodes)).toMatchObject({ level: 'season', swap: true })
+    expect(manualPickOf(release('Friends.S03E08.MULTi.1080p.BluRay.x264-GRP'), episodes)).toEqual({ coverage: [{ season: 3, episode: 8 }], level: 'episode' })
   })
 })
 
