@@ -4,7 +4,7 @@ import { useSearchContext } from '../../../contexts/Search/Search'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import Movie from '../../../components/Movie/Movie'
 import Person from '../../../components/Person/Person'
-import Show from '../../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import nanobounce from 'nanobounce'
 
 export const Input = ({ ...props }) => {
@@ -301,6 +301,7 @@ export const Results = ({ ...props }) => {
                   child={Show}
                   props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
                   display={device !== 'mobile' ? 'column' : 'row'}
+                  extra={FOOTER_HEIGHT}
                   stack={true}
                   more={{
                     title: `More results for ${query}`,

@@ -17,7 +17,7 @@ import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { status, statusGroupOf } from '../../components/Show/fields'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { withTMDB } from '../../store/tmdb'
@@ -224,6 +224,7 @@ export const ShowsRequests = compose(
     id: 'shows-requests',
     display: 'grid',
     child: Show,
+    extra: FOOTER_HEIGHT,
     empty: {
       emoji: '🍻',
       title: 'No requests found',
@@ -234,7 +235,7 @@ export const ShowsRequests = compose(
       ),
     },
   }),
-  withFetchQuery(APIQuery.shows.getShows({ params: { limit: '' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery(APIQuery.shows.getShows({ params: { limit: '', progress: 'true' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withUnfulfilledShows(),
   withControls({
     title: i18n.t('pages.requests.title'),

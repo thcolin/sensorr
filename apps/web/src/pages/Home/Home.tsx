@@ -8,7 +8,7 @@ import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
 import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { TrendingShows, LibraryShows, AiringShows, DiscoverShows, RequestedMoviesAndShows, MovieOrShow } from './Items/Shows'
 
 const Home = ({ ...props }) => {
@@ -44,6 +44,7 @@ const Home = ({ ...props }) => {
         label={t('items.shows.trending.label')}
         display='row'
         child={Show}
+        extra={FOOTER_HEIGHT}
         limit={20}
         props={pretty}
         more={{
@@ -92,6 +93,7 @@ const Home = ({ ...props }) => {
         label={t('items.shows.library.label')}
         display='row'
         child={Show}
+        extra={FOOTER_HEIGHT}
         limit={20}
         hide={true}
         more={{
@@ -121,6 +123,7 @@ const Home = ({ ...props }) => {
         label={t('items.shows.airing.label')}
         display='row'
         child={Show}
+        extra={FOOTER_HEIGHT}
         limit={20}
         hide={true}
         props={() => ({
@@ -170,6 +173,7 @@ const Home = ({ ...props }) => {
         label={t('items.shows.discover.label')}
         display='row'
         child={Show}
+        extra={FOOTER_HEIGHT}
         limit={20}
         props={pretty}
         more={{

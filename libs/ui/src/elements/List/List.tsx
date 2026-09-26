@@ -38,6 +38,8 @@ export interface ListProps {
   more?: Omit<MoreProps, 'rotate'>
   onMore?: () => void
   space?: number
+  // Added to the height of a mobile row's cell, like the grid's, for a child that draws something under its poster
+  extra?: number
 }
 
 const UIList = ({
@@ -54,6 +56,7 @@ const UIList = ({
   more = null,
   onMore = null,
   space = 4,
+  extra = 0,
 }: ListProps) => {
   const mobile = useResponsiveValue([true, false])
   const ref = useRef<HTMLDivElement>()
@@ -98,7 +101,7 @@ const UIList = ({
         (mobile && virtual && display === 'row') ? (
           <ResponsiveVirtualGrid
             total={length + 1}
-            cell={{ height: 210, width: 130 }}
+            cell={{ height: 210 + extra, width: 130 }}
             onRender={onMore || null}
             child={WrappedChild}
             childProps={{ ...childProps, more, moreIndex: length }}
@@ -130,7 +133,8 @@ UIList.styles = {
       left: '0em',
       display: 'flex',
       flexWrap: 'nowrap',
-      alignItems: 'center',
+      // Posters line up by their top, whatever a card draws under its own: a show's progress footer, a pretty card
+      alignItems: 'flex-start',
       flexDirection: 'row',
       overflowX: 'auto',
       overflowY: 'hidden',

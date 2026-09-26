@@ -3,7 +3,7 @@ import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
 import { formatDuration, intervalToDuration } from 'date-fns'
-import Show from '../../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { Summary, freed, freedLabel } from '../Summary'
 import { Warnings } from '../Warnings'
 
@@ -275,7 +275,7 @@ const UIShowsJob = ({ job, logs }) => {
         ) : !empty ? (
           <div sx={UIShowsJob.styles.entities}>
             <Warnings logs={warnings} />
-            {command.sections.map(({ key, label, child = Show, extra = undefined }) => (
+            {command.sections.map(({ key, label, child = Show, extra = 0 }) => (
               <Entities
                 key={key}
                 id={`${job.meta.command}-${key}-${job.job}`}
@@ -285,7 +285,7 @@ const UIShowsJob = ({ job, logs }) => {
                 display='grid'
                 hide={true}
                 child={child as any}
-                {...(extra ? { extra } : {})}
+                extra={FOOTER_HEIGHT + extra}
               />
             ))}
           </div>

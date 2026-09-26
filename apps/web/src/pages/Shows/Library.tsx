@@ -19,7 +19,7 @@ import { useAPI, query as APIQuery } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useBulkContext } from '../../contexts/Bulk/Bulk'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { status, statusGroupOf } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
@@ -60,8 +60,7 @@ const Library = compose(
     id: 'shows-library',
     display: 'grid',
     child: ShowWithBulk,
-    // The progress footer under each poster: its 0.5em margin and the 1.275em compact pill, so a row keeps the movie library's gap
-    extra: 28,
+    extra: FOOTER_HEIGHT,
     empty: {
       emoji: '📺',
       title: "Oh no, your request didn't return results",

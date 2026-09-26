@@ -15,7 +15,7 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import withProps from '../../components/enhancers/withProps'
@@ -31,6 +31,7 @@ export const Discover = compose(
   withProps({
     display: 'grid',
     child: Show,
+    extra: FOOTER_HEIGHT,
     useMetadataContext: useShowsMetadataContext,
     props: () => ({ focus: 'vote_average' }),
     empty: {

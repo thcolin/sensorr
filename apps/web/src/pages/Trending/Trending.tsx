@@ -4,7 +4,7 @@ import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Person from '../../components/Person/Person'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
@@ -20,6 +20,7 @@ export const Trending = (resource) => compose(
     id: 'trending',
     display: 'grid',
     child: { movies: MovieWithCreditsAndReviews, persons: Person, shows: Show }[resource],
+    extra: { shows: FOOTER_HEIGHT }[resource],
     useMetadataContext: { shows: useShowsMetadataContext }[resource],
     empty: {
       movies: {

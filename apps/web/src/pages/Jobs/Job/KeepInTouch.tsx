@@ -3,7 +3,7 @@ import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
-import Show from '../../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { Summary } from '../Summary'
 import { Warnings } from '../Warnings'
 
@@ -122,6 +122,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
               length={shows.length}
               label={emojize('📺', 'Shows')}
               display='grid'
+              extra={FOOTER_HEIGHT}
               hide={true}
               child={Show as any}
             />

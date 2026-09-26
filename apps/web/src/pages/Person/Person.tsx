@@ -10,7 +10,7 @@ import { usePersonsMetadataContext, withPersonsMetadataContext } from '../../con
 import withProps from '../../components/enhancers/withProps'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
-import Show from '../../components/Show/Show'
+import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import { withBody } from '../../layout/withLayout'
 
@@ -280,6 +280,7 @@ const Person = ({ ...props }) => {
         }), {}) as { [id: number]: any })
         .sort((a, b) => ((b.episode_count || 0) - (a.episode_count || 0)) || (new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime())),
       child: Show,
+      extra: FOOTER_HEIGHT,
       ready: ready && !tv.loading,
       error: tv.error,
       props: ({ entity }) => ({
