@@ -71,7 +71,8 @@ const RecordData = ({ index, sensorr = null, ...props }) => {
 
 // The virtualized records of a job page, shared by the movie and the show jobs. `ref` is the scroll container,
 // `headerRef` the job header that scrolls above the list inside it, `listRef` the list.
-export const useRecordsVirtualizer = (count: number, estimateSize: (index: number) => number, job: string) => {
+// Sizes are kept by `getItemKey`: while a job runs, each new record comes first and shifts the index of every other
+export const useRecordsVirtualizer = (count: number, estimateSize: (index: number) => number, getItemKey: (index: number) => string | number, job: string) => {
   const ref = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -85,6 +86,7 @@ export const useRecordsVirtualizer = (count: number, estimateSize: (index: numbe
     count,
     getScrollElement: () => ref.current,
     estimateSize,
+    getItemKey,
     overscan: 8,
     scrollMargin,
   })
@@ -170,7 +172,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
     warning: record.warning && (!znab || (record.release?.valid && record.release?.znab === znab)),
   }[filter])), [filter, znab, records])
 
-  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index], device), job.job)
+  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index], device), (index) => (filtered[index] as any)?.group ?? index, job.job)
 
   useEffect(() => {
     setFilter(null)

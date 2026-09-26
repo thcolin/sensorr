@@ -127,7 +127,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
     (!znab || record.releases.some(release => release.znab === znab))
   )), [records, filter, znab])
 
-  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index]), job.job)
+  const { ref, listRef, headerRef, logsCache, rowVirtualizer } = useRecordsVirtualizer(filtered.length, (index) => estimateRecordHeight(filtered[index]), (index) => (filtered[index] as any)?.group ?? index, job.job)
 
   useEffect(() => {
     setFilter(null)
