@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
-import { episodeStatus, progressOf } from '@sensorr/sensorr'
+import { diffusionOf, episodeStatus, isAiring, progressOf } from '@sensorr/sensorr'
 import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
@@ -23,6 +23,25 @@ const GAP = [6, 4]
 const pendingOf = (proposals, season: number) => proposals.filter(({ release }) => (release.coverage || []).some(unit => unit.season === season))
 
 const NONE = []
+
+const regionOf = () => (global as any)?.config?.region || 'fr-FR'
+
+// The earliest air date still to come among these episodes, like `next` in the API's progress
+export const nextOf = (episodes) => episodes
+  .filter(({ air_date }) => !!air_date && new Date(air_date).getTime() > Date.now())
+  .map(({ air_date }) => new Date(air_date))
+  .sort((a, b) => a.getTime() - b.getTime())[0] || null
+
+// A season airs while its series does and one of its episodes has not aired yet, dated or not
+const diffusionOfSeason = (status, episodes) => {
+  if (!isAiring(status) || !episodes.some(({ air_date }) => !air_date || new Date(air_date).getTime() > Date.now())) {
+    return { airing: false, detail: undefined }
+  }
+
+  const next = nextOf(episodes)
+  // At UTC midnight like every TMDB day, formatted as `diffusionOf` does
+  return { airing: true, detail: next ? `next episode on ${next.toLocaleDateString(regionOf(), { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : 'still airing' }
+}
 
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
@@ -66,6 +85,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
         progress: progressOf(list),
+        // Specials have no progress pill
+        diffusion: number === 0 ? { airing: false, detail: undefined } : diffusionOfSeason(entity?.status, list),
         // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
         proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
@@ -73,12 +94,15 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         monitored: !!list.length && followed === list.length,
       }
     })
-  }, [entity?.seasons, episodes, proposals, inLibrary])
+  }, [entity?.seasons, entity?.status, episodes, proposals, inLibrary])
 
   const totals = useMemo(() => {
     const list = (episodes || []).filter(({ season_number }) => season_number !== 0)
-    return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
-  }, [episodes])
+    const progress = progressOf(list)
+    // The diffusion of the header's pill (Show.tsx), over the same episodes
+    const diffusion = diffusionOf(entity, { aired: progress.aired, next: nextOf(list) }, regionOf())
+    return { count: list.length, progress, diffusion, size: sizeOf(episodes || []) }
+  }, [episodes, entity])
 
   // Episodes a pending swap covers: on an owned one, the file it would replace is marked. Any other proposal only
   // fills the missing ones (`importLinksOf`, apps/cli/src/utils/shows.js)
@@ -185,7 +209,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             </div>
             {inLibrary && (
               <div sx={UISeasons.styles.summary}>
-                <ProgressPill {...totals.progress} />
+                <ProgressPill {...totals.progress} airing={totals.diffusion.airing} detail={totals.diffusion.detail} />
                 <Bar progress={totals.progress} />
                 <Complete progress={totals.progress} />
                 <span />
@@ -245,7 +269,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       {/* Specials are not followed by default: owned over aired would read as a gap. An empty season has nothing to count */}
                       {(specials || empty) ? <><span /><span /><span /></> : (
                         <>
-                          <ProgressPill {...season.progress} />
+                          <ProgressPill {...season.progress} airing={season.diffusion.airing} detail={season.diffusion.detail} />
                           <Bar progress={season.progress} />
                           <Complete progress={season.progress} />
                         </>

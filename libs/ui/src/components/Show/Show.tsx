@@ -1,7 +1,7 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { ENDED, coverageLabel } from '@sensorr/sensorr'
+import { ENDED, coverageLabel, diffusionOf } from '@sensorr/sensorr'
 import { utils as tmdb, fields } from '@sensorr/tmdb'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
@@ -59,6 +59,7 @@ const UIShow = ({
   const details = useMemo(() => transformShowDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/tv/${entity.id}` }))(entity), [entity, props.link])
   const progress = !placeholder && entity?.progress
+  const diffusion = progress ? diffusionOf(entity, progress, (global as any)?.config?.region || 'fr-FR') : null
 
   const badges = useMemo(() => {
     if (entity?.id === null) {
@@ -120,7 +121,7 @@ const UIShow = ({
       selected={selected}
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
-      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} compact={device === 'mobile'} />}
+      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} detail={diffusion.detail} compact={device === 'mobile'} />}
     />
   )
 }
@@ -132,17 +133,21 @@ interface ShowProgressProps {
   aired: number
   seasons?: { owned: number, aired: number }[]
   first_air_date?: string | Date | null
+  // The series still airs: the pill takes the airing tint
+  airing?: boolean
+  // After the counts in the titles, like "next episode on 29/09"
+  detail?: string
   compact?: boolean
 }
 
 // The owned count or the upcoming status on the left, the bar or the first air date on the right, so neighbour cards line up
-const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowProgressProps) => (
+const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, detail, compact }: ShowProgressProps) => (
   <div sx={ShowProgress.styles.element}>
     {aired > 0 ? (
       <>
         {/* On a 96px mobile card the pill steps down with the title, so it stays lighter than it */}
         <span sx={ShowProgress.styles.pill}>
-          <ProgressPill owned={owned} aired={aired} />
+          <ProgressPill owned={owned} aired={aired} airing={airing} detail={detail} />
         </span>
         {/* A 96px mobile card leaves the bar 5px to 19px beside the pill: the pill alone says it there */}
         {!compact && (
@@ -150,7 +155,7 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, compact }: ShowPr
             value={owned}
             max={aired}
             segments={seasons?.map(season => ({ value: season.owned, max: season.aired }))}
-            title={`${owned} of ${aired} aired episodes owned`}
+            title={[`${owned} of ${aired} aired episodes owned`, detail].filter(Boolean).join(' · ')}
           />
         )}
       </>

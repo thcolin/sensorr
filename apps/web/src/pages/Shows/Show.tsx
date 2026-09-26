@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
 import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
-import { episodeStatus, progressOf } from '@sensorr/sensorr'
+import { diffusionOf, episodeStatus, progressOf, progressOfDetails } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -13,12 +13,12 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import { withBody } from '../../layout/withLayout'
 import ShowChild from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
-import { ReleaseSize } from '../../components/Sensorr/Release'
+import { ReleaseSize, ReleaseTag } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
 import { ShowActions } from './components/Actions'
 import { useProposals } from './components/Proposals'
-import { Seasons } from './components/Seasons'
+import { nextOf, Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
@@ -77,13 +77,26 @@ const Show = ({ ...props }) => {
 
   const proposals = useProposals({ entity: show.data, metadata, episodes: inLibrary ? (episodes || null) : null, proceedRelease, banRelease })
 
-  // In the pills of the "All seasons" row: owned over aired, the size, then what waits on a gesture
+  // In the pills of the "All seasons" row: owned over aired, the size, the diffusion, then what waits on a gesture.
+  // Out of the library, the diffusion alone, from the TMDB details
   const summary = useMemo(() => {
-    if (!inLibrary || !episodes) {
+    if (!show.data?.id || metadataLoading || (inLibrary && !episodes)) {
       return null
     }
 
-    const progress = progressOf(episodes.filter(({ season_number }) => season_number !== 0))
+    const regular = inLibrary ? episodes.filter(({ season_number }) => season_number !== 0) : null
+    const progress = inLibrary ? progressOf(regular) : null
+    const diffusion = diffusionOf(show.data, inLibrary ? { aired: progress.aired, next: nextOf(regular) } : progressOfDetails(show.data), (global as any)?.config?.region || 'fr-FR')
+    const tag = !!diffusion.label && (
+      <ReleaseTag title={show.data.status} data-diffusion={true} data-airing={diffusion.airing}>
+        <code>{diffusion.label}</code>
+      </ReleaseTag>
+    )
+
+    if (!inLibrary) {
+      return tag ? [<span key='pills' sx={Show.styles.pills}>{tag}</span>] : null
+    }
+
     const size = sizeOf(episodes)
     const pending = proposals.rows.length
     const wanted = episodes.filter(episode => episodeStatus(episode) === 'wanted').length
@@ -95,8 +108,9 @@ const Show = ({ ...props }) => {
 
     return [
       <span key='pills' sx={Show.styles.pills}>
-        <ProgressPill {...progress} />
+        <ProgressPill {...progress} airing={diffusion.airing} detail={diffusion.detail} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
+        {tag}
         {!!pending && (
           <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
             <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={pending} compact={true} size='small' />
@@ -107,7 +121,7 @@ const Show = ({ ...props }) => {
         )}
       </span>,
     ]
-  }, [inLibrary, episodes, proposals.rows.length, id])
+  }, [show.data, metadataLoading, inLibrary, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
     externals: {
@@ -242,9 +256,18 @@ Show.styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    '>[data-size]': {
+    '>[data-size], >[data-diffusion]': {
       fontSize: 6,
       whiteSpace: 'nowrap',
+    },
+    // The tints of the aired side of the progress pill (TransitionPill): violet while the series airs
+    '>[data-diffusion] >code': {
+      backgroundColor: 'grayDark',
+      color: 'text',
+    },
+    '>[data-diffusion][data-airing="true"] >code': {
+      backgroundColor: 'airingDark',
+      color: 'whitePure',
     },
   },
   anchor: {

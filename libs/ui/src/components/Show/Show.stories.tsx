@@ -45,6 +45,11 @@ export const ShowPosterUnfollowed = () => <UIShow entity={entity} state='unfollo
 
 export const ShowPosterComplete = () => <UIShow entity={{ ...entity, progress: seasons([10, 10, 10, 10, 10, 10, 7, 6], [10, 10, 10, 10, 10, 10, 7, 6]) }} state='followed' />
 
+// Still on air: the aired side turns violet, and the owned side too once it covers every aired episode
+export const ShowPosterAiring = () => <UIShow entity={{ ...entity, status: 'Returning Series', progress: { ...seasons([10, 10, 10, 10, 10, 10, 7, 6], [10, 10, 10, 10, 10, 10, 7, 6]), next: '2026-09-29' } }} state='followed' />
+
+export const ShowPosterAiringMissing = () => <UIShow entity={{ ...entity, status: 'Returning Series', progress: { ...entity.progress, next: null } }} state='followed' />
+
 export const ShowPosterNearlyComplete = () => <UIShow entity={{ ...entity, progress: { owned: 136, aired: 138 } }} state='followed' />
 
 export const ShowPosterOneSeason = () => <UIShow entity={{ ...entity, progress: seasons([4], [10]) }} state='followed' />
