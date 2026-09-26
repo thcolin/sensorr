@@ -343,6 +343,20 @@ export class API {
           },
         }
       }),
+      getShowProgress: (
+        { init = {}, params: { id } }: { init?: any, params: { id: number } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `shows/${id}/progress`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
       getMetadata: (
         { init = {}, params: { page = 1 } = {} }: { init?: any, params?: { page?: number } }
       ): { uri: string, params: {}, init: {} } => ({

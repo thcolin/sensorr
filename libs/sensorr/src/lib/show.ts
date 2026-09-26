@@ -28,6 +28,62 @@ export const STATUS_GROUPS = {
   ended: ENDED,
 }
 
+type ShowDetails = {
+  seasons?: { season_number: number, episode_count?: number }[],
+  last_episode_to_air?: { season_number: number, episode_number: number } | null,
+  next_episode_to_air?: { air_date?: string | null } | null,
+}
+
+export const isAiring = (status?: string | null): boolean => !!status && !ENDED.includes(status)
+
+// TMDB only names the last episode aired: the seasons before it aired whole, the ones after it not at all
+export const progressOfDetails = (details: ShowDetails) => {
+  const last = details?.last_episode_to_air
+  const seasons = (details?.seasons || [])
+    .filter(({ season_number, episode_count }) => season_number !== 0 && episode_count > 0)
+    .sort((a, b) => a.season_number - b.season_number)
+    .map(({ season_number, episode_count }) => ({
+      season_number,
+      owned: 0,
+      aired: (!last || season_number > last.season_number) ? 0 : season_number < last.season_number ? episode_count : Math.min(last.episode_number, episode_count),
+    }))
+
+  return {
+    owned: 0,
+    aired: seasons.reduce((sum, { aired }) => sum + aired, 0),
+    next: details?.next_episode_to_air?.air_date || null,
+    seasons,
+  }
+}
+
+// TMDB dates are days, read at UTC midnight: formatted in UTC so no timezone moves them to the day before
+export const diffusionOf = (
+  show: { status?: string | null, first_air_date?: string | Date | null, last_air_date?: string | Date | null },
+  { aired, next }: { aired: number, next?: string | Date | null },
+  region = 'fr-FR',
+): { airing: boolean, label: string, detail: string } => {
+  const format = (value: string | Date, options: Intl.DateTimeFormatOptions) => new Date(value).toLocaleDateString(region, { ...options, timeZone: 'UTC' })
+  const year = show?.last_air_date ? new Date(show.last_air_date).getUTCFullYear() : null
+
+  if (aired === 0) {
+    const first = next || show?.first_air_date
+    const date = first ? format(first, { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+    return { airing: isAiring(show?.status), label: `Upcoming · ${date || 'TBA'}`, detail: date ? `first episode on ${date}` : 'first episode to be announced' }
+  }
+
+  if (ENDED.includes(show?.status)) {
+    const word = show.status
+    return { airing: false, label: year ? `${word} · ${year}` : word, detail: year ? `${word.toLowerCase()} in ${year}` : word.toLowerCase() }
+  }
+
+  if (isAiring(show?.status)) {
+    const date = next ? format(next, { day: '2-digit', month: '2-digit' }) : null
+    return { airing: true, label: date ? `Airing · next ${date}` : 'Airing', detail: date ? `next episode on ${date}` : 'still airing' }
+  }
+
+  return { airing: false, label: '', detail: '' }
+}
+
 export const isTvCategory = (category) => [].concat(category ?? []).some(value => Math.floor(Number(value) / 1000) === 5)
 
 export const levelOf = (meta, category = []): ShowUnit['type'] | null => {

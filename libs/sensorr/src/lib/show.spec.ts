@@ -1,7 +1,7 @@
 import oleoo from 'oleoo'
 import { Policy, SENSORR_POLICY_FALLBACK } from './policy'
 import { Sensorr } from './sensorr'
-import { coverageLabel, coverageOf, isUnitCovered, pickReleases, searchShowUnits, searchUnits, ShowUnit, swapOf, swapReplacesOf } from './show'
+import { coverageLabel, coverageOf, diffusionOf, isAiring, isUnitCovered, pickReleases, progressOfDetails, searchShowUnits, searchUnits, ShowUnit, swapOf, swapReplacesOf } from './show'
 import { clean } from './utils'
 
 const now = new Date('2026-09-24T12:00:00Z')
@@ -557,5 +557,89 @@ describe('coverageLabel', () => {
     expect(coverageLabel(range(3, 4, 6), 'episode')).toBe('S03E04-E06')
     expect(coverageLabel([{ season: 3, episode: 6 }, { season: 3, episode: 4 }], 'episode')).toBe('S03E04E06')
     expect(coverageLabel([])).toBe('')
+  })
+})
+
+describe('isAiring', () => {
+  it('says a show still airs while TMDB gives it a status that is neither Ended nor Canceled', () => {
+    expect(['Returning Series', 'In Production', 'Planned', 'Pilot'].map(isAiring)).toEqual([true, true, true, true])
+    expect(['Ended', 'Canceled'].map(isAiring)).toEqual([false, false])
+    expect([null, undefined, ''].map(isAiring)).toEqual([false, false, false])
+  })
+})
+
+describe('progressOfDetails', () => {
+  const seasons = (...counts: [number, number][]) => counts.map(([season_number, episode_count]) => ({ season_number, episode_count }))
+
+  it('counts the seasons before the last aired episode whole, its season up to it, and gives the next air date', () => {
+    const tedLasso = {
+      seasons: seasons([1, 10], [2, 12], [3, 12], [4, 10]),
+      last_episode_to_air: { season_number: 4, episode_number: 8 },
+      next_episode_to_air: { air_date: '2026-09-29' },
+    }
+
+    expect(progressOfDetails(tedLasso)).toEqual({
+      owned: 0,
+      aired: 42,
+      next: '2026-09-29',
+      seasons: [
+        { season_number: 1, owned: 0, aired: 10 },
+        { season_number: 2, owned: 0, aired: 12 },
+        { season_number: 3, owned: 0, aired: 12 },
+        { season_number: 4, owned: 0, aired: 8 },
+      ],
+    })
+  })
+
+  it('counts every episode of an ended show, with no next air date', () => {
+    const ended = { seasons: seasons([1, 24], [2, 24]), last_episode_to_air: { season_number: 2, episode_number: 24 }, next_episode_to_air: null }
+
+    expect(progressOfDetails(ended)).toEqual({ owned: 0, aired: 48, next: null, seasons: [{ season_number: 1, owned: 0, aired: 24 }, { season_number: 2, owned: 0, aired: 24 }] })
+  })
+
+  it('leaves out the specials and the seasons without episodes, and sorts the others', () => {
+    const details = { seasons: seasons([2, 6], [0, 3], [3, 0], [1, 6]), last_episode_to_air: { season_number: 2, episode_number: 3 } }
+
+    expect(progressOfDetails(details)).toEqual({ owned: 0, aired: 9, next: null, seasons: [{ season_number: 1, owned: 0, aired: 6 }, { season_number: 2, owned: 0, aired: 3 }] })
+  })
+
+  it('counts nothing aired before a first episode, and nothing without details', () => {
+    const upcoming = { seasons: seasons([1, 8]), last_episode_to_air: null, next_episode_to_air: { air_date: '2026-11-25' } }
+
+    expect(progressOfDetails(upcoming)).toEqual({ owned: 0, aired: 0, next: '2026-11-25', seasons: [{ season_number: 1, owned: 0, aired: 0 }] })
+    expect(progressOfDetails(undefined)).toEqual({ owned: 0, aired: 0, next: null, seasons: [] })
+  })
+
+  it('never counts more aired episodes in a season than TMDB gives it', () => {
+    const details = { seasons: seasons([1, 10], [2, 6]), last_episode_to_air: { season_number: 2, episode_number: 8 } }
+
+    expect(progressOfDetails(details).seasons).toEqual([{ season_number: 1, owned: 0, aired: 10 }, { season_number: 2, owned: 0, aired: 6 }])
+    expect(progressOfDetails(details).aired).toBe(16)
+  })
+})
+
+describe('diffusionOf', () => {
+  it('gives the first air date of a show with nothing aired yet, tinted when it will air', () => {
+    expect(diffusionOf({ status: 'Returning Series' }, { aired: 0, next: '2026-11-25' }, 'fr-FR')).toEqual({ airing: true, label: 'Upcoming · 25/11/2026', detail: 'first episode on 25/11/2026' })
+    expect(diffusionOf({ status: 'In Production', first_air_date: '2026-11-25' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: true, label: 'Upcoming · 25/11/2026', detail: 'first episode on 25/11/2026' })
+    expect(diffusionOf({ status: 'Planned' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: true, label: 'Upcoming · TBA', detail: 'first episode to be announced' })
+    expect(diffusionOf({ first_air_date: '2026-11-25' }, { aired: 0 }, 'fr-FR').airing).toBe(false)
+  })
+
+  it('gives the year an ended or canceled show stopped, never tinted', () => {
+    expect(diffusionOf({ status: 'Ended', last_air_date: '2017-05-19' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, label: 'Ended · 2017', detail: 'ended in 2017' })
+    expect(diffusionOf({ status: 'Ended' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, label: 'Ended', detail: 'ended' })
+    expect(diffusionOf({ status: 'Canceled', last_air_date: new Date('2019-01-01') }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, label: 'Canceled · 2019', detail: 'canceled in 2019' })
+    expect(diffusionOf({ status: 'Canceled' }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, label: 'Canceled', detail: 'canceled' })
+  })
+
+  it('gives the next episode of a show still airing, by day and month', () => {
+    expect(diffusionOf({ status: 'Returning Series', last_air_date: '2026-09-22' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: true, label: 'Airing · next 29/09', detail: 'next episode on 29/09' })
+    expect(diffusionOf({ status: 'Returning Series' }, { aired: 42, next: new Date('2026-09-29T00:00:00Z') }, 'fr-FR').label).toBe('Airing · next 29/09')
+    expect(diffusionOf({ status: 'Returning Series' }, { aired: 42, next: null }, 'fr-FR')).toEqual({ airing: true, label: 'Airing', detail: 'still airing' })
+  })
+
+  it('gives no verdict on a show without status', () => {
+    expect(diffusionOf({ last_air_date: '2017-05-19' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: false, label: '', detail: '' })
   })
 })

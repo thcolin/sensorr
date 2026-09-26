@@ -73,4 +73,9 @@ export class ShowsController {
   async getShowEpisodes(@Param('id', ParseIntPipe) id: number): Promise<unknown> {
     return this.showsService.getShowEpisodes(id)
   }
+
+  @Get(':id/progress')
+  async getShowProgress(@Param('id', ParseIntPipe) id: number): Promise<unknown> {
+    return this.showsService.getShowProgress(id)
+  }
 }

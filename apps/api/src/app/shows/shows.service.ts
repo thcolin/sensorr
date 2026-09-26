@@ -13,11 +13,13 @@ import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
 
-const METADATA_FIELDS = ['name', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'releases', 'banned_releases', 'requested_by']
 
 const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent', 'replaces']
 
 const LABELS ={ totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' }
+
+const NO_PROGRESS = { owned: 0, aired: 0, next: null, seasons: [] }
 
 const monitored = (value) => ({
   true: { monitored: true },
@@ -253,21 +255,25 @@ export class ShowsService {
 
     if (`${params.progress}` === 'true') {
       const progress = await this.getProgress((res.results as any[]).map(({ _id }) => _id))
-      res.results = (res.results as any[]).map(show => ({ ...show, progress: progress[show._id] || { owned: 0, aired: 0, seasons: [] } })) as any
+      res.results = (res.results as any[]).map(show => ({ ...show, progress: progress[show._id] || NO_PROGRESS })) as any
     }
 
     return res
   }
 
   // Specials are left out, like everywhere else progress is counted
-  async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number, seasons: { season_number: number, owned: number, aired: number }[] } }> {
+  async getProgress(ids: number[]): Promise<{ [id: number]: { owned: number, aired: number, next: Date | null, seasons: { season_number: number, owned: number, aired: number }[] } }> {
+    // One instant for both counts, so an episode is either aired or next
+    const now = new Date()
     const counts = await this.episodeModel.aggregate([
       { $match: { show_id: { $in: ids }, season_number: { $ne: 0 } } },
       {
         $group: {
           _id: { show_id: '$show_id', season_number: '$season_number' },
           owned: { $sum: { $cond: [{ $gt: [{ $size: { $ifNull: ['$files', []] } }, 0] }, 1, 0] } },
-          aired: { $sum: { $cond: [{ $and: [{ $gt: ['$air_date', null] }, { $lte: ['$air_date', new Date()] }] }, 1, 0] } },
+          aired: { $sum: { $cond: [{ $and: [{ $gt: ['$air_date', null] }, { $lte: ['$air_date', now] }] }, 1, 0] } },
+          // $min skips the nulls: a season with nothing left to air gives none
+          next: { $min: { $cond: [{ $gt: ['$air_date', now] }, '$air_date', null] } },
         },
       },
       { $sort: { '_id.show_id': 1, '_id.season_number': 1 } },
@@ -275,14 +281,22 @@ export class ShowsService {
 
     const progress = {}
 
-    for (const { _id: { show_id, season_number }, owned, aired } of counts) {
-      progress[show_id] = progress[show_id] || { owned: 0, aired: 0, seasons: [] }
+    for (const { _id: { show_id, season_number }, owned, aired, next } of counts) {
+      progress[show_id] = progress[show_id] || { owned: 0, aired: 0, next: null, seasons: [] }
       progress[show_id].owned += owned
       progress[show_id].aired += aired
+      if (next && (!progress[show_id].next || next < progress[show_id].next)) {
+        progress[show_id].next = next
+      }
       progress[show_id].seasons.push({ season_number, owned, aired })
     }
 
     return progress
+  }
+
+  async getShowProgress(id: number) {
+    this.logger.log(`GetShowProgress "${id}"`)
+    return (await this.getProgress([id]))[id] || NO_PROGRESS
   }
 
   async getShow(id: number) {
