@@ -9,6 +9,7 @@ import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
 
 const IMAGE_WIDTHS = [320, 640, 1280]
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 @Injectable()
 export class WrappedService {
@@ -173,19 +174,25 @@ export class WrappedService {
       // PNG by default, seven times heavier
       img_format: 'jpg',
     }).toString()
-    // The route is public: what went wrong upstream is logged, the guest only gets a 502
+    // The route is public, the guest only gets a bare 502; node-fetch errors carry the URL, so the key, and are not logged
+    const failed = (reason: string) => {
+      this.logger.warn(`Image "${key}", ${reason}`)
+      return new BadGatewayException()
+    }
     const res = await fetch(uri, { signal: AbortSignal.timeout(10000) }).catch((error) => {
-      this.logger.warn(`Image "${key}", Tautulli unreachable: ${error.message}`)
-      throw new BadGatewayException()
+      throw failed(`Tautulli unreachable: ${error.name} ${error.code || ''}`)
     })
-    const type = res.headers.get('content-type') || ''
+    const type = (res.headers.get('content-type') || '').split(';')[0].trim()
 
-    if (!res.ok || !type.startsWith('image/')) {
-      this.logger.warn(`Image "${key}", Tautulli answered ${res.status} with "${type}"`)
-      throw new BadGatewayException()
+    if (!res.ok || !IMAGE_TYPES.includes(type)) {
+      throw failed(`Tautulli answered ${res.status} with "${type}"`)
     }
 
-    return { type, buffer: Buffer.from(await res.arrayBuffer()) }
+    const body = await res.arrayBuffer().catch((error) => {
+      throw failed(`Tautulli body failed: ${error.name} ${error.code || ''}`)
+    })
+
+    return { type, buffer: Buffer.from(body) }
   }
 
   async guests() {

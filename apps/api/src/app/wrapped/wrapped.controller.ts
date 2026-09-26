@@ -19,7 +19,7 @@ export class WrappedController {
   @Get('share/:token/images/:kind')
   async image(@Param('token') token: string, @Param('kind') kind: string, @Query('key') key: string, @Query('width', ParseIntPipe) width: number, @Res() res: Response) {
     const { type, buffer } = await this.wrappedService.image(token, key, kind, width)
-    res.set({ 'Content-Type': type, 'Cache-Control': 'private, max-age=604800' }).send(buffer)
+    res.set({ 'Content-Type': type, 'Cache-Control': 'private, max-age=604800', 'X-Content-Type-Options': 'nosniff' }).send(buffer)
   }
 
   @Post('viewers')

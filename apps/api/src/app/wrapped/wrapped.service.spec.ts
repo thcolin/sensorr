@@ -41,8 +41,16 @@ describe('WrappedService.image', () => {
     await expect(service.image('token', { $ne: 'x' } as any, 'thumb', 640)).rejects.toBeInstanceOf(BadRequestException)
   })
 
+  it('never logs the Tautulli URL, which carries the API key', async () => {
+    const { service } = serviceOf()
+    const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined)
+    ;(fetch as unknown as jest.Mock).mockRejectedValue(Object.assign(new Error('request to http://tautulli.local/api/v2?apikey=secret failed'), { name: 'FetchError', code: 'ECONNREFUSED' }))
+    await expect(service.image('token', 'plex://movie/heat', 'thumb', 640)).rejects.toBeInstanceOf(BadGatewayException)
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/secret|apikey/)
+  })
+
   it('answers 502 when Tautulli does not send an image, without telling why', async () => {
-    const error = await serviceOf({ contentType: 'text/html' }).service.image('token', 'plex://movie/heat', 'thumb', 640).catch((error) => error)
+    const error = await serviceOf({ contentType: 'image/svg+xml' }).service.image('token', 'plex://movie/heat', 'thumb', 640).catch((error) => error)
     expect(error).toBeInstanceOf(BadGatewayException)
     expect(JSON.stringify(error.getResponse())).not.toMatch(/tautulli|secret/i)
   })

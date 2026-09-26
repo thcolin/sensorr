@@ -13,7 +13,16 @@ export interface Share {
 
 type State = { status: 'loading' } | { status: 'gone' } | { status: 'error' } | { status: 'done', share: Share }
 
-const token = decodeURIComponent(window.location.pathname.replace(/^\/wrapped\/?/, '').split('/')[0] || '')
+const tokenOf = (path: string) => {
+  try {
+    return decodeURIComponent(path.replace(/^\/wrapped\/?/, '').split('/')[0] || '')
+  } catch (error) {
+    // A mangled link is a link that leads nowhere, the page says so
+    return ''
+  }
+}
+
+const token = tokenOf(window.location.pathname)
 
 export const App = () => {
   const [state, setState] = useState<State>({ status: 'loading' })
