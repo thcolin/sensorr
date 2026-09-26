@@ -1,4 +1,4 @@
-import { partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
+import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
 
 const at = (iso: string) => Date.parse(iso) / 1000
 let id = 0
@@ -33,7 +33,8 @@ const plays = [
   play(1, 'show:1', '2026-05-04T23:00:00Z', 0.5, 'episode'),
   play(1, 'show:1', '2026-06-01T20:00:00Z', 0.5, 'episode'),
   play(2, 'show:1', '2026-06-01T20:00:00Z', 20, 'episode'),
-  play(1, 'plex://movie/2001', '2025-12-31T20:00:00Z', 2),
+  play(1, 'plex://movie/2001', '2025-11-30T20:00:00Z', 2),
+  play(1, 'plex://movie/heat', '2026-12-01T20:00:00Z', 3),
 ]
 
 describe('partsOf', () => {
@@ -43,12 +44,21 @@ describe('partsOf', () => {
   })
 })
 
+describe('editionOf', () => {
+  it('counts December for the next edition', () => {
+    expect(editionOf(at('2026-11-30T22:30:00Z'), 'Europe/Paris')).toBe(2026)
+    expect(editionOf(at('2026-11-30T23:30:00Z'), 'Europe/Paris')).toBe(2027)
+    expect(editionOf(at('2026-01-01T00:00:00Z'), 'Europe/Paris')).toBe(2026)
+  })
+})
+
 describe('wrappedOf', () => {
   const wrapped = wrappedOf({ plays, titles, user_id: 1, year: 2026 })
 
-  it('counts the year of one user, and nothing from another year', () => {
+  it('counts the edition of one user, from December to November, and nothing from another edition', () => {
     expect(wrapped).toMatchObject({ plays: 9, movies: 3, shows: 2, episodes: 5, hours: 14 })
-    expect(wrapped.months[0]).toBe(2)
+    expect(wrapped.months[0]).toBe(0)
+    expect(wrapped.months[1]).toBe(2)
     expect(wrapped.months[11]).toBe(0)
   })
 

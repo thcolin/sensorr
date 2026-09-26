@@ -43,6 +43,7 @@ export interface WrappedShow {
 }
 
 export interface Wrapped {
+  // The edition, from 1 December of the previous year to 30 November
   year: number
   hours: number
   plays: number
@@ -76,6 +77,12 @@ export const partsOf = (timestamp: number, timeZone: string) => {
   return { year: +parts.year, month: +parts.month, day: +parts.day, hour: +parts.hour, minute: +parts.minute, date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` }
 }
 
+// An edition closes on 1 December: what is watched in December counts for the next one
+export const editionOf = (timestamp: number, timeZone: string) => {
+  const { year, month } = partsOf(timestamp, timeZone)
+  return month === 12 ? year + 1 : year
+}
+
 const round = (value: number, digits = 0) => Math.round(value * 10 ** digits) / 10 ** digits
 const hoursOf = (plays: WrappedPlay[]) => plays.reduce((sum, play) => sum + (play.play_duration || 0), 0) / 3600
 const median = (values: number[]) => {
@@ -100,7 +107,7 @@ export const wrappedOf = (
   { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, timeZone?: string },
 ): Wrapped => {
   const byKey = new Map(titles.map((title) => [title.key, title]))
-  const server = plays.filter((play) => partsOf(play.started, timeZone).year === year)
+  const server = plays.filter((play) => editionOf(play.started, timeZone) === year)
   const byUser = groupBy(server, (play) => play.user_id)
   const mine = byUser.get(user_id) || []
   const movies = mine.filter((play) => play.media_type === 'movie')
@@ -155,7 +162,8 @@ export const wrappedOf = (
       end: partsOf(last!.stopped, timeZone).time,
       titles: [...new Set(nightPlays.map((play) => byKey.get(play.title)?.title || play.title))].slice(0, 4),
     } : null,
-    months: Array.from({ length: 12 }, (_, index) => round(hoursOf(mine.filter((play) => partsOf(play.started, timeZone).month === index + 1)), 1)),
+    // From December of the previous year to November
+    months: Array.from({ length: 12 }, (_, index) => round(hoursOf(mine.filter((play) => partsOf(play.started, timeZone).month === (index + 11) % 12 + 1)), 1)),
     top_movies: topMovies.slice(0, 10).map(movieOf),
     top_shows: topShows.slice(0, 4).map(showOf),
     palme: topMovies.length ? movieOf(topMovies[0]) : null,
