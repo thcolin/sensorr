@@ -230,7 +230,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             return (
               <div key={season.number} id={`season-${season.number}`} sx={UISeasons.styles.season} data-opened={opened}>
                 {/* The whole row opens the drawer, but its follow and search: a click on the title button bubbles up to it */}
-                <div sx={{ ...UISeasons.styles.head, ...(empty ? {} : UISeasons.styles.drawer) }} onClick={empty ? undefined : toggle(season.number, opened)}>
+                <div sx={{ ...UISeasons.styles.head, ...(empty ? {} : UISeasons.styles.drawer), ...(inLibrary ? {} : UISeasons.styles.inline) }} onClick={empty ? undefined : toggle(season.number, opened)}>
                   {empty ? (
                     <div sx={{ ...UISeasons.styles.label, ...UISeasons.styles.toggle, cursor: 'default' }} data-specials={specials}>{title}</div>
                   ) : (
@@ -426,6 +426,11 @@ UISeasons.styles = {
     flexShrink: 0,
     alignSelf: 'center',
     transition: 'transform 200ms ease-in-out',
+  },
+  // Out of the library the search alone follows the title, on one line on a phone too
+  inline: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   remote: {
     display: 'flex',

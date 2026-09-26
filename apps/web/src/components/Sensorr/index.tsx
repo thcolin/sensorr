@@ -246,7 +246,7 @@ const UISensorr = compose(
       },
     },
   }),
-)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, ...props }) => {
+)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, describe = null, ...props }) => {
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
   const banned = (onBan ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
@@ -270,25 +270,28 @@ const UISensorr = compose(
       {override || (
         <div sx={{ flexGrow: 1, flexShrink: 1, height: '100%', overflowX: 'hidden', overflowY: 'auto', color: 'text' }}>
           {entities.map(release => (
-            <Release
-              key={release.link}
-              entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
-              statistics={statistics}
-              downloadable={true}
-              actions={false}
-              proceed={async (release, choice) => {
-                toggle()
-
-                try {
-                  await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
-                } catch (err) {
-                  console.warn(err)
-                  toast.error('Error while processing release')
-                }
-              }}
-              banned={banned.includes(release?.title)}
-              ban={() => toggleBan(release?.title)}
-            />
+            <div key={release.link}>
+              <Release
+                entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
+                statistics={statistics}
+                downloadable={true}
+                actions={false}
+                proceed={async (release, choice) => {
+                  toggle()
+  
+                  try {
+                    await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
+                  } catch (err) {
+                    console.warn(err)
+                    toast.error('Error while processing release')
+                  }
+                }}
+                banned={banned.includes(release?.title)}
+                ban={() => toggleBan(release?.title)}
+              />
+              {/* What a pick covers, its level and the owned files it replaces, before the click that downloads it */}
+              {!!describe && <small sx={UISensorrWrapper.styles.describe}>{describe(release)}</small>}
+            </div>
           ))}
         </div>
       )}
@@ -296,7 +299,7 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, button = null, loading = false, portal = null, ...props }) => {
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, portal = null, ...props }) => {
   const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
@@ -324,6 +327,7 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
               unit={unit}
               banned={banned}
               onBan={onBan}
+              describe={describe}
               entity={!loading && entity?.id ? entity : {}}
               ready={!loading && entity?.id}
               toggle={togglePortal}
@@ -336,6 +340,18 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
 }
 
 UISensorrWrapper.styles = {
+  // The reach line of a show's proposal (Shows/components/Proposals.tsx)
+  describe: {
+    display: 'block',
+    marginTop: -8,
+    paddingBottom: 8,
+    fontFamily: 'monospace',
+    fontSize: 6,
+    color: 'grayDarkest',
+    fontVariantNumeric: 'tabular-nums',
+    textAlign: 'center',
+    textWrap: 'balance',
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',

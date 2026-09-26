@@ -16,7 +16,7 @@ import { fileMetaOf, fillsOf, ownedFilesOf } from './fills'
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
 
 // What the size pill does not say: the episodes it replaces, the ones it brings
-const reachOf = (fills, swap) => {
+export const reachOf = (fills, swap) => {
   const partial = !!fills.missing.length && fills.missing.length < fills.total
 
   if (swap) {

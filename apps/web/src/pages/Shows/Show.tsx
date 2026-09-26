@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
 import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
-import { diffusionOf, episodeStatus, manualPickOf, nextAirDateOf, progressOf } from '@sensorr/sensorr'
+import { coverageLabel, diffusionOf, episodeStatus, manualPickOf, nextAirDateOf, progressOf, swapOf, unitLabel } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -19,9 +19,10 @@ import { Sensorr } from '../../components/Sensorr'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
 import { ShowActions, useShowPolicy } from './components/Actions'
-import { useProposals } from './components/Proposals'
+import { reachOf, useProposals } from './components/Proposals'
+import { isPending } from '../Proposals/queue'
 import { Seasons } from './components/Seasons'
-import { sizeOf } from './components/fills'
+import { fillsOf, sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 const Show = ({ ...props }) => {
@@ -83,7 +84,7 @@ const Show = ({ ...props }) => {
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
 
-  const [search, setSearch] = useState({ unit: null, title: 'Releases' })
+  const [search, setSearch] = useState({ unit: null, title: 'Releases', proposal: null })
   const toggleSearch = useRef((e) => null)
   const policy = useShowPolicy(show.data, metadata)
   const searched = useMemo(() => ({
@@ -93,11 +94,13 @@ const Show = ({ ...props }) => {
   }), [sensorr, show.data, metadata?.query, metadata?.banned_releases, policy])
 
   // The seasons TMDB announces, for a whole series pack to hold them all
-  const openSearch = useCallback((e, target = { type: 'series' }, label = 'the whole series') => {
+  const openSearch = useCallback((e, target: { type: string, season?: number, episode?: number } = { type: 'series' }, label = 'the whole series') => {
     const seasons = (show.data?.seasons || []).filter(({ season_number, episode_count }) => season_number !== 0 && episode_count)
-    setSearch({ unit: { ...target, episodes: seasons.map(({ season_number }) => ({ season: season_number, episode: 1 })) }, title: `Releases for ${label}` })
+    const covers = ({ season, episode }) => (target.season === undefined || season === target.season) && (target.episode === undefined || episode === target.episode)
+    const proposal = (metadata?.releases || []).find(release => isPending(release) && (release.coverage || []).some(covers)) || null
+    setSearch({ unit: { ...target, episodes: seasons.map(({ season_number }) => ({ season: season_number, episode: 1 })) }, title: `Releases for ${label}`, proposal })
     toggleSearch.current(e)
-  }, [show.data])
+  }, [show.data, metadata?.releases])
 
   // A pick out of the library adds the show first, unfollowed: its episodes are where the import links the files
   const pickRelease = useCallback(async (release) => {
@@ -105,6 +108,17 @@ const Show = ({ ...props }) => {
     const { releases = [] } = inLibrary ? metadata : {}
     await setShowMetadata(Number(id), 'releases', [...releases, { ...release, ...manualPickOf(release, listed), from: 'record', job: 'manual', proposal: true, choice: true }])
   }, [id, inLibrary, episodes, metadata, addShow])
+
+  // Out of the library nothing is owned yet, and the episodes a release covers are only known once the show is added
+  const describeRelease = useCallback((release) => {
+    const { coverage, level, swap } = manualPickOf(release, inLibrary ? (episodes || []) : [])
+
+    if (!coverage.length) {
+      return level ? unitLabel({ type: level, season: release.meta?.seasons?.[0], episode: release.meta?.episodes?.[0], episodes: [] }) : null
+    }
+
+    return [coverageLabel(coverage, level), reachOf(fillsOf(coverage, episodes, level), swap ? swapOf(coverage, episodes) : null)].filter(Boolean).join(' · ')
+  }, [inLibrary, episodes])
 
   const toggleBan = useCallback((title, banned) => (banned ? unbanShowRelease : banShowRelease)(Number(id), title), [id])
 
@@ -286,6 +300,8 @@ const Show = ({ ...props }) => {
         metadata={searched}
         unit={search.unit}
         title={search.title}
+        proposal={search.proposal}
+        describe={describeRelease}
         onPick={pickRelease}
         banned={searched.banned_releases}
         onBan={toggleBan}
