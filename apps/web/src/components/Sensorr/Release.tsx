@@ -18,6 +18,7 @@ const UIRelease = ({
   ban = null,
   statistics = null,
   actions = true,
+  footer = null,
 }) => {
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
@@ -32,7 +33,7 @@ const UIRelease = ({
           </div>
         )}
         <div key={entity?.link} sx={UIRelease.styles.wrapper} data-disabled={!downloadable}>
-          <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
+          <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8], flexWrap: footer ? 'wrap' : 'nowrap' }}>
             <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
                 {(
@@ -152,6 +153,7 @@ const UIRelease = ({
                 )}
               </div>
             )}
+            {!!footer && <div sx={UIRelease.styles.footer}>{footer}</div>}
           </div>
         </div>
       </div>
@@ -187,6 +189,11 @@ UIRelease.styles = {
         backgroundColor: 'grayLightest',
       },
     },
+  },
+  // A line of its own under the release, inside its row: hovered and ruled with it
+  footer: {
+    flexBasis: '100%',
+    textAlign: 'center',
   },
   head: {
     flex: 1,

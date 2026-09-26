@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControlsState, Warning } from '@sensorr/ui'
-import { Policy, reachesUnit } from '@sensorr/sensorr'
+import { Policy, levelOf, reachesUnit } from '@sensorr/sensorr'
 import { useSensorrRequest } from '../../store/sensorr'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
@@ -13,9 +13,15 @@ export const withSensorrRequest = () => (WrappedComponent) => {
     const query = useMemo(() => unit ? { ...serialized.query, unit } : serialized.query, [serialized.query, unit])
     const applied = { ...query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases, ...(unit ? { reach: true } : {}) }
     const reached = (list) => unit ? list.filter(({ meta, category }) => reachesUnit(meta, category, unit)) : list
+    // The level searched first, then the levels above it, the policy's order inside each, a valid release before any other
+    const levels = !unit ? [] : unit.type === 'episode' ? ['episode', 'season', 'series'] : unit.type === 'season' ? ['season', 'series'] : ['series', 'season']
+    const ranked = (list) => !unit ? list : [...list].sort((a, b) => (
+      (Number(a.valid === false) - Number(b.valid === false)) ||
+      (levels.indexOf(levelOf(a.meta, a.category)) - levels.indexOf(levelOf(b.meta, b.category)))
+    ))
 
     const entities = useMemo(
-      () => reached((serialized.policy?.apply && serialized.policy.apply(releases || [], applied)) || (releases || [])),
+      () => ranked(reached((serialized.policy?.apply && serialized.policy.apply(releases || [], applied)) || (releases || []))),
       [releases, query, serialized.policy, metadata.banned_releases, metadata.query?.titles]
     )
 

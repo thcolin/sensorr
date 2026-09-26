@@ -1,4 +1,4 @@
-import { Fragment, memo, useMemo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { compose, emojize } from '@sensorr/utils'
 import { Icon, Sorting, Warning, Drawer, withControls, QuerySelect } from '@sensorr/ui'
 import { Policy, SENSORR_POLICY_FALLBACK } from '@sensorr/sensorr'
@@ -270,28 +270,26 @@ const UISensorr = compose(
       {override || (
         <div sx={{ flexGrow: 1, flexShrink: 1, height: '100%', overflowX: 'hidden', overflowY: 'auto', color: 'text' }}>
           {entities.map(release => (
-            <Fragment key={release.link}>
-              <Release
-                entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
-                statistics={statistics}
-                downloadable={true}
-                actions={false}
-                proceed={async (release, choice) => {
-                  toggle()
+            <Release
+              key={release.link}
+              entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
+              statistics={statistics}
+              downloadable={true}
+              actions={false}
+              proceed={async (release, choice) => {
+                toggle()
 
-                  try {
-                    await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
-                  } catch (err) {
-                    console.warn(err)
-                    toast.error('Error while processing release')
-                  }
-                }}
-                banned={banned.includes(release?.title)}
-                ban={onBan === false ? null : () => toggleBan(release?.title)}
-              />
-              {/* What a pick covers, its level and the owned files it replaces, before the click that downloads it */}
-              {!!describe && <small sx={UISensorrWrapper.styles.describe}>{describe(release)}</small>}
-            </Fragment>
+                try {
+                  await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
+                } catch (err) {
+                  console.warn(err)
+                  toast.error('Error while processing release')
+                }
+              }}
+              banned={banned.includes(release?.title)}
+              ban={onBan === false ? null : () => toggleBan(release?.title)}
+              footer={!!describe && <small sx={UISensorrWrapper.styles.describe}>{describe(release)}</small>}
+            />
           ))}
         </div>
       )}
@@ -340,13 +338,12 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
 }
 
 UISensorrWrapper.styles = {
-  // The reach line of a show's proposal (Shows/components/Proposals.tsx)
+  // What a pick covers, its level and the owned files it replaces, in the reach line of a show's proposal (Shows/components/Proposals.tsx)
   describe: {
     display: 'block',
-    marginTop: -8,
-    paddingBottom: 8,
+    paddingTop: 8,
     fontFamily: 'monospace',
-    fontSize: 6,
+    fontSize: 'inherit',
     color: 'grayDarkest',
     fontVariantNumeric: 'tabular-nums',
     textAlign: 'center',
