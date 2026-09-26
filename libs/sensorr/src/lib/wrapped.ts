@@ -48,6 +48,8 @@ export interface WrappedShow {
 
 export interface WrappedCycle {
   kind: 'show' | 'director'
+  // The show, or the director's first movie, whose artwork stands for the cycle
+  key: string
   name: string
   count: number
   months: number[]
@@ -171,12 +173,12 @@ export const wrappedOf = (
   const directorPlays = groupBy(movies.flatMap((play) => (byKey.get(play.title)?.directors || []).map((director) => ({ director, play }))), ({ director }) => director)
   const cycles: WrappedCycle[] = [
     ...topShows.map(showOf).filter((show) => show.episodes >= SHOW_CYCLE_EPISODES && show.months.length >= 2)
-      .map(({ title, episodes, months, thumb }) => ({ kind: 'show' as const, name: title, count: episodes, months, thumb })),
+      .map(({ key, title, episodes, months, thumb }) => ({ kind: 'show' as const, key, name: title, count: episodes, months, thumb })),
     ...[...directorPlays.entries()]
       .map(([director, entries]) => ({ director, keys: [...new Set(entries.map(({ play }) => play.title))], months: unique(entries.map(({ play }) => play.month)) }))
       .filter(({ keys }) => keys.length >= DIRECTOR_CYCLE_MOVIES)
       .sort((a, b) => b.keys.length - a.keys.length)
-      .map(({ director, keys, months }) => ({ kind: 'director' as const, name: director, count: keys.length, months, thumb: byKey.get(keys[0])?.thumb })),
+      .map(({ director, keys, months }) => ({ kind: 'director' as const, key: keys[0], name: director, count: keys.length, months, thumb: byKey.get(keys[0])?.thumb })),
   ]
 
   const nights = groupBy(mine, (play) => play.evening)

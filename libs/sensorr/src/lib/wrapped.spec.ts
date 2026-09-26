@@ -113,8 +113,8 @@ describe('wrappedOf', () => {
       { key: 'plex://movie/shining', media_type: 'movie' as const, title: 'The Shining', directors: ['Stanley Kubrick'] },
     ]
     expect(wrappedOf({ plays: cycle, titles: kubrick, user_id: 5, year: 2026 }).cycles).toEqual([
-      { kind: 'show', name: 'Scrubs', count: 12, months: [3, 4], thumb: undefined },
-      { kind: 'director', name: 'Stanley Kubrick', count: 3, months: [5, 6], thumb: undefined },
+      { kind: 'show', key: 'show:1', name: 'Scrubs', count: 12, months: [3, 4], thumb: undefined },
+      { kind: 'director', key: 'plex://movie/eyes', name: 'Stanley Kubrick', count: 3, months: [5, 6], thumb: undefined },
     ])
     expect(wrapped.cycles).toEqual([])
   })

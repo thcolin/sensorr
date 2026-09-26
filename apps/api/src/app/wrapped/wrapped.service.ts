@@ -1,10 +1,14 @@
 import crypto from 'node:crypto'
+import fetch from 'node-fetch'
 import { Model } from 'mongoose'
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
+import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
+
+const IMAGE_WIDTHS = [320, 640, 1280]
 
 @Injectable()
 export class WrappedService {
@@ -16,6 +20,7 @@ export class WrappedService {
     @InjectModel(Title.name) private readonly titleModel: Model<Title>,
     @InjectModel(Edition.name) private readonly editionModel: Model<Edition>,
     @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
+    private readonly configService: ConfigService,
   ) {}
 
   async upsertViewers(viewers: { user_id: number, email: string, username: string, friendly_name: string }[]) {
@@ -61,9 +66,13 @@ export class WrappedService {
     return { upserted: upsertedCount, modified: modifiedCount }
   }
 
-  // The plays and titles of an edition, a day of margin on each side for the time zone
+  // A day of margin on each side for the time zone
+  private editionWindow(year: number) {
+    return { $gte: Date.UTC(year - 1, 10, 29) / 1000, $lt: Date.UTC(year, 11, 2) / 1000 }
+  }
+
   private async editionData(year: number): Promise<{ plays: WrappedPlay[], titles: WrappedTitle[] }> {
-    const docs = await this.playModel.find({ started: { $gte: Date.UTC(year - 1, 10, 29) / 1000, $lt: Date.UTC(year, 11, 2) / 1000 } }).lean()
+    const docs = await this.playModel.find({ started: this.editionWindow(year) }).lean()
     const plays = docs.map(({ _id, ...play }) => ({ id: _id, ...play }) as WrappedPlay).filter((play) => editionOf(play.started, TIME_ZONE) === year)
     const titles = (await this.titleModel.find({ _id: { $in: [...new Set(plays.map((play) => play.title))] } }).lean())
       .map(({ _id, ...title }) => ({ key: _id, ...title }) as WrappedTitle)
@@ -111,14 +120,19 @@ export class WrappedService {
     return email ? this.viewerModel.findOne({ email: email.toLowerCase() }).lean() : null
   }
 
-  async share(token: string, year?: number) {
-    const guest = token ? await this.guestModel.findOne({ wrapped_token: token }).lean() : null
+  private async shareOf(token: string) {
+    const guest = typeof token === 'string' && token ? await this.guestModel.findOne({ wrapped_token: token }).lean() : null
     const viewer = guest && await this.viewerOf(guest.email)
 
     if (!viewer) {
       throw new NotFoundException()
     }
 
+    return { guest, viewer }
+  }
+
+  async share(token: string, year?: number) {
+    const { guest, viewer } = await this.shareOf(token)
     const edition = year || this.shownEdition()
     const editions = (await this.editionModel.find({ user_id: viewer._id }, { year: 1 }).lean()).map(({ year }) => year)
     this.logger.log(`Share "${guest.email}", edition "${edition}"`)
@@ -128,6 +142,44 @@ export class WrappedService {
       editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
       ...(await this.wrapped(viewer._id, edition)),
     }
+  }
+
+  // Only the artwork of what this guest watched in the shown edition, which covers every title of their wrapped
+  async image(token: string, key: string, kind: string, width: number) {
+    if (typeof key !== 'string' || !['thumb', 'art'].includes(kind) || !IMAGE_WIDTHS.includes(width)) {
+      throw new BadRequestException()
+    }
+
+    const { viewer } = await this.shareOf(token)
+    const [watched, title] = await Promise.all([
+      this.playModel.exists({ user_id: viewer._id, title: key, started: this.editionWindow(this.shownEdition()) }),
+      this.titleModel.findById(key, { thumb: 1, art: 1 }).lean(),
+    ])
+    const url = this.configService.config.get('tautulli.url')
+
+    if (!watched || !title?.[kind] || !url) {
+      throw new NotFoundException()
+    }
+
+    const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
+    uri.search = new URLSearchParams({
+      apikey: this.configService.config.get('tautulli.key'),
+      cmd: 'pms_image_proxy',
+      img: title[kind],
+      width: String(width),
+      height: String(Math.round(kind === 'thumb' ? width * 1.5 : width * 9 / 16)),
+      fallback: kind === 'thumb' ? 'poster' : 'art',
+      // PNG by default, seven times heavier
+      img_format: 'jpg',
+    }).toString()
+    const res = await fetch(uri)
+    const type = res.headers.get('content-type') || ''
+
+    if (!res.ok || !type.startsWith('image/')) {
+      throw new BadGatewayException(`Tautulli answered ${res.status} for the artwork of "${key}"`)
+    }
+
+    return { type, buffer: await res.buffer() }
   }
 
   async guests() {

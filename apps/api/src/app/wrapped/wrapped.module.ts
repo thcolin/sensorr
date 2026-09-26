@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Guest, GuestSchema } from '../guests/guest.schema'
+import { ConfigService } from '../config/config.service'
 import { WrappedController } from './wrapped.controller'
 import { WrappedService } from './wrapped.service'
 import { Play, PlaySchema, Viewer, ViewerSchema, Title, TitleSchema, Edition, EditionSchema } from './wrapped.schema'
@@ -16,6 +17,6 @@ import { Play, PlaySchema, Viewer, ViewerSchema, Title, TitleSchema, Edition, Ed
     ]),
   ],
   controllers: [WrappedController],
-  providers: [WrappedService],
+  providers: [WrappedService, ConfigService],
 })
 export class WrappedModule {}

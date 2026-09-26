@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post, Param, Query, ParseIntPipe } from '@nestjs/common'
+import { Body, Controller, Get, Post, Param, Query, ParseIntPipe, Res } from '@nestjs/common'
+import { Response } from 'express'
 import { WrappedPlay, WrappedTitle } from '@sensorr/sensorr'
 import { Public } from '../auth/auth.decorators'
 import { WrappedService } from './wrapped.service'
@@ -11,6 +12,14 @@ export class WrappedController {
   @Get('share/:token')
   async share(@Param('token') token: string, @Query('year') year?: string) {
     return this.wrappedService.share(token, year ? Number(year) || undefined : undefined)
+  }
+
+  // `key` goes in the query: a movie guid carries slashes
+  @Public()
+  @Get('share/:token/images/:kind')
+  async image(@Param('token') token: string, @Param('kind') kind: string, @Query('key') key: string, @Query('width', ParseIntPipe) width: number, @Res() res: Response) {
+    const { type, buffer } = await this.wrappedService.image(token, key, kind, width)
+    res.set({ 'Content-Type': type, 'Cache-Control': 'private, max-age=604800' }).send(buffer)
   }
 
   @Post('viewers')
