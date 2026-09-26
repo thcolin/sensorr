@@ -72,6 +72,9 @@ export class Title extends Document {
 
   @Prop()
   art: string
+
+  @Prop()
+  duration: number
 }
 
 export const TitleSchema = SchemaFactory.createForClass(Title)

@@ -16,7 +16,7 @@ const titles: WrappedTitle[] = [
   { key: 'plex://movie/2001', media_type: 'movie', title: '2001', year: 1968, genres: ['Science-Fiction'], directors: ['Stanley Kubrick'] },
   { key: 'plex://movie/heat', media_type: 'movie', title: 'Heat', year: 1995, genres: ['Crime'], directors: ['Michael Mann'] },
   { key: 'plex://movie/dune', media_type: 'movie', title: 'Dune', year: 2021, genres: ['Science-Fiction'], directors: ['Denis Villeneuve'] },
-  { key: 'show:1', media_type: 'show', title: 'Scrubs' },
+  { key: 'show:1', media_type: 'show', title: 'Scrubs', duration: 30 * 60 },
   { key: 'show:2', media_type: 'show', title: 'Twin Peaks' },
 ]
 
@@ -33,6 +33,7 @@ const plays = [
   play(1, 'show:1', '2026-05-04T23:00:00Z', 0.5, 'episode'),
   play(1, 'show:1', '2026-06-01T20:00:00Z', 0.5, 'episode'),
   play(2, 'show:1', '2026-06-01T20:00:00Z', 20, 'episode'),
+  play(2, 'plex://movie/heat', '2026-06-02T20:00:00Z', 20),
   play(1, 'plex://movie/2001', '2025-11-30T20:00:00Z', 2),
   play(1, 'plex://movie/heat', '2026-12-01T20:00:00Z', 3),
 ]
@@ -64,8 +65,12 @@ describe('wrappedOf', () => {
 
   it('ranks by hours against every user of the server', () => {
     expect(wrapped.rank).toBe(2)
-    expect(wrapped.server).toEqual({ users: 2, median_hours: 18 })
+    expect(wrapped.server).toEqual({ users: 2, median_hours: 19 })
     expect(wrappedOf({ plays, titles, user_id: 2, year: 2026 }).rank).toBe(1)
+  })
+
+  it('caps a play at its media duration', () => {
+    expect(wrappedOf({ plays, titles, user_id: 2, year: 2026 }).hours).toBe(23)
   })
 
   it('keeps a night past midnight as one night', () => {
@@ -76,7 +81,7 @@ describe('wrappedOf', () => {
     expect(wrapped.palme).toMatchObject({ title: 'Heat', plays: 2 })
     expect(wrapped.grand_prix).toMatchObject({ title: 'Scrubs', episodes: 3, months: [5, 6] })
     expect(wrapped.jury).toMatchObject({ title: '2001' })
-    expect(wrapped.alone_pct).toBe(67)
+    expect(wrapped.alone_pct).toBe(33)
   })
 
   it('reads taste from the movies', () => {

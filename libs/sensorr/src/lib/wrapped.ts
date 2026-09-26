@@ -1,4 +1,4 @@
-// A play is one row of the Tautulli history, grouped and capped at the media duration.
+// A play is one grouped row of the Tautulli history.
 // `title` is the movie guid, or `show:<grandparent_rating_key>` for an episode.
 export interface WrappedPlay {
   id: number
@@ -20,6 +20,8 @@ export interface WrappedTitle {
   tmdb_id?: number
   thumb?: string
   art?: string
+  // Seconds, a typical episode for a show
+  duration?: number
 }
 
 export interface WrappedMovie {
@@ -107,7 +109,10 @@ export const wrappedOf = (
   { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, timeZone?: string },
 ): Wrapped => {
   const byKey = new Map(titles.map((title) => [title.key, title]))
-  const server = plays.filter((play) => editionOf(play.started, timeZone) === year)
+  // A session left open keeps counting in Tautulli, a play never lasts longer than its media
+  const server = plays
+    .filter((play) => editionOf(play.started, timeZone) === year)
+    .map((play) => ({ ...play, play_duration: Math.min(play.play_duration || 0, byKey.get(play.title)?.duration || Infinity) }))
   const byUser = groupBy(server, (play) => play.user_id)
   const mine = byUser.get(user_id) || []
   const movies = mine.filter((play) => play.media_type === 'movie')
