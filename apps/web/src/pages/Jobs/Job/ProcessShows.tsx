@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Warning } from '@sensorr/ui'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { useResponsiveValue } from '@sensorr/utils'
@@ -11,6 +11,8 @@ import { Release } from '../../../components/Sensorr/Release'
 import { Summary } from '../Summary'
 import { RecordLogs, useRecordsVirtualizer } from './ProcessMovies'
 import { ShowSettings } from '../../Shows/components/Actions'
+import { ShowSearchSingleton } from '../../Shows/components/Search'
+import { ShowTicket } from '../../Details/components/Actions'
 
 export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, treated = 0, withdrawn, ignored, missing, warning }, extended = true, config = {} as any) => [
   ...(extended ? [{
@@ -91,6 +93,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
   const [znab, setZnab] = useState(null)
   const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
   const { metadata: showsMetadata, setShowMetadata, banShowRelease, unbanShowRelease } = useShowsMetadataContext() as any
+  const toggleSearch = useRef((e, show) => null)
 
   const records = useMemo(() => Object.values((logs || []).reduce((groups, log) => (!log.meta.group || log.meta.type !== 'show') ? groups : {
     ...groups,
@@ -216,6 +219,8 @@ const UIProcessShowsJob = ({ job, logs }) => {
             <Icon value='spinner' />
           </div>
         ) : filtered.length ? (
+          <>
+          <ShowSearchSingleton setToggle={fn => toggleSearch.current = fn} />
           <div ref={listRef} style={{ height: rowVirtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
               const record = filtered[virtualItem.index] as any
@@ -242,11 +247,13 @@ const UIProcessShowsJob = ({ job, logs }) => {
                     banShowRelease={banShowRelease}
                     unbanShowRelease={unbanShowRelease}
                     logsCache={logsCache}
+                    toggleSearch={(e, show) => toggleSearch.current(e, show)}
                   />
                 </div>
               )
             })}
           </div>
+          </>
         ) : job.meta.done ? (
           <Warning emoji={job.meta.error ? '💢' : '📺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No recorded shows during this job'} />
         ) : (
@@ -304,7 +311,7 @@ UIProcessShowsJob.styles = {
 
 export const ProcessShowsJob = memo(UIProcessShowsJob)
 
-const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, banShowRelease, unbanShowRelease, logsCache, done, ...props }) => {
+const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, banShowRelease, unbanShowRelease, logsCache, toggleSearch, done, ...props }) => {
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -374,9 +381,14 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
 
   return (
     <div sx={UIRecord.styles.element}>
-      <div sx={UIRecord.styles.show}>
-        <Show entity={show || {}} />
-        {mobile && settings}
+      <div sx={UIRecord.styles.wrapper}>
+        <div sx={UIRecord.styles.show}>
+          <Show entity={show || {}} />
+          {mobile && settings}
+        </div>
+        <div sx={UIRecord.styles.button}>
+          <ShowTicket ready={!!metadata?.state} entity={show || {}} toggleSensorr={(e) => toggleSearch(e, show)} />
+        </div>
       </div>
       <div sx={UIRecord.styles.results}>
         {!mobile && settings}
@@ -429,13 +441,27 @@ UIRecord.styles = {
     backgroundColor: 'grayLighter',
     overflow: 'hidden',
   },
-  show: {
+  wrapper: {
     flexShrink: 0,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
+    alignItems: ['center', 'unset'],
     maxWidth: '100%',
     marginRight: [12, 4],
     marginBottom: [4, 12],
+  },
+  show: {
+    display: 'flex',
+    flexDirection: 'row',
+    maxWidth: '100%',
+  },
+  button: {
+    display: 'flex',
+    marginX: 4,
+    marginTop: 0,
+    marginBottom: [12, 4],
+    fontSize: 6,
+    zIndex: 1,
   },
   metadata: {
     flex: 1,
