@@ -24,6 +24,10 @@ export class Play extends Document {
 
   @Prop()
   play_duration: number
+
+  // The import run that last saw this row, what a complete run did not see is gone from Tautulli
+  @Prop({ index: true })
+  seen: string
 }
 
 export const PlaySchema = SchemaFactory.createForClass(Play)

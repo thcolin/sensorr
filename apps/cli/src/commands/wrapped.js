@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { render, Text } from 'ink'
-import { editionOf } from '@sensorr/sensorr'
+import { editionOf, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import command from '../utils/command'
@@ -11,7 +11,6 @@ const meta = {
   builder: {},
 }
 
-const TIME_ZONE = 'Europe/Paris'
 const PAGE = 1000
 
 const Tautulli = ({ url, key }) => async (cmd, params = {}) => {
@@ -100,16 +99,14 @@ const ImportPlaysTask = () => {
       setStatus('loading')
 
       try {
-        const range = api.query.wrapped.getPlaysRange()
-        const { last } = await api.fetch(range.uri, range.params, range.init)
-        // Two days back: a grouped row keeps growing while its sessions go on
-        const after = last ? new Date((last - 2 * 86400) * 1000).toISOString().slice(0, 10) : undefined
+        // The whole history every time: Tautulli filters sessions by date before grouping them, so a
+        // date window would split a play resumed days later into two rows
         const titles = {}
         let imported = 0
         let total = 0
 
         for (let start = 0; start === 0 || start < total; start += PAGE) {
-          const { data, recordsFiltered } = await state.tautulli('get_history', { grouping: 1, order_column: 'date', order_dir: 'asc', start, length: PAGE, after })
+          const { data, recordsFiltered } = await state.tautulli('get_history', { grouping: 1, order_column: 'date', order_dir: 'asc', start, length: PAGE })
           total = recordsFiltered
 
           // A session still playing has no id yet, the next run imports it
@@ -120,7 +117,7 @@ const ImportPlaysTask = () => {
               const title = movie ? row.guid : `show:${row.grandparent_rating_key}`
               titles[title] = { rating_key: movie ? row.rating_key : row.grandparent_rating_key, media_type: movie ? 'movie' : 'show', title: movie ? row.title : row.grandparent_title }
               // The first session of a group stays while the group grows, `reference_id` can point to a session years older
-              return { id: Number(String(row.group_ids || row.id).split(',')[0]), user_id: row.user_id, media_type: row.media_type, title, started: row.started, stopped: row.stopped, play_duration: row.play_duration }
+              return { id: Math.min(...String(row.group_ids || row.id).split(',').map(Number)), seen: state.metadata.job, user_id: row.user_id, media_type: row.media_type, title, started: row.started, stopped: row.stopped, play_duration: row.play_duration }
             })
 
           if (plays.length) {
@@ -129,12 +126,15 @@ const ImportPlaysTask = () => {
             imported += plays.length
           }
 
-          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> plays imported{after ? ` since ${after}` : ''}</Text> }))
+          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> plays imported</Text> }))
         }
 
+        const prune = api.query.wrapped.prunePlays({ body: { seen: state.metadata.job } })
+        const { deleted } = await api.fetch(prune.uri, prune.params, prune.init)
+        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> plays imported, <Text bold={true}>{deleted}</Text> gone from Tautulli removed</Text> }))
         setState((state) => ({ ...state, titles }))
         setStatus('done')
-        state.logger.info({ message: `🍿 ${imported} plays imported${after ? ` since ${after}` : ''}`, metadata: { ...state.metadata, summary: { plays: imported } } })
+        state.logger.info({ message: `🍿 ${imported} plays imported, ${deleted} gone from Tautulli removed`, metadata: { ...state.metadata, summary: { plays: imported, deleted } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))
@@ -172,15 +172,31 @@ const ImportTitlesTask = () => {
         const known = new Set(await api.fetch(existing.uri, existing.params, existing.init))
         const missing = Object.entries(state.titles).filter(([key]) => !known.has(key))
         const titles = []
+        let failed = 0
 
-        for (const [key, { rating_key, media_type, title }] of missing) {
-          setTask((task) => ({ ...task, output: `Look at "${title}" (${titles.length + 1}/${missing.length})` }))
-          let metadata = {}
+        const flush = async () => {
+          if (titles.length) {
+            const { uri, params, init } = api.query.wrapped.postTitles({ body: titles.splice(0) })
+            await api.fetch(uri, params, init)
+          }
+        }
+
+        for (const [index, [key, { rating_key, media_type, title }]] of missing.entries()) {
+          setTask((task) => ({ ...task, output: `Look at "${title}" (${index + 1}/${missing.length})` }))
+          let metadata
 
           try {
-            metadata = await state.tautulli('get_metadata', { rating_key })
+            metadata = await state.tautulli('get_metadata', { rating_key }) || {}
           } catch (error) {
+            // Left out, so the next run looks it up again
+            failed++
             state.logger.warn({ message: `Unable to read "${title}" metadata from Tautulli: "${error.message || error}"`, metadata: { ...state.metadata, title: key } })
+            continue
+          }
+
+          // Gone from Plex, or its rating key now belongs to another movie: only the name from the history holds
+          if (media_type === 'movie' && metadata.guid !== key) {
+            metadata = {}
           }
 
           const tmdb = (metadata.guids || []).find((guid) => guid.startsWith('tmdb://'))
@@ -197,15 +213,16 @@ const ImportTitlesTask = () => {
             duration: metadata.duration ? Math.round(Number(metadata.duration) / 1000) : undefined,
           })
 
-          if (titles.length % 100 === 0 || titles.length === missing.length) {
-            const { uri, params, init } = api.query.wrapped.postTitles({ body: titles.slice(-(titles.length % 100 || 100)) })
-            await api.fetch(uri, params, init)
+          if (titles.length === 100) {
+            await flush()
           }
         }
 
-        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{titles.length}</Text> new movies and shows</Text> }))
+        await flush()
+        const found = missing.length - failed
+        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{found}</Text> new movies and shows{failed ? `, ${failed} left for the next run` : ''}</Text> }))
         setStatus('done')
-        state.logger.info({ message: `🎬 ${titles.length} new movies and shows`, metadata: { ...state.metadata, summary: { titles: titles.length } } })
+        state.logger.info({ message: `🎬 ${found} new movies and shows${failed ? `, ${failed} left for the next run` : ''}`, metadata: { ...state.metadata, summary: { titles: found, failed } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))

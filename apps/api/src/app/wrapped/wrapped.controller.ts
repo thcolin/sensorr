@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Delete, Param, Query, ParseIntPipe } from '@nestjs/common'
+import { Body, Controller, Get, Post, Param, Query, ParseIntPipe } from '@nestjs/common'
 import { WrappedPlay, WrappedTitle } from '@sensorr/sensorr'
 import { Public } from '../auth/auth.decorators'
 import { WrappedService } from './wrapped.service'
@@ -21,6 +21,11 @@ export class WrappedController {
   @Post('plays')
   async upsertPlays(@Body() plays: WrappedPlay[]) {
     return this.wrappedService.upsertPlays(plays)
+  }
+
+  @Post('plays/prune')
+  async prunePlays(@Body('seen') seen: string) {
+    return this.wrappedService.prunePlays(seen)
   }
 
   @Get('plays/range')
@@ -51,15 +56,5 @@ export class WrappedController {
   @Post('tokens')
   async renewToken(@Body('email') email: string) {
     return this.wrappedService.renewToken(email)
-  }
-
-  @Delete('tokens')
-  async revokeToken(@Body('email') email: string) {
-    return this.wrappedService.revokeToken(email)
-  }
-
-  @Get(':user_id')
-  async wrapped(@Param('user_id', ParseIntPipe) user_id: number, @Query('year') year?: string) {
-    return this.wrappedService.wrapped(user_id, Number(year) || this.wrappedService.currentEdition())
   }
 }

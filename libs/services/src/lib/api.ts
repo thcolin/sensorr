@@ -659,6 +659,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      prunePlays: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/plays/prune',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       getPlaysRange: (
         { init = {} }: { init?: any } = {}
       ): { uri: string, params: {}, init: {} } => ({
@@ -741,22 +757,6 @@ export class API {
         init: {
           ...init,
           method: 'POST',
-          headers: {
-            Authorization: `Bearer __ACCESS_TOKEN__`,
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body)
-        }
-      }),
-      deleteToken: (
-        { body, init = {} }: { body: any, init?: any }
-      ): { uri: string, params: {}, init: {} } => ({
-        uri: 'wrapped/tokens',
-        params: {},
-        init: {
-          ...init,
-          method: 'DELETE',
           headers: {
             Authorization: `Bearer __ACCESS_TOKEN__`,
             Accept: 'application/json',

@@ -1,12 +1,10 @@
 import crypto from 'node:crypto'
 import { Model } from 'mongoose'
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from '@sensorr/sensorr'
+import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
-
-const TIME_ZONE = 'Europe/Paris'
 
 @Injectable()
 export class WrappedService {
@@ -23,7 +21,7 @@ export class WrappedService {
   async upsertViewers(viewers: { user_id: number, email: string, username: string, friendly_name: string }[]) {
     this.logger.log(`UpsertViewers "${viewers.length}"`)
     const { upsertedCount, modifiedCount } = await this.viewerModel.bulkWrite(viewers.map(({ user_id, ...viewer }) => ({
-      updateOne: { filter: { _id: user_id }, update: { _id: user_id, ...viewer }, upsert: true },
+      updateOne: { filter: { _id: user_id }, update: { _id: user_id, ...viewer, email: viewer.email?.toLowerCase() }, upsert: true },
     })))
     return { upserted: upsertedCount, modified: modifiedCount }
   }
@@ -34,6 +32,16 @@ export class WrappedService {
       updateOne: { filter: { _id: id }, update: { _id: id, ...play }, upsert: true },
     })))
     return { upserted: upsertedCount, modified: modifiedCount }
+  }
+
+  async prunePlays(seen: string) {
+    if (!seen || !(await this.playModel.exists({ seen }))) {
+      throw new BadRequestException(`No play seen by run "${seen}", nothing pruned`)
+    }
+
+    const { deletedCount } = await this.playModel.deleteMany({ seen: { $ne: seen } })
+    this.logger.log(`PrunePlays "${seen}", ${deletedCount} deleted`)
+    return { deleted: deletedCount }
   }
 
   async playsRange(): Promise<{ first: number | null, last: number | null }> {
@@ -63,17 +71,24 @@ export class WrappedService {
   }
 
   async freeze(year: number) {
-    if (await this.editionModel.exists({ year })) {
-      this.logger.log(`Freeze "${year}", already frozen`)
+    const frozen = new Set((await this.editionModel.find({ year }, { user_id: 1 }).lean()).map(({ user_id }) => user_id))
+    const { plays, titles } = await this.editionData(year)
+    const users = [...new Set(plays.map((play) => play.user_id))].filter((user_id) => !frozen.has(user_id))
+
+    if (!users.length) {
       return { year, frozen: 0 }
     }
 
-    const { plays, titles } = await this.editionData(year)
-    const users = [...new Set(plays.map((play) => play.user_id))]
     const frozen_at = Date.now()
-    await this.editionModel.insertMany(users.map((user_id) => ({ year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, timeZone: TIME_ZONE }) })))
-    this.logger.log(`Freeze "${year}", ${users.length} users`)
-    return { year, frozen: users.length }
+    const { upsertedCount } = await this.editionModel.bulkWrite(users.map((user_id) => ({
+      updateOne: {
+        filter: { year, user_id },
+        update: { $setOnInsert: { year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, timeZone: TIME_ZONE }) } },
+        upsert: true,
+      },
+    })))
+    this.logger.log(`Freeze "${year}", ${upsertedCount} users`)
+    return { year, frozen: upsertedCount }
   }
 
   async wrapped(user_id: number, year: number) {
@@ -88,13 +103,12 @@ export class WrappedService {
   }
 
   // In December the edition that just closed is the one to show, the next one has barely started
-  currentEdition(now = Date.now() / 1000) {
-    const { year, month } = partsOf(now, TIME_ZONE)
-    return month === 12 ? year : editionOf(now, TIME_ZONE)
+  shownEdition(now = Date.now() / 1000) {
+    return partsOf(now, TIME_ZONE).year
   }
 
   private async viewerOf(email: string) {
-    return email ? this.viewerModel.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }).lean() : null
+    return email ? this.viewerModel.findOne({ email: email.toLowerCase() }).lean() : null
   }
 
   async share(token: string, year?: number) {
@@ -105,13 +119,13 @@ export class WrappedService {
       throw new NotFoundException()
     }
 
-    const edition = year || this.currentEdition()
+    const edition = year || this.shownEdition()
     const editions = (await this.editionModel.find({ user_id: viewer._id }, { year: 1 }).lean()).map(({ year }) => year)
     this.logger.log(`Share "${guest.email}", edition "${edition}"`)
     return {
       name: guest.name,
       year: edition,
-      editions: [...new Set([...editions, this.currentEdition()])].sort((a, b) => a - b),
+      editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
       ...(await this.wrapped(viewer._id, edition)),
     }
   }
@@ -130,11 +144,5 @@ export class WrappedService {
     }
 
     return { email, wrapped_token: guest.wrapped_token }
-  }
-
-  async revokeToken(email: string) {
-    this.logger.log(`RevokeToken "${email}"`)
-    await this.guestModel.updateOne({ email }, { $unset: { wrapped_token: 1 } })
-    return { email, wrapped_token: null }
   }
 }
