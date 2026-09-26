@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Button, Icon, Link } from '@sensorr/ui'
+import { Badge, Button, Icon, Link } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
@@ -12,14 +12,21 @@ const Friends = ({ ...props }) => {
   useTitle('Settings - Friends')
   const api = useAPI()
   const { loading, guests, deleteGuest } = useGuestsContext() as any
-  const [wrapped, setWrapped] = useState({})
+  const [wrapped, setWrapped] = useState(null)
+  const [wrappedError, setWrappedError] = useState(false)
 
-  useEffect(() => {
+  const fetchWrapped = useCallback(() => {
+    setWrappedError(false)
     const { uri, params, init } = api.query.wrapped.getGuests()
     api.fetch(uri, params, init)
       .then((results) => setWrapped(results.reduce((acc, guest) => ({ ...acc, [guest.email]: guest }), {})))
-      .catch((err) => console.warn(err))
-  }, [guests])
+      .catch((err) => {
+        console.warn(err)
+        setWrappedError(true)
+      })
+  }, [])
+
+  useEffect(fetchWrapped, [guests])
 
   const renewToken = useCallback(async (email) => {
     const { uri, params, init } = api.query.wrapped.postToken({ body: { email } })
@@ -29,13 +36,22 @@ const Friends = ({ ...props }) => {
   }, [])
 
   const copyLink = useCallback(async (email, renew = false) => {
+    let token
+
     try {
-      const token = (!renew && wrapped[email]?.wrapped_token) || await renewToken(email)
+      token = (!renew && wrapped?.[email]?.wrapped_token) || await renewToken(email)
+    } catch (err) {
+      console.warn(err)
+      toast.error(`Error while creating the wrapped link of "${email}", try again`)
+      return
+    }
+
+    try {
       await navigator.clipboard.writeText(linkOf(token))
       toast.success(renew ? `New wrapped link of "${email}" copied, the previous one no longer opens` : `Wrapped link of "${email}" copied to Clipboard`)
     } catch (err) {
       console.warn(err)
-      toast.error(`Error while creating the wrapped link of "${email}"`)
+      toast.error(`Unable to copy to Clipboard, the wrapped link of "${email}" is ${linkOf(token)}`)
     }
   }, [wrapped])
   const [invitation, setInvitation] = useState(
@@ -77,14 +93,25 @@ const Friends = ({ ...props }) => {
                   <br/>
                   <small>{guest.email}</small>
                   <div sx={Friends.styles.wrapped}>
-                    <small>
-                      Wrapped · {!wrapped[guest.email] ? 'looking for them in Tautulli...' : wrapped[guest.email].viewer ? 'found in Tautulli' : 'not found in Tautulli'}
-                    </small>
+                    {wrappedError ? (
+                      <small>
+                        Unable to load the wrapped links. <Link to='' onClick={(e) => { e.preventDefault(); fetchWrapped() }}>Retry</Link>
+                      </small>
+                    ) : !wrapped ? (
+                      <div><Badge emoji={<Icon value='spinner' height='1em' width='1em' />} label='Wrapped' size='small' /></div>
+                    ) : wrapped[guest.email]?.viewer ? (
+                      <div><Badge emoji='🎞️' label='Wrapped' size='small' /></div>
+                    ) : (
+                      <small>
+                        No Tautulli user with this email, the <Link to='/settings/jobs'><code>wrapped</code> job</Link> imports them
+                      </small>
+                    )}
                     <Button
                       type='button'
                       variant='outline'
                       color='gray'
-                      disabled={!wrapped[guest.email]?.viewer}
+                      aria-label={`Copy the wrapped link of ${guest.name}`}
+                      disabled={!wrapped?.[guest.email]?.viewer}
                       onClick={() => copyLink(guest.email)}
                     >
                       Copy link
@@ -93,7 +120,8 @@ const Friends = ({ ...props }) => {
                       type='button'
                       variant='outline'
                       color='gray'
-                      disabled={!wrapped[guest.email]?.wrapped_token}
+                      aria-label={`Replace the wrapped link of ${guest.name}`}
+                      disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token}
                       onClick={() => {
                         if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
                           copyLink(guest.email, true)
@@ -187,8 +215,11 @@ Friends.styles = {
     alignItems: 'center',
     gap: 4,
     marginTop: 4,
-    '>small': {
+    '>small, >div': {
       flex: '1 1 100%',
+    },
+    '>div': {
+      display: 'flex',
     },
   },
 }
