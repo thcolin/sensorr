@@ -192,7 +192,7 @@ browser runs the same `tvsearch` from that level up to the whole series (`reachP
 the proposal: it is posted with `job: 'manual'` and `choice: true`, downloaded into
 `shows.blackhole` at once, and covers every episode its release holds, followed or not, as a swap
 when some of them are owned (`manualPickOf`). A pending proposal on one of those episodes is
-refused on the way (`shows.service.ts:130-138`). A show out of the library is added first,
+refused once the pick is accepted (`shows.service.ts:136-146`). A show out of the library is added first,
 unfollowed, so the import has episodes to link.
 
 ### One volume for the hard link

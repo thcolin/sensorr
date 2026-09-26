@@ -127,7 +127,14 @@ export class ShowsService {
 
           const accepted = { accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
 
-          // A manual pick takes over its episodes: a proposal waiting on one of them is refused
+          if (picked.coverage?.length) {
+            await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
+          }
+
+          await this.updateRelease(id, picked.id, accepted)
+
+          // A manual pick takes over its episodes, accepted first: a proposal waiting on one of them is refused,
+          // and lets go only of the episodes the pick does not cover
           if (manual && picked.coverage?.length) {
             const covered = new Set(picked.coverage.map(({ season, episode }) => `${season}:${episode}`))
             const { releases: stored = [] } = (await this.showModel.findOne({ _id: id }, { releases: 1 }).lean()) || {}
@@ -136,12 +143,6 @@ export class ShowsService {
               await this.refuseProposal(id, other)
             }
           }
-
-          if (picked.coverage?.length) {
-            await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
-          }
-
-          await this.updateRelease(id, picked.id, accepted)
 
           if (!manual) {
             await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
