@@ -7,6 +7,9 @@ export interface ProgressProps extends React.ProgressHTMLAttributes<HTMLProgress
   segments?: { value: number, max: number }[]
 }
 
+// Past 8 parts, a row of rounded pills reads as a dotted line: the bar is notched instead
+const NOTCHED = 8
+
 const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   if (!(max > 0)) {
     return null
@@ -24,6 +27,7 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.min(value, max)}
+        data-notched={parts.length > NOTCHED || undefined}
         sx={UIProgress.styles.segments}
       >
         {parts.map((segment, index) => (
@@ -66,7 +70,7 @@ UIProgress.styles = {
   // One pill per part, each with the track and the fill of `element`
   segments: {
     display: 'flex',
-    // A fifth of an average part, from 2px on a 5 seasons card down to half a pixel past 30 seasons
+    // A fifth of an average part, 2px on a 5 seasons card
     gap: 'clamp(0.5px, calc(100% / var(--parts) / 5), 0.125em)',
     width: '100%',
     height: '0.25em',
@@ -85,6 +89,15 @@ UIProgress.styles = {
         backgroundColor: 'primary',
         transformOrigin: 'left',
         transition: 'transform 400ms ease-in-out',
+      },
+    },
+    // One bar cut by 1px notches: flat inner ends, only the ends of the whole bar stay round
+    '&[data-notched]': {
+      gap: '1px',
+      borderRadius: '0.125em',
+      overflow: 'hidden',
+      '>span': {
+        borderRadius: '0em',
       },
     },
   },

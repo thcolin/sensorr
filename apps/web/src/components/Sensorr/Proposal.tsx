@@ -50,7 +50,7 @@ const UITransition = ({ axis = '', from = null, to = null, policy = null, compac
       to={<Value axis={axis} value={to} compact={compact} />}
       state={state}
       compact={compact}
-      unknown={{ from: !from, to: !to }}
+      neutral={{ from: !from, to: !to }}
       title={state === 'same' ? `${axis}: ${to}` : `${axis}: ${from} ${separator} ${to}`}
     />
   )

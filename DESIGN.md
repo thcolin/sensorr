@@ -20,6 +20,9 @@ colors:
   plex: "hsla(41, 89%, 47%, 1)"
   success: "hsla(154, 99%, 41%, 1)"
   info: "hsla(200, 77%, 52%, 1)"
+  airingDark: "hsla(265, 50%, 43%, 1)"
+  airingDarkest: "hsla(265, 50%, 27%, 1)"
+  airingLightest: "hsla(265, 100%, 94%, 1)"
   warning: "hsla(45, 89%, 47%, 1)"
   error: "hsla(0, 77%, 52%, 1)"
   errorDark: "hsla(0, 75%, 48%, 1)"
@@ -206,6 +209,12 @@ components:
   transition-pill-broken-before:
     backgroundColor: "{colors.errorDarkest}"
     textColor: "{colors.text}"
+  transition-pill-airing:
+    backgroundColor: "{colors.airingDark}"
+    textColor: "{colors.whitePure}"
+  transition-pill-airing-before:
+    backgroundColor: "{colors.airingDarkest}"
+    textColor: "{colors.airingLightest}"
 ---
 
 # Design System: Sensorr
@@ -303,6 +312,8 @@ meaning and never for decoration.
   destructive button, a failed job.
 - **Signal Amber** (`warning`): a job that ran but did not finish its work.
 - **Signal Blue** (`info`): a neutral notice.
+- **Signal Violet** (`airingDark`, `airingDarkest`, `airingLightest`): a series whose aired
+  count still grows, on its `ProgressPill` and on the diffusion pill in the header of its page.
 - **Signal Green** (`success`): the same value as `primary`. They are one color with two
   names, which is why a successful job and a primary action look identical, and why green
   is never available as a decorative choice.
@@ -590,19 +601,41 @@ tint of the same hue. Both halves are set in regular weight:
 - `broken` (the new value is in `avoid`, or a `require` was lost): `errorDark` over
   `errorDarkest`, a 10-point step; white on `errorDark` measures 5.15:1.
 - `moved` and `quiet` (no group has an opinion on the new value): `grayDark` over `gray`.
+- `airing` (a series still on air, see `ProgressPill` below): `airingDark` over
+  `airingDarkest`, `whitePure` over `airingLightest`, a 16-point step. White on `airingDark`
+  measures 7.98:1 and `airingLightest` on `airingDarkest` 10.20:1: both halves clear AA.
 - `same`: the new value alone, at `opacity: 0.3`.
+- A side without a verdict is `neutral`: it keeps the `quiet` gray whatever the state. That is
+  an axis value the release name does not give, drawn `?` by `Proposal.tsx`, or owned episodes
+  that do not cover the aired ones yet.
 - The card header and the list rows draw the size the same way, lightest owned release under the proposed
   one, with a forced `state`: `held` when lighter, `broken` when heavier, `quiet` below the
   "Same size below" threshold.
 - A show's owned episodes over its aired ones take the same pill, `ProgressPill`
-  (`libs/ui/src/components/Show/ProgressPill/ProgressPill.tsx`): `held` once every aired episode is
-  owned, `quiet` otherwise.
+  (`libs/ui/src/components/Show/ProgressPill/ProgressPill.tsx`). The aired side says the
+  diffusion: `airing` while the series still airs, since its aired count will grow. The owned
+  side takes the same tint once it covers every aired episode, and stays `neutral` until then.
+  An ended series held whole is `held` on both sides, a series on air you are caught up on is
+  `airing` on both, one on air with episodes missing is gray under violet, and an ended one
+  with episodes missing is gray on both. A series still airs when TMDB gives it a status that
+  is neither `Ended` nor `Canceled` (`libs/sensorr/src/lib/show.ts`), so a canceled series
+  reads like an ended one on the pill; only the text pill in the header of the show's page
+  says "Canceled".
 
 There is no separator: the overlap says "becomes", the hue says what the policy thinks,
 and the `title` still spells `x264 ~ x265` for the tooltip. The policy marks (`*`, `!`, the
 `prefer` rank) stay out of the pill: at `0.75em` they read as a stray dot, and the hue
 already says what the policy thinks. **This is the component that makes Sensorr look like Sensorr; extend its
 vocabulary rather than inventing a second diff widget.**
+
+### Progress Bar
+`Progress` (`libs/ui/src/atoms/Progress/Progress.tsx`) is a `0.25em` `primary` fill on a
+`grayDarker` track with round ends. Given `segments`, it splits into one pill per part: on a
+show's card, one per season, sized by its aired episodes and filled with its owned ones, a
+fifth of an average part apart and never more than `0.125em`. Past 8 parts the bar is
+notched instead: the parts sit 1px apart with flat inner ends, and only the two ends of the
+whole bar stay round, because a row of that many rounded pills reads as a dotted line. Each
+fill still grows on `scaleX`, `400ms ease-in-out`.
 
 ### Empty and Error States (signature)
 `Warning` (`libs/ui/src/atoms/Warning/Warning.tsx`) is the one shape for "nothing here" and

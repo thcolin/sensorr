@@ -3,21 +3,21 @@ import { memo } from 'react'
 export interface TransitionPillProps extends React.HTMLAttributes<HTMLSpanElement> {
   from?: React.ReactNode
   to: React.ReactNode
-  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same'
+  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing'
   compact?: boolean
-  // A side whose value is unknown carries no verdict: it stays gray whatever the state
-  unknown?: { from?: boolean, to?: boolean }
+  // A side without a verdict stays gray whatever the state: an unknown value, or owned episodes behind the aired ones
+  neutral?: { from?: boolean, to?: boolean }
 }
 
 // The new value sits on top of the old one, one tint brighter in the same hue.
 // `same` draws the new value alone.
-const UITransitionPill = ({ from = null, to = null, state = 'quiet', compact = false, unknown = {}, ...props }: TransitionPillProps) => {
+const UITransitionPill = ({ from = null, to = null, state = 'quiet', compact = false, neutral = {}, ...props }: TransitionPillProps) => {
   const side = UITransitionPill.styles.side
   const element = { ...UITransitionPill.styles.element, fontSize: compact ? 6 : 5 }
   const { quiet } = UITransitionPill.styles.tints
   const tint = UITransitionPill.styles.tints[state] || quiet
-  const before = unknown.from ? quiet.before : tint.before
-  const after = unknown.to ? quiet.after : tint.after
+  const before = neutral.from ? quiet.before : tint.before
+  const after = neutral.to ? quiet.after : tint.after
 
   if (state === 'same') {
     return (
@@ -77,6 +77,11 @@ UITransitionPill.styles = {
     quiet: {
       before: { backgroundColor: 'gray', color: 'grayDarkest' },
       after: { backgroundColor: 'grayDark', color: 'text' },
+    },
+    // A series still on air, whose aired count will grow
+    airing: {
+      before: { backgroundColor: 'airingDarkest', color: 'airingLightest' },
+      after: { backgroundColor: 'airingDark', color: 'whitePure' },
     },
   },
 }

@@ -23,6 +23,13 @@ describe('Progress', () => {
     expect((render(<Progress value={180} max={180} segments={parts} />).container.querySelector('[role="progressbar"]') as HTMLElement).style.getPropertyValue('--parts')).toBe('18')
   })
 
+  it('notches the bar past 8 parts', () => {
+    const bar = (count: number) => render(<Progress value={count} max={count} segments={Array(count).fill(1).map(max => ({ value: max, max }))} />).container.querySelector('[role="progressbar"]')
+
+    expect(bar(8).hasAttribute('data-notched')).toBe(false)
+    expect(bar(9).hasAttribute('data-notched')).toBe(true)
+  })
+
   it('renders nothing when nothing aired', () => {
     expect(render(<Progress value={0} max={0} segments={[]} />).container.firstChild).toBeNull()
   })
