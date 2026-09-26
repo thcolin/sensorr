@@ -24,7 +24,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
   return (
     <div>
       <div sx={UIMetadata.styles.container}>
-        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide }}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide, ...UIMetadata.styles.line }}>
           <span>Terms</span>
           <QueryInput
             value={values.terms}
@@ -37,7 +37,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will search for all selected terms on configured indexers">Sensorr will search for all selected terms on configured indexers</small>}
         </div>
-        <div sx={UIMetadata.styles.block}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
           <span>Years</span>
           <QueryInput
             value={values.years}
@@ -50,7 +50,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will filter releases with selected years">Sensorr will filter releases with selected years</small>}
         </div>
-        <div sx={UIMetadata.styles.block}>
+        <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
           <span>Policy</span>
           <PolicyInput
             value={policy}
@@ -60,7 +60,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
         </div>
         {help && (
           <>
-            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...UIMetadata.styles.option }}>
               <span>Refine for better release</span>
               <OptionInput
                 id={`refine-${entity?.id}`}
@@ -69,7 +69,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
                 onChange={value => setMetadata('refine', value)}
               />
             </div>
-            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option, gridColumn: ['auto', '2 / -1'] }}>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...UIMetadata.styles.option, gridColumn: ['auto', '2 / -1'] }}>
               <span>Shrink for smaller release</span>
               <OptionInput
                 id={`shrink-${entity?.id}`}
@@ -86,8 +86,11 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
 }
 
 UIMetadata.styles = {
+  // One row from the second breakpoint, one column below the first. In between, two 12em columns would
+  // squeeze Terms down to nothing: the row wraps, Terms on a line of its own and the other fields under it
   container: {
-    display: 'grid',
+    display: ['grid', 'flex', 'grid'],
+    flexWrap: 'wrap',
     gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 1fr) 12em 12em'],
     columnGap: 0,
   },
@@ -116,8 +119,17 @@ UIMetadata.styles = {
   wide: {
     overflow: 'hidden',
   },
+  // Once the row wraps, Terms and each option take a line of their own, and Years and Policy share one
+  // from the width of their column
+  line: {
+    flexBasis: [null, '100%'],
+  },
+  column: {
+    flex: [null, '1 1 12em'],
+  },
+  // An option's text wraps rather than run under its neighbour when its column is narrower than it
   option: {
-    whiteSpace: ['wrap', 'nowrap'],
+    whiteSpace: 'normal',
   },
 }
 
