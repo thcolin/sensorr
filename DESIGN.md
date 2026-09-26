@@ -321,9 +321,8 @@ meaning and never for decoration.
 - **Signal Amber** (`warning`): a job that ran but did not finish its work.
 - **Signal Blue** (`info`): a neutral notice.
 - **Signal Violet** (`airing`, `airingLight`, `airingDark`, `airingDarkest`, `airingLightest`): a
-  series whose aired count still grows, on its `ProgressPill` and on the diffusion pill in the
-  header of its page. On one Sensorr does not follow, both pills are hollow: `airing` is their
-  ring and `airingLight` their text.
+  series whose aired count still grows, on its `ProgressPill`. On one Sensorr does not follow,
+  the aired side is hollow: `airing` is its ring and `airingLight` its number.
 - **Signal Green** (`success`): the same value as `primary`. They are one color with two
   names, which is why a successful job and a primary action look identical, and why green
   is never available as a decorative choice.
@@ -479,9 +478,8 @@ in on `translate3d`, `libs/ui/src/atoms/Pane/Pane.tsx:46-63`).
   `0 0 0 0.15em currentColor` (`libs/ui/src/inputs/Option/Option.tsx:72`).
 - **Hollow ring** (`box-shadow: inset 0 0 0 1.5px airing`): the aired side of a
   `TransitionPill` in the `unfollowed` tint
-  (`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx:92`), which the diffusion pill of a
-  show's page takes too (`apps/web/src/pages/Shows/Show.tsx:283`). Inset and spread-only,
-  zero blur: an outline that keeps the pill at the size of a filled one.
+  (`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx:92`). Inset and spread-only, zero
+  blur: an outline that keeps the pill at the size of a filled one.
 
 ### Named Rules
 
@@ -646,19 +644,10 @@ tint of the same hue. Both halves are set in regular weight:
   `showStateOf` (`apps/web/src/contexts/ShowsMetadata/ShowsMetadata.tsx`). A series that does
   not air keeps its tint whatever its state. A series still airs when TMDB gives it a status that
   is neither `Ended` nor `Canceled` (`libs/sensorr/src/lib/show.ts`), so a canceled series
-  reads like an ended one on the pill. Its `title` and `aria-label` still say "canceled in
-  2019", and the diffusion pill in the header of the show's page says "Canceled".
-- The diffusion pill puts that diffusion into words, in the header of a show's page
-  (`apps/web/src/pages/Shows/Show.tsx`), right after the size. It is not a transition pill but
-  a `ReleaseTag` like the size beside it, at its font size: Fira Code 600, a `0.25em` radius, no
-  overlap. Its fill is `airingDark` under `whitePure` while the series airs, `grayDark` under
-  `text` otherwise (10.12:1 in dark mode). A series on air that Sensorr does not follow takes the
-  hollow side of `unfollowed`: the page's `white`, a `1.5px` inset ring of `airing`, `airingLight`
-  text. It says `Airing · next 29/09`,
-  `Airing` when TMDB dates no next episode, `Ended · 2017` or `Canceled · 2019` with the year of
-  the last episode, and `Upcoming · 25/11/2026` before the first one; an aired series without a
-  status gets none. Its `title` is the TMDB status itself. Out of the library it is the header's
-  only pill, read from the TMDB details, since there is no owned count to draw.
+  reads like an ended one on the pill. Its `title` and `aria-label` say it in words: "next
+  episode on 29/09", "still airing", "ended in 2017", "canceled in 2019". There is no pill of
+  words beside it: a rectangle there read as a button, and the dates line of the page already
+  says `2005 - Airing`.
 
 There is no separator: the overlap says "becomes", the hue says what the policy thinks,
 and the `title` still spells `x264 ~ x265` for the tooltip. The policy marks (`*`, `!`, the

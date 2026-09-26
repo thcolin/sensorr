@@ -95,4 +95,3 @@ UITransitionPill.styles = {
 }
 
 export const TransitionPill = memo(UITransitionPill)
-export const TransitionPillStyles = UITransitionPill.styles

@@ -353,10 +353,9 @@ UIDetails.styles = {
 
 const Details = memo(UIDetails)
 
-// Inline, like in the summary of the metadata's details: the pills follow the year, out of the library too
 const ShowSubtitle = ({ entity, title, meaningful, summary = null }) => (
   <>
-    <h4 sx={{ ...UIDetails.styles.subtitle, display: 'inline-block' }}>
+    <h4 sx={UIDetails.styles.subtitle}>
       {!!entity.original_name && entity.original_name !== title && (<strong>{entity.original_name}</strong>)}
       {!!entity.original_name && entity.original_name !== title && !!meaningful.year && (<span> </span>)}
       {!!meaningful.year && (<span>({<meaningful.year />})</span>)}

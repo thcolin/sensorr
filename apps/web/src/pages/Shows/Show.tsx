@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
-import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, TransitionPillStyles, Warning } from '@sensorr/ui'
-import { diffusionOf, episodeStatus, nextAirDateOf, progressOf, progressOfDetails } from '@sensorr/sensorr'
+import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
+import { diffusionOf, episodeStatus, nextAirDateOf, progressOf } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -13,7 +13,7 @@ import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPo
 import { withBody } from '../../layout/withLayout'
 import ShowChild, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
-import { ReleaseSize, ReleaseTag } from '../../components/Sensorr/Release'
+import { ReleaseSize } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
 import { ShowActions } from './components/Actions'
@@ -82,31 +82,19 @@ const Show = ({ ...props }) => {
 
   const progress = useMemo(() => (inLibrary && episodes) ? progressOf(episodes.filter(({ season_number }) => season_number !== 0)) : null, [inLibrary, episodes])
 
-  // The diffusion of the header's pill and of the "All seasons" row (Seasons.tsx), computed once for both. Out of the
-  // library, from the TMDB details
+  // The diffusion of the header's pill and of the "All seasons" row (Seasons.tsx), computed once for both
   const diffusion = useMemo(() => {
-    if (!show.data?.id || metadataLoading || (inLibrary && !episodes)) {
+    if (!show.data?.id || metadataLoading || !inLibrary || !episodes) {
       return null
     }
 
-    return diffusionOf(show.data, inLibrary ? { aired: progress.aired, next: nextAirDateOf(episodes) } : progressOfDetails(show.data), (global as any)?.config?.region || 'fr-FR')
+    return diffusionOf(show.data, { aired: progress.aired, next: nextAirDateOf(episodes) }, (global as any)?.config?.region || 'fr-FR')
   }, [show.data, metadataLoading, inLibrary, episodes, progress])
 
-  // In the pills of the header: owned over aired, the size, the diffusion, then what waits on a gesture. Out of the
-  // library, the diffusion alone
+  // In the pills of the header: owned over aired, the size, then what waits on a gesture
   const summary = useMemo(() => {
     if (!diffusion) {
       return null
-    }
-
-    const tag = !!diffusion.label && (
-      <ReleaseTag title={show.data.status} data-diffusion={true} data-airing={diffusion.airing} data-followed={followed}>
-        <code>{diffusion.label}</code>
-      </ReleaseTag>
-    )
-
-    if (!inLibrary) {
-      return tag ? [<span key='pills' sx={Show.styles.pills}>{tag}</span>] : null
     }
 
     const size = sizeOf(episodes)
@@ -122,7 +110,6 @@ const Show = ({ ...props }) => {
       <span key='pills' sx={Show.styles.pills}>
         <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.detail} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
-        {tag}
         {!!pending && (
           <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
             <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={pending} compact={true} size='small' />
@@ -133,7 +120,7 @@ const Show = ({ ...props }) => {
         )}
       </span>,
     ]
-  }, [show.data, diffusion, progress, inLibrary, followed, episodes, proposals.rows.length, id])
+  }, [diffusion, progress, followed, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
     externals: {
@@ -272,15 +259,10 @@ Show.styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    '>[data-size], >[data-diffusion]': {
+    '>[data-size]': {
       fontSize: 6,
       whiteSpace: 'nowrap',
     },
-    // The tints of a transition pill's new side: `airing` while the series airs, `unfollowed` when Sensorr does not
-    // follow it, `quiet` otherwise
-    '>[data-diffusion] >code': TransitionPillStyles.tints.quiet.after,
-    '>[data-diffusion][data-airing="true"] >code': TransitionPillStyles.tints.airing.after,
-    '>[data-diffusion][data-airing="true"][data-followed="false"] >code': TransitionPillStyles.tints.unfollowed.after,
   },
   anchor: {
     display: 'flex',

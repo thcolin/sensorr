@@ -76,27 +76,27 @@ export const diffusionOf = (
   show: { status?: string | null, first_air_date?: string | Date | null, last_air_date?: string | Date | null },
   { aired, next }: { aired: number, next?: string | Date | null },
   region = 'fr-FR',
-): { airing: boolean, label: string, detail: string } => {
+): { airing: boolean, detail: string } => {
   const year = show?.last_air_date ? new Date(show.last_air_date).getUTCFullYear() : null
 
   // Before the episode count: an ended show whose episodes are unknown still ended
   if (ENDED.includes(show?.status)) {
     const word = show.status
-    return { airing: false, label: year ? `${word} · ${year}` : word, detail: year ? `${word.toLowerCase()} in ${year}` : word.toLowerCase() }
+    return { airing: false, detail: year ? `${word.toLowerCase()} in ${year}` : word.toLowerCase() }
   }
 
   if (aired === 0) {
     const first = next || show?.first_air_date
     const date = first ? formatDay(first, region, { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-    return { airing: isAiring(show?.status), label: `Upcoming · ${date || 'TBA'}`, detail: date ? `first episode on ${date}` : 'first episode to be announced' }
+    return { airing: isAiring(show?.status), detail: date ? `first episode on ${date}` : 'first episode to be announced' }
   }
 
   if (isAiring(show?.status)) {
     const date = next ? formatDay(next, region, { day: '2-digit', month: '2-digit' }) : null
-    return { airing: true, label: date ? `Airing · next ${date}` : 'Airing', detail: date ? `next episode on ${date}` : 'still airing' }
+    return { airing: true, detail: date ? `next episode on ${date}` : 'still airing' }
   }
 
-  return { airing: false, label: '', detail: '' }
+  return { airing: false, detail: '' }
 }
 
 // A season airs while its series does and one of its episodes outside season 0 has not aired yet, dated or not

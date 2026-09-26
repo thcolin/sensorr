@@ -239,7 +239,7 @@ export const transformShowDetails = (entity) => {
       ) : null,
       release_dates_range: first ? () => (
         <span title={entity.status} sx={{ whiteSpace: 'nowrap' }}>
-          {/* Before its first episode a show is not airing yet: the diffusion pill says "Upcoming", the line keeps the year */}
+          {/* Before its first episode a show is not airing yet: the line keeps the year alone */}
           {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : (isAiring(entity.status) && new Date(entity.first_air_date).getTime() <= Date.now()) ? `${first} - Airing` : `${first}`)}
         </span>
       ) : null,
