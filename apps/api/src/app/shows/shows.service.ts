@@ -127,6 +127,16 @@ export class ShowsService {
 
           const accepted = { accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
 
+          // A manual pick takes over its episodes: a proposal waiting on one of them is refused
+          if (manual && picked.coverage?.length) {
+            const covered = new Set(picked.coverage.map(({ season, episode }) => `${season}:${episode}`))
+            const { releases: stored = [] } = (await this.showModel.findOne({ _id: id }, { releases: 1 }).lean()) || {}
+
+            for (const other of (stored as ShowReleaseDTO[]).filter(other => other.proposal && (other.coverage || []).some(({ season, episode }) => covered.has(`${season}:${episode}`)))) {
+              await this.refuseProposal(id, other)
+            }
+          }
+
           if (picked.coverage?.length) {
             await this.episodeModel.updateMany({ show_id: id, $or: picked.coverage.map(({ season, episode }) => ({ season_number: season, episode_number: episode })) }, { release: picked.id })
           }
@@ -137,10 +147,7 @@ export class ShowsService {
             await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1 } })
           }
         } else if (!manual) {
-          await this.sensorrService.removeRelease(release)
-          await this.episodeModel.updateMany({ show_id: id, release: release.id }, { release: null })
-          await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id } } })
-          await this.logsService.ammendLog(log, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+          await this.refuseProposal(id, release)
         }
       }
     }
@@ -159,6 +166,16 @@ export class ShowsService {
     }))
 
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
+  }
+
+  private async refuseProposal(id: number, release: ShowReleaseDTO) {
+    await this.sensorrService.removeRelease(release)
+    await this.episodeModel.updateMany({ show_id: id, release: release.id }, { release: null })
+    await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id } } })
+    await this.logsService.ammendLog(
+      { 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true },
+      { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } },
+    )
   }
 
   // An accepted swap names the Plex files of its seasons, for `sync shows` to delete once it lands
