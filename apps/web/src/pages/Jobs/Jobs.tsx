@@ -41,6 +41,12 @@ const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?:
   'migrate sonarr': { view: ShowsJob, summary: summaryMigrateSonarr },
 }
 
+// An import shows runs every ten minutes: once done with nothing imported, pending, late or failed, it only shows under its own tab
+const isEmptyImport = (job) => {
+  const { success, pending, warning, overdue } = job.meta.summary?.imports || {}
+  return jobNameOf(job.meta) === 'import shows' && job.meta.done && !job.meta.error && !success && !pending && !warning && !overdue
+}
+
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
   const location = useLocation()
@@ -56,7 +62,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
   useEffect(() => {
     if ((!job && !loading && jobs.length) || (!loading && !jobs.find(j => j.job === job) && jobs.length && !(location.state as any)?.new)) {
-      navigate(`/jobs/${(jobs[0] as any).job}`, { replace: true })
+      navigate(`/jobs/${(jobs.find(j => !isEmptyImport(j)) || jobs[0]).job}`, { replace: true })
       return
     }
   }, [jobs, job, loading])
@@ -161,7 +167,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
   const [filter, setFilter] = useState(null)
-  const groups = useMemo(() => jobs.filter(job => !filter || jobNameOf(job.meta) === filter).reduce((groups, job) => {
+  const listed = useMemo(() => jobs.filter(job => !isEmptyImport(job)), [jobs])
+  const groups = useMemo(() => (filter ? jobs.filter(job => jobNameOf(job.meta) === filter) : listed).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 
@@ -172,7 +179,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         job,
       ].sort((a, b) => b.start - a.start),
     }
-  }, {}), [jobs, filter])
+  }, {}), [jobs, listed, filter])
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
     .map(name => ({ value: name, emoji: JOB_EMOJIS[name], label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
@@ -216,7 +223,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <CommandTabs options={options} all={jobs.length} value={filter} onChange={setFilter} />
+          <CommandTabs options={options} all={listed.length} value={filter} onChange={setFilter} />
           <div sx={UISidebar.styles.jobs}>
             {Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
