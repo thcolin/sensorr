@@ -20,8 +20,10 @@ colors:
   plex: "hsla(41, 89%, 47%, 1)"
   success: "hsla(154, 99%, 41%, 1)"
   info: "hsla(200, 77%, 52%, 1)"
+  airing: "hsla(265, 55%, 60%, 1)"
   airingDark: "hsla(265, 50%, 43%, 1)"
   airingDarkest: "hsla(265, 50%, 27%, 1)"
+  airingLight: "hsla(265, 90%, 82%, 1)"
   airingLightest: "hsla(265, 100%, 94%, 1)"
   warning: "hsla(45, 89%, 47%, 1)"
   error: "hsla(0, 77%, 52%, 1)"
@@ -215,6 +217,12 @@ components:
   transition-pill-airing-before:
     backgroundColor: "{colors.airingDarkest}"
     textColor: "{colors.airingLightest}"
+  transition-pill-unfollowed:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.airingLight}"
+  transition-pill-unfollowed-before:
+    backgroundColor: "{colors.gray}"
+    textColor: "{colors.grayDarkest}"
 ---
 
 # Design System: Sensorr
@@ -302,7 +310,7 @@ meaning and never for decoration.
   `white` is the page, `grayLightest`/`grayLighter`/`grayLight` are the panels that sit on
   it, `gray` is a filled chip, `grayDark`/`grayDarker`/`grayDarkest` are borders in their
   three states. The names describe the *light-mode* appearance; in dark mode every one of
-  them resolves to a near-black (`libs/theme/src/lib/theme/colors.ts:119-130`).
+  them resolves to a near-black (`libs/theme/src/lib/theme/colors.ts:121-132`).
 - **Absolutes** (`whitePure`, `blackPure`): the only two colors that never invert. Use
   them when you need actual white or actual black regardless of mode — type on a green
   field, a knob on a photograph.
@@ -312,8 +320,10 @@ meaning and never for decoration.
   destructive button, a failed job.
 - **Signal Amber** (`warning`): a job that ran but did not finish its work.
 - **Signal Blue** (`info`): a neutral notice.
-- **Signal Violet** (`airingDark`, `airingDarkest`, `airingLightest`): a series whose aired
-  count still grows, on its `ProgressPill` and on the diffusion pill in the header of its page.
+- **Signal Violet** (`airing`, `airingLight`, `airingDark`, `airingDarkest`, `airingLightest`): a
+  series whose aired count still grows, on its `ProgressPill` and on the diffusion pill in the
+  header of its page. On one Sensorr does not follow, both pills are hollow: `airing` is their
+  ring and `airingLight` their text.
 - **Signal Green** (`success`): the same value as `primary`. They are one color with two
   names, which is why a successful job and a primary action look identical, and why green
   is never available as a decorative choice.
@@ -340,8 +350,8 @@ content.** Do not hardcode an accent for a movie-scoped surface.
 Green therefore always means *the system says yes*: this is on, this is kept, this held.
 Never reach for green because a surface needs a color.
 
-**The Declared-and-Unreachable Light Mode Rule.** `libs/theme/src/lib/theme/colors.ts:75-101`
-defines a complete 27-line `light` palette, and `colors.ts:144` registers it as
+**The Declared-and-Unreachable Light Mode Rule.** `libs/theme/src/lib/theme/colors.ts:77-103`
+defines a complete 27-line `light` palette, and `colors.ts:146` registers it as
 `modes.light`. `libs/theme/src/lib/theme/index.ts:11-14` sets
 `initialColorModeName: 'dark'` and `useColorSchemeMediaQuery: false`, and **nothing in the
 application calls `setColorMode` or `useColorMode`** — the only references to `colorMode`
@@ -442,11 +452,12 @@ appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.
 ## Elevation & Depth
 
 **Flat, with tonal stacking.** There is no elevation system. `libs/theme` exports a
-`shadows` object with two entries (`libs/theme/src/lib/theme/colors.ts:147-150`), the theme
+`shadows` object with two entries (`libs/theme/src/lib/theme/colors.ts:149-152`), the theme
 registers it (`index.ts:24`), and **nothing else in `apps/` or `libs/` references
-`shadows`** — zero consumers, verified by grep. Across the whole of `libs/ui` there are 8
+`shadows`** — zero consumers, verified by grep. Across the whole of `libs/ui` there are 10
 `boxShadow` declarations: 3 are `boxShadow: 'none'` resetting `react-select`, 4 are the
-`Range` thumb's focus ring, and 1 is the Poster glow described below.
+`Range` thumb's focus ring, 1 is the `Option` focus ring, 1 is the Poster glow described
+below, and 1 is the hollow ring of the `unfollowed` transition pill.
 
 Depth comes from tone instead. Surfaces step through `white` → `grayLightest` →
 `grayLighter` → `grayLight` → `gray`, which in dark mode is 0% → 2% → 4% → 7% → 10%
@@ -458,20 +469,26 @@ in on `translate3d`, `libs/ui/src/atoms/Pane/Pane.tsx:46-63`).
 ### Shadow Vocabulary
 - **Poster glow** (`box-shadow: 0px 3px 30px <poster colorfulColor>`): the single
   intentional shadow in the system, at
-  `libs/ui/src/elements/Entity/Poster/Poster.tsx:483`. It is not a drop shadow — it is a
+  `libs/ui/src/elements/Entity/Poster/Poster.tsx:565`. It is not a drop shadow — it is a
   30px blur with no spread, tinted with the *poster's own* most chromatic color, falling
   back to `primary`. It reads as a lamp behind the artwork.
 - **Focus ring** (`box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.1)`, growing to `8px` on
-  hover and `14px` on drag): the `Range` thumb only
+  hover and `14px` on drag): the `Range` thumb
   (`libs/ui/src/inputs/Range/Range.tsx:183-192`). A spread-only halo, zero blur — a ring,
-  not a shadow.
+  not a shadow. A checkbox or radio `Option` draws the same kind under `:focus-visible`,
+  `0 0 0 0.15em currentColor` (`libs/ui/src/inputs/Option/Option.tsx:72`).
+- **Hollow ring** (`box-shadow: inset 0 0 0 1.5px airing`): the aired side of a
+  `TransitionPill` in the `unfollowed` tint
+  (`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx:92`), which the diffusion pill of a
+  show's page takes too (`apps/web/src/pages/Shows/Show.tsx:283`). Inset and spread-only,
+  zero blur: an outline that keeps the pill at the size of a filled one.
 
 ### Named Rules
 
 **The No Shadow Rule.** A new surface gets a tonal step and a 1px border. If you find
 yourself reaching for `box-shadow` to separate two things, the two things need different
 `gray*` values instead. The only sanctioned exceptions are a color taken from artwork
-(the poster glow) and a spread-only focus halo.
+(the poster glow), a spread-only focus halo, and the inset ring of the `unfollowed` pill.
 
 ## Shapes
 
@@ -604,6 +621,11 @@ tint of the same hue. Both halves are set in regular weight:
 - `airing` (a series still on air, see `ProgressPill` below): `airingDark` over
   `airingDarkest`, `whitePure` over `airingLightest`, a 16-point step. White on `airingDark`
   measures 7.98:1 and `airingLightest` on `airingDarkest` 10.20:1: both halves clear AA.
+- `unfollowed` (a series still on air that Sensorr does not follow, see `ProgressPill` below):
+  the new side is hollow, the page's `white` under a `1.5px` inset ring of `airing`, its value in
+  `airingLight`; the old side is the `quiet` gray. The ring is an inset `box-shadow`, so the pill
+  keeps the size of the others. In dark mode `airingLight` on `white` measures 10.49:1, and the
+  ring 4.81:1 against it.
 - `same`: the new value alone, at `opacity: 0.3`.
 - A side without a verdict is `neutral`: it keeps the `quiet` gray whatever the state. That is
   an axis value the release name does not give, drawn `?` by `Proposal.tsx`, or owned episodes
@@ -617,7 +639,12 @@ tint of the same hue. Both halves are set in regular weight:
   side takes the same tint once it covers every aired episode, and stays `neutral` until then.
   An ended series held whole is `held` on both sides, a series on air you are caught up on is
   `airing` on both, one on air with episodes missing is gray under violet, and an ended one
-  with episodes missing is gray on both. A series still airs when TMDB gives it a status that
+  with episodes missing is gray on both. A series on air that Sensorr does not follow, ignored,
+  pinned, out of the library or with its state still loading, is `unfollowed` instead, caught up
+  or not: gray under a violet ring. Most shows on Discover air and are not followed, and a grid
+  of filled violet said nothing. A card reads it from its `state` prop, the show's page from
+  `showStateOf` (`apps/web/src/contexts/ShowsMetadata/ShowsMetadata.tsx`). A series that does
+  not air keeps its tint whatever its state. A series still airs when TMDB gives it a status that
   is neither `Ended` nor `Canceled` (`libs/sensorr/src/lib/show.ts`), so a canceled series
   reads like an ended one on the pill. Its `title` and `aria-label` still say "canceled in
   2019", and the diffusion pill in the header of the show's page says "Canceled".
@@ -625,7 +652,9 @@ tint of the same hue. Both halves are set in regular weight:
   (`apps/web/src/pages/Shows/Show.tsx`), right after the size. It is not a transition pill but
   a `ReleaseTag` like the size beside it, at its font size: Fira Code 600, a `0.25em` radius, no
   overlap. Its fill is `airingDark` under `whitePure` while the series airs, `grayDark` under
-  `text` otherwise (10.12:1 in dark mode). It says `Airing · next 29/09`,
+  `text` otherwise (10.12:1 in dark mode). A series on air that Sensorr does not follow takes the
+  hollow side of `unfollowed`: the page's `white`, a `1.5px` inset ring of `airing`, `airingLight`
+  text. It says `Airing · next 29/09`,
   `Airing` when TMDB dates no next episode, `Ended · 2017` or `Canceled · 2019` with the year of
   the last episode, and `Upcoming · 25/11/2026` before the first one; an aired series without a
   status gets none. Its `title` is the TMDB status itself. Out of the library it is the header's
@@ -694,7 +723,8 @@ instead of writing a bespoke empty state.
   frontmatter.
 
 ### Don't:
-- **Don't** add a `box-shadow`. The system is flat; use a tonal step.
+- **Don't** add a `box-shadow` outside the exceptions of The No Shadow Rule. The system is
+  flat; use a tonal step.
 - **Don't** use green for anything other than "the system says yes". `primary` and
   `success` are the same value, and that identity is the meaning.
 - **Don't** round an action into a pill, or square off a state badge.

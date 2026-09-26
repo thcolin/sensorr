@@ -17,6 +17,13 @@ describe('ProgressPill', () => {
     expect(pill({ owned: 32, aired: 33 })).toBe('quiet|quiet')
   })
 
+  it('hollows the violet of a series Sensorr does not follow, and leaves one that does not air as it is', () => {
+    expect(pill({ owned: 42, aired: 42, airing: true, followed: false })).toBe('unfollowed|unfollowed')
+    expect(pill({ owned: 40, aired: 42, airing: true, followed: false })).toBe('quiet|unfollowed')
+    expect(pill({ owned: 33, aired: 33, followed: false })).toBe('held|held')
+    expect(pill({ owned: 32, aired: 33, followed: false })).toBe('quiet|quiet')
+  })
+
   it('appends the detail to the counts', () => {
     const { container } = render(<ProgressPill owned={42} aired={42} airing={true} detail='next episode on 29/09' />)
     expect((container.firstChild as HTMLElement).title).toBe('42 of 42 aired episodes owned · next episode on 29/09')

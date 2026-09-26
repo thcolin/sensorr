@@ -3,7 +3,7 @@ import { memo } from 'react'
 export interface TransitionPillProps extends React.HTMLAttributes<HTMLSpanElement> {
   from?: React.ReactNode
   to: React.ReactNode
-  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing'
+  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing' | 'unfollowed'
   compact?: boolean
   // A side without a verdict stays gray whatever the state: an unknown value, or owned episodes behind the aired ones
   neutral?: { from?: boolean, to?: boolean }
@@ -14,7 +14,6 @@ export interface TransitionPillProps extends React.HTMLAttributes<HTMLSpanElemen
 const UITransitionPill = ({ from = null, to = null, state = 'quiet', compact = false, neutral = {}, ...props }: TransitionPillProps) => {
   const side = UITransitionPill.styles.side
   const element = { ...UITransitionPill.styles.element, fontSize: compact ? 6 : 5 }
-  const { quiet } = UITransitionPill.styles.tints
   const tint = UITransitionPill.styles.tints[state] || quiet
   const before = neutral.from ? quiet.before : tint.before
   const after = neutral.to ? quiet.after : tint.after
@@ -33,6 +32,12 @@ const UITransitionPill = ({ from = null, to = null, state = 'quiet', compact = f
       <span sx={{ ...side, ...UITransitionPill.styles.after, ...after }}>{to}</span>
     </span>
   )
+}
+
+// The gray of a side without a verdict, kept by the owned side of a series Sensorr does not follow
+const quiet = {
+  before: { backgroundColor: 'gray', color: 'grayDarkest' },
+  after: { backgroundColor: 'grayDark', color: 'text' },
 }
 
 UITransitionPill.styles = {
@@ -74,14 +79,17 @@ UITransitionPill.styles = {
       before: { backgroundColor: 'errorDarkest', color: 'text' },
       after: { backgroundColor: 'errorDark', color: 'whitePure' },
     },
-    quiet: {
-      before: { backgroundColor: 'gray', color: 'grayDarkest' },
-      after: { backgroundColor: 'grayDark', color: 'text' },
-    },
+    quiet,
     // A series still on air, whose aired count will grow
     airing: {
       before: { backgroundColor: 'airingDarkest', color: 'airingLightest' },
       after: { backgroundColor: 'airingDark', color: 'whitePure' },
+    },
+    // A series still on air that Sensorr does not follow: gray under a hollow violet, the fill of the page under an inset
+    // ring so the pill keeps its size
+    unfollowed: {
+      before: quiet.before,
+      after: { backgroundColor: 'white', color: 'airingLight', boxShadow: theme => `inset 0 0 0 1.5px ${theme.colors.airing}` },
     },
   },
 }

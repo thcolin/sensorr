@@ -28,6 +28,8 @@ const raw = {
   infoDark: 'hsla(200, 75%, 48%, 1)',
   infoDarker: 'hsla(200, 73%, 43%, 1)',
   airingLightest: 'hsla(265, 100%, 94%, 1)',
+  airingLight: 'hsla(265, 90%, 82%, 1)',
+  airing: 'hsla(265, 55%, 60%, 1)',
   airingDark: 'hsla(265, 50%, 43%, 1)',
   airingDarkest: 'hsla(265, 50%, 27%, 1)',
   warningLightest: 'hsla(45, 100%, 82%, 1)',
