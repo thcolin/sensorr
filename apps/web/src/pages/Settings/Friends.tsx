@@ -112,7 +112,7 @@ const Friends = ({ ...props }) => {
                 </Button>
                 <footer sx={Friends.styles.wrapped}>
                   <h5 title='wrapped'>🎞️<span>&nbsp;wrapped</span></h5>
-                  <p data-muted={!(wrapped?.[guest.email]?.viewer && wrapped[guest.email].wrapped_token) || undefined}>
+                  <p aria-live='polite' data-muted={!(wrapped?.[guest.email]?.viewer && wrapped[guest.email].wrapped_token) || undefined}>
                     {wrappedError ? (
                       <span>Unable to load the wrapped links, <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>retry</button></span>
                     ) : !wrapped ? (
@@ -120,9 +120,9 @@ const Friends = ({ ...props }) => {
                     ) : !wrapped[guest.email]?.viewer ? (
                       <span>No Tautulli user with this email</span>
                     ) : wrapped[guest.email].wrapped_token ? (
-                      <span>{linkOf(wrapped[guest.email].wrapped_token)}</span>
+                      <span><span sx={{ display: ['none', 'inline'] }}>{document.location.origin}</span>/wrapped/{wrapped[guest.email].wrapped_token}</span>
                     ) : (
-                      <span>No link yet</span>
+                      <span>No link yet, 📋 creates one</span>
                     )}
                   </p>
                   <button
@@ -220,10 +220,13 @@ Friends.styles = {
     display: 'flex',
     alignItems: 'stretch',
     flex: '1 1 100%',
-    marginTop: 6,
-    border: '1px solid',
+    marginTop: 8,
+    marginX: -6,
+    marginBottom: -8,
+    borderTop: '1px solid',
     borderColor: 'grayDark',
-    borderRadius: '0.25rem',
+    borderBottomLeftRadius: '0.25rem',
+    borderBottomRightRadius: '0.25rem',
     overflow: 'hidden',
     '>h5': {
       display: 'flex',
@@ -249,14 +252,17 @@ Friends.styles = {
       marginX: 6,
       fontFamily: 'monospace',
       fontSize: 5,
-      '&[data-muted]': {
-        fontFamily: 'body',
-        color: 'grayDarkest',
-      },
       '>span': {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+      },
+      '&[data-muted]': {
+        fontFamily: 'body',
+        color: 'grayDarkest',
+        '>span': {
+          whiteSpace: ['normal', 'nowrap'],
+        },
       },
     },
   },
@@ -279,6 +285,7 @@ Friends.styles = {
     },
     ':disabled': {
       opacity: 0.5,
+      filter: 'grayscale(1)',
     },
   },
   retry: {
