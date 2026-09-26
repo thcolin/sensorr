@@ -3,7 +3,7 @@ import { MotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTrans
 
 // The poster ramp, dark to light, and the red a poster keeps
 const RAMP = ['#241a2e', '#5c4668', '#9a7a45', '#e9dcc0'].map((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255))
-const CRIMSON = [0xc8, 0x28, 0x1e].map((value) => value / 255)
+const CRIMSON = [0xb3, 0x22, 0x1a].map((value) => value / 255)
 
 const VERTEX = `
 attribute vec2 a_position;

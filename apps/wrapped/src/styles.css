@@ -32,7 +32,7 @@
   --ink: #241a2e;
   --mauve: #5c4668;
   --bone: #e9dcc0;
-  --crimson: #c8281e;
+  --crimson: #b3221a;
   --lettering: 'Sedgwick Ave Display', 'Marker Felt', cursive;
   --hand: 'Patrick Hand', 'Segoe Print', cursive;
   /* A hundredth of a sheet, for the sheet's own box: container units only apply inside it */
@@ -166,19 +166,17 @@ ol {
   font-size: 13cqi;
   line-height: 0.95;
   text-transform: uppercase;
-  text-wrap: balance;
   letter-spacing: -0.01em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.46em;
 }
 
 .lettering > span {
   display: inline-block;
-  margin-right: 0.2em;
   transform: rotate(var(--lean)) scale(var(--grow));
   transform-origin: 50% 70%;
-}
-
-.lettering > span:last-child {
-  margin-right: 0;
 }
 
 .lettering-highlight {
@@ -269,9 +267,17 @@ ol {
   stroke-linecap: round;
 }
 
+/* A backdrop bleeds off the top and the sides of its sheet */
+.backdrop {
+  aspect-ratio: 4 / 5;
+  margin: calc(var(--u) * -9) -7cqi 0;
+  flex: none;
+}
+
 /* 2 · Figures */
-.sheet-figures {
-  justify-content: center;
+.sheet-figures .figure {
+  margin-top: -16cqi;
+  z-index: 2;
 }
 
 .figure {
@@ -308,11 +314,9 @@ ol {
 }
 
 /* 3 · Official selection */
-.sheet-selection {
-  justify-content: space-between;
-}
-
 .selection-entry {
+  flex: 1;
+  justify-content: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -320,7 +324,7 @@ ol {
 }
 
 .selection-poster {
-  width: 62cqi;
+  width: 74cqi;
   transform: rotate(-2deg);
 }
 
@@ -330,6 +334,7 @@ ol {
 
 .selection-title {
   font-size: 9cqi;
+  justify-content: center;
 }
 
 .selection-count {
@@ -355,19 +360,30 @@ ol {
 }
 
 /* 4 · Series */
-.show-lead {
-  display: grid;
-  grid-template-columns: 52cqi 1fr;
-  align-items: end;
-  gap: 5cqi;
+.sheet-shows > .lettering {
+  order: 1;
 }
 
-.show-lead-poster {
-  transform: rotate(-3deg);
+.sheet-shows .backdrop {
+  flex: 1;
+  aspect-ratio: auto;
+  min-height: 56cqi;
+}
+
+.show-lead {
+  display: contents;
+}
+
+.show-lead figcaption {
+  order: 2;
 }
 
 .show-lead .lettering {
-  font-size: 8cqi;
+  font-size: 9cqi;
+}
+
+.show-others {
+  order: 3;
 }
 
 .show-others {
@@ -397,9 +413,36 @@ ol {
 
 /* 5 · Cycles */
 .cycles {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 7cqi;
+}
+
+/* The longest cycle leads with its poster at scale */
+.cycle:first-child {
+  grid-template-columns: 50cqi 1fr;
+}
+
+.cycle:first-child .cycle-name {
+  font-size: 11cqi;
+}
+
+.cycle {
+  display: grid;
+  grid-template-columns: 17cqi 1fr;
+  column-gap: 4cqi;
+  align-items: end;
+}
+
+.cycle-poster {
+  grid-row: span 2;
+  transform: rotate(-3deg);
+}
+
+.cycle-months {
+  grid-column: span 2;
 }
 
 .cycle-name {
@@ -436,14 +479,22 @@ ol {
 }
 
 .year-curve {
-  width: 100%;
+  flex: 1;
+  width: calc(100% + 14cqi);
+  margin-inline: -7cqi;
+  min-height: 90cqi;
   overflow: visible;
 }
 
-.year-stroke {
+.year-mass {
+  fill: var(--ink);
+}
+
+.year-ridge {
   fill: none;
-  stroke: var(--ink);
-  stroke-width: 11;
+  stroke: var(--crimson);
+  stroke-width: 6;
+  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -456,15 +507,20 @@ ol {
   stroke-linecap: round;
 }
 
-.year-curve text {
-  font-family: var(--hand);
-  font-size: 15px;
-  fill: var(--ink);
-  text-anchor: middle;
+.year-months {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  margin: -9cqi -7cqi 0;
+  padding: 0 1.5cqi;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--bone);
+  font-size: max(0.875rem, 4cqi);
+  position: relative;
 }
 
-.year-curve .year-label-future {
-  fill: var(--mauve);
+.year-month-future {
+  color: var(--ink);
 }
 
 .year-peak {
@@ -518,9 +574,25 @@ ol {
 
 /* 8 · Profile */
 .profile {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
   gap: 6cqi;
+}
+
+/* Answers alternate sides, like lines pasted across a bill */
+.profile > div:nth-child(even) {
+  align-self: flex-end;
+  text-align: right;
+}
+
+.profile > div:nth-child(odd) dd {
+  transform: rotate(-2deg);
+}
+
+.profile > div:nth-child(even) dd {
+  transform: rotate(1.5deg);
 }
 
 .profile dt {
@@ -529,13 +601,15 @@ ol {
 
 .profile dd {
   font-family: var(--lettering);
-  font-size: 10cqi;
+  font-size: 12cqi;
   line-height: 0.95;
   text-transform: uppercase;
 }
 
 /* 9 · Awards */
 .awards {
+  flex: 1;
+  align-content: space-evenly;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6cqi 5cqi;
@@ -550,8 +624,13 @@ ol {
 }
 
 .award:not(.award-lead) .award-poster {
-  width: 60%;
-  margin-bottom: 2cqi;
+  width: 82%;
+  margin-bottom: 3cqi;
+  transform: rotate(-2.5deg);
+}
+
+.award:nth-child(3) .award-poster {
+  transform: rotate(2deg);
 }
 
 .award-prize {
@@ -596,6 +675,32 @@ ol {
   font-size: 56cqi;
   line-height: 0.8;
   transform: rotate(-3deg);
+}
+
+.rank sup {
+  font-size: 0.4em;
+  vertical-align: 1.2em;
+  margin-left: 0.04em;
+}
+
+/* One stroke per spectator, ranked from the left; the visitor's is the red one */
+.crowd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6cqi 1.3cqi;
+  margin-block: 2cqi;
+}
+
+.crowd > li {
+  width: 1.3cqi;
+  height: 7cqi;
+  background: var(--ink);
+  transform: rotate(-6deg);
+}
+
+.crowd > .crowd-you {
+  background: var(--crimson);
+  transform: rotate(-6deg) scaleY(1.7);
 }
 
 .rank-detail {

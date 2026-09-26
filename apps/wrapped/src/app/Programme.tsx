@@ -15,6 +15,7 @@ const number = new Intl.NumberFormat('fr-FR')
 const plural = (count: number, one: string, many: string) => `${number.format(count)} ${count > 1 ? many : one}`
 const today = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: TIME_ZONE })
 const ordinal = (rank: number) => rank === 1 ? '1er' : `${rank}e`
+const Ordinal = ({ rank }: { rank: number }) => <>{rank}<sup>{rank === 1 ? 'er' : 'e'}</sup></>
 
 type Titled = Pick<WrappedMovie, 'key' | 'title' | 'thumb' | 'art'>
 
@@ -28,12 +29,12 @@ export const Programme = ({ share, token }: { share: Share, token: string }) => 
   return (
     <main className="wall">
       <Opening name={name} year={year} posters={[...wrapped.top_movies, ...wrapped.top_shows].filter((item) => item.thumb).slice(0, 5)} art={art} />
-      <Figures hours={wrapped.hours} plays={wrapped.plays} movies={wrapped.movies} shows={wrapped.shows} episodes={wrapped.episodes} />
+      <Figures backdrop={[wrapped.palme, wrapped.grand_prix].find((item) => item?.art)} art={art} hours={wrapped.hours} plays={wrapped.plays} movies={wrapped.movies} shows={wrapped.shows} episodes={wrapped.episodes} />
       {!short && (
         <>
           {!!wrapped.top_movies.length && <Selection movies={wrapped.top_movies} art={art} />}
           {!!wrapped.top_shows.length && <Shows shows={wrapped.top_shows} art={art} />}
-          {!!wrapped.cycles.length && <Cycles cycles={wrapped.cycles} />}
+          {!!wrapped.cycles.length && <Cycles cycles={wrapped.cycles} art={art} />}
           <Year months={wrapped.months} frozen={frozen} />
           {wrapped.night && <Night night={wrapped.night} />}
           <Profile wrapped={wrapped} />
@@ -75,19 +76,25 @@ const Opening = ({ name, year, posters, art }: { name: string, year: number, pos
   )
 }
 
-const Figures = ({ hours, plays, movies, shows, episodes }: { hours: number, plays: number, movies: number, shows: number, episodes: number }) => (
-  <Sheet className="sheet-figures" label="Chiffres">
-    <p className="figure" aria-label={plural(hours, 'heure', 'heures')}>
-      <span aria-hidden="true">{number.format(hours)}</span>
-    </p>
-    <Lettering className="figure-unit" text={hours > 1 ? 'heures devant l’écran' : 'heure devant l’écran'} seed={2} />
-    <ul className="figure-details">
-      <li>{plural(plays, 'séance', 'séances')}</li>
-      {!!movies && <li>{plural(movies, 'film', 'films')}</li>}
-      {!!shows && <li>{plural(shows, 'série', 'séries')}, {plural(episodes, 'épisode', 'épisodes')}</li>}
-    </ul>
-  </Sheet>
-)
+const Figures = ({ backdrop, art, hours, plays, movies, shows, episodes }: { backdrop?: Titled | null, art: Art, hours: number, plays: number, movies: number, shows: number, episodes: number }) => {
+  const sheet = useRef<HTMLElement>(null)
+  const progress = useRevealProgress(sheet)
+
+  return (
+    <Sheet ref={sheet} className="sheet-figures" label="Chiffres">
+      {backdrop && <Painted className="backdrop" src={art(backdrop, 'art', 1280)} alt={backdrop.title} progress={progress} />}
+      <p className="figure" aria-label={plural(hours, 'heure', 'heures')}>
+        <span aria-hidden="true">{number.format(hours)}</span>
+      </p>
+      <Lettering className="figure-unit" text={hours > 1 ? 'heures devant l’écran' : 'heure devant l’écran'} seed={2} />
+      <ul className="figure-details">
+        <li>{plural(plays, 'séance', 'séances')}</li>
+        {!!movies && <li>{plural(movies, 'film', 'films')}</li>}
+        {!!shows && <li>{plural(shows, 'série', 'séries')}, {plural(episodes, 'épisode', 'épisodes')}</li>}
+      </ul>
+    </Sheet>
+  )
+}
 
 // Pinned while the scroll runs through the ten posters, each one repainted over its own stretch
 const Selection = ({ movies, art }: { movies: WrappedMovie[], art: Art }) => {
@@ -141,7 +148,7 @@ const Shows = ({ shows, art }: { shows: WrappedShow[], art: Art }) => {
     <Sheet ref={sheet} className="sheet-shows" label="Séries">
       <Lettering text="Tes séries" seed={4} />
       <figure className="show-lead">
-        <Painted className="show-lead-poster" src={art(first)} alt={first.title} progress={progress} />
+        <Painted className="backdrop" src={art(first, first.art ? 'art' : 'thumb', 1280)} alt={first.title} progress={progress} />
         <figcaption>
           <Lettering as="h3" text={first.title} seed={5} />
           <p className="meta">{plural(first.episodes, 'épisode', 'épisodes')}</p>
@@ -162,24 +169,30 @@ const Shows = ({ shows, art }: { shows: WrappedShow[], art: Art }) => {
   )
 }
 
-const Cycles = ({ cycles }: { cycles: Share['wrapped']['cycles'] }) => (
-  <Sheet className="sheet-cycles" label="Cycles">
-    <Lettering text="Les cycles" seed={6} />
-    <ol className="cycles">
-      {cycles.map((cycle) => (
-        <li key={`${cycle.kind}-${cycle.name}`} className="cycle">
-          <h3 className="cycle-name">{cycle.name}</h3>
-          <p className="meta">{cycle.kind === 'show' ? `série · ${plural(cycle.count, 'épisode', 'épisodes')}` : `réalisation · ${plural(cycle.count, 'film', 'films')}`}</p>
-          <ol className="cycle-months" aria-label={`En ${cycle.months.map((month) => MONTHS[month % 12]).join(', ')}`}>
-            {MONTHS.map((month, index) => (
-              <li key={month} aria-hidden="true" className={cycle.months.includes(index === 0 ? 12 : index) ? 'cycle-month-on' : undefined}>{month[0]}</li>
-            ))}
-          </ol>
-        </li>
-      ))}
-    </ol>
-  </Sheet>
-)
+const Cycles = ({ cycles, art }: { cycles: Share['wrapped']['cycles'], art: Art }) => {
+  const sheet = useRef<HTMLElement>(null)
+  const progress = useRevealProgress(sheet)
+
+  return (
+    <Sheet ref={sheet} className="sheet-cycles" label="Cycles">
+      <Lettering text="Les cycles" seed={6} />
+      <ol className="cycles">
+        {cycles.map((cycle) => (
+          <li key={`${cycle.kind}-${cycle.name}`} className="cycle">
+            <Painted className="cycle-poster" src={art({ key: cycle.key, title: cycle.name, thumb: cycle.thumb }, 'thumb', 320)} alt={cycle.name} progress={progress} />
+            <h3 className="cycle-name">{cycle.name}</h3>
+            <p className="meta">{cycle.kind === 'show' ? `série · ${plural(cycle.count, 'épisode', 'épisodes')}` : `réalisation · ${plural(cycle.count, 'film', 'films')}`}</p>
+            <ol className="cycle-months" aria-label={`En ${cycle.months.map((month) => MONTHS[month % 12]).join(', ')}`}>
+              {MONTHS.map((month, index) => (
+                <li key={month} aria-hidden="true" className={cycle.months.includes(index === 0 ? 12 : index) ? 'cycle-month-on' : undefined}>{month[0]}</li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ol>
+    </Sheet>
+  )
+}
 
 const Year = ({ months, frozen }: { months: number[], frozen: boolean }) => {
   const reduced = useReducedMotion()
@@ -191,26 +204,31 @@ const Year = ({ months, frozen }: { months: number[], frozen: boolean }) => {
   const elapsed = frozen ? 12 : (Number(month) % 12) + 1
   const max = Math.max(...months, 1)
   const peak = months.indexOf(Math.max(...months))
-  const points = months.slice(0, elapsed).map((hours, index) => [10 + index * (380 / 11), 190 - (hours / max) * 160])
-  const path = points.map(([x, y], index) => `${index ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')
+  const x = (index: number) => 10 + index * (380 / 11)
+  const points = months.slice(0, elapsed).map((hours, index) => [x(index), 250 - (hours / max) * 200])
+  const ridge = points.map(([px, py], index) => `${index ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')
+  const reveal = useTransform(drawn, (value) => `inset(0 ${(100 - value * 100).toFixed(1)}% 0 0)`)
 
   return (
     <div ref={track} className="track" style={{ '--steps': reduced ? 0 : 1 } as React.CSSProperties}>
       <Sheet className="sheet-year" label="L'année mois par mois">
         <Lettering text="L’année, mois par mois" seed={7} />
-        <svg className="year-curve" viewBox="0 0 400 230" role="img" aria-label={months.slice(0, elapsed).map((hours, index) => `${MONTHS[index]} ${number.format(hours)} h`).join(', ')}>
+        <svg className="year-curve" viewBox="0 0 400 320" preserveAspectRatio="none" role="img" aria-label={months.slice(0, elapsed).map((hours, index) => `${MONTHS[index]} ${number.format(hours)} h`).join(', ')}>
           <defs>
             <filter id="brush">
               <feTurbulence type="fractalNoise" baseFrequency="0.04 0.9" numOctaves="2" seed="3" />
               <feDisplacementMap in="SourceGraphic" scale="7" />
             </filter>
           </defs>
-          {elapsed < 12 && <path className="year-future" d={`M${(10 + (elapsed - 1) * (380 / 11)).toFixed(1)} 190 H390`} />}
-          <motion.path className="year-stroke" d={path} filter="url(#brush)" style={{ pathLength: reduced ? 1 : drawn }} />
-          {MONTHS.map((name, index) => (
-            <text key={name} x={10 + index * (380 / 11)} y="222" className={index >= elapsed ? 'year-label-future' : undefined}>{name[0].toUpperCase()}</text>
-          ))}
+          <motion.g style={{ clipPath: reduced ? 'none' : reveal }}>
+            <path className="year-mass" d={`${ridge} h17 V330 L-20 330 L-20 ${points[0][1].toFixed(1)} Z`} filter="url(#brush)" />
+            <path className="year-ridge" d={ridge} filter="url(#brush)" />
+          </motion.g>
+          {elapsed < 12 && <path className="year-future" d={`M${x(elapsed - 1).toFixed(1)} 250 H390`} />}
         </svg>
+        <ol className="year-months" aria-hidden="true">
+          {MONTHS.map((name, index) => <li key={name} className={index >= elapsed ? 'year-month-future' : undefined}>{name[0]}</li>)}
+        </ol>
         {months[peak] > 0 && (
           <p className="year-peak">
             <span className="year-peak-month">{MONTHS[peak]}</span>, ton mois le plus chargé : {number.format(months[peak])} h
@@ -225,8 +243,8 @@ const Night = ({ night }: { night: NonNullable<Share['wrapped']['night']> }) => 
   const date = new Date(`${night.date}T12:00:00Z`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TIME_ZONE })
 
   return (
-    <Sheet className="sheet-night" label="Ta plus longue nuit">
-      <Lettering text="Ta plus longue nuit" seed={8} />
+    <Sheet className="sheet-night" label="Ton plus long marathon">
+      <Lettering text="Ton plus long marathon" seed={8} />
       <p className="night-date">{date}</p>
       <p className="night-figures">
         {night.episodes ? plural(night.episodes, 'épisode', 'épisodes') : plural(night.plays, 'séance', 'séances')} d’affilée, jusqu’à <strong>{night.end.replace(':', ' h ')}</strong>
@@ -298,9 +316,12 @@ const Awards = ({ palme, grandPrix, jury, frozen, art }: { palme: WrappedMovie, 
 const Rank = ({ rank, users, hours, median }: { rank: number, users: number, hours: number, median: number }) => (
   <Sheet className="sheet-rank" label="Ton rang">
     <p className="rank" aria-label={`${ordinal(rank)} sur ${users}`}>
-      <span aria-hidden="true">{ordinal(rank)}</span>
+      <span aria-hidden="true"><Ordinal rank={rank} /></span>
     </p>
     <Lettering text={`sur ${users} spectateurs`} seed={11} />
+    <ol className="crowd" aria-hidden="true">
+      {Array.from({ length: users }, (_, index) => <li key={index} className={index === rank - 1 ? 'crowd-you' : undefined} />)}
+    </ol>
     <p className="rank-detail">
       Classement anonyme aux heures regardées. Tu en es à {plural(hours, 'heure', 'heures')}, la moitié du serveur est sous {plural(median, 'heure', 'heures')}.
     </p>
