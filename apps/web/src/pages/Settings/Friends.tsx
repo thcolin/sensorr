@@ -1,13 +1,43 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button, Icon, Link } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
+import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
 import { useTitle } from '@sensorr/utils'
 
+const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
+
 const Friends = ({ ...props }) => {
   useTitle('Settings - Friends')
+  const api = useAPI()
   const { loading, guests, deleteGuest } = useGuestsContext() as any
+  const [wrapped, setWrapped] = useState({})
+
+  useEffect(() => {
+    const { uri, params, init } = api.query.wrapped.getGuests()
+    api.fetch(uri, params, init)
+      .then((results) => setWrapped(results.reduce((acc, guest) => ({ ...acc, [guest.email]: guest }), {})))
+      .catch((err) => console.warn(err))
+  }, [guests])
+
+  const renewToken = useCallback(async (email) => {
+    const { uri, params, init } = api.query.wrapped.postToken({ body: { email } })
+    const { wrapped_token } = await api.fetch(uri, params, init)
+    setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], wrapped_token } }))
+    return wrapped_token
+  }, [])
+
+  const copyLink = useCallback(async (email, renew = false) => {
+    try {
+      const token = (!renew && wrapped[email]?.wrapped_token) || await renewToken(email)
+      await navigator.clipboard.writeText(linkOf(token))
+      toast.success(renew ? `New wrapped link of "${email}" copied, the previous one no longer opens` : `Wrapped link of "${email}" copied to Clipboard`)
+    } catch (err) {
+      console.warn(err)
+      toast.error(`Error while creating the wrapped link of "${email}"`)
+    }
+  }, [wrapped])
   const [invitation, setInvitation] = useState(
     `Someone wonderful want to follow your Plex "Watchlist" and consider your movie wishes !\n` +
     `To accept his invitation, link your Plex account with Sensorr server by following quick instructions,\n` +
@@ -46,6 +76,33 @@ const Friends = ({ ...props }) => {
                   <strong>{guest.name}</strong>
                   <br/>
                   <small>{guest.email}</small>
+                  <div sx={Friends.styles.wrapped}>
+                    <small>
+                      Wrapped · {!wrapped[guest.email] ? 'looking for them in Tautulli...' : wrapped[guest.email].viewer ? 'found in Tautulli' : 'not found in Tautulli'}
+                    </small>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      color='gray'
+                      disabled={!wrapped[guest.email]?.viewer}
+                      onClick={() => copyLink(guest.email)}
+                    >
+                      Copy link
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      color='gray'
+                      disabled={!wrapped[guest.email]?.wrapped_token}
+                      onClick={() => {
+                        if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
+                          copyLink(guest.email, true)
+                        }
+                      }}
+                    >
+                      New link
+                    </Button>
+                  </div>
                 </div>
                 <Button
                   type='button'
@@ -123,7 +180,17 @@ Friends.styles = {
         flex: 0,
       },
     }
-  }
+  },
+  wrapped: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+    '>small': {
+      flex: '1 1 100%',
+    },
+  },
 }
 
 export default Friends
