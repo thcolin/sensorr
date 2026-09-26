@@ -55,6 +55,16 @@ bin/sensorr record movies
 
 A local API spawns the same wrapper, so on Node 24 its jobs fail the same way: the child exits without printing the job id, and `POST /api/jobs` fails with `exited (1) before it started` (`runProcess` in `apps/api/src/app/sensorr/sensorr.service.ts`).
 
+### `nx run wrapped:serve`
+
+Serves the wrapped programme on **http://localhost:4230/wrapped/<token>**. Requests to `/api` go through `apps/wrapped/proxy.conf.json` to `http://localhost:4300`, a local `yarn api`; `--proxyConfig=<file>` points them elsewhere. The page has nothing to show until that API holds a Tautulli import, and Cortex has none before the wrapped ships, so run it on a local stack:
+
+1. Mongo as a replica set, empty, and `yarn api` against it, with `tautulli.url` and `tautulli.key` in the local `config.json` (the key is a secret, never commit it).
+2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
+3. A guest whose email is a Tautulli user's, then **Copy link** on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
+
+Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short programme.
+
 ### The component gallery
 
 **https://localhost:4443/design**, while `yarn web` is running. It renders the 156 stories exported by the 40 `*.stories.tsx` files of `libs/ui/src`, one page per story file, each story with its `.args` spread as props.
@@ -112,11 +122,11 @@ A change is clean when it adds no new red on top of those.
 npx nx build web
 ```
 
-Not part of the gate, and the only one of the three that exits 0. It writes a 7.5 MB `dist/apps/web`, measured on 2026-09-25 with the Shows section in, which is the figure to compare a bundle change against. `npx nx build api` and `npx nx build cli` exit 0 as well.
+Not part of the gate, and the only one of the three that exits 0. It writes a 7.5 MB `dist/apps/web`, measured on 2026-09-25 with the Shows section in, which is the figure to compare a bundle change against. `npx nx build api`, `npx nx build cli` and `npx nx build wrapped` exit 0 as well.
 
 ## Project layout
 
-`apps/` holds `api`, `web`, `cli`, `db` and `web-e2e`. What each one owns is in [architecture.md](architecture.md#containers).
+`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `web-e2e`. What each one owns is in [architecture.md](architecture.md#containers).
 
 `libs/` holds `config` (the schema of `config.json`), `tmdb` and `plex` (the two external clients), `sensorr` (release parsing and policy scoring), `services`, `ui` (the shared components), `theme` and `palette`, `i18n` (English and French) and `utils`.
 
