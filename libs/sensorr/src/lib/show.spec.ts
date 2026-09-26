@@ -602,17 +602,23 @@ describe('swapOf', () => {
 })
 
 describe('swapReplacesOf', () => {
-  it('names each Plex file of the swapped season once, and nothing Plex did not read', () => {
-    const double = { id: 'plex://b#2', from: 'sync' }
-    const episodes = [
-      { season_number: 4, episode_number: 1, files: [{ id: 'plex://a#1', from: 'sync' }, { id: 'import:a.mkv', from: 'import' }] },
-      { season_number: 4, episode_number: 2, files: [double] },
-      { season_number: 4, episode_number: 3, files: [double] },
-      { season_number: 4, episode_number: 4, files: [{ id: 'sonarr:9', from: 'sonarr' }] },
-      { season_number: 5, episode_number: 1, files: [{ id: 'plex://c#3', from: 'sync' }] },
-    ]
+  const double = { id: 'plex://b#2', from: 'sync' }
+  const episodes = [
+    { season_number: 4, episode_number: 1, files: [{ id: 'plex://a#1', from: 'sync' }, { id: 'import:a.mkv', from: 'import' }] },
+    { season_number: 4, episode_number: 2, files: [double] },
+    { season_number: 4, episode_number: 3, files: [double] },
+    { season_number: 4, episode_number: 4, files: [{ id: 'sonarr:9', from: 'sonarr' }] },
+    { season_number: 5, episode_number: 1, files: [{ id: 'plex://c#3', from: 'sync' }] },
+  ]
 
-    expect(swapReplacesOf([{ season: 4, episode: 4 }], episodes)).toEqual(['plex://a#1', 'plex://b#2'])
+  it('names each Plex file of a swapped season pack once, and nothing Plex did not read', () => {
+    expect(swapReplacesOf([1, 2, 3, 4].map(episode => ({ season: 4, episode })), episodes)).toEqual(['plex://a#1', 'plex://b#2'])
+  })
+
+  it('names only the files of the episodes a swap covers, never one that also holds another episode', () => {
+    expect(swapReplacesOf([{ season: 4, episode: 1 }], episodes)).toEqual(['plex://a#1'])
+    expect(swapReplacesOf([{ season: 4, episode: 2 }], episodes)).toEqual([])
+    expect(swapReplacesOf([{ season: 4, episode: 2 }, { season: 4, episode: 3 }], episodes)).toEqual(['plex://b#2'])
   })
 })
 

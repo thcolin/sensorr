@@ -286,13 +286,16 @@ export const manualPickOf = (release, episodes: ShowEpisode[]) => {
   }
 }
 
-// Only a file Plex read can be deleted through Plex
+// Only a file Plex read can be deleted through Plex, and never one that also holds an episode the swap does not cover
 export const swapReplacesOf = (coverage: Coverage[], episodes: ShowEpisode[]) => {
-  const seasons = new Set(coverage.map(({ season }) => season))
+  const covered = new Set(coverage.map(({ season, episode }) => `${season}:${episode}`))
+  const isCovered = ({ season_number, episode_number }: ShowEpisode) => covered.has(`${season_number}:${episode_number}`)
+  const kept = new Set(episodes.filter(episode => !isCovered(episode)).flatMap(({ files }) => files || []).map(({ id }) => id))
+
   return [...new Set(episodes
-    .filter(({ season_number }) => seasons.has(season_number))
+    .filter(isCovered)
     .flatMap(({ files }) => files || [])
-    .filter(({ from }) => from === 'sync')
+    .filter(({ from, id }) => from === 'sync' && !kept.has(id))
     .map(({ id }) => id))]
 }
 
