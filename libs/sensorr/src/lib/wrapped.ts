@@ -109,6 +109,18 @@ export const editionOf = (timestamp: number, timeZone: string) => {
   return month === 12 ? year + 1 : year
 }
 
+// The edition runs from 1 December of the previous year to 1 December, midnight where it is read
+export const editionBounds = (year: number, timeZone: string) => {
+  const midnight = (month: number, y: number) => {
+    const guess = Date.UTC(y, month, 1) / 1000
+    const { day, hour, minute } = partsOf(guess, timeZone)
+    // Ahead of UTC it is already the 1st there, behind it is still the day before
+    return day === 1 ? guess - hour * 3600 - minute * 60 : guess + (24 - hour) * 3600 - minute * 60
+  }
+
+  return { start: midnight(11, year - 1), end: midnight(11, year) }
+}
+
 const round = (value: number, digits = 0) => Math.round(value * 10 ** digits) / 10 ** digits
 const hoursOf = (plays: { play_duration: number }[]) => plays.reduce((sum, play) => sum + (play.play_duration || 0), 0) / 3600
 const median = (values: number[]) => {

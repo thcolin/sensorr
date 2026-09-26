@@ -1,7 +1,7 @@
 import { forwardRef, ReactNode, useId } from 'react'
 
-export const Sheet = forwardRef<HTMLElement, { className?: string, label?: string, children: ReactNode }>(({ className, label, children }, ref) => (
-  <section ref={ref} className={`sheet ${className || ''}`} aria-label={label}>
+export const Sheet = forwardRef<HTMLElement, { className?: string, label?: string, style?: React.CSSProperties, children: ReactNode }>(({ className, label, style, children }, ref) => (
+  <section ref={ref} className={`sheet ${className || ''}`} aria-label={label} style={style}>
     {children}
   </section>
 ))

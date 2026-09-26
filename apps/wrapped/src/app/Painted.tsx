@@ -73,14 +73,27 @@ const compile = (gl: WebGLRenderingContext, type: number, source: string) => {
 
 type Source = HTMLImageElement | HTMLCanvasElement
 
-// Draws `image` repainted as a poster; returns the redraw for a new progress, or null without WebGL
-// A composed canvas is drawn for its box and fills it; a poster covers its box like `object-fit: cover`
-const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill = false) => {
-  const ratioOf = image instanceof HTMLImageElement ? image.naturalWidth / image.naturalHeight : image.width / image.height
+interface Renderer {
+  canvas: HTMLCanvasElement
+  gl: WebGLRenderingContext
+  uniform: (name: string) => WebGLUniformLocation | null
+  textures: Map<Source, WebGLTexture>
+}
+
+// One WebGL context paints every poster and hands each result to the poster's own 2D canvas:
+// browsers cap live contexts at around sixteen, and a page can show more posters than that
+let shared: Renderer | null | undefined
+
+const renderer = (): Renderer | null => {
+  if (shared !== undefined) {
+    return shared
+  }
+
+  const canvas = document.createElement('canvas')
   const gl = canvas.getContext('webgl', { premultipliedAlpha: true, antialias: false })
 
   if (!gl) {
-    return null
+    return (shared = null)
   }
 
   const program = gl.createProgram() as WebGLProgram
@@ -89,8 +102,8 @@ const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill = fa
   gl.linkProgram(program)
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.warn('Unable to paint the poster, shown as is', gl.getProgramInfoLog(program))
-    return null
+    console.warn('Unable to paint the posters, shown as they are', gl.getProgramInfoLog(program))
+    return (shared = null)
   }
 
   gl.useProgram(program)
@@ -100,20 +113,55 @@ const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill = fa
   gl.enableVertexAttribArray(position)
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
 
-  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture())
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
-
   const uniform = (name: string) => gl.getUniformLocation(program, name)
-  gl.uniform1f(uniform('u_seed'), seed)
   gl.uniform3fv(uniform('u_ramp'), RAMP.flat())
   gl.uniform3fv(uniform('u_crimson'), CRIMSON)
+
+  // A lost context is rebuilt on the next draw, its textures with it
+  canvas.addEventListener('webglcontextlost', (event) => {
+    event.preventDefault()
+    shared = undefined
+  })
+
+  return (shared = { canvas, gl, uniform, textures: new Map() })
+}
+
+const textureOf = ({ gl, textures }: Renderer, image: Source) => {
+  if (!textures.has(image)) {
+    const texture = gl.createTexture() as WebGLTexture
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+    textures.set(image, texture)
+  }
+
+  return textures.get(image) as WebGLTexture
+}
+
+const release = (image: Source) => {
+  const texture = shared?.textures.get(image)
+
+  if (shared && texture) {
+    shared.gl.deleteTexture(texture)
+    shared.textures.delete(image)
+  }
+}
+
+// Draws `image` repainted as a poster into `canvas`; a composed canvas is drawn for its box and
+// fills it, a poster covers its box like `object-fit: cover`. Without WebGL the image is drawn as it is.
+const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill: boolean) => {
+  const ratioOf = image instanceof HTMLImageElement ? image.naturalWidth / image.naturalHeight : image.width / image.height
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D
 
   return (progress: number) => {
     const width = Math.round(canvas.clientWidth * Math.min(window.devicePixelRatio, 2))
     const height = Math.round(canvas.clientHeight * Math.min(window.devicePixelRatio, 2))
+
+    if (!width || !height) {
+      return
+    }
 
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width
@@ -121,10 +169,28 @@ const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill = fa
     }
 
     const ratio = fill ? 1 : (width / height) / ratioOf
+    const [scaleX, scaleY] = [Math.min(ratio, 1), Math.min(1 / ratio, 1)]
+    const painter = renderer()
+    context.clearRect(0, 0, width, height)
+
+    if (!painter) {
+      const [sourceWidth, sourceHeight] = image instanceof HTMLImageElement ? [image.naturalWidth, image.naturalHeight] : [image.width, image.height]
+      context.drawImage(image, sourceWidth * (1 - scaleX) / 2, sourceHeight * (1 - scaleY) / 2, sourceWidth * scaleX, sourceHeight * scaleY, 0, 0, width, height)
+      return
+    }
+
+    const { gl, uniform } = painter
+    painter.canvas.width = width
+    painter.canvas.height = height
     gl.viewport(0, 0, width, height)
-    gl.uniform2f(uniform('u_scale'), Math.min(ratio, 1), Math.min(1 / ratio, 1))
+    gl.bindTexture(gl.TEXTURE_2D, textureOf(painter, image))
+    gl.uniform1f(uniform('u_seed'), seed)
+    gl.uniform2f(uniform('u_scale'), scaleX, scaleY)
     gl.uniform1f(uniform('u_progress'), progress)
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    context.drawImage(painter.canvas, 0, 0)
   }
 }
 
@@ -136,7 +202,6 @@ export const useRevealProgress = (target: React.RefObject<HTMLElement>) => {
   return useTransform(scrollYProgress, [0.15, 1], [0, 1], { clamp: true })
 }
 
-// A WebGL context is only held while the poster is near the screen: phones cap how many live at once
 const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
   const image = new Image()
   image.decoding = 'async'
@@ -145,75 +210,78 @@ const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, rejec
   image.src = src
 })
 
-export const Painted = ({ src, alt, progress, className, compose }: { src?: string, alt: string, progress: MotionValue<number>, className?: string, compose?: (width: number, height: number) => Promise<HTMLCanvasElement> }) => {
+type Compose = (width: number, height: number) => Promise<HTMLCanvasElement>
+
+// A poster only loads and paints once it nears the screen
+export const Painted = ({ src, alt, progress, className, compose }: { src?: string, alt: string, progress: MotionValue<number>, className?: string, compose?: Compose }) => {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => setNear(entry.isIntersecting), { rootMargin: '100% 0px' })
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && setNear(true), { rootMargin: '100% 0px' })
     box.current && observer.observe(box.current)
     return () => observer.disconnect()
   }, [])
 
   return (
-    <div ref={box} className={`painted ${className || ''}`}>
+    <div ref={box} className={`painted ${className || ''}`} role="img" aria-label={alt}>
       {src || compose ? (near && <Canvas key={src || 'composed'} src={src} compose={compose} alt={alt} progress={progress} />) : <Missing alt={alt} />}
     </div>
   )
 }
 
 const Missing = ({ alt }: { alt: string }) => (
-  <div className="painted-missing" role="img" aria-label={alt}>
-    <span aria-hidden="true">{alt}</span>
+  <div className="painted-missing" aria-hidden="true">
+    <span>{alt}</span>
   </div>
 )
 
-const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: (width: number, height: number) => Promise<HTMLCanvasElement>, alt: string, progress: MotionValue<number> }) => {
+const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: Compose, alt: string, progress: MotionValue<number> }) => {
   const canvas = useRef<HTMLCanvasElement>(null)
   const draw = useRef<((progress: number) => void) | null>(null)
-  const [state, setState] = useState<'painting' | 'fallback' | 'missing'>('painting')
+  const [missing, setMissing] = useState(false)
+  // A composed canvas is drawn for one box size, it is composed again when the box changes
+  const [size, setSize] = useState('')
   const reduced = useReducedMotion()
 
   useEffect(() => {
     let cancelled = false
+    let source: Source | null = null
+    const current = canvas.current as HTMLCanvasElement
     const dpr = Math.min(window.devicePixelRatio, 2)
-    ;(compose ? compose((canvas.current?.clientWidth || 1) * dpr, (canvas.current?.clientHeight || 1) * dpr) : loadImage(src as string)).then(
-      (source) => {
-        if (cancelled || !canvas.current) {
+
+    ;(compose ? compose(current.clientWidth * dpr, current.clientHeight * dpr) : loadImage(src as string)).then(
+      (loaded) => {
+        if (cancelled) {
           return
         }
 
-        draw.current = paint(canvas.current, source, seedOf(src || alt), !!compose)
-        draw.current ? draw.current(reduced ? 1 : progress.get()) : setState(src ? 'fallback' : 'missing')
+        source = loaded
+        draw.current = paint(current, loaded, seedOf(src || alt), !!compose)
+        draw.current(reduced ? 1 : progress.get())
       },
-      () => !cancelled && setState('missing'),
+      () => !cancelled && setMissing(true),
     )
 
-    const resize = new ResizeObserver(() => draw.current?.(reduced ? 1 : progress.get()))
-    const current = canvas.current
-    current && resize.observe(current)
+    const resize = new ResizeObserver(() => {
+      const next = `${Math.round(current.clientWidth / 24)}x${Math.round(current.clientHeight / 24)}`
+      compose ? setSize(next) : draw.current?.(reduced ? 1 : progress.get())
+    })
+    resize.observe(current)
 
     return () => {
       cancelled = true
       resize.disconnect()
       draw.current = null
-
-      // Released once the canvas has left the page, not when an effect merely reruns on it
-      if (current && !current.isConnected) {
-        current.getContext('webgl')?.getExtension('WEBGL_lose_context')?.loseContext()
-      }
+      source && release(source)
     }
-  }, [src, reduced])
+  }, [src, reduced, compose && size])
 
   useMotionValueEvent(progress, 'change', (value) => !reduced && draw.current?.(value))
 
-  if (state === 'missing') {
+  if (missing) {
     return <Missing alt={alt} />
   }
 
-  if (state === 'fallback') {
-    return <img className="painted-fallback" src={src} alt={alt} />
-  }
-
-  return <canvas ref={canvas} role="img" aria-label={alt} />
+  return <canvas ref={canvas} aria-hidden="true" />
 }

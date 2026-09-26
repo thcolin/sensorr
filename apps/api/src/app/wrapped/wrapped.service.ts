@@ -1,9 +1,9 @@
-import crypto from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { editionBounds, editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
@@ -151,8 +151,9 @@ export class WrappedService {
     }
 
     const { viewer } = await this.shareOf(token)
+    const { start, end } = editionBounds(this.shownEdition(), TIME_ZONE)
     const [watched, title] = await Promise.all([
-      this.playModel.exists({ user_id: viewer._id, title: key, started: this.editionWindow(this.shownEdition()) }),
+      this.playModel.exists({ user_id: viewer._id, title: key, started: { $gte: start, $lt: end } }),
       this.titleModel.findById(key, { thumb: 1, art: 1 }).lean(),
     ])
     const url = this.configService.config.get('tautulli.url')
@@ -172,14 +173,19 @@ export class WrappedService {
       // PNG by default, seven times heavier
       img_format: 'jpg',
     }).toString()
-    const res = await fetch(uri)
+    // The route is public: what went wrong upstream is logged, the guest only gets a 502
+    const res = await fetch(uri, { signal: AbortSignal.timeout(10000) }).catch((error) => {
+      this.logger.warn(`Image "${key}", Tautulli unreachable: ${error.message}`)
+      throw new BadGatewayException()
+    })
     const type = res.headers.get('content-type') || ''
 
     if (!res.ok || !type.startsWith('image/')) {
-      throw new BadGatewayException(`Tautulli answered ${res.status} for the artwork of "${key}"`)
+      this.logger.warn(`Image "${key}", Tautulli answered ${res.status} with "${type}"`)
+      throw new BadGatewayException()
     }
 
-    return { type, buffer: await res.buffer() }
+    return { type, buffer: Buffer.from(await res.arrayBuffer()) }
   }
 
   async guests() {
@@ -193,7 +199,7 @@ export class WrappedService {
     }
 
     this.logger.log(`RenewToken "${email}"`)
-    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_token: crypto.randomBytes(18).toString('base64url') }, { new: true }).lean()
+    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_token: randomBytes(18).toString('base64url') }, { new: true }).lean()
 
     if (!guest) {
       throw new NotFoundException()

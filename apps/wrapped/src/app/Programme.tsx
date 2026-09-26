@@ -16,7 +16,7 @@ const plural = (count: number, one: string, many: string) => `${number.format(co
 const today = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: TIME_ZONE })
 // Month numbers in edition order, December first
 const monthsOf = (months: number[]) => [...months].sort((a, b) => (a % 12) - (b % 12)).map((month) => MONTHS[month % 12]).join(', ')
-const ordinal = (rank: number) => rank === 1 ? '1er' : `${rank}e`
+const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 
 type Art = (item: WrappedPoster, kind?: 'thumb' | 'art', width?: number) => string | undefined
 
@@ -26,6 +26,8 @@ export const Programme = ({ share, token }: { share: Share, token: string }) => 
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
   const short = wrapped.plays < THRESHOLD
+  // 1 December at midnight in Paris: until the job freezes the edition, it is still closed
+  const closed = frozen || Date.now() >= Date.UTC(year, 10, 30, 23)
   const lead = wrapped.palme || wrapped.grand_prix
   const shown = new Set(wrapped.top_shows.map(({ key }) => key))
   const cycles = wrapped.cycles.filter((cycle) => !(cycle.kind === 'show' && shown.has(cycle.key)))
@@ -33,21 +35,21 @@ export const Programme = ({ share, token }: { share: Share, token: string }) => 
   return (
     <main className="wall">
       <Opening name={name} year={year} posters={[...wrapped.top_movies, ...wrapped.top_shows].filter((item) => item.thumb).slice(0, 5)} art={art} />
-      <Figures poster={lead || wrapped.top_movies[0]} art={art} hours={wrapped.hours} plays={wrapped.plays} movies={wrapped.movies} shows={wrapped.shows} episodes={wrapped.episodes} />
+      <Figures poster={lead} art={art} hours={wrapped.hours} plays={wrapped.plays} movies={wrapped.movies} shows={wrapped.shows} episodes={wrapped.episodes} />
       {!short && (
         <>
           {!!wrapped.top_movies.length && <Selection movies={wrapped.top_movies} art={art} />}
           {!!wrapped.top_shows.length && <Shows shows={wrapped.top_shows} art={art} />}
           {!!cycles.length && <Cycles cycles={cycles} art={art} />}
-          <Year months={wrapped.months} posters={wrapped.month_posters} frozen={frozen} art={art} />
+          <Year months={wrapped.months} posters={wrapped.month_posters} closed={closed} art={art} />
           {wrapped.night && <Night night={wrapped.night} art={art} />}
           <Profile wrapped={wrapped} art={art} />
           <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />
-          {wrapped.palme && (wrapped.grand_prix || wrapped.jury) && <Awards grandPrix={wrapped.grand_prix} jury={wrapped.jury} frozen={frozen} art={art} />}
-          {lead && <Finale prize={wrapped.palme ? 'Palme d’or' : 'Grand Prix'} poster={lead} year={year} frozen={frozen} art={art} />}
+          {wrapped.palme && (wrapped.grand_prix || wrapped.jury) && <Awards grandPrix={wrapped.grand_prix} jury={wrapped.jury} closed={closed} art={art} />}
+          {lead && <Finale prize={wrapped.palme ? 'Palme d’or' : 'Grand Prix'} poster={lead} year={year} closed={closed} art={art} />}
         </>
       )}
-      <Colophon year={year} frozen={frozen} short={short} />
+      <Colophon year={year} closed={closed} short={short} />
     </main>
   )
 }
@@ -79,12 +81,12 @@ const Opening = ({ name, year, posters, art }: { name: string, year: number, pos
   )
 }
 
-const Figures = ({ poster, art, hours, plays, movies, shows, episodes }: { poster?: WrappedPoster, art: Art, hours: number, plays: number, movies: number, shows: number, episodes: number }) => {
+const Figures = ({ poster, art, hours, plays, movies, shows, episodes }: { poster: WrappedPoster | null, art: Art, hours: number, plays: number, movies: number, shows: number, episodes: number }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
 
   return (
-    <Sheet ref={sheet} className="sheet-figures" label="Chiffres">
+    <Sheet ref={sheet} className="sheet-figures" label="Chiffres" style={{ '--digits': String(Math.round(hours)).length } as React.CSSProperties}>
       {poster && <Painted className="figures-poster" src={art(poster)} alt={poster.title} progress={progress} />}
       <p className="figure" aria-label={plural(hours, 'heure', 'heures')}>
         <span aria-hidden="true">{number.format(hours)}</span>
@@ -168,7 +170,7 @@ const Shows = ({ shows, art }: { shows: WrappedShow[], art: Art }) => {
             <li key={show.key}>
               <Painted className="show-other-poster" src={art(show, 'thumb', 320)} alt={show.title} progress={progress} />
               <span className="show-other-title">{show.title}</span>
-              <span className="meta">{plural(show.episodes, 'épisode', 'épisodes')}</span>
+              <span className="meta">{plural(show.episodes, 'épisode', 'épisodes')}, en {monthsOf(show.months)}</span>
             </li>
           ))}
         </ul>
@@ -201,13 +203,13 @@ const Cycles = ({ cycles, art }: { cycles: Share['wrapped']['cycles'], art: Art 
 }
 
 // Each month is a strip of its most played poster, as tall as the hours it took
-const Year = ({ months, posters, frozen, art }: { months: number[], posters: (WrappedPoster | null)[], frozen: boolean, art: Art }) => {
+const Year = ({ months, posters, closed, art }: { months: number[], posters: (WrappedPoster | null)[], closed: boolean, art: Art }) => {
   const reduced = useReducedMotion()
   const track = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: track, offset: ['start start', 'end end'] })
   const repaint = useTransform(scrollYProgress, [0, 0.7], [0, 1], { clamp: true })
   const month = new Date().toLocaleDateString('en-US', { month: 'numeric', timeZone: TIME_ZONE })
-  const elapsed = frozen ? 12 : (Number(month) % 12) + 1
+  const elapsed = closed ? 12 : (Number(month) % 12) + 1
   const max = Math.max(...months, 1)
   const peak = months.indexOf(Math.max(...months))
 
@@ -279,7 +281,7 @@ const Night = ({ night, art }: { night: NonNullable<Share['wrapped']['night']>, 
         <Brushed lines={['Ton plus long', 'marathon']} seed={8} />
         <p className="night-date">{date}</p>
         <p className="night-figures">
-          {night.episodes ? plural(night.episodes, 'épisode', 'épisodes') : plural(night.plays, 'séance', 'séances')} d’affilée, jusqu’à <strong>{night.end.replace(':', ' h ')}</strong>
+          {night.episodes ? plural(night.episodes, 'épisode', 'épisodes') : plural(night.plays, 'séance', 'séances')} d’affilée, jusqu’à <strong>{night.end.replace(/^0?(\d+):/, '$1 h ')}</strong>
         </p>
         <ul className="night-titles">
           {night.titles.map((title) => <li key={title}>{title}</li>)}
@@ -328,8 +330,8 @@ const Profile = ({ wrapped, art }: { wrapped: Share['wrapped'], art: Art }) => {
 
 const Rank = ({ rank, users, hours }: { rank: number, users: number, hours: number }) => (
   <Sheet className="sheet-rank" label="Ton rang">
-    <p className="rank" aria-label={`${ordinal(rank)} sur ${users}`}>
-      <span aria-hidden="true">{rank}<sup>{rank === 1 ? 'er' : 'e'}</sup></span>
+    <p className="rank" aria-label={`${rank}${suffix(rank)} sur ${users}`}>
+      <span aria-hidden="true">{rank}<sup>{suffix(rank)}</sup></span>
     </p>
     <Lettering text={`sur ${users} spectateurs`} seed={11} />
     <ol className="crowd" aria-hidden="true">
@@ -339,7 +341,7 @@ const Rank = ({ rank, users, hours }: { rank: number, users: number, hours: numb
   </Sheet>
 )
 
-const Awards = ({ grandPrix, jury, frozen, art }: { grandPrix: WrappedShow | null, jury: WrappedMovie | null, frozen: boolean, art: Art }) => {
+const Awards = ({ grandPrix, jury, closed, art }: { grandPrix: WrappedShow | null, jury: WrappedMovie | null, closed: boolean, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
   const awards = [
@@ -361,12 +363,12 @@ const Awards = ({ grandPrix, jury, frozen, art }: { grandPrix: WrappedShow | nul
         ))}
       </ol>
       <p className="awards-next">Et la Palme d’or…</p>
-      {!frozen && <p className="stamp">Provisoire</p>}
+      {!closed && <p className="stamp">Provisoire</p>}
     </Sheet>
   )
 }
 
-const Finale = ({ prize, poster, year, frozen, art }: { prize: string, poster: WrappedPoster, year: number, frozen: boolean, art: Art }) => {
+const Finale = ({ prize, poster, year, closed, art }: { prize: string, poster: WrappedPoster, year: number, closed: boolean, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
 
@@ -376,7 +378,7 @@ const Finale = ({ prize, poster, year, frozen, art }: { prize: string, poster: W
       <div className="finale-text">
         <Brushed lines={[`${prize} ${year}`]} seed={12} />
         <Lettering as="p" className="finale-title" text={poster.title} seed={13} />
-        {!frozen && <p className="stamp stamp-finale">Provisoire</p>}
+        {!closed && <p className="stamp stamp-finale">Provisoire</p>}
         <p className="finale-end">Fin.</p>
         <p className="finale-next">À l’année prochaine.</p>
       </div>
@@ -384,9 +386,9 @@ const Finale = ({ prize, poster, year, frozen, art }: { prize: string, poster: W
   )
 }
 
-const Colophon = ({ year, frozen, short }: { year: number, frozen: boolean, short: boolean }) => (
+const Colophon = ({ year, closed, short }: { year: number, closed: boolean, short: boolean }) => (
   <footer className="colophon">
     {short && <p className="colophon-short">Ton programme se remplit à chaque séance&#8239;: reviens le voir dans l’année.</p>}
-    <p>{frozen ? `Programme ${year}, clôturé le 1er décembre ${year}.` : `Programme au ${today()}, clôture le 1er décembre ${year}.`}</p>
+    <p>{closed ? `Programme ${year}, clôturé le 1er décembre ${year}.` : `Programme au ${today()}, clôture le 1er décembre ${year}.`}</p>
   </footer>
 )

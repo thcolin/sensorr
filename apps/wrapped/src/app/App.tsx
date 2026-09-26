@@ -36,6 +36,7 @@ export const App = () => {
       document.title = `Programme de ${share.name} ${share.year}`
       setState({ status: 'done', share })
     } catch (error) {
+      console.error('Unable to load the programme', error)
       setState({ status: 'error' })
     }
   }, [])

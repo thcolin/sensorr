@@ -1,4 +1,4 @@
-import { editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
+import { editionBounds, editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
 
 const at = (iso: string) => Date.parse(iso) / 1000
 let id = 0
@@ -50,6 +50,15 @@ describe('editionOf', () => {
     expect(editionOf(at('2026-11-30T22:30:00Z'), 'Europe/Paris')).toBe(2026)
     expect(editionOf(at('2026-11-30T23:30:00Z'), 'Europe/Paris')).toBe(2027)
     expect(editionOf(at('2026-01-01T00:00:00Z'), 'Europe/Paris')).toBe(2026)
+  })
+})
+
+describe('editionBounds', () => {
+  it('runs from 1 December to 1 December, midnight in the given time zone', () => {
+    expect(editionBounds(2026, 'Europe/Paris')).toEqual({ start: at('2025-11-30T23:00:00Z'), end: at('2026-11-30T23:00:00Z') })
+    expect(editionBounds(2026, 'America/New_York')).toEqual({ start: at('2025-12-01T05:00:00Z'), end: at('2026-12-01T05:00:00Z') })
+    expect(editionOf(editionBounds(2026, 'Europe/Paris').end - 1, 'Europe/Paris')).toBe(2026)
+    expect(editionOf(editionBounds(2026, 'Europe/Paris').end, 'Europe/Paris')).toBe(2027)
   })
 })
 
