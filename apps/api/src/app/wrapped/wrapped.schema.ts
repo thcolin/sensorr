@@ -28,7 +28,6 @@ export class Play extends Document {
 
 export const PlaySchema = SchemaFactory.createForClass(Play)
 
-// A Tautulli user, `_id` is its Tautulli user id
 @Schema({ collection: 'viewers' })
 export class Viewer extends Document {
   @Prop()
@@ -82,7 +81,6 @@ export class Title extends Document {
 
 export const TitleSchema = SchemaFactory.createForClass(Title)
 
-// An edition frozen on 1 December, never recomputed
 @Schema({ collection: 'editions' })
 export class Edition extends Document {
   declare _id: mongoose.Types.ObjectId

@@ -1,4 +1,3 @@
-// A play is one grouped row of the Tautulli history.
 // `title` is the movie guid, or `show:<grandparent_rating_key>` for an episode.
 export interface WrappedPlay {
   id: number
@@ -68,7 +67,6 @@ export interface Wrapped {
   jury: WrappedMovie | null
 }
 
-// Calendar parts of a Unix timestamp (seconds) in the given time zone
 export const partsOf = (timestamp: number, timeZone: string) => {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-GB', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
