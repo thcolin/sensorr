@@ -1,7 +1,7 @@
 import { Fragment, memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import clanguages from 'country-language'
-import { ENDED, coverageLabel, diffusionOf } from '@sensorr/sensorr'
+import { ENDED, coverageLabel, diffusionOf, isAiring } from '@sensorr/sensorr'
 import { utils as tmdb, fields } from '@sensorr/tmdb'
 import { emojize, humanize, useDevice } from '@sensorr/utils'
 import { Empty } from '../../atoms/Picture/Picture'
@@ -238,7 +238,8 @@ export const transformShowDetails = (entity) => {
       ) : null,
       release_dates_range: first ? () => (
         <span title={entity.status} sx={{ whiteSpace: 'nowrap' }}>
-          {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : `${first} - Airing`)}
+          {/* Before its first episode a show is not airing yet: the diffusion pill says "Upcoming", the line keeps the year */}
+          {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : (isAiring(entity.status) && new Date(entity.first_air_date).getTime() <= Date.now()) ? `${first} - Airing` : `${first}`)}
         </span>
       ) : null,
       runtime: !!entity.episode_run_time?.length ? () => (
