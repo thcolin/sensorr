@@ -83,7 +83,6 @@ const Show = ({ ...props }) => {
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
     .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
 
-  // One release search for the whole page, opened on the series, a season or an episode (Seasons.tsx)
   const [search, setSearch] = useState({ unit: null, title: 'Releases' })
   const toggleSearch = useRef((e) => null)
   const policy = useShowPolicy(show.data, metadata)

@@ -163,7 +163,6 @@ export const reachesUnit = (meta, category, unit: ShowUnit) => {
   }
 }
 
-// The searches a manual search runs, from its own level up to the whole series
 export const reachParamsOf = (unit: ShowUnit): { season?: number, episode?: number }[] => [
   ...(unit.type === 'episode' ? [{ season: unit.season, episode: unit.episode }] : []),
   ...(unit.type !== 'series' ? [{ season: unit.season }] : []),

@@ -1,7 +1,6 @@
 import { memo } from 'react'
 import { Badge, Icon } from '@sensorr/ui'
 
-// Opens the release search of a season or an episode: the round badge of its follow (`Follow`), a magnifier in it
 const UISearch = ({ onClick, disabled = false, title }) => (
   <button type='button' data-search={true} disabled={disabled} onClick={onClick} title={title} aria-label={title} sx={UISearch.styles.element}>
     <Badge emoji={<Icon value='search' width='1em' height='1em' />} compact={true} size='small' />

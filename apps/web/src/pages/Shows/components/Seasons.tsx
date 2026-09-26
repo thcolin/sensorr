@@ -427,7 +427,6 @@ UISeasons.styles = {
     alignSelf: 'center',
     transition: 'transform 200ms ease-in-out',
   },
-  // Out of the library, the search alone ends the row where a season's follow does
   remote: {
     display: 'flex',
     justifyContent: 'flex-end',

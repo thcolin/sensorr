@@ -248,7 +248,6 @@ const UISensorr = compose(
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, ...props }) => {
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
-  // A show bans through `onBan`, its bans in its own metadata
   const banned = (onBan ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
     .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))

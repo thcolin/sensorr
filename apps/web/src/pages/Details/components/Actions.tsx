@@ -54,7 +54,6 @@ const animations = {
   `,
 }
 
-// The poster palette, turned around when it would vanish on the page background of the color mode
 export const useModePalette = (palette) => {
   const { colorMode } = useThemeUI()
 
@@ -135,7 +134,6 @@ UIMovieActions.styles = {
 
 export const MovieActions = memo(UIMovieActions)
 
-// The ticket of a show: the search alone, a show sets its preferences elsewhere
 const UIShowTicket = ({ palette = null, ...props }) => (
   <div sx={UIMovieActions.styles.element}>
     <Ticket
