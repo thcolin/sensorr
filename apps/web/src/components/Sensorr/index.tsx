@@ -288,7 +288,7 @@ const UISensorr = compose(
               }}
               banned={banned.includes(release?.title)}
               ban={onBan === false ? null : () => toggleBan(release?.title)}
-              footer={!!describe && <small sx={UISensorrWrapper.styles.describe}>{describe(release)}</small>}
+              note={describe ? describe(release) : null}
             />
           ))}
         </div>
@@ -338,17 +338,6 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
 }
 
 UISensorrWrapper.styles = {
-  // What a pick covers, its level and the owned files it replaces, in the reach line of a show's proposal (Shows/components/Proposals.tsx)
-  describe: {
-    display: 'block',
-    paddingTop: 8,
-    fontFamily: 'monospace',
-    fontSize: 'inherit',
-    color: 'grayDarkest',
-    fontVariantNumeric: 'tabular-nums',
-    textAlign: 'center',
-    textWrap: 'balance',
-  },
   container: {
     display: 'flex',
     flexDirection: 'column',
