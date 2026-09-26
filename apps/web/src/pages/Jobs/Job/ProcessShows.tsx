@@ -381,51 +381,53 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
 
   return (
     <div sx={UIRecord.styles.element}>
-      <div sx={UIRecord.styles.wrapper}>
-        <div sx={UIRecord.styles.show}>
-          <Show entity={show || {}} />
-          {mobile && settings}
-        </div>
-        <div sx={UIRecord.styles.button}>
-          <ShowTicket ready={!!metadata?.state} entity={show || {}} toggleSensorr={(e) => toggleSearch(e, show)} />
-        </div>
-      </div>
-      <div sx={UIRecord.styles.results}>
-        {!mobile && settings}
-        {logs === null && !summaryLogs?.length ? (
-          <div sx={UIRecord.styles.placeholder}>
-            <Icon value='spinner' />
+      <div sx={UIRecord.styles.record}>
+        <div sx={UIRecord.styles.wrapper}>
+          <div sx={UIRecord.styles.show}>
+            <Show entity={show || {}} />
+            {mobile && settings}
           </div>
-        ) : (
-          <>
-            <RecordLogs
-              logs={logs || summaryLogs}
-              command={command}
-              metadata={metadata}
-              toggleBan={toggleBan}
-            />
-            {done && (releases.length ? (
-              <div>
-                {releases.map(release => (
-                  <div key={release.id} sx={UIRecord.styles.release}>
-                    <code>{coverageLabel(release.coverage || [], release.level || levelOf(release.meta, release.category) || undefined)}</code>
-                    <Release
-                      entity={{ from: command, job, ...release, ...optimistic[release.id] }}
-                      display='column'
-                      proceed={proceed}
-                      banned={banned.includes(release.title)}
-                      ban={() => toggleBan(release.title)}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div sx={UIRecord.styles.release}>
-                <Release entity={failure || {}} display='column' />
-              </div>
-            ))}
-          </>
-        )}
+          <div sx={UIRecord.styles.button}>
+            <ShowTicket ready={!!metadata?.state} entity={show || {}} toggleSensorr={(e) => toggleSearch(e, show)} />
+          </div>
+        </div>
+        <div sx={UIRecord.styles.results}>
+          {!mobile && settings}
+          {logs === null && !summaryLogs?.length ? (
+            <div sx={UIRecord.styles.placeholder}>
+              <Icon value='spinner' />
+            </div>
+          ) : (
+            <>
+              <RecordLogs
+                logs={logs || summaryLogs}
+                command={command}
+                metadata={metadata}
+                toggleBan={toggleBan}
+              />
+              {done && (releases.length ? (
+                <div>
+                  {releases.map(release => (
+                    <div key={release.id} sx={UIRecord.styles.release}>
+                      <code>{coverageLabel(release.coverage || [], release.level || levelOf(release.meta, release.category) || undefined)}</code>
+                      <Release
+                        entity={{ from: command, job, ...release, ...optimistic[release.id] }}
+                        display='column'
+                        proceed={proceed}
+                        banned={banned.includes(release.title)}
+                        ban={() => toggleBan(release.title)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div sx={UIRecord.styles.release}>
+                  <Release entity={failure || {}} display='column' />
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -433,6 +435,12 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
 
 UIRecord.styles = {
   element: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    paddingY: 0,
+  },
+  record: {
     display: 'flex',
     flexDirection: ['column', 'row'],
     alignItems: ['center', 'unset'],
@@ -464,7 +472,8 @@ UIRecord.styles = {
     zIndex: 1,
   },
   metadata: {
-    flex: 1,
+    // Beside the poster on a phone, above the logs otherwise, where stretching would push them down
+    flex: [1, 'none'],
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -478,6 +487,7 @@ UIRecord.styles = {
     flexDirection: 'column',
     width: ['100%', 'auto'],
     maxWidth: '100%',
+    marginTop: [2, 12],
     overflow: 'hidden',
   },
   placeholder: {
