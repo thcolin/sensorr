@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
-import { diffusionOf, episodeStatus, isAiring, progressOf } from '@sensorr/sensorr'
+import { episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
 import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
@@ -26,23 +26,6 @@ const NONE = []
 
 const regionOf = () => (global as any)?.config?.region || 'fr-FR'
 
-// The earliest air date still to come among these episodes, like `next` in the API's progress
-export const nextOf = (episodes) => episodes
-  .filter(({ air_date }) => !!air_date && new Date(air_date).getTime() > Date.now())
-  .map(({ air_date }) => new Date(air_date))
-  .sort((a, b) => a.getTime() - b.getTime())[0] || null
-
-// A season airs while its series does and one of its episodes has not aired yet, dated or not
-const diffusionOfSeason = (status, episodes) => {
-  if (!isAiring(status) || !episodes.some(({ air_date }) => !air_date || new Date(air_date).getTime() > Date.now())) {
-    return { airing: false, detail: undefined }
-  }
-
-  const next = nextOf(episodes)
-  // At UTC midnight like every TMDB day, formatted as `diffusionOf` does
-  return { airing: true, detail: next ? `next episode on ${next.toLocaleDateString(regionOf(), { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : 'still airing' }
-}
-
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
 
@@ -65,8 +48,8 @@ const bleed = {
 }
 
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
-// atop its season's drawer, or in its episode's unfolded row
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, inLibrary, ready, followEpisodes, ...props }) => {
+// atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx)
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, inLibrary, ready, followEpisodes, ...props }) => {
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -85,8 +68,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
         progress: progressOf(list),
-        // Specials have no progress pill
-        diffusion: number === 0 ? { airing: false, detail: undefined } : diffusionOfSeason(entity?.status, list),
+        // Specials have no progress pill: `seasonDiffusionOf` leaves them out
+        diffusion: seasonDiffusionOf(entity?.status, list, Date.now(), regionOf()),
         // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
         proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
@@ -98,11 +81,8 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
 
   const totals = useMemo(() => {
     const list = (episodes || []).filter(({ season_number }) => season_number !== 0)
-    const progress = progressOf(list)
-    // The diffusion of the header's pill (Show.tsx), over the same episodes
-    const diffusion = diffusionOf(entity, { aired: progress.aired, next: nextOf(list) }, regionOf())
-    return { count: list.length, progress, diffusion, size: sizeOf(episodes || []) }
-  }, [episodes, entity])
+    return { count: list.length, progress: progressOf(list), size: sizeOf(episodes || []) }
+  }, [episodes])
 
   // Episodes a pending swap covers: on an owned one, the file it would replace is marked. Any other proposal only
   // fills the missing ones (`importLinksOf`, apps/cli/src/utils/shows.js)
@@ -209,7 +189,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             </div>
             {inLibrary && (
               <div sx={UISeasons.styles.summary}>
-                <ProgressPill {...totals.progress} airing={totals.diffusion.airing} detail={totals.diffusion.detail} />
+                <ProgressPill {...totals.progress} airing={diffusion?.airing} detail={diffusion?.detail} />
                 <Bar progress={totals.progress} />
                 <Complete progress={totals.progress} />
                 <span />

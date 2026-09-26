@@ -23,7 +23,7 @@ export const Segments = () => (
 export const ManySegments = () => <Progress value={273} max={416} segments={Array(32).fill(13).map((max, index) => ({ value: index % 3 ? max : 0, max }))} />
 export const Notched = () => (
   <div sx={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-    <Progress value={42} max={50} segments={[10, 10, 10, 10, 2].map(value => ({ value, max: 10 }))} />
+    <Progress value={82} max={90} segments={[10, 10, 10, 10, 10, 10, 10, 10, 2].map(value => ({ value, max: 10 }))} />
     <Progress value={196} max={234} segments={Array(18).fill(13).map((max, index) => ({ value: index < 15 ? max : 0, max }))} />
   </div>
 )

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
-import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
-import { diffusionOf, episodeStatus, progressOf, progressOfDetails } from '@sensorr/sensorr'
+import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, TransitionPillStyles, Warning } from '@sensorr/ui'
+import { diffusionOf, episodeStatus, nextAirDateOf, progressOf, progressOfDetails } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -11,14 +11,14 @@ import { showStateOf, useShowsMetadataContext } from '../../contexts/ShowsMetada
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import { withBody } from '../../layout/withLayout'
-import ShowChild from '../../components/Show/Show'
+import ShowChild, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import Person from '../../components/Person/Person'
 import { ReleaseSize, ReleaseTag } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
 import { ShowActions } from './components/Actions'
 import { useProposals } from './components/Proposals'
-import { nextOf, Seasons } from './components/Seasons'
+import { Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
@@ -77,16 +77,25 @@ const Show = ({ ...props }) => {
 
   const proposals = useProposals({ entity: show.data, metadata, episodes: inLibrary ? (episodes || null) : null, proceedRelease, banRelease })
 
-  // In the pills of the "All seasons" row: owned over aired, the size, the diffusion, then what waits on a gesture.
-  // Out of the library, the diffusion alone, from the TMDB details
-  const summary = useMemo(() => {
+  const progress = useMemo(() => (inLibrary && episodes) ? progressOf(episodes.filter(({ season_number }) => season_number !== 0)) : null, [inLibrary, episodes])
+
+  // The diffusion of the header's pill and of the "All seasons" row (Seasons.tsx), computed once for both. Out of the
+  // library, from the TMDB details
+  const diffusion = useMemo(() => {
     if (!show.data?.id || metadataLoading || (inLibrary && !episodes)) {
       return null
     }
 
-    const regular = inLibrary ? episodes.filter(({ season_number }) => season_number !== 0) : null
-    const progress = inLibrary ? progressOf(regular) : null
-    const diffusion = diffusionOf(show.data, inLibrary ? { aired: progress.aired, next: nextOf(regular) } : progressOfDetails(show.data), (global as any)?.config?.region || 'fr-FR')
+    return diffusionOf(show.data, inLibrary ? { aired: progress.aired, next: nextAirDateOf(episodes) } : progressOfDetails(show.data), (global as any)?.config?.region || 'fr-FR')
+  }, [show.data, metadataLoading, inLibrary, episodes, progress])
+
+  // In the pills of the header: owned over aired, the size, the diffusion, then what waits on a gesture. Out of the
+  // library, the diffusion alone
+  const summary = useMemo(() => {
+    if (!diffusion) {
+      return null
+    }
+
     const tag = !!diffusion.label && (
       <ReleaseTag title={show.data.status} data-diffusion={true} data-airing={diffusion.airing}>
         <code>{diffusion.label}</code>
@@ -121,7 +130,7 @@ const Show = ({ ...props }) => {
         )}
       </span>,
     ]
-  }, [show.data, metadataLoading, inLibrary, episodes, proposals.rows.length, id])
+  }, [show.data, diffusion, progress, inLibrary, episodes, proposals.rows.length, id])
 
   const additional = useMemo(() => ({
     externals: {
@@ -135,6 +144,7 @@ const Show = ({ ...props }) => {
       label: t('items.movies.recommendations.label'),
       entities: show.data?.recommendations?.results || [],
       child: ShowChild,
+      extra: FOOTER_HEIGHT,
       ready,
     }
 
@@ -143,6 +153,7 @@ const Show = ({ ...props }) => {
       label: t('items.movies.similar.label'),
       entities: show.data?.similar?.results || [],
       child: ShowChild,
+      extra: FOOTER_HEIGHT,
       ready,
     }
 
@@ -239,6 +250,7 @@ const Show = ({ ...props }) => {
             proposals={proposals.rows}
             policy={proposals.policy}
             answer={proposals.answer}
+            diffusion={diffusion}
             inLibrary={!seasonsReady || inLibrary}
             ready={actionsReady}
             followEpisodes={followEpisodes}
@@ -260,15 +272,9 @@ Show.styles = {
       fontSize: 6,
       whiteSpace: 'nowrap',
     },
-    // The tints of the aired side of the progress pill (TransitionPill): violet while the series airs
-    '>[data-diffusion] >code': {
-      backgroundColor: 'grayDark',
-      color: 'text',
-    },
-    '>[data-diffusion][data-airing="true"] >code': {
-      backgroundColor: 'airingDark',
-      color: 'whitePure',
-    },
+    // The tints of a transition pill's new side: `airing` while the series airs, `quiet` otherwise
+    '>[data-diffusion] >code': TransitionPillStyles.tints.quiet.after,
+    '>[data-diffusion][data-airing="true"] >code': TransitionPillStyles.tints.airing.after,
   },
   anchor: {
     display: 'flex',
