@@ -16,11 +16,11 @@ UISearch.styles = {
     '>span': {
       transition: 'background-color 200ms ease-in-out',
     },
-    // 44px of touch target on a phone around a badge of 20px, as the follow's select
+    // The touch target of the follow's select, but on a phone its gap belongs to the follow on its right
     '::after': {
       content: '""',
       position: 'absolute',
-      inset: ['-0.75em', '-0.5em'],
+      inset: ['-0.75em 0 -0.75em -0.75em', '-0.5em'],
     },
     ':hover:not(:disabled) >span': {
       backgroundColor: 'grayDark',

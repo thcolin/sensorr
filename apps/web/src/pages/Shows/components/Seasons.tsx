@@ -16,8 +16,8 @@ const THRESHOLD = 60
 
 const pad = (number) => String(number).padStart(2, '0')
 
-// Wide enough for a pill of four digits on each side. The last two columns, the gap between them and the
-// right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the follows align
+// Wide enough for a pill of four digits on each side. The last three columns, the gaps between them and the
+// right inset are those of an episode row (`UIEpisodes.styles.row`): the check sits in its state column, the searches and follows align
 const SUMMARY = ['5.5em minmax(0, 1fr) 1.25em 1.25em 1.25em', '6.5em 10em 1.5em 1.5em 1.5em']
 const GAP = [6, 4]
 
@@ -255,11 +255,13 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                           <Complete progress={season.progress} />
                         </>
                       )}
-                      <Search
-                        disabled={!ready}
-                        title={`Search releases for ${season.name}`}
-                        onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
-                      />
+                      {!!search && (
+                        <Search
+                          disabled={!ready}
+                          title={`Search releases for ${season.name}`}
+                          onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
+                        />
+                      )}
                       <Follow
                         checked={season.monitored}
                         partial={!!season.followed && !season.monitored}
@@ -273,7 +275,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                         onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
                       />
                     </div>
-                  ) : (
+                  ) : !!search && (
                     <div sx={UISeasons.styles.remote}>
                       <Search
                         disabled={!ready}
@@ -518,11 +520,13 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
                 </time>
                 {/* The follow already says an episode is not followed: the empty cell keeps the grid columns */}
                 {!readonly && (status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />)}
-                <Search
-                  disabled={!ready}
-                  title={`Search releases for S${pad(episode.season_number)}E${pad(episode.episode_number)}`}
-                  onClick={e => search(e, { type: 'episode', season: episode.season_number, episode: episode.episode_number }, `S${pad(episode.season_number)}E${pad(episode.episode_number)}`)}
-                />
+                {!!search && (
+                  <Search
+                    disabled={!ready}
+                    title={`Search releases for S${pad(episode.season_number)}E${pad(episode.episode_number)}`}
+                    onClick={e => search(e, { type: 'episode', season: episode.season_number, episode: episode.episode_number }, `S${pad(episode.season_number)}E${pad(episode.episode_number)}`)}
+                  />
+                )}
                 {!readonly && (
                   <Follow
                     checked={!!episode.monitored}

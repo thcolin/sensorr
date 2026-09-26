@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useMemo, useRef, useState } from 'react'
 import { compose, emojize } from '@sensorr/utils'
 import { Icon, Sorting, Warning, Drawer, withControls, QuerySelect } from '@sensorr/ui'
 import { Policy, SENSORR_POLICY_FALLBACK } from '@sensorr/sensorr'
@@ -248,7 +248,7 @@ const UISensorr = compose(
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, describe = null, ...props }) => {
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
-  const banned = (onBan ? props.banned : metadata?.banned_releases) || []
+  const banned = (onBan !== null ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
     .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))
   const statistics = useMemo(() => ({
@@ -270,7 +270,7 @@ const UISensorr = compose(
       {override || (
         <div sx={{ flexGrow: 1, flexShrink: 1, height: '100%', overflowX: 'hidden', overflowY: 'auto', color: 'text' }}>
           {entities.map(release => (
-            <div key={release.link}>
+            <Fragment key={release.link}>
               <Release
                 entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
                 statistics={statistics}
@@ -278,7 +278,7 @@ const UISensorr = compose(
                 actions={false}
                 proceed={async (release, choice) => {
                   toggle()
-  
+
                   try {
                     await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
                   } catch (err) {
@@ -287,11 +287,11 @@ const UISensorr = compose(
                   }
                 }}
                 banned={banned.includes(release?.title)}
-                ban={() => toggleBan(release?.title)}
+                ban={onBan === false ? null : () => toggleBan(release?.title)}
               />
               {/* What a pick covers, its level and the owned files it replaces, before the click that downloads it */}
               {!!describe && <small sx={UISensorrWrapper.styles.describe}>{describe(release)}</small>}
-            </div>
+            </Fragment>
           ))}
         </div>
       )}

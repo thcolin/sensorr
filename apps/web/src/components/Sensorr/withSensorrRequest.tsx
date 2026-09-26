@@ -67,15 +67,15 @@ export const withSensorrRequest = () => (WrappedComponent) => {
             <Warning
               emoji="🎟"
               title="Setting up Sensorr"
-              subtitle="Loading data and custom preferences, please wait a few moments..."
+              subtitle={`Loading ${unit ? 'show' : 'movie'} data and custom preferences, please wait a few moments...`}
             />
           </div>
         ) : (!releases.length && (loading || !done)) ? (
           <div sx={styles.empty}>
             <Warning
               emoji="🎟"
-              title="Searching for releases on ZNABS"
-              subtitle={!progress.ongoing ? 'Setting up Sensorr with data and custom preferences, please wait a few moments...' : (
+              title={`Searching for ${unit ? 'show' : 'movie'} releases on ZNABS`}
+              subtitle={!progress.ongoing ? `Setting up Sensorr with ${unit ? 'show' : 'movie'} data and custom preferences, please wait a few moments...` : (
                 <span>
                   Using <em>"{progress.ongoing?.term}"</em> term on <strong>{progress.ongoing?.znab?.name}</strong>...
                 </span>

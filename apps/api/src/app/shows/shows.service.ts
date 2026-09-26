@@ -168,10 +168,16 @@ export class ShowsService {
     return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
   }
 
+  // Pulled only while still a proposal: an answer accepted meanwhile keeps its release, its metafile and its episodes
   private async refuseProposal(id: number, release: ShowReleaseDTO) {
+    const { modifiedCount } = await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id, proposal: true } } })
+
+    if (modifiedCount !== 1) {
+      return
+    }
+
     await this.sensorrService.removeRelease(release)
     await this.episodeModel.updateMany({ show_id: id, release: release.id }, { release: null })
-    await this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id } } })
     await this.logsService.ammendLog(
       { 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true },
       { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } },

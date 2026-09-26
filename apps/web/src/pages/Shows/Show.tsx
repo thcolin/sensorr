@@ -97,7 +97,7 @@ const Show = ({ ...props }) => {
   const openSearch = useCallback((e, target: { type: string, season?: number, episode?: number } = { type: 'series' }, label = 'the whole series') => {
     const seasons = (show.data?.seasons || []).filter(({ season_number, episode_count }) => season_number !== 0 && episode_count)
     const covers = ({ season, episode }) => (target.season === undefined || season === target.season) && (target.episode === undefined || episode === target.episode)
-    const proposal = (metadata?.releases || []).find(release => isPending(release) && (release.coverage || []).some(covers)) || null
+    const proposal = (metadata?.releases || []).find(release => isPending(release) && (target.type !== 'series' || release.level === 'series') && (release.coverage || []).some(covers)) || null
     setSearch({ unit: { ...target, episodes: seasons.map(({ season_number }) => ({ season: season_number, episode: 1 })) }, title: `Releases for ${label}`, proposal })
     toggleSearch.current(e)
   }, [show.data, metadata?.releases])
@@ -105,9 +105,8 @@ const Show = ({ ...props }) => {
   // A pick out of the library adds the show first, unfollowed: its episodes are where the import links the files
   const pickRelease = useCallback(async (release) => {
     const listed = inLibrary ? episodes : await addShow(Number(id), false)
-    const { releases = [] } = inLibrary ? metadata : {}
-    await setShowMetadata(Number(id), 'releases', [...releases, { ...release, ...manualPickOf(release, listed), from: 'record', job: 'manual', proposal: true, choice: true }])
-  }, [id, inLibrary, episodes, metadata, addShow])
+    await setShowMetadata(Number(id), 'release', { ...release, ...manualPickOf(release, listed), from: 'record', job: 'manual', proposal: true, choice: true })
+  }, [id, inLibrary, episodes, addShow])
 
   // Out of the library nothing is owned yet, and the episodes a release covers are only known once the show is added
   const describeRelease = useCallback((release) => {
@@ -304,7 +303,7 @@ const Show = ({ ...props }) => {
         describe={describeRelease}
         onPick={pickRelease}
         banned={searched.banned_releases}
-        onBan={toggleBan}
+        onBan={inLibrary ? toggleBan : false}
         setPortalToggle={(toggleOpen) => toggleSearch.current = (e) => toggleOpen(e)}
       />
     </Details>

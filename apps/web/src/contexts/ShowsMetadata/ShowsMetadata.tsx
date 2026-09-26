@@ -124,7 +124,7 @@ export const Provider = ({ ...props }) => {
 
   const setShowMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'releases',
+    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'release' | 'releases',
     value: any,
   ) => {
     const ids = Array.isArray(id) ? id : [id]
@@ -136,13 +136,15 @@ export const Provider = ({ ...props }) => {
         id: Number(i),
         ...(key === 'proposal' ? {
           releases: (initial[i].releases || []).map(r => answered(r) ? { ...r, choice: typeof value === 'object' ? value.choice : value } : r),
+        } : key === 'release' ? {
+          releases: [...(initial[i].releases || []), value],
         } : {
           [key]: typeof value === 'function' ? value(initial[i], i) : value,
         }),
       },
     }), {})
 
-    const covered = key !== 'proposal' ? [] : ids.flatMap(i => changes[i].releases
+    const covered = key === 'release' ? ids.map(i => ({ show: Number(i), release: value })) : key !== 'proposal' ? [] : ids.flatMap(i => changes[i].releases
       .filter(release => typeof release.choice === 'boolean' && !(initial[i].releases || []).find(r => r.id === release.id && typeof r.choice === 'boolean'))
       .map(release => ({ show: Number(i), release })))
     const moved = (release, episode) => (
@@ -170,8 +172,10 @@ export const Provider = ({ ...props }) => {
         }, episodes))
       }
 
-      // An answer posts only the releases it answers: the others may still hold the choice of an answer in flight
-      const body = key !== 'proposal' ? changes : ids.reduce((acc, i) => ({ ...acc, [i]: { id: Number(i), releases: changes[i].releases.filter(answered) } }), {})
+      // An answer or a pick posts only its own release: the others may still hold the choice of an answer in flight
+      const body = key === 'release' ? ids.reduce((acc, i) => ({ ...acc, [i]: { id: Number(i), releases: [value] } }), {})
+        : key !== 'proposal' ? changes
+        : ids.reduce((acc, i) => ({ ...acc, [i]: { id: Number(i), releases: changes[i].releases.filter(answered) } }), {})
 
       try {
         const { uri, params, init } = api.query.shows.postShows({ body })

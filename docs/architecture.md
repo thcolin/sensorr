@@ -101,7 +101,7 @@ flowchart TD
 
   boot["CLI logs in, loads config from the API<br/>utils/command.js:9-13"] --> fetch
   fetch["GET /api/movies, state wished, no pending proposal<br/>commands/record.js:41"] --> query
-  query["Build search terms from titles and years<br/>libs/sensorr/src/lib/sensorr.ts:46"] --> search
+  query["Build search terms from titles and years<br/>libs/sensorr/src/lib/sensorr.ts:49"] --> search
   search["One search per indexer per term<br/>libs/sensorr/src/lib/znab.ts:57"] --> policy
   policy["Policy filters, scores and sorts<br/>libs/sensorr/src/lib/policy.ts:116"] --> valid
 
@@ -145,10 +145,10 @@ daily, or `airing shows`, hourly, the same component with a narrower entry list
 flowchart TD
   cron["API cron tick, record shows or airing shows<br/>jobs.service.ts:95"] --> fetch
   fetch["GET /api/shows, wished and monitored, kept when an episode is wanted<br/>ProcessShowsTask.js:32-37"] --> units
-  units["Search units: whole series, season packs, then episodes<br/>libs/sensorr/src/lib/show.ts:177"] --> search
+  units["Search units: whole series, season packs, then episodes<br/>libs/sensorr/src/lib/show.ts:197"] --> search
   search["tvsearch with season and ep, or search with SxxEyy<br/>libs/sensorr/src/lib/znab.ts:88"] --> policy
   policy["Policy checks level and years, then scores<br/>libs/sensorr/src/lib/policy.ts:133-135"] --> pick
-  pick["Each release keeps the episodes it is the first to cover<br/>libs/sensorr/src/lib/show.ts:206"] --> picked
+  pick["Each release keeps the episodes it is the first to cover<br/>libs/sensorr/src/lib/show.ts:226"] --> picked
 
   picked{"Any release picked ?"}
   picked -->|no| stop["Nothing written, the run logs why"]
@@ -162,8 +162,8 @@ flowchart TD
   dlcache --> cached["Torrent buffer stored in the blackhole collection<br/>sensorr.service.ts:73"]
 
   cached --> review["Show page or notification, one decision per release"]
-  review -->|accepted| accept["POST /api/shows with choice true<br/>shows.service.ts:107"]
-  review -->|refused| refuse["Buffer deleted, the covered episodes let go<br/>shows.service.ts:140-141"]
+  review -->|accepted| accept["POST /api/shows with choice true<br/>shows.service.ts:106"]
+  review -->|refused| refuse["Buffer deleted, the covered episodes let go<br/>shows.service.ts:172"]
   accept --> blackhole
 
   blackhole --> client["The download client saves the files into shows.staging"]
@@ -184,6 +184,16 @@ later (`import-shows.js:189-204`), `sync shows` for an episode whose file left P
 writes that file on the episode, marked `from: 'import'`, and stamps the release `imported_at`;
 `sync shows` later replaces the entry with the file Plex reads (`import-shows.js`). Why each job selects what it does is in
 [jobs.md](jobs.md#series).
+
+The show page also searches by hand, from the ticket under the poster for the whole series or
+from the search badge of a season or an episode row (`apps/web/src/pages/Shows/Show.tsx`). The
+browser runs the same `tvsearch` from that level up to the whole series (`reachParamsOf`,
+`libs/sensorr/src/lib/show.ts`), and keeps only the releases that hold the target. A pick skips
+the proposal: it is posted with `job: 'manual'` and `choice: true`, downloaded into
+`shows.blackhole` at once, and covers every episode its release holds, followed or not, as a swap
+when some of them are owned (`manualPickOf`). A pending proposal on one of those episodes is
+refused on the way (`shows.service.ts:130-138`). A show out of the library is added first,
+unfollowed, so the import has episodes to link.
 
 ### One volume for the hard link
 
