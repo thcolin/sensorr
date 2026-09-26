@@ -5,9 +5,9 @@ max_score: 36
 na_heuristics: 7
 p0_count: 0
 p1_count: 3
-target_identity: "file:/Users/thcolin/orca/workspaces/sensorr/wrapped-donnees/apps/web/src/pages/Settings/Friends.tsx"
+target_identity: "file:apps/web/src/pages/Settings/Friends.tsx"
 target_fingerprint: "sha256:f48a7803cd5fd13b7d9136a255e05b6927d2ff1d8f0356a54d6d8e9d53cd5713"
-target_path: /Users/thcolin/orca/workspaces/sensorr/wrapped-donnees/apps/web/src/pages/Settings/Friends.tsx
+target_path: apps/web/src/pages/Settings/Friends.tsx
 timestamp: 2026-09-26T12-15-50Z
 slug: apps-web-src-pages-settings-friends-tsx
 closed: true
