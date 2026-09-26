@@ -42,7 +42,7 @@ const Tautulli = ({ ...props }) => {
                   </Label>
                 )}
               />
-              <small sx={{ disply: 'block', marginTop: 6 }}>Found in Tautulli, under <code>Settings</code> › <code>Web Interface</code> › <code>API</code></small>
+              <small sx={{ marginTop: 6 }}>Found in Tautulli, under <code>Settings</code> › <code>Web Interface</code> › <code>API</code></small>
             </div>
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>

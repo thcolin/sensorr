@@ -14,6 +14,7 @@ const Friends = ({ ...props }) => {
   const { loading, guests, deleteGuest } = useGuestsContext() as any
   const [wrapped, setWrapped] = useState(null)
   const [wrappedError, setWrappedError] = useState(false)
+  const [busy, setBusy] = useState({})
 
   const fetchWrapped = useCallback(() => {
     setWrappedError(false)
@@ -37,6 +38,7 @@ const Friends = ({ ...props }) => {
 
   const copyLink = useCallback(async (email, renew = false) => {
     let token
+    setBusy((busy) => ({ ...busy, [email]: true }))
 
     try {
       token = (!renew && wrapped?.[email]?.wrapped_token) || await renewToken(email)
@@ -44,6 +46,8 @@ const Friends = ({ ...props }) => {
       console.warn(err)
       toast.error(`Error while creating the wrapped link of "${email}", try again`)
       return
+    } finally {
+      setBusy((busy) => ({ ...busy, [email]: false }))
     }
 
     try {
@@ -95,10 +99,10 @@ const Friends = ({ ...props }) => {
                   <div sx={Friends.styles.wrapped}>
                     {wrappedError ? (
                       <small>
-                        Unable to load the wrapped links. <Link to='' onClick={(e) => { e.preventDefault(); fetchWrapped() }}>Retry</Link>
+                        Unable to load the wrapped links. <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>Retry</button>
                       </small>
                     ) : !wrapped ? (
-                      <div><Badge emoji={<Icon value='spinner' height='1em' width='1em' />} label='Wrapped' size='small' /></div>
+                      <div aria-busy={true}><Badge emoji={<Icon value='spinner' height='1em' width='1em' />} label='Looking for them in Tautulli' size='small' /></div>
                     ) : wrapped[guest.email]?.viewer ? (
                       <div><Badge emoji='🎞️' label='Wrapped' size='small' /></div>
                     ) : (
@@ -111,7 +115,7 @@ const Friends = ({ ...props }) => {
                       variant='outline'
                       color='gray'
                       aria-label={`Copy the wrapped link of ${guest.name}`}
-                      disabled={!wrapped?.[guest.email]?.viewer}
+                      disabled={!wrapped?.[guest.email]?.viewer || busy[guest.email]}
                       onClick={() => copyLink(guest.email)}
                     >
                       Copy link
@@ -121,7 +125,7 @@ const Friends = ({ ...props }) => {
                       variant='outline'
                       color='gray'
                       aria-label={`Replace the wrapped link of ${guest.name}`}
-                      disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token}
+                      disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token || busy[guest.email]}
                       onClick={() => {
                         if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
                           copyLink(guest.email, true)
@@ -221,6 +225,15 @@ Friends.styles = {
     '>div': {
       display: 'flex',
     },
+  },
+  retry: {
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    font: 'inherit',
+    color: 'primary',
+    textDecoration: 'underline',
+    cursor: 'pointer',
   },
 }
 
