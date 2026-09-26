@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Badge, Button, Icon, Link } from '@sensorr/ui'
+import { Button, Icon, Link } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
@@ -96,45 +96,6 @@ const Friends = ({ ...props }) => {
                   <strong>{guest.name}</strong>
                   <br/>
                   <small>{guest.email}</small>
-                  <div sx={Friends.styles.wrapped}>
-                    {wrappedError ? (
-                      <small>
-                        Unable to load the wrapped links. <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>Retry</button>
-                      </small>
-                    ) : !wrapped ? (
-                      <div aria-busy={true}><Badge emoji={<Icon value='spinner' height='1em' width='1em' />} label='Looking for them in Tautulli' size='small' /></div>
-                    ) : wrapped[guest.email]?.viewer ? (
-                      <div><Badge emoji='🎞️' label='Wrapped' size='small' /></div>
-                    ) : (
-                      <small>
-                        No Tautulli user with this email, the <Link to='/settings/jobs'><code>wrapped</code> job</Link> imports them
-                      </small>
-                    )}
-                    <Button
-                      type='button'
-                      variant='outline'
-                      color='gray'
-                      aria-label={`Copy the wrapped link of ${guest.name}`}
-                      disabled={!wrapped?.[guest.email]?.viewer || busy[guest.email]}
-                      onClick={() => copyLink(guest.email)}
-                    >
-                      Copy link
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      color='gray'
-                      aria-label={`Replace the wrapped link of ${guest.name}`}
-                      disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token || busy[guest.email]}
-                      onClick={() => {
-                        if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
-                          copyLink(guest.email, true)
-                        }
-                      }}
-                    >
-                      New link
-                    </Button>
-                  </div>
                 </div>
                 <Button
                   type='button'
@@ -149,6 +110,46 @@ const Friends = ({ ...props }) => {
                 >
                   Delete
                 </Button>
+                <footer sx={Friends.styles.wrapped}>
+                  <h5 title='wrapped'>🎞️<span>&nbsp;wrapped</span></h5>
+                  <p data-muted={!(wrapped?.[guest.email]?.viewer && wrapped[guest.email].wrapped_token) || undefined}>
+                    {wrappedError ? (
+                      <span>Unable to load the wrapped links, <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>retry</button></span>
+                    ) : !wrapped ? (
+                      <span aria-busy={true}>Looking for them in Tautulli...</span>
+                    ) : !wrapped[guest.email]?.viewer ? (
+                      <span>No Tautulli user with this email</span>
+                    ) : wrapped[guest.email].wrapped_token ? (
+                      <span>{linkOf(wrapped[guest.email].wrapped_token)}</span>
+                    ) : (
+                      <span>No link yet</span>
+                    )}
+                  </p>
+                  <button
+                    type='button'
+                    sx={Friends.styles.action}
+                    aria-label={`Copy the wrapped link of ${guest.name}`}
+                    title='Copy link'
+                    disabled={!wrapped?.[guest.email]?.viewer || busy[guest.email]}
+                    onClick={() => copyLink(guest.email)}
+                  >
+                    📋
+                  </button>
+                  <button
+                    type='button'
+                    sx={Friends.styles.action}
+                    aria-label={`Replace the wrapped link of ${guest.name}`}
+                    title='New link, the previous one no longer opens'
+                    disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token || busy[guest.email]}
+                    onClick={() => {
+                      if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
+                        copyLink(guest.email, true)
+                      }
+                    }}
+                  >
+                    🔄
+                  </button>
+                </footer>
               </div>
             ))}
           </div>
@@ -206,24 +207,78 @@ Friends.styles = {
       },
       '>div': {
         flex: 1,
+        minWidth: 0,
         marginX: 4,
       },
       '>button': {
         flex: 0,
       },
+      flexWrap: 'wrap',
     }
   },
   wrapped: {
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-    '>small, >div': {
-      flex: '1 1 100%',
-    },
-    '>div': {
+    alignItems: 'stretch',
+    flex: '1 1 100%',
+    marginTop: 6,
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25rem',
+    overflow: 'hidden',
+    '>h5': {
       display: 'flex',
+      alignItems: 'center',
+      margin: 12,
+      paddingY: 12,
+      paddingX: 6,
+      backgroundColor: 'grayLight',
+      borderRight: '1px solid',
+      borderColor: 'grayDark',
+      fontFamily: 'monospace',
+      whiteSpace: 'nowrap',
+      '>span': {
+        display: ['none', 'inline'],
+      },
+    },
+    '>p': {
+      display: 'flex',
+      alignItems: 'center',
+      flex: 1,
+      minWidth: 0,
+      marginY: 12,
+      marginX: 6,
+      fontFamily: 'monospace',
+      fontSize: 5,
+      '&[data-muted]': {
+        fontFamily: 'body',
+        color: 'grayDarkest',
+      },
+      '>span': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+    },
+  },
+  action: {
+    variant: 'button.reset',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    minWidth: '2.5rem',
+    minHeight: '2.5rem',
+    paddingY: 8,
+    paddingX: 6,
+    fontSize: 5,
+    borderLeft: '1px solid',
+    borderColor: 'grayDark',
+    lineHeight: 1.5,
+    ':hover:not(:disabled)': {
+      backgroundColor: 'gray',
+    },
+    ':disabled': {
+      opacity: 0.5,
     },
   },
   retry: {
