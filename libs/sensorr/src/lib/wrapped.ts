@@ -46,6 +46,13 @@ export interface WrappedShow {
   art?: string
 }
 
+export interface WrappedPoster {
+  key: string
+  title: string
+  thumb?: string
+  art?: string
+}
+
 export interface WrappedCycle {
   kind: 'show' | 'director'
   // The show, or the director's first movie, whose artwork stands for the cycle
@@ -71,8 +78,12 @@ export interface Wrapped {
   genre: string | null
   director: string | null
   only_you_pct: number
-  night: { date: string, plays: number, episodes: number, end: string, titles: string[] } | null
+  // `key` is the title played the most that night
+  night: { date: string, plays: number, episodes: number, end: string, titles: string[], key: string } | null
   months: number[]
+  // The title played the most each month, from December to November
+  month_posters: (WrappedPoster | null)[]
+  director_movies: WrappedMovie[]
   cycles: WrappedCycle[]
   top_movies: WrappedMovie[]
   top_shows: WrappedShow[]
@@ -185,9 +196,15 @@ export const wrappedOf = (
   const episodesOf = (plays: typeof mine) => plays.filter((play) => play.media_type === 'episode').length
   const [nightDate, nightPlays] = [...nights.entries()].sort((a, b) => (episodesOf(b[1]) - episodesOf(a[1])) || (b[1].length - a[1].length) || (hoursOf(b[1]) - hoursOf(a[1])))[0] || []
 
+  const posterOf = (key: string): WrappedPoster => {
+    const title = byKey.get(key)
+    return { key, title: title?.title || key, thumb: title?.thumb, art: title?.art }
+  }
+
   const movieTitles = topMovies.map((key) => byKey.get(key)).filter(Boolean) as WrappedTitle[]
   const years = movieTitles.map((title) => title.year).filter(Boolean) as number[]
   const monthly = groupBy(mine, (play) => play.month)
+  const director = mostCommon(movieTitles.flatMap((title) => title.directors || []))
 
   return {
     year,
@@ -201,7 +218,7 @@ export const wrappedOf = (
     film_age: years.length ? round(years.reduce((sum, y) => sum + y, 0) / years.length) : null,
     decade: mostCommon(years.map((y) => Math.floor(y / 10) * 10)),
     genre: mostCommon(movieTitles.flatMap((title) => title.genres || [])),
-    director: mostCommon(movieTitles.flatMap((title) => title.directors || [])),
+    director,
     only_you_pct: moviePlays.size ? round(100 * onlyYou.length / moviePlays.size) : 0,
     night: nightDate && nightPlays ? {
       date: nightDate,
@@ -209,9 +226,15 @@ export const wrappedOf = (
       episodes: episodesOf(nightPlays),
       end: partsOf(Math.max(...nightPlays.map((play) => play.ended)), timeZone).time,
       titles: [...new Set(nightPlays.map((play) => byKey.get(play.title)?.title || play.title))].slice(0, 4),
+      key: mostCommon(nightPlays.map((play) => play.title))!,
     } : null,
     // From December of the previous year to November
     months: Array.from({ length: 12 }, (_, index) => round(hoursOf(monthly.get((index + 11) % 12 + 1) || []), 1)),
+    month_posters: Array.from({ length: 12 }, (_, index) => {
+      const key = mostCommon((monthly.get((index + 11) % 12 + 1) || []).map((play) => play.title))
+      return key ? posterOf(key) : null
+    }),
+    director_movies: director ? topMovies.filter((key) => byKey.get(key)?.directors?.includes(director)).slice(0, 4).map(movieOf) : [],
     cycles,
     top_movies: topMovies.slice(0, 10).map(movieOf),
     top_shows: topShows.slice(0, 4).map(showOf),

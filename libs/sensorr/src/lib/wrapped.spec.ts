@@ -74,7 +74,14 @@ describe('wrappedOf', () => {
   })
 
   it('keeps a night past midnight as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', titles: ['Twin Peaks', 'Scrubs'] })
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', titles: ['Twin Peaks', 'Scrubs'], key: 'show:2' })
+  })
+
+  it('puts a poster on each month, and gathers the movies of the director', () => {
+    expect(wrapped.month_posters[3]).toMatchObject({ key: 'plex://movie/heat', title: 'Heat' })
+    expect(wrapped.month_posters[0]).toBeNull()
+    expect(wrapped.director).toBe('Michael Mann')
+    expect(wrapped.director_movies.map(({ title }) => title)).toEqual(['Heat'])
   })
 
   it('gives the awards', () => {
@@ -120,6 +127,6 @@ describe('wrappedOf', () => {
   })
 
   it('gives an empty year to a user without plays', () => {
-    expect(wrappedOf({ plays, titles, user_id: 3, year: 2026 })).toMatchObject({ plays: 0, hours: 0, rank: 0, night: null, palme: null, grand_prix: null, jury: null, film_age: null })
+    expect(wrappedOf({ plays, titles, user_id: 3, year: 2026 })).toMatchObject({ plays: 0, hours: 0, rank: 0, night: null, palme: null, grand_prix: null, jury: null, film_age: null, director_movies: [] })
   })
 })
