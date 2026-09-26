@@ -37,7 +37,8 @@ float fbm(vec2 p) {
 void main() {
   vec2 uv = (v_uv - 0.5) * u_scale + 0.5;
   uv.y = 1.0 - uv.y;
-  vec3 photo = texture2D(u_image, uv).rgb;
+  vec4 texel = texture2D(u_image, uv);
+  vec3 photo = texel.rgb;
 
   // Brush strokes: the paint drags the image along short oblique strokes
   vec2 stroke = vec2(fbm(uv * vec2(6.0, 28.0) + u_seed), fbm(uv * vec2(28.0, 6.0) - u_seed)) - 0.5;
@@ -59,7 +60,7 @@ void main() {
   // Torn paper edge
   vec2 edge = min(v_uv, 1.0 - v_uv);
   float torn = 0.006 + 0.014 * fbm(v_uv * 40.0 + u_seed);
-  float alpha = smoothstep(torn - 0.002, torn, min(edge.x, edge.y));
+  float alpha = smoothstep(torn - 0.002, torn, min(edge.x, edge.y)) * texel.a;
   gl_FragColor = vec4(color * alpha, alpha);
 }`
 
@@ -70,8 +71,12 @@ const compile = (gl: WebGLRenderingContext, type: number, source: string) => {
   return shader
 }
 
+type Source = HTMLImageElement | HTMLCanvasElement
+
 // Draws `image` repainted as a poster; returns the redraw for a new progress, or null without WebGL
-const paint = (canvas: HTMLCanvasElement, image: HTMLImageElement, seed: number) => {
+// A composed canvas is drawn for its box and fills it; a poster covers its box like `object-fit: cover`
+const paint = (canvas: HTMLCanvasElement, image: Source, seed: number, fill = false) => {
+  const ratioOf = image instanceof HTMLImageElement ? image.naturalWidth / image.naturalHeight : image.width / image.height
   const gl = canvas.getContext('webgl', { premultipliedAlpha: true, antialias: false })
 
   if (!gl) {
@@ -115,8 +120,7 @@ const paint = (canvas: HTMLCanvasElement, image: HTMLImageElement, seed: number)
       canvas.height = height
     }
 
-    // Cover the box like `object-fit: cover`
-    const ratio = (width / height) / (image.naturalWidth / image.naturalHeight)
+    const ratio = fill ? 1 : (width / height) / ratioOf
     gl.viewport(0, 0, width, height)
     gl.uniform2f(uniform('u_scale'), Math.min(ratio, 1), Math.min(1 / ratio, 1))
     gl.uniform1f(uniform('u_progress'), progress)
@@ -133,7 +137,15 @@ export const useRevealProgress = (target: React.RefObject<HTMLElement>) => {
 }
 
 // A WebGL context is only held while the poster is near the screen: phones cap how many live at once
-export const Painted = ({ src, alt, progress, className }: { src?: string, alt: string, progress: MotionValue<number>, className?: string }) => {
+const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+  const image = new Image()
+  image.decoding = 'async'
+  image.onload = () => resolve(image)
+  image.onerror = reject
+  image.src = src
+})
+
+export const Painted = ({ src, alt, progress, className, compose }: { src?: string, alt: string, progress: MotionValue<number>, className?: string, compose?: (width: number, height: number) => Promise<HTMLCanvasElement> }) => {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
 
@@ -145,7 +157,7 @@ export const Painted = ({ src, alt, progress, className }: { src?: string, alt: 
 
   return (
     <div ref={box} className={`painted ${className || ''}`}>
-      {src ? (near && <Canvas key={src} src={src} alt={alt} progress={progress} />) : <Missing alt={alt} />}
+      {src || compose ? (near && <Canvas key={src || 'composed'} src={src} compose={compose} alt={alt} progress={progress} />) : <Missing alt={alt} />}
     </div>
   )
 }
@@ -156,26 +168,26 @@ const Missing = ({ alt }: { alt: string }) => (
   </div>
 )
 
-const Canvas = ({ src, alt, progress }: { src: string, alt: string, progress: MotionValue<number> }) => {
+const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: (width: number, height: number) => Promise<HTMLCanvasElement>, alt: string, progress: MotionValue<number> }) => {
   const canvas = useRef<HTMLCanvasElement>(null)
   const draw = useRef<((progress: number) => void) | null>(null)
   const [state, setState] = useState<'painting' | 'fallback' | 'missing'>('painting')
   const reduced = useReducedMotion()
 
   useEffect(() => {
-    const image = new Image()
     let cancelled = false
-    image.decoding = 'async'
-    image.onload = () => {
-      if (cancelled || !canvas.current) {
-        return
-      }
+    const dpr = Math.min(window.devicePixelRatio, 2)
+    ;(compose ? compose((canvas.current?.clientWidth || 1) * dpr, (canvas.current?.clientHeight || 1) * dpr) : loadImage(src as string)).then(
+      (source) => {
+        if (cancelled || !canvas.current) {
+          return
+        }
 
-      draw.current = paint(canvas.current, image, seedOf(src))
-      draw.current ? draw.current(reduced ? 1 : progress.get()) : setState('fallback')
-    }
-    image.onerror = () => !cancelled && setState('missing')
-    image.src = src
+        draw.current = paint(canvas.current, source, seedOf(src || alt), !!compose)
+        draw.current ? draw.current(reduced ? 1 : progress.get()) : setState(src ? 'fallback' : 'missing')
+      },
+      () => !cancelled && setState('missing'),
+    )
 
     const resize = new ResizeObserver(() => draw.current?.(reduced ? 1 : progress.get()))
     const current = canvas.current

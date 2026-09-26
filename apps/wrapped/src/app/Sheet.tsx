@@ -1,4 +1,4 @@
-import { forwardRef, ReactNode } from 'react'
+import { forwardRef, ReactNode, useId } from 'react'
 
 export const Sheet = forwardRef<HTMLElement, { className?: string, label?: string, children: ReactNode }>(({ className, label, children }, ref) => (
   <section ref={ref} className={`sheet ${className || ''}`} aria-label={label}>
@@ -31,6 +31,35 @@ export const Lettering = ({ text, highlight, as: Tag = 'h2', className, seed = 1
           {word}
         </span>
       ))}
+    </Tag>
+  )
+}
+
+// A fixed heading painted along a curve, one arc per line, its edges roughened like a dry brush
+export const Brushed = ({ lines, as: Tag = 'h2', className, seed = 1 }: { lines: string[], as?: 'h1' | 'h2', className?: string, seed?: number }) => {
+  const id = useId().replace(/:/g, '')
+
+  return (
+    <Tag className={`brushed ${className || ''}`}>
+      <span className="visually-hidden">{lines.join(' ')}</span>
+      <svg viewBox={`0 0 400 ${lines.length * 84 + 16}`} aria-hidden="true">
+        <defs>
+          <filter id={`${id}-dry`}>
+            <feTurbulence type="fractalNoise" baseFrequency="0.9 0.06" numOctaves="2" seed={seed} />
+            <feDisplacementMap in="SourceGraphic" scale="4" />
+          </filter>
+          {lines.map((line, index) => {
+            const bend = (lean(index, seed) - 0.5) * 36
+            const y = 70 + index * 84
+            return <path key={index} id={`${id}-${index}`} d={`M8 ${y + bend} Q200 ${y - bend} 392 ${y + bend}`} />
+          })}
+        </defs>
+        {lines.map((line, index) => (
+          <text key={index} filter={`url(#${id}-dry)`} style={{ fontSize: Math.min(78, 560 / Math.max(line.length, 1)) }}>
+            <textPath href={`#${id}-${index}`} startOffset="50%" textAnchor="middle">{line}</textPath>
+          </text>
+        ))}
+      </svg>
     </Tag>
   )
 }

@@ -78,8 +78,8 @@ export interface Wrapped {
   genre: string | null
   director: string | null
   only_you_pct: number
-  // `key` is the title played the most that night
-  night: { date: string, plays: number, episodes: number, end: string, titles: string[], key: string } | null
+  // `poster` is the title played the most that night
+  night: { date: string, plays: number, episodes: number, end: string, titles: string[], poster: WrappedPoster } | null
   months: number[]
   // The title played the most each month, from December to November
   month_posters: (WrappedPoster | null)[]
@@ -226,7 +226,7 @@ export const wrappedOf = (
       episodes: episodesOf(nightPlays),
       end: partsOf(Math.max(...nightPlays.map((play) => play.ended)), timeZone).time,
       titles: [...new Set(nightPlays.map((play) => byKey.get(play.title)?.title || play.title))].slice(0, 4),
-      key: mostCommon(nightPlays.map((play) => play.title))!,
+      poster: posterOf(mostCommon(nightPlays.map((play) => play.title))!),
     } : null,
     // From December of the previous year to November
     months: Array.from({ length: 12 }, (_, index) => round(hoursOf(monthly.get((index + 11) % 12 + 1) || []), 1)),

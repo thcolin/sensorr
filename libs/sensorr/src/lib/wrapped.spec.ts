@@ -74,7 +74,7 @@ describe('wrappedOf', () => {
   })
 
   it('keeps a night past midnight as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', titles: ['Twin Peaks', 'Scrubs'], key: 'show:2' })
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', titles: ['Twin Peaks', 'Scrubs'], poster: { key: 'show:2', title: 'Twin Peaks' } })
   })
 
   it('puts a poster on each month, and gathers the movies of the director', () => {

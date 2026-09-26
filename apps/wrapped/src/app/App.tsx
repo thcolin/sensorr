@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped } from '@sensorr/sensorr'
 import { Programme } from './Programme'
-import { Sheet, Lettering } from './Sheet'
+import { Brushed, Sheet } from './Sheet'
 
 export interface Share {
   name: string
@@ -60,8 +60,8 @@ export const App = () => {
       return (
         <main className="wall">
           <Sheet className="sheet-notice">
-            <Lettering as="h1" text="Séance annulée" />
-            <p className="notice">Ce lien n'est plus valable. Demande-en un nouveau à Thomas.</p>
+            <Brushed as="h1" lines={['Séance', 'annulée']} seed={14} />
+            <p className="notice">Ce lien n’est plus valable. Demande‑en un nouveau à Thomas.</p>
           </Sheet>
         </main>
       )
@@ -69,8 +69,8 @@ export const App = () => {
       return (
         <main className="wall">
           <Sheet className="sheet-notice">
-            <Lettering as="h1" text="La projection a sauté" />
-            <p className="notice">Le programme n'a pas pu se charger. Vérifie ta connexion, puis relance.</p>
+            <Brushed as="h1" lines={['La projection', 'a sauté']} seed={15} />
+            <p className="notice">Le programme n’a pas pu se charger. Vérifie ta connexion, puis relance.</p>
             <button className="retry" type="button" onClick={load}>Relancer</button>
           </Sheet>
         </main>
