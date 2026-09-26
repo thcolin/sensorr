@@ -145,6 +145,7 @@ const UIShowTicket = ({ palette = null, ...props }) => (
       setExpanded={() => null}
       setHover={() => null}
     />
+    <Preferences entity={props.entity} metadata={{}} setMetadata={() => null} expanded={false} hover={false} />
   </div>
 )
 
