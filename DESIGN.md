@@ -302,7 +302,7 @@ meaning and never for decoration.
   `white` is the page, `grayLightest`/`grayLighter`/`grayLight` are the panels that sit on
   it, `gray` is a filled chip, `grayDark`/`grayDarker`/`grayDarkest` are borders in their
   three states. The names describe the *light-mode* appearance; in dark mode every one of
-  them resolves to a near-black (`libs/theme/src/lib/theme/colors.ts:116-127`).
+  them resolves to a near-black (`libs/theme/src/lib/theme/colors.ts:119-130`).
 - **Absolutes** (`whitePure`, `blackPure`): the only two colors that never invert. Use
   them when you need actual white or actual black regardless of mode — type on a green
   field, a knob on a photograph.
@@ -340,8 +340,8 @@ content.** Do not hardcode an accent for a movie-scoped surface.
 Green therefore always means *the system says yes*: this is on, this is kept, this held.
 Never reach for green because a surface needs a color.
 
-**The Declared-and-Unreachable Light Mode Rule.** `libs/theme/src/lib/theme/colors.ts:72-98`
-defines a complete 27-line `light` palette, and `colors.ts:141` registers it as
+**The Declared-and-Unreachable Light Mode Rule.** `libs/theme/src/lib/theme/colors.ts:75-101`
+defines a complete 27-line `light` palette, and `colors.ts:144` registers it as
 `modes.light`. `libs/theme/src/lib/theme/index.ts:11-14` sets
 `initialColorModeName: 'dark'` and `useColorSchemeMediaQuery: false`, and **nothing in the
 application calls `setColorMode` or `useColorMode`** — the only references to `colorMode`
@@ -442,7 +442,7 @@ appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.
 ## Elevation & Depth
 
 **Flat, with tonal stacking.** There is no elevation system. `libs/theme` exports a
-`shadows` object with two entries (`libs/theme/src/lib/theme/colors.ts:144-147`), the theme
+`shadows` object with two entries (`libs/theme/src/lib/theme/colors.ts:147-150`), the theme
 registers it (`index.ts:24`), and **nothing else in `apps/` or `libs/` references
 `shadows`** — zero consumers, verified by grep. Across the whole of `libs/ui` there are 8
 `boxShadow` declarations: 3 are `boxShadow: 'none'` resetting `react-select`, 4 are the
@@ -619,8 +619,17 @@ tint of the same hue. Both halves are set in regular weight:
   `airing` on both, one on air with episodes missing is gray under violet, and an ended one
   with episodes missing is gray on both. A series still airs when TMDB gives it a status that
   is neither `Ended` nor `Canceled` (`libs/sensorr/src/lib/show.ts`), so a canceled series
-  reads like an ended one on the pill; only the text pill in the header of the show's page
-  says "Canceled".
+  reads like an ended one on the pill. Its `title` and `aria-label` still say "canceled in
+  2019", and the diffusion pill in the header of the show's page says "Canceled".
+- The diffusion pill puts that diffusion into words, in the header of a show's page
+  (`apps/web/src/pages/Shows/Show.tsx`), right after the size. It is not a transition pill but
+  a `ReleaseTag` like the size beside it, at its font size: Fira Code 600, a `0.25em` radius, no
+  overlap. Its fill is `airingDark` under `whitePure` while the series airs, `grayDark` under
+  `text` otherwise (10.12:1 in dark mode). It says `Airing · next 29/09`,
+  `Airing` when TMDB dates no next episode, `Ended · 2017` or `Canceled · 2019` with the year of
+  the last episode, and `Upcoming · 25/11/2026` before the first one; an aired series without a
+  status gets none. Its `title` is the TMDB status itself. Out of the library it is the header's
+  only pill, read from the TMDB details, since there is no owned count to draw.
 
 There is no separator: the overlap says "becomes", the hue says what the policy thinks,
 and the `title` still spells `x264 ~ x265` for the tooltip. The policy marks (`*`, `!`, the

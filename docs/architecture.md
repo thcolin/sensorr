@@ -145,10 +145,10 @@ daily, or `airing shows`, hourly, the same component with a narrower entry list
 flowchart TD
   cron["API cron tick, record shows or airing shows<br/>jobs.service.ts:95"] --> fetch
   fetch["GET /api/shows, wished and monitored, kept when an episode is wanted<br/>ProcessShowsTask.js:32-37"] --> units
-  units["Search units: whole series, season packs, then episodes<br/>libs/sensorr/src/lib/show.ts:85"] --> search
+  units["Search units: whole series, season packs, then episodes<br/>libs/sensorr/src/lib/show.ts:177"] --> search
   search["tvsearch with season and ep, or search with SxxEyy<br/>libs/sensorr/src/lib/znab.ts:88"] --> policy
   policy["Policy checks level and years, then scores<br/>libs/sensorr/src/lib/policy.ts:133-135"] --> pick
-  pick["Each release keeps the episodes it is the first to cover<br/>libs/sensorr/src/lib/show.ts:116"] --> picked
+  pick["Each release keeps the episodes it is the first to cover<br/>libs/sensorr/src/lib/show.ts:206"] --> picked
 
   picked{"Any release picked ?"}
   picked -->|no| stop["Nothing written, the run logs why"]
@@ -162,8 +162,8 @@ flowchart TD
   dlcache --> cached["Torrent buffer stored in the blackhole collection<br/>sensorr.service.ts:73"]
 
   cached --> review["Show page or notification, one decision per release"]
-  review -->|accepted| accept["POST /api/shows with choice true<br/>shows.service.ts:105"]
-  review -->|refused| refuse["Buffer deleted, the covered episodes let go<br/>shows.service.ts:115-116"]
+  review -->|accepted| accept["POST /api/shows with choice true<br/>shows.service.ts:107"]
+  review -->|refused| refuse["Buffer deleted, the covered episodes let go<br/>shows.service.ts:140-141"]
   accept --> blackhole
 
   blackhole --> client["The download client saves the files into shows.staging"]
@@ -224,7 +224,7 @@ collide because movies and shows live in two collections.
 Mongo has to run as a replica set, and that is not a preference. Three places call
 `Model.watch()`: `logs.service.ts:14`, which the jobs and notifications streams are built on
 (`jobs.service.ts:46`, `:69`, `notifications.service.ts:44`), `movies.service.ts:26` and
-`shows.service.ts:31`, and change streams do not exist outside a replica set. A plain `mongod` accepts the connection and then fails on the first SSE endpoint.
+`shows.service.ts:32`, and change streams do not exist outside a replica set. A plain `mongod` accepts the connection and then fails on the first SSE endpoint.
 `apps/db/docker-entrypoint.sh:11` starts `mongod --replSet rs0 --bind_ip_all --keyFile`,
 generating the keyfile on first boot if it is missing (`:3-6`), and the `sensorr-db`
 healthcheck of `docker-compose.yml` runs `rs.initiate` until it answers.

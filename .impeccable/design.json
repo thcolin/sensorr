@@ -441,7 +441,7 @@
       {
         "name": "The Declared-and-Unreachable Light Mode Rule",
         "section": "colors",
-        "body": "libs/theme/src/lib/theme/colors.ts:72-98 defines a complete 27-line light palette, and colors.ts:141 registers it as modes.light. index.ts:11-14 sets initialColorModeName: 'dark' and useColorSchemeMediaQuery: false, and nothing in the application calls setColorMode or useColorMode - the only references to colorMode anywhere in apps/ and libs/ are reads. The light palette is therefore dead code that stays correct: it is documented debt, not a feature. Keep it consistent when you add a color, but do not describe Sensorr as having a light theme, and do not build a toggle without deciding first whether the light palette is still wanted."
+        "body": "libs/theme/src/lib/theme/colors.ts:75-101 defines a complete 27-line light palette, and colors.ts:144 registers it as modes.light. index.ts:11-14 sets initialColorModeName: 'dark' and useColorSchemeMediaQuery: false, and nothing in the application calls setColorMode or useColorMode - the only references to colorMode anywhere in apps/ and libs/ are reads. The light palette is therefore dead code that stays correct: it is documented debt, not a feature. Keep it consistent when you add a color, but do not describe Sensorr as having a light theme, and do not build a toggle without deciding first whether the light palette is still wanted."
       },
       {
         "name": "The Monospace-Means-Machine Rule",
