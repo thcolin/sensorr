@@ -62,6 +62,15 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.airing.shows.cron` | `string` | `0 * * * *` | Airing shows job cron, wanted episodes aired in the last 7 days are searched one by one |
 | `jobs.airing.shows.paused` | `boolean` | `true` | Pause Airing shows job |
 | `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.wrapped.cron` | `string` | `0 6 * * *` | Wrapped job cron |
+| `jobs.wrapped.paused` | `boolean` | `true` | Pause Wrapped job |
+
+## Tautulli
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `tautulli.url` | `string` | `""` | Tautulli URL, where the Plex watch history is read from |
+| `tautulli.key` | `string` | `""` | Tautulli API key |
 
 ## Plex
 

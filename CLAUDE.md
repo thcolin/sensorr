@@ -41,7 +41,11 @@ project-by-project list to compare against, and the exact lint line to read, are
 What `/thcolin:craft` and `/thcolin:design` read before touching a screen: how to run the app on real
 data, what to open, how to capture.
 
-- Frontend paths: `apps/web/**`, `libs/ui/**`, `libs/theme/**`.
+- Frontend paths: `apps/web/**`, `apps/wrapped/**`, `libs/ui/**`, `libs/theme/**`.
+- `apps/wrapped`, the guests' yearly programme, runs on a local stack and never on Cortex: local Mongo, local
+  API, a Tautulli import, then `nx run wrapped:serve` on `http://localhost:4230/wrapped/<token>`. Steps and the
+  three guests to check in [`docs/development.md`](docs/development.md#nx-run-wrappedserve). Its look is the
+  edition's, in `apps/wrapped/.impeccable/surfaces/apps-wrapped.md`; `DESIGN.md` does not apply to it.
 - Run `yarn web` alone. `apps/web/proxy.conf.json` sends `/api` to the Cortex instance, so the app shows
   the real library, about 9 000 movies and 3 000 pending proposals. **Look, never act**: an `Accept`,
   `Refuse` or `Ban` click from this app writes on Cortex. Never start a second API against the Cortex

@@ -626,6 +626,146 @@ export class API {
         }
       }),
     },
+    wrapped: {
+      postViewers: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/viewers',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      postPlays: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/plays',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      prunePlays: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/plays/prune',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      getPlaysRange: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/plays/range',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      getTitles: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/titles',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      postTitles: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/titles',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      postFreeze: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/freeze',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      getGuests: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/guests',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      postToken: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/tokens',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+    },
     config: {
       getConfig: (
         { init = {} }: { init?: any }

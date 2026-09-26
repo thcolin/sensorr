@@ -28,6 +28,10 @@ export class Guest extends Document {
 
   @Prop()
   plex_token_checked_at: number
+
+  // Opens this guest's wrapped without an account, replaced to revoke the previous link
+  @Prop({ index: { unique: true, sparse: true } })
+  wrapped_token: string
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest)

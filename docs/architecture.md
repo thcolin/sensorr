@@ -34,7 +34,7 @@ qBittorrent's `.!qB` suffix on an incomplete file and the sizes the `.torrent` a
 
 ## Containers
 
-Three applications and a database.
+Four applications and a database.
 
 **`apps/web`** is a React PWA, served as static files. Talks to the API over HTTP under
 `/api`, with a JWT in the `Authorization` header, and keeps Server-Sent Events streams open
@@ -45,10 +45,17 @@ calls TMDB straight from the browser, and reaches the indexers through the API p
 the `proxify` option is set, which `apps/web/src/store/sensorr.tsx:7` sets and the CLI does
 not.
 
+**`apps/wrapped`** is the yearly programme a guest opens from a link, a React page served as
+static files under `/wrapped/<token>`. It has no login: the token is the access, and it reads
+`GET /api/wrapped/share/:token` plus the artwork route beside it. Its look belongs to the
+edition and does not follow `DESIGN.md`.
+
 **`apps/api`** is the NestJS server. It owns Mongo, `config.json`, the two blackhole
 directories and the cron schedule. Every route is behind a global JWT guard (`auth.module.ts:19`,
 `auth.guard.ts:10`); only routes marked `@Public()` escape it: guest
-registration, guest PIN status (`guests.controller.ts:10,16`) and the login route itself.
+registration, guest PIN status (`guests.controller.ts:10,16`), a guest's wrapped and its artwork
+(`wrapped.controller.ts:11,18`), and the login route
+itself.
 
 **`apps/cli`** is an `ink` terminal app. It carries every long job, one command per job
 ([jobs.md](jobs.md)). It is not standalone: the first thing any command does is log into
@@ -285,7 +292,7 @@ services.
 
 | Service | Image | Built from | Boundary it owns |
 | --- | --- | --- | --- |
-| `sensorr-web` | `sensorr/sensorr-web` | `apps/web/Dockerfile`, where `node:18-alpine` builds the PWA and `caddy:2.6.4` serves it | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300` and falls back to `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-18`) |
+| `sensorr-web` | `sensorr/sensorr-web` | `apps/web/Dockerfile`, where `node:18-alpine` builds the PWA and the wrapped page, and `caddy:2.6.4` serves them | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300`, serves `/wrapped/*` from the wrapped build with its own `index.html`, and falls back to the PWA's `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-25`) |
 | `sensorr-api` | `sensorr/sensorr-api` | `apps/api/Dockerfile`, which builds **both** the api and the cli bundles and copies `dist/` and `bin/` into the runtime stage | Mongo, `config.json`, `.secrets/`, the blackhole and the shows directory, the last four mounted as volumes |
 | `sensorr-db` | `sensorr/sensorr-db` | `apps/db/Dockerfile`, `mongo:6.0.6` with the replica set entrypoint | the data, under `./db` |
 

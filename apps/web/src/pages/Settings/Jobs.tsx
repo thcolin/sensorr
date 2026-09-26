@@ -50,6 +50,15 @@ const JobsSettings = ({ ...props }) => {
     ),
   }
 
+  const tautulli = {
+    disabled: !config.get('tautulli.url'),
+    warning: config.get('tautulli.url') ? null : (
+      <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+        <strong>Warning</strong>, you need to configure Tautulli on dedicated <Link to='/settings/tautulli'>"Tautulli" Settings page</Link> first
+      </span>
+    ),
+  }
+
   const stopJob = useCallback(async (name, job) => {
     if (!confirm(`Do you really want to stop ${name} job "${job}" ?`)) {
       return
@@ -183,6 +192,12 @@ const JobsSettings = ({ ...props }) => {
                   {
                     command: 'keep-in-touch',
                     description: 'Goes through guests Plex watchlist: requested movies become wished, requested shows arrive not followed',
+                    options: ['cron'],
+                  },
+                  {
+                    command: 'wrapped',
+                    description: 'Import the Plex watch history from Tautulli and compute each friend wrapped',
+                    ...tautulli,
                     options: ['cron'],
                   },
                 ],

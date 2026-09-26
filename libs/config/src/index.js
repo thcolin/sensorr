@@ -274,6 +274,30 @@ const config = convict({
         },
       },
     },
+    wrapped: {
+      cron: {
+        doc: 'Wrapped job cron',
+        format: 'String',
+        default: '0 6 * * *',
+      },
+      paused: {
+        doc: 'Pause Wrapped job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
+  },
+  tautulli: {
+    url: {
+      doc: 'Tautulli URL, where the Plex watch history is read from',
+      format: 'String',
+      default: '',
+    },
+    key: {
+      doc: 'Tautulli API key',
+      format: 'String',
+      default: '',
+    },
   },
   plex: {
     url: {
