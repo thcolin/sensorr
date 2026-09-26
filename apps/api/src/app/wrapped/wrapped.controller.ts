@@ -23,9 +23,9 @@ export class WrappedController {
     return this.wrappedService.upsertPlays(plays)
   }
 
-  @Get('plays/last')
-  async lastPlay() {
-    return this.wrappedService.lastPlay()
+  @Get('plays/range')
+  async playsRange() {
+    return this.wrappedService.playsRange()
   }
 
   @Get('titles')

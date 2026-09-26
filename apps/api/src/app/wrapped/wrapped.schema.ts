@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose, { Document } from 'mongoose'
 
-// One grouped row of the Tautulli history, `_id` is its Tautulli reference id
+// One grouped row of the Tautulli history, `_id` is the id of its first session
 @Schema({ collection: 'plays' })
 export class Play extends Document {
+  @Prop()
   declare _id: number
 
   @Prop({ required: true, index: true })
@@ -30,6 +31,7 @@ export const PlaySchema = SchemaFactory.createForClass(Play)
 // A Tautulli user, `_id` is its Tautulli user id
 @Schema({ collection: 'viewers' })
 export class Viewer extends Document {
+  @Prop()
   declare _id: number
 
   @Prop({ index: true })
@@ -47,6 +49,7 @@ export const ViewerSchema = SchemaFactory.createForClass(Viewer)
 // A movie or a show watched on Plex, `_id` is the `title` of its plays
 @Schema({ collection: 'titles' })
 export class Title extends Document {
+  @Prop()
   declare _id: string
 
   @Prop({ required: true })

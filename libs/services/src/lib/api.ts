@@ -659,10 +659,10 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
-      getLastPlay: (
+      getPlaysRange: (
         { init = {} }: { init?: any } = {}
       ): { uri: string, params: {}, init: {} } => ({
-        uri: 'wrapped/plays/last',
+        uri: 'wrapped/plays/range',
         params: {},
         init: {
           ...init,

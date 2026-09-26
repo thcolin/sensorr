@@ -36,9 +36,9 @@ export class WrappedService {
     return { upserted: upsertedCount, modified: modifiedCount }
   }
 
-  async lastPlay(): Promise<{ started: number | null }> {
-    const last = await this.playModel.findOne({}, { started: 1 }).sort({ started: -1 }).lean()
-    return { started: last?.started ?? null }
+  async playsRange(): Promise<{ first: number | null, last: number | null }> {
+    const [first, last] = await Promise.all([1, -1].map((order) => this.playModel.findOne({}, { started: 1 }).sort({ started: order as 1 | -1 }).lean()))
+    return { first: first?.started ?? null, last: last?.started ?? null }
   }
 
   async titleKeys(): Promise<string[]> {

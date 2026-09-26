@@ -100,13 +100,12 @@ const ImportPlaysTask = () => {
       setStatus('loading')
 
       try {
-        const last = api.query.wrapped.getLastPlay()
-        const { started } = await api.fetch(last.uri, last.params, last.init)
+        const range = api.query.wrapped.getPlaysRange()
+        const { last } = await api.fetch(range.uri, range.params, range.init)
         // Two days back: a grouped row keeps growing while its sessions go on
-        const after = started ? new Date((started - 2 * 86400) * 1000).toISOString().slice(0, 10) : undefined
+        const after = last ? new Date((last - 2 * 86400) * 1000).toISOString().slice(0, 10) : undefined
         const titles = {}
         let imported = 0
-        let earliest = null
         let total = 0
 
         for (let start = 0; start === 0 || start < total; start += PAGE) {
@@ -115,25 +114,25 @@ const ImportPlaysTask = () => {
 
           // A session still playing has no id yet, the next run imports it
           const plays = data
-            .filter((row) => row.reference_id && ['movie', 'episode'].includes(row.media_type))
+            .filter((row) => row.id && ['movie', 'episode'].includes(row.media_type))
             .map((row) => {
               const movie = row.media_type === 'movie'
               const title = movie ? row.guid : `show:${row.grandparent_rating_key}`
               titles[title] = { rating_key: movie ? row.rating_key : row.grandparent_rating_key, media_type: movie ? 'movie' : 'show', title: movie ? row.title : row.grandparent_title }
-              return { id: row.reference_id, user_id: row.user_id, media_type: row.media_type, title, started: row.started, stopped: row.stopped, play_duration: row.play_duration }
+              // The first session of a group stays while the group grows, `reference_id` can point to a session years older
+              return { id: Number(String(row.group_ids || row.id).split(',')[0]), user_id: row.user_id, media_type: row.media_type, title, started: row.started, stopped: row.stopped, play_duration: row.play_duration }
             })
 
           if (plays.length) {
             const { uri, params, init } = api.query.wrapped.postPlays({ body: plays })
             await api.fetch(uri, params, init)
             imported += plays.length
-            earliest = Math.min(earliest ?? Infinity, ...plays.map((play) => play.started))
           }
 
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> plays imported{after ? ` since ${after}` : ''}</Text> }))
         }
 
-        setState((state) => ({ ...state, titles, earliest }))
+        setState((state) => ({ ...state, titles }))
         setStatus('done')
         state.logger.info({ message: `🍿 ${imported} plays imported${after ? ` since ${after}` : ''}`, metadata: { ...state.metadata, summary: { plays: imported } } })
       } catch (error) {
@@ -242,10 +241,12 @@ const FreezeEditionsTask = () => {
       try {
         const now = Date.now() / 1000
         const current = editionOf(now, TIME_ZONE)
+        const range = api.query.wrapped.getPlaysRange()
+        const { first } = await api.fetch(range.uri, range.params, range.init)
         const frozen = []
 
-        // Every edition closed since the earliest play just imported, the freeze leaves an edition already frozen as it is
-        for (let year = Math.min(editionOf(state.earliest ?? now, TIME_ZONE), current - 1); year < current; year++) {
+        // Every closed edition since the first play, the freeze leaves an edition already frozen as it is
+        for (let year = first ? editionOf(first, TIME_ZONE) : current; year < current; year++) {
           const { uri, params, init } = api.query.wrapped.postFreeze({ body: { year } })
           const res = await api.fetch(uri, params, init)
 
