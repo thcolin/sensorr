@@ -118,6 +118,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
 
           let episodes = null
           const done = [], overdue = []
+          const folders = (await fs.readdir(path.join(library, folder), { withFileTypes: true }).catch(() => [])).filter((entry) => entry.isDirectory()).map(({ name }) => name)
           const now = Date.now()
           const fetchEpisodes = async () => {
             const { uri, params, init } = api.query.shows.getShowEpisodes({ params: { id: show.id } })
@@ -143,7 +144,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             const linked = [], existing = []
 
             // A copy would double the space a hard link does not take: a failed link is only logged
-            for (const link of importLinksOf(release, show, episodes, library)) {
+            for (const link of importLinksOf(release, show, episodes, library, folders)) {
               try {
                 await fs.mkdir(path.dirname(link.target), { recursive: true })
                 await fs.link(path.join(staging, link.source), link.target)

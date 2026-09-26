@@ -164,13 +164,20 @@ export const isReleaseFinished = (release, listing) => release.torrent.files.eve
 
 export const showFolderOf = (show) => show.path || sanitizeFilename(show.first_air_date ? `${show.name} (${new Date(show.first_air_date).getUTCFullYear()})` : show.name)
 
-export const importTargetOf = (library, show, season, file) => path.join(library, showFolderOf(show), `Season ${`${season}`.padStart(2, '0')}`, path.basename(file))
+// A show migrated from Sonarr already has its season folders, `Season 1` by default: a second one for the same season would split it on disk
+const SEASON_FOLDER = /^(?:season|saison|s)\s*0*(\d+)$/i
+
+export const seasonFolderOf = (season, folders = []) => [...folders].sort().find((folder) => (
+  Number(SEASON_FOLDER.exec(folder)?.[1]) === season || (season === 0 && /^specials?$/i.test(folder))
+)) || `Season ${`${season}`.padStart(2, '0')}`
+
+export const importTargetOf = (library, show, season, file, folders = []) => path.join(library, showFolderOf(show), seasonFolderOf(season, folders), path.basename(file))
 
 const SUBTITLE = /\.(srt|ass|ssa|sub|idx|vtt)$/i
 
 // A subtitle holds no episode: it follows a video it numbers the same, into its Season folder.
 // A swap links the episodes you own too, it replaces them.
-export const importLinksOf = (release, show, episodes, library) => {
+export const importLinksOf = (release, show, episodes, library, folders = []) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const covered = new Set((release.coverage || []).map(({ season, episode }) => keyOf(season, episode)))
   const missing = new Set(episodes.filter(({ files }) => !files?.length).map(({ season_number, episode_number }) => keyOf(season_number, episode_number)))
@@ -183,14 +190,14 @@ export const importLinksOf = (release, show, episodes, library) => {
     const { season, episodes: numbers } = oleoo.parse(path.basename(file))
     const matched = typeof season === 'number' ? numbers.filter((number) => covered.has(keyOf(season, number)) && (release.swap || missing.has(keyOf(season, number)))) : []
 
-    return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: matched, size }] : []
+    return matched.length ? [{ source: file, target: importTargetOf(library, show, season, file, folders), season, episodes: matched, size }] : []
   })
 
   const subtitles = release.torrent.files.filter(({ path: file }) => SUBTITLE.test(file)).flatMap(({ path: file, size }) => {
     const { season, episodes: numbers } = oleoo.parse(path.basename(file))
     const followed = videos.some((video) => video.season === season && video.episodes.some((number) => numbers.includes(number)))
 
-    return followed ? [{ source: file, target: importTargetOf(library, show, season, file), season, episodes: [], size }] : []
+    return followed ? [{ source: file, target: importTargetOf(library, show, season, file, folders), season, episodes: [], size }] : []
   })
 
   return [...videos, ...subtitles]

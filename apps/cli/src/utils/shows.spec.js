@@ -277,6 +277,20 @@ describe('importTargetOf', () => {
     expect(importTargetOf('/tvshows', { name: 'Friends', first_air_date: '1994-09-22', path: 'Friends' }, 10, 'Friends.S10E17.mkv')).toBe('/tvshows/Friends/Season 10/Friends.S10E17.mkv')
   })
 
+  it('links into the season folder the show already has, whatever its spelling', () => {
+    const show = { name: 'Friends', path: 'Friends' }
+
+    expect(importTargetOf('/tvshows', show, 1, 'Friends.S01E01.mkv', ['Season 1', 'Season 10', '@eaDir'])).toBe('/tvshows/Friends/Season 1/Friends.S01E01.mkv')
+    expect(importTargetOf('/tvshows', show, 10, 'Friends.S10E17.mkv', ['Season 1', 'Season 10'])).toBe('/tvshows/Friends/Season 10/Friends.S10E17.mkv')
+    expect(importTargetOf('/tvshows', show, 2, 'Friends.S02E01.mkv', ['S2'])).toBe('/tvshows/Friends/S2/Friends.S02E01.mkv')
+    expect(importTargetOf('/tvshows', show, 3, 'Friends.S03E01.mkv', ['saison 03'])).toBe('/tvshows/Friends/saison 03/Friends.S03E01.mkv')
+    expect(importTargetOf('/tvshows', show, 0, 'Friends.S00E01.mkv', ['Specials'])).toBe('/tvshows/Friends/Specials/Friends.S00E01.mkv')
+  })
+
+  it('creates Season NN when no folder names that season', () => {
+    expect(importTargetOf('/tvshows', { name: 'Friends', path: 'Friends' }, 4, 'Friends.S04E01.mkv', ['Season 1', 'Friends.S04.MULTI.1080p', 'Seasons 4'])).toBe('/tvshows/Friends/Season 04/Friends.S04E01.mkv')
+  })
+
   it('drops what a folder name cannot hold', () => {
     expect(showFolderOf({ name: 'Law & Order: Special Victims Unit', first_air_date: '1999-09-20' })).toBe('Law & Order Special Victims Unit (1999)')
     expect(showFolderOf({ name: 'Untitled' })).toBe('Untitled')
@@ -309,6 +323,10 @@ describe('importLinksOf', () => {
     expect(importLinksOf(release, show, episodes, '/tvshows')).toEqual([
       { source: 'The.Office.US.S03/The.Office.US.S03E24E25.mkv', target: '/tvshows/The Office (2005)/Season 03/The.Office.US.S03E24E25.mkv', season: 3, episodes: [24, 25], size: 2 },
     ])
+  })
+
+  it('links into the season folders it is given', () => {
+    expect(importLinksOf(release, show, episodes, '/tvshows', ['Season 3']).map(({ target }) => target)).toEqual(['/tvshows/The Office (2005)/Season 3/The.Office.US.S03E24E25.mkv'])
   })
 
   it('links every episode of a swap, the ones with files included', () => {

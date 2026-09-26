@@ -168,7 +168,7 @@ flowchart TD
 
   blackhole --> client["The download client saves the files into shows.staging"]
   client --> import["import shows, every 10 minutes: every file at its size, none ending in .!qB<br/>apps/cli/src/utils/shows.js:96"]
-  import --> link["Hard link into shows.library, Show (year)/Season NN/, the episode is owned<br/>apps/cli/src/commands/import-shows.js:149"]
+  import --> link["Hard link into shows.library, Show (year)/Season NN/ or the season folder already there, the episode is owned<br/>apps/cli/src/commands/import-shows.js:150"]
   link --> plex["Plex scans the shows library"]
   plex --> sync["sync shows replaces the imported file with the one Plex reads<br/>apps/cli/src/commands/sync-shows.js:192"]
 ```
@@ -179,7 +179,7 @@ release onto the show (`ProcessShowsTask.js`), so the episodes read
 `proposed` from then on and no later run searches them again (`episodeStatus`,
 `libs/sensorr/src/lib/episode.ts:4`). Refusing clears that id and the episodes are `wanted`
 again, and so do two jobs: `import shows` for an accepted release still not imported a week
-later (`import-shows.js:169-182`), `sync shows` for an episode whose file left Plex
+later (`import-shows.js:189-204`), `sync shows` for an episode whose file left Plex
 (`sync-shows.js:201`). An episode is `owned` as soon as the import links its file: the import
 writes that file on the episode, marked `from: 'import'`, and stamps the release `imported_at`;
 `sync shows` later replaces the entry with the file Plex reads (`import-shows.js`). Why each job selects what it does is in
@@ -187,7 +187,7 @@ writes that file on the episode, marked `from: 'import'`, and stamps the release
 
 ### One volume for the hard link
 
-`import shows` calls `fs.link` (`apps/cli/src/commands/import-shows.js:149`), and Linux
+`import shows` calls `fs.link` (`apps/cli/src/commands/import-shows.js:150`), and Linux
 refuses a hard link across two mount points with `EXDEV`, even when both mount the same
 filesystem. Inside a container every bind mount is a mount point of its own, so the staging
 folder and the library have to come through one volume. `docker-compose.yml:51` mounts
@@ -197,7 +197,7 @@ that same filesystem.
 
 A link that fails is logged and never replaced by a copy, which would take the space the link
 saves (`import-shows.js:145`). Every error but `EEXIST` leaves the release for the next run
-(`import-shows.js:152`, `:161`), so a split mount shows as the same warning every ten
+(`import-shows.js:153`, `:173`), so a split mount shows as the same warning every ten
 minutes rather than as a silent miss.
 
 ## Data
