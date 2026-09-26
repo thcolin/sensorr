@@ -3,6 +3,7 @@ import { Badge, Icon } from '@sensorr/ui'
 import { coverageLabel, manualPickOf, swapOf, unitLabel } from '@sensorr/sensorr'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useSensorr } from '../../../store/sensorr'
+import { useTMDBRequest } from '../../../store/tmdb'
 import { Sensorr } from '../../../components/Sensorr'
 import { isPending } from '../../Proposals/queue'
 import { useShowPolicy } from './Actions'
@@ -114,7 +115,10 @@ export const useShowSearch = (entity, loading = false) => {
 export const ShowSearchSingleton = ({ setToggle }) => {
   const [entity, setEntity] = useState(null)
   const { metadata, episodes, loadEpisodes } = useShowsMetadataContext() as any
-  const { open, drawer } = useShowSearch(entity)
+  // A job logs the show lightened: the titles and dates of its query come from TMDB, as on the show page
+  const details = useTMDBRequest(`tv/${entity?.id}`, { append_to_response: 'alternative_titles' }, { transform: (data) => data, ready: !!entity?.id })
+  const loaded = details.data?.id === entity?.id
+  const { open, drawer } = useShowSearch(loaded ? details.data : entity, details.loading)
 
   setToggle((e, show) => {
     setEntity(show)
