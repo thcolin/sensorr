@@ -86,8 +86,8 @@ const Friends = ({ ...props }) => {
           )}
           <div sx={Friends.styles.guests}>
             {Object.values(guests).map((guest: any) => (
-              <div>
-                <img src={guest.avatar} />
+              <div key={guest.email}>
+                <img src={guest.avatar} alt='' />
                 <div>
                   <strong>{guest.name}</strong>
                   <br/>
