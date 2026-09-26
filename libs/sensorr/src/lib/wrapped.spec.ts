@@ -81,11 +81,42 @@ describe('wrappedOf', () => {
     expect(wrapped.palme).toMatchObject({ title: 'Heat', plays: 2 })
     expect(wrapped.grand_prix).toMatchObject({ title: 'Scrubs', episodes: 3, months: [5, 6] })
     expect(wrapped.jury).toMatchObject({ title: '2001' })
-    expect(wrapped.alone_pct).toBe(33)
+    expect(wrapped.only_you_pct).toBe(33)
   })
 
   it('reads taste from the movies', () => {
     expect(wrapped).toMatchObject({ film_age: 1995, decade: 1990, genre: 'Science-Fiction' })
+  })
+
+  it('prefers a night of episodes to a night of movies, and ends a session left open at its media length', () => {
+    const night = [
+      play(4, 'plex://movie/2001', '2026-02-01T19:00:00Z', 2),
+      play(4, 'plex://movie/heat', '2026-02-01T21:00:00Z', 3),
+      play(4, 'plex://movie/dune', '2026-02-02T00:00:00Z', 2.5),
+      play(4, 'show:1', '2026-02-10T19:00:00Z', 0.5, 'episode'),
+      play(4, 'show:1', '2026-02-10T19:30:00Z', 0.5, 'episode'),
+      { ...play(4, 'show:1', '2026-02-10T20:00:00Z', 0.5, 'episode'), stopped: at('2026-02-13T20:00:00Z') },
+    ]
+    expect(wrappedOf({ plays: night, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-10', episodes: 3, end: '21:30' })
+  })
+
+  it('finds the cycles: a show over months, a director over several movies', () => {
+    const cycle = [
+      ...Array.from({ length: 12 }, (_, index) => play(5, 'show:1', `2026-0${index < 6 ? 3 : 4}-0${(index % 6) + 1}T20:00:00Z`, 0.5, 'episode')),
+      play(5, 'plex://movie/eyes', '2026-05-01T20:00:00Z', 2),
+      play(5, 'plex://movie/shining', '2026-05-02T20:00:00Z', 2),
+      play(5, 'plex://movie/2001', '2026-06-03T20:00:00Z', 2),
+    ]
+    const kubrick = [
+      ...titles,
+      { key: 'plex://movie/eyes', media_type: 'movie' as const, title: 'Eyes Wide Shut', directors: ['Stanley Kubrick'] },
+      { key: 'plex://movie/shining', media_type: 'movie' as const, title: 'The Shining', directors: ['Stanley Kubrick'] },
+    ]
+    expect(wrappedOf({ plays: cycle, titles: kubrick, user_id: 5, year: 2026 }).cycles).toEqual([
+      { kind: 'show', name: 'Scrubs', count: 12, months: [3, 4], thumb: undefined },
+      { kind: 'director', name: 'Stanley Kubrick', count: 3, months: [5, 6], thumb: undefined },
+    ])
+    expect(wrapped.cycles).toEqual([])
   })
 
   it('gives an empty year to a user without plays', () => {
