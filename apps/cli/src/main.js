@@ -19,6 +19,7 @@ import refine from './commands/refine'
 import shrink from './commands/shrink'
 import report from './commands/report'
 import keepInTouch from './commands/keep-in-touch'
+import wrapped from './commands/wrapped'
 import migrate from './commands/migrate'
 import migrateSonarr from './commands/migrate-sonarr'
 
@@ -79,6 +80,7 @@ const main = async () => {
     .command(typed('shrink', '✂️ Shrink refined movies with smallest release available', [shrink(job, handlers)]))
     .command(typed('report', '🚩 Replace archived movies reported from Plex with their best release', [report(job, handlers)]))
     .command(keepInTouch(job, handlers))
+    .command(wrapped(job, handlers))
     .command({ ...migrate(job, handlers), builder: (yargs) => yargs.command(migrateSonarr(job, handlers)) })
     .scriptName('sensorr')
     .locale('en')
