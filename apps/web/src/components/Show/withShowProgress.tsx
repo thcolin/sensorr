@@ -2,20 +2,43 @@ import { useEffect, useMemo, useState } from 'react'
 import { progressOfDetails } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
+import { limited } from './limited'
 
-// A show's diffusion does not change within a session: one TMDB request per show, whatever the cards showing it
-const details = new Map<number, Promise<any>>()
+const DAY = 24 * 60 * 60 * 1000
+
+// One TMDB request per show, whatever the cards showing it. A tab left open reads it again once its next episode
+// aired, and after a day at most
+const details = new Map<number, { expires: number, promise: Promise<{ progress: any, status?: string, last_air_date?: string }> }>()
+
+// While in flight, never expired
+const cachedOf = (id: number) => {
+  const cached = details.get(id)
+  return (cached && cached.expires > Date.now()) ? cached.promise : null
+}
 
 // Shared by every card of the show, so no card's unmount aborts it. A failed request is forgotten, the next card asks again
 const detailsOf = (tmdb, id: number) => {
-  if (!details.has(id)) {
-    details.set(id, tmdb.fetch(`tv/${id}`).catch((error) => {
-      details.delete(id)
-      throw error
-    }))
+  if (!cachedOf(id)) {
+    const cached = {
+      expires: Infinity,
+      promise: tmdb.fetch(`tv/${id}`).then((show) => {
+        const progress = progressOfDetails(show)
+        const now = Date.now()
+        const next = progress.next ? new Date(progress.next).getTime() : Infinity
+        // A next episode dated today or before has not reached TMDB's counts yet: it waits the day like the others
+        cached.expires = Math.min(now + DAY, next > now ? next : Infinity)
+        // Only what a card draws is kept, not the whole details
+        return { progress, status: show.status, last_air_date: show.last_air_date }
+      }).catch((error) => {
+        details.delete(id)
+        throw error
+      }),
+    }
+
+    details.set(id, cached)
   }
 
-  return details.get(id)
+  return cachedOf(id)
 }
 
 // The progress footer of a poster whose entity comes without one: from Sensorr when it holds the show, from its
@@ -40,15 +63,16 @@ export const withShowProgress = () => (WrappedComponent) => {
         try {
           if (inSensorr) {
             const { uri, params, init } = api.query.shows.getShowProgress({ params: { id }, init: { signal: controller.signal } })
-            const progress = await api.fetch(uri, params, init)
+            const progress = await limited(() => api.fetch(uri, params, init), controller.signal)
             setFetched({ id, progress })
             return
           }
 
-          const show = await detailsOf(tmdb, id)
+          // A show another card already asked for takes no turn
+          const { progress, status, last_air_date } = await (cachedOf(id) || limited(() => detailsOf(tmdb, id), controller.signal))
 
           if (!controller.signal.aborted) {
-            setFetched({ id, progress: progressOfDetails(show), status: show.status, last_air_date: show.last_air_date })
+            setFetched({ id, progress, status, last_air_date })
           }
         } catch (error) {
           if (!controller.signal.aborted) {
