@@ -54,7 +54,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
   return (
     <div sx={UIShowSettings.styles.container}>
-      <div sx={MetadataStyles.block}>
+      <div sx={{ ...MetadataStyles.block, ...UIShowSettings.styles.policy }}>
         <span id={ids.policy}>Policy</span>
         <fieldset disabled={!ready || !!pending['policy']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
@@ -64,26 +64,28 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </fieldset>
         {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
-      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...UIShowSettings.styles.spaced }}>
-        <span id={ids.auto}>Auto</span>
-        <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
-          {DOWNLOADS.map(({ value, key, label }) => (
-            <Option
-              key={key}
-              id={`${ids.auto}-${key}`}
-              name={ids.auto}
-              type='radio'
-              checked={auto === value}
-              disabled={!ready || !!pending['proposal_only']}
-              onChange={() => set('proposal_only', value)}
-            >
-              <span>{label}</span>
-            </Option>
-          ))}
+      <div sx={UIShowSettings.styles.columns}>
+        <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...UIShowSettings.styles.spaced }}>
+          <span id={ids.auto}>Auto</span>
+          <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
+            {DOWNLOADS.map(({ value, key, label }) => (
+              <Option
+                key={key}
+                id={`${ids.auto}-${key}`}
+                name={ids.auto}
+                type='radio'
+                checked={auto === value}
+                disabled={!ready || !!pending['proposal_only']}
+                onChange={() => set('proposal_only', value)}
+              >
+                <span>{label}</span>
+              </Option>
+            ))}
+          </div>
+          {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
         </div>
-        {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
+        {children}
       </div>
-      {children}
     </div>
   )
 }
@@ -138,17 +140,35 @@ export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
   // One row as wide as the movie settings: Policy stretches like Terms, the other columns take
-  // the width of their content, and the last one ends on the right edge
+  // the width of their content, and the last one ends on the right edge. The row wraps where Policy would
+  // get narrower than its select, a width that follows the other columns: Policy on a line of its own, the
+  // other columns under it
   container: {
-    display: ['flex', 'grid'],
-    flexDirection: 'column',
-    gridTemplateColumns: 'minmax(0, 1fr)',
-    gridAutoFlow: 'column',
-    gridAutoColumns: 'max-content',
+    display: 'flex',
+    flexDirection: ['column', 'row'],
+    flexWrap: 'wrap',
+    columnGap: MetadataStyles.container.columnGap,
+  },
+  // Policy takes the room the other columns leave, down to the width of its select: its help follows the
+  // width of the column rather than set it
+  policy: {
+    flex: [null, '1 1 0'],
+    minWidth: [0, 'auto'],
+    '>small': {
+      ...MetadataStyles.block['>small'],
+      contain: 'inline-size',
+    },
+  },
+  // Auto and Follow wrap together under Policy, then one under the other
+  columns: {
+    display: 'flex',
+    flexDirection: ['column', 'row'],
+    flexWrap: 'wrap',
     columnGap: MetadataStyles.container.columnGap,
   },
   // Radios and boxes are shorter than the select: their label keeps them off it, which puts them
-  // level with the select, and the help drops to the bottom of the row, on the Policy help line
+  // level with the select, and the help drops to the bottom of the row, on the Policy help line. On a line
+  // of its own, Auto keeps the mobile gap between its radios and its help
   spaced: {
     '>span': {
       ...MetadataStyles.block['>span'],
@@ -157,6 +177,7 @@ UIShowSettings.styles = {
     '>small': {
       ...MetadataStyles.block['>small'],
       marginTop: [10, 'auto'],
+      paddingTop: [null, 10],
     },
   },
   // The first box sits under its label like a control, the second one the gap `Option` keeps
@@ -182,8 +203,10 @@ UIShowSettings.styles = {
       opacity: 0.5,
     },
   },
+  // A column narrower than the three radios, as a job's settings get, wraps them rather than clip them
   radios: {
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: ['center', 'flex-start'],
     gap: 4,
