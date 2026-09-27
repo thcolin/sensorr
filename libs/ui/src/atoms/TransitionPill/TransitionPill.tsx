@@ -3,7 +3,7 @@ import { memo } from 'react'
 export interface TransitionPillProps extends React.HTMLAttributes<HTMLSpanElement> {
   from?: React.ReactNode
   to: React.ReactNode
-  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing' | 'unfollowed'
+  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing' | 'unfollowed' | 'downloading'
   compact?: boolean
   // A side without a verdict stays gray whatever the state: an unknown value, or owned episodes behind the aired ones
   neutral?: { from?: boolean, to?: boolean }
@@ -84,6 +84,11 @@ UITransitionPill.styles = {
     airing: {
       before: { backgroundColor: 'airingDarkest', color: 'airingLightest' },
       after: { backgroundColor: 'airingDark', color: 'whitePure' },
+    },
+    // Files still on their way to the staging folder
+    downloading: {
+      before: { backgroundColor: 'warningDarkest', color: 'warningLightest' },
+      after: { backgroundColor: 'warningDarker', color: 'whitePure' },
     },
     // A series still on air that Sensorr does not follow: gray under a hollow violet, the fill of the page under an inset
     // ring so the pill keeps its size

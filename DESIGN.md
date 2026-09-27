@@ -217,6 +217,12 @@ components:
   transition-pill-airing-before:
     backgroundColor: "{colors.airingDarkest}"
     textColor: "{colors.airingLightest}"
+  transition-pill-downloading:
+    backgroundColor: "{colors.warningDarker}"
+    textColor: "{colors.whitePure}"
+  transition-pill-downloading-before:
+    backgroundColor: "{colors.warningDarkest}"
+    textColor: "{colors.warningLightest}"
   transition-pill-unfollowed:
     backgroundColor: "{colors.white}"
     textColor: "{colors.airingLight}"
@@ -318,7 +324,8 @@ meaning and never for decoration.
 ### Semantic
 - **Signal Red** (`error`, `errorDark`, `errorDarker`, `errorDarkest`): a broken policy, a
   destructive button, a failed job.
-- **Signal Amber** (`warning`): a job that ran but did not finish its work.
+- **Signal Amber** (`warning`): a job that ran but did not finish its work, and a show release
+  whose files are still downloading, on its `TransitionPill` and its bar.
 - **Signal Blue** (`info`): a neutral notice.
 - **Signal Violet** (`airing`, `airingLight`, `airingDark`, `airingDarkest`, `airingLightest`): a
   series whose aired count still grows, on its `ProgressPill`. On one Sensorr does not follow,
@@ -619,6 +626,9 @@ tint of the same hue. Both halves are set in regular weight:
 - `airing` (a series still on air, see `ProgressPill` below): `airingDark` over
   `airingDarkest`, `whitePure` over `airingLightest`, a 16-point step. White on `airingDark`
   measures 7.98:1 and `airingLightest` on `airingDarkest` 10.20:1: both halves clear AA.
+- `downloading` (the files of a show release still on their way to the staging folder):
+  `warningDarker` over `warningDarkest`, `whitePure` over `warningLightest`. White on
+  `warningDarker` measures 4.71:1 and `warningLightest` on `warningDarkest` 6.59:1.
 - `unfollowed` (a series still on air that Sensorr does not follow, see `ProgressPill` below):
   the new side is hollow, the page's `white` under a `1.5px` inset ring of `airing`, its value in
   `airingLight`; the old side is the `quiet` gray. The ring is an inset `box-shadow`, so the pill
