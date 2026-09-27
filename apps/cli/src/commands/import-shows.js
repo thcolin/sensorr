@@ -118,7 +118,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
           }))
 
           let episodes = null
-          const done = [], overdue = []
+          const done = [], overdue = [], waiting = []
           const folders = (await fs.readdir(path.join(library, folder), { withFileTypes: true }).catch(() => [])).filter((entry) => entry.isDirectory()).map(({ name }) => name)
           const now = Date.now()
           const fetchEpisodes = async () => {
@@ -127,9 +127,12 @@ const ImportShowsReleasesTask = ({ ...props }) => {
           }
 
           for (const release of show.releases.filter(isImportable)) {
-            if (!isReleaseFinished(release, await listingOf(staging, release))) {
+            const listing = await listingOf(staging, release)
+
+            if (!isReleaseFinished(release, listing)) {
               pending++
               downloading.push(release.title)
+              waiting.push({ title: release.title, size: release.size, files: release.torrent.files.length, staged: release.torrent.files.filter(({ path: file }) => file in listing || `${file}${INCOMPLETE}` in listing).length })
 
               if (!release.overdue && isReleaseOverdue(release, now)) {
                 overdue.push(release)
@@ -186,6 +189,10 @@ const ImportShowsReleasesTask = ({ ...props }) => {
               imported++
               state.logger.info({ message: `📥 Import "${release.title}" into "${folder}", ${linked.length} files linked`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), release: { id: release.id, title: release.title }, links: linked.length } })
             }
+          }
+
+          if (waiting.length) {
+            state.logger.info({ message: `⏳ ${waiting.length} "${show.name}" releases still downloading, ${waiting.reduce((sum, { staged }) => sum + staged, 0)}/${waiting.reduce((sum, { files }) => sum + files, 0)} files in staging`, metadata: { ...state.metadata, group: show.id, type: 'show', show: lighten.show(show), waiting } })
           }
 
           // Its episodes are released before the mark is written, so a failed write only repeats this next run
