@@ -14,7 +14,8 @@ export class JobsController implements OnApplicationBootstrap {
     private readonly sensorrService: SensorrService
   ) {}
 
-  onApplicationBootstrap() {
+  async onApplicationBootstrap() {
+    await this.jobsService.closeOrphans()
     this.jobsService.setupCrons()
   }
 

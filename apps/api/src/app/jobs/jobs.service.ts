@@ -34,7 +34,33 @@ export class JobsService {
     private sensorrService: SensorrService,
     private configService: ConfigService,
     private logsService: LogsService,
-  ) {}
+  ) {
+    this.sensorrService.exits.subscribe(job => this.closeJob(job))
+  }
+
+  // The CLI writes its closing log itself, unless it was killed before it could
+  async closeJob(job: string, timestamp = new Date()) {
+    if (await this.logModel.exists({ 'meta.job': job, 'meta.done': true })) {
+      return
+    }
+
+    this.logger.warn(`CloseJob "${job}", interrupted`)
+    await this.logModel.create({ timestamp, level: 'error', message: '⚠️ Interrupted', meta: { job, summary: true, done: true, error: { message: 'Interrupted' } } })
+  }
+
+  // Every CLI is a child of this process, so none of those left open by a previous boot is still running
+  async closeOrphans() {
+    const orphans = await this.logModel.aggregate([
+      { $match: { 'meta.summary': { $exists: true } } },
+      { $group: { _id: '$meta.job', done: { $max: '$meta.done' } } },
+      { $match: { done: { $ne: true } } },
+    ])
+
+    for (const { _id: job } of orphans) {
+      const last = await this.logModel.findOne({ 'meta.job': job }).sort({ timestamp: -1 }).lean().exec()
+      await this.closeJob(job, last?.timestamp)
+    }
+  }
 
   listenJobs(): Observable<MessageEvent> {
     this.logger.log('ListenJobs')

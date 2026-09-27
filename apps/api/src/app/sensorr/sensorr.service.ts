@@ -40,6 +40,7 @@ export class SensorrService {
   public process = {}
   public processObservable = new Subject<MessageEvent>()
   private readonly running = new Set<string>()
+  public exits = new Subject<string>()
 
   constructor(
     @InjectModel(MetafileDocument.name) private readonly metafileModel: Model<MetafileDocument>,
@@ -165,6 +166,9 @@ export class SensorrService {
 
         delete this.process[job]
         this.processObservable.next({ data: this.process } as MessageEvent)
+        if (job) {
+          this.exits.next(job)
+        }
       })
     })
   }
