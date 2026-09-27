@@ -47,6 +47,31 @@ const isEmptyImport = (job) => {
   return jobNameOf(job.meta) === 'import shows' && job.meta.done && !job.meta.error && !success && !pending && !warning && !overdue
 }
 
+const REPEATED = ['import shows', 'airing shows']
+
+const isIdle = (job) => {
+  const { imports, recorded, proposal, warning } = job.meta.summary || {}
+  return job.meta.done && !job.meta.error && !imports?.success && !imports?.warning && !imports?.overdue && !recorded && !proposal && !warning
+}
+
+// Of idle import or airing shows telling the same summary in a row, "all" keeps the newest only
+const listedOf = (jobs) => {
+  const newer = {}
+
+  return jobs.filter((job) => {
+    const name = jobNameOf(job.meta)
+
+    if (!REPEATED.includes(name)) {
+      return true
+    }
+
+    const summary = JSON.stringify(job.meta.summary)
+    const repeated = isIdle(job) && newer[name] === summary
+    newer[name] = isIdle(job) ? summary : null
+    return !isEmptyImport(job) && !repeated
+  })
+}
+
 const UIJobs = ({ controls = null, ...props }) => {
   const api = useAPI()
   const location = useLocation()
@@ -62,7 +87,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
   useEffect(() => {
     if ((!job && !loading && jobs.length) || (!loading && !jobs.find(j => j.job === job) && jobs.length && !(location.state as any)?.new)) {
-      navigate(`/jobs/${(jobs.find(j => !isEmptyImport(j)) || jobs[0]).job}`, { replace: true })
+      navigate(`/jobs/${(listedOf(jobs)[0] || jobs[0]).job}`, { replace: true })
       return
     }
   }, [jobs, job, loading])
@@ -167,7 +192,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
   const [filter, setFilter] = useState(null)
-  const listed = useMemo(() => jobs.filter(job => !isEmptyImport(job)), [jobs])
+  const listed = useMemo(() => listedOf(jobs), [jobs])
   const groups = useMemo(() => (filter ? jobs.filter(job => jobNameOf(job.meta) === filter) : listed).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
     const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
