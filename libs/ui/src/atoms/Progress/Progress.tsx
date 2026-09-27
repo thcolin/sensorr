@@ -5,12 +5,14 @@ export interface ProgressProps extends React.ProgressHTMLAttributes<HTMLProgress
   max: number
   // Splits the bar into one pill per part, sized by its `max` and filled with its own `value`
   segments?: { value: number, max: number }[]
+  // The theme color of the fill
+  tint?: string
 }
 
 // Past 8 parts, a row of rounded pills reads as a dotted line: the bar is notched instead
 const NOTCHED = 8
 
-const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
+const UIProgress = ({ value, max, segments, tint = 'primary', ...props }: ProgressProps) => {
   if (!(max > 0)) {
     return null
   }
@@ -28,7 +30,7 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
         aria-valuemax={max}
         aria-valuenow={Math.min(value, max)}
         data-notched={parts.length > NOTCHED || undefined}
-        sx={UIProgress.styles.segments}
+        sx={UIProgress.styles.segments(tint)}
       >
         {parts.map((segment, index) => (
           <span key={index} style={{ flexGrow: segment.max }}>
@@ -40,12 +42,12 @@ const UIProgress = ({ value, max, segments, ...props }: ProgressProps) => {
   }
 
   return (
-    <progress {...props} value={Math.min(value, max)} max={max} sx={UIProgress.styles.element} />
+    <progress {...props} value={Math.min(value, max)} max={max} sx={UIProgress.styles.element(tint)} />
   )
 }
 
 UIProgress.styles = {
-  element: {
+  element: (tint) => ({
     appearance: 'none',
     display: 'block',
     width: '100%',
@@ -55,20 +57,20 @@ UIProgress.styles = {
     borderRadius: '2em',
     overflow: 'hidden',
     backgroundColor: 'grayDarker',
-    color: 'primary',
+    color: tint,
     '::-webkit-progress-bar': {
       backgroundColor: 'grayDarker',
     },
     '::-webkit-progress-value': {
-      backgroundColor: 'primary',
+      backgroundColor: tint,
       transition: 'width 400ms ease-in-out',
     },
     '::-moz-progress-bar': {
-      backgroundColor: 'primary',
+      backgroundColor: tint,
     },
-  },
+  }),
   // One pill per part, each with the track and the fill of `element`
-  segments: {
+  segments: (tint) => ({
     display: 'flex',
     // A fifth of an average part, 2px on a 5 seasons card
     gap: 'clamp(0.5px, calc(100% / var(--parts) / 5), 0.125em)',
@@ -86,7 +88,7 @@ UIProgress.styles = {
         display: 'block',
         width: '100%',
         height: '100%',
-        backgroundColor: 'primary',
+        backgroundColor: tint,
         transformOrigin: 'left',
         transition: 'transform 400ms ease-in-out',
       },
@@ -100,7 +102,7 @@ UIProgress.styles = {
         borderRadius: '0em',
       },
     },
-  },
+  }),
 }
 
 export const Progress = memo(UIProgress)

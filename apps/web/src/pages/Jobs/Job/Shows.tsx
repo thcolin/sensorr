@@ -161,12 +161,13 @@ UIMissingShow.styles = {
 
 const MissingShow = memo(UIMissingShow)
 
-// The footer of a library card, its pill and its bar, counting the files in staging instead of the owned episodes
+// The footer of a library card, its pill and its bar, counting the downloaded files instead of the owned episodes
 const UIDownloadingShow = ({ entity, ...props }) => {
   const staged = entity.waiting.reduce((sum, { staged }) => sum + staged, 0)
   const files = entity.waiting.reduce((sum, { files }) => sum + files, 0)
+  const partial = entity.waiting.reduce((sum, { partial = 0 }) => sum + partial, 0)
   const title = [
-    `${staged} of ${files} files in staging`,
+    `${staged} of ${files} files downloaded${partial ? `, ${partial} in progress` : ''}`,
     filesize.stringify(entity.waiting.reduce((sum, { size }) => sum + (size || 0), 0)),
     ...entity.waiting.map(({ title }) => title),
   ].join(' · ')
@@ -178,9 +179,9 @@ const UIDownloadingShow = ({ entity, ...props }) => {
       footer={(
         <span sx={UIDownloadingShow.styles.footer}>
           <span sx={UIDownloadingShow.styles.pill}>
-            <TransitionPill from={staged} to={files} neutral={{ from: staged < files }} compact={true} title={title} />
+            <TransitionPill from={staged} to={files} state='downloading' compact={true} title={title} />
           </span>
-          <Progress value={staged} max={files} segments={entity.waiting.map(({ staged, files }) => ({ value: staged, max: files }))} title={title} />
+          <Progress value={staged} max={files} tint='warning' segments={entity.waiting.map(({ staged, files }) => ({ value: staged, max: files }))} title={title} />
         </span>
       )}
     />

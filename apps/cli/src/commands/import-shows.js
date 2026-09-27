@@ -132,7 +132,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
             if (!isReleaseFinished(release, listing)) {
               pending++
               downloading.push(release.title)
-              waiting.push({ title: release.title, size: release.size, files: release.torrent.files.length, staged: release.torrent.files.filter(({ path: file }) => file in listing || `${file}${INCOMPLETE}` in listing).length })
+              waiting.push({ title: release.title, size: release.size, files: release.torrent.files.length, staged: release.torrent.files.filter(({ path: file, size }) => listing[file] === size && !(`${file}${INCOMPLETE}` in listing)).length, partial: release.torrent.files.filter(({ path: file }) => `${file}${INCOMPLETE}` in listing).length })
 
               if (!release.overdue && isReleaseOverdue(release, now)) {
                 overdue.push(release)
