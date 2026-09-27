@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import Tippy from '@tippyjs/react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
@@ -143,14 +144,20 @@ export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated =
 
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 
-const UIMissingShow = ({ entity, ...props }) => (
-  <div sx={UIMissingShow.styles.element}>
+const UICaptionedShow = ({ entity, ...props }) => (
+  <div sx={UICaptionedShow.styles.element}>
     <Show entity={entity} {...props} />
-    <code>{emojize('💊', `${entity.missing} episode${entity.missing > 1 ? 's' : ''}`)}</code>
+    {entity.tip ? (
+      <Tippy maxWidth='80vw' content={<code>{entity.tip}</code>}>
+        <code>{entity.caption}</code>
+      </Tippy>
+    ) : (
+      <code>{entity.caption}</code>
+    )}
   </div>
 )
 
-UIMissingShow.styles = {
+UICaptionedShow.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
@@ -159,7 +166,7 @@ UIMissingShow.styles = {
   },
 }
 
-const MissingShow = memo(UIMissingShow)
+const CaptionedShow = memo(UICaptionedShow)
 
 const showsOf = (logs, test) => logs
   .filter(test)
@@ -189,7 +196,7 @@ const COMMANDS = {
     // A show whose episodes left Plex is logged as a warning too, with its count
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
-      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', child: MissingShow, extra: 36 },
+      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, caption: emojize('💊', `${missing} episode${missing > 1 ? 's' : ''}`) }), child: CaptionedShow, extra: 36 },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
     ],
     empty: 'No fixed shows during this job',
@@ -201,6 +208,18 @@ const COMMANDS = {
     warnings: (log) => log.level === 'warn',
     sections: [
       { key: 'imported', label: emojize('📥', 'Imported'), test: (log) => log.level === 'info' && log.meta.show && typeof log.meta.links === 'number' },
+      {
+        key: 'downloading',
+        label: emojize('⏳', 'Downloading'),
+        test: (log) => log.level === 'info' && log.meta.show && log.meta.waiting,
+        entity: ({ show, waiting }) => ({
+          ...show,
+          caption: emojize('⏳', `${waiting.reduce((sum, { staged }) => sum + staged, 0)}/${waiting.reduce((sum, { files }) => sum + files, 0)} files · ${filesize.stringify(waiting.reduce((sum, { size }) => sum + (size || 0), 0))}`),
+          tip: waiting.map(({ title }) => title).join(', '),
+        }),
+        child: CaptionedShow,
+        extra: 36,
+      },
     ],
     empty: 'No imported releases during this job',
   },
@@ -219,14 +238,13 @@ const COMMANDS = {
 const UIShowsJob = ({ job, logs }) => {
   const command = COMMANDS[jobNameOf(job.meta)]
   const warnings = useMemo(() => [...(logs || [])].filter(command.warnings).sort(newest), [logs, command])
-  const sections = useMemo(() => command.sections.reduce((acc, { key, test }) => ({
+  const sections = useMemo(() => command.sections.reduce((acc, { key, test, entity }: any) => ({
     ...acc,
-    [key]: key === 'missings'
-      ? (logs || []).filter(test).sort(newest).map(({ meta }) => ({ ...meta.show, missing: meta.missing }))
+    [key]: entity
+      ? (logs || []).filter(test).sort(newest).map(({ meta }) => entity(meta))
       : showsOf(logs || [], test),
   }), {}), [logs, command])
-  const downloading = useMemo(() => (job.meta.summary?.imports?.downloading || []).map((message) => ({ message })), [job.meta.summary])
-  const empty = !warnings.length && !downloading.length && command.sections.every(({ key }) => !sections[key].length)
+  const empty = !warnings.length && command.sections.every(({ key }) => !sections[key].length)
 
   return (
     <div sx={UIShowsJob.styles.element}>
@@ -277,7 +295,6 @@ const UIShowsJob = ({ job, logs }) => {
         ) : !empty ? (
           <div sx={UIShowsJob.styles.entities}>
             <Warnings logs={warnings} />
-            <Warnings logs={downloading} label={emojize('⏳', 'Downloading')} />
             {command.sections.map(({ key, label, child = Show, extra = 0 }) => (
               <Entities
                 key={key}
