@@ -97,6 +97,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
 
     const cb = async () => {
       let imported = 0, pending = 0, links = 0, warning = 0, late = 0
+      const downloading = []
       const { library, staging } = state.shows
       setStatus('loading')
 
@@ -128,6 +129,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
           for (const release of show.releases.filter(isImportable)) {
             if (!isReleaseFinished(release, await listingOf(staging, release))) {
               pending++
+              downloading.push(release.title)
 
               if (!release.overdue && isReleaseOverdue(release, now)) {
                 overdue.push(release)
@@ -219,7 +221,7 @@ const ImportShowsReleasesTask = ({ ...props }) => {
         }
       }
 
-      state.logger.info({ message: `📥 Imported ${imported} show releases, ${links} files linked, ${pending} still downloading, ${late} newly overdue`, metadata: { ...state.metadata, summary: { imports: { success: imported, pending, links, warning, overdue: late } } } })
+      state.logger.info({ message: `📥 Imported ${imported} show releases, ${links} files linked, ${pending} still downloading, ${late} newly overdue`, metadata: { ...state.metadata, summary: { imports: { success: imported, pending, links, warning, overdue: late, downloading } } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> releases imported, <Text bold={true}>{links}</Text> files linked, <Text bold={true}>{pending}</Text> still downloading</Text> }))
       setStatus('done')

@@ -1,6 +1,6 @@
-export const Warnings = ({ logs = [], ...props }) => !logs.length ? null : (
+export const Warnings = ({ logs = [], label = 'Warnings' as any, ...props }) => !logs.length ? null : (
   <div sx={Warnings.styles.element}>
-    <span>Warnings</span>
+    <span>{label}</span>
     <div>
       <div>
         {logs.map(({ message, timestamp }, index) => (

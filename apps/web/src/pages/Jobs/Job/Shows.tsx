@@ -101,7 +101,7 @@ export const summaryImportShows = ({ shows = 0, releases = 0, imports }, extende
   ...(imports?.pending > 0 ? [{
     key: 'pending',
     emoji: '⏳',
-    title: <span><strong>{imports.pending}</strong> Releases still downloading</span>,
+    title: <span><strong>{imports.pending}</strong> Releases still downloading{imports.downloading?.length ? `: ${imports.downloading.join(', ')}` : ''}</span>,
     length: imports.pending,
   }] : []),
   ...(imports?.warning > 0 ? [{
@@ -224,7 +224,8 @@ const UIShowsJob = ({ job, logs }) => {
       ? (logs || []).filter(test).sort(newest).map(({ meta }) => ({ ...meta.show, missing: meta.missing }))
       : showsOf(logs || [], test),
   }), {}), [logs, command])
-  const empty = !warnings.length && command.sections.every(({ key }) => !sections[key].length)
+  const downloading = useMemo(() => (job.meta.summary?.imports?.downloading || []).map((message) => ({ message })), [job.meta.summary])
+  const empty = !warnings.length && !downloading.length && command.sections.every(({ key }) => !sections[key].length)
 
   return (
     <div sx={UIShowsJob.styles.element}>
@@ -275,6 +276,7 @@ const UIShowsJob = ({ job, logs }) => {
         ) : !empty ? (
           <div sx={UIShowsJob.styles.entities}>
             <Warnings logs={warnings} />
+            <Warnings logs={downloading} label={emojize('⏳', 'Downloading')} />
             {command.sections.map(({ key, label, child = Show, extra = 0 }) => (
               <Entities
                 key={key}
