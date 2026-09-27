@@ -6,7 +6,7 @@ import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
 import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
-import { usePainted, useTitle } from '@sensorr/utils'
+import { usePainted, useResponsiveValue, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
@@ -194,6 +194,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const [expanded, setExpanded] = useState(false)
   const [filter, setFilter] = useState(null)
   const painted = usePainted()
+  const mobile = useResponsiveValue([true, false])
   const listed = useMemo(() => listedOf(jobs), [jobs])
   const groups = useMemo(() => (filter ? jobs.filter(job => jobNameOf(job.meta) === filter) : listed).reduce((groups, job) => {
     const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
@@ -252,7 +253,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
           <CommandTabs options={options} all={listed.length} value={filter} onChange={setFilter} />
           <div sx={UISidebar.styles.jobs}>
-            {painted && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
+            {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
                 <h6>{distance}</h6>
                 <div sx={{ paddingX: 2 }}>
