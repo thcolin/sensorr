@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { OverlayScrollbars } from 'overlayscrollbars'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { useTouchable } from '@sensorr/utils'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 
 const Body = ({ overlayScrollbars = false, ...props }) => {
@@ -15,11 +16,12 @@ const Body = ({ overlayScrollbars = false, ...props }) => {
     restoreScrollPosition()
   }, [ready])
 
-  // Where native scrollbars already overlay the content (touch devices), the library brings nothing
+  // On a touch device whose native scrollbars already overlay the content, the library brings nothing
   // and its synchronous setup forces layout inside the screen transition.
+  const touchable = useTouchable()
   const { x, y } = OverlayScrollbars.env().scrollbarsOverlaid
 
-  if (overlayScrollbars && !(x && y)) {
+  if (overlayScrollbars && !(touchable && x && y)) {
     return (
       <OverlayScrollbarsComponent
         element='div'

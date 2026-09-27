@@ -14,18 +14,27 @@ const RippleNavLink = ({ to, onClick, ...props }) => {
   const [ref, ripple] = useRipple()
   const location = useLocation()
   const navigate = useNavigate()
+  const navigated = useRef(false)
 
   const handlePointerDown = (e) => {
     ripple(e)
 
-    if (e.button === 0) {
+    if (e.button === 0 && !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey)) {
+      navigated.current = true
       onClick(e)
       navigate(to, { viewTransition: true, replace: createPath(location) === to })
     }
   }
 
-  // The click that follows a pointer press already navigated, a keyboard one (`detail` 0) has not
-  const handleClick = (e) => e.detail ? e.preventDefault() : onClick(e)
+  // The click that follows a press has nothing left to do, a keyboard or assistive one navigates
+  const handleClick = (e) => {
+    if (navigated.current) {
+      navigated.current = false
+      e.preventDefault()
+    } else {
+      onClick(e)
+    }
+  }
 
   return (
     <NavLink ref={ref} to={to} onPointerDown={handlePointerDown} onClick={handleClick} {...props as any} />

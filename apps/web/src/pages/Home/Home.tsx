@@ -1,9 +1,9 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
+import { useNavigationType } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePainted, useTitle } from '@sensorr/utils'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
-import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import Body from '../../layout/Body/Body'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
@@ -16,18 +16,12 @@ const Home = ({ ...props }) => {
   useTitle('Home')
   const { t } = useTranslation()
   const { device } = useDeviceContext()
-  const { restoreScrollPosition } = useScrollPositionContext()
-  const painted = usePainted()
+  const navigationType = useNavigationType()
+  // Going back restores a scroll position that may need every row, so they all mount at once
+  const painted = usePainted() || navigationType === 'POP'
   const pretty = useCallback(({ index }) => ({
     display: (((device !== 'mobile') && index < 5) ? 'pretty' : 'poster') as 'pretty' | 'poster',
   }), [device])
-
-  // Rows past the first three mount after the screen transition, a restored position may need them
-  useEffect(() => {
-    if (painted) {
-      restoreScrollPosition()
-    }
-  }, [painted])
 
   return (
     <Body overlayScrollbars={true}>
