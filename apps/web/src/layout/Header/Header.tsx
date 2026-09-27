@@ -109,22 +109,26 @@ const Logo = ({ ...props }) => {
   )
 }
 
-const Toolbar = ({ ...props }) => (
-  <div sx={Toolbar.styles.element}>
-    <LoadingBar />
-    <div sx={Toolbar.styles.wrapper}>
-      <div sx={Toolbar.styles.left}>
-        <Logo />
-      </div>
-      <div sx={Toolbar.styles.center}>
-        <SearchInput />
-      </div>
-      <div sx={Toolbar.styles.right}>
-        <Notifications />
+const Toolbar = ({ ...props }) => {
+  const { pwa } = useDeviceContext()
+
+  return (
+    <div sx={Toolbar.styles.element}>
+      {!pwa && <LoadingBar />}
+      <div sx={Toolbar.styles.wrapper}>
+        <div sx={Toolbar.styles.left}>
+          <Logo />
+        </div>
+        <div sx={Toolbar.styles.center}>
+          <SearchInput />
+        </div>
+        <div sx={Toolbar.styles.right}>
+          <Notifications />
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 Toolbar.styles = {
   element: {
@@ -167,6 +171,7 @@ Toolbar.styles = {
 
 const Header = ({ ...props }) => {
   const location = useLocation()
+  const { pwa } = useDeviceContext()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
 
@@ -187,7 +192,7 @@ const Header = ({ ...props }) => {
       </div>
       <Navigation display='web' />
       <Navigation display='secondary' />
-      <hr sx={{ variant: 'hr.default' }} {...props} />
+      {pwa ? <LoadingBar /> : <hr sx={{ variant: 'hr.default' }} {...props} />}
     </div>
   )
 }
