@@ -115,3 +115,17 @@
 ::view-transition-new(backward) {
   animation: 400ms cubic-bezier(0.4, 0, 0.2, 1) both view-transition-backward-in;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(top),
+  ::view-transition-old(forward),
+  ::view-transition-old(backward) {
+    animation-name: view-transition-fade-out;
+  }
+
+  ::view-transition-new(top),
+  ::view-transition-new(forward),
+  ::view-transition-new(backward) {
+    animation-name: view-transition-fade-in;
+  }
+}
