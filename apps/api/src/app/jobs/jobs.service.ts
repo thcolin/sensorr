@@ -38,9 +38,9 @@ export class JobsService {
     this.sensorrService.exits.subscribe(job => this.closeJob(job))
   }
 
-  // The CLI writes its closing log itself, unless it was killed before it could
+  // The CLI writes its closing log itself, unless it was killed before it could: `summary: true`, where a movie's log carries a summary object
   async closeJob(job: string, timestamp = new Date()) {
-    if (await this.logModel.exists({ 'meta.job': job, 'meta.summary': { $exists: true }, 'meta.done': true })) {
+    if (await this.logModel.exists({ 'meta.job': job, 'meta.summary': true, 'meta.done': true })) {
       return
     }
 
@@ -52,7 +52,7 @@ export class JobsService {
   async closeOrphans() {
     const orphans = await this.logModel.aggregate([
       { $match: { 'meta.summary': { $exists: true } } },
-      { $group: { _id: '$meta.job', done: { $max: '$meta.done' } } },
+      { $group: { _id: '$meta.job', done: { $max: { $and: [{ $eq: ['$meta.summary', true] }, { $eq: ['$meta.done', true] }] } } } },
       { $match: { done: { $ne: true } } },
     ])
 
