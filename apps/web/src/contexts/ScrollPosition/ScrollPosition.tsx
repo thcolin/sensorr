@@ -8,7 +8,7 @@ const scrollPositionContext = createContext({})
 
 export const Provider = ({ ...props }) => {
   const ref = useRef()
-  const { pwa, setHistoryIndex } = useDeviceContext()
+  const { pwa } = useDeviceContext()
   const detailsDrawer = useDetailsDrawerContext()
   const location = useLocation()
   const navigationType = useNavigationType()
@@ -22,7 +22,6 @@ export const Provider = ({ ...props }) => {
     detailsDrawer.close()
 
     sessionStorage.setItem(`${historyEntryOf(location)}-scroll`, (ref.current as any).scrollTop)
-    setHistoryIndex(curr => ({ POP: curr - 1, PUSH: curr + 1, REPLACE: curr }[historyAction]))
 
     // routes mounted outside `withLayout` have no `#main` to carry the view transition
     const main = document.getElementById('main')

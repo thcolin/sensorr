@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
 import { useDeviceContext } from '../../../contexts/Device/Device'
+import { SECONDARY } from './sections'
 
 const Chevron = ({ ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" height="0.5em" width="0.5em" viewBox="0 0 320 512">
@@ -15,29 +16,6 @@ const RippleNavLink = ({ ...props }) => {
   return (
     <NavLink ref={ref} onPointerDown={onPointerDown} {...props as any} />
   )
-}
-
-const SECONDARY = {
-  '/movie': [
-    { to: '/movie/library', label: 'Library' },
-    { to: '/movie/discover', label: 'Discover' },
-    { to: '/movie/calendar', label: 'Calendar' },
-    { to: '/movie/trending', label: 'Trending' },
-    { to: '/movie/theatres', label: 'Theatres' },
-    { to: '/movie/requests', label: 'Requests' },
-    { to: '/movie/swaps', label: 'Swaps' },
-  ],
-  '/tv': [
-    { to: '/tv/library', label: 'Library' },
-    { to: '/tv/discover', label: 'Discover' },
-    { to: '/tv/calendar', label: 'Calendar' },
-    { to: '/tv/trending', label: 'Trending' },
-    { to: '/tv/requests', label: 'Requests' },
-  ],
-  '/person': [
-    { to: '/person/followed', label: 'Followed' },
-    { to: '/person/trending', label: 'Trending' },
-  ],
 }
 
 const Secondary = ({ ...props }) => {
@@ -114,14 +92,13 @@ Secondary.styles = {
 }
 
 const Navigation = ({ display = 'web', ...props }) => {
-  const { device, pwa, setHistoryIndex } = useDeviceContext()
+  const { device, pwa } = useDeviceContext()
 
   const location = useLocation()
   const container = useRef() as any
 
   const handleAppNavigation = useCallback(() => {
     window.SENSORR_BODY_VIEW_TRANSITION_NAME = 'top'
-    setHistoryIndex(-1)
   }, [])
 
   const handleWebNavigation = useCallback((e) => {

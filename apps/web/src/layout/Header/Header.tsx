@@ -9,6 +9,7 @@ import { useSearchContext } from '../../contexts/Search/Search'
 import { Input as SearchInput, Results as SearchResults, History as SearchHistory } from './elements/Search'
 import { Notifications } from './elements/Notifications'
 import Navigation from './elements/Navigation'
+import { sectionRootOf } from './elements/sections'
 
 const PWD = ({ ...props }) => {
   const location = useLocation()
@@ -54,15 +55,27 @@ Seperator.styles = {
 
 const Logo = ({ ...props }) => {
   const [ref, onPointerDown] = useRipple()
-  const { pwa, historyIndex } = useDeviceContext()
+  const { pwa, device } = useDeviceContext()
+  const location = useLocation()
   const navigate = useNavigate()
+  const root = sectionRootOf(location.pathname, device)
+
+  const back = () => {
+    if (window.history.state?.idx > 0) {
+      navigate(-1)
+      return
+    }
+
+    window.SENSORR_BODY_VIEW_TRANSITION_NAME = 'backward'
+    navigate(root, { replace: true })
+  }
 
   return pwa ? (
     <button
       ref={ref}
       onPointerDown={onPointerDown}
-      onClick={() => navigate(-1)}
-      disabled={!historyIndex}
+      onClick={back}
+      disabled={!root}
       sx={{
         variant: 'button.reset',
         flex: 1,

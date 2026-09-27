@@ -1,11 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import { useDevice } from '@sensorr/utils'
 
 const deviceContext = createContext({})
 
 export const Provider = ({ ...props }) => {
   const device = useDevice()
-  const [historyIndex, setHistoryIndex] = useState(0)
   const pwa = window.matchMedia('(display-mode: standalone)').matches
   const ios = (
     (/iPad|iPhone|iPod/.test(navigator.platform) ||
@@ -18,8 +17,8 @@ export const Provider = ({ ...props }) => {
   }, [device])
 
   return (
-    <deviceContext.Provider {...props} value={{ device, ios, pwa, historyIndex, setHistoryIndex }} />
+    <deviceContext.Provider {...props} value={{ device, ios, pwa }} />
   )
 }
 
-export const useDeviceContext = () => useContext(deviceContext) as ({ device: 'mobile' | 'tablet' | 'desktop', ios: boolean, pwa: boolean, historyIndex: number, setHistoryIndex: any })
+export const useDeviceContext = () => useContext(deviceContext) as ({ device: 'mobile' | 'tablet' | 'desktop', ios: boolean, pwa: boolean })
