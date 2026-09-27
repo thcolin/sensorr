@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react'
-import Tippy from '@tippyjs/react'
-import { Entities, Icon, Warning } from '@sensorr/ui'
+import { Entities, Icon, Progress, TransitionPill, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
@@ -144,33 +143,66 @@ export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated =
 
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 
-const UICaptionedShow = ({ entity, ...props }) => (
-  <div sx={UICaptionedShow.styles.element}>
+const UIMissingShow = ({ entity, ...props }) => (
+  <div sx={UIMissingShow.styles.element}>
     <Show entity={entity} {...props} />
-    {entity.tip ? (
-      <Tippy maxWidth='80vw' content={<code>{entity.tip}</code>}>
-        <code>{entity.caption}</code>
-      </Tippy>
-    ) : (
-      <code>{entity.caption}</code>
-    )}
+    <code>{emojize('💊', `${entity.missing} episode${entity.missing > 1 ? 's' : ''}`)}</code>
   </div>
 )
 
-UICaptionedShow.styles = {
+UIMissingShow.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
-    '>code': {
-      whiteSpace: 'pre-line',
-      textAlign: 'center',
-    },
   },
 }
 
-const CaptionedShow = memo(UICaptionedShow)
+const MissingShow = memo(UIMissingShow)
+
+// The footer of a library card, its pill and its bar, counting the files in staging instead of the owned episodes
+const UIDownloadingShow = ({ entity, ...props }) => {
+  const staged = entity.waiting.reduce((sum, { staged }) => sum + staged, 0)
+  const files = entity.waiting.reduce((sum, { files }) => sum + files, 0)
+  const title = [
+    `${staged} of ${files} files in staging`,
+    filesize.stringify(entity.waiting.reduce((sum, { size }) => sum + (size || 0), 0)),
+    ...entity.waiting.map(({ title }) => title),
+  ].join(' · ')
+
+  return (
+    <Show
+      entity={entity}
+      {...props}
+      footer={(
+        <span sx={UIDownloadingShow.styles.footer}>
+          <span sx={UIDownloadingShow.styles.pill}>
+            <TransitionPill from={staged} to={files} neutral={{ from: staged < files }} compact={true} title={title} />
+          </span>
+          <Progress value={staged} max={files} segments={entity.waiting.map(({ staged, files }) => ({ value: staged, max: files }))} title={title} />
+        </span>
+      )}
+    />
+  )
+}
+
+UIDownloadingShow.styles = {
+  footer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    '>progress, >[role="progressbar"]': {
+      flex: 1,
+    },
+  },
+  pill: {
+    display: 'flex',
+    fontSize: [5, 4],
+  },
+}
+
+const DownloadingShow = memo(UIDownloadingShow)
 
 const showsOf = (logs, test) => logs
   .filter(test)
@@ -200,7 +232,7 @@ const COMMANDS = {
     // A show whose episodes left Plex is logged as a warning too, with its count
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
-      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, caption: emojize('💊', `${missing} episode${missing > 1 ? 's' : ''}`) }), child: CaptionedShow, extra: 36 },
+      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing }), child: MissingShow, extra: 36 },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
     ],
     empty: 'No fixed shows during this job',
@@ -216,13 +248,8 @@ const COMMANDS = {
         key: 'downloading',
         label: emojize('⏳', 'Downloading'),
         test: (log) => log.level === 'info' && log.meta.show && log.meta.waiting,
-        entity: ({ show, waiting }) => ({
-          ...show,
-          caption: `${emojize('⏳', `${waiting.reduce((sum, { staged }) => sum + staged, 0)}/${waiting.reduce((sum, { files }) => sum + files, 0)} files`)}\n${emojize('💾', filesize.stringify(waiting.reduce((sum, { size }) => sum + (size || 0), 0)))}`,
-          tip: waiting.map(({ title }) => title).join(', '),
-        }),
-        child: CaptionedShow,
-        extra: 60,
+        entity: ({ show, waiting }) => ({ ...show, waiting }),
+        child: DownloadingShow,
       },
     ],
     empty: 'No imported releases during this job',

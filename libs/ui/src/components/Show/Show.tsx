@@ -36,6 +36,8 @@ export interface ShowProps extends Omit<
   selected?: boolean | null
   selectedVisible?: boolean
   onSelectedChange?: (id: string) => void
+  // In place of the episodes progress, for a card that counts something else
+  footer?: React.ReactNode
 }
 
 const UIShow = ({
@@ -52,6 +54,7 @@ const UIShow = ({
   selected = null,
   selectedVisible = false,
   onSelectedChange,
+  footer,
   ...props
 }: ShowProps) => {
   const device = useDevice()
@@ -121,7 +124,7 @@ const UIShow = ({
       selected={selected}
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
-      footer={!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.detail} compact={device === 'mobile'} />}
+      footer={footer || (!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.detail} compact={device === 'mobile'} />)}
     />
   )
 }
