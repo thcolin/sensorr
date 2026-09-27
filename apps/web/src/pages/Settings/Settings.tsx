@@ -86,7 +86,7 @@ const Settings = ({ ...props }) => {
           </div>
         </footer>
       </aside>
-      <div sx={Settings.styles.container} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'none' : 'block' } : {}}>
+      <div sx={Settings.styles.container} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'none' : 'flex' } : {}}>
         <Outlet context={{ onSave, updateAvailable, remoteApp }} />
       </div>
     </section>
@@ -97,7 +97,7 @@ Settings.styles = {
   element: {
     display: 'flex',
     flex: '1 1 0%',
-    overflow: ['unset', 'hidden'],
+    overflow: 'hidden',
   },
   sidebar: {
     display: 'flex',
@@ -105,6 +105,7 @@ Settings.styles = {
     minWidth: ['100%', '21em'],
     maxWidth: ['100%', '21em'],
     paddingBottom: [0, 12],
+    overflowY: ['auto', 'unset'],
     backgroundColor: 'grayLighter',
     '>h1': {
       display: ['none', 'block'],
