@@ -206,6 +206,7 @@ Navigation.styles = {
       borderTop: '1px solid',
       borderColor: 'gray',
       zIndex: 5,
+      viewTransitionName: 'navigation',
       '>a': {
         variant: 'link.reset',
         display: 'flex',
