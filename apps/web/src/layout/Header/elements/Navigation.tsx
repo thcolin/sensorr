@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, createPath, useLocation, useNavigate } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 
@@ -9,11 +9,26 @@ const Chevron = ({ ...props }) => (
   </svg>
 )
 
-const RippleNavLink = ({ ...props }) => {
-  const [ref, onPointerDown] = useRipple()
+// Navigates as soon as the finger touches the tab, like a native tab bar, rather than when it lifts
+const RippleNavLink = ({ to, onClick, ...props }) => {
+  const [ref, ripple] = useRipple()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handlePointerDown = (e) => {
+    ripple(e)
+
+    if (e.button === 0) {
+      onClick(e)
+      navigate(to, { viewTransition: true, replace: createPath(location) === to })
+    }
+  }
+
+  // The click that follows a pointer press already navigated, a keyboard one (`detail` 0) has not
+  const handleClick = (e) => e.detail ? e.preventDefault() : onClick(e)
 
   return (
-    <NavLink ref={ref} onPointerDown={onPointerDown} {...props as any} />
+    <NavLink ref={ref} to={to} onPointerDown={handlePointerDown} onClick={handleClick} {...props as any} />
   )
 }
 
