@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { Option, Icon, Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
-import { JOB_EMOJIS } from '@sensorr/sensorr'
+import { JOB_EMOJIS, jobTitleOf } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -28,15 +28,15 @@ const JobsSettings = ({ ...props }) => {
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
-      loading: `Running new Job **${name}**, please wait...`,
+      loading: `Running new Job **${jobTitleOf(name)}**, please wait...`,
       success: (data) => {
         setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Job **${name}** successfully run (${data.job})`
+        return `Job **${jobTitleOf(name)}** successfully run (${data.job})`
       },
       error: (err) => {
         console.warn(err)
         setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Error during Job **${name}** run`
+        return `Error during Job **${jobTitleOf(name)}** run`
       },
     })
   }, [])
@@ -51,7 +51,7 @@ const JobsSettings = ({ ...props }) => {
   }
 
   const stopJob = useCallback(async (name, job) => {
-    if (!confirm(`Do you really want to stop ${name} job "${job}" ?`)) {
+    if (!confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
       return
     }
 
@@ -265,15 +265,15 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
     <div sx={JobSettings.styles.element}>
       <div sx={JobSettings.styles.container}>
         <div sx={JobSettings.styles.metadata}>
-          <h5>{emojize(emoji, name)}</h5>
+          <h5>{emojize(emoji, command)}</h5>
           <p>{description}</p>
         </div>
         <div sx={{ display: 'flex' }}>
           <button
             type='button'
             sx={JobSettings.styles.run}
-            aria-label={running ? `Stop ${name}` : `Run ${name}`}
-            title={running ? `Stop ${name}` : `Run ${name}`}
+            aria-label={running ? `Stop ${jobTitleOf(name)}` : `Run ${jobTitleOf(name)}`}
+            title={running ? `Stop ${jobTitleOf(name)}` : `Run ${jobTitleOf(name)}`}
             onClick={() => (running ? stopJob(name, running.job) : runJob(command, type))}
             disabled={disabled}
           >
