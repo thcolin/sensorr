@@ -49,7 +49,7 @@ export const withShowProgress = () => (WrappedComponent) => {
     const tmdb = useTMDB()
     const [fetched, setFetched] = useState(null)
     const inSensorr = !!metadata?.state
-    const skip = !!entity?.progress || !!placeholder || display === 'card' || display === 'pretty' || typeof entity?.id !== 'number' || state === 'loading'
+    const skip = !!entity?.progress || !!props.footer || !!placeholder || display === 'card' || display === 'pretty' || typeof entity?.id !== 'number' || state === 'loading'
 
     useEffect(() => {
       if (skip) {
