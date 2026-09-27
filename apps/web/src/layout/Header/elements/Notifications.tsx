@@ -1,12 +1,12 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
 import toast from 'react-hot-toast'
-import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
-import { emojize } from '@sensorr/utils'
+import { Policy, coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
+import { emojize, filesize } from '@sensorr/utils'
 import useRipple from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
-import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
@@ -14,8 +14,11 @@ import { showStateOf, useShowsMetadataContext } from '../../../contexts/ShowsMet
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
+import { useSensorr } from '../../../store/sensorr'
 import { ReleaseSize, ReleaseTag, safeUrl } from '../../../components/Sensorr/Release'
-import { swapLabelOf } from '../../../components/Sensorr/Proposal'
+import { Transition, swapLabelOf } from '../../../components/Sensorr/Proposal'
+import { Size, delta } from '../../../pages/Proposals/Card'
+import { isPending, itemOf } from '../../../pages/Proposals/queue'
 
 // Keyed by `jobNameOf`
 const COMMANDS = {
@@ -32,7 +35,8 @@ const COMMANDS = {
 
 const UINotifications = ({ ...props }) => {
   const { pwa } = useDeviceContext()
-  const ref = useRef()
+  // The list is rendered in a portal: a state, so the virtualizer renders again once its container exists
+  const [scroller, setScroller] = useState<HTMLDivElement>(null)
   const [pointerRef, onPointerDown] = useRipple()
   const { Portal, togglePortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
   const { notifications: all, loading, dismissNotifications, subscribable, subscribed, toggleNotificationsSubscription } = useNotificationsContext() as any
@@ -49,6 +53,26 @@ const UINotifications = ({ ...props }) => {
   const options = useMemo(() => Object.keys(COMMANDS)
     .filter(name => name === filter || notifications.some(notification => jobNameOf(notification.meta) === name))
     .map(name => ({ value: name, ...COMMANDS[name], count: notifications.filter(notification => jobNameOf(notification.meta) === name).length })), [notifications, filter])
+
+  const listRef = useRef(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+
+  // A swap takes more lines than the other notifications, so each row is measured
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scroller,
+    estimateSize: () => 240,
+    getItemKey: (index) => filtered[index]?._id ?? index,
+    overscan: 4,
+    scrollMargin,
+  })
+
+  // The tabs scroll above the list inside the same container
+  useLayoutEffect(() => {
+    if (listRef.current && scroller) {
+      setScrollMargin(listRef.current.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop)
+    }
+  }, [scroller, filtered.length > 0])
 
   useEffect(() => {
     if (open && navigator.clearAppBadge) {
@@ -96,23 +120,20 @@ const UINotifications = ({ ...props }) => {
                 <Icon value='clear' active={true} height='1.25em' width='1.25em' />
               </button>
             </span>
-            <div ref={ref} sx={UINotifications.styles.container}>
+            <div ref={setScroller} sx={UINotifications.styles.container}>
               <CommandTabs options={options} all={notifications.length} value={filter} onChange={setFilter} />
               {filtered.length ? (
-                <div>
-                  <ResponsiveVirtualGrid
-                    total={filtered.length}
-                    cell={{ height: 240 }}
-                    child={Notification}
-                    childProps={{ closePortal }}
-                    viewportOffset={10}
-                    scrollContainer={ref.current}
-                    scrollDirection={'vertical'}
-                    useChildProps={(key) => ({
-                      key: filtered[key.split('-').shift()]?._id,
-                      ...filtered[key.split('-').shift()],
-                    })}
-                  />
+                <div ref={listRef} style={{ position: 'relative', height: virtualizer.getTotalSize() }}>
+                  {virtualizer.getVirtualItems().map((row) => (
+                    <div
+                      key={row.key}
+                      data-index={row.index}
+                      ref={virtualizer.measureElement}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - scrollMargin}px)` }}
+                    >
+                      <Notification {...filtered[row.index]} closePortal={closePortal} />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 filter ? (
@@ -242,12 +263,12 @@ export const Notifications = memo(UINotifications)
 
 const Notification = (props) => props.meta?.type === 'show' ? <ShowNotification {...props} /> : <MovieNotification {...props} />
 
-const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poster, heading, children }) => {
+const NotificationFrame = ({ _id, timestamp, meta, closePortal, to, poster, heading, children }) => {
   const { dismissNotifications } = useNotificationsContext() as any
 
   return (
-    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : dismissNotifications([_id])} style={{ ...style, width: '100%' }}>
-      <div sx={{ position: 'relative', display: 'flex', height: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
+    <div sx={{ paddingX: 4, overflow: 'hidden', color: 'textLight', ...(!meta?.seen ? { backgroundColor: 'grayLighter' } : {}) }} onMouseEnter={() => meta?.seen ? {} : dismissNotifications([_id])}>
+      <div sx={{ position: 'relative', display: 'flex', minHeight: '240px', alignItems: 'center', paddingY: 4, borderBottom: '1px solid', borderColor: 'gray' }}>
         {!meta?.seen && (
           <span sx={{ position: 'absolute', top: '0.5em', display: 'block', backgroundColor: 'error', height: '0.5em', width: '0.5em', borderRadius: '0.25em' }}></span>
         )}
@@ -282,10 +303,29 @@ const NotificationFrame = ({ _id, timestamp, meta, closePortal, style, to, poste
   )
 }
 
-const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
+const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
   const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata, banMovieRelease } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
+  const sensorr = useSensorr()
+  const swapped = useRef(null)
+
+  // The Swaps row of this proposal, while it waits: once decided, the owned releases are no longer the ones it
+  // replaces. The last one is kept, so answering does not move the buttons under the pointer.
+  const swap = useMemo(() => {
+    const stored = (metadata.releases || []).find(release => release.id === meta?.release?.id)
+
+    if (!['refine', 'shrink', 'report'].includes(meta?.command) || !isPending(stored)) {
+      return null
+    }
+
+    const item = itemOf(meta.movie, metadata.releases.filter(release => !release.proposal || release === stored), new Policy(metadata.policy || '', sensorr.policies))
+    return item.owned.length ? item : null
+  }, [meta?.command, meta?.movie, meta?.release?.id, metadata.releases, metadata.policy, sensorr.policies])
+
+  if (swap) {
+    swapped.current = swap
+  }
 
   const choice = useMemo(() => {
     if (typeof meta?.choice !== 'undefined') {
@@ -316,7 +356,6 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       timestamp={timestamp}
       meta={meta}
       closePortal={closePortal}
-      style={props.style}
       to={`/movie/${meta?.movie?.id}`}
       poster={meta?.movie?.poster_path}
       heading={{
@@ -338,21 +377,23 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
         </span>
         <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
       </div>
-      <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
-        <span sx={{ fontSize: 6 }}>
-          {{
-            'record': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'report': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'sync': `Do you want to fix it ?`,
-            'keep-in-touch': `Requested by`,
-          }[meta?.command]}
-        </span>
-      </div>
+      {!swapped.current && (
+        <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
+          <span sx={{ fontSize: 6 }}>
+            {{
+              'record': meta?.release?.proposal ? `Release proposal` : `Release`,
+              'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
+              'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
+              'report': meta?.release?.proposal ? `Release proposal` : `Release`,
+              'sync': `Do you want to fix it ?`,
+              'keep-in-touch': `Requested by`,
+            }[meta?.command]}
+          </span>
+        </div>
+      )}
       {['record', 'refine', 'shrink', 'report'].includes(meta?.command) && (
-        <div sx={{ marginTop: 8 }}>
-          <NotificationRelease release={meta?.release} />
+        <div sx={{ marginTop: swapped.current ? 12 : 8 }}>
+          <NotificationRelease release={meta?.release} swap={swapped.current} />
           <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
             {meta?.release?.proposal ? (
               <>
@@ -400,12 +441,6 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
           </div>
         </div>
       )}
-      {/* {meta?.command === 'refine' && (
-        <Release entity={meta?.release} display='column' proceed={() => {}} />
-      )} */}
-      {/* {meta?.command === 'shrink' && (
-        <Release entity={meta?.release} display='column' proceed={() => {}} />
-      )} */}
       {meta?.command === 'sync' && (
         <div sx={{ display: 'flex', marginTop: 4, '>button': { flex: 1, ...(choice === null ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
           {(choice === null || choice === true) && (
@@ -474,7 +509,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   )
 }
 
-const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
+const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
   const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow, setShowState, banShowRelease } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
@@ -545,7 +580,6 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
       timestamp={timestamp}
       meta={meta}
       closePortal={closePortal}
-      style={props.style}
       to={`/tv/${meta?.show?.id}`}
       poster={meta?.show?.poster_path}
       heading={{
@@ -673,22 +707,50 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal, ...props }) => {
   )
 }
 
-const NotificationRelease = ({ release }) => (
+const NotificationRelease = ({ release, swap = null }) => (
   <>
-    <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
-      <code
-        title={release?.title}
-        sx={{
-          display: 'block',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          fontSize: 6,
-        }}
-      >
-        {release?.title || 'No releases found during this job'}
-      </code>
-    </Tippy>
+    {swap ? (
+      <div sx={NotificationRelease.styles.swap}>
+        <span>Owned</span>
+        <code title={swap.owned.map(release => `${release.title} (${filesize.stringify(release.size || 0)})`).join('\n')}>
+          {swap.diff.from?.title}
+        </code>
+        <code data-size={true}>
+          {swap.owned.length > 1 && <small>+{swap.owned.length - 1}</small>}
+          {filesize.stringify(swap.diff.from?.size || 0)}
+        </code>
+        <span>Proposed</span>
+        <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
+          <code title={release?.title}>{release?.title}</code>
+        </Tippy>
+        <code data-size={true}>{filesize.stringify(release?.size || 0)}</code>
+        <div>
+          <span>
+            {swap.diff.listed.map(({ axis, from, to }) => (
+              <Transition key={axis} axis={axis} from={from} to={to} policy={swap.policy} compact={true} />
+            ))}
+          </span>
+          <code title={`Size against the lightest owned release: ${delta(swap.diff.size)}`}>
+            <Size item={swap} threshold={0} compact={true} named={false} />
+          </code>
+        </div>
+      </div>
+    ) : (
+      <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
+        <code
+          title={release?.title}
+          sx={{
+            display: 'block',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            fontSize: 6,
+          }}
+        >
+          {release?.title || 'No releases found during this job'}
+        </code>
+      </Tippy>
+    )}
     <div sx={{ display: 'flex', flexDirection: ['column', 'row'], alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
       <div
         sx={{
@@ -715,7 +777,7 @@ const NotificationRelease = ({ release }) => (
             <code>{emojize('🌍 ', release?.peers || 0)}</code>
           </ReleaseTag>
         )}
-        {typeof release?.size !== 'undefined' && <ReleaseSize size={release?.size} fontSize={7} />}
+        {(!swap && typeof release?.size !== 'undefined') && <ReleaseSize size={release?.size} fontSize={7} />}
         {typeof release?.score !== 'undefined' && (
           <ReleaseTag title={`Score (${release?.score})`} fontSize={7}>
             <code>{emojize('💯 ', release?.score || 0)}</code>
@@ -743,3 +805,63 @@ const NotificationRelease = ({ release }) => (
     </div>
   </>
 )
+
+// The owned release the pills compare against, over the proposed one, then the Swaps row's pills and size
+NotificationRelease.styles = {
+  swap: {
+    display: 'grid',
+    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+    alignItems: 'baseline',
+    columnGap: 6,
+    rowGap: 10,
+    '>span': {
+      color: 'grayDarker',
+      fontSize: 6,
+      fontWeight: 'semibold',
+    },
+    '>code': {
+      fontSize: 6,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+    '>code[data-size]': {
+      color: 'grayDarker',
+      textAlign: 'right',
+      '>small': {
+        marginRight: 8,
+      },
+    },
+    '>div': {
+      gridColumn: '1 / -1',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 10,
+      // A pill that does not fit wraps onto a hidden second line rather than being cut, as on a Swaps row.
+      // The widest one always fits: the size goes under the pills first.
+      '>span': {
+        flex: '1 1 auto',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 7,
+        minWidth: 'min-content',
+        height: '1.3em',
+        overflow: 'hidden',
+        '>*': {
+          flexShrink: 0,
+        },
+      },
+      '>code': {
+        flexShrink: 0,
+        display: 'flex',
+        fontFamily: 'monospace',
+        '>small': {
+          fontSize: 7,
+        },
+      },
+    },
+  },
+}
