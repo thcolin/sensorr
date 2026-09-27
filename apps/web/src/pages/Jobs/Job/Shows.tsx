@@ -163,6 +163,10 @@ UICaptionedShow.styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
+    '>code': {
+      whiteSpace: 'pre-line',
+      textAlign: 'center',
+    },
   },
 }
 
@@ -214,11 +218,11 @@ const COMMANDS = {
         test: (log) => log.level === 'info' && log.meta.show && log.meta.waiting,
         entity: ({ show, waiting }) => ({
           ...show,
-          caption: emojize('⏳', `${waiting.reduce((sum, { staged }) => sum + staged, 0)}/${waiting.reduce((sum, { files }) => sum + files, 0)} files · ${filesize.stringify(waiting.reduce((sum, { size }) => sum + (size || 0), 0))}`),
+          caption: `${emojize('⏳', `${waiting.reduce((sum, { staged }) => sum + staged, 0)}/${waiting.reduce((sum, { files }) => sum + files, 0)} files`)}\n${emojize('💾', filesize.stringify(waiting.reduce((sum, { size }) => sum + (size || 0), 0)))}`,
           tip: waiting.map(({ title }) => title).join(', '),
         }),
         child: CaptionedShow,
-        extra: 36,
+        extra: 60,
       },
     ],
     empty: 'No imported releases during this job',
