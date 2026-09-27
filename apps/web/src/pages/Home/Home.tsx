@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useTitle } from '@sensorr/utils'
+import { usePainted, useTitle } from '@sensorr/utils'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, LibraryMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
+import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
 import Body from '../../layout/Body/Body'
 import Person from '../../components/Person/Person'
 import { TrendingPersons } from '../../components/Entities/Persons'
@@ -15,9 +16,18 @@ const Home = ({ ...props }) => {
   useTitle('Home')
   const { t } = useTranslation()
   const { device } = useDeviceContext()
+  const { restoreScrollPosition } = useScrollPositionContext()
+  const painted = usePainted()
   const pretty = useCallback(({ index }) => ({
     display: (((device !== 'mobile') && index < 5) ? 'pretty' : 'poster') as 'pretty' | 'poster',
   }), [device])
+
+  // Rows past the first three mount after the screen transition, a restored position may need them
+  useEffect(() => {
+    if (painted) {
+      restoreScrollPosition()
+    }
+  }, [painted])
 
   return (
     <Body overlayScrollbars={true}>
@@ -88,165 +98,169 @@ const Home = ({ ...props }) => {
           }}
         />
       )}
-      <LibraryShows
-        id='library_shows'
-        label={t('items.shows.library.label')}
-        display='row'
-        child={Show}
-        extra={FOOTER_HEIGHT}
-        limit={20}
-        hide={true}
-        more={{
-          title: t('items.shows.library.more'),
-          to: '/tv/library',
-        }}
-      />
-      <CalendarMovies
-        id='calendar'
-        dateMax={new Date(new Date().setMonth(new Date().getMonth() + 2))}
-        label={t('items.movies.calendar.label')}
-        // title={t('items.movies.calendar.title')}
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        hide={true}
-        props={() => ({
-          focus: 'release_date_full',
-        })}
-        more={{
-          title: t('items.movies.calendar.more'),
-          to: '/movie/calendar',
-        }}
-      />
-      <AiringShows
-        id='airing'
-        label={t('items.shows.airing.label')}
-        display='row'
-        child={Show}
-        extra={FOOTER_HEIGHT}
-        limit={20}
-        hide={true}
-        props={() => ({
-          focus: 'release_date_full',
-        })}
-        more={{
-          title: t('items.shows.airing.more'),
-          to: '/tv/calendar',
-        }}
-      />
-      <RequestedMoviesAndShows
-        id='requests'
-        label={t('items.movies.requests.label')}
-        // title={t('items.movies.requests.title')}
-        display='row'
-        child={MovieOrShow}
-        limit={20}
-        hide={true}
-        // props={() => ({
-        //   focus: 'release_date_full',
-        // })}
-        more={{
-          title: t('items.movies.requests.more'),
-          to: '/movie/requests',
-        }}
-      />
-      <DiscoverMovies
-        id='discover'
-        label={t('items.movies.discover.label')}
-        // title={t('items.movies.discover.title')}
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        props={pretty}
-        more={{
-          title: t('items.movies.discover.more'),
-          to: '/movie/discover',
-        }}
-        empty={{
-          emoji: '',
-          title: '',
-          subtitle: '',
-        }}
-      />
-      <DiscoverShows
-        id='discover_shows'
-        label={t('items.shows.discover.label')}
-        display='row'
-        child={Show}
-        extra={FOOTER_HEIGHT}
-        limit={20}
-        props={pretty}
-        more={{
-          title: t('items.shows.discover.more'),
-          to: '/tv/discover',
-        }}
-        empty={{
-          emoji: '',
-          title: '',
-          subtitle: '',
-        }}
-      />
-      <TheatresMovies
-        id='theatres'
-        label={t('items.movies.theatres.label')}
-        // title={t('items.movies.theatres.title')}
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        hide={true}
-        props={() => ({
-          focus: 'release_date_full',
-        })}
-        more={{
-          title: t('items.movies.theatres.more'),
-          to: '/movie/theatres',
-          state: { controls: { uri: 'movie/now_playing' } },
-        }}
-      />
-      <UpcomingMovies
-        id='upcoming'
-        label={t('items.movies.upcoming.label')}
-        // title={t('items.movies.upcoming.title')}
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        hide={true}
-        props={() => ({
-          focus: 'release_date_full',
-        })}
-        more={{
-          title: t('items.movies.upcoming.more'),
-          to: '/movie/theatres',
-          state: { controls: { uri: 'movie/upcoming' } },
-        }}
-      />
-      <DiscoverMoviesSelectable
-        id='discover_selectable'
-        display='row'
-        child={MovieWithCreditsAndReviews}
-        limit={20}
-        props={pretty}
-      />
-      <TrendingPersons
-        id='trending_persons'
-        label={t('items.persons.trending.label')}
-        // title={t('items.persons.trending.title')}
-        display='row'
-        child={Person}
-        limit={20}
-        props={() => ({
-          display: 'poster',
-        })}
-        more={{
-          title: t('items.movies.trending.more'),
-          to: '/person/trending',
-        }}
-        empty={{
-          emoji: '',
-          title: '',
-          subtitle: '',
-        }}
-      />
+      {painted && (
+        <>
+          <LibraryShows
+            id='library_shows'
+            label={t('items.shows.library.label')}
+            display='row'
+            child={Show}
+            extra={FOOTER_HEIGHT}
+            limit={20}
+            hide={true}
+            more={{
+              title: t('items.shows.library.more'),
+              to: '/tv/library',
+            }}
+          />
+          <CalendarMovies
+            id='calendar'
+            dateMax={new Date(new Date().setMonth(new Date().getMonth() + 2))}
+            label={t('items.movies.calendar.label')}
+            // title={t('items.movies.calendar.title')}
+            display='row'
+            child={MovieWithCreditsAndReviews}
+            limit={20}
+            hide={true}
+            props={() => ({
+              focus: 'release_date_full',
+            })}
+            more={{
+              title: t('items.movies.calendar.more'),
+              to: '/movie/calendar',
+            }}
+          />
+          <AiringShows
+            id='airing'
+            label={t('items.shows.airing.label')}
+            display='row'
+            child={Show}
+            extra={FOOTER_HEIGHT}
+            limit={20}
+            hide={true}
+            props={() => ({
+              focus: 'release_date_full',
+            })}
+            more={{
+              title: t('items.shows.airing.more'),
+              to: '/tv/calendar',
+            }}
+          />
+          <RequestedMoviesAndShows
+            id='requests'
+            label={t('items.movies.requests.label')}
+            // title={t('items.movies.requests.title')}
+            display='row'
+            child={MovieOrShow}
+            limit={20}
+            hide={true}
+            // props={() => ({
+            //   focus: 'release_date_full',
+            // })}
+            more={{
+              title: t('items.movies.requests.more'),
+              to: '/movie/requests',
+            }}
+          />
+          <DiscoverMovies
+            id='discover'
+            label={t('items.movies.discover.label')}
+            // title={t('items.movies.discover.title')}
+            display='row'
+            child={MovieWithCreditsAndReviews}
+            limit={20}
+            props={pretty}
+            more={{
+              title: t('items.movies.discover.more'),
+              to: '/movie/discover',
+            }}
+            empty={{
+              emoji: '',
+              title: '',
+              subtitle: '',
+            }}
+          />
+          <DiscoverShows
+            id='discover_shows'
+            label={t('items.shows.discover.label')}
+            display='row'
+            child={Show}
+            extra={FOOTER_HEIGHT}
+            limit={20}
+            props={pretty}
+            more={{
+              title: t('items.shows.discover.more'),
+              to: '/tv/discover',
+            }}
+            empty={{
+              emoji: '',
+              title: '',
+              subtitle: '',
+            }}
+          />
+          <TheatresMovies
+            id='theatres'
+            label={t('items.movies.theatres.label')}
+            // title={t('items.movies.theatres.title')}
+            display='row'
+            child={MovieWithCreditsAndReviews}
+            limit={20}
+            hide={true}
+            props={() => ({
+              focus: 'release_date_full',
+            })}
+            more={{
+              title: t('items.movies.theatres.more'),
+              to: '/movie/theatres',
+              state: { controls: { uri: 'movie/now_playing' } },
+            }}
+          />
+          <UpcomingMovies
+            id='upcoming'
+            label={t('items.movies.upcoming.label')}
+            // title={t('items.movies.upcoming.title')}
+            display='row'
+            child={MovieWithCreditsAndReviews}
+            limit={20}
+            hide={true}
+            props={() => ({
+              focus: 'release_date_full',
+            })}
+            more={{
+              title: t('items.movies.upcoming.more'),
+              to: '/movie/theatres',
+              state: { controls: { uri: 'movie/upcoming' } },
+            }}
+          />
+          <DiscoverMoviesSelectable
+            id='discover_selectable'
+            display='row'
+            child={MovieWithCreditsAndReviews}
+            limit={20}
+            props={pretty}
+          />
+          <TrendingPersons
+            id='trending_persons'
+            label={t('items.persons.trending.label')}
+            // title={t('items.persons.trending.title')}
+            display='row'
+            child={Person}
+            limit={20}
+            props={() => ({
+              display: 'poster',
+            })}
+            more={{
+              title: t('items.movies.trending.more'),
+              to: '/person/trending',
+            }}
+            empty={{
+              emoji: '',
+              title: '',
+              subtitle: '',
+            }}
+          />
+        </>
+      )}
     </Body>
   )
 }
