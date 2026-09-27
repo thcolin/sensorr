@@ -86,7 +86,7 @@ const Settings = ({ ...props }) => {
           </div>
         </footer>
       </aside>
-      <div sx={Settings.styles.container} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'none' : 'flex' } : {}}>
+      <div sx={Settings.styles.container} style={(device === 'mobile' && location.pathname === '/settings') ? { display: 'none' } : {}}>
         <Outlet context={{ onSave, updateAvailable, remoteApp }} />
       </div>
     </section>
