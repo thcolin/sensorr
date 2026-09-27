@@ -40,12 +40,14 @@ export const lighten = {
     // vote_count,
   }),
   show: ({
+    first_air_date,
     genres,
     id,
     name,
     poster_path,
     vote_average,
   }) => ({
+    first_air_date,
     genres,
     id,
     name,
