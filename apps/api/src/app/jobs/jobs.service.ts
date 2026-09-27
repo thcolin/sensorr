@@ -40,7 +40,7 @@ export class JobsService {
 
   // The CLI writes its closing log itself, unless it was killed before it could
   async closeJob(job: string, timestamp = new Date()) {
-    if (await this.logModel.exists({ 'meta.job': job, 'meta.done': true })) {
+    if (await this.logModel.exists({ 'meta.job': job, 'meta.summary': { $exists: true }, 'meta.done': true })) {
       return
     }
 
