@@ -19,7 +19,11 @@ const RippleNavLink = ({ to, onClick, ...props }) => {
   const handlePointerDown = (e) => {
     ripple(e)
 
-    if (e.button === 0 && !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey)) {
+    // A press in the tab's bottom padding, where the iOS home gesture starts, waits for the release
+    const { bottom } = e.currentTarget.getBoundingClientRect()
+    const edge = e.clientY > bottom - parseFloat(getComputedStyle(e.currentTarget).paddingBottom)
+
+    if (e.button === 0 && !edge && !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey)) {
       navigated.current = true
       onClick(e)
       navigate(to, { viewTransition: true, replace: createPath(location) === to })
