@@ -15,7 +15,7 @@ import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { CommandTabs } from '../../../components/Sensorr/CommandTabs'
 import { useSensorr } from '../../../store/sensorr'
-import { ReleaseSize, ReleaseTag, safeUrl } from '../../../components/Sensorr/Release'
+import { ReleaseSize, ReleaseState, ReleaseTag, safeUrl } from '../../../components/Sensorr/Release'
 import { Transition, swapLabelOf } from '../../../components/Sensorr/Proposal'
 import { Size, delta } from '../../../pages/Proposals/Card'
 import { isPending, itemOf } from '../../../pages/Proposals/queue'
@@ -367,7 +367,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
         'keep-in-touch': `Movie request`,
       }[meta?.command]}
     >
-      <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
+      <div sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 8, paddingY: 10 }}>
         <span sx={{ fontSize: 6, marginRight: 6 }}>
           <MovieState
             value={(loading ? 'loading' : metadata.state) || 'ignored'}
@@ -376,6 +376,11 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
           />
         </span>
         <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
+        {!!swapped.current && (
+          <span sx={{ display: 'flex', flexShrink: 0, marginLeft: 'auto', paddingLeft: 6 }} title={`Size against the lightest owned release: ${delta(swapped.current.diff.size)}`}>
+            <Size item={swapped.current} threshold={0} compact={true} named={false} />
+          </span>
+        )}
       </div>
       {!swapped.current && (
         <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
@@ -392,7 +397,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
         </div>
       )}
       {['record', 'refine', 'shrink', 'report'].includes(meta?.command) && (
-        <div sx={{ marginTop: swapped.current ? 12 : 8 }}>
+        <div sx={{ marginTop: 8 }}>
           <NotificationRelease release={meta?.release} swap={swapped.current} />
           <div sx={{ display: 'flex', marginTop: '1em', '>button': { flex: 1, ...((choice === null || choice === false) ? { ':first-of-type': { marginRight: 8 }, ':last-of-type': { marginLeft: 8 } } : {}) } }}>
             {meta?.release?.proposal ? (
@@ -711,29 +716,16 @@ const NotificationRelease = ({ release, swap = null }) => (
   <>
     {swap ? (
       <div sx={NotificationRelease.styles.swap}>
-        <span>Owned</span>
+        <span><ReleaseState entity={{ ...swap.diff.from, valid: true, from: swap.diff.from?.from || 'record' }} /></span>
         <code title={swap.owned.map(release => `${release.title} (${filesize.stringify(release.size || 0)})`).join('\n')}>
           {swap.diff.from?.title}
         </code>
-        <code data-size={true}>
-          {swap.owned.length > 1 && <small>+{swap.owned.length - 1}</small>}
-          {filesize.stringify(swap.diff.from?.size || 0)}
-        </code>
-        <span>Proposed</span>
+        <code data-more={true}>{swap.owned.length > 1 && <small>+{swap.owned.length - 1}</small>}</code>
+        <span><ReleaseState entity={{ ...release, ...swap.proposal, valid: true }} /></span>
         <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
           <code title={release?.title}>{release?.title}</code>
         </Tippy>
-        <code data-size={true}>{filesize.stringify(release?.size || 0)}</code>
-        <div>
-          <span>
-            {swap.diff.listed.map(({ axis, from, to }) => (
-              <Transition key={axis} axis={axis} from={from} to={to} policy={swap.policy} compact={true} />
-            ))}
-          </span>
-          <code title={`Size against the lightest owned release: ${delta(swap.diff.size)}`}>
-            <Size item={swap} threshold={0} compact={true} named={false} />
-          </code>
-        </div>
+        <code data-more={true} />
       </div>
     ) : (
       <Tippy maxWidth='80vw' disabled={!release?.original} content={<code><small>{release?.original}</small></code>}>
@@ -803,21 +795,34 @@ const NotificationRelease = ({ release, swap = null }) => (
         <a href={safeUrl(release?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
       </div>
     </div>
+    {!!swap && (
+      <div sx={NotificationRelease.styles.pills}>
+        {swap.diff.rows.map(({ axis, from, to }) => (
+          <Transition key={axis} axis={axis} from={from} to={to} policy={swap.policy} compact={true} />
+        ))}
+      </div>
+    )}
   </>
 )
 
-// The owned release the pills compare against, over the proposed one, then the Swaps row's pills and size
+// The owned release the pills compare against, over the proposed one, each with the state icon of a Swaps
+// release row. The pills sit under the release's tags, centred like the diff of a job record (ProcessMovies.tsx),
+// and the size pill next to the movie title
 NotificationRelease.styles = {
   swap: {
     display: 'grid',
     gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-    alignItems: 'baseline',
+    alignItems: 'center',
     columnGap: 6,
-    rowGap: 10,
+    rowGap: 8,
+    // ReleaseState draws its icon at 1.5em with a 1em gutter: at 0.5em, it is the height of the name
     '>span': {
-      color: 'grayDarker',
-      fontSize: 6,
-      fontWeight: 'semibold',
+      display: 'flex',
+      marginLeft: -4,
+      fontSize: 8,
+      '>*': {
+        display: 'flex',
+      },
     },
     '>code': {
       fontSize: 6,
@@ -825,43 +830,19 @@ NotificationRelease.styles = {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     },
-    '>code[data-size]': {
+    // The count of the other owned releases, listed in the name's title; the sizes are in the size pill
+    '>code[data-more]': {
       color: 'grayDarker',
-      textAlign: 'right',
-      '>small': {
-        marginRight: 8,
-      },
     },
-    '>div': {
-      gridColumn: '1 / -1',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginTop: 10,
-      // A pill that does not fit wraps onto a hidden second line rather than being cut, as on a Swaps row.
-      // The widest one always fits: the size goes under the pills first.
-      '>span': {
-        flex: '1 1 auto',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 7,
-        minWidth: 'min-content',
-        height: '1.3em',
-        overflow: 'hidden',
-        '>*': {
-          flexShrink: 0,
-        },
-      },
-      '>code': {
-        flexShrink: 0,
-        display: 'flex',
-        fontFamily: 'monospace',
-        '>small': {
-          fontSize: 7,
-        },
-      },
-    },
+  },
+  pills: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    columnGap: 7,
+    rowGap: 8,
+    marginTop: 6,
+    paddingY: 8,
   },
 }
