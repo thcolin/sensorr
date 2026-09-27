@@ -126,6 +126,7 @@ const Toolbar = ({ ...props }) => {
           <Notifications />
         </div>
       </div>
+      {pwa && <LoadingBar />}
     </div>
   )
 }
@@ -171,7 +172,6 @@ Toolbar.styles = {
 
 const Header = ({ ...props }) => {
   const location = useLocation()
-  const { pwa } = useDeviceContext()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
 
@@ -192,7 +192,7 @@ const Header = ({ ...props }) => {
       </div>
       <Navigation display='web' />
       <Navigation display='secondary' />
-      {pwa ? <LoadingBar /> : <hr sx={{ variant: 'hr.default' }} {...props} />}
+      <hr sx={{ variant: 'hr.default' }} {...props} />
     </div>
   )
 }
