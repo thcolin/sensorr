@@ -9,6 +9,9 @@ import { Option } from '../../../inputs/Option/Option'
 // import { MovieDetails } from '../../../components/Movie/Movie'
 // import { PersonDetails } from '../../../components/Person/Person'
 
+// The ring around a badge takes the color of the surface under the poster, which sets `--poster-cutout` when it is not `grayLightest`
+const cutout = 'var(--poster-cutout, var(--theme-ui-colors-grayLightest))'
+
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: any // MovieDetails | PersonDetails
   link?: LinkProps
@@ -138,7 +141,7 @@ const UIPoster = ({
                 justifyContent: 'center',
                 borderStyle: 'solid',
                 borderWidth: '0.25em',
-                borderColor: 'grayLightest',
+                borderColor: cutout,
               }}
             >
               <Option
@@ -177,11 +180,11 @@ const UIPoster = ({
             >
               {badges?.reviews?.component && (
                 <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
-                  <badges.reviews.component {...badges?.reviews?.props} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }} />
+                  <badges.reviews.component {...badges?.reviews?.props} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }} />
                 </span>
               )}
               {badges?.focus?.component && (
-                <span sx={{ display: 'block', marginTop: badges?.reviews?.component ? ['-1.75em', '-2em'] : 12, borderRadius: '2em', borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'grayLightest' }}>
+                <span sx={{ display: 'block', marginTop: badges?.reviews?.component ? ['-1.75em', '-2em'] : 12, borderRadius: '2em', borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }}>
                   <badges.focus.component {...badges?.focus?.props} />
                 </span>
               )}
@@ -381,7 +384,7 @@ UIPoster.styles = {
     borderRadius: '50%',
     borderStyle: 'solid',
     borderWidth: '0.25em',
-    borderColor: 'grayLightest',
+    borderColor: cutout,
     backgroundColor: 'gray',
   },
   proposal: {
@@ -389,7 +392,7 @@ UIPoster.styles = {
     borderRadius: '50%',
     borderStyle: 'solid',
     borderWidth: '0.25em',
-    borderColor: 'grayLightest',
+    borderColor: cutout,
   },
   link: {
     display: 'flex',
