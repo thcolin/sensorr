@@ -46,3 +46,15 @@ export const jobNameOf = (meta: { command?: string, type?: string } = {}): strin
   const types = typesOf(meta.command)
   return types?.length ? `${meta.command} ${types.find((type) => type === `${meta.type}s`) || types[0]}` : meta.command as string
 }
+
+// A `jobNameOf` name split for display, the command first and what it runs on after: `record shows` reads `record` and `tv`
+export const jobLabelOf = (name: string): { command: string, suffix?: string } => {
+  const [command, suffix] = name.split(' ')
+  return { command, suffix: suffix === 'shows' ? 'tv' : suffix }
+}
+
+// The same where text cannot be styled: a document title, a toast, an aria-label
+export const jobTitleOf = (name: string): string => {
+  const { command, suffix } = jobLabelOf(name)
+  return suffix ? `${command} (${suffix})` : command
+}

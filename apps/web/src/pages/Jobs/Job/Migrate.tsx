@@ -1,6 +1,8 @@
 import { memo, useMemo } from 'react'
 import { Entities, Icon, Person, Warning } from '@sensorr/ui'
+import { jobNameOf } from '@sensorr/sensorr'
 import { emojize } from '@sensorr/utils'
+import { JobName } from '../../../components/Sensorr/JobName'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
 import { Summary } from '../Summary'
@@ -59,7 +61,7 @@ const UIMigrateJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIMigrateJob.styles.title}>{job.meta.command}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIMigrateJob.styles.title} />
             </span>
           )}
           subtitle={(

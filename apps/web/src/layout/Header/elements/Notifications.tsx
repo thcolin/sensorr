@@ -19,15 +19,15 @@ import { swapLabelOf } from '../../../components/Sensorr/Proposal'
 
 // Keyed by `jobNameOf`
 const COMMANDS = {
-  'record movies': { emoji: '📹', label: 'record movies' },
-  'refine movies': { emoji: '✨', label: 'refine movies' },
-  'shrink movies': { emoji: '✂️', label: 'shrink movies' },
-  'report movies': { emoji: '🚩', label: 'report movies' },
+  'record movies': { emoji: '📹' },
+  'refine movies': { emoji: '✨' },
+  'shrink movies': { emoji: '✂️' },
+  'report movies': { emoji: '🚩' },
   'sync movies': { emoji: '💊', label: 'missing' },
   'keep-in-touch': { emoji: '🍺', label: 'request' },
-  'record shows': { emoji: '📹', label: 'record shows' },
-  'airing shows': { emoji: '📡', label: 'airing shows' },
-  'sync shows': { emoji: '💊', label: 'missing episodes' },
+  'record shows': { emoji: '📹' },
+  'airing shows': { emoji: '📡' },
+  'sync shows': { emoji: '💊', label: 'missing' },
 }
 
 const UINotifications = ({ ...props }) => {

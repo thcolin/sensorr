@@ -1,4 +1,4 @@
-import { isJob, jobNameOf } from './jobs'
+import { isJob, jobLabelOf, jobNameOf, jobTitleOf } from './jobs'
 
 describe('isJob', () => {
   it('takes a job about one media type with a type it handles, and keep-in-touch without one', () => {
@@ -41,5 +41,21 @@ describe('jobNameOf', () => {
   it('tells the two migrate commands apart', () => {
     expect(jobNameOf({ command: 'migrate' })).toBe('migrate')
     expect(jobNameOf({ command: 'migrate', type: 'show' })).toBe('migrate sonarr')
+  })
+})
+
+describe('jobLabelOf', () => {
+  it('puts the command first, calls shows tv, and keeps the source of migrate sonarr', () => {
+    expect(jobLabelOf('record movies')).toEqual({ command: 'record', suffix: 'movies' })
+    expect(jobLabelOf('record shows')).toEqual({ command: 'record', suffix: 'tv' })
+    expect(jobLabelOf('migrate sonarr')).toEqual({ command: 'migrate', suffix: 'sonarr' })
+    expect(jobLabelOf('keep-in-touch')).toEqual({ command: 'keep-in-touch', suffix: undefined })
+  })
+})
+
+describe('jobTitleOf', () => {
+  it('writes the suffix between parentheses, and nothing for a job without one', () => {
+    expect(jobTitleOf('airing shows')).toBe('airing (tv)')
+    expect(jobTitleOf('keep-in-touch')).toBe('keep-in-touch')
   })
 })

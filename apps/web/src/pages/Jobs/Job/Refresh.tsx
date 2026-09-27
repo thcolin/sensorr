@@ -3,6 +3,7 @@ import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { jobNameOf } from '@sensorr/sensorr'
+import { JobName } from '../../../components/Sensorr/JobName'
 import Person from '../../../components/Person/Person'
 import Movie from '../../../components/Movie/Movie'
 import { Summary } from '../Summary'
@@ -50,7 +51,7 @@ const UIRefreshJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIRefreshJob.styles.title}>{jobNameOf(job.meta)}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIRefreshJob.styles.title} />
             </span>
           )}
           subtitle={(

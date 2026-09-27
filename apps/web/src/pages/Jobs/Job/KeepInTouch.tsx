@@ -1,6 +1,8 @@
 import { memo, useMemo, useState } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
+import { jobNameOf } from '@sensorr/sensorr'
 import { emojize } from '@sensorr/utils'
+import { JobName } from '../../../components/Sensorr/JobName'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
@@ -74,7 +76,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIKeepInTouchJob.styles.title}>{job.meta.command}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIKeepInTouchJob.styles.title} />
             </span>
           )}
           subtitle={(

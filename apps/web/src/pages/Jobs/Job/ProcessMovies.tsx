@@ -14,6 +14,7 @@ import { Metadata } from '../../Details/components/Metadata'
 import { Summary, freed, freedLabel } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
 import { Policy, jobNameOf } from '@sensorr/sensorr'
+import { JobName } from '../../../components/Sensorr/JobName'
 import { useSensorr } from '../../../store/sensorr'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { Size } from '../../Proposals/Card'
@@ -192,7 +193,7 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIProcessMoviesJob.styles.title}>{jobNameOf(job.meta)}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIProcessMoviesJob.styles.title} />
             </span>
           )}
           subtitle={(

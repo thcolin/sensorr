@@ -7,7 +7,7 @@ import useRipple from 'use-ripple-hook'
 import { Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
-import { JOB_EMOJIS, jobNameOf } from '@sensorr/sensorr'
+import { JOB_EMOJIS, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { RecordJob, summary as summaryRecord } from './Job/Record'
@@ -23,6 +23,7 @@ import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows, su
 import { Summary } from './Summary'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
+import { JobName } from '../../components/Sensorr/JobName'
 
 const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { view: SyncJob, summary: summarySync },
@@ -80,7 +81,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   const { job } = useParams() as any
   const active = jobs.find(j => j.job === job)
   const View = active && JOBS_UI[jobNameOf(active.meta)]?.view
-  useTitle(['Jobs', active && jobNameOf(active.meta)].filter(part => part).join(' - '))
+  useTitle(['Jobs', active && jobTitleOf(jobNameOf(active.meta))].filter(part => part).join(' - '))
   const store = useRef(null)
   const [logs, setLogs] = useState(null)
   const drainLogs = useMemo(() => throttle(3000, () => setLogs(store.current)), [])
@@ -207,7 +208,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   }, {}), [jobs, listed, filter])
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
-    .map(name => ({ value: name, emoji: JOB_EMOJIS[name], label: name, count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
+    .map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -227,7 +228,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
             <div>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
                 <div sx={{ marginRight: 7, lineHeight: 'reset' }}><Icon value={active?.meta?.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></div>
-                <h5>{active ? jobNameOf(active.meta) : 'Loading'}</h5>
+                <h5>{active ? <JobName name={jobNameOf(active.meta)} /> : 'Loading'}</h5>
                 {active?.meta?.done && (
                   <span>
                     {formatDuration(intervalToDuration({ start: new Date(active?.start), end: new Date(active?.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}
@@ -418,7 +419,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
           <span sx={UIJob.styles.container}>
             <span sx={{ display: 'flex', alignItems: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIJob.styles.title}>{jobNameOf({ command, type: meta.type })}</span>
+              <JobName name={jobNameOf({ command, type: meta.type })} sx={UIJob.styles.title} />
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
                   {formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}

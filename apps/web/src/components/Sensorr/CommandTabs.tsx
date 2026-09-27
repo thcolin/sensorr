@@ -1,9 +1,10 @@
 import { memo } from 'react'
+import { JobName } from './JobName'
 
 export interface CommandTab {
   value: string
   emoji: string
-  label: string
+  label?: string
   count: number
 }
 
@@ -26,7 +27,7 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
       {tabs.map(tab => (
         <button key={tab.value || 'all'} type='button' aria-pressed={tab.value === value} onClick={() => onChange(tab.value)}>
           <span aria-hidden={true}>{tab.emoji}</span>
-          <code>{tab.label}</code>
+          <code>{tab.value ? <JobName name={tab.value} label={tab.label} /> : tab.label}</code>
           <span data-digits={String(tab.count).length}>{tab.count}</span>
         </button>
       ))}

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Warning } from '@sensorr/ui'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
+import { JobName } from '../../../components/Sensorr/JobName'
 import { useResponsiveValue } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -142,7 +143,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIProcessShowsJob.styles.title}>{jobNameOf(job.meta)}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIProcessShowsJob.styles.title} />
             </span>
           )}
           subtitle={(

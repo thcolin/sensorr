@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
+import { JobName } from '../../../components/Sensorr/JobName'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { Summary, freed, freedLabel } from '../Summary'
@@ -235,7 +236,7 @@ const UIShowsJob = ({ job, logs }) => {
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <span sx={UIShowsJob.styles.title}>{jobNameOf(job.meta)}</span>
+              <JobName name={jobNameOf(job.meta)} sx={UIShowsJob.styles.title} />
             </span>
           )}
           subtitle={(
