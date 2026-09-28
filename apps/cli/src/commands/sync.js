@@ -3,13 +3,13 @@ import fs from 'node:fs/promises'
 import { render, Text } from 'ink'
 import oleoo from 'oleoo'
 import { TMDB } from '@sensorr/tmdb'
-import { Plex } from '@sensorr/plex'
+import { Plex, artworksOf, sameArtworks } from '@sensorr/plex'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { settleSwaps, cleanedSpaceOf } from '../utils/swaps'
-import { releaseOf, artworksOf, sameArtworks, isMassLoss, LOSS_CEILING } from '../utils/plex'
+import { releaseOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
 
 const meta = {
   command: 'sync',

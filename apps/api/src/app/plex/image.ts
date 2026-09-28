@@ -4,12 +4,6 @@ const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 // The sizes `Picture` asks for: each other width would be one more transcode kept by Plex
 const SIZE = /^(w92|w154|w185|w300|w342|w500|w780|original)$/
 
-export interface PlexArtworks {
-  poster: string | null
-  backdrop: string | null
-  logo: string | null
-}
-
 export interface ImageRequest {
   path: string
   size: string

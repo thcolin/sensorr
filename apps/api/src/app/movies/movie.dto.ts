@@ -1,5 +1,5 @@
 import { ReleaseDTO } from './release.dto'
-import { PlexArtworks } from '../plex/image'
+import { PlexArtworks } from '@sensorr/plex'
 
 export class MovieDTO {
   _id: number

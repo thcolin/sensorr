@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
-import { PlexArtworks } from '../plex/image'
+import { PlexArtworks } from '@sensorr/plex'
 
 @Schema({ collection: 'shows' })
 export class Show extends Document {
