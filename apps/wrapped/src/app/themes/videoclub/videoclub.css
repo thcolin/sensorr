@@ -55,6 +55,7 @@
   --vc-type: 'Archivo', 'Helvetica Neue', sans-serif;
   --vc-hand: 'Rock Salt', 'Marker Felt', cursive;
   --vc-gutter: 18px;
+  --vc-brick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='48'%3E%3Crect width='64' height='48' fill='%232c1a27'/%3E%3Cpath d='M0 23H64M0 47H64M1 0V24M33 24V48' stroke='%23120a12' stroke-width='2'/%3E%3C/svg%3E");
   --switch-bg: var(--vc-panel);
   --switch-fg: var(--vc-cyan);
   --switch-font: 800 14px/1 var(--vc-type);
@@ -178,7 +179,7 @@ html[data-theme='videoclub'] {
     radial-gradient(ellipse 60% 45% at 50% 72%, rgb(255 63 164 / 0.16), transparent 70%),
     radial-gradient(ellipse 70% 40% at 50% 22%, rgb(255 236 190 / 0.12), transparent 70%),
     linear-gradient(transparent 70%, var(--vc-night)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='48'%3E%3Crect width='64' height='48' fill='%232c1a27'/%3E%3Cpath d='M0 23H64M0 47H64M1 0V24M33 24V48' stroke='%23120a12' stroke-width='2'/%3E%3C/svg%3E");
+    var(--vc-brick);
   background-size: auto, auto, auto, 64px 48px;
 }
 
@@ -319,6 +320,165 @@ html[data-theme='videoclub'] {
 @keyframes videoclub-strike {
   0%, 14%, 27% { color: #574866; text-shadow: 0 18px 12px rgb(0 0 0 / 0.6); }
   9%, 20%, 36%, 100% { color: var(--lit-color); text-shadow: var(--lit-glow); }
+}
+
+/* Loading and notices: the shop front, before opening or closed */
+.videoclub-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100svh;
+  background: radial-gradient(ellipse 60% 35% at 50% 48%, rgb(255 236 190 / 0.12), transparent 70%), var(--vc-brick);
+  background-size: auto, 64px 48px;
+}
+
+.videoclub-state .videoclub-fascia {
+  width: min(calc(100% - 2 * var(--vc-gutter)), 640px);
+}
+
+.videoclub-state .videoclub-fascia-face {
+  padding-block: 18px 16px;
+  font-size: clamp(44px, 14vw, 88px);
+}
+
+.videoclub-waiting {
+  justify-content: center;
+  padding: 48px 0;
+}
+
+/* The starter clicks, the tube catches for a moment, and tries again: no progress, only waiting */
+.videoclub-waiting .videoclub-fascia-face {
+  animation: videoclub-starter 2.8s steps(1, end) infinite;
+}
+
+@keyframes videoclub-starter {
+  0%, 18%, 26%, 100% { filter: brightness(0.4) saturate(0.5); }
+  12%, 22%, 30%, 70% { filter: none; }
+}
+
+.videoclub-closed .videoclub-fascia-face {
+  filter: brightness(0.55) saturate(0.7);
+}
+
+.videoclub-closed-front {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 56px 0 28px;
+}
+
+.videoclub-closed-shutter {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 56px var(--vc-gutter) 72px;
+  background: repeating-linear-gradient(#9b98ae 0 14px, #605d76 14px 16px, #b4b1c4 16px 19px);
+  box-shadow: inset 0 14px 18px rgb(0 0 0 / 0.5);
+}
+
+/* The note, taped at two corners */
+.videoclub-note {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  width: min(100%, 460px);
+  padding: 28px 24px 26px;
+  background: var(--vc-label);
+  color: var(--vc-ink);
+  transform: rotate(-1.5deg);
+  box-shadow: 0 14px 24px rgb(0 0 0 / 0.45);
+}
+
+.videoclub-note::before,
+.videoclub-note::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  width: 86px;
+  height: 26px;
+  background: rgb(255 250 225 / 0.6);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+}
+
+.videoclub-note::before {
+  left: -18px;
+  transform: rotate(-24deg);
+}
+
+.videoclub-note::after {
+  right: -18px;
+  transform: rotate(20deg);
+}
+
+.videoclub-note h1 {
+  display: grid;
+  color: var(--vc-pen);
+  font: 400 clamp(30px, 9vw, 44px)/1.3 var(--vc-hand);
+}
+
+.videoclub-note p {
+  font-size: 1.125rem;
+  line-height: 1.45;
+}
+
+.videoclub-button {
+  min-height: 48px;
+  padding: 12px 22px 10px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--vc-sticker);
+  color: #111;
+  font: 900 1rem/1 var(--vc-type);
+  font-stretch: 88%;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 0 #b39500, 0 8px 14px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out;
+}
+
+.videoclub-button:hover {
+  background: #ffe95c;
+}
+
+.videoclub-button:focus-visible {
+  outline: 3px solid var(--vc-pen);
+  outline-offset: 4px;
+}
+
+.videoclub-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #b39500, 0 3px 6px rgb(0 0 0 / 0.3);
+}
+
+@media (min-width: 960px) {
+  .videoclub-closed-front {
+    padding-top: 80px;
+  }
+
+  .videoclub-closed-shutter {
+    padding-top: 96px;
+  }
+
+  .videoclub-note {
+    width: 520px;
+    padding: 36px 36px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoclub-waiting .videoclub-fascia-face {
+    animation: none;
+    filter: brightness(0.7);
+  }
+
+  .videoclub-button {
+    transition: none;
+  }
 }
 
 /* A plank of shelf, stretched to the edges of the screen */
