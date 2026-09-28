@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import usePortal from 'react-useportal'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -25,7 +25,8 @@ export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) =>
 }
 
 const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
-  const { Portal, openPortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
+  const trigger = useRef<HTMLButtonElement>(null)
+  const { Portal, openPortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true, onClose: () => setTimeout(() => trigger.current?.focus()) })
   const ratingKey = ratingKeyOf(artworks)
 
   if (!ratingKey) {
@@ -34,7 +35,7 @@ const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
 
   return (
     <>
-      <button type='button' className={className} sx={UIArtworks.styles.button} onClick={openPortal} title='Change artworks' aria-label='Change artworks'>
+      <button ref={trigger} type='button' className={className} sx={UIArtworks.styles.button} onClick={openPortal} title='Change artworks' aria-label='Change artworks' aria-haspopup='dialog'>
         🖼️
       </button>
       <Portal>
@@ -52,8 +53,8 @@ UIArtworks.styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '2em',
-    width: '2em',
+    height: ['2.75em', '2em'],
+    width: ['2.75em', '2em'],
     borderRadius: '50%',
     backgroundColor: 'gray',
     fontSize: 4,
@@ -105,6 +106,27 @@ UITitleLogo.styles = {
 
 export const TitleLogo = memo(UITitleLogo)
 
+// One stop per row for Tab, the arrows go along it
+const rove = (e) => {
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key]
+  const buttons = Array.from(e.currentTarget.querySelectorAll('button')) as HTMLButtonElement[]
+  const next = step && buttons[buttons.indexOf(document.activeElement as HTMLButtonElement) + step]
+
+  if (next) {
+    e.preventDefault()
+    next.focus()
+    next.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }
+}
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host.replace(/^www\./, '')
+  } catch {
+    return 'link'
+  }
+}
+
 const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const api = useAPI()
   const tmdb = useTMDB()
@@ -116,6 +138,31 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const [chosen, setChosen] = useState<Chosen>({})
   const [links, setLinks] = useState<Partial<Record<ArtworkKind, Candidate[]>>>({})
   const [writing, setWriting] = useState(false)
+  const [preview, setPreview] = useState(0)
+  const dialog = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    dialog.current?.querySelector<HTMLElement>('input:not(:disabled), button')?.focus()
+  }, [])
+
+  // The pane is modal: Tab goes round inside it
+  const trap = (e) => {
+    if (e.key !== 'Tab') {
+      return
+    }
+
+    const focusables = Array.from(dialog.current.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]'))
+      .filter((element) => element.tabIndex >= 0)
+    const [first, last] = [focusables[0], focusables[focusables.length - 1]]
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last?.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first?.focus()
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -189,43 +236,59 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const apply = async () => {
     setWriting(true)
 
+    let written, failed
+
     try {
       const { uri, params, init } = api.query.plex.postArtworks({ ratingKey, body: Object.fromEntries(changed.map(([kind, { choice }]) => [kind, choice])) })
-      const { artworks: written, failed } = await api.fetch(uri, params, init)
+      ;({ artworks: written, failed } = await api.fetch(uri, params, init))
+    } catch (err) {
+      console.warn(err)
+      toast.error('Plex could not write the artworks, nothing changed')
+      setWriting(false)
+      return
+    }
+
+    try {
       const saving = behavior === 'movie'
         ? api.query.movies.postMovie({ body: { id: entity.id, plex_artworks: written } })
         : api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_artworks: written } } })
       await api.fetch(saving.uri, saving.params, saving.init)
-
-      if (Object.keys(failed || {}).length) {
-        toast.error(`Plex refused the ${Object.keys(failed).join(' and ')}: ${Object.values(failed).join(', ')}`)
-        setChosen((chosen) => Object.fromEntries(Object.entries(chosen).filter(([kind]) => kind in failed)))
-        return
-      }
-
-      toast.success('Artworks written on Plex')
-      close()
     } catch (err) {
       console.warn(err)
-      toast.error('Plex could not write the artworks, nothing changed')
-    } finally {
-      setWriting(false)
+      toast.error('Written on Plex, Sensorr shows it after the next sync')
     }
+
+    setWriting(false)
+
+    if (Object.keys(failed || {}).length) {
+      toast.error(`Plex refused the ${Object.keys(failed).join(' and ')}: ${Object.values(failed).join(', ')}`)
+      setChosen((chosen) => Object.fromEntries(Object.entries(chosen).filter(([kind]) => kind in failed)))
+      return
+    }
+
+    toast.success('Artworks written on Plex')
+    close()
   }
 
   return (
-    <div sx={Picker.styles.element}>
+    <div ref={dialog} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-labelledby={`artworks-${entity.id}`} onKeyDown={trap}>
       <div sx={Picker.styles.head}>
-        <h2>Artworks</h2>
+        <h2 id={`artworks-${entity.id}`}>Artworks</h2>
         <span>{entity?.title || entity?.name}</span>
         <button type='button' onClick={close} aria-label='Close'>
           <Icon value='clear' active={true} height='1.25em' width='1.25em' />
         </button>
       </div>
-      <div sx={Picker.styles.body}>
-        <Preview artworks={artworks} chosen={chosen} reset={() => setChosen({})} />
-        {lists.errors.map((error) => <p key={error} sx={Picker.styles.error}>{error}</p>)}
-        <Link onAdd={addLink} />
+      <div sx={Picker.styles.body} style={preview ? { '--artworks-preview': `${preview}px` } as any : undefined}>
+        <Preview
+          artworks={artworks}
+          current={Object.fromEntries(KINDS.map(({ kind }) => [kind, groups[kind].find(({ label }) => label === 'current')?.items[0]?.thumb]))}
+          chosen={chosen}
+          reset={() => setChosen({})}
+          onHeight={setPreview}
+        />
+        {lists.errors.map((error) => <p key={error} role='alert' sx={Picker.styles.error}>{error}</p>)}
+        <Link onAdd={addLink} disabled={writing || (!lists.loading && !lists.plex)} />
         {mediux && (
           <section sx={Picker.styles.section}>
             <h3>
@@ -233,14 +296,16 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
               Sets
               <span>{lists.loading ? '…' : (lists.sets || []).length}</span>
             </h3>
-            {!lists.loading && !(lists.sets || []).length && (
+            {!lists.loading && lists.sets !== null && !lists.sets.length && (
               <p sx={Picker.styles.empty}>No MediUX set for this title</p>
             )}
-            <div sx={Picker.styles.row}>
-              {(lists.sets || []).map((set) => (
+            <div sx={Picker.styles.row} onKeyDown={rove}>
+              {(lists.sets || []).map((set, index) => (
                 <button
                   key={set.id}
                   type='button'
+                  tabIndex={index ? -1 : 0}
+                  aria-label={['Set', set.title, set.author && `by ${set.author}`].filter(Boolean).join(' ')}
                   sx={Picker.styles.set}
                   aria-pressed={[['poster', set.poster], ['backdrop', set.backdrop]].every(([kind, image]) => !image || chosen[kind]?.id === `mediux:${set.id}:${kind}`)}
                   title={[set.title, set.author].filter(Boolean).join(' · ')}
@@ -270,11 +335,13 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
             {groups[kind].map(({ label: group, items }) => (
               <div key={group}>
                 <small sx={Picker.styles.group}>{group} · {items.length}</small>
-                <div sx={Picker.styles.row}>
-                  {items.map((candidate) => (
+                <div sx={Picker.styles.row} onKeyDown={rove}>
+                  {items.map((candidate, index) => (
                     <button
                       key={candidate.id}
                       type='button'
+                      tabIndex={index ? -1 : 0}
+                      aria-label={`${label}, ${candidate.lang || 'no language'}, from ${candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.source}${candidate.current ? ', current' : ''}`}
                       sx={{ ...Picker.styles.thumb, width, height, ...(kind === 'logo' ? Picker.styles.logo : {}) }}
                       aria-pressed={chosen[kind]?.id === candidate.id}
                       data-current={candidate.current}
@@ -284,7 +351,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
                     >
                       <Picture path={candidate.thumb} size={size as any} empty={candidate.source === 'link' ? LinkEmpty : undefined} />
                       {candidate.current && <em>current</em>}
-                      <code>{candidate.lang || candidate.source}</code>
+                      <code>{candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.lang || candidate.source}</code>
                     </button>
                   ))}
                 </div>
@@ -335,7 +402,13 @@ Picker.styles = {
     },
     '>button': {
       variant: 'button.reset',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       alignSelf: 'center',
+      height: '2.75rem',
+      width: '2.75rem',
+      marginY: '-0.75rem',
       cursor: 'pointer',
       '>svg': {
         color: 'whitePure',
@@ -343,7 +416,7 @@ Picker.styles = {
     },
   },
   body: {
-    '--artworks-preview': '15em',
+    '--artworks-preview': '14.5em',
     flex: 1,
     overflowY: 'auto',
     overflowX: 'hidden',
@@ -407,6 +480,9 @@ Picker.styles = {
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
+    ':hover:not(:disabled)::after': {
+      boxShadow: 'inset 0 0 0 1px currentColor',
+    },
     '&[aria-pressed="true"]::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
     },
@@ -423,7 +499,7 @@ Picker.styles = {
       bottom: '3px',
       paddingX: 10,
       paddingY: 11,
-      fontSize: 8,
+      fontSize: '0.6875em',
       lineHeight: 1,
       color: 'whitePure',
       backgroundColor: 'hsla(0, 0%, 0%, 0.75)',
@@ -440,7 +516,7 @@ Picker.styles = {
     marginTop: 8,
     marginBottom: 9,
     fontFamily: 'monospace',
-    fontSize: 7,
+    fontSize: '0.6875em',
     color: 'grayDarkest',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -471,6 +547,9 @@ Picker.styles = {
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
+    ':hover:not(:disabled)::after': {
+      boxShadow: 'inset 0 0 0 1px currentColor',
+    },
     '&[aria-pressed="true"]::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
     },
@@ -492,7 +571,7 @@ Picker.styles = {
       paddingY: 11,
       fontStyle: 'normal',
       fontFamily: 'monospace',
-      fontSize: 8,
+      fontSize: '0.6875em',
       fontWeight: 'bold',
       color: 'blackPure',
       backgroundColor: 'primary',
@@ -504,7 +583,7 @@ Picker.styles = {
       bottom: '3px',
       paddingX: 10,
       paddingY: 11,
-      fontSize: 8,
+      fontSize: '0.6875em',
       lineHeight: 1,
       color: 'whitePure',
       backgroundColor: 'hsla(0, 0%, 0%, 0.75)',
@@ -532,28 +611,39 @@ Picker.styles = {
   },
 }
 
-const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fontSize: 8, textAlign: 'center', height: 'auto !important', width: '90% !important' }}>Plex fetches it on Apply</small>
+// TMDB answers with CORS headers: its logos can be read to pick their tone
+const isTMDB = (path) => typeof path === 'string' && (path.startsWith('https://image.tmdb.org/') || /^\/[\w-]+\.\w+$/.test(path))
 
-const Preview = ({ artworks, chosen, reset }) => {
+const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fontSize: '0.6875em', color: 'grayDarkest', textAlign: 'center', height: 'auto !important', width: '90% !important' }}>Plex fetches it on Apply</small>
+
+const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
   const api = useAPI()
-  const current = (kind: ArtworkKind) => artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null
+  const element = useRef<HTMLDivElement>(null)
+  // What Plex shows once its list is read, what Sensorr stored until then
+  const current = (kind: ArtworkKind) => listed[kind] || (artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null)
+
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => onHeight(Math.round(entry.borderBoxSize?.[0]?.blockSize || entry.target.getBoundingClientRect().height)))
+    observer.observe(element.current)
+    return () => observer.disconnect()
+  }, [])
   const shown = (kind: ArtworkKind) => chosen[kind]?.thumb || current(kind)
   const edited = Object.values(chosen).some(Boolean)
   const [tone, setTone] = useState<LogoTone>('as-is')
   const onLogo = useCallback((e, error) => setTone(!error && e?.target ? toneOfImage(e.target) : 'as-is'), [])
 
   return (
-    <div sx={Preview.styles.element}>
+    <div ref={element} sx={Preview.styles.element}>
       <div sx={Preview.styles.scene}>
         <div sx={Preview.styles.backdrop} data-changed={!!chosen.backdrop}><Picture path={shown('backdrop')} size='w780' empty={chosen.backdrop?.link ? LinkEmpty : undefined} /></div>
         <div sx={Preview.styles.poster} data-changed={!!chosen.poster}><Picture path={shown('poster')} size='w342' empty={chosen.poster?.link ? LinkEmpty : undefined} /></div>
         {shown('logo')
-          ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} /></div>
+          ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} crossOrigin={isTMDB(shown('logo')) ? 'anonymous' : undefined} /></div>
           : <small sx={Preview.styles.none}>No logo</small>}
       </div>
       <div sx={Preview.styles.legend}>
-        {KINDS.map(({ kind, label }) => (
-          <span key={kind} data-changed={!!chosen[kind]}>{label.toLowerCase()} {chosen[kind] ? 'changed' : 'current'}</span>
+        {KINDS.map(({ kind, label }, index) => (
+          <span key={kind} data-changed={!!chosen[kind]}>{index ? '· ' : ''}{label.toLowerCase()} {chosen[kind] ? 'changed' : 'current'}</span>
         ))}
         {edited && <button type='button' onClick={reset}>Reset all</button>}
       </div>
@@ -648,7 +738,7 @@ Preview.styles = {
   },
 }
 
-const Link = ({ onAdd }) => {
+const Link = ({ onAdd, disabled = false }) => {
   const [value, setValue] = useState('')
   const [kind, setKind] = useState<ArtworkKind>('poster')
   const [error, setError] = useState(null)
@@ -671,11 +761,11 @@ const Link = ({ onAdd }) => {
   return (
     <form sx={Link.styles.element} onSubmit={submit}>
       <div>
-        <input type='url' value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label='Image link' aria-invalid={!!error} />
-        <select value={kind} onChange={(e) => setKind(e.target.value as ArtworkKind)} aria-label='Artwork kind'>
+        <input type='url' disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label='Image link' aria-invalid={!!error} />
+        <select disabled={disabled} value={kind} onChange={(e) => setKind(e.target.value as ArtworkKind)} aria-label='Artwork kind'>
           {KINDS.map(({ kind, label }) => <option key={kind} value={kind}>{label}</option>)}
         </select>
-        <Button type='submit' variant='outline' color='primary' disabled={!value.trim()}>Add</Button>
+        <Button type='submit' variant='outline' color='primary' disabled={disabled || !value.trim()}>Add</Button>
       </div>
       {!!error && <small role='alert'>{error}</small>}
     </form>

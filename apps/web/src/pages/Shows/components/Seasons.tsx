@@ -374,8 +374,6 @@ UISeasons.styles = {
     display: ['none', 'block'],
     gridColumn: 1,
     gridRow: '1 / span 100',
-    position: 'sticky',
-    top: '1em',
     width: '8em',
     height: '12em',
     marginTop: 8,

@@ -54,6 +54,7 @@ export interface PictureProps extends Omit<React.HTMLAttributes<HTMLSpanElement>
   onReady?: (event: any, error: boolean) => void
   lazy?: boolean
   blur?: boolean | number
+  crossOrigin?: '' | 'anonymous' | 'use-credentials'
 }
 
 export interface MoviePictureProps extends PictureProps {
@@ -80,6 +81,7 @@ function UIPicture({
   palette = null,
   empty: Empty,
   onReady,
+  crossOrigin = undefined,
   ...props
 }: PictureProps) {
   const ref = useRef(null)
@@ -144,7 +146,7 @@ function UIPicture({
   return (
     <span {...props} sx={UIPicture.styles.element} style={styles.element}>
       {!!Empty && <Empty style={styles.empty} sx={UIPicture.styles.empty} />}
-      <img ref={ref} {...onLoadProps} src={src} sx={UIPicture.styles.image} style={styles.image as any} loading={lazy ? 'lazy' : 'eager'} decoding='async' />
+      <img ref={ref} {...onLoadProps} src={src} crossOrigin={crossOrigin} sx={UIPicture.styles.image} style={styles.image as any} loading={lazy ? 'lazy' : 'eager'} decoding='async' />
     </span>
   )
 }
