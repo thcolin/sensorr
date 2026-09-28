@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import usePortal from 'react-useportal'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { Button, Icon, Pane, Picture, pictureSrc } from '@sensorr/ui'
@@ -26,8 +26,25 @@ export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) =>
 
 const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
   const trigger = useRef<HTMLButtonElement>(null)
-  const { Portal, openPortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, onClose: () => setTimeout(() => trigger.current?.focus()) })
+  const [open, setOpen] = useState(false)
+  // Mounted from the start and kept through its way out: the pane slides in and out instead of popping
+  const [shown, setShown] = useState(false)
   const ratingKey = ratingKeyOf(artworks)
+
+  useEffect(() => {
+    if (open) {
+      setShown(true)
+      return
+    }
+
+    const timeout = setTimeout(() => setShown(false), 400)
+    return () => clearTimeout(timeout)
+  }, [open])
+
+  const close = useCallback(() => {
+    setOpen(false)
+    setTimeout(() => trigger.current?.focus())
+  }, [])
 
   if (!ratingKey) {
     return null
@@ -35,14 +52,14 @@ const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
 
   return (
     <>
-      <button ref={trigger} type='button' className={className} sx={UIArtworks.styles.button} onClick={openPortal} title='Change artworks' aria-label='Change artworks' aria-haspopup='dialog'>
+      <button ref={trigger} type='button' className={className} sx={UIArtworks.styles.button} onClick={() => setOpen(true)} title='Change artworks' aria-label='Change artworks' aria-haspopup='dialog'>
         🖼️
       </button>
-      <Portal>
-        <Pane position='right' width={['100%', '40em']} background='grayLightest' open={open} toggleOpen={closePortal}>
-          {open && <Picker behavior={behavior} entity={entity} artworks={artworks} ratingKey={ratingKey} close={closePortal} />}
+      {createPortal((
+        <Pane position='right' width={['100%', '40em']} background='grayLightest' open={open} toggleOpen={close}>
+          {shown && <Picker behavior={behavior} entity={entity} artworks={artworks} ratingKey={ratingKey} close={close} />}
         </Pane>
-      </Portal>
+      ), document.body)}
     </>
   )
 }
@@ -53,8 +70,8 @@ UIArtworks.styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: ['2.75em', '2em'],
-    width: ['2.75em', '2em'],
+    height: ['2.2em', '2em'],
+    width: ['2.2em', '2em'],
     borderRadius: '50%',
     backgroundColor: 'gray',
     fontSize: 4,

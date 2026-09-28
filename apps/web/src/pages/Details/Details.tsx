@@ -246,9 +246,12 @@ UIDetails.styles = {
     transition: 'margin 400ms ease-in-out',
     maxWidth: ['unset', '19em'],
     '>a': {
+      alignSelf: 'center',
       color: 'grayDark',
       marginY: 8,
-      textAlign: 'right',
+      // Below the artworks badge astride the poster's corner, which is wider than the gap on a phone
+      marginTop: ['2em', 8],
+      textAlign: 'center',
       textDecoration: 'none',
       opacity: 0.625,
       fontSize: 6,
