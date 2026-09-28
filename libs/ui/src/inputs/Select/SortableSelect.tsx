@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { components } from 'react-select'
-import { DndContext, MouseSensor, TouchSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useThemeUI } from 'theme-ui'
 import { Select } from './Select'
 
@@ -46,10 +47,6 @@ const MultiValue = (props) => {
     )
   }
 
-  const values = props.selectProps.value
-  const index = values.findIndex(v => v.value === id)
-  const joined = { left: sameRank(values[index - 1], props.data), right: sameRank(props.data, values[index + 1]) }
-  const ranked = joined.left || joined.right
   const zone = target?.id === `${id}` && active !== `${id}` ? target.zone : null
   const setNodeRef = (node) => {
     draggable.setNodeRef(node)
@@ -57,32 +54,9 @@ const MultiValue = (props) => {
   }
 
   return (
-    <div
-      sx={{
-        display: 'flex',
-        alignItems: 'stretch',
-        marginY: '0.25em',
-        marginLeft: joined.left ? '0px' : '0.25em',
-        marginRight: joined.right ? '0px' : '0.25em',
-        ...(ranked ? {
-          padding: '0.25em',
-          paddingLeft: joined.left ? '0px' : '0.25em',
-          marginY: '0px',
-          border: '1px solid',
-          borderColor: 'primary',
-          borderLeftWidth: joined.left ? '0px' : '1px',
-          borderRightWidth: joined.right ? '0px' : '1px',
-          borderRadius: '2px',
-          borderTopLeftRadius: joined.left ? '0px' : '2px',
-          borderBottomLeftRadius: joined.left ? '0px' : '2px',
-          borderTopRightRadius: joined.right ? '0px' : '2px',
-          borderBottomRightRadius: joined.right ? '0px' : '2px',
-        } : {}),
-      }}
-    >
+    <div sx={{ display: 'flex', alignItems: 'stretch', margin: '0.25em' }}>
       <div
         ref={setNodeRef}
-        title={zone === 'rank' ? `Same rank as ${id}` : undefined}
         sx={{
           display: 'flex',
           alignItems: 'stretch',
@@ -99,7 +73,7 @@ const MultiValue = (props) => {
             position: 'absolute',
             top: '-0.25em',
             bottom: '-0.25em',
-            [zone === 'before' ? 'left' : 'right']: 'calc(-0.25em - 2px)',
+            [zone === 'before' ? 'left' : 'right']: 'calc(-0.25em - 1px)',
             width: '2px',
             backgroundColor: 'primary',
           } : {},
@@ -137,11 +111,42 @@ const MultiValue = (props) => {
   )
 }
 
-const SortableComponents = { MultiValue }
+// Neighbours of one ⭐ prefer rank are drawn inside one box, which wraps with them
+const ValueContainer = ({ children, ...props }) => {
+  const [values, ...rest] = children
+  const runs = Array.isArray(values) ? values.reduce((runs, element) => {
+    const run = runs[runs.length - 1]
+    return (run && sameRank(run[run.length - 1].props.data, element.props.data)) ? [...runs.slice(0, -1), [...run, element]] : [...runs, [element]]
+  }, []) : null
+
+  return (
+    <components.ValueContainer {...props as any}>
+      {runs ? runs.map(run => run.length === 1 ? run[0] : (
+        <div
+          key={`rank-${run[0].key}`}
+          sx={{
+            display: 'inline-flex',
+            flexWrap: 'wrap',
+            marginX: '0.125em',
+            border: '1px solid',
+            borderColor: 'accentDarkest',
+            borderRadius: '0.25em',
+          }}
+        >
+          {run}
+        </div>
+      )) : values}
+      {rest}
+    </components.ValueContainer>
+  )
+}
+
+const SortableComponents = { MultiValue, ValueContainer }
 
 export const SortableSelect = ({ value, onChange, requirable = false, rankable = false, ...props }) => {
   const { theme } = useThemeUI()
   const [active, setActive] = useState(null)
+  const [dragged, setDragged] = useState(null)
   const [target, setTarget] = useState(null)
   const dragging = useRef(false)
   const sensors = useSensors(
@@ -151,6 +156,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
 
   const release = useCallback(() => {
     setActive(null)
+    setDragged(null)
     setTarget(null)
     setTimeout(() => { dragging.current = false }, 100)
   }, [])
@@ -266,7 +272,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
       <DndContext
         sensors={sensors}
         collisionDetection={pointerWithin}
-        onDragStart={(event) => { dragging.current = true; setActive(event.active.id) }}
+        onDragStart={(event) => { dragging.current = true; setActive(event.active.id); setDragged(event.active.data.current) }}
         onDragMove={onDragMove}
         onDragEnd={onDragEnd}
         onDragCancel={release}
@@ -280,6 +286,29 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
           styles={styles}
           components={SortableComponents}
         />
+        {createPortal(<DragOverlay dropAnimation={null}>
+          {dragged && (
+            <div
+              sx={{
+                display: 'inline-flex',
+                paddingX: '6px',
+                paddingY: '3px',
+                backgroundColor: colors(theme)[dragged.group] || 'transparent',
+                border: '1px solid',
+                borderColor: colors(theme)[dragged.group] || '#FFF',
+                borderRadius: '2px',
+                color: '#FFF',
+                fontFamily: 'monospace',
+                fontSize: '0.75em',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                cursor: 'grabbing',
+              }}
+            >
+              {dragged.label}
+            </div>
+          )}
+        </DragOverlay>, document.body)}
       </DndContext>
     </dropContext.Provider>
   )
