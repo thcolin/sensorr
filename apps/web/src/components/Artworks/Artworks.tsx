@@ -155,6 +155,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const [links, setLinks] = useState<Partial<Record<ArtworkKind, Candidate[]>>>({})
   const [writing, setWriting] = useState(false)
   const [preview, setPreview] = useState(0)
+  const [adding, setAdding] = useState<ArtworkKind | null>(null)
   const dialog = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -322,7 +323,6 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
           onHeight={setPreview}
         />
         {lists.errors.map((error) => <p key={error} role='alert' sx={Picker.styles.error}>{error}</p>)}
-        <Link onAdd={addLink} disabled={writing || (!lists.loading && !lists.plex)} />
         {mediux && (
           <section sx={Picker.styles.section}>
             <h3>
@@ -363,18 +363,40 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
               {label}
               <span>{lists.loading ? '…' : groups[kind].reduce((count, { items, label }) => count + (label === 'links' ? 0 : items.length), 0)}</span>
             </h3>
-            {!lists.loading && !groups[kind].length && (
-              <p sx={Picker.styles.empty}>No {label.toLowerCase()} on Plex nor on TMDB, paste a link to add one</p>
+            {adding === kind && (
+              <Link
+                label={label}
+                onAdd={(url) => { addLink(kind, url); setAdding(null) }}
+                onCancel={() => setAdding(null)}
+                disabled={writing}
+              />
             )}
-            {groups[kind].map(({ label: group, items }) => (
-              <div key={group}>
-                <small sx={Picker.styles.group}>{group} · {items.length}</small>
+            {!lists.loading && !groups[kind].length && (
+              <p sx={Picker.styles.empty}>No {label.toLowerCase()} on Plex nor on TMDB, add one from a link</p>
+            )}
+            {(groups[kind].length ? groups[kind] : [{ label: null, items: [] }]).map(({ label: group, items }, row) => (
+              <div key={group || 'none'}>
+                {!!group && <small sx={Picker.styles.group}>{group} · {items.length}</small>}
                 <div sx={Picker.styles.row} onKeyDown={rove}>
-                  {items.map((candidate, index) => (
+                  {!row && (
+                    <button
+                      type='button'
+                      tabIndex={0}
+                      aria-label={`Add a ${label.toLowerCase()} from a link`}
+                      aria-expanded={adding === kind}
+                      title='Paste a link: ThePosterDB, MediUX, any image'
+                      sx={{ ...Picker.styles.add, width, height }}
+                      onClick={() => setAdding(adding === kind ? null : kind)}
+                      disabled={writing || (!lists.loading && !lists.plex)}
+                    >
+                      <span aria-hidden={true}>+</span>
+                    </button>
+                  )}
+                  {items.map((candidate) => (
                     <button
                       key={candidate.id}
                       type='button'
-                      tabIndex={index ? -1 : 0}
+                      tabIndex={-1}
                       aria-label={`${label}, ${candidate.lang || 'no language'}, from ${candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.source}${candidate.current ? ', current' : ''}`}
                       sx={{ ...Picker.styles.thumb, width, height, ...(kind === 'logo' ? Picker.styles.logo : {}) }}
                       aria-pressed={chosen[kind]?.id === candidate.id}
@@ -410,7 +432,7 @@ Picker.styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    backgroundColor: 'primary',
+    backgroundColor: 'blackPure',
     color: 'whitePure',
     outline: 'none',
   },
@@ -418,6 +440,7 @@ Picker.styles = {
   head: {
     paddingX: 2,
     paddingBottom: 4,
+    backgroundColor: 'primary',
     whiteSpace: 'normal',
     '>div': {
       padding: 12,
@@ -457,12 +480,12 @@ Picker.styles = {
       fontSize: 4,
       fontWeight: 'semibold',
       color: 'whitePure',
-      backgroundColor: 'primary',
+      backgroundColor: 'blackPure',
       '>span:last-of-type': {
         fontFamily: 'monospace',
         fontSize: 6,
         fontWeight: 'medium',
-        backgroundColor: 'primaryDarkest',
+        backgroundColor: 'gray-800',
         borderRadius: '1em',
         paddingX: 8,
         paddingY: 11,
@@ -490,7 +513,7 @@ Picker.styles = {
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 0 currentColor',
-      color: 'whitePure',
+      color: 'primary',
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
@@ -505,7 +528,7 @@ Picker.styles = {
     },
     ':focus-visible::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'blackPure',
+      color: 'whitePure',
     },
     '>code': {
       position: 'absolute',
@@ -559,7 +582,7 @@ Picker.styles = {
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 0 currentColor',
-      color: 'whitePure',
+      color: 'primary',
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
@@ -574,7 +597,7 @@ Picker.styles = {
     },
     ':focus-visible::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'blackPure',
+      color: 'whitePure',
     },
     ':disabled': {
       cursor: 'default',
@@ -604,6 +627,36 @@ Picker.styles = {
       color: 'whitePure',
       backgroundColor: 'hsla(0, 0%, 0%, 0.75)',
       borderRadius: '1em',
+    },
+  },
+  add: {
+    variant: 'button.reset',
+    flex: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '2px dashed',
+    borderColor: 'gray-600',
+    fontSize: 4,
+    color: 'gray-400',
+    '>span': {
+      fontSize: '2em',
+      fontWeight: 'light',
+      lineHeight: 1,
+    },
+    transition: 'border-color 120ms ease-in-out, color 120ms ease-in-out',
+    ':hover:not(:disabled), &[aria-expanded="true"]': {
+      borderColor: 'primary',
+      color: 'primary',
+    },
+    ':focus-visible': {
+      outline: 'none',
+      borderColor: 'whitePure',
+      color: 'whitePure',
+    },
+    ':disabled': {
+      opacity: 0.4,
+      cursor: 'default',
     },
   },
   logo: {
@@ -664,12 +717,7 @@ const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
           ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} crossOrigin={isTMDB(shown('logo')) ? 'anonymous' : undefined} /></div>
           : <div sx={Preview.styles.none}><small>No logo</small></div>}
       </div>
-      <div sx={Preview.styles.legend}>
-        {KINDS.map(({ kind, label }, index) => (
-          <span key={kind} data-changed={!!chosen[kind]}>{index ? '· ' : ''}{label.toLowerCase()} {chosen[kind] ? 'changed' : 'current'}</span>
-        ))}
-        {edited && <button type='button' onClick={reset}>Reset all</button>}
-      </div>
+      {edited && <button type='button' sx={Preview.styles.reset} onClick={reset}>Reset all</button>}
     </div>
   )
 }
@@ -679,8 +727,7 @@ Preview.styles = {
     position: 'sticky',
     top: '0px',
     zIndex: 2,
-    paddingBottom: 8,
-    backgroundColor: 'primary',
+    backgroundColor: 'blackPure',
     boxShadow: '0 0.25em 0.5em -0.25em hsla(0, 0%, 0%, 0.35)',
   },
   scene: {
@@ -693,7 +740,7 @@ Preview.styles = {
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'whitePure',
+      color: 'primary',
       pointerEvents: 'none',
     },
   },
@@ -715,11 +762,14 @@ Preview.styles = {
       minHeight: '0px',
     },
   },
+  // Centered in the backdrop right of the poster
   logo: {
     position: 'absolute',
+    top: '0px',
+    bottom: '0px',
     left: '8.5em',
     right: '1em',
-    bottom: '1.125em',
+    marginY: 'auto',
     height: '4.375em',
     '>span': {
       minHeight: '0px',
@@ -727,14 +777,17 @@ Preview.styles = {
     },
     'img': {
       objectFit: 'contain',
-      objectPosition: 'left bottom',
+      objectPosition: 'center',
     },
   },
   // Where the logo would sit: a logo is expected, and this one has none
   none: {
     position: 'absolute',
+    top: '0px',
+    bottom: '0px',
     left: '8.5em',
-    bottom: '1.125em',
+    right: '1em',
+    margin: 'auto',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -750,34 +803,26 @@ Preview.styles = {
       color: 'whitePure',
     },
   },
-  legend: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-    paddingX: 4,
+  reset: {
+    variant: 'button.reset',
+    position: 'absolute',
+    top: '0.75em',
+    right: '0.75em',
+    paddingX: 8,
+    paddingY: 10,
     fontFamily: 'monospace',
-    color: 'hsla(0, 0%, 100%, 0.8)',
-    '>*': {
-      fontSize: 7,
-    },
-    '>span[data-changed="true"]': {
-      color: 'whitePure',
-      fontWeight: 'bold',
-    },
-    '>button': {
-      variant: 'button.reset',
-      marginLeft: 'auto',
-      fontSize: 7,
-      textDecoration: 'underline',
-      cursor: 'pointer',
+    fontSize: 7,
+    color: 'whitePure',
+    backgroundColor: 'hsla(0, 0%, 0%, 0.75)',
+    borderRadius: '1em',
+    ':hover, :focus-visible': {
+      backgroundColor: 'blackPure',
     },
   },
 }
 
-const Link = ({ onAdd, disabled = false }) => {
+const Link = ({ label, onAdd, onCancel, disabled = false }) => {
   const [value, setValue] = useState('')
-  const [kind, setKind] = useState<ArtworkKind>('poster')
   const [error, setError] = useState(null)
 
   const submit = (e) => {
@@ -790,18 +835,20 @@ const Link = ({ onAdd, disabled = false }) => {
     }
 
     // Some hosts refuse to be drawn from another site, ThePosterDB among them: Plex, which fetches it, is the check
-    onAdd(kind, url)
-    setValue('')
-    setError(null)
+    onAdd(url)
+  }
+
+  const cancel = (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      onCancel()
+    }
   }
 
   return (
-    <form sx={Link.styles.element} onSubmit={submit}>
+    <form sx={Link.styles.element} onSubmit={submit} onKeyDown={cancel}>
       <div>
-        <input type='url' disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label='Image link' aria-invalid={!!error} />
-        <select disabled={disabled} value={kind} onChange={(e) => setKind(e.target.value as ArtworkKind)} aria-label='Artwork kind'>
-          {KINDS.map(({ kind, label }) => <option key={kind} value={kind}>{label}</option>)}
-        </select>
+        <input type='url' autoFocus={true} disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label={`${label} link`} aria-invalid={!!error} />
         <Button type='submit' variant='outline' disabled={disabled || !value.trim()}>Add</Button>
       </div>
       {!!error && <small role='alert'>{error}</small>}
@@ -811,16 +858,16 @@ const Link = ({ onAdd, disabled = false }) => {
 
 Link.styles = {
   element: {
-    marginTop: 4,
+    marginBottom: 8,
     '>div': {
       display: 'flex',
       gap: 8,
-      '>input, >select': {
+      '>input': {
         variant: 'input.default',
         width: 'auto',
         fontSize: 5,
         color: 'whitePure',
-        borderColor: 'hsla(0, 0%, 100%, 0.6)',
+        borderColor: 'gray-600',
         ':hover:not(:disabled):not(:focus):not(:active)': {
           borderColor: 'hsla(0, 0%, 100%, 0.8)',
         },
@@ -834,11 +881,6 @@ Link.styles = {
         '::placeholder': {
           color: 'hsla(0, 0%, 100%, 0.75)',
         },
-        '>option': {
-          color: 'blackPure',
-        },
-      },
-      '>input': {
         flex: 1,
         minWidth: '0px',
       },
