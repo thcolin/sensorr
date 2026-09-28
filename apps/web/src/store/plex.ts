@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAPI } from './api'
 
 // `Picture` appends the size to the query
-const artworkOf = (path: string | null, fallback: string | null, token: string) => path
+export const artworkOf = (path: string | null, fallback: string | null, token: string) => path
   ? `/api/plex/image?${new URLSearchParams({ path, ...(fallback ? { fallback } : {}), authorization: `Bearer ${token}` })}`
   : fallback
 
