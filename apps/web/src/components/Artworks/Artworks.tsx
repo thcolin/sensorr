@@ -24,12 +24,13 @@ export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) =>
   return metadata && 'plex_artworks' in metadata ? metadata.plex_artworks : behavior === 'movie' ? artworks?.[id] || null : null
 }
 
-const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
+// A season (`{ number, name, key, seasons }`, its show's `plex_seasons`) only has a poster, written to its own Plex item
+const UIArtworks = ({ behavior, entity, artworks, season = null, className = undefined }) => {
   const trigger = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
   // Mounted from the start and kept through its way out: the pane slides in and out instead of popping
   const [shown, setShown] = useState(false)
-  const ratingKey = ratingKeyOf(artworks)
+  const ratingKey = season?.key || ratingKeyOf(artworks)
 
   useEffect(() => {
     if (open) {
@@ -57,7 +58,7 @@ const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
       </button>
       {createPortal((
         <Pane position='right' width={['100%', '40em']} open={open} toggleOpen={close}>
-          {shown && <Picker behavior={behavior} entity={entity} artworks={artworks} ratingKey={ratingKey} close={close} />}
+          {shown && <Picker behavior={behavior} entity={entity} artworks={artworks} season={season} ratingKey={ratingKey} close={close} />}
         </Pane>
       ), document.body)}
     </>
@@ -143,13 +144,16 @@ const hostOf = (url: string) => {
   }
 }
 
-const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
+const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
   const api = useAPI()
   const tmdb = useTMDB()
   const { i18n: { language } } = useTranslation()
   const region = (language || 'en').split('-')[0]
   const { config } = useConfigContext()
-  const mediux = !!config.get('mediux.token')
+  // MediUX sets are read for a show's own poster and backdrop, not its seasons'
+  const mediux = !season && !!config.get('mediux.token')
+  const kinds = useMemo(() => season ? KINDS.filter(({ kind }) => kind === 'poster') : KINDS, [season])
+  const title = season ? `${season.name} of ${entity?.name}` : entity?.title || entity?.name
   const [lists, setLists] = useState({ loading: true, plex: null, tmdb: null, sets: null, errors: [] as string[] })
   const [chosen, setChosen] = useState<Chosen>({})
   const [links, setLinks] = useState<Partial<Record<ArtworkKind, Candidate[]>>>({})
@@ -193,7 +197,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     Promise.allSettled([
       api.fetch(plexQuery.uri, plexQuery.params, plexQuery.init),
       // Without a language TMDB lists every image, where the configured one would leave only its own
-      tmdb.fetch(`${behavior}/${entity.id}/images`, { language: '' }, { signal: controller.signal }),
+      tmdb.fetch(season ? `tv/${entity.id}/season/${season.number}/images` : `${behavior}/${entity.id}/images`, { language: '' }, { signal: controller.signal }),
       mediux ? api.fetch(setsQuery.uri, setsQuery.params, setsQuery.init) : Promise.resolve({ sets: null }),
     ]).then(([plex, images, sets]) => {
       if (controller.signal.aborted) {
@@ -214,14 +218,14 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     })
 
     return controller
-  }, [ratingKey, entity?.id, behavior, mediux])
+  }, [ratingKey, entity?.id, behavior, mediux, season?.number])
 
   useEffect(() => {
     const controller = load()
     return () => controller.abort()
   }, [load])
 
-  const groups = useMemo(() => KINDS.reduce((acc, { kind, tmdb: list }) => {
+  const groups = useMemo(() => kinds.reduce((acc, { kind, tmdb: list }) => {
     const [current, ...rest] = candidatesOf(lists.plex?.[kind] || [], lists.tmdb?.[list] || [], { region, token: api.access_token })
     const sets = kind === 'logo' ? [] : setCandidatesOf(lists.sets || [], kind)
 
@@ -234,7 +238,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
         ...(current?.label === 'current' ? rest : [current, ...rest].filter(Boolean)),
       ],
     }
-  }, {} as Record<ArtworkKind, CandidateGroup[]>), [lists, links, region, api.access_token])
+  }, {} as Record<ArtworkKind, CandidateGroup[]>), [kinds, lists, links, region, api.access_token])
 
   const chooseSet = (set) => {
     const [poster, backdrop] = ['poster', 'backdrop'].map((kind) => setCandidatesOf([set], kind as ArtworkKind)[0])
@@ -279,9 +283,11 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     if (!written) {
       toast.error('Written on Plex, Sensorr shows it after the next sync')
     } else try {
-      const saving = behavior === 'movie'
-        ? api.query.movies.postMovie({ body: { id: entity.id, plex_artworks: written } })
-        : api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_artworks: written } } })
+      const saving = season
+        ? api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_seasons: { ...season.seasons, [season.number]: { key: season.key, poster: written.poster } } } } })
+        : behavior === 'movie'
+          ? api.query.movies.postMovie({ body: { id: entity.id, plex_artworks: written } })
+          : api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_artworks: written } } })
       await api.fetch(saving.uri, saving.params, saving.init)
     } catch (err) {
       console.warn(err)
@@ -302,7 +308,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   }
 
   return (
-    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-label={`Artworks of ${entity?.title || entity?.name}`} onKeyDown={trap}>
+    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-label={`Artworks of ${title}`} onKeyDown={trap}>
       <div sx={Picker.styles.body} style={preview ? { '--artworks-preview': `${preview}px` } as any : undefined}>
         <div sx={Picker.styles.head}>
           <Warning
@@ -310,14 +316,16 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
             title='Artworks'
             subtitle={(
               <span>
-                Choose the <strong>poster</strong>, <strong>backdrop</strong> and <strong>logo</strong> Plex shows for <strong>{entity?.title || entity?.name}</strong>, from Plex, TMDB, MediUX sets or a pasted link
+                {season
+                  ? <>Choose the <strong>poster</strong> Plex shows for <strong>{title}</strong>, from Plex, TMDB or a pasted link</>
+                  : <>Choose the <strong>poster</strong>, <strong>backdrop</strong> and <strong>logo</strong> Plex shows for <strong>{title}</strong>, from Plex, TMDB, MediUX sets or a pasted link</>}
               </span>
             )}
           />
         </div>
         <Preview
           artworks={artworks}
-          current={Object.fromEntries(KINDS.map(({ kind }) => [kind, groups[kind].find(({ label }) => label === 'current')?.items[0]?.thumb]))}
+          current={Object.fromEntries(KINDS.map(({ kind }) => [kind, groups[kind]?.find(({ label }) => label === 'current')?.items[0]?.thumb]))}
           chosen={chosen}
           reset={() => setChosen({})}
           onHeight={setPreview}
@@ -356,7 +364,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
             </div>
           </section>
         )}
-        {KINDS.map(({ kind, emoji, label, width, height, size }) => (
+        {kinds.map(({ kind, emoji, label, width, height, size }) => (
           <section key={kind} sx={Picker.styles.section}>
             <h3>
               <span aria-hidden={true}>{emoji}</span>
