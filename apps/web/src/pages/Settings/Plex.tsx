@@ -12,6 +12,21 @@ const UIPlex = ({ ...props }) => {
   const { config } = useConfigContext()
   const api = useAPI()
   const [registering, setRegistering] = useState(false)
+
+  const handleMediux = useCallback(async (e) => {
+    e.preventDefault()
+    const value = e.target.elements.mediux.value.trim()
+
+    try {
+      const { uri, params, init } = api.query.config.putConfig({ body: { key: 'mediux.token', value } })
+      await api.fetch(uri, params, init)
+      config.set('mediux.token', value)
+      toast.success(value ? 'MediUX token saved' : 'MediUX token removed')
+    } catch (err) {
+      console.warn(err)
+      toast.error('Error while saving the MediUX token')
+    }
+  }, [])
   const [step, setStep] = useState(config.get('plex.token') ? 'token' : config.get('plex.url') ? 'pin' : 'url')
 
   const handleRegister = useCallback(async (e) => {
@@ -210,6 +225,19 @@ const UIPlex = ({ ...props }) => {
               <input type='text' value={config.get('plex.token')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
               <button type='button' onClick={handleReset} disabled={step !== 'token'}>Unregister</button>
             </div>
+          )}
+        />
+      </div>
+      <div>
+        <Warning
+          emoji='🎨'
+          title='MediUX'
+          subtitle={<span>With a MediUX token, the artworks of a movie or a show also list the sets MediUX users made for it</span>}
+          children={(
+            <form onSubmit={handleMediux} sx={UIPlex.styles.inputs}>
+              <input name='mediux' type='text' placeholder='MediUX token' defaultValue={config.get('mediux.token')} autoComplete='off' spellCheck={false} />
+              <button type='submit'>Save</button>
+            </form>
           )}
         />
       </div>
