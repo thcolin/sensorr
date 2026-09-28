@@ -57,13 +57,13 @@ A local API spawns the same wrapper, so on Node 24 its jobs fail the same way: t
 
 ### `nx run wrapped:serve`
 
-Serves the wrapped programme on **http://localhost:4230/wrapped/<token>**. Requests to `/api` go through `apps/wrapped/proxy.conf.json` to `http://localhost:4300`, a local `yarn api`; `--proxyConfig=<file>` points them elsewhere. The page has nothing to show until that API holds a Tautulli import, and Cortex has none before the wrapped ships, so run it on a local stack:
+Serves the wrapped, the « Rétrospective » of its French copy, on **http://localhost:4230/wrapped/<token>**. Requests to `/api` go through `apps/wrapped/proxy.conf.json` to `http://localhost:4300`, a local `yarn api`; `--proxyConfig=<file>` points them elsewhere. The page has nothing to show until that API holds a Tautulli import, and Cortex has none before the wrapped ships, so run it on a local stack:
 
 1. Mongo as a replica set, empty, and `yarn api` against it, with `tautulli.url` and `tautulli.key` in the local `config.json` (the key is a secret, never commit it).
 2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
 3. A guest whose email is a Tautulli user's, then **Copy link** on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
 
-Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short programme.
+Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version.
 
 ### The component gallery
 

@@ -42,7 +42,7 @@ What `/thcolin:craft` and `/thcolin:design` read before touching a screen: how t
 data, what to open, how to capture.
 
 - Frontend paths: `apps/web/**`, `apps/wrapped/**`, `libs/ui/**`, `libs/theme/**`.
-- `apps/wrapped`, the guests' yearly programme, runs on a local stack and never on Cortex: local Mongo, local
+- `apps/wrapped`, the guests' yearly wrapped, runs on a local stack and never on Cortex: local Mongo, local
   API, a Tautulli import, then `nx run wrapped:serve` on `http://localhost:4230/wrapped/<token>`. Steps and the
   three guests to check in [`docs/development.md`](docs/development.md#nx-run-wrappedserve). Its look is the
   edition's, in `apps/wrapped/.impeccable/surfaces/apps-wrapped.md`; `DESIGN.md` does not apply to it.

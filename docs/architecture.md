@@ -45,7 +45,7 @@ calls TMDB straight from the browser, and reaches the indexers through the API p
 the `proxify` option is set, which `apps/web/src/store/sensorr.tsx:7` sets and the CLI does
 not.
 
-**`apps/wrapped`** is the yearly programme a guest opens from a link, a React page served as
+**`apps/wrapped`** is the yearly wrapped a guest opens from a link, a React page served as
 static files under `/wrapped/<token>`. It has no login: the token is the access, and it reads
 `GET /api/wrapped/share/:token` plus the artwork route beside it. Its look belongs to the
 edition and does not follow `DESIGN.md`.
