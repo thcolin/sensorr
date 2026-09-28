@@ -4,7 +4,6 @@ export type ArtworkChoice = { key: string } | { url: string }
 
 export interface Candidate {
   id: string
-  // A TMDB path, a URL, or a path on the Sensorr API: what `Picture` draws
   thumb: string
   choice: ArtworkChoice
   lang: string | null
@@ -23,7 +22,7 @@ export const ratingKeyOf = (artworks) => [artworks?.poster, artworks?.backdrop, 
   .map((path) => typeof path === 'string' && path.match(/^\/library\/metadata\/(\d+)\//)?.[1])
   .find(Boolean) || null
 
-// A candidate Plex keeps as its own file is read through the API, which holds the Plex token
+// A file Plex keeps is read through the API, which holds the Plex token
 const plexThumbOf = (thumb: string, token: string) => thumb.startsWith('/library/metadata/')
   ? `/api/plex/image?${new URLSearchParams({ path: thumb, authorization: `Bearer ${token}` })}`
   : thumb
@@ -70,7 +69,6 @@ export const candidatesOf = (plex = [], tmdb = [], { region, token }: { region: 
   ].filter(({ items }) => items.length)
 }
 
-// A MediUX image is fetched by Plex in the JPEG MediUX makes of it
 export const setCandidatesOf = (sets = [], kind: ArtworkKind): Candidate[] => sets
   .filter((set) => set[kind])
   .map((set) => ({

@@ -71,7 +71,6 @@ const styles = {
   },
 }
 
-// A long press on a poster is the way to the artworks where no page is open, on a phone
 const DrawerArtworks = ({ details, link }) => {
   const behavior = `${link?.to || ''}`.startsWith('/tv/') ? 'tv' : 'movie'
   const { metadata: movies } = useMoviesMetadataContext() as any

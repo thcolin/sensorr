@@ -361,7 +361,6 @@ UISeasons.styles = {
       backgroundColor: 'grayLightest',
     },
   },
-  // The season's own poster, in a column of its own beside the episodes, on a screen wide enough
   postered: {
     display: ['block', 'grid'],
     gridTemplateColumns: '8em minmax(0, 1fr)',
