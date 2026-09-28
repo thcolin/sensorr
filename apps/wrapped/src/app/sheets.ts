@@ -9,7 +9,7 @@ const THRESHOLD = 10
 // `wrapped.month_shows` runs from December of the previous year to November
 export const MONTHS = ['décembre', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre']
 // French puts a narrow space before a colon and a percent sign
-export const THIN = ' '
+export const THIN = '\u202f'
 
 export const number = new Intl.NumberFormat('fr-FR')
 export const plural = (count: number, one: string, many: string) => `${number.format(count)} ${count > 1 ? many : one}`
@@ -33,11 +33,11 @@ export const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 export type Billed = { what: string, poster: WrappedPoster, detail: string }
 
 export type SheetModel =
-  | { kind: 'opening', label: string, title: string, name: string, year: number, lede: string | null, figures: string[], posters: WrappedPoster[] }
+  | { kind: 'opening', label: string, title: string, name: string, year: number, lede: string | null, first: string | null, figures: string[], posters: WrappedPoster[] }
   | { kind: 'rank', label: string, rank: number, suffix: string, users: number, unit: string, detail: string }
   | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string } | null }
-  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[] }
+  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null }
   | { kind: 'night', label: string, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
   | { kind: 'server', label: string, lines: string[], poster: WrappedPoster, title: string, lede: string }
   | { kind: 'figure', label: string, lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[] }
@@ -78,6 +78,8 @@ export const sheetsOf = (share: Share) => {
     name,
     year,
     lede: first ? `Ton année sur ${place} a commencé le ${dayOf(first.date)}, avec ${quoted(first.title)}.` : null,
+    // The key of the first title of the year, when it is among the posters
+    first: first?.key ?? null,
     figures: [
       `En tout${THIN}: ${plural(wrapped.hours, 'heure', 'heures')}, sur ${plural(wrapped.evenings, 'soir', 'soirs')}.`,
       wrapped.movies && plural(wrapped.movies, 'film', 'films'),
@@ -141,6 +143,8 @@ export const sheetsOf = (share: Share) => {
       lines: binge ? [plural(binge.episodes, 'épisode', 'épisodes'), 'en une soirée'] : ['Ton rythme'],
       poster: lead,
       title: lead.title,
+      // Episodes watched in the binge evening, none when only the pace is known
+      episodes: binge?.episodes ?? null,
       meta: [
         binge && `Le ${dayOf(binge.date, true)}, ${lasting(binge.minutes)} d’affilée.`,
         pace && `${pace.key === lead.key ? 'En tout' : `Et ${quoted(pace.title)}`}${THIN}: ${plural(pace.episodes, 'épisode', 'épisodes')} en ${plural(pace.days, 'jour', 'jours')}, ${rhythm(pace.episodes / pace.days)}.`,
