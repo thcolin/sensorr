@@ -47,7 +47,7 @@ const Show = ({ ...props }) => {
     include_image_language: 'en,null',
   }, { transform: transformShowDetails })
 
-  const { details } = usePlexArtworks(show.data, show.details, metadata?.plex_artworks)
+  const { details } = usePlexArtworks(show.data, show.details, metadata?.plex_artworks, metadataLoading)
   const inLibrary = !!metadata && metadata.state !== 'ignored'
   const state = metadataLoading ? 'loading' : showStateOf(metadata)
   // An airing show Sensorr does not follow, pinned or out of the library, draws its violet as a hollow ring

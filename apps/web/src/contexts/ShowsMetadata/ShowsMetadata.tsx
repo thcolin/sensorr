@@ -361,7 +361,7 @@ export const showStateOf = (metadata) => (!metadata?.state || metadata.state ===
 export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, setShowState } = useShowsMetadataContext() as any
-    const artworked = usePlexArtworks(entity, (props as any).details, metadata?.plex_artworks)
+    const artworked = usePlexArtworks(entity, (props as any).details, metadata?.plex_artworks, loading)
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
       .catch(() => toast.error('Error while answering the proposal')), [entity?.id])

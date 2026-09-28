@@ -6,8 +6,19 @@ const artworkOf = (path: string | null, fallback: string | null, token: string) 
   ? `/api/plex/image?${new URLSearchParams({ path, ...(fallback ? { fallback } : {}), authorization: `Bearer ${token}` })}`
   : fallback
 
-export const withPlexArtworks = (entity, details, artworks, token) => {
-  if (!artworks?.poster && !artworks?.backdrop) {
+const isArtworked = (entity) => [entity?.poster_path, entity?.backdrop_path].some((path) => typeof path === 'string' && path.startsWith('/api/'))
+
+// A movie drawn inside another one's metadata context goes through twice: its TMDB paths are gone by then
+// `pending` while the source is unknown: a TMDB image drawn first would be downloaded, then swapped
+export const withPlexArtworks = (entity, details, artworks, token, pending = false) => {
+  if (pending && !isArtworked(entity)) {
+    return {
+      entity: entity && { ...entity, poster_path: null, backdrop_path: null },
+      details: details && { ...details, poster: null, billboard: null },
+    }
+  }
+
+  if ((!artworks?.poster && !artworks?.backdrop) || isArtworked(entity)) {
     return { entity, details }
   }
 
@@ -20,7 +31,7 @@ export const withPlexArtworks = (entity, details, artworks, token) => {
   }
 }
 
-export const usePlexArtworks = (entity, details, artworks) => {
+export const usePlexArtworks = (entity, details, artworks, pending = false) => {
   const api = useAPI()
-  return useMemo(() => withPlexArtworks(entity, details, artworks, api.access_token), [entity, details, artworks])
+  return useMemo(() => withPlexArtworks(entity, details, artworks, api.access_token, pending), [entity, details, artworks, pending])
 }
