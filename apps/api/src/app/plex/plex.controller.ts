@@ -30,7 +30,6 @@ export class PlexController {
     return this.plexService.checkStatus(id)
   }
 
-  // Plex unreachable or the artwork gone, TMDB serves its own at the same size
   @Get('image')
   async image(@Query() query: Record<string, string>, @Res() res: Response) {
     const request = imageRequestOf(query)
