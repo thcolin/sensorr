@@ -67,7 +67,7 @@
   --labo-black: #070403;
   --labo-edge: #ffb238;
   --labo-safelight: #ff4b1f;
-  --labo-grease: #cf2c16;
+  --labo-grease: #b3230f;
   --labo-grease-light: #ff5a36;
   --labo-wax: #f6ecd8;
   --labo-text: #eadcc3;
@@ -84,9 +84,9 @@
   --labo-mark: 14px;
   --labo-inset: calc(var(--labo-rail) + var(--labo-mark) + 8px);
   --labo-perfs: repeating-linear-gradient(90deg, var(--labo-hole) 0 6px, transparent 6px 12px);
-  --switch-bg: var(--labo-paper);
-  --switch-fg: var(--labo-ink);
-  --switch-font: 500 13px/1 var(--labo-mono);
+  --switch-bg: var(--labo-black);
+  --switch-fg: var(--labo-edge);
+  --switch-font: 500 14px/1 var(--labo-mono);
   --switch-radius: 2px;
   color-scheme: dark;
 }
@@ -147,7 +147,7 @@ html[data-theme='labo'] {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 64px var(--labo-inset) 104px;
+  padding: 64px var(--labo-inset);
 }
 
 .labo-sheet {
@@ -428,7 +428,7 @@ html[data-theme='labo'] {
 
 .labo-leader-title strong {
   max-width: 100%;
-  font: 900 min(6rem, calc(88cqw / (var(--len, 6) * 0.52)))/0.85 var(--labo-display);
+  font: 900 min(11rem, calc(88cqw / (var(--len, 6) * 0.52)))/0.85 var(--labo-display);
   text-transform: uppercase;
   overflow-wrap: break-word;
 }
@@ -593,7 +593,7 @@ html[data-theme='labo'] {
   align-items: baseline;
   gap: 8px;
   margin-bottom: 3px;
-  font: 500 10px/1.2 var(--labo-mono);
+  font: 500 11px/1.2 var(--labo-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--labo-paper-muted);
@@ -726,9 +726,9 @@ html[data-theme='labo'] {
 
 .labo-stamp-rank {
   flex-shrink: 0;
+  max-width: 11rem;
   margin-top: 14px;
   text-align: center;
-  mix-blend-mode: multiply;
 }
 
 .labo-stamp-rank span {
@@ -743,9 +743,10 @@ html[data-theme='labo'] {
 
 .labo-stamp-rank small {
   display: block;
-  margin-top: 4px;
-  font: 500 9px/1.2 var(--labo-mono);
-  letter-spacing: 0.12em;
+  margin-top: 6px;
+  font: 500 12px/1.25 var(--labo-mono);
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .labo-stamp-ok {
@@ -977,6 +978,13 @@ html[data-theme='labo'] {
 }
 
 /* Behind the reel on a wide screen: negatives drying on the line */
+.labo-single {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(72%, 340px);
+}
+
 .labo-line {
   display: none;
 }
@@ -1002,6 +1010,25 @@ html[data-theme='labo'] {
   .labo-strip,
   .labo-strip[data-count='3'] {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .labo-strip[data-count='2'] {
+    grid-template-columns: repeat(2, minmax(0, 220px));
+  }
+
+  .labo-strip[data-count='1'] {
+    grid-template-columns: minmax(0, 260px);
+  }
+
+  .labo-sheet-opening .labo-lede {
+    max-width: 44ch;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--labo-wax);
+  }
+
+  .labo-leader-title small {
+    font-size: 14px;
   }
 
   .labo-marked {
@@ -1064,7 +1091,7 @@ html[data-theme='labo'] {
   .labo-line {
     position: fixed;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     display: block;
     pointer-events: none;
   }

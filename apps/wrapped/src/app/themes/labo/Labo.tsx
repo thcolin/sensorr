@@ -256,7 +256,7 @@ const FicheHead = ({ reel, children }: { reel: Reel, children?: ReactNode }) => 
 // As many frames as evenings in a row, all cut from the show that filled them
 const Streak = ({ sheet, index, reel, art }: { sheet: Of<'streak'>, index: number, reel: Reel, art: Art }) => (
   <Sheet sheet={sheet} index={index} reel={reel}>
-    <p className="labo-intro">{sheet.intro}</p>
+    <h2 className="labo-intro">{sheet.intro}</h2>
     <div className="labo-figure-pair">
       <Frame poster={sheet.poster} art={art} code="1A" />
       <p className="labo-figure">
@@ -371,7 +371,7 @@ const Figure = ({ sheet, index, reel, art }: { sheet: Of<'figure'>, index: numbe
   const at = sheet.highlight ? sheet.unit.indexOf(sheet.highlight) : -1
   return (
     <Sheet sheet={sheet} index={index} reel={reel}>
-      {sheet.lines && <Title lines={sheet.lines} />}
+      {sheet.lines ? <Title lines={sheet.lines} /> : <h2 className="visually-hidden">{sheet.label}</h2>}
       <p className="labo-figure labo-figure-alone">
         <span aria-hidden="true">{number.format(sheet.count)}</span>
         <span className="visually-hidden">{sheet.spoken}</span>
@@ -380,7 +380,13 @@ const Figure = ({ sheet, index, reel, art }: { sheet: Of<'figure'>, index: numbe
         {at < 0 ? sheet.unit : <>{sheet.unit.slice(0, at)}<em>{sheet.highlight}</em>{sheet.unit.slice(at + sheet.highlight!.length)}</>}
       </p>
       <p className="labo-body">{sheet.details}</p>
-      {!!sheet.posters.length && <Strip posters={sheet.posters} art={art} start={index * 4} />}
+      {sheet.posters.length === 1 && (
+        <div className="labo-single">
+          <Frame poster={sheet.posters[0]} art={art} code={`${index * 4}A`} />
+          <p className="labo-strip-title">{sheet.posters[0].title}</p>
+        </div>
+      )}
+      {sheet.posters.length > 1 && <Strip posters={sheet.posters} art={art} start={index * 4} />}
     </Sheet>
   )
 }
@@ -448,7 +454,7 @@ const Genre = ({ sheet, index, reel, art }: { sheet: Of<'genre'>, index: number,
 const Finale = ({ sheet, index, reel, art }: { sheet: Of<'finale'>, index: number, reel: Reel, art: Art }) => (
   <Sheet sheet={sheet} index={index} reel={reel}>
     <Title lines={sheet.lines} />
-    <Frame poster={sheet.poster} art={art} width={1280} code="LAST" className="labo-frame-last" />
+    <Frame poster={sheet.poster} art={art} width={1280} code={`${index * 4}A`} className="labo-frame-last" />
     <h3 className="labo-name">{sheet.title}</h3>
     <div className="labo-finale-date">
       <p className="labo-intro">{sheet.date}</p>
