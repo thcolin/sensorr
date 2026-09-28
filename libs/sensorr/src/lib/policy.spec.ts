@@ -1,4 +1,4 @@
-import { entryPolicy, matchPolicy } from './policy'
+import { Policy, entryPolicy, matchPolicy, ranked, unranked } from './policy'
 
 describe('matchPolicy', () => {
   const policies = [
@@ -34,5 +34,31 @@ describe('entryPolicy', () => {
   it('leaves a movie already in the library, or with a stored policy, as it is', () => {
     expect(entryPolicy(movie, { state: 'wished' }, policies)).toBeUndefined()
     expect(entryPolicy(movie, { state: 'ignored', policy: 'MULTi' }, policies)).toBeUndefined()
+  })
+})
+
+describe('prefer ranks', () => {
+  const policy = (language) => new Policy({ name: 'MULTi', sorting: 'size', descending: false, prefer: { language }, avoid: {} } as any)
+  const releases = [
+    { title: 'Little.Italy.2018.MULTi-VF2.1080p.BLURAY.x264-A', size: 8, seeders: 1 },
+    { title: 'Little.Italy.2018.MULTi-VFF.1080p.WEB.x264-B', size: 2, seeders: 1 },
+    { title: 'Little.Italy.2018.MULTi.1080p.WEB.x264-C', size: 1, seeders: 1 },
+  ]
+  const scores = (language) => Object.fromEntries(policy(language).apply(releases, null).map(({ original, title, score }) => [(original || title).split('.')[3], score]))
+
+  it('scores each entry of a flat list by its position', () => {
+    expect(scores(['MULTi-VF2', 'MULTi-VFF', 'MULTi'])).toEqual({ 'MULTi-VF2': 2200, 'MULTi-VFF': 2166, MULTi: 2133 })
+  })
+
+  it('gives the values of one rank the same score, and lets the sorting decide between them', () => {
+    expect(scores([['MULTi-VF2', 'MULTi-VFF'], 'MULTi'])).toEqual({ 'MULTi-VF2': 2200, 'MULTi-VFF': 2200, MULTi: 2150 })
+    expect(policy([['MULTi-VF2', 'MULTi-VFF'], 'MULTi']).apply(releases, null)[0].meta.language).toBe('MULTi-VFF')
+  })
+
+  it('goes back and forth between entries and ranked values', () => {
+    const entries = ['YGG', ['C411', 'TR4KER'], 'ABN']
+    expect(unranked(entries)).toEqual([{ value: 'YGG', rank: 0 }, { value: 'C411', rank: 1 }, { value: 'TR4KER', rank: 1 }, { value: 'ABN', rank: 2 }])
+    expect(ranked(unranked(entries))).toEqual(entries)
+    expect(ranked(unranked(entries).filter(({ value }) => value !== 'TR4KER'))).toEqual(['YGG', 'C411', 'ABN'])
   })
 })

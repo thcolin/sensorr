@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Option, Button, Label } from '@sensorr/ui'
-import { Znab } from '@sensorr/sensorr'
+import { Znab, ranked, unranked } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
@@ -187,7 +187,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                     },
                     prefer: {
                       ...(policy.prefer || {}),
-                      znab: (policy.prefer || {}).znab?.map((value) => value === values.oldName ? e.target.value : value) || [],
+                      znab: ranked(unranked((policy.prefer || {}).znab).map((item) => item.value === values.oldName ? { ...item, value: e.target.value } : item)),
                     },
                     avoid: {
                       ...(policy.avoid || {}),
@@ -250,7 +250,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                     },
                     prefer: {
                       ...(policy.prefer || {}),
-                      znab: (policy.prefer || {}).znab?.filter((value) => value !== values.oldName) || [],
+                      znab: ranked(unranked((policy.prefer || {}).znab).filter((item) => item.value !== values.oldName)),
                     },
                     avoid: {
                       ...(policy.avoid || {}),
