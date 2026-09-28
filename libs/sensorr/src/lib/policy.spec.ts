@@ -60,5 +60,6 @@ describe('prefer ranks', () => {
     expect(unranked(entries)).toEqual([{ value: 'YGG', rank: 0 }, { value: 'C411', rank: 1 }, { value: 'TR4KER', rank: 1 }, { value: 'ABN', rank: 2 }])
     expect(ranked(unranked(entries))).toEqual(entries)
     expect(ranked(unranked(entries).filter(({ value }) => value !== 'TR4KER'))).toEqual(['YGG', 'C411', 'ABN'])
+    expect(ranked([{ value: 'YGG', rank: undefined }, { value: 'ABN', rank: undefined }])).toEqual(['YGG', 'ABN'])
   })
 })
