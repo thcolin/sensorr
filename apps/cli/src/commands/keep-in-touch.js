@@ -7,7 +7,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import { lighten } from '../store/logger'
 import command from '../utils/command'
-import { fetchSensorrShows, fetchShow, requestedShowOf } from '../utils/shows'
+import { fetchSensorrShows, fetchShow, requestedShowOf, isNotedShow } from '../utils/shows'
 import { requestedAtOf } from '../utils/plex'
 
 const meta = {
@@ -459,14 +459,14 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
           const changed = added || guests.length !== (show.requested_by || []).length
           // Once dated, a request keeps its date: a guest joining it later does not make it newer
           const requested_at = show.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
-          const noted = show.state === 'ignored' && !!state.owner && guests.includes(state.owner)
+          const noted = isNotedShow(show, guests, state.owner)
 
           if (changed || show.plex_guid !== plex_guid || requested_at || noted) {
             const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}), ...(noted ? { state: 'wished' } : {}) } } })
             await api.fetch(uri, params, init)
           }
 
-          if (added) {
+          if (added || noted) {
             processed.push(show)
             state.logger.info({ message: `Show "${show.name}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: show.id, type: 'show', show: lighten.show(show), processed: show.state !== 'archived', requested_by: guests } })
           } else {

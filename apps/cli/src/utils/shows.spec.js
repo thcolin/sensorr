@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, fetchSonarrShow, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, fetchSonarrShow, sonarrEpisodesOf, isNotedShow, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -442,6 +442,14 @@ describe('requestedShowOf', () => {
     expect(show).toMatchObject({ state: 'wished', monitored: false, monitor_new_seasons: false })
     expect(episodes.every(({ monitored }) => monitored === false)).toBe(true)
     expect(requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com'], 'owner@example.com').show.state).toBe('ignored')
+  })
+
+  it('moves only an ignored show the owner adds to the library', () => {
+    expect(isNotedShow({ state: 'ignored' }, ['guest@example.com', 'owner@example.com'], 'owner@example.com')).toBe(true)
+    expect(isNotedShow({ state: 'ignored' }, ['guest@example.com'], 'owner@example.com')).toBe(false)
+    expect(isNotedShow({ state: 'ignored' }, ['owner@example.com'], null)).toBe(false)
+    expect(isNotedShow({ state: 'wished' }, ['owner@example.com'], 'owner@example.com')).toBe(false)
+    expect(isNotedShow({ state: 'archived' }, ['owner@example.com'], 'owner@example.com')).toBe(false)
   })
 
   it('brings a requested show in ignored and unmonitored, every episode unmonitored, with the guests requesting it', () => {
