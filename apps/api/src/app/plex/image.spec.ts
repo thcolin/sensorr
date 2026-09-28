@@ -18,10 +18,11 @@ describe('imageRequestOf', () => {
 })
 
 describe('transcodeOf', () => {
-  it('asks Plex for the width TMDB would have served', () => {
+  it('asks Plex for the width TMDB would have served, 1920 for the original', () => {
     expect(transcodeOf({ path: '/library/metadata/1/thumb/2', size: 'w300', fallback: null }))
       .toBe('/photo/:/transcode?url=%2Flibrary%2Fmetadata%2F1%2Fthumb%2F2&width=300&height=1200&minSize=0&upscale=0')
-    expect(transcodeOf({ path: '/library/metadata/1/art/2', size: 'original', fallback: null })).toBe('/library/metadata/1/art/2')
+    expect(transcodeOf({ path: '/library/metadata/1/art/2', size: 'original', fallback: null }))
+      .toBe('/photo/:/transcode?url=%2Flibrary%2Fmetadata%2F1%2Fart%2F2&width=1920&height=7680&minSize=0&upscale=0')
   })
 })
 

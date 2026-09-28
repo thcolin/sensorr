@@ -21,7 +21,7 @@ export const Provider = ({ ...props }) => {
   const refreshTime = useRef() as any
   const [loading, setLoading] = useState(true)
   const [metadata, setMetadata] = useState({})
-  const [artworks, setArtworks] = useState({})
+  const [artworks, setArtworks] = useState(null)
 
   useEffect(() => {
     if (!authenticated) {
@@ -32,7 +32,12 @@ export const Provider = ({ ...props }) => {
 
     const cb = async () => {
       const artworksQuery = api.query.movies.getArtworks({ init: { signal: controller.signal } })
-      api.fetch(artworksQuery.uri, artworksQuery.params, artworksQuery.init).then(setArtworks).catch((e) => e.name !== 'AbortError' && console.warn(e))
+      api.fetch(artworksQuery.uri, artworksQuery.params, artworksQuery.init).then(setArtworks).catch((e) => {
+        if (e.name !== 'AbortError') {
+          console.warn(e)
+          setArtworks(artworks => artworks || {})
+        }
+      })
 
       try {
         let total_pages = null
@@ -232,7 +237,7 @@ export const useMoviesMetadataContext = () => useContext(moviesMetadataContext)
 export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedComponent) => {
   const withMovieMetadataContext = ({ entity, ...props }) => {
     const sensorr = useSensorr()
-    const { loading, metadata: { [entity.id]: _metadata = {} }, artworks: { [entity.id]: artworks = null } = {}, setMovieMetadata, removeMovieRelease } = useMoviesMetadataContext() as any
+    const { loading, metadata: { [entity.id]: _metadata = {} }, artworks: known = {}, setMovieMetadata, removeMovieRelease } = useMoviesMetadataContext() as any
     const setMetadata = useCallback((key, value) => setMovieMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setMovieMetadata(entity.id, 'proposal', release?.id ? { id: release.id, choice } : choice), [entity?.id])
     const removeRelease = useCallback((release) => removeMovieRelease(entity.id, release), [entity?.id])
@@ -251,7 +256,7 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
       }
     }, [entity?.id, _metadata])
 
-    const artworked = usePlexArtworks(entity, (props as any).details, _metadata?.plex_artworks || artworks)
+    const artworked = usePlexArtworks(entity, (props as any).details, _metadata?.plex_artworks || known?.[entity.id], known === null)
 
     return (
       <WrappedComponent
