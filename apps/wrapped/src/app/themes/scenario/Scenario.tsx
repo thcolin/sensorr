@@ -351,6 +351,7 @@ const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
       <div key={meta}>
         <Slug scene={scene + index}>{index ? 'Int. salon – plus tard' : 'Int. salon – soir'}</Slug>
         {!index && <Insert poster={sheet.poster} art={art} wide />}
+        {!!index && sheet.pace && <Insert poster={sheet.pace} art={art} />}
         <p className="scenario-action">
           {!index && <><Caps>{sheet.title}</Caps>. </>}
           {meta}
