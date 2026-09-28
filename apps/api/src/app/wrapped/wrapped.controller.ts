@@ -9,6 +9,12 @@ export class WrappedController {
   constructor(private readonly wrappedService: WrappedService) {}
 
   @Public()
+  @Get('look')
+  look() {
+    return this.wrappedService.look()
+  }
+
+  @Public()
   @Get('share/:token')
   async share(@Param('token') token: string, @Query('year') year?: string) {
     return this.wrappedService.share(token, year ? Number(year) || undefined : undefined)

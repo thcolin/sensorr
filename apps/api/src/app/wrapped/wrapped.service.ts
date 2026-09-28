@@ -256,6 +256,11 @@ export class WrappedService {
     return { type, buffer: Buffer.from(body) }
   }
 
+  // The look a page wears before it knows its friend: an unknown link, a revoked one, no link at all
+  look() {
+    return this.lookOf({}, this.shownEdition())
+  }
+
   private lookOf(guest: { wrapped_theme?: string | null, wrapped_choice?: boolean | null }, year: number) {
     const { config } = this.configService
 

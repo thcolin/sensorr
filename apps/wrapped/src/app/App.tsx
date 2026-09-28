@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped, WrappedTheme } from '@sensorr/sensorr'
 import { WrappedPage } from './Wrapped'
-import { read } from './look'
+import { known, read } from './look'
 import { STATES } from './themes'
 import type { NoticeProps, StatesModule } from './themes/types'
 
@@ -42,8 +42,21 @@ const Waiting = () => (
 )
 
 const States = ({ notice }: { notice?: NoticeProps }) => {
-  const theme = shown || (notice ? 'affiche' : null)
+  // A notice on a device that never showed a look asks the server for the one Thomas set
+  const [theme, setTheme] = useState<WrappedTheme | null>(shown)
   const [states, setStates] = useState<StatesModule | null>(null)
+
+  useEffect(() => {
+    if (notice && !theme) {
+      fetch('/api/wrapped/look')
+        .then((res) => res.ok ? res.json() : Promise.reject(new Error(`${res.status}`)))
+        .then(({ theme }) => setTheme(known(theme) ? theme : 'affiche'))
+        .catch((error) => {
+          console.error('Unable to load the default look', error)
+          setTheme('affiche')
+        })
+    }
+  }, [notice, theme])
 
   useEffect(() => {
     if (theme) {
