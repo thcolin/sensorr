@@ -158,13 +158,25 @@ export class WrappedService {
     const edition = year || this.shownEdition()
     const editions = (await this.editionModel.find({ user_id: viewer._id }, { year: 1 }).lean()).map(({ year }) => year)
     this.logger.log(`Share "${guest.email}", edition "${edition}"`)
+    const shown = await this.wrapped(viewer._id, edition)
     return {
       name: guest.name,
       server: await this.serverNameOf(),
       year: edition,
       editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
-      ...(await this.wrapped(viewer._id, edition)),
+      names: await this.namesOf(shown.wrapped),
+      ...shown,
     }
+  }
+
+  // The viewers a wrapped matches with: a guest by the name given in Friends, anyone else as Tautulli names them, read when shown so a rename applies
+  private async namesOf(wrapped: { twin?: { user_id: number } | null, duo?: { posters: { with: number }[] } | null }) {
+    const ids = [wrapped.twin?.user_id, ...(wrapped.duo?.posters || []).map((poster) => poster.with)].filter(Number.isInteger)
+    const viewers = ids.length ? await this.viewerModel.find({ _id: { $in: ids } }, { email: 1, friendly_name: 1, username: 1 }).lean() : []
+    // Viewer emails are stored lower case, a guest's as it was typed
+    const guests = viewers.length ? await this.guestModel.find({}, { email: 1, name: 1 }).lean() : []
+    const guestNames = new Map(guests.map(({ email, name }) => [email?.toLowerCase(), name]))
+    return Object.fromEntries(viewers.map(({ _id, email, friendly_name, username }) => [_id, guestNames.get(email) || friendly_name || username]))
   }
 
   // Read once from Tautulli; without it the page names no server

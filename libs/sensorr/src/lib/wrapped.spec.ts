@@ -84,17 +84,17 @@ describe('wrappedOf', () => {
     expect(wrapped.last).toMatchObject({ title: 'Scrubs', date: '2026-06-01' })
   })
 
-  it('keeps the night launched the latest, past midnight, as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, start: '01:00', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
+  it('keeps the night that ended the latest, past midnight, as one night', () => {
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
   })
 
-  it('falls back on the evening with the most plays when nothing starts after 01:00', () => {
+  it('falls back on the evening with the most plays when nothing ends after 01:00, and ignores a session left open', () => {
     const early = [
-      play(4, 'plex://movie/2001', '2026-02-01T19:00:00Z', 2),
-      play(4, 'plex://movie/heat', '2026-02-01T21:00:00Z', 3),
-      play(4, 'plex://movie/dune', '2026-02-10T22:00:00Z', 2.5),
+      play(4, 'plex://movie/2001', '2026-02-01T18:00:00Z', 2),
+      { ...play(4, 'plex://movie/heat', '2026-02-01T20:00:00Z', 3), stopped: at('2026-02-03T20:00:00Z') },
+      play(4, 'plex://movie/dune', '2026-02-10T19:00:00Z', 2.5),
     ]
-    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, start: '22:00', late: false })
+    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, end: '00:30', late: false })
   })
 
   it('puts the show watched the most on each month', () => {
@@ -132,8 +132,8 @@ describe('wrappedOf', () => {
       play(17, 'plex://movie/dune', '2026-05-01T20:00:00Z', 2.5),
     ]
     expect(wrappedOf({ plays: match, titles, user_id: 15, year: 2026 })).toMatchObject({
-      duo: { count: 4, posters: [{ title: '2001' }, { title: 'Heat' }, { title: 'Scrubs' }, { title: 'Twin Peaks' }] },
-      twin: { shared: 5, total: 5 },
+      duo: { count: 4, posters: [{ title: '2001', with: 16 }, { title: 'Heat', with: 16 }, { title: 'Scrubs', with: 16 }, { title: 'Twin Peaks', with: 16 }] },
+      twin: { user_id: 16, shared: 5, total: 5 },
     })
     expect(wrappedOf({ plays: match.slice(0, 7), titles, user_id: 15, year: 2026 }).twin).toBeNull()
   })
@@ -203,9 +203,10 @@ describe('wrappedOf', () => {
   })
 
   it('reads the genre, led by the actor seen the most, else the first show', () => {
-    expect(wrapped.genre).toEqual({ name: 'Science-Fiction', titles: 2, total: 5, lead: { kind: 'show', name: 'Scrubs', titles: 1, poster: { key: 'show:1', title: 'Scrubs' } } })
+    expect(wrapped.genre).toMatchObject({ name: 'Science-Fiction', titles: 2, total: 5, lead: { kind: 'show', name: 'Scrubs', titles: 1, posters: [{ key: 'show:1', title: 'Scrubs' }] } })
+    expect(wrapped.genre?.posters.map(({ title }) => title)).toEqual(['2001', 'Dune'])
     const cast = titles.map((title) => ({ ...title, actors: ['Al Pacino'] }))
-    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).genre?.lead).toMatchObject({ kind: 'actor', name: 'Al Pacino', titles: 5 })
+    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).genre?.lead).toMatchObject({ kind: 'actor', name: 'Al Pacino', titles: 5, posters: [{ title: 'Scrubs' }, { title: 'Heat' }, { title: 'Twin Peaks' }, { title: '2001' }] })
   })
 
   it('compares with the previous edition only when the gap is worth telling', () => {

@@ -38,6 +38,7 @@ type Billed = [string, WrappedPoster, string]
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { name, year, frozen, wrapped } = share
   const place = share.server || 'le serveur'
+  const nameOf = (user_id: number) => share.names[user_id] || 'quelqu’un'
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
@@ -61,8 +62,8 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
       {!short && wrapped.night && (wrapped.night.late || wrapped.night.date !== wrapped.binge?.date) && <Night night={wrapped.night} art={art} />}
       {(first_on_server || same_week) && <Server first={first_on_server} week={same_week} place={place} art={art} />}
       {only_you && <OnlyYou onlyYou={only_you} place={place} art={art} />}
-      {!short && wrapped.duo && <Duo duo={wrapped.duo} place={place} art={art} />}
-      {!short && wrapped.twin && <Twin twin={wrapped.twin} place={place} art={art} />}
+      {!short && wrapped.duo && <Duo duo={wrapped.duo} place={place} nameOf={nameOf} art={art} />}
+      {!short && wrapped.twin && <Twin twin={wrapped.twin} name={nameOf(wrapped.twin.user_id)} art={art} />}
       {!short && (dropped || dropped_show) && (
         <Posters label="Pas fini, ou presque" lines={['Pas fini,', 'ou presque']} seed={19} art={art} items={[
           dropped && ['Arrêté', dropped, `à ${dropped.percent}${THIN}%, jamais repris`],
@@ -214,7 +215,7 @@ const Binge = ({ binge, pace, art }: { binge: Wrapped['binge'], pace: Wrapped['p
       <Painted className="show-lead" src={art(lead, lead.art ? 'art' : 'thumb', 1280)} alt={lead.title} progress={progress} />
       <div className="show-lead-text">
         <Lettering as="h3" className="show-lead-title" text={lead.title} seed={5} />
-        {binge && <p className="meta">Le {dayOf(binge.date, true)}.</p>}
+        {binge && <p className="meta">Le {dayOf(binge.date, true)}, {lasting(binge.minutes)} d’affilée.</p>}
         {pace && (
           <p className="meta">
             {pace.key === lead.key ? 'En tout' : `Et ${quoted(pace.title)}`}{THIN}: {plural(pace.episodes, 'épisode', 'épisodes')} en {plural(pace.days, 'jour', 'jours')}, {rhythm(pace.episodes / pace.days)}.
@@ -237,9 +238,9 @@ const Night = ({ night, art }: { night: NonNullable<Wrapped['night']>, art: Art 
         <Brushed lines={late ? ['Ta nuit', 'la plus tardive'] : ['Ta plus grosse', 'soirée']} seed={8} />
         <p className="night-date">{late ? `Dans la nuit du ${dayOf(night.date, true)}` : dayOf(night.date, true)}</p>
         <p className="night-figures">
-          À <strong>{clock(night.start)}</strong>, tu lances {late ? 'encore ' : ''}{night.episode ? `un épisode ${of(poster.title)}` : quoted(poster.title)}.
+          Tu éteins à <strong>{clock(night.end)}</strong>{night.plays > 1 ? `, après ${plural(night.plays, 'séance', 'séances')}` : ''}.
         </p>
-        {night.plays > 1 && <p className="night-figures">{late ? `Le ${night.plays}e de la soirée.` : `${plural(night.plays, 'séance', 'séances')} ce soir-là, celle-ci en dernier.`}</p>}
+        <p className="night-figures">{night.plays > 1 ? 'La dernière' : 'Au programme'}{THIN}: {night.episode ? `un épisode ${of(poster.title)}` : quoted(poster.title)}.</p>
       </div>
     </Sheet>
   )
@@ -265,12 +266,13 @@ const Server = ({ first, week, place, art }: { first: Wrapped['first_on_server']
 }
 
 // A few posters with their titles, the proof behind a count
-const Strip = ({ posters, layout, progress, art }: { posters: WrappedPoster[], layout: 'row' | 'grid', progress: MotionValue<number>, art: Art }) => (
+const Strip = <P extends WrappedPoster>({ posters, layout, caption, progress, art }: { posters: P[], layout: 'row' | 'grid', caption?: (poster: P) => string, progress: MotionValue<number>, art: Art }) => (
   <ul className="strip" data-layout={layout}>
     {posters.map((poster) => (
       <li key={poster.key} className="strip-entry">
         <Painted className="strip-poster" src={art(poster, 'thumb', 320)} alt={poster.title} progress={progress} />
         <span className="strip-title">{poster.title}</span>
+        {caption && <span className="strip-caption">{caption(poster)}</span>}
       </li>
     ))}
   </ul>
@@ -289,7 +291,7 @@ const OnlyYou = ({ onlyYou, place, art }: { onlyYou: NonNullable<Wrapped['only_y
         <span aria-hidden="true">{number.format(count)}</span>
         <span className="visually-hidden">{plural(count, 'film', 'films')}</span>
       </p>
-      <Lettering className="figure-unit" text={one ? 'film que personne d’autre n’a lancé' : 'films que personne d’autre n’a lancés'} seed={3} />
+      <Lettering className="figure-unit" text={one ? 'film que personne d’autre n’a vu' : 'films que personne d’autre n’a vus'} seed={3} />
       <p className="figure-details">
         Sur {place}, {one ? 'il n’est passé' : 'ils ne sont passés'} que chez toi.{count > posters.length ? ` En haut, les ${posters.length} derniers vus.` : ''}
       </p>
@@ -297,7 +299,7 @@ const OnlyYou = ({ onlyYou, place, art }: { onlyYou: NonNullable<Wrapped['only_y
   )
 }
 
-const Duo = ({ duo, place, art }: { duo: NonNullable<Wrapped['duo']>, place: string, art: Art }) => {
+const Duo = ({ duo, place, nameOf, art }: { duo: NonNullable<Wrapped['duo']>, place: string, nameOf: (user_id: number) => string, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
   const { count, posters } = duo
@@ -306,15 +308,15 @@ const Duo = ({ duo, place, art }: { duo: NonNullable<Wrapped['duo']>, place: str
     <Sheet ref={sheet} className="sheet-duo" label="Vus à deux">
       <Brushed lines={['Vus à deux']} seed={22} />
       <p className="lede">
-        Toi et une seule autre personne sur {place} avez vu {count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.
+        Sur {place}, vous n’êtes que deux à avoir vu {count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.
         {count > posters.length ? ` Les ${posters.length} plus anciens${THIN}:` : ''}
       </p>
-      <Strip posters={posters} layout="grid" progress={progress} art={art} />
+      <Strip posters={posters} layout="grid" caption={(poster) => `avec ${nameOf(poster.with)}`} progress={progress} art={art} />
     </Sheet>
   )
 }
 
-const Twin = ({ twin, place, art }: { twin: NonNullable<Wrapped['twin']>, place: string, art: Art }) => {
+const Twin = ({ twin, name, art }: { twin: NonNullable<Wrapped['twin']>, name: string, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
   const { shared, total, posters } = twin
@@ -326,8 +328,8 @@ const Twin = ({ twin, place, art }: { twin: NonNullable<Wrapped['twin']>, place:
         <span aria-hidden="true">{number.format(shared)}</span>
         <span className="visually-hidden">{plural(shared, 'titre', 'titres')}</span>
       </p>
-      <Lettering className="figure-unit" text="titres en commun" seed={24} />
-      <p className="figure-details">Quelqu’un sur {place} a vu {shared} de tes {plural(total, 'film et série', 'films et séries')}. Son nom reste secret. Parmi les plus rares{THIN}:</p>
+      <Lettering className="figure-unit" text={`titres en commun avec ${name}`} highlight={name} seed={24} />
+      <p className="figure-details">{name} a vu {shared} de tes {plural(total, 'film et série', 'films et séries')}. Parmi les plus rares{THIN}:</p>
       <Strip posters={posters} layout="row" progress={progress} art={art} />
     </Sheet>
   )
@@ -362,24 +364,25 @@ const Posters = ({ label, lines, seed, items, art }: { label: string, lines: str
 const Genre = ({ genre, art }: { genre: NonNullable<Wrapped['genre']>, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
-  const { name, titles, total, lead } = genre
+  const { name, titles, total, posters, lead } = genre
   const role = lead && {
-    actor: `joue dans ${lead.titles}\u00a0de tes films et séries.`,
+    actor: `joue dans ${lead.titles}\u00a0de tes films et séries${THIN}:`,
     show: 'tourne en boucle.',
-    director: `a signé ${lead.titles}\u00a0de tes films.`,
+    director: `a signé ${lead.titles}\u00a0de tes films${THIN}:`,
   }[lead.kind]
 
   return (
     <Sheet ref={sheet} className="sheet-genre" label="Ton genre">
       <Brushed lines={['Ton genre']} seed={18} />
-      {lead?.poster && <Painted className="genre-poster" src={art(lead.poster)} alt={lead.poster.title} progress={progress} />}
       <Lettering as="p" className="genre-name" text={name} highlight={name} seed={21} />
-      <p className="genre-count">{titles === total ? 'Tous tes films et séries en sont.' : `${titles} de tes ${total}\u00a0films et séries en sont.`}</p>
+      <p className="genre-count">{titles === total ? 'Tous tes films et séries en sont' : `${titles} de tes ${total}\u00a0films et séries en sont`}, dont{THIN}:</p>
+      <Strip posters={posters} layout="row" progress={progress} art={art} />
       {lead && (
         <p className="genre-lead">
           <span className="genre-lead-name">{lead.kind === 'show' ? quoted(lead.name) : lead.name}</span> {role}
         </p>
       )}
+      {lead && lead.kind !== 'show' && <Strip posters={lead.posters} layout="row" progress={progress} art={art} />}
     </Sheet>
   )
 }
@@ -395,7 +398,7 @@ const Rank = ({ rank, users, place }: { rank: number, users: number, place: stri
       {Array.from({ length: users }, (_, index) => <li key={index} className={index === rank - 1 ? 'crowd-you' : undefined} />)}
     </ol>
     <p className="rank-detail">
-      {rank === 1 ? 'Personne n’a' : rank === 2 ? 'Une seule personne a' : `${rank <= 11 ? 'Seules ' : ''}${rank - 1}\u00a0personnes ont`} passé plus de temps que toi devant {place}. Un trait par spectateur, le rouge, c’est toi.
+      {rank === 1 ? 'Personne n’a' : rank === 2 ? 'Une seule personne a' : `${rank <= 11 ? 'Seules ' : ''}${rank - 1}\u00a0personnes ont`} passé plus de temps que toi devant {place}.
     </p>
   </Sheet>
 )

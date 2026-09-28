@@ -495,6 +495,11 @@ ol {
   overflow-wrap: anywhere;
 }
 
+.strip-caption {
+  font-size: max(0.875rem, 3.8cqi);
+  color: var(--mauve);
+}
+
 .sheet-strip {
   justify-content: space-between;
 }

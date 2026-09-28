@@ -7,6 +7,8 @@ export interface Share {
   name: string
   // The Plex server's name, null when Tautulli did not give it
   server: string | null
+  // Tautulli's name of each viewer the wrapped matches with
+  names: Record<number, string>
   year: number
   editions: number[]
   frozen: boolean
