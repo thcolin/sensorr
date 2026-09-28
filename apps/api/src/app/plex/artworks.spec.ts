@@ -12,6 +12,17 @@ describe('artworkChoicesOf', () => {
     expect(artworkChoicesOf({ poster: { key: ['upload://posters/a'] } })).toBeNull()
     expect(artworkChoicesOf({})).toBeNull()
     expect(artworkChoicesOf(null)).toBeNull()
+    expect(artworkChoicesOf(JSON.parse('{"constructor":{"url":"https://a.example/b.jpg"}}'))).toBeNull()
+    expect(artworkChoicesOf(JSON.parse('{"__proto__":{"key":"upload://x"}}'))).toBeNull()
+  })
+})
+
+describe('artworkChoicesOf, a url', () => {
+  it('refuses an address on the network Plex sits in', () => {
+    for (const url of ['http://localhost:32400/x', 'http://127.0.0.1/x', 'http://192.168.1.1/cgi', 'http://10.0.0.2/a.jpg', 'http://172.20.0.1/a', 'http://169.254.169.254/latest', 'http://[::1]/a']) {
+      expect(artworkChoicesOf({ poster: { url } })).toBeNull()
+    }
+    expect(artworkChoicesOf({ poster: { url: 'http://172.32.0.1/a.jpg' } })).toEqual({ poster: { url: 'http://172.32.0.1/a.jpg' } })
   })
 })
 

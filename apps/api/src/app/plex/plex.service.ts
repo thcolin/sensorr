@@ -133,6 +133,15 @@ export class PlexService {
       this.logger.log(`Write "${ratingKey}" ${kind}, ${method}`)
 
       try {
+        // A key picks back a candidate Plex lists for this item, never one it did not
+        if ('key' in choice) {
+          const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}/${PLEX_ARTWORKS[kind].list}`)).json()
+
+          if (!candidatesOf(MediaContainer?.Metadata).some(({ key }) => key === choice.key)) {
+            throw new Error('Not a candidate Plex lists')
+          }
+        }
+
         await this.plex(path, { method, timeout: 30000 })
       } catch (err) {
         this.logger.warn(`Write "${ratingKey}" ${kind}, ${err.message}`)

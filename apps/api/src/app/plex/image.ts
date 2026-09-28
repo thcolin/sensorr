@@ -1,5 +1,23 @@
 // Item artworks only: the route must not open the rest of the Plex API to the token it adds
-const ARTWORK = /^\/library\/metadata\/\d+\/((thumb|art|clearLogo)\/\d+|file\?url=(metadata|upload|media)%3A%2F%2F(?!.*(\.\.|%2E%2E|\.%2E|%2E\.))[\w%.-]+)$/i
+const ARTWORK = /^\/library\/metadata\/\d+\/(thumb|art|clearLogo)\/\d+$/
+const FILE = /^\/library\/metadata\/\d+\/file\?url=([^&]+)$/
+// Decoded once: no segment starting with a dot, so no `..`, and nothing left encoded twice
+const LOCAL = /^(metadata|upload|media):\/\/[\w-][\w.-]*(\/[\w-][\w.-]*)*$/
+
+const artworkOf = (path: string) => {
+  if (ARTWORK.test(path)) {
+    return true
+  }
+
+  const [, raw] = path.match(FILE) || []
+
+  try {
+    const url = raw && decodeURIComponent(raw)
+    return !!url && !url.includes('%') && LOCAL.test(url)
+  } catch {
+    return false
+  }
+}
 const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 // The sizes `Picture` asks for: each other width would be one more transcode kept by Plex
 const SIZE = /^(w92|w154|w185|w300|w342|w500|w780|original)$/
@@ -16,7 +34,7 @@ export const imageRequestOf = ({ path, size = 'original', fallback = null }: Rec
     return null
   }
 
-  return ARTWORK.test(path) && SIZE.test(size) && (!fallback || TMDB.test(fallback as string)) ? { path, size, fallback: fallback as string | null } : null
+  return artworkOf(path) && SIZE.test(size) && (!fallback || TMDB.test(fallback as string)) ? { path, size, fallback: fallback as string | null } : null
 }
 
 // An artwork uploaded to Plex keeps its size, 3840 wide for some: `original` stops where TMDB's usually does
