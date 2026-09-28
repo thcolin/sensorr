@@ -139,12 +139,35 @@ const Ring = ({ className }: { className?: string }) => (
   </svg>
 )
 
-// The rough box an editor draws around the frame to print
-const Crop = () => (
-  <svg className="labo-ring labo-crop" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-    <path d="M1 5 L 98 2 M 96 0 L 98 97 M 100 95 L 3 98 M 5 100 L 2 3" />
-  </svg>
-)
+// What an editor scrawls on a frame in grease pencil, each gesture in the frame's own box
+const GESTURES = {
+  crop: 'M1 5 L 98 2 M 96 0 L 98 97 M 100 95 L 3 98 M 5 100 L 2 3',
+  ring: 'M52 -2 C 97 -3, 107 30, 105 55 C 103 95, 64 102, 30 101 C 1 99, -6 64, -4 36 C -1 5, 34 -3, 67 3',
+  corners: 'M-3 18 L -3 -3 L 18 -3 M 82 -3 L 103 -3 L 103 18 M 103 82 L 103 103 L 82 103 M 18 103 L -3 103 L -3 82',
+  slash: 'M 3 97 C 28 72, 66 32, 98 4 M 8 99 C 34 74, 70 36, 99 10',
+  squiggle: 'M 4 95 C 12 90, 16 100, 24 95 S 38 90, 46 95 S 60 100, 68 95 S 82 90, 90 95 S 96 99, 98 93',
+  arrow: 'M -16 -14 C -10 8, 2 20, 22 26 M 22 26 L 9 29 M 22 26 L 15 14',
+}
+
+type Gesture = keyof typeof GESTURES
+
+const hash = (text: string) => [...text].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 2147483646, 7)
+
+// A different gesture for each frame, and from one sheet of frames to the next
+const gestureOf = (sheet: number, item: number) => {
+  const gestures = Object.keys(GESTURES) as Gesture[]
+  return gestures[(sheet * 2 + item) % gestures.length]
+}
+
+const Scrawl = ({ gesture, seed }: { gesture: Gesture, seed: number }) => {
+  const random = rng(seed)
+  const style = { '--stroke': 2.5 + random() * 2.5, transform: `rotate(${(random() - 0.5) * 5}deg)` } as React.CSSProperties
+  return (
+    <svg className={`labo-ring labo-scrawl labo-scrawl-${gesture}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style={style}>
+      <path d={GESTURES[gesture]} />
+    </svg>
+  )
+}
 
 // Drying on the line behind the reel, the year's posters as colour negatives
 const Negatives = ({ posters, art }: { posters: WrappedPoster[], art: Art }) => {
@@ -306,14 +329,25 @@ const Months = ({ sheet, index, reel, art }: { sheet: Of<'months'>, index: numbe
 
 // One evening's binge, a frame per episode
 const Binge = ({ sheet, index, reel, art, episodes }: { sheet: Of<'binge'>, index: number, reel: Reel, art: Art, episodes: number }) => {
-  const { poster } = sheet
+  const { poster, pace } = sheet
+  // The pace line comes last, and moves under its own show's frame when it is another show
+  const meta = pace ? sheet.meta.slice(0, -1) : sheet.meta
   return (
     <Sheet sheet={sheet} index={index} reel={reel}>
       <Title lines={sheet.lines} />
       <Frame poster={poster} art={art} kind="art" width={1280} code="1A" />
       <h3 className="labo-name">{sheet.title}</h3>
       {episodes > 0 && <Cells count={episodes} src={art(poster, 'art', 640) || art(poster, 'thumb', 320)} seed={episodes * 53} columns={Math.ceil(episodes / Math.ceil(episodes / 6))} className="labo-cells-reel" />}
-      {sheet.meta.map((meta) => <p key={meta} className="labo-body">{meta}</p>)}
+      {meta.map((line) => <p key={line} className="labo-body">{line}</p>)}
+      {pace && (
+        <div className="labo-pace">
+          <Frame poster={pace} art={art} width={320} code="2A" />
+          <div>
+            <h3 className="labo-name">{pace.title}</h3>
+            <p className="labo-body">{sheet.meta[sheet.meta.length - 1]}</p>
+          </div>
+        </div>
+      )}
     </Sheet>
   )
 }
@@ -408,10 +442,10 @@ const Posters = ({ sheet, index, reel, art }: { sheet: Of<'posters'>, index: num
       <ol ref={ref} className="labo-marked" data-count={sheet.items.length} data-draw={draw}>
         {sheet.items.map(({ what, poster, detail }, item) => (
           <li key={poster.key}>
-            <h3 className="labo-grease labo-marked-what">{what}</h3>
+            <h3 className="labo-grease labo-marked-what" style={{ transform: `rotate(${(rng(hash(poster.key))() - 0.7) * 10}deg)` }}>{what}</h3>
             <div className="labo-marked-frame">
               <Frame poster={poster} art={art} code={`${index * 4 + item}A`} />
-              <Crop />
+              <Scrawl gesture={gestureOf(index, item)} seed={hash(poster.key)} />
             </div>
             <p className="labo-marked-title">{poster.title}</p>
             <p className="labo-body">{detail}</p>

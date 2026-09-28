@@ -343,8 +343,9 @@ html[data-theme='labo'] {
 .labo-ring path {
   fill: none;
   stroke: var(--labo-grease-light);
-  stroke-width: 3;
+  stroke-width: var(--stroke, 3);
   stroke-linecap: round;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   /* Longer than any ring on screen, the stroke being measured in screen pixels */
   stroke-dasharray: 4000;
@@ -913,12 +914,37 @@ html[data-theme='labo'] {
 
 .labo-marked-what {
   font-size: 1.9rem;
-  transform: rotate(-4deg);
   transform-origin: left bottom;
+}
+
+.labo-ring.labo-scrawl {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.labo-scrawl-slash path {
+  opacity: 0.85;
+}
+
+.labo-pace {
+  display: grid;
+  grid-template-columns: 32% 1fr;
+  gap: 16px;
+  align-items: end;
+  padding-top: 20px;
+  border-top: 1px solid rgb(255 178 56 / 0.28);
+}
+
+.labo-pace .labo-name {
+  margin-bottom: 8px;
+  font-size: 1.8rem;
 }
 
 .labo-marked-frame {
   position: relative;
+  margin: 6px 0 10px;
 }
 
 .labo-marked-title {
