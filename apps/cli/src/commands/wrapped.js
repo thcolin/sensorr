@@ -117,7 +117,19 @@ const ImportPlaysTask = () => {
               const title = movie ? row.guid : `show:${row.grandparent_rating_key}`
               titles[title] = { rating_key: movie ? row.rating_key : row.grandparent_rating_key, media_type: movie ? 'movie' : 'show', title: movie ? row.title : row.grandparent_title }
               // The first session of a group stays while the group grows, `reference_id` can point to a session years older
-              return { id: Math.min(...String(row.group_ids || row.id).split(',').map(Number)), seen: state.metadata.job, user_id: row.user_id, media_type: row.media_type, title, started: row.started, stopped: row.stopped, play_duration: row.play_duration }
+              const sessions = String(row.group_ids || row.id).split(',').map(Number)
+              return {
+                id: Math.min(...sessions),
+                seen: state.metadata.job,
+                user_id: row.user_id,
+                media_type: row.media_type,
+                title,
+                started: row.started,
+                stopped: row.stopped,
+                play_duration: row.play_duration,
+                sessions: sessions.length,
+                ...(movie ? {} : { parent_media_index: Number(row.parent_media_index) || undefined, media_index: Number(row.media_index) || undefined }),
+              }
             })
 
           if (plays.length) {
@@ -207,10 +219,12 @@ const ImportTitlesTask = () => {
             year: Number(metadata.year) || undefined,
             genres: metadata.genres || [],
             directors: metadata.directors || [],
+            actors: (metadata.actors || []).slice(0, 5),
             tmdb_id: tmdb ? Number(tmdb.replace('tmdb://', '')) : undefined,
             thumb: metadata.thumb,
             art: metadata.art,
             duration: metadata.duration ? Math.round(Number(metadata.duration) / 1000) : undefined,
+            episode_count: media_type === 'show' ? Number(metadata.children_count) || undefined : undefined,
           })
 
           if (titles.length === 100) {

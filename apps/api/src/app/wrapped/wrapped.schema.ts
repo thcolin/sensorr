@@ -25,6 +25,15 @@ export class Play extends Document {
   @Prop()
   play_duration: number
 
+  @Prop()
+  sessions: number
+
+  @Prop()
+  parent_media_index: number
+
+  @Prop()
+  media_index: number
+
   // The import run that last saw this row, what a complete run did not see is gone from Tautulli
   @Prop({ index: true })
   seen: string
@@ -70,6 +79,9 @@ export class Title extends Document {
   @Prop({ type: [String] })
   directors: string[]
 
+  @Prop({ type: [String] })
+  actors: string[]
+
   @Prop()
   tmdb_id: number
 
@@ -81,6 +93,9 @@ export class Title extends Document {
 
   @Prop()
   duration: number
+
+  @Prop()
+  episode_count: number
 }
 
 export const TitleSchema = SchemaFactory.createForClass(Title)

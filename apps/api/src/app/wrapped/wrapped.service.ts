@@ -55,8 +55,9 @@ export class WrappedService {
     return { first: first?.started ?? null, last: last?.started ?? null }
   }
 
+  // A title read before the actors were kept is read again
   async titleKeys(): Promise<string[]> {
-    return (await this.titleModel.find({}, { _id: 1 }).lean()).map(({ _id }) => _id)
+    return (await this.titleModel.find({ actors: { $exists: true } }, { _id: 1 }).lean()).map(({ _id }) => _id)
   }
 
   async upsertTitles(titles: WrappedTitle[]) {
@@ -90,10 +91,11 @@ export class WrappedService {
     }
 
     const frozen_at = Date.now()
+    const previous = await this.previousOf(year)
     const { upsertedCount } = await this.editionModel.bulkWrite(users.map((user_id) => ({
       updateOne: {
         filter: { year, user_id },
-        update: { $setOnInsert: { year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, timeZone: TIME_ZONE }) } },
+        update: { $setOnInsert: { year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, previous: previous.get(user_id), timeZone: TIME_ZONE }) } },
         upsert: true,
       },
     })))
@@ -109,7 +111,14 @@ export class WrappedService {
     }
 
     const { plays, titles } = await this.editionData(year)
-    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, timeZone: TIME_ZONE }) }
+    const previous = await this.previousOf(year, user_id)
+    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, previous: previous.get(user_id), timeZone: TIME_ZONE }) }
+  }
+
+  // The figures of the edition before, frozen by now
+  private async previousOf(year: number, user_id?: number) {
+    const editions = await this.editionModel.find({ year: year - 1, ...(user_id === undefined ? {} : { user_id }) }, { user_id: 1, 'wrapped.hours': 1, 'wrapped.movies': 1, 'wrapped.episodes': 1 }).lean()
+    return new Map(editions.map(({ user_id, wrapped }) => [user_id, wrapped as { hours: number, movies: number, episodes: number }]))
   }
 
   // In December the edition that just closed is the one to show, the next one has barely started
