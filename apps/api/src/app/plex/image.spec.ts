@@ -8,6 +8,13 @@ describe('imageRequestOf', () => {
       .toEqual({ path: '/library/metadata/6850/clearLogo/1790301610', size: 'original', fallback: null })
   })
 
+  it('reads a candidate Plex keeps as a file of its own', () => {
+    const path = '/library/metadata/4260/file?url=upload%3A%2F%2Fposters%2Fcom.plexapp.agents.imdb_1a2b%2E'
+    expect(imageRequestOf({ path, size: 'w154' })).toEqual({ path, size: 'w154', fallback: null })
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=http%3A%2F%2Fevil.example%2Fa.jpg' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2Fa&X-Plex-Token=1' })).toBeNull()
+  })
+
   it('refuses any other path on Plex, and a fallback outside TMDB', () => {
     expect(imageRequestOf({ path: '/library/sections' })).toBeNull()
     expect(imageRequestOf({ path: '/library/metadata/6850/thumb/1643698660?X-Plex-Token=1' })).toBeNull()

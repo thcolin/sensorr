@@ -1,5 +1,5 @@
 // Item artworks only: the route must not open the rest of the Plex API to the token it adds
-const ARTWORK = /^\/library\/metadata\/\d+\/(thumb|art|clearLogo)\/\d+$/
+const ARTWORK = /^\/library\/metadata\/\d+\/((thumb|art|clearLogo)\/\d+|file\?url=(metadata|upload|media)%3A%2F%2F[\w%.-]+)$/
 const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 // The sizes `Picture` asks for: each other width would be one more transcode kept by Plex
 const SIZE = /^(w92|w154|w185|w300|w342|w500|w780|original)$/
