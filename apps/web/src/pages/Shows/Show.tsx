@@ -7,6 +7,7 @@ import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTMDBRequest } from '../../store/tmdb'
+import { usePlexArtworks } from '../../store/plex'
 import { showStateOf, useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useScrollPositionContext } from '../../contexts/ScrollPosition/ScrollPosition'
@@ -46,6 +47,7 @@ const Show = ({ ...props }) => {
     include_image_language: 'en,null',
   }, { transform: transformShowDetails })
 
+  const { details } = usePlexArtworks(show.data, show.details, metadata?.plex_artworks)
   const inLibrary = !!metadata && metadata.state !== 'ignored'
   const state = metadataLoading ? 'loading' : showStateOf(metadata)
   // An airing show Sensorr does not follow, pinned or out of the library, draws its violet as a hollow ring
@@ -207,7 +209,7 @@ const Show = ({ ...props }) => {
 
   return (
     <Details
-      details={show.details}
+      details={details}
       entity={show.data}
       additional={additional}
       metadata={metadata}

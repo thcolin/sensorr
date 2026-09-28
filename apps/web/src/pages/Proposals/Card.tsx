@@ -1,9 +1,11 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { Button, Icon, Link, Option, Picture, transformMovieDetails } from '@sensorr/ui'
+import { Button, Icon, Link, Option, Picture, pictureSrc, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
+import { useAPI } from '../../store/api'
+import { usePlexArtworks, withPlexArtworks } from '../../store/plex'
 import { withMovieMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { Metadata } from '../Details/components/Metadata'
 import { Externals, Meaningful } from '../Details/components/Externals'
@@ -58,10 +60,11 @@ const ROW = '88px'
 const SIZE = '11.5em'
 
 export const useLoadDetails = () => {
+  const api = useAPI()
   const tmdb = useTMDB()
   const wikidata = useWikiData()
 
-  return (id) => {
+  return (id, artworks = null) => {
     if (!id) {
       return null
     }
@@ -72,9 +75,11 @@ export const useLoadDetails = () => {
         wikidata.fetch(wikidata.query.movies.getMovieAdditionalData.query(id), wikidata.query.movies.getMovieAdditionalData.transform).catch(() => ({})),
       ]).then(async ([movie, additional]) => {
         // The card's poster is decoded before it opens, so it is drawn from its first frame.
-        if (movie?.poster_path) {
+        const { entity: { poster_path } } = withPlexArtworks(movie, null, artworks, api.access_token)
+
+        if (poster_path) {
           const poster = new Image()
-          poster.src = `https://image.tmdb.org/t/p/${POSTER}${movie.poster_path}`
+          poster.src = pictureSrc(poster_path, POSTER)
           await poster.decode().catch(() => null)
         }
 
@@ -95,13 +100,13 @@ export const useLoadDetails = () => {
   }
 }
 
-const useDetails = (id) => {
+const useDetails = (id, artworks) => {
   const load = useLoadDetails()
   const [state, setState] = useState({ id: null, movie: null, additional: null })
 
   useEffect(() => {
     let active = true
-    load(id)?.then((loaded) => active && setState({ id, ...loaded })).catch((error) => console.warn(error))
+    load(id, artworks)?.then((loaded) => active && setState({ id, ...loaded })).catch((error) => console.warn(error))
     return () => { active = false }
   }, [id])
 
@@ -163,7 +168,7 @@ export const Size = ({ item, threshold, compact = false, named = true }) => item
 ) : <small style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>
 
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onSearch, onClose = null, disabled = false, selected = null, selectedVisible = false, onSelectedChange = undefined, ...props }) => {
-  const { movie, additional } = useDetails(item.id)
+  const { movie, additional } = useDetails(item.id, item.entity?.plex_artworks)
   const [meaningful, setMeaningful] = useState(false)
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
   const [editing, setEditing] = useState(false)
@@ -577,12 +582,13 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const morph = morphing ? name : () => undefined
   const label = `Open ${item.entity?.title || 'proposal'}`
+  const { entity } = usePlexArtworks(item.entity, null, item.entity?.plex_artworks)
 
   return (
-    <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }} onPointerEnter={onHover ? () => onHover(item.id) : undefined}>
+    <div sx={{ ...UICompact.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }} onPointerEnter={onHover ? () => onHover(item.id, item.entity?.plex_artworks) : undefined}>
       <button type='button' onClick={() => onSelect(item.id)} sx={UICompact.styles.open} aria-label={label} tabIndex={-1} />
       <span sx={UICompact.styles.poster} style={morphing ? poster(item.id) : undefined} data-morph-poster={true}>
-        <Picture path={item.entity?.poster_path} size='w92' />
+        <Picture path={entity?.poster_path} size='w92' />
       </span>
       {!!onSelectedChange && (
         <Select
@@ -825,11 +831,12 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
   const accepted = item.proposal?.accepted_at
   const title = item.entity?.title
+  const { entity } = usePlexArtworks(item.entity, null, item.entity?.plex_artworks)
 
   return (
     <div sx={{ ...UICompact.styles.element, ...UIOverdue.styles.element, ...(leaving ? { pointerEvents: 'none' } : {}) }}>
       <span sx={{ ...UICompact.styles.poster, ...UIOverdue.styles.poster }}>
-        <Picture path={item.entity?.poster_path} size='w92' />
+        <Picture path={entity?.poster_path} size='w92' />
       </span>
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>

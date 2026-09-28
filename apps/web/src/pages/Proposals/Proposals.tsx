@@ -24,7 +24,7 @@ import { DELAY, usePendingVerdict } from './pending'
 
 const MB = 1024 * 1024
 
-const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'reports', 'state']
+const FIELDS = ['id', 'title', 'original_title', 'poster_path', 'release_date', 'genres', 'updated_at', 'refined_at', 'shrinked_at', 'releases', 'policy', 'banned_releases', 'reports', 'state', 'plex_artworks']
 
 const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 
@@ -601,7 +601,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   }, [activeIndex])
 
   useEffect(() => {
-    queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id)?.catch(() => null))
+    queue.slice(activeIndex, activeIndex + 3).forEach(item => loadDetails(item.id, item.entity?.plex_artworks)?.catch(() => null))
   }, [queue, activeIndex])
 
   // Treated from another tab or by a job: the proposal left the metadata.
@@ -924,7 +924,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   keys.current.reveal = reveal
 
   // The pointer reaches a row a few hundred milliseconds before its chevron is clicked.
-  const prefetch = useCallback((id) => loadDetails(id)?.catch(() => null), [])
+  const prefetch = useCallback((id, artworks) => loadDetails(id, artworks)?.catch(() => null), [])
 
   const select = useCallback((id) => keys.current.morph(() => setActiveId(id), id), [])
 

@@ -5,6 +5,7 @@ import { fetchShow } from '@sensorr/tmdb'
 import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
+import { usePlexArtworks } from '../../store/plex'
 
 const showsMetadataContext = createContext({})
 
@@ -360,6 +361,7 @@ export const showStateOf = (metadata) => (!metadata?.state || metadata.state ===
 export const withShowMetadataContext = () => (WrappedComponent) => {
   const withShowMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, setShowState } = useShowsMetadataContext() as any
+    const artworked = usePlexArtworks(entity, (props as any).details, metadata?.plex_artworks)
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
       .catch(() => toast.error('Error while answering the proposal')), [entity?.id])
@@ -369,7 +371,8 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
     return (
       <WrappedComponent
         {...props}
-        entity={entity}
+        {...(artworked.details ? { details: artworked.details } : {})}
+        entity={artworked.entity}
         state={loading ? 'loading' : showStateOf(metadata)}
         setState={setState}
         metadata={metadata}

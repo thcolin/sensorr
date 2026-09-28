@@ -64,6 +64,14 @@ export interface PersonPictureProps extends PictureProps {
   size?: 'w45' | 'w185' | 'w300' | 'h632' | 'original'
 }
 
+// A path on the Sensorr API serves the size asked, one on TMDB is prefixed with it
+export const pictureSrc = (path: string, size: string) => (
+  !path ? null
+  : path.startsWith('/api/') ? `${path}&size=${size}`
+  : (path.startsWith('data:image/') || path.startsWith('http')) ? path
+  : `https://image.tmdb.org/t/p/${size}${path}`
+)
+
 function UIPicture({
   path,
   size = 'w300',
@@ -78,7 +86,7 @@ function UIPicture({
   const ref = useRef(null)
   const [error, setError] = useState(false)
   const [loaded, setLoaded] = useState(false)
-  const src = path ? (path.startsWith('data:image/') || path.startsWith('http')) ? path : `https://image.tmdb.org/t/p/${size}${path}` : null
+  const src = pictureSrc(path, size)
 
   const onLoadProps = useMemo(() => ({
     onLoad: (e) => {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { usePalette } from '@sensorr/palette'
 import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
+import { pictureSrc } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
@@ -26,7 +27,7 @@ const UIPretty = ({
   const onBillboardReady = useCallback(() => setBackground(true), [])
 
   const palette = usePalette(
-    !!details?.poster && `https://image.tmdb.org/t/p/w92${details?.poster}`,
+    !!details?.poster && pictureSrc(details.poster, 'w92'),
     (props as any).palette || {
       backgroundColor: theme.rawColors.grayLight,
       color: theme.rawColors.text,

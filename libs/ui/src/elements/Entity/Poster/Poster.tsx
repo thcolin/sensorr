@@ -3,7 +3,7 @@ import { LinkProps } from 'react-router-dom'
 import { useDevice } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Link } from '../../../atoms/Link/Link'
-import { Picture, PictureProps } from '../../../atoms/Picture/Picture'
+import { Picture, PictureProps, pictureSrc } from '../../../atoms/Picture/Picture'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 import { Option } from '../../../inputs/Option/Option'
 // import { MovieDetails } from '../../../components/Movie/Movie'
@@ -66,7 +66,7 @@ const UIPoster = ({
   }, [onReady])
 
   const { palette } = usePalette(
-    interactive && !!details?.poster && `https://image.tmdb.org/t/p/w92${details?.poster}`,
+    interactive && !!details?.poster && pictureSrc(details.poster, 'w92'),
     { colorfulColor: null, backgroundColor: null, color: null, alternativeColor: null, negativeColor: null },
     details?.poster,
   )
