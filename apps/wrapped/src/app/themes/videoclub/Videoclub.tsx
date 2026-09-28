@@ -85,7 +85,10 @@ const Shelf = ({ posters, art, className }: { posters: WrappedPoster[], art: Art
 const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?: string }) => {
   const [lit, setLit] = useState(false)
   const at = sheet.title.indexOf(sheet.name)
-  const parts = at < 0 ? [sheet.title] : [sheet.title.slice(0, at), sheet.name, sheet.title.slice(at + sheet.name.length)].map((part) => part.trim()).filter(Boolean)
+  const [head, tail] = at < 0 ? [sheet.title, ''] : [sheet.title.slice(0, at).trim(), sheet.title.slice(at + sheet.name.length).trim()]
+  const letters = at < 0 ? [] : [...sheet.name]
+  // One tube has gone out, as on any sign that has been up a few winters
+  const dead = letters.length > 3 ? Math.floor(letters.length / 2) : -1
   // The hero case stands in the middle, the others fan out from it
   const order = [3, 1, 0, 2, 4].map((index) => sheet.posters[index]).filter(Boolean)
 
@@ -101,9 +104,23 @@ const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?
     <section className="videoclub-sheet videoclub-opening" aria-label={sheet.label}>
       <h1 className={`videoclub-sign ${lit ? 'videoclub-sign-on' : ''}`}>
         <span className="visually-hidden">{sheet.title}</span>
-        {parts.map((part, index) => (
-          <span key={part} aria-hidden="true" className={`videoclub-neon videoclub-neon-${part === sheet.name ? 'cyan' : 'pink'} videoclub-sign-${part === sheet.name ? 'name' : index ? 'year' : 'head'}`}>{part}</span>
-        ))}
+        <span className="videoclub-fascia" aria-hidden="true">
+          <span className="videoclub-fascia-face">{head}</span>
+        </span>
+        {!!letters.length && (
+          <span className="videoclub-tube" aria-hidden="true">
+            {letters.map((letter, index) => (
+              <span
+                key={index}
+                className={index === dead ? 'videoclub-tube-dead' : undefined}
+                style={{ '--delay': `${0.5 + ((index * 7) % 5) * 0.12}s` } as React.CSSProperties}
+              >
+                {letter === ' ' ? '\u00a0' : letter}
+              </span>
+            ))}
+          </span>
+        )}
+        {tail && <span className="videoclub-plate" aria-hidden="true">{tail}</span>}
       </h1>
       {!!order.length && (
         <div className="videoclub-front">
@@ -349,11 +366,11 @@ const Finale = ({ sheet, art }: { sheet: Of<'finale'>, art: Art }) => (
     <div className="videoclub-window" data-closed={sheet.closed}>
       <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.closed ? undefined : 'Provisoire'} />
       <div className="videoclub-shutter" aria-hidden="true" />
+      <p className="videoclub-end">{sheet.end}</p>
     </div>
     <div className="videoclub-shelf-card">
       <h3>{sheet.title}</h3>
       <p>{sheet.date}</p>
     </div>
-    <p className="videoclub-end">{sheet.end}</p>
   </section>
 )
