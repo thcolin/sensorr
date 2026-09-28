@@ -512,7 +512,6 @@ ol {
   gap: 5cqi;
 }
 
-/* Three posters stack as rows, the poster beside its figure */
 .posters[data-count='3'] > .posters-entry {
   display: grid;
   grid-template-columns: 24cqi 1fr;

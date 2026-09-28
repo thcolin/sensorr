@@ -37,7 +37,6 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   // 1 December at midnight in Paris: until the job freezes the edition, it is still closed
   const closed = frozen || Date.now() >= Date.UTC(year, 10, 30, 23)
   const { first_on_server, same_week, only_you, dropped, dropped_show, slowest, longest, oldest, rewatched } = wrapped
-  // The opening shows the posters the sheets are about to tell
   const collage = [
     wrapped.first, wrapped.streak?.poster, wrapped.binge, wrapped.night?.poster, first_on_server || same_week,
     only_you?.poster, longest, oldest, wrapped.last, ...wrapped.month_shows,
