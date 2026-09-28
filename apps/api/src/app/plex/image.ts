@@ -1,7 +1,8 @@
 // Item artworks only: the route must not open the rest of the Plex API to the token it adds
 const ARTWORK = /^\/library\/metadata\/\d+\/(thumb|art|clearLogo)\/\d+$/
 const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
-const SIZE = /^(w\d{2,4}|original)$/
+// The sizes `Picture` asks for: each other width would be one more transcode kept by Plex
+const SIZE = /^(w92|w154|w185|w300|w342|w500|w780|original)$/
 
 export interface PlexArtworks {
   poster: string | null
@@ -15,9 +16,14 @@ export interface ImageRequest {
   fallback: string | null
 }
 
-export const imageRequestOf = ({ path, size = 'original', fallback = null }: Record<string, string>): ImageRequest | null => (
-  ARTWORK.test(path || '') && SIZE.test(size) && (!fallback || TMDB.test(fallback)) ? { path, size, fallback } : null
-)
+// A repeated or bracketed query parameter is an array, which a regular expression would read as a string
+export const imageRequestOf = ({ path, size = 'original', fallback = null }: Record<string, unknown>): ImageRequest | null => {
+  if (typeof path !== 'string' || typeof size !== 'string' || (fallback !== null && typeof fallback !== 'string')) {
+    return null
+  }
+
+  return ARTWORK.test(path) && SIZE.test(size) && (!fallback || TMDB.test(fallback as string)) ? { path, size, fallback: fallback as string | null } : null
+}
 
 // An artwork uploaded to Plex keeps its size, 3840 wide for some: `original` stops where TMDB's usually does
 const ORIGINAL = 1920
