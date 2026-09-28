@@ -47,6 +47,13 @@ export class Movie extends Document {
   @Prop()
   plex_url: string
 
+  @Prop(raw({
+    poster: { type: String },
+    backdrop: { type: String },
+    logo: { type: String },
+  }))
+  plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
+
   @Prop()
   original_language: string
 

@@ -50,6 +50,7 @@ export class ShowDTO {
   readonly proposal_only: boolean | null
   readonly path: string
   readonly plex_guid: string
+  readonly plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
   readonly requested_by: string[]
   readonly requested_at: number
   readonly banned_releases: string[]
