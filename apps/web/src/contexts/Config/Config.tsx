@@ -1,5 +1,5 @@
 import config from '@sensorr/config'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
@@ -15,6 +15,21 @@ export const Provider = ({ children = null, ...props }) => {
   const { authenticated, setAuthenticated } = useAuthContext()
   const [singleton, setSingleton] = useState(null)
 
+  const load = useCallback(async (raw) => {
+    config.load(raw)
+
+    i18n.changeLanguage(config.get('region') || localStorage.getItem('region') || 'en-US')
+
+    sensorr.znabs = config.get('znabs')
+    sensorr.policies = config.get('policies')
+    sensorr.region = config.get('region')
+
+    tmdb.key = config.get('tmdb')
+    tmdb.region = config.get('region') || localStorage.getItem('region') || 'en-US'
+    tmdb.adult = config.get('adult')
+    await tmdb.init()
+  }, [])
+
   useEffect(() => {
     if (!authenticated) {
       return
@@ -25,18 +40,7 @@ export const Provider = ({ children = null, ...props }) => {
         const { uri, params, init } = api.query.config.getConfig({})
         const raw = await api.fetch(uri, params, init)
 
-        config.load(raw)
-
-        i18n.changeLanguage(config.get('region') || localStorage.getItem('region') || 'en-US')
-
-        sensorr.znabs = config.get('znabs')
-        sensorr.policies = config.get('policies')
-        sensorr.region = config.get('region')
-
-        tmdb.key = config.get('tmdb')
-        tmdb.region = config.get('region') || localStorage.getItem('region') || 'en-US'
-        tmdb.adult = config.get('adult')
-        await tmdb.init()
+        await load(raw)
 
         setSingleton(config)
       } catch (err) {
@@ -49,10 +53,10 @@ export const Provider = ({ children = null, ...props }) => {
   }, [authenticated])
 
   return (
-    <configContext.Provider {...props} value={{ config: singleton }}>
+    <configContext.Provider {...props} value={{ config: singleton, load }}>
       {children}
     </configContext.Provider>
   )
 }
 
-export const useConfigContext = () => useContext(configContext) as { config: { [key: string]: any } }
+export const useConfigContext = () => useContext(configContext) as { config: { [key: string]: any }, load: (raw: any) => Promise<void> }
