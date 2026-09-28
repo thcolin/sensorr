@@ -57,7 +57,7 @@ const Policies = ({ ...props }) => {
           </p>
           <ul>
             <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
-            <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance.</li>
+            <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance, and drop a tag onto another to give both the same rank.</li>
             <li sx={{ listStyleType: 'none' }}>
               <ul>
                 <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
@@ -69,7 +69,7 @@ const Policies = ({ ...props }) => {
           <p>
             Sensorr ranks releases using a clear point system. A release first earns a base score of <strong>1000 points</strong> for matching the movie's title (original or localized).
             <br/>
-            It then accumulates additional points from your <code>⭐ prefer</code> tags. The top-ranked tag is worth <strong>100 points</strong>, while subsequent tags in the same list are worth progressively less.
+            It then accumulates additional points from your <code>⭐ prefer</code> tags. The top-ranked tag is worth <strong>100 points</strong>, while subsequent tags in the same list are worth progressively less. Tags sharing a rank are worth the same points.
             <br/>
             The release with the highest total score is always chosen. In case of a tie, <code>sort</code> setting acts as the tie-breaker.
           </p>
