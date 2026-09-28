@@ -845,8 +845,17 @@ const Link = ({ label, onAdd, onCancel, disabled = false }) => {
     }
   }
 
+  // Focus leaving the form closes it, unless it goes to the + that toggles it
+  const leave = (e) => {
+    const next = e.relatedTarget as HTMLElement | null
+
+    if (!e.currentTarget.contains(next) && !next?.matches('[aria-expanded="true"]')) {
+      onCancel()
+    }
+  }
+
   return (
-    <form sx={Link.styles.element} onSubmit={submit} onKeyDown={cancel}>
+    <form sx={Link.styles.element} onSubmit={submit} onKeyDown={cancel} onBlur={leave}>
       <div>
         <input type='url' autoFocus={true} disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label={`${label} link`} aria-invalid={!!error} />
         <Button type='submit' variant='outline' disabled={disabled || !value.trim()}>Add</Button>
