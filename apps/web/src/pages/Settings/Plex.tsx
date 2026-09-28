@@ -142,18 +142,40 @@ const UIPlex = ({ ...props }) => {
   return (
     <div
       sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'stretch',
+        // One row per part of a step, shared by every step through subgrid: the inputs sit on one line
+        display: 'grid',
+        gridTemplateColumns: ['repeat(4, 80%)', 'repeat(4, minmax(0, 1fr))'],
+        gridTemplateRows: '1fr auto auto auto auto 1fr',
         height: '100%',
         overflow: ['auto', 'hidden'],
         '>*': {
           position: 'relative',
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          minWidth: ['80%', 'auto'],
+          display: 'grid',
+          gridRow: '1 / -1',
+          gridTemplateRows: 'subgrid',
+          justifyItems: 'center',
+          padding: '2.5em 2.5em 4.5em 2.5em',
+          textAlign: 'center',
           marginX: 11,
+          // The Warning lays its emoji, title, subtitle and inputs out in those rows
+          '>div:last-child': {
+            display: 'contents',
+            '>h1': {
+              gridRow: 2,
+              alignSelf: 'end',
+            },
+            '>h2': {
+              gridRow: 3,
+              alignSelf: 'end',
+            },
+            '>p': {
+              gridRow: 4,
+              alignSelf: 'start',
+            },
+            '>:nth-child(4)': {
+              gridRow: 5,
+            },
+          },
           backgroundColor: 'primaryDark',
           transition: 'opacity 400ms ease-in-out',
           '&:first-child': {
