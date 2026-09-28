@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { Button, Icon, Pane, Picture, pictureSrc } from '@sensorr/ui'
+import { Button, Pane, Picture, pictureSrc, Warning } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { artworkOf } from '../../store/plex'
@@ -56,7 +56,7 @@ const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
         🖼️
       </button>
       {createPortal((
-        <Pane position='right' width={['100%', '40em']} background='grayLightest' open={open} toggleOpen={close}>
+        <Pane position='right' width={['100%', '40em']} open={open} toggleOpen={close}>
           {shown && <Picker behavior={behavior} entity={entity} artworks={artworks} ratingKey={ratingKey} close={close} />}
         </Pane>
       ), document.body)}
@@ -301,15 +301,19 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   }
 
   return (
-    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-labelledby={`artworks-${entity.id}`} onKeyDown={trap}>
-      <div sx={Picker.styles.head}>
-        <h2 id={`artworks-${entity.id}`}>Artworks</h2>
-        <span>{entity?.title || entity?.name}</span>
-        <button type='button' onClick={close} aria-label='Close'>
-          <Icon value='clear' active={true} height='1.25em' width='1.25em' />
-        </button>
-      </div>
+    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-label={`Artworks of ${entity?.title || entity?.name}`} onKeyDown={trap}>
       <div sx={Picker.styles.body} style={preview ? { '--artworks-preview': `${preview}px` } as any : undefined}>
+        <div sx={Picker.styles.head}>
+          <Warning
+            emoji='🖼️'
+            title='Artworks'
+            subtitle={(
+              <span>
+                Choose the <strong>poster</strong>, <strong>backdrop</strong> and <strong>logo</strong> Plex shows for <strong>{entity?.title || entity?.name}</strong>, from Plex, TMDB, MediUX sets or a pasted link
+              </span>
+            )}
+          />
+        </div>
         <Preview
           artworks={artworks}
           current={Object.fromEntries(KINDS.map(({ kind }) => [kind, groups[kind].find(({ label }) => label === 'current')?.items[0]?.thumb]))}
@@ -391,8 +395,8 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
         ))}
       </div>
       <div sx={Picker.styles.foot}>
-        <Button type='button' variant='outline' color='primary' onClick={close} disabled={writing}>Cancel</Button>
-        <Button type='button' color='primary' onClick={apply} disabled={writing || !changed.length || !lists.plex}>
+        <Button type='button' variant='outline' onClick={close} disabled={writing}>Cancel</Button>
+        <Button type='button' onClick={apply} disabled={writing || !changed.length || !lists.plex}>
           {writing ? 'Writing…' : 'Apply'}
         </Button>
       </div>
@@ -406,44 +410,17 @@ Picker.styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    backgroundColor: 'grayLightest',
+    backgroundColor: 'primary',
+    color: 'whitePure',
     outline: 'none',
   },
+  // The Warning the filters panes open on (Library.tsx)
   head: {
-    display: 'flex',
-    alignItems: 'baseline',
-    backgroundColor: 'primary',
-    padding: 2,
-    paddingBottom: 8,
-    '>h2': {
-      variant: 'heading.default',
-      color: 'whitePure',
-      margin: 12,
-    },
-    '>span': {
-      flex: 1,
-      marginLeft: 6,
-      color: 'whitePure',
-      fontSize: 5,
-      fontWeight: 'semibold',
-      opacity: 0.8,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
-    '>button': {
-      variant: 'button.reset',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      alignSelf: 'center',
-      height: '2.75rem',
-      width: '2.75rem',
-      marginY: '-0.75rem',
-      cursor: 'pointer',
-      '>svg': {
-        color: 'whitePure',
-      },
+    paddingX: 2,
+    paddingBottom: 4,
+    whiteSpace: 'normal',
+    '>div': {
+      padding: 12,
     },
   },
   body: {
@@ -458,8 +435,12 @@ Picker.styles = {
   },
   error: {
     marginY: 8,
+    paddingX: 8,
+    paddingY: 9,
     fontSize: 6,
-    color: 'error',
+    color: 'whitePure',
+    backgroundColor: 'error',
+    borderRadius: '0.25em',
   },
   section: {
     marginTop: 3,
@@ -474,12 +455,14 @@ Picker.styles = {
       margin: 12,
       paddingY: 8,
       fontSize: 4,
-      backgroundColor: 'grayLightest',
+      fontWeight: 'semibold',
+      color: 'whitePure',
+      backgroundColor: 'primary',
       '>span:last-of-type': {
         fontFamily: 'monospace',
         fontSize: 6,
         fontWeight: 'medium',
-        backgroundColor: 'gray',
+        backgroundColor: 'primaryDarkest',
         borderRadius: '1em',
         paddingX: 8,
         paddingY: 11,
@@ -507,7 +490,7 @@ Picker.styles = {
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 0 currentColor',
-      color: 'primary',
+      color: 'whitePure',
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
@@ -522,7 +505,7 @@ Picker.styles = {
     },
     ':focus-visible::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'grayDarkest',
+      color: 'blackPure',
     },
     '>code': {
       position: 'absolute',
@@ -540,7 +523,8 @@ Picker.styles = {
   empty: {
     margin: 12,
     fontSize: 6,
-    color: 'grayDarkest',
+    color: 'whitePure',
+    opacity: 0.8,
   },
   group: {
     display: 'block',
@@ -548,7 +532,8 @@ Picker.styles = {
     marginBottom: 9,
     fontFamily: 'monospace',
     fontSize: '0.6875em',
-    color: 'grayDarkest',
+    color: 'whitePure',
+    opacity: 0.8,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
@@ -574,7 +559,7 @@ Picker.styles = {
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 0 currentColor',
-      color: 'primary',
+      color: 'whitePure',
       pointerEvents: 'none',
       transition: 'box-shadow 120ms ease-in-out',
     },
@@ -589,7 +574,7 @@ Picker.styles = {
     },
     ':focus-visible::after': {
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'grayDarkest',
+      color: 'blackPure',
     },
     ':disabled': {
       cursor: 'default',
@@ -604,8 +589,8 @@ Picker.styles = {
       fontFamily: 'monospace',
       fontSize: '0.6875em',
       fontWeight: 'bold',
-      color: 'blackPure',
-      backgroundColor: 'primary',
+      color: 'primaryDarkest',
+      backgroundColor: 'whitePure',
       borderRadius: '1em',
     },
     '>code': {
@@ -631,14 +616,22 @@ Picker.styles = {
       },
     },
   },
+  // The buttons of the filters panes (Aside.tsx)
   foot: {
     display: 'flex',
-    justifyContent: 'flex-end',
-    gap: 8,
-    padding: 4,
-    borderTop: '1px solid',
-    borderColor: 'gray',
-    backgroundColor: 'grayLighter',
+    flexDirection: 'row',
+    backgroundColor: 'primaryDarker',
+    paddingX: 4,
+    paddingY: 0,
+    '>*': {
+      flex: 1,
+      '&:not(:first-of-type)': {
+        marginLeft: 6,
+      },
+      '&:not(:last-of-type)': {
+        marginRight: 6,
+      },
+    },
   },
 }
 
@@ -669,7 +662,7 @@ const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
         <div sx={Preview.styles.poster} data-changed={!!chosen.poster}><Picture path={shown('poster')} size='w342' empty={chosen.poster?.link ? LinkEmpty : undefined} /></div>
         {shown('logo')
           ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} crossOrigin={isTMDB(shown('logo')) ? 'anonymous' : undefined} /></div>
-          : <small sx={Preview.styles.none}>No logo</small>}
+          : <div sx={Preview.styles.none}><small>No logo</small></div>}
       </div>
       <div sx={Preview.styles.legend}>
         {KINDS.map(({ kind, label }, index) => (
@@ -686,24 +679,21 @@ Preview.styles = {
     position: 'sticky',
     top: '0px',
     zIndex: 2,
-    paddingX: 4,
-    paddingTop: 5,
     paddingBottom: 8,
-    backgroundColor: 'grayLightest',
-    borderBottom: '1px solid',
-    borderColor: 'gray',
+    backgroundColor: 'primary',
+    boxShadow: '0 0.25em 0.5em -0.25em hsla(0, 0%, 0%, 0.35)',
   },
   scene: {
     position: 'relative',
-    height: '12em',
+    height: '13em',
     overflow: 'hidden',
-    backgroundColor: 'grayLight',
+    backgroundColor: 'primaryDarkest',
     '[data-changed="true"]::after': {
       content: '""',
       position: 'absolute',
       inset: '0px',
       boxShadow: 'inset 0 0 0 3px currentColor',
-      color: 'primary',
+      color: 'whitePure',
       pointerEvents: 'none',
     },
   },
@@ -740,28 +730,45 @@ Preview.styles = {
       objectPosition: 'left bottom',
     },
   },
+  // Where the logo would sit: a logo is expected, and this one has none
   none: {
     position: 'absolute',
-    left: '8.5rem',
-    bottom: '1.5rem',
-    fontFamily: 'monospace',
-    fontSize: 7,
-    color: 'grayDarkest',
+    left: '8.5em',
+    bottom: '1.125em',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '4.375em',
+    width: 'min(16em, calc(100% - 9.5em))',
+    border: '2px dashed',
+    borderColor: 'hsla(0, 0%, 100%, 0.7)',
+    borderRadius: '0.25em',
+    backgroundColor: 'hsla(0, 0%, 0%, 0.25)',
+    '>small': {
+      fontFamily: 'monospace',
+      fontSize: 6,
+      color: 'whitePure',
+    },
   },
   legend: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
     marginTop: 8,
+    paddingX: 4,
     fontFamily: 'monospace',
-    fontSize: 7,
-    color: 'grayDarkest',
+    color: 'hsla(0, 0%, 100%, 0.8)',
+    '>*': {
+      fontSize: 7,
+    },
     '>span[data-changed="true"]': {
-      color: 'primary',
+      color: 'whitePure',
+      fontWeight: 'bold',
     },
     '>button': {
       variant: 'button.reset',
       marginLeft: 'auto',
+      fontSize: 7,
       textDecoration: 'underline',
       cursor: 'pointer',
     },
@@ -795,7 +802,7 @@ const Link = ({ onAdd, disabled = false }) => {
         <select disabled={disabled} value={kind} onChange={(e) => setKind(e.target.value as ArtworkKind)} aria-label='Artwork kind'>
           {KINDS.map(({ kind, label }) => <option key={kind} value={kind}>{label}</option>)}
         </select>
-        <Button type='submit' variant='outline' color='primary' disabled={disabled || !value.trim()}>Add</Button>
+        <Button type='submit' variant='outline' disabled={disabled || !value.trim()}>Add</Button>
       </div>
       {!!error && <small role='alert'>{error}</small>}
     </form>
@@ -812,6 +819,24 @@ Link.styles = {
         variant: 'input.default',
         width: 'auto',
         fontSize: 5,
+        color: 'whitePure',
+        borderColor: 'hsla(0, 0%, 100%, 0.6)',
+        ':hover:not(:disabled):not(:focus):not(:active)': {
+          borderColor: 'hsla(0, 0%, 100%, 0.8)',
+        },
+        ':focus,:active:not(:disabled)': {
+          borderColor: 'whitePure',
+        },
+        ':disabled': {
+          borderColor: 'hsla(0, 0%, 100%, 0.4)',
+          color: 'hsla(0, 0%, 100%, 0.6)',
+        },
+        '::placeholder': {
+          color: 'hsla(0, 0%, 100%, 0.75)',
+        },
+        '>option': {
+          color: 'blackPure',
+        },
       },
       '>input': {
         flex: 1,
@@ -819,10 +844,14 @@ Link.styles = {
       },
     },
     '>small': {
-      display: 'block',
+      display: 'inline-block',
       marginTop: 9,
+      paddingX: 8,
+      paddingY: 10,
       fontSize: 6,
-      color: 'error',
+      color: 'whitePure',
+      backgroundColor: 'error',
+      borderRadius: '0.25em',
     },
   },
 }
