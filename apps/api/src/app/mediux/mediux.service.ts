@@ -25,7 +25,7 @@ export class MediuxService {
     })
     const body = await res.json().catch(() => ({}))
 
-    if (!res.ok || body.errors?.length) {
+    if (!res.ok || body.errors?.length || !body.data) {
       throw new Error(`MediUX answered ${res.status}${body.errors?.length ? `, ${body.errors[0].message}` : ''}`)
     }
 

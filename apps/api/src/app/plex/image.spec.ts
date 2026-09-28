@@ -13,6 +13,8 @@ describe('imageRequestOf', () => {
     expect(imageRequestOf({ path, size: 'w154' })).toEqual({ path, size: 'w154', fallback: null })
     expect(imageRequestOf({ path: '/library/metadata/4260/file?url=http%3A%2F%2Fevil.example%2Fa.jpg' })).toBeNull()
     expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2Fa&X-Plex-Token=1' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F..%2F..%2Fetc' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F%2E%2E%2Fetc' })).toBeNull()
   })
 
   it('refuses any other path on Plex, and a fallback outside TMDB', () => {

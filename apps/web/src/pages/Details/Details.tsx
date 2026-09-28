@@ -15,6 +15,7 @@ import { Sensorr } from '../../components/Sensorr'
 import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
 import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Artworks'
+import { ratingKeyOf } from '../../components/Artworks/candidates'
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -89,7 +90,7 @@ const UIDetails = ({
             requested_by={metadata?.requested_by}
             state={state}
             setState={setState}
-            artworks={['movie', 'tv'].includes(behavior) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
+            artworks={['movie', 'tv'].includes(behavior) && !!ratingKeyOf(artworks) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
           />
           <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
             Contribute to TheMovieDB

@@ -23,7 +23,6 @@ const SETS = {
 export type MediuxType = keyof typeof SETS
 
 export interface MediuxImage {
-  // Small enough for a thumbnail, and the JPEG Plex fetches: the original is a PNG of several megabytes
   thumb: string
   url: string
 }
@@ -40,7 +39,7 @@ export const typeOf = (value: unknown): MediuxType | null => value === 'movie' |
 
 export const queryOf = (type: MediuxType, id: number) => ({ query: SETS[type], variables: { id: `${id}` } })
 
-// An asset is public, its version is the date it was last modified
+// The JPEG MediUX makes for Plex: the original is a PNG of several megabytes
 const imageOf = (asset): MediuxImage | null => {
   const image = [].concat(asset || [])[0]
 
@@ -48,9 +47,10 @@ const imageOf = (asset): MediuxImage | null => {
     return null
   }
 
-  const v = new Date(image.modified_on).toISOString().replace(/\D/g, '').slice(0, 14)
-  const base = `https://images.mediux.io/assets/${encodeURIComponent(image.id)}?v=${v}`
-  return { thumb: `${base}&key=thumb`, url: `${base}&key=jpg` }
+  const modified = new Date(image.modified_on)
+  const v = Number.isNaN(modified.getTime()) ? '' : `v=${modified.toISOString().replace(/\D/g, '').slice(0, 14)}&`
+  const base = `https://images.mediux.io/assets/${encodeURIComponent(image.id)}?${v}`
+  return { thumb: `${base}key=thumb`, url: `${base}key=jpg` }
 }
 
 export const setsOf = (data): MediuxSet[] => (data?.item?.sets || []).map((set) => ({

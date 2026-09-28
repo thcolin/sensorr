@@ -281,7 +281,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             if (!corrections.includes(show.id)) {
               corrections.push(show.id)
             }
-            state.logger.info({ message: `🩹 Fix "${show.name}" artworks with Plex metadata`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
+            state.logger.info({ message: `🩹 Fix "${show.name}" artworks and season posters with Plex metadata`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
           }
 
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{show.name}</Text> - {changes.length} episodes files fixed</Text> }))

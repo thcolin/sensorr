@@ -26,7 +26,7 @@ export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) =>
 
 const UIArtworks = ({ behavior, entity, artworks, className = undefined }) => {
   const trigger = useRef<HTMLButtonElement>(null)
-  const { Portal, openPortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true, onClose: () => setTimeout(() => trigger.current?.focus()) })
+  const { Portal, openPortal, closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, onClose: () => setTimeout(() => trigger.current?.focus()) })
   const ratingKey = ratingKeyOf(artworks)
 
   if (!ratingKey) {
@@ -106,7 +106,6 @@ UITitleLogo.styles = {
 
 export const TitleLogo = memo(UITitleLogo)
 
-// One stop per row for Tab, the arrows go along it
 const rove = (e) => {
   const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key]
   const buttons = Array.from(e.currentTarget.querySelectorAll('button')) as HTMLButtonElement[]
@@ -145,8 +144,13 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     dialog.current?.querySelector<HTMLElement>('input:not(:disabled), button')?.focus()
   }, [])
 
-  // The pane is modal: Tab goes round inside it
   const trap = (e) => {
+    if (e.key === 'Escape' && !writing) {
+      e.stopPropagation()
+      close()
+      return
+    }
+
     if (e.key !== 'Tab') {
       return
     }
@@ -164,8 +168,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     }
   }
 
-  useEffect(() => {
-    const controller = new AbortController()
+  const load = useCallback((controller = new AbortController()) => {
     const plexQuery = api.query.plex.getArtworks({ ratingKey, init: { signal: controller.signal } })
     const setsQuery = api.query.mediux.getSets({ type: behavior, id: entity.id, init: { signal: controller.signal } })
 
@@ -192,8 +195,13 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
       })
     })
 
+    return controller
+  }, [ratingKey, entity?.id, behavior, mediux])
+
+  useEffect(() => {
+    const controller = load()
     return () => controller.abort()
-  }, [ratingKey, entity?.id])
+  }, [load])
 
   const groups = useMemo(() => KINDS.reduce((acc, { kind, tmdb: list }) => {
     const [current, ...rest] = candidatesOf(lists.plex?.[kind] || [], lists.tmdb?.[list] || [], { region, token: api.access_token })
@@ -208,7 +216,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
         ...(current?.label === 'current' ? rest : [current, ...rest].filter(Boolean)),
       ],
     }
-  }, {} as Record<ArtworkKind, CandidateGroup[]>), [lists, links, region])
+  }, {} as Record<ArtworkKind, CandidateGroup[]>), [lists, links, region, api.access_token])
 
   const chooseSet = (set) => {
     const [poster, backdrop] = ['poster', 'backdrop'].map((kind) => setCandidatesOf([set], kind as ArtworkKind)[0])
@@ -234,6 +242,8 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const changed = Object.entries(chosen).filter(([, value]) => value) as [ArtworkKind, { choice: ArtworkChoice }][]
 
   const apply = async () => {
+    // Its buttons turn disabled while it writes: the focus stays in the pane
+    dialog.current?.focus()
     setWriting(true)
 
     let written, failed
@@ -248,7 +258,9 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
       return
     }
 
-    try {
+    if (!written) {
+      toast.error('Written on Plex, Sensorr shows it after the next sync')
+    } else try {
       const saving = behavior === 'movie'
         ? api.query.movies.postMovie({ body: { id: entity.id, plex_artworks: written } })
         : api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_artworks: written } } })
@@ -263,6 +275,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     if (Object.keys(failed || {}).length) {
       toast.error(`Plex refused the ${Object.keys(failed).join(' and ')}: ${Object.values(failed).join(', ')}`)
       setChosen((chosen) => Object.fromEntries(Object.entries(chosen).filter(([kind]) => kind in failed)))
+      load()
       return
     }
 
@@ -271,7 +284,7 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   }
 
   return (
-    <div ref={dialog} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-labelledby={`artworks-${entity.id}`} onKeyDown={trap}>
+    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-labelledby={`artworks-${entity.id}`} onKeyDown={trap}>
       <div sx={Picker.styles.head}>
         <h2 id={`artworks-${entity.id}`}>Artworks</h2>
         <span>{entity?.title || entity?.name}</span>
@@ -377,6 +390,7 @@ Picker.styles = {
     flexDirection: 'column',
     overflow: 'hidden',
     backgroundColor: 'grayLightest',
+    outline: 'none',
   },
   head: {
     display: 'flex',
@@ -619,7 +633,6 @@ const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fo
 const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
   const api = useAPI()
   const element = useRef<HTMLDivElement>(null)
-  // What Plex shows once its list is read, what Sensorr stored until then
   const current = (kind: ArtworkKind) => listed[kind] || (artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null)
 
   useEffect(() => {
