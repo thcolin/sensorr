@@ -304,6 +304,13 @@ const config = convict({
       default: '',
     },
   },
+  mediux: {
+    token: {
+      doc: 'MediUX API token, to list the artwork sets of a movie or a show',
+      format: 'String',
+      default: '',
+    },
+  },
   znabs: {
     doc: 'ZNAB sources',
     format: 'source-array',

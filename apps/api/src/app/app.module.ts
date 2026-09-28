@@ -12,6 +12,7 @@ import { JobsModule } from './jobs/jobs.module'
 import { LogsModule } from './logs/logs.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { PlexModule } from './plex/plex.module'
+import { MediuxModule } from './mediux/mediux.module'
 import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
 
@@ -34,6 +35,7 @@ import { SensorrModule } from './sensorr/sensorr.module'
     LogsModule,
     NotificationsModule,
     PlexModule,
+    MediuxModule,
     ConfigModule,
     SensorrModule,
   ],
