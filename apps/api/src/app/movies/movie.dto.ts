@@ -1,4 +1,5 @@
 import { ReleaseDTO } from './release.dto'
+import { PlexArtworks } from '../plex/image'
 
 export class MovieDTO {
   _id: number
@@ -23,7 +24,7 @@ export class MovieDTO {
   readonly imdb_id: string
   readonly plex_guid: string
   readonly plex_url: string
-  readonly plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
+  readonly plex_artworks: PlexArtworks
   readonly original_language: string
   readonly original_title: string
   readonly overview: string

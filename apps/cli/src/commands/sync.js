@@ -220,13 +220,21 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const reason = (
             movie?.state !== body?.state ? `Plex movie state unknown from Sensorr library (${movie?.state || 'unknown'})` :
             movie?.plex_url !== body?.plex_url ? `Plex movie link unknown from Sensorr library` :
-            !sameArtworks(movie?.plex_artworks, body.plex_artworks) ? `Plex movie artworks unknown from Sensorr library` :
             JSON.stringify((movie?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` :
             swaps.changed ? `Accepted swap landed or overdue` : null
           )
 
           if (!reason) {
             setState((state) => ({ ...state, processed: [...(state.processed || []), movie?.id] }))
+
+            // Apart from the rewrite below: its `updated_at` would move the movie up the library
+            if (!sameArtworks(movie.plex_artworks, body.plex_artworks)) {
+              state.logger.info({ message: `🩹 Fix "${payload.title}" movie artworks with Plex metadata`, metadata: { ...state.metadata, group: 'corrections', movie: lighten.movie(movie) } })
+              const { uri, params, init } = api.query.movies.postMovie({ body: { id: movie.id, plex_artworks: body.plex_artworks } })
+              await api.fetch(uri, params, init)
+              corrections.push(movie.id)
+            }
+
             setTask((task) => ({ ...task, output: <Text><Text bold={true}>{payload.title}</Text> - Already "archived" on Sensorr</Text> }))
             continue
           }
@@ -328,6 +336,7 @@ const ComputeSensorrMissingMovies = ({ ...props }) => {
             body: {
               ...movie,
               releases: (movie.releases || []).filter(release => release.from !== 'sync'),
+              plex_artworks: null,
               state: 'missing',
               updated_at: new Date().getTime(),
             },

@@ -1,5 +1,6 @@
 import { TorrentFiles } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
+import { PlexArtworks } from '../plex/image'
 
 export class ShowReleaseDTO extends ReleaseDTO {
   coverage?: { season: number, episode: number }[]
@@ -50,7 +51,7 @@ export class ShowDTO {
   readonly proposal_only: boolean | null
   readonly path: string
   readonly plex_guid: string
-  readonly plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
+  readonly plex_artworks: PlexArtworks
   readonly requested_by: string[]
   readonly requested_at: number
   readonly banned_releases: string[]

@@ -253,5 +253,6 @@ describe('sameArtworks', () => {
     expect(sameArtworks({ poster: '/library/metadata/1/thumb/2' }, artworks)).toBe(true)
     expect(sameArtworks({ poster: '/library/metadata/1/thumb/3' }, artworks)).toBe(false)
     expect(sameArtworks(undefined, artworks)).toBe(false)
+    expect(sameArtworks({ poster: '/library/metadata/1/thumb/2', logo: '/library/metadata/1/clearLogo/2' }, artworks)).toBe(false)
   })
 })

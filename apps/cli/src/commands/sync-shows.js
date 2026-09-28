@@ -206,12 +206,6 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             created.push(show.id)
           }
 
-          if (!unknown && !sameArtworks(show.plex_artworks, artworks)) {
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { id: show.id, plex_artworks: artworks } } })
-            await api.fetch(uri, params, init)
-            corrections.push(show.id)
-          }
-
           // A swap whose deletion failed stays pending, it is tried again on the next run
           const swaps = settleSeasonSwaps(show.releases, episodeVersionsOf(listed), { cleanup: state.cleanup, now: Date.now() })
           const deleted = new Set(), failed = new Set()
@@ -267,7 +261,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
                 : changes.reduce((acc, { id, files }) => ({ ...acc, [id]: syncedFilesOf(files) }), {}),
             })
             await api.fetch(uri, params, init)
-            corrections.push(...(corrections.includes(show.id) ? [] : [show.id]))
+            corrections.push(show.id)
             state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata, ${unread.length} read`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched, read: unread.length } })
           }
 
@@ -277,6 +271,15 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             await api.fetch(uri, params, init)
             withdrawals++
             state.logger.info({ message: `🗑️ Withdraw "${release.title}" proposal of "${show.name}", all its episodes are on Plex`, metadata: { ...state.metadata, group: 'withdrawals', show: lighten.show(show), release: { id: release.id, title: release.title } } })
+          }
+
+          if (!unknown && !sameArtworks(show.plex_artworks, artworks)) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { id: show.id, plex_artworks: artworks } } })
+            await api.fetch(uri, params, init)
+            if (!corrections.includes(show.id)) {
+              corrections.push(show.id)
+            }
+            state.logger.info({ message: `🩹 Fix "${show.name}" artworks with Plex metadata`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
           }
 
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{show.name}</Text> - {changes.length} episodes files fixed</Text> }))
