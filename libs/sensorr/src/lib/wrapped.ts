@@ -3,6 +3,15 @@ export const WRAPPED_TIME_ZONE = 'Europe/Paris'
 // The looks of the wrapped page, the same list as `WRAPPED_THEMES` in `@sensorr/config`
 export type WrappedTheme = 'affiche' | 'labo' | 'tele' | 'videoclub' | 'scenario'
 
+// Each look as the page names it to the friend
+export const WRAPPED_THEME_NAMES: Record<WrappedTheme, string> = {
+  affiche: 'Affiche polonaise',
+  labo: 'Labo 35 mm',
+  tele: 'Télé-magazine',
+  videoclub: 'Vidéoclub',
+  scenario: 'Scénario',
+}
+
 interface WrappedLook { theme?: WrappedTheme | null, choice?: boolean | null }
 
 // A friend's own setting wins over the edition's, which wins over the global one

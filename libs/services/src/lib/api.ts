@@ -749,6 +749,22 @@ export class API {
           },
         }
       }),
+      postLook: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/looks',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       postToken: (
         { body, init = {} }: { body: any, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
