@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Wrapped } from '@sensorr/sensorr'
+import type { Wrapped, WrappedTheme } from '@sensorr/sensorr'
 import { WrappedPage } from './Wrapped'
-import { Brushed, Sheet } from './Sheet'
+import { Brushed, Sheet } from './themes/affiche/Sheet'
+import './themes/affiche/affiche.css'
 
 export interface Share {
   name: string
@@ -12,6 +13,8 @@ export interface Share {
   year: number
   editions: number[]
   frozen: boolean
+  // The look the page opens with, and whether the friend may switch it
+  look: { theme: WrappedTheme, choice: boolean }
   wrapped: Wrapped
 }
 
