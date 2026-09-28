@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { components } from 'react-select'
-import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useThemeUI } from 'theme-ui'
 import { Select } from './Select'
 
@@ -28,9 +28,41 @@ const zoneOf = ({ active, over, activatorEvent, delta }, rankable) => {
   return (grouping && ratio > 0.3 && ratio < 0.7) ? 'rank' : ratio < 0.5 ? 'before' : 'after'
 }
 
+// A pointer in a gap between values drops next to the closest one, as long as it stays among them
+const collide = (args) => {
+  const within = pointerWithin(args)
+  const point = args.pointerCoordinates
+  const rects = [...args.droppableRects.values()]
+
+  if (within.length || !point || !rects.length) {
+    return within
+  }
+
+  const inside = point.x >= Math.min(...rects.map(r => r.left)) && point.x <= Math.max(...rects.map(r => r.right)) &&
+    point.y >= Math.min(...rects.map(r => r.top)) && point.y <= Math.max(...rects.map(r => r.bottom))
+
+  return inside ? closestCenter(args) : []
+}
+
+export const drop = (values, active, over, zone, fresh) => {
+  const moved = values.find(v => `${v.value}` === active)
+  const rest = values.filter(v => v !== moved)
+  const index = rest.findIndex(v => `${v.value}` === over)
+  const at = zone === 'before' ? index : index + 1
+  const rank = zone === 'rank' ?
+    (rest[index].rank ?? fresh) :
+    (moved.group === RANKED && sameRank(rest[at - 1], rest[at]) ? rest[at].rank : undefined)
+
+  return [
+    ...rest.slice(0, at).map((v, i) => (zone === 'rank' && i === index) ? { ...v, rank } : v),
+    { ...moved, rank },
+    ...rest.slice(at),
+  ]
+}
+
 const MultiValue = (props) => {
   const { theme } = useThemeUI()
-  const { active, target, requirable } = useContext(dropContext) as any
+  const { active, dragged, target, requirable } = useContext(dropContext) as any
   const id = props.data.value
   const draggable = useDraggable({ id: `${id}`, data: props.data, disabled: typeof id === 'undefined' })
   const droppable = useDroppable({ id: `${id}`, data: props.data, disabled: typeof id === 'undefined' })
@@ -75,7 +107,7 @@ const MultiValue = (props) => {
             bottom: '-0.25em',
             [zone === 'before' ? 'left' : 'right']: 'calc(-0.25em - 1px)',
             width: '2px',
-            backgroundColor: 'primary',
+            backgroundColor: dragged?.group === 'avoid' ? 'error' : 'primary',
           } : {},
         }}
       >
@@ -149,6 +181,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
   const [dragged, setDragged] = useState(null)
   const [target, setTarget] = useState(null)
   const dragging = useRef(false)
+  const fresh = useRef(0)
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
@@ -162,8 +195,11 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
   }, [])
 
   const onDragMove = useCallback((event) => {
-    setTarget(event.over && event.over.id !== event.active.id ? { id: event.over.id, zone: zoneOf(event, rankable) } : null)
+    const next = event.over && event.over.id !== event.active.id ? { id: event.over.id, zone: zoneOf(event, rankable) } : null
+    setTarget(previous => (previous?.id === next?.id && previous?.zone === next?.zone) ? previous : next)
   }, [rankable])
+
+  const context = useMemo(() => ({ active, dragged, target, requirable }), [active, dragged, target, requirable])
 
   const onDragEnd = useCallback((event) => {
     release()
@@ -172,21 +208,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
       return
     }
 
-    const zone = zoneOf(event, rankable)
-    const moved = value.find(v => `${v.value}` === event.active.id)
-    const rest = value.filter(v => v !== moved)
-    const over = rest.findIndex(v => `${v.value}` === event.over.id)
-    const at = zone === 'before' ? over : over + 1
-    const rank = zone === 'rank' ?
-      (rest[over].rank ?? `${rest[over].value}`) :
-      (sameRank(rest[at - 1], rest[at]) && moved.group === RANKED ? rest[at].rank : undefined)
-    const next = [
-      ...rest.slice(0, at).map((v, index) => (zone === 'rank' && index === over) ? { ...v, rank } : v),
-      { ...moved, rank },
-      ...rest.slice(at),
-    ]
-
-    onChange(next.filter(v => v.value))
+    onChange(drop(value, event.active.id, event.over.id, zoneOf(event, rankable), `rank-${++fresh.current}`).filter(v => v.value))
   }, [value, onChange, rankable, release])
 
   // A drop ends on a pointer up, which must not also cycle the value it lands on
@@ -268,10 +290,10 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
   }), [theme])
 
   return (
-    <dropContext.Provider value={{ active, target, requirable } as any}>
+    <dropContext.Provider value={context as any}>
       <DndContext
         sensors={sensors}
-        collisionDetection={pointerWithin}
+        collisionDetection={collide}
         onDragStart={(event) => { dragging.current = true; setActive(event.active.id); setDragged(event.active.data.current) }}
         onDragMove={onDragMove}
         onDragEnd={onDragEnd}
