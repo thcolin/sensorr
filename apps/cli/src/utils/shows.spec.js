@@ -436,6 +436,14 @@ describe('requestedShowOf', () => {
     ],
   }
 
+  it('brings a show of the owner watchlist in the library unfollowed, even when a guest requests it too', () => {
+    const { show, episodes } = requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com', 'owner@example.com'], 'owner@example.com')
+
+    expect(show).toMatchObject({ state: 'wished', monitored: false, monitor_new_seasons: false })
+    expect(episodes.every(({ monitored }) => monitored === false)).toBe(true)
+    expect(requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com'], 'owner@example.com').show.state).toBe('ignored')
+  })
+
   it('brings a requested show in ignored and unmonitored, every episode unmonitored, with the guests requesting it', () => {
     const { show, episodes } = requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com'])
 

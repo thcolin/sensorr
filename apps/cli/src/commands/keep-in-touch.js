@@ -30,9 +30,14 @@ export default (job, handlers) => ({
     // Use the installation's unique, persisted X-Plex-Client-Identifier (falls back to the legacy
     // hardcoded one only if it hasn't been generated yet)
     app.plex = config.get('plex.client_identifier') || app.plex
+    const token = config.get('plex.token')
+    const owner = token ? await Plex({ url: 'https://plex.tv:443', token, fallbackPort: 443 }, app).query('/api/v2/user').then(({ email }) => email).catch((error) => {
+      logger.warn({ message: `Unable to read the Plex account Sensorr is set up with, every watchlist is read as a guest's: "${error.message || error}"`, metadata: { job, command: meta.command } })
+      return null
+    }) : null
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb, app }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tmdb, app, owner }}>
         <FetchSensorrMoviesTask />
         <FetchSensorrShowsTask />
         <FetchGuestsTask />
@@ -431,7 +436,7 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
 
             if (!show) {
               setTask((task) => ({ ...task, output: `Show "${plex_guid}" requested by ${requested_by.join(', ')} unknown from library, look up for his TMDB data with TMDB id "${tmdb_id}"...` }))
-              const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by)
+              const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by, state.owner)
               const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
 
               const shows = api.query.shows.postShows({ body: { [requested.show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
@@ -454,9 +459,10 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
           const changed = added || guests.length !== (show.requested_by || []).length
           // Once dated, a request keeps its date: a guest joining it later does not make it newer
           const requested_at = show.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
+          const noted = show.state === 'ignored' && !!state.owner && guests.includes(state.owner)
 
-          if (changed || show.plex_guid !== plex_guid || requested_at) {
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}) } } })
+          if (changed || show.plex_guid !== plex_guid || requested_at || noted) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}), ...(noted ? { state: 'wished' } : {}) } } })
             await api.fetch(uri, params, init)
           }
 
