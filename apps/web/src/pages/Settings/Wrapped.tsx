@@ -1,14 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import toast from 'react-hot-toast'
+import { Controller, useFieldArray, UseFormReturn } from 'react-hook-form'
 import { Button, Option } from '@sensorr/ui'
 import { editionOf, lookOf, WRAPPED_THEME_NAMES, WRAPPED_TIME_ZONE, WrappedTheme } from '@sensorr/sensorr'
-import { useTitle } from '@sensorr/utils'
-import { useConfigContext } from '../../contexts/Config/Config'
-import { useGuestsContext } from '../../contexts/Guests/Guests'
-import { useAPI } from '../../store/api'
-import Body from '../../layout/Body/Body'
 
 const THEMES = Object.keys(WRAPPED_THEME_NAMES) as WrappedTheme[]
 
@@ -80,14 +72,14 @@ const inherit = (theme: WrappedTheme) => `Default · ${WRAPPED_THEME_NAMES[theme
 const inheritChoice = (choice: boolean) => `Default · ${choice ? 'can switch' : 'fixed'}`
 
 // '' stands for « keep the default » in a select, null in the config and the API
-const LookSelect = ({ value, fallback, onChange, label }: { value: WrappedTheme | null, fallback: WrappedTheme, onChange: (theme: WrappedTheme | null) => void, label: string }) => (
+export const LookSelect = ({ value, fallback, onChange, label }: { value: WrappedTheme | null, fallback: WrappedTheme, onChange: (theme: WrappedTheme | null) => void, label: string }) => (
   <select aria-label={label} value={value ?? ''} onChange={(event) => onChange((event.target.value || null) as WrappedTheme | null)} sx={{ variant: 'select.default' }} data-custom={value !== null || undefined}>
     <option value=''>{inherit(fallback)}</option>
     {THEMES.map((theme) => <option key={theme} value={theme}>{WRAPPED_THEME_NAMES[theme]}</option>)}
   </select>
 )
 
-const ChoiceSelect = ({ value, fallback, onChange, label }: { value: boolean | null, fallback: boolean, onChange: (choice: boolean | null) => void, label: string }) => (
+export const ChoiceSelect = ({ value, fallback, onChange, label }: { value: boolean | null, fallback: boolean, onChange: (choice: boolean | null) => void, label: string }) => (
   <select aria-label={label} value={value === null ? '' : String(value)} onChange={(event) => onChange(event.target.value === '' ? null : event.target.value === 'true')} sx={{ variant: 'select.default' }} data-custom={value !== null || undefined}>
     <option value=''>{inheritChoice(fallback)}</option>
     <option value='true'>Can switch</option>
@@ -95,162 +87,86 @@ const ChoiceSelect = ({ value, fallback, onChange, label }: { value: boolean | n
   </select>
 )
 
-type Look = { wrapped_theme: WrappedTheme | null, wrapped_choice: boolean | null }
-type Friend = Look & { viewer: number | null, username: string | null }
+type Edition = { year: number, theme: WrappedTheme | null, choice: boolean | null }
 
-const Wrapped = () => {
-  useTitle('Settings - Wrapped')
-  const api = useAPI()
-  const { onSave } = useOutletContext() as any
-  const { config } = useConfigContext()
-  const { guests } = useGuestsContext() as any
-  const form = useForm({ defaultValues: config.getProperties() })
-  const editions = useFieldArray({ name: 'wrapped.editions', control: form.control })
-  const [looks, setLooks] = useState<Record<string, Friend> | null>(null)
-  const [changed, setChanged] = useState<Record<string, Look>>({})
-  const [failed, setFailed] = useState(false)
-
+// What a friend without a look of their own gets on the current edition, from the values being edited
+export const useFallback = (form: UseFormReturn<any>) => {
   const global = { theme: form.watch('wrapped.theme') as WrappedTheme, choice: form.watch('wrapped.choice') as boolean }
-  const rows = form.watch('wrapped.editions') as { year: number, theme: WrappedTheme | null, choice: boolean | null }[]
+  const rows = (form.watch('wrapped.editions') || []) as Edition[]
+  return { global, rows, fallback: lookOf({ global, edition: rows.find(({ year }) => year === editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)) }) }
+}
+
+// The looks everyone gets and each year's own, saved with the config
+export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSave: (data: any) => void }) => {
+  const editions = useFieldArray({ name: 'wrapped.editions', control: form.control })
+  const { global, rows } = useFallback(form)
   const years = rows.map(({ year }) => year)
   const current = editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)
   const next = years.includes(current) ? Math.max(...years) + 1 : current
-  // What a friend without a look of their own gets this year
-  const fallback = lookOf({ global, edition: rows.find(({ year }) => year === current) })
-
-  const fetchLooks = useCallback(() => {
-    setFailed(false)
-    const { uri, params, init } = api.query.wrapped.getGuests()
-    api.fetch(uri, params, init)
-      .then((results) => setLooks(results.reduce((acc, guest) => ({ ...acc, [guest.email]: guest }), {})))
-      .catch((err) => {
-        console.warn(err)
-        setFailed(true)
-      })
-  }, [])
-
-  useEffect(fetchLooks, [guests])
-
-  const setLook = (email: string, look: Partial<Look>) => setChanged((changed) => ({
-    ...changed,
-    [email]: { wrapped_theme: looks![email].wrapped_theme, wrapped_choice: looks![email].wrapped_choice, ...changed[email], ...look },
-  }))
-
-  const save = form.handleSubmit(async (data) => {
-    await onSave(data)
-    const entries = Object.entries(changed)
-
-    try {
-      await Promise.all(entries.map(([email, { wrapped_theme, wrapped_choice }]) => {
-        const { uri, params, init } = api.query.wrapped.postLook({ body: { email, theme: wrapped_theme, choice: wrapped_choice } })
-        return api.fetch(uri, params, init)
-      }))
-      setLooks((looks) => ({ ...looks, ...Object.fromEntries(entries.map(([email, look]) => [email, { ...looks![email], ...look }])) }))
-      setChanged({})
-    } catch (err) {
-      console.warn(err)
-      toast.error('Error while saving the looks of the friends, try again')
-    }
-  })
-
-  const friends = Object.values(guests || {}).filter((guest: any) => looks?.[guest.email]?.viewer) as any[]
 
   return (
-    <Body>
-      <section>
-        <article>
-          <h2>Wrapped</h2>
-          <p>The look of each friend's wrapped, the yearly page of what they watched on Plex. Pick the look everyone gets, change it for a year, then for a friend.</p>
-          <form onSubmit={save}>
-            <h3>Look</h3>
-            <Controller
-              name='wrapped.theme'
-              control={form.control}
-              render={({ field: { value, onChange } }) => (
-                <div role='radiogroup' aria-label='Look' sx={Wrapped.styles.looks}>
-                  {THEMES.map((theme) => (
-                    <label key={theme} sx={Wrapped.styles.look} data-checked={value === theme || undefined}>
-                      <input type='radio' name='wrapped.theme' value={theme} checked={value === theme} onChange={() => onChange(theme)} />
-                      <Glimpse theme={theme} />
-                      <span>{WRAPPED_THEME_NAMES[theme]}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            />
-            <Controller
-              name='wrapped.choice'
-              control={form.control}
-              render={({ field: { value: checked, onChange } }) => (
-                <Option type='checkbox' id='wrapped.choice' checked={checked} onChange={(e: any) => onChange(e.target.checked)}>
-                  <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                    <strong>Friends can switch to another look</strong>
-                    <br />
-                    <small>On their page, and their device remembers it</small>
-                  </div>
-                </Option>
-              )}
-            />
-
-            <h3>By year</h3>
-            {!editions.fields.length && <p><small>Every year wears the look above.</small></p>}
-            {editions.fields.map((edition, index) => (
-              <div key={edition.id} sx={Wrapped.styles.row}>
-                <strong>{rows[index]?.year} edition</strong>
-                <Controller
-                  name={`wrapped.editions.${index}.theme`}
-                  control={form.control}
-                  render={({ field: { value, onChange } }) => <LookSelect label={`Look of the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.theme} onChange={onChange} />}
-                />
-                <Controller
-                  name={`wrapped.editions.${index}.choice`}
-                  control={form.control}
-                  render={({ field: { value, onChange } }) => <ChoiceSelect label={`Whether friends switch on the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.choice} onChange={onChange} />}
-                />
-                <button type='button' sx={Wrapped.styles.remove} onClick={() => editions.remove(index)} aria-label={`Back to the default look for ${rows[index]?.year}`}>
-                  Remove
-                </button>
-              </div>
+    <form onSubmit={form.handleSubmit(onSave)}>
+      <Controller
+        name='wrapped.theme'
+        control={form.control}
+        render={({ field: { value, onChange } }) => (
+          <div role='radiogroup' aria-label='Look' sx={WrappedLooks.styles.looks}>
+            {THEMES.map((theme) => (
+              <label key={theme} sx={WrappedLooks.styles.look} data-checked={value === theme || undefined}>
+                <input type='radio' name='wrapped.theme' value={theme} checked={value === theme} onChange={() => onChange(theme)} />
+                <Glimpse theme={theme} />
+                <span>{WRAPPED_THEME_NAMES[theme]}</span>
+              </label>
             ))}
-            <button type='button' sx={Wrapped.styles.add} onClick={() => editions.append({ year: next, theme: null, choice: null })}>
-              + A look of its own for {next}
-            </button>
-
-            <h3>By friend</h3>
-            {failed ? (
-              <p>Unable to load the friends, <button type='button' sx={Wrapped.styles.link} onClick={fetchLooks}>retry</button></p>
-            ) : !looks ? (
-              <p aria-busy={true}>Looking for them in Tautulli...</p>
-            ) : !friends.length ? (
-              <p><small>No friend matches a Tautulli user yet, see Friends</small></p>
-            ) : (
-              friends.map((guest) => {
-                const look = { ...looks[guest.email], ...changed[guest.email] }
-                return (
-                  <div key={guest.email} sx={Wrapped.styles.row}>
-                    <div sx={Wrapped.styles.friend} title={guest.email}>
-                      <strong>{looks[guest.email].username || guest.name}</strong>
-                      {looks[guest.email].username && <small>{guest.name}</small>}
-                    </div>
-                    <LookSelect label={`Look of ${guest.name}`} value={look.wrapped_theme ?? null} fallback={fallback.theme} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
-                    <ChoiceSelect label={`Whether ${guest.name} can switch`} value={look.wrapped_choice ?? null} fallback={fallback.choice} onChange={(wrapped_choice) => setLook(guest.email, { wrapped_choice })} />
-                    <span />
-                  </div>
-                )
-              })
-            )}
-
-            <div sx={{ display: 'flex', marginTop: 8 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+          </div>
+        )}
+      />
+      <Controller
+        name='wrapped.choice'
+        control={form.control}
+        render={({ field: { value: checked, onChange } }) => (
+          <Option type='checkbox' id='wrapped.choice' checked={checked} onChange={(e: any) => onChange(e.target.checked)}>
+            <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+              <strong>Friends can switch to another look</strong>
+              <br />
+              <small>On their page, and their device remembers it</small>
             </div>
-          </form>
-        </article>
-      </section>
-    </Body>
+          </Option>
+        )}
+      />
+      <h4 sx={WrappedLooks.styles.subtitle}>By year</h4>
+      {!editions.fields.length && <p><small>Every year wears the look above.</small></p>}
+      {editions.fields.map((edition, index) => (
+        <div key={edition.id} sx={WrappedLooks.styles.row}>
+          <strong>{rows[index]?.year}</strong>
+          <Controller
+            name={`wrapped.editions.${index}.theme`}
+            control={form.control}
+            render={({ field: { value, onChange } }) => <LookSelect label={`Look of the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.theme} onChange={onChange} />}
+          />
+          <Controller
+            name={`wrapped.editions.${index}.choice`}
+            control={form.control}
+            render={({ field: { value, onChange } }) => <ChoiceSelect label={`Whether friends switch on the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.choice} onChange={onChange} />}
+          />
+          <button type='button' sx={WrappedLooks.styles.remove} onClick={() => editions.remove(index)} title={`Back to the default look for ${rows[index]?.year}`} aria-label={`Back to the default look for ${rows[index]?.year}`}>
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }} aria-hidden='true'>
+              <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
+            </svg>
+          </button>
+        </div>
+      ))}
+      <Button type='button' color='primary' variant='contain' sx={{ width: '100%', marginTop: 6 }} onClick={() => editions.append({ year: next, theme: null, choice: null })}>
+        Add a look for {next}
+      </Button>
+      <div sx={{ display: 'flex', marginTop: 12 }}>
+        <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+      </div>
+    </form>
   )
 }
 
-Wrapped.styles = {
+WrappedLooks.styles = {
   looks: {
     display: 'grid',
     gridTemplateColumns: ['repeat(3, 1fr)', 'repeat(5, 1fr)'],
@@ -280,6 +196,7 @@ Wrapped.styles = {
     },
     '>span': {
       fontWeight: 'semibold',
+      fontSize: [6, 5],
       textAlign: 'center',
     },
     ':hover': {
@@ -294,18 +211,20 @@ Wrapped.styles = {
       outlineOffset: 2,
     },
   },
+  subtitle: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
   row: {
     display: 'grid',
-    gridTemplateColumns: ['1fr auto', 'minmax(8rem, 1fr) 2fr 2fr 5rem'],
+    gridTemplateColumns: ['1fr auto', '4rem 1fr 1fr auto'],
     alignItems: 'center',
     gap: 4,
     paddingY: 8,
     borderBottom: '1px solid',
     borderColor: 'grayDark',
     '>strong': {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      fontFamily: 'monospace',
     },
     '>select': {
       gridColumn: ['1 / -1', 'auto'],
@@ -314,44 +233,31 @@ Wrapped.styles = {
       },
     },
   },
-  friend: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-    '>*': {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
-    '>small': {
-      color: 'grayDarkest',
-    },
-  },
+  // The remove button of Settings › Indexers
   remove: {
     variant: 'button.reset',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+    minWidth: '2.5rem',
     minHeight: '2.5rem',
-    paddingX: 6,
-    color: 'grayDarkest',
-    ':hover, :focus-visible': {
-      color: 'error',
-    },
     gridRow: [1, 'auto'],
     gridColumn: [2, 'auto'],
+    borderRadius: '0.25em',
+    paddingX: 6,
+    backgroundColor: 'error',
+    color: 'whitePure',
     cursor: 'pointer',
-  },
-  add: {
-    variant: 'button.reset',
-    marginY: 8,
-    paddingY: 8,
-    color: 'primary',
-    fontWeight: 'semibold',
-    cursor: 'pointer',
-  },
-  link: {
-    variant: 'button.reset',
-    textDecoration: 'underline',
-    cursor: 'pointer',
+    '>svg': {
+      height: '0.75em',
+      width: '0.75em',
+    },
+    '&:hover': {
+      backgroundColor: 'errorDarker',
+    },
+    '&:active': {
+      backgroundColor: 'errorDarkest',
+    },
   },
 }
-
-export default Wrapped

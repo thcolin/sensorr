@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Button, Icon, Link } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
 import { useTitle } from '@sensorr/utils'
+import { useConfigContext } from '../../contexts/Config/Config'
+import { ChoiceSelect, LookSelect, useFallback, WrappedLooks } from './Wrapped'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
 
@@ -15,6 +19,10 @@ const Friends = ({ ...props }) => {
   const [wrapped, setWrapped] = useState(null)
   const [wrappedError, setWrappedError] = useState(false)
   const [busy, setBusy] = useState({})
+  const { onSave } = useOutletContext() as any
+  const { config } = useConfigContext()
+  const looks = useForm({ defaultValues: config.getProperties() })
+  const { fallback } = useFallback(looks)
 
   const fetchWrapped = useCallback(() => {
     setWrappedError(false)
@@ -58,6 +66,22 @@ const Friends = ({ ...props }) => {
       toast.error(`Unable to copy to Clipboard, the wrapped link of "${email}" is ${linkOf(token)}`)
     }
   }, [wrapped])
+  // Saved as soon as it is picked, like the link beside it
+  const setLook = useCallback(async (email, look) => {
+    const previous = wrapped[email]
+    const next = { wrapped_theme: previous.wrapped_theme ?? null, wrapped_choice: previous.wrapped_choice ?? null, ...look }
+    setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], ...next } }))
+
+    try {
+      const { uri, params, init } = api.query.wrapped.postLook({ body: { email, theme: next.wrapped_theme, choice: next.wrapped_choice } })
+      await api.fetch(uri, params, init)
+    } catch (err) {
+      console.warn(err)
+      setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], wrapped_theme: previous.wrapped_theme, wrapped_choice: previous.wrapped_choice } }))
+      toast.error(`Error while saving the look of "${email}", try again`)
+    }
+  }, [wrapped])
+
   const [invitation, setInvitation] = useState(
     `Someone wonderful want to follow your Plex "Watchlist" and consider your movie wishes !\n` +
     `To accept his invitation, link your Plex account with Sensorr server by following quick instructions,\n` +
@@ -67,6 +91,11 @@ const Friends = ({ ...props }) => {
   return (
     <Body>
       <section>
+        <article>
+          <h2>Wrapped</h2>
+          <p>Each friend matched to a Tautulli user gets a yearly page of what they watched on Plex, the wrapped. Pick the look it wears, give a year its own, then a friend in their card below.</p>
+          <WrappedLooks form={looks} onSave={onSave} />
+        </article>
         <article>
           <h2>Friends</h2>
           <p>
@@ -149,6 +178,12 @@ const Friends = ({ ...props }) => {
                   >
                     🔄
                   </button>
+                  {wrapped?.[guest.email]?.viewer && (
+                    <div sx={Friends.styles.look}>
+                      <LookSelect label={`Look of the wrapped of ${guest.name}`} value={wrapped[guest.email].wrapped_theme ?? null} fallback={fallback.theme} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
+                      <ChoiceSelect label={`Whether ${guest.name} can switch the look`} value={wrapped[guest.email].wrapped_choice ?? null} fallback={fallback.choice} onChange={(wrapped_choice) => setLook(guest.email, { wrapped_choice })} />
+                    </div>
+                  )}
                 </footer>
               </div>
             ))}
@@ -218,6 +253,7 @@ Friends.styles = {
   },
   wrapped: {
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'stretch',
     flex: '1 1 100%',
     marginTop: 8,
@@ -264,6 +300,19 @@ Friends.styles = {
           whiteSpace: ['normal', 'nowrap'],
         },
       },
+    },
+  },
+  // The friend's own look, a second line of the wrapped footer
+  look: {
+    display: 'grid',
+    gridTemplateColumns: ['1fr', '1fr 1fr'],
+    gap: 4,
+    flex: '1 1 100%',
+    padding: 6,
+    borderTop: '1px solid',
+    borderColor: 'grayDark',
+    '>select[data-custom]': {
+      borderColor: 'primary',
     },
   },
   action: {

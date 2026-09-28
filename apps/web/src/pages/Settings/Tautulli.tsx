@@ -17,7 +17,7 @@ const Tautulli = ({ ...props }) => {
       <section>
         <article>
           <h2>Tautulli</h2>
-          <p>Sensorr reads the Plex watch history from <a href='https://tautulli.com/' target='_blank' rel='noopener noreferrer'>Tautulli</a> to compute each friend's wrapped, through the <code>wrapped</code> job. Its look is set in <code>Wrapped</code>.</p>
+          <p>Sensorr reads the Plex watch history from <a href='https://tautulli.com/' target='_blank' rel='noopener noreferrer'>Tautulli</a> to compute each friend's wrapped, through the <code>wrapped</code> job. Its look is set in <code>Friends</code>.</p>
           <form onSubmit={form.handleSubmit(onSave)}>
             <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
               <Controller
