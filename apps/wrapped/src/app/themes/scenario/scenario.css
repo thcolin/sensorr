@@ -1,0 +1,771 @@
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-400-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-700-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-400-italic-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/CourierPrime-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/Caveat-500-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../../assets/fonts/scenario/Caveat-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root[data-theme='scenario'] {
+  --scenario-desk: #2b2622;
+  --scenario-ink: #1b1a17;
+  --scenario-quiet: #4a4640;
+  --scenario-pencil: #a3201a;
+  --scenario-marker: #fff06a;
+  --scenario-clip: #7d828a;
+  --switch-bg: #fbfaf5;
+  --switch-fg: #1b1a17;
+  --switch-font: 700 14px/1 'Courier Prime', 'Courier New', monospace;
+  --switch-radius: 2px;
+}
+
+html[data-theme='scenario'] {
+  background: var(--scenario-desk);
+  color-scheme: dark;
+  scrollbar-color: #6e6259 var(--scenario-desk);
+}
+
+[data-theme='scenario'] body {
+  background: var(--scenario-desk);
+  color: var(--scenario-ink);
+  font: 400 15px/1.5 'Courier Prime', 'Courier New', monospace;
+}
+
+[data-theme='scenario'] ::selection {
+  background: var(--scenario-marker);
+  color: var(--scenario-ink);
+}
+
+/* The desk: a lamp pool from above, pages in the middle, an index card and props on a wide screen */
+.scenario-desk {
+  min-height: 100svh;
+  padding: 16px 12px 96px;
+  background: radial-gradient(ellipse 90% 60% at 50% 0%, rgb(255 214 160 / 0.09), transparent 70%) fixed, var(--scenario-desk);
+  overflow-x: clip;
+}
+
+.scenario-script {
+  display: grid;
+  grid-template-columns: minmax(0, 816px);
+  justify-content: center;
+  gap: 28px;
+}
+
+.scenario-index,
+.scenario-props {
+  display: none;
+}
+
+/* A US Letter sheet, 8.5 by 11 */
+.scenario-page {
+  --paper: #fbfaf5;
+  --marker: var(--scenario-marker);
+  --margin-left: 38px;
+  --margin-right: 20px;
+  position: relative;
+  width: 100%;
+  max-width: 816px;
+  aspect-ratio: 8.5 / 11;
+  padding: 60px var(--margin-right) 88px var(--margin-left);
+  background: var(--paper);
+  color: var(--scenario-ink);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 14px 32px -8px rgb(0 0 0 / 0.55);
+  scroll-margin-top: 24px;
+}
+
+.scenario-page[data-revision='blue'] { --paper: #dbe7f7; }
+.scenario-page[data-revision='pink'] { --paper: #f7dbe3; }
+.scenario-page[data-revision='yellow'] { --paper: #f8f0b8; --marker: #ffb0cf; }
+.scenario-page[data-revision='green'] { --paper: #d9edd0; }
+.scenario-page[data-revision='gold'] { --paper: #efd89e; --marker: #ffb0cf; }
+.scenario-page[data-revision='buff'] { --paper: #f1e3c7; --marker: #ffb0cf; }
+.scenario-page[data-revision='salmon'] { --paper: #f6d2c1; }
+.scenario-page[data-revision='cherry'] { --paper: #f2c6cc; }
+.scenario-page[data-revision='tan'] { --paper: #ddcbad; --marker: #ffb0cf; }
+
+.scenario-holes {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 11px;
+}
+
+.scenario-holes i {
+  position: absolute;
+  left: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--scenario-desk);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.scenario-holes i:nth-child(1) { top: 11%; }
+.scenario-holes i:nth-child(2) { top: calc(50% - 5px); }
+.scenario-holes i:nth-child(3) { bottom: 11%; }
+
+.scenario-holes-brads i:not(:nth-child(2)) {
+  background: radial-gradient(circle at 35% 35%, #ecd48a, #b38a33 55%, #7a5a1c);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.scenario-head {
+  position: absolute;
+  top: 20px;
+  right: var(--margin-right);
+  display: flex;
+  gap: 2ch;
+  font-size: 13px;
+  color: var(--scenario-quiet);
+}
+
+.scenario-head span:last-child {
+  color: var(--scenario-ink);
+}
+
+.scenario-act {
+  margin: 0 0 22px;
+  font-size: 1.12em;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+  text-wrap: balance;
+}
+
+.scenario-slug {
+  position: relative;
+  margin: 24px 0 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scenario-scene {
+  position: absolute;
+  top: 0.1em;
+  left: calc(-1 * var(--margin-left) + 21px);
+  font-size: 12px;
+}
+
+.scenario-scene-right {
+  left: auto;
+  right: calc(-1 * var(--margin-right) + 4px);
+}
+
+.scenario-action {
+  margin: 0 0 14px;
+  max-width: 62ch;
+}
+
+.scenario-date::first-letter {
+  text-transform: uppercase;
+}
+
+.scenario-character {
+  margin: 20px 0 0 32%;
+  text-transform: uppercase;
+}
+
+.scenario-parenthetical {
+  margin-left: 24%;
+}
+
+.scenario-dialogue {
+  margin: 0 8% 12px 16%;
+}
+
+.scenario-transition {
+  margin: 28px 0 0;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.scenario-end {
+  margin: 48px 0 0;
+  font-size: 1.2em;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.scenario-caps {
+  text-transform: uppercase;
+}
+
+/* A highlighter swipe: a little short at both ends, uneven like a felt tip */
+.scenario-mark {
+  padding: 0 0.18em;
+  margin: 0 -0.06em;
+  color: inherit;
+  background: linear-gradient(97deg, transparent 0 2px, var(--marker) 3px calc(100% - 4px), transparent calc(100% - 2px)) 0 55% / 100% 1.05em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.scenario-pencil-note {
+  margin: 2px 0 16px;
+  font: 500 24px/1.1 'Caveat', cursive;
+  color: var(--scenario-pencil);
+  transform: rotate(-3deg);
+  transform-origin: left center;
+}
+
+/* Posters paper-clipped to the page */
+.scenario-insert {
+  position: relative;
+  width: 56%;
+  margin: 22px 0 22px auto;
+  transform: rotate(var(--tilt, 1.5deg));
+}
+
+.scenario-insert img,
+.scenario-insert-blank {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: #d8d2c4;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 10px 18px -6px rgb(0 0 0 / 0.4);
+}
+
+.scenario-insert-blank {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  font-size: 13px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.scenario-insert-wide {
+  width: 100%;
+}
+
+.scenario-insert-wide img {
+  aspect-ratio: 16 / 9;
+}
+
+.scenario-clip {
+  position: absolute;
+  z-index: 1;
+  top: -16px;
+  left: var(--clip, 20%);
+  width: 20px;
+  height: 54px;
+  filter: drop-shadow(0 2px 1px rgb(0 0 0 / 0.3));
+}
+
+.scenario-insert figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.scenario-insert figcaption span {
+  color: var(--scenario-quiet);
+}
+
+.scenario-inserts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 18px;
+  margin: 24px 0 20px;
+}
+
+.scenario-inserts .scenario-insert {
+  width: 100%;
+  margin: 0;
+}
+
+.scenario-beside {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 16px;
+}
+
+.scenario-beside .scenario-insert {
+  flex: none;
+  margin-left: 0;
+}
+
+.scenario-pencil-side {
+  flex: 1;
+  margin: 0;
+  text-align: right;
+}
+
+.scenario-tally {
+  flex: 1;
+  max-width: 180px;
+  fill: none;
+  stroke: var(--scenario-pencil);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.scenario-continued p {
+  margin: 10px 0 0;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scenario-continued p:nth-child(2) { opacity: 0.55; }
+.scenario-continued p:nth-child(3) { opacity: 0.25; }
+
+/* The cast list, billed in order */
+.scenario-cast {
+  max-width: 34ch;
+  margin: 8px auto 24px;
+}
+
+.scenario-cast li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+  line-height: 1.9;
+}
+
+.scenario-cast li > span:first-child {
+  width: 4ch;
+  flex: none;
+  text-align: right;
+}
+
+.scenario-cast i {
+  flex: 1;
+  height: 0.9em;
+  border-bottom: 1px dotted rgb(27 26 23 / 0.5);
+}
+
+.scenario-cast li[data-gap] {
+  margin-top: 1.6em;
+}
+
+.scenario-cast li[data-gap]::before {
+  content: '…';
+  position: absolute;
+  top: -1.55em;
+  left: 2.5ch;
+}
+
+/* The months: short scenes, a thumbnail each */
+.scenario-months .scenario-slug {
+  margin: 18px 0 4px;
+}
+
+.scenario-month {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.scenario-month .scenario-action {
+  flex: 1;
+  margin: 0;
+}
+
+.scenario-month-text {
+  flex: 1;
+}
+
+/* A felt-tip stroke under each month, as long as its episodes */
+.scenario-swipe {
+  display: block;
+  width: calc(var(--share, 0) * 100%);
+  min-width: 6px;
+  height: 7px;
+  margin-top: 5px;
+  background: var(--marker);
+  border-radius: 1px 3px 2px 1px;
+  filter: saturate(1.3) brightness(0.96);
+}
+
+.scenario-insert-thumb {
+  flex: none;
+  width: 46px;
+  margin: 8px 4px 4px 0;
+}
+
+.scenario-insert-thumb .scenario-clip {
+  top: -9px;
+  width: 11px;
+  height: 30px;
+}
+
+.scenario-month-peak .scenario-pencil-note {
+  margin: 6px 0 4px;
+}
+
+.scenario-genre {
+  margin: 8px 0 18px;
+  font-size: 1.3em;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* The title page: centred title, author, and the draft notes bottom left */
+.scenario-title-page {
+  display: flex;
+  flex-direction: column;
+  padding-top: 72px;
+}
+
+.scenario-title-block {
+  margin-top: 14%;
+  text-align: center;
+}
+
+.scenario-title {
+  font-size: 1.35em;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+  text-wrap: balance;
+}
+
+.scenario-untyped {
+  visibility: hidden;
+}
+
+.scenario-caret {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 1em;
+}
+
+.scenario-caret::after {
+  content: '';
+  position: absolute;
+  bottom: -0.15em;
+  left: 1px;
+  width: 0.55em;
+  height: 1.15em;
+  background: var(--scenario-ink);
+  animation: scenario-caret 1.05s steps(1) infinite;
+}
+
+@keyframes scenario-caret {
+  50% { opacity: 0; }
+}
+
+.scenario-byline {
+  margin-top: 2.4em;
+}
+
+.scenario-author {
+  margin-top: 1.1em;
+  font-weight: 700;
+}
+
+.scenario-fan {
+  display: flex;
+  justify-content: center;
+  margin: 44px 0 36px;
+  padding-left: 7%;
+}
+
+.scenario-fan .scenario-insert {
+  width: 27%;
+  margin: 0 0 0 -7%;
+}
+
+.scenario-fan .scenario-insert:nth-child(even) {
+  margin-top: 14px;
+}
+
+.scenario-draft {
+  margin-top: auto;
+  max-width: 44ch;
+  font-size: 13px;
+}
+
+.scenario-draft ul {
+  margin-top: 10px;
+}
+
+.scenario-draft li + li {
+  margin-top: 2px;
+}
+
+/* The back cover: blue card stock, a typed label */
+.scenario-cover {
+  position: relative;
+  width: 100%;
+  max-width: 816px;
+  padding: 72px 28px 104px 44px;
+  background: #27405f;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 14px 32px -8px rgb(0 0 0 / 0.55);
+}
+
+.scenario-cover-label {
+  max-width: 44ch;
+  margin: 0 auto;
+  padding: 18px 20px;
+  background: #fbfaf5;
+  color: var(--scenario-ink);
+  font-size: 13px;
+  transform: rotate(-0.6deg);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+.scenario-cover-label p + p {
+  margin-top: 8px;
+}
+
+@media (min-width: 600px) {
+  .scenario-inserts[data-count='3'],
+  .scenario-inserts[data-count='4'] {
+    grid-template-columns: repeat(var(--columns, 4), 1fr);
+  }
+
+  .scenario-inserts[data-count='3'] {
+    --columns: 3;
+  }
+}
+
+/* At real scale: 12 pt Courier, ten characters to the inch */
+@media (min-width: 900px) {
+  [data-theme='scenario'] body {
+    font-size: 16px;
+  }
+
+  .scenario-desk {
+    padding: 48px 32px 120px;
+  }
+
+  .scenario-script {
+    gap: 48px;
+  }
+
+  .scenario-page {
+    --margin-left: 15ch;
+    --margin-right: 10ch;
+    padding-top: 96px;
+    padding-bottom: 120px;
+    transform: rotate(var(--tilt, 0deg));
+  }
+
+  .scenario-holes {
+    left: 26px;
+    width: 14px;
+  }
+
+  .scenario-holes i {
+    width: 14px;
+    height: 14px;
+  }
+
+  .scenario-head {
+    top: 48px;
+    font-size: inherit;
+  }
+
+  .scenario-scene {
+    left: -7ch;
+    font-size: inherit;
+  }
+
+  .scenario-scene-right {
+    left: auto;
+    right: -6ch;
+  }
+
+  .scenario-character { margin-left: 22ch; }
+  .scenario-parenthetical { margin-left: 16ch; }
+  .scenario-dialogue { max-width: 35ch; margin: 0 0 12px 10ch; }
+
+  .scenario-insert { width: 44%; }
+  .scenario-insert-wide { width: 100%; }
+  .scenario-inserts .scenario-insert { width: 100%; }
+  .scenario-insert-thumb { width: 54px; }
+
+  .scenario-title-page {
+    padding-top: 96px;
+  }
+
+  .scenario-draft {
+    font-size: inherit;
+  }
+
+  .scenario-pencil-note {
+    font-size: 28px;
+  }
+
+  .scenario-cover {
+    padding: 96px 10ch 120px 15ch;
+  }
+
+  .scenario-cover-label {
+    font-size: inherit;
+  }
+}
+
+@media (min-width: 1300px) {
+  .scenario-desk {
+    display: grid;
+    grid-template-columns: 1fr 816px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .scenario-index {
+    position: sticky;
+    top: 48px;
+    display: block;
+    justify-self: end;
+    width: 270px;
+    margin-top: 40px;
+    padding: 48px 18px 12px;
+    background: #fbfaf5 repeating-linear-gradient(transparent 0 23px, #a9c6e8 23px 24px) 0 48px / 100% calc(100% - 60px) no-repeat;
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 12px 26px -8px rgb(0 0 0 / 0.55);
+    transform: rotate(-1.6deg);
+    font-size: 13px;
+    line-height: 24px;
+  }
+
+  .scenario-index::before {
+    content: '';
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #d9686a;
+  }
+
+  .scenario-index a {
+    display: flex;
+    justify-content: space-between;
+    gap: 1ch;
+    color: var(--scenario-ink);
+    text-decoration: none;
+  }
+
+  .scenario-index a span:first-child {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .scenario-index a:hover span:first-child {
+    background: linear-gradient(var(--scenario-marker), var(--scenario-marker)) 0 55% / 100% 1em no-repeat;
+  }
+
+  .scenario-index a:focus-visible {
+    outline: 2px solid var(--scenario-pencil);
+    outline-offset: 2px;
+  }
+
+  .scenario-props {
+    position: sticky;
+    top: 120px;
+    display: block;
+    height: 420px;
+  }
+
+  .scenario-props svg {
+    position: absolute;
+    filter: drop-shadow(6px 12px 8px rgb(0 0 0 / 0.45));
+  }
+
+  .scenario-pencil {
+    top: 0;
+    left: 60px;
+    height: 300px;
+    transform: rotate(24deg);
+  }
+
+  .scenario-highlighter {
+    top: 60px;
+    left: 150px;
+    height: 220px;
+    transform: rotate(-14deg);
+  }
+
+  .scenario-brads {
+    top: 340px;
+    left: 40px;
+    width: 80px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenario-caret::after {
+    animation: none;
+  }
+}
