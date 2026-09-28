@@ -230,9 +230,17 @@ const Binge = ({ sheet, art, episodes }: { sheet: Of<'binge'>, art: Art, episode
       <Box poster={sheet.poster} art={art} className="videoclub-box-large" />
       {!!episodes && <Spines poster={sheet.poster} count={Math.min(episodes, 40)} />}
     </div>
-    <div className="videoclub-shelf-card">
-      <h3>{sheet.title}</h3>
-      {sheet.meta.map((meta) => <p key={meta}>{meta}</p>)}
+    <div className="videoclub-binge-text">
+      <div className="videoclub-shelf-card">
+        <h3>{sheet.title}</h3>
+        {(sheet.pace ? sheet.meta.slice(0, -1) : sheet.meta).map((meta) => <p key={meta}>{meta}</p>)}
+      </div>
+      {sheet.pace && (
+        <div className="videoclub-pace">
+          <Box poster={sheet.pace} art={art} width={320} tilt={6} />
+          <p className="videoclub-pace-note">{sheet.meta[sheet.meta.length - 1]}</p>
+        </div>
+      )}
     </div>
   </section>
 )

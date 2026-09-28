@@ -983,6 +983,31 @@ html[data-theme='videoclub'] {
   margin-top: 6px;
 }
 
+/* The pace show beside the box set, its line on a note */
+.videoclub-binge-text {
+  display: grid;
+  gap: 28px;
+}
+
+.videoclub-pace {
+  display: grid;
+  grid-template-columns: 34% 1fr;
+  align-items: center;
+  gap: 18px;
+  width: min(100%, 460px);
+  margin-inline: auto;
+}
+
+.videoclub-pace-note {
+  padding: 12px 14px 14px;
+  background: var(--vc-label);
+  color: var(--vc-ink);
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  transform: rotate(1.5deg);
+  box-shadow: 0 8px 16px rgb(0 0 0 / 0.45);
+}
+
 /* Night: the returns box, the last tape half through the slot */
 .videoclub-returns {
   width: min(100%, 400px);
@@ -1269,6 +1294,7 @@ html[data-theme='videoclub'] {
   margin-top: 4px;
   color: var(--vc-pen);
   font: 400 0.75rem/1.5 var(--vc-hand);
+  overflow-wrap: anywhere;
 }
 
 /* Genre: the aisle's board, hung on two chains */
@@ -1538,7 +1564,7 @@ html[data-theme='videoclub'] {
   }
 
   .videoclub-rank > .videoclub-lede,
-  .videoclub-binge > .videoclub-shelf-card,
+  .videoclub-binge-text,
   .videoclub-night-text,
   .videoclub-server > .videoclub-shelf-card,
   .videoclub-finale > .videoclub-shelf-card,
