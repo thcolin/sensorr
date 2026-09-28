@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { WRAPPED_THEME_NAMES, type WrappedTheme } from '@sensorr/sensorr'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
-import { LOADERS, THEMES, THEME_COLORS } from './themes'
+import { DEFAULT_THEME, LOADERS, THEMES, THEME_COLORS } from './themes'
 import type { Art } from './themes/types'
 import { known, read, write } from './look'
 
@@ -20,10 +20,11 @@ const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, l
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { look } = share
-  const looks = (look.looks || Object.keys(THEMES) as WrappedTheme[]).filter(known)
+  // In the order of the list, whatever order the config keeps them in
+  const looks = (Object.keys(THEMES) as WrappedTheme[]).filter((id) => !look.looks || look.looks.includes(id))
   const chosen = read('chosen', token)
   // A look chosen earlier and since turned off gives way to the one Thomas set
-  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : 'affiche'))
+  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : DEFAULT_THEME))
   const Theme = THEMES[theme]
   const { sheets, colophon, closed } = sheetsOf(share)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]

@@ -4,31 +4,34 @@ import type { StatesModule, ThemeProps } from './types'
 
 type Loader = () => Promise<{ default: React.ComponentType<ThemeProps> }>
 
+// The look a page falls back on when the API cannot say, the default one of the config
+export const DEFAULT_THEME: WrappedTheme = 'tele'
+
 // Each look loads with its own fonts and sheet the first time it is shown
 export const LOADERS: Record<WrappedTheme, Loader> = {
-  affiche: () => import('./affiche/Affiche'),
-  labo: () => import('./labo/Labo'),
   tele: () => import('./tele/Tele'),
+  labo: () => import('./labo/Labo'),
   videoclub: () => import('./videoclub/Videoclub'),
   scenario: () => import('./scenario/Scenario'),
+  affiche: () => import('./affiche/Affiche'),
 }
 
 // Each look's loading and notice screens, small enough to show before the share arrives
 export const STATES: Record<WrappedTheme, () => Promise<StatesModule>> = {
-  affiche: () => import('./affiche/States'),
-  labo: () => import('./labo/States'),
   tele: () => import('./tele/States'),
+  labo: () => import('./labo/States'),
   videoclub: () => import('./videoclub/States'),
   scenario: () => import('./scenario/States'),
+  affiche: () => import('./affiche/States'),
 }
 
 export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>
 
 // The colour the browser paints around each look, on phones the status bar
 export const THEME_COLORS: Record<WrappedTheme, string> = {
-  affiche: '#b8955a',
-  labo: '#120c08',
   tele: '#f4efe4',
+  labo: '#120c08',
   videoclub: '#0c0a1a',
   scenario: '#2b2622',
+  affiche: '#b8955a',
 }

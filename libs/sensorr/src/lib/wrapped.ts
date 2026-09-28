@@ -4,12 +4,13 @@ export const WRAPPED_TIME_ZONE = 'Europe/Paris'
 export type WrappedTheme = 'affiche' | 'labo' | 'tele' | 'videoclub' | 'scenario'
 
 // Each look as the page names it to the friend
+// In the order Settings and the page list them
 export const WRAPPED_THEME_NAMES: Record<WrappedTheme, string> = {
-  affiche: 'Affiche polonaise',
-  labo: 'Labo 35 mm',
   tele: 'Télé-magazine',
+  labo: 'Labo 35 mm',
   videoclub: 'Vidéoclub',
   scenario: 'Scénario',
+  affiche: 'Affiche polonaise',
 }
 
 interface WrappedLook { theme?: WrappedTheme | null, choice?: boolean | null }

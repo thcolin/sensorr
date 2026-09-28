@@ -76,12 +76,12 @@ A `[]` in a name stands for one item of the array above it.
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `wrapped.looks` | `wrapped-looks` | `["affiche","labo","tele","videoclub","scenario"]` | Looks offered, to the friends who can switch and in every setting below; one left out is never shown |
-| `wrapped.theme` | `affiche`, `labo`, `tele`, `videoclub`, `scenario` | `affiche` | Look of every wrapped, unless an edition or a friend sets its own: affiche, labo, tele, videoclub, scenario |
+| `wrapped.looks` | `wrapped-looks` | `["tele","labo","videoclub","scenario","affiche"]` | Looks offered, to the friends who can switch and in every setting below; one left out is never shown |
+| `wrapped.theme` | `tele`, `labo`, `videoclub`, `scenario`, `affiche` | `tele` | Look of every wrapped, unless an edition or a friend sets its own: tele, labo, videoclub, scenario, affiche |
 | `wrapped.choice` | `boolean` | `true` | Let each friend switch to another look on their page, unless an edition or a friend says otherwise |
 | `wrapped.editions` | `wrapped-editions` | `[]` | Per edition overrides of `theme` and `choice`, a null value keeps the global one |
 | `wrapped.editions[].year` | `nat` | `null` | Year of the edition |
-| `wrapped.editions[].theme` | `affiche`, `labo`, `tele`, `videoclub`, `scenario`, `null` | `null` | Look of this edition: affiche, labo, tele, videoclub, scenario |
+| `wrapped.editions[].theme` | `tele`, `labo`, `videoclub`, `scenario`, `affiche`, `null` | `null` | Look of this edition: tele, labo, videoclub, scenario, affiche |
 | `wrapped.editions[].choice` | `true`, `false`, `null` | `null` | Let each friend switch to another look on this edition |
 
 ## Plex

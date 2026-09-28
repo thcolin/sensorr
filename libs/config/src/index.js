@@ -17,7 +17,7 @@ convict.addFormat({
 })
 
 // The looks of the wrapped page, `apps/wrapped/src/app/themes` draws each one
-export const WRAPPED_THEMES = ['affiche', 'labo', 'tele', 'videoclub', 'scenario']
+export const WRAPPED_THEMES = ['tele', 'labo', 'videoclub', 'scenario', 'affiche']
 
 // A list of looks, each one known and listed once, never empty
 convict.addFormat({
@@ -340,7 +340,7 @@ const schema = {
     theme: {
       doc: `Look of every wrapped, unless an edition or a friend sets its own: ${WRAPPED_THEMES.join(', ')}`,
       format: WRAPPED_THEMES,
-      default: 'affiche',
+      default: 'tele',
     },
     choice: {
       doc: 'Let each friend switch to another look on their page, unless an edition or a friend says otherwise',

@@ -9,7 +9,7 @@ related_targets: []
 
 Scope: `apps/wrapped`, the page behind `/wrapped/<token>`. Mode: Experience. One edition shown, 2026, open until 1 December then frozen. Stands apart from the Sensorr app: `DESIGN.md` does not apply here.
 
-Looks: five, each a whole world drawn over the same sheets and words (`src/app/sheets.ts`): `affiche`, the Polish poster below and the default; `labo`, the year as a reel of 35 mm film; `tele`, a 1990s French TV weekly; `videoclub`, a VHS rental store at night; `scenario`, a screenplay in its revision colours. Each lives in `src/app/themes/<id>/`, scoped under `[data-theme='<id>']` with its own self-hosted fonts. Thomas sets the look globally, per edition and per friend, and whether the friend may switch it on the page. The direction contract below is the Affiche's.
+Looks: five, each a whole world drawn over the same sheets and words (`src/app/sheets.ts`): `tele`, a 1990s French TV weekly and the default; `labo`, the year as a reel of 35 mm film; `videoclub`, a VHS rental store at night; `scenario`, a screenplay in its revision colours; `affiche`, the Polish poster below, listed last. Each lives in `src/app/themes/<id>/`, scoped under `[data-theme='<id>']` with its own self-hosted fonts. Thomas turns each look on or off and sets it globally, per edition and per friend, and whether the friend may switch it on the page, all in Settings › Friends. The direction contract below is the Affiche's.
 
 Audience and job: a friend of Thomas, linked as a guest, opens their link on a phone in the evening. They know cinema, not data. They come to see their year of movies and series on Thomas's Plex, and come back during the year. Success: the first minute impresses, they reread it in August, they talk about it.
 

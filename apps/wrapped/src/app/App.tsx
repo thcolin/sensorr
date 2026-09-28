@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped, WrappedTheme } from '@sensorr/sensorr'
 import { WrappedPage } from './Wrapped'
 import { known, read } from './look'
-import { STATES } from './themes'
+import { DEFAULT_THEME, STATES } from './themes'
 import type { NoticeProps, StatesModule } from './themes/types'
 
 export interface Share {
@@ -51,10 +51,10 @@ const States = ({ notice }: { notice?: NoticeProps }) => {
     if (notice && !theme) {
       fetch('/api/wrapped/look')
         .then((res) => res.ok ? res.json() : Promise.reject(new Error(`${res.status}`)))
-        .then(({ theme }) => setTheme(known(theme) ? theme : 'affiche'))
+        .then(({ theme }) => setTheme(known(theme) ? theme : DEFAULT_THEME))
         .catch((error) => {
           console.error('Unable to load the default look', error)
-          setTheme('affiche')
+          setTheme(DEFAULT_THEME)
         })
     }
   }, [notice, theme])
