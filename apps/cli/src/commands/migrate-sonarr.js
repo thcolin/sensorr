@@ -125,6 +125,12 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
             output: `Migrate "${series.title}"...`,
           }))
 
+          // A show already in Sensorr may have changed since, whatever Sonarr says
+          if (state.known.has(series.tmdbId)) {
+            counts.known++
+            continue
+          }
+
           const fetched = await fetchSonarrShow(state.tmdb, series)
 
           if (!fetched) {
@@ -135,7 +141,10 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
 
           const { show } = fetched
 
-          // A show already in Sensorr may have changed since, whatever Sonarr says
+          if (show.id !== series.tmdbId) {
+            state.logger.info({ message: `Sonarr series "${series.title}" found by its TVDB id ${series.tvdbId}, as TMDB ${show.id}${series.tmdbId ? ` instead of ${series.tmdbId}` : ''}`, metadata: { ...state.metadata, group: show.id } })
+          }
+
           if (state.known.has(show.id)) {
             counts.known++
             continue
@@ -153,14 +162,17 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
           }
 
           if (!state.dry) {
-            const shows = api.query.shows.postShows({ body: { [show.id]: { ...show, ...fields, refreshed_at: new Date() } } })
-            await api.fetch(shows.uri, shows.params, shows.init)
-
+            // The episodes go first: a show posted without them would be known, and skipped by the next run
             if (episodes.length) {
               const { uri, params, init } = api.query.episodes.postEpisodes({ body: episodes.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {}) })
               await api.fetch(uri, params, init)
             }
+
+            const shows = api.query.shows.postShows({ body: { [show.id]: { ...show, ...fields, refreshed_at: new Date() } } })
+            await api.fetch(shows.uri, shows.params, shows.init)
           }
+
+          state.known.add(show.id)
 
           state.logger.info({ message: `Migrate "${show.name}" as "${fields.state}"${state.dry ? ' (dry run)' : ''}`, metadata: { ...state.metadata, group: show.id, type: 'show', entity: lighten.show(show) } })
           counts[fields.state]++
