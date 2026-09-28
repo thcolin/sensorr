@@ -15,6 +15,10 @@ describe('imageRequestOf', () => {
     expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2Fa&X-Plex-Token=1' })).toBeNull()
     expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F..%2F..%2Fetc' })).toBeNull()
     expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F%2E%2E%2Fetc' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F%2Fetc%2Fpasswd' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=upload%3A%2F%2F%252E%252E%252Fetc' })).toBeNull()
+    expect(imageRequestOf({ path: '/LIBRARY/METADATA/4260/FILE?url=media%3A%2F%2Fa' })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/4260/file?url=media%3A%2F%2F2%2Fab12.bundle%2FContents%2FThumbnails%2Fthumb1.jpg' })).not.toBeNull()
   })
 
   it('refuses any other path on Plex, and a fallback outside TMDB', () => {
