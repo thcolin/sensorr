@@ -316,6 +316,15 @@ html[data-theme='affiche'] {
   gap: 1.5cqi;
 }
 
+/* The pace's own show, pinned beside the line that tells it */
+.show-pace {
+  align-self: flex-end;
+  width: 30cqi;
+  aspect-ratio: 2 / 3;
+  margin-top: calc(var(--u) * -2);
+  transform: rotate(4deg);
+}
+
 /* Year */
 .year-strips {
   flex: 1;

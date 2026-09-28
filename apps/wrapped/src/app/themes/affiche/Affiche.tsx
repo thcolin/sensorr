@@ -157,6 +157,7 @@ const Binge = ({ sheet, art }: { sheet: Of<'binge'>, art: Art }) => {
         <Lettering as="h3" className="show-lead-title" text={sheet.title} seed={5} />
         {sheet.meta.map((meta) => <p key={meta} className="meta">{meta}</p>)}
       </div>
+      {sheet.pace && <Painted className="show-pace" src={art(sheet.pace, 'thumb', 320)} alt={sheet.pace.title} progress={progress} />}
     </Sheet>
   )
 }
