@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import config from '@sensorr/config'
+import config, { create } from '@sensorr/config'
 import { migrateJobs } from './migrate'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -66,7 +66,16 @@ export class ConfigService implements OnModuleInit {
     this.logger.log(`Write "${this.file}"`)
   }
 
+  // Convict keeps whatever it loaded even when validation then fails, and routes read the config live
+  private validate(apply: (candidate: any) => void) {
+    const candidate = create()
+    candidate.load(this.config.getProperties())
+    apply(candidate)
+    candidate.validate({ allowed: 'warn', output: () => {} })
+  }
+
   async set(key, value) {
+    this.validate((candidate) => candidate.set(key, value))
     this.config.set(key, value)
     await this.write()
     this.logger.log(`Set "${key}"`)
@@ -76,16 +85,20 @@ export class ConfigService implements OnModuleInit {
     // The Settings pages post the whole config they loaded: the report job's cursor would go back with it.
     delete changes?.jobs?.report?.movies?.since
 
+    const renames = []
+
     if (changes.policies && changes.policies.some(policy => policy.removed || (policy.oldName !== policy.name))) {
       for (const policy of changes.policies) {
         if (policy.removed || policy.oldName !== policy.name) {
-          this.eventEmitter.emit('policy.rename', { oldName: policy.oldName, newName: policy.removed ? null : policy.name })
+          renames.push({ oldName: policy.oldName, newName: policy.removed ? null : policy.name })
         }
       }
 
       changes.policies = changes.policies.filter(policy => !policy.removed).map(({ oldName, ...policy }) => ({ ...policy }))
     }
 
+    this.validate((candidate) => candidate.load(changes))
+    renames.forEach((rename) => this.eventEmitter.emit('policy.rename', rename))
     this.config.load(changes)
     await this.write()
     this.logger.log(`Update "${changes}"`)

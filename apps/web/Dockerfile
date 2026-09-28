@@ -12,10 +12,11 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV NX_REJECT_UNKNOWN_LOCAL_CACHE=0
-RUN yarn build web --prod
+RUN yarn build web --prod && yarn build wrapped --prod
 
 FROM caddy:2.6.4 As production
 
 COPY docker/sensorr-web/Caddyfile /etc/caddy/Caddyfile
 COPY docker/sensorr-web/sslmode /srv/sslmode
 COPY --from=builder /app/dist/apps/web /srv
+COPY --from=builder /app/dist/apps/wrapped /srv/wrapped

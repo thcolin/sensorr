@@ -12,6 +12,12 @@ https:// {
     reverse_proxy sensorr-api:4300
   }
 
+  handle /wrapped/* {
+    root * /srv
+    try_files {path} /wrapped/index.html
+    file_server
+  }
+
   handle {
     root * /srv
     try_files {path} /index.html
@@ -24,6 +30,12 @@ http:// {
 
   handle /api/* {
     reverse_proxy sensorr-api:4300
+  }
+
+  handle /wrapped/* {
+    root * /srv
+    try_files {path} /wrapped/index.html
+    file_server
   }
 
   handle {

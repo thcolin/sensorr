@@ -1,0 +1,1248 @@
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/BigShouldersDisplay-900-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/BigShouldersDisplay-900.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/IBMPlexMono-400-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/IBMPlexMono-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/IBMPlexMono-500-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/IBMPlexMono-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Permanent Marker';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../assets/fonts/labo/PermanentMarker-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root[data-theme='labo'] {
+  --labo-base: #120c08;
+  --labo-film: #1d130c;
+  --labo-black: #070403;
+  --labo-edge: #ffb238;
+  --labo-safelight: #ff4b1f;
+  --labo-grease: #b3230f;
+  --labo-grease-light: #ff5a36;
+  --labo-wax: #f6ecd8;
+  --labo-text: #eadcc3;
+  --labo-muted: #c0a27f;
+  --labo-paper: #f3e7cf;
+  --labo-ink: #1a1410;
+  --labo-paper-muted: #6b5540;
+  --labo-felt: #1c3b8f;
+  --labo-hole: #3a1a10;
+  --labo-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --labo-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --labo-marker: 'Permanent Marker', 'Marker Felt', cursive;
+  --labo-rail: 20px;
+  --labo-mark: 14px;
+  --labo-inset: calc(var(--labo-rail) + var(--labo-mark) + 8px);
+  --labo-perfs: repeating-linear-gradient(90deg, var(--labo-hole) 0 6px, transparent 6px 12px);
+  --switch-bg: var(--labo-black);
+  --switch-fg: var(--labo-edge);
+  --switch-font: 500 14px/1 var(--labo-mono);
+  --switch-radius: 2px;
+  color-scheme: dark;
+}
+
+html[data-theme='labo'] {
+  background: radial-gradient(ellipse 70% 45% at 50% -8%, rgb(255 75 31 / 0.2), transparent 70%) fixed, var(--labo-base);
+  scrollbar-color: var(--labo-edge) var(--labo-base);
+  scrollbar-width: thin;
+}
+
+[data-theme='labo'] body {
+  background: transparent;
+  color: var(--labo-text);
+  font-family: var(--labo-mono);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+[data-theme='labo'] ::selection {
+  background: var(--labo-safelight);
+  color: var(--labo-base);
+}
+
+/* The reel: perforations down both edges, the full height of the page */
+.labo-reel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 720px);
+  margin: 0 auto;
+  background: var(--labo-film);
+  box-shadow: 0 0 80px rgb(0 0 0 / 0.7);
+  overflow-x: clip;
+}
+
+.labo-reel::before,
+.labo-reel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: var(--labo-rail);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='30'%3E%3Crect x='5' y='8' width='10' height='14' rx='2.5' fill='%233a1a10'/%3E%3C/svg%3E") center top / 100% auto repeat-y, var(--labo-black);
+  pointer-events: none;
+}
+
+.labo-reel::before {
+  left: 0;
+}
+
+.labo-reel::after {
+  right: 0;
+}
+
+.labo-sheet,
+.labo-colophon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 64px var(--labo-inset);
+}
+
+.labo-sheet {
+  min-height: 100svh;
+  justify-content: center;
+}
+
+.labo-sheet + .labo-sheet,
+.labo-colophon {
+  border-top: 10px solid var(--labo-black);
+}
+
+.labo-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--labo-rail);
+  width: var(--labo-mark);
+  display: flex;
+  justify-content: space-around;
+  gap: 40px;
+  padding: 24px 0;
+  overflow: hidden;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  font: 500 9px/1 var(--labo-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--labo-edge);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.labo-edge-right {
+  left: auto;
+  right: var(--labo-rail);
+}
+
+.labo-edge-right span {
+  transform: rotate(180deg);
+}
+
+/* Type */
+.labo-title {
+  font: 900 clamp(3.25rem, 15vw, 5.5rem)/0.92 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-wax);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.labo-title > span {
+  display: block;
+}
+
+.labo-title > span:last-child:not(:first-child) {
+  color: var(--labo-safelight);
+}
+
+.labo-name {
+  font: 900 2.25rem/0.92 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-wax);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.labo-lede {
+  max-width: 40ch;
+  font-size: 0.95rem;
+  color: var(--labo-muted);
+  text-wrap: pretty;
+}
+
+.labo-body {
+  max-width: 46ch;
+  font-size: 0.95rem;
+  color: var(--labo-text);
+  text-wrap: pretty;
+}
+
+.labo-body strong {
+  font-weight: 500;
+  color: var(--labo-safelight);
+}
+
+.labo-intro {
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--labo-edge);
+  text-wrap: balance;
+}
+
+.labo-grease {
+  font: 400 1.5rem/1.15 var(--labo-marker);
+  color: var(--labo-grease-light);
+}
+
+.labo-felt {
+  font: 400 1.5rem/1.15 var(--labo-marker);
+  color: var(--labo-felt);
+}
+
+.labo-felt-large {
+  font-size: 2.6rem;
+  line-height: 1.05;
+}
+
+/* Frames */
+.labo-frame {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: #000;
+}
+
+.labo-frame-wide {
+  aspect-ratio: 16 / 9;
+}
+
+.labo-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.35) saturate(1.2) contrast(1.05);
+}
+
+.labo-frame-code {
+  position: absolute;
+  left: 7px;
+  bottom: 5px;
+  font: 500 10px/1 var(--labo-mono);
+  letter-spacing: 0.15em;
+  color: var(--labo-edge);
+  text-shadow: 0 1px 2px #000;
+}
+
+.labo-frame-blank {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  text-align: center;
+  font: 900 1.25rem/0.95 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-muted);
+  background: repeating-linear-gradient(90deg, transparent 0 23px, rgb(255 178 56 / 0.05) 23px 24px), #140d09;
+  overflow-wrap: anywhere;
+}
+
+/* Cells cut from one picture, on a black strip perforated along both edges */
+.labo-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16px, 1fr));
+  gap: 2px;
+  padding: 9px 4px;
+  background:
+    var(--labo-perfs) left 6px top 2px / calc(100% - 12px) 3px no-repeat,
+    var(--labo-perfs) left 6px bottom 2px / calc(100% - 12px) 3px no-repeat,
+    var(--labo-black);
+}
+
+.labo-cells > li {
+  aspect-ratio: 3 / 2;
+  background: var(--src) center / 320% auto no-repeat, #2a1b12;
+  filter: sepia(0.4) saturate(1.3);
+}
+
+.labo-cells-strip {
+  grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+}
+
+.labo-cells-reel {
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 3px;
+}
+
+/* Grease pencil: drawn by default, drawn again once in view when motion is allowed */
+.labo-ring {
+  position: absolute;
+  left: -10px;
+  top: -8px;
+  width: calc(100% + 20px);
+  height: calc(100% + 16px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.labo-ring path {
+  fill: none;
+  stroke: var(--labo-grease-light);
+  stroke-width: var(--stroke, 3);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  /* Longer than any ring on screen, the stroke being measured in screen pixels */
+  stroke-dasharray: 4000;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 2.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+
+[data-draw='wait'] .labo-ring path {
+  stroke-dashoffset: 4000;
+  transition: none;
+}
+
+.labo-stamp {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 3px solid var(--labo-grease);
+  font: 900 1.4rem/1 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-grease);
+  transform: rotate(-9deg);
+  opacity: 0.9;
+}
+
+/* Opening: the leader */
+.labo-leader {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  container-type: inline-size;
+  background: #d8cfbf;
+  color: var(--labo-ink);
+  transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.labo-leader-dial {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--labo-ink);
+  stroke-width: 2.5;
+  transition: opacity 0.4s;
+}
+
+.labo-leader-sweep {
+  fill: var(--labo-ink);
+  stroke: none;
+  opacity: 0.18;
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+  animation: labo-sweep 0.85s linear infinite;
+}
+
+.labo-leader-count {
+  position: relative;
+  font: 900 clamp(8rem, 44vw, 14rem)/1 var(--labo-display);
+}
+
+.labo-leader-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+  color: var(--labo-base);
+  opacity: 0;
+}
+
+.labo-leader-title small {
+  font: 500 11px/1.2 var(--labo-mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.labo-leader-title strong {
+  max-width: 100%;
+  font: 900 min(11rem, calc(88cqw / (var(--len, 6) * 0.52)))/0.85 var(--labo-display);
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.labo-leader-printed {
+  background: var(--labo-safelight);
+}
+
+.labo-leader-printed .labo-leader-dial {
+  opacity: 0;
+}
+
+.labo-leader-printed .labo-leader-title {
+  opacity: 1;
+  animation: labo-print 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.labo-leader-printed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff8e8;
+  opacity: 0;
+  pointer-events: none;
+  animation: labo-flash 0.6s ease-out;
+}
+
+.labo-still,
+.labo-still * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.labo-still::after {
+  content: none;
+}
+
+@keyframes labo-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Printed through the enlarger: overexposed and soft, then the grain settles */
+@keyframes labo-print {
+  from {
+    opacity: 0;
+    filter: blur(12px) brightness(3);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  to {
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes labo-flash {
+  from {
+    opacity: 0.85;
+  }
+}
+
+.labo-contact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.labo-contact[data-count='5'] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.labo-contact[data-count='5'] > :first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.labo-contact[data-count='2'],
+.labo-contact[data-count='4'] {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.labo-contact[data-count='1'] {
+  grid-template-columns: minmax(0, 70%);
+}
+
+.labo-slate {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--labo-wax);
+}
+
+.labo-slate > li {
+  padding: 10px 0;
+  border-top: 1px solid rgb(255 178 56 / 0.28);
+}
+
+/* Figures */
+.labo-figure {
+  display: flex;
+  flex-direction: column;
+  font: 900 clamp(4.5rem, 26vw, 6rem)/0.85 var(--labo-display);
+  color: var(--labo-safelight);
+}
+
+.labo-figure small {
+  margin-top: 8px;
+  font-size: 1.6rem;
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: var(--labo-wax);
+}
+
+.labo-figure-pair {
+  display: grid;
+  grid-template-columns: 44% 1fr;
+  gap: 16px;
+  align-items: end;
+}
+
+.labo-unit {
+  max-width: 22ch;
+  font: 900 2rem/0.95 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-wax);
+  text-wrap: balance;
+}
+
+.labo-unit em {
+  font-style: normal;
+  color: var(--labo-safelight);
+}
+
+/* The lab's paper: the contact sheet and the forms */
+.labo-paper,
+.labo-fiche {
+  position: relative;
+  background: var(--labo-paper);
+  color: var(--labo-ink);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+}
+
+.labo-paper {
+  padding: 16px 12px 22px;
+}
+
+.labo-paper .labo-ring path,
+.labo-fiche .labo-ring path {
+  stroke: var(--labo-grease);
+}
+
+.labo-planche-row {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.labo-planche-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+  font: 500 11px/1.2 var(--labo-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--labo-paper-muted);
+}
+
+.labo-planche-head strong {
+  min-width: 0;
+  font: 900 1.1rem/1 var(--labo-display);
+  letter-spacing: 0;
+  color: var(--labo-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labo-planche-head span:last-child:not(:first-child) {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.labo-planche-blank {
+  display: block;
+  height: 14px;
+  background: var(--labo-black);
+  opacity: 0.85;
+}
+
+.labo-planche-future {
+  opacity: 0.4;
+}
+
+.labo-planche-peak .labo-ring {
+  left: -8px;
+  top: -6px;
+  width: calc(100% + 16px);
+  height: calc(100% + 12px);
+}
+
+.labo-planche-note {
+  margin-top: 14px;
+  color: var(--labo-grease);
+  transform: rotate(-2deg);
+  text-wrap: balance;
+}
+
+.labo-fiche {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px 28px;
+}
+
+.labo-fiche-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--labo-ink);
+  font: 500 10px/1.4 var(--labo-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.labo-fiche-head strong {
+  font: 900 1.6rem/1 var(--labo-display);
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.labo-fiche .labo-fiche-title,
+.labo-fiche-title {
+  margin-top: 18px;
+  font: 900 2.75rem/0.9 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-ink);
+}
+
+.labo-fiche-typed {
+  max-width: 46ch;
+  margin-top: 14px;
+  font-size: 0.95rem;
+  color: var(--labo-ink);
+  text-wrap: pretty;
+}
+
+.labo-fiche-values {
+  margin-top: 10px;
+}
+
+.labo-fiche-values > div {
+  padding: 10px 0 12px;
+  border-bottom: 1px solid rgb(26 20 16 / 0.2);
+}
+
+.labo-fiche-values dt {
+  font: 500 10px/1.4 var(--labo-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--labo-paper-muted);
+}
+
+.labo-fiche-values dd {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.labo-fiche-lead {
+  margin-top: 22px;
+}
+
+.labo-fiche .labo-strip {
+  margin-top: 14px;
+}
+
+.labo-fiche .labo-strip-title {
+  color: var(--labo-ink);
+}
+
+.labo-fiche .labo-strip-caption {
+  color: var(--labo-paper-muted);
+}
+
+.labo-fiche-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.labo-stamp-rank {
+  flex-shrink: 0;
+  max-width: 11rem;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.labo-stamp-rank span {
+  display: block;
+  font-size: 3.5rem;
+  line-height: 0.9;
+}
+
+.labo-stamp-rank sup {
+  font-size: 0.45em;
+}
+
+.labo-stamp-rank small {
+  display: block;
+  margin-top: 6px;
+  font: 500 12px/1.25 var(--labo-mono);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.labo-stamp-ok {
+  align-self: flex-end;
+  margin-top: 22px;
+  transform: rotate(-7deg);
+  mix-blend-mode: multiply;
+}
+
+.labo-stamp-copy {
+  position: absolute;
+  top: 18px;
+  right: -8px;
+  border-color: var(--labo-grease-light);
+  background: rgb(18 12 8 / 0.7);
+  color: var(--labo-grease-light);
+  transform: rotate(7deg);
+}
+
+.labo-stamp-draft {
+  border-color: var(--labo-grease-light);
+  color: var(--labo-grease-light);
+  font-size: 1.1rem;
+}
+
+/* Rank: one frame per viewer */
+.labo-crowd {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+  gap: 3px;
+  padding: 10px 6px 12px;
+  background:
+    var(--labo-perfs) left 6px top 3px / calc(100% - 12px) 3px no-repeat,
+    var(--labo-perfs) left 6px bottom 3px / calc(100% - 12px) 3px no-repeat,
+    var(--labo-black);
+}
+
+.labo-crowd > li {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: #2e1f15;
+  box-shadow: inset 0 0 0 1px #45301f;
+}
+
+.labo-crowd > .labo-crowd-you {
+  z-index: 1;
+  background: var(--labo-safelight);
+  box-shadow: none;
+}
+
+.labo-crowd-you .labo-ring {
+  left: -9px;
+  top: -9px;
+  width: calc(100% + 18px);
+  height: calc(100% + 18px);
+}
+
+.labo-crowd-you .labo-grease {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) rotate(-6deg);
+  white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
+}
+
+/* Night: the tail of the reel */
+.labo-tail {
+  width: min(78%, 340px);
+}
+
+.labo-tail-leader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 190px;
+  padding: 16px 10px;
+  border-top: 4px solid var(--labo-black);
+  background: repeating-linear-gradient(90deg, transparent 0 41px, rgb(246 236 216 / 0.05) 41px 42px), #0c0806;
+}
+
+.labo-tail-mark {
+  font: 500 10px/1 var(--labo-mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--labo-edge);
+}
+
+.labo-tail-hour {
+  font: 400 3.4rem/1 var(--labo-marker);
+  color: var(--labo-wax);
+  transform: rotate(-6deg);
+  white-space: nowrap;
+}
+
+/* Server */
+.labo-ringed {
+  position: relative;
+  width: min(78%, 340px);
+}
+
+/* Photogrammes: a cut of film per poster, titles under it */
+.labo-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 10px;
+}
+
+.labo-strip[data-count='1'] {
+  grid-template-columns: minmax(0, 55%);
+}
+
+.labo-strip[data-count='3'] {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.labo-strip > li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.labo-strip-film {
+  padding: 12px 5px;
+  background:
+    var(--labo-perfs) left 4px top 4px / calc(100% - 8px) 4px no-repeat,
+    var(--labo-perfs) left 4px bottom 4px / calc(100% - 8px) 4px no-repeat,
+    var(--labo-black);
+}
+
+.labo-strip-title {
+  font-weight: 500;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--labo-wax);
+  overflow-wrap: anywhere;
+}
+
+.labo-strip-caption {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--labo-edge);
+}
+
+/* Posters: frames boxed and labelled in grease pencil */
+.labo-marked {
+  display: grid;
+  gap: 40px;
+}
+
+.labo-marked > li {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(80%, 320px);
+}
+
+.labo-marked > li:nth-child(even) {
+  margin-left: auto;
+}
+
+.labo-marked-what {
+  font-size: 1.9rem;
+  transform-origin: left bottom;
+}
+
+.labo-ring.labo-scrawl {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.labo-scrawl-slash path {
+  opacity: 0.85;
+}
+
+.labo-pace {
+  display: grid;
+  grid-template-columns: 32% 1fr;
+  gap: 16px;
+  align-items: end;
+  padding-top: 20px;
+  border-top: 1px solid rgb(255 178 56 / 0.28);
+}
+
+.labo-pace .labo-name {
+  margin-bottom: 8px;
+  font-size: 1.8rem;
+}
+
+.labo-marked-frame {
+  position: relative;
+  margin: 6px 0 10px;
+}
+
+.labo-marked-title {
+  font: 900 1.8rem/0.92 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-wax);
+  overflow-wrap: anywhere;
+}
+
+/* Finale */
+.labo-frame-last {
+  width: min(84%, 380px);
+}
+
+.labo-finale-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.labo-burn {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--labo-safelight);
+}
+
+.labo-burn svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.labo-burn-end {
+  position: relative;
+  z-index: 1;
+  font: 900 6rem/1 var(--labo-display);
+  text-transform: uppercase;
+  color: var(--labo-base);
+}
+
+/* Colophon */
+.labo-colophon {
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--labo-muted);
+}
+
+.labo-colophon-short {
+  max-width: 40ch;
+  font-size: 0.95rem;
+  color: var(--labo-wax);
+}
+
+/* Behind the reel on a wide screen: negatives drying on the line */
+.labo-single {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(72%, 340px);
+}
+
+.labo-line {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  :root[data-theme='labo'] {
+    --labo-rail: 30px;
+    --labo-mark: 20px;
+  }
+
+  .labo-edge {
+    font-size: 10px;
+  }
+
+  .labo-cells {
+    grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+  }
+
+  .labo-crowd {
+    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  }
+
+  .labo-strip,
+  .labo-strip[data-count='3'] {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .labo-strip[data-count='2'] {
+    grid-template-columns: repeat(2, minmax(0, 220px));
+  }
+
+  .labo-strip[data-count='1'] {
+    grid-template-columns: minmax(0, 260px);
+  }
+
+  .labo-sheet-notice .labo-notice-frame {
+    width: 100%;
+  }
+
+  .labo-sheet-opening .labo-lede {
+    max-width: 44ch;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--labo-wax);
+  }
+
+  .labo-leader-title small {
+    font-size: 14px;
+  }
+
+  .labo-marked {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  .labo-marked > li,
+  .labo-marked > li:nth-child(even) {
+    width: auto;
+    margin: 0;
+  }
+
+  .labo-marked > li:nth-child(even) {
+    margin-top: 64px;
+  }
+
+  .labo-marked[data-count='1'] > li {
+    width: 60%;
+  }
+
+  .labo-sheet-night,
+  .labo-sheet-server,
+  .labo-sheet-finale {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: center;
+    gap: 20px 32px;
+  }
+
+  .labo-sheet-night > :not(.labo-edge),
+  .labo-sheet-server > :not(.labo-edge),
+  .labo-sheet-finale > :not(.labo-edge) {
+    grid-column: 2;
+    align-self: start;
+  }
+
+  .labo-sheet-night > .labo-title,
+  .labo-sheet-server > .labo-title,
+  .labo-sheet-finale > .labo-title {
+    grid-column: 1 / -1;
+  }
+
+  .labo-sheet-night > .labo-tail,
+  .labo-sheet-server > .labo-ringed,
+  .labo-sheet-finale > .labo-frame-last {
+    grid-column: 1;
+    grid-row: 2 / span 4;
+    width: 100%;
+  }
+
+  .labo-sheet-night > .labo-intro,
+  .labo-sheet-server > .labo-name,
+  .labo-sheet-finale > .labo-name {
+    margin-top: 12px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .labo-line {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    display: block;
+    pointer-events: none;
+  }
+
+  .labo-negative {
+    position: absolute;
+    top: -30px;
+    left: calc((100vw - 720px) / 4 - 70px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 140px;
+    padding: 60px 20px 0;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22'%3E%3Crect x='3' y='5' width='8' height='11' rx='2' fill='%23120c08'/%3E%3C/svg%3E") left top / 20px auto repeat-y,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='22'%3E%3Crect x='3' y='5' width='8' height='11' rx='2' fill='%23120c08'/%3E%3C/svg%3E") right top / 20px auto repeat-y,
+      #b35a1f;
+    opacity: 0.5;
+    transform: rotate(1.4deg);
+    transform-origin: top center;
+  }
+
+  .labo-negative + .labo-negative {
+    left: auto;
+    right: calc((100vw - 720px) / 4 - 70px);
+    top: -120px;
+    transform: rotate(-1.1deg);
+  }
+
+  .labo-negative-clip {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    width: 44px;
+    height: 26px;
+    border-radius: 3px;
+    background: #2b1d13;
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.5);
+    transform: translateX(-50%);
+  }
+
+  .labo-negative-frame {
+    display: block;
+    aspect-ratio: 2 / 3;
+    background: #c9702c;
+  }
+
+  .labo-negative-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: invert(1) grayscale(0.3) contrast(0.9);
+    mix-blend-mode: multiply;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .labo-reel *,
+  .labo-reel *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Waiting and notices, before the share is known */
+.labo-sheet-waiting {
+  justify-content: center;
+}
+
+.labo-leader-waiting .labo-leader-sweep {
+  animation-duration: 1.6s;
+}
+
+.labo-notice-frame {
+  width: min(100%, 420px);
+  aspect-ratio: 4 / 3;
+}
+
+.labo-notice-struck {
+  position: relative;
+  background: repeating-linear-gradient(90deg, transparent 0 41px, rgb(246 236 216 / 0.05) 41px 42px), #0c0806;
+  box-shadow: inset 0 0 0 1px #3a2a1c;
+}
+
+.labo-notice-struck .labo-ring {
+  left: 8%;
+  top: 8%;
+  width: 84%;
+  height: 84%;
+}
+
+.labo-notice-struck .labo-ring path {
+  stroke-width: 6;
+}
+
+.labo-button {
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--labo-safelight);
+  color: var(--labo-base);
+  font: 500 0.95rem/1 var(--labo-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.1s;
+}
+
+.labo-button:hover {
+  background: var(--labo-edge);
+}
+
+.labo-button:active {
+  background: var(--labo-wax);
+  transform: translateY(1px);
+}
+
+.labo-button:focus-visible {
+  outline: 2px solid var(--labo-edge);
+  outline-offset: 4px;
+}

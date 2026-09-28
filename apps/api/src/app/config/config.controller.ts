@@ -15,7 +15,7 @@ export class ConfigController {
   @Post()
   async update(@Body() raw): Promise<{}> {
     try {
-      return this.configService.update(raw)
+      return await this.configService.update(raw)
     } catch (err) {
       this.logger.error(err)
       throw new HttpException(err, 500)
@@ -25,7 +25,7 @@ export class ConfigController {
   @Put()
   async register(@Body() raw): Promise<{}> {
     try {
-      this.configService.set(raw.key, raw.value)
+      await this.configService.set(raw.key, raw.value)
       return { success: true }
     } catch (err) {
       this.logger.error(err)

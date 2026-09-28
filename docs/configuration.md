@@ -62,6 +62,27 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.airing.shows.cron` | `string` | `0 * * * *` | Airing shows job cron, wanted episodes aired in the last 7 days are searched one by one |
 | `jobs.airing.shows.paused` | `boolean` | `true` | Pause Airing shows job |
 | `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.wrapped.cron` | `string` | `0 6 * * *` | Wrapped job cron |
+| `jobs.wrapped.paused` | `boolean` | `true` | Pause Wrapped job |
+
+## Tautulli
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `tautulli.url` | `string` | `""` | Tautulli URL, where the Plex watch history is read from |
+| `tautulli.key` | `string` | `""` | Tautulli API key |
+
+## Wrapped
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `wrapped.looks` | `wrapped-looks` | `["tele","labo","videoclub","scenario","affiche"]` | Looks offered, to the friends who can switch and in every setting below; one left out is never shown |
+| `wrapped.theme` | `tele`, `labo`, `videoclub`, `scenario`, `affiche` | `tele` | Look of every wrapped, unless an edition or a friend sets its own: tele, labo, videoclub, scenario, affiche |
+| `wrapped.choice` | `boolean` | `true` | Let each friend switch to another look on their page, unless an edition or a friend says otherwise |
+| `wrapped.editions` | `wrapped-editions` | `[]` | Per edition overrides of `theme` and `choice`, a null value keeps the global one |
+| `wrapped.editions[].year` | `nat` | `null` | Year of the edition |
+| `wrapped.editions[].theme` | `tele`, `labo`, `videoclub`, `scenario`, `affiche`, `null` | `null` | Look of this edition: tele, labo, videoclub, scenario, affiche |
+| `wrapped.editions[].choice` | `true`, `false`, `null` | `null` | Let each friend switch to another look on this edition |
 
 ## Plex
 

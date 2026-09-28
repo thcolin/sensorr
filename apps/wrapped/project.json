@@ -1,0 +1,55 @@
+{
+  "name": "wrapped",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/wrapped/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/wrapped",
+        "index": "apps/wrapped/src/index.html",
+        "baseHref": "/wrapped/",
+        "deployUrl": "/wrapped/",
+        "main": "apps/wrapped/src/main.tsx",
+        "tsConfig": "apps/wrapped/tsconfig.app.json",
+        "assets": ["apps/wrapped/src/assets"],
+        "styles": ["apps/wrapped/src/styles.css"],
+        "scripts": [],
+        "webpackConfig": "apps/wrapped/webpack.config.js"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "options": {
+        "buildTarget": "wrapped:build",
+        "port": 4230,
+        "proxyConfig": "apps/wrapped/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "wrapped:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/wrapped/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  },
+  "tags": []
+}

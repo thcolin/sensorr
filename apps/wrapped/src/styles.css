@@ -1,0 +1,124 @@
+/* What every look shares; each look's own sheet lives with it in app/themes */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Until a look is known the page stays dark, rather than flash a look it may not wear */
+html:not([data-theme]) {
+  background: #0d0c0b;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.theme-loading {
+  min-height: 100svh;
+}
+
+/* The look switch, before the first sheet and after the colophon: each look sets --switch-* to dress it */
+.theme-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--switch-bg, #111);
+  color: var(--switch-fg, #fff);
+  font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
+}
+
+.theme-switch select {
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 12px 22px 10px 2px;
+  margin-right: -22px;
+  cursor: pointer;
+}
+
+.theme-switch select option {
+  color: initial;
+  background: initial;
+}
+
+.theme-switch svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.theme-switch select:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+/* The wait before any look is known: a dark room, the projector warming up */
+.waiting {
+  min-height: 100svh;
+  background: #0d0c0b;
+}
+
+.waiting::after {
+  content: '';
+  position: fixed;
+  inset: 45% 30%;
+  background: radial-gradient(closest-side, rgb(255 244 220 / 0.14), transparent);
+  animation: waiting 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes waiting {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waiting::after {
+    animation: none;
+  }
+}

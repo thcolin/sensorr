@@ -1,20 +1,52 @@
 import convict from 'convict'
 import oleoo from 'oleoo'
 
+const validateSources = (sources, schema) => {
+  if (!Array.isArray(sources)) {
+    throw new Error('must be of type Array')
+  }
+
+  for (let source of sources) {
+    convict(schema.children).load(source).validate({ output: () => {} })
+  }
+}
+
 convict.addFormat({
   name: 'source-array',
-  validate: function (sources, schema) {
-    if (!Array.isArray(sources)) {
-      throw new Error('must be of type Array')
+  validate: validateSources,
+})
+
+// The looks of the wrapped page, `apps/wrapped/src/app/themes` draws each one
+export const WRAPPED_THEMES = ['tele', 'labo', 'videoclub', 'scenario', 'affiche']
+
+// A list of looks, each one known and listed once, never empty
+convict.addFormat({
+  name: 'wrapped-looks',
+  validate: function (looks) {
+    if (!Array.isArray(looks) || !looks.length) {
+      throw new Error('must list at least one look')
     }
 
-    for (let source of sources) {
-      convict(schema.children).load(source).validate({ output: () => {} })
+    if (looks.some((look) => !WRAPPED_THEMES.includes(look)) || new Set(looks).size !== looks.length) {
+      throw new Error(`must list each of ${WRAPPED_THEMES.join(', ')} at most once`)
     }
   },
 })
 
-const config = convict({
+// A `source-array` where each year shows once, the API reads the first one it finds
+convict.addFormat({
+  name: 'wrapped-editions',
+  validate: function (editions, schema) {
+    validateSources(editions, schema)
+    const years = editions.map(({ year }) => year)
+
+    if (new Set(years).size !== years.length) {
+      throw new Error('each year must show once')
+    }
+  },
+})
+
+const schema = {
   docker: {
     doc: 'Is Sensorr App running in Docker env ?',
     format: 'Boolean',
@@ -271,6 +303,69 @@ const config = convict({
           doc: "Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
           format: 'Boolean',
           default: true,
+        },
+      },
+    },
+    wrapped: {
+      cron: {
+        doc: 'Wrapped job cron',
+        format: 'String',
+        default: '0 6 * * *',
+      },
+      paused: {
+        doc: 'Pause Wrapped job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
+  },
+  tautulli: {
+    url: {
+      doc: 'Tautulli URL, where the Plex watch history is read from',
+      format: 'String',
+      default: '',
+    },
+    key: {
+      doc: 'Tautulli API key',
+      format: 'String',
+      default: '',
+    },
+  },
+  wrapped: {
+    looks: {
+      doc: 'Looks offered, to the friends who can switch and in every setting below; one left out is never shown',
+      format: 'wrapped-looks',
+      default: WRAPPED_THEMES,
+    },
+    theme: {
+      doc: `Look of every wrapped, unless an edition or a friend sets its own: ${WRAPPED_THEMES.join(', ')}`,
+      format: WRAPPED_THEMES,
+      default: 'tele',
+    },
+    choice: {
+      doc: 'Let each friend switch to another look on their page, unless an edition or a friend says otherwise',
+      format: 'Boolean',
+      default: true,
+    },
+    editions: {
+      doc: 'Per edition overrides of `theme` and `choice`, a null value keeps the global one',
+      format: 'wrapped-editions',
+      default: [],
+      children: {
+        year: {
+          doc: 'Year of the edition',
+          format: 'nat',
+          default: null,
+        },
+        theme: {
+          doc: `Look of this edition: ${WRAPPED_THEMES.join(', ')}`,
+          format: [...WRAPPED_THEMES, null],
+          default: null,
+        },
+        choice: {
+          doc: 'Let each friend switch to another look on this edition',
+          format: [true, false, null],
+          default: null,
         },
       },
     },
@@ -582,6 +677,11 @@ const config = convict({
       },
     },
   },
-})
+}
+
+// A fresh instance on the same schema, to validate changes before they reach the shared one
+export const create = () => convict(schema)
+
+const config = create()
 
 export default config
