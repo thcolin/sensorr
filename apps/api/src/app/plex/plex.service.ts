@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { createPin, checkPin, PlexApp } from '@sensorr/plex'
+import { createPin, checkPin, PlexApp, PlexArtworkCandidate, PlexArtworkKind, PlexArtworks, artworksOf, candidatesOf } from '@sensorr/plex'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { ConfigService } from '../config/config.service'
 import { ImageRequest, transcodeOf } from './image'
+import { ArtworkChoices, PLEX_ARTWORKS, writeOf } from './artworks'
 import app from './../../../../../package.json'
 
 const IMAGES = ['image/jpeg', 'image/png', 'image/webp']
@@ -71,27 +72,70 @@ export class PlexService {
     return { done: true, token: result.token }
   }
 
-  async image(request: ImageRequest): Promise<{ type: string, buffer: Buffer } | null> {
-    const url = this.configService.config.get('plex.url')
-    const token = this.configService.config.get('plex.token')
+  private registered() {
+    return !!(this.configService.config.get('plex.url') && this.configService.config.get('plex.token'))
+  }
 
-    if (!url || !token) {
+  private async plex(path: string, { method = 'GET', accept = 'application/json', timeout = 10000 } = {}) {
+    const res = await fetch(`${this.configService.config.get('plex.url').replace(/\/$/, '')}${path}`, {
+      method,
+      headers: { 'X-Plex-Token': this.configService.config.get('plex.token'), Accept: accept },
+      signal: AbortSignal.timeout(timeout),
+      // A redirect would carry the token to another host
+      redirect: 'error',
+    })
+
+    if (!res.ok) {
+      throw new Error(`Plex answered ${res.status}`)
+    }
+
+    return res
+  }
+
+  async image(request: ImageRequest): Promise<{ type: string, buffer: Buffer } | null> {
+    if (!this.registered()) {
       return null
     }
 
     // A grid asks for dozens at once: an unreachable Plex must hand them to TMDB quickly
-    const res = await fetch(`${url.replace(/\/$/, '')}${transcodeOf(request)}`, {
-      headers: { 'X-Plex-Token': token, Accept: 'image/*' },
-      signal: AbortSignal.timeout(3000),
-      // A redirect would carry the token to another host
-      redirect: 'error',
-    })
+    const res = await this.plex(transcodeOf(request), { accept: 'image/*', timeout: 3000 })
     const type = res.headers.get('content-type')?.split(';')[0]
 
-    if (!res.ok || !IMAGES.includes(type)) {
-      throw new Error(`Plex answered ${res.status} ${type}`)
+    if (!IMAGES.includes(type)) {
+      throw new Error(`Plex answered ${type}`)
     }
 
     return { type, buffer: Buffer.from(await res.arrayBuffer()) }
+  }
+
+  async candidates(ratingKey: string): Promise<Record<PlexArtworkKind, PlexArtworkCandidate[]>> {
+    this.logger.log(`Candidates "${ratingKey}"`)
+    const kinds = Object.keys(PLEX_ARTWORKS) as PlexArtworkKind[]
+    const lists = await Promise.all(kinds.map(async (kind) => {
+      const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}/${PLEX_ARTWORKS[kind].list}`)).json()
+      return candidatesOf(MediaContainer?.Metadata)
+    }))
+
+    return kinds.reduce((acc, kind, index) => ({ ...acc, [kind]: lists[index] }), {} as Record<PlexArtworkKind, PlexArtworkCandidate[]>)
+  }
+
+  // One kind after the other: a kind Plex refuses leaves the others written
+  async write(ratingKey: string, choices: ArtworkChoices): Promise<{ artworks: PlexArtworks, failed: Partial<Record<PlexArtworkKind, string>> }> {
+    const failed = {}
+
+    for (const [kind, choice] of Object.entries(choices)) {
+      const { method, path } = writeOf(ratingKey, kind as PlexArtworkKind, choice)
+      this.logger.log(`Write "${ratingKey}" ${kind}, ${method}`)
+
+      try {
+        await this.plex(path, { method, timeout: 30000 })
+      } catch (err) {
+        this.logger.warn(`Write "${ratingKey}" ${kind}, ${err.message}`)
+        failed[kind] = err.message
+      }
+    }
+
+    const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}`)).json()
+    return { artworks: artworksOf(MediaContainer?.Metadata?.[0] || {}), failed }
   }
 }

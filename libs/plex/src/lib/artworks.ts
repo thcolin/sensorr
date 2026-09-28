@@ -15,13 +15,6 @@ export interface PlexArtworkCandidate {
 
 const ARTWORKS = { coverPoster: 'poster', background: 'backdrop', clearLogo: 'logo' }
 
-// What Plex calls each kind: the list it offers, and the one it shows
-export const PLEX_ARTWORKS: { [kind in PlexArtworkKind]: { list: string, one: string } } = {
-  poster: { list: 'posters', one: 'poster' },
-  backdrop: { list: 'arts', one: 'art' },
-  logo: { list: 'clearLogos', one: 'clearLogo' },
-}
-
 export const artworksOf = (payload): PlexArtworks => (payload.Image || []).reduce(
   (acc, { type, url }) => ARTWORKS[type] ? { ...acc, [ARTWORKS[type]]: url } : acc,
   { poster: payload.thumb || null, backdrop: payload.art || null, logo: null },

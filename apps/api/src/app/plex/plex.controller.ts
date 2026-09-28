@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Delete, Get, HttpException, Logg
 import { Response } from 'express'
 import { PlexService } from './plex.service'
 import { imageRequestOf, fallbackOf } from './image'
+import { artworkChoicesOf, ratingKeyOf } from './artworks'
 
 @Controller('plex')
 export class PlexController {
@@ -57,5 +58,38 @@ export class PlexController {
     // The path changes with the artwork: a stored copy never goes stale
     res.set({ 'Content-Type': image.type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, max-age=31536000, immutable' })
     res.send(image.buffer)
+  }
+
+  @Get('artworks/:ratingKey')
+  async candidates(@Param('ratingKey') raw: string) {
+    const ratingKey = ratingKeyOf(raw)
+
+    if (!ratingKey) {
+      throw new BadRequestException('Not a Plex item')
+    }
+
+    try {
+      return await this.plexService.candidates(ratingKey)
+    } catch (err) {
+      this.logger.warn(`Candidates "${ratingKey}", ${err.message}`)
+      throw new HttpException(err.message, 502)
+    }
+  }
+
+  @Post('artworks/:ratingKey')
+  async write(@Param('ratingKey') raw: string, @Body() body: unknown) {
+    const ratingKey = ratingKeyOf(raw)
+    const choices = artworkChoicesOf(body)
+
+    if (!ratingKey || !choices) {
+      throw new BadRequestException('Nothing to write on a Plex item')
+    }
+
+    try {
+      return await this.plexService.write(ratingKey, choices)
+    } catch (err) {
+      this.logger.warn(`Write "${ratingKey}", ${err.message}`)
+      throw new HttpException(err.message, 502)
+    }
   }
 }
