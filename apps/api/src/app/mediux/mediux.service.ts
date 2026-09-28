@@ -8,7 +8,6 @@ export class MediuxService {
 
   constructor(private configService: ConfigService) {}
 
-  // `null` without a token: MediUX lists no set to anyone else
   async sets(type: MediuxType, id: number): Promise<MediuxSet[] | null> {
     const token = this.configService.config.get('mediux.token')
 

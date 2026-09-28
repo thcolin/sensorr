@@ -32,7 +32,7 @@ export const candidatesOf = (metadata = []): PlexArtworkCandidate[] => metadata.
   selected: !!selected,
 }))
 
-// The poster of each season Plex holds for a show, by season number; a season without its own shows the show's
+// A season without a poster of its own shows the show's: it is left out
 export const seasonsOf = (seasons = [], ratingKeys: string[]): Record<string, string> => seasons
   .filter(({ parentRatingKey, thumb, parentThumb }) => ratingKeys.includes(`${parentRatingKey}`) && thumb && thumb !== parentThumb)
   .reduce((acc, { index, thumb }) => acc[index] ? acc : { ...acc, [index]: thumb }, {})

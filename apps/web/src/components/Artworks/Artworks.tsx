@@ -19,7 +19,6 @@ const KINDS: { kind: ArtworkKind, emoji: string, label: string, tmdb: string, wi
 
 type Chosen = Partial<Record<ArtworkKind, { id: string, choice: ArtworkChoice, thumb: string, link?: boolean }>>
 
-// The artworks Plex shows for a movie or a show: those Sensorr stored, or those the metadata stream brought since
 export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) => {
   const { artworks } = useMoviesMetadataContext() as any
   return metadata && 'plex_artworks' in metadata ? metadata.plex_artworks : behavior === 'movie' ? artworks?.[id] || null : null
@@ -68,7 +67,7 @@ UIArtworks.styles = {
 
 export const Artworks = memo(UIArtworks)
 
-// The logo Plex holds, where the title is written: the title again if it does not load. Keyed by its path, it starts over with a new logo
+// Keyed by its path where it is drawn, so that a new logo starts over
 const UITitleLogo = ({ path, title, className = undefined }) => {
   const api = useAPI()
   const [tone, setTone] = useState<LogoTone | null>(null)
@@ -535,7 +534,6 @@ Picker.styles = {
 
 const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fontSize: 8, textAlign: 'center', height: 'auto !important', width: '90% !important' }}>Plex fetches it on Apply</small>
 
-// The page of the movie in small: what Apply will leave on Plex
 const Preview = ({ artworks, chosen, reset }) => {
   const api = useAPI()
   const current = (kind: ArtworkKind) => artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null
@@ -650,7 +648,6 @@ Preview.styles = {
   },
 }
 
-// A link Plex fetches itself: a ThePosterDB page, a MediUX image, any image URL
 const Link = ({ onAdd }) => {
   const [value, setValue] = useState('')
   const [kind, setKind] = useState<ArtworkKind>('poster')

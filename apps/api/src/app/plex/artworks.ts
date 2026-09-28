@@ -1,13 +1,11 @@
 import type { PlexArtworkKind } from '@sensorr/plex'
 
-// What Plex calls each kind: the list it offers, and the one it shows
 export const PLEX_ARTWORKS: { [kind in PlexArtworkKind]: { list: string, one: string } } = {
   poster: { list: 'posters', one: 'poster' },
   backdrop: { list: 'arts', one: 'art' },
   logo: { list: 'clearLogos', one: 'clearLogo' },
 }
 
-// A candidate Plex listed, picked back by its `ratingKey`, or an image Plex has to fetch
 export type ArtworkChoice = { key: string } | { url: string }
 export type ArtworkChoices = Partial<Record<PlexArtworkKind, ArtworkChoice>>
 
