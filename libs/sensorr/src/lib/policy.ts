@@ -40,6 +40,17 @@ export const SENSORR_POLICY_FALLBACK = {
   }
 }
 
+// A `prefer` entry is one value, or an array of the values sharing its rank
+export const rankOf = (entries = [], value) => entries.findIndex(entry => [entry].flat().includes(value))
+
+// `prefer` entries as a flat list, each value with the index of its rank
+export const unranked = (entries = []): { value: string, rank: any }[] => entries.flatMap((entry, rank) => [entry].flat().map(value => ({ value, rank })))
+
+// Back to `prefer` entries: neighbours of one rank join in an array
+export const ranked = (values: { value: string, rank: any }[]) => values.reduce((entries, { value, rank }, index) => (
+  (index && values[index - 1].rank === rank) ? [...entries.slice(0, -1), [entries[entries.length - 1]].flat().concat(value)] : [...entries, value]
+), [])
+
 export const matchPolicy = (movie: { original_language?: string }, policies = []) =>
   policies.find(policy => policy.match?.original_languages?.includes(movie?.original_language))
 
@@ -373,7 +384,7 @@ export class Policy {
         .reduce((acc, tag) => ({
           ...acc,
           [tag]: (tag === 'znab' && ignore) ? { recorded: 100 } : policy.prefer[tag]
-            .reduce((acc, keyword, index, arr) => {
+            .reduce((acc, entry, index, arr) => {
               const base = (tag === 'flags' ? 1 : (arr.length - index) / arr.length)
               const test = (tag === 'custom' ?
                 (keyword) => (new RegExp(keyword, 'ig').test(release.original) || new RegExp(keyword, 'ig').test(release.title)) :
@@ -382,7 +393,7 @@ export class Policy {
 
               return {
                 ...acc,
-                [keyword]: test(keyword) ? Math.floor(base * 100) : 0,
+                ...Object.fromEntries([entry].flat().map(keyword => [keyword, test(keyword) ? Math.floor(base * 100) : 0])),
               }
             }, {})
         }), {})

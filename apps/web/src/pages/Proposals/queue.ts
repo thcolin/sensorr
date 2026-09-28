@@ -1,6 +1,6 @@
 // Free of any UI import, so that queue.spec.ts runs without the app around it.
 
-import { scoredTitle } from '@sensorr/sensorr'
+import { rankOf, scoredTitle } from '@sensorr/sensorr'
 
 // oleoo axes compared between the owned release and the proposed one, in the order
 // they read in a release name. `dub` is the audio codec, not the language.
@@ -25,7 +25,7 @@ const has = (list, value) => (list || []).includes(value)
 const SUPERSCRIPT = '⁰¹²³⁴⁵⁶⁷⁸⁹'
 
 // What the policy says about one value, and nothing more. `require` and `avoid` are
-// sets; `prefer` is an ordered list whose position is the score (policy.ts:330-353).
+// sets; `prefer` is an ordered list of ranks whose position is the score (policy.ts `releaseScore`).
 export const levelOf = (axis, value, policy) => {
   if (!value) {
     return { kind: null }
@@ -36,7 +36,7 @@ export const levelOf = (axis, value, policy) => {
   }
 
   const preferred = policy?.prefer?.[axis] || []
-  const rank = preferred.indexOf(value)
+  const rank = rankOf(preferred, value)
 
   if (has(policy?.require?.[axis], value)) {
     return { kind: 'require', mark: '*', rank: rank === -1 ? null : rank + 1, total: preferred.length }
