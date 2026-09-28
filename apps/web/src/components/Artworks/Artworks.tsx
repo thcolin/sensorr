@@ -858,7 +858,8 @@ const Link = ({ label, onAdd, onCancel, disabled = false }) => {
     <form sx={Link.styles.element} onSubmit={submit} onKeyDown={cancel} onBlur={leave}>
       <div>
         <input type='url' autoFocus={true} disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label={`${label} link`} aria-invalid={!!error} />
-        <Button type='submit' variant='outline' disabled={disabled || !value.trim()}>Add</Button>
+        {/* Safari and Firefox on macOS do not focus a clicked button: the input would lose it to nothing, and close the form before Add */}
+        <Button type='submit' variant='outline' disabled={disabled || !value.trim()} onMouseDown={(e) => e.preventDefault()}>Add</Button>
       </div>
       {!!error && <small role='alert'>{error}</small>}
     </form>
