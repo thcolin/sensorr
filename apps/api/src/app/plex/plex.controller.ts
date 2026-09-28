@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, HttpException, Logger, Param, Post } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, Logger, NotFoundException, Param, Post, Query, Res } from '@nestjs/common'
+import { Response } from 'express'
 import { PlexService } from './plex.service'
+import { imageRequestOf, fallbackOf } from './image'
 
 @Controller('plex')
 export class PlexController {
@@ -26,5 +28,35 @@ export class PlexController {
   @Get(':id/status')
   status(@Param('id') id): Promise<{ done: boolean, token?: string, expired?: boolean, error?: string }> {
     return this.plexService.checkStatus(id)
+  }
+
+  // Plex unreachable or the artwork gone, TMDB serves its own at the same size
+  @Get('image')
+  async image(@Query() query: Record<string, string>, @Res() res: Response) {
+    const request = imageRequestOf(query)
+
+    if (!request) {
+      throw new BadRequestException('Not a Plex artwork path')
+    }
+
+    const image = await this.plexService.image(request).catch((err) => {
+      this.logger.warn(`Image "${request.path}", ${err.message}`)
+      return null
+    })
+
+    if (!image) {
+      const fallback = fallbackOf(request)
+
+      if (!fallback) {
+        throw new NotFoundException()
+      }
+
+      res.set('Cache-Control', 'no-store')
+      return res.redirect(302, fallback)
+    }
+
+    // The path changes with the artwork: a stored copy never goes stale
+    res.set({ 'Content-Type': image.headers.get('content-type') || 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' })
+    res.send(Buffer.from(await image.arrayBuffer()))
   }
 }
