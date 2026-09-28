@@ -13,12 +13,12 @@ export interface Policy {
     original_languages?: string[],
   },
   prefer: {
-    znab?: string[],
-    source?: string[],
-    encoding?: string[],
-    resolution?: string[],
-    language?: string[],
-    dub?: string[],
+    znab?: (string | string[])[],
+    source?: (string | string[])[],
+    encoding?: (string | string[])[],
+    resolution?: (string | string[])[],
+    language?: (string | string[])[],
+    dub?: (string | string[])[],
     flags?: string[],
   },
   avoid?: {
