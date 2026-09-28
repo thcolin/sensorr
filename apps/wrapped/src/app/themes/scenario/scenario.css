@@ -76,9 +76,9 @@
   --scenario-pencil: #a3201a;
   --scenario-marker: #fff06a;
   --scenario-clip: #7d828a;
-  --switch-bg: #fbfaf5;
-  --switch-fg: #1b1a17;
-  --switch-font: 700 14px/1 'Courier Prime', 'Courier New', monospace;
+  --switch-bg: var(--scenario-desk);
+  --switch-fg: #efe9dc;
+  --switch-font: 400 16px/1 'Courier Prime', 'Courier New', monospace;
   --switch-radius: 2px;
 }
 
@@ -89,9 +89,9 @@ html[data-theme='scenario'] {
 }
 
 [data-theme='scenario'] body {
-  background: var(--scenario-desk);
+  background: radial-gradient(ellipse 90% 60% at 50% 0%, rgb(255 214 160 / 0.09), transparent 70%) fixed, var(--scenario-desk);
   color: var(--scenario-ink);
-  font: 400 15px/1.5 'Courier Prime', 'Courier New', monospace;
+  font: 400 16px/1.5 'Courier Prime', 'Courier New', monospace;
 }
 
 [data-theme='scenario'] ::selection {
@@ -102,8 +102,7 @@ html[data-theme='scenario'] {
 /* The desk: a lamp pool from above, pages in the middle, an index card and props on a wide screen */
 .scenario-desk {
   min-height: 100svh;
-  padding: 16px 12px 96px;
-  background: radial-gradient(ellipse 90% 60% at 50% 0%, rgb(255 214 160 / 0.09), transparent 70%) fixed, var(--scenario-desk);
+  padding: 16px 12px 40px;
   overflow-x: clip;
 }
 
@@ -123,8 +122,9 @@ html[data-theme='scenario'] {
 .scenario-page {
   --paper: #fbfaf5;
   --marker: var(--scenario-marker);
-  --margin-left: 38px;
-  --margin-right: 20px;
+  --margin-left: 46px;
+  --margin-right: 18px;
+  container-type: inline-size;
   position: relative;
   width: 100%;
   max-width: 816px;
@@ -150,7 +150,7 @@ html[data-theme='scenario'] {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 6px;
+  left: 5px;
   width: 11px;
 }
 
@@ -179,7 +179,7 @@ html[data-theme='scenario'] {
   right: var(--margin-right);
   display: flex;
   gap: 2ch;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--scenario-quiet);
 }
 
@@ -202,6 +202,7 @@ html[data-theme='scenario'] {
 .scenario-slug {
   position: relative;
   margin: 24px 0 12px;
+  padding-right: 14px;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -209,13 +210,13 @@ html[data-theme='scenario'] {
 .scenario-scene {
   position: absolute;
   top: 0.1em;
-  left: calc(-1 * var(--margin-left) + 21px);
-  font-size: 12px;
+  left: calc(-1 * var(--margin-left) + 25px);
+  font-size: 13px;
 }
 
 .scenario-scene-right {
   left: auto;
-  right: calc(-1 * var(--margin-right) + 4px);
+  right: -12px;
 }
 
 .scenario-action {
@@ -248,7 +249,8 @@ html[data-theme='scenario'] {
 
 .scenario-end {
   margin: 48px 0 0;
-  font-size: 1.2em;
+  font-size: clamp(3rem, 16cqw, 4.5rem);
+  line-height: 1;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
@@ -326,7 +328,7 @@ html[data-theme='scenario'] {
 
 .scenario-insert figcaption {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
@@ -467,11 +469,51 @@ html[data-theme='scenario'] {
   margin: 6px 0 4px;
 }
 
-.scenario-genre {
-  margin: 8px 0 18px;
-  font-size: 1.3em;
-  font-weight: 700;
+.scenario-shout {
+  margin: 26px 0 26px;
   text-align: center;
+}
+
+.scenario-shout-figure {
+  font-size: clamp(4rem, 21cqw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.scenario-shout-figure sup {
+  font-size: 0.4em;
+  vertical-align: 1.3em;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.scenario-shout-figure .scenario-mark {
+  padding: 0 0.12em;
+  background-size: 100% 0.62em;
+  background-position: 0 72%;
+}
+
+/* A word instead of a number shrinks to fit its line */
+.scenario-shout-word {
+  font-size: min(4.5rem, calc((100cqw - 90px) / (var(--length) * 0.62)));
+  letter-spacing: 0;
+}
+
+.scenario-shout-unit {
+  max-width: 26ch;
+  margin: 12px auto 0;
+  font-size: 1.25em;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.scenario-inserts[data-count='1'] {
+  grid-template-columns: minmax(0, 56%);
+  justify-content: end;
 }
 
 /* The title page: centred title, author, and the draft notes bottom left */
@@ -482,18 +524,19 @@ html[data-theme='scenario'] {
 }
 
 .scenario-title-block {
-  margin-top: 14%;
+  margin-top: 10%;
   text-align: center;
 }
 
 .scenario-title {
-  font-size: 1.35em;
+  font-size: clamp(2rem, 10.5cqw, 3.6rem);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
   text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 6px;
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.14em;
   text-wrap: balance;
 }
 
@@ -524,11 +567,12 @@ html[data-theme='scenario'] {
 }
 
 .scenario-byline {
-  margin-top: 2.4em;
+  margin-top: 2.2em;
 }
 
 .scenario-author {
-  margin-top: 1.1em;
+  margin-top: 0.6em;
+  font-size: 1.4em;
   font-weight: 700;
 }
 
@@ -551,7 +595,6 @@ html[data-theme='scenario'] {
 .scenario-draft {
   margin-top: auto;
   max-width: 44ch;
-  font-size: 13px;
 }
 
 .scenario-draft ul {
@@ -578,7 +621,6 @@ html[data-theme='scenario'] {
   padding: 18px 20px;
   background: #fbfaf5;
   color: var(--scenario-ink);
-  font-size: 13px;
   transform: rotate(-0.6deg);
   box-shadow: 0 2px 4px rgb(0 0 0 / 0.35);
 }
@@ -605,7 +647,7 @@ html[data-theme='scenario'] {
   }
 
   .scenario-desk {
-    padding: 48px 32px 120px;
+    padding: 48px 32px 64px;
   }
 
   .scenario-script {
@@ -638,6 +680,10 @@ html[data-theme='scenario'] {
   .scenario-scene {
     left: -7ch;
     font-size: inherit;
+  }
+
+  .scenario-slug {
+    padding-right: 0;
   }
 
   .scenario-scene-right {

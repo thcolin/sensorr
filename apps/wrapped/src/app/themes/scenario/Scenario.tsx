@@ -153,6 +153,14 @@ const Slug = ({ scene, children }: { scene: number, children: ReactNode }) => (
 
 const Caps = ({ children }: { children: ReactNode }) => <span className="scenario-caps">{children}</span>
 const Mark = ({ children }: { children: ReactNode }) => <mark className="scenario-mark">{children}</mark>
+// A key figure said at the scale of the page: centred capitals, like a line shouted from the room
+const Shout = ({ figure, children, long }: { figure: ReactNode, children?: ReactNode, long?: number }) => (
+  <div className="scenario-shout" style={long ? { '--length': long } as React.CSSProperties : undefined}>
+    <p className={`scenario-shout-figure${long ? ' scenario-shout-word' : ''}`}><Mark>{figure}</Mark></p>
+    {children && <p className="scenario-shout-unit">{children}</p>}
+  </div>
+)
+
 const Pencil = ({ children, className }: { children: ReactNode, className?: string }) => <p className={`scenario-pencil-note ${className || ''}`}>{children}</p>
 
 const Clip = () => (
@@ -262,9 +270,7 @@ const Rank = ({ sheet, name, scene }: { sheet: Of<'rank'>, name: string } & Scen
       </ol>
       <p className="scenario-character">La salle</p>
       <p className="scenario-parenthetical">(en chœur)</p>
-      <p className="scenario-dialogue">
-        <Mark>{rank}<sup>{sheet.suffix}</sup></Mark> {sheet.unit}.
-      </p>
+      <Shout figure={<>{rank}<sup>{sheet.suffix}</sup></>}>{sheet.unit}</Shout>
       <p className="scenario-dialogue">{sheet.detail}</p>
     </>
   )
@@ -298,9 +304,8 @@ const Streak = ({ sheet, scene, art }: { sheet: Of<'streak'> } & Scene) => (
   <>
     <Act>{sheet.label}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>
-    <p className="scenario-action">
-      {sheet.intro}{THIN}: <Mark>{number.format(sheet.evenings)} {sheet.unit}</Mark>.
-    </p>
+    <p className="scenario-action">{sheet.intro}{THIN}:</p>
+    <Shout figure={number.format(sheet.evenings)}>{sheet.unit}</Shout>
     <div className="scenario-beside">
       <Insert poster={sheet.poster} art={art} />
       <Tally count={sheet.evenings} />
@@ -358,10 +363,11 @@ const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
 const Night = ({ sheet, scene, art }: { sheet: Of<'night'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
-    <Slug scene={scene}>Int. salon – nuit – {sheet.end}</Slug>
+    <Slug scene={scene}>Int. salon – nuit</Slug>
     <p className="scenario-action scenario-date">{sheet.date}.</p>
+    <Shout figure={sheet.end} />
     <Insert poster={sheet.poster} art={art} />
-    <p className="scenario-action">Tu éteins à <Mark>{sheet.end}</Mark>{sheet.after}.</p>
+    <p className="scenario-action">Tu éteins à {sheet.end}{sheet.after}.</p>
     <p className="scenario-action">{sheet.last}</p>
   </>
 )
@@ -387,12 +393,11 @@ const Figure = ({ sheet, scene, art }: { sheet: Of<'figure'> } & Scene) => {
     <>
       <Act>{sheet.lines ? sheet.lines.join(' ') : sheet.label}</Act>
       <Slug scene={scene}>Int. salon – soir</Slug>
-      <p className="scenario-action">
-        <Mark>{number.format(sheet.count)}</Mark>{' '}
+      <Shout figure={number.format(sheet.count)}>
         {unit.map((part, index) => (
-          <span key={index}>{index > 0 && <Mark><Caps>{sheet.highlight}</Caps></Mark>}{part}</span>
-        ))}.
-      </p>
+          <span key={index}>{index > 0 && <Mark>{sheet.highlight}</Mark>}{part}</span>
+        ))}
+      </Shout>
       <p className="scenario-action">{sheet.details}</p>
       {!!sheet.posters.length && <Inserts posters={sheet.posters} art={art} />}
     </>
@@ -432,7 +437,7 @@ const Genre = ({ sheet, scene, art }: { sheet: Of<'genre'> } & Scene) => {
     <>
       <Act>{sheet.lines.join(' ')}</Act>
       <Slug scene={scene}>Int. salon – soir</Slug>
-      <p className="scenario-genre"><Mark><Caps>{sheet.name}</Caps></Mark></p>
+      <Shout figure={sheet.name} long={Math.max(sheet.name.length, 5)} />
       <p className="scenario-action">{sheet.count}</p>
       <Inserts posters={sheet.posters} art={art} />
       {lead && <p className="scenario-action"><Mark><Caps>{lead.name}</Caps></Mark> {lead.role}</p>}
