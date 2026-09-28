@@ -23,6 +23,7 @@ export class MovieDTO {
   readonly imdb_id: string
   readonly plex_guid: string
   readonly plex_url: string
+  readonly plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
   readonly original_language: string
   readonly original_title: string
   readonly overview: string

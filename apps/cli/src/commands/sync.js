@@ -9,7 +9,7 @@ import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
 import { settleSwaps, cleanedSpaceOf } from '../utils/swaps'
-import { releaseOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
+import { releaseOf, artworksOf, sameArtworks, isMassLoss, LOSS_CEILING } from '../utils/plex'
 
 const meta = {
   command: 'sync',
@@ -196,6 +196,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const body = {
             state: 'archived',
             plex_url: `https://app.plex.tv/desktop/#!/server/${state.server}/details?key=${encodeURIComponent(payload.key)}`,
+            plex_artworks: artworksOf(payload),
             releases: [
               ...swaps.releases.map(release => ({
                 ...release,
@@ -219,6 +220,7 @@ const CheckSensorrMoviesTask = ({ ...props }) => {
           const reason = (
             movie?.state !== body?.state ? `Plex movie state unknown from Sensorr library (${movie?.state || 'unknown'})` :
             movie?.plex_url !== body?.plex_url ? `Plex movie link unknown from Sensorr library` :
+            !sameArtworks(movie?.plex_artworks, body.plex_artworks) ? `Plex movie artworks unknown from Sensorr library` :
             JSON.stringify((movie?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) !== JSON.stringify((body?.releases || []).map(({ title }) => title).sort((a, b) => a.localeCompare(b))) ? `Plex release different from Sensorr library` :
             swaps.changed ? `Accepted swap landed or overdue` : null
           )

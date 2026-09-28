@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, isMassLoss, LOSS_CEILING } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, isMassLoss, LOSS_CEILING, artworksOf, sameArtworks } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -220,5 +220,38 @@ describe('isMassLoss', () => {
 
   it('has nothing to hold back when Sensorr holds nothing from Plex', () => {
     expect(isMassLoss(0, 0)).toBe(false)
+  })
+})
+
+describe('artworksOf', () => {
+  it('reads the poster, the backdrop and the logo picked on Plex', () => {
+    expect(artworksOf({
+      thumb: '/library/metadata/6850/thumb/1643698660',
+      art: '/library/metadata/6850/art/1643698660',
+      Image: [
+        { type: 'coverPoster', url: '/library/metadata/6850/thumb/1643698660' },
+        { type: 'background', url: '/library/metadata/6850/art/1643698660' },
+        { type: 'backgroundSquare', url: '/library/metadata/6850/squareArt/1643698660' },
+        { type: 'clearLogo', url: '/library/metadata/6850/clearLogo/1790301610' },
+      ],
+    })).toEqual({
+      poster: '/library/metadata/6850/thumb/1643698660',
+      backdrop: '/library/metadata/6850/art/1643698660',
+      logo: '/library/metadata/6850/clearLogo/1790301610',
+    })
+  })
+
+  it('falls back on thumb and art, and holds null for what Plex does not have', () => {
+    expect(artworksOf({ thumb: '/library/metadata/1/thumb/2' })).toEqual({ poster: '/library/metadata/1/thumb/2', backdrop: null, logo: null })
+  })
+})
+
+describe('sameArtworks', () => {
+  const artworks = { poster: '/library/metadata/1/thumb/2', backdrop: null, logo: null }
+
+  it('tells a changed artwork, and one Sensorr never stored', () => {
+    expect(sameArtworks({ poster: '/library/metadata/1/thumb/2' }, artworks)).toBe(true)
+    expect(sameArtworks({ poster: '/library/metadata/1/thumb/3' }, artworks)).toBe(false)
+    expect(sameArtworks(undefined, artworks)).toBe(false)
   })
 })

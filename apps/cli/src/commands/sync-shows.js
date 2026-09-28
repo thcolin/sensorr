@@ -7,7 +7,7 @@ import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { showFilesOf, unreadItemsOf, episodeVersionsOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
+import { artworksOf, sameArtworks, showFilesOf, unreadItemsOf, episodeVersionsOf, isMassLoss, LOSS_CEILING } from '../utils/plex'
 import { settleSeasonSwaps, cleanedSpaceOf } from '../utils/swaps'
 import { fetchShow, fetchSensorrShows, syncedFilesOf, plexFilesOf, plexShowOf, withdrawnProposalsOf } from '../utils/shows'
 
@@ -63,7 +63,7 @@ const FetchSensorrShowsTask = ({ ...props }) => {
       setStatus('loading')
 
       try {
-        const library = await fetchSensorrShows(api, { fields: 'id|name|first_air_date|external_ids|genres|poster_path|vote_average|releases' })
+        const library = await fetchSensorrShows(api, { fields: 'id|name|first_air_date|external_ids|genres|poster_path|vote_average|releases|plex_artworks' })
         const { uri, params, init } = api.query.episodes.getEpisodes({ params: { fields: 'id|show_id|season_number|episode_number|files' } })
         const { results } = await api.fetch(uri, { ...params, limit: '' }, init)
         const episodes = results.reduce((acc, episode) => ({ ...acc, [episode.show_id]: [...(acc[episode.show_id] || []), episode] }), {})
@@ -172,12 +172,12 @@ const CheckSensorrShowsTask = ({ ...props }) => {
           return acc
         }
 
-        return { ...acc, [match.id]: { title: payload.title, keys: [...(acc[match.id]?.keys || []), `${payload.ratingKey}`] } }
+        return { ...acc, [match.id]: { title: payload.title, artworks: acc[match.id]?.artworks || artworksOf(payload), keys: [...(acc[match.id]?.keys || []), `${payload.ratingKey}`] } }
       }, {})
 
       setState((state) => ({ ...state, processed: [...Object.keys(distant).map(Number), ...named] }))
 
-      for (const [tmdb, { title, keys }] of Object.entries(distant)) {
+      for (const [tmdb, { title, artworks, keys }] of Object.entries(distant)) {
         try {
           setTask((task) => ({
             ...task,
@@ -200,10 +200,16 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             const fetched = await fetchShow(state.tmdb, tmdb)
             show = fetched.show
             episodes = fetched.episodes.map((episode) => ({ ...episode, monitored: false }))
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { ...show, state: 'archived', monitored: false, refreshed_at: new Date() } } })
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { ...show, state: 'archived', monitored: false, plex_artworks: artworks, refreshed_at: new Date() } } })
             await api.fetch(uri, params, init)
             state.logger.info({ message: `🩹 Add "${show.name}" show from Plex (archived)`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
             created.push(show.id)
+          }
+
+          if (!unknown && !sameArtworks(show.plex_artworks, artworks)) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { id: show.id, plex_artworks: artworks } } })
+            await api.fetch(uri, params, init)
+            corrections.push(show.id)
           }
 
           // A swap whose deletion failed stays pending, it is tried again on the next run
@@ -261,7 +267,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
                 : changes.reduce((acc, { id, files }) => ({ ...acc, [id]: syncedFilesOf(files) }), {}),
             })
             await api.fetch(uri, params, init)
-            corrections.push(show.id)
+            corrections.push(...(corrections.includes(show.id) ? [] : [show.id]))
             state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata, ${unread.length} read`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched, read: unread.length } })
           }
 

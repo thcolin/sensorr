@@ -137,6 +137,13 @@ export class Show extends Document {
   @Prop()
   plex_guid: string
 
+  @Prop(raw({
+    poster: { type: String },
+    backdrop: { type: String },
+    logo: { type: String },
+  }))
+  plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
+
   @Prop(raw([String]))
   requested_by: Record<any, any>
 
