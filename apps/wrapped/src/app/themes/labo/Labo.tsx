@@ -55,8 +55,8 @@ const Labo = ({ share, sheets, colophon, art }: ThemeProps) => {
 export default Labo
 
 // Edge printing: film stock, the reel's name and a key number that climbs down the page
-const Edges = ({ index, reel }: { index: number, reel: Reel }) => {
-  const marks = [`KODAK 5219`, `${reel.name.toUpperCase()} ${reel.year}`, `▸ ${two(index * 4 + 1)}`, 'SAFETY FILM', `▸ ${two(index * 4 + 3)}`]
+export const Edges = ({ index, reel }: { index: number, reel?: Reel }) => {
+  const marks = [`KODAK 5219`, reel && `${reel.name.toUpperCase()} ${reel.year}`, `▸ ${two(index * 4 + 1)}`, 'SAFETY FILM', `▸ ${two(index * 4 + 3)}`].filter(Boolean) as string[]
   return (
     <>
       {['left', 'right'].map((side) => (
@@ -462,6 +462,13 @@ const Finale = ({ sheet, index, reel, art }: { sheet: Of<'finale'>, index: numbe
     </div>
     <div className="labo-burn">
       <p className="labo-burn-end">{sheet.end}</p>
+      <Scorch />
+    </div>
+  </Sheet>
+)
+
+// Holes burnt through the film where the projector held on one frame
+export const Scorch = () => (
       <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
           <filter id="labo-scorch">
@@ -482,6 +489,4 @@ const Finale = ({ sheet, index, reel, art }: { sheet: Of<'finale'>, index: numbe
           <circle cx="60" cy="262" r="62" fill="url(#labo-hole)" />
         </g>
       </svg>
-    </div>
-  </Sheet>
 )
