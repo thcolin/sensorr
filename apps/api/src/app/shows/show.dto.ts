@@ -1,6 +1,6 @@
 import { TorrentFiles } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
-import { PlexArtworks } from '@sensorr/plex'
+import { PlexArtworks, PlexSeason } from '@sensorr/plex'
 
 export class ShowReleaseDTO extends ReleaseDTO {
   coverage?: { season: number, episode: number }[]
@@ -52,7 +52,7 @@ export class ShowDTO {
   readonly path: string
   readonly plex_guid: string
   readonly plex_artworks: PlexArtworks
-  readonly plex_seasons: Record<string, string>
+  readonly plex_seasons: Record<string, PlexSeason>
   readonly requested_by: string[]
   readonly requested_at: number
   readonly banned_releases: string[]

@@ -32,12 +32,20 @@ export const candidatesOf = (metadata = []): PlexArtworkCandidate[] => metadata.
   selected: !!selected,
 }))
 
-// A season without a poster of its own shows the show's: it is left out
-export const seasonsOf = (seasons = [], ratingKeys: string[]): Record<string, string> => seasons
-  .filter(({ parentRatingKey, thumb, parentThumb }) => ratingKeys.includes(`${parentRatingKey}`) && thumb && thumb !== parentThumb)
-  .reduce((acc, { index, thumb }) => acc[index] ? acc : { ...acc, [index]: thumb }, {})
+export interface PlexSeason {
+  key: string
+  poster: string | null
+}
 
-export const sameSeasons = (known: Record<string, string> | null | undefined, seasons: Record<string, string>) => {
+// Every season with the Plex item its poster is written to; one without a poster of its own shows the show's, and has none
+export const seasonsOf = (seasons = [], ratingKeys: string[]): Record<string, PlexSeason> => seasons
+  .filter(({ parentRatingKey }) => ratingKeys.includes(`${parentRatingKey}`))
+  .reduce((acc, { index, ratingKey, thumb, parentThumb }) => acc[index] ? acc : {
+    ...acc,
+    [index]: { key: `${ratingKey}`, poster: thumb && thumb !== parentThumb ? thumb : null },
+  }, {})
+
+export const sameSeasons = (known: Record<string, PlexSeason> | null | undefined, seasons: Record<string, PlexSeason>) => {
   const keys = new Set([...Object.keys(known || {}), ...Object.keys(seasons)])
-  return [...keys].every((key) => (known?.[key] || null) === (seasons[key] || null))
+  return [...keys].every((key) => (known?.[key]?.key || null) === (seasons[key]?.key || null) && (known?.[key]?.poster || null) === (seasons[key]?.poster || null))
 }

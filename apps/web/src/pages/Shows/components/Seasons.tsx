@@ -9,6 +9,7 @@ import { useTMDBRequest } from '../../../store/tmdb'
 import { useAPI } from '../../../store/api'
 import { artworkOf } from '../../../store/plex'
 import { ReleasesStyles } from '../../Details/components/Releases'
+import { Artworks } from '../../../components/Artworks/Artworks'
 import { Follow } from './Follow'
 import { Search } from './Search'
 import { Proposal } from './Proposals'
@@ -53,7 +54,7 @@ const bleed = {
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
 // atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
 // and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, posters = null, ...props }) => {
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, plex = null, artworks = null, ...props }) => {
   const api = useAPI()
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
@@ -289,10 +290,23 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                   )}
                 </div>
                 {opened && (
-                  <div id={id} sx={{ ...UISeasons.styles.opened, ...(posters?.[season.number] ? UISeasons.styles.postered : {}) }}>
-                    {!!posters?.[season.number] && (
+                  <div id={id} sx={{ ...UISeasons.styles.opened, ...(plex?.[season.number] ? UISeasons.styles.postered : {}) }}>
+                    {!!plex?.[season.number] && (
                       <div sx={UISeasons.styles.poster}>
-                        <Picture path={artworkOf(posters[season.number], (entity?.seasons || []).find(({ season_number }) => season_number === season.number)?.poster_path || null, api.access_token)} size='w185' />
+                        {plex[season.number].poster ? (
+                          <Picture path={artworkOf(plex[season.number].poster, (entity?.seasons || []).find(({ season_number }) => season_number === season.number)?.poster_path || null, api.access_token)} size='w185' />
+                        ) : (
+                          // Plex shows the show's poster: where this season's own would go
+                          <span sx={UISeasons.styles.none}><small>No poster</small></span>
+                        )}
+                        <div sx={UISeasons.styles.artworks}>
+                          <Artworks
+                            behavior='tv'
+                            entity={entity}
+                            artworks={{ poster: plex[season.number].poster, backdrop: artworks?.backdrop || null, logo: artworks?.logo || null }}
+                            season={{ number: season.number, name: season.name, key: plex[season.number].key, seasons: plex }}
+                          />
+                        </div>
                       </div>
                     )}
                     {(placed.seasons[season.number] || NONE).map(block)}
@@ -384,6 +398,26 @@ UISeasons.styles = {
     '>span': {
       minHeight: '0px',
     },
+  },
+  none: {
+    display: 'flex !important',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    border: '2px dashed',
+    borderColor: 'grayDark',
+    borderRadius: '0.25em',
+    '>small': {
+      fontFamily: 'monospace',
+      fontSize: 6,
+      color: 'grayDarkest',
+    },
+  },
+  // Astride the corner, as on the show's poster
+  artworks: {
+    position: 'absolute',
+    bottom: '-0.75em',
+    left: '-0.75em',
   },
   head: {
     display: 'flex',
