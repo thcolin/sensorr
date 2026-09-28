@@ -39,15 +39,6 @@ export const LOSS_CEILING = 0.25
 
 export const isMassLoss = (lost, held) => held > 0 && lost / held > LOSS_CEILING
 
-const ARTWORKS = { coverPoster: 'poster', background: 'backdrop', clearLogo: 'logo' }
-
-export const artworksOf = (payload) => (payload.Image || []).reduce(
-  (acc, { type, url }) => ARTWORKS[type] ? { ...acc, [ARTWORKS[type]]: url } : acc,
-  { poster: payload.thumb || null, backdrop: payload.art || null, logo: null },
-)
-
-export const sameArtworks = (known, artworks) => Object.keys(artworks).every((key) => (known?.[key] || null) === artworks[key])
-
 const REFINES = { MULTi: ['MULTi-VFF', 'MULTi-VFQ', 'MULTi-VF2'], FRENCH: ['TRUEFRENCH', 'VFQ'] }
 
 export const languageOf = (streams) => {

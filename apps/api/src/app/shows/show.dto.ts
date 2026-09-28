@@ -1,6 +1,6 @@
 import { TorrentFiles } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
-import { PlexArtworks } from '../plex/image'
+import { PlexArtworks } from '@sensorr/plex'
 
 export class ShowReleaseDTO extends ReleaseDTO {
   coverage?: { season: number, episode: number }[]
