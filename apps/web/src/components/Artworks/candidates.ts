@@ -70,6 +70,18 @@ export const candidatesOf = (plex = [], tmdb = [], { region, token }: { region: 
   ].filter(({ items }) => items.length)
 }
 
+// A MediUX image is fetched by Plex in the JPEG MediUX makes of it
+export const setCandidatesOf = (sets = [], kind: ArtworkKind): Candidate[] => sets
+  .filter((set) => set[kind])
+  .map((set) => ({
+    id: `mediux:${set.id}:${kind}`,
+    thumb: set[kind].thumb,
+    choice: { url: set[kind].url },
+    lang: null,
+    source: 'mediux',
+    current: false,
+  }))
+
 // A ThePosterDB page is not an image: its asset is
 export const linkOf = (raw: string): string | null => {
   const value = raw.trim()

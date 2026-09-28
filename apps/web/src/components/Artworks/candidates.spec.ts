@@ -1,4 +1,4 @@
-import { candidatesOf, linkOf, ratingKeyOf } from './candidates'
+import { candidatesOf, linkOf, ratingKeyOf, setCandidatesOf } from './candidates'
 
 const plex = [
   { key: 'upload://posters/a', thumb: '/library/metadata/4260/file?url=upload%3A%2F%2Fposters%2Fa', provider: 'local', selected: true },
@@ -50,5 +50,19 @@ describe('linkOf', () => {
     expect(linkOf('https://mediux.pro/some.jpg')).toBe('https://mediux.pro/some.jpg')
     expect(linkOf('not a link')).toBeNull()
     expect(linkOf('javascript:alert(1)')).toBeNull()
+  })
+})
+
+describe('setCandidatesOf', () => {
+  it('has Plex fetch the JPEG of each set that holds this kind', () => {
+    const sets = [
+      { id: '1', poster: { thumb: 'https://images.mediux.io/assets/a?v=1&key=thumb', url: 'https://images.mediux.io/assets/a?v=1&key=jpg' }, backdrop: null },
+      { id: '2', poster: null, backdrop: { thumb: 't', url: 'u' } },
+    ]
+
+    expect(setCandidatesOf(sets, 'poster')).toEqual([
+      { id: 'mediux:1:poster', thumb: 'https://images.mediux.io/assets/a?v=1&key=thumb', choice: { url: 'https://images.mediux.io/assets/a?v=1&key=jpg' }, lang: null, source: 'mediux', current: false },
+    ])
+    expect(setCandidatesOf(sets, 'backdrop').map(({ id }) => id)).toEqual(['mediux:2:backdrop'])
   })
 })

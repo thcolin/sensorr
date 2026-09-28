@@ -7,7 +7,8 @@ import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { artworkOf } from '../../store/plex'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
-import { ArtworkChoice, ArtworkKind, Candidate, CandidateGroup, candidatesOf, linkOf, ratingKeyOf } from './candidates'
+import { useConfigContext } from '../../contexts/Config/Config'
+import { ArtworkChoice, ArtworkKind, Candidate, CandidateGroup, candidatesOf, linkOf, ratingKeyOf, setCandidatesOf } from './candidates'
 
 const KINDS: { kind: ArtworkKind, emoji: string, label: string, tmdb: string, width: string, height: string, size: string, preview: string }[] = [
   { kind: 'poster', emoji: '🖼️', label: 'Poster', tmdb: 'posters', width: '5.75em', height: '8.625em', size: 'w154', preview: 'w342' },
@@ -71,7 +72,9 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const tmdb = useTMDB()
   const { i18n: { language } } = useTranslation()
   const region = (language || 'en').split('-')[0]
-  const [lists, setLists] = useState({ loading: true, plex: null, tmdb: null, errors: [] as string[] })
+  const { config } = useConfigContext()
+  const mediux = !!config.get('mediux.token')
+  const [lists, setLists] = useState({ loading: true, plex: null, tmdb: null, sets: null, errors: [] as string[] })
   const [chosen, setChosen] = useState<Chosen>({})
   const [links, setLinks] = useState<Partial<Record<ArtworkKind, Candidate[]>>>({})
   const [writing, setWriting] = useState(false)
@@ -79,12 +82,14 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   useEffect(() => {
     const controller = new AbortController()
     const plexQuery = api.query.plex.getArtworks({ ratingKey, init: { signal: controller.signal } })
+    const setsQuery = api.query.mediux.getSets({ type: behavior, id: entity.id, init: { signal: controller.signal } })
 
     Promise.allSettled([
       api.fetch(plexQuery.uri, plexQuery.params, plexQuery.init),
       // Without a language TMDB lists every image, where the configured one would leave only its own
       tmdb.fetch(`${behavior}/${entity.id}/images`, { language: '' }, { signal: controller.signal }),
-    ]).then(([plex, images]) => {
+      mediux ? api.fetch(setsQuery.uri, setsQuery.params, setsQuery.init) : Promise.resolve({ sets: null }),
+    ]).then(([plex, images, sets]) => {
       if (controller.signal.aborted) {
         return
       }
@@ -93,7 +98,9 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
         loading: false,
         plex: plex.status === 'fulfilled' ? plex.value : null,
         tmdb: images.status === 'fulfilled' ? images.value : null,
+        sets: sets.status === 'fulfilled' ? sets.value.sets : null,
         errors: [
+          ...(sets.status === 'rejected' ? ['MediUX did not answer: its sets are missing'] : []),
           ...(plex.status === 'rejected' ? ['Plex did not answer: its artworks are missing, and nothing can be written'] : []),
           ...(images.status === 'rejected' ? ['TMDB did not answer: its artworks are missing'] : []),
         ],
@@ -103,13 +110,30 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
     return () => controller.abort()
   }, [ratingKey, entity?.id])
 
-  const groups = useMemo(() => KINDS.reduce((acc, { kind, tmdb: list }) => ({
-    ...acc,
-    [kind]: [
-      ...(links[kind]?.length ? [{ label: 'links', items: links[kind] }] : []),
-      ...candidatesOf(lists.plex?.[kind] || [], lists.tmdb?.[list] || [], { region, token: api.access_token }),
-    ],
-  }), {} as Record<ArtworkKind, CandidateGroup[]>), [lists, links, region])
+  const groups = useMemo(() => KINDS.reduce((acc, { kind, tmdb: list }) => {
+    const [current, ...rest] = candidatesOf(lists.plex?.[kind] || [], lists.tmdb?.[list] || [], { region, token: api.access_token })
+    const sets = kind === 'logo' ? [] : setCandidatesOf(lists.sets || [], kind)
+
+    return {
+      ...acc,
+      [kind]: [
+        ...(links[kind]?.length ? [{ label: 'links', items: links[kind] }] : []),
+        ...(current?.label === 'current' ? [current] : []),
+        ...(sets.length ? [{ label: 'mediux', items: sets }] : []),
+        ...(current?.label === 'current' ? rest : [current, ...rest].filter(Boolean)),
+      ],
+    }
+  }, {} as Record<ArtworkKind, CandidateGroup[]>), [lists, links, region])
+
+  const chooseSet = (set) => {
+    const [poster, backdrop] = ['poster', 'backdrop'].map((kind) => setCandidatesOf([set], kind as ArtworkKind)[0])
+    const whole = (!poster || chosen.poster?.id === poster.id) && (!backdrop || chosen.backdrop?.id === backdrop.id)
+    setChosen((chosen) => ({
+      ...chosen,
+      ...(poster ? { poster: whole ? undefined : { id: poster.id, choice: poster.choice, thumb: poster.thumb } } : {}),
+      ...(backdrop ? { backdrop: whole ? undefined : { id: backdrop.id, choice: backdrop.choice, thumb: backdrop.thumb } } : {}),
+    }))
+  }
 
   const choose = useCallback((kind: ArtworkKind, candidate: Candidate) => setChosen((chosen) => ({
     ...chosen,
@@ -164,6 +188,37 @@ const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
         <Preview artworks={artworks} chosen={chosen} reset={() => setChosen({})} />
         {lists.errors.map((error) => <p key={error} sx={Picker.styles.error}>{error}</p>)}
         <Link onAdd={addLink} />
+        {mediux && (
+          <section sx={Picker.styles.section}>
+            <h3>
+              <span aria-hidden={true}>🎨</span>
+              Sets
+              <span>{lists.loading ? '…' : (lists.sets || []).length}</span>
+            </h3>
+            {!lists.loading && !(lists.sets || []).length && (
+              <p sx={Picker.styles.empty}>No MediUX set for this title</p>
+            )}
+            <div sx={Picker.styles.row}>
+              {(lists.sets || []).map((set) => (
+                <button
+                  key={set.id}
+                  type='button'
+                  sx={Picker.styles.set}
+                  aria-pressed={[['poster', set.poster], ['backdrop', set.backdrop]].every(([kind, image]) => !image || chosen[kind]?.id === `mediux:${set.id}:${kind}`)}
+                  title={[set.title, set.author].filter(Boolean).join(' · ')}
+                  onClick={() => chooseSet(set)}
+                  disabled={writing || !lists.plex}
+                >
+                  <span>
+                    {!!set.poster && <span sx={{ width: '5.75em', height: '8.625em' }}><Picture path={set.poster.thumb} /></span>}
+                    {!!set.backdrop && <span sx={{ width: '15.33em', height: '8.625em' }}><Picture path={set.backdrop.thumb} /></span>}
+                  </span>
+                  <code>{set.author || set.title}</code>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {KINDS.map(({ kind, emoji, label, width, height, size }) => (
           <section key={kind} sx={Picker.styles.section}>
             <h3>
@@ -287,6 +342,54 @@ Picker.styles = {
         paddingX: 8,
         paddingY: 11,
       },
+    },
+  },
+  set: {
+    variant: 'button.reset',
+    position: 'relative',
+    flex: 'none',
+    fontSize: 4,
+    cursor: 'pointer',
+    '>span': {
+      display: 'flex',
+      gap: 11,
+      '>span': {
+        display: 'block',
+        '>span': {
+          minHeight: '0px',
+        },
+      },
+    },
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      inset: '0px',
+      boxShadow: 'inset 0 0 0 0 currentColor',
+      color: 'primary',
+      pointerEvents: 'none',
+      transition: 'box-shadow 120ms ease-in-out',
+    },
+    '&[aria-pressed="true"]::after': {
+      boxShadow: 'inset 0 0 0 3px currentColor',
+    },
+    ':focus-visible': {
+      outline: 'none',
+    },
+    ':focus-visible::after': {
+      boxShadow: 'inset 0 0 0 3px currentColor',
+      color: 'grayDarkest',
+    },
+    '>code': {
+      position: 'absolute',
+      left: '3px',
+      bottom: '3px',
+      paddingX: 10,
+      paddingY: 11,
+      fontSize: 8,
+      lineHeight: 1,
+      color: 'whitePure',
+      backgroundColor: 'hsla(0, 0%, 0%, 0.75)',
+      borderRadius: '1em',
     },
   },
   empty: {

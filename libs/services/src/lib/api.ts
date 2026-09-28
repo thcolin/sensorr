@@ -596,6 +596,22 @@ export class API {
         }
       }),
     },
+    mediux: {
+      getSets: (
+        { type, id, init = {} }: { type: 'movie' | 'tv', id: number, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `mediux/sets/${type}/${id}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+    },
     guests: {
       postGuest: (
         { body, init = {} }: { body: any, init?: any }
