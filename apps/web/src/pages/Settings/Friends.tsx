@@ -167,7 +167,7 @@ const Friends = ({ ...props }) => {
                   </button>
                 </footer>
                 {wrapped?.[guest.email]?.viewer && (
-                  <div sx={Friends.styles.look}>
+                  <fieldset sx={Friends.styles.look}>
                     <select
                       aria-label={`Look of the wrapped of ${guest.name}`}
                       value={wrapped[guest.email].wrapped_theme ?? ''}
@@ -187,7 +187,7 @@ const Friends = ({ ...props }) => {
                       <option value='true'>Chooses the look</option>
                       <option value='false'>Look fixed</option>
                     </select>
-                  </div>
+                  </fieldset>
                 )}
               </div>
             ))}
@@ -306,6 +306,8 @@ Friends.styles = {
     },
   },
   look: {
+    border: 'none',
+    minWidth: 0,
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 4,
