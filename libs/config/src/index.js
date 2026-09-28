@@ -32,7 +32,7 @@ convict.addFormat({
   },
 })
 
-const config = convict({
+const schema = {
   docker: {
     doc: 'Is Sensorr App running in Docker env ?',
     format: 'Boolean',
@@ -651,6 +651,11 @@ const config = convict({
       },
     },
   },
-})
+}
+
+// A fresh instance on the same schema, to validate changes before they reach the shared one
+export const create = () => convict(schema)
+
+const config = create()
 
 export default config
