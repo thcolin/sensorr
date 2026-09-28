@@ -51,6 +51,11 @@ describe('lookOf', () => {
     expect(lookOf({ global, edition: { choice: false }, guest: { choice: true } })).toEqual({ theme: 'affiche', choice: true })
   })
 
+  it('skips a look turned off, down to the first one offered', () => {
+    expect(lookOf({ global, edition: { theme: 'labo' }, guest: { theme: 'tele' }, looks: ['affiche', 'labo'] })).toEqual({ theme: 'labo', choice: true })
+    expect(lookOf({ global, guest: { theme: 'tele' }, looks: ['scenario', 'labo'] })).toEqual({ theme: 'scenario', choice: true })
+  })
+
   it('reads a null value as no override', () => {
     expect(lookOf({ global, edition: { theme: null, choice: null }, guest: { theme: null, choice: null } })).toEqual(global)
   })

@@ -19,6 +19,20 @@ convict.addFormat({
 // The looks of the wrapped page, `apps/wrapped/src/app/themes` draws each one
 export const WRAPPED_THEMES = ['affiche', 'labo', 'tele', 'videoclub', 'scenario']
 
+// A list of looks, each one known and listed once, never empty
+convict.addFormat({
+  name: 'wrapped-looks',
+  validate: function (looks) {
+    if (!Array.isArray(looks) || !looks.length) {
+      throw new Error('must list at least one look')
+    }
+
+    if (looks.some((look) => !WRAPPED_THEMES.includes(look)) || new Set(looks).size !== looks.length) {
+      throw new Error(`must list each of ${WRAPPED_THEMES.join(', ')} at most once`)
+    }
+  },
+})
+
 // A `source-array` where each year shows once, the API reads the first one it finds
 convict.addFormat({
   name: 'wrapped-editions',
@@ -318,6 +332,11 @@ const schema = {
     },
   },
   wrapped: {
+    looks: {
+      doc: 'Looks offered, to the friends who can switch and in every setting below; one left out is never shown',
+      format: 'wrapped-looks',
+      default: WRAPPED_THEMES,
+    },
     theme: {
       doc: `Look of every wrapped, unless an edition or a friend sets its own: ${WRAPPED_THEMES.join(', ')}`,
       format: WRAPPED_THEMES,

@@ -8,11 +8,11 @@ import { known, read, write } from './look'
 
 type At = 'start' | 'end'
 
-const Switch = ({ at, theme, onChoose }: { at: At, theme: WrappedTheme, onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => (
+const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => (
   <label className="theme-switch" data-at={at}>
     <span>{at === 'start' ? 'Voir en' : 'Revoir en'}</span>
     <select name={`theme-${at}`} value={theme} onChange={(event) => onChoose(event.target.value as WrappedTheme, at, event.currentTarget)}>
-      {(Object.keys(THEMES) as WrappedTheme[]).map((id) => <option key={id} value={id}>{WRAPPED_THEME_NAMES[id]}</option>)}
+      {looks.map((id) => <option key={id} value={id}>{WRAPPED_THEME_NAMES[id]}</option>)}
     </select>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
   </label>
@@ -20,7 +20,10 @@ const Switch = ({ at, theme, onChoose }: { at: At, theme: WrappedTheme, onChoose
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { look } = share
-  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && read('chosen', token)) || (known(look.theme) ? look.theme : 'affiche'))
+  const looks = (look.looks || Object.keys(THEMES) as WrappedTheme[]).filter(known)
+  const chosen = read('chosen', token)
+  // A look chosen earlier and since turned off gives way to the one Thomas set
+  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : 'affiche'))
   const Theme = THEMES[theme]
   const { sheets, colophon, closed } = sheetsOf(share)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
@@ -78,11 +81,11 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
 
   return (
     <>
-      {look.choice && <Switch at="start" theme={theme} onChoose={choose} />}
+      {look.choice && looks.length > 1 && <Switch at="start" theme={theme} looks={looks} onChoose={choose} />}
       <Suspense fallback={<div className="theme-loading" aria-busy="true" />}>
         <Theme share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
       </Suspense>
-      {look.choice && <Switch at="end" theme={theme} onChoose={choose} />}
+      {look.choice && looks.length > 1 && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
     </>
   )
 }

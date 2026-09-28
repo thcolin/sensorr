@@ -176,7 +176,7 @@ export class WrappedService {
       year: edition,
       editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
       names: await this.namesOf(shown.wrapped),
-      look: this.lookOf(guest, edition),
+      look: { ...this.lookOf(guest, edition), looks: this.configService.config.get('wrapped.looks') },
       ...shown,
     }
   }
@@ -258,7 +258,7 @@ export class WrappedService {
 
   // The look a page wears before it knows its friend: an unknown link, a revoked one, no link at all
   look() {
-    return this.lookOf({}, this.shownEdition())
+    return { ...this.lookOf({}, this.shownEdition()), looks: this.configService.config.get('wrapped.looks') }
   }
 
   private lookOf(guest: { wrapped_theme?: string | null, wrapped_choice?: boolean | null }, year: number) {
@@ -266,6 +266,7 @@ export class WrappedService {
 
     return lookOf({
       global: { theme: config.get('wrapped.theme'), choice: config.get('wrapped.choice') },
+      looks: config.get('wrapped.looks'),
       edition: config.get('wrapped.editions').find((edition) => edition.year === year),
       // A look since removed from the list falls back to the edition's or the global one
       guest: { theme: WRAPPED_THEMES.includes(guest.wrapped_theme) ? guest.wrapped_theme as WrappedTheme : null, choice: guest.wrapped_choice },

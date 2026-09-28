@@ -22,7 +22,7 @@ const Friends = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const looks = useForm({ defaultValues: config.getProperties() })
-  const { fallback } = useFallback(looks)
+  const { fallback, looks: offered } = useFallback(looks)
 
   const fetchWrapped = useCallback(() => {
     setWrappedError(false)
@@ -175,7 +175,7 @@ const Friends = ({ ...props }) => {
                   </button>
                   {wrapped?.[guest.email]?.viewer && (
                     <div sx={Friends.styles.look}>
-                      <LookSelect label={`Look of the wrapped of ${guest.name}`} value={wrapped[guest.email].wrapped_theme ?? null} fallback={fallback.theme} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
+                      <LookSelect label={`Look of the wrapped of ${guest.name}`} value={wrapped[guest.email].wrapped_theme ?? null} fallback={fallback.theme} looks={offered} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
                       <ChoiceSelect label={`Whether ${guest.name} can switch the look`} value={wrapped[guest.email].wrapped_choice ?? null} fallback={fallback.choice} onChange={(wrapped_choice) => setLook(guest.email, { wrapped_choice })} />
                     </div>
                   )}

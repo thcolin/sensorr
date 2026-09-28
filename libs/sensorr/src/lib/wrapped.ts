@@ -14,11 +14,14 @@ export const WRAPPED_THEME_NAMES: Record<WrappedTheme, string> = {
 
 interface WrappedLook { theme?: WrappedTheme | null, choice?: boolean | null }
 
-// A friend's own setting wins over the edition's, which wins over the global one
-export const lookOf = ({ global, edition, guest }: { global: { theme: WrappedTheme, choice: boolean }, edition?: WrappedLook | null, guest?: WrappedLook | null }) => ({
-  theme: guest?.theme ?? edition?.theme ?? global.theme,
-  choice: guest?.choice ?? edition?.choice ?? global.choice,
-})
+// A friend's own setting wins over the edition's, which wins over the global one; a look turned off falls back the same way
+export const lookOf = ({ global, edition, guest, looks }: { global: { theme: WrappedTheme, choice: boolean }, edition?: WrappedLook | null, guest?: WrappedLook | null, looks?: WrappedTheme[] }) => {
+  const offered = (theme?: WrappedTheme | null) => theme && (!looks || looks.includes(theme)) ? theme : null
+  return {
+    theme: offered(guest?.theme) ?? offered(edition?.theme) ?? offered(global.theme) ?? looks?.[0] ?? global.theme,
+    choice: guest?.choice ?? edition?.choice ?? global.choice,
+  }
+}
 
 // `title` is the movie guid, or `show:<grandparent_rating_key>` for an episode.
 export interface WrappedPlay {

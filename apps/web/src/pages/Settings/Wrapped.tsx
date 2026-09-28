@@ -72,10 +72,13 @@ const inherit = (theme: WrappedTheme) => `Default · ${WRAPPED_THEME_NAMES[theme
 const inheritChoice = (choice: boolean) => `Default · ${choice ? 'can switch' : 'fixed'}`
 
 // '' stands for « keep the default » in a select, null in the config and the API
-export const LookSelect = ({ value, fallback, onChange, label }: { value: WrappedTheme | null, fallback: WrappedTheme, onChange: (theme: WrappedTheme | null) => void, label: string }) => (
+// A look turned off stays listed only where it is still set, so the setting reads true
+export const LookSelect = ({ value, fallback, looks, onChange, label }: { value: WrappedTheme | null, fallback: WrappedTheme, looks: WrappedTheme[], onChange: (theme: WrappedTheme | null) => void, label: string }) => (
   <select aria-label={label} value={value ?? ''} onChange={(event) => onChange((event.target.value || null) as WrappedTheme | null)} sx={{ variant: 'select.default' }} data-custom={value !== null || undefined}>
     <option value=''>{inherit(fallback)}</option>
-    {THEMES.map((theme) => <option key={theme} value={theme}>{WRAPPED_THEME_NAMES[theme]}</option>)}
+    {THEMES.filter((theme) => looks.includes(theme) || theme === value).map((theme) => (
+      <option key={theme} value={theme}>{WRAPPED_THEME_NAMES[theme]}{looks.includes(theme) ? '' : ' · off, uses the default'}</option>
+    ))}
   </select>
 )
 
@@ -93,13 +96,16 @@ type Edition = { year: number, theme: WrappedTheme | null, choice: boolean | nul
 export const useFallback = (form: UseFormReturn<any>) => {
   const global = { theme: form.watch('wrapped.theme') as WrappedTheme, choice: form.watch('wrapped.choice') as boolean }
   const rows = (form.watch('wrapped.editions') || []) as Edition[]
-  return { global, rows, fallback: lookOf({ global, edition: rows.find(({ year }) => year === editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)) }) }
+  const looks = (form.watch('wrapped.looks') || THEMES) as WrappedTheme[]
+  return { global, rows, looks, fallback: lookOf({ global, looks, edition: rows.find(({ year }) => year === editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)) }) }
 }
 
 // The looks everyone gets and each year's own, saved with the config
 export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSave: (data: any) => void }) => {
   const editions = useFieldArray({ name: 'wrapped.editions', control: form.control })
-  const { global, rows } = useFallback(form)
+  const { global, rows, looks } = useFallback(form)
+  // Turning a look on or off, the default one always stays on
+  const offer = (theme: WrappedTheme, on: boolean) => form.setValue('wrapped.looks', THEMES.filter((other) => other === theme ? on : looks.includes(other)), { shouldDirty: true })
   const years = rows.map(({ year }) => year)
   const current = editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)
   const next = years.includes(current) ? Math.max(...years) + 1 : current
@@ -110,13 +116,36 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
         name='wrapped.theme'
         control={form.control}
         render={({ field: { value, onChange } }) => (
-          <div role='radiogroup' aria-label='Look' sx={WrappedLooks.styles.looks}>
+          <div role='radiogroup' aria-label='Default look' sx={WrappedLooks.styles.looks}>
             {THEMES.map((theme) => (
-              <label key={theme} sx={WrappedLooks.styles.look} data-checked={value === theme || undefined}>
-                <input type='radio' name='wrapped.theme' value={theme} checked={value === theme} onChange={() => onChange(theme)} />
-                <Glimpse theme={theme} />
-                <span>{WRAPPED_THEME_NAMES[theme]}</span>
-              </label>
+              <div key={theme} sx={WrappedLooks.styles.cell} data-off={!looks.includes(theme) || undefined}>
+                <label sx={WrappedLooks.styles.look} data-checked={value === theme || undefined}>
+                  <input
+                    type='radio'
+                    name='wrapped.theme'
+                    value={theme}
+                    checked={value === theme}
+                    onChange={() => {
+                      onChange(theme)
+                      looks.includes(theme) || offer(theme, true)
+                    }}
+                  />
+                  <Glimpse theme={theme} />
+                  <span>{WRAPPED_THEME_NAMES[theme]}</span>
+                </label>
+                <div sx={WrappedLooks.styles.offer}>
+                  <Option
+                    type='checkbox'
+                    id={`wrapped.looks.${theme}`}
+                    checked={looks.includes(theme)}
+                    disabled={value === theme}
+                    title={value === theme ? 'The default look is always offered' : undefined}
+                    onChange={(event: any) => offer(theme, event.target.checked)}
+                  >
+                    <small>{value === theme ? 'Default' : looks.includes(theme) ? 'Offered' : 'Off'}</small>
+                  </Option>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -142,7 +171,7 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
           <Controller
             name={`wrapped.editions.${index}.theme`}
             control={form.control}
-            render={({ field: { value, onChange } }) => <LookSelect label={`Look of the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.theme} onChange={onChange} />}
+            render={({ field: { value, onChange } }) => <LookSelect label={`Look of the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.theme} looks={looks} onChange={onChange} />}
           />
           <Controller
             name={`wrapped.editions.${index}.choice`}
@@ -172,6 +201,21 @@ WrappedLooks.styles = {
     gridTemplateColumns: ['repeat(3, 1fr)', 'repeat(5, 1fr)'],
     gap: 6,
     marginY: 8,
+  },
+  cell: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    '&[data-off] > label': {
+      opacity: 0.45,
+    },
+  },
+  offer: {
+    display: 'flex',
+    justifyContent: 'center',
+    '>label:has(input:disabled)': {
+      color: 'grayDarkest',
+    },
   },
   look: {
     position: 'relative',

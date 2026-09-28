@@ -15,7 +15,8 @@ export interface Share {
   editions: number[]
   frozen: boolean
   // The look the page opens with, and whether the friend may switch it
-  look: { theme: WrappedTheme, choice: boolean }
+  // `looks`: the ones Thomas offers, the switch lists no other
+  look: { theme: WrappedTheme, choice: boolean, looks?: WrappedTheme[] }
   wrapped: Wrapped
 }
 
