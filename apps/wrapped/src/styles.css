@@ -555,27 +555,27 @@ ol {
   line-height: 1.1;
 }
 
-/* Sign */
-.sheet-sign {
+/* Genre */
+.sheet-genre {
   justify-content: center;
 }
 
-.sign-poster {
+.genre-poster {
   width: 60cqi;
   align-self: flex-end;
   margin-right: -4cqi;
   transform: rotate(3deg);
 }
 
-.sign-genre {
+.genre-name {
   font-size: 16cqi;
 }
 
-.sign-lead {
+.genre-lead {
   font-size: max(1.25rem, 6.2cqi);
 }
 
-.sign-name {
+.genre-lead-name {
   font-family: var(--lettering);
   font-size: 9cqi;
   line-height: 1;

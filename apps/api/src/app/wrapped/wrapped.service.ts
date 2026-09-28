@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { editionBounds, editionOf, figuresOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { editionBounds, editionOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
@@ -122,13 +122,13 @@ export class WrappedService {
       .map(({ _id, ...play }) => ({ id: _id, ...play }) as WrappedPlay)
     const titles = (await this.titleModel.find({ _id: { $in: [...new Set(plays.map((play) => play.title))] } }, { duration: 1 }).lean())
       .map(({ _id, ...title }) => ({ key: _id, ...title }) as WrappedTitle)
-    return plays.length ? figuresOf({ plays, titles, user_id }) : null
+    return plays.length ? { hours: watchedHoursOf({ plays, titles, user_id }) } : null
   }
 
   // A closed edition is compared with the whole previous one, frozen by then
   private async previousOf(year: number) {
-    const editions = await this.editionModel.find({ year: year - 1 }, { user_id: 1, 'wrapped.hours': 1, 'wrapped.movies': 1, 'wrapped.episodes': 1 }).lean()
-    return new Map(editions.map(({ user_id, wrapped }) => [user_id, wrapped as { hours: number, movies: number, episodes: number }]))
+    const editions = await this.editionModel.find({ year: year - 1 }, { user_id: 1, 'wrapped.hours': 1 }).lean()
+    return new Map(editions.map(({ user_id, wrapped }) => [user_id, wrapped as { hours: number }]))
   }
 
   // In December the edition that just closed is the one to show, the next one has barely started

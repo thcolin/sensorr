@@ -1,4 +1,4 @@
-import { editionBounds, editionOf, figuresOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
+import { editionBounds, editionOf, watchedHoursOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
 
 const at = (iso: string) => Date.parse(iso) / 1000
 let id = 0
@@ -85,7 +85,7 @@ describe('wrappedOf', () => {
   })
 
   it('keeps the night launched the latest, past midnight, as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, start: '01:00', poster: { key: 'show:1', title: 'Scrubs' } })
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, start: '01:00', late: true, poster: { key: 'show:1', title: 'Scrubs' } })
   })
 
   it('falls back on the evening with the most plays when nothing starts after 01:00', () => {
@@ -94,7 +94,7 @@ describe('wrappedOf', () => {
       play(4, 'plex://movie/heat', '2026-02-01T21:00:00Z', 3),
       play(4, 'plex://movie/dune', '2026-02-10T22:00:00Z', 2.5),
     ]
-    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, start: '22:00' })
+    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, start: '22:00', late: false })
   })
 
   it('puts the show watched the most on each month', () => {
@@ -163,11 +163,12 @@ describe('wrappedOf', () => {
     ]
     const timed = titles.map((title) => title.media_type === 'movie' ? { ...title, duration: { '2001': 2, 'Heat': 3, 'Dune': 2.5 }[title.title]! * 3600 } : title)
     expect(wrappedOf({ plays: recent, titles: timed, user_id: 14, year: 2026 })).toMatchObject({ slowest: null, oldest: { title: 'Heat', year: 1995 } })
-    expect(wrappedOf({ plays: recent.slice(0, 1).concat(play(14, 'plex://movie/dune', '2026-03-01T20:00:00Z', 2.5)), titles: timed, user_id: 14, year: 2026 }).oldest).toBeNull()
+    const modern = timed.map((title) => title.key === 'plex://movie/heat' ? { ...title, year: 2005 } : title)
+    expect(wrappedOf({ plays: recent, titles: modern, user_id: 14, year: 2026 }).oldest).toBeNull()
   })
 
-  it('sums the figures of any stretch of plays, capped at the media duration', () => {
-    expect(figuresOf({ plays, titles, user_id: 2 })).toEqual({ hours: 23, movies: 2, episodes: 1 })
+  it('sums the hours of any stretch of plays, capped at the media duration', () => {
+    expect(watchedHoursOf({ plays, titles, user_id: 2 })).toBe(23)
   })
 
   it('finds a show dropped before its end and before where someone else got to', () => {
@@ -181,21 +182,23 @@ describe('wrappedOf', () => {
     ]
     expect(wrappedOf({ plays: shows, titles: counted, user_id: 11, year: 2026 }).dropped_show).toMatchObject({ title: 'Scrubs', season: 1, episode: 3, episode_count: 20 })
     expect(wrappedOf({ plays: shows.slice(0, 3), titles: counted, user_id: 11, year: 2026 }).dropped_show).toBeNull()
+    expect(wrappedOf({ plays: shows, titles: titles.map((title) => title.key === 'show:1' ? { ...title, episode_count: 3 } : title), user_id: 11, year: 2026 }).dropped_show).toBeNull()
+    expect(wrappedOf({ plays: [...shows, episode(12, 9, '2026-01-20T20:00:00Z')].filter((play) => play.started < at('2026-02-01T00:00:00Z')), titles: counted, user_id: 11, year: 2026 }).dropped_show).toBeNull()
   })
 
-  it('reads a sign from the genres, rising in the actor seen the most, else the first show', () => {
-    expect(wrapped.sign).toEqual({ genre: 'Science-Fiction', ascendant: { kind: 'show', name: 'Scrubs', titles: 1, poster: { key: 'show:1', title: 'Scrubs' } } })
+  it('reads the genre, led by the actor seen the most, else the first show', () => {
+    expect(wrapped.genre).toEqual({ name: 'Science-Fiction', lead: { kind: 'show', name: 'Scrubs', titles: 1, poster: { key: 'show:1', title: 'Scrubs' } } })
     const cast = titles.map((title) => ({ ...title, actors: ['Al Pacino'] }))
-    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).sign?.ascendant).toMatchObject({ kind: 'actor', name: 'Al Pacino', titles: 5 })
+    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).genre?.lead).toMatchObject({ kind: 'actor', name: 'Al Pacino', titles: 5 })
   })
 
   it('compares with the previous edition only when the gap is worth telling', () => {
-    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 30, movies: 10, episodes: 40 } }).previous).toEqual({ year: 2025, hours: 30, movies: 10, episodes: 40 })
-    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 15, movies: 3, episodes: 5 } }).previous).toBeNull()
-    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 5, movies: 1, episodes: 1 } }).previous).toBeNull()
+    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 30 } }).previous).toEqual({ year: 2025, hours: 30 })
+    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 15 } }).previous).toBeNull()
+    expect(wrappedOf({ plays, titles, user_id: 1, year: 2026, previous: { hours: 5 } }).previous).toBeNull()
   })
 
   it('gives an empty year to a user without plays', () => {
-    expect(wrappedOf({ plays, titles, user_id: 3, year: 2026 })).toMatchObject({ plays: 0, hours: 0, rank: 0, evenings: 0, first: null, night: null, streak: null, only_you: null, sign: null, month_shows: Array(12).fill(null) })
+    expect(wrappedOf({ plays, titles, user_id: 3, year: 2026 })).toMatchObject({ plays: 0, hours: 0, rank: 0, evenings: 0, first: null, night: null, streak: null, only_you: null, genre: null, month_shows: Array(12).fill(null) })
   })
 })

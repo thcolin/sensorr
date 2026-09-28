@@ -53,7 +53,7 @@ export interface Wrapped {
   rank: number
   server: { users: number, median_hours: number }
   // The previous edition, only when the gap is worth telling
-  previous: { year: number, hours: number, movies: number, episodes: number } | null
+  previous: { year: number, hours: number } | null
   first: WrappedPoster & { date: string } | null
   last: WrappedPoster & { date: string } | null
   streak: { evenings: number, from: string, to: string, poster: WrappedPoster } | null
@@ -61,7 +61,8 @@ export interface Wrapped {
   month_shows: (WrappedPoster & { episodes: number } | null)[]
   binge: WrappedPoster & { episodes: number, date: string } | null
   pace: WrappedPoster & { episodes: number, days: number } | null
-  night: { date: string, plays: number, start: string, poster: WrappedPoster } | null
+  // `late` when a play started past 01:00, otherwise it is the evening with the most plays
+  night: { date: string, plays: number, start: string, late: boolean, poster: WrappedPoster } | null
   first_on_server: WrappedPoster & { others: number } | null
   same_week: WrappedPoster & { others: number } | null
   only_you: { count: number, poster: WrappedPoster } | null
@@ -71,7 +72,7 @@ export interface Wrapped {
   longest: WrappedPoster & { minutes: number } | null
   oldest: WrappedPoster & { year: number } | null
   rewatched: WrappedPoster & { times: number } | null
-  sign: { genre: string, ascendant: { kind: 'actor' | 'show' | 'director', name: string, titles: number, poster?: WrappedPoster } | null } | null
+  genre: { name: string, lead: { kind: 'actor' | 'show' | 'director', name: string, titles: number, poster?: WrappedPoster } | null } | null
 }
 
 const formats = new Map<string, Intl.DateTimeFormat>()
@@ -124,15 +125,13 @@ const groupBy = <T, K>(values: T[], key: (value: T) => K) => {
   return groups
 }
 
-// The figures one edition is compared on, over any stretch of plays
-export const figuresOf = ({ plays, titles, user_id }: { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number }) => {
-  const durations = new Map(titles.map((title) => [title.key, title.duration]))
-  const mine = plays.filter((play) => play.user_id === user_id)
-  return {
-    hours: mine.reduce((sum, play) => sum + Math.min(play.play_duration || 0, durations.get(play.title) || Infinity), 0) / 3600,
-    movies: new Set(mine.filter((play) => play.media_type === 'movie').map((play) => play.title)).size,
-    episodes: mine.filter((play) => play.media_type === 'episode').length,
-  }
+// A session left open keeps counting in Tautulli, a play never lasts longer than its media
+const cappedOf = (play: WrappedPlay, title?: WrappedTitle) => Math.min(play.play_duration || 0, title?.duration || Infinity)
+
+// The hours one user watched over any stretch of plays, what an edition is compared on
+export const watchedHoursOf = ({ plays, titles, user_id }: { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number }) => {
+  const byKey = new Map(titles.map((title) => [title.key, title]))
+  return plays.filter((play) => play.user_id === user_id).reduce((sum, play) => sum + cappedOf(play, byKey.get(play.title)), 0) / 3600
 }
 
 const WATCHED = 0.85
@@ -147,15 +146,14 @@ const leaderOf = (names: string[], min: number) => {
 // `plays` holds the whole server's plays: ranks and "only you" are measured against every user
 export const wrappedOf = (
   { plays, titles, user_id, year, previous, timeZone = WRAPPED_TIME_ZONE }:
-  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, previous?: { hours: number, movies: number, episodes: number } | null, timeZone?: string },
+  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, previous?: { hours: number } | null, timeZone?: string },
 ): Wrapped => {
   const byKey = new Map(titles.map((title) => [title.key, title]))
   const server = plays
     .map((play) => {
       const started = partsOf(play.started, timeZone)
       const duration = byKey.get(play.title)?.duration
-      // A session left open keeps counting in Tautulli, a play never lasts longer than its media
-      const play_duration = Math.min(play.play_duration || 0, duration || Infinity)
+      const play_duration = cappedOf(play, byKey.get(play.title))
       // An evening runs from 06:00 to 06:00 the next day, so a night past midnight stays one night
       const evening = partsOf(play.started - 6 * 3600, timeZone)
       return {
@@ -200,7 +198,8 @@ export const wrappedOf = (
 
   const latest = [...mine].sort((a, b) => b.late - a.late)[0]
   // Launched after 01:00, otherwise the evening with the most plays
-  const nightPlays = latest && latest.late >= 19 * 60 ? nights.get(latest.evening)! : [...nights.values()].sort((a, b) => b.length - a.length)[0]
+  const late = !!latest && latest.late >= 19 * 60
+  const nightPlays = late ? nights.get(latest.evening)! : [...nights.values()].sort((a, b) => b.length - a.length)[0]
   const lastLaunch = nightPlays && [...nightPlays].sort((a, b) => b.late - a.late)[0]
 
   const serverMovies = groupBy(server.filter((play) => play.media_type === 'movie'), (play) => play.title)
@@ -259,7 +258,7 @@ export const wrappedOf = (
     rank: mine.length ? ranked.findIndex(({ user }) => user === user_id) + 1 : 0,
     server: { users: ranked.length, median_hours: ranked.length ? round(median(ranked.map(({ hours }) => hours))) : 0 },
     previous: previous && previous.hours >= 10 && Math.abs(hours - previous.hours) >= previous.hours * 0.2
-      ? { year: year - 1, hours: round(previous.hours), movies: previous.movies, episodes: previous.episodes }
+      ? { year: year - 1, hours: round(previous.hours) }
       : null,
     first: mine.length ? { ...posterOf(mine[0].title), date: mine[0].date } : null,
     last: mine.length ? { ...posterOf(mine[mine.length - 1].title), date: mine[mine.length - 1].date } : null,
@@ -273,7 +272,7 @@ export const wrappedOf = (
     pace: topShow && topShowPlays!.length >= 3
       ? { ...posterOf(topShow), episodes: topShowPlays!.length, days: dayOf(topShowPlays![topShowPlays!.length - 1].date) - dayOf(topShowPlays![0].date) + 1 }
       : null,
-    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, start: lastLaunch.time, poster: posterOf(lastLaunch.title) } : null,
+    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, start: lastLaunch.time, late, poster: posterOf(lastLaunch.title) } : null,
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, poster: posterOf([...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a))[0]) } : null,
@@ -283,9 +282,9 @@ export const wrappedOf = (
     longest: moviePlays.size >= 2 && longest ? { ...posterOf(longest), minutes: Math.round(byKey.get(longest)!.duration! / 60) } : null,
     oldest: moviePlays.size >= 2 && oldest ? { ...posterOf(oldest), year: byKey.get(oldest)!.year! } : null,
     rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched) } : null,
-    sign: genre ? {
-      genre,
-      ascendant: actor ? { kind: 'actor', ...actor, poster: posterWith('actors', actor.name) }
+    genre: genre ? {
+      name: genre,
+      lead: actor ? { kind: 'actor', ...actor, poster: posterWith('actors', actor.name) }
         : topShow ? { kind: 'show', name: posterOf(topShow).title, titles: 1, poster: posterOf(topShow) }
           : director ? { kind: 'director', ...director, poster: posterWith('directors', director.name) }
             : null,

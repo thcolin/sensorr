@@ -45,18 +45,18 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   return (
     <main className="wall">
       <Opening name={name} year={year} wrapped={wrapped} closed={closed} posters={collage} art={art} />
-      <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />
+      {wrapped.rank > 0 && <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />}
       {!short && wrapped.streak && <Streak streak={wrapped.streak} art={art} />}
       {!short && wrapped.month_shows.some(Boolean) && <Months shows={wrapped.month_shows} closed={closed} art={art} />}
       {!short && (wrapped.binge || wrapped.pace) && <Binge binge={wrapped.binge} pace={wrapped.pace} art={art} />}
-      {/* An evening before midnight that is the binge's own evening would tell it twice */}
-      {!short && wrapped.night && (wrapped.night.start < '06:00' || wrapped.night.date !== wrapped.binge?.date) && <Night night={wrapped.night} art={art} />}
+      {/* An early evening that is the binge's own evening would tell it twice */}
+      {!short && wrapped.night && (wrapped.night.late || wrapped.night.date !== wrapped.binge?.date) && <Night night={wrapped.night} art={art} />}
       {(first_on_server || same_week) && <Server first={first_on_server} week={same_week} art={art} />}
       {only_you && <OnlyYou onlyYou={only_you} art={art} />}
       {!short && (dropped || dropped_show || slowest) && (
         <Posters label="Pas fini, ou presque" lines={['Pas fini,', 'ou presque']} seed={19} art={art} items={[
           dropped && ['Lâché', dropped, `à ${dropped.percent}${THIN}%`],
-          dropped_show && ['Arrêté', dropped_show, `saison ${dropped_show.season}, épisode ${dropped_show.episode}, sur ${plural(dropped_show.episode_count, 'épisode', 'épisodes')}`],
+          dropped_show && ['Arrêté', dropped_show, `à l’épisode ${dropped_show.episode} de la saison ${dropped_show.season}, sur ${dropped_show.episode_count}\u00a0en tout`],
           slowest && ['Fini', slowest, `en ${plural(slowest.days, 'jour', 'jours')}`],
         ]} />
       )}
@@ -67,7 +67,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
           oldest && ['Le plus vieux', oldest, `sorti en ${oldest.year}`],
         ]} />
       )}
-      {!short && wrapped.sign && <Sign sign={wrapped.sign} art={art} />}
+      {!short && wrapped.genre && <Genre genre={wrapped.genre} art={art} />}
       {wrapped.last && <Finale last={wrapped.last} year={year} closed={closed} art={art} />}
       <Colophon year={year} closed={closed} short={short} />
     </main>
@@ -218,9 +218,7 @@ const Binge = ({ binge, pace, art }: { binge: Wrapped['binge'], pace: Wrapped['p
 const Night = ({ night, art }: { night: NonNullable<Wrapped['night']>, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
-  const poster = night.poster
-  // Launched past midnight, before the evening ends at 06:00
-  const late = night.start < '06:00'
+  const { poster, late } = night
 
   return (
     <Sheet ref={sheet} className="sheet-night" label={late ? 'Ta nuit la plus tardive' : 'Ta plus grosse soirée'}>
@@ -262,7 +260,7 @@ const OnlyYou = ({ onlyYou, art }: { onlyYou: NonNullable<Wrapped['only_you']>, 
   const one = onlyYou.count === 1
 
   return (
-    <Sheet ref={sheet} className="sheet-figures" label="Toi seul" style={{ '--digits': String(onlyYou.count).length } as React.CSSProperties}>
+    <Sheet ref={sheet} className="sheet-figures" label="Personne d’autre" style={{ '--digits': String(onlyYou.count).length } as React.CSSProperties}>
       <Painted className="figures-poster" src={art(onlyYou.poster)} alt={onlyYou.poster.title} progress={progress} />
       <p className="figure">
         <span aria-hidden="true">{number.format(onlyYou.count)}</span>
@@ -300,24 +298,24 @@ const Posters = ({ label, lines, seed, items, art }: { label: string, lines: str
   )
 }
 
-const Sign = ({ sign, art }: { sign: NonNullable<Wrapped['sign']>, art: Art }) => {
+const Genre = ({ genre, art }: { genre: NonNullable<Wrapped['genre']>, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
-  const { genre, ascendant } = sign
-  const lead = ascendant && {
-    actor: `en tête d’affiche de ${ascendant.titles}\u00a0de tes films et séries`,
+  const { name, lead } = genre
+  const role = lead && {
+    actor: `en tête d’affiche de ${lead.titles}\u00a0de tes films et séries`,
     show: 'en boucle',
-    director: `derrière ${ascendant.titles}\u00a0de tes films`,
-  }[ascendant.kind]
+    director: `derrière ${lead.titles}\u00a0de tes films`,
+  }[lead.kind]
 
   return (
-    <Sheet ref={sheet} className="sheet-sign" label="Ton genre">
+    <Sheet ref={sheet} className="sheet-genre" label="Ton genre">
       <Brushed lines={['Ton genre']} seed={18} />
-      {ascendant?.poster && <Painted className="sign-poster" src={art(ascendant.poster)} alt={ascendant.poster.title} progress={progress} />}
-      <Lettering as="p" className="sign-genre" text={genre} highlight={genre} seed={21} />
-      {ascendant && (
-        <p className="sign-lead">
-          <span className="sign-name">{ascendant.kind === 'show' ? quoted(ascendant.name) : ascendant.name}</span> {lead}
+      {lead?.poster && <Painted className="genre-poster" src={art(lead.poster)} alt={lead.poster.title} progress={progress} />}
+      <Lettering as="p" className="genre-name" text={name} highlight={name} seed={21} />
+      {lead && (
+        <p className="genre-lead">
+          <span className="genre-lead-name">{lead.kind === 'show' ? quoted(lead.name) : lead.name}</span> {role}
         </p>
       )}
     </Sheet>
