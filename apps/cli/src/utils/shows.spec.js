@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, fetchSonarrShow, sonarrEpisodesOf, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -55,15 +55,40 @@ describe('sonarrShowOf', () => {
     expect(sonarrShowOf(series)).toEqual({ state: 'wished', monitored: true, monitor_new_seasons: true, path: 'Friends (1994)' })
   })
 
-  it('archives an unmonitored series with files, and skips one without any', () => {
+  it('archives an unmonitored series with files, and keeps one without any unfollowed', () => {
     expect(sonarrShowOf({ ...series, monitored: false, statistics: { episodeFileCount: 3 } })).toMatchObject({ state: 'archived', monitored: false })
-    expect(sonarrShowOf({ ...series, monitored: false })).toBe(null)
-    expect(sonarrShowOf({ ...series, monitored: false, statistics: undefined })).toBe(null)
+    expect(sonarrShowOf({ ...series, monitored: false })).toMatchObject({ state: 'wished', monitored: false })
+    expect(sonarrShowOf({ ...series, monitored: false, statistics: undefined })).toMatchObject({ state: 'wished', monitored: false })
   })
 
   it('monitors new seasons only when Sonarr monitors all new items', () => {
     expect(sonarrShowOf({ ...series, monitorNewItems: 'none' }).monitor_new_seasons).toBe(false)
     expect(sonarrShowOf({ ...series, monitorNewItems: undefined }).monitor_new_seasons).toBe(false)
+  })
+})
+
+describe('fetchSonarrShow', () => {
+  const tmdbOf = (shows, found = {}) => ({
+    fetch: jest.fn(async (uri) => {
+      const [, id] = uri.split('/')
+      if (uri.startsWith('find/')) return { tv_results: found[id] ? [{ id: found[id] }] : [] }
+      if (!shows.includes(Number(id))) throw new Error('The resource you requested could not be found.')
+      return { id: Number(id), name: id, seasons: [] }
+    }),
+  })
+
+  it('fetches the show of its tmdbId', async () => {
+    expect((await fetchSonarrShow(tmdbOf([1]), { tmdbId: 1, tvdbId: 10 })).show.id).toBe(1)
+  })
+
+  it('finds the show by its tvdbId when the tmdbId is missing or unknown to TMDB', async () => {
+    expect((await fetchSonarrShow(tmdbOf([2], { 10: 2 }), { tmdbId: 0, tvdbId: 10 })).show.id).toBe(2)
+    expect((await fetchSonarrShow(tmdbOf([2], { 10: 2 }), { tmdbId: 1, tvdbId: 10 })).show.id).toBe(2)
+  })
+
+  it('returns nothing without any id TMDB knows, and throws the TMDB error of an unknown tmdbId', async () => {
+    expect(await fetchSonarrShow(tmdbOf([]), { tmdbId: 0, tvdbId: 10 })).toBe(null)
+    await expect(fetchSonarrShow(tmdbOf([]), { tmdbId: 1, tvdbId: 10 })).rejects.toThrow('The resource you requested could not be found.')
   })
 })
 

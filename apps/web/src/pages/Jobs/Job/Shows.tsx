@@ -127,11 +127,12 @@ export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated =
     title: <span><strong>{migrated ?? ((shows.wished || 0) + (shows.archived || 0))}</strong> Migrated series (<strong>{shows.wished || 0}</strong> wished, <strong>{shows.archived || 0}</strong> archived)</span>,
     length: migrated ?? ((shows.wished || 0) + (shows.archived || 0)),
   },
-  ...(extended && ((shows.skipped || 0) + (shows.untracked || 0)) > 0 ? [{
+  // `skipped`, series without monitoring nor file, only exists in the logs of runs before they were migrated too
+  ...(extended && ((shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0)) > 0 ? [{
     key: 'skipped',
     emoji: '🗑️ ',
-    title: <span><strong>{(shows.skipped || 0) + (shows.untracked || 0)}</strong> Skipped series (<strong>{shows.skipped || 0}</strong> without monitoring nor file, <strong>{shows.untracked || 0}</strong> without TMDB id)</span>,
-    length: (shows.skipped || 0) + (shows.untracked || 0),
+    title: <span><strong>{(shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0)}</strong> Skipped series (<strong>{shows.known || 0}</strong> already in Sensorr, {shows.skipped ? <><strong>{shows.skipped}</strong> without monitoring nor file, </> : null}<strong>{shows.untracked || 0}</strong> not found on TMDB)</span>,
+    length: (shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0),
   }] : []),
   ...(((shows.warning || 0) + (shows.unmatched || 0)) > 0 ? [{
     key: 'warning',
