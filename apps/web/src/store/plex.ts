@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import { useAPI } from './api'
 
-// An artwork picked on Plex, served by the API with the TMDB one as fallback; `Picture` adds the size
+// `Picture` appends the size to the query
 const artworkOf = (path: string | null, fallback: string | null, token: string) => path
   ? `/api/plex/image?${new URLSearchParams({ path, ...(fallback ? { fallback } : {}), authorization: `Bearer ${token}` })}`
   : fallback
 
-// The poster and backdrop of a movie or a show Plex has, over the TMDB ones of `entity` and its `details`
 export const withPlexArtworks = (entity, details, artworks, token) => {
   if (!artworks?.poster && !artworks?.backdrop) {
     return { entity, details }

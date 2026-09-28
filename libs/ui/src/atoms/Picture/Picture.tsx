@@ -64,7 +64,6 @@ export interface PersonPictureProps extends PictureProps {
   size?: 'w45' | 'w185' | 'w300' | 'h632' | 'original'
 }
 
-// A path on the Sensorr API serves the size asked, one on TMDB is prefixed with it
 export const pictureSrc = (path: string, size: string) => (
   !path ? null
   : path.startsWith('/api/') ? `${path}&size=${size}`

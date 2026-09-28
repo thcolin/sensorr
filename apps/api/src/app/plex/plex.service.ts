@@ -69,7 +69,6 @@ export class PlexService {
     return { done: true, token: result.token }
   }
 
-  // An artwork read on Plex with the server token, which never leaves the API
   async image(request: ImageRequest): Promise<Response | null> {
     const url = this.configService.config.get('plex.url')
     const token = this.configService.config.get('plex.token')

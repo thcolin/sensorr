@@ -41,8 +41,6 @@ export const isMassLoss = (lost, held) => held > 0 && lost / held > LOSS_CEILING
 
 const ARTWORKS = { coverPoster: 'poster', background: 'backdrop', clearLogo: 'logo' }
 
-// The artworks picked on Plex, as paths on the Plex server: a section listing carries them in `Image`,
-// an older server only as `thumb` and `art`
 export const artworksOf = (payload) => (payload.Image || []).reduce(
   (acc, { type, url }) => ARTWORKS[type] ? { ...acc, [ARTWORKS[type]]: url } : acc,
   { poster: payload.thumb || null, backdrop: payload.art || null, logo: null },

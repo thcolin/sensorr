@@ -1,4 +1,4 @@
-// The only paths the image route reads on Plex: an artwork of an item, as `sync` stores it
+// Item artworks only: the route must not open the rest of the Plex API to the token it adds
 const ARTWORK = /^\/library\/metadata\/\d+\/(thumb|art|clearLogo)\/\d+$/
 const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 const SIZE = /^(w\d{2,4}|original)$/
