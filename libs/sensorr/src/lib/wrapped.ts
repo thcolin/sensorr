@@ -317,7 +317,8 @@ export const wrappedOf = (
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, posters: [...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a)).slice(0, 4).map(posterOf) } : null,
-    duo: duo.length ? { count: duo.length, posters: duo.slice(0, 4).map(({ key, days }) => ({ ...posterOf(key), year: byKey.get(key)?.year, with: [...watchersOf.get(key)!].find((user) => user !== user_id)!, days })) } : null,
+    // A title Tautulli never described has no name to show, it still counts
+    duo: duo.length ? { count: duo.length, posters: duo.filter(({ key }) => byKey.get(key)?.title).slice(0, 4).map(({ key, days }) => ({ ...posterOf(key), year: byKey.get(key)?.year, with: [...watchersOf.get(key)!].find((user) => user !== user_id)!, days })) } : null,
     // The titles fewest others watched say the most about the match
     twin: twin?.length >= 5 ? { user_id: [...overlap.entries()].find(([, keys]) => keys === twin)![0], shared: twin.length, total: mineKeys.length, posters: [...twin].sort((a, b) => watchersOf.get(a)!.size - watchersOf.get(b)!.size).slice(0, 4).map(posterOf) } : null,
     dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * seenOf(dropped)) } : null,
