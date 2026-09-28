@@ -7,6 +7,7 @@ import { useConfigContext } from '../Config/Config'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
+import { usePlexArtworks } from '../../store/plex'
 
 const moviesMetadataContext = createContext({})
 
@@ -245,10 +246,13 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
       }
     }, [entity?.id, _metadata])
 
+    const artworked = usePlexArtworks(entity, (props as any).details, _metadata?.plex_artworks)
+
     return (
       <WrappedComponent
         {...props}
-        entity={entity}
+        {...(artworked.details ? { details: artworked.details } : {})}
+        entity={artworked.entity}
         state={loading ? 'loading' : (metadata?.state || 'ignored')}
         setState={setState}
         metadata={metadata}

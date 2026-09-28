@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useSt
 import { useThemeUI } from '@theme-ui/core'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
+import { pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -49,7 +50,7 @@ const UIDetails = ({
   const { expanded } = useExpandContext() as any
   const { theme } = useThemeUI() as any
   const palette = usePalette(
-    !!poster && `https://image.tmdb.org/t/p/w92${poster}`,
+    !!poster && pictureSrc(poster, 'w92'),
     {
       backgroundColor: theme.rawColors.grayLight,
       color: theme.rawColors.text,
