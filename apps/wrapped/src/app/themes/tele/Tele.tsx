@@ -18,7 +18,7 @@ const rubric = (sheet: SheetModel) => {
     case 'binge': return 'Soirée spéciale'
     case 'night': return 'Dernière partie de soirée'
     case 'server': return 'Exclusivité'
-    case 'figure': return sheet.lines ? 'Courrier des lecteurs' : 'Rareté'
+    case 'figure': return sheet.lines ? 'Ils ont aimé' : 'Rareté'
     case 'duo': return 'Courrier des lecteurs'
     case 'posters': return 'Critiques'
     case 'genre': return 'Horoscope'
@@ -135,8 +135,8 @@ const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: S
       id="tele-p0"
       className="tele-spread tele-spread-cover"
       aria-label={sheet.label}
-      initial={reduced ? false : { y: -36, scale: 1.05, rotate: -2.4, boxShadow: '0 60px 90px -10px rgb(40 30 20 / 0.05)' }}
-      animate={{ y: 0, scale: 1, rotate: 0, boxShadow: '0 30px 60px -24px rgb(40 30 20 / 0.5)' }}
+      initial={reduced ? false : { y: -36, scale: 1.05, rotate: -2.4, '--lift': 1 }}
+      animate={{ y: 0, scale: 1, rotate: 0, '--lift': 0 }}
       transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="tele-cover">
@@ -191,11 +191,17 @@ const Rank = ({ sheet, name, page }: { sheet: Of<'rank'> } & Page) => (
       <p className="tele-standfirst">{sheet.detail}</p>
     </>}
     right={
-      <ol className="tele-ratings" aria-hidden="true">
-        {Array.from({ length: sheet.users }, (_, index) => (
-          <li key={index} className={index === sheet.rank - 1 ? 'tele-ratings-you' : undefined}>{index + 1}</li>
-        ))}
-      </ol>
+      <table className="tele-ratings" aria-hidden="true">
+        <tbody>
+          {[...new Set([1, sheet.rank, sheet.users])].flatMap((rank, index, ranks) => [
+            index > 0 && rank - ranks[index - 1] > 1 && <tr key={`gap-${rank}`} className="tele-ratings-gap"><td colSpan={2}>…</td></tr>,
+            <tr key={rank} className={rank === sheet.rank ? 'tele-ratings-you' : undefined}>
+              <th>{rank}<sup>{rank === 1 ? 'er' : 'e'}</sup></th>
+              <td>{rank === sheet.rank ? <b>Toi</b> : <span className="tele-ratings-blank" />}</td>
+            </tr>,
+          ])}
+        </tbody>
+      </table>
     }
   />
 )
@@ -210,11 +216,8 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
       <p className="tele-standfirst">{sheet.intro}</p>
       <Big value={sheet.evenings} spoken={sheet.spoken} />
       <p className="tele-unit">{sheet.unit}</p>
-      <ol className="tele-episodes" aria-hidden="true">
-        {Array.from({ length: sheet.evenings }, (_, index) => <li key={index}>{index + 1}</li>)}
-      </ol>
     </>}
-    right={
+    right={<>
       <article className="tele-pick">
         <Photo poster={sheet.poster} art={art} />
         <div>
@@ -222,7 +225,12 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
           <p>{sheet.details}</p>
         </div>
       </article>
-    }
+      <ol className="tele-episodes" aria-hidden="true">
+        {[...new Set([1, 2, 3, sheet.evenings])].filter((episode) => episode <= sheet.evenings).map((episode, index, episodes) => (
+          <li key={episode} className={episode - (episodes[index - 1] || 0) > 1 ? 'tele-episodes-later' : undefined}>Épisode {episode}</li>
+        ))}
+      </ol>
+    </>}
   />
 )
 
@@ -289,7 +297,6 @@ const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => (
     right={<>
       <h3 className="tele-title">{sheet.title}</h3>
       {sheet.meta.map((meta) => <p key={meta} className="tele-body">{meta}</p>)}
-      <Photo poster={sheet.poster} art={art} className="tele-side-poster" />
     </>}
   />
 )
@@ -429,10 +436,10 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
       <p className="tele-body">{sheet.date}</p>
       {!sheet.closed && <p className="tele-stamp">Provisoire</p>}
       <svg className="tele-testcard" viewBox="0 0 280 160" aria-hidden="true">
-        {['#f4efe4', '#ffd200', '#3fb8c9', '#3aa64a', '#c23fa0', '#e2081c', '#1537a8'].map((fill, index) => <rect key={fill} x={index * 40} y="0" width="40" height="112" fill={fill} />)}
-        {['#1537a8', '#16140f', '#c23fa0', '#16140f', '#3fb8c9', '#16140f', '#f4efe4'].map((fill, index) => <rect key={index} x={index * 40} y="112" width="40" height="16" fill={fill} />)}
-        <rect x="0" y="128" width="280" height="32" fill="#16140f" />
-        <circle cx="140" cy="64" r="44" fill="none" stroke="#16140f" strokeWidth="3" />
+        {['paper', 'yellow', 'cyan', 'green', 'magenta', 'red', 'blue'].map((fill, index) => <rect key={fill} x={index * 40} y="0" width="40" height="112" style={{ fill: `var(--${fill})` }} />)}
+        {['blue', 'ink', 'magenta', 'ink', 'cyan', 'ink', 'paper'].map((fill, index) => <rect key={index} x={index * 40} y="112" width="40" height="16" style={{ fill: `var(--${fill})` }} />)}
+        <rect x="0" y="128" width="280" height="32" style={{ fill: 'var(--ink)' }} />
+        <circle cx="140" cy="64" r="44" fill="none" strokeWidth="3" style={{ stroke: 'var(--ink)' }} />
       </svg>
       <p className="tele-end">{sheet.end}</p>
     </>}

@@ -151,10 +151,14 @@
   --yellow: #ffd200;
   --blue: #1537a8;
   --table: #cfc6b4;
+  /* The test card's own bars */
+  --cyan: #3fb8c9;
+  --green: #3aa64a;
+  --magenta: #c23fa0;
   --cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --serif: 'Source Serif 4', Georgia, serif;
-  --switch-bg: var(--red);
-  --switch-fg: #fff;
+  --switch-bg: var(--ink);
+  --switch-fg: var(--paper);
   --switch-font: italic 800 18px/1 var(--cond);
   --switch-radius: 0;
   color-scheme: light;
@@ -214,10 +218,6 @@ html[data-theme='tele'] {
 
 .tele-page + .tele-page > .tele-folio {
   display: none;
-}
-
-.tele-spread > .tele-page:last-child {
-  padding-bottom: 88px;
 }
 
 .tele-spread-blue {
@@ -359,7 +359,10 @@ html[data-theme='tele'] {
 
 /* Cover */
 .tele-spread-cover {
+  --lift: 0;
   transform-origin: 50% 30%;
+  /* Lifted while the magazine is being put down, its shadow tightens as it lands */
+  box-shadow: 0 calc(30px + 30px * var(--lift)) calc(60px + 30px * var(--lift)) -24px rgb(40 30 20 / calc(0.5 - 0.45 * var(--lift)));
 }
 
 .tele-cover {
@@ -387,7 +390,7 @@ html[data-theme='tele'] {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.25), transparent 22%, transparent 40%, rgb(0 0 0 / 0.85) 88%);
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.25), transparent 18%, transparent 30%, rgb(0 0 0 / 0.6) 50%, rgb(0 0 0 / 0.88) 80%);
 }
 
 .tele-mast {
@@ -459,13 +462,16 @@ html[data-theme='tele'] {
   display: grid;
   gap: 12px;
   margin-top: auto;
-  padding: 0 16px 88px;
+  padding: 0 16px 24px;
 }
 
 .tele-cover-lede {
-  max-width: 30ch;
+  justify-self: start;
+  max-width: 32ch;
+  padding: 6px 10px;
+  background: var(--ink);
+  color: #fff;
   font: italic 600 17px/1.3 var(--serif);
-  text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
 }
 
 .tele-cover-title {
@@ -527,56 +533,98 @@ html[data-theme='tele'] {
 .tele-cover > .tele-barcode {
   position: absolute;
   right: 16px;
-  bottom: 88px;
+  bottom: 24px;
 }
 
 .tele-contents {
   display: none;
 }
 
-/* Audience */
+/* Audience: the ratings table, the reader's line highlighted */
 .tele-ratings {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-  gap: 3px;
-  counter-reset: none;
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 3px solid var(--ink);
+  font-family: var(--cond);
 }
 
-.tele-ratings li {
-  padding: 6px 0;
-  background: rgb(22 20 15 / 0.07);
-  color: var(--muted);
-  font: 800 13px/1 var(--cond);
-  text-align: center;
+.tele-ratings th,
+.tele-ratings td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--ink);
+  text-align: left;
+}
+
+.tele-ratings th {
+  width: 5ch;
+  color: var(--blue);
+  font: italic 900 30px/1 var(--cond);
   font-variant-numeric: tabular-nums;
 }
 
-.tele-ratings .tele-ratings-you {
-  position: relative;
-  z-index: 1;
-  background: var(--red);
-  color: #fff;
-  font-weight: 900;
-  transform: scale(1.3);
-  box-shadow: 0 4px 10px rgb(22 20 15 / 0.35);
+.tele-ratings sup {
+  font-size: 0.5em;
 }
 
-/* Feuilleton */
+.tele-ratings-blank {
+  display: block;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 6px);
+  opacity: 0.5;
+}
+
+.tele-ratings-gap td {
+  padding-block: 2px;
+  color: var(--muted);
+  font: 900 22px/1 var(--cond);
+  text-align: center;
+}
+
+.tele-ratings .tele-ratings-you {
+  background: var(--yellow);
+}
+
+.tele-ratings-you th {
+  color: var(--red-deep);
+}
+
+.tele-ratings-you b {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--red);
+  color: #fff;
+  font: italic 900 22px/1 var(--cond);
+  text-transform: uppercase;
+}
+
+/* Feuilleton: the serial's episode guide */
 .tele-episodes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
-  gap: 3px;
-  margin-top: 8px;
+  border-top: 3px solid var(--ink);
 }
 
 .tele-episodes li {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 4 / 3;
-  border-radius: 3px;
-  background: var(--ink);
-  color: var(--paper);
-  font: 700 10px/1 var(--cond);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink);
+  font: italic 800 20px/1 var(--cond);
+  text-transform: uppercase;
+}
+
+.tele-episodes li:last-child {
+  color: var(--red-deep);
+}
+
+.tele-episodes-later {
+  position: relative;
+  margin-top: 30px;
+}
+
+.tele-episodes-later::before {
+  content: '…';
+  position: absolute;
+  top: -30px;
+  left: 0;
+  color: var(--muted);
+  font-size: 22px;
 }
 
 .tele-pick {
@@ -698,14 +746,6 @@ html[data-theme='tele'] {
   left: -6px;
   bottom: -12px;
   transform: rotate(-2deg);
-}
-
-.tele-side-poster {
-  width: 46%;
-  margin-top: 8px;
-  border: 4px solid #fff;
-  box-shadow: 0 10px 24px -6px rgb(22 20 15 / 0.45);
-  transform: rotate(2deg);
 }
 
 .tele-full-poster {
@@ -897,7 +937,7 @@ html[data-theme='tele'] {
   display: grid;
   gap: 12px;
   justify-items: start;
-  padding: 20px 16px 96px;
+  padding: 20px 16px 32px;
   border-top: 6px solid var(--red);
   background: var(--paper);
 }
@@ -962,10 +1002,6 @@ html[data-theme='tele'] {
     display: flex;
   }
 
-  .tele-spread > .tele-page:last-child {
-    padding-bottom: 48px;
-  }
-
   .tele-headline {
     font-size: 76px;
   }
@@ -983,17 +1019,6 @@ html[data-theme='tele'] {
     min-height: 0;
     height: 100%;
     aspect-ratio: auto;
-  }
-
-  .tele-ratings {
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-    gap: 4px;
-    margin-top: 12px;
-  }
-
-  .tele-ratings li {
-    padding: 10px 0;
-    font-size: 16px;
   }
 
   .tele-slot {
