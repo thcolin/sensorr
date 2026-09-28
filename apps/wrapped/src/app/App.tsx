@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped, WrappedTheme } from '@sensorr/sensorr'
 import { WrappedPage } from './Wrapped'
-import { Brushed, Sheet } from './themes/affiche/Sheet'
-import './themes/affiche/affiche.css'
+import { read } from './look'
+import { STATES } from './themes'
+import type { NoticeProps, StatesModule } from './themes/types'
 
 export interface Share {
   name: string
@@ -30,6 +31,33 @@ const tokenOf = (path: string) => {
 }
 
 const token = tokenOf(window.location.pathname)
+// The look this link last showed on this device, so the wait and the notices already wear it
+const shown = token ? read('shown', token) : null
+
+// Before any look is known, the wait belongs to none of them
+const Waiting = () => (
+  <main className="waiting" aria-busy="true">
+    <p className="visually-hidden">Chargement de la rétrospective</p>
+  </main>
+)
+
+const States = ({ notice }: { notice?: NoticeProps }) => {
+  const theme = shown || (notice ? 'affiche' : null)
+  const [states, setStates] = useState<StatesModule | null>(null)
+
+  useEffect(() => {
+    if (theme) {
+      document.documentElement.dataset.theme = theme
+      STATES[theme]().then(setStates, (error) => console.error(`Unable to load the "${theme}" look`, error))
+    }
+  }, [theme])
+
+  if (!states) {
+    return <Waiting />
+  }
+
+  return notice ? <states.Notice {...notice} /> : <states.Loading />
+}
 
 export const App = () => {
   const [state, setState] = useState<State>({ status: 'loading' })
@@ -63,35 +91,11 @@ export const App = () => {
 
   switch (state.status) {
     case 'loading':
-      return (
-        <main className="wall" aria-busy="true">
-          <Sheet className="sheet-loading">
-            <svg className="loading-stroke" viewBox="0 0 200 40" aria-hidden="true">
-              <path d="M6 28 C 40 6, 70 34, 104 18 S 170 8, 194 22" />
-            </svg>
-            <p className="visually-hidden">Chargement de la rétrospective</p>
-          </Sheet>
-        </main>
-      )
+      return <States />
     case 'gone':
-      return (
-        <main className="wall">
-          <Sheet className="sheet-notice">
-            <Brushed as="h1" lines={['Séance', 'annulée']} seed={14} />
-            <p className="notice">Ce lien n’est plus valable. Demande‑en un nouveau à Thomas.</p>
-          </Sheet>
-        </main>
-      )
+      return <States notice={{ lines: ['Séance', 'annulée'], text: 'Ce lien n’est plus valable. Demande‑en un nouveau à Thomas.' }} />
     case 'error':
-      return (
-        <main className="wall">
-          <Sheet className="sheet-notice">
-            <Brushed as="h1" lines={['La projection', 'a sauté']} seed={15} />
-            <p className="notice">La rétrospective n’a pas pu se charger. Vérifie ta connexion, puis relance.</p>
-            <button className="retry" type="button" onClick={load}>Relancer</button>
-          </Sheet>
-        </main>
-      )
+      return <States notice={{ lines: ['La projection', 'a sauté'], text: 'La rétrospective n’a pas pu se charger. Vérifie ta connexion, puis relance.', action: { label: 'Relancer', onClick: load } }} />
     case 'done':
       return <WrappedPage share={state.share} token={token} />
   }

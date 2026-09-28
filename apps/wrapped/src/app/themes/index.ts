@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 import type { WrappedTheme } from '@sensorr/sensorr'
-import type { ThemeProps } from './types'
+import type { StatesModule, ThemeProps } from './types'
 
 type Loader = () => Promise<{ default: React.ComponentType<ThemeProps> }>
 
@@ -11,6 +11,15 @@ export const LOADERS: Record<WrappedTheme, Loader> = {
   tele: () => import('./tele/Tele'),
   videoclub: () => import('./videoclub/Videoclub'),
   scenario: () => import('./scenario/Scenario'),
+}
+
+// Each look's loading and notice screens, small enough to show before the share arrives
+export const STATES: Record<WrappedTheme, () => Promise<StatesModule>> = {
+  affiche: () => import('./affiche/States'),
+  labo: () => import('./labo/States'),
+  tele: () => import('./tele/States'),
+  videoclub: () => import('./videoclub/States'),
+  scenario: () => import('./scenario/States'),
 }
 
 export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>

@@ -4,19 +4,7 @@ import type { Share } from './App'
 import { sheetsOf } from './sheets'
 import { LOADERS, THEMES, THEME_COLORS } from './themes'
 import type { Art } from './themes/types'
-
-const storageKey = (token: string) => `wrapped-look:${token}`
-const known = (theme: string | null): theme is WrappedTheme => !!theme && Object.hasOwn(THEMES, theme)
-
-const stored = (token: string) => {
-  try {
-    const theme = window.localStorage.getItem(storageKey(token))
-    return known(theme) ? theme : null
-  } catch (error) {
-    // Private browsing or blocked storage: the page opens on the look Thomas set
-    return null
-  }
-}
+import { known, read, write } from './look'
 
 type At = 'start' | 'end'
 
@@ -32,7 +20,7 @@ const Switch = ({ at, theme, onChoose }: { at: At, theme: WrappedTheme, onChoose
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { look } = share
-  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && stored(token)) || (known(look.theme) ? look.theme : 'affiche'))
+  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && read('chosen', token)) || (known(look.theme) ? look.theme : 'affiche'))
   const Theme = THEMES[theme]
   const { sheets, colophon, closed } = sheetsOf(share)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
@@ -44,6 +32,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme])
+    write('shown', token, theme)
 
     const kept = anchor.current
     anchor.current = null
@@ -84,12 +73,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
 
     anchor.current = { at, top }
     setTheme(next)
-
-    try {
-      window.localStorage.setItem(storageKey(token), next)
-    } catch (error) {
-      // Not remembered on this device, the look still changes for this visit
-    }
+    write('chosen', token, next)
   }
 
   return (

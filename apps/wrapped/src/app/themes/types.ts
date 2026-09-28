@@ -12,3 +12,15 @@ export interface ThemeProps {
   closed: boolean
   art: Art
 }
+
+// What a look shows before the share arrives, or instead of it
+export interface NoticeProps {
+  lines: string[]
+  text: string
+  action?: { label: string, onClick: () => void }
+}
+
+export interface StatesModule {
+  Loading: () => JSX.Element
+  Notice: (props: NoticeProps) => JSX.Element
+}

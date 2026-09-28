@@ -9,6 +9,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Until a look is known the page stays dark, rather than flash a look it may not wear */
+html:not([data-theme]) {
+  background: #0d0c0b;
+}
+
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -91,4 +96,29 @@ ol {
 .theme-switch select:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 4px;
+}
+
+/* The wait before any look is known: a dark room, the projector warming up */
+.waiting {
+  min-height: 100svh;
+  background: #0d0c0b;
+}
+
+.waiting::after {
+  content: '';
+  position: fixed;
+  inset: 45% 30%;
+  background: radial-gradient(closest-side, rgb(255 244 220 / 0.14), transparent);
+  animation: waiting 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes waiting {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waiting::after {
+    animation: none;
+  }
 }
