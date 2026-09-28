@@ -75,7 +75,7 @@ export const useLoadDetails = () => {
         wikidata.fetch(wikidata.query.movies.getMovieAdditionalData.query(id), wikidata.query.movies.getMovieAdditionalData.transform).catch(() => ({})),
       ]).then(async ([movie, additional]) => {
         // The card's poster is decoded before it opens, so it is drawn from its first frame.
-        const { entity: { poster_path } } = withPlexArtworks(movie, null, artworks, api.access_token)
+        const poster_path = withPlexArtworks(movie, null, artworks, api.access_token).entity?.poster_path
 
         if (poster_path) {
           const poster = new Image()

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
+import { PlexArtworks } from '../plex/image'
 
 @Schema({ collection: 'shows' })
 export class Show extends Document {
@@ -142,7 +143,7 @@ export class Show extends Document {
     backdrop: { type: String },
     logo: { type: String },
   }))
-  plex_artworks: { poster: string | null, backdrop: string | null, logo: string | null }
+  plex_artworks: PlexArtworks
 
   @Prop(raw([String]))
   requested_by: Record<any, any>

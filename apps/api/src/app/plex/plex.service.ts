@@ -69,7 +69,7 @@ export class PlexService {
     return { done: true, token: result.token }
   }
 
-  async image(request: ImageRequest): Promise<Response | null> {
+  async image(request: ImageRequest): Promise<{ type: string, buffer: Buffer } | null> {
     const url = this.configService.config.get('plex.url')
     const token = this.configService.config.get('plex.token')
 
@@ -77,11 +77,16 @@ export class PlexService {
       return null
     }
 
+    // A grid asks for dozens at once: an unreachable Plex must hand them to TMDB quickly
     const res = await fetch(`${url.replace(/\/$/, '')}${transcodeOf(request)}`, {
       headers: { 'X-Plex-Token': token, Accept: 'image/*' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(3000),
     })
 
-    return res.ok ? res : null
+    if (!res.ok) {
+      throw new Error(`Plex answered ${res.status}`)
+    }
+
+    return { type: res.headers.get('content-type') || 'image/jpeg', buffer: Buffer.from(await res.arrayBuffer()) }
   }
 }

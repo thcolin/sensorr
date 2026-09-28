@@ -3,6 +3,12 @@ const ARTWORK = /^\/library\/metadata\/\d+\/(thumb|art|clearLogo)\/\d+$/
 const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 const SIZE = /^(w\d{2,4}|original)$/
 
+export interface PlexArtworks {
+  poster: string | null
+  backdrop: string | null
+  logo: string | null
+}
+
 export interface ImageRequest {
   path: string
   size: string

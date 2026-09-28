@@ -55,7 +55,7 @@ export class PlexController {
     }
 
     // The path changes with the artwork: a stored copy never goes stale
-    res.set({ 'Content-Type': image.headers.get('content-type') || 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' })
-    res.send(Buffer.from(await image.arrayBuffer()))
+    res.set({ 'Content-Type': image.type, 'Cache-Control': 'private, max-age=31536000, immutable' })
+    res.send(image.buffer)
   }
 }

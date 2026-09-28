@@ -33,5 +33,5 @@ export const withPlexArtworks = (entity, details, artworks, token, pending = fal
 
 export const usePlexArtworks = (entity, details, artworks, pending = false) => {
   const api = useAPI()
-  return useMemo(() => withPlexArtworks(entity, details, artworks, api.access_token, pending), [entity, details, artworks, pending])
+  return useMemo(() => withPlexArtworks(entity, details, artworks, api.access_token, pending), [entity, details, artworks, pending, api.access_token])
 }

@@ -449,7 +449,7 @@ export class MoviesService {
   async getArtworks() {
     this.logger.log('GetArtworks')
     const movies = await this.movieModel.find({ plex_artworks: { $ne: null } }, { plex_artworks: 1 }).lean()
-    return movies.reduce((acc, { _id, plex_artworks }) => ({ ...acc, [_id]: plex_artworks }), {})
+    return Object.fromEntries(movies.map(({ _id, plex_artworks }) => [_id, plex_artworks]))
   }
 
   listenMetadata(): Observable<MessageEvent> {

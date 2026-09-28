@@ -30,15 +30,16 @@ export const Provider = ({ ...props }) => {
 
     const controller = new AbortController()
 
-    const cb = async () => {
-      const artworksQuery = api.query.movies.getArtworks({ init: { signal: controller.signal } })
-      api.fetch(artworksQuery.uri, artworksQuery.params, artworksQuery.init).then(setArtworks).catch((e) => {
-        if (e.name !== 'AbortError') {
-          console.warn(e)
-          setArtworks(artworks => artworks || {})
-        }
-      })
+    // Once per session: the changes stream carries the artworks from then on
+    const artworksQuery = api.query.movies.getArtworks({ init: { signal: controller.signal } })
+    api.fetch(artworksQuery.uri, artworksQuery.params, artworksQuery.init).then(setArtworks).catch((e) => {
+      if (e.name !== 'AbortError') {
+        console.warn(e)
+        setArtworks(artworks => artworks || {})
+      }
+    })
 
+    const cb = async () => {
       try {
         let total_pages = null
         let page = 1
@@ -256,7 +257,7 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
       }
     }, [entity?.id, _metadata])
 
-    const artworked = usePlexArtworks(entity, (props as any).details, _metadata?.plex_artworks || known?.[entity.id], known === null)
+    const artworked = usePlexArtworks(entity, (props as any).details, 'plex_artworks' in _metadata ? _metadata.plex_artworks : known?.[entity.id], known === null)
 
     return (
       <WrappedComponent
