@@ -70,6 +70,7 @@ const Settings = ({ ...props }) => {
           <NavLink to='friends' viewTransition={device === 'mobile'}>Friends</NavLink>
           <NavLink to='plex' viewTransition={device === 'mobile'}>Plex</NavLink>
           <NavLink to='tautulli' viewTransition={device === 'mobile'}>Tautulli</NavLink>
+          <NavLink to='wrapped' viewTransition={device === 'mobile'}>Wrapped</NavLink>
           <NavLink to='mobile' viewTransition={device === 'mobile'}>Mobile</NavLink>
           <NavLink to='update' viewTransition={device === 'mobile'}>Update</NavLink>
         </nav>

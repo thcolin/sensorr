@@ -5,7 +5,6 @@ import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
 import { useTitle } from '@sensorr/utils'
-import { WRAPPED_THEME_NAMES } from '@sensorr/sensorr'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
 
@@ -59,21 +58,6 @@ const Friends = ({ ...props }) => {
       toast.error(`Unable to copy to Clipboard, the wrapped link of "${email}" is ${linkOf(token)}`)
     }
   }, [wrapped])
-  const setLook = useCallback(async (email, look) => {
-    const previous = wrapped[email]
-    const next = { wrapped_theme: previous.wrapped_theme ?? null, wrapped_choice: previous.wrapped_choice ?? null, ...look }
-    setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], ...next } }))
-
-    try {
-      const { uri, params, init } = api.query.wrapped.postLook({ body: { email, theme: next.wrapped_theme, choice: next.wrapped_choice } })
-      await api.fetch(uri, params, init)
-    } catch (err) {
-      console.warn(err)
-      setWrapped((wrapped) => ({ ...wrapped, [email]: previous }))
-      toast.error(`Error while saving the look of "${email}", try again`)
-    }
-  }, [wrapped])
-
   const [invitation, setInvitation] = useState(
     `Someone wonderful want to follow your Plex "Watchlist" and consider your movie wishes !\n` +
     `To accept his invitation, link your Plex account with Sensorr server by following quick instructions,\n` +
@@ -166,29 +150,6 @@ const Friends = ({ ...props }) => {
                     🔄
                   </button>
                 </footer>
-                {wrapped?.[guest.email]?.viewer && (
-                  <fieldset sx={Friends.styles.look}>
-                    <select
-                      aria-label={`Look of the wrapped of ${guest.name}`}
-                      value={wrapped[guest.email].wrapped_theme ?? ''}
-                      onChange={(e) => setLook(guest.email, { wrapped_theme: e.target.value || null })}
-                      sx={{ variant: 'select.default' }}
-                    >
-                      <option value=''>Edition look</option>
-                      {Object.entries(WRAPPED_THEME_NAMES).map(([theme, name]) => <option key={theme} value={theme}>{name}</option>)}
-                    </select>
-                    <select
-                      aria-label={`Whether ${guest.name} chooses the look`}
-                      value={wrapped[guest.email].wrapped_choice === null || wrapped[guest.email].wrapped_choice === undefined ? '' : String(wrapped[guest.email].wrapped_choice)}
-                      onChange={(e) => setLook(guest.email, { wrapped_choice: e.target.value === '' ? null : e.target.value === 'true' })}
-                      sx={{ variant: 'select.default' }}
-                    >
-                      <option value=''>Edition choice</option>
-                      <option value='true'>Chooses the look</option>
-                      <option value='false'>Look fixed</option>
-                    </select>
-                  </fieldset>
-                )}
               </div>
             ))}
           </div>
@@ -304,20 +265,6 @@ Friends.styles = {
         },
       },
     },
-  },
-  look: {
-    border: 'none',
-    minWidth: 0,
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 4,
-    flex: '1 1 100%',
-    marginX: -6,
-    marginBottom: -8,
-    paddingX: 6,
-    paddingY: 8,
-    borderTop: '1px solid',
-    borderColor: 'grayDark',
   },
   action: {
     variant: 'button.reset',

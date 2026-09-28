@@ -274,13 +274,18 @@ export class WrappedService {
 
   async guests() {
     const guests = await this.guestModel.find({}, { email: 1, wrapped_token: 1, wrapped_theme: 1, wrapped_choice: 1 }).lean()
-    return Promise.all(guests.map(async ({ email, wrapped_token, wrapped_theme, wrapped_choice }) => ({
-      email,
-      wrapped_token: wrapped_token || null,
-      wrapped_theme: wrapped_theme ?? null,
-      wrapped_choice: wrapped_choice ?? null,
-      viewer: (await this.viewerOf(email))?._id ?? null,
-    })))
+    return Promise.all(guests.map(async ({ email, wrapped_token, wrapped_theme, wrapped_choice }) => {
+      const viewer = await this.viewerOf(email)
+      return {
+        email,
+        wrapped_token: wrapped_token || null,
+        wrapped_theme: wrapped_theme ?? null,
+        wrapped_choice: wrapped_choice ?? null,
+        viewer: viewer?._id ?? null,
+        // The name the wrapped page gives this friend
+        username: viewer?.username || viewer?.friendly_name || null,
+      }
+    }))
   }
 
   async setLook(email: string, theme: string | null, choice: boolean | null) {

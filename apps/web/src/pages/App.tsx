@@ -53,6 +53,7 @@ import PoliciesSettings from './Settings/Policies'
 import FriendsSettings from './Settings/Friends'
 import PlexSettings from './Settings/Plex'
 import TautulliSettings from './Settings/Tautulli'
+import WrappedSettings from './Settings/Wrapped'
 import MobileSettings from './Settings/Mobile'
 import UpdateSettings from './Settings/Update'
 import { useDeviceContext } from '../contexts/Device/Device'
@@ -137,6 +138,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path='friends' element={<FriendsSettings />} />
           <Route path='plex' element={<PlexSettings />} />
           <Route path='tautulli' element={<TautulliSettings />} />
+          <Route path='wrapped' element={<WrappedSettings />} />
           <Route path='mobile' element={<MobileSettings />} />
           <Route path='update' element={<UpdateSettings />} />
         </Route>
