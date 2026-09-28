@@ -4,7 +4,7 @@ import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { WRAPPED_THEMES } from '@sensorr/config'
-import { editionBounds, editionOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { editionBounds, editionOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTheme, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
@@ -255,7 +255,8 @@ export class WrappedService {
     return lookOf({
       global: { theme: config.get('wrapped.theme'), choice: config.get('wrapped.choice') },
       edition: config.get('wrapped.editions').find((edition) => edition.year === year),
-      guest: { theme: guest.wrapped_theme as any, choice: guest.wrapped_choice },
+      // A look since removed from the list falls back to the edition's or the global one
+      guest: { theme: WRAPPED_THEMES.includes(guest.wrapped_theme) ? guest.wrapped_theme as WrappedTheme : null, choice: guest.wrapped_choice },
     })
   }
 

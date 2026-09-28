@@ -1,21 +1,36 @@
 import convict from 'convict'
 import oleoo from 'oleoo'
 
+const validateSources = (sources, schema) => {
+  if (!Array.isArray(sources)) {
+    throw new Error('must be of type Array')
+  }
+
+  for (let source of sources) {
+    convict(schema.children).load(source).validate({ output: () => {} })
+  }
+}
+
 convict.addFormat({
   name: 'source-array',
-  validate: function (sources, schema) {
-    if (!Array.isArray(sources)) {
-      throw new Error('must be of type Array')
-    }
-
-    for (let source of sources) {
-      convict(schema.children).load(source).validate({ output: () => {} })
-    }
-  },
+  validate: validateSources,
 })
 
 // The looks of the wrapped page, `apps/wrapped/src/app/themes` draws each one
 export const WRAPPED_THEMES = ['affiche', 'labo', 'tele', 'videoclub', 'scenario']
+
+// A `source-array` where each year shows once, the API reads the first one it finds
+convict.addFormat({
+  name: 'wrapped-editions',
+  validate: function (editions, schema) {
+    validateSources(editions, schema)
+    const years = editions.map(({ year }) => year)
+
+    if (new Set(years).size !== years.length) {
+      throw new Error('each year must show once')
+    }
+  },
+})
 
 const config = convict({
   docker: {
@@ -315,7 +330,7 @@ const config = convict({
     },
     editions: {
       doc: 'Per edition overrides of `theme` and `choice`, a null value keeps the global one',
-      format: 'source-array',
+      format: 'wrapped-editions',
       default: [],
       children: {
         year: {
