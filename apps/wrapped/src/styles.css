@@ -149,7 +149,9 @@ ol {
 .lettering > span {
   display: inline-block;
   max-width: 100%;
-  transform: rotate(var(--lean)) scale(var(--grow));
+  /* Grown through its size rather than a scale, so the line makes room for it */
+  font-size: calc(var(--grow) * 1em);
+  transform: rotate(var(--lean));
   transform-origin: 50% 70%;
 }
 
@@ -235,7 +237,7 @@ ol {
   position: relative;
   z-index: 5;
   margin-top: -18cqi;
-  font-size: 14cqi;
+  font-size: 13cqi;
   -webkit-text-stroke: 0.09em var(--paper);
   paint-order: stroke fill;
 }
@@ -257,7 +259,8 @@ ol {
 }
 
 .opening-gap {
-  color: var(--crimson);
+  font-family: var(--lettering);
+  text-transform: uppercase;
 }
 
 .scroll-hint {
@@ -280,7 +283,8 @@ ol {
   position: absolute;
   top: calc(var(--u) * 4);
   right: calc(var(--u) * -8);
-  width: 86cqi;
+  /* A wide sheet is shorter for its width, the poster would reach its lettering */
+  width: min(86cqi, 44svh);
   transform: rotate(4deg);
 }
 
@@ -461,6 +465,10 @@ ol {
   font-size: 50cqi;
   line-height: 0.85;
   transform: rotate(-3deg);
+}
+
+.rank-unit {
+  font-size: 9cqi;
 }
 
 .rank sup {

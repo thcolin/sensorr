@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { editionBounds, editionOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { editionBounds, editionOf, figuresOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
@@ -111,12 +111,23 @@ export class WrappedService {
     }
 
     const { plays, titles } = await this.editionData(year)
-    const previous = await this.previousOf(year, user_id)
-    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, previous: previous.get(user_id), timeZone: TIME_ZONE }) }
+    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, previous: await this.samePeriodOf(year, user_id), timeZone: TIME_ZONE }) }
   }
 
-  private async previousOf(year: number, user_id?: number) {
-    const editions = await this.editionModel.find({ year: year - 1, ...(user_id === undefined ? {} : { user_id }) }, { user_id: 1, 'wrapped.hours': 1, 'wrapped.movies': 1, 'wrapped.episodes': 1 }).lean()
+  // An open edition is compared with the previous one up to the same day, not with its whole year
+  private async samePeriodOf(year: number, user_id: number) {
+    const { start, end } = editionBounds(year, TIME_ZONE)
+    const before = editionBounds(year - 1, TIME_ZONE).start
+    const plays = (await this.playModel.find({ user_id, started: { $gte: before, $lt: before + Math.min(Date.now() / 1000, end) - start } }).lean())
+      .map(({ _id, ...play }) => ({ id: _id, ...play }) as WrappedPlay)
+    const titles = (await this.titleModel.find({ _id: { $in: [...new Set(plays.map((play) => play.title))] } }, { duration: 1 }).lean())
+      .map(({ _id, ...title }) => ({ key: _id, ...title }) as WrappedTitle)
+    return plays.length ? figuresOf({ plays, titles, user_id }) : null
+  }
+
+  // A closed edition is compared with the whole previous one, frozen by then
+  private async previousOf(year: number) {
+    const editions = await this.editionModel.find({ year: year - 1 }, { user_id: 1, 'wrapped.hours': 1, 'wrapped.movies': 1, 'wrapped.episodes': 1 }).lean()
     return new Map(editions.map(({ user_id, wrapped }) => [user_id, wrapped as { hours: number, movies: number, episodes: number }]))
   }
 

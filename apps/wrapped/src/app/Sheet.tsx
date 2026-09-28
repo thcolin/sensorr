@@ -17,7 +17,8 @@ export const Lettering = ({ text, highlight, as: Tag = 'h2', className, seed = 1
   const highlighted = new Set((highlight || '').split(/\s+/).filter(Boolean))
 
   return (
-    <Tag className={`lettering ${className || ''}`} aria-label={text}>
+    <Tag className={`lettering ${className || ''}`}>
+      <span className="visually-hidden">{text}</span>
       {words.map((word, index) => (
         <span
           key={index}

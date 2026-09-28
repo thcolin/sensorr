@@ -14,7 +14,7 @@ const MONTHS = ['décembre', 'janvier', 'février', 'mars', 'avril', 'mai', 'jui
 const THIN = ' '
 
 const number = new Intl.NumberFormat('fr-FR')
-const plural = (count: number, one: string, many: string) => `${number.format(count)} ${count > 1 ? many : one}`
+const plural = (count: number, one: string, many: string) => `${number.format(count)}\u00a0${count > 1 ? many : one}`
 const today = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: TIME_ZONE })
 // A date of the edition, read at noon so no time zone moves it to the day before
 const dayOf = (date: string, weekday = false) => new Date(`${date}T12:00:00Z`)
@@ -44,7 +44,8 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
 
   return (
     <main className="wall">
-      <Opening name={name} year={year} wrapped={wrapped} posters={collage} art={art} />
+      <Opening name={name} year={year} wrapped={wrapped} closed={closed} posters={collage} art={art} />
+      <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />
       {!short && wrapped.streak && <Streak streak={wrapped.streak} art={art} />}
       {!short && wrapped.month_shows.some(Boolean) && <Months shows={wrapped.month_shows} closed={closed} art={art} />}
       {!short && (wrapped.binge || wrapped.pace) && <Binge binge={wrapped.binge} pace={wrapped.pace} art={art} />}
@@ -67,14 +68,13 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
         ]} />
       )}
       {!short && wrapped.sign && <Sign sign={wrapped.sign} art={art} />}
-      <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />
       {wrapped.last && <Finale last={wrapped.last} year={year} closed={closed} art={art} />}
       <Colophon year={year} closed={closed} short={short} />
     </main>
   )
 }
 
-const Opening = ({ name, year, wrapped, posters, art }: { name: string, year: number, wrapped: Wrapped, posters: WrappedPoster[], art: Art }) => {
+const Opening = ({ name, year, wrapped, closed, posters, art }: { name: string, year: number, wrapped: Wrapped, closed: boolean, posters: WrappedPoster[], art: Art }) => {
   const reduced = useReducedMotion()
   const progress = useMotionValue(reduced ? 1 : 0)
   const { first, previous } = wrapped
@@ -100,7 +100,7 @@ const Opening = ({ name, year, wrapped, posters, art }: { name: string, year: nu
         <li>{plural(wrapped.evenings, 'soir', 'soirs')}, {plural(wrapped.hours, 'heure', 'heures')}</li>
         {!!wrapped.movies && <li>{plural(wrapped.movies, 'film', 'films')}</li>}
         {!!wrapped.shows && <li>{plural(wrapped.shows, 'série', 'séries')}, {plural(wrapped.episodes, 'épisode', 'épisodes')}</li>}
-        {previous && !!gap && <li className="opening-gap">{gap > 0 ? `+${gap}` : `−${-gap}`}{THIN}% d’heures par rapport à {previous.year}</li>}
+        {previous && !!gap && <li className="opening-gap">{gap > 0 ? `+${gap}` : `−${-gap}`}{THIN}% d’heures par rapport à {previous.year}{closed ? '' : ', à la même date'}</li>}
       </ul>
       <svg className="scroll-hint" viewBox="0 0 40 90" aria-hidden="true">
         <path d="M20 4 C 16 30, 25 52, 19 80 M8 64 C 13 72, 17 78, 19 84 C 23 76, 27 70, 33 62" />
@@ -116,8 +116,9 @@ const Streak = ({ streak, art }: { streak: NonNullable<Wrapped['streak']>, art: 
   return (
     <Sheet ref={sheet} className="sheet-figures" label="Soirs d’affilée" style={{ '--digits': String(streak.evenings).length } as React.CSSProperties}>
       <Painted className="figures-poster" src={art(streak.poster)} alt={streak.poster.title} progress={progress} />
-      <p className="figure" aria-label={plural(streak.evenings, 'soir', 'soirs')}>
+      <p className="figure">
         <span aria-hidden="true">{number.format(streak.evenings)}</span>
+        <span className="visually-hidden">{plural(streak.evenings, 'soir', 'soirs')}</span>
       </p>
       <Lettering className="figure-unit" text="soirs d’affilée" seed={2} />
       <p className="figure-details">Du {dayOf(streak.from)} au {dayOf(streak.to)}, sans rater une séance. Surtout {quoted(streak.poster.title)}.</p>
@@ -263,8 +264,9 @@ const OnlyYou = ({ onlyYou, art }: { onlyYou: NonNullable<Wrapped['only_you']>, 
   return (
     <Sheet ref={sheet} className="sheet-figures" label="Toi seul" style={{ '--digits': String(onlyYou.count).length } as React.CSSProperties}>
       <Painted className="figures-poster" src={art(onlyYou.poster)} alt={onlyYou.poster.title} progress={progress} />
-      <p className="figure" aria-label={plural(onlyYou.count, 'film', 'films')}>
+      <p className="figure">
         <span aria-hidden="true">{number.format(onlyYou.count)}</span>
+        <span className="visually-hidden">{plural(onlyYou.count, 'film', 'films')}</span>
       </p>
       <Lettering className="figure-unit" text={one ? 'film que personne d’autre n’a lancé' : 'films que personne d’autre n’a lancés'} seed={3} />
       <p className="figure-details">{one ? `C’est ${quoted(onlyYou.poster.title)}.` : `Le dernier en date${THIN}: ${quoted(onlyYou.poster.title)}.`}</p>
@@ -303,9 +305,9 @@ const Sign = ({ sign, art }: { sign: NonNullable<Wrapped['sign']>, art: Art }) =
   const progress = useRevealProgress(sheet)
   const { genre, ascendant } = sign
   const lead = ascendant && {
-    actor: `en tête d’affiche de ${plural(ascendant.titles, 'de tes films', 'de tes films et séries')}`,
+    actor: `en tête d’affiche de ${ascendant.titles}\u00a0de tes films et séries`,
     show: 'en boucle',
-    director: `derrière ${plural(ascendant.titles, 'de tes films', 'de tes films')}`,
+    director: `derrière ${ascendant.titles}\u00a0de tes films`,
   }[ascendant.kind]
 
   return (
@@ -324,10 +326,11 @@ const Sign = ({ sign, art }: { sign: NonNullable<Wrapped['sign']>, art: Art }) =
 
 const Rank = ({ rank, users, hours }: { rank: number, users: number, hours: number }) => (
   <Sheet className="sheet-rank" label="Ton rang">
-    <p className="rank" aria-label={`${rank}${suffix(rank)} spectateur sur ${users}`}>
+    <p className="rank">
       <span aria-hidden="true">{rank}<sup>{suffix(rank)}</sup></span>
+      <span className="visually-hidden">{rank}{suffix(rank)}</span>
     </p>
-    <Lettering text={`spectateur sur ${users}`} seed={11} />
+    <Lettering className="rank-unit" text={`spectateur sur ${users}`} seed={11} />
     <ol className="crowd" aria-hidden="true">
       {Array.from({ length: users }, (_, index) => <li key={index} className={index === rank - 1 ? 'crowd-you' : undefined} />)}
     </ol>

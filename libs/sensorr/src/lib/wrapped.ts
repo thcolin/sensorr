@@ -124,6 +124,17 @@ const groupBy = <T, K>(values: T[], key: (value: T) => K) => {
   return groups
 }
 
+// The figures one edition is compared on, over any stretch of plays
+export const figuresOf = ({ plays, titles, user_id }: { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number }) => {
+  const durations = new Map(titles.map((title) => [title.key, title.duration]))
+  const mine = plays.filter((play) => play.user_id === user_id)
+  return {
+    hours: mine.reduce((sum, play) => sum + Math.min(play.play_duration || 0, durations.get(play.title) || Infinity), 0) / 3600,
+    movies: new Set(mine.filter((play) => play.media_type === 'movie').map((play) => play.title)).size,
+    episodes: mine.filter((play) => play.media_type === 'episode').length,
+  }
+}
+
 const WATCHED = 0.85
 const DAY = 24 * 3600
 
@@ -223,10 +234,10 @@ export const wrappedOf = (
   const slowest = movies
     .filter((play) => (play.watched ?? 0) >= WATCHED && (play.sessions || 1) > 1)
     .map((play) => ({ play, days: Math.floor((play.stopped - play.started) / DAY) }))
-    .filter(({ days }) => days >= 1)
+    .filter(({ days }) => days >= 7)
     .sort((a, b) => b.days - a.days)[0]
   const longest = [...moviePlays.keys()].filter((key) => byKey.get(key)?.duration).sort((a, b) => byKey.get(b)!.duration! - byKey.get(a)!.duration!)[0]
-  const oldest = byYear([...moviePlays.keys()])[0]
+  const oldest = byYear([...moviePlays.keys()]).filter((key) => byKey.get(key)!.year! < 2000)[0]
   const rewatches = (key: string) => moviePlays.get(key)!.filter((play) => (play.watched ?? 0) >= WATCHED).length
   const rewatched = [...moviePlays.keys()].filter((key) => rewatches(key) >= 2).sort((a, b) => rewatches(b) - rewatches(a))[0]
 
