@@ -23,9 +23,11 @@ export const imageRequestOf = ({ path, size = 'original', fallback = null }: Rec
 const ORIGINAL = 1920
 
 // Plex fits the artwork in the box and keeps its ratio, the height only has to be out of the way
+// A logo keeps its transparency in PNG, which Plex otherwise serves under a JPEG type
 export const transcodeOf = ({ path, size }: ImageRequest) => {
   const width = size === 'original' ? ORIGINAL : Number(size.slice(1))
-  return `/photo/:/transcode?${new URLSearchParams({ url: path, width: `${width}`, height: `${width * 4}`, minSize: '0', upscale: '0' })}`
+  const format = /clearLogos?/.test(path) ? { format: 'png' } : {}
+  return `/photo/:/transcode?${new URLSearchParams({ url: path, width: `${width}`, height: `${width * 4}`, minSize: '0', upscale: '0', ...format })}`
 }
 
 export const fallbackOf = ({ size, fallback }: ImageRequest) => fallback ? `https://image.tmdb.org/t/p/${size}${fallback}` : null
