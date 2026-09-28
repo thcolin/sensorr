@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { createPin, checkPin, PlexApp } from '@sensorr/plex'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { ConfigService } from '../config/config.service'
+import { ImageRequest, transcodeOf } from './image'
 import app from './../../../../../package.json'
 
 @Injectable()
@@ -66,5 +67,22 @@ export class PlexService {
     this.configService.config.set('plex.token', result.token)
     await this.configService.write()
     return { done: true, token: result.token }
+  }
+
+  // An artwork read on Plex with the server token, which never leaves the API
+  async image(request: ImageRequest): Promise<Response | null> {
+    const url = this.configService.config.get('plex.url')
+    const token = this.configService.config.get('plex.token')
+
+    if (!url || !token) {
+      return null
+    }
+
+    const res = await fetch(`${url.replace(/\/$/, '')}${transcodeOf(request)}`, {
+      headers: { 'X-Plex-Token': token, Accept: 'image/*' },
+      signal: AbortSignal.timeout(10000),
+    })
+
+    return res.ok ? res : null
   }
 }
