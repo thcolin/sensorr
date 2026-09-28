@@ -5,7 +5,7 @@ import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
 import command from '../utils/command'
-import { fetchShow, sonarrShowOf, sonarrEpisodesOf } from '../utils/shows'
+import { fetchSensorrShows, fetchSonarrShow, sonarrShowOf, sonarrEpisodesOf } from '../utils/shows'
 
 const meta = {
   command: 'migrate',
@@ -76,7 +76,8 @@ const FetchSonarrSeriesTask = ({ ...props }) => {
 
       try {
         const series = await state.sonarr('series')
-        setState((state) => ({ ...state, series }))
+        const known = new Set((await fetchSensorrShows(api, { fields: 'id' })).map(({ id }) => id))
+        setState((state) => ({ ...state, series, known }))
         state.logger.info({ message: `📡 ${series.length} series found on Sonarr`, metadata: { ...state.metadata, summary: { sonarr: series.length } } })
         setTask((task) => ({ ...task, output: <Text><Text bold={true}>{series.length}</Text> series found on Sonarr</Text> }))
         setStatus('done')
@@ -107,7 +108,7 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
     }
 
     const cb = async () => {
-      const counts = { wished: 0, archived: 0, skipped: 0, untracked: 0, unmatched: 0, files: 0, warning: 0 }
+      const counts = { wished: 0, archived: 0, known: 0, untracked: 0, unmatched: 0, files: 0, warning: 0 }
       setStatus('loading')
 
       for (const series of (state.series || [])) {
@@ -124,22 +125,25 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
             output: `Migrate "${series.title}"...`,
           }))
 
-          if (!series.tmdbId) {
-            state.logger.info({ message: `Sonarr series "${series.title}" without TMDB id, ignored`, metadata: { ...state.metadata, ignored: true } })
+          const fetched = await fetchSonarrShow(state.tmdb, series)
+
+          if (!fetched) {
+            state.logger.info({ message: `Sonarr series "${series.title}" not found on TMDB, ignored`, metadata: { ...state.metadata, ignored: true } })
             counts.untracked++
             continue
           }
 
-          const fields = sonarrShowOf(series)
+          const { show } = fetched
 
-          if (!fields) {
-            counts.skipped++
+          // A show already in Sensorr may have changed since, whatever Sonarr says
+          if (state.known.has(show.id)) {
+            counts.known++
             continue
           }
 
-          const { show, episodes: fetched } = await fetchShow(state.tmdb, series.tmdbId)
+          const fields = sonarrShowOf(series)
           const files = series.statistics?.episodeFileCount ? await state.sonarr('episodefile', { seriesId: series.id }) : []
-          const { episodes, unmatched } = sonarrEpisodesOf(fetched, await state.sonarr('episode', { seriesId: series.id }), fields, series.seasons, files)
+          const { episodes, unmatched } = sonarrEpisodesOf(fetched.episodes, await state.sonarr('episode', { seriesId: series.id }), fields, series.seasons, files)
           counts.files += episodes.filter(({ files }) => files?.length).length
 
           if (unmatched.length) {
@@ -167,7 +171,7 @@ const MigrateSonarrSeriesTask = ({ ...props }) => {
         }
       }
 
-      const summary = `${counts.wished} wished, ${counts.archived} archived, ${counts.skipped} skipped without monitoring nor file, ${counts.untracked} without TMDB id, ${counts.unmatched} episodes unknown to TMDB, ${counts.files} episodes owned, ${counts.warning} errors`
+      const summary = `${counts.wished} wished, ${counts.archived} archived, ${counts.known} already in Sensorr, ${counts.untracked} not found on TMDB, ${counts.unmatched} episodes unknown to TMDB, ${counts.files} episodes owned, ${counts.warning} errors`
       state.logger.info({ message: `🚚 ${state.dry ? 'Would migrate' : 'Migrated'} ${counts.wished + counts.archived} Sonarr series: ${summary}`, metadata: { ...state.metadata, summary: { shows: counts } } })
       await new Promise(resolve => setTimeout(resolve, 600))
       setTask((task) => ({ ...task, output: <Text><Text bold={true}>{counts.wished + counts.archived}</Text> series {state.dry ? 'to migrate' : 'migrated'}: {summary}</Text> }))

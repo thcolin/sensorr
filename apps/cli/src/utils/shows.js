@@ -3,7 +3,8 @@ import oleoo from 'oleoo'
 import sanitizeFilename from 'sanitize-filename'
 import { MEDIA } from '@sensorr/sensorr'
 import { OVERDUE_AFTER } from './swaps'
-export { fetchShow } from '@sensorr/tmdb'
+import { fetchShow } from '@sensorr/tmdb'
+export { fetchShow }
 
 const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
 
@@ -112,11 +113,36 @@ export const fetchSensorrShows = async (api, params = {}) => {
   return shows
 }
 
-export const sonarrShowOf = (series) => (!series.monitored && !series.statistics?.episodeFileCount) ? null : {
-  state: series.monitored ? 'wished' : 'archived',
+// An unmonitored series without any file is a show noted in Sonarr, kept in the library unfollowed
+export const sonarrShowOf = (series) => ({
+  state: series.monitored || !series.statistics?.episodeFileCount ? 'wished' : 'archived',
   monitored: !!series.monitored,
   monitor_new_seasons: series.monitorNewItems === 'all',
   path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
+})
+
+// Sonarr's tmdbId can be missing, or name a show TMDB no longer has: its tvdbId may still find it
+export const fetchSonarrShow = async (tmdb, series) => {
+  const fallback = async () => {
+    const { tv_results: found = [] } = series.tvdbId ? await tmdb.fetch(`find/${series.tvdbId}`, { external_source: 'tvdb_id' }) : {}
+    return found.length ? fetchShow(tmdb, found[0].id) : null
+  }
+
+  if (!series.tmdbId) {
+    return fallback()
+  }
+
+  try {
+    return await fetchShow(tmdb, series.tmdbId)
+  } catch (error) {
+    const found = await fallback()
+
+    if (!found) {
+      throw error
+    }
+
+    return found
+  }
 }
 
 const sonarrFileOf = (file) => {
