@@ -54,6 +54,11 @@ export class MoviesController {
     return this.moviesService.getMetadata(page)
   }
 
+  @Get('artworks')
+  async getArtworks(): Promise<{}> {
+    return this.moviesService.getArtworks()
+  }
+
   @Get('statistics')
   async getStatistics(
     @Query() { context = 'library', ...query },

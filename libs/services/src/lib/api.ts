@@ -184,6 +184,20 @@ export class API {
           },
         }
       }),
+      getArtworks: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'movies/artworks',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
       getStatistics: (
         { init = {}, params = {} }: { init?: any, params?: { [key: string]: any } }
       ): { uri: string, params: {}, init: {} } => ({

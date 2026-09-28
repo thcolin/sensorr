@@ -15,7 +15,7 @@ import { Movie as MovieDocument } from './movie.schema'
 
 const SWAPS = ['refine', 'shrink', 'report']
 
-const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'plex_artworks', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
 
 @Injectable()
 export class MoviesService {
@@ -445,12 +445,19 @@ export class MoviesService {
     return res
   }
 
+  // Out of the metadata pages, read one after the other: a poster would wait for its page
+  async getArtworks() {
+    this.logger.log('GetArtworks')
+    const movies = await this.movieModel.find({ plex_artworks: { $ne: null } }, { plex_artworks: 1 }).lean()
+    return movies.reduce((acc, { _id, plex_artworks }) => ({ ...acc, [_id]: plex_artworks }), {})
+  }
+
   listenMetadata(): Observable<MessageEvent> {
     this.logger.log('ListenMetadata')
 
     return this.changes$.pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
-      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, METADATA_FIELDS).lean().exec()),
+      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, [...METADATA_FIELDS, 'plex_artworks']).lean().exec()),
       map(metadata => ({
         data: metadata.reduce((acc, curr) => ({
           ...acc,
