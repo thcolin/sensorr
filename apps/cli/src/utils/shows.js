@@ -25,8 +25,12 @@ export const monitoredOf = (episode, show, known = []) => {
 }
 
 // A show on the watchlist of the Plex account Sensorr is set up with is its owner's, noted in the library rather than requested
+const isOwnerRequest = (requested_by, owner) => !!owner && requested_by.includes(owner)
+
+export const isNotedShow = (show, requested_by, owner) => show.state === 'ignored' && isOwnerRequest(requested_by, owner)
+
 export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by, owner = null) => ({
-  show: { ...show, state: owner && requested_by.includes(owner) ? 'wished' : 'ignored', monitored: false, monitor_new_seasons: false, plex_guid, requested_by },
+  show: { ...show, state: isOwnerRequest(requested_by, owner) ? 'wished' : 'ignored', monitored: false, monitor_new_seasons: false, plex_guid, requested_by },
   episodes: episodes.map((episode) => ({ ...episode, monitored: false })),
 })
 
