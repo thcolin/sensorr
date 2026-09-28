@@ -22,7 +22,7 @@ const Videoclub = ({ share, sheets, colophon, art }: ThemeProps) => (
         case 'binge': return <Binge key={index} sheet={sheet} art={art} episodes={sheet.episodes || 0} />
         case 'night': return <Night key={index} sheet={sheet} art={art} />
         case 'server': return <Server key={index} sheet={sheet} art={art} />
-        case 'figure': return sheet.lines ? <Twin key={index} sheet={sheet} art={art} /> : <Nobody key={index} sheet={sheet} art={art} />
+        case 'figure': return sheet.variant === 'twin' ? <Twin key={index} sheet={sheet} art={art} /> : <Nobody key={index} sheet={sheet} art={art} />
         case 'duo': return <Duo key={index} sheet={sheet} art={art} />
         case 'posters': return <Posters key={index} sheet={sheet} art={art} />
         case 'genre': return <Genre key={index} sheet={sheet} art={art} />
@@ -249,7 +249,7 @@ const Night = ({ sheet, art }: { sheet: Of<'night'>, art: Art }) => (
     </div>
     <div className="videoclub-night-text">
       <p className="videoclub-night-date">{sheet.date}</p>
-      <p className="videoclub-lede">Rendu à <strong className="videoclub-time">{sheet.end}</strong>{sheet.after}.</p>
+      <p className="videoclub-lede">Tu éteins à <strong className="videoclub-time">{sheet.end}</strong>{sheet.after}.</p>
       <p className="videoclub-lede">{sheet.last}</p>
     </div>
   </section>
@@ -259,7 +259,7 @@ const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-server" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-spot">
-      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.label === 'Avant tout le monde' ? 'Exclusivité' : 'Même semaine'} />
+      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.first ? 'Exclusivité' : 'Même semaine'} />
     </div>
     <div className="videoclub-shelf-card">
       <h3>{sheet.title}</h3>
@@ -330,7 +330,7 @@ const Duo = ({ sheet, art }: { sheet: Of<'duo'>, art: Art }) => (
 // One case per figure, the figure written on its label
 const Posters = ({ sheet, art }: { sheet: Of<'posters'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-posters" aria-label={sheet.label}>
-    <Neon lines={sheet.lines} tone={sheet.label === 'Hors normes' ? 'cyan' : 'pink'} />
+    <Neon lines={sheet.lines} tone={sheet.variant === 'outliers' ? 'cyan' : 'pink'} />
     <ol className="videoclub-shelf videoclub-shelf-large" data-count={sheet.items.length}>
       {sheet.items.map(({ what, poster, detail }, index) => (
         <li key={poster.key} className="videoclub-shelf-entry">

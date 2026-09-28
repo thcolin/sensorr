@@ -344,7 +344,7 @@ const Server = ({ sheet, index, reel, art }: { sheet: Of<'server'>, index: numbe
       <div ref={ref} className="labo-ringed" data-draw={draw}>
         <Frame poster={sheet.poster} art={art} code="0A" />
         <Ring />
-        {sheet.label === 'Avant tout le monde' && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">Copie zéro</span>}
+        {sheet.first && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">Copie zéro</span>}
       </div>
       <h3 className="labo-name">{sheet.title}</h3>
       <p className="labo-body">{sheet.lede}</p>

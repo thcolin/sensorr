@@ -18,7 +18,7 @@ const rubric = (sheet: SheetModel) => {
     case 'binge': return 'Soirée spéciale'
     case 'night': return 'Dernière partie de soirée'
     case 'server': return 'Exclusivité'
-    case 'figure': return sheet.lines ? 'Ils ont aimé' : 'Rareté'
+    case 'figure': return sheet.variant === 'twin' ? 'Ils ont aimé' : 'Rareté'
     case 'duo': return 'Courrier des lecteurs'
     case 'posters': return 'Critiques'
     case 'genre': return 'Horoscope'
@@ -227,7 +227,7 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
       </article>
       <ol className="tele-episodes" aria-hidden="true">
         {[...new Set([1, 2, 3, sheet.evenings])].filter((episode) => episode <= sheet.evenings).map((episode, index, episodes) => (
-          <li key={episode} className={episode - (episodes[index - 1] || 0) > 1 ? 'tele-episodes-later' : undefined}>Épisode {episode}</li>
+          <li key={episode} className={episode - (episodes[index - 1] || 0) > 1 ? 'tele-episodes-later' : undefined}>Soir {episode}</li>
         ))}
       </ol>
     </>}

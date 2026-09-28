@@ -38,11 +38,11 @@ export type SheetModel =
   | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string } | null }
   | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null }
-  | { kind: 'night', label: string, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
-  | { kind: 'server', label: string, lines: string[], poster: WrappedPoster, title: string, lede: string }
-  | { kind: 'figure', label: string, lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[] }
+  | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
+  | { kind: 'server', label: string, first: boolean, lines: string[], poster: WrappedPoster, title: string, lede: string }
+  | { kind: 'figure', label: string, variant: 'only_you' | 'twin', lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[] }
   | { kind: 'duo', label: string, lines: string[], lede: string, posters: (WrappedPoster & { caption: string })[] }
-  | { kind: 'posters', label: string, lines: string[], items: Billed[] }
+  | { kind: 'posters', label: string, variant: 'dropped' | 'outliers', lines: string[], items: Billed[] }
   | { kind: 'genre', label: string, lines: string[], name: string, count: string, posters: WrappedPoster[], lead: { name: string, role: string, posters: WrappedPoster[] } | null }
   | { kind: 'finale', label: string, lines: string[], poster: WrappedPoster, title: string, date: string, closed: boolean, end: string }
 
@@ -158,6 +158,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'night',
       label: late ? 'Ta nuit la plus tardive' : 'Ta plus grosse soirée',
+      late,
       lines: late ? ['Ta nuit', 'la plus tardive'] : ['Ta plus grosse', 'soirée'],
       poster,
       date: late ? `Dans la nuit du ${dayOf(night.date, true)}` : dayOf(night.date, true),
@@ -175,6 +176,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'server',
       label: first_on_server ? 'Avant tout le monde' : 'Tous la même semaine',
+      first: !!first_on_server,
       lines: first_on_server ? ['Avant', 'tout le monde'] : ['Tous la', 'même semaine'],
       poster: item,
       title: item.title,
@@ -190,6 +192,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'figure',
       label: 'Personne d’autre',
+      variant: 'only_you',
       lines: null,
       count,
       spoken: plural(count, 'film', 'films'),
@@ -217,6 +220,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'figure',
       label: 'Ton jumeau',
+      variant: 'twin',
       lines: ['Ton jumeau'],
       count: shared,
       spoken: plural(shared, 'titre', 'titres'),
@@ -231,6 +235,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'posters',
       label: 'Pas fini, ou presque',
+      variant: 'dropped',
       lines: ['Pas fini,', 'ou presque'],
       items: bill([
         dropped && { what: 'Arrêté', poster: dropped, detail: `à ${dropped.percent}${THIN}%, jamais repris` },
@@ -243,6 +248,7 @@ export const sheetsOf = (share: Share) => {
     sheets.push({
       kind: 'posters',
       label: 'Hors normes',
+      variant: 'outliers',
       lines: ['Hors', 'normes'],
       items: bill([
         rewatched && { what: 'Revu', poster: rewatched, detail: `${rewatched.times} fois` },

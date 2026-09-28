@@ -363,7 +363,7 @@ const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
 const Night = ({ sheet, scene, art }: { sheet: Of<'night'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
-    <Slug scene={scene}>Int. salon – nuit</Slug>
+    <Slug scene={scene}>{sheet.late ? 'Int. salon – nuit' : 'Int. salon – soir'}</Slug>
     <p className="scenario-action scenario-date">{sheet.date}.</p>
     <Shout figure={sheet.end} />
     <Insert poster={sheet.poster} art={art} />
@@ -378,7 +378,7 @@ const Server = ({ sheet, scene, art }: { sheet: Of<'server'> } & Scene) => (
     <Slug scene={scene}>Int. salle de projection – soir</Slug>
     <div className="scenario-beside">
       <Insert poster={sheet.poster} art={art} />
-      {sheet.label === 'Avant tout le monde' && <Pencil className="scenario-pencil-side">Première projection</Pencil>}
+      {sheet.first && <Pencil className="scenario-pencil-side">Première projection</Pencil>}
     </div>
     <p className="scenario-action"><Caps>{sheet.title}</Caps>.</p>
     <p className="scenario-action">{sheet.lede}</p>

@@ -23,7 +23,7 @@ const Affiche = ({ sheets, colophon, art }: ThemeProps) => (
         case 'server': return <Server key={index} sheet={sheet} art={art} />
         case 'figure': return <Figure key={index} sheet={sheet} art={art} />
         case 'duo': return <Duo key={index} sheet={sheet} art={art} />
-        case 'posters': return <Posters key={index} sheet={sheet} seed={sheet.label === 'Hors normes' ? 20 : 19} art={art} />
+        case 'posters': return <Posters key={index} sheet={sheet} seed={sheet.variant === 'outliers' ? 20 : 19} art={art} />
         case 'genre': return <Genre key={index} sheet={sheet} art={art} />
         case 'finale': return <Finale key={index} sheet={sheet} art={art} />
       }
