@@ -2,13 +2,14 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import usePortal from 'react-useportal'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { Button, Icon, Pane, Picture } from '@sensorr/ui'
+import { Button, Icon, Pane, Picture, pictureSrc } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { artworkOf } from '../../store/plex'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { ArtworkChoice, ArtworkKind, Candidate, CandidateGroup, candidatesOf, linkOf, ratingKeyOf, setCandidatesOf } from './candidates'
+import { LogoTone, LOGO_FILTERS, toneOfImage } from './tone'
 
 const KINDS: { kind: ArtworkKind, emoji: string, label: string, tmdb: string, width: string, height: string, size: string, preview: string }[] = [
   { kind: 'poster', emoji: '🖼️', label: 'Poster', tmdb: 'posters', width: '5.75em', height: '8.625em', size: 'w154', preview: 'w342' },
@@ -66,6 +67,44 @@ UIArtworks.styles = {
 }
 
 export const Artworks = memo(UIArtworks)
+
+// The logo Plex holds, where the title is written: the title again if it does not load. Keyed by its path, it starts over with a new logo
+const UITitleLogo = ({ path, title, className = undefined }) => {
+  const api = useAPI()
+  const [tone, setTone] = useState<LogoTone | null>(null)
+  const [failed, setFailed] = useState(false)
+  const src = pictureSrc(artworkOf(path, null, api.access_token), 'w500')
+
+  if (failed) {
+    return <>{title}</>
+  }
+
+  return (
+    <img
+      src={src}
+      alt={title}
+      className={className}
+      sx={UITitleLogo.styles.element}
+      style={{ filter: tone ? LOGO_FILTERS[tone] : undefined, opacity: tone ? 1 : 0 }}
+      onLoad={(e) => setTone(toneOfImage(e.currentTarget))}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+UITitleLogo.styles = {
+  element: {
+    display: 'block',
+    maxHeight: '4.5rem',
+    maxWidth: ['100%', '32rem'],
+    marginX: ['auto', '0em'],
+    objectFit: 'contain',
+    objectPosition: ['center', 'left bottom'],
+    transition: 'opacity 400ms ease-in-out',
+  },
+}
+
+export const TitleLogo = memo(UITitleLogo)
 
 const Picker = ({ behavior, entity, artworks, ratingKey, close }) => {
   const api = useAPI()
@@ -502,6 +541,8 @@ const Preview = ({ artworks, chosen, reset }) => {
   const current = (kind: ArtworkKind) => artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null
   const shown = (kind: ArtworkKind) => chosen[kind]?.thumb || current(kind)
   const edited = Object.values(chosen).some(Boolean)
+  const [tone, setTone] = useState<LogoTone>('as-is')
+  const onLogo = useCallback((e, error) => setTone(!error && e?.target ? toneOfImage(e.target) : 'as-is'), [])
 
   return (
     <div sx={Preview.styles.element}>
@@ -509,7 +550,7 @@ const Preview = ({ artworks, chosen, reset }) => {
         <div sx={Preview.styles.backdrop} data-changed={!!chosen.backdrop}><Picture path={shown('backdrop')} size='w780' empty={chosen.backdrop?.link ? LinkEmpty : undefined} /></div>
         <div sx={Preview.styles.poster} data-changed={!!chosen.poster}><Picture path={shown('poster')} size='w342' empty={chosen.poster?.link ? LinkEmpty : undefined} /></div>
         {shown('logo')
-          ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} /></div>
+          ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} /></div>
           : <small sx={Preview.styles.none}>No logo</small>}
       </div>
       <div sx={Preview.styles.legend}>

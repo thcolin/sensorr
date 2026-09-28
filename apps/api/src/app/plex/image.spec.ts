@@ -32,6 +32,8 @@ describe('transcodeOf', () => {
       .toBe('/photo/:/transcode?url=%2Flibrary%2Fmetadata%2F1%2Fthumb%2F2&width=300&height=1200&minSize=0&upscale=0')
     expect(transcodeOf({ path: '/library/metadata/1/art/2', size: 'original', fallback: null }))
       .toBe('/photo/:/transcode?url=%2Flibrary%2Fmetadata%2F1%2Fart%2F2&width=1920&height=7680&minSize=0&upscale=0')
+    expect(transcodeOf({ path: '/library/metadata/1/clearLogo/2', size: 'w500', fallback: null }))
+      .toBe('/photo/:/transcode?url=%2Flibrary%2Fmetadata%2F1%2FclearLogo%2F2&width=500&height=2000&minSize=0&upscale=0&format=png')
   })
 })
 

@@ -252,6 +252,7 @@ const Show = ({ ...props }) => {
             ready={actionsReady}
             followEpisodes={followEpisodes}
             search={openSearch}
+            posters={metadata?.plex_seasons}
           />
         </Skeleton>
       )}

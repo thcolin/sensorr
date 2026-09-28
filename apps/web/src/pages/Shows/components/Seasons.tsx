@@ -1,11 +1,13 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Progress, ProgressPill } from '@sensorr/ui'
+import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Picture, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
 import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
+import { useAPI } from '../../../store/api'
+import { artworkOf } from '../../../store/plex'
 import { ReleasesStyles } from '../../Details/components/Releases'
 import { Follow } from './Follow'
 import { Search } from './Search'
@@ -51,7 +53,8 @@ const bleed = {
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
 // atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
 // and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, ...props }) => {
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, posters = null, ...props }) => {
+  const api = useAPI()
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
     const numbers = [...new Set([...summaries.map(({ season_number }) => season_number), ...(episodes || []).map(({ season_number }) => season_number)])]
@@ -286,7 +289,12 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                   )}
                 </div>
                 {opened && (
-                  <div id={id} sx={UISeasons.styles.opened}>
+                  <div id={id} sx={{ ...UISeasons.styles.opened, ...(posters?.[season.number] ? UISeasons.styles.postered : {}) }}>
+                    {!!posters?.[season.number] && (
+                      <div sx={UISeasons.styles.poster}>
+                        <Picture path={artworkOf(posters[season.number], (entity?.seasons || []).find(({ season_number }) => season_number === season.number)?.poster_path || null, api.access_token)} size='w185' />
+                      </div>
+                    )}
                     {(placed.seasons[season.number] || NONE).map(block)}
                     {inLibrary ? (
                       <Episodes
@@ -351,6 +359,30 @@ UISeasons.styles = {
     '::before': {
       ...bleed['::before'],
       backgroundColor: 'grayLightest',
+    },
+  },
+  // The season's own poster, in a column of its own beside the episodes, on a screen wide enough
+  postered: {
+    display: ['block', 'grid'],
+    gridTemplateColumns: '8em minmax(0, 1fr)',
+    columnGap: 4,
+    alignItems: 'start',
+    '>*:not(:first-child)': {
+      gridColumn: 2,
+    },
+  },
+  poster: {
+    display: ['none', 'block'],
+    gridColumn: 1,
+    gridRow: '1 / span 100',
+    position: 'sticky',
+    top: '1em',
+    width: '8em',
+    height: '12em',
+    marginTop: 8,
+    boxShadow: '0 0 0 1px hsla(0, 0%, 100%, 0.1)',
+    '>span': {
+      minHeight: '0px',
     },
   },
   head: {

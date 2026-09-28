@@ -14,7 +14,7 @@ import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
 import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
-import { Artworks, useArtworksOf } from '../../components/Artworks/Artworks'
+import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Artworks'
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -127,7 +127,7 @@ const UIDetails = ({
           <div sx={UIDetails.styles.container}>
             <div sx={UIDetails.styles.content}>
               <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
-                <h1 sx={UIDetails.styles.title}>{title}</h1>
+                <h1 sx={UIDetails.styles.title}>{artworks?.logo ? <TitleLogo key={artworks.logo} path={artworks.logo} title={title} /> : title}</h1>
               </Skeleton>
               {behavior === 'movie' && (
                 <React.Fragment>
