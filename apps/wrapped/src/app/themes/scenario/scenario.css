@@ -629,6 +629,53 @@ html[data-theme='scenario'] {
   margin-top: 8px;
 }
 
+/* Waiting and notices: one page alone on the desk */
+.scenario-state {
+  display: grid;
+  align-content: center;
+  min-height: 100svh;
+}
+
+.scenario-title-blank {
+  text-decoration: none;
+}
+
+.scenario-notice-text {
+  margin: 56px 0 0;
+}
+
+.scenario-retry {
+  display: block;
+  min-height: 44px;
+  margin: 28px 0 0 auto;
+  padding: 10px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--scenario-ink);
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  cursor: pointer;
+  transition: text-underline-offset 160ms ease-out;
+}
+
+.scenario-retry:hover {
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.scenario-retry:focus-visible {
+  outline: 2px solid var(--scenario-pencil);
+  outline-offset: 2px;
+}
+
+.scenario-retry:active {
+  background: linear-gradient(97deg, transparent 0 2px, var(--marker) 3px calc(100% - 4px), transparent calc(100% - 2px)) 0 55% / 100% 1.05em no-repeat;
+}
+
 @media (min-width: 600px) {
   .scenario-inserts[data-count='3'],
   .scenario-inserts[data-count='4'] {
@@ -722,7 +769,7 @@ html[data-theme='scenario'] {
 }
 
 @media (min-width: 1300px) {
-  .scenario-desk {
+  .scenario-desk:not(.scenario-state) {
     display: grid;
     grid-template-columns: 1fr 816px 1fr;
     gap: 40px;
@@ -813,5 +860,9 @@ html[data-theme='scenario'] {
 @media (prefers-reduced-motion: reduce) {
   .scenario-caret::after {
     animation: none;
+  }
+
+  .scenario-retry {
+    transition: none;
   }
 }
