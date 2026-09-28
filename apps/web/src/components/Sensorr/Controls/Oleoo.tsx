@@ -45,7 +45,7 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RU
         const next = groups[groups.indexOf(removedValue.group) + 1] || null
         onChange([
           ...values.filter(v => v.value),
-          { ...removedValue, group: next, ...(removedValue.group ? { required: false } : {}) },
+          { ...removedValue, group: next, rank: undefined, ...(removedValue.group ? { required: false } : {}) },
         ])
         return
       }
@@ -126,6 +126,7 @@ export const LanguageFilter = withProps({
 
 export const FlagsFilter = withProps({
   label: emojize('🚩', 'Flags'),
+  rankable: false,
   options: rules.flags.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,

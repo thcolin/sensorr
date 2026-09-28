@@ -1,7 +1,7 @@
 import { memo, useMemo, useRef, useState } from 'react'
 import { compose, emojize } from '@sensorr/utils'
 import { Icon, Sorting, Warning, Drawer, withControls, QuerySelect } from '@sensorr/ui'
-import { Policy, SENSORR_POLICY_FALLBACK } from '@sensorr/sensorr'
+import { Policy, SENSORR_POLICY_FALLBACK, unranked } from '@sensorr/sensorr'
 import { useBreakpointIndex } from '@sensorr/utils'
 import { useThemeUI } from 'theme-ui'
 import toast from 'react-hot-toast'
@@ -119,14 +119,14 @@ const UISensorr = compose(
                       ...Object.keys(policy.prefer).reduce((acc, key) => ({
                         ...acc,
                         [key]: [
-                          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+                          ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
                           ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
                         ],
                       }), {}),
                       ...Object.keys(policy.avoid).reduce((acc, key) => ({
                         ...acc,
                         [key]: [
-                          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+                          ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
                           ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
                         ],
                       }), {}),
@@ -211,32 +211,32 @@ const UISensorr = compose(
       },
       znab: {
         initial: [],
-        component: ZNABFilter,
+        component: withProps({ rankable: true })(ZNABFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       encoding: {
         initial: [],
-        component: EncodingFilter,
+        component: withProps({ rankable: true })(EncodingFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       resolution: {
         initial: [],
-        component: ResolutionFilter,
+        component: withProps({ rankable: true })(ResolutionFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       source: {
         initial: [],
-        component: SourceFilter,
+        component: withProps({ rankable: true })(SourceFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       dub: {
         initial: [],
-        component: DubFilter,
+        component: withProps({ rankable: true })(DubFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       language: {
         initial: [],
-        component: LanguageFilter,
+        component: withProps({ rankable: true })(LanguageFilter),
         serialize: (key, values) => ({ [key]: values }),
       },
       flags: {

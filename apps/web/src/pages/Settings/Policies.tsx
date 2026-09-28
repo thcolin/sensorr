@@ -24,6 +24,7 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
 import { emojize, languages, useTitle } from '@sensorr/utils'
+import { rankOf, ranked, unranked } from '@sensorr/sensorr'
 
 const Policies = ({ ...props }) => {
   useTitle('Settings - Policies')
@@ -551,14 +552,14 @@ const ControlledPolicyFilter = ({ form, prefix, name, Component, ...props }) => 
   const avoidValues = form.watch(`${prefix}.avoid.${name}`) || []
 
   const value = useMemo(() => [
-    ...preferValues.map(value => ({ value, label: value, group: 'prefer', required: requireValues.includes(value) })),
+    ...unranked(preferValues).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank, required: requireValues.includes(value) })),
     ...avoidValues.map(value => ({ value, label: value, group: 'avoid' })),
-    ...requireValues.filter(value => !preferValues.includes(value)).map(value => ({ value, label: value, group: null, required: true })),
+    ...requireValues.filter(value => rankOf(preferValues, value) === -1).map(value => ({ value, label: value, group: null, required: true })),
   ], [requireValues, preferValues, avoidValues])
 
   const handleChange = useCallback((next) => {
     form.setValue(`${prefix}.require.${name}`, next.filter(item => item.required).map(item => item.value), { shouldDirty: true })
-    form.setValue(`${prefix}.prefer.${name}`, next.filter(item => item.group === 'prefer').map(item => item.value), { shouldDirty: true })
+    form.setValue(`${prefix}.prefer.${name}`, ranked(next.filter(item => item.group === 'prefer')), { shouldDirty: true })
     form.setValue(`${prefix}.avoid.${name}`, next.filter(item => item.group === 'avoid').map(item => item.value), { shouldDirty: true })
   }, [form, prefix, name])
 
@@ -568,6 +569,7 @@ const ControlledPolicyFilter = ({ form, prefix, name, Component, ...props }) => 
       value={value}
       onChange={handleChange}
       requirable={true}
+      rankable={true}
     />
   )
 }

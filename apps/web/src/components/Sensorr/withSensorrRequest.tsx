@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControlsState, Warning } from '@sensorr/ui'
-import { Policy, levelOf, reachesUnit } from '@sensorr/sensorr'
+import { Policy, levelOf, ranked, reachesUnit, unranked } from '@sensorr/sensorr'
 import { useSensorrRequest } from '../../store/sensorr'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
@@ -141,14 +141,14 @@ const useSensorrControlsState = ({ query, policy } = {} as any) => {
     ...Object.keys(policy.prefer).reduce((acc, key) => ({
       ...acc,
       [key]: [
-        ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+        ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
         ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
       ],
     }), {}),
     ...Object.keys(policy.avoid).reduce((acc, key) => ({
       ...acc,
       [key]: [
-        ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+        ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
         ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
       ],
     }), {}),
@@ -173,14 +173,14 @@ const useSensorrControlsState = ({ query, policy } = {} as any) => {
       ...Object.keys(policy.prefer).reduce((acc, key) => ({
         ...acc,
         [key]: [
-          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+          ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
           ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
         ],
       }), {}),
       ...Object.keys(policy.avoid).reduce((acc, key) => ({
         ...acc,
         [key]: [
-          ...policy.prefer[key].map(value => ({ value, label: value, group: 'prefer' })),
+          ...unranked(policy.prefer[key]).map(({ value, rank }) => ({ value, label: value, group: 'prefer', rank })),
           ...policy.avoid[key].map(value => ({ value, label: value, group: 'avoid' })),
         ],
       }), {}),
@@ -194,7 +194,7 @@ const useSensorrControlsState = ({ query, policy } = {} as any) => {
       policy: new Policy({
         sorting,
         descending,
-        prefer: Object.keys(values).reduce((prefer, key) => ({ ...prefer, [key]: values[key].filter(v => v.group === 'prefer').map(({ value }) => value), }), {}),
+        prefer: Object.keys(values).reduce((prefer, key) => ({ ...prefer, [key]: ranked(values[key].filter(v => v.group === 'prefer')), }), {}),
         avoid: Object.keys(values).reduce((avoid, key) => ({ ...avoid, [key]: values[key].filter(v => v.group === 'avoid').map(({ value }) => value), }), {}),
       }),
     })
