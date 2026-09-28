@@ -4,6 +4,7 @@ import type { WrappedPoster } from '@sensorr/sensorr'
 import { MONTHS, number, plural, type SheetModel } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
 import { TestCard } from './States'
+import { anchor } from '../../anchor'
 import './tele.css'
 
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
@@ -21,7 +22,7 @@ const rubric = (sheet: SheetModel) => {
     case 'server': return 'Exclusivité'
     case 'figure': return sheet.variant === 'twin' ? 'Ils ont aimé' : 'Rareté'
     case 'duo': return 'Courrier des lecteurs'
-    case 'posters': return 'Critiques'
+    case 'posters': return sheet.variant === 'dropped' ? 'Zapping' : 'Critiques'
     case 'genre': return 'Horoscope'
     case 'finale': return 'Fin des programmes'
   }
@@ -101,19 +102,6 @@ const Photo = ({ poster, art, kind = 'thumb', width = 640, className = '', eager
     : <span className={`tele-photo tele-photo-${kind} tele-photo-none ${className}`} role="img" aria-label={poster.title}><span aria-hidden="true">{poster.title}</span></span>
 }
 
-// A few posters with their titles, the proof behind a count
-const Posters4 = <P extends WrappedPoster>({ posters, art, caption }: { posters: P[], art: Art, caption?: (poster: P) => string }) => (
-  <ul className="tele-thumbs" data-count={posters.length}>
-    {posters.map((poster) => (
-      <li key={poster.key} className="tele-thumb">
-        <Photo poster={poster} art={art} width={320} />
-        <span className="tele-thumb-title">{poster.title}</span>
-        {caption && <span className="tele-thumb-caption">{caption(poster)}</span>}
-      </li>
-    ))}
-  </ul>
-)
-
 const Big = ({ value, spoken, suffix }: { value: number, spoken: string, suffix?: string }) => (
   <p className="tele-big">
     <span aria-hidden="true">{number.format(value)}{suffix && <sup>{suffix}</sup>}</span>
@@ -166,7 +154,7 @@ const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: S
         <ol>
           {sheets.slice(1).map((other, index) => (
             <li key={index}>
-              <a href={`#tele-p${(index + 1) * 2}`}>
+              <a href={anchor(`tele-p${(index + 1) * 2}`)}>
                 <span className="tele-contents-rubric">{rubric(other)}</span>
                 <span className="tele-contents-label">{other.label}</span>
                 <span className="tele-contents-page">{(index + 1) * 2}</span>
@@ -284,23 +272,76 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
   )
 }
 
-const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => (
-  <Spread
-    sheet={sheet}
-    {...page}
-    left={<>
-      <Headline lines={sheet.lines} />
-      <figure className="tele-still">
-        <Photo poster={sheet.poster} art={art} kind="art" width={1280} />
-        <span className="tele-tag" aria-hidden="true">Soirée spéciale</span>
-      </figure>
-    </>}
-    right={<>
-      <h3 className="tele-title">{sheet.title}</h3>
-      {sheet.meta.map((meta) => <p key={meta} className="tele-body">{meta}</p>)}
-    </>}
-  />
+// A paragraph of the model cut at its sentences, so each can take its own place on the page
+const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+
+// A photo with its caption and a credit line, as a magazine prints them
+const Pictured = ({ poster, art, kind = 'thumb', width = 640, line, className = '' }: { poster: WrappedPoster, art: Art, kind?: 'thumb' | 'art', width?: 320 | 640 | 1280, line?: string, className?: string }) => (
+  <figure className={`tele-pictured ${className}`}>
+    <Photo poster={poster} art={art} kind={kind} width={width} />
+    <figcaption>
+      <b>{poster.title}</b>{line && <> · {line}</>}
+      <span className="tele-credit" aria-hidden="true">Photo DR</span>
+    </figcaption>
+  </figure>
 )
+
+// The first poster large, the others inset in a row under it
+const Gallery = <P extends WrappedPoster>({ posters, art, caption }: { posters: P[], art: Art, caption?: (poster: P) => string }) => {
+  const [lead, ...rest] = posters
+
+  return lead ? (
+    <div className="tele-gallery">
+      <Pictured poster={lead} art={art} kind={lead.art ? 'art' : 'thumb'} width={1280} line={caption?.(lead)} className="tele-gallery-lead" />
+      {!!rest.length && (
+        <ul className="tele-gallery-row" data-count={rest.length}>
+          {rest.map((poster) => (
+            <li key={poster.key}>
+              <Photo poster={poster} art={art} width={320} />
+              <span className="tele-thumb-title">{poster.title}</span>
+              {caption && <span className="tele-thumb-caption">{caption(poster)}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  ) : null
+}
+
+const Quote = ({ text }: { text: string }) => <p className="tele-quote">{text}</p>
+
+const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
+  const { pace } = sheet
+  // The pace line tells another show, it goes in that show's own box
+  const [own, other] = pace ? [sheet.meta.slice(0, -1), sheet.meta[sheet.meta.length - 1]] : [sheet.meta, null]
+
+  return (
+    <Spread
+      sheet={sheet}
+      {...page}
+      left={<>
+        <Headline lines={sheet.lines} />
+        <figure className="tele-still">
+          <Photo poster={sheet.poster} art={art} kind="art" width={1280} />
+          <span className="tele-tag" aria-hidden="true">Soirée spéciale</span>
+        </figure>
+      </>}
+      right={<>
+        <h3 className="tele-title">{sheet.title}</h3>
+        {own.map((meta) => <p key={meta} className="tele-standfirst">{meta}</p>)}
+        {pace && other && (
+          <article className="tele-pick">
+            <Photo poster={pace} art={art} />
+            <div>
+              <h3 className="tele-pick-title">{pace.title}</h3>
+              <p>{other}</p>
+            </div>
+          </article>
+        )}
+      </>}
+    />
+  )
+}
 
 const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => (
   <Spread
@@ -317,26 +358,35 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => (
   />
 )
 
-const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => (
-  <Spread
-    sheet={sheet}
-    {...page}
-    left={
-      <figure className="tele-exclusive">
-        <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
-        <span className="tele-ribbon" aria-hidden="true">Exclusivité</span>
-      </figure>
-    }
-    right={<>
-      <Headline lines={sheet.lines} />
-      <h3 className="tele-title">{sheet.title}</h3>
-      <p className="tele-standfirst">{sheet.lede}</p>
-    </>}
-  />
-)
+const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => {
+  const [chapo, ...more] = sentences(sheet.lede)
+
+  return (
+    <Spread
+      sheet={sheet}
+      {...page}
+      left={<>
+        <figure className="tele-exclusive">
+          <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
+          <span className="tele-ribbon" aria-hidden="true">Exclusivité</span>
+        </figure>
+        <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">Photo DR</span></p>
+      </>}
+      right={<>
+        <Headline lines={sheet.lines} />
+        <h3 className="tele-title">{sheet.title}</h3>
+        <p className="tele-standfirst">{chapo}</p>
+        {sheet.poster.art && <Pictured poster={sheet.poster} art={art} kind="art" width={1280} />}
+        {!!more.length && <Quote text={more.join(' ')} />}
+      </>}
+    />
+  )
+}
 
 const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
   const [before, after] = sheet.highlight ? sheet.unit.split(sheet.highlight) : [sheet.unit]
+  const [chapo, ...more] = sentences(sheet.details)
+  const twin = sheet.variant === 'twin'
 
   return (
     <Spread
@@ -344,26 +394,61 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
       {...page}
       left={<>
         {sheet.lines ? <Headline lines={sheet.lines} /> : <h2 className="tele-headline"><span className="tele-band">Rareté</span></h2>}
+        {twin && sheet.highlight && (
+          <p className="tele-portrait" aria-hidden="true">
+            <span className="tele-portrait-initial">{sheet.highlight[0]}</span>
+            <span className="tele-portrait-name">{sheet.highlight}</span>
+          </p>
+        )}
         <Big value={sheet.count} spoken={sheet.spoken} />
         <p className="tele-unit">{before}{sheet.highlight && <><mark className="tele-mark">{sheet.highlight}</mark>{after}</>}</p>
-        <p className="tele-standfirst">{sheet.details}</p>
+        <p className="tele-standfirst">{chapo}</p>
+        {!twin && sheet.posters.length > 1 && (
+          <aside className="tele-box">
+            <p className="tele-box-title">{more.join(' ')}</p>
+            <ol className="tele-palmares">
+              {sheet.posters.map((poster) => <li key={poster.key}>{poster.title}</li>)}
+            </ol>
+          </aside>
+        )}
       </>}
-      right={sheet.posters.length ? <Posters4 posters={sheet.posters} art={art} /> : undefined}
+      right={sheet.posters.length ? <>
+        {twin && !!more.length && <p className="tele-box-title">{more.join(' ')}</p>}
+        <Gallery posters={sheet.posters} art={art} />
+      </> : undefined}
     />
   )
 }
 
-const Duo = ({ sheet, art, ...page }: { sheet: Of<'duo'> } & Page) => (
-  <Spread
-    sheet={sheet}
-    {...page}
-    left={<>
-      <Headline lines={sheet.lines} />
-      <p className="tele-standfirst">{sheet.lede}</p>
-    </>}
-    right={<Posters4 posters={sheet.posters} art={art} caption={(poster) => poster.caption} />}
-  />
+// Each title watched at two is a reader's letter, signed with the other viewer
+const Letter = ({ poster, art, lead }: { poster: Of<'duo'>['posters'][number], art: Art, lead?: boolean }) => (
+  <article className={`tele-letter${lead ? ' tele-letter-lead' : ''}`}>
+    <Photo poster={poster} art={art} width={lead ? 640 : 320} />
+    <div>
+      <h3 className="tele-pick-title">{poster.title}</h3>
+      <p className="tele-letter-sign">{poster.caption}</p>
+    </div>
+  </article>
 )
+
+const Duo = ({ sheet, art, ...page }: { sheet: Of<'duo'> } & Page) => {
+  const [chapo, ...more] = sentences(sheet.lede)
+  const [lead, ...rest] = sheet.posters
+
+  return (
+    <Spread
+      sheet={sheet}
+      {...page}
+      left={<>
+        <Headline lines={sheet.lines} />
+        <p className="tele-standfirst">{chapo}</p>
+        {!!more.length && <p className="tele-box-title">{more.join(' ')}</p>}
+        {lead && <Letter poster={lead} art={art} lead />}
+      </>}
+      right={rest.length ? <div className="tele-letters">{rest.map((poster) => <Letter key={poster.key} poster={poster} art={art} />)}</div> : undefined}
+    />
+  )
+}
 
 // Each figure a review, with its poster
 const Review = ({ item: { what, poster, detail }, art, lead }: { item: Of<'posters'>['items'][number], art: Art, lead?: boolean }) => (
@@ -373,6 +458,21 @@ const Review = ({ item: { what, poster, detail }, art, lead }: { item: Of<'poste
       <p className="tele-review-what">{what}</p>
       <h3 className="tele-pick-title">{poster.title}</h3>
       <p className="tele-body">{detail}</p>
+    </div>
+  </article>
+)
+
+// A review on the facing page opens on the film's still, its poster beside the words
+const Feature = ({ item: { what, poster, detail }, art }: { item: Of<'posters'>['items'][number], art: Art }) => (
+  <article className="tele-feature">
+    {poster.art && <Photo poster={poster} art={art} kind="art" width={1280} />}
+    <div className="tele-feature-body">
+      <Photo poster={poster} art={art} />
+      <div>
+        <p className="tele-review-what">{what}</p>
+        <h3 className="tele-title">{poster.title}</h3>
+        <Quote text={detail} />
+      </div>
     </div>
   </article>
 )
@@ -387,11 +487,20 @@ const Posters = ({ sheet, art, ...page }: { sheet: Of<'posters'> } & Page) => {
       left={<>
         <Headline lines={sheet.lines} />
         {lead && <Review item={lead} art={art} lead />}
+        {lead?.poster.art && <Pictured poster={lead.poster} art={art} kind="art" width={1280} line={lead.what} />}
       </>}
-      right={rest.length ? rest.map((item) => <Review key={item.poster.key} item={item} art={art} />) : undefined}
+      right={rest.length ? rest.map((item) => <Feature key={item.poster.key} item={item} art={art} />) : undefined}
     />
   )
 }
+
+const Sign = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="46" />
+    <path d="M28 64 C 34 36, 48 30, 50 50 C 52 70, 66 64, 72 36" />
+    <circle className="tele-sign-dot" cx="72" cy="36" r="5" />
+  </svg>
+)
 
 const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
   const { lead } = sheet
@@ -404,22 +513,18 @@ const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
       left={<>
         <Headline lines={sheet.lines} />
         <div className="tele-sign">
-          <svg viewBox="0 0 100 100" aria-hidden="true">
-            <circle cx="50" cy="50" r="46" />
-            <path d="M28 64 C 34 36, 48 30, 50 50 C 52 70, 66 64, 72 36" />
-            <circle className="tele-sign-dot" cx="72" cy="36" r="5" />
-          </svg>
+          <Sign />
           <p><span className="tele-sign-label" aria-hidden="true">Ton signe</span><span className="tele-sign-name">{sheet.name}</span></p>
         </div>
-        <p className="tele-body">{sheet.count}</p>
-        <Posters4 posters={sheet.posters} art={art} />
+        <p className="tele-standfirst">{sheet.count}</p>
+        <Gallery posters={sheet.posters} art={art} />
       </>}
       right={lead ? <>
         <dl className="tele-reading">
           <dt aria-hidden="true">Ascendant</dt>
-          <dd><b>{lead.name}</b> {lead.role}</dd>
+          <dd><b className="tele-reading-name">{lead.name}</b> {lead.role}</dd>
         </dl>
-        {!!lead.posters.length && <Posters4 posters={lead.posters} art={art} />}
+        {lead.posters.length ? <Gallery posters={lead.posters} art={art} /> : <Sign className="tele-sign-wheel" />}
       </> : undefined}
     />
   )
@@ -430,12 +535,16 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
   <Spread
     sheet={sheet}
     {...page}
-    left={<Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />}
+    left={<>
+      <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
+      <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">Photo DR</span></p>
+    </>}
     right={<>
       <Headline lines={sheet.lines} />
       <h3 className="tele-title">{sheet.title}</h3>
-      <p className="tele-body">{sheet.date}</p>
+      <p className="tele-standfirst">{sheet.date}</p>
       {!sheet.closed && <p className="tele-stamp">Provisoire</p>}
+      {sheet.poster.art && <Pictured poster={sheet.poster} art={art} kind="art" width={1280} />}
       <TestCard />
       <p className="tele-end">{sheet.end}</p>
     </>}

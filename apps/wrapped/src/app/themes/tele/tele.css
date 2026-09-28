@@ -779,26 +779,6 @@ html[data-theme='tele'] {
 }
 
 /* Posters with their titles */
-.tele-thumbs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 12px;
-}
-
-.tele-thumbs[data-count='1'] {
-  grid-template-columns: minmax(0, 60%);
-}
-
-.tele-thumb {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.tele-spread-blue .tele-thumb .tele-photo {
-  border: 3px solid #fff;
-}
-
 .tele-thumb-title {
   font: 800 16px/1.05 var(--cond);
   text-transform: uppercase;
@@ -808,6 +788,273 @@ html[data-theme='tele'] {
 .tele-thumb-caption {
   color: var(--muted);
   font: italic 400 15px/1.3 var(--serif);
+}
+
+/* Captions, credits, galleries and pull quotes: the small matter of a page */
+.tele-pictured {
+  display: grid;
+  gap: 6px;
+}
+
+.tele-pictured figcaption,
+.tele-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid currentColor;
+  font: 600 14px/1.3 var(--cond);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tele-pictured figcaption b,
+.tele-caption b {
+  font-weight: 800;
+}
+
+.tele-credit {
+  margin-left: auto;
+  font: 600 11px/1 var(--cond);
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.tele-gallery {
+  display: grid;
+  gap: 14px;
+}
+
+.tele-gallery-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 3px solid currentColor;
+}
+
+.tele-gallery-row[data-count='1'] {
+  grid-template-columns: minmax(0, 40%);
+}
+
+.tele-gallery-row li {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tele-gallery-row .tele-photo {
+  box-shadow: 0 8px 16px -8px rgb(22 20 15 / 0.5);
+}
+
+.tele-gallery-row .tele-thumb-title {
+  font-size: 14px;
+}
+
+.tele-gallery-row .tele-thumb-caption {
+  font-size: 13px;
+}
+
+.tele-spread-blue .tele-photo {
+  border: 3px solid #fff;
+}
+
+.tele-quote {
+  position: relative;
+  padding: 14px 0 12px 34px;
+  border-block: 3px solid var(--red);
+  font: italic 700 clamp(24px, 7vw, 30px)/1.2 var(--serif);
+  text-wrap: balance;
+}
+
+.tele-quote::before {
+  content: '«';
+  position: absolute;
+  top: 4px;
+  left: 0;
+  color: var(--red);
+  font: italic 900 52px/1 var(--cond);
+}
+
+.tele-spread-blue .tele-quote {
+  border-color: var(--yellow);
+}
+
+.tele-spread-blue .tele-quote::before {
+  color: var(--yellow);
+}
+
+.tele-box {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.tele-box-title {
+  font: 800 18px/1.15 var(--cond);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tele-palmares {
+  counter-reset: palmares;
+  border-top: 3px solid var(--ink);
+}
+
+.tele-palmares li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink);
+  font: italic 900 22px/1 var(--cond);
+  text-transform: uppercase;
+  counter-increment: palmares;
+}
+
+.tele-palmares li::before {
+  content: counter(palmares);
+  min-width: 1.2em;
+  color: var(--red-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ton jumeau: the other viewer's portrait, a monogram in a sticker */
+.tele-portrait {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tele-portrait-initial {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--red-deep);
+  font: italic 900 52px/1 var(--cond);
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  box-shadow: 0 6px 14px -4px rgb(22 20 15 / 0.4);
+}
+
+.tele-portrait-name {
+  font: italic 900 38px/0.9 var(--cond);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Courrier des lecteurs */
+.tele-letters {
+  display: grid;
+  gap: 0;
+  border-top: 3px solid var(--ink);
+}
+
+.tele-letter {
+  display: grid;
+  grid-template-columns: 30% minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.tele-letter > div {
+  display: grid;
+  gap: 8px;
+}
+
+.tele-letter .tele-pick-title {
+  font-size: clamp(22px, 6.5vw, 32px);
+  overflow-wrap: normal;
+  hyphens: auto;
+}
+
+.tele-letter-sign {
+  font: italic 400 17px/1.35 var(--serif);
+}
+
+.tele-letter-sign::before {
+  content: '— ';
+}
+
+.tele-letter-lead {
+  grid-template-columns: 40% minmax(0, 1fr);
+  padding: 14px;
+  border: 0;
+  background: var(--yellow);
+}
+
+/* A review opening on its still, the poster inset */
+.tele-feature {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding-top: 14px;
+  border-top: 3px solid var(--ink);
+}
+
+.tele-feature + .tele-feature {
+  margin-top: 8px;
+}
+
+.tele-feature-body {
+  display: grid;
+  grid-template-columns: 40% minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+}
+
+.tele-feature-body > div {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.tele-feature .tele-title {
+  font-size: clamp(30px, 9vw, 44px);
+}
+
+.tele-sign-wheel {
+  width: min(100%, 320px);
+  margin: auto;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.tele-sign-wheel circle {
+  stroke: var(--yellow);
+  stroke-width: 2;
+}
+
+.tele-sign-wheel path {
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.tele-sign-wheel .tele-sign-dot {
+  fill: var(--yellow);
+  stroke: none;
+}
+
+.tele-reading-name {
+  display: block;
+  margin-block: 2px 4px;
+  color: var(--yellow);
+  font: italic 900 clamp(38px, 11vw, 56px)/0.9 var(--cond);
+  text-transform: uppercase;
+}
+
+.tele-spread-blue .tele-credit,
+.tele-spread-blue .tele-pictured figcaption {
+  color: #fff;
 }
 
 /* Critiques */
@@ -1016,10 +1263,6 @@ html[data-theme='tele'] {
 
   .tele-slot {
     padding-block: 6px;
-  }
-
-  .tele-thumbs {
-    max-width: 440px;
   }
 
   .tele-pick,
