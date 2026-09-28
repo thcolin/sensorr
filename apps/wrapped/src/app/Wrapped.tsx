@@ -6,7 +6,7 @@ import { LOADERS, THEMES, THEME_COLORS } from './themes'
 import type { Art } from './themes/types'
 
 const storageKey = (token: string) => `wrapped-look:${token}`
-const known = (theme: string | null): theme is WrappedTheme => !!theme && theme in THEMES
+const known = (theme: string | null): theme is WrappedTheme => !!theme && Object.hasOwn(THEMES, theme)
 
 const stored = (token: string) => {
   try {
