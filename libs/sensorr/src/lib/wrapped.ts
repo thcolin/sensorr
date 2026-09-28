@@ -9,6 +9,10 @@ export interface WrappedPlay {
   started: number
   stopped: number
   play_duration: number
+  // Sessions Tautulli grouped into this play, a play resumed later has more than one
+  sessions?: number
+  parent_media_index?: number
+  media_index?: number
   seen?: string
 }
 
@@ -19,31 +23,15 @@ export interface WrappedTitle {
   year?: number
   genres?: string[]
   directors?: string[]
+  // The first billed
+  actors?: string[]
   tmdb_id?: number
   thumb?: string
   art?: string
   // Seconds, a typical episode for a show
   duration?: number
-}
-
-export interface WrappedMovie {
-  key: string
-  title: string
-  year?: number
-  plays: number
-  tmdb_id?: number
-  thumb?: string
-  art?: string
-}
-
-export interface WrappedShow {
-  key: string
-  title: string
-  episodes: number
-  months: number[]
-  tmdb_id?: number
-  thumb?: string
-  art?: string
+  // Episodes of a show in Plex
+  episode_count?: number
 }
 
 export interface WrappedPoster {
@@ -51,16 +39,6 @@ export interface WrappedPoster {
   title: string
   thumb?: string
   art?: string
-}
-
-export interface WrappedCycle {
-  kind: 'show' | 'director'
-  // The show, or the director's first movie, whose artwork stands for the cycle
-  key: string
-  name: string
-  count: number
-  months: number[]
-  thumb?: string
 }
 
 export interface Wrapped {
@@ -71,25 +49,29 @@ export interface Wrapped {
   movies: number
   shows: number
   episodes: number
+  evenings: number
   rank: number
   server: { users: number, median_hours: number }
-  film_age: number | null
-  decade: number | null
-  genre: string | null
-  director: string | null
-  only_you_pct: number
-  // `poster` is the title played the most that night
-  night: { date: string, plays: number, episodes: number, end: string, titles: string[], poster: WrappedPoster } | null
-  months: number[]
-  // The title played the most each month, from December to November
-  month_posters: (WrappedPoster | null)[]
-  director_movies: WrappedMovie[]
-  cycles: WrappedCycle[]
-  top_movies: WrappedMovie[]
-  top_shows: WrappedShow[]
-  palme: WrappedMovie | null
-  grand_prix: WrappedShow | null
-  jury: WrappedMovie | null
+  // The previous edition, only when the gap is worth telling
+  previous: { year: number, hours: number, movies: number, episodes: number } | null
+  first: WrappedPoster & { date: string } | null
+  last: WrappedPoster & { date: string } | null
+  streak: { evenings: number, from: string, to: string, poster: WrappedPoster } | null
+  // The show watched the most each month, from December to November
+  month_shows: (WrappedPoster & { episodes: number } | null)[]
+  binge: WrappedPoster & { episodes: number, date: string } | null
+  pace: WrappedPoster & { episodes: number, days: number } | null
+  night: { date: string, plays: number, start: string, poster: WrappedPoster } | null
+  first_on_server: WrappedPoster & { others: number } | null
+  same_week: WrappedPoster & { others: number } | null
+  only_you: { count: number, poster: WrappedPoster } | null
+  dropped: WrappedPoster & { percent: number } | null
+  dropped_show: WrappedPoster & { season: number, episode: number, episode_count: number } | null
+  slowest: WrappedPoster & { days: number } | null
+  longest: WrappedPoster & { minutes: number } | null
+  oldest: WrappedPoster & { year: number } | null
+  rewatched: WrappedPoster & { times: number } | null
+  sign: { genre: string, ascendant: { kind: 'actor' | 'show' | 'director', name: string, poster?: WrappedPoster } | null } | null
 }
 
 const formats = new Map<string, Intl.DateTimeFormat>()
@@ -141,117 +123,160 @@ const groupBy = <T, K>(values: T[], key: (value: T) => K) => {
   })
   return groups
 }
-const unique = (values: number[]) => [...new Set(values)].sort((a, b) => a - b)
 
-const SHOW_CYCLE_EPISODES = 10
-const DIRECTOR_CYCLE_MOVIES = 3
+const WATCHED = 0.85
+const DAY = 24 * 3600
+
+// Ranked by count, a tie gives no leader
+const leaderOf = (names: string[], min: number) => {
+  const counts = [...groupBy(names, (name) => name).entries()].map(([name, list]) => [name, list.length] as const).sort((a, b) => b[1] - a[1])
+  return counts[0] && counts[0][1] >= min && counts[0][1] !== counts[1]?.[1] ? counts[0][0] : null
+}
 
 // `plays` holds the whole server's plays: ranks and "only you" are measured against every user
 export const wrappedOf = (
-  { plays, titles, user_id, year, timeZone = WRAPPED_TIME_ZONE }:
-  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, timeZone?: string },
+  { plays, titles, user_id, year, previous, timeZone = WRAPPED_TIME_ZONE }:
+  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, previous?: { hours: number, movies: number, episodes: number } | null, timeZone?: string },
 ): Wrapped => {
   const byKey = new Map(titles.map((title) => [title.key, title]))
   const server = plays
     .map((play) => {
       const started = partsOf(play.started, timeZone)
+      const duration = byKey.get(play.title)?.duration
       // A session left open keeps counting in Tautulli, a play never lasts longer than its media
-      const play_duration = Math.min(play.play_duration || 0, byKey.get(play.title)?.duration || Infinity)
+      const play_duration = Math.min(play.play_duration || 0, duration || Infinity)
+      // An evening runs from 06:00 to 06:00 the next day, so a night past midnight stays one night
+      const evening = partsOf(play.started - 6 * 3600, timeZone)
       return {
         ...play,
         play_duration,
+        watched: duration ? play_duration / duration : null,
         edition: started.month === 12 ? started.year + 1 : started.year,
         month: started.month,
-        // An evening runs from 06:00 to 06:00 the next day, so a night past midnight stays one night
-        evening: partsOf(play.started - 6 * 3600, timeZone).date,
-        // A stop long after its capped length belongs to a session left open
-        ended: play.stopped - play.started > play_duration + 6 * 3600 ? play.started + play_duration : play.stopped,
+        date: started.date,
+        time: started.time,
+        evening: evening.date,
+        // Minutes since 06:00, so 01:00 comes after 23:00
+        late: evening.hour * 60 + evening.minute,
       }
     })
     .filter((play) => play.edition === year)
   const byUser = groupBy(server, (play) => play.user_id)
-  const mine = byUser.get(user_id) || []
+  const mine = (byUser.get(user_id) || []).sort((a, b) => a.started - b.started)
   const movies = mine.filter((play) => play.media_type === 'movie')
   const episodes = mine.filter((play) => play.media_type === 'episode')
   const ranked = [...byUser.entries()].map(([user, plays]) => ({ user, hours: hoursOf(plays) })).sort((a, b) => b.hours - a.hours)
-
-  const moviePlays = groupBy(movies, (play) => play.title)
-  const movieOf = (key: string): WrappedMovie => {
-    const title = byKey.get(key)
-    return { key, title: title?.title || key, year: title?.year, plays: moviePlays.get(key)?.length || 0, tmdb_id: title?.tmdb_id, thumb: title?.thumb, art: title?.art }
-  }
-  const lastStarted = (key: string) => Math.max(...moviePlays.get(key)!.map((play) => play.started))
-  const topMovies = [...moviePlays.keys()].sort((a, b) => (moviePlays.get(b)!.length - moviePlays.get(a)!.length) || (lastStarted(b) - lastStarted(a)))
-
-  const watchers = groupBy(server.filter((play) => play.media_type === 'movie'), (play) => play.title)
-  const onlyYou = topMovies.filter((key) => new Set(watchers.get(key)!.map((play) => play.user_id)).size === 1)
-
-  const showPlays = groupBy(episodes, (play) => play.title)
-  const showOf = (key: string): WrappedShow => {
-    const title = byKey.get(key)
-    return { key, title: title?.title || key, episodes: showPlays.get(key)!.length, months: unique(showPlays.get(key)!.map((play) => play.month)), tmdb_id: title?.tmdb_id, thumb: title?.thumb, art: title?.art }
-  }
-  const topShows = [...showPlays.keys()].sort((a, b) => showPlays.get(b)!.length - showPlays.get(a)!.length)
-
-  const directorPlays = groupBy(movies.flatMap((play) => (byKey.get(play.title)?.directors || []).map((director) => ({ director, play }))), ({ director }) => director)
-  const cycles: WrappedCycle[] = [
-    ...topShows.map(showOf).filter((show) => show.episodes >= SHOW_CYCLE_EPISODES && show.months.length >= 2)
-      .map(({ key, title, episodes, months, thumb }) => ({ kind: 'show' as const, key, name: title, count: episodes, months, thumb })),
-    ...[...directorPlays.entries()]
-      .map(([director, entries]) => ({ director, keys: [...new Set(entries.map(({ play }) => play.title))], months: unique(entries.map(({ play }) => play.month)) }))
-      .filter(({ keys }) => keys.length >= DIRECTOR_CYCLE_MOVIES)
-      .sort((a, b) => b.keys.length - a.keys.length)
-      .map(({ director, keys, months }) => ({ kind: 'director' as const, key: keys[0], name: director, count: keys.length, months, thumb: byKey.get(keys[0])?.thumb })),
-  ]
-
-  const nights = groupBy(mine, (play) => play.evening)
-  const episodesOf = (plays: typeof mine) => plays.filter((play) => play.media_type === 'episode').length
-  const [nightDate, nightPlays] = [...nights.entries()].sort((a, b) => (episodesOf(b[1]) - episodesOf(a[1])) || (b[1].length - a[1].length) || (hoursOf(b[1]) - hoursOf(a[1])))[0] || []
+  const hours = round(hoursOf(mine))
 
   const posterOf = (key: string): WrappedPoster => {
     const title = byKey.get(key)
     return { key, title: title?.title || key, thumb: title?.thumb, art: title?.art }
   }
+  const dayOf = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1000 / DAY
 
-  const movieTitles = topMovies.map((key) => byKey.get(key)).filter(Boolean) as WrappedTitle[]
-  const years = movieTitles.map((title) => title.year).filter(Boolean) as number[]
-  const monthly = groupBy(mine, (play) => play.month)
-  const director = mostCommon(movieTitles.flatMap((title) => title.directors || []))
+  const moviePlays = groupBy(movies, (play) => play.title)
+  const showPlays = groupBy(episodes, (play) => play.title)
+  const nights = groupBy(mine, (play) => play.evening)
+
+  const evenings = [...nights.keys()].sort()
+  const streaks: string[][] = []
+  evenings.forEach((date, index) => index && dayOf(date) - dayOf(evenings[index - 1]) === 1 ? streaks[streaks.length - 1].push(date) : streaks.push([date]))
+  const streak = [...streaks].sort((a, b) => b.length - a.length)[0]
+
+  const monthly = groupBy(episodes, (play) => play.month)
+  const binged = [...groupBy(episodes, (play) => `${play.evening} ${play.title}`).values()].sort((a, b) => b.length - a.length)[0]
+  const [topShow, topShowPlays] = [...showPlays.entries()].sort((a, b) => b[1].length - a[1].length)[0] || []
+
+  const latest = [...mine].sort((a, b) => b.late - a.late)[0]
+  // Launched after 01:00, otherwise the evening with the most plays
+  const nightPlays = latest && latest.late >= 19 * 60 ? nights.get(latest.evening)! : [...nights.values()].sort((a, b) => b.length - a.length)[0]
+  const lastLaunch = nightPlays && [...nightPlays].sort((a, b) => b.late - a.late)[0]
+
+  const serverMovies = groupBy(server.filter((play) => play.media_type === 'movie'), (play) => play.title)
+  const shared = [...moviePlays.keys()].map((key) => {
+    const starts = new Map<number, number>()
+    serverMovies.get(key)!.forEach((play) => starts.set(play.user_id, Math.min(play.started, starts.get(play.user_id) ?? Infinity)))
+    const at = starts.get(user_id)!
+    const others = [...starts.entries()].filter(([user]) => user !== user_id).map(([, started]) => started)
+    return { key, others: others.length, ahead: others.every((started) => started > at), week: others.filter((started) => Math.abs(started - at) <= 7 * DAY).length }
+  })
+  const pioneer = shared.filter(({ others, ahead }) => ahead && others >= 2).sort((a, b) => b.others - a.others)[0]
+  const together = [...shared].sort((a, b) => b.week - a.week)[0]
+  const onlyYou = shared.filter(({ others }) => others === 0).map(({ key }) => key)
+  const byYear = (keys: string[]) => [...keys].filter((key) => byKey.get(key)?.year).sort((a, b) => byKey.get(a)!.year! - byKey.get(b)!.year!)
+
+  const best = (key: string) => Math.max(...moviePlays.get(key)!.map((play) => play.watched ?? 1))
+  const dropped = [...moviePlays.keys()].filter((key) => best(key) >= 0.1 && best(key) < 0.5).sort((a, b) => best(b) - best(a))[0]
+
+  // Season and episode as one number, to find the furthest episode reached
+  const reach = (play: WrappedPlay) => (play.parent_media_index || 0) * 10000 + (play.media_index || 0)
+  const furthest = new Map([...groupBy(server.filter((play) => play.media_type === 'episode'), (play) => play.title).entries()].map(([key, plays]) => [key, Math.max(...plays.map(reach))]))
+  const now = Math.max(...server.map((play) => play.started))
+  // Left for two months, before the last episode Plex has, and before where someone else on the server got to
+  const [droppedShow, droppedAt] = [...showPlays.entries()]
+    .map(([key, plays]) => [key, plays, Math.max(...plays.map(reach))] as const)
+    .filter(([key, plays, at]) => plays.length >= 3 && at % 10000 && now - plays[plays.length - 1].started > 60 * DAY
+      && new Set(plays.map(reach)).size < (byKey.get(key)?.episode_count || 0) && at < furthest.get(key)!)
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([key, , at]) => [key, at] as const)[0] || []
+
+  const slowest = movies
+    .filter((play) => (play.watched ?? 0) >= WATCHED && (play.sessions || 1) > 1)
+    .map((play) => ({ play, days: Math.floor((play.stopped - play.started) / DAY) }))
+    .filter(({ days }) => days >= 1)
+    .sort((a, b) => b.days - a.days)[0]
+  const longest = [...moviePlays.keys()].filter((key) => byKey.get(key)?.duration).sort((a, b) => byKey.get(b)!.duration! - byKey.get(a)!.duration!)[0]
+  const oldest = byYear([...moviePlays.keys()])[0]
+  const rewatches = (key: string) => moviePlays.get(key)!.filter((play) => (play.watched ?? 0) >= WATCHED).length
+  const rewatched = [...moviePlays.keys()].filter((key) => rewatches(key) >= 2).sort((a, b) => rewatches(b) - rewatches(a))[0]
+
+  const watchedTitles = [...moviePlays.keys(), ...showPlays.keys()].map((key) => byKey.get(key)).filter(Boolean) as WrappedTitle[]
+  const genre = mostCommon(watchedTitles.flatMap((title) => title.genres || []))
+  const actor = leaderOf(watchedTitles.flatMap((title) => title.actors || []), 3)
+  const director = leaderOf(watchedTitles.flatMap((title) => title.directors || []), 2)
+  const posterWith = (list: 'actors' | 'directors', name: string) => posterOf(watchedTitles.find((title) => title[list]?.includes(name))!.key)
 
   return {
     year,
-    hours: round(hoursOf(mine)),
+    hours,
     plays: mine.length,
     movies: moviePlays.size,
     shows: showPlays.size,
     episodes: episodes.length,
+    evenings: nights.size,
     rank: mine.length ? ranked.findIndex(({ user }) => user === user_id) + 1 : 0,
     server: { users: ranked.length, median_hours: ranked.length ? round(median(ranked.map(({ hours }) => hours))) : 0 },
-    film_age: years.length ? round(years.reduce((sum, y) => sum + y, 0) / years.length) : null,
-    decade: mostCommon(years.map((y) => Math.floor(y / 10) * 10)),
-    genre: mostCommon(movieTitles.flatMap((title) => title.genres || [])),
-    director,
-    only_you_pct: moviePlays.size ? round(100 * onlyYou.length / moviePlays.size) : 0,
-    night: nightDate && nightPlays ? {
-      date: nightDate,
-      plays: nightPlays.length,
-      episodes: episodesOf(nightPlays),
-      end: partsOf(Math.max(...nightPlays.map((play) => play.ended)), timeZone).time,
-      titles: [...new Set(nightPlays.map((play) => byKey.get(play.title)?.title || play.title))].slice(0, 4),
-      poster: posterOf(mostCommon(nightPlays.map((play) => play.title))!),
-    } : null,
-    // From December of the previous year to November
-    months: Array.from({ length: 12 }, (_, index) => round(hoursOf(monthly.get((index + 11) % 12 + 1) || []), 1)),
-    month_posters: Array.from({ length: 12 }, (_, index) => {
-      const key = mostCommon((monthly.get((index + 11) % 12 + 1) || []).map((play) => play.title))
-      return key ? posterOf(key) : null
+    previous: previous && previous.hours >= 10 && Math.abs(hours - previous.hours) >= previous.hours * 0.2
+      ? { year: year - 1, hours: round(previous.hours), movies: previous.movies, episodes: previous.episodes }
+      : null,
+    first: mine.length ? { ...posterOf(mine[0].title), date: mine[0].date } : null,
+    last: mine.length ? { ...posterOf(mine[mine.length - 1].title), date: mine[mine.length - 1].date } : null,
+    streak: streak?.length >= 3 ? { evenings: streak.length, from: streak[0], to: streak[streak.length - 1], poster: posterOf(mostCommon(streak.flatMap((date) => nights.get(date)!.map((play) => play.title)))!) } : null,
+    month_shows: Array.from({ length: 12 }, (_, index) => {
+      const month = monthly.get((index + 11) % 12 + 1) || []
+      const key = mostCommon(month.map((play) => play.title))
+      return key ? { ...posterOf(key), episodes: month.filter((play) => play.title === key).length } : null
     }),
-    director_movies: director ? topMovies.filter((key) => byKey.get(key)?.directors?.includes(director)).slice(0, 4).map(movieOf) : [],
-    cycles,
-    top_movies: topMovies.slice(0, 10).map(movieOf),
-    top_shows: topShows.slice(0, 4).map(showOf),
-    palme: topMovies.length ? movieOf(topMovies[0]) : null,
-    grand_prix: topShows.length ? showOf(topShows[0]) : null,
-    jury: onlyYou.length ? movieOf([...onlyYou].sort((a, b) => (byKey.get(a)?.year || 9999) - (byKey.get(b)?.year || 9999))[0]) : null,
+    binge: binged?.length >= 3 ? { ...posterOf(binged[0].title), episodes: binged.length, date: binged[0].evening } : null,
+    pace: topShow && topShowPlays!.length >= 3
+      ? { ...posterOf(topShow), episodes: topShowPlays!.length, days: dayOf(topShowPlays![topShowPlays!.length - 1].date) - dayOf(topShowPlays![0].date) + 1 }
+      : null,
+    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, start: lastLaunch.time, poster: posterOf(lastLaunch.title) } : null,
+    first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
+    same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
+    only_you: onlyYou.length ? { count: onlyYou.length, poster: posterOf(byYear(onlyYou)[0] || onlyYou[0]) } : null,
+    dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * best(dropped)) } : null,
+    dropped_show: droppedShow ? { ...posterOf(droppedShow), season: Math.floor(droppedAt! / 10000), episode: droppedAt! % 10000, episode_count: byKey.get(droppedShow)!.episode_count! } : null,
+    slowest: slowest ? { ...posterOf(slowest.play.title), days: slowest.days } : null,
+    longest: moviePlays.size >= 2 && longest ? { ...posterOf(longest), minutes: Math.round(byKey.get(longest)!.duration! / 60) } : null,
+    oldest: moviePlays.size >= 2 && oldest ? { ...posterOf(oldest), year: byKey.get(oldest)!.year! } : null,
+    rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched) } : null,
+    sign: genre ? {
+      genre,
+      ascendant: actor ? { kind: 'actor', name: actor, poster: posterWith('actors', actor) }
+        : topShow ? { kind: 'show', name: posterOf(topShow).title, poster: posterOf(topShow) }
+          : director ? { kind: 'director', name: director, poster: posterWith('directors', director) }
+            : null,
+    } : null,
   }
 }
