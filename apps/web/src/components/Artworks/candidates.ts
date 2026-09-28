@@ -1,4 +1,6 @@
-export type ArtworkKind = 'poster' | 'backdrop' | 'logo'
+import type { PlexArtworkKind } from '@sensorr/plex'
+
+export type ArtworkKind = PlexArtworkKind
 
 export type ArtworkChoice = { key: string } | { url: string }
 
@@ -22,7 +24,6 @@ export const ratingKeyOf = (artworks) => [artworks?.poster, artworks?.backdrop, 
   .map((path) => typeof path === 'string' && path.match(/^\/library\/metadata\/(\d+)\//)?.[1])
   .find(Boolean) || null
 
-// A file Plex keeps is read through the API, which holds the Plex token
 const plexThumbOf = (thumb: string, token: string) => thumb.startsWith('/library/metadata/')
   ? `/api/plex/image?${new URLSearchParams({ path: thumb, authorization: `Bearer ${token}` })}`
   : thumb
@@ -80,7 +81,6 @@ export const setCandidatesOf = (sets = [], kind: ArtworkKind): Candidate[] => se
     current: false,
   }))
 
-// A ThePosterDB page is not an image: its asset is
 export const linkOf = (raw: string): string | null => {
   const value = raw.trim()
   const poster = value.match(/^https?:\/\/(www\.)?theposterdb\.com\/posters?\/(\d+)/)

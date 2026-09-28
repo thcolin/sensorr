@@ -111,16 +111,21 @@ export class PlexService {
   async candidates(ratingKey: string): Promise<Record<PlexArtworkKind, PlexArtworkCandidate[]>> {
     this.logger.log(`Candidates "${ratingKey}"`)
     const kinds = Object.keys(PLEX_ARTWORKS) as PlexArtworkKind[]
-    const lists = await Promise.all(kinds.map(async (kind) => {
+    const lists = await Promise.allSettled(kinds.map(async (kind) => {
       const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}/${PLEX_ARTWORKS[kind].list}`)).json()
       return candidatesOf(MediaContainer?.Metadata)
     }))
 
-    return kinds.reduce((acc, kind, index) => ({ ...acc, [kind]: lists[index] }), {} as Record<PlexArtworkKind, PlexArtworkCandidate[]>)
+    if (lists.every(({ status }) => status === 'rejected')) {
+      throw (lists[0] as PromiseRejectedResult).reason
+    }
+
+    // A kind this Plex does not list, the logos of an older server, leaves the others to pick
+    return kinds.reduce((acc, kind, index) => ({ ...acc, [kind]: lists[index].status === 'fulfilled' ? (lists[index] as PromiseFulfilledResult<PlexArtworkCandidate[]>).value : [] }), {} as Record<PlexArtworkKind, PlexArtworkCandidate[]>)
   }
 
   // One kind after the other: a kind Plex refuses leaves the others written
-  async write(ratingKey: string, choices: ArtworkChoices): Promise<{ artworks: PlexArtworks, failed: Partial<Record<PlexArtworkKind, string>> }> {
+  async write(ratingKey: string, choices: ArtworkChoices): Promise<{ artworks: PlexArtworks | null, failed: Partial<Record<PlexArtworkKind, string>> }> {
     const failed = {}
 
     for (const [kind, choice] of Object.entries(choices)) {
@@ -135,7 +140,18 @@ export class PlexService {
       }
     }
 
-    const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}`)).json()
-    return { artworks: artworksOf(MediaContainer?.Metadata?.[0] || {}), failed }
+    // Written already: an item Plex does not read back is no reason to say otherwise
+    try {
+      const { MediaContainer } = await (await this.plex(`/library/metadata/${ratingKey}`)).json()
+
+      if (!MediaContainer?.Metadata?.[0]) {
+        throw new Error('Plex listed no item')
+      }
+
+      return { artworks: artworksOf(MediaContainer.Metadata[0]), failed }
+    } catch (err) {
+      this.logger.warn(`Write "${ratingKey}", read back: ${err.message}`)
+      return { artworks: null, failed }
+    }
   }
 }

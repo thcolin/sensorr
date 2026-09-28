@@ -235,7 +235,7 @@ const UIPlex = ({ ...props }) => {
           subtitle={<span>With a MediUX token, the artworks of a movie or a show also list the sets MediUX users made for it</span>}
           children={(
             <form onSubmit={handleMediux} sx={UIPlex.styles.inputs}>
-              <input name='mediux' type='text' placeholder='MediUX token' defaultValue={config.get('mediux.token')} autoComplete='off' spellCheck={false} />
+              <input name='mediux' type='password' placeholder='MediUX token' defaultValue={config.get('mediux.token')} autoComplete='off' spellCheck={false} />
               <button type='submit'>Save</button>
             </form>
           )}

@@ -89,7 +89,12 @@ export const Provider = ({ ...props }) => {
 
     try {
       eventSource = new ReconnectingEventSource(`/api/movies/changes?authorization=Bearer%20${api.access_token}`)
-      eventSource.onmessage = ({ data }) => setMetadata(metadata => ({ ...metadata, ...JSON.parse(data) }))
+      eventSource.onmessage = ({ data }) => {
+        const changes = JSON.parse(data)
+        setMetadata(metadata => ({ ...metadata, ...changes }))
+        // A metadata page carries no artworks: the map is what the next refresh falls back on
+        setArtworks(artworks => artworks && ({ ...artworks, ...Object.fromEntries(Object.entries(changes).filter(([, doc]: any) => doc && 'plex_artworks' in doc).map(([id, doc]: any) => [id, doc.plex_artworks])) }))
+      }
     } catch (e) {
       console.warn(e)
     }
