@@ -92,11 +92,6 @@ const Friends = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Wrapped</h2>
-          <p>Each friend matched to a Tautulli user gets a yearly page of what they watched on Plex, the wrapped. Pick the look it wears, give a year its own, then a friend in their card below.</p>
-          <WrappedLooks form={looks} onSave={onSave} />
-        </article>
-        <article>
           <h2>Friends</h2>
           <p>
             Fullfill your friends movie <Link to='/movie/requests'>requests</Link> on Sensorr by following their <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener'>Plex "Watchlist"</a>.
@@ -216,6 +211,11 @@ const Friends = ({ ...props }) => {
               Copy Invitation to Clipboard
             </Button>
           </div>
+        </article>
+        <article>
+          <h2>Wrapped</h2>
+          <p>Each friend matched to a Tautulli user gets a yearly page of what they watched on Plex, the wrapped. Pick the look it wears, give a year its own, then a friend in their card above.</p>
+          <WrappedLooks form={looks} onSave={onSave} />
         </article>
       </section>
     </Body>

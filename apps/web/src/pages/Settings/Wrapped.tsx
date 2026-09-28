@@ -159,7 +159,7 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
       <Button type='button' color='primary' variant='contain' sx={{ width: '100%', marginTop: 6 }} onClick={() => editions.append({ year: next, theme: null, choice: null })}>
         Add a look for {next}
       </Button>
-      <div sx={{ display: 'flex', marginTop: 12 }}>
+      <div sx={{ display: 'flex', marginTop: 2 }}>
         <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
       </div>
     </form>
@@ -212,8 +212,8 @@ WrappedLooks.styles = {
     },
   },
   subtitle: {
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 4,
+    marginBottom: 8,
   },
   row: {
     display: 'grid',
