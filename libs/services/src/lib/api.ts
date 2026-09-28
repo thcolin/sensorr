@@ -551,6 +551,36 @@ export class API {
           },
         }
       }),
+      getArtworks: (
+        { ratingKey, init = {} }: { ratingKey: string, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `plex/artworks/${ratingKey}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      postArtworks: (
+        { ratingKey, body, init = {} }: { ratingKey: string, body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `plex/artworks/${ratingKey}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       status: (
         { id, init = {} }: { id: string, init?: any }
       ): { uri: string, params: {}, init: {} } => ({

@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react'
 import { Picture, Empty, Guests, MovieState, PersonState, ShowState } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
-const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], ...props }) => {
+const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, ...props }) => {
   const guestsContext = useGuestsContext() as any
   const guests = useMemo(() => guestsContext.loading ? [] : (requested_by || []).reduce((guests, email) => [
     ...guests,
@@ -48,6 +48,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
           />
         </div>
       )}
+      {!!artworks && ready && <div sx={UIPoster.styles.artworks}>{artworks}</div>}
       <div sx={UIPoster.styles.guests}>
         {!!requested_by?.length && (
           <Guests guests={guests} display='poster' compact={false} to={behavior === 'tv' ? '/tv/requests' : '/movie/requests'} />
@@ -75,6 +76,13 @@ UIPoster.styles = {
     position: 'absolute',
     top: '0.75em',
     right: '0.75em',
+    fontSize: 3,
+    zIndex: 1,
+  },
+  artworks: {
+    position: 'absolute',
+    bottom: '0.75em',
+    left: '0.75em',
     fontSize: 3,
     zIndex: 1,
   },

@@ -14,6 +14,7 @@ import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
 import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
+import { Artworks, useArtworksOf } from '../../components/Artworks/Artworks'
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -41,6 +42,7 @@ const UIDetails = ({
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
+  const artworks = useArtworksOf(behavior, entity?.id, metadata)
   // A show opens its settings once it is in the library, which is known only once its metadata loads
   const [metadataState, setMetadataState] = useHistoryState('metadata', behavior === 'tv' ? null : ['wished', 'archived', 'missing'].includes(state))
   const [meaningfulState, setMeaningfulState] = useHistoryState('meaningful', false)
@@ -87,6 +89,7 @@ const UIDetails = ({
             requested_by={metadata?.requested_by}
             state={state}
             setState={setState}
+            artworks={['movie', 'tv'].includes(behavior) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
           />
           <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
             Contribute to TheMovieDB
