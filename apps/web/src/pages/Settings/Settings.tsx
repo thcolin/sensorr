@@ -4,15 +4,13 @@ import toast from 'react-hot-toast'
 import { useThemeUI } from 'theme-ui'
 import semver from 'semver'
 import { useAPI } from '../../store/api'
-import { useSensorr } from '../../store/sensorr'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import localApp from '../../../../../package.json'
 
 const Settings = ({ ...props }) => {
   const api = useAPI()
-  const sensorr = useSensorr()
-  const { config } = useConfigContext()
+  const { load } = useConfigContext()
   const { theme } = useThemeUI()
   const { device } = useDeviceContext()
   const location = useLocation()
@@ -26,10 +24,7 @@ const Settings = ({ ...props }) => {
 
       try {
         const raw = await api.fetch(uri, params, init)
-        config.load(raw)
-        sensorr.znabs = config.get('znabs')
-        sensorr.policies = config.get('policies')
-        sensorr.region = config.get('region')
+        await load(raw)
         resolve(true)
       } catch (err) {
         console.warn(err)
