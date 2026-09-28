@@ -1,4 +1,4 @@
-import { artworksOf, sameArtworks, candidatesOf } from './artworks'
+import { artworksOf, sameArtworks, candidatesOf, seasonsOf, sameSeasons } from './artworks'
 
 describe('artworksOf', () => {
   it('reads the poster, the backdrop and the logo picked on Plex', () => {
@@ -43,5 +43,24 @@ describe('candidatesOf', () => {
       { key: 'https://image.tmdb.org/t/p/original/a.jpg', thumb: 'https://images.plex.tv/photo?url=a', provider: 'tmdb', selected: false },
       { key: 'upload://posters/b', thumb: '/library/metadata/1/file?url=upload%3A%2F%2Fposters%2Fb', provider: 'local', selected: true },
     ])
+  })
+})
+
+describe('seasonsOf', () => {
+  it('keeps the seasons of this show that have a poster of their own', () => {
+    expect(seasonsOf([
+      { index: 1, parentRatingKey: '11344', thumb: '/library/metadata/11463/thumb/1', parentThumb: '/library/metadata/11344/thumb/9' },
+      { index: 2, parentRatingKey: '11344', thumb: '/library/metadata/11344/thumb/9', parentThumb: '/library/metadata/11344/thumb/9' },
+      { index: 1, parentRatingKey: '999', thumb: '/library/metadata/1000/thumb/1', parentThumb: '/library/metadata/999/thumb/1' },
+    ], ['11344'])).toEqual({ 1: '/library/metadata/11463/thumb/1' })
+  })
+})
+
+describe('sameSeasons', () => {
+  it('tells a season poster changed, added or gone', () => {
+    expect(sameSeasons({ 1: 'a' }, { 1: 'a' })).toBe(true)
+    expect(sameSeasons({ 1: 'a' }, { 1: 'b' })).toBe(false)
+    expect(sameSeasons(undefined, { 1: 'a' })).toBe(false)
+    expect(sameSeasons({ 1: 'a', 2: 'b' }, { 1: 'a' })).toBe(false)
   })
 })

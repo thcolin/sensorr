@@ -31,3 +31,13 @@ export const candidatesOf = (metadata = []): PlexArtworkCandidate[] => metadata.
   provider: provider || 'local',
   selected: !!selected,
 }))
+
+// The poster of each season Plex holds for a show, by season number; a season without its own shows the show's
+export const seasonsOf = (seasons = [], ratingKeys: string[]): Record<string, string> => seasons
+  .filter(({ parentRatingKey, thumb, parentThumb }) => ratingKeys.includes(`${parentRatingKey}`) && thumb && thumb !== parentThumb)
+  .reduce((acc, { index, thumb }) => acc[index] ? acc : { ...acc, [index]: thumb }, {})
+
+export const sameSeasons = (known: Record<string, string> | null | undefined, seasons: Record<string, string>) => {
+  const keys = new Set([...Object.keys(known || {}), ...Object.keys(seasons)])
+  return [...keys].every((key) => (known?.[key] || null) === (seasons[key] || null))
+}

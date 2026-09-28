@@ -52,6 +52,7 @@ export class ShowDTO {
   readonly path: string
   readonly plex_guid: string
   readonly plex_artworks: PlexArtworks
+  readonly plex_seasons: Record<string, string>
   readonly requested_by: string[]
   readonly requested_at: number
   readonly banned_releases: string[]
