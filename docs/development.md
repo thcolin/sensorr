@@ -63,7 +63,7 @@ Serves the wrapped, the « Rétrospective » of its French copy, on **http://loc
 2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
 3. A guest whose email is a Tautulli user's, then **Copy link** on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
 
-Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version.
+Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version. Check every look: with `wrapped.choice` on, `localStorage['wrapped-look:<token>']` set to `affiche`, `labo`, `tele`, `videoclub` or `scenario` opens the page in it, and a browser context of its own keeps two looks apart.
 
 ### The component gallery
 

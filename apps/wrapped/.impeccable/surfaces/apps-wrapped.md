@@ -9,6 +9,8 @@ related_targets: []
 
 Scope: `apps/wrapped`, the page behind `/wrapped/<token>`. Mode: Experience. One edition shown, 2026, open until 1 December then frozen. Stands apart from the Sensorr app: `DESIGN.md` does not apply here.
 
+Looks: five, each a whole world drawn over the same sheets and words (`src/app/sheets.ts`): `affiche`, the Polish poster below and the default; `labo`, the year as a reel of 35 mm film; `tele`, a 1990s French TV weekly; `videoclub`, a VHS rental store at night; `scenario`, a screenplay in its revision colours. Each lives in `src/app/themes/<id>/`, scoped under `[data-theme='<id>']` with its own self-hosted fonts. Thomas sets the look globally, per edition and per friend, and whether the friend may switch it on the page. The direction contract below is the Affiche's.
+
 Audience and job: a friend of Thomas, linked as a guest, opens their link on a phone in the evening. They know cinema, not data. They come to see their year of movies and series on Thomas's Plex, and come back during the year. Success: the first minute impresses, they reread it in August, they talk about it.
 
 Content and ranges (79 users, edition 2026, import of 28/09): sheets per guest 4 · 11 · 11 · 11 (min · median · p90 · max), 11 users under 10 plays; evenings in a row 3 · 7 · 15 · 57 (52 users); months with a show 0 · 4 · 10 · 10; binge 3 · 6 · 21 · 58 episodes (53 users); films only you watched 1 · 6 · 34 · 85 (70 users); titles 3 · 15 · 30 · 53 characters; ascendant names 4 · 12 · 20 · 25. Source: `GET /api/wrapped/share/:token`; images through the API, relayed from Tautulli.
