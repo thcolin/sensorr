@@ -62,7 +62,7 @@ export const drop = (values, active, over, zone, fresh) => {
 
 const MultiValue = (props) => {
   const { theme } = useThemeUI()
-  const { active, dragged, target, requirable } = useContext(dropContext) as any
+  const { active, target, requirable } = useContext(dropContext) as any
   const id = props.data.value
   const draggable = useDraggable({ id: `${id}`, data: props.data, disabled: typeof id === 'undefined' })
   const droppable = useDroppable({ id: `${id}`, data: props.data, disabled: typeof id === 'undefined' })
@@ -107,7 +107,7 @@ const MultiValue = (props) => {
             bottom: '-0.25em',
             [zone === 'before' ? 'left' : 'right']: 'calc(-0.25em - 1px)',
             width: '2px',
-            backgroundColor: dragged?.group === 'avoid' ? 'error' : 'primary',
+            backgroundColor: 'text',
           } : {},
         }}
       >
@@ -199,7 +199,7 @@ export const SortableSelect = ({ value, onChange, requirable = false, rankable =
     setTarget(previous => (previous?.id === next?.id && previous?.zone === next?.zone) ? previous : next)
   }, [rankable])
 
-  const context = useMemo(() => ({ active, dragged, target, requirable }), [active, dragged, target, requirable])
+  const context = useMemo(() => ({ active, target, requirable }), [active, target, requirable])
 
   const onDragEnd = useCallback((event) => {
     release()
