@@ -374,6 +374,9 @@ UISeasons.styles = {
     display: ['none', 'block'],
     gridColumn: 1,
     gridRow: '1 / span 100',
+    // Above the episodes' hover, which runs edge to edge
+    position: 'relative',
+    zIndex: 1,
     width: '8em',
     height: '12em',
     marginTop: 8,
