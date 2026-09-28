@@ -79,10 +79,11 @@ UIPoster.styles = {
     fontSize: 3,
     zIndex: 1,
   },
+  // Astride the corner, half its size out of the poster
   artworks: {
     position: 'absolute',
-    bottom: '0.75em',
-    left: '0.75em',
+    bottom: ['-1.1em', '-1em'],
+    left: ['-1.1em', '-1em'],
     fontSize: 3,
     zIndex: 1,
   },
