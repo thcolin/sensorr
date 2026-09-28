@@ -238,7 +238,10 @@ const Night = ({ night, art }: { night: NonNullable<Wrapped['night']>, art: Art 
         <Brushed lines={late ? ['Ta nuit', 'la plus tardive'] : ['Ta plus grosse', 'soirée']} seed={8} />
         <p className="night-date">{late ? `Dans la nuit du ${dayOf(night.date, true)}` : dayOf(night.date, true)}</p>
         <p className="night-figures">
-          Tu éteins à <strong>{clock(night.end)}</strong>{night.plays > 1 ? `, après ${plural(night.plays, 'séance', 'séances')}` : ''}.
+          Tu éteins à <strong>{clock(night.end)}</strong>{night.plays > 1 ? `, après ${[
+            night.episodes && plural(night.episodes, 'épisode', 'épisodes'),
+            night.plays - night.episodes && plural(night.plays - night.episodes, 'film', 'films'),
+          ].filter(Boolean).join(' et ')}` : ''}.
         </p>
         <p className="night-figures">{night.plays > 1 ? 'La dernière' : 'Au programme'}{THIN}: {night.episode ? `un épisode ${of(poster.title)}` : quoted(poster.title)}.</p>
       </div>
@@ -286,15 +289,15 @@ const OnlyYou = ({ onlyYou, place, art }: { onlyYou: NonNullable<Wrapped['only_y
 
   return (
     <Sheet ref={sheet} className="sheet-figures sheet-strip" label="Personne d’autre" style={{ '--digits': String(count).length } as React.CSSProperties}>
-      <Strip posters={posters} layout="row" progress={progress} art={art} />
       <p className="figure">
         <span aria-hidden="true">{number.format(count)}</span>
         <span className="visually-hidden">{plural(count, 'film', 'films')}</span>
       </p>
       <Lettering className="figure-unit" text={one ? 'film que personne d’autre n’a vu' : 'films que personne d’autre n’a vus'} seed={3} />
       <p className="figure-details">
-        Sur {place}, {one ? 'il n’est passé' : 'ils ne sont passés'} que chez toi.{count > posters.length ? ` En haut, les ${posters.length} derniers vus.` : ''}
+        {one ? `Cette année, personne d’autre sur ${place} ne l’a vu.` : `Cette année, personne d’autre sur ${place} ne les a vus. ${count > posters.length ? `Les ${posters.length} derniers` : 'Les voici'}${THIN}:`}
       </p>
+      {!one && <Strip posters={posters} layout="row" progress={progress} art={art} />}
     </Sheet>
   )
 }
@@ -308,10 +311,10 @@ const Duo = ({ duo, place, nameOf, art }: { duo: NonNullable<Wrapped['duo']>, pl
     <Sheet ref={sheet} className="sheet-duo" label="Vus à deux">
       <Brushed lines={['Vus à deux']} seed={22} />
       <p className="lede">
-        Sur {place}, vous n’êtes que deux à avoir vu {count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.
-        {count > posters.length ? ` Les ${posters.length} plus anciens${THIN}:` : ''}
+        Cette année sur {place}, vous n’êtes que deux à avoir vu {count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.
+        {count > posters.length ? ` Les ${posters.length} plus vieux${THIN}:` : ''}
       </p>
-      <Strip posters={posters} layout="grid" caption={(poster) => `avec ${nameOf(poster.with)}`} progress={progress} art={art} />
+      <Strip posters={posters} layout="grid" caption={(poster) => [poster.year, `avec ${nameOf(poster.with)}`].filter(Boolean).join(', ')} progress={progress} art={art} />
     </Sheet>
   )
 }

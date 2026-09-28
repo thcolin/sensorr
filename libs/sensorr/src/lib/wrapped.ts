@@ -60,12 +60,12 @@ export interface Wrapped {
   binge: WrappedPoster & { episodes: number, minutes: number, date: string } | null
   pace: WrappedPoster & { episodes: number, days: number } | null
   // `late` when the evening ended past 01:00, otherwise it is the evening with the most plays; `poster` is its last play
-  night: { date: string, plays: number, end: string, late: boolean, episode: boolean, poster: WrappedPoster } | null
+  night: { date: string, plays: number, episodes: number, end: string, late: boolean, episode: boolean, poster: WrappedPoster } | null
   first_on_server: WrappedPoster & { others: number } | null
   same_week: WrappedPoster & { others: number } | null
   only_you: { count: number, posters: WrappedPoster[] } | null
   // Titles only one other viewer watched, the oldest first, `with` that viewer
-  duo: { count: number, posters: (WrappedPoster & { with: number })[] } | null
+  duo: { count: number, posters: (WrappedPoster & { year?: number, with: number })[] } | null
   // The viewer who shares the most titles with this one
   twin: { user_id: number, shared: number, total: number, posters: WrappedPoster[] } | null
   dropped: WrappedPoster & { percent: number } | null
@@ -284,11 +284,11 @@ export const wrappedOf = (
     pace: topShow && topShowPlays!.length >= 3
       ? { ...posterOf(topShow), episodes: topShowPlays!.length, days: dayOf(topShowPlays![topShowPlays!.length - 1].date) - dayOf(topShowPlays![0].date) + 1 }
       : null,
-    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, end: partsOf(nightEnd!, timeZone).time, late, episode: lastLaunch.media_type === 'episode', poster: posterOf(lastLaunch.title) } : null,
+    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, episodes: nightPlays!.filter((play) => play.media_type === 'episode').length, end: partsOf(nightEnd!, timeZone).time, late, episode: lastLaunch.media_type === 'episode', poster: posterOf(lastLaunch.title) } : null,
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, posters: [...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a)).slice(0, 4).map(posterOf) } : null,
-    duo: duo.length ? { count: duo.length, posters: duo.slice(0, 4).map((key) => ({ ...posterOf(key), with: [...watchersOf.get(key)!].find((user) => user !== user_id)! })) } : null,
+    duo: duo.length ? { count: duo.length, posters: duo.slice(0, 4).map((key) => ({ ...posterOf(key), year: byKey.get(key)?.year, with: [...watchersOf.get(key)!].find((user) => user !== user_id)! })) } : null,
     // The titles fewest others watched say the most about the match
     twin: twin?.length >= 5 ? { user_id: [...overlap.entries()].find(([, keys]) => keys === twin)![0], shared: twin.length, total: mineKeys.length, posters: [...twin].sort((a, b) => watchersOf.get(a)!.size - watchersOf.get(b)!.size).slice(0, 4).map(posterOf) } : null,
     dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * seenOf(dropped)) } : null,

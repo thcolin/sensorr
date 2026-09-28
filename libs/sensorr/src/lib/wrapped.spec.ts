@@ -91,7 +91,7 @@ describe('wrappedOf', () => {
   })
 
   it('keeps the night that ended the latest, past midnight, as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
   })
 
   it('falls back on the evening with the most plays when nothing ends after 01:00, and ignores a session left open', () => {
@@ -138,7 +138,7 @@ describe('wrappedOf', () => {
       play(17, 'plex://movie/dune', '2026-05-01T20:00:00Z', 2.5),
     ]
     expect(wrappedOf({ plays: match, titles, user_id: 15, year: 2026 })).toMatchObject({
-      duo: { count: 4, posters: [{ title: '2001', with: 16 }, { title: 'Heat', with: 16 }, { title: 'Scrubs', with: 16 }, { title: 'Twin Peaks', with: 16 }] },
+      duo: { count: 4, posters: [{ title: '2001', year: 1968, with: 16 }, { title: 'Heat', year: 1995, with: 16 }, { title: 'Scrubs', with: 16 }, { title: 'Twin Peaks', with: 16 }] },
       twin: { user_id: 16, shared: 5, total: 5 },
     })
     expect(wrappedOf({ plays: match.slice(0, 7), titles, user_id: 15, year: 2026 }).twin).toBeNull()
