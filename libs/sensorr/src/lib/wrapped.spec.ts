@@ -84,6 +84,12 @@ describe('wrappedOf', () => {
     expect(wrapped.last).toMatchObject({ title: 'Scrubs', date: '2026-06-01' })
   })
 
+  it('opens on the first title from 1 January, and on December only when nothing came after', () => {
+    const december = [play(18, 'plex://movie/dune', '2025-12-20T20:00:00Z', 2.5), play(18, 'plex://movie/heat', '2026-01-03T20:00:00Z', 3)]
+    expect(wrappedOf({ plays: december, titles, user_id: 18, year: 2026 }).first).toMatchObject({ title: 'Heat', date: '2026-01-03' })
+    expect(wrappedOf({ plays: december.slice(0, 1), titles, user_id: 18, year: 2026 }).first).toMatchObject({ title: 'Dune', date: '2025-12-20' })
+  })
+
   it('keeps the night that ended the latest, past midnight, as one night', () => {
     expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
   })

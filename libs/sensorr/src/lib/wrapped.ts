@@ -179,6 +179,8 @@ export const wrappedOf = (
   const episodes = mine.filter((play) => play.media_type === 'episode')
   const ranked = [...byUser.entries()].map(([user, plays]) => ({ user, hours: hoursOf(plays) })).sort((a, b) => b.hours - a.hours)
   const hours = round(hoursOf(mine))
+  // The year starts on 1 January even if the edition opens in December, which only counts when nothing came after
+  const opening = mine.find((play) => play.month !== 12) || mine[0]
 
   const posterOf = (key: string): WrappedPoster => {
     const title = byKey.get(key)
@@ -270,7 +272,7 @@ export const wrappedOf = (
     previous: previous && previous.hours >= 10 && Math.abs(hours - previous.hours) >= previous.hours * 0.2
       ? { year: year - 1, hours: round(previous.hours) }
       : null,
-    first: mine.length ? { ...posterOf(mine[0].title), date: mine[0].date } : null,
+    first: opening ? { ...posterOf(opening.title), date: opening.date } : null,
     last: mine.length ? { ...posterOf(mine[mine.length - 1].title), date: mine[mine.length - 1].date } : null,
     streak: streak?.length >= 3 ? { evenings: streak.length, from: streak[0], to: streak[streak.length - 1], poster: posterOf(mostCommon(streak.flatMap((date) => nights.get(date)!.map((play) => play.title)))!) } : null,
     month_shows: Array.from({ length: 12 }, (_, index) => {

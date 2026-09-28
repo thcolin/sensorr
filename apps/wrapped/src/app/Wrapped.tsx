@@ -106,7 +106,7 @@ const Opening = ({ name, year, place, wrapped, closed, posters, art }: { name: s
       <Lettering as="h1" className="opening-title" text={`Rétrospective de ${name} ${year}`} highlight={name} />
       {first && <p className="lede">Ton année sur {place} a commencé le {dayOf(first.date)}, avec {quoted(first.title)}.</p>}
       <ul className="opening-figures">
-        <li>Depuis{THIN}: {plural(wrapped.hours, 'heure', 'heures')}, sur {plural(wrapped.evenings, 'soir', 'soirs')}.</li>
+        <li>En tout{THIN}: {plural(wrapped.hours, 'heure', 'heures')}, sur {plural(wrapped.evenings, 'soir', 'soirs')}.</li>
         {!!wrapped.movies && <li>{plural(wrapped.movies, 'film', 'films')}</li>}
         {!!wrapped.shows && <li>{plural(wrapped.shows, 'série', 'séries')}, {plural(wrapped.episodes, 'épisode', 'épisodes')}</li>}
         {previous && <li>{closed ? 'L’an dernier, tu en avais fait' : 'L’an dernier à la même date, tu en étais à'} {plural(previous.hours, 'heure', 'heures')}.</li>}
