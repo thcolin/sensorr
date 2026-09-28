@@ -137,32 +137,31 @@ describe('wrappedOf', () => {
     expect(wrapped).toMatchObject({ first_on_server: null, same_week: null, only_you: { count: 1, poster: { title: '2001' } } })
   })
 
-  it('tells the movies dropped, rewatched, finished over days, the longest and the oldest', () => {
+  it('tells the movies dropped, rewatched, the longest and the oldest', () => {
     const timed = titles.map((title) => title.media_type === 'movie' ? { ...title, duration: { '2001': 2, 'Heat': 3, 'Dune': 2.5 }[title.title]! * 3600 } : title)
     const habits = [
       play(10, 'plex://movie/heat', '2026-02-01T20:00:00Z', 3),
       play(10, 'plex://movie/heat', '2026-02-08T20:00:00Z', 3),
       play(10, 'plex://movie/dune', '2026-02-09T20:00:00Z', 1),
-      { ...play(10, 'plex://movie/2001', '2026-02-10T20:00:00Z', 2), stopped: at('2026-02-24T21:00:00Z'), sessions: 3 },
+      play(10, 'plex://movie/2001', '2026-02-10T20:00:00Z', 2),
     ]
     expect(wrappedOf({ plays: habits, titles: timed, user_id: 10, year: 2026 })).toMatchObject({
       dropped: { title: 'Dune', percent: 40 },
       rewatched: { title: 'Heat', times: 2 },
-      slowest: { title: '2001', days: 14 },
       longest: { title: 'Heat', minutes: 180 },
       oldest: { title: '2001', year: 1968 },
     })
-    const open = [{ ...habits[3], sessions: 1 }, habits[0]]
-    expect(wrappedOf({ plays: open, titles: timed, user_id: 10, year: 2026 }).slowest).toBeNull()
+    const resumed = [play(10, 'plex://movie/dune', '2026-02-09T20:00:00Z', 1.2), play(10, 'plex://movie/dune', '2026-02-10T20:00:00Z', 1.3)]
+    expect(wrappedOf({ plays: resumed, titles: timed, user_id: 10, year: 2026 }).dropped).toBeNull()
   })
 
-  it('keeps a film finished within a week and one released after 2000 out of the extremes', () => {
+  it('keeps a film released after 2000 out of the oldest', () => {
     const recent = [
-      { ...play(14, 'plex://movie/dune', '2026-02-01T20:00:00Z', 2.5), stopped: at('2026-02-04T20:00:00Z'), sessions: 2 },
+      play(14, 'plex://movie/dune', '2026-02-01T20:00:00Z', 2.5),
       play(14, 'plex://movie/heat', '2026-02-05T20:00:00Z', 3),
     ]
     const timed = titles.map((title) => title.media_type === 'movie' ? { ...title, duration: { '2001': 2, 'Heat': 3, 'Dune': 2.5 }[title.title]! * 3600 } : title)
-    expect(wrappedOf({ plays: recent, titles: timed, user_id: 14, year: 2026 })).toMatchObject({ slowest: null, oldest: { title: 'Heat', year: 1995 } })
+    expect(wrappedOf({ plays: recent, titles: timed, user_id: 14, year: 2026 })).toMatchObject({ oldest: { title: 'Heat', year: 1995 } })
     const modern = timed.map((title) => title.key === 'plex://movie/heat' ? { ...title, year: 2005 } : title)
     expect(wrappedOf({ plays: recent, titles: modern, user_id: 14, year: 2026 }).oldest).toBeNull()
   })

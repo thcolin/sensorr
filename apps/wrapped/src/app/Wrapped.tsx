@@ -36,7 +36,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const short = wrapped.plays < THRESHOLD
   // 1 December at midnight in Paris: until the job freezes the edition, it is still closed
   const closed = frozen || Date.now() >= Date.UTC(year, 10, 30, 23)
-  const { first_on_server, same_week, only_you, dropped, dropped_show, slowest, longest, oldest, rewatched } = wrapped
+  const { first_on_server, same_week, only_you, dropped, dropped_show, longest, oldest, rewatched } = wrapped
   const collage = [
     wrapped.first, wrapped.streak?.poster, wrapped.binge, wrapped.night?.poster, first_on_server || same_week,
     only_you?.poster, longest, oldest, wrapped.last, ...wrapped.month_shows,
@@ -53,11 +53,10 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
       {!short && wrapped.night && (wrapped.night.late || wrapped.night.date !== wrapped.binge?.date) && <Night night={wrapped.night} art={art} />}
       {(first_on_server || same_week) && <Server first={first_on_server} week={same_week} art={art} />}
       {only_you && <OnlyYou onlyYou={only_you} art={art} />}
-      {!short && (dropped || dropped_show || slowest) && (
+      {!short && (dropped || dropped_show) && (
         <Posters label="Pas fini, ou presque" lines={['Pas fini,', 'ou presque']} seed={19} art={art} items={[
           dropped && ['Lâché', dropped, `à ${dropped.percent}${THIN}%`],
           dropped_show && ['Arrêté', dropped_show, `à l’épisode ${dropped_show.episode} de la saison ${dropped_show.season}, sur ${dropped_show.episode_count}\u00a0en tout`],
-          slowest && ['Fini', slowest, `en ${plural(slowest.days, 'jour', 'jours')}`],
         ]} />
       )}
       {(longest || oldest || rewatched) && (

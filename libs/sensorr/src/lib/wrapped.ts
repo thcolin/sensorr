@@ -9,8 +9,6 @@ export interface WrappedPlay {
   started: number
   stopped: number
   play_duration: number
-  // Sessions Tautulli grouped into this play, a play resumed later has more than one
-  sessions?: number
   parent_media_index?: number
   media_index?: number
   seen?: string
@@ -68,7 +66,6 @@ export interface Wrapped {
   only_you: { count: number, poster: WrappedPoster } | null
   dropped: WrappedPoster & { percent: number } | null
   dropped_show: WrappedPoster & { season: number, episode: number, episode_count: number } | null
-  slowest: WrappedPoster & { days: number } | null
   longest: WrappedPoster & { minutes: number } | null
   oldest: WrappedPoster & { year: number } | null
   rewatched: WrappedPoster & { times: number } | null
@@ -215,8 +212,9 @@ export const wrappedOf = (
   const onlyYou = shared.filter(({ others }) => others === 0).map(({ key }) => key)
   const byYear = (keys: string[]) => [...keys].filter((key) => byKey.get(key)?.year).sort((a, b) => byKey.get(a)!.year! - byKey.get(b)!.year!)
 
-  const best = (key: string) => Math.max(...moviePlays.get(key)!.map((play) => play.watched ?? 1))
-  const dropped = [...moviePlays.keys()].filter((key) => best(key) >= 0.1 && best(key) < 0.5).sort((a, b) => best(b) - best(a))[0]
+  // Summed over its plays: a film resumed on another player is not always grouped by Tautulli
+  const seenOf = (key: string) => Math.min(1, moviePlays.get(key)!.reduce((sum, play) => sum + (play.watched ?? 1), 0))
+  const dropped = [...moviePlays.keys()].filter((key) => seenOf(key) >= 0.1 && seenOf(key) < 0.5).sort((a, b) => seenOf(b) - seenOf(a))[0]
 
   // Season and episode as one number, to find the furthest episode reached
   const reach = (play: WrappedPlay) => (play.parent_media_index || 0) * 10000 + (play.media_index || 0)
@@ -230,11 +228,6 @@ export const wrappedOf = (
     .sort((a, b) => b[1].length - a[1].length)
     .map(([key, , at]) => [key, at] as const)[0] || []
 
-  const slowest = movies
-    .filter((play) => (play.watched ?? 0) >= WATCHED && (play.sessions || 1) > 1)
-    .map((play) => ({ play, days: Math.floor((play.stopped - play.started) / DAY) }))
-    .filter(({ days }) => days >= 7)
-    .sort((a, b) => b.days - a.days)[0]
   const longest = [...moviePlays.keys()].filter((key) => byKey.get(key)?.duration).sort((a, b) => byKey.get(b)!.duration! - byKey.get(a)!.duration!)[0]
   const oldest = byYear([...moviePlays.keys()]).filter((key) => byKey.get(key)!.year! < 2000)[0]
   const rewatches = (key: string) => moviePlays.get(key)!.filter((play) => (play.watched ?? 0) >= WATCHED).length
@@ -276,9 +269,8 @@ export const wrappedOf = (
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, poster: posterOf([...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a))[0]) } : null,
-    dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * best(dropped)) } : null,
+    dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * seenOf(dropped)) } : null,
     dropped_show: droppedShow ? { ...posterOf(droppedShow), season: Math.floor(droppedAt! / 10000), episode: droppedAt! % 10000, episode_count: byKey.get(droppedShow)!.episode_count! } : null,
-    slowest: slowest ? { ...posterOf(slowest.play.title), days: slowest.days } : null,
     longest: moviePlays.size >= 2 && longest ? { ...posterOf(longest), minutes: Math.round(byKey.get(longest)!.duration! / 60) } : null,
     oldest: moviePlays.size >= 2 && oldest ? { ...posterOf(oldest), year: byKey.get(oldest)!.year! } : null,
     rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched) } : null,

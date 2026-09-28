@@ -127,7 +127,6 @@ const ImportPlaysTask = () => {
                 started: row.started,
                 stopped: row.stopped,
                 play_duration: row.play_duration,
-                sessions: sessions.length,
                 ...(movie ? {} : { parent_media_index: Number(row.parent_media_index) || undefined, media_index: Number(row.media_index) || undefined }),
               }
             })

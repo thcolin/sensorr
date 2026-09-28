@@ -26,9 +26,6 @@ export class Play extends Document {
   play_duration: number
 
   @Prop()
-  sessions: number
-
-  @Prop()
   parent_media_index: number
 
   @Prop()
