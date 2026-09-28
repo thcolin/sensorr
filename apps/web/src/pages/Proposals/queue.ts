@@ -68,6 +68,10 @@ export const transitionOf = (axis, from, to, policy) => {
     return { state: 'held', separator: '→', left, right }
   }
 
+  if (left.kind === 'prefer' && right.kind === 'prefer' && left.rank === right.rank) {
+    return { state: 'quiet', separator: '~', left, right }
+  }
+
   if (!left.kind && !right.kind) {
     return { state: 'quiet', separator: '~', left, right }
   }
