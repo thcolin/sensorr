@@ -145,6 +145,9 @@ export class Show extends Document {
   }))
   plex_artworks: PlexArtworks
 
+  @Prop({ type: Object })
+  plex_seasons: Record<string, string>
+
   @Prop(raw([String]))
   requested_by: Record<any, any>
 

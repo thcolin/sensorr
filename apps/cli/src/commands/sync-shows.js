@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import fs from 'node:fs/promises'
 import { render, Text } from 'ink'
 import { TMDB } from '@sensorr/tmdb'
-import { Plex, artworksOf, sameArtworks } from '@sensorr/plex'
+import { Plex, artworksOf, sameArtworks, seasonsOf, sameSeasons } from '@sensorr/plex'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
 import api from '../store/api'
@@ -63,7 +63,7 @@ const FetchSensorrShowsTask = ({ ...props }) => {
       setStatus('loading')
 
       try {
-        const library = await fetchSensorrShows(api, { fields: 'id|name|first_air_date|external_ids|genres|poster_path|vote_average|releases|plex_artworks' })
+        const library = await fetchSensorrShows(api, { fields: 'id|name|first_air_date|external_ids|genres|poster_path|vote_average|releases|plex_artworks|plex_seasons' })
         const { uri, params, init } = api.query.episodes.getEpisodes({ params: { fields: 'id|show_id|season_number|episode_number|files' } })
         const { results } = await api.fetch(uri, { ...params, limit: '' }, init)
         const episodes = results.reduce((acc, episode) => ({ ...acc, [episode.show_id]: [...(acc[episode.show_id] || []), episode] }), {})
@@ -107,10 +107,11 @@ const FetchPlexShowsTask = ({ ...props }) => {
         for (const section of sections) {
           const { MediaContainer: { Metadata: distant = [] } } = await state.plex.query(`/library/sections/${section.key}/all?includeGuids=1`)
           const { MediaContainer: { Metadata: items = [] } } = await state.plex.query(`/library/sections/${section.key}/all?type=4`)
+          const { MediaContainer: { Metadata: seasons = [] } } = await state.plex.query(`/library/sections/${section.key}/all?type=3`)
           shows += distant.length
           episodes += items.length
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{shows}</Text> shows and <Text bold={true}>{episodes}</Text> episodes found on <Text bold={true}>{sections.length}</Text> section(s) on Plex Server <Text bold={true}>{server}</Text></Text> }))
-          setState((state) => ({ ...state, distant: [...(state.distant || []), ...distant], items: [...(state.items || []), ...items] }))
+          setState((state) => ({ ...state, distant: [...(state.distant || []), ...distant], items: [...(state.items || []), ...items], seasons: [...(state.seasons || []), ...seasons] }))
         }
 
         setStatus('done')
@@ -192,6 +193,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
           }))
 
           let listed = (state.items || []).filter((item) => keys.includes(`${item.grandparentRatingKey}`))
+          const seasons = seasonsOf(state.seasons, keys)
           let show = (state.library || []).find((show) => `${show.id}` === tmdb)
           const unknown = !show
           let episodes = state.episodes?.[tmdb] || []
@@ -200,7 +202,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             const fetched = await fetchShow(state.tmdb, tmdb)
             show = fetched.show
             episodes = fetched.episodes.map((episode) => ({ ...episode, monitored: false }))
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { ...show, state: 'archived', monitored: false, plex_artworks: artworks, refreshed_at: new Date() } } })
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { ...show, state: 'archived', monitored: false, plex_artworks: artworks, plex_seasons: seasons, refreshed_at: new Date() } } })
             await api.fetch(uri, params, init)
             state.logger.info({ message: `🩹 Add "${show.name}" show from Plex (archived)`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show) } })
             created.push(show.id)
@@ -273,8 +275,8 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             state.logger.info({ message: `🗑️ Withdraw "${release.title}" proposal of "${show.name}", all its episodes are on Plex`, metadata: { ...state.metadata, group: 'withdrawals', show: lighten.show(show), release: { id: release.id, title: release.title } } })
           }
 
-          if (!unknown && !sameArtworks(show.plex_artworks, artworks)) {
-            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { id: show.id, plex_artworks: artworks } } })
+          if (!unknown && (!sameArtworks(show.plex_artworks, artworks) || !sameSeasons(show.plex_seasons, seasons))) {
+            const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { id: show.id, plex_artworks: artworks, plex_seasons: seasons } } })
             await api.fetch(uri, params, init)
             if (!corrections.includes(show.id)) {
               corrections.push(show.id)

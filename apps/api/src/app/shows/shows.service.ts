@@ -13,7 +13,7 @@ import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
 
-const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'plex_artworks', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'proposal_only', 'path', 'query', 'plex_artworks', 'plex_seasons', 'releases', 'banned_releases', 'requested_by']
 
 const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent', 'replaces']
 
