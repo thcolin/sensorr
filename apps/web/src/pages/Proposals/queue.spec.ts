@@ -1,5 +1,5 @@
 import { Policy } from '@sensorr/sensorr'
-import { arrange, balanceOf, decide, groupOf, itemOf, levelOf, matches } from './queue'
+import { arrange, balanceOf, decide, groupOf, itemOf, levelOf, matches, transitionOf } from './queue'
 
 const GB = 1024 ** 3
 
@@ -227,5 +227,13 @@ describe('levelOf', () => {
     const ranks = { require: {}, avoid: {}, prefer: { language: [['MULTi-VF2', 'MULTi-VFF'], 'MULTi'] } }
     expect(levelOf('language', 'MULTi-VFF', ranks)).toEqual({ kind: 'prefer', mark: '¹', rank: 1, total: 2 })
     expect(levelOf('language', 'MULTi', ranks)).toEqual({ kind: 'prefer', mark: '²', rank: 2, total: 2 })
+  })
+})
+
+describe('transitionOf', () => {
+  it('keeps a swap between two values of one prefer rank neutral', () => {
+    const ranks = { require: {}, avoid: {}, prefer: { language: [['MULTi-VF2', 'MULTi-VFF'], 'MULTi'] } }
+    expect(transitionOf('language', 'MULTi-VF2', 'MULTi-VFF', ranks).state).toBe('quiet')
+    expect(transitionOf('language', 'MULTi-VF2', 'MULTi', ranks).state).toBe('moved')
   })
 })
