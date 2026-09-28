@@ -15,6 +15,8 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export class WrappedService {
   private readonly logger = new Logger(WrappedService.name)
 
+  private serverName: string | null = null
+
   constructor(
     @InjectModel(Play.name) private readonly playModel: Model<Play>,
     @InjectModel(Viewer.name) private readonly viewerModel: Model<Viewer>,
@@ -158,10 +160,29 @@ export class WrappedService {
     this.logger.log(`Share "${guest.email}", edition "${edition}"`)
     return {
       name: guest.name,
+      server: await this.serverNameOf(),
       year: edition,
       editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
       ...(await this.wrapped(viewer._id, edition)),
     }
+  }
+
+  // Read once from Tautulli; without it the page names no server
+  private async serverNameOf() {
+    const url = this.configService.config.get('tautulli.url')
+
+    if (!this.serverName && url) {
+      const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
+      uri.search = new URLSearchParams({ apikey: this.configService.config.get('tautulli.key'), cmd: 'get_server_friendly_name' }).toString()
+      // node-fetch errors carry the URL, so the key, and are not logged
+      const body = await fetch(uri, { signal: AbortSignal.timeout(5000) }).then((res) => res.ok ? res.json() as Promise<{ response?: { data?: unknown } }> : null).catch((error) => {
+        this.logger.warn(`Server name, Tautulli unreachable: ${error.name} ${error.code || ''}`)
+        return null
+      })
+      this.serverName = typeof body?.response?.data === 'string' ? body.response.data : null
+    }
+
+    return this.serverName
   }
 
   // Only the artwork of what this guest watched in the shown edition, which covers every title of their wrapped

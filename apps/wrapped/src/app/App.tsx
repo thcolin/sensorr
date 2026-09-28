@@ -5,6 +5,8 @@ import { Brushed, Sheet } from './Sheet'
 
 export interface Share {
   name: string
+  // The Plex server's name, null when Tautulli did not give it
+  server: string | null
   year: number
   editions: number[]
   frozen: boolean

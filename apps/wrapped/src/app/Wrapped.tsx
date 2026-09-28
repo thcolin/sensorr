@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { animate, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { animate, MotionValue, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import type { Wrapped, WrappedPoster } from '@sensorr/sensorr'
 import type { Share } from './App'
 import { Painted, useRevealProgress } from './Painted'
@@ -21,7 +21,14 @@ const dayOf = (date: string, weekday = false) => new Date(`${date}T12:00:00Z`)
   .toLocaleDateString('fr-FR', { weekday: weekday ? 'long' : undefined, day: 'numeric', month: 'long', timeZone: TIME_ZONE })
   .replace(/(^|\s)1 /, '$11er ')
 const clock = (time: string) => time.replace(/^0?(\d+):/, '$1 h ')
-const quoted = (title: string) => `« ${title} »`
+const quoted = (title: string) => `«\u00a0${title}\u00a0»`
+// « d’Entourage », « de Scrubs »
+const of = (title: string) => `${/^[aeiouyhàâéèêîôû]/i.test(title) ? 'd’' : 'de '}${quoted(title)}`
+const lasting = (minutes: number) => minutes < 60 ? `${minutes}\u00a0min` : `${Math.floor(minutes / 60)}\u00a0h\u00a0${String(minutes % 60).padStart(2, '0')}`
+const rhythm = (perDay: number) => perDay >= 1.5 ? `${Math.round(perDay)} par jour`
+  : perDay >= 1 ? 'plus d’un par jour'
+    : perDay >= 0.8 ? 'presque un par jour'
+      : `un tous les ${Math.round(1 / perDay)}\u00a0jours`
 const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 
 type Art = (item: WrappedPoster, kind?: 'thumb' | 'art', width?: number) => string | undefined
@@ -30,6 +37,7 @@ type Billed = [string, WrappedPoster, string]
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { name, year, frozen, wrapped } = share
+  const place = share.server || 'le serveur'
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
@@ -39,30 +47,32 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const { first_on_server, same_week, only_you, dropped, dropped_show, longest, oldest, rewatched } = wrapped
   const collage = [
     wrapped.first, wrapped.streak?.poster, wrapped.binge, wrapped.night?.poster, first_on_server || same_week,
-    only_you?.poster, longest, oldest, wrapped.last, ...wrapped.month_shows,
+    only_you?.posters[0], longest, oldest, wrapped.last, ...wrapped.month_shows,
   ].filter((item, index, items): item is WrappedPoster => !!item?.thumb && items.findIndex((other) => other?.key === item.key) === index).slice(0, 5)
 
   return (
     <main className="wall">
-      <Opening name={name} year={year} wrapped={wrapped} closed={closed} posters={collage} art={art} />
-      {wrapped.rank > 0 && <Rank rank={wrapped.rank} users={wrapped.server.users} hours={wrapped.hours} />}
+      <Opening name={name} year={year} place={place} wrapped={wrapped} closed={closed} posters={collage} art={art} />
+      {wrapped.rank > 0 && <Rank rank={wrapped.rank} users={wrapped.server.users} place={place} />}
       {!short && wrapped.streak && <Streak streak={wrapped.streak} art={art} />}
       {!short && wrapped.month_shows.some(Boolean) && <Months shows={wrapped.month_shows} closed={closed} art={art} />}
       {!short && (wrapped.binge || wrapped.pace) && <Binge binge={wrapped.binge} pace={wrapped.pace} art={art} />}
       {/* An early evening that is the binge's own evening would tell it twice */}
       {!short && wrapped.night && (wrapped.night.late || wrapped.night.date !== wrapped.binge?.date) && <Night night={wrapped.night} art={art} />}
-      {(first_on_server || same_week) && <Server first={first_on_server} week={same_week} art={art} />}
-      {only_you && <OnlyYou onlyYou={only_you} art={art} />}
+      {(first_on_server || same_week) && <Server first={first_on_server} week={same_week} place={place} art={art} />}
+      {only_you && <OnlyYou onlyYou={only_you} place={place} art={art} />}
+      {!short && wrapped.duo && <Duo duo={wrapped.duo} place={place} art={art} />}
+      {!short && wrapped.twin && <Twin twin={wrapped.twin} place={place} art={art} />}
       {!short && (dropped || dropped_show) && (
         <Posters label="Pas fini, ou presque" lines={['Pas fini,', 'ou presque']} seed={19} art={art} items={[
-          dropped && ['Lâché', dropped, `à ${dropped.percent}${THIN}%`],
-          dropped_show && ['Arrêté', dropped_show, `à l’épisode ${dropped_show.episode} de la saison ${dropped_show.season}, sur ${dropped_show.episode_count}\u00a0en tout`],
+          dropped && ['Arrêté', dropped, `à ${dropped.percent}${THIN}%, jamais repris`],
+          dropped_show && ['Arrêté', dropped_show, `à l’épisode ${dropped_show.episode} de la saison ${dropped_show.season}, jamais repris depuis`],
         ]} />
       )}
       {(longest || oldest || rewatched) && (
         <Posters label="Hors normes" lines={['Hors', 'normes']} seed={20} art={art} items={[
           rewatched && ['Revu', rewatched, `${rewatched.times} fois`],
-          longest && ['Le plus long', longest, plural(longest.minutes, 'minute', 'minutes')],
+          longest && ['Le plus long', longest, lasting(longest.minutes)],
           oldest && ['Le plus vieux', oldest, `sorti en ${oldest.year}`],
         ]} />
       )}
@@ -73,11 +83,10 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   )
 }
 
-const Opening = ({ name, year, wrapped, closed, posters, art }: { name: string, year: number, wrapped: Wrapped, closed: boolean, posters: WrappedPoster[], art: Art }) => {
+const Opening = ({ name, year, place, wrapped, closed, posters, art }: { name: string, year: number, place: string, wrapped: Wrapped, closed: boolean, posters: WrappedPoster[], art: Art }) => {
   const reduced = useReducedMotion()
   const progress = useMotionValue(reduced ? 1 : 0)
   const { first, previous } = wrapped
-  const gap = previous && Math.round(100 * (wrapped.hours - previous.hours) / previous.hours)
 
   useEffect(() => {
     if (!reduced) {
@@ -94,12 +103,12 @@ const Opening = ({ name, year, wrapped, closed, posters, art }: { name: string, 
         ))}
       </div>
       <Lettering as="h1" className="opening-title" text={`Rétrospective de ${name} ${year}`} highlight={name} />
-      {first && <p className="lede">Tout a commencé le {dayOf(first.date)} avec {quoted(first.title)}.</p>}
+      {first && <p className="lede">Ton année sur {place} a commencé le {dayOf(first.date)}, avec {quoted(first.title)}.</p>}
       <ul className="opening-figures">
-        <li>{plural(wrapped.evenings, 'soir', 'soirs')}, {plural(wrapped.hours, 'heure', 'heures')}</li>
+        <li>Depuis{THIN}: {plural(wrapped.hours, 'heure', 'heures')}, sur {plural(wrapped.evenings, 'soir', 'soirs')}.</li>
         {!!wrapped.movies && <li>{plural(wrapped.movies, 'film', 'films')}</li>}
         {!!wrapped.shows && <li>{plural(wrapped.shows, 'série', 'séries')}, {plural(wrapped.episodes, 'épisode', 'épisodes')}</li>}
-        {previous && !!gap && <li className="opening-gap">{gap > 0 ? `+${gap}` : `−${-gap}`}{THIN}% d’heures par rapport à {previous.year}{closed ? '' : ', à la même date'}</li>}
+        {previous && <li>{closed ? 'L’an dernier, tu en avais fait' : 'L’an dernier à la même date, tu en étais à'} {plural(previous.hours, 'heure', 'heures')}.</li>}
       </ul>
       <svg className="scroll-hint" viewBox="0 0 40 90" aria-hidden="true">
         <path d="M20 4 C 16 30, 25 52, 19 80 M8 64 C 13 72, 17 78, 19 84 C 23 76, 27 70, 33 62" />
@@ -115,12 +124,13 @@ const Streak = ({ streak, art }: { streak: NonNullable<Wrapped['streak']>, art: 
   return (
     <Sheet ref={sheet} className="sheet-figures" label="Soirs d’affilée" style={{ '--digits': String(streak.evenings).length } as React.CSSProperties}>
       <Painted className="figures-poster" src={art(streak.poster)} alt={streak.poster.title} progress={progress} />
+      <p className="figure-intro">Ta plus longue série sans rater un soir</p>
       <p className="figure">
         <span aria-hidden="true">{number.format(streak.evenings)}</span>
         <span className="visually-hidden">{plural(streak.evenings, 'soir', 'soirs')}</span>
       </p>
       <Lettering className="figure-unit" text="soirs d’affilée" seed={2} />
-      <p className="figure-details">Du {dayOf(streak.from)} au {dayOf(streak.to)}, sans rater une séance. Surtout {quoted(streak.poster.title)}.</p>
+      <p className="figure-details">Du {dayOf(streak.from)} au {dayOf(streak.to)}, avec {quoted(streak.poster.title)} le plus souvent.</p>
     </Sheet>
   )
 }
@@ -173,6 +183,7 @@ const Months = ({ shows, closed, art }: { shows: Wrapped['month_shows'], closed:
     <div ref={track} className="track" style={{ '--steps': reduced ? 0 : 1 } as React.CSSProperties}>
       <Sheet className="sheet-year" label="Tes séries, mois par mois">
         <Brushed lines={['Tes séries,', 'mois par mois']} seed={7} />
+        <p className="lede">Chaque bande, c’est la série que tu as le plus regardée ce mois-là.</p>
         <Painted
           className="year-strips"
           compose={compose}
@@ -184,7 +195,7 @@ const Months = ({ shows, closed, art }: { shows: Wrapped['month_shows'], closed:
         </ol>
         {shows[peak] && (
           <p className="year-peak">
-            <span className="year-peak-month">{MONTHS[peak]}</span>, c’était {quoted(shows[peak]!.title)}{THIN}: {plural(shows[peak]!.episodes, 'épisode', 'épisodes')}.
+            En <span className="year-peak-month">{MONTHS[peak]}</span>, c’était {quoted(shows[peak]!.title)}{THIN}: {plural(shows[peak]!.episodes, 'épisode', 'épisodes')}.
           </p>
         )}
       </Sheet>
@@ -206,7 +217,7 @@ const Binge = ({ binge, pace, art }: { binge: Wrapped['binge'], pace: Wrapped['p
         {binge && <p className="meta">Le {dayOf(binge.date, true)}.</p>}
         {pace && (
           <p className="meta">
-            {pace.key === lead.key ? 'En tout' : `Et ${quoted(pace.title)}`}, {plural(pace.episodes, 'épisode', 'épisodes')} en {plural(pace.days, 'jour', 'jours')}.
+            {pace.key === lead.key ? 'En tout' : `Et ${quoted(pace.title)}`}{THIN}: {plural(pace.episodes, 'épisode', 'épisodes')} en {plural(pace.days, 'jour', 'jours')}, {rhythm(pace.episodes / pace.days)}.
           </p>
         )}
       </div>
@@ -226,15 +237,15 @@ const Night = ({ night, art }: { night: NonNullable<Wrapped['night']>, art: Art 
         <Brushed lines={late ? ['Ta nuit', 'la plus tardive'] : ['Ta plus grosse', 'soirée']} seed={8} />
         <p className="night-date">{late ? `Dans la nuit du ${dayOf(night.date, true)}` : dayOf(night.date, true)}</p>
         <p className="night-figures">
-          {late ? 'À ' : 'La dernière à '}<strong>{clock(night.start)}</strong>, tu lances {late ? 'encore ' : ''}{quoted(poster.title)}.
+          À <strong>{clock(night.start)}</strong>, tu lances {late ? 'encore ' : ''}{night.episode ? `un épisode ${of(poster.title)}` : quoted(poster.title)}.
         </p>
-        {night.plays > 1 && <p className="night-figures">{plural(night.plays, 'séance', 'séances')} ce soir-là.</p>}
+        {night.plays > 1 && <p className="night-figures">{late ? `Le ${night.plays}e de la soirée.` : `${plural(night.plays, 'séance', 'séances')} ce soir-là, celle-ci en dernier.`}</p>}
       </div>
     </Sheet>
   )
 }
 
-const Server = ({ first, week, art }: { first: Wrapped['first_on_server'], week: Wrapped['same_week'], art: Art }) => {
+const Server = ({ first, week, place, art }: { first: Wrapped['first_on_server'], week: Wrapped['same_week'], place: string, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
   const item = (first || week)!
@@ -246,27 +257,78 @@ const Server = ({ first, week, art }: { first: Wrapped['first_on_server'], week:
       <Lettering as="h3" className="server-title" text={item.title} seed={17} />
       <p className="lede">
         {first
-          ? `Tu l’as lancé le premier sur le serveur. ${plural(first.others, 'autre spectateur a', 'autres spectateurs ont')} suivi.`
-          : `Toi et ${plural(week!.others, 'autre spectateur', 'autres spectateurs')}, à une semaine près.`}
+          ? `Tu as vu ${quoted(item.title)} avant tout le monde sur ${place}. ${first.others === 1 ? 'Une personne l’a regardé' : `${first.others}\u00a0personnes l’ont regardé`} après toi.`
+          : `Toi et ${plural(week!.others, 'autre personne', 'autres personnes')} l’avez regardé la même semaine.`}
       </p>
     </Sheet>
   )
 }
 
-const OnlyYou = ({ onlyYou, art }: { onlyYou: NonNullable<Wrapped['only_you']>, art: Art }) => {
+// A few posters with their titles, the proof behind a count
+const Strip = ({ posters, layout, progress, art }: { posters: WrappedPoster[], layout: 'row' | 'grid', progress: MotionValue<number>, art: Art }) => (
+  <ul className="strip" data-layout={layout}>
+    {posters.map((poster) => (
+      <li key={poster.key} className="strip-entry">
+        <Painted className="strip-poster" src={art(poster, 'thumb', 320)} alt={poster.title} progress={progress} />
+        <span className="strip-title">{poster.title}</span>
+      </li>
+    ))}
+  </ul>
+)
+
+const OnlyYou = ({ onlyYou, place, art }: { onlyYou: NonNullable<Wrapped['only_you']>, place: string, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
-  const one = onlyYou.count === 1
+  const { count, posters } = onlyYou
+  const one = count === 1
 
   return (
-    <Sheet ref={sheet} className="sheet-figures" label="Personne d’autre" style={{ '--digits': String(onlyYou.count).length } as React.CSSProperties}>
-      <Painted className="figures-poster" src={art(onlyYou.poster)} alt={onlyYou.poster.title} progress={progress} />
+    <Sheet ref={sheet} className="sheet-figures sheet-strip" label="Personne d’autre" style={{ '--digits': String(count).length } as React.CSSProperties}>
+      <Strip posters={posters} layout="row" progress={progress} art={art} />
       <p className="figure">
-        <span aria-hidden="true">{number.format(onlyYou.count)}</span>
-        <span className="visually-hidden">{plural(onlyYou.count, 'film', 'films')}</span>
+        <span aria-hidden="true">{number.format(count)}</span>
+        <span className="visually-hidden">{plural(count, 'film', 'films')}</span>
       </p>
       <Lettering className="figure-unit" text={one ? 'film que personne d’autre n’a lancé' : 'films que personne d’autre n’a lancés'} seed={3} />
-      <p className="figure-details">{one ? `C’est ${quoted(onlyYou.poster.title)}.` : `Le dernier en date${THIN}: ${quoted(onlyYou.poster.title)}.`}</p>
+      <p className="figure-details">
+        Sur {place}, {one ? 'il n’est passé' : 'ils ne sont passés'} que chez toi.{count > posters.length ? ` En haut, les ${posters.length} derniers vus.` : ''}
+      </p>
+    </Sheet>
+  )
+}
+
+const Duo = ({ duo, place, art }: { duo: NonNullable<Wrapped['duo']>, place: string, art: Art }) => {
+  const sheet = useRef<HTMLElement>(null)
+  const progress = useRevealProgress(sheet)
+  const { count, posters } = duo
+
+  return (
+    <Sheet ref={sheet} className="sheet-duo" label="Vus à deux">
+      <Brushed lines={['Vus à deux']} seed={22} />
+      <p className="lede">
+        Toi et une seule autre personne sur {place} avez vu {count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.
+        {count > posters.length ? ` Les ${posters.length} plus anciens${THIN}:` : ''}
+      </p>
+      <Strip posters={posters} layout="grid" progress={progress} art={art} />
+    </Sheet>
+  )
+}
+
+const Twin = ({ twin, place, art }: { twin: NonNullable<Wrapped['twin']>, place: string, art: Art }) => {
+  const sheet = useRef<HTMLElement>(null)
+  const progress = useRevealProgress(sheet)
+  const { shared, total, posters } = twin
+
+  return (
+    <Sheet ref={sheet} className="sheet-figures sheet-strip" label="Ton jumeau" style={{ '--digits': String(shared).length } as React.CSSProperties}>
+      <Brushed lines={['Ton jumeau']} seed={23} />
+      <p className="figure">
+        <span aria-hidden="true">{number.format(shared)}</span>
+        <span className="visually-hidden">{plural(shared, 'titre', 'titres')}</span>
+      </p>
+      <Lettering className="figure-unit" text="titres en commun" seed={24} />
+      <p className="figure-details">Quelqu’un sur {place} a vu {shared} de tes {plural(total, 'film et série', 'films et séries')}. Son nom reste secret. Parmi les plus rares{THIN}:</p>
+      <Strip posters={posters} layout="row" progress={progress} art={art} />
     </Sheet>
   )
 }
@@ -300,11 +362,11 @@ const Posters = ({ label, lines, seed, items, art }: { label: string, lines: str
 const Genre = ({ genre, art }: { genre: NonNullable<Wrapped['genre']>, art: Art }) => {
   const sheet = useRef<HTMLElement>(null)
   const progress = useRevealProgress(sheet)
-  const { name, lead } = genre
+  const { name, titles, total, lead } = genre
   const role = lead && {
-    actor: `en tête d’affiche de ${lead.titles}\u00a0de tes films et séries`,
-    show: 'en boucle',
-    director: `derrière ${lead.titles}\u00a0de tes films`,
+    actor: `joue dans ${lead.titles}\u00a0de tes films et séries.`,
+    show: 'tourne en boucle.',
+    director: `a signé ${lead.titles}\u00a0de tes films.`,
   }[lead.kind]
 
   return (
@@ -312,6 +374,7 @@ const Genre = ({ genre, art }: { genre: NonNullable<Wrapped['genre']>, art: Art 
       <Brushed lines={['Ton genre']} seed={18} />
       {lead?.poster && <Painted className="genre-poster" src={art(lead.poster)} alt={lead.poster.title} progress={progress} />}
       <Lettering as="p" className="genre-name" text={name} highlight={name} seed={21} />
+      <p className="genre-count">{titles === total ? 'Tous tes films et séries en sont.' : `${titles} de tes ${total}\u00a0films et séries en sont.`}</p>
       {lead && (
         <p className="genre-lead">
           <span className="genre-lead-name">{lead.kind === 'show' ? quoted(lead.name) : lead.name}</span> {role}
@@ -321,7 +384,7 @@ const Genre = ({ genre, art }: { genre: NonNullable<Wrapped['genre']>, art: Art 
   )
 }
 
-const Rank = ({ rank, users, hours }: { rank: number, users: number, hours: number }) => (
+const Rank = ({ rank, users, place }: { rank: number, users: number, place: string }) => (
   <Sheet className="sheet-rank" label="Ton rang">
     <p className="rank">
       <span aria-hidden="true">{rank}<sup>{suffix(rank)}</sup></span>
@@ -331,7 +394,9 @@ const Rank = ({ rank, users, hours }: { rank: number, users: number, hours: numb
     <ol className="crowd" aria-hidden="true">
       {Array.from({ length: users }, (_, index) => <li key={index} className={index === rank - 1 ? 'crowd-you' : undefined} />)}
     </ol>
-    <p className="rank-detail">{plural(hours, 'heure', 'heures')} au cinéma de Thomas. Chaque trait est un spectateur, classé aux heures regardées, sans nom.</p>
+    <p className="rank-detail">
+      {rank === 1 ? 'Personne n’a' : rank === 2 ? 'Une seule personne a' : `${rank <= 11 ? 'Seules ' : ''}${rank - 1}\u00a0personnes ont`} passé plus de temps que toi devant {place}. Un trait par spectateur, le rouge, c’est toi.
+    </p>
   </Sheet>
 )
 
@@ -345,7 +410,7 @@ const Finale = ({ last, year, closed, art }: { last: NonNullable<Wrapped['last']
       <div className="finale-text">
         <Brushed lines={['Dernière séance']} seed={12} />
         <Lettering as="p" className="finale-title" text={last.title} seed={13} />
-        <p className="finale-next">Le {dayOf(last.date)}.</p>
+        <p className="finale-next">Le {dayOf(last.date)}{closed ? '' : ', pour l’instant'}.</p>
         {!closed && <p className="stamp stamp-finale">Provisoire</p>}
         <p className="finale-end">Fin.</p>
       </div>
