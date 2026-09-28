@@ -1,4 +1,4 @@
-import { editionBounds, editionOf, watchedHoursOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
+import { editionBounds, editionOf, lookOf, watchedHoursOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
 
 const at = (iso: string) => Date.parse(iso) / 1000
 let id = 0
@@ -37,6 +37,24 @@ const plays = [
   play(1, 'plex://movie/2001', '2025-11-30T20:00:00Z', 2),
   play(1, 'plex://movie/heat', '2026-12-01T20:00:00Z', 3),
 ]
+
+describe('lookOf', () => {
+  const global = { theme: 'affiche' as const, choice: true }
+
+  it('keeps the global look when nothing overrides it', () => {
+    expect(lookOf({ global })).toEqual({ theme: 'affiche', choice: true })
+  })
+
+  it('lets the edition override the global look, and the friend override both', () => {
+    expect(lookOf({ global, edition: { theme: 'labo', choice: false } })).toEqual({ theme: 'labo', choice: false })
+    expect(lookOf({ global, edition: { theme: 'labo', choice: false }, guest: { theme: 'tele' } })).toEqual({ theme: 'tele', choice: false })
+    expect(lookOf({ global, edition: { choice: false }, guest: { choice: true } })).toEqual({ theme: 'affiche', choice: true })
+  })
+
+  it('reads a null value as no override', () => {
+    expect(lookOf({ global, edition: { theme: null, choice: null }, guest: { theme: null, choice: null } })).toEqual(global)
+  })
+})
 
 describe('partsOf', () => {
   it('reads the calendar in the given time zone', () => {

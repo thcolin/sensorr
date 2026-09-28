@@ -3,7 +3,8 @@ import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { editionBounds, editionOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { WRAPPED_THEMES } from '@sensorr/config'
+import { editionBounds, editionOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
@@ -165,6 +166,7 @@ export class WrappedService {
       year: edition,
       editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
       names: await this.namesOf(shown.wrapped),
+      look: this.lookOf(guest, edition),
       ...shown,
     }
   }
@@ -247,9 +249,48 @@ export class WrappedService {
     return { type, buffer: Buffer.from(body) }
   }
 
+  private lookOf(guest: { wrapped_theme?: string | null, wrapped_choice?: boolean | null }, year: number) {
+    const { config } = this.configService
+
+    return lookOf({
+      global: { theme: config.get('wrapped.theme'), choice: config.get('wrapped.choice') },
+      edition: config.get('wrapped.editions').find((edition) => edition.year === year),
+      guest: { theme: guest.wrapped_theme as any, choice: guest.wrapped_choice },
+    })
+  }
+
   async guests() {
-    const guests = await this.guestModel.find({}, { email: 1, wrapped_token: 1 }).lean()
-    return Promise.all(guests.map(async ({ email, wrapped_token }) => ({ email, wrapped_token: wrapped_token || null, viewer: (await this.viewerOf(email))?._id ?? null })))
+    const guests = await this.guestModel.find({}, { email: 1, wrapped_token: 1, wrapped_theme: 1, wrapped_choice: 1 }).lean()
+    return Promise.all(guests.map(async ({ email, wrapped_token, wrapped_theme, wrapped_choice }) => ({
+      email,
+      wrapped_token: wrapped_token || null,
+      wrapped_theme: wrapped_theme ?? null,
+      wrapped_choice: wrapped_choice ?? null,
+      viewer: (await this.viewerOf(email))?._id ?? null,
+    })))
+  }
+
+  async setLook(email: string, theme: string | null, choice: boolean | null) {
+    if (typeof email !== 'string') {
+      throw new BadRequestException('An email is required')
+    }
+
+    if (theme !== null && !WRAPPED_THEMES.includes(theme)) {
+      throw new BadRequestException(`The theme must be one of ${WRAPPED_THEMES.join(', ')}, or null`)
+    }
+
+    if (choice !== null && typeof choice !== 'boolean') {
+      throw new BadRequestException('The choice must be a boolean, or null')
+    }
+
+    this.logger.log(`SetLook "${email}", theme "${theme}", choice "${choice}"`)
+    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_theme: theme, wrapped_choice: choice }, { new: true }).lean()
+
+    if (!guest) {
+      throw new NotFoundException()
+    }
+
+    return { email, wrapped_theme: guest.wrapped_theme ?? null, wrapped_choice: guest.wrapped_choice ?? null }
   }
 
   async renewToken(email: string) {

@@ -32,6 +32,13 @@ export class Guest extends Document {
   // Opens this guest's wrapped without an account, replaced to revoke the previous link
   @Prop({ index: { unique: true, sparse: true } })
   wrapped_token: string
+
+  // This friend's look of the wrapped and whether they may switch it, null keeps the edition's or the global one
+  @Prop({ type: String, default: null })
+  wrapped_theme: string | null
+
+  @Prop({ type: Boolean, default: null })
+  wrapped_choice: boolean | null
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest)

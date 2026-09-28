@@ -1,5 +1,16 @@
 export const WRAPPED_TIME_ZONE = 'Europe/Paris'
 
+// The looks of the wrapped page, the same list as `WRAPPED_THEMES` in `@sensorr/config`
+export type WrappedTheme = 'affiche' | 'labo' | 'tele' | 'videoclub' | 'scenario'
+
+interface WrappedLook { theme?: WrappedTheme | null, choice?: boolean | null }
+
+// A friend's own setting wins over the edition's, which wins over the global one
+export const lookOf = ({ global, edition, guest }: { global: { theme: WrappedTheme, choice: boolean }, edition?: WrappedLook | null, guest?: WrappedLook | null }) => ({
+  theme: guest?.theme ?? edition?.theme ?? global.theme,
+  choice: guest?.choice ?? edition?.choice ?? global.choice,
+})
+
 // `title` is the movie guid, or `show:<grandparent_rating_key>` for an episode.
 export interface WrappedPlay {
   id: number

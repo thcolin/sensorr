@@ -14,6 +14,9 @@ convict.addFormat({
   },
 })
 
+// The looks of the wrapped page, `apps/wrapped/src/app/themes` draws each one
+export const WRAPPED_THEMES = ['affiche', 'labo', 'tele', 'videoclub', 'scenario']
+
 const config = convict({
   docker: {
     doc: 'Is Sensorr App running in Docker env ?',
@@ -297,6 +300,40 @@ const config = convict({
       doc: 'Tautulli API key',
       format: 'String',
       default: '',
+    },
+  },
+  wrapped: {
+    theme: {
+      doc: `Look of every wrapped, unless an edition or a friend sets its own: ${WRAPPED_THEMES.join(', ')}`,
+      format: WRAPPED_THEMES,
+      default: 'affiche',
+    },
+    choice: {
+      doc: 'Let each friend switch to another look on their page, unless an edition or a friend says otherwise',
+      format: 'Boolean',
+      default: true,
+    },
+    editions: {
+      doc: 'Per edition overrides of `theme` and `choice`, a null value keeps the global one',
+      format: 'source-array',
+      default: [],
+      children: {
+        year: {
+          doc: 'Year of the edition',
+          format: 'nat',
+          default: null,
+        },
+        theme: {
+          doc: `Look of this edition: ${WRAPPED_THEMES.join(', ')}`,
+          format: [...WRAPPED_THEMES, null],
+          default: null,
+        },
+        choice: {
+          doc: 'Let each friend switch to another look on this edition',
+          format: [true, false, null],
+          default: null,
+        },
+      },
     },
   },
   plex: {
