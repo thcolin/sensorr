@@ -919,13 +919,6 @@ html[data-theme='tele'] {
   transform: rotate(-6deg);
 }
 
-.tele-testcard {
-  display: block;
-  width: 100%;
-  max-width: 360px;
-  height: auto;
-}
-
 .tele-end {
   color: var(--red);
   font: italic 900 72px/0.9 var(--cond);
@@ -1095,5 +1088,122 @@ html[data-theme='tele'] {
 
   .tele-ours-short {
     grid-column: 1 / -1;
+  }
+}
+
+/* Waiting for the issue, or a notice in its place */
+.tele-state {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+}
+
+.tele-state-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-height: 100svh;
+  padding: 16px 16px 32px;
+  background: var(--paper);
+}
+
+.tele-state-waiting > .tele-screen {
+  margin-top: 0;
+}
+
+.tele-state-waiting {
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+
+.tele-state-logo {
+  padding: 6px 14px 2px;
+  background: var(--red);
+  color: #fff;
+  font: italic 900 64px/0.82 var(--cond);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* A set's screen: the card behind a slow rolling band, as an old tube shows it */
+.tele-screen {
+  position: relative;
+  width: min(100%, 420px);
+  margin-top: auto;
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--ink);
+  box-shadow: 0 24px 48px -20px rgb(40 30 20 / 0.55);
+}
+
+.tele-screen-card {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.tele-screen-rolling::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, transparent 40%, rgb(255 255 255 / 0.18) 50%, transparent 60%) 0 0 / 100% 300% no-repeat;
+  animation: tele-roll 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes tele-roll {
+  from { background-position: 0 100%; }
+  to { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tele-screen-rolling::after {
+    animation: none;
+    background: none;
+  }
+}
+
+.tele-button {
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 10px 24px 8px;
+  border: 0;
+  background: var(--red);
+  color: #fff;
+  font: italic 900 24px/1 var(--cond);
+  text-transform: uppercase;
+  box-shadow: 0 8px 16px -6px rgb(22 20 15 / 0.45);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.tele-button:hover {
+  background: var(--red-deep);
+}
+
+.tele-button:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.tele-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 6px -3px rgb(22 20 15 / 0.45);
+}
+
+@media (min-width: 1024px) {
+  .tele-state {
+    padding: 56px 40px;
+  }
+
+  .tele-state-page {
+    width: min(100%, 640px);
+    min-height: min(calc(100svh - 112px), 860px);
+    padding: 28px 48px 48px;
+    box-shadow: 0 30px 60px -24px rgb(40 30 20 / 0.5), 0 2px 6px rgb(40 30 20 / 0.2);
   }
 }

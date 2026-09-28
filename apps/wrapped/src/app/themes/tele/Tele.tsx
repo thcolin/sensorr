@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
 import { MONTHS, number, plural, type SheetModel } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
+import { TestCard } from './States'
 import './tele.css'
 
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
@@ -435,12 +436,7 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
       <h3 className="tele-title">{sheet.title}</h3>
       <p className="tele-body">{sheet.date}</p>
       {!sheet.closed && <p className="tele-stamp">Provisoire</p>}
-      <svg className="tele-testcard" viewBox="0 0 280 160" aria-hidden="true">
-        {['paper', 'yellow', 'cyan', 'green', 'magenta', 'red', 'blue'].map((fill, index) => <rect key={fill} x={index * 40} y="0" width="40" height="112" style={{ fill: `var(--${fill})` }} />)}
-        {['blue', 'ink', 'magenta', 'ink', 'cyan', 'ink', 'paper'].map((fill, index) => <rect key={index} x={index * 40} y="112" width="40" height="16" style={{ fill: `var(--${fill})` }} />)}
-        <rect x="0" y="128" width="280" height="32" style={{ fill: 'var(--ink)' }} />
-        <circle cx="140" cy="64" r="44" fill="none" strokeWidth="3" style={{ stroke: 'var(--ink)' }} />
-      </svg>
+      <TestCard />
       <p className="tele-end">{sheet.end}</p>
     </>}
   />
