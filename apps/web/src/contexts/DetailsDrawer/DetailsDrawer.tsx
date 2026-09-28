@@ -1,6 +1,9 @@
 import { createContext, useCallback, useContext, useState } from 'react'
 import usePortal from 'react-useportal'
 import { Drawer, Link, List, Person, Picture } from '@sensorr/ui'
+import { Artworks, useArtworksOf } from '../../components/Artworks/Artworks'
+import { useMoviesMetadataContext } from '../MoviesMetadata/MoviesMetadata'
+import { useShowsMetadataContext } from '../ShowsMetadata/ShowsMetadata'
 
 const detailsDrawerContext = createContext({})
 
@@ -68,6 +71,16 @@ const styles = {
   },
 }
 
+// A long press on a poster is the way to the artworks where no page is open, on a phone
+const DrawerArtworks = ({ details, link }) => {
+  const behavior = `${link?.to || ''}`.startsWith('/tv/') ? 'tv' : 'movie'
+  const { metadata: movies } = useMoviesMetadataContext() as any
+  const { metadata: shows } = useShowsMetadataContext() as any
+  const artworks = useArtworksOf(behavior, details.id, (behavior === 'tv' ? shows : movies)?.[details.id])
+
+  return <Artworks behavior={behavior} entity={{ id: details.id, title: details.title }} artworks={artworks} />
+}
+
 export const Provider = ({ children, ...props }) => {
   const { Portal, openPortal, closePortal, isOpen: isOpen } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, programmaticallyOpen: true })
   const [{ details, link, palette }, setData] = useState({ details: null, link: null, badges: null, credits: null, palette: null })
@@ -123,6 +136,7 @@ export const Provider = ({ children, ...props }) => {
                   }}
                 >
                   {/* {badges?.reviews?.component && <badges.reviews.component {...({ ...badges?.reviews?.props, size: 'normal' })} palette={palette} />} */}
+                  <DrawerArtworks details={details} link={link} />
                 </div>
               </div>
               <div
