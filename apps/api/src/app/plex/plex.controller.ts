@@ -31,7 +31,7 @@ export class PlexController {
   }
 
   @Get('image')
-  async image(@Query() query: Record<string, string>, @Res() res: Response) {
+  async image(@Query() query: Record<string, unknown>, @Res() res: Response) {
     const request = imageRequestOf(query)
 
     if (!request) {
@@ -55,7 +55,7 @@ export class PlexController {
     }
 
     // The path changes with the artwork: a stored copy never goes stale
-    res.set({ 'Content-Type': image.type, 'Cache-Control': 'private, max-age=31536000, immutable' })
+    res.set({ 'Content-Type': image.type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, max-age=31536000, immutable' })
     res.send(image.buffer)
   }
 }

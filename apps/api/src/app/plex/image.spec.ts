@@ -14,6 +14,8 @@ describe('imageRequestOf', () => {
     expect(imageRequestOf({ path: '/library/metadata/6850/thumb/1643698660', fallback: '//evil.example/a.jpg' })).toBeNull()
     expect(imageRequestOf({ path: '/library/metadata/6850/thumb/1643698660', size: '../w300' })).toBeNull()
     expect(imageRequestOf({})).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/6850/thumb/1643698660', size: ['w300'] })).toBeNull()
+    expect(imageRequestOf({ path: '/library/metadata/6850/thumb/1643698660', size: 'w9999' })).toBeNull()
   })
 })
 

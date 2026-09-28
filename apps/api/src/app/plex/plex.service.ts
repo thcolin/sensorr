@@ -5,6 +5,8 @@ import { ConfigService } from '../config/config.service'
 import { ImageRequest, transcodeOf } from './image'
 import app from './../../../../../package.json'
 
+const IMAGES = ['image/jpeg', 'image/png', 'image/webp']
+
 @Injectable()
 export class PlexService {
   private readonly logger = new Logger(PlexService.name)
@@ -81,12 +83,15 @@ export class PlexService {
     const res = await fetch(`${url.replace(/\/$/, '')}${transcodeOf(request)}`, {
       headers: { 'X-Plex-Token': token, Accept: 'image/*' },
       signal: AbortSignal.timeout(3000),
+      // A redirect would carry the token to another host
+      redirect: 'error',
     })
+    const type = res.headers.get('content-type')?.split(';')[0]
 
-    if (!res.ok) {
-      throw new Error(`Plex answered ${res.status}`)
+    if (!res.ok || !IMAGES.includes(type)) {
+      throw new Error(`Plex answered ${res.status} ${type}`)
     }
 
-    return { type: res.headers.get('content-type') || 'image/jpeg', buffer: Buffer.from(await res.arrayBuffer()) }
+    return { type, buffer: Buffer.from(await res.arrayBuffer()) }
   }
 }
