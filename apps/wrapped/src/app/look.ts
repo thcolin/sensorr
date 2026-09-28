@@ -9,7 +9,9 @@ export const known = (theme: string | null): theme is WrappedTheme => !!theme &&
 export const read = (kind: keyof typeof keyOf, token: string) => {
   try {
     const theme = window.localStorage.getItem(`${keyOf[kind]}:${token}`)
-    return known(theme) ? theme : null
+    // A link never opened here, or no link at all, wears the look last shown on this device
+    const last = kind === 'shown' ? window.localStorage.getItem(`${keyOf.shown}:last`) : null
+    return known(theme) ? theme : known(last) ? last : null
   } catch (error) {
     // Private browsing or blocked storage: nothing is remembered on this device
     return null
@@ -19,6 +21,7 @@ export const read = (kind: keyof typeof keyOf, token: string) => {
 export const write = (kind: keyof typeof keyOf, token: string, theme: WrappedTheme) => {
   try {
     window.localStorage.setItem(`${keyOf[kind]}:${token}`, theme)
+    kind === 'shown' && window.localStorage.setItem(`${keyOf.shown}:last`, theme)
   } catch (error) {
     // Not remembered, the look still shows for this visit
   }

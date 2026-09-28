@@ -32,7 +32,7 @@ const tokenOf = (path: string) => {
 
 const token = tokenOf(window.location.pathname)
 // The look this link last showed on this device, so the wait and the notices already wear it
-const shown = token ? read('shown', token) : null
+const shown = read('shown', token)
 
 // Before any look is known, the wait belongs to none of them
 const Waiting = () => (

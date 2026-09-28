@@ -3,6 +3,7 @@ import { useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
 import { MONTHS, number, plural, THIN, type SheetModel } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
+import { anchor } from '../../anchor'
 import './scenario.css'
 
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
@@ -86,7 +87,7 @@ const Index = ({ sheets }: { sheets: SheetModel[] }) => (
     <ol>
       {sheets.map((sheet, index) => (
         <li key={index}>
-          <a href={`#scenario-p${index}`}>
+          <a href={anchor(`scenario-p${index}`)}>
             <span>{sheet.label}</span>
             <span aria-hidden="true">{index ? `${index + 1}.` : ''}</span>
           </a>
