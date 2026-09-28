@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { WRAPPED_THEME_NAMES, type WrappedTheme } from '@sensorr/sensorr'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
@@ -31,7 +31,38 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme])
   }, [theme])
 
-  const choose = (next: WrappedTheme) => {
+  // Where the switch that was used sat on screen, so the new look opens at the same place
+  const anchor = useRef<{ at: string, top: number } | null>(null)
+
+  useEffect(() => {
+    const kept = anchor.current
+
+    if (!kept) {
+      return
+    }
+
+    // The new look and its images settle over a few frames, the switch is held in place meanwhile
+    let frame = 0
+    const until = performance.now() + 1500
+    const stop = () => { cancelAnimationFrame(frame); anchor.current = null }
+    const hold = () => {
+      const target = document.querySelector(`.theme-switch[data-at="${kept.at}"]`)
+      target && window.scrollBy(0, target.getBoundingClientRect().top - kept.top)
+      frame = performance.now() < until ? requestAnimationFrame(hold) : 0
+    }
+    hold()
+    window.addEventListener('wheel', stop, { once: true })
+    window.addEventListener('touchstart', stop, { once: true })
+
+    return () => {
+      stop()
+      window.removeEventListener('wheel', stop)
+      window.removeEventListener('touchstart', stop)
+    }
+  }, [theme])
+
+  const choose = (next: WrappedTheme, from: HTMLElement) => {
+    anchor.current = { at: from.dataset.at || 'start', top: from.getBoundingClientRect().top }
     setTheme(next)
 
     try {
@@ -41,20 +72,23 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     }
   }
 
+  const Switch = ({ at }: { at: 'start' | 'end' }) => (
+    <label className="theme-switch" data-at={at}>
+      <span>{at === 'start' ? 'Voir en' : 'Revoir en'}</span>
+      <select name={`theme-${at}`} value={theme} onChange={(event) => choose(event.target.value as WrappedTheme, event.currentTarget.parentElement as HTMLElement)}>
+        {(Object.keys(THEMES) as WrappedTheme[]).map((id) => <option key={id} value={id}>{WRAPPED_THEME_NAMES[id]}</option>)}
+      </select>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
+    </label>
+  )
+
   return (
     <>
+      {look.choice && <Switch at="start" />}
       <Suspense fallback={<div className="theme-loading" aria-busy="true" />}>
         <Theme share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
       </Suspense>
-      {look.choice && (
-        <label className="theme-switch">
-          <span className="visually-hidden">Univers de la rétrospective</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="8" cy="17" r="2" /></svg>
-          <select value={theme} onChange={(event) => choose(event.target.value as WrappedTheme)}>
-            {(Object.keys(THEMES) as WrappedTheme[]).map((id) => <option key={id} value={id}>{WRAPPED_THEME_NAMES[id]}</option>)}
-          </select>
-        </label>
-      )}
+      {look.choice && <Switch at="end" />}
     </>
   )
 }

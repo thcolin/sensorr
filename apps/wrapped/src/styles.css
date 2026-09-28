@@ -45,53 +45,50 @@ ol {
   min-height: 100svh;
 }
 
-/* The look switch: each look sets --switch-* to dress it */
+/* The look switch, before the first sheet and after the colophon: each look sets --switch-* to dress it */
 .theme-switch {
-  position: fixed;
-  right: max(12px, env(safe-area-inset-right));
-  bottom: max(12px, env(safe-area-inset-bottom));
-  z-index: 100;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
   background: var(--switch-bg, #111);
   color: var(--switch-fg, #fff);
-  font: var(--switch-font, 600 14px/1 system-ui, sans-serif);
-  border-radius: var(--switch-radius, 22px);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.28);
-}
-
-.theme-switch svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-}
-
-.theme-switch svg circle {
-  fill: var(--switch-bg, #111);
+  font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
 }
 
 .theme-switch select {
   appearance: none;
   border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
   background: transparent;
   color: inherit;
   font: inherit;
-  padding: 12px 0;
+  padding: 12px 22px 10px 2px;
+  margin-right: -22px;
   cursor: pointer;
+}
+
+.theme-switch select option {
+  color: initial;
+  background: initial;
+}
+
+.theme-switch svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .theme-switch select:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 4px;
-}
-
-.theme-switch:has(select:focus-visible) {
-  outline: 2px solid var(--switch-bg, #111);
-  outline-offset: 3px;
 }

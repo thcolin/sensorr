@@ -195,7 +195,8 @@ export const sheetsOf = (share: Share) => {
       spoken: plural(count, 'film', 'films'),
       unit: one ? 'film que personne d’autre n’a vu' : 'films que personne d’autre n’a vus',
       details: one ? `Cette année, personne d’autre sur ${place} ne l’a vu.` : `Cette année, personne d’autre sur ${place} ne les a vus. ${count > posters.length ? `Les ${posters.length} derniers` : 'Les voici'}${THIN}:`,
-      posters: one ? [] : posters,
+      // A single film still shows, it is the one only this friend saw
+      posters: one ? posters.slice(0, 1) : posters,
     })
   }
 
