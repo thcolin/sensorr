@@ -156,10 +156,25 @@ describe('wrappedOf', () => {
       play(17, 'plex://movie/dune', '2026-05-01T20:00:00Z', 2.5),
     ]
     expect(wrappedOf({ plays: match, titles, user_id: 15, year: 2026 })).toMatchObject({
-      duo: { count: 4, posters: [{ title: '2001', year: 1968, with: 16 }, { title: 'Heat', year: 1995, with: 16 }, { title: 'Scrubs', with: 16 }, { title: 'Twin Peaks', with: 16 }] },
+      duo: { count: 4, posters: [{ title: '2001', year: 1968, with: 16, days: 31 }, { title: 'Heat', year: 1995, with: 16, days: 31 }, { title: 'Scrubs', with: 16, days: 31 }, { title: 'Twin Peaks', with: 16, days: 31 }] },
       twin: { user_id: 16, shared: 5, total: 5 },
     })
     expect(wrappedOf({ plays: match.slice(0, 7), titles, user_id: 15, year: 2026 }).twin).toBeNull()
+  })
+
+  it('orders the titles watched with one other viewer by how close the two evenings were', () => {
+    const close = [
+      play(15, 'plex://movie/2001', '2026-03-01T20:00:00Z', 2), play(16, 'plex://movie/2001', '2026-06-01T20:00:00Z', 2),
+      play(15, 'plex://movie/heat', '2026-03-02T20:00:00Z', 3), play(16, 'plex://movie/heat', '2026-03-02T21:00:00Z', 3),
+      play(15, 'plex://movie/dune', '2026-03-03T20:00:00Z', 2.5), play(16, 'plex://movie/dune', '2026-03-06T20:00:00Z', 2.5),
+    ]
+    expect(wrappedOf({ plays: close, titles, user_id: 15, year: 2026 }).duo).toMatchObject({ count: 3, posters: [{ title: 'Heat', days: 0 }, { title: 'Dune', days: 3 }, { title: '2001', days: 92 }] })
+  })
+
+  it('counts as only yours a film nobody else ever watched, earlier years included', () => {
+    const alone = [play(13, 'plex://movie/2001', '2026-03-01T20:00:00Z', 2), play(13, 'plex://movie/heat', '2026-04-01T20:00:00Z', 3)]
+    const history = { 'plex://movie/2001': [13], 'plex://movie/heat': [13, 14] }
+    expect(wrappedOf({ plays: alone, titles, user_id: 13, year: 2026, history }).only_you).toMatchObject({ count: 1, posters: [{ title: '2001' }] })
   })
 
   it('compares with the other users, who stay anonymous', () => {

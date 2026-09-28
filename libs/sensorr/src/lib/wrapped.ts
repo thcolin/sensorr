@@ -85,7 +85,8 @@ export interface Wrapped {
   same_week: WrappedPoster & { others: number } | null
   only_you: { count: number, posters: WrappedPoster[] } | null
   // Titles only one other viewer watched, the oldest first, `with` that viewer
-  duo: { count: number, posters: (WrappedPoster & { year?: number, with: number })[] } | null
+  // `days` between their evening and the other viewer's, the closest first
+  duo: { count: number, posters: (WrappedPoster & { year?: number, with: number, days?: number })[] } | null
   // The viewer who shares the most titles with this one
   twin: { user_id: number, shared: number, total: number, posters: WrappedPoster[] } | null
   dropped: WrappedPoster & { percent: number } | null
@@ -166,8 +167,9 @@ const leaderOf = (names: string[], min: number) => {
 
 // `plays` holds the whole server's plays: ranks and "only you" are measured against every user
 export const wrappedOf = (
-  { plays, titles, user_id, year, previous, timeZone = WRAPPED_TIME_ZONE }:
-  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, previous?: { hours: number } | null, timeZone?: string },
+  { plays, titles, user_id, year, previous, history, timeZone = WRAPPED_TIME_ZONE }:
+  // `history`: who ever watched each title on the server, up to the end of the edition
+  { plays: WrappedPlay[], titles: WrappedTitle[], user_id: number, year: number, previous?: { hours: number } | null, history?: Record<string, number[]>, timeZone?: string },
 ): Wrapped => {
   const byKey = new Map(titles.map((title) => [title.key, title]))
   const server = plays
@@ -239,7 +241,7 @@ export const wrappedOf = (
   })
   const pioneer = shared.filter(({ others, ahead }) => ahead && others >= 2).sort((a, b) => b.others - a.others)[0]
   const together = [...shared].sort((a, b) => b.week - a.week)[0]
-  const onlyYou = shared.filter(({ others }) => others === 0).map(({ key }) => key)
+  const onlyYou = shared.filter(({ key, others }) => others === 0 && (history?.[key] || []).every((user) => user === user_id)).map(({ key }) => key)
   const byYear = (keys: string[]) => [...keys].filter((key) => byKey.get(key)?.year).sort((a, b) => byKey.get(a)!.year! - byKey.get(b)!.year!)
 
   // Summed over its plays: a film resumed on another player is not always grouped by Tautulli
@@ -265,7 +267,14 @@ export const wrappedOf = (
 
   const mineKeys = [...moviePlays.keys(), ...showPlays.keys()]
   const watchersOf = new Map([...groupBy(server, (play) => play.title).entries()].map(([key, plays]) => [key, new Set(plays.map((play) => play.user_id))]))
-  const duo = mineKeys.filter((key) => watchersOf.get(key)!.size === 2).sort((a, b) => (byKey.get(a)?.year || 9999) - (byKey.get(b)?.year || 9999))
+  const titlePlays = groupBy(server, (play) => play.title)
+  const gapOf = (key: string) => {
+    const [yours, theirs] = [titlePlays.get(key)!.filter((play) => play.user_id === user_id), titlePlays.get(key)!.filter((play) => play.user_id !== user_id)]
+    return Math.min(...yours.flatMap((a) => theirs.map((b) => Math.abs(dayOf(a.evening) - dayOf(b.evening)))))
+  }
+  const duo = mineKeys.filter((key) => watchersOf.get(key)!.size === 2)
+    .map((key) => ({ key, days: gapOf(key) }))
+    .sort((a, b) => a.days - b.days || (byKey.get(a.key)?.year || 9999) - (byKey.get(b.key)?.year || 9999))
   const overlap = new Map<number, string[]>()
   mineKeys.forEach((key) => watchersOf.get(key)!.forEach((user) => user !== user_id && overlap.set(user, [...(overlap.get(user) || []), key])))
   const twin = [...overlap.values()].sort((a, b) => b.length - a.length)[0]
@@ -308,7 +317,7 @@ export const wrappedOf = (
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, posters: [...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a)).slice(0, 4).map(posterOf) } : null,
-    duo: duo.length ? { count: duo.length, posters: duo.slice(0, 4).map((key) => ({ ...posterOf(key), year: byKey.get(key)?.year, with: [...watchersOf.get(key)!].find((user) => user !== user_id)! })) } : null,
+    duo: duo.length ? { count: duo.length, posters: duo.slice(0, 4).map(({ key, days }) => ({ ...posterOf(key), year: byKey.get(key)?.year, with: [...watchersOf.get(key)!].find((user) => user !== user_id)!, days })) } : null,
     // The titles fewest others watched say the most about the match
     twin: twin?.length >= 5 ? { user_id: [...overlap.entries()].find(([, keys]) => keys === twin)![0], shared: twin.length, total: mineKeys.length, posters: [...twin].sort((a, b) => watchersOf.get(a)!.size - watchersOf.get(b)!.size).slice(0, 4).map(posterOf) } : null,
     dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * seenOf(dropped)) } : null,

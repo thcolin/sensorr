@@ -76,17 +76,26 @@ export class WrappedService {
     return { $gte: Date.UTC(year - 1, 10, 29) / 1000, $lt: Date.UTC(year, 11, 2) / 1000 }
   }
 
-  private async editionData(year: number): Promise<{ plays: WrappedPlay[], titles: WrappedTitle[] }> {
+  private async editionData(year: number): Promise<{ plays: WrappedPlay[], titles: WrappedTitle[], history: Record<string, number[]> }> {
     const docs = await this.playModel.find({ started: this.editionWindow(year) }).lean()
     const plays = docs.map(({ _id, ...play }) => ({ id: _id, ...play }) as WrappedPlay).filter((play) => editionOf(play.started, TIME_ZONE) === year)
     const titles = (await this.titleModel.find({ _id: { $in: [...new Set(plays.map((play) => play.title))] } }).lean())
       .map(({ _id, ...title }) => ({ key: _id, ...title }) as WrappedTitle)
-    return { plays, titles }
+    return { plays, titles, history: await this.historyOf(year, titles.filter((title) => title.media_type === 'movie').map((title) => title.key)) }
+  }
+
+  // Who ever watched each of these titles on the server, from the first play Tautulli kept to the end of the edition
+  private async historyOf(year: number, keys: string[]) {
+    const rows = await this.playModel.aggregate<{ _id: string, users: number[] }>([
+      { $match: { title: { $in: keys }, started: { $lt: editionBounds(year, TIME_ZONE).end } } },
+      { $group: { _id: '$title', users: { $addToSet: '$user_id' } } },
+    ])
+    return Object.fromEntries(rows.map(({ _id, users }) => [_id, users]))
   }
 
   async freeze(year: number) {
     const frozen = new Set((await this.editionModel.find({ year }, { user_id: 1 }).lean()).map(({ user_id }) => user_id))
-    const { plays, titles } = await this.editionData(year)
+    const { plays, titles, history } = await this.editionData(year)
     const users = [...new Set(plays.map((play) => play.user_id))].filter((user_id) => !frozen.has(user_id))
 
     if (!users.length) {
@@ -98,7 +107,7 @@ export class WrappedService {
     const { upsertedCount } = await this.editionModel.bulkWrite(users.map((user_id) => ({
       updateOne: {
         filter: { year, user_id },
-        update: { $setOnInsert: { year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, previous: previous.get(user_id), timeZone: TIME_ZONE }) } },
+        update: { $setOnInsert: { year, user_id, frozen_at, wrapped: wrappedOf({ plays, titles, user_id, year, previous: previous.get(user_id), history, timeZone: TIME_ZONE }) } },
         upsert: true,
       },
     })))
@@ -113,8 +122,8 @@ export class WrappedService {
       return { frozen: true, wrapped: edition.wrapped }
     }
 
-    const { plays, titles } = await this.editionData(year)
-    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, previous: await this.samePeriodOf(year, user_id), timeZone: TIME_ZONE }) }
+    const { plays, titles, history } = await this.editionData(year)
+    return { frozen: false, wrapped: wrappedOf({ plays, titles, user_id, year, previous: await this.samePeriodOf(year, user_id), history, timeZone: TIME_ZONE }) }
   }
 
   // An open edition is compared with the previous one up to the same day, not with its whole year

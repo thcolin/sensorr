@@ -28,6 +28,8 @@ const rhythm = (perDay: number) => perDay >= 1.5 ? `${Math.round(perDay)} par jo
     : perDay >= 0.8 ? 'presque un par jour'
       : `un tous les ${Math.round(1 / perDay)} jours`
 export const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
+// Between one evening and the other viewer's
+const gapOf = (days?: number) => days === undefined ? null : days === 0 ? 'le même soir' : days === 1 ? 'à un jour d’écart' : `à ${plural(days, 'jour', 'jours')} d’écart`
 
 // A poster with what it stands for: a label above its title, and a detail under it
 export type Billed = { what: string, poster: WrappedPoster, detail: string }
@@ -37,7 +39,7 @@ export type SheetModel =
   | { kind: 'rank', label: string, rank: number, suffix: string, users: number, unit: string, detail: string }
   | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string } | null }
-  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null }
+  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null, pace: (WrappedPoster & { episodes: number, days: number }) | null }
   | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
   | { kind: 'server', label: string, first: boolean, lines: string[], poster: WrappedPoster, title: string, lede: string }
   | { kind: 'figure', label: string, variant: 'only_you' | 'twin', lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[] }
@@ -145,6 +147,8 @@ export const sheetsOf = (share: Share) => {
       title: lead.title,
       // Episodes watched in the binge evening, none when only the pace is known
       episodes: binge?.episodes ?? null,
+      // The show of the pace line, when it is not the binge's own and wants its own poster
+      pace: pace && pace.key !== lead.key ? pace : null,
       meta: [
         binge && `Le ${dayOf(binge.date, true)}, ${lasting(binge.minutes)} d’affilée.`,
         pace && `${pace.key === lead.key ? 'En tout' : `Et ${quoted(pace.title)}`}${THIN}: ${plural(pace.episodes, 'épisode', 'épisodes')} en ${plural(pace.days, 'jour', 'jours')}, ${rhythm(pace.episodes / pace.days)}.`,
@@ -196,8 +200,8 @@ export const sheetsOf = (share: Share) => {
       lines: null,
       count,
       spoken: plural(count, 'film', 'films'),
-      unit: one ? 'film que personne d’autre n’a vu' : 'films que personne d’autre n’a vus',
-      details: one ? `Cette année, personne d’autre sur ${place} ne l’a vu.` : `Cette année, personne d’autre sur ${place} ne les a vus. ${count > posters.length ? `Les ${posters.length} derniers` : 'Les voici'}${THIN}:`,
+      unit: one ? 'film que personne d’autre n’a jamais vu' : 'films que personne d’autre n’a jamais vus',
+      details: one ? `Tu l’as vu cette année, et personne d’autre sur ${place} ne l’a jamais vu.` : `Tu les as vus cette année, et personne d’autre sur ${place} ne les a jamais vus. ${count > posters.length ? `Les ${posters.length} derniers` : 'Les voici'}${THIN}:`,
       // A single film still shows, it is the one only this friend saw
       posters: one ? posters.slice(0, 1) : posters,
     })
@@ -209,8 +213,8 @@ export const sheetsOf = (share: Share) => {
       kind: 'duo',
       label: 'Vus à deux',
       lines: ['Vus à deux'],
-      lede: `Cette année sur ${place}, vous n’êtes que deux à avoir vu ${count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.${count > posters.length ? ` Les ${posters.length} plus vieux${THIN}:` : ''}`,
-      posters: posters.map((poster) => ({ ...poster, caption: [poster.year, `avec ${nameOf(poster.with)}`].filter(Boolean).join(', ') })),
+      lede: `Cette année sur ${place}, vous n’êtes que deux à avoir vu ${count === 1 ? 'ce titre' : `ces ${plural(count, 'titre', 'titres')}`}.${count > posters.length ? ` Les ${posters.length} que vous avez vus au plus près dans le temps${THIN}:` : ''}`,
+      posters: posters.map((poster) => ({ ...poster, caption: [`avec ${nameOf(poster.with)}`, gapOf(poster.days)].filter(Boolean).join(', ') })),
     })
   }
 
