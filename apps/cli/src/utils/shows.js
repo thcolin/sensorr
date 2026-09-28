@@ -121,6 +121,8 @@ export const sonarrShowOf = (series) => ({
   path: (series.path || '').split(/[\\/]/).filter(Boolean).pop(),
 })
 
+const TMDB_NOT_FOUND = 'The resource you requested could not be found.'
+
 // Sonarr's tmdbId can be missing, or name a show TMDB no longer has: its tvdbId may still find it
 export const fetchSonarrShow = async (tmdb, series) => {
   const fallback = async () => {
@@ -135,6 +137,10 @@ export const fetchSonarrShow = async (tmdb, series) => {
   try {
     return await fetchShow(tmdb, series.tmdbId)
   } catch (error) {
+    if (error?.message !== TMDB_NOT_FOUND) {
+      throw error
+    }
+
     const found = await fallback()
 
     if (!found) {

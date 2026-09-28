@@ -90,6 +90,12 @@ describe('fetchSonarrShow', () => {
     expect(await fetchSonarrShow(tmdbOf([]), { tmdbId: 0, tvdbId: 10 })).toBe(null)
     await expect(fetchSonarrShow(tmdbOf([]), { tmdbId: 1, tvdbId: 10 })).rejects.toThrow('The resource you requested could not be found.')
   })
+
+  it('throws any other TMDB error without looking the tvdbId up', async () => {
+    const tmdb = { fetch: jest.fn(async () => { throw new Error('Your request count (41) is over the allowed limit of 40.') }) }
+    await expect(fetchSonarrShow(tmdb, { tmdbId: 1, tvdbId: 10 })).rejects.toThrow('over the allowed limit')
+    expect(tmdb.fetch).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('sonarrEpisodesOf', () => {
