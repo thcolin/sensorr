@@ -71,7 +71,7 @@ export interface Wrapped {
   longest: WrappedPoster & { minutes: number } | null
   oldest: WrappedPoster & { year: number } | null
   rewatched: WrappedPoster & { times: number } | null
-  sign: { genre: string, ascendant: { kind: 'actor' | 'show' | 'director', name: string, poster?: WrappedPoster } | null } | null
+  sign: { genre: string, ascendant: { kind: 'actor' | 'show' | 'director', name: string, titles: number, poster?: WrappedPoster } | null } | null
 }
 
 const formats = new Map<string, Intl.DateTimeFormat>()
@@ -129,8 +129,8 @@ const DAY = 24 * 3600
 
 // Ranked by count, a tie gives no leader
 const leaderOf = (names: string[], min: number) => {
-  const counts = [...groupBy(names, (name) => name).entries()].map(([name, list]) => [name, list.length] as const).sort((a, b) => b[1] - a[1])
-  return counts[0] && counts[0][1] >= min && counts[0][1] !== counts[1]?.[1] ? counts[0][0] : null
+  const counts = [...groupBy(names, (name) => name).entries()].map(([name, list]) => ({ name, titles: list.length })).sort((a, b) => b.titles - a.titles)
+  return counts[0] && counts[0].titles >= min && counts[0].titles !== counts[1]?.titles ? counts[0] : null
 }
 
 // `plays` holds the whole server's plays: ranks and "only you" are measured against every user
@@ -235,6 +235,7 @@ export const wrappedOf = (
   const actor = leaderOf(watchedTitles.flatMap((title) => title.actors || []), 3)
   const director = leaderOf(watchedTitles.flatMap((title) => title.directors || []), 2)
   const posterWith = (list: 'actors' | 'directors', name: string) => posterOf(watchedTitles.find((title) => title[list]?.includes(name))!.key)
+  const lastStarted = (key: string) => Math.max(...moviePlays.get(key)!.map((play) => play.started))
 
   return {
     year,
@@ -264,7 +265,7 @@ export const wrappedOf = (
     night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, start: lastLaunch.time, poster: posterOf(lastLaunch.title) } : null,
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
-    only_you: onlyYou.length ? { count: onlyYou.length, poster: posterOf(byYear(onlyYou)[0] || onlyYou[0]) } : null,
+    only_you: onlyYou.length ? { count: onlyYou.length, poster: posterOf([...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a))[0]) } : null,
     dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * best(dropped)) } : null,
     dropped_show: droppedShow ? { ...posterOf(droppedShow), season: Math.floor(droppedAt! / 10000), episode: droppedAt! % 10000, episode_count: byKey.get(droppedShow)!.episode_count! } : null,
     slowest: slowest ? { ...posterOf(slowest.play.title), days: slowest.days } : null,
@@ -273,9 +274,9 @@ export const wrappedOf = (
     rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched) } : null,
     sign: genre ? {
       genre,
-      ascendant: actor ? { kind: 'actor', name: actor, poster: posterWith('actors', actor) }
-        : topShow ? { kind: 'show', name: posterOf(topShow).title, poster: posterOf(topShow) }
-          : director ? { kind: 'director', name: director, poster: posterWith('directors', director) }
+      ascendant: actor ? { kind: 'actor', ...actor, poster: posterWith('actors', actor.name) }
+        : topShow ? { kind: 'show', name: posterOf(topShow).title, titles: 1, poster: posterOf(topShow) }
+          : director ? { kind: 'director', ...director, poster: posterWith('directors', director.name) }
             : null,
     } : null,
   }

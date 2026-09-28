@@ -116,6 +116,11 @@ describe('wrappedOf', () => {
     expect(wrapped).toMatchObject({ streak: null, binge: null, pace: { title: 'Scrubs', episodes: 3, days: 28 } })
   })
 
+  it('shows the last film watched alone among the films nobody else watched', () => {
+    const alone = [play(13, 'plex://movie/2001', '2026-03-01T20:00:00Z', 2), play(13, 'plex://movie/heat', '2026-04-01T20:00:00Z', 3)]
+    expect(wrappedOf({ plays: alone, titles, user_id: 13, year: 2026 }).only_you).toMatchObject({ count: 2, poster: { title: 'Heat' } })
+  })
+
   it('compares with the other users, who stay anonymous', () => {
     const server = [
       play(7, 'plex://movie/dune', '2026-04-01T20:00:00Z', 2.5),
@@ -165,9 +170,9 @@ describe('wrappedOf', () => {
   })
 
   it('reads a sign from the genres, rising in the actor seen the most, else the first show', () => {
-    expect(wrapped.sign).toEqual({ genre: 'Science-Fiction', ascendant: { kind: 'show', name: 'Scrubs', poster: { key: 'show:1', title: 'Scrubs' } } })
+    expect(wrapped.sign).toEqual({ genre: 'Science-Fiction', ascendant: { kind: 'show', name: 'Scrubs', titles: 1, poster: { key: 'show:1', title: 'Scrubs' } } })
     const cast = titles.map((title) => ({ ...title, actors: ['Al Pacino'] }))
-    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).sign?.ascendant).toMatchObject({ kind: 'actor', name: 'Al Pacino' })
+    expect(wrappedOf({ plays, titles: cast, user_id: 1, year: 2026 }).sign?.ascendant).toMatchObject({ kind: 'actor', name: 'Al Pacino', titles: 5 })
   })
 
   it('compares with the previous edition only when the gap is worth telling', () => {

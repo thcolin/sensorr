@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped } from '@sensorr/sensorr'
-import { Programme } from './Programme'
+import { WrappedPage } from './Wrapped'
 import { Brushed, Sheet } from './Sheet'
 
 export interface Share {
@@ -42,10 +42,10 @@ export const App = () => {
       }
 
       const share: Share = await res.json()
-      document.title = `Programme de ${share.name} ${share.year}`
+      document.title = `Rétrospective de ${share.name} ${share.year}`
       setState({ status: 'done', share })
     } catch (error) {
-      console.error('Unable to load the programme', error)
+      console.error('Unable to load the wrapped', error)
       setState({ status: 'error' })
     }
   }, [])
@@ -62,7 +62,7 @@ export const App = () => {
             <svg className="loading-stroke" viewBox="0 0 200 40" aria-hidden="true">
               <path d="M6 28 C 40 6, 70 34, 104 18 S 170 8, 194 22" />
             </svg>
-            <p className="visually-hidden">Chargement du programme</p>
+            <p className="visually-hidden">Chargement de la rétrospective</p>
           </Sheet>
         </main>
       )
@@ -80,13 +80,13 @@ export const App = () => {
         <main className="wall">
           <Sheet className="sheet-notice">
             <Brushed as="h1" lines={['La projection', 'a sauté']} seed={15} />
-            <p className="notice">Le programme n’a pas pu se charger. Vérifie ta connexion, puis relance.</p>
+            <p className="notice">La rétrospective n’a pas pu se charger. Vérifie ta connexion, puis relance.</p>
             <button className="retry" type="button" onClick={load}>Relancer</button>
           </Sheet>
         </main>
       )
     case 'done':
-      return <Programme share={state.share} token={token} />
+      return <WrappedPage share={state.share} token={token} />
   }
 }
 
