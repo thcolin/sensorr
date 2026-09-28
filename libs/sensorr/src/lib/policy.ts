@@ -43,10 +43,8 @@ export const SENSORR_POLICY_FALLBACK = {
 // A `prefer` entry is one value, or an array of the values sharing its rank
 export const rankOf = (entries = [], value) => entries.findIndex(entry => [entry].flat().includes(value))
 
-// `prefer` entries as a flat list, each value with the index of its rank
 export const unranked = (entries = []): { value: string, rank: any }[] => entries.flatMap((entry, rank) => [entry].flat().map(value => ({ value, rank })))
 
-// Back to `prefer` entries: neighbours of one rank join in an array, a value without rank stands alone
 export const ranked = (values: { value: string, rank: any }[]) => values.reduce((entries, { value, rank }, index) => (
   (index && rank !== undefined && values[index - 1].rank === rank) ? [...entries.slice(0, -1), [entries[entries.length - 1]].flat().concat(value)] : [...entries, value]
 ), [])
