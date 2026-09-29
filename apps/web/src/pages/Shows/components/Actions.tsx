@@ -32,8 +32,8 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
   const query = useMemo(() => sensorr.getShowQuery(entity, metadata?.query), [entity?.id, entity?.query, metadata?.query])
   const years = query.years.map(Number)
 
-  // `getShowQuery` keeps a saved query only when its titles, terms and years are all set
-  const setQuery = (changes) => set('query', { titles: query.titles, terms: query.terms, years: query.years, ...changes })
+  // Only the field changed is saved: the others keep following TMDB, the years a new season adds among them
+  const setQuery = (changes) => set('query', { ...metadata?.query, ...changes })
 
   const ids = {
     terms: `show-terms-${entity?.id}`,
@@ -86,25 +86,36 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
 export const ShowSettings = memo(UIShowSettings)
 
+const isRange = ([from, to]) => from >= 1000 && to <= 9999 && from <= to
+
+// A range is kept once focus leaves both bounds, so each can be typed before the other; a wrong one stays shown
 const UIYearsInput = ({ value, onChange }) => {
   const [draft, setDraft] = useState(value)
+  const [invalid, setInvalid] = useState(false)
 
   useEffect(() => {
     setDraft(value)
+    setInvalid(false)
   }, [value[0], value[1]])
 
   const commit = () => {
-    const [from, to] = draft.map(Number)
+    const [from, to] = draft.map(year => year ? Number(year) : null)
 
-    if (from >= 1000 && to <= 9999 && from <= to && (from !== value[0] || to !== value[1])) {
+    if (from === value[0] && to === value[1]) {
+      setInvalid(false)
+    } else if (isRange([from, to])) {
       onChange([from, to])
     } else {
-      setDraft(value)
+      setInvalid(true)
     }
   }
 
   return (
-    <div sx={UIYearsInput.styles.element}>
+    <div
+      sx={UIYearsInput.styles.element}
+      data-invalid={invalid || undefined}
+      onBlur={e => !e.currentTarget.contains(e.relatedTarget) && commit()}
+    >
       {['From', 'To'].map((label, index) => [
         index > 0 && <span key='to' aria-hidden='true'>–</span>,
         <input
@@ -112,43 +123,62 @@ const UIYearsInput = ({ value, onChange }) => {
           type='text'
           inputMode='numeric'
           maxLength={4}
+          placeholder='YYYY'
           aria-label={label}
+          aria-invalid={invalid}
           value={draft[index] ?? ''}
           onChange={e => setDraft(draft.map((year, i) => i === index ? e.currentTarget.value.replace(/\D/g, '') : year))}
-          onBlur={commit}
-          onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              commit()
+            } else if (e.key === 'Escape') {
+              setDraft(value)
+              setInvalid(false)
+            }
+          }}
         />,
       ])}
     </div>
   )
 }
 
+// Bounds fill the box, so a tap anywhere in it lands in one, and meet at the dash
 UIYearsInput.styles = {
   element: {
     display: 'flex',
     alignItems: 'center',
     gap: 9,
     marginY: 10,
-    paddingY: '5px',
-    paddingX: 9,
+    padding: 10,
     borderRadius: '0.25em',
     border: '1px solid',
     borderColor: 'gray-500',
-    transition: 'border-color 200ms ease-in-out',
+    transition: 'border-color 100ms ease-in-out',
     ':focus-within': {
-      borderColor: 'accent',
+      borderColor: 'grayDarkest',
+    },
+    '&[data-invalid]': {
+      borderColor: 'error',
     },
     '>input': {
       variant: 'input.reset',
-      width: '5ch',
-      padding: 10,
+      flex: 1,
+      minWidth: 0,
+      paddingY: 9,
+      paddingX: 12,
       fontFamily: 'body',
       fontSize: 6,
       fontWeight: 'semibold',
       fontVariantNumeric: 'tabular-nums',
       color: 'text',
-      textAlign: 'center',
       cursor: 'text',
+      ':first-of-type': {
+        textAlign: 'right',
+      },
+      '::placeholder': {
+        color: 'gray-500',
+        fontWeight: 'normal',
+      },
     },
     '>span': {
       fontSize: 6,
@@ -166,30 +196,35 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
     monitor_new_seasons: `show-new-seasons-${entity.id}`,
   }
 
+  const labelled = (id) => ({
+    'aria-labelledby': `${id}-label`,
+    'aria-describedby': `keep-up-to-date-${id}-help`,
+  })
+
   return (
     <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option }}>
-        <span>Follow episodes</span>
+        <span id={`${ids.monitored}-label`}>Follow episodes</span>
         <OptionInput
           id={ids.monitored}
           value={!!metadata?.monitored}
           disabled={!ready || !!pending['monitored']}
           onChange={value => set('monitored', value)}
-          aria-labelledby={`keep-up-to-date-${ids.monitored}-help`}
+          {...labelled(ids.monitored)}
         >
           {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
         </OptionInput>
       </div>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option, gridColumn: ['auto', '2 / -1'] }}>
-        <span>Follow new seasons</span>
+        <span id={`${ids.monitor_new_seasons}-label`}>Follow new seasons</span>
         <OptionInput
           id={ids.monitor_new_seasons}
           value={!!metadata?.monitor_new_seasons}
           disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
           onChange={value => set('monitor_new_seasons', value)}
-          aria-labelledby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
+          {...labelled(ids.monitor_new_seasons)}
         >
-          {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+          {!metadata?.monitored ? 'Follow episodes first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
         </OptionInput>
       </div>
     </ShowSettings>
