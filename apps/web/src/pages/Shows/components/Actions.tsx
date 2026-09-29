@@ -86,7 +86,6 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
 export const ShowSettings = memo(UIShowSettings)
 
-// A year is kept on blur or Enter once both bounds read as years in order, the last saved range otherwise
 const UIYearsInput = ({ value, onChange }) => {
   const [draft, setDraft] = useState(value)
 
@@ -141,8 +140,9 @@ UIYearsInput.styles = {
     },
     '>input': {
       variant: 'input.reset',
-      width: '4ch',
+      width: '5ch',
       padding: 10,
+      fontFamily: 'body',
       fontSize: 6,
       fontWeight: 'semibold',
       fontVariantNumeric: 'tabular-nums',
