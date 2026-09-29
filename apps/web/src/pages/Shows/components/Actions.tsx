@@ -86,7 +86,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
 
 export const ShowSettings = memo(UIShowSettings)
 
-const isRange = ([from, to]) => from >= 1000 && to <= 9999 && from <= to
+const isRange = ([from, to]) => from >= 1900 && to <= new Date().getFullYear() + 10 && from <= to
 
 // A range is kept once focus leaves both bounds, so each can be typed before the other; a wrong one stays shown
 const UIYearsInput = ({ value, onChange }) => {
