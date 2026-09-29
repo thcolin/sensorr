@@ -84,7 +84,9 @@ export class Sensorr {
     return {
       _defaults,
       banned_releases,
-      ...((query?.titles?.length && query?.terms?.length && query?.years?.length) ? query : _defaults),
+      titles: query?.titles?.length ? query.titles : _defaults.titles,
+      terms: query?.terms?.length ? query.terms : _defaults.terms,
+      years: query?.years?.length ? query.years : _defaults.years,
     }
   }
 

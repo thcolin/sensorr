@@ -33,7 +33,7 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.record.movies.proposalOnly` | `boolean` | `false` | Record movies job will only submit proposal and don't download any release |
 | `jobs.record.shows.cron` | `string` | `0 17 * * *` | Record shows job cron, wished shows are searched by whole series, season packs and episodes |
 | `jobs.record.shows.paused` | `boolean` | `true` | Pause Record shows job |
-| `jobs.record.shows.proposalOnly` | `boolean` | `true` | Record shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.record.shows.proposalOnly` | `boolean` | `true` | Record shows job will only submit proposal and don't download any release |
 | `jobs.refresh.movies.cron` | `string` | `0 4 * * *` | Refresh movies job cron |
 | `jobs.refresh.movies.paused` | `boolean` | `false` | Pause Refresh movies job |
 | `jobs.refresh.shows.cron` | `string` | `0 4 * * *` | Refresh shows job cron, shows still airing are refreshed on every run, the others once a month |
@@ -61,7 +61,7 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.import.shows.paused` | `boolean` | `true` | Pause Import shows job |
 | `jobs.airing.shows.cron` | `string` | `0 * * * *` | Airing shows job cron, wanted episodes aired in the last 7 days are searched one by one |
 | `jobs.airing.shows.paused` | `boolean` | `true` | Pause Airing shows job |
-| `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise |
+| `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release |
 | `jobs.wrapped.cron` | `string` | `0 6 * * *` | Wrapped job cron |
 | `jobs.wrapped.paused` | `boolean` | `true` | Pause Wrapped job |
 
