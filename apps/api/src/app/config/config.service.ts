@@ -76,10 +76,14 @@ export class ConfigService implements OnModuleInit {
     apply(candidate)
     candidate.validate({ allowed: 'warn', output: () => {} })
 
-    // Convict only knows a cron as a String, the scheduler's own parser is the one that decides
+    // Convict only knows a cron as a String, the scheduler's own parser is the one that decides, and it never reads a paused job's
     for (const [command, types] of Object.entries(JOBS)) {
       for (const type of types.length ? types : [undefined]) {
         const key = ['jobs', command, type].filter(Boolean).join('.')
+
+        if (candidate.get(`${key}.paused`)) {
+          continue
+        }
 
         try {
           new CronTime(candidate.get(`${key}.cron`))
