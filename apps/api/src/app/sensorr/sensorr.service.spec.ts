@@ -61,6 +61,12 @@ describe('SensorrService', () => {
       expect(await fs.readFile(path.join(blackhole, 'Dune (2021) [1080p] [WEBRip]-TPB.magnet'), 'utf8')).toBe(`${enclosure}\n`)
     })
 
+    it('writes a single line, whatever line break the link carries', async () => {
+      await (await serviceOf(true)).downloadRelease({ ...release, enclosure: `${enclosure}\nmagnet:?xt=urn:btih:0087CFECF585492A760BD952659D1382C973852A` }, 'enclosure', 'fs')
+      const [file] = await fs.readdir(blackhole)
+      expect((await fs.readFile(path.join(blackhole, file), 'utf8')).split('\n')).toHaveLength(2)
+    })
+
     it('writes a proposed link once it is accepted', async () => {
       const service = await serviceOf(true)
       await service.downloadRelease(release, 'enclosure', 'cache')
