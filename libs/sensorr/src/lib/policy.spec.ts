@@ -92,8 +92,13 @@ describe('magnet releases', () => {
   })
 
   it('withdraws a magnet link from a show search even when magnet links are on', () => {
-    const [result] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), title: 'Dune.S01.1080p.WEBRip.x264' }], { ...query, magnet: true, unit: { type: 'season', season: 1, episodes: [] } } as any)
+    const result = Policy.normalizers.magnetReleases({ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), valid: true }, true, { type: 'season', season: 1, episodes: [] })
     expect(result.valid).toBe(false)
     expect(result.reason).toMatch(/show needs a \.torrent/)
+  })
+
+  it('gives the reason of any other policy before the magnet one', () => {
+    const [result] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), title: 'Dune.1984.1080p.WEBRip.x264' }], query)
+    expect(result.reason).toMatch(/Release year/)
   })
 })
