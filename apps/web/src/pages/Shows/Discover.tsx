@@ -22,7 +22,7 @@ import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useAPI, query as APIQuery } from '../../store/api'
-import { networks } from '../../components/Show/fields'
+import { networks, TYPES as SHOW_TYPES } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -41,13 +41,9 @@ const STATUSES = [
   { value: 4, label: emojize('🪦', 'Canceled') },
 ]
 
-const TYPES = [
-  { value: 4, label: emojize('🎬', 'Scripted') },
-  { value: 2, label: emojize('📕', 'Miniseries') },
-  { value: 0, label: emojize('🎓', 'Documentary') },
-  { value: 3, label: emojize('🤳', 'Reality') },
-  { value: 6, label: emojize('📼', 'Video') },
-]
+const TYPES = SHOW_TYPES
+  .filter(({ name }) => !['Talk Show', 'News'].includes(name))
+  .map(({ name, index, emoji }) => ({ value: index, label: emojize(emoji, name) }))
 
 const oneOf = (label, options) => ({
   initial: { values: [] },

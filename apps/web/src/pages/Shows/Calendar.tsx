@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import { AbstractEntity, Badge, CalendarMonthPicker, Empty, Entities, EpisodeStatus, EpisodeStatusOptions, FilterGenres, FilterStatistics, Warning, transformShowDetails, useControlsState, withControls } from '@sensorr/ui'
 import { coverageLabel } from '@sensorr/sensorr'
 import i18n from '@sensorr/i18n'
@@ -6,7 +7,7 @@ import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields } from '@sensorr/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { withTMDB } from '../../store/tmdb'
-import { episode_status, networks } from '../../components/Show/fields'
+import { episode_status, multi, networks } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -117,9 +118,9 @@ const aside = {
 }
 
 // The values of the followed shows, uncounted: a count of shows would read as a count of the episodes shown
-const uncounted = (Component) => ({ statistics, ...props }) => <Component {...props} statistics={statistics?.map(({ count, ...value }) => value)} />
-
-const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
+const uncounted = (Component) => ({ statistics, ...props }) => (
+  <Component {...props} statistics={statistics && [...statistics].sort((a, b) => b.count - a.count).map(({ count, ...value }) => value)} />
+)
 
 const FIELDS = {
   head: {
@@ -167,7 +168,12 @@ const useStatistics = () => {
 
     api.fetch(uri, params, init)
       .then(setStatistics)
-      .catch((e) => e.name !== 'AbortError' && console.warn(e))
+      .catch((e) => {
+        if (e.name !== 'AbortError') {
+          console.warn(e)
+          toast.error('Error while loading calendar statistics')
+        }
+      })
 
     return () => controller.abort()
   }, [])
