@@ -82,3 +82,13 @@ describe('episodeStatusFilter', () => {
     expect(episodeStatusFilter('missing', now)).toEqual({})
   })
 })
+
+describe('a query string parsed into arrays or objects', () => {
+  it('filters on none of them, and reads no prototype key', () => {
+    expect(showFilter({ networks: ['49'], status: { $ne: 'Ended' }, type: 'Scripted' })).toEqual({ state: { $nin: ['ignored'] }, type: { $in: ['Scripted'] } })
+    expect(movieFilter({ genres: { $gt: '' } })).toEqual({ state: { $nin: ['ignored'] } })
+    expect(episodeStatusFilter({ $ne: 'owned' }, new Date())).toEqual({})
+    expect(episodeStatusFilter('__proto__', new Date())).toEqual({})
+    expect(showFilter({ monitored: 'constructor', 'releases.proposal': '__proto__' })).toEqual({ state: { $nin: ['ignored'] } })
+  })
+})
