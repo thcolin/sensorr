@@ -138,11 +138,20 @@ describe('wrappedOf', () => {
       ...[20, 21, 22, 23].map((hour) => play(6, 'show:1', `2026-03-10T${hour}:00:00Z`, 0.5, 'episode')),
     ]
     expect(wrappedOf({ plays: binge, titles, user_id: 6, year: 2026 })).toMatchObject({
-      streak: { evenings: 3, from: '2026-03-01', to: '2026-03-03', poster: { title: 'Scrubs' } },
+      streak: { evenings: 3, from: '2026-03-01', to: '2026-03-03', poster: { title: 'Scrubs' }, times: 3, nights: [{ title: 'Scrubs' }, { title: 'Scrubs' }, { title: 'Scrubs' }] },
       binge: { title: 'Scrubs', episodes: 4, date: '2026-03-10' },
       pace: { title: 'Scrubs', episodes: 8, days: 11 },
     })
     expect(wrapped).toMatchObject({ streak: null, binge: null, pace: { title: 'Scrubs', episodes: 3, days: 28 } })
+  })
+
+  it('tells each evening of the run by its own title', () => {
+    const run = [
+      play(14, 'plex://movie/2001', '2026-03-01T20:00:00Z', 2),
+      play(14, 'plex://movie/heat', '2026-03-02T20:00:00Z', 2),
+      play(14, 'show:1', '2026-03-03T20:00:00Z', 0.5, 'episode'),
+    ]
+    expect(wrappedOf({ plays: run, titles, user_id: 14, year: 2026 }).streak).toMatchObject({ evenings: 3, times: 1, nights: [{ title: '2001' }, { title: 'Heat' }, { title: 'Scrubs' }] })
   })
 
   it('shows the last film watched alone among the films nobody else watched', () => {
