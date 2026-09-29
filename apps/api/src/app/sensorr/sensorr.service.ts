@@ -64,9 +64,9 @@ export class SensorrService {
 
     switch (source) {
       case 'enclosure':
-        // A .magnet file holds the link itself, one per line, as qBittorrent reads it from its watched folder
+        // A .magnet file holds one link per line, as qBittorrent reads it from its watched folder: URL drops any line break
         if (magnet) {
-          buffer = Buffer.from(`${release.enclosure}\n`)
+          buffer = Buffer.from(`${new URL(release.enclosure).href}\n`)
           break
         }
 
