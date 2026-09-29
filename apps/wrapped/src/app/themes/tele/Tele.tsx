@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, number, plural, type SheetModel } from '../../sheets'
+import { MONTHS, THIN, number, plural, type SheetModel } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
 import { TestCard } from './States'
 import { anchor } from '../../anchor'
@@ -112,9 +112,9 @@ const Big = ({ value, spoken, suffix }: { value: number, spoken: string, suffix?
 const Barcode = () => <span className="tele-barcode" aria-hidden="true"><i /></span>
 
 // A quantity stands out with its unit: not a date, nor the digits of a name or of a title in quotes
-const UNIT = '(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
+const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
-const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
+const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
 const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
@@ -194,22 +194,41 @@ const Rank = ({ sheet, name, page }: { sheet: Of<'rank'> } & Page) => (
       <Big value={sheet.rank} suffix={sheet.suffix} spoken={`${sheet.rank}${sheet.suffix}`} />
       <p className="tele-unit">{sheet.unit}</p>
       <p className="tele-standfirst">{figures(sheet.detail)}</p>
+      <p className="tele-body">{figures(sheet.compare)}</p>
     </>}
-    right={
-      <table className="tele-ratings" aria-hidden="true">
-        <tbody>
-          {[...new Set([1, sheet.rank, sheet.users])].flatMap((rank, index, ranks) => [
+    right={<Ratings sheet={sheet} />}
+  />
+)
+
+// The ratings of the server: the first, the reader, the middle and the last, each with the hours known for it
+const Ratings = ({ sheet }: { sheet: Of<'rank'> }) => {
+  const middle = Math.ceil(sheet.users / 2)
+  const hoursOf = (rank: number) => rank === sheet.rank ? sheet.hours : rank === 1 ? sheet.max : rank === middle ? sheet.median : null
+  const top = sheet.max || sheet.hours
+
+  return (
+    <table className="tele-ratings" aria-hidden="true">
+      <tbody>
+        {[...new Set([1, sheet.rank, middle, sheet.users])].sort((a, b) => a - b).flatMap((rank, index, ranks) => {
+          const hours = hoursOf(rank)
+          return [
             index > 0 && rank - ranks[index - 1] > 1 && <tr key={`gap-${rank}`} className="tele-ratings-gap"><td colSpan={2}>…</td></tr>,
             <tr key={rank} className={rank === sheet.rank ? 'tele-ratings-you' : undefined}>
               <th>{rank}<sup>{rank === 1 ? 'er' : 'e'}</sup></th>
-              <td>{rank === sheet.rank ? <b>Toi</b> : <span className="tele-ratings-blank" />}</td>
+              <td>
+                {rank === sheet.rank && <b>Toi</b>}
+                {rank !== sheet.rank && rank === middle && <span className="tele-ratings-label">Médiane</span>}
+                {hours !== null
+                  ? <span className="tele-ratings-bar" style={{ '--share': Math.max(hours / top, 0.04) } as React.CSSProperties}><span>{number.format(hours)} h</span></span>
+                  : rank !== sheet.rank && <span className="tele-ratings-blank" />}
+              </td>
             </tr>,
-          ])}
-        </tbody>
-      </table>
-    }
-  />
-)
+          ]
+        })}
+      </tbody>
+    </table>
+  )
+}
 
 // A daily serial: one episode per evening of the run
 const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
@@ -221,6 +240,7 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
       <p className="tele-standfirst">{sheet.intro}</p>
       <Big value={sheet.evenings} spoken={sheet.spoken} />
       <p className="tele-unit">{sheet.unit}</p>
+      <Calendar from={sheet.from} to={sheet.to} />
     </>}
     right={<>
       {sheet.lead
@@ -229,7 +249,7 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
             <Photo poster={sheet.poster} art={art} />
             <div>
               <h3 className="tele-pick-title">{sheet.poster.title}</h3>
-              <p>{figures(sheet.details)}</p>
+              <p>{figures(sheet.span)}</p>
             </div>
           </article>
         )
@@ -251,6 +271,41 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
   />
 )
 
+const DAY = 86400000
+const noon = (date: string) => Date.parse(`${date}T12:00:00Z`)
+
+// The months of the run as a wall calendar, its evenings struck through
+const Calendar = ({ from, to }: { from: string, to: string }) => {
+  const [start, end] = [noon(from), noon(to)]
+  const months: Date[] = []
+  for (let month = new Date(start); month.getTime() <= end; month = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1, 12))) {
+    months.push(new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1, 12)))
+  }
+
+  return (
+    <div className="tele-calendar" aria-hidden="true">
+      {months.slice(0, 3).map((month) => {
+        const days = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0, 12)).getUTCDate()
+        // Monday first
+        const offset = (month.getUTCDay() + 6) % 7
+        return (
+          <div key={month.getTime()} className="tele-calendar-month">
+            <p className="tele-calendar-name">{month.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' })}</p>
+            <ol>
+              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => <li key={`h${index}`} className="tele-calendar-head">{day}</li>)}
+              {Array.from({ length: days }, (_, index) => {
+                const time = month.getTime() + index * DAY
+                const on = time >= start && time <= end
+                return <li key={index} className={`${on ? 'tele-calendar-on' : ''}${time === end ? ' tele-calendar-last' : ''}`} style={index === 0 ? { gridColumnStart: offset + 1 } : undefined}>{index + 1}</li>
+              })}
+            </ol>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // The year as a listings grid, one line per month, the show watched the most in each
 const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
   const { shows, elapsed, max, peak } = sheet
@@ -268,7 +323,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
             <Photo poster={peak.show} art={art} />
             <div>
               <h3 className="tele-pick-title">{peak.show.title}</h3>
-              <p>En <b>{peak.month}</b>, {figures(peak.text)}</p>
+              <p>En <b>{peak.month}</b>{THIN}: {figures(peak.bare)}</p>
             </div>
           </article>
         )}
@@ -349,7 +404,7 @@ const Quote = ({ text }: { text: ReactNode }) => <p className="tele-quote">{text
 const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
   const { pace } = sheet
   // The pace line tells another show, it goes in that show's own box
-  const [own, other] = pace ? [sheet.meta.slice(0, -1), sheet.meta[sheet.meta.length - 1]] : [sheet.meta, null]
+  const own = pace ? sheet.meta.slice(0, -1) : sheet.meta
 
   return (
     <Spread
@@ -364,12 +419,12 @@ const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
         <h3 className="tele-title">{sheet.title}</h3>
         {own.map((meta) => <p key={meta} className="tele-standfirst">{figures(meta)}</p>)}
       </>}
-      right={pace && other ? (
+      right={pace && sheet.paced ? (
         <article className="tele-pick">
           <Photo poster={pace} art={art} />
           <div>
             <h3 className="tele-pick-title">{pace.title}</h3>
-            <p>{figures(other)}</p>
+            <p>{figures(sheet.paced)}</p>
           </div>
         </article>
       ) : undefined}
@@ -387,24 +442,26 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => (
       <p className="tele-unit">{sheet.date}</p>
       <p className="tele-clock" aria-hidden="true">{sheet.end}</p>
       <p className="tele-body">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
-      <p className="tele-body">{sheet.last}</p>
-      {sheet.earlier && <>
-        <p className="tele-box-title">{sheet.earlier}</p>
-        <ul className="tele-gallery-row" data-count={sheet.before.length}>
-          {sheet.before.map((poster) => (
-            <li key={poster.key}>
-              <Photo poster={poster} art={art} width={320} />
-              <span className="tele-thumb-title">{poster.title}</span>
-            </li>
-          ))}
-        </ul>
-      </>}
+      {sheet.listing
+        ? <>
+          <p className="tele-box-title">{sheet.listing}</p>
+          <ol className="tele-listing">
+            {sheet.schedule.map((line, index) => (
+              <li key={`${line.start}-${index}`} className={index === sheet.schedule.length - 1 ? 'tele-listing-last' : undefined}>
+                <span className="tele-listing-time"><b>{line.start}</b><span>{line.end}</span></span>
+                <Photo poster={line.poster} art={art} width={320} className="tele-listing-poster" />
+                <span className="tele-listing-title">{line.poster.title}{line.what && <span>{line.what}</span>}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+        : <p className="tele-body">{sheet.last}</p>}
     </>}
   />
 )
 
 const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => {
-  const [chapo, ...more] = sentences(sheet.lede)
+  const [chapo, ...more] = sentences(sheet.bare)
 
   return (
     <Spread
@@ -439,13 +496,9 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
       {...page}
       left={<>
         {sheet.lines ? <Headline lines={sheet.lines} /> : <h2 className="tele-headline"><span className="tele-band">Rareté</span></h2>}
-        {twin && sheet.highlight && (
-          <p className="tele-portrait" aria-hidden="true">
-            <span className="tele-portrait-initial">{sheet.highlight[0]}</span>
-            <span className="tele-portrait-name">{sheet.highlight}</span>
-          </p>
-        )}
-        <Big value={sheet.count} spoken={sheet.spoken} />
+        {twin && sheet.highlight && sheet.sides
+          ? <Venn name={sheet.highlight} count={sheet.count} spoken={sheet.spoken} sides={sheet.sides} />
+          : <Big value={sheet.count} spoken={sheet.spoken} />}
         <p className="tele-unit">{before}{sheet.highlight && <><mark className="tele-mark">{sheet.highlight}</mark>{after}</>}</p>
         <p className="tele-standfirst">{figures(chapo)}</p>
         {!twin && sheet.posters.length > 1 && (
@@ -464,6 +517,15 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
     />
   )
 }
+
+// Two viewers as two circles, the titles they share where they cross
+const Venn = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
+  <div className="tele-venn">
+    <p className="tele-venn-side tele-venn-you" aria-hidden="true"><b>Toi</b><span>{number.format(sides.you)}</span></p>
+    <p className="tele-venn-side tele-venn-them" aria-hidden="true"><b>{name}</b>{sides.them !== null && <span>{number.format(sides.them)}</span>}</p>
+    <p className="tele-venn-shared"><span aria-hidden="true">{number.format(count)}</span><span className="visually-hidden">{spoken}</span></p>
+  </div>
+)
 
 // Each title watched at two is a reader's letter, signed with the other viewer
 const Letter = ({ poster, art, lead }: { poster: Of<'duo'>['posters'][number], art: Art, lead?: boolean }) => (
