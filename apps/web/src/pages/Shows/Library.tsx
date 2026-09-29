@@ -236,6 +236,7 @@ const Library = compose(
             { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
             { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
             { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+            { label: i18n.t('ui.sortings.last_air_date'), value: 'last_air_date' },
             { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
             { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
             { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
