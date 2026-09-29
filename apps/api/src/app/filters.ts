@@ -1,0 +1,145 @@
+// The Mongo filters of the library screens, from the query string their controls send. They serve `find` and
+// `aggregate` alike, so every value is cast here: an aggregation stage gets no help from the schema.
+
+const RELEASE_TAGS = ['znab', 'encoding', 'resolution', 'source', 'dub', 'language', 'flags']
+
+const RELEASE_KEYS = [
+  'releases.proposal',
+  'releases.overdue',
+  'release_from',
+  'release_size.lte',
+  'release_size.gte',
+  ...RELEASE_TAGS.flatMap(tag => [`release_${tag}.prefer`, `release_${tag}.avoid`]),
+]
+
+// `a|b` matches any of the values, `a,b` all of them
+export const oneOf = (value: string | undefined, path: string, cast: (value: string) => any = (value) => value) => value ? {
+  [path]: /,/.test(value) ? { $all: value.split(',').map(cast) } : { $in: value.split('|').map(cast) },
+} : {}
+
+export const between = (params, key: string, path = key, cast: (value: string) => any = Number) => (params[`${key}.lte`] || params[`${key}.gte`]) ? {
+  [path]: {
+    ...(params[`${key}.lte`] ? { $lte: cast(params[`${key}.lte`]) } : {}),
+    ...(params[`${key}.gte`] ? { $gte: cast(params[`${key}.gte`]) } : {}),
+  },
+} : {}
+
+const date = (value: string) => new Date(value)
+
+const requested = (params) => ({
+  ...oneOf(params.requested_by, 'requested_by'),
+  ...(params['requested_by.gte'] ? {
+    [`requested_by.${Number(params['requested_by.gte']) - 1}`]: { $exists: true },
+  } : {}),
+})
+
+// A preferred tag is looked for on the proposal when the proposal filter asks for one
+export const releasesFilter = (params) => {
+  if (!Object.keys(params).some(key => RELEASE_KEYS.includes(key))) {
+    return {}
+  }
+
+  const proposal = `${params['releases.proposal']}` === 'true' ? { proposal: true } : {}
+  const prefer = (key: string, value) => [{ releases: { $elemMatch: { [key]: value, ...proposal } } }]
+
+  return {
+    $and: [
+      ...(params['releases.proposal'] ? ({
+        true: [{ releases: { $elemMatch: { proposal: true } } }],
+        false: [{ releases: { $not: { $elemMatch: { proposal: true } } } }],
+      })[params['releases.proposal']] || [] : []),
+      ...(`${params['releases.overdue']}` === 'true' ? [{ releases: { $elemMatch: { overdue: true } } }] : []),
+      ...(params['release_znab.prefer'] ? prefer('znab', { $in: params['release_znab.prefer'].split('|') }) : []),
+      ...(params['release_znab.avoid'] ? [{ releases: { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } } } } }] : []),
+      ...RELEASE_TAGS.filter(tag => tag !== 'znab').flatMap(tag => [
+        ...(params[`release_${tag}.prefer`] ? prefer('title', { $regex: params[`release_${tag}.prefer`] }) : []),
+        ...(params[`release_${tag}.avoid`] ? [{ releases: { $not: { $elemMatch: { title: { $regex: params[`release_${tag}.avoid`] } } } } }] : []),
+      ]),
+      // Scoped by the same $elemMatch as `releases.proposal`, otherwise an entry matches on a pending proposal
+      // and on an unrelated release from another job
+      ...(params.release_from ? prefer('from', { $in: params.release_from.split('|') }) : []),
+      ...(params['release_size.lte'] ? [{ releases: { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } } }] : []),
+      ...(params['release_size.gte'] ? [{ releases: { $elemMatch: { size: { $gte: params['release_size.gte'] * Math.pow(1024, 3) } } } }] : []),
+    ],
+  }
+}
+
+export const movieFilter = (params) => ({
+  state: { $nin: ['ignored'] },
+  ...(params.state ? {
+    state: { $in: params.state.split('|') }
+  } : {}),
+  ...(params.policy ? {
+    policy: { $in: params.policy.split('|') }
+  } : {}),
+  ...(typeof params.refine === 'boolean' ? {
+    refine: params.refine ? { $ne: false } : { $eq: false },
+  } : {}),
+  ...(typeof params.shrink === 'boolean' ? {
+    shrink: params.shrink ? { $ne: false } : { $eq: false },
+  } : {}),
+  ...(`${params.reported}` === 'true' ? {
+    'reports.0': { $exists: true },
+  } : {}),
+  ...oneOf(params.genres, 'genres.id', Number),
+  ...oneOf(params.original_languages, 'original_language'),
+  ...oneOf(params.spoken_languages, 'spoken_languages.iso_639_1'),
+  ...oneOf(params.production_companies, 'production_companies.name'),
+  ...requested(params),
+  ...((params['refined_at.lte'] || params['refined_at.gte']) ? {
+    refined_at: {
+      ...(params['refined_at.lte'] ? { $not: { $gte: params['refined_at.lte'] }  } : {}),
+      ...(params['refined_at.gte'] ? { $not: { $lte: params['refined_at.gte'] }  } : {}),
+    },
+  } : {}),
+  ...((params['shrinked_at.lte'] || params['shrinked_at.gte']) ? {
+    shrinked_at: {
+      ...(params['shrinked_at.lte'] ? { $not: { $gte: params['shrinked_at.lte'] }  } : {}),
+      ...(params['shrinked_at.gte'] ? { $not: { $lte: params['shrinked_at.gte'] }  } : {}),
+    },
+  } : {}),
+  ...between(params, 'release_date', 'release_date', date),
+  ...between(params, 'popularity'),
+  ...between(params, 'vote_average'),
+  ...between(params, 'vote_count'),
+  ...between(params, 'budget', 'budget', (value) => Number(value) * 1000000),
+  ...between(params, 'runtime'),
+  ...releasesFilter(params),
+})
+
+const monitored = (value) => ({
+  true: { monitored: true },
+  false: { monitored: { $ne: true } },
+})[`${value}`] || {}
+
+export const showFilter = (params) => ({
+  state: { $nin: ['ignored'] },
+  ...(params.state ? {
+    state: { $in: params.state.split('|') }
+  } : {}),
+  ...(params.policy ? {
+    policy: { $in: params.policy.split('|') }
+  } : {}),
+  ...(params.status ? {
+    status: { $in: params.status.split('|') }
+  } : {}),
+  ...(params.type ? {
+    type: { $in: params.type.split('|') }
+  } : {}),
+  ...monitored(params.monitored),
+  ...oneOf(params.genres, 'genres.id', Number),
+  ...oneOf(params.networks, 'networks.id', Number),
+  ...oneOf(params.original_languages, 'original_language'),
+  ...oneOf(params.origin_country, 'origin_country'),
+  ...requested(params),
+  ...between(params, 'first_air_date', 'first_air_date', date),
+  ...between(params, 'number_of_seasons'),
+  ...between(params, 'popularity'),
+  ...between(params, 'vote_average'),
+  ...between(params, 'vote_count'),
+  // A show lists one length per format it aired in, TMDB mostly gives one
+  ...((params['episode_run_time.lte'] || params['episode_run_time.gte']) ? {
+    episode_run_time: { $elemMatch: between(params, 'episode_run_time', 'value').value },
+  } : {}),
+  ...releasesFilter(params),
+})
