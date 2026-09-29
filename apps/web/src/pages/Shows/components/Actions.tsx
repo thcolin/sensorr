@@ -1,16 +1,8 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Option } from '@sensorr/ui'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
-import { useConfigContext } from '../../../contexts/Config/Config'
-import { MetadataStyles, OptionInput, PolicyInput } from '../../Details/components/Metadata'
-
-export const DOWNLOADS = [
-  { value: null, key: 'jobs', label: 'As jobs' },
-  { value: true, key: 'ask', label: 'Ask first' },
-  { value: false, key: 'auto', label: 'At once' },
-]
+import { MetadataStyles, OptionInput, PolicyInput, QueryInput, termsValuesOf } from '../../Details/components/Metadata'
 
 export const useShowPolicy = (entity, metadata) => {
   const sensorr = useSensorr()
@@ -34,27 +26,50 @@ const usePendingMetadata = (setMetadata) => {
 }
 
 const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, children = null }) => {
-  const { config } = useConfigContext()
+  const sensorr = useSensorr()
   const { pending, set } = usePendingMetadata(setMetadata)
   const policy = useShowPolicy(entity, metadata)
-  const jobs = useMemo(() => ['record', 'airing']
-    .map(command => `${command}: ${config?.get(`jobs.${command}.shows.proposalOnly`) ? 'ask first' : 'at once'}`)
-    .join(' · '), [config])
+  const query = useMemo(() => sensorr.getShowQuery(entity, metadata?.query), [entity?.id, entity?.query, metadata?.query])
+  const years = query.years.map(Number)
 
-  const auto = typeof metadata?.proposal_only === 'boolean' ? metadata.proposal_only : null
+  // `getShowQuery` keeps a saved query only when its titles, terms and years are all set
+  const setQuery = (changes) => set('query', { titles: query.titles, terms: query.terms, years: query.years, ...changes })
+
   const ids = {
+    terms: `show-terms-${entity?.id}`,
+    years: `show-years-${entity?.id}`,
     policy: `show-policy-${entity?.id}`,
-    auto: `show-auto-${entity?.id}`,
   }
 
   const helps = {
+    terms: 'Sensorr will search for all selected terms on configured indexers',
+    years: 'Sensorr will filter releases with a year outside this range',
     policy: 'Sensorr will apply selected policy to sort and select the best release',
-    auto: auto === null ? `As the jobs say, ${jobs}` : auto ? 'Releases found wait for your answer' : 'Releases found download at once',
   }
 
   return (
     <div sx={UIShowSettings.styles.container}>
-      <div sx={{ ...MetadataStyles.block, ...UIShowSettings.styles.policy }}>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...MetadataStyles.line }}>
+        <span id={ids.terms}>Terms</span>
+        <fieldset disabled={!ready || !!pending['query']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.terms}>
+          <QueryInput
+            value={termsValuesOf(query)}
+            onChange={values => setQuery({ terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value) })}
+          />
+        </fieldset>
+        {help && <small title={helps.terms}>{helps.terms}</small>}
+      </div>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
+        <span id={ids.years}>Years</span>
+        <fieldset disabled={!ready || !!pending['query']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.years}>
+          <YearsInput
+            value={years.length ? [Math.min(...years), Math.max(...years)] : [null, null]}
+            onChange={([from, to]) => setQuery({ years: Array.from({ length: to - from + 1 }, (_, index) => `${from + index}`) })}
+          />
+        </fieldset>
+        {help && <small title={helps.years}>{helps.years}</small>}
+      </div>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
         <span id={ids.policy}>Policy</span>
         <fieldset disabled={!ready || !!pending['policy']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
@@ -64,73 +79,118 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </fieldset>
         {help && <small title={helps.policy}>{helps.policy}</small>}
       </div>
-      <div sx={UIShowSettings.styles.columns}>
-        <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...UIShowSettings.styles.spaced }}>
-          <span id={ids.auto}>Auto</span>
-          <div role='radiogroup' aria-labelledby={ids.auto} aria-describedby={help ? `${ids.auto}-help` : undefined} sx={UIShowSettings.styles.radios}>
-            {DOWNLOADS.map(({ value, key, label }) => (
-              <Option
-                key={key}
-                id={`${ids.auto}-${key}`}
-                name={ids.auto}
-                type='radio'
-                checked={auto === value}
-                disabled={!ready || !!pending['proposal_only']}
-                onChange={() => set('proposal_only', value)}
-              >
-                <span>{label}</span>
-              </Option>
-            ))}
-          </div>
-          {help && <small id={`${ids.auto}-help`} title={helps.auto}>{helps.auto}</small>}
-        </div>
-        {children}
-      </div>
+      {children}
     </div>
   )
 }
 
 export const ShowSettings = memo(UIShowSettings)
 
+// A year is kept on blur or Enter once both bounds read as years in order, the last saved range otherwise
+const UIYearsInput = ({ value, onChange }) => {
+  const [draft, setDraft] = useState(value)
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value[0], value[1]])
+
+  const commit = () => {
+    const [from, to] = draft.map(Number)
+
+    if (from >= 1000 && to <= 9999 && from <= to && (from !== value[0] || to !== value[1])) {
+      onChange([from, to])
+    } else {
+      setDraft(value)
+    }
+  }
+
+  return (
+    <div sx={UIYearsInput.styles.element}>
+      {['From', 'To'].map((label, index) => [
+        index > 0 && <span key='to' aria-hidden='true'>–</span>,
+        <input
+          key={label}
+          type='text'
+          inputMode='numeric'
+          maxLength={4}
+          aria-label={label}
+          value={draft[index] ?? ''}
+          onChange={e => setDraft(draft.map((year, i) => i === index ? e.currentTarget.value.replace(/\D/g, '') : year))}
+          onBlur={commit}
+          onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+        />,
+      ])}
+    </div>
+  )
+}
+
+UIYearsInput.styles = {
+  element: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 9,
+    marginY: 10,
+    paddingY: '5px',
+    paddingX: 9,
+    borderRadius: '0.25em',
+    border: '1px solid',
+    borderColor: 'gray-500',
+    transition: 'border-color 200ms ease-in-out',
+    ':focus-within': {
+      borderColor: 'accent',
+    },
+    '>input': {
+      variant: 'input.reset',
+      width: '4ch',
+      padding: 10,
+      fontSize: 6,
+      fontWeight: 'semibold',
+      fontVariantNumeric: 'tabular-nums',
+      color: 'text',
+      textAlign: 'center',
+      cursor: 'text',
+    },
+    '>span': {
+      fontSize: 6,
+      color: 'gray-500',
+    },
+  },
+}
+
+const YearsInput = memo(UIYearsInput)
+
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
   const { pending, set } = usePendingMetadata(setMetadata)
   const ids = {
-    follow: `show-follow-${entity.id}`,
     monitored: `show-monitored-${entity.id}`,
     monitor_new_seasons: `show-new-seasons-${entity.id}`,
   }
 
-  const titles = {
-    monitored: metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes',
-    monitor_new_seasons: metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them',
-  }
-
   return (
     <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
-      <div role='group' aria-labelledby={ids.follow} sx={{ ...MetadataStyles.block, ...MetadataStyles.option, ...UIShowSettings.styles.spaced }}>
-        <span id={ids.follow}>Follow</span>
-        <div title={titles.monitored} sx={UIShowSettings.styles.option}>
-          <OptionInput
-            id={ids.monitored}
-            value={!!metadata?.monitored}
-            disabled={!ready || !!pending['monitored']}
-            onChange={value => set('monitored', value)}
-            aria-labelledby={`keep-up-to-date-${ids.monitored}-help`}
-          >
-            Followed episodes
-          </OptionInput>
-        </div>
-        <div title={titles.monitor_new_seasons} sx={UIShowSettings.styles.option}>
-          <OptionInput
-            id={ids.monitor_new_seasons}
-            value={!!metadata?.monitor_new_seasons}
-            disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
-            onChange={value => set('monitor_new_seasons', value)}
-            aria-labelledby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
-          >
-            {metadata?.monitored ? 'New seasons as they appear' : 'Follow the show first'}
-          </OptionInput>
-        </div>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option }}>
+        <span>Follow episodes</span>
+        <OptionInput
+          id={ids.monitored}
+          value={!!metadata?.monitored}
+          disabled={!ready || !!pending['monitored']}
+          onChange={value => set('monitored', value)}
+          aria-labelledby={`keep-up-to-date-${ids.monitored}-help`}
+        >
+          {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
+        </OptionInput>
+      </div>
+      <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option, gridColumn: ['auto', '2 / -1'] }}>
+        <span>Follow new seasons</span>
+        <OptionInput
+          id={ids.monitor_new_seasons}
+          value={!!metadata?.monitor_new_seasons}
+          disabled={!ready || !metadata?.monitored || !!pending['monitor_new_seasons']}
+          onChange={value => set('monitor_new_seasons', value)}
+          aria-labelledby={`keep-up-to-date-${ids.monitor_new_seasons}-help`}
+        >
+          {!metadata?.monitored ? 'Follow the show first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+        </OptionInput>
       </div>
     </ShowSettings>
   )
@@ -139,58 +199,11 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
-  // One row as wide as the movie settings: Policy stretches like Terms, the other columns take
-  // the width of their content, and the last one ends on the right edge. The row wraps where Policy would
-  // get narrower than its select, a width that follows the other columns: Policy on a line of its own, the
-  // other columns under it
+  // The movie grid, with helps that wrap under their control instead of ending on an ellipsis
   container: {
-    display: 'flex',
-    flexDirection: ['column', 'row'],
-    flexWrap: 'wrap',
-    columnGap: MetadataStyles.container.columnGap,
-  },
-  // Policy takes the room the other columns leave, down to the width of its select: its help follows the
-  // width of the column rather than set it
-  policy: {
-    flex: [null, '1 1 0'],
-    minWidth: [0, 'auto'],
-    '>small': {
-      ...MetadataStyles.block['>small'],
-      contain: 'inline-size',
-    },
-  },
-  // Auto and Follow wrap together under Policy, then one under the other
-  columns: {
-    display: 'flex',
-    flexDirection: ['column', 'row'],
-    flexWrap: 'wrap',
-    columnGap: MetadataStyles.container.columnGap,
-  },
-  // Radios and boxes are shorter than the select: their label keeps them off it, which puts them
-  // level with the select, and the help drops to the bottom of the row, on the Policy help line. On a line
-  // of its own, Auto keeps the mobile gap between its radios and its help
-  spaced: {
-    '>span': {
-      ...MetadataStyles.block['>span'],
-      paddingBottom: 4,
-    },
-    '>small': {
-      ...MetadataStyles.block['>small'],
-      marginTop: [10, 'auto'],
-      paddingTop: [null, 10],
-    },
-  },
-  // The first box sits under its label like a control, the second one the gap `Option` keeps
-  // between two options; centered on mobile like the radios
-  option: {
-    display: 'flex',
-    justifyContent: ['center', 'flex-start'],
-    marginTop: 8,
-    ':first-of-type': {
-      marginTop: 10,
-    },
-    '>div, >div>label': {
-      marginY: 12,
+    ...MetadataStyles.container,
+    small: {
+      whiteSpace: 'normal',
     },
   },
   fieldset: {
@@ -201,30 +214,6 @@ UIShowSettings.styles = {
     transition: 'opacity 200ms ease-in-out',
     ':disabled': {
       opacity: 0.5,
-    },
-  },
-  // A column narrower than the three radios, as a job's settings get, wraps them rather than clip them
-  radios: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: ['center', 'flex-start'],
-    gap: 4,
-    marginY: 10,
-    '>label': {
-      marginY: 12,
-      color: 'grayDarkest',
-      transition: 'color 200ms ease-in-out, opacity 200ms ease-in-out',
-      ':has(input:checked)': {
-        color: 'accentDark',
-      },
-      ':has(input:disabled)': {
-        opacity: 0.5,
-      },
-      '>span': {
-        fontSize: 6,
-        color: 'text',
-      },
     },
   },
 }

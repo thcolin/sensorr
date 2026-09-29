@@ -100,6 +100,15 @@ describe('Sensorr.getShowQuery', () => {
     expect(sensorr.getShowQuery({ name: 'Pilot' }).years).toEqual([])
   })
 
+  it('keeps the defaults a job logged with the show, and a saved query once its titles, terms and years are set', () => {
+    const _defaults = { titles: ['pilot'], terms: ['pilot'], years: ['2020', '2021'] }
+    const saved = { titles: ['pilot'], terms: ['pilot', 'le pilote'], years: ['2019', '2020', '2021'] }
+
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } })).toEqual({ _defaults, banned_releases: [], ..._defaults })
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } }, saved)).toEqual({ _defaults, banned_releases: [], ...saved })
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } }, { ...saved, years: [] })).toEqual({ _defaults, banned_releases: [], ..._defaults })
+  })
+
   it('keeps the US, GB and region titles, as a movie does', () => {
     const show = { name: 'Dark', alternative_titles: { results: [{ iso_3166_1: 'DE', title: 'Dunkel', type: '' }, { iso_3166_1: 'FR', title: 'Sombre', type: '' }] } }
 
