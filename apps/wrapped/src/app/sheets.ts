@@ -27,6 +27,16 @@ const rhythm = (perDay: number) => perDay >= 1.5 ? `${Math.round(perDay)} par jo
   : perDay >= 1 ? 'plus d’un par jour'
     : perDay >= 0.8 ? 'presque un par jour'
       : `un tous les ${Math.round(1 / perDay)} jours`
+// A figure and its unit, for a look that sets them apart from the sentence
+export type Stat = { value: string, unit: string }
+const paceStatsOf = ({ episodes, days }: { episodes: number, days: number }): Stat[] => {
+  const perDay = episodes / days
+  return [
+    { value: number.format(episodes), unit: episodes > 1 ? 'épisodes' : 'épisode' },
+    { value: number.format(days), unit: days > 1 ? 'jours' : 'jour' },
+    perDay >= 1 ? { value: number.format(Math.round(perDay * 10) / 10), unit: 'par jour' } : { value: '1', unit: `tous les ${Math.round(1 / perDay)} jours` },
+  ]
+}
 export const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 // S03E12
 const episodeOf = (season: number, episode: number) => `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`
@@ -42,7 +52,7 @@ const scheduleOf = (plays: NonNullable<NonNullable<Wrapped['night']>['schedule']
 }, []).map(({ from, ...line }) => line)
 
 // Between one evening and the other viewer's
-const gapOf = (days?: number) => days === undefined ? null : days === 0 ? 'le même soir' : days === 1 ? 'à un jour d’écart' : `à ${plural(days, 'jour', 'jours')} d’écart`
+const gapOf = (days?: number) => days === undefined ? null : days === 0 ? 'le même soir' : days === 1 ? 'un jour d’écart' : `${plural(days, 'jour', 'jours')} d’écart`
 
 // A poster with what it stands for: a label above its title, a detail under it, and when it was watched
 export type Billed = { what: string, poster: WrappedPoster, detail: string, when?: string | null }
@@ -54,7 +64,7 @@ export type SheetModel =
   | { kind: 'rank', label: string, rank: number, suffix: string, users: number, unit: string, detail: string, hours: number, median: number, max: number | null, compare: string }
   | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string, span: string, lead: boolean, from: string, to: string, nights: { day: string, poster: WrappedPoster | null }[] }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string, bare: string } | null }
-  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], paced: string | null, episodes: number | null, pace: (WrappedPoster & { episodes: number, days: number }) | null }
+  | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], paced: string | null, date: string | null, stats: Stat[], paced_stats: Stat[], episodes: number | null, pace: (WrappedPoster & { episodes: number, days: number }) | null }
   | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string, listing: string | null, schedule: { start: string, end: string, poster: WrappedPoster, what: string | null }[] }
   | { kind: 'server', label: string, first: boolean, lines: string[], poster: WrappedPoster, title: string, lede: string, bare: string }
   | { kind: 'figure', label: string, variant: 'only_you' | 'twin', lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[], sides?: { you: number, them: number | null } }
@@ -181,6 +191,9 @@ export const sheetsOf = (share: Share) => {
       episodes: binge?.episodes ?? null,
       // The show of the pace line, when it is not the binge's own and wants its own poster
       pace: pace && pace.key !== lead.key ? pace : null,
+      date: binge && `Le ${dayOf(binge.date, true)}`,
+      stats: [...(binge ? [{ value: lasting(binge.minutes), unit: 'd’affilée' }] : []), ...(pace && pace.key === lead.key ? paceStatsOf(pace) : [])],
+      paced_stats: pace && pace.key !== lead.key ? paceStatsOf(pace) : [],
       // The pace line, under the title of its show
       paced: pace && `${plural(pace.episodes, 'épisode', 'épisodes')} en ${plural(pace.days, 'jour', 'jours')}, ${rhythm(pace.episodes / pace.days)}.`,
       meta: [
@@ -284,8 +297,8 @@ export const sheetsOf = (share: Share) => {
       variant: 'dropped',
       lines: ['Pas fini,', 'ou presque'],
       items: bill([
-        dropped && { what: 'Arrêté', poster: dropped, detail: `à ${dropped.percent}${THIN}%` },
-        dropped_show && { what: 'Arrêté', poster: dropped_show, detail: `à ${episodeOf(dropped_show.season, dropped_show.episode)}` },
+        dropped && { what: 'Arrêté', poster: dropped, detail: `${dropped.percent}${THIN}%` },
+        dropped_show && { what: 'Arrêté', poster: dropped_show, detail: episodeOf(dropped_show.season, dropped_show.episode) },
       ]),
     })
   }
@@ -299,7 +312,7 @@ export const sheetsOf = (share: Share) => {
       items: bill([
         rewatched && { what: 'Revu', poster: rewatched, detail: `${rewatched.times} fois`, when: seen(rewatched.dates) },
         longest && { what: 'Le plus long', poster: longest, detail: lasting(longest.minutes), when: seen(longest.dates) },
-        oldest && { what: 'Le plus vieux', poster: oldest, detail: `sorti en ${oldest.year}`, when: seen(oldest.dates) },
+        oldest && { what: 'Le plus vieux', poster: oldest, detail: String(oldest.year), when: seen(oldest.dates) },
       ]),
     })
   }

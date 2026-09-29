@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, type SheetModel } from '../../sheets'
+import { MONTHS, THIN, number, plural, type SheetModel, type Stat } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
 import { TestCard } from './States'
 import { anchor } from '../../anchor'
@@ -399,12 +399,17 @@ const Gallery = <P extends WrappedPoster>({ posters, art, caption }: { posters: 
   ) : null
 }
 
+// Each figure on its own line, set as large as the page allows
+const Stats = ({ stats }: { stats: Stat[] }) => (
+  <ul className="tele-stats">
+    {stats.map((stat) => <li key={stat.unit}><b>{stat.value}</b> <span>{stat.unit}</span></li>)}
+  </ul>
+)
+
 const Quote = ({ text }: { text: ReactNode }) => <p className="tele-quote">{text}</p>
 
 const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
   const { pace } = sheet
-  // The pace line tells another show, it goes in that show's own box
-  const own = pace ? sheet.meta.slice(0, -1) : sheet.meta
 
   return (
     <Spread
@@ -417,14 +422,15 @@ const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
           <span className="tele-tag" aria-hidden="true">Soirée spéciale</span>
         </figure>
         <h3 className="tele-title">{sheet.title}</h3>
-        {own.map((meta) => <p key={meta} className="tele-standfirst">{figures(meta)}</p>)}
+        {sheet.date && <p className="tele-standfirst">{sheet.date}</p>}
+        <Stats stats={sheet.stats} />
       </>}
-      right={pace && sheet.paced ? (
+      right={pace && sheet.paced_stats.length ? (
         <article className="tele-pick">
           <Photo poster={pace} art={art} />
           <div>
             <h3 className="tele-pick-title">{pace.title}</h3>
-            <p>{figures(sheet.paced)}</p>
+            <Stats stats={sheet.paced_stats} />
           </div>
         </article>
       ) : undefined}
@@ -499,8 +505,10 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
         {twin && sheet.highlight && sheet.sides
           ? <Venn name={sheet.highlight} count={sheet.count} spoken={sheet.spoken} sides={sheet.sides} />
           : <Big value={sheet.count} spoken={sheet.spoken} />}
-        <p className="tele-unit">{before}{sheet.highlight && <><mark className="tele-mark">{sheet.highlight}</mark>{after}</>}</p>
-        <p className="tele-standfirst">{figures(chapo)}</p>
+        <div className={twin ? 'tele-venn-caption' : 'tele-figure-caption'}>
+          <p className="tele-unit">{before}{sheet.highlight && <><mark className="tele-mark">{sheet.highlight}</mark>{after}</>}</p>
+          <p className="tele-standfirst">{figures(chapo)}</p>
+        </div>
         {!twin && sheet.posters.length > 1 && (
           <aside className="tele-box">
             <p className="tele-box-title">{more.join(' ')}</p>
