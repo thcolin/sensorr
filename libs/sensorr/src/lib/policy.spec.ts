@@ -63,3 +63,18 @@ describe('prefer ranks', () => {
     expect(ranked([{ value: 'YGG', rank: undefined }, { value: 'ABN', rank: undefined }])).toEqual(['YGG', 'ABN'])
   })
 })
+
+describe('movie releases', () => {
+  const policy = new Policy({ name: 'MULTi', sorting: 'size', descending: false, prefer: {}, avoid: {} } as any)
+  const query = { terms: ['Mayday'], years: [2025], titles: ['Mayday'], banned_releases: [] }
+  const release = (title) => ({ title, size: 1, seeders: 1, publishDate: '2025-10-01' })
+
+  it('withdraws a release that names a season or an episode', () => {
+    const results = policy.apply([release('Mayday.S25.FRENCH.1080p.WEB-DL.h264-TFA'), release('Mayday.S25E03.FRENCH.1080p.WEB-DL.h264-TFA'), release('Mayday.2025.FRENCH.1080p.WEB-DL.h264-TFA')], query)
+    expect(Object.fromEntries(results.map(({ meta, valid }) => [meta.original, valid]))).toEqual({
+      'Mayday.S25.FRENCH.1080p.WEB-DL.h264-TFA': false,
+      'Mayday.S25E03.FRENCH.1080p.WEB-DL.h264-TFA': false,
+      'Mayday.2025.FRENCH.1080p.WEB-DL.h264-TFA': true,
+    })
+  })
+})
