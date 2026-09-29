@@ -94,7 +94,7 @@ describe('wrappedOf', () => {
 
   it('ranks by hours against every user of the server', () => {
     expect(wrapped.rank).toBe(2)
-    expect(wrapped.server).toEqual({ users: 2, median_hours: 18 })
+    expect(wrapped.server).toEqual({ users: 2, median_hours: 18, max_hours: 23 })
     expect(wrappedOf({ plays, titles, user_id: 2, year: 2026 }).rank).toBe(1)
   })
 
@@ -114,7 +114,12 @@ describe('wrappedOf', () => {
   })
 
   it('keeps the night that ended the latest, past midnight, as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' }, before: [{ key: 'show:2', title: 'Twin Peaks' }] })
+    expect(wrapped.night).toMatchObject({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' }, schedule: [
+      { title: 'Twin Peaks', start: '21:00', end: '21:45' },
+      { title: 'Twin Peaks', start: '22:00', end: '22:45' },
+      { title: 'Scrubs', start: '00:00', end: '00:30' },
+      { title: 'Scrubs', start: '01:00', end: '01:30' },
+    ] })
   })
 
   it('falls back on the evening with the most plays when nothing ends after 01:00, and ignores a session left open', () => {
@@ -123,7 +128,7 @@ describe('wrappedOf', () => {
       { ...play(4, 'plex://movie/heat', '2026-02-01T20:00:00Z', 3), stopped: at('2026-02-03T20:00:00Z') },
       play(4, 'plex://movie/dune', '2026-02-10T19:00:00Z', 2.5),
     ]
-    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, end: '00:30', late: false, poster: { title: 'Heat' }, before: [{ title: '2001' }] })
+    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, end: '00:30', late: false, poster: { title: 'Heat' }, schedule: [{ title: '2001' }, { title: 'Heat' }] })
   })
 
   it('puts the show watched the most on each month', () => {
@@ -171,7 +176,7 @@ describe('wrappedOf', () => {
     ]
     expect(wrappedOf({ plays: match, titles, user_id: 15, year: 2026 })).toMatchObject({
       duo: { count: 4, posters: [{ title: '2001', year: 1968, with: 16, days: 31 }, { title: 'Heat', year: 1995, with: 16, days: 31 }, { title: 'Scrubs', with: 16, days: 31 }, { title: 'Twin Peaks', with: 16, days: 31 }] },
-      twin: { user_id: 16, shared: 5, total: 5 },
+      twin: { user_id: 16, shared: 5, total: 5, theirs: 5 },
     })
     expect(wrappedOf({ plays: match.slice(0, 7), titles, user_id: 15, year: 2026 }).twin).toBeNull()
   })
