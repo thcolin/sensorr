@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
 import Body from '../../layout/Body/Body'
-import { useTitle } from '@sensorr/utils'
+import { emojize, useTitle } from '@sensorr/utils'
 
 const Blackhole = ({ ...props }) => {
   useTitle('Settings - Blackhole')
@@ -17,7 +17,7 @@ const Blackhole = ({ ...props }) => {
         <article>
           <h2>Blackhole</h2>
           <p>
-            Sensorr will download releases <code>.torrent</code> or <code>.nzb</code> files to your defined blackhole directory, then on your own, configure your download client to watch this directory and automatically download the releases
+            Sensorr will download releases <code>.torrent</code> or <code>.nzb</code> files, and the <code>.magnet</code> files of movies once turned on below, to your defined blackhole directory, then on your own, configure your download client to watch this directory and automatically download the releases
           </p>
           <form onSubmit={form.handleSubmit(onSave)}>
             <h3>Movies</h3>
@@ -36,15 +36,17 @@ const Blackhole = ({ ...props }) => {
               {config.get('docker') && (
                 <small sx={{ display: 'block', marginTop: 6 }}>Sensorr is currently running from <strong>Docker</strong> images, to configure blackhole you need to edit your <code>SENSORR_BLACKHOLE</code> environment variable from your <code>.env</code> file</small>
               )}
+            </div>
+            <div sx={{ paddingBottom: 8 }}>
               <Controller
                 name='magnet'
                 control={form.control}
                 render={({ field: { value: checked, onChange } }) => (
                   <Option type='checkbox' id='magnet' checked={!!checked} onChange={(e: any) => onChange(e.target.checked)}>
                     <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                      <strong>Magnet links</strong>
+                      <strong>{emojize('🧲', 'Magnet links')}</strong>
                       <br />
-                      <small>Written as <code>.magnet</code> files, for a download client that reads them from its watched folder, as qBittorrent does. Off, a release an indexer only gives as a magnet link is left aside</small>
+                      <small>Your download client has to read <code>.magnet</code> files from its watched folder: qBittorrent does, Transmission does not. Off, a release an indexer only has as a magnet link is withdrawn</small>
                     </div>
                   </Option>
                 )}
@@ -52,7 +54,7 @@ const Blackhole = ({ ...props }) => {
             </div>
             <h3>Shows</h3>
             <p>
-              Shows <code>.torrent</code> files go to their own blackhole. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
+              Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
             </p>
             <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
               {[
