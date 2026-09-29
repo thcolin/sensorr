@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
 import { SchedulerRegistry } from '@nestjs/schedule'
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter'
 import { Subject } from 'rxjs'
 import { JOBS } from '@sensorr/sensorr'
 import { Log as LogDocument } from '../logs/log.schema'
@@ -20,6 +21,7 @@ describe('JobsService.setupCrons', () => {
 
   let service: JobsService
   let registry: SchedulerRegistry
+  let events: EventEmitter2
   const crons = () => Object.fromEntries([...registry.getCronJobs()].map(([name, job]) => [name, job.cronTime.source]))
 
   beforeEach(async () => {
@@ -29,6 +31,7 @@ describe('JobsService.setupCrons', () => {
     ]))
 
     const module = await Test.createTestingModule({
+      imports: [EventEmitterModule.forRoot()],
       providers: [
         JobsService,
         SchedulerRegistry,
@@ -39,8 +42,10 @@ describe('JobsService.setupCrons', () => {
       ],
     }).compile()
 
+    await module.createNestApplication().init()
     service = module.get(JobsService)
     registry = module.get(SchedulerRegistry)
+    events = module.get(EventEmitter2)
   })
 
   afterEach(() => registry.getCronJobs().forEach(job => job.stop()))
@@ -53,7 +58,7 @@ describe('JobsService.setupCrons', () => {
     expect(crons()).toEqual({ 'record movies': '0 17 * * *', 'keep-in-touch': '0 17 * * *' })
   })
 
-  it('applies a pause, a resume and a new cron without a restart, and keeps the crons that did not change', () => {
+  it('applies a pause, a resume and a new cron on a config write, and keeps the crons that did not change', () => {
     jobs.record.movies.paused = false
     jobs.sync.shows.paused = false
     service.setupCrons()
@@ -61,14 +66,13 @@ describe('JobsService.setupCrons', () => {
 
     jobs.record.movies.paused = true
     jobs.record.shows.paused = false
-    jobs.sync.shows.cron = '0 17 * * *'
     jobs.airing.shows.paused = false
-    service.setupCrons()
+    events.emit('config.write')
     expect(crons()).toEqual({ 'record shows': '0 17 * * *', 'sync shows': '0 17 * * *', 'airing shows': '0 17 * * *' })
     expect(registry.getCronJob('sync shows')).toBe(untouched)
 
     jobs.sync.shows.cron = '*/5 * * * *'
-    service.setupCrons()
+    events.emit('config.write')
     expect(crons()['sync shows']).toBe('*/5 * * * *')
     expect(registry.getCronJob('sync shows')).not.toBe(untouched)
     expect(untouched.running).toBe(false)
