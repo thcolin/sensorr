@@ -94,8 +94,10 @@ html[data-theme='affiche'] {
     transform: translateX(7%) rotate(0.7deg);
   }
 
+  /* The next sheet hangs over the foot of this one: its padding keeps the last words clear */
   .wall > .sheet {
     margin-block: -3svh;
+    padding-bottom: calc(var(--u) * 9 + 6svh);
   }
 }
 
@@ -144,6 +146,105 @@ html[data-theme='affiche'] {
 
 .meta {
   font-size: max(1rem, 4.4cqi);
+}
+
+/* A quantity in a sentence, lettered by hand with its unit */
+.daub {
+  display: inline-block;
+  margin-inline: 0.04em;
+  color: var(--crimson);
+  font-family: var(--lettering);
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(var(--lean, -2deg));
+}
+
+.daub-n {
+  font-size: 1.45em;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+.daub-unit {
+  font-size: 0.82em;
+  color: var(--ink);
+}
+
+.sheet-night .daub,
+.sheet-finale .daub {
+  color: var(--bone);
+}
+
+.sheet-night .daub-unit,
+.sheet-finale .daub-unit {
+  color: var(--bone);
+}
+
+.sheet-night .daub-n,
+.sheet-finale .daub-n {
+  padding: 0.06em 0.16em 0;
+  background: var(--crimson);
+  mask: var(--swash) center / 100% 100% no-repeat;
+  -webkit-mask: var(--swash) center / 100% 100% no-repeat;
+}
+
+/* Figures stacked like a poster's lettering, one leaning left, the next right */
+.stats {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1cqi;
+}
+
+.stats > li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 2.5cqi;
+  transform: rotate(var(--lean));
+  transform-origin: 0 70%;
+}
+
+.stats > li:nth-child(even) {
+  align-self: flex-end;
+  transform-origin: 100% 70%;
+}
+
+.stats b {
+  font-family: var(--lettering);
+  font-weight: 400;
+  font-size: 22cqi;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.06em var(--paper);
+  paint-order: stroke fill;
+}
+
+.stats > li:first-child b {
+  color: var(--crimson);
+}
+
+.stats span {
+  font-family: var(--lettering);
+  font-size: 7cqi;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.stats-small b {
+  font-size: 12cqi;
+}
+
+.stats-small span {
+  font-size: 4.6cqi;
+}
+
+.stats-small > li:nth-child(even) {
+  align-self: flex-start;
 }
 
 /* Painted posters */
@@ -255,8 +356,54 @@ html[data-theme='affiche'] {
 .figure-intro {
   position: relative;
   z-index: 2;
+  align-self: flex-start;
   max-width: 24ch;
+  padding: 2cqi 4cqi 1.5cqi;
   font-size: max(1.125rem, 5.4cqi);
+  background: var(--swash) center / 100% 100% no-repeat;
+  transform: rotate(-1.5deg);
+}
+
+/* One stroke per evening, five struck through */
+.tally {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3cqi 5cqi;
+}
+
+.tally-group {
+  position: relative;
+  display: flex;
+  gap: 1.6cqi;
+  padding-inline: 0.6cqi;
+}
+
+.tally-group > i {
+  width: 2cqi;
+  height: 12cqi;
+  background: var(--ink);
+  transform: rotate(var(--lean));
+}
+
+.tally-group > .tally-lead {
+  background: var(--crimson);
+}
+
+.tally-full::after {
+  content: '';
+  position: absolute;
+  left: -1.5cqi;
+  right: -1.5cqi;
+  top: 45%;
+  height: 1.6cqi;
+  background: var(--ink);
+  transform: rotate(-22deg);
+}
+
+.sheet-streak .figure-details {
+  margin-top: 0;
 }
 
 .figure {
@@ -288,22 +435,56 @@ html[data-theme='affiche'] {
   position: relative;
   z-index: 2;
   font-size: 10cqi;
+  -webkit-text-stroke: 0.1em var(--paper);
+  paint-order: stroke fill;
+}
+
+.figure-unit .lettering-highlight {
+  -webkit-text-stroke: 0;
+}
+
+/* The run's poster hangs at the top, its foot under the figure */
+.sheet-streak {
+  justify-content: flex-start;
+}
+
+.sheet-streak .figures-poster {
+  position: relative;
+  top: auto;
+  right: auto;
+  align-self: flex-end;
+  width: min(78cqi, 46svh);
+  margin: calc(var(--u) * -4) calc(var(--u) * -8) -52cqi 0;
 }
 
 .figure-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5cqi;
   margin-top: 3cqi;
   font-size: max(1.25rem, 6.2cqi);
 }
 
 /* Series */
 .show-lead {
-  flex: 1;
-  aspect-ratio: auto;
-  min-height: 60cqi;
+  position: relative;
   margin-inline: calc(var(--u) * -7);
+}
+
+.show-lead-still {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+
+/* The show's own poster pasted over a corner of its still */
+.show-lead-poster {
+  position: absolute;
+  right: 6cqi;
+  bottom: -18cqi;
+  width: 26cqi;
+  transform: rotate(5deg);
+  z-index: 2;
+}
+
+.show-lead-text {
+  padding-right: 30cqi;
 }
 
 .show-lead-title {
@@ -311,25 +492,37 @@ html[data-theme='affiche'] {
 }
 
 .show-lead-text {
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   gap: 1.5cqi;
 }
 
-/* The pace's own show, pinned beside the line that tells it */
+/* The pace's own show, pinned beside its figures */
 .show-pace {
-  align-self: flex-end;
-  width: 30cqi;
-  aspect-ratio: 2 / 3;
-  margin-top: calc(var(--u) * -2);
-  transform: rotate(4deg);
+  display: grid;
+  grid-template-columns: 30cqi 1fr;
+  align-items: center;
+  gap: 5cqi;
+  margin-top: 3cqi;
+}
+
+.show-pace-poster {
+  transform: rotate(-4deg);
+}
+
+.show-pace-title {
+  font-size: 8cqi;
+  margin-bottom: 2cqi;
 }
 
 /* Year */
 .year-strips {
   flex: 1;
   aspect-ratio: auto;
-  min-height: 80cqi;
+  /* The sheet is pinned at the screen's height: the strips take what the words leave */
+  min-height: min(80cqi, 24svh);
   margin-inline: calc(var(--u) * -7);
 }
 
@@ -358,7 +551,7 @@ html[data-theme='affiche'] {
 
 /* Night */
 .sheet-night {
-  justify-content: flex-end;
+  justify-content: flex-start;
   background-color: var(--ink);
   color: var(--bone);
   padding-top: 0;
@@ -370,9 +563,11 @@ html[data-theme='affiche'] {
 }
 
 .night-poster {
-  position: absolute;
-  inset: 0 0 38% 0;
+  flex: none;
+  height: min(64svh, 150cqi);
   aspect-ratio: auto;
+  margin-inline: calc(var(--u) * -7);
+  margin-bottom: -40cqi;
 }
 
 .night-text {
@@ -381,6 +576,74 @@ html[data-theme='affiche'] {
   display: flex;
   flex-direction: column;
   gap: 3cqi;
+  margin-inline: calc(var(--u) * -7);
+  padding: 6cqi 7cqi 0;
+  background: linear-gradient(to bottom, transparent, var(--ink) 30cqi);
+}
+
+/* The night's programme, as it was played */
+.night-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 3cqi;
+  margin-top: 2cqi;
+}
+
+.night-schedule > li {
+  display: grid;
+  grid-template-columns: 17cqi 11cqi 1fr;
+  align-items: center;
+  gap: 4cqi;
+}
+
+.night-schedule-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6cqi;
+}
+
+.night-schedule-time b {
+  font-family: var(--lettering);
+  font-weight: 400;
+  font-size: 7cqi;
+  line-height: 1;
+}
+
+.night-schedule-time span {
+  font-size: max(0.9375rem, 4cqi);
+  color: #c9b99c;
+}
+
+.night-schedule-last .night-schedule-time b {
+  padding: 0.08em 0.18em 0;
+  background: var(--crimson);
+  mask: var(--swash) center / 100% 100% no-repeat;
+  -webkit-mask: var(--swash) center / 100% 100% no-repeat;
+}
+
+.night-schedule-poster {
+  transform: rotate(-3deg);
+}
+
+.night-schedule > li:nth-child(even) .night-schedule-poster {
+  transform: rotate(2.5deg);
+}
+
+.night-schedule-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6cqi;
+  font-size: max(1rem, 4.6cqi);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.night-schedule-title > span {
+  font-family: var(--lettering);
+  font-size: 0.9em;
+  text-transform: uppercase;
+  color: #c9b99c;
 }
 
 .sheet-night .brushed text {
@@ -426,13 +689,117 @@ html[data-theme='affiche'] {
 }
 
 .server-poster {
+  position: relative;
+  z-index: 2;
   width: 56cqi;
   align-self: center;
   transform: rotate(-2.5deg);
 }
 
+/* Pasted on a sheet of bone paper, so it stands off the still */
+.sheet-server-still .server-poster::before {
+  content: '';
+  position: absolute;
+  inset: -2.4cqi;
+  background: var(--bone);
+  transform: rotate(4deg);
+  z-index: -1;
+}
+
+/* The still as a band of paint across the sheet, behind its poster */
+.server-still {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30%;
+  height: 36%;
+  aspect-ratio: auto;
+  transform: rotate(-4deg) scale(1.15);
+}
+
+.sheet-server-still .brushed,
+.sheet-server-still .server-title,
+.sheet-server-still .lede {
+  position: relative;
+  z-index: 2;
+}
+
 .server-title {
   font-size: 9cqi;
+}
+
+.sheet-server .lede {
+  font-size: max(1.125rem, 5.6cqi);
+}
+
+/* Twin: two daubs of paint crossing on the shared titles */
+.twins {
+  position: relative;
+  z-index: 2;
+  margin-inline: calc(var(--u) * -3);
+  color: var(--bone);
+}
+
+.twins svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.twins circle {
+  mix-blend-mode: multiply;
+}
+
+.twins-you {
+  fill: var(--crimson);
+}
+
+.twins-them {
+  fill: var(--mauve);
+}
+
+.twins-side {
+  position: absolute;
+  top: 50%;
+  width: 24%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: translateY(-50%);
+}
+
+.twins-side-you {
+  left: 9%;
+}
+
+.twins-side-them {
+  right: 9%;
+}
+
+.twins-side span {
+  font-family: var(--lettering);
+  text-transform: uppercase;
+  font-size: max(1rem, 4.6cqi);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.twins-side b {
+  font-family: var(--lettering);
+  font-weight: 400;
+  font-size: 11cqi;
+  line-height: 1;
+}
+
+.twins-shared {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-family: var(--lettering);
+  font-size: min(20cqi, calc(56cqi / var(--digits, 2)));
+  line-height: 1;
+  transform: translate(-50%, -50%) rotate(-4deg);
 }
 
 /* Strips of posters */
@@ -531,6 +898,45 @@ html[data-theme='affiche'] {
   font-size: max(1.125rem, 5.2cqi);
 }
 
+/* The hours of the first viewer, the reader and the median, each as large as its share */
+.rank-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5cqi;
+}
+
+.rank-hours > li {
+  display: flex;
+  align-items: baseline;
+  gap: 3cqi;
+  transform: rotate(var(--lean));
+  transform-origin: 0 70%;
+}
+
+.rank-hours b {
+  font-family: var(--lettering);
+  font-weight: 400;
+  font-size: calc(7cqi + var(--share) * 19cqi);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.rank-hours small {
+  margin-left: 0.08em;
+  font-size: 0.5em;
+}
+
+.rank-hours span {
+  font-family: var(--lettering);
+  font-size: 6cqi;
+  text-transform: uppercase;
+}
+
+.rank-hours-you b,
+.rank-hours-you span {
+  color: var(--crimson);
+}
+
 /* Posters, one per figure */
 .posters {
   flex: 1;
@@ -552,14 +958,14 @@ html[data-theme='affiche'] {
 
 .posters[data-count='3'] > .posters-entry {
   display: grid;
-  grid-template-columns: 24cqi 1fr;
-  grid-template-rows: auto auto 1fr;
+  grid-template-columns: 30cqi 1fr;
+  grid-template-rows: auto auto auto auto 1fr;
   column-gap: 5cqi;
   align-items: start;
 }
 
 .posters[data-count='3'] .posters-poster {
-  grid-row: span 3;
+  grid-row: span 5;
   margin-bottom: 0;
 }
 
@@ -585,6 +991,23 @@ html[data-theme='affiche'] {
   line-height: 1.1;
 }
 
+.posters-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 3cqi;
+  margin-top: 1.5cqi;
+  font-size: 6.5cqi;
+}
+
+.posters[data-count='3'] .posters-detail {
+  font-size: 8cqi;
+}
+
+.posters-when {
+  margin-top: 1cqi;
+  font-size: max(0.9375rem, 4cqi);
+}
+
 /* Genre */
 .sheet-genre {
   justify-content: center;
@@ -598,7 +1021,7 @@ html[data-theme='affiche'] {
 }
 
 .genre-name {
-  font-size: 16cqi;
+  font-size: min(24cqi, calc(95cqi / var(--letters, 6)));
 }
 
 .genre-count {
@@ -607,6 +1030,17 @@ html[data-theme='affiche'] {
 
 .genre-lead {
   font-size: max(1.25rem, 6.2cqi);
+}
+
+.genre-lead-single {
+  display: grid;
+  grid-template-columns: 1fr 34cqi;
+  align-items: center;
+  gap: 5cqi;
+}
+
+.genre-lead-poster {
+  transform: rotate(4deg);
 }
 
 .genre-lead-name {
@@ -672,7 +1106,6 @@ html[data-theme='affiche'] {
 .stamp-finale {
   position: static;
   align-self: flex-end;
-  margin-top: -2cqi;
 }
 
 .finale-end {

@@ -7,7 +7,7 @@ export const Sheet = forwardRef<HTMLElement, { className?: string, label?: strin
 ))
 
 // Hand lettering: each word leans and grows a little on its own, the same way on every visit
-const lean = (index: number, seed: number) => {
+export const lean = (index: number, seed: number) => {
   const value = Math.sin((index + 1) * 12.9898 + seed * 78.233) * 43758.5453
   return value - Math.floor(value)
 }
