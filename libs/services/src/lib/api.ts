@@ -263,6 +263,20 @@ export class API {
           },
         }
       }),
+      getStatistics: (
+        { init = {}, params = {} }: { init?: any, params?: { [key: string]: any } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'shows/statistics',
+        params,
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
       postShowRelease: (
         { body, init = {}, params: { id } }: { body: any, init?: any, params: { id: number } }
       ): { uri: string, params: {}, init: {} } => ({

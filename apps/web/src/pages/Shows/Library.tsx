@@ -3,9 +3,15 @@ import toast from 'react-hot-toast'
 import {
   Entities,
   withControls,
+  FilterGenres,
   FilterStatistics,
   FilterProposal,
   FilterStates,
+  FilterReleaseDate,
+  FilterPopularity,
+  FilterVoteAverage,
+  FilterVoteCount,
+  FilterRuntime,
   Sorting,
   Warning,
   Option,
@@ -13,14 +19,17 @@ import {
   ShowStateOptions,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { fields } from '@sensorr/tmdb'
+import { compose, languages, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useLocation } from 'react-router-dom'
+import { withTMDB } from '../../store/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
 import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
-import { status, statusGroupOf } from '../../components/Show/fields'
+import { status, type, networks, origin_country, number_of_seasons, untouched } from '../../components/Show/fields'
+import { RELEASES_AREAS, ReleasesToggle, releasesFields } from '../../components/Sensorr/Controls/Releases'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -32,9 +41,6 @@ const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
 
 const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
-
-const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {}))
-  .map(([_id, count]) => ({ _id, count }))
 
 const ShowWithBulk = ({ entity, ...props }) => {
   const { selection, setSelection } = useBulkContext()
@@ -91,20 +97,45 @@ const Library = compose(
           display: ['none', 'block'],
         },
       },
-      aside: {
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: `
-          "head_main"
-          "state"
-          "status"
-          "proposal"
-          "policy"
-          "requested_by"
-        `,
-      },
+      aside: [
+        {
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gridTemplateRows: 'auto',
+          gap: '2em',
+          gridTemplateAreas: `
+            "head_main"
+            "state"
+            "status"
+            "proposal"
+            "policy"
+            "toggle_sub_asides_0"
+            "requested_by"
+            "genres"
+            "type"
+            "networks"
+            "original_languages"
+            "origin_country"
+            "first_air_date"
+            "number_of_seasons"
+            "popularity"
+            "vote_average"
+            "vote_count"
+            "episode_run_time"
+          `,
+        },
+        {
+          display: 'grid',
+          backgroundColor: 'primaryDark',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gridTemplateRows: 'auto',
+          gap: '2em',
+          gridTemplateAreas: RELEASES_AREAS,
+        },
+      ],
+    },
+    components: {
+      toggle_sub_asides_0: ReleasesToggle,
     },
     fields: {
       head_main: {
@@ -116,7 +147,7 @@ const Library = compose(
               title="Library"
               subtitle={(
                 <span>
-                  Explore shows from your library with filters on whether you <strong>follow</strong> them, whether they still <strong>air</strong>, their pending <strong>proposals</strong>, their <strong>policy</strong>, and who <strong>requested</strong> them
+                  Explore shows from your library with various filters about shows like <strong>state</strong>, <strong>genres</strong>, <strong>networks</strong>, <strong>first air date</strong>, etc...
                 </span>
               )}
             />
@@ -233,44 +264,58 @@ const Library = compose(
         serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
         component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
       },
+      genres: {
+        ...fields.genres,
+        initial: { values: [], behavior: 'or' },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+        component: compose(withProps({ display: 'checkbox', type: 'tv' }), withTMDB())(FilterGenres),
+      },
+      type,
+      networks,
+      original_languages: {
+        ...fields.original_languages,
+        initial: { values: [], behavior: 'or' },
+        serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+        component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+      },
+      origin_country,
+      first_air_date: untouched({
+        ...fields.release_date,
+        component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
+      }),
+      number_of_seasons,
+      popularity: untouched({
+        ...fields.popularity,
+        component: FilterPopularity,
+      }),
+      vote_average: untouched({
+        ...fields.vote_average,
+        component: FilterVoteAverage,
+      }),
+      vote_count: untouched({
+        ...fields.vote_count,
+        component: FilterVoteCount,
+      }),
+      episode_run_time: untouched({
+        ...fields.episode_runtime,
+        component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
+      }),
+      ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
     },
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
-
-      const [counts, setCounts] = useState({})
-      const [bulk, setBulk] = useState(null)
-
-      useEffect(() => {
-        const controller = new AbortController()
-        const all = APIQuery.shows.getShows({ params: { fields: 'id|monitored|status|policy|requested_by', limit: '' }, init: { signal: controller.signal } })
-
-        api.fetch(all.uri, all.params, all.init)
-          .then(({ results: shows }) => setCounts({
-            state: countsOf(shows.map(({ monitored }) => monitored ? 'followed' : 'unfollowed')),
-            status: countsOf(shows.map(({ status }) => statusGroupOf(status)).filter(Boolean)),
-            policy: countsOf(shows.map(({ policy }) => policy).filter(Boolean)),
-            requested_by: countsOf(shows.flatMap(({ requested_by }) => requested_by || [])),
-          }))
-          .catch((e) => {
-            if (e.name !== 'AbortError') {
-              console.warn(e)
-              toast.error('Error while loading library statistics')
-            }
-          })
-
-        return () => controller.abort()
-      }, [])
+      const [statistics, setStatistics] = useState({})
 
       useEffect(() => {
         // The ids of the previous filters must not stand in for the current ones.
-        setBulk(null)
+        setStatistics({})
 
         const controller = new AbortController()
         const { sort_by, ...filters } = state as any
-        const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
+        const { uri, params, init } = APIQuery.shows.getStatistics({ params: filters, init: { signal: controller.signal } })
 
-        api.fetch(matching.uri, matching.params, matching.init)
-          .then(({ results: ids }) => setBulk([{ entities: ids.map(({ id }) => id) }]))
+        api.fetch(uri, params, init)
+          .then(setStatistics)
           .catch((e) => {
             if (e.name !== 'AbortError') {
               console.warn(e)
@@ -281,7 +326,7 @@ const Library = compose(
         return () => controller.abort()
       }, [JSON.stringify(state)])
 
-      return useMemo(() => ({ ...counts, ...(bulk ? { bulk } : {}) }), [counts, bulk])
+      return statistics
     },
   }),
   withPlacehodersHistoryState(),
