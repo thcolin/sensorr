@@ -30,7 +30,8 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
-// `discover/tv` takes a status and a type by their index in TMDB's lists
+// `discover/tv` takes a status and a type by their index in TMDB's lists. Talk Show and News are left to the
+// genres, which the default already excludes
 const STATUSES = [
   { value: 0, label: emojize('📡', 'Returning Series') },
   { value: 2, label: emojize('🏗️', 'In Production') },
@@ -43,10 +44,8 @@ const STATUSES = [
 const TYPES = [
   { value: 4, label: emojize('🎬', 'Scripted') },
   { value: 2, label: emojize('📕', 'Miniseries') },
-  { value: 0, label: emojize('🌍', 'Documentary') },
-  { value: 3, label: emojize('🎥', 'Reality') },
-  { value: 5, label: emojize('🎙️', 'Talk Show') },
-  { value: 1, label: emojize('📰', 'News') },
+  { value: 0, label: emojize('🎓', 'Documentary') },
+  { value: 3, label: emojize('🤳', 'Reality') },
   { value: 6, label: emojize('📼', 'Video') },
 ]
 
@@ -246,7 +245,7 @@ export const Discover = compose(
       first_air_date: {
         ...fields.release_date,
         statistics: (entities, field) => fields.release_date.statistics(entities.map(entity => ({ release_date: entity.first_air_date })), field),
-        component: withProps({ label: i18n.t('ui.sortings.first_air_date') })(FilterReleaseDate),
+        component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
       },
       vote_average: {
         ...fields.vote_average,

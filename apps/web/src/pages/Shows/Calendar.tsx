@@ -116,6 +116,9 @@ const aside = {
   `,
 }
 
+// The values of the followed shows, uncounted: a count of shows would read as a count of the episodes shown
+const uncounted = (Component) => ({ statistics, ...props }) => <Component {...props} statistics={statistics?.map(({ count, ...value }) => value)} />
+
 const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
 
 const FIELDS = {
@@ -124,7 +127,7 @@ const FIELDS = {
     component: () => (
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
         <Warning
-          emoji="📅"
+          emoji="🗓️"
           title="Calendar"
           subtitle={(
             <span>
@@ -136,22 +139,21 @@ const FIELDS = {
     ),
   },
   episode_status,
-  networks,
+  networks: { ...networks, component: withProps({ counted: false })(networks.component) },
   genres: {
     ...fields.genres,
-    initial: { values: [], behavior: 'or' },
-    serialize: multi,
-    component: compose(withProps({ display: 'checkbox', type: 'tv' }), withTMDB())(FilterGenres),
+    statistics: null,
+    component: compose(withProps({ display: 'select', type: 'tv' }), withTMDB())(FilterGenres),
   },
   policy: {
     initial: { values: [] },
     serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
-    component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
+    component: uncounted(withProps({ label: 'ui.filters.policy' })(FilterStatistics)),
   },
   requested_by: {
     initial: { values: [], behavior: 'or' },
     serialize: multi,
-    component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
+    component: uncounted(withProps({ label: 'ui.filters.requested_by' })(FilterStatistics)),
   },
 }
 
