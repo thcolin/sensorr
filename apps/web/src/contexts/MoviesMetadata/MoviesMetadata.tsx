@@ -8,6 +8,7 @@ import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
 import { usePlexArtworks } from '../../store/plex'
+import { refresh } from './refresh'
 
 const moviesMetadataContext = createContext({})
 
@@ -144,18 +145,10 @@ export const Provider = ({ ...props }) => {
 
       try {
         if (Object.keys(changes).length === 1) {
-          const movie = await tmdb.fetch(`movie/${Object.keys(changes)[0]}`, {
-            append_to_response: 'alternative_titles,release_dates',
-          })
-
-          // Lighten object for database by reducing releases_dates, only Theatrical (type === 3) and merge same year releases
-          movie.release_dates.results = movie.release_dates.results
-            .filter(({ type }) => type === 3)
-            .reduce((acc, raw) => acc.map(({ release_date }) => new Date(release_date).getFullYear()).includes(new Date(raw.release_date).getFullYear()) ? acc : [...acc, raw], [])
-
-          changes[Object.keys(changes)[0]] = {
-            ...movie,
-            ...changes[Object.keys(changes)[0]],
+          const [i] = Object.keys(changes)
+          changes[i] = {
+            ...(await refresh(tmdb, i, !!initial[i])),
+            ...changes[i],
           }
         }
 
