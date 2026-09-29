@@ -48,7 +48,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
   }
 
   return (
-    <div sx={UIShowSettings.styles.container}>
+    <div sx={MetadataStyles.container}>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...MetadataStyles.line }}>
         <span id={ids.terms}>Terms</span>
         <fieldset disabled={!ready || !!pending['query']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.terms}>
@@ -234,13 +234,6 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 export const ShowActions = memo(UIShowActions)
 
 UIShowSettings.styles = {
-  // The movie grid, with helps that wrap under their control instead of ending on an ellipsis
-  container: {
-    ...MetadataStyles.container,
-    small: {
-      whiteSpace: 'normal',
-    },
-  },
   fieldset: {
     minWidth: 0,
     margin: 12,
