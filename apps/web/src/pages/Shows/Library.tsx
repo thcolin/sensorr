@@ -304,18 +304,35 @@ const Library = compose(
     },
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
-      const [statistics, setStatistics] = useState({})
+      const [counts, setCounts] = useState({})
+      const [bulk, setBulk] = useState(null)
+
+      useEffect(() => {
+        const controller = new AbortController()
+        const { uri, params, init } = APIQuery.shows.getStatistics({ init: { signal: controller.signal } })
+
+        api.fetch(uri, params, init)
+          .then(setCounts)
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              console.warn(e)
+              toast.error('Error while loading library statistics')
+            }
+          })
+
+        return () => controller.abort()
+      }, [])
 
       useEffect(() => {
         // The ids of the previous filters must not stand in for the current ones.
-        setStatistics({})
+        setBulk(null)
 
         const controller = new AbortController()
         const { sort_by, ...filters } = state as any
-        const { uri, params, init } = APIQuery.shows.getStatistics({ params: filters, init: { signal: controller.signal } })
+        const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
 
-        api.fetch(uri, params, init)
-          .then(setStatistics)
+        api.fetch(matching.uri, matching.params, matching.init)
+          .then(({ results: ids }) => setBulk([{ entities: ids.map(({ id }) => id) }]))
           .catch((e) => {
             if (e.name !== 'AbortError') {
               console.warn(e)
@@ -326,7 +343,7 @@ const Library = compose(
         return () => controller.abort()
       }, [JSON.stringify(state)])
 
-      return statistics
+      return useMemo(() => ({ ...counts, ...(bulk ? { bulk } : {}) }), [counts, bulk])
     },
   }),
   withPlacehodersHistoryState(),

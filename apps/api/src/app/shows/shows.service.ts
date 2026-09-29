@@ -261,7 +261,7 @@ export class ShowsService {
     return res
   }
 
-  async getStatistics(params = {} as any, context: 'library' | 'followed' = 'library') {
+  async getStatistics(context: 'library' | 'followed' = 'library') {
     this.logger.log('GetStatistics')
     const count = { count: { $sum: 1 } }
     const bucket = (key: string, boundaries: number[], groupBy: any = `$${key}`) => [{ $bucket: { groupBy, boundaries, default: -1, output: count } }]
@@ -287,7 +287,6 @@ export class ShowsService {
           vote_count: bucket('vote_count', fields.vote_count.boundaries),
           // A show without a length would fall in the last bar
           episode_run_time: [{ $match: { 'episode_run_time.0': { $exists: true } } }, ...bucket('episode_run_time', fields.episode_runtime.boundaries, { $first: '$episode_run_time' })],
-          bulk: [{ $match: showFilter(params) }, { $group: { _id: null, entities: { $addToSet: '$id' } } }],
         },
       },
     ])
