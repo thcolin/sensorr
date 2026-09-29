@@ -147,7 +147,7 @@ export const Provider = ({ ...props }) => {
         if (Object.keys(changes).length === 1) {
           const [i] = Object.keys(changes)
           changes[i] = {
-            ...(await refresh(tmdb, i, !!initial[i])),
+            ...(await refresh(tmdb, i, initial[i])),
             ...changes[i],
           }
         }

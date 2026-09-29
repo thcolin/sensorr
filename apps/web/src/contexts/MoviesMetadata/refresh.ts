@@ -1,7 +1,7 @@
-// TMDB drops a movie now and then, a duplicate merged into another one among them: a movie Sensorr already stores
-// is written without its refresh then, so that its proposal can still be answered. A new one has nothing else to be
-// written from
-export const refresh = async (tmdb: { fetch: (uri: string, params?: any) => Promise<any> }, id: string | number, stored: boolean) => {
+// TMDB drops a movie now and then, a duplicate merged into another one among them: a movie Sensorr stores with its
+// title is written without its refresh then, so that its proposal can still be answered. Without a title, a new
+// movie, a ban-only one or one just ignored, TMDB is all it could be written from
+export const refresh = async (tmdb: { fetch: (uri: string, params?: any) => Promise<any> }, id: string | number, current?: { title?: string }) => {
   try {
     const movie = await tmdb.fetch(`movie/${id}`, {
       append_to_response: 'alternative_titles,release_dates',
@@ -14,7 +14,7 @@ export const refresh = async (tmdb: { fetch: (uri: string, params?: any) => Prom
 
     return movie
   } catch (err) {
-    if (!stored) {
+    if (!current?.title) {
       throw err
     }
 
