@@ -238,7 +238,7 @@ export class MoviesService {
         'production_companies.name': { $in: params.production_companies.split('|') }
       } : {}),
       ...((params.production_companies && /\,/.test(params.production_companies)) ? {
-        'production_companies.name': { $all: params.spoken_languages.split(',') }
+        'production_companies.name': { $all: params.production_companies.split(',') }
       } : {}),
       ...(params.requested_by ? {
         requested_by: {
@@ -649,7 +649,7 @@ export class MoviesService {
                   'production_companies.name': { $in: params.production_companies.split('|') }
                 } : {}),
                 ...((params.production_companies && /\,/.test(params.production_companies)) ? {
-                  'production_companies.name': { $all: params.spoken_languages.split(',') }
+                  'production_companies.name': { $all: params.production_companies.split(',') }
                 } : {}),
                 ...(params.requested_by ? {
                   requested_by: {
