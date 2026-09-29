@@ -11,13 +11,18 @@ import {
   withControls,
   Warning,
   Option,
+  Checkbox,
+  Select,
 } from '@sensorr/ui'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
+import { useEffect, useState } from 'react'
+import { compose, countries, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { fields, useFieldsComputedStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetadata'
+import { useAPI, query as APIQuery } from '../../store/api'
+import { networks } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
@@ -25,7 +30,79 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
-// The filters of the movies Discover that `discover/tv` also takes, people and release types aside
+// `discover/tv` takes a status and a type by their index in TMDB's lists
+const STATUSES = [
+  { value: 0, label: emojize('📡', 'Returning Series') },
+  { value: 2, label: emojize('🏗️', 'In Production') },
+  { value: 1, label: emojize('📅', 'Planned') },
+  { value: 5, label: emojize('🧪', 'Pilot') },
+  { value: 3, label: emojize('🏁', 'Ended') },
+  { value: 4, label: emojize('🪦', 'Canceled') },
+]
+
+const TYPES = [
+  { value: 4, label: emojize('🎬', 'Scripted') },
+  { value: 2, label: emojize('📕', 'Miniseries') },
+  { value: 0, label: emojize('🌍', 'Documentary') },
+  { value: 3, label: emojize('🎥', 'Reality') },
+  { value: 5, label: emojize('🎙️', 'Talk Show') },
+  { value: 1, label: emojize('📰', 'News') },
+  { value: 6, label: emojize('📼', 'Video') },
+]
+
+const oneOf = (label, options) => ({
+  initial: { values: [] },
+  serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
+  component: ({ statistics, ...props }) => (
+    <Checkbox
+      {...props as any}
+      label={label}
+      options={options}
+      value={props.value.values}
+      onChange={values => props.onChange({ ...props.value, values })}
+    />
+  ),
+})
+
+const FilterCountries = ({ value, onChange, statistics, ...props }) => (
+  <Select
+    label={i18n.t('ui.filters.origin_country')}
+    menuPlacement='auto'
+    {...props as any}
+    options={Object.keys(countries).map(value => ({ value, label: `${countries[value].emoji}  ${countries[value].name}` }))}
+    value={value.values}
+    onChange={values => onChange({ ...value, values })}
+    behavior={value.behavior}
+    onBehavior={behavior => onChange({ ...value, behavior })}
+    multi={true}
+    closeMenuOnSelect={true}
+    isSearchable={true}
+    isClearable={false}
+    defaultOptions={true}
+  />
+)
+
+// TMDB searches no network by name: the networks to pick from are those of the library, with their id
+const useStatistics = (entities, fields) => {
+  const api = useAPI()
+  const statistics = useFieldsComputedStatistics(entities, fields)
+  const [library, setLibrary] = useState(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const { uri, params, init } = APIQuery.shows.getStatistics({ init: { signal: controller.signal } })
+
+    api.fetch(uri, params, init)
+      .then(({ networks }) => setLibrary(networks))
+      .catch((e) => e.name !== 'AbortError' && console.warn(e))
+
+    return () => controller.abort()
+  }, [])
+
+  return { ...statistics, with_networks: library }
+}
+
+// The filters of the movies Discover that `discover/tv` also takes, people and release types aside, and its own
 export const Discover = compose(
   withTitle(i18n.t('pages.shows.discover.title')),
   withProps({
@@ -76,13 +153,17 @@ export const Discover = compose(
           "head"
           "with_genres"
           "without_genres"
+          "with_type"
+          "with_status"
           "first_air_date"
           "vote_average"
           "vote_count"
+          "with_networks"
           "with_companies"
           "with_keywords"
           "without_keywords"
           "with_original_language"
+          "with_origin_country"
           "with_runtime"
         `,
       },
@@ -114,7 +195,7 @@ export const Discover = compose(
               title="Discover"
               subtitle={(
                 <span>
-                  Discover shows with various filters like <strong>average rating</strong>, <strong>number of votes</strong>, <strong>genres</strong>, <strong>first air date</strong>, etc...
+                  Discover shows with various filters like <strong>genres</strong>, <strong>networks</strong>, <strong>type</strong>, <strong>first air date</strong>, etc...
                   <br/>
                   <small><em>Combine filters to discover new shows !</em></small>
                 </span>
@@ -181,6 +262,9 @@ export const Discover = compose(
         statistics: null,
         component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
       },
+      with_type: oneOf(i18n.t('ui.filters.type'), TYPES),
+      with_status: oneOf(i18n.t('ui.filters.status'), STATUSES),
+      with_networks: networks,
       with_companies: {
         ...fields.companies,
         component: withTMDB()(FilterCompanies),
@@ -201,6 +285,11 @@ export const Discover = compose(
       with_original_language: {
         ...fields.original_language,
         component: FilterLanguages,
+        props: { menuPlacement: 'top' },
+      },
+      with_origin_country: {
+        ...fields.original_language,
+        component: FilterCountries,
         props: { menuPlacement: 'top' },
       },
     },
