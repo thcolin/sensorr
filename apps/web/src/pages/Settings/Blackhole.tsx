@@ -1,4 +1,4 @@
-import { Button, Label } from '@sensorr/ui'
+import { Button, Label, Option } from '@sensorr/ui'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -36,6 +36,19 @@ const Blackhole = ({ ...props }) => {
               {config.get('docker') && (
                 <small sx={{ display: 'block', marginTop: 6 }}>Sensorr is currently running from <strong>Docker</strong> images, to configure blackhole you need to edit your <code>SENSORR_BLACKHOLE</code> environment variable from your <code>.env</code> file</small>
               )}
+              <Controller
+                name='magnet'
+                control={form.control}
+                render={({ field: { value: checked, onChange } }) => (
+                  <Option type='checkbox' id='magnet' checked={!!checked} onChange={(e: any) => onChange(e.target.checked)}>
+                    <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                      <strong>Magnet links</strong>
+                      <br />
+                      <small>Written as <code>.magnet</code> files, for a download client that reads them from its watched folder, as qBittorrent does. Off, a release an indexer only gives as a magnet link is left aside</small>
+                    </div>
+                  </Option>
+                )}
+              />
             </div>
             <h3>Shows</h3>
             <p>
