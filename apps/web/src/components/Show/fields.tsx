@@ -5,6 +5,9 @@ import { fields, useFieldComputedRangeProps } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { countries, emojize } from '@sensorr/utils'
 import withProps from '../enhancers/withProps'
+import { multi, statuses, untouched } from './serialize'
+
+export { multi, untouched }
 
 const OneOf = ({ label, options, statistics, ...props }) => (
   <Checkbox
@@ -32,28 +35,24 @@ export const status = {
   })(OneOf),
 }
 
-// A range left where it starts sends nothing: its lower bound would drop every show TMDB gives no value for
-export const untouched = (field) => ({
-  ...field,
-  serialize: (key, raw) => JSON.stringify(raw) === JSON.stringify(field.initial) ? {} : field.serialize(key, raw),
-})
 
-const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
+// A TMDB type by its name, and by its index for `discover/tv`
+export const TYPES = [
+  { name: 'Scripted', index: 4, emoji: '🎬' },
+  { name: 'Miniseries', index: 2, emoji: '📕' },
+  { name: 'Documentary', index: 0, emoji: '🎓' },
+  { name: 'Reality', index: 3, emoji: '🤳' },
+  { name: 'Talk Show', index: 5, emoji: '🛋️' },
+  { name: 'News', index: 1, emoji: '🗞️' },
+  { name: 'Video', index: 6, emoji: '📼' },
+]
 
 export const type = {
   initial: { values: [] },
   serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
   component: withProps({
     label: i18n.t('ui.filters.type'),
-    options: [
-      { value: 'Scripted', label: emojize('🎬', 'Scripted') },
-      { value: 'Miniseries', label: emojize('📕', 'Miniseries') },
-      { value: 'Documentary', label: emojize('🎓', 'Documentary') },
-      { value: 'Reality', label: emojize('🤳', 'Reality') },
-      { value: 'Talk Show', label: emojize('🛋️', 'Talk Show') },
-      { value: 'News', label: emojize('🗞️', 'News') },
-      { value: 'Video', label: emojize('📼', 'Video') },
-    ],
+    options: TYPES.map(({ name, emoji }) => ({ value: name, label: emojize(emoji, name) })),
   })(OneOf),
 }
 
@@ -114,7 +113,7 @@ const EPISODE_STATUSES = ['wanted', 'proposed', 'owned', 'upcoming', 'unmonitore
 // Uncounted: the list view loads its episodes page by page
 export const episode_status = {
   initial: { values: [] },
-  serialize: (key, raw) => raw?.values?.length ? { status: raw.values.join('|') } : {},
+  serialize: statuses,
   component: ({ statistics, ...props }) => (
     <Checkbox
       {...props as any}

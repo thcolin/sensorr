@@ -1,4 +1,3 @@
-// Every value is cast here: an aggregation stage, unlike `find`, gets no help from the schema
 
 const RELEASE_TAGS = ['znab', 'encoding', 'resolution', 'source', 'dub', 'language', 'flags']
 
