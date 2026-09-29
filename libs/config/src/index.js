@@ -68,6 +68,11 @@ const schema = {
     default: '/tmp',
     arg: 'blackhole',
   },
+  magnet: {
+    doc: 'Write the magnet link of a movie release to the blackhole as a .magnet file, for a download client that reads them from its watched folder',
+    format: 'Boolean',
+    default: false,
+  },
   shows: {
     library: {
       doc: 'Shows library absolute path, where imported episodes are hard linked',

@@ -4,6 +4,9 @@ export const MAX_TORRENT_FILES = 20000
 
 export const MEDIA = /\.(mkv|mp4|m4v|avi|ts|webm)$/i
 
+// An indexer that only has magnet links, like The Pirate Bay through Jackett, gives one as the enclosure
+export const isMagnet = (url: string) => /^magnet:/i.test(url || '')
+
 const text = (buffer: Uint8Array, start: number, end: number) => new TextDecoder().decode(buffer.subarray(start, end))
 
 // Byte strings are read as UTF-8, which garbles `pieces` and nothing else that is read here

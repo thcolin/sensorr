@@ -21,7 +21,7 @@ export default (job, handlers) => ({
     const { waitUntilExit } = render((
       <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command, type: meta.type }, logger, sensorr, policies: config.get('policies') }}>
         <FetchAPIMoviesTask command='record' />
-        <ProcessMoviesTask command='record' proposalOnly={config.get('jobs.record.movies.proposalOnly')} />
+        <ProcessMoviesTask command='record' proposalOnly={config.get('jobs.record.movies.proposalOnly')} magnet={config.get('magnet')} />
       </Tasks>
     ), { exitOnCtrlC: false, stdin: process.stdin.isTTY ? process.stdin : new StdinMock })
 
