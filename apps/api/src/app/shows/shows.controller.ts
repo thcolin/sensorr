@@ -27,6 +27,13 @@ export class ShowsController {
     return this.showsService.getShows({ ...query, sort_by }, page, Number(limit))
   }
 
+  @Get('statistics')
+  async getStatistics(
+    @Query() { context = 'library', ...query },
+  ): Promise<unknown> {
+    return this.showsService.getStatistics(query, context as 'library' | 'followed')
+  }
+
   @Get('metadata')
   async getMetadata(
     @Query('page') page = 1,

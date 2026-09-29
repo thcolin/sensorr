@@ -4,7 +4,9 @@ import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
-import { entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
+import { STATUS_GROUPS, entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
+import { fields } from '@sensorr/tmdb'
+import { episodeStatusFilter, showFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { LogsService } from '../logs/logs.service'
@@ -25,6 +27,9 @@ const monitored = (value) => ({
   true: { monitored: true },
   false: { monitored: { $ne: true } },
 })[`${value}`] || {}
+
+// The filters of a show that narrow the episodes of the calendar
+const SHOW_PARAMS = ['networks', 'genres', 'policy', 'requested_by']
 
 @Injectable()
 export class ShowsService {
@@ -237,36 +242,7 @@ export class ShowsService {
 
   async getShows(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<ShowDocument>> {
     this.logger.log(`GetShows, params=${JSON.stringify(params)}, page=${page}`)
-    const res = await this.showModel.paginate({
-      state: { $nin: ['ignored'] },
-      ...(params.state ? {
-        state: { $in: params.state.split('|') }
-      } : {}),
-      ...(params.policy ? {
-        policy: { $in: params.policy.split('|') }
-      } : {}),
-      ...(params.status ? {
-        status: { $in: params.status.split('|') }
-      } : {}),
-      ...monitored(params.monitored),
-      ...(params.requested_by ? {
-        requested_by: {
-          ...(!/,/.test(params.requested_by) ? {
-            $in: params.requested_by.split('|'),
-          } : {}),
-          ...(/,/.test(params.requested_by) ? {
-            $all: params.requested_by.split(','),
-          } : {}),
-        },
-      } : {}),
-      ...(params['requested_by.gte'] ? {
-        [`requested_by.${Number(params['requested_by.gte']) - 1}`]: { $exists: true },
-      } : {}),
-      ...(({
-        true: { 'releases': { $elemMatch: { 'proposal': true } } },
-        false: { 'releases': { $not: { $elemMatch: { 'proposal': true } } } },
-      })[params['releases.proposal']] || {}),
-    }, {
+    const res = await this.showModel.paginate(showFilter(params), {
       page,
       lean: true,
       leanWithId: false,
@@ -283,6 +259,46 @@ export class ShowsService {
     }
 
     return res
+  }
+
+  // The counts beside each filter of the library, or of the calendar on the followed shows, and the ids the filters match
+  async getStatistics(params = {} as any, context: 'library' | 'followed' = 'library') {
+    this.logger.log('GetStatistics')
+    const count = { count: { $sum: 1 } }
+    const bucket = (key: string, boundaries: number[], groupBy: any = `$${key}`) => [{ $bucket: { groupBy, boundaries, default: -1, output: count } }]
+    const unwound = (path: string, _id = `$${path}`) => [{ $unwind: `$${path.split('.')[0]}` }, { $group: { _id, ...count } }]
+
+    const [raw] = await this.showModel.aggregate([
+      { $match: showFilter(context === 'followed' ? { monitored: 'true' } : {}) },
+      {
+        $facet: {
+          state: [{ $group: { _id: { $cond: ['$monitored', 'followed', 'unfollowed'] }, ...count } }],
+          status: [{ $group: { _id: '$status', ...count } }],
+          policy: [{ $match: { policy: { $ne: null } } }, { $group: { _id: '$policy', ...count } }],
+          requested_by: unwound('requested_by'),
+          genres: unwound('genres.id'),
+          networks: [{ $unwind: '$networks' }, { $group: { _id: '$networks.id', name: { $first: '$networks.name' }, ...count } }],
+          original_languages: [{ $group: { _id: '$original_language', ...count } }],
+          origin_country: unwound('origin_country'),
+          type: [{ $match: { type: { $ne: null } } }, { $group: { _id: '$type', ...count } }],
+          first_air_date: [{ $match: { first_air_date: { $ne: null } } }, { $group: { _id: { $year: '$first_air_date' }, ...count } }],
+          number_of_seasons: [{ $match: { number_of_seasons: { $gte: 1 } } }, ...bucket('number_of_seasons', fields.number_of_seasons.boundaries)],
+          popularity: bucket('popularity', fields.popularity.boundaries),
+          vote_average: bucket('vote_average', fields.vote_average.boundaries),
+          vote_count: bucket('vote_count', fields.vote_count.boundaries),
+          // A show without a length would fall in the last bar
+          episode_run_time: [{ $match: { 'episode_run_time.0': { $exists: true } } }, ...bucket('episode_run_time', fields.episode_runtime.boundaries, { $first: '$episode_run_time' })],
+          bulk: [{ $match: showFilter(params) }, { $group: { _id: null, entities: { $addToSet: '$id' } } }],
+        },
+      },
+    ])
+
+    // The library filters on the group of a TMDB status
+    raw.status = Object.keys(STATUS_GROUPS)
+      .map(group => ({ _id: group, count: raw.status.filter(({ _id }) => STATUS_GROUPS[group].includes(_id)).reduce((sum, { count }) => sum + count, 0) }))
+      .filter(({ count }) => count)
+
+    return raw
   }
 
   // Specials are left out, like everywhere else progress is counted
@@ -392,8 +408,12 @@ export class ShowsService {
   async getEpisodes(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<EpisodeDocument>> {
     this.logger.log(`GetEpisodes, params=${JSON.stringify(params)}, page=${page}`)
 
-    const followed = `${params.monitored_show}` === 'true'
-      ? (await this.showModel.find(monitored(true), { _id: 1 }).lean()).map(({ _id }) => Number(_id))
+    const narrowed = SHOW_PARAMS.some(key => params[key])
+    const followed = (`${params.monitored_show}` === 'true' || narrowed)
+      ? (await this.showModel.find(showFilter({
+        ...(`${params.monitored_show}` === 'true' ? { monitored: 'true' } : {}),
+        ...Object.fromEntries(SHOW_PARAMS.filter(key => params[key]).map(key => [key, params[key]])),
+      }), { _id: 1 }).lean()).map(({ _id }) => Number(_id))
       : null
     const requested = params.show ? `${params.show}`.split('|').map(Number) : null
     const shows = (followed && requested) ? requested.filter(id => followed.includes(id)) : (followed || requested)
@@ -403,6 +423,7 @@ export class ShowsService {
         show_id: { $in: shows }
       } : {}),
       ...monitored(params.monitored),
+      ...episodeStatusFilter(params.status, new Date()),
       ...((params.aired_after || params.aired_before || `${params.wanted}` === 'true') ? {
         $and: [
           ...(params.aired_after ? [{ air_date: { $gte: new Date(params.aired_after) } }] : []),

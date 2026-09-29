@@ -143,3 +143,16 @@ export const showFilter = (params) => ({
   } : {}),
   ...releasesFilter(params),
 })
+
+// The same cases as `episodeStatus` in `libs/sensorr/src/lib/episode.ts`, read by Mongo
+export const episodeStatusFilter = (value: string | undefined, now: Date) => {
+  const cases = (value || '').split('|').map(status => ({
+    owned: { 'files.0': { $exists: true } },
+    upcoming: { 'files.0': { $exists: false }, $or: [{ air_date: { $gt: now } }, { air_date: null, monitored: true }] },
+    unmonitored: { 'files.0': { $exists: false }, monitored: { $ne: true }, $or: [{ air_date: null }, { air_date: { $lte: now } }] },
+    proposed: { 'files.0': { $exists: false }, monitored: true, air_date: { $lte: now }, release: { $nin: [null, ''] } },
+    wanted: { 'files.0': { $exists: false }, monitored: true, air_date: { $lte: now }, release: { $in: [null, ''] } },
+  })[status]).filter(Boolean)
+
+  return cases.length ? { $or: cases } : {}
+}
