@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Checkbox, EpisodeStatusOptions, FilterStatistics, Range } from '@sensorr/ui'
+import { Checkbox, EpisodeStatusOptions, FilterStatistics, INACTIVE, Range } from '@sensorr/ui'
 import { STATUS_GROUPS } from '@sensorr/sensorr'
 import { fields, useFieldComputedRangeProps } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
@@ -48,16 +48,16 @@ export const type = {
     options: [
       { value: 'Scripted', label: emojize('🎬', 'Scripted') },
       { value: 'Miniseries', label: emojize('📕', 'Miniseries') },
-      { value: 'Documentary', label: emojize('🌍', 'Documentary') },
-      { value: 'Reality', label: emojize('🎥', 'Reality') },
-      { value: 'Talk Show', label: emojize('🎙️', 'Talk Show') },
-      { value: 'News', label: emojize('📰', 'News') },
+      { value: 'Documentary', label: emojize('🎓', 'Documentary') },
+      { value: 'Reality', label: emojize('🤳', 'Reality') },
+      { value: 'Talk Show', label: emojize('🛋️', 'Talk Show') },
+      { value: 'News', label: emojize('🗞️', 'News') },
       { value: 'Video', label: emojize('📼', 'Video') },
     ],
   })(OneOf),
 }
 
-const FilterNetworks = ({ statistics, ...props }) => {
+const FilterNetworks = ({ statistics, counted = true, ...props }) => {
   const names = useMemo(() => Object.fromEntries((statistics || []).map(({ _id, name }) => [_id, name])), [statistics])
 
   return (
@@ -66,7 +66,7 @@ const FilterNetworks = ({ statistics, ...props }) => {
       statistics={statistics}
       label='ui.filters.networks'
       display='select'
-      labelize={(_id, count) => `${names[_id] || _id} (${count})`}
+      labelize={(_id, count) => counted ? `${names[_id] || _id} (${count})` : `${names[_id] || _id}`}
     />
   )
 }
@@ -106,8 +106,10 @@ export const number_of_seasons = untouched({
   component: FilterSeasons,
 })
 
-const EPISODE_STATUSES = ['wanted', 'proposed', 'owned', 'upcoming', 'unmonitored']
-  .map(value => ({ value, label: emojize(EpisodeStatusOptions[value].emoji, EpisodeStatusOptions[value].label) }))
+const EPISODE_STATUSES = ['wanted', 'proposed', 'owned', 'upcoming', 'unmonitored'].map(value => {
+  const { emoji, label, inactive } = EpisodeStatusOptions[value]
+  return { value, label, emoji: (inactive ? <span sx={INACTIVE}>{emoji}</span> : emoji) as any }
+})
 
 // Uncounted: the list view loads its episodes page by page
 export const episode_status = {

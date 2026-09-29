@@ -19,7 +19,7 @@ export const RELEASES_AREAS = `
 export const JOBS = {
   sync: emojize('🔗', 'Sync'),
   record: emojize('📹', 'Record'),
-  airing: emojize('📡', 'Airing'),
+  airing: emojize('🛰️', 'Airing'),
   refine: emojize('✨', 'Refine'),
   shrink: emojize('✂️', 'Shrink'),
 }

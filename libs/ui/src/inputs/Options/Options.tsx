@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useId, useMemo } from 'react'
 import { Option } from '../Option/Option'
 
 interface InputInterface {
@@ -23,6 +23,8 @@ export interface OptionsProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
 }
 
 const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
+  // Two fields of a panel share values, `airing` or a TMDB index: a bare value as id checks the other field's box
+  const uid = useId()
   const styles = useMemo(() => ({
     ...UIOptions.styles,
     option: {
@@ -65,7 +67,7 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
         {options.map((input) => (
           <Option
             key={input.value}
-            id={input.value}
+            id={`${uid}${input.value}`}
             type={type}
             checked={testChecked(input, value)}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e, input, value)}
