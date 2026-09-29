@@ -83,6 +83,8 @@ interface Renderer {
 // One WebGL context paints every poster and hands each result to the poster's own 2D canvas:
 // browsers cap live contexts at around sixteen, and a page can show more posters than that
 let shared: Renderer | null | undefined
+// Every poster on the page, drawn again when the context is lost, into a new one or as it is
+const redraws = new Set<() => void>()
 
 const renderer = (): Renderer | null => {
   if (shared !== undefined) {
@@ -117,10 +119,11 @@ const renderer = (): Renderer | null => {
   gl.uniform3fv(uniform('u_ramp'), RAMP.flat())
   gl.uniform3fv(uniform('u_crimson'), CRIMSON)
 
-  // A lost context is rebuilt on the next draw, its textures with it
+  // A lost context is rebuilt, its textures with it, and every poster drawn again: one drawn before the loss is blank
   canvas.addEventListener('webglcontextlost', (event) => {
     event.preventDefault()
     shared = undefined
+    setTimeout(() => redraws.forEach((redraw) => redraw()))
   })
 
   return (shared = { canvas, gl, uniform, textures: new Map() })
@@ -268,9 +271,12 @@ const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: Compo
       compose ? setSize(next) : draw.current?.(reduced ? 1 : progress.get())
     })
     resize.observe(current)
+    const redraw = () => draw.current?.(reduced ? 1 : progress.get())
+    redraws.add(redraw)
 
     return () => {
       cancelled = true
+      redraws.delete(redraw)
       resize.disconnect()
       draw.current = null
       source && release(source)
