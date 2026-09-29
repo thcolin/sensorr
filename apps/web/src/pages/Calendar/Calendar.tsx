@@ -15,7 +15,6 @@ import {
   withControls,
   useControlsState,
   Warning,
-  Icon,
   Option,
   Badge,
   Empty,
@@ -24,7 +23,6 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
-import { Trans, useTranslation } from 'react-i18next'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
@@ -32,7 +30,7 @@ import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/Person
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
-import { Agenda, Cell, ControlsContext, Line, Month, Stream, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
+import { Agenda, Cell, ControlsContext, Line, Month, Stream, Toggle, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
 import { dateOf, day, monthRange, monthWeeks, originOf, withToday } from '../../components/Calendar/agenda'
 import withFetchCalendarQuery, { discoverCalendar, refine, summarizeCalendar } from './withFetchCalendarQuery'
 import { withBody } from '../../layout/withLayout'
@@ -218,42 +216,6 @@ const ASIDE = {
     "with_runtime"
     "certification"
   `,
-}
-
-const Toggle = ({ toggleOpen, fields, values, ...props }) => {
-  const { t } = useTranslation()
-  const active = Object.keys(values)
-    .filter(key => !['sort_by', 'primary_release_date', 'with_release_type', 'hide_library'].includes(key))
-    .reduce((acc, key) => acc + (values[key] && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
-
-  return (
-    <button
-      {...props}
-      sx={{
-        variant: 'button.reset',
-        display: 'flex',
-        alignItems: 'center',
-        marginY: 4,
-        paddingX: 2,
-        borderRadius: '0.25em',
-        ':hover': {
-          backgroundColor: 'accent',
-        },
-        ':active': {
-          backgroundColor: 'accentDark',
-        },
-        '>svg': {
-          height: '1em',
-          marginLeft: 6,
-        },
-      }}
-      type='button'
-      onClick={toggleOpen}
-    >
-      <Trans t={t} i18nKey='ui.controls.toggle' values={{ active }} components={[<span style={{ whiteSpace: 'pre' }} />, <strong />]} />
-      <Icon value='filters' />
-    </button>
-  )
 }
 
 // The bar of the Theatres page: the view beside the library toggle, the sort only where the order is not the date
