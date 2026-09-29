@@ -114,7 +114,7 @@ describe('wrappedOf', () => {
   })
 
   it('keeps the night that ended the latest, past midnight, as one night', () => {
-    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' } })
+    expect(wrapped.night).toEqual({ date: '2026-05-04', plays: 4, episodes: 4, end: '01:30', late: true, episode: true, poster: { key: 'show:1', title: 'Scrubs' }, before: [{ key: 'show:2', title: 'Twin Peaks' }] })
   })
 
   it('falls back on the evening with the most plays when nothing ends after 01:00, and ignores a session left open', () => {
@@ -123,7 +123,7 @@ describe('wrappedOf', () => {
       { ...play(4, 'plex://movie/heat', '2026-02-01T20:00:00Z', 3), stopped: at('2026-02-03T20:00:00Z') },
       play(4, 'plex://movie/dune', '2026-02-10T19:00:00Z', 2.5),
     ]
-    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, end: '00:30', late: false })
+    expect(wrappedOf({ plays: early, titles, user_id: 4, year: 2026 }).night).toMatchObject({ date: '2026-02-01', plays: 2, end: '00:30', late: false, poster: { title: 'Heat' }, before: [{ title: '2001' }] })
   })
 
   it('puts the show watched the most on each month', () => {
@@ -217,9 +217,9 @@ describe('wrappedOf', () => {
     ]
     expect(wrappedOf({ plays: habits, titles: timed, user_id: 10, year: 2026 })).toMatchObject({
       dropped: { title: 'Dune', percent: 40 },
-      rewatched: { title: 'Heat', times: 2 },
+      rewatched: { title: 'Heat', times: 2, dates: ['2026-02-01', '2026-02-08'] },
       longest: { title: 'Heat', minutes: 180 },
-      oldest: { title: '2001', year: 1968 },
+      oldest: { title: '2001', year: 1968, dates: ['2026-02-10'] },
     })
     const resumed = [play(10, 'plex://movie/dune', '2026-02-09T20:00:00Z', 1.2), play(10, 'plex://movie/dune', '2026-02-10T20:00:00Z', 1.3)]
     expect(wrappedOf({ plays: resumed, titles: timed, user_id: 10, year: 2026 }).dropped).toBeNull()

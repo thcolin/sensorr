@@ -307,20 +307,29 @@ html[data-theme='tele'] {
 }
 
 .tele-figure {
-  color: var(--red);
-  font: italic 900 1.7em/0.8 var(--cond);
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  margin: 0.1em 0.08em;
+  padding: 0.14em 0.32em 0.08em;
+  background: var(--red);
+  color: #fff;
+  font: italic 900 1.05em/1 var(--cond);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   white-space: nowrap;
+  transform: rotate(-2deg);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
-.tele-pick .tele-figure,
-.tele-review-lead .tele-figure {
-  color: var(--red-deep);
+.tele-figure-n {
+  font-size: 1.5em;
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .tele-spread-blue .tele-figure {
-  color: var(--yellow);
+  background: var(--yellow);
+  color: var(--ink);
 }
 
 .tele-mark {
@@ -506,10 +515,19 @@ html[data-theme='tele'] {
 }
 
 .tele-cover-line b {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  transform: none;
   color: var(--yellow);
-  font-weight: 900;
-  font-style: italic;
+  font: italic 900 1em/1.2 var(--cond);
+}
+
+.tele-cover-line .tele-figure-n {
   font-size: 1.5em;
+  line-height: 1;
 }
 
 .tele-cover-line-lead {
@@ -1157,8 +1175,11 @@ html[data-theme='tele'] {
 }
 
 .tele-review-detail .tele-figure {
-  font-size: 2.6em;
-  line-height: 0.9;
+  font-size: 1.6em;
+}
+
+.tele-review-when {
+  font: italic 400 17px/1.35 var(--serif);
 }
 
 .tele-review-what {

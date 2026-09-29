@@ -31,8 +31,10 @@ export const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 // Between one evening and the other viewer's
 const gapOf = (days?: number) => days === undefined ? null : days === 0 ? 'le même soir' : days === 1 ? 'à un jour d’écart' : `à ${plural(days, 'jour', 'jours')} d’écart`
 
-// A poster with what it stands for: a label above its title, and a detail under it
-export type Billed = { what: string, poster: WrappedPoster, detail: string }
+// A poster with what it stands for: a label above its title, a detail under it, and when it was watched
+export type Billed = { what: string, poster: WrappedPoster, detail: string, when?: string | null }
+// « Vu le 3 mars », « Vu le 1er février et le 8 février »
+const seen = (dates?: string[]) => dates?.length ? `Vu ${dates.map((date) => `le ${dayOf(date)}`).join(', ').replace(/, (?=[^,]*$)/, ' et ')}.` : null
 
 export type SheetModel =
   | { kind: 'opening', label: string, title: string, name: string, year: number, lede: string | null, first: string | null, figures: string[], posters: WrappedPoster[] }
@@ -40,7 +42,7 @@ export type SheetModel =
   | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string, lead: boolean, nights: { day: string, poster: WrappedPoster | null }[] }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string } | null }
   | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null, pace: (WrappedPoster & { episodes: number, days: number }) | null }
-  | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
+  | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string, earlier: string | null, before: WrappedPoster[] }
   | { kind: 'server', label: string, first: boolean, lines: string[], poster: WrappedPoster, title: string, lede: string }
   | { kind: 'figure', label: string, variant: 'only_you' | 'twin', lines: string[] | null, count: number, spoken: string, unit: string, highlight?: string, details: string, posters: WrappedPoster[] }
   | { kind: 'duo', label: string, lines: string[], lede: string, posters: (WrappedPoster & { caption: string })[] }
@@ -54,7 +56,7 @@ export type Colophon = { short: string | null, text: string }
 const bill = (items: (Billed | null | false)[]) => (items.filter(Boolean) as Billed[]).reduce<Billed[]>((all, item) => {
   const same = all.find((other) => other.poster.key === item.poster.key)
   return same
-    ? all.map((entry) => entry === same ? { what: `${same.what} et ${item.what.toLowerCase()}`, poster: item.poster, detail: `${same.detail}, ${item.detail}` } : entry)
+    ? all.map((entry) => entry === same ? { what: `${same.what} et ${item.what.toLowerCase()}`, poster: item.poster, detail: `${same.detail}, ${item.detail}`, when: same.when || item.when } : entry)
     : [...all, item]
 }, [])
 
@@ -180,6 +182,9 @@ export const sheetsOf = (share: Share) => {
         night.plays - night.episodes && plural(night.plays - night.episodes, 'film', 'films'),
       ].filter(Boolean).join(' et ')}` : '',
       last: `${night.plays > 1 ? 'La dernière' : 'Au programme'}${THIN}: ${night.episode ? `un épisode ${of(poster.title)}` : quoted(poster.title)}.`,
+      // An edition frozen before the other titles of the night were kept has none
+      earlier: night.before?.length ? `Plus tôt ${late ? 'dans la nuit' : 'dans la soirée'}${THIN}:` : null,
+      before: (night.before || []).slice(0, 6),
     })
   }
 
@@ -263,9 +268,9 @@ export const sheetsOf = (share: Share) => {
       variant: 'outliers',
       lines: ['Hors', 'normes'],
       items: bill([
-        rewatched && { what: 'Revu', poster: rewatched, detail: `${rewatched.times} fois` },
-        longest && { what: 'Le plus long', poster: longest, detail: lasting(longest.minutes) },
-        oldest && { what: 'Le plus vieux', poster: oldest, detail: `sorti en ${oldest.year}` },
+        rewatched && { what: 'Revu', poster: rewatched, detail: `${rewatched.times} fois`, when: seen(rewatched.dates) },
+        longest && { what: 'Le plus long', poster: longest, detail: lasting(longest.minutes), when: seen(longest.dates) },
+        oldest && { what: 'Le plus vieux', poster: oldest, detail: `sorti en ${oldest.year}`, when: seen(oldest.dates) },
       ]),
     })
   }
