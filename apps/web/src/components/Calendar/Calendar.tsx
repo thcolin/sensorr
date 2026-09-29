@@ -72,7 +72,6 @@ const UIFailure = ({ error, fallback }: { error: any, fallback: Failure }) => {
   )
 }
 
-// The filters button of a calendar bar, counting the filters the bar itself does not show
 export const Toggle = ({ toggleOpen, fields, values, ...props }) => {
   const { t } = useTranslation()
   const active = Object.keys(values)

@@ -1,5 +1,4 @@
-// The Mongo filters of the library screens, from the query string their controls send. They serve `find` and
-// `aggregate` alike, so every value is cast here: an aggregation stage gets no help from the schema.
+// Every value is cast here: an aggregation stage, unlike `find`, gets no help from the schema
 
 const RELEASE_TAGS = ['znab', 'encoding', 'resolution', 'source', 'dub', 'language', 'flags']
 
@@ -33,7 +32,6 @@ const requested = (params) => ({
   } : {}),
 })
 
-// A preferred tag is looked for on the proposal when the proposal filter asks for one
 export const releasesFilter = (params) => {
   if (!Object.keys(params).some(key => RELEASE_KEYS.includes(key))) {
     return {}
@@ -137,7 +135,6 @@ export const showFilter = (params) => ({
   ...between(params, 'popularity'),
   ...between(params, 'vote_average'),
   ...between(params, 'vote_count'),
-  // A show lists one length per format it aired in, TMDB mostly gives one
   ...((params['episode_run_time.lte'] || params['episode_run_time.gte']) ? {
     episode_run_time: { $elemMatch: between(params, 'episode_run_time', 'value').value },
   } : {}),

@@ -32,8 +32,7 @@ export const status = {
   })(OneOf),
 }
 
-// A range left where it starts sends nothing: its lower bound would drop every show TMDB gives no value for,
-// 288 of 522 on the episode length
+// A range left where it starts sends nothing: its lower bound would drop every show TMDB gives no value for
 export const untouched = (field) => ({
   ...field,
   serialize: (key, raw) => JSON.stringify(raw) === JSON.stringify(field.initial) ? {} : field.serialize(key, raw),
@@ -41,7 +40,6 @@ export const untouched = (field) => ({
 
 const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
 
-// The TMDB types of a show, as `/shows/statistics` counts them
 export const type = {
   initial: { values: [] },
   serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
@@ -59,7 +57,6 @@ export const type = {
   })(OneOf),
 }
 
-// The networks come counted with their name, the filter sends their TMDB id
 const FilterNetworks = ({ statistics, ...props }) => {
   const names = useMemo(() => Object.fromEntries((statistics || []).map(({ _id, name }) => [_id, name])), [statistics])
 
@@ -90,7 +87,6 @@ export const origin_country = {
   })(FilterStatistics),
 }
 
-// The last mark stands for ten seasons and more, `Range` writes it `10+`
 const FilterSeasons = ({ statistics, ...props }) => {
   const field = useFieldComputedRangeProps('number_of_seasons', statistics)
 
@@ -113,7 +109,7 @@ export const number_of_seasons = untouched({
 const EPISODE_STATUSES = ['wanted', 'proposed', 'owned', 'upcoming', 'unmonitored']
   .map(value => ({ value, label: emojize(EpisodeStatusOptions[value].emoji, EpisodeStatusOptions[value].label) }))
 
-// The statuses of an episode, the badges of the calendar. Uncounted: the list view loads the episodes page by page
+// Uncounted: the list view loads its episodes page by page
 export const episode_status = {
   initial: { values: [] },
   serialize: (key, raw) => raw?.values?.length ? { status: raw.values.join('|') } : {},

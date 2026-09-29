@@ -3,8 +3,6 @@ import i18n from '@sensorr/i18n'
 import { emojize } from '@sensorr/utils'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from './Oleoo'
 
-// The second aside of a library, on the releases of its entries: its areas, the button that opens it, and its fields
-
 export const RELEASES_AREAS = `
   "head_release"
   "job"

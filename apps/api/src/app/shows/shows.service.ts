@@ -28,7 +28,7 @@ const monitored = (value) => ({
   false: { monitored: { $ne: true } },
 })[`${value}`] || {}
 
-// The filters of a show that narrow the episodes of the calendar
+// The filters of a show the episodes take, `monitored` staying the episode's own
 const SHOW_PARAMS = ['networks', 'genres', 'policy', 'requested_by']
 
 @Injectable()
@@ -261,7 +261,6 @@ export class ShowsService {
     return res
   }
 
-  // The counts beside each filter of the library, or of the calendar on the followed shows, and the ids the filters match
   async getStatistics(params = {} as any, context: 'library' | 'followed' = 'library') {
     this.logger.log('GetStatistics')
     const count = { count: { $sum: 1 } }
@@ -293,7 +292,6 @@ export class ShowsService {
       },
     ])
 
-    // The library filters on the group of a TMDB status
     raw.status = Object.keys(STATUS_GROUPS)
       .map(group => ({ _id: group, count: raw.status.filter(({ _id }) => STATUS_GROUPS[group].includes(_id)).reduce((sum, { count }) => sum + count, 0) }))
       .filter(({ count }) => count)
