@@ -149,8 +149,8 @@ export class Policy {
       .map(release => Policy.normalizers.releaseTitlesSimilarity(release, [...new Set([...(query?.titles || []), ...(query?.terms || [])])], ignore))
       .map(release => Policy.normalizers.releasePolicy(release, this))
       .map(release => Policy.normalizers.releaseRequirePolicy(release, this, strict))
-      .map(release => Policy.normalizers.magnetReleases(release, query?.magnet, unit, ignore))
       .map(release => Policy.normalizers.releaseNoSeeders(release, ignore))
+      .map(release => Policy.normalizers.magnetReleases(release, query?.magnet, unit, ignore))
       .map(release => Policy.normalizers.releaseScore(release, this, (strict || ignore || !release.znab)))
       .sort((a: any, b: any) => {
         if (a.score === b.score) {
