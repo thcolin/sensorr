@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControlsState, Warning } from '@sensorr/ui'
 import { Policy, levelOf, ranked, reachesUnit, unranked } from '@sensorr/sensorr'
 import { useSensorrRequest } from '../../store/sensorr'
+import { useConfigContext } from '../../contexts/Config/Config'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
   // `unit` searches a show from that level up to the whole series, and keeps only the releases that hold it
@@ -9,9 +10,11 @@ export const withSensorrRequest = () => (WrappedComponent) => {
     const [serialized, state] = useSensorrControlsState(metadata)
     const { call, reset, id, loading, done, tasks, releases } = useSensorrRequest() as any
     const request = useRef(null)
+    const { config } = useConfigContext()
+    const magnet = config.get('magnet')
 
     const query = useMemo(() => unit ? { ...serialized.query, unit } : serialized.query, [serialized.query, unit])
-    const applied = { ...query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases, ...(unit ? { reach: true } : {}) }
+    const applied = { ...query, titles: metadata.query?.titles, banned_releases: metadata.banned_releases, magnet, ...(unit ? { reach: true } : {}) }
     const reached = (list) => unit ? list.filter(({ meta, category }) => reachesUnit(meta, category, unit)) : list
     // A valid release before any other, then the level searched and the levels above it, each by its first season like
     // the seasons of the page, the policy's order inside a season
@@ -24,7 +27,7 @@ export const withSensorrRequest = () => (WrappedComponent) => {
 
     const entities = useMemo(
       () => ranked(reached((serialized.policy?.apply && serialized.policy.apply(releases || [], applied)) || (releases || []))),
-      [releases, query, serialized.policy, metadata.banned_releases, metadata.query?.titles]
+      [releases, query, serialized.policy, metadata.banned_releases, metadata.query?.titles, magnet]
     )
 
     const progress = useMemo(() => ({
@@ -36,7 +39,7 @@ export const withSensorrRequest = () => (WrappedComponent) => {
         ...task,
         releases: serialized.policy.apply(task.releases || [], applied),
       })),
-    }), [id, loading, done, tasks, query, serialized.policy, metadata.banned_releases, metadata.query?.titles])
+    }), [id, loading, done, tasks, query, serialized.policy, metadata.banned_releases, metadata.query?.titles, magnet])
 
     const controls = useMemo(() => ({
       ...state,
