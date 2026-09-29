@@ -100,6 +100,7 @@ export default {
       budget: emojize('💸', 'Budget'),
       name: emojize('🔤', 'Name'),
       first_air_date: emojize('📅', 'First Air Date'),
+      last_air_date: emojize('📺', 'Last Episode'),
       refreshed_at: emojize('🔄', 'Last Refresh'),
       requested_at: emojize('🍻', 'Request Date'),
     },
