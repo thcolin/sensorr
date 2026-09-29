@@ -40,11 +40,16 @@ const paceStatsOf = ({ episodes, days }: { episodes: number, days: number }): St
 export const suffix = (rank: number) => rank === 1 ? 'er' : 'e'
 // S03E12
 const episodeOf = (season: number, episode: number) => `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`
-// The plays of a night, the episodes of a show in a row on one line: « S01E01 à S01E05 »
+// Minutes from one « HH:MM » to the next, past midnight included
+const minutesBetween = (end: string, start: string) => {
+  const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3))
+  return (minutes(start) - minutes(end) + 1440) % 1440
+}
+// The plays of a night, the episodes of a show watched in a row on one line: « S01E01 à S01E05 »
 const scheduleOf = (plays: NonNullable<NonNullable<Wrapped['night']>['schedule']>) => plays.reduce<{ start: string, end: string, poster: WrappedPoster, what: string | null, from?: string }[]>((lines, play) => {
   const code = play.season !== undefined && play.episode !== undefined ? episodeOf(play.season, play.episode) : null
   const last = lines[lines.length - 1]
-  if (last && code && last.from && last.poster.key === play.key) {
+  if (last && code && last.from && last.poster.key === play.key && minutesBetween(last.end, play.start) <= 30) {
     return [...lines.slice(0, -1), { ...last, end: play.end, what: `${last.from} à ${code}` }]
   }
   const { start, end, season, episode, ...poster } = play
