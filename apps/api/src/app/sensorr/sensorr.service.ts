@@ -9,7 +9,7 @@ import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { isJob, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
+import { isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -48,9 +48,14 @@ export class SensorrService {
   ) {}
 
   async downloadRelease(release: ReleaseDTO, source: 'enclosure' | 'cache' = 'enclosure', destination: 'fs' | 'cache' = 'fs', kind: 'movie' | 'show' = 'movie'): Promise<TorrentFiles | void> {
-    const filename = sanitizeFilename(`${release.title}-${release.znab}.torrent`)
+    const magnet = isMagnet(release.enclosure)
+    const filename = sanitizeFilename(`${release.title}-${release.znab}.${magnet ? 'magnet' : 'torrent'}`)
     const blackhole = this.configService.config.get(kind === 'show' ? 'shows.blackhole' : 'blackhole')
     let res, buffer
+
+    if (magnet && (kind === 'show' || !this.configService.config.get('magnet'))) {
+      throw new UnprocessableEntityException(kind === 'show' ? 'Magnet link, a show needs a .torrent' : 'Magnet link, turned off in Settings > Blackhole')
+    }
 
     // An accepted release has already left the cache, so it is fetched again from its indexer
     if (source === 'cache' && !(await this.metafileModel.exists({ _id: release.link }))) {
@@ -59,6 +64,12 @@ export class SensorrService {
 
     switch (source) {
       case 'enclosure':
+        // A .magnet file holds the link itself, one per line, as qBittorrent reads it from its watched folder
+        if (magnet) {
+          buffer = Buffer.from(`${release.enclosure}\n`)
+          break
+        }
+
         res = await fetch(release.enclosure)
 
         if (!res.ok) {
