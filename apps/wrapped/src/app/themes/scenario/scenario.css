@@ -369,6 +369,7 @@ html[data-theme='scenario'] {
 .scenario-tally {
   flex: 1;
   max-width: 180px;
+  max-height: 110px;
   fill: none;
   stroke: var(--scenario-pencil);
   stroke-width: 2.2;
@@ -479,7 +480,6 @@ html[data-theme='scenario'] {
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
-  text-transform: uppercase;
 }
 
 .scenario-shout-figure sup {
@@ -499,6 +499,13 @@ html[data-theme='scenario'] {
 .scenario-shout-word {
   font-size: min(4.5rem, calc((100cqw - 90px) / (var(--length) * 0.62)));
   letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* An hour of the clock, as wide as a word */
+.scenario-shout-time .scenario-shout-figure {
+  font-size: clamp(3.5rem, 17cqw, 6rem);
+  letter-spacing: -0.06em;
 }
 
 .scenario-shout-unit {
@@ -514,6 +521,329 @@ html[data-theme='scenario'] {
 .scenario-inserts[data-count='1'] {
   grid-template-columns: minmax(0, 56%);
   justify-content: end;
+}
+
+/* A quantity in a sentence: typed bold, the number a size up, a red pencil stroke under it */
+.scenario-figure {
+  padding-bottom: 0.12em;
+  font-weight: 700;
+  white-space: nowrap;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cpath d='M1 5.2 C 20 3.4, 42 6.4, 62 4.4 S 90 3.6, 99 4.8' fill='none' stroke='%23a3201a' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 0 100% / 100% 0.34em no-repeat;
+}
+
+.scenario-figure-n {
+  font-size: 1.3em;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.scenario-act .scenario-figure {
+  background: none;
+}
+
+.scenario-act .scenario-figure-n {
+  font-size: 1.6em;
+}
+
+/* The month watched the most: its figure ringed in red pencil */
+.scenario-month-peak .scenario-figure {
+  margin: -0.4em -0.3em;
+  padding: 0.4em 0.7em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40' preserveAspectRatio='none'%3E%3Cpath d='M70 4 C 30 1, 3 9, 4 21 C 5 34, 42 38, 74 36 C 104 34, 118 26, 116 16 C 114 6, 92 2, 52 5' fill='none' stroke='%23a3201a' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+}
+
+.scenario-centred {
+  max-width: none;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.scenario-cast-role {
+  color: var(--scenario-quiet);
+  font-style: italic;
+}
+
+.scenario-cast-hours {
+  flex: none;
+}
+
+.scenario-beside-alone {
+  justify-content: center;
+}
+
+/* The evenings of the run, each a continued scene: its date as a heading, its title under it */
+.scenario-nights {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 14px 24px;
+  margin: 22px 0 0;
+}
+
+.scenario-nights li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+}
+
+.scenario-nights li[data-gap] {
+  grid-column: 1 / -1;
+}
+
+.scenario-nights li[data-gap]::before {
+  content: '(suite)';
+  flex: none;
+  width: 42px;
+  color: var(--scenario-quiet);
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.scenario-nights p {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.scenario-night-slug {
+  font-size: 0.875em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scenario-nights .scenario-insert-thumb {
+  width: 42px;
+  margin: 6px 0 0;
+}
+
+/* A still clipped to the page, its poster clipped over the lower corner */
+.scenario-still {
+  position: relative;
+  margin: 24px 0 36px;
+  padding-left: 12%;
+  transform: rotate(var(--tilt, 0.5deg));
+}
+
+.scenario-still > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #d8d2c4;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 10px 18px -6px rgb(0 0 0 / 0.4);
+}
+
+.scenario-still > .scenario-clip {
+  left: 60%;
+}
+
+.scenario-still .scenario-still-poster {
+  position: absolute;
+  z-index: 2;
+  bottom: -24px;
+  left: 0;
+  width: 27%;
+  margin: 0;
+}
+
+/* The clapperboard: striped sticks over a black board, the figures chalked in boxes */
+.scenario-slate {
+  --chalk: #f1ede4;
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 1), 1fr);
+  width: min(100%, 520px);
+  margin: 26px auto 18px;
+  padding: 34px 10px 10px;
+  background:
+    repeating-linear-gradient(-55deg, #1d1d1f 0 18px, #f1ede4 18px 36px) 0 0 / 100% 22px no-repeat,
+    #232427;
+  color: var(--chalk);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 22px -8px rgb(0 0 0 / 0.5);
+  transform: rotate(-1deg);
+}
+
+.scenario-slate[data-count='2'] { --columns: 2; }
+.scenario-slate[data-count='3'],
+.scenario-slate[data-count='4'] { --columns: 2; }
+
+.scenario-slate li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px 8px;
+  border: 2px solid rgb(241 237 228 / 0.75);
+  margin: 0 -1px -1px 0;
+  text-align: center;
+}
+
+.scenario-slate[data-count='3'] li:first-child {
+  grid-column: 1 / -1;
+}
+
+.scenario-slate b {
+  font: 500 clamp(2.6rem, 11cqw, 4rem)/1 'Caveat', cursive;
+  white-space: nowrap;
+}
+
+.scenario-slate span {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.scenario-slate-small {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  padding-top: 26px;
+  background-size: 100% 16px, auto;
+}
+
+.scenario-slate-small b {
+  font-size: clamp(1.9rem, 7cqw, 2.6rem);
+}
+
+.scenario-slate-small span {
+  font-size: 11px;
+}
+
+/* The night's log, one play per line with its hours */
+.scenario-log-title {
+  margin: 30px 0 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.scenario-log li {
+  display: grid;
+  grid-template-columns: 7ch 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  border-top: 1px dashed rgb(27 26 23 / 0.35);
+}
+
+.scenario-log li:last-child {
+  border-bottom: 1px dashed rgb(27 26 23 / 0.35);
+}
+
+.scenario-log-time {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+}
+
+.scenario-log-time > span {
+  color: var(--scenario-quiet);
+  font-weight: 400;
+}
+
+.scenario-log-title-line {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-log-title-line > span:not(.scenario-caps) {
+  color: var(--scenario-quiet);
+}
+
+.scenario-log .scenario-insert-thumb {
+  margin: 8px 4px 2px 0;
+}
+
+/* Dual dialogue: two characters speaking at once, side by side */
+.scenario-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 8px 0 0;
+}
+
+.scenario-dual .scenario-character {
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.scenario-dual .scenario-dialogue {
+  max-width: none;
+  margin: 2px 0 0;
+  text-align: center;
+}
+
+/* The titles watched at two, each a line of dialogue */
+.scenario-exchange {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 30px 28px;
+  margin: 26px 0 0;
+}
+
+.scenario-exchange li {
+  display: grid;
+  grid-template-columns: 38% 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.scenario-exchange .scenario-insert {
+  width: 100%;
+  margin: 10px 0 0;
+}
+
+.scenario-exchange .scenario-character,
+.scenario-exchange .scenario-parenthetical,
+.scenario-exchange .scenario-dialogue {
+  max-width: none;
+  margin: 0;
+  text-align: center;
+}
+
+.scenario-exchange .scenario-dialogue {
+  margin-top: 4px;
+  text-wrap: balance;
+}
+
+/* A figure of the outliers, beside its poster */
+.scenario-verdict {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+
+.scenario-verdict .scenario-pencil-note {
+  margin: 0 0 6px;
+  transform-origin: right center;
+}
+
+.scenario-verdict-figure {
+  font-size: clamp(2rem, 9cqw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.scenario-verdict-figure .scenario-mark {
+  background-size: 100% 0.62em;
+  background-position: 0 72%;
+}
+
+.scenario-verdict-when {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--scenario-quiet);
+}
+
+.scenario-pencil-stamp {
+  margin: 18px 0 0;
+  text-align: center;
+  transform-origin: center;
 }
 
 /* The title page: centred title, author, and the draft notes bottom left */

@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, number, plural, THIN, type SheetModel } from '../../sheets'
+import { MONTHS, number, plural, THIN, type SheetModel, type Stat } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
 import { anchor } from '../../anchor'
 import './scenario.css'
@@ -31,7 +31,7 @@ const scenesOf = (sheet: SheetModel) => {
   switch (sheet.kind) {
     case 'opening': return 0
     case 'months': return sheet.elapsed
-    case 'binge': return sheet.meta.length
+    case 'binge': return sheet.pace ? 2 : 1
     case 'posters': return sheet.items.length
     default: return 1
   }
@@ -154,9 +154,31 @@ const Slug = ({ scene, children }: { scene: number, children: ReactNode }) => (
 
 const Caps = ({ children }: { children: ReactNode }) => <span className="scenario-caps">{children}</span>
 const Mark = ({ children }: { children: ReactNode }) => <mark className="scenario-mark">{children}</mark>
+
+// A quantity is typed bold with its unit and underlined in red pencil: not a date, nor the digits of a name or of a title in quotes
+const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
+const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
+const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
+const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+  if (index % 2) return [part]
+  const bits: ReactNode[] = []
+  let from = 0
+  for (const match of part.matchAll(QUANTITY)) {
+    bits.push(part.slice(from, match.index), (
+      <b key={`${index}-${match.index}`} className="scenario-figure">
+        <span className="scenario-figure-n">{match[1]}</span>{match[2] && <> {match[2]}</>}
+      </b>
+    ))
+    from = match.index + match[0].length
+  }
+  return [...bits, part.slice(from)]
+})
+
+// A paragraph of the model cut at its sentences
+const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
 // A key figure said at the scale of the page: centred capitals, like a line shouted from the room
-const Shout = ({ figure, children, long }: { figure: ReactNode, children?: ReactNode, long?: number }) => (
-  <div className="scenario-shout" style={long ? { '--length': long } as React.CSSProperties : undefined}>
+const Shout = ({ figure, children, long, className = '' }: { figure: ReactNode, children?: ReactNode, long?: number, className?: string }) => (
+  <div className={`scenario-shout ${className}`} style={long ? { '--length': long } as React.CSSProperties : undefined}>
     <p className={`scenario-shout-figure${long ? ' scenario-shout-word' : ''}`}><Mark>{figure}</Mark></p>
     {children && <p className="scenario-shout-unit">{children}</p>}
   </div>
@@ -193,6 +215,27 @@ const Inserts = ({ posters, art, caption }: { posters: WrappedPoster[], art: Art
       <Insert key={poster.key} poster={poster} art={art} width={320} caption={caption ? caption(poster, index) : poster.title} />
     ))}
   </div>
+)
+
+// A still paper-clipped across the page, its poster clipped over the corner so the title reads at a glance
+const Still = ({ poster, art }: { poster: WrappedPoster, art: Art }) => {
+  const src = poster.art && art(poster, 'art', 1280)
+  if (!src || !poster.thumb) return <Insert poster={poster} art={art} wide />
+
+  return (
+    <figure className="scenario-still" style={{ '--tilt': `${(lean(`${poster.key}-still`) - 0.5) * 2}deg` } as React.CSSProperties}>
+      <Clip />
+      <img src={src} alt="" loading="lazy" decoding="async" />
+      <Insert poster={poster} art={art} width={320} className="scenario-still-poster" />
+    </figure>
+  )
+}
+
+// A clapperboard: each figure chalked in its own box
+const Slate = ({ stats, small }: { stats: Stat[], small?: boolean }) => (
+  <ul className={`scenario-slate${small ? ' scenario-slate-small' : ''}`} data-count={stats.length}>
+    {stats.map((stat) => <li key={stat.unit}><b>{stat.value}</b> <span>{stat.unit}</span></li>)}
+  </ul>
 )
 
 // The title page types itself once, the caret keeps blinking where it stopped
@@ -245,34 +288,42 @@ const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
       <div className="scenario-draft">
         {sheet.lede && <p>{sheet.lede}</p>}
         <ul>
-          {sheet.figures.map((figure) => <li key={figure}>{figure}</li>)}
+          {sheet.figures.map((figure) => <li key={figure}>{figures(figure)}</li>)}
         </ul>
       </div>
     </section>
   )
 }
 
-// A cast list, the friend's name billed at its rank and the other lines left blank
+// A cast list, the friend's name billed at its rank and the other lines left blank, the hours written where they are known
 const Rank = ({ sheet, name, scene }: { sheet: Of<'rank'>, name: string } & Scene) => {
   const { rank, users } = sheet
-  const shown = [...new Set([1, 2, 3, rank - 1, rank, rank + 1, users])].filter((line) => line >= 1 && line <= users).sort((a, b) => a - b)
+  const middle = Math.ceil(users / 2)
+  const shown = [...new Set([1, 2, 3, rank - 1, rank, rank + 1, middle, users])].filter((line) => line >= 1 && line <= users).sort((a, b) => a - b)
+  const hoursOf = (line: number) => line === rank ? sheet.hours : line === 1 ? sheet.max : line === middle ? sheet.median : null
 
   return (
     <>
       <Act>{sheet.label}</Act>
       <Slug scene={scene}>Int. salle de projection – soir</Slug>
       <ol className="scenario-cast" aria-hidden="true">
-        {shown.map((line, index) => (
-          <li key={line} className={line === rank ? 'scenario-cast-you' : undefined} data-gap={index > 0 && line - shown[index - 1] > 1 ? '' : undefined}>
-            <span>{line}.</span>
-            {line === rank ? <Mark><Caps>{name}</Caps></Mark> : <i />}
-          </li>
-        ))}
+        {shown.map((line, index) => {
+          const hours = hoursOf(line)
+          return (
+            <li key={line} className={line === rank ? 'scenario-cast-you' : undefined} data-gap={index > 0 && line - shown[index - 1] > 1 ? '' : undefined}>
+              <span>{line}.</span>
+              {line === rank ? <Mark><Caps>{name}</Caps></Mark> : line === middle && <span className="scenario-cast-role">(médiane)</span>}
+              <i />
+              {hours !== null && <b className="scenario-cast-hours">{number.format(hours)} h</b>}
+            </li>
+          )
+        })}
       </ol>
       <p className="scenario-character">La salle</p>
       <p className="scenario-parenthetical">(en chœur)</p>
       <Shout figure={<>{rank}<sup>{sheet.suffix}</sup></>}>{sheet.unit}</Shout>
-      <p className="scenario-dialogue">{sheet.detail}</p>
+      <p className="scenario-dialogue">{figures(sheet.detail)}</p>
+      <p className="scenario-action">{figures(sheet.compare)}</p>
     </>
   )
 }
@@ -284,7 +335,7 @@ const Tally = ({ count }: { count: number }) => {
   const rows = Math.ceil(groups / perRow)
 
   return (
-    <svg className="scenario-tally" viewBox={`0 0 ${perRow * 34} ${rows * 34}`} aria-hidden="true">
+    <svg className="scenario-tally" viewBox={`0 0 ${Math.min(groups, perRow) * 34} ${rows * 34}`} aria-hidden="true">
       {Array.from({ length: groups }, (_, group) => {
         const [x, y] = [(group % perRow) * 34 + 4, Math.floor(group / perRow) * 34 + 4]
         const strokes = Math.min(5, count - group * 5)
@@ -301,26 +352,40 @@ const Tally = ({ count }: { count: number }) => {
   )
 }
 
-const Streak = ({ sheet, scene, art }: { sheet: Of<'streak'> } & Scene) => (
-  <>
-    <Act>{sheet.label}</Act>
-    <Slug scene={scene}>Int. salon – soir</Slug>
-    <p className="scenario-action">{sheet.intro}{THIN}:</p>
-    <Shout figure={number.format(sheet.evenings)}>{sheet.unit}</Shout>
-    <div className="scenario-beside">
-      <Insert poster={sheet.poster} art={art} />
-      <Tally count={sheet.evenings} />
-    </div>
-    <p className="scenario-action">{sheet.details}</p>
-    <div className="scenario-continued" aria-hidden="true">
-      <p>Int. salon – soir (suite)</p>
-      <p>Int. salon – soir (suite)</p>
-      <p>Int. salon – soir (suite)</p>
-    </div>
-  </>
-)
+// The evenings of the run as scenes continued one after the other, the title of each typed under its date
+const Streak = ({ sheet, scene, art }: { sheet: Of<'streak'> } & Scene) => {
+  const shown = sheet.evenings <= 10 ? sheet.nights.map((_, index) => index) : [0, 1, 2, 3, sheet.evenings - 2, sheet.evenings - 1]
 
-// Twelve short scenes, one per month, a highlighter swipe as long as its episodes
+  return (
+    <>
+      <Act>{sheet.label}</Act>
+      <Slug scene={scene}>Int. salon – soir</Slug>
+      <p className="scenario-action">{sheet.intro}{THIN}:</p>
+      <Shout figure={number.format(sheet.evenings)}>{sheet.unit}</Shout>
+      <div className={`scenario-beside${sheet.lead ? '' : ' scenario-beside-alone'}`}>
+        {sheet.lead && <Insert poster={sheet.poster} art={art} caption={<Caps>{sheet.poster.title}</Caps>} />}
+        <Tally count={sheet.evenings} />
+      </div>
+      <p className="scenario-action">{figures(sheet.lead ? sheet.span : sheet.details)}</p>
+      <ol className="scenario-nights">
+        {shown.map((index, position) => {
+          const { day, poster } = sheet.nights[index]
+          return (
+            <li key={index} data-gap={position > 0 && index - shown[position - 1] > 1 ? '' : undefined}>
+              {poster && <Insert poster={poster} art={art} width={320} className="scenario-insert-thumb" />}
+              <p>
+                <span className="scenario-night-slug">Soir {index + 1} – {day}</span>
+                {poster && <Caps>{poster.title}</Caps>}
+              </p>
+            </li>
+          )
+        })}
+      </ol>
+    </>
+  )
+}
+
+// Twelve short scenes, one per month, a highlighter swipe as long as its episodes, the month watched the most ringed in pencil
 const Months = ({ sheet, scene, art }: { sheet: Of<'months'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
@@ -332,45 +397,67 @@ const Months = ({ sheet, scene, art }: { sheet: Of<'months'> } & Scene) => (
           <div className="scenario-month">
             <div className="scenario-month-text">
               <p className="scenario-action">
-                {show ? <><Caps>{show.title}</Caps>, {plural(show.episodes, 'épisode', 'épisodes')}.</> : 'Rien.'}
+                {show ? <><Caps>{show.title}</Caps>, {figures(plural(show.episodes, 'épisode', 'épisodes'))}.</> : 'Rien.'}
               </p>
               {show && <span className="scenario-swipe" aria-hidden="true" style={{ '--share': show.episodes / sheet.max } as React.CSSProperties} />}
             </div>
             {show && <Insert poster={show} art={art} width={320} className="scenario-insert-thumb" />}
           </div>
-          {sheet.peak?.index === index && <Pencil>En {sheet.peak.month}, {sheet.peak.text}</Pencil>}
         </li>
       ))}
     </ol>
   </>
 )
 
+// The evening's still with its poster, its figures chalked on a clapperboard, the pace of another show as a later scene
 const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
   <>
-    <Act>{sheet.lines.join(' ')}</Act>
-    {sheet.meta.map((meta, index) => (
-      <div key={meta}>
-        <Slug scene={scene + index}>{index ? 'Int. salon – plus tard' : 'Int. salon – soir'}</Slug>
-        {!index && <Insert poster={sheet.poster} art={art} wide />}
-        {!!index && sheet.pace && <Insert poster={sheet.pace} art={art} />}
-        <p className="scenario-action">
-          {!index && <><Caps>{sheet.title}</Caps>. </>}
-          {meta}
-        </p>
-      </div>
-    ))}
+    <Act>{figures(sheet.lines.join(' '))}</Act>
+    <Slug scene={scene}>Int. salon – soir</Slug>
+    <Still poster={sheet.poster} art={art} />
+    <p className="scenario-action scenario-centred"><Caps>{sheet.title}</Caps>{sheet.date && <>. {sheet.date}.</>}</p>
+    <Slate stats={sheet.stats} />
+    {sheet.pace && (
+      <>
+        <Slug scene={scene + 1}>Int. salon – plus tard</Slug>
+        <div className="scenario-beside">
+          <Insert poster={sheet.pace} art={art} caption={<Caps>{sheet.pace.title}</Caps>} />
+          <Slate stats={sheet.paced_stats} small />
+        </div>
+      </>
+    )}
   </>
 )
 
+// The plays of the night logged one under the other, their hours on the left like a shooting schedule
 const Night = ({ sheet, scene, art }: { sheet: Of<'night'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>{sheet.late ? 'Int. salon – nuit' : 'Int. salon – soir'}</Slug>
     <p className="scenario-action scenario-date">{sheet.date}.</p>
-    <Shout figure={sheet.end} />
-    <Insert poster={sheet.poster} art={art} />
-    <p className="scenario-action">Tu éteins à {sheet.end}{sheet.after}.</p>
-    <p className="scenario-action">{sheet.last}</p>
+    <Shout figure={sheet.end} className="scenario-shout-time" />
+    <p className="scenario-action scenario-centred">Tu éteins à {sheet.end}{figures(sheet.after)}.</p>
+    {sheet.listing
+      ? (
+        <>
+          <p className="scenario-log-title">{sheet.listing}</p>
+          <ol className="scenario-log">
+            {sheet.schedule.map((line, index) => (
+              <li key={`${line.start}-${index}`} className={index === sheet.schedule.length - 1 ? 'scenario-log-last' : undefined}>
+                <span className="scenario-log-time">{index === sheet.schedule.length - 1 ? <Mark>{line.start}</Mark> : line.start}<span>{line.end}</span></span>
+                <span className="scenario-log-title-line"><Caps>{line.poster.title}</Caps>{line.what && <span>{line.what}</span>}</span>
+                <Insert poster={line.poster} art={art} width={320} className="scenario-insert-thumb" />
+              </li>
+            ))}
+          </ol>
+        </>
+      )
+      : (
+        <>
+          <Insert poster={sheet.poster} art={art} />
+          <p className="scenario-action">{sheet.last}</p>
+        </>
+      )}
   </>
 )
 
@@ -379,54 +466,90 @@ const Server = ({ sheet, scene, art }: { sheet: Of<'server'> } & Scene) => (
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>Int. salle de projection – soir</Slug>
     <div className="scenario-beside">
-      <Insert poster={sheet.poster} art={art} />
+      <Insert poster={sheet.poster} art={art} caption={<Caps>{sheet.title}</Caps>} />
       {sheet.first && <Pencil className="scenario-pencil-side">Première projection</Pencil>}
     </div>
-    <p className="scenario-action"><Caps>{sheet.title}</Caps>.</p>
-    <p className="scenario-action">{sheet.lede}</p>
+    {sentences(sheet.bare).map((sentence) => <p key={sentence} className="scenario-action">{figures(sentence)}</p>)}
+    {sheet.poster.art && <Insert poster={sheet.poster} art={art} wide />}
   </>
 )
 
-// « Personne d’autre » has no lines; « Ton jumeau » names the other viewer as a character
+// « Personne d’autre » has no lines; « Ton jumeau » names the other viewer as a character, both speaking at once
 const Figure = ({ sheet, scene, art }: { sheet: Of<'figure'> } & Scene) => {
   const unit = sheet.highlight ? sheet.unit.split(sheet.highlight) : [sheet.unit]
+  const titles = (count: number) => figures(`${plural(count, 'film et série', 'films et séries')}.`)
+  const dual = !!sheet.highlight && sheet.sides?.them != null
+  // The dual dialogue already says the figures of the first sentence
+  const details = dual ? sentences(sheet.details).slice(1).join(' ') : sheet.details
 
   return (
     <>
       <Act>{sheet.lines ? sheet.lines.join(' ') : sheet.label}</Act>
       <Slug scene={scene}>Int. salon – soir</Slug>
+      {dual && sheet.sides && sheet.sides.them !== null && (
+        <div className="scenario-dual">
+          <div>
+            <p className="scenario-character">Toi</p>
+            <p className="scenario-dialogue">{titles(sheet.sides.you)}</p>
+          </div>
+          <div>
+            <p className="scenario-character">{sheet.highlight}</p>
+            <p className="scenario-dialogue">{titles(sheet.sides.them)}</p>
+          </div>
+        </div>
+      )}
       <Shout figure={number.format(sheet.count)}>
         {unit.map((part, index) => (
           <span key={index}>{index > 0 && <Mark>{sheet.highlight}</Mark>}{part}</span>
         ))}
       </Shout>
-      <p className="scenario-action">{sheet.details}</p>
+      {details && <p className="scenario-action">{figures(details)}</p>}
       {!!sheet.posters.length && <Inserts posters={sheet.posters} art={art} />}
     </>
   )
 }
 
+// Each title watched at two is a line of dialogue: the other viewer's name as the character, the gap as the parenthetical
 const Duo = ({ sheet, scene, art }: { sheet: Of<'duo'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>
-    <p className="scenario-action">{sheet.lede}</p>
-    <Inserts posters={sheet.posters} art={art} caption={(poster, index) => <>{poster.title}<br /><span>{sheet.posters[index].caption}</span></>} />
+    <p className="scenario-action">{figures(sheet.lede)}</p>
+    <ol className="scenario-exchange">
+      {sheet.posters.map((poster) => {
+        // « avec lapt564, 7 jours d’écart »
+        const [who, ...rest] = poster.caption.split(', ')
+        const gap = rest.join(', ')
+        return (
+          <li key={poster.key}>
+            <Insert poster={poster} art={art} width={320} />
+            <div>
+              <p className="scenario-character">{who.replace(/^avec /, '')}</p>
+              {gap && <p className="scenario-parenthetical">({figures(gap)})</p>}
+              <p className="scenario-dialogue">« {poster.title} »</p>
+            </div>
+          </li>
+        )
+      })}
+    </ol>
   </>
 )
 
-// One scene per poster, what it stands for noted in red pencil
+// One scene per poster, what it stands for noted in red pencil beside it, its figure highlighted
 const Posters = ({ sheet, scene, art }: { sheet: Of<'posters'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
-    {sheet.items.map(({ what, poster, detail }, index) => (
+    {sheet.items.map(({ what, poster, detail, when }, index) => (
       <div key={poster.key}>
         <Slug scene={scene + index}>Int. salon – soir</Slug>
         <div className="scenario-beside">
-          <Insert poster={poster} art={art} />
-          <Pencil className="scenario-pencil-side">{what}</Pencil>
+          <Insert poster={poster} art={art} caption={<Caps>{poster.title}</Caps>} />
+          <div className="scenario-verdict">
+            <Pencil>{what}</Pencil>
+            <p className="scenario-verdict-figure"><Mark>{detail}</Mark></p>
+            {when && <p className="scenario-verdict-when">{when}</p>}
+          </div>
         </div>
-        <p className="scenario-action"><Caps>{poster.title}</Caps>, {detail}.</p>
       </div>
     ))}
   </>
@@ -440,9 +563,9 @@ const Genre = ({ sheet, scene, art }: { sheet: Of<'genre'> } & Scene) => {
       <Act>{sheet.lines.join(' ')}</Act>
       <Slug scene={scene}>Int. salon – soir</Slug>
       <Shout figure={sheet.name} long={Math.max(sheet.name.length, 5)} />
-      <p className="scenario-action">{sheet.count}</p>
+      <p className="scenario-action">{figures(sheet.count)}</p>
       <Inserts posters={sheet.posters} art={art} />
-      {lead && <p className="scenario-action"><Mark><Caps>{lead.name}</Caps></Mark> {lead.role}</p>}
+      {lead && <p className="scenario-action"><Mark><Caps>{lead.name}</Caps></Mark> {figures(lead.role)}</p>}
       {lead && !!lead.posters.length && <Inserts posters={lead.posters} art={art} />}
     </>
   )
@@ -452,11 +575,10 @@ const Finale = ({ sheet, scene, art }: { sheet: Of<'finale'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>
-    <div className="scenario-beside">
-      <Insert poster={sheet.poster} art={art} />
-      {!sheet.closed && <Pencil className="scenario-pencil-side">Provisoire</Pencil>}
-    </div>
-    <p className="scenario-action"><Caps>{sheet.title}</Caps>.</p>
-    <p className="scenario-action">{sheet.date}</p>
+    {sheet.poster.art
+      ? <Still poster={sheet.poster} art={art} />
+      : <Insert poster={sheet.poster} art={art} />}
+    <p className="scenario-action scenario-centred"><Caps>{sheet.title}</Caps>. {sheet.date}</p>
+    {!sheet.closed && <Pencil className="scenario-pencil-stamp">Provisoire</Pencil>}
   </>
 )
