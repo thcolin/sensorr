@@ -118,7 +118,6 @@ const aside = {
 
 const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
 
-// The episodes narrowed by their status, or by what their show is: counted on the followed shows
 const FIELDS = {
   head: {
     initial: null,
