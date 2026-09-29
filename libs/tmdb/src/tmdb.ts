@@ -69,6 +69,11 @@ export class TMDB {
     return `${this.base}${uri}?${qs.stringify(query)}`
   }
 
+  // TMDB tags some shows with a movie genre, History or Romance, that `genre/tv/list` does not carry
+  pickGenres(ids: number[], ...lists: Genre[][]) {
+    return ids.map((id) => lists.map((list) => list[id]).find(Boolean)).filter(Boolean)
+  }
+
   transform(body: any, { uri, params = {} }: { uri: string; params: any }) {
     switch (uri) {
       case 'trending/movie/day':
@@ -80,7 +85,7 @@ export class TMDB {
           ...body,
           results: body.results.map(({ genre_ids = [], ...result }) => ({
             ...result,
-            genres: genre_ids.map((id) => this.genres[id]),
+            genres: this.pickGenres(genre_ids, this.genres),
           })),
           // TODO: Remove [TMDB issue](https://www.themoviedb.org/talk/61bbb4dc6a300b00977d906c) is fixed
           total_results: Math.min(10000, body.total_results),
@@ -94,7 +99,7 @@ export class TMDB {
               ...body.recommendations,
               results: body.recommendations.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
-                genres: genre_ids.map((id) => this.genres[id]),
+                genres: this.pickGenres(genre_ids, this.genres),
               })),
             },
           }),
@@ -103,7 +108,7 @@ export class TMDB {
               ...body.similar,
               results: body.similar.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
-                genres: genre_ids.map((id) => this.genres[id]),
+                genres: this.pickGenres(genre_ids, this.genres),
               })),
             },
           }),
@@ -114,13 +119,13 @@ export class TMDB {
           ...(body.cast && {
             cast: body.cast.map(({ genre_ids = [], ...show }) => ({
               ...show,
-              genres: genre_ids.map((id) => this.tvGenres[id]),
+              genres: this.pickGenres(genre_ids, this.tvGenres, this.genres),
             })),
           }),
           ...(body.crew && {
             crew: body.crew.map(({ genre_ids = [], ...show }) => ({
               ...show,
-              genres: genre_ids.map((id) => this.tvGenres[id]),
+              genres: this.pickGenres(genre_ids, this.tvGenres, this.genres),
             })),
           }),
         }
@@ -130,13 +135,13 @@ export class TMDB {
           ...(body.cast && {
             cast: body.cast.map(({ genre_ids = [], ...movie }) => ({
               ...movie,
-              genres: genre_ids.map((id) => this.genres[id]),
+              genres: this.pickGenres(genre_ids, this.genres),
             })),
           }),
           ...(body.crew && {
             crew: body.crew.map(({ genre_ids = [], ...movie }) => ({
               ...movie,
-              genres: genre_ids.map((id) => this.genres[id]),
+              genres: this.pickGenres(genre_ids, this.genres),
             })),
           }),
         }
@@ -148,11 +153,11 @@ export class TMDB {
               ...body.movie_credits,
               cast: body.movie_credits.cast.map(({ genre_ids = [], ...movie }) => ({
                 ...movie,
-                genres: genre_ids.map((id) => this.genres[id]),
+                genres: this.pickGenres(genre_ids, this.genres),
               })),
               crew: body.movie_credits.crew.map(({ genre_ids = [], ...movie }) => ({
                 ...movie,
-                genres: genre_ids.map((id) => this.genres[id]),
+                genres: this.pickGenres(genre_ids, this.genres),
               })),
             },
           }),
@@ -162,7 +167,7 @@ export class TMDB {
           ...body,
           parts: body.parts.map(({ genre_ids = [], ...result }) => ({
             ...result,
-            genres: genre_ids.map((id) => this.genres[id]),
+            genres: this.pickGenres(genre_ids, this.genres),
           })),
         }
       case (uri.match(/trending\/tv\/\w+/) || {}).input:
@@ -172,7 +177,7 @@ export class TMDB {
           ...body,
           results: body.results.map(({ genre_ids = [], ...result }) => ({
             ...result,
-            genres: genre_ids.map((id) => this.tvGenres[id]),
+            genres: this.pickGenres(genre_ids, this.tvGenres, this.genres),
           })),
           total_results: Math.min(10000, body.total_results),
           total_pages: Math.min(500, body.total_pages),
@@ -187,7 +192,7 @@ export class TMDB {
               ...body.recommendations,
               results: body.recommendations.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
-                genres: genre_ids.map((id) => this.tvGenres[id]),
+                genres: this.pickGenres(genre_ids, this.tvGenres, this.genres),
               })),
             },
           }),
@@ -196,7 +201,7 @@ export class TMDB {
               ...body.similar,
               results: body.similar.results.map(({ genre_ids = [], ...result }) => ({
                 ...result,
-                genres: genre_ids.map((id) => this.tvGenres[id]),
+                genres: this.pickGenres(genre_ids, this.tvGenres, this.genres),
               })),
             },
           }),
