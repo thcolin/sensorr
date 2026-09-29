@@ -35,7 +35,6 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
-import { DOWNLOADS } from './components/Actions'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
@@ -210,13 +209,6 @@ const Library = compose(
                     label: 'Policy',
                     options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
                     onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
-                  },
-                  {
-                    key: 'proposal_only',
-                    icon: '🤖',
-                    label: 'Auto',
-                    options: DOWNLOADS.map(({ value, label }) => ({ value, label })),
-                    onChange: ({ value, label }) => apply('proposal_only', value, `Do you want to set Auto to "${label}" for ${shows(selected.length)}?`),
                   },
                 ]}
               />

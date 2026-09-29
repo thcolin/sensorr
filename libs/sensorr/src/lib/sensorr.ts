@@ -75,7 +75,7 @@ export class Sensorr {
     const latin = terms.filter(isLatin)
     const first = show?.first_air_date ? new Date(show.first_air_date).getFullYear() : null
     const last = show?.last_air_date ? Math.max(first, new Date(show.last_air_date).getFullYear()) : first
-    const _defaults = {
+    const _defaults = show?.query?._defaults ? show.query._defaults : {
       titles,
       terms: latin.length ? latin : terms,
       years: first ? Array.from({ length: last - first + 1 }, (_, index) => `${first + index}`) : [],
@@ -84,7 +84,9 @@ export class Sensorr {
     return {
       _defaults,
       banned_releases,
-      ...((query?.titles?.length && query?.terms?.length && query?.years?.length) ? query : _defaults),
+      titles: query?.titles?.length ? query.titles : _defaults.titles,
+      terms: query?.terms?.length ? query.terms : _defaults.terms,
+      years: query?.years?.length ? query.years : _defaults.years,
     }
   }
 

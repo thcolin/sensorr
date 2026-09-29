@@ -125,7 +125,7 @@ export const Provider = ({ ...props }) => {
 
   const setShowMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'proposal_only' | 'proposal' | 'release' | 'releases',
+    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'query' | 'proposal' | 'release' | 'releases',
     value: any,
   ) => {
     const ids = Array.isArray(id) ? id : [id]

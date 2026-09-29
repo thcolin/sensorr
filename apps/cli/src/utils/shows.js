@@ -34,8 +34,6 @@ export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by, own
   episodes: episodes.map((episode) => ({ ...episode, monitored: false })),
 })
 
-export const proposalOnlyOf = (show, job) => typeof show.proposal_only === 'boolean' ? show.proposal_only : !!job
-
 export const showReleaseOf = (release, { from, job, proposal, level }, now) => ({
   id: release.id,
   title: release.title,

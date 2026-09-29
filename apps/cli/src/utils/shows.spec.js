@@ -1,4 +1,4 @@
-import { isRefreshDue, monitoredOf, sonarrShowOf, fetchSonarrShow, sonarrEpisodesOf, isNotedShow, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, proposalOnlyOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
+import { isRefreshDue, monitoredOf, sonarrShowOf, fetchSonarrShow, sonarrEpisodesOf, isNotedShow, REFRESH_AFTER, isImportable, isReleaseFinished, showFolderOf, importTargetOf, importLinksOf, requestedShowOf, airingUnits, syncedFilesOf, withdrawnProposalsOf, isReleaseOverdue, showReleaseOf, plexFilesOf, importedEpisodesOf, plexShowOf, goneEpisodesOf } from './shows'
 import { OVERDUE_AFTER } from './swaps'
 
 const now = 1790000000000
@@ -466,16 +466,6 @@ describe('requestedShowOf', () => {
       requested_by: ['guest@example.com'],
     })
     expect(episodes.map(({ id, monitored }) => [id, monitored])).toEqual([[1, false], [2, false]])
-  })
-})
-
-describe('proposalOnlyOf', () => {
-  it('follows the show when it says, the job otherwise', () => {
-    expect(proposalOnlyOf({ proposal_only: false }, true)).toBe(false)
-    expect(proposalOnlyOf({ proposal_only: true }, false)).toBe(true)
-    expect(proposalOnlyOf({ proposal_only: null }, true)).toBe(true)
-    expect(proposalOnlyOf({}, false)).toBe(false)
-    expect(proposalOnlyOf({}, undefined)).toBe(false)
   })
 })
 

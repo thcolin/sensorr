@@ -131,7 +131,7 @@ const schema = {
           default: true,
         },
         proposalOnly: {
-          doc: "Record shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+          doc: "Record shows job will only submit proposal and don't download any release",
           format: 'Boolean',
           default: true,
         },
@@ -305,7 +305,7 @@ const schema = {
           default: true,
         },
         proposalOnly: {
-          doc: "Airing shows job will only submit proposal and don't download any release, for the shows that don't say otherwise",
+          doc: "Airing shows job will only submit proposal and don't download any release",
           format: 'Boolean',
           default: true,
         },

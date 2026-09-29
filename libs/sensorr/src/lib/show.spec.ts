@@ -100,6 +100,16 @@ describe('Sensorr.getShowQuery', () => {
     expect(sensorr.getShowQuery({ name: 'Pilot' }).years).toEqual([])
   })
 
+  it('keeps the defaults a job logged with the show, and each field of a saved query that is set', () => {
+    const _defaults = { titles: ['pilot'], terms: ['pilot'], years: ['2020', '2021'] }
+    const saved = { titles: ['pilot'], terms: ['pilot', 'le pilote'], years: ['2019', '2020', '2021'] }
+
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } })).toEqual({ _defaults, banned_releases: [], ..._defaults })
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } }, saved)).toEqual({ _defaults, banned_releases: [], ...saved })
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } }, { terms: saved.terms })).toEqual({ _defaults, banned_releases: [], ..._defaults, terms: saved.terms })
+    expect(sensorr.getShowQuery({ name: 'Pilot', query: { _defaults } }, { years: ['2019', '2020'], terms: [] })).toEqual({ _defaults, banned_releases: [], ..._defaults, years: ['2019', '2020'] })
+  })
+
   it('keeps the US, GB and region titles, as a movie does', () => {
     const show = { name: 'Dark', alternative_titles: { results: [{ iso_3166_1: 'DE', title: 'Dunkel', type: '' }, { iso_3166_1: 'FR', title: 'Sombre', type: '' }] } }
 
@@ -115,9 +125,9 @@ describe('Sensorr.getShowQuery', () => {
     expect(sensorr.getShowQuery({ name: cats.original_name, original_name: cats.original_name }).terms).toEqual([clean(cats.original_name)])
   })
 
-  it('keeps a saved query only when it has titles, terms and years', () => {
+  it('keeps each field of a saved query that is set, and the default of any other', () => {
     expect(sensorr.getShowQuery(friends, { titles: ['f'], terms: ['f'], years: ['1994'] })).toMatchObject({ terms: ['f'], years: ['1994'] })
-    expect(sensorr.getShowQuery(friends, { titles: ['f'], terms: ['f'], years: [] })).toMatchObject({ terms: ['friends'] })
+    expect(sensorr.getShowQuery(friends, { terms: ['f'], years: [] })).toMatchObject({ terms: ['f'], years: sensorr.getShowQuery(friends).years })
   })
 })
 

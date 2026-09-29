@@ -320,7 +320,7 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
   const mobile = useResponsiveValue([true, false])
   const banned = metadata?.banned_releases || []
 
-  // The Policy and Auto fields handle their own failure
+  // The settings fields handle their own failure
   const setSettings = useCallback((key, value) => setShowMetadata(show?.id, key, value), [show?.id, setShowMetadata])
   // A ban goes through its own route: the list written whole would drop a ban a job made meanwhile
   const toggleBan = useCallback((title) => (banned.includes(title) ? unbanShowRelease : banShowRelease)(show?.id, title).catch(() => {

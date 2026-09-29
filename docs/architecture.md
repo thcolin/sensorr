@@ -167,7 +167,7 @@ flowchart TD
   picked -->|no| stop["Nothing written, the run logs why"]
   picked -->|yes| branch
 
-  branch{"proposal_only of the show, else the job's proposalOnly<br/>apps/cli/src/utils/shows.js:34"}
+  branch{"proposalOnly of the job, true for a season swap<br/>ProcessShowsTask.js:325"}
   branch -->|false| dlfs["POST /api/sensorr/release/download, destination fs, kind show<br/>ProcessShowsTask.js:349"]
   branch -->|true| dlcache["POST /api/sensorr/release/download, destination cache, kind show<br/>ProcessShowsTask.js:349"]
 
@@ -231,7 +231,7 @@ One Mongo database, `sensorr`, eight collections. Schemas are Mongoose classes u
 | Collection | Schema | What it holds |
 | --- | --- | --- |
 | `movies` | `movies/movie.schema.ts:5` | a TMDB movie document, plus what Sensorr adds: `state`, `policy`, `query`, `releases[]`, `banned_releases`, `requested_by` |
-| `shows` | `shows/show.schema.ts:5` | a TMDB TV show document, with the summary of its `seasons[]` and its `external_ids`, plus what Sensorr adds: `state`, `monitored`, `monitor_new_seasons`, `policy`, `proposal_only`, `path`, `plex_guid`, `requested_by`, `banned_releases`, `releases[]`. A release is stored once on the show, with the episodes it covers (`coverage`) and, once its `.torrent` has been read, its files (`torrent`) |
+| `shows` | `shows/show.schema.ts:5` | a TMDB TV show document, with the summary of its `seasons[]` and its `external_ids`, plus what Sensorr adds: `state`, `monitored`, `monitor_new_seasons`, `policy`, `query`, `path`, `plex_guid`, `requested_by`, `banned_releases`, `releases[]`. A release is stored once on the show, with the episodes it covers (`coverage`) and, once its `.torrent` has been read, its files (`torrent`) |
 | `episodes` | `shows/episode.schema.ts:5` | a TMDB episode, tied to its show by `show_id`, plus `monitored`, the `files` `sync shows` saw on Plex, and `release`, the id of the release that covers it. Its status is computed from those, never stored (`episodeStatus` in `libs/sensorr/src/lib/episode.ts:4`) |
 | `persons` | `persons/person.schema.ts:5` | a TMDB person document, plus `state`; `followed` keeps it, `ignored` deletes it (`upsertPerson` in `persons.service.ts`) |
 | `guests` | `guests/guest.schema.ts:5` | a Plex account whose watchlist `keep-in-touch` reads, with its Plex token and that token's health |

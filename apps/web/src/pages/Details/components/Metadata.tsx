@@ -4,17 +4,19 @@ import { Icon, QuerySelect, Option } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
 import { useThemeUI } from 'theme-ui'
 
+export const termsValuesOf = (query) => [
+  ...(query?._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
+  ...(query?.titles || []).filter(title => !(query?._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query?.terms || []).includes(title) })),
+  ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
+]
+
 const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) => {
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
   const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, metadata.state, entity?.original_language, sensorr.policies])
 
   const values = useMemo(() => ({
-    terms: [
-      ...(query?._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
-      ...(query?.titles || []).filter(title => !(query?._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query?.terms || []).includes(title) })),
-      ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
-    ],
+    terms: termsValuesOf(query),
     years: [
       ...(query?._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.years?.includes(term) })),
       ...(query?.years || []).filter(term => !query?._defaults?.years?.includes(term)).map(term => ({ value: term, label: term })),
