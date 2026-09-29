@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { SchedulerRegistry } from '@nestjs/schedule'
+import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { CronJob } from 'cron'
@@ -100,12 +101,24 @@ export class JobsService {
     )
   }
 
+  @OnEvent('config.write')
   setupCrons() {
     this.logger.log(`SetupCrons`)
 
     for (const [command, types] of Object.entries(JOBS)) {
       for (const type of types.length ? types : [undefined]) {
+        const name = [command, type].filter(Boolean).join(' ')
         const { cron, paused } = this.configService.config.get(['jobs', command, type].filter(Boolean).join('.'))
+        const scheduled = this.schedulerRegistry.doesExist('cron', name) ? this.schedulerRegistry.getCronJob(name) : null
+
+        if (scheduled && !paused && scheduled.cronTime.source === cron) {
+          continue
+        }
+
+        if (scheduled) {
+          this.schedulerRegistry.deleteCronJob(name)
+          this.logger.log(`DeleteCron "${name}"`)
+        }
 
         if (!paused) {
           this.setupCron(command, type, cron)
