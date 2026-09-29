@@ -5,7 +5,9 @@ import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
+import { CronTime } from 'cron'
 import config, { create } from '@sensorr/config'
+import { JOBS } from '@sensorr/sensorr'
 import { migrateJobs } from './migrate'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -72,6 +74,19 @@ export class ConfigService implements OnModuleInit {
     candidate.load(this.config.getProperties())
     apply(candidate)
     candidate.validate({ allowed: 'warn', output: () => {} })
+
+    // Convict only knows a cron as a String, the scheduler's own parser is the one that decides
+    for (const [command, types] of Object.entries(JOBS)) {
+      for (const type of types.length ? types : [undefined]) {
+        const key = ['jobs', command, type].filter(Boolean).join('.')
+
+        try {
+          new CronTime(candidate.get(`${key}.cron`))
+        } catch (err) {
+          throw new Error(`${key}.cron: ${err.message}`)
+        }
+      }
+    }
   }
 
   async set(key, value) {
