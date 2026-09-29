@@ -66,6 +66,7 @@ export class ConfigService implements OnModuleInit {
     this.config.validate({ allowed: 'warn', output: () => {} })
     await fs.writeFile(this.file, JSON.stringify(JSON.parse(this.config.toString()), null, 2))
     this.logger.log(`Write "${this.file}"`)
+    this.eventEmitter.emit('config.write')
   }
 
   // Convict keeps whatever it loaded even when validation then fails, and routes read the config live
