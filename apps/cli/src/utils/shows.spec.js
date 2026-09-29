@@ -485,6 +485,18 @@ describe('airingUnits', () => {
   it('keeps the single episodes aired since the given date, and no pack', () => {
     expect(airingUnits(units, episodes, since).map(({ type, episode }) => `${type}:${episode}`)).toEqual(['episode:2', 'episode:3'])
   })
+
+  it('adds the season pack as a last resort swap for the last episode of a followed season', () => {
+    const finale = episodes.map((episode) => ({ ...episode, monitored: true, ...(episode.episode_number === 4 ? { air_date: '2026-09-25' } : {}) }))
+
+    expect(airingUnits(units, finale, since).map(({ type, episode, fallback, episodes }) => `${type}:${episode ?? ''}:${!!fallback}:${JSON.stringify(episodes)}`)).toEqual([
+      'episode:2:false:[{"season":3,"episode":2}]',
+      'episode:3:false:[{"season":3,"episode":3}]',
+      'episode:4:false:[{"season":3,"episode":4}]',
+      'season::true:[{"season":3,"episode":4}]',
+    ])
+    expect(airingUnits(units, finale.map((episode) => episode.episode_number === 1 ? { ...episode, monitored: false } : episode), since).some(({ type }) => type === 'season')).toBe(false)
+  })
 })
 
 describe('goneEpisodesOf', () => {

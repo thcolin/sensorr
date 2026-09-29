@@ -56,7 +56,14 @@ export const airingUnits =(units, episodes, since) => {
     .filter(({ air_date }) => air_date && new Date(air_date).getTime() >= since)
     .map(({ season_number, episode_number }) => `${season_number}:${episode_number}`))
 
-  return units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
+  const airing = units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
+  const ofSeason = (season) => episodes.filter(({ season_number }) => season_number === season)
+  const finales = airing.filter(({ season, episode }) => season !== 0 &&
+    episode === Math.max(...ofSeason(season).map(({ episode_number }) => episode_number)) &&
+    ofSeason(season).every(({ monitored }) => monitored))
+
+  // A season pack can be out before the file of its last episode: it stands in for that one, as a swap of the season
+  return [...airing, ...finales.map(({ season, episodes: covered }) => ({ type: 'season', season, episodes: covered, fallback: true }))]
 }
 
 // A "Fix match" in Plex can drop the tmdb:// guid of a show: its tvdb:// or imdb:// guid still names it, and its title and year
