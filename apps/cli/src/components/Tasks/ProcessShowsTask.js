@@ -4,7 +4,7 @@ import { Text } from 'ink'
 import { Task, useTask } from '../Taskink'
 import api from '../../store/api'
 import { lighten } from '../../store/logger'
-import { proposalOnlyOf, airingUnits, showReleaseOf } from '../../utils/shows'
+import { airingUnits, showReleaseOf } from '../../utils/shows'
 
 const TITLES = {
   record: `📹 Record wished shows`,
@@ -321,8 +321,8 @@ const ProcessShowTask = ({ show, hide, since, dependencies = [], proposalOnly = 
         }
 
         for (const release of picks) {
-          // A swap replaces files you own, it waits for your answer whatever the show says
-          const proposal = !!release.swap || proposalOnlyOf(show, proposalOnly)
+          // A swap replaces files you own, it waits for your answer whatever the job says
+          const proposal = !!release.swap || !!proposalOnly
           const level = levelOf(release.meta, release.category)
           const label = coverageLabel(release.coverage, level)
           const raw = showReleaseOf(release, { from: state.metadata.command, job: state.metadata.job, proposal, level }, Date.now())

@@ -48,7 +48,6 @@ export class ShowDTO {
   readonly monitored: boolean
   readonly monitor_new_seasons: boolean
   readonly policy: string
-  readonly proposal_only: boolean | null
   readonly path: string
   readonly plex_guid: string
   readonly plex_artworks: PlexArtworks

@@ -129,9 +129,6 @@ export class Show extends Document {
   @Prop()
   policy: string
 
-  @Prop({ type: Boolean })
-  proposal_only: boolean | null
-
   @Prop()
   path: string
 
