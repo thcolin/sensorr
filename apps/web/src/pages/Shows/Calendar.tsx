@@ -1,19 +1,20 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { AbstractEntity, Badge, CalendarMonthPicker, Empty, Entities, EpisodeStatus, EpisodeStatusOptions, transformShowDetails, useControlsState, withControls } from '@sensorr/ui'
+import { AbstractEntity, Badge, CalendarMonthPicker, Empty, Entities, EpisodeStatus, EpisodeStatusOptions, FilterGenres, FilterStatistics, Warning, transformShowDetails, useControlsState, withControls } from '@sensorr/ui'
 import { coverageLabel } from '@sensorr/sensorr'
 import i18n from '@sensorr/i18n'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { fields } from '@sensorr/tmdb'
 import { useAPI, query as APIQuery } from '../../store/api'
+import { withTMDB } from '../../store/tmdb'
+import { episode_status, networks } from '../../components/Show/fields'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
-import { Agenda, Cell, ControlsContext, Line, Month, Stream, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
+import { Agenda, Cell, ControlsContext, Line, Month, Stream, Toggle, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
 import { dateOf, day, monthRange, originOf } from '../../components/Calendar/agenda'
 import { agendaDays, groupByDay, weeksRange } from './agenda'
-
-const STATISTICS = {}
 
 const FALLBACK = {
   title: 'Sorry, unable to display episodes...',
@@ -88,25 +89,98 @@ const AIR_DATE = {
   component: CalendarMonthPicker,
 }
 
-// Beside the month, the count and the view, as on the Theatres bar
+// Beside the month, the count, the view and the filters, as on the movies calendar
 const nav = {
   display: 'grid' as const,
-  gridTemplateColumns: ['1fr min-content min-content', 'min-content 1fr min-content min-content'],
+  gridTemplateColumns: ['1fr min-content min-content min-content', 'min-content 1fr min-content min-content min-content'],
   gridTemplateRows: 'auto',
   gap: '2em',
-  gridTemplateAreas: [`"air_date results view"`, `"title air_date results view"`],
+  gridTemplateAreas: [`"air_date results view toggle"`, `"title air_date results view toggle"`],
   '>h4': {
     display: ['none', 'block'],
   },
 }
 
+const aside = {
+  display: 'grid' as const,
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  gridTemplateRows: 'auto',
+  gap: '2em',
+  gridTemplateAreas: `
+    "head"
+    "episode_status"
+    "networks"
+    "genres"
+    "policy"
+    "requested_by"
+  `,
+}
+
+const multi = (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {}
+
+// The episodes narrowed by their status, or by what their show is: counted on the followed shows
+const FIELDS = {
+  head: {
+    initial: null,
+    component: () => (
+      <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
+        <Warning
+          emoji="📅"
+          title="Calendar"
+          subtitle={(
+            <span>
+              Narrow the episodes of the shows you follow by their <strong>status</strong>, or by the <strong>network</strong>, <strong>genres</strong>, <strong>policy</strong> and <strong>requesters</strong> of their show
+            </span>
+          )}
+        />
+      </div>
+    ),
+  },
+  episode_status,
+  networks,
+  genres: {
+    ...fields.genres,
+    initial: { values: [], behavior: 'or' },
+    serialize: multi,
+    component: compose(withProps({ display: 'checkbox', type: 'tv' }), withTMDB())(FilterGenres),
+  },
+  policy: {
+    initial: { values: [] },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
+    component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
+  },
+  requested_by: {
+    initial: { values: [], behavior: 'or' },
+    serialize: multi,
+    component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
+  },
+}
+
+const useStatistics = () => {
+  const api = useAPI()
+  const [statistics, setStatistics] = useState({})
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const { uri, params, init } = APIQuery.shows.getStatistics({ params: { context: 'followed' }, init: { signal: controller.signal } })
+
+    api.fetch(uri, params, init)
+      .then(setStatistics)
+      .catch((e) => e.name !== 'AbortError' && console.warn(e))
+
+    return () => controller.abort()
+  }, [])
+
+  return statistics
+}
+
 const controls = (fields, hooks = {}) => withControls({
   title: i18n.t('pages.calendar.title'),
-  useStatistics: () => STATISTICS,
+  useStatistics,
   hooks,
-  layout: { nav },
-  components: { view: ViewSelect },
-  fields: { air_date: { ...AIR_DATE, ...fields } },
+  layout: { nav, aside },
+  components: { toggle: Toggle, view: ViewSelect },
+  fields: { ...FIELDS, air_date: { ...AIR_DATE, ...fields } },
 })
 
 // An episode card on the model of a movie of the calendar: its day on the left, its status on the right
@@ -172,7 +246,7 @@ const GridCalendar = compose(
     empty: {
       emoji: '📅',
       title: 'No episode this month',
-      subtitle: 'None of the shows you follow has an episode airing this month, try another one',
+      subtitle: 'None of the shows you follow has an episode airing this month and matching these filters, try another month or fewer filters',
     },
   }),
   withFollowedShows(),
@@ -228,13 +302,15 @@ const withShowsAgenda = () => (WrappedComponent) => {
   const withShowsAgenda = ({ ready, error, shows, ...props }) => {
     const api = useAPI()
     const context = useContext(ControlsContext)
-    const [, controls] = useControlsState(() => context)
+    const [query, controls] = useControlsState(() => context, ({ uri, ...params }) => ({ ready: true, params }))
     const [today] = useState(() => day(new Date()))
     const [origin, setOrigin] = useState(() => originOf(context?.[0]?.air_date, today))
+    const filters = JSON.stringify(query?.params || {})
+    const key = query?.ready ? `${origin} ${filters}` : null
 
     const fetchPage = useCallback((stream: Stream, page: number, signal: AbortSignal) => {
       const { uri, params, init } = APIQuery.episodes.getEpisodes({
-        params: { monitored_show: 'true', limit: STEP, page, ...STREAMS[stream](origin) },
+        params: { ...JSON.parse(filters), monitored_show: 'true', limit: STEP, page, ...STREAMS[stream](origin) },
         init: { signal },
       })
 
@@ -243,9 +319,9 @@ const withShowsAgenda = () => (WrappedComponent) => {
         total: total_results,
         done: !results.length || page >= total_pages,
       }))
-    }, [api, origin])
+    }, [api, origin, filters])
 
-    const { streams, more, ready: loaded, failure } = useStreams(origin, fetchPage, 'episodes')
+    const { streams, more, ready: loaded, failure } = useStreams(key, fetchPage, 'episodes')
     const days = useMemo(() => (ready && loaded) ? agendaDays(streams, shows, today, origin) : [], [ready, loaded, streams, shows, today, origin])
     const setMonth = context?.[1]
     const onMonth = useCallback((month: Date) => setMonth(values => ({ ...values, air_date: month })), [setMonth])
@@ -284,7 +360,7 @@ const UIShowsAgenda = ({ shows, controls, ...props }) => {
       empty={{
         emoji: '📅',
         title: 'No episode to list',
-        subtitle: 'None of the shows you follow has an episode with an air date yet',
+        subtitle: 'None of the shows you follow has an episode with an air date and matching these filters yet',
       }}
       noun='episodes'
       label='Episodes by day'
