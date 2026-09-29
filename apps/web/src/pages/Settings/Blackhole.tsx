@@ -42,7 +42,7 @@ const Blackhole = ({ ...props }) => {
                 name='magnet'
                 control={form.control}
                 render={({ field: { value: checked, onChange } }) => (
-                  <Option type='checkbox' id='magnet' checked={!!checked} onChange={(e: any) => onChange(e.target.checked)}>
+                  <Option type='checkbox' id='magnet' checked={checked} onChange={(e: any) => onChange(e.target.checked)}>
                     <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
                       <strong>{emojize('🧲', 'Magnet links')}</strong>
                       <br />

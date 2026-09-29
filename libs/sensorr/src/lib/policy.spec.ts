@@ -100,5 +100,7 @@ describe('magnet releases', () => {
   it('gives the reason of any other policy before the magnet one', () => {
     const [result] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), title: 'Dune.1984.1080p.WEBRip.x264' }], query)
     expect(result.reason).toMatch(/Release year/)
+    const [unseeded] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), seeders: 0 }], query)
+    expect(unseeded.reason).toMatch(/No seeders/)
   })
 })
