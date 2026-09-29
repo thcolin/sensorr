@@ -84,8 +84,8 @@ export interface Wrapped {
   month_shows: (WrappedPoster & { episodes: number } | null)[]
   binge: WrappedPoster & { episodes: number, minutes: number, date: string } | null
   pace: WrappedPoster & { episodes: number, days: number } | null
-  // `late` when the evening ended past 01:00, otherwise it is the evening with the most plays; `poster` is its last play
-  night: { date: string, plays: number, episodes: number, end: string, late: boolean, episode: boolean, poster: WrappedPoster } | null
+  // `late` when the evening ended past 01:00, otherwise it is the evening with the most plays; `poster` is its last play, `before` the other titles in the order they started
+  night: { date: string, plays: number, episodes: number, end: string, late: boolean, episode: boolean, poster: WrappedPoster, before?: WrappedPoster[] } | null
   first_on_server: WrappedPoster & { others: number } | null
   same_week: WrappedPoster & { others: number } | null
   only_you: { count: number, posters: WrappedPoster[] } | null
@@ -96,9 +96,10 @@ export interface Wrapped {
   twin: { user_id: number, shared: number, total: number, posters: WrappedPoster[] } | null
   dropped: WrappedPoster & { percent: number } | null
   dropped_show: WrappedPoster & { season: number, episode: number } | null
-  longest: WrappedPoster & { minutes: number } | null
-  oldest: WrappedPoster & { year: number } | null
-  rewatched: WrappedPoster & { times: number } | null
+  // `dates` are the evenings the film was watched, or started when it never was
+  longest: WrappedPoster & { minutes: number, dates?: string[] } | null
+  oldest: WrappedPoster & { year: number, dates?: string[] } | null
+  rewatched: WrappedPoster & { times: number, dates?: string[] } | null
   genre: { name: string, titles: number, total: number, posters: WrappedPoster[], lead: { kind: 'actor' | 'show' | 'director', name: string, titles: number, posters: WrappedPoster[] } | null } | null
 }
 
@@ -281,6 +282,11 @@ export const wrappedOf = (
   const oldest = byYear([...moviePlays.keys()]).filter((key) => byKey.get(key)!.year! < 2000)[0]
   const rewatches = (key: string) => moviePlays.get(key)!.filter((play) => (play.watched ?? 0) >= WATCHED).length
   const rewatched = [...moviePlays.keys()].filter((key) => rewatches(key) >= 2).sort((a, b) => rewatches(b) - rewatches(a))[0]
+  const datesOf = (key: string) => {
+    const plays = moviePlays.get(key)!
+    const watched = plays.filter((play) => (play.watched ?? 0) >= WATCHED)
+    return [...new Set((watched.length ? watched : plays).map((play) => play.evening))]
+  }
 
   const mineKeys = [...moviePlays.keys(), ...showPlays.keys()]
   const watchersOf = new Map([...groupBy(server, (play) => play.title).entries()].map(([key, plays]) => [key, new Set(plays.map((play) => play.user_id))]))
@@ -330,7 +336,7 @@ export const wrappedOf = (
     pace: topShow && topShowPlays!.length >= 3
       ? { ...posterOf(topShow), episodes: topShowPlays!.length, days: dayOf(topShowPlays![topShowPlays!.length - 1].date) - dayOf(topShowPlays![0].date) + 1 }
       : null,
-    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, episodes: nightPlays!.filter((play) => play.media_type === 'episode').length, end: partsOf(nightEnd!, timeZone).time, late, episode: lastLaunch.media_type === 'episode', poster: posterOf(lastLaunch.title) } : null,
+    night: lastLaunch ? { date: lastLaunch.evening, plays: nightPlays!.length, episodes: nightPlays!.filter((play) => play.media_type === 'episode').length, end: partsOf(nightEnd!, timeZone).time, late, episode: lastLaunch.media_type === 'episode', poster: posterOf(lastLaunch.title), before: [...new Set([...nightPlays!].sort((a, b) => a.late - b.late).map((play) => play.title))].filter((title) => title !== lastLaunch.title).map(posterOf) } : null,
     first_on_server: pioneer ? { ...posterOf(pioneer.key), others: pioneer.others } : null,
     same_week: together?.week >= 2 ? { ...posterOf(together.key), others: together.week } : null,
     only_you: onlyYou.length ? { count: onlyYou.length, posters: [...onlyYou].sort((a, b) => lastStarted(b) - lastStarted(a)).slice(0, 4).map(posterOf) } : null,
@@ -340,9 +346,9 @@ export const wrappedOf = (
     twin: twin?.length >= 5 ? { user_id: [...overlap.entries()].find(([, keys]) => keys === twin)![0], shared: twin.length, total: mineKeys.length, posters: [...twin].sort((a, b) => watchersOf.get(a)!.size - watchersOf.get(b)!.size).slice(0, 4).map(posterOf) } : null,
     dropped: dropped ? { ...posterOf(dropped), percent: Math.round(100 * seenOf(dropped)) } : null,
     dropped_show: droppedShow ? { ...posterOf(droppedShow), season: Math.floor(droppedAt! / 10000), episode: droppedAt! % 10000 } : null,
-    longest: moviePlays.size >= 2 && longest ? { ...posterOf(longest), minutes: Math.round(byKey.get(longest)!.duration! / 60) } : null,
-    oldest: moviePlays.size >= 2 && oldest ? { ...posterOf(oldest), year: byKey.get(oldest)!.year! } : null,
-    rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched) } : null,
+    longest: moviePlays.size >= 2 && longest ? { ...posterOf(longest), minutes: Math.round(byKey.get(longest)!.duration! / 60), dates: datesOf(longest) } : null,
+    oldest: moviePlays.size >= 2 && oldest ? { ...posterOf(oldest), year: byKey.get(oldest)!.year!, dates: datesOf(oldest) } : null,
+    rewatched: rewatched ? { ...posterOf(rewatched), times: rewatches(rewatched), dates: datesOf(rewatched) } : null,
     genre: genre ? {
       name: genre,
       titles: watchedTitles.filter((title) => title.genres?.includes(genre)).length,

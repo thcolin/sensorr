@@ -111,11 +111,24 @@ const Big = ({ value, spoken, suffix }: { value: number, spoken: string, suffix?
 
 const Barcode = () => <span className="tele-barcode" aria-hidden="true"><i /></span>
 
-// A quantity stands out from its words: not a date, nor the digits of a name or of a title in quotes
-const QUANTITY = /(?<![\p{L}\d._])(\d+(?:\s\d{3})*(?:\sh\s\d+|\s?%)?)(?![\p{L}\d])(?!(?:er)?\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))/u
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => index % 2
-  ? [part]
-  : part.split(QUANTITY).map((bit, at) => at % 2 ? <b key={`${index}-${at}`} className="tele-figure">{bit}</b> : bit))
+// A quantity stands out with its unit: not a date, nor the digits of a name or of a title in quotes
+const UNIT = '(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
+const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
+const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
+const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+  if (index % 2) return [part]
+  const bits: ReactNode[] = []
+  let from = 0
+  for (const match of part.matchAll(QUANTITY)) {
+    bits.push(part.slice(from, match.index), (
+      <b key={`${index}-${match.index}`} className="tele-figure">
+        <span className="tele-figure-n">{match[1]}</span>{match[2] && <> {match[2]}</>}
+      </b>
+    ))
+    from = match.index + match[0].length
+  }
+  return [...bits, part.slice(from)]
+})
 
 const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: SheetModel[] } & Page) => {
   const reduced = useReducedMotion()
@@ -375,6 +388,17 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => (
       <p className="tele-clock" aria-hidden="true">{sheet.end}</p>
       <p className="tele-body">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
       <p className="tele-body">{sheet.last}</p>
+      {sheet.earlier && <>
+        <p className="tele-box-title">{sheet.earlier}</p>
+        <ul className="tele-gallery-row" data-count={sheet.before.length}>
+          {sheet.before.map((poster) => (
+            <li key={poster.key}>
+              <Photo poster={poster} art={art} width={320} />
+              <span className="tele-thumb-title">{poster.title}</span>
+            </li>
+          ))}
+        </ul>
+      </>}
     </>}
   />
 )
@@ -472,19 +496,20 @@ const Duo = ({ sheet, art, ...page }: { sheet: Of<'duo'> } & Page) => {
 }
 
 // Each figure a review, with its poster
-const Review = ({ item: { what, poster, detail }, art, lead }: { item: Of<'posters'>['items'][number], art: Art, lead?: boolean }) => (
+const Review = ({ item: { what, poster, detail, when }, art, lead }: { item: Of<'posters'>['items'][number], art: Art, lead?: boolean }) => (
   <article className={`tele-review${lead ? ' tele-review-lead' : ''}`}>
     <Photo poster={poster} art={art} />
     <div>
       <p className="tele-review-what">{what}</p>
       <h3 className="tele-pick-title">{poster.title}</h3>
       <p className="tele-review-detail">{figures(detail)}</p>
+      {when && <p className="tele-review-when">{when}</p>}
     </div>
   </article>
 )
 
 // A review on the facing page opens on the film's still, its poster beside the words
-const Feature = ({ item: { what, poster, detail }, art }: { item: Of<'posters'>['items'][number], art: Art }) => (
+const Feature = ({ item: { what, poster, detail, when }, art }: { item: Of<'posters'>['items'][number], art: Art }) => (
   <article className="tele-feature">
     {poster.art && <Photo poster={poster} art={art} kind="art" width={1280} />}
     <div className="tele-feature-body">
@@ -493,6 +518,7 @@ const Feature = ({ item: { what, poster, detail }, art }: { item: Of<'posters'>[
         <p className="tele-review-what">{what}</p>
         <h3 className="tele-title">{poster.title}</h3>
         <Quote text={figures(detail)} />
+        {when && <p className="tele-review-when">{when}</p>}
       </div>
     </div>
   </article>
