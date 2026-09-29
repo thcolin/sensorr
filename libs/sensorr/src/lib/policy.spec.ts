@@ -78,3 +78,22 @@ describe('movie releases', () => {
     })
   })
 })
+
+describe('magnet releases', () => {
+  const policy = new Policy({ name: 'MULTi', sorting: 'size', descending: false, prefer: {}, avoid: {} } as any)
+  const query = { terms: ['Dune'], years: [2021], titles: ['Dune'], banned_releases: [] }
+  const release = (enclosure) => ({ title: 'Dune.2021.1080p.WEBRip.x264', size: 1, seeders: 1, publishDate: '2021-10-17', enclosure })
+  const valid = (results) => Object.fromEntries(results.map(({ enclosure, valid }) => [enclosure.split(':')[0], valid]))
+
+  it('withdraws a magnet link from a movie search unless magnet links are on', () => {
+    const releases = [release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), release('https://jackett/dl/1')]
+    expect(valid(policy.apply(releases, query))).toEqual({ magnet: false, https: true })
+    expect(valid(policy.apply(releases, { ...query, magnet: true }))).toEqual({ magnet: true, https: true })
+  })
+
+  it('withdraws a magnet link from a show search even when magnet links are on', () => {
+    const [result] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), title: 'Dune.S01.1080p.WEBRip.x264' }], { ...query, magnet: true, unit: { type: 'season', season: 1, episodes: [] } } as any)
+    expect(result.valid).toBe(false)
+    expect(result.reason).toMatch(/show needs a \.torrent/)
+  })
+})

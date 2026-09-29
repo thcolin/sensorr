@@ -3,6 +3,7 @@ import oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
 import { ShowUnit, levelOf, matchesUnit, reachesUnit, unitLabel } from './show'
+import { isMagnet } from './torrent'
 
 const MINIMUM_SIMILARITY = 0.6
 
@@ -131,6 +132,7 @@ export class Policy {
       banned_releases: string[],
       unit?: ShowUnit,
       reach?: boolean,
+      magnet?: boolean,
     } = null,
     strict = false
   ) {
@@ -140,6 +142,7 @@ export class Policy {
     return releases
       .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
       .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
+      .map(release => Policy.normalizers.magnetReleases(release, query?.magnet, unit, ignore))
       .map(release => unit ? Policy.normalizers.showReleaseUnit(release, unit, query?.reach) : Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
       .map(release => unit ? release : Policy.normalizers.movieReleaseType(release, ignore))
       .map(release => unit ? release : Policy.normalizers.releasePublishDate(release, query?.years, ignore))
@@ -179,6 +182,21 @@ export class Policy {
         valid,
         reason: valid ? null : `🚫 Release banned`,
         warning: valid ? 0 : 70,
+      }
+    },
+    // A show release needs the file list of its .torrent, which a magnet link does not carry
+    magnetReleases: (release, magnet, unit, ignore = false) => {
+      if (!release.valid || ignore || !isMagnet(release.enclosure)) {
+        return release
+      }
+
+      const valid = !unit && !!magnet
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : unit ? `🧲 Magnet link, a show needs a .torrent` : `🧲 Magnet link, turned off in Settings > Blackhole`,
+        warning: valid ? 0 : 30,
       }
     },
     collectionReleases: (release, banned, ignore = false) => {

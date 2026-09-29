@@ -7,7 +7,7 @@ import { lighten } from '../../store/logger'
 import { proposedSpaceOf } from '../../utils/swaps'
 import { replacesOf } from '../../utils/reports'
 
-export const ProcessMoviesTask = ({ command, proposalOnly = false, ...props }) => {
+export const ProcessMoviesTask = ({ command, proposalOnly = false, magnet = false, ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { tasks, state } } = useTask(
     {
       id: 'process-movies',
@@ -266,7 +266,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
 
           if (!done) {
             releases.push(...raw.value.releases)
-            const results = policy.apply(raw.value.releases, query)
+            const results = policy.apply(raw.value.releases, { ...query, magnet })
 
             const stats = {
               total: results?.length || 0,
@@ -285,7 +285,7 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
           }
         } while (!done)
 
-        const results = policy.apply(releases, query)
+        const results = policy.apply(releases, { ...query, magnet })
 
         if (!results.length) {
           setTask((task) => ({ ...task, output: '📭 No releases found' }))
