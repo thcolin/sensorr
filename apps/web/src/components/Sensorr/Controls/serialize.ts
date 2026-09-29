@@ -1,4 +1,4 @@
-// A range left where it starts sends nothing: its lower bound would drop every show TMDB gives no value for
+// A range left where it starts sends nothing: its lower bound would drop every entry TMDB gives no value for
 export const untouched = (field) => ({
   ...field,
   serialize: (key, raw) => JSON.stringify(raw) === JSON.stringify(field.initial) ? {} : field.serialize(key, raw),
