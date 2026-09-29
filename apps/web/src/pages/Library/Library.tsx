@@ -32,6 +32,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { RELEASES_AREAS, ReleasesToggle, releasesFields } from '../../components/Sensorr/Controls/Releases'
+import { untouched } from '../../components/Sensorr/Controls/serialize'
 import { withBody } from '../../layout/withLayout'
 
 const SLICE = 50
@@ -302,30 +303,30 @@ const Library = compose(
         ...fields.production_companies,
         component: withProps({ label: 'ui.filters.companies', display: 'select' })(FilterStatistics),
       },
-      release_date: {
+      release_date: untouched({
         ...fields.release_date,
         component: FilterReleaseDate,
-      },
-      popularity: {
+      }),
+      popularity: untouched({
         ...fields.popularity,
         component: FilterPopularity,
-      },
-      vote_average: {
+      }),
+      vote_average: untouched({
         ...fields.vote_average,
         component: FilterVoteAverage,
-      },
-      vote_count: {
+      }),
+      vote_count: untouched({
         ...fields.vote_count,
         component: FilterVoteCount,
-      },
-      budget: {
+      }),
+      budget: untouched({
         ...fields.budget,
         component: FilterBudget,
-      },
-      runtime: {
+      }),
+      runtime: untouched({
         ...fields.runtime,
         component: FilterRuntime,
-      },
+      }),
       ...releasesFields({ noun: 'movies', jobs: ['sync', 'record', 'refine', 'shrink'] }),
     },
     useStatistics: (entities, fields, state) => {

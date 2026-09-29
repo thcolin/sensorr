@@ -5,7 +5,7 @@ import { fields, useFieldComputedRangeProps } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { countries, emojize } from '@sensorr/utils'
 import withProps from '../enhancers/withProps'
-import { multi, statuses, untouched } from './serialize'
+import { multi, statuses, untouched } from '../Sensorr/Controls/serialize'
 
 export { multi, untouched }
 
