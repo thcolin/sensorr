@@ -194,7 +194,7 @@ const Rank = ({ sheet, name, page }: { sheet: Of<'rank'> } & Page) => (
       <Big value={sheet.rank} suffix={sheet.suffix} spoken={`${sheet.rank}${sheet.suffix}`} />
       <p className="tele-unit">{sheet.unit}</p>
       <p className="tele-standfirst">{figures(sheet.detail)}</p>
-      <p className="tele-body">{figures(sheet.compare)}</p>
+      {sentences(sheet.compare).map((sentence) => <p key={sentence} className="tele-body">{figures(sentence)}</p>)}
     </>}
     right={<Ratings sheet={sheet} />}
   />
