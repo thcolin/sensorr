@@ -186,6 +186,7 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, magnet = fals
           key={movie.id}
           movie={movie}
           proposalOnly={proposalOnly}
+          magnet={magnet}
           dependencies={arr[i - 1] ? [`process-movie-${arr[i - 1].id}`] : []}
           hide={status === 'done' || (['waiting', 'loading'].includes(status) && !(i >= index && i <= (index + 10)))}
           depth={1}
@@ -195,7 +196,7 @@ export const ProcessMoviesTask = ({ command, proposalOnly = false, magnet = fals
   )
 }
 
-const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false, ...props }) => {
+const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false, magnet = false, ...props }) => {
   const { ready, task, setTask, status, setStatus, context: { state, setState } } = useTask(
     {
       id: `process-movie-${movie.id}`,
