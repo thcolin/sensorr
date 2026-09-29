@@ -632,6 +632,57 @@ html[data-theme='tele'] {
   text-transform: uppercase;
 }
 
+/* Soirée spéciale: the figures of a binge, each on its own line */
+.tele-stats {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.tele-stats li {
+  display: grid;
+  justify-items: start;
+}
+
+.tele-stats b {
+  color: var(--red);
+  font: italic 900 clamp(72px, 20vw, 120px)/0.82 var(--cond);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tele-stats li:nth-child(3n + 2) b {
+  color: var(--blue);
+}
+
+.tele-stats li:nth-child(3n) b {
+  color: var(--ink);
+}
+
+.tele-stats span {
+  margin-top: -4px;
+  padding: 4px 10px 3px;
+  background: var(--ink);
+  color: #fff;
+  font: italic 900 20px/1 var(--cond);
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.tele-stats li:nth-child(even) span {
+  background: var(--red);
+  transform: rotate(1.5deg);
+}
+
+.tele-pick .tele-stats b {
+  font-size: clamp(56px, 15vw, 88px);
+}
+
+.tele-pick .tele-stats li:nth-child(3n + 1) b {
+  color: var(--red-deep);
+}
+
 /* Dernière partie de soirée: the night as a programme listing */
 .tele-listing {
   border-top: 3px solid var(--ink);
@@ -1079,7 +1130,8 @@ html[data-theme='tele'] {
 
 .tele-quote {
   position: relative;
-  padding: 14px 0 12px 34px;
+  padding: 14px 34px 12px;
+  text-align: center;
   border-block: 3px solid var(--red);
   font: italic 700 clamp(24px, 7vw, 30px)/1.2 var(--serif);
   text-wrap: balance;
@@ -1185,6 +1237,18 @@ html[data-theme='tele'] {
 .tele-venn-side span {
   font: italic 900 clamp(26px, 7vw, 38px)/1 var(--cond);
   font-variant-numeric: tabular-nums;
+}
+
+.tele-venn-caption {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 480px);
+  text-align: center;
+}
+
+.tele-figure-caption {
+  display: contents;
 }
 
 .tele-venn-shared {
