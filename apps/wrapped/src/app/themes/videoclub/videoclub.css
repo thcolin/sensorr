@@ -128,6 +128,55 @@ html[data-theme='videoclub'] {
   color: #e2fdff;
 }
 
+/* A figure priced with the gun: a yellow label slapped over the sentence */
+.videoclub-figure {
+  display: inline-block;
+  margin: 0.08em 0.06em;
+  padding: 0.16em 0.34em 0.1em;
+  background: var(--vc-sticker);
+  color: #111;
+  font: 900 0.95em/1 var(--vc-type);
+  font-stretch: 80%;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(-2deg);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.45);
+}
+
+.videoclub-figure-n {
+  margin-right: 0.1em;
+  font-size: 1.45em;
+  font-stretch: 90%;
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* On cream card the label is the fluorescent pink one */
+.videoclub-shelf-card .videoclub-figure,
+.videoclub-loan .videoclub-figure {
+  background: var(--vc-pink);
+  color: var(--vc-ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+/* On till paper the figure is printed, only heavier */
+.videoclub-ticket .videoclub-figure {
+  margin: 0;
+  padding: 0;
+  background: none;
+  font-size: 1em;
+  font-stretch: 78%;
+  text-transform: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.videoclub-ticket .videoclub-figure-n {
+  font-size: 1.5em;
+  font-stretch: 78%;
+}
+
 /* In-store neon: a thin tube held off the wall, its shadow on the paint behind */
 .videoclub-neon {
   --lit-color: #ffd7ec;
@@ -701,10 +750,15 @@ html[data-theme='videoclub'] {
 }
 
 .videoclub-stamps li {
+  display: grid;
+  place-items: center;
   aspect-ratio: 1;
+  color: rgb(214 32 120 / 0.9);
+  font-size: clamp(11px, 3vw, 15px);
+  font-weight: 900;
+  font-stretch: 78%;
   border: 2px solid rgb(214 32 120 / 0.78);
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 38%, rgb(214 32 120 / 0.7) 41% 50%, transparent 53%);
   transform: rotate(var(--turn));
   mix-blend-mode: multiply;
 }
@@ -715,6 +769,70 @@ html[data-theme='videoclub'] {
   font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.35;
+}
+
+/* Streak: every evening's tape back on the shelf, its day under it */
+.videoclub-run {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.videoclub-run-tapes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px 0;
+  width: min(100%, 1000px);
+}
+
+.videoclub-run-tapes li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  width: 76px;
+  padding: 0 4px;
+}
+
+/* The plank under each tape joins the next one's into a shelf */
+.videoclub-run-tapes li::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 29px);
+  height: 10px;
+  background: var(--vc-wood);
+  box-shadow: 0 6px 10px rgb(0 0 0 / 0.5);
+}
+
+.videoclub-run-tapes .videoclub-box-mini,
+.videoclub-run-empty {
+  width: 100%;
+}
+
+.videoclub-run-empty {
+  aspect-ratio: 2 / 3.2;
+  border: 2px dashed #3b3357;
+}
+
+.videoclub-run-tapes small {
+  color: var(--vc-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-stretch: 85%;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.videoclub-run-tapes[data-long] li {
+  width: 52px;
+}
+
+.videoclub-run-tapes[data-long] small {
+  font-size: 0.625rem;
 }
 
 /* Rank: the membership card, number embossed */
@@ -819,6 +937,85 @@ html[data-theme='videoclub'] {
   text-transform: uppercase;
 }
 
+/* The felt letter board by the till, white plastic letters pushed in its grooves */
+.videoclub-rank-text {
+  display: grid;
+  gap: 24px;
+  justify-items: center;
+}
+
+.videoclub-rank-text > .videoclub-lede {
+  margin: 0;
+}
+
+.videoclub-board {
+  width: min(100%, 420px);
+  padding: 14px 18px 16px;
+  background: repeating-linear-gradient(transparent 0 5px, rgb(0 0 0 / 0.35) 5px 6px), #1c1a22;
+  border: 10px solid #4a2e1b;
+  border-image: var(--vc-wood) 10;
+  box-shadow: 0 14px 26px rgb(0 0 0 / 0.55);
+  color: #f4f1ea;
+  font-stretch: 78%;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.videoclub-board-head {
+  padding-bottom: 8px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-align: center;
+}
+
+.videoclub-board li {
+  display: grid;
+  grid-template-columns: 3.4em 1fr auto;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.videoclub-board li > span:last-child {
+  text-align: right;
+}
+
+.videoclub-board .videoclub-board-you {
+  color: var(--vc-sticker);
+  font-size: 1.625rem;
+  font-weight: 900;
+}
+
+.videoclub-board .videoclub-board-gap {
+  display: block;
+  color: #8f8a9e;
+  line-height: 0.6;
+  text-align: center;
+}
+
+.videoclub-board-foot {
+  margin-top: 10px;
+  color: #d8d3e6;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: none;
+}
+
+.videoclub-board-foot + .videoclub-board-foot {
+  margin-top: 4px;
+}
+
+.videoclub-board-foot .videoclub-figure {
+  font-size: 0.9em;
+}
+
 /* Months: a bookcase, one shelf per month */
 .videoclub-rack {
   display: grid;
@@ -869,6 +1066,11 @@ html[data-theme='videoclub'] {
   color: var(--vc-ink);
   font: 700 0.75rem/1.2 var(--vc-type);
   font-stretch: 80%;
+}
+
+.videoclub-rack-tag small b {
+  font-size: 1.5em;
+  font-weight: 900;
 }
 
 .videoclub-rack-future .videoclub-rack-tag {
@@ -925,8 +1127,8 @@ html[data-theme='videoclub'] {
   font-size: 0.6875rem;
 }
 
-.videoclub-peak {
-  max-width: 44ch;
+.videoclub-peak .videoclub-shelf-card {
+  width: auto;
 }
 
 /* Binge: the box set, a spine for each episode of the evening */
@@ -983,10 +1185,67 @@ html[data-theme='videoclub'] {
   margin-top: 6px;
 }
 
-/* The pace show beside the box set, its line on a note */
+/* The pace show beside the box set, its figures on tags under it */
+.videoclub-binge-visual,
 .videoclub-binge-text {
   display: grid;
-  gap: 28px;
+  gap: 24px;
+}
+
+/* Price tags, the scoreboard of a sheet that only has figures */
+.videoclub-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 12px;
+}
+
+.videoclub-tag {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  min-width: 120px;
+  padding: 12px 16px 12px 32px;
+  background: var(--vc-sticker);
+  color: #111;
+  clip-path: polygon(18px 0, 100% 0, 100% 100%, 18px 100%, 0 50%);
+  transform: rotate(var(--turn));
+}
+
+.videoclub-tag::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--vc-wall);
+}
+
+.videoclub-tag b {
+  font-size: clamp(44px, 12vw, 64px);
+  font-weight: 900;
+  font-stretch: 85%;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.videoclub-tag span {
+  font-size: 0.875rem;
+  font-weight: 800;
+  font-stretch: 85%;
+  text-transform: uppercase;
+}
+
+.videoclub-tag:nth-child(3n + 2) {
+  background: var(--vc-pink);
+}
+
+.videoclub-tag:nth-child(3n) {
+  background: var(--vc-cyan);
 }
 
 .videoclub-pace {
@@ -998,15 +1257,40 @@ html[data-theme='videoclub'] {
   margin-inline: auto;
 }
 
-.videoclub-pace-note {
-  padding: 12px 14px 14px;
-  background: var(--vc-label);
-  color: var(--vc-ink);
-  font-size: 1.0625rem;
-  line-height: 1.4;
-  transform: rotate(1.5deg);
-  box-shadow: 0 8px 16px rgb(0 0 0 / 0.45);
+.videoclub-pace-text {
+  display: grid;
+  gap: 18px;
 }
+
+.videoclub-pace-text .videoclub-shelf-card h3 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.videoclub-pace-text .videoclub-tag {
+  min-width: 0;
+  padding: 8px 12px 8px 26px;
+}
+
+.videoclub-pace-text .videoclub-tag b {
+  font-size: clamp(30px, 8vw, 40px);
+}
+
+.videoclub-binge-text .videoclub-pace {
+  grid-template-columns: 28% 1fr;
+  width: min(100%, 540px);
+}
+
+.videoclub-pace-text .videoclub-tags {
+  justify-content: flex-start;
+  gap: 10px 6px;
+}
+
+.videoclub-pace-text .videoclub-tag span {
+  font-size: 0.75rem;
+}
+
 
 /* Night: the returns box, the last tape half through the slot */
 .videoclub-returns {
@@ -1075,6 +1359,65 @@ html[data-theme='videoclub'] {
   font: 400 1.7em/1 var(--vc-sign);
   text-shadow: 0 0 1px #fff, 0 0 6px rgb(62 242 255 / 0.75), 0 0 14px rgb(62 242 255 / 0.3);
   white-space: nowrap;
+}
+
+/* The return slip of the night, a line per tape, the hours printed */
+.videoclub-ticket-returns {
+  width: min(100%, 440px);
+  margin: 8px auto 0;
+  transform: rotate(-1deg);
+}
+
+.videoclub-ticket-returns li {
+  display: grid;
+  grid-template-columns: 3.4em 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgb(21 18 31 / 0.45);
+}
+
+.videoclub-ticket-returns .videoclub-box-mini {
+  width: 32px;
+}
+
+.videoclub-ticket-time {
+  display: grid;
+  gap: 2px;
+}
+
+.videoclub-ticket-time b {
+  font-size: 1.375rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.videoclub-ticket-time span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.videoclub-ticket-time span::before {
+  content: '→ ';
+}
+
+.videoclub-ticket-title {
+  display: grid;
+  gap: 2px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.videoclub-ticket-title b {
+  color: #b3165a;
+  font-weight: 900;
+}
+
+.videoclub-ticket-returns li:last-child .videoclub-ticket-time b {
+  color: #b3165a;
 }
 
 /* Server: the case under a spotlight */
@@ -1204,6 +1547,19 @@ html[data-theme='videoclub'] {
   font-weight: 800;
 }
 
+.videoclub-shelf-when {
+  margin-top: 4px;
+  color: var(--vc-soft);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* The figure written large on the case's label */
+.videoclub-shelf-large .videoclub-label {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
 /* Twin and duo: loan cards, ruled, a red margin */
 .videoclub-loan {
   background:
@@ -1258,6 +1614,33 @@ html[data-theme='videoclub'] {
   line-height: 1.4;
 }
 
+.videoclub-loan-details + .videoclub-loan-details {
+  margin-top: 6px;
+}
+
+/* Both borrowers' totals, written on the ruled lines */
+.videoclub-loan-ledger {
+  display: grid;
+  margin-bottom: 10px;
+}
+
+.videoclub-loan-ledger div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 28px;
+}
+
+.videoclub-loan-ledger dt {
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.videoclub-loan-ledger dd {
+  color: var(--vc-pen);
+  font: 400 1.125rem/28px var(--vc-hand);
+}
+
 .videoclub-loans {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1295,6 +1678,10 @@ html[data-theme='videoclub'] {
   color: var(--vc-pen);
   font: 400 0.75rem/1.5 var(--vc-hand);
   overflow-wrap: anywhere;
+}
+
+.videoclub-loan-hand .videoclub-figure {
+  font-size: 0.8125rem;
 }
 
 /* Genre: the aisle's board, hung on two chains */
@@ -1492,6 +1879,14 @@ html[data-theme='videoclub'] {
     height: 300px;
   }
 
+  /* The box set's plank stays under its own column, clear of the pace show */
+  .videoclub-set::after {
+    left: -36px;
+    right: -36px;
+    width: auto;
+    transform: none;
+  }
+
   .videoclub-box-mini {
     width: 52px;
   }
@@ -1535,6 +1930,8 @@ html[data-theme='videoclub'] {
 
   .videoclub-rank { grid-template-areas: 'visual sign' 'visual text'; }
   .videoclub-binge { grid-template-areas: 'sign visual' 'text visual'; }
+  .videoclub-binge-solo { grid-template-areas: 'sign visual'; }
+  .videoclub-binge.videoclub-binge-solo > .videoclub-neon { align-self: center; }
   .videoclub-night { grid-template-areas: 'sign visual' 'text visual'; }
   .videoclub-server { grid-template-areas: 'visual sign' 'visual text'; }
   .videoclub-finale { grid-template-areas: 'visual sign' 'visual text'; }
@@ -1552,8 +1949,12 @@ html[data-theme='videoclub'] {
     align-self: end;
   }
 
+  .videoclub-twin > .videoclub-neon {
+    align-self: center;
+  }
+
   .videoclub-rank > .videoclub-card,
-  .videoclub-set,
+  .videoclub-binge-visual,
   .videoclub-returns,
   .videoclub-spot,
   .videoclub-window,
@@ -1563,7 +1964,7 @@ html[data-theme='videoclub'] {
     align-self: center;
   }
 
-  .videoclub-rank > .videoclub-lede,
+  .videoclub-rank-text,
   .videoclub-binge-text,
   .videoclub-night-text,
   .videoclub-server > .videoclub-shelf-card,
@@ -1609,7 +2010,7 @@ html[data-theme='videoclub'] {
   }
 
   .videoclub-shelf-large .videoclub-label {
-    font-size: 0.9375rem;
+    font-size: 1.5rem;
   }
 
   .videoclub-loans {
