@@ -1,6 +1,6 @@
 import { ReactNode, createContext, forwardRef, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { keyframes } from '@emotion/react'
 import { ControlsSelect, Icon, Link, Picture, Warning } from '@sensorr/ui'
@@ -69,6 +69,43 @@ const UIFailure = ({ error, fallback }: { error: any, fallback: Failure }) => {
 
   return (
     <Warning emoji={error.emoji || '💢'} title={error.title || fallback.title} subtitle={error.subtitle || fallback.subtitle} />
+  )
+}
+
+// The filters button of a calendar bar, counting the filters the bar itself does not show
+export const Toggle = ({ toggleOpen, fields, values, ...props }) => {
+  const { t } = useTranslation()
+  const active = Object.keys(values)
+    .filter(key => !['sort_by', 'primary_release_date', 'air_date', 'with_release_type', 'hide_library'].includes(key))
+    .reduce((acc, key) => acc + (values[key] && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
+
+  return (
+    <button
+      {...props}
+      sx={{
+        variant: 'button.reset',
+        display: 'flex',
+        alignItems: 'center',
+        marginY: 4,
+        paddingX: 2,
+        borderRadius: '0.25em',
+        ':hover': {
+          backgroundColor: 'accent',
+        },
+        ':active': {
+          backgroundColor: 'accentDark',
+        },
+        '>svg': {
+          height: '1em',
+          marginLeft: 6,
+        },
+      }}
+      type='button'
+      onClick={toggleOpen}
+    >
+      <Trans t={t} i18nKey='ui.controls.toggle' values={{ active }} components={[<span style={{ whiteSpace: 'pre' }} />, <strong />]} />
+      <Icon value='filters' />
+    </button>
   )
 }
 
