@@ -177,6 +177,12 @@ export const fields = {
     boundaries: Array(13).fill(null).map((foo, i) => i * 10), // 0-10-20...120 (= 2h)
     serialize: serializers.range(120),
   },
+  // A show of ten seasons or more counts in the last bar, and the top of the range sends no bound
+  number_of_seasons: {
+    initial: [1, 10],
+    boundaries: Array(10).fill(null).map((foo, i) => i + 1), // 1-2-3...10
+    serialize: serializers.range(10),
+  },
   known_for_department: {
     initial: { values: [], behavior: 'or' },
     serialize: serializers.select('multi'),

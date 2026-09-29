@@ -1,4 +1,4 @@
-import { movieFilter, oneOf, releasesFilter, showFilter } from './filters'
+import { episodeStatusFilter, movieFilter, oneOf, releasesFilter, showFilter } from './filters'
 
 describe('oneOf', () => {
   it('matches any value on a pipe, every value on a comma, cast', () => {
@@ -62,5 +62,23 @@ describe('showFilter', () => {
     expect(showFilter({ 'releases.proposal': 'false' })).toMatchObject({
       $and: [{ releases: { $not: { $elemMatch: { proposal: true } } } }],
     })
+  })
+})
+
+describe('episodeStatusFilter', () => {
+  const now = new Date('2026-09-29T00:00:00.000Z')
+
+  it('matches any of the statuses asked for', () => {
+    expect(episodeStatusFilter('owned|wanted', now)).toEqual({
+      $or: [
+        { 'files.0': { $exists: true } },
+        { 'files.0': { $exists: false }, monitored: true, air_date: { $lte: now }, release: { $in: [null, ''] } },
+      ],
+    })
+  })
+
+  it('adds nothing for no status, or an unknown one', () => {
+    expect(episodeStatusFilter(undefined, now)).toEqual({})
+    expect(episodeStatusFilter('missing', now)).toEqual({})
   })
 })
