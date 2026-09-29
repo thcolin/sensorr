@@ -37,7 +37,7 @@ export type Billed = { what: string, poster: WrappedPoster, detail: string }
 export type SheetModel =
   | { kind: 'opening', label: string, title: string, name: string, year: number, lede: string | null, first: string | null, figures: string[], posters: WrappedPoster[] }
   | { kind: 'rank', label: string, rank: number, suffix: string, users: number, unit: string, detail: string }
-  | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string }
+  | { kind: 'streak', label: string, evenings: number, poster: WrappedPoster, intro: string, unit: string, spoken: string, details: string, lead: boolean, nights: { day: string, poster: WrappedPoster | null }[] }
   | { kind: 'months', label: string, lines: string[], lede: string, shows: Wrapped['month_shows'], elapsed: number, max: number, alt: string, peak: { month: string, index: number, show: WrappedPoster & { episodes: number }, text: string } | null }
   | { kind: 'binge', label: string, lines: string[], poster: WrappedPoster, title: string, meta: string[], episodes: number | null, pace: (WrappedPoster & { episodes: number, days: number }) | null }
   | { kind: 'night', label: string, late: boolean, lines: string[], poster: WrappedPoster, date: string, end: string, after: string, last: string }
@@ -113,7 +113,15 @@ export const sheetsOf = (share: Share) => {
       intro: 'Ta plus longue série sans rater un soir',
       unit: 'soirs d’affilée',
       spoken: plural(streak.evenings, 'soir', 'soirs'),
-      details: `Du ${dayOf(streak.from)} au ${dayOf(streak.to)}, avec ${quoted(streak.poster.title)} le plus souvent.`,
+      details: `Du ${dayOf(streak.from)} au ${dayOf(streak.to)}, ${streak.times === undefined ? `avec ${quoted(streak.poster.title)} le plus souvent`
+        : streak.times > 1 ? `dont ${streak.times} soirs avec ${quoted(streak.poster.title)}` : 'un titre différent chaque soir'}.`,
+      // The poster stands for the run only when it came back on more than one evening
+      lead: streak.times === undefined || streak.times > 1,
+      // An edition frozen before the titles of each evening were kept only has its dates
+      nights: Array.from({ length: streak.evenings }, (_, index) => ({
+        day: dayOf(new Date(Date.parse(`${streak.from}T12:00:00Z`) + index * 86400000).toISOString().slice(0, 10), true),
+        poster: streak.nights?.[index] || null,
+      })),
     })
   }
 

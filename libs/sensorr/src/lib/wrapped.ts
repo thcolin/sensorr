@@ -78,7 +78,8 @@ export interface Wrapped {
   previous: { year: number, hours: number } | null
   first: WrappedPoster & { date: string } | null
   last: WrappedPoster & { date: string } | null
-  streak: { evenings: number, from: string, to: string, poster: WrappedPoster } | null
+  // `poster` is the title seen on the most evenings of the run, `times` how many; `nights` the title watched the most each evening
+  streak: { evenings: number, from: string, to: string, poster: WrappedPoster, times?: number, nights?: WrappedPoster[] } | null
   // The show watched the most each month, from December to November
   month_shows: (WrappedPoster & { episodes: number } | null)[]
   binge: WrappedPoster & { episodes: number, minutes: number, date: string } | null
@@ -223,6 +224,18 @@ export const wrappedOf = (
   evenings.forEach((date, index) => index && dayOf(date) - dayOf(evenings[index - 1]) === 1 ? streaks[streaks.length - 1].push(date) : streaks.push([date]))
   const streak = [...streaks].sort((a, b) => b.length - a.length)[0]
 
+  const streakOf = (dates: string[]) => {
+    const lead = mostCommon(dates.flatMap((date) => [...new Set(nights.get(date)!.map((play) => play.title))]))!
+    return {
+      evenings: dates.length,
+      from: dates[0],
+      to: dates[dates.length - 1],
+      poster: posterOf(lead),
+      times: dates.filter((date) => nights.get(date)!.some((play) => play.title === lead)).length,
+      nights: dates.map((date) => posterOf(mostCommon(nights.get(date)!.map((play) => play.title))!)),
+    }
+  }
+
   const monthly = groupBy(episodes, (play) => play.month)
   const binged = [...groupBy(episodes, (play) => `${play.evening} ${play.title}`).values()].sort((a, b) => b.length - a.length)[0]
   const [topShow, topShowPlays] = [...showPlays.entries()].sort((a, b) => b[1].length - a[1].length)[0] || []
@@ -307,7 +320,7 @@ export const wrappedOf = (
       : null,
     first: opening ? { ...posterOf(opening.title), date: opening.date } : null,
     last: mine.length ? { ...posterOf(mine[mine.length - 1].title), date: mine[mine.length - 1].date } : null,
-    streak: streak?.length >= 3 ? { evenings: streak.length, from: streak[0], to: streak[streak.length - 1], poster: posterOf(mostCommon(streak.flatMap((date) => nights.get(date)!.map((play) => play.title)))!) } : null,
+    streak: streak?.length >= 3 ? streakOf(streak) : null,
     month_shows: Array.from({ length: 12 }, (_, index) => {
       const month = monthly.get((index + 11) % 12 + 1) || []
       const key = mostCommon(month.map((play) => play.title))
