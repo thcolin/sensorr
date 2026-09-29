@@ -1,4 +1,9 @@
 
+// A query string parser gives arrays and objects too: they would reach `.split` or an operator
+const scalars = (params): any => Object.fromEntries(Object.entries(params || {}).filter(([, value]) => value === null || typeof value !== 'object'))
+
+const lookup = (table, key) => Object.hasOwn(table, `${key}`) ? table[`${key}`] : undefined
+
 const RELEASE_TAGS = ['znab', 'encoding', 'resolution', 'source', 'dub', 'language', 'flags']
 
 const RELEASE_KEYS = [
@@ -31,7 +36,9 @@ const requested = (params) => ({
   } : {}),
 })
 
-export const releasesFilter = (params) => {
+export const releasesFilter = (raw) => {
+  const params = scalars(raw)
+
   if (!Object.keys(params).some(key => RELEASE_KEYS.includes(key))) {
     return {}
   }
@@ -39,29 +46,33 @@ export const releasesFilter = (params) => {
   const proposal = `${params['releases.proposal']}` === 'true' ? { proposal: true } : {}
   const prefer = (key: string, value) => [{ releases: { $elemMatch: { [key]: value, ...proposal } } }]
 
-  return {
-    $and: [
-      ...(params['releases.proposal'] ? ({
-        true: [{ releases: { $elemMatch: { proposal: true } } }],
-        false: [{ releases: { $not: { $elemMatch: { proposal: true } } } }],
-      })[params['releases.proposal']] || [] : []),
-      ...(`${params['releases.overdue']}` === 'true' ? [{ releases: { $elemMatch: { overdue: true } } }] : []),
-      ...(params['release_znab.prefer'] ? prefer('znab', { $in: params['release_znab.prefer'].split('|') }) : []),
-      ...(params['release_znab.avoid'] ? [{ releases: { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } } } } }] : []),
-      ...RELEASE_TAGS.filter(tag => tag !== 'znab').flatMap(tag => [
-        ...(params[`release_${tag}.prefer`] ? prefer('title', { $regex: params[`release_${tag}.prefer`] }) : []),
-        ...(params[`release_${tag}.avoid`] ? [{ releases: { $not: { $elemMatch: { title: { $regex: params[`release_${tag}.avoid`] } } } } }] : []),
-      ]),
-      // Scoped by the same $elemMatch as `releases.proposal`, otherwise an entry matches on a pending proposal
-      // and on an unrelated release from another job
-      ...(params.release_from ? prefer('from', { $in: params.release_from.split('|') }) : []),
-      ...(params['release_size.lte'] ? [{ releases: { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } } }] : []),
-      ...(params['release_size.gte'] ? [{ releases: { $elemMatch: { size: { $gte: params['release_size.gte'] * Math.pow(1024, 3) } } } }] : []),
-    ],
-  }
+  const $and = [
+    ...(lookup({
+      true: [{ releases: { $elemMatch: { proposal: true } } }],
+      false: [{ releases: { $not: { $elemMatch: { proposal: true } } } }],
+    }, params['releases.proposal']) || []),
+    ...(`${params['releases.overdue']}` === 'true' ? [{ releases: { $elemMatch: { overdue: true } } }] : []),
+    ...(params['release_znab.prefer'] ? prefer('znab', { $in: params['release_znab.prefer'].split('|') }) : []),
+    ...(params['release_znab.avoid'] ? [{ releases: { $not: { $elemMatch: { znab: { $nin: params['release_znab.avoid'].split('|') } } } } }] : []),
+    ...RELEASE_TAGS.filter(tag => tag !== 'znab').flatMap(tag => [
+      ...(params[`release_${tag}.prefer`] ? prefer('title', { $regex: params[`release_${tag}.prefer`] }) : []),
+      ...(params[`release_${tag}.avoid`] ? [{ releases: { $not: { $elemMatch: { title: { $regex: params[`release_${tag}.avoid`] } } } } }] : []),
+    ]),
+    // Scoped by the same $elemMatch as `releases.proposal`, otherwise an entry matches on a pending proposal
+    // and on an unrelated release from another job
+    ...(params.release_from ? prefer('from', { $in: params.release_from.split('|') }) : []),
+    ...(params['release_size.lte'] ? [{ releases: { $elemMatch: { size: { $lte: params['release_size.lte'] * Math.pow(1024, 3) } } } }] : []),
+    ...(params['release_size.gte'] ? [{ releases: { $elemMatch: { size: { $gte: params['release_size.gte'] * Math.pow(1024, 3) } } } }] : []),
+  ]
+
+  // Mongo refuses an empty `$and`, which an unknown value gives
+  return $and.length ? { $and } : {}
 }
 
-export const movieFilter = (params) => ({
+export const movieFilter = (raw) => {
+  const params = scalars(raw)
+
+  return {
   state: { $nin: ['ignored'] },
   ...(params.state ? {
     state: { $in: params.state.split('|') }
@@ -102,14 +113,18 @@ export const movieFilter = (params) => ({
   ...between(params, 'budget', 'budget', (value) => Number(value) * 1000000),
   ...between(params, 'runtime'),
   ...releasesFilter(params),
-})
+  }
+}
 
-const monitored = (value) => ({
+const monitored = (value) => lookup({
   true: { monitored: true },
   false: { monitored: { $ne: true } },
-})[`${value}`] || {}
+}, value) || {}
 
-export const showFilter = (params) => ({
+export const showFilter = (raw) => {
+  const params = scalars(raw)
+
+  return {
   state: { $nin: ['ignored'] },
   ...(params.state ? {
     state: { $in: params.state.split('|') }
@@ -138,17 +153,18 @@ export const showFilter = (params) => ({
     episode_run_time: { $elemMatch: between(params, 'episode_run_time', 'value').value },
   } : {}),
   ...releasesFilter(params),
-})
+  }
+}
 
 // The same cases as `episodeStatus` in `libs/sensorr/src/lib/episode.ts`, read by Mongo
-export const episodeStatusFilter = (value: string | undefined, now: Date) => {
-  const cases = (value || '').split('|').map(status => ({
+export const episodeStatusFilter = (value: unknown, now: Date) => {
+  const cases = (typeof value === 'string' ? value : '').split('|').map(status => lookup({
     owned: { 'files.0': { $exists: true } },
     upcoming: { 'files.0': { $exists: false }, $or: [{ air_date: { $gt: now } }, { air_date: null, monitored: true }] },
     unmonitored: { 'files.0': { $exists: false }, monitored: { $ne: true }, $or: [{ air_date: null }, { air_date: { $lte: now } }] },
     proposed: { 'files.0': { $exists: false }, monitored: true, air_date: { $lte: now }, release: { $nin: [null, ''] } },
     wanted: { 'files.0': { $exists: false }, monitored: true, air_date: { $lte: now }, release: { $in: [null, ''] } },
-  })[status]).filter(Boolean)
+  }, status)).filter(Boolean)
 
   return cases.length ? { $or: cases } : {}
 }
