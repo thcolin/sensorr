@@ -214,15 +214,23 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const painted = usePainted()
   const mobile = useResponsiveValue([true, false])
   const [unstacked, setUnstacked] = useState({})
-  const running = useMemo(() => jobs.filter(job => !job.meta.done && (!filter || jobNameOf(job.meta) === filter)), [jobs, filter])
+  const running = useMemo(() => jobs.filter(job => !job.meta.done).sort((a, b) => b.start - a.start), [jobs])
   const listed = useMemo(() => listedOf(jobs), [jobs])
-  const groups = useMemo(() => (filter ? jobs.filter(job => job.meta.done && jobNameOf(job.meta) === filter).map(job => ({ ...job, stack: [] })) : listed).reduce((groups, job) => ({
-    ...groups,
-    [dayOf(job)]: [
-      ...(groups[dayOf(job)] || []),
-      job,
-    ].sort((a, b) => b.start - a.start),
-  }), running.length ? { running } : {}), [jobs, listed, running, filter])
+  const groups = useMemo(() => {
+    const shown = filter ? running.filter(job => jobNameOf(job.meta) === filter) : running
+
+    return (filter ? jobs.filter(job => job.meta.done && jobNameOf(job.meta) === filter).map(job => ({ ...job, stack: [] })) : listed).reduce((groups, job) => {
+      const day = dayOf(job)
+
+      return {
+        ...groups,
+        [day]: [
+          ...(groups[day] || []),
+          job,
+        ].sort((a, b) => b.start - a.start),
+      }
+    }, shown.length ? { running: shown } : {})
+  }, [jobs, listed, running, filter])
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
     .map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
@@ -272,16 +280,21 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
               <Fragment key={distance}>
                 <h6>{distance}</h6>
                 <div sx={{ paddingX: 2 }}>
-                  {jobs.map(({ stack = [], ...j }) => (
-                    <Pile
-                      key={j.job}
-                      head={j}
-                      stack={stack}
-                      job={job}
-                      unstacked={unstacked[j.job] ?? stack.some(s => s.job === job)}
-                      onToggle={(value) => setUnstacked(unstacked => ({ ...unstacked, [j.job]: value }))}
-                    />
-                  ))}
+                  {jobs.map(({ stack = [], ...j }) => {
+                    // A new head joins the pile every cron tick: its oldest job keeps the pile's state
+                    const pile = stack[stack.length - 1]?.job
+
+                    return (
+                      <Pile
+                        key={j.job}
+                        head={j}
+                        stack={stack}
+                        job={job}
+                        unstacked={unstacked[pile] ?? stack.some(s => s.job === job)}
+                        onToggle={(value) => setUnstacked(unstacked => ({ ...unstacked, [pile]: value }))}
+                      />
+                    )
+                  })}
                 </div>
               </Fragment>
             ))}
@@ -442,7 +455,7 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
             type='button'
             sx={UIPile.styles.toggle}
             aria-expanded={unstacked}
-            aria-label={`${unstacked ? 'Stack' : 'Show'} ${stack.length} more ${jobTitleOf(jobNameOf(head.meta))} jobs telling the same`}
+            aria-label={`×${stack.length + 1}, ${unstacked ? 'stack' : 'show'} ${stack.length} more ${jobTitleOf(jobNameOf(head.meta))} jobs telling the same`}
             onClick={() => onToggle(!unstacked)}
           >
             ×{stack.length + 1}
@@ -472,14 +485,14 @@ UIPile.styles = {
     '&[data-pile=unstacked]>a:last-of-type': {
       borderBottom: 'none',
     },
-    '&[data-selected=true][data-pile=stacked]>a, &[data-selected=true][data-pile=unstacked], &[data-pile]:hover>a, &[data-pile=unstacked]:hover': {
+    '&[data-selected=true][data-pile=stacked]>a, &[data-selected=true][data-pile=unstacked], &[data-pile=stacked]:hover>a, &[data-pile=unstacked]:hover, &[data-selected=true]>span>span, &:hover>span>span': {
       borderColor: 'grayDark',
     },
-    '&[data-selected=false]>span, &[data-selected=false]>button': {
+    '&[data-selected=false]>button': {
       opacity: 0.5,
       transition: 'opacity ease 300ms',
     },
-    '&:hover>span, &:hover>button': {
+    '&:hover>button, &:focus-within>button': {
       opacity: 1,
     },
   },
@@ -493,7 +506,8 @@ UIPile.styles = {
       backgroundColor: 'grayLighter',
       border: '1px solid',
       borderTop: 'none',
-      borderColor: 'grayDark',
+      borderColor: 'grayLight',
+      transition: 'border-color ease 300ms',
       borderRadius: '0 0 0.25em 0.25em',
     },
     '>span:last-of-type': {
@@ -521,6 +535,11 @@ UIPile.styles = {
     borderRadius: '0.25em',
     paddingX: 8,
     cursor: 'pointer',
+    '::before': {
+      content: '""',
+      position: 'absolute',
+      inset: ['0px', '-8px'],
+    },
     '&[aria-expanded=true]': {
       backgroundColor: 'gray',
     },
