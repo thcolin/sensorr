@@ -1,6 +1,6 @@
 import React from 'react'
 import { cleanup, render, waitFor } from '@testing-library/react'
-import { useDragScroll } from './useDragScroll'
+import { pageOf, useDragScroll } from './useDragScroll'
 
 let clicks = 0
 let reduced = false
@@ -14,6 +14,17 @@ const Row = () => {
       <div data-testid='cell'>
         <button onClick={() => clicks++}>poster</button>
       </div>
+    </div>
+  )
+}
+
+// Pills lay straight in the row, as in CommandTabs: the gaps between them are its background
+const Pills = () => {
+  const drag = useDragScroll<HTMLDivElement>()
+
+  return (
+    <div ref={drag} data-testid='row'>
+      <button onClick={() => clicks++}>all</button>
     </div>
   )
 }
@@ -138,5 +149,63 @@ describe('useDragScroll', () => {
 
     expect(row.scrollLeft).toBe(0)
     expect(cell.style.translate || '').toBe('')
+  })
+
+  it('leaves a pill laid straight in the row to its click', () => {
+    const { getByTestId } = render(<Pills />)
+    const row = size(getByTestId('row'))
+    const pill = row.querySelector('button')
+
+    pointer('pointerdown', pill, 600)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+    pointer('pointerup', window, 380)
+    click(pill)
+
+    expect(row.scrollLeft).toBe(0)
+    expect(clicks).toBe(1)
+  })
+
+  it('shows grab over the background only', () => {
+    const { row, cell, poster } = mount()
+
+    cell.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }))
+    expect(row.style.cursor).toBe('grab')
+
+    poster.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }))
+    expect(row.style.cursor).toBe('')
+  })
+})
+
+describe('pageOf', () => {
+  // Five items of 300px from 0, and a view of 700px: two and a third show
+  const row = (left) => {
+    const element = document.createElement('div')
+    for (let i = 0; i < 5; i++) {
+      const item = document.createElement('div')
+      item.getBoundingClientRect = () => ({ left: i * 300 - left, right: (i + 1) * 300 - left }) as DOMRect
+      element.appendChild(item)
+    }
+    element.getBoundingClientRect = () => ({ left: 0 }) as DOMRect
+    Object.defineProperty(element, 'scrollLeft', { value: left })
+    Object.defineProperty(element, 'scrollWidth', { value: 1500 })
+    Object.defineProperty(element, 'clientWidth', { value: 700 })
+    return element
+  }
+
+  it('brings the first item cut at the right to the left edge', () => {
+    expect(pageOf(row(0), 1)).toBe(600)
+  })
+
+  it('goes to the end when less than a quarter of the view is left', () => {
+    expect(pageOf(row(600), 1)).toBe(800)
+  })
+
+  it('brings the item cut at the left to the right edge, from the first item that fits with it', () => {
+    expect(pageOf(row(800), -1)).toBe(300)
+  })
+
+  it('goes to the start when less than a quarter of the view is left', () => {
+    expect(pageOf(row(300), -1)).toBe(0)
   })
 })

@@ -543,6 +543,10 @@ per action. It is the only floating control of the app, and a `0.25em` box there
 toast rather than as a bar of commands. Everything else that can be pressed keeps its
 `0.25em` corner.
 
+The round chevrons of a titled row are the other exception (`paging` in
+`libs/ui/src/layout/Entities/Entities.tsx`): the `1.5em` `gray` round the title's chevron already
+has on a phone, as a pair. A glyph that points is what reads as pressable there, not the corner.
+
 ## Components
 
 ### Buttons
@@ -709,11 +713,17 @@ instead of writing a bespoke empty state.
   belongs to its form: it fades out, or shows as the row's edge uncovers it (`MORPH` in
   `apps/web/src/pages/Proposals/Proposals.tsx`).
 - A row that scrolls sideways, of posters, pills, badges or artworks, is grabbed by a mouse
-  and scrolls with a short glide: past an edge it follows at the resistance of iOS
+  by its background, the row or the padding around its items, never by an item, which keeps
+  its click, hover and text selection. It scrolls with a short glide: past an edge it follows at the resistance of iOS
   `(1 - 1 / (d × 0.55 / w + 1)) × w`, released it glides on framer-motion's inertia,
   `power: 0.35`, `timeConstant: 250`, and springs back to the edge at stiffness `400`,
   damping `40`, critically damped. A touch keeps the native scroll, reduced motion drops
   the glide and the rubber band (`libs/utils/src/hooks/useDragScroll.ts`).
+- A titled row that overflows pages from two round chevrons at the end of its title line: the
+  first item cut at the far edge comes to the near one in `400ms` on the route curve, the
+  chevron at an end dims to `opacity: 0.33` and keeps its focus. The pressed pill of the command
+  tabs slides by the same glide (`glide` and `pageOf` in `libs/utils/src/hooks/useDragScroll.ts`,
+  `paging` in `libs/ui/src/layout/Entities/Entities.tsx`).
 - Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `placeholder`, `bounce`,
   `pulse`, `blink`, `spin`.
 

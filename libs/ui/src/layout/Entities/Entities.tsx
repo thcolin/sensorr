@@ -1,5 +1,5 @@
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { animate } from 'framer-motion'
+import { glide, pageOf } from '@sensorr/utils'
 import { Movie as MovieInterface, Collection as CollectionInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface } from '@sensorr/tmdb'
 import { Movie, MovieProps } from '../../components/Movie/Movie'
 import { Person, PersonProps } from '../../components/Person/Person'
@@ -36,7 +36,7 @@ type EntityInterface = MovieInterface | CollectionInterface | PersonInterface | 
 
 interface CommonProps extends
   Omit<GridProps, 'length' |'child' |'override' |'onMore'>,
-  Omit<ListProps, 'entities' | 'length' | 'child' | 'override' | 'display'>
+  Omit<ListProps, 'entities' | 'length' | 'child' | 'override' | 'display' | 'scroller'>
 {
   child: typeof Movie | typeof AbstractEntity | typeof Person | typeof Show
   props?: (props?: { index?: number, entity?: EntityInterface }) => Omit<MovieProps, 'entity'> | Omit<AbstractEntityProps, 'entity'> | Omit<PersonProps, 'entity'> | Omit<ShowProps, 'entity'>
@@ -104,7 +104,6 @@ const UIEntities = ({
   ), limit), [limit, ready, length, placeholders, entities?.length])
 
   const row = useRef<HTMLDivElement>(null)
-  const paging = useRef(null)
   const [edges, setEdges] = useState({ start: true, end: true })
 
   useEffect(() => {
@@ -120,40 +119,16 @@ const UIEntities = ({
       setEdges(edges => (edges.start === start && edges.end === end) ? edges : { start, end })
     }
 
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
     update()
     element.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
 
     return () => {
+      observer.disconnect()
       element.removeEventListener('scroll', update)
-      window.removeEventListener('resize', update)
     }
   }, [display, total, ready])
-
-  // The first item cut at the far edge comes to the near one, on the route curve
-  const page = (direction: 1 | -1) => {
-    const element = row.current
-    const padding = parseFloat(getComputedStyle(element).paddingLeft)
-    const origin = element.getBoundingClientRect().left - element.scrollLeft
-    const items = (Array.from(element.children) as HTMLElement[]).map((item) => {
-      const box = item.getBoundingClientRect()
-      return { start: box.left - origin, end: box.right - origin }
-    })
-    const view = { start: element.scrollLeft + padding, end: element.scrollLeft + element.clientWidth - padding }
-    const cut = direction > 0 ? items.find(item => item.end > view.end + 1) : [...items].reverse().find(item => item.start < view.start - 1)
-    const start = direction > 0 ? cut?.start : items.find(item => item.start >= (cut?.end ?? 0) - (view.end - view.start) - 1)?.start
-    const to = Math.max(0, Math.min(typeof start === 'number' ? start - padding : direction * Infinity, element.scrollWidth - element.clientWidth))
-
-    paging.current?.stop()
-
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      element.scrollLeft = to
-      return
-    }
-
-    paging.current = animate(element.scrollLeft, to, { duration: 0.4, ease: [0.4, 0, 0.2, 1], onUpdate: (left) => { element.scrollLeft = left } })
-    element.addEventListener('pointerdown', () => paging.current?.stop(), { once: true })
-  }
 
   const override = useMemo(() => (!total || !!error) ? (
     <Warning
@@ -177,11 +152,12 @@ const UIEntities = ({
               ) : label}
             </DragScroll>
             {display === 'row' && !(edges.start && edges.end) && (
-              <div sx={UIEntities.styles.paging}>
-                <button type='button' aria-label='Scroll left' disabled={edges.start} onClick={() => page(-1)}>
+              <div sx={UIEntities.styles.paging} role='group' aria-label={typeof label === 'string' ? label : undefined}>
+                {/* Disabled for the pointer only: a button that ends its row keeps the keyboard's focus */}
+                <button type='button' aria-label='Scroll left' aria-disabled={edges.start} onClick={() => !edges.start && glide(row.current, pageOf(row.current, -1))}>
                   <Icon value='chevron' direction={false} />
                 </button>
-                <button type='button' aria-label='Scroll right' disabled={edges.end} onClick={() => page(1)}>
+                <button type='button' aria-label='Scroll right' aria-disabled={edges.end} onClick={() => !edges.end && glide(row.current, pageOf(row.current, 1))}>
                   <Icon value='chevron' direction={false} />
                 </button>
               </div>
@@ -238,9 +214,11 @@ UIEntities.styles = {
   grid: {
     paddingY: 4,
   },
+  // As tall as the chevrons, whether they show or not, so no row moves when they come
   head: {
     display: 'flex',
     alignItems: 'center',
+    minHeight: '1.5em',
     marginBottom: [12, 8],
     marginTop: [4, 12],
   },
@@ -278,7 +256,7 @@ UIEntities.styles = {
   paging: {
     display: ['none', 'flex'],
     flexShrink: 0,
-    gap: 9,
+    gap: 4,
     paddingRight: 4,
     '>button': {
       variant: 'button.reset',
@@ -292,22 +270,26 @@ UIEntities.styles = {
       borderRadius: '1.5em',
       backgroundColor: 'gray',
       transition: 'background-color 200ms ease-in-out, opacity 400ms ease-in-out',
-      // The hit area reaches 2.5em, the round stays 1.5em
+      // The hit area reaches 2.5em, the round stays 1.5em, and two areas meet in the 1em between them
       '::after': {
         content: '""',
         position: 'absolute',
         inset: '-0.5em',
       },
-      ':hover:not(:disabled)': {
+      ':hover:not([aria-disabled="true"])': {
         backgroundColor: 'grayDark',
+      },
+      ':active:not([aria-disabled="true"])': {
+        backgroundColor: 'grayDarker',
       },
       ':focus-visible': {
         outline: '2px solid',
         outlineColor: 'text',
         outlineOffset: '2px',
       },
-      ':disabled': {
+      '&[aria-disabled="true"]': {
         opacity: 0.33,
+        cursor: 'default',
       },
       '>svg': {
         height: '0.75em',

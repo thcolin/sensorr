@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react'
 import { jobLabelOf } from '@sensorr/sensorr'
-import { useDragScroll } from '@sensorr/utils'
+import { glide, useDragScroll } from '@sensorr/utils'
 
 export interface CommandTab {
   value: string
@@ -17,19 +17,6 @@ interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
 }
 
 const GROUPED = ['movies', 'tv']
-
-// cubic-bezier(0.4, 0, 0.2, 1), the curve of the route transitions: solve x for the time, then read y
-const ease = (time) => {
-  const x = (t) => 3 * (1 - t) ** 2 * t * 0.4 + 3 * (1 - t) * t ** 2 * 0.2 + t ** 3
-  const dx = (t) => 3 * (1 - t) ** 2 * 0.4 + 6 * (1 - t) * t * (0.2 - 0.4) + 3 * t ** 2 * (1 - 0.2)
-  let t = time
-
-  for (let i = 0; i < 8; i++) {
-    t = Math.min(1, Math.max(0, t - (x(t) - time) / (dx(t) || 1)))
-  }
-
-  return 3 * (1 - t) * t ** 2 + t ** 3
-}
 
 // Commands about one media type share a capsule named after it, the others stand alone as pills, in the order given
 const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
@@ -55,34 +42,8 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
     const element = row.current
     const pressed = element?.querySelector<HTMLElement>('[aria-pressed="true"]')
 
-    if (!pressed) {
-      return
-    }
-
-    const from = element.scrollLeft
-    const to = Math.max(0, Math.min(pressed.offsetLeft - parseFloat(getComputedStyle(element).paddingLeft), element.scrollWidth - element.clientWidth))
-
-    if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      element.scrollLeft = to
-      return
-    }
-
-    let frame = null
-    const start = performance.now()
-    const step = (now) => {
-      const progress = Math.min(1, (now - start) / 400)
-      element.scrollLeft = from + (to - from) * ease(progress)
-      frame = progress < 1 ? requestAnimationFrame(step) : null
-    }
-
-    // A press on the row takes it back from the slide, for a drag to start from where it is
-    const stop = () => cancelAnimationFrame(frame)
-    frame = requestAnimationFrame(step)
-    element.addEventListener('pointerdown', stop, { once: true })
-
-    return () => {
-      cancelAnimationFrame(frame)
-      element.removeEventListener('pointerdown', stop)
+    if (pressed) {
+      glide(element, pressed.offsetLeft - parseFloat(getComputedStyle(element).paddingLeft))
     }
   }, [value])
 

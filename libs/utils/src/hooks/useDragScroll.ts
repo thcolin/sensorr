@@ -14,6 +14,9 @@ const background = (element: HTMLElement, target: EventTarget) => target === ele
   (target as Element).parentElement === element && !(target as Element).matches(INTERACTIVE)
 )
 
+// Every row the hook holds, and how it glides there: its motion value is the one writer of its scroll
+const glides = new WeakMap<HTMLElement, (left: number) => void>()
+
 const swallow = (e: MouseEvent) => {
   e.preventDefault()
   e.stopPropagation()
@@ -34,6 +37,15 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     for (const child of Array.from(element.children) as HTMLElement[]) {
       child.style.translate = value === left ? '' : `${left - value}px`
     }
+  })
+
+  // To a position in 400ms on the route curve, taken back by a press or the wheel like any glide
+  glides.set(element, (left) => {
+    const to = Math.max(0, Math.min(left, max()))
+
+    animation?.stop()
+    x.jump(element.scrollLeft)
+    animation = matchMedia('(prefers-reduced-motion: reduce)').matches ? (x.set(to), null) : animate(x, to, { duration: 0.4, ease: [0.4, 0, 0.2, 1] })
   })
 
   const onPointerMove = (e: PointerEvent) => {
@@ -165,6 +177,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
   element.addEventListener('wheel', onWheel, { passive: true })
 
   return () => {
+    glides.delete(element)
     release()
 
     if (dragging) {
@@ -178,6 +191,39 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     element.removeEventListener('pointerover', onPointerOver)
     element.removeEventListener('wheel', onWheel)
   }
+}
+
+export const glide = (element: HTMLElement, left: number) => {
+  const to = glides.get(element)
+
+  if (to) {
+    to(left)
+  } else {
+    element.scrollLeft = left
+  }
+}
+
+// The scroll that brings the first item cut at the far edge to the near one. Short of an end by less than a
+// quarter of the view, it goes to that end, rather than nudge a row by the padding of its last item.
+export const pageOf = (element: HTMLElement, direction: 1 | -1) => {
+  const padding = parseFloat(getComputedStyle(element).paddingLeft) || 0
+  const origin = element.getBoundingClientRect().left - element.scrollLeft
+  const items = (Array.from(element.children) as HTMLElement[]).map((item) => {
+    const box = item.getBoundingClientRect()
+    return { start: box.left - origin, end: box.right - origin }
+  })
+  const view = { start: element.scrollLeft + padding, end: element.scrollLeft + element.clientWidth - padding }
+  const width = view.end - view.start
+  const limit = element.scrollWidth - element.clientWidth
+  const cut = direction > 0 ? items.find(item => item.end > view.end + 1) : [...items].reverse().find(item => item.start < view.start - 1)
+  const start = direction > 0 ? cut?.start : items.find(item => item.start >= (cut?.end ?? 0) - width - 1)?.start
+  const to = Math.max(0, Math.min(typeof start === 'number' ? start - padding : direction * Infinity, limit))
+
+  if (direction > 0) {
+    return limit - to < width / 4 ? limit : to
+  }
+
+  return to < width / 4 ? 0 : to
 }
 
 // A mouse grabs the element by its background to scroll it sideways, with an inertia and the rubber band
