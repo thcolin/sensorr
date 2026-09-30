@@ -530,6 +530,10 @@ them because the format only accepts `px`, `rem` and `em`; it lives in this sect
 a wishlist badge, a policy axis, a tag. Anything with a `0.25em` corner is something you
 can press. Do not round an action into a pill.
 
+The count that folds and unfolds a pile of jobs in the Jobs sidebar is a pill too, chosen on
+purpose (`UIPile` in `apps/web/src/pages/Jobs/Jobs.tsx`): it reads as the size of the pile, like
+the `Summary` pills beside it, and a chevron says it can be pressed.
+
 One exception, chosen on purpose: the selection bar (`libs/ui/src/elements/Bulk/Bulk.tsx`)
 floats at the bottom of Library and Swaps as a single `2em` pill split into one segment
 per action. It is the only floating control of the app, and a `0.25em` box there read as a
