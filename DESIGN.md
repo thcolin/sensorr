@@ -451,9 +451,12 @@ A list of rows is a `Card` at a fixed `7.5em` height and `35em` max width. Filte
 lay out as `repeat(auto-fill, 22em)` (`libs/ui/src/inputs/Options/Options.tsx:29-33`).
 
 **Two navigations for two shells.** Installed as a PWA, navigation is a bottom bar with
-icon-over-label items and `padding-bottom: max(0.75em, env(safe-area-inset-bottom))`. In a
-browser it is a horizontal scroller at the top, with a second row of sub-routes that
-appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.tsx:41-109`).
+icon-over-label items and `padding-bottom: max(0.75em, env(safe-area-inset-bottom))`. Its
+Movies, TV and Stars tabs open the home of their section, `/movie`, `/tv` and `/person`, a
+column of rows whose `›` leads to each page of the section; a page below them shows a back
+chevron to that home (`sectionRootOf` in `apps/web/src/layout/Header/elements/sections.ts`).
+In a browser it is a horizontal scroller at the top, with a second row of sub-routes that
+appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.tsx`).
 
 ## Elevation & Depth
 
@@ -608,7 +611,7 @@ command shows with a `0` count.
 - **Browser:** a horizontal scroller of semibold `0.875em` body text at `opacity: 0.33`,
   rising to `0.66` on hover above the first breakpoint and to `1` when active — the active
   item is *not* colored, it is simply the only one at full opacity
-  (`apps/web/src/layout/Header/elements/Navigation.tsx:151-198`). A chevron introduces the
+  (`apps/web/src/layout/Header/elements/Navigation.tsx`, `Navigation.styles.web`). A chevron introduces the
   sub-route row, which only exists inside its branch.
 - **PWA:** a bottom bar of inline-SVG icons over `0.625em` labels, `grayLighter` ground,
   1px `gray` top border, `grayDark` at rest and `primary` when active. Items ripple on
