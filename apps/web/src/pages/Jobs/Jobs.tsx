@@ -278,8 +278,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                       head={j}
                       stack={stack}
                       job={job}
-                      unstacked={!!unstacked[j.job]}
-                      onToggle={() => setUnstacked(unstacked => ({ ...unstacked, [j.job]: !unstacked[j.job] }))}
+                      unstacked={unstacked[j.job] ?? stack.some(s => s.job === job)}
+                      onToggle={(value) => setUnstacked(unstacked => ({ ...unstacked, [j.job]: value }))}
                     />
                   ))}
                 </div>
@@ -421,9 +421,10 @@ const Sidebar = memo(UISidebar)
 const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
   const oldest = stack[stack.length - 1]
   const jobs = [head, ...(unstacked ? stack : [])]
+  const selected = jobs.some(j => j.job === job)
 
   return (
-    <div sx={UIPile.styles.element} data-stacked={!!stack.length && !unstacked}>
+    <div sx={UIPile.styles.element} data-pile={stack.length ? (unstacked ? 'unstacked' : 'stacked') : null} data-selected={selected}>
       {jobs.map((j, index) => (
         <Job
           key={j.job}
@@ -442,9 +443,10 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
             sx={UIPile.styles.toggle}
             aria-expanded={unstacked}
             aria-label={`${unstacked ? 'Stack' : 'Show'} ${stack.length} more ${jobTitleOf(jobNameOf(head.meta))} jobs telling the same`}
-            onClick={onToggle}
+            onClick={() => onToggle(!unstacked)}
           >
             ×{stack.length + 1}
+            <Icon value='chevron' direction={unstacked} height='0.75em' width='0.75em' />
           </button>
         </>
       )}
@@ -455,15 +457,30 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
 UIPile.styles = {
   element: {
     position: 'relative',
-    '&[data-stacked=true]': {
+    '&[data-pile]': {
       marginY: 10,
-      '>a': {
-        backgroundColor: 'grayLighter',
-        border: '1px solid',
-        borderColor: 'grayDark',
-        borderRadius: '0.25em',
-        paddingX: 10,
-      },
+      marginX: '-0.5em',
+    },
+    '&[data-pile=stacked]>a, &[data-pile=unstacked]': {
+      backgroundColor: 'grayLighter',
+      border: '1px solid',
+      borderColor: 'grayLight',
+      borderRadius: '0.25em',
+      paddingX: '0.5em',
+      transition: 'border-color ease 300ms',
+    },
+    '&[data-pile=unstacked]>a:last-of-type': {
+      borderBottom: 'none',
+    },
+    '&[data-selected=true][data-pile=stacked]>a, &[data-selected=true][data-pile=unstacked], &[data-pile]:hover>a, &[data-pile=unstacked]:hover': {
+      borderColor: 'grayDark',
+    },
+    '&[data-selected=false]>span, &[data-selected=false]>button': {
+      opacity: 0.5,
+      transition: 'opacity ease 300ms',
+    },
+    '&:hover>span, &:hover>button': {
+      opacity: 1,
     },
   },
   sheets: {
@@ -472,33 +489,37 @@ UIPile.styles = {
     alignItems: 'center',
     '>span': {
       height: '0.4em',
+      width: 'calc(100% - 1.5em)',
       backgroundColor: 'grayLighter',
       border: '1px solid',
       borderTop: 'none',
       borderColor: 'grayDark',
       borderRadius: '0 0 0.25em 0.25em',
     },
-    '>span:first-of-type': {
-      width: 'calc(100% - 1.5em)',
-    },
     '>span:last-of-type': {
       width: 'calc(100% - 3em)',
-      opacity: 0.6,
     },
   },
   toggle: {
     variant: 'button.reset',
     position: 'absolute',
-    top: '1em',
+    top: ['0.75em', '1em'],
     right: '0.75em',
+    minHeight: ['44px', '24px'],
+    minWidth: ['44px', '24px'],
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.4em',
     backgroundColor: 'grayLight',
+    border: '1px solid',
+    borderColor: 'grayDark',
     color: 'text',
     fontFamily: 'monospace',
     fontWeight: 'bold',
     fontSize: 6,
-    borderRadius: '1em',
-    paddingX: 5,
-    paddingY: 9,
+    borderRadius: '0.25em',
+    paddingX: 8,
     cursor: 'pointer',
     '&[aria-expanded=true]': {
       backgroundColor: 'gray',
