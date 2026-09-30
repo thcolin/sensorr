@@ -11,6 +11,7 @@ const Row = () => {
   return (
     <div ref={drag} data-testid='row'>
       <button onClick={() => clicks++}>poster</button>
+      <p data-drag-scroll='off'>overview</p>
     </div>
   )
 }
@@ -136,5 +137,15 @@ describe('useDragScroll', () => {
 
     expect(row.scrollLeft).toBe(0)
     expect(poster.style.translate || '').toBe('')
+  })
+
+  it('leaves the prose marked off to its text selection', () => {
+    const row = mount()
+
+    pointer('pointerdown', row.querySelector('p'), 600)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+
+    expect(row.scrollLeft).toBe(0)
   })
 })

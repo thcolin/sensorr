@@ -108,8 +108,8 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
       velocity,
       min: 0,
       max: limit,
-      power: 0.8,
-      timeConstant: 325,
+      power: 0.35,
+      timeConstant: 250,
       bounceStiffness: 400,
       bounceDamping: 40,
     }) : animate(x, Math.max(0, Math.min(value, limit)), { type: 'spring', stiffness: 400, damping: 40 })
@@ -118,8 +118,10 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
   const onPointerDown = (e: PointerEvent & { grabbed?: boolean }) => {
     // Below the content box is the scrollbar, which scrolls on its own
     const below = e.clientY - element.getBoundingClientRect().top - element.clientTop >= element.clientHeight
+    // Prose marked `data-drag-scroll='off'` keeps its text selection
+    const prose = (e.target as Element).closest?.('[data-drag-scroll="off"]')
 
-    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0 || below) {
+    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0 || below || prose) {
       return
     }
 
@@ -178,7 +180,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
   }
 }
 
-// A mouse grabs the element to scroll it sideways, with the inertia and the rubber band of iOS; a touch
+// A mouse grabs the element to scroll it sideways, with an inertia and the rubber band of iOS; a touch
 // keeps the native scroll. The release that ends a drag is not a click. Returns the ref to put on the element.
 export const useDragScroll = <T extends HTMLElement>(ref?: MutableRefObject<T>, enabled = true) => {
   const active = useRef(enabled)

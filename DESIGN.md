@@ -709,9 +709,9 @@ instead of writing a bespoke empty state.
   belongs to its form: it fades out, or shows as the row's edge uncovers it (`MORPH` in
   `apps/web/src/pages/Proposals/Proposals.tsx`).
 - A row that scrolls sideways, of posters, pills, badges or artworks, is grabbed by a mouse
-  and scrolls with the physics of iOS: past an edge it follows at the resistance
+  and scrolls with a short glide: past an edge it follows at the resistance of iOS
   `(1 - 1 / (d × 0.55 / w + 1)) × w`, released it glides on framer-motion's inertia,
-  `power: 0.8`, `timeConstant: 325`, and springs back to the edge at stiffness `400`,
+  `power: 0.35`, `timeConstant: 250`, and springs back to the edge at stiffness `400`,
   damping `40`, critically damped. A touch keeps the native scroll, reduced motion drops
   the glide and the rubber band (`libs/utils/src/hooks/useDragScroll.ts`).
 - Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `placeholder`, `bounce`,
