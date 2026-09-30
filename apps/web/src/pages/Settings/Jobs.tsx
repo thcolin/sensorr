@@ -1,45 +1,23 @@
-import React, { useCallback, useState } from 'react'
+import React from 'react'
 import { Option, Icon, Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS, jobTitleOf } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
-import toast from 'react-hot-toast'
 import cronParser from 'cron-parser'
 import cronstrue from 'cronstrue'
-import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
+import { JOB_GROUPS, nameOfEntry, useJobRunner } from '../../components/Sensorr/Jobs'
 
 const JobsSettings = ({ ...props }) => {
   useTitle('Settings - Jobs')
-  const api = useAPI()
   const { config } = useConfigContext()
   const { onSave } = useOutletContext() as any
   const form = useForm({ defaultValues: config.getProperties() })
   const { process } = useJobsContext() as any
-  const [ongoing, setOngoing] = useState([])
-
-  const runJob = useCallback(async (command, type) => {
-    const name = [command, type].filter(Boolean).join(' ')
-    setOngoing(ongoing => [...ongoing, name])
-    const { uri, params, init } = api.query.jobs.runJob({ body: { command, type } })
-    const request = api.fetch(uri, params, init)
-
-    toast.promise(request, {
-      loading: `Running new Job **${jobTitleOf(name)}**, please wait...`,
-      success: (data) => {
-        setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Job **${jobTitleOf(name)}** successfully run (${data.job})`
-      },
-      error: (err) => {
-        console.warn(err)
-        setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Error during Job **${jobTitleOf(name)}** run`
-      },
-    })
-  }, [])
+  const { runJob, stopJob, ongoing } = useJobRunner()
 
   const plex = {
     disabled: !config.get('plex.token'),
@@ -58,27 +36,6 @@ const JobsSettings = ({ ...props }) => {
       </span>
     ),
   }
-
-  const stopJob = useCallback(async (name, job) => {
-    if (!confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
-      return
-    }
-
-    const { uri, params, init } = api.query.jobs.stopJob({ params: { job } })
-    const request = api.fetch(uri, params, init)
-
-    toast.promise(request, {
-      loading: 'Loading...',
-      success: (data) => {
-        // console.log(data)
-        return `Job "${job}" successfully stop`
-      },
-      error: (err) => {
-        console.warn(err)
-        return `Error during Job "${job}" stop`
-      },
-    })
-  }, [])
 
   return (
     <Body>
@@ -106,111 +63,16 @@ const JobsSettings = ({ ...props }) => {
         </article>
         <article>
           <form onSubmit={form.handleSubmit(onSave)} >
-            {[
-              {
-                label: 'Movies',
-                jobs: [
-                  {
-                    command: 'record',
-                    type: 'movies',
-                    description: 'Record Sensorr wished movies',
-                    options: ['cron', 'proposalOnly'],
-                  },
-                  {
-                    command: 'refine',
-                    type: 'movies',
-                    description: 'Refine archived movies with better fitting release',
-                    options: ['cron', 'proposalOnly'],
-                  },
-                  {
-                    command: 'shrink',
-                    type: 'movies',
-                    description: 'Shrink refined movies with smallest release available',
-                    options: ['cron', 'proposalOnly', 'threshold'],
-                  },
-                  {
-                    command: 'report',
-                    type: 'movies',
-                    description: 'Replace archived movies reported from Plex with their best release',
-                    ...plex,
-                    options: ['cron', 'proposalOnly'],
-                  },
-                  {
-                    command: 'refresh',
-                    type: 'movies',
-                    description: 'Refresh Sensorr movies and persons with TMDB changes',
-                    options: ['cron'],
-                  },
-                  {
-                    command: 'sync',
-                    type: 'movies',
-                    description: 'Sync Sensorr library with registered Plex server',
-                    ...plex,
-                    options: ['cron', 'cleanup'],
-                  },
-                ],
-              },
-              {
-                label: 'Shows',
-                jobs: [
-                  {
-                    command: 'record',
-                    type: 'shows',
-                    description: 'Record wished shows by whole series, season packs and episodes',
-                    options: ['cron', 'proposalOnly'],
-                  },
-                  {
-                    command: 'airing',
-                    type: 'shows',
-                    description: 'Record wanted episodes aired in the last 7 days',
-                    options: ['cron', 'proposalOnly'],
-                  },
-                  {
-                    command: 'import',
-                    type: 'shows',
-                    description: 'Import finished show releases from the staging folder into the library',
-                    options: ['cron'],
-                  },
-                  {
-                    command: 'refresh',
-                    type: 'shows',
-                    description: 'Refresh Sensorr shows and their episodes with TMDB changes',
-                    options: ['cron'],
-                  },
-                  {
-                    command: 'sync',
-                    type: 'shows',
-                    description: 'Sync Sensorr shows with registered Plex server',
-                    ...plex,
-                    options: ['cron', 'cleanup'],
-                  },
-                ],
-              },
-              {
-                label: 'Friends',
-                jobs: [
-                  {
-                    command: 'keep-in-touch',
-                    description: 'Goes through guests Plex watchlist: requested movies become wished, requested shows arrive not followed',
-                    options: ['cron'],
-                  },
-                  {
-                    command: 'wrapped',
-                    description: 'Import the Plex watch history from Tautulli and compute each friend wrapped',
-                    ...tautulli,
-                    options: ['cron'],
-                  },
-                ],
-              },
-            ].map(({ label, jobs }) => (
+            {JOB_GROUPS.map(({ label, jobs }) => (
               <React.Fragment key={label}>
                 <h3>{label}</h3>
-                {jobs.map((value: any) => (
+                {jobs.map((value) => (
                   <JobSettings
-                    key={[value.command, value.type].filter(Boolean).join(' ')}
+                    key={nameOfEntry(value)}
                     {...value}
+                    {...{ 'plex.token': plex, 'tautulli.url': tautulli }[value.requires]}
                     running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
-                    disabled={value.disabled || ongoing.includes([value.command, value.type].filter(Boolean).join(' '))}
+                    disabled={(!!value.requires && !config.get(value.requires)) || ongoing.includes(nameOfEntry(value))}
                     runJob={runJob}
                     stopJob={stopJob}
                     control={form.control}
