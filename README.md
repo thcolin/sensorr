@@ -108,7 +108,7 @@ echo "SENSORR_SSL_CERT_NAME=domain.cert" >> .env
 echo "SENSORR_SSL_KEY_NAME=domain.key" >> .env
 ```
 
-On a Synology, point it at the certificate DSM manages, in `/usr/syno/etc/certificate/_archive/<id>`, where `<id>` is the content of `/usr/syno/etc/certificate/_archive/DEFAULT` for the default certificate
+On a Synology, point it at the certificate DSM manages, in `/usr/syno/etc/certificate/_archive/<id>`, where `<id>` is what `sudo cat /usr/syno/etc/certificate/_archive/DEFAULT` prints for the default certificate
 
 ```sh
 echo "SENSORR_SSL_DIR=/usr/syno/etc/certificate/_archive/<id>" >> .env
@@ -117,6 +117,8 @@ echo "SENSORR_SSL_KEY_NAME=privkey.pem" >> .env
 ```
 
 Caddy reads the files when it starts: after a renewal, restart it with `docker container restart sensorr-web`
+
+`SENSORR_SSL_KEY` and `SENSORR_SSL_CERT` are no longer read: an install that set them moves to `SENSORR_SSL_DIR`, `SENSORR_SSL_CERT_NAME` and `SENSORR_SSL_KEY_NAME`
 
 ## Configuration
 
