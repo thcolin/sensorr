@@ -194,9 +194,10 @@ Toolbar.styles = {
 
 const Header = ({ ...props }) => {
   const location = useLocation()
-  const { pwa } = useDeviceContext()
+  const { pwa, ios } = useDeviceContext()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
+  const statusBar = pwa && ios
 
   useEffect(() => {
     if (extanded) {
@@ -205,9 +206,9 @@ const Header = ({ ...props }) => {
   }, [location])
 
   return (
-    <div sx={{ ...Header.styles.element, ...(pwa ? { paddingTop: Header.styles.statusBar.height } : {}) }} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
-      {pwa && <div sx={Header.styles.statusBar} />}
-      <div sx={{ ...Header.styles.container, height: extanded ? (pwa ? `calc(100dvh - ${Header.styles.statusBar.height})` : '100dvh') : 'initial' }}>
+    <div sx={{ ...Header.styles.element, ...(statusBar ? { paddingTop: Header.styles.statusBar.height } : {}) }} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
+      {statusBar && <div sx={Header.styles.statusBar} />}
+      <div sx={{ ...Header.styles.container, height: extanded ? `calc(100dvh - ${statusBar ? Header.styles.statusBar.height : '0px'})` : 'initial' }}>
         <Toolbar />
         <div sx={Header.styles.history}>
           <SearchHistory />
