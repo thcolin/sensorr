@@ -19,8 +19,8 @@ export interface ControlsProps {
       initial: any
       statistics?: any
       serialize?: (key: string, value: any) => { [key: string]: any }
-      // Filters entities in the browser, for what the query can't express, see `withFetchQuery`
-      filter?: (entity: any, value: any) => boolean
+      // Filters entities in the browser rather than in the query, see `withFetchQuery` `filters`
+      filter?: boolean
       hideFromFiltersCount?: boolean,
       props?: {
         [key: string]: any

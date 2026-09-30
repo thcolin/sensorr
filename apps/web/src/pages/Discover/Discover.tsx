@@ -29,8 +29,6 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
-const hideUnknown = (movie, value) => !value || !utils.isUnknown(movie)
-
 export const Discover = compose(
   withTitle(i18n.t('pages.discover.title')),
   withProps({
@@ -49,7 +47,7 @@ export const Discover = compose(
   withFetchQuery({
     uri: 'discover/movie',
     filters: {
-      hide_unknown: hideUnknown,
+      hide_unknown: (value) => value ? (movie) => !utils.isUnknown(movie) : null,
     },
   }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
@@ -198,7 +196,7 @@ export const Discover = compose(
       hide_unknown: {
         initial: true,
         serialize: () => ({}),
-        filter: hideUnknown,
+        filter: true,
         component: ({ value, onChange, style }) => (
           <div style={style}>
             <Option
