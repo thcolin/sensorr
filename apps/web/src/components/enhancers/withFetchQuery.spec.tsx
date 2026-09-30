@@ -22,7 +22,6 @@ const answer = async (page, results, total = 1000) => {
   await flush()
 }
 
-// 20 movies per page, `known: false` on the ones the filter drops
 const movies = (page, unknown = 0) => Array(20).fill(null).map((_, index) => ({ id: page * 100 + index, known: index >= unknown }))
 
 let probe

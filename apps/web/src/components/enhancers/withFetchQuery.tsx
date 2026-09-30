@@ -16,9 +16,8 @@ interface withFetchQueryProps {
 const BATCH = 5
 
 const withFetchQuery = (
-  // `filters` drop entities in the browser, for control values TMDB can't filter on: each one turns
-  // its value into a predicate, or `null` when inactive. While one is active, pages load in batches
-  // and are laid end to end, so a dropped entity leaves no hole.
+  // `filters` turn a control value TMDB can't filter on into a predicate, or `null` when inactive. While
+  // one is active, pages load in batches and are laid end to end, so a dropped entity leaves no hole.
   defaultQuery: { uri?: string; params?: {}, init?: {}, filters?: { [key: string]: (value) => ((entity) => boolean) | null } },
   initPage: number = null,
   useService: (() => API) | (() => TMDB),
