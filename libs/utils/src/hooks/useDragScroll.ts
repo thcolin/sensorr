@@ -19,7 +19,6 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
 
   const max = () => element.scrollWidth - element.clientWidth
 
-  // Within the bounds the element scrolls natively, past them its children shift by what is out
   const unsubscribe = x.on('change', (value) => {
     const left = Math.max(0, Math.min(value, max()))
     element.scrollLeft = left
@@ -86,7 +85,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
         child.style.pointerEvents = ''
       }
 
-      // The click that follows this release lands on what was grabbed, it is not a click
+      // The click that follows this release lands on what was grabbed
       window.addEventListener('click', swallow, { capture: true, once: true })
       setTimeout(() => window.removeEventListener('click', swallow, { capture: true }))
     } else if (!out) {
@@ -116,7 +115,6 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
 
     animation?.stop()
 
-    // Caught in its bounce the element stays where it is, otherwise it starts from its native scroll
     const value = x.get()
     x.jump(value < 0 || value > max() ? value : element.scrollLeft)
     press = { x: e.clientX, left: x.get(), still: matchMedia('(prefers-reduced-motion: reduce)').matches }
