@@ -8,6 +8,7 @@ export type ShowUnit = {
   episode?: number,
   episodes: Coverage[],
   fallback?: boolean,
+  published_after?: number,
 }
 
 type ShowEpisode = {

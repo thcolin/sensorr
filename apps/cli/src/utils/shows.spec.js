@@ -485,6 +485,22 @@ describe('airingUnits', () => {
   it('keeps the single episodes aired since the given date, and no pack', () => {
     expect(airingUnits(units, episodes, since).map(({ type, episode }) => `${type}:${episode}`)).toEqual(['episode:2', 'episode:3'])
   })
+
+  it('adds the season pack as a last resort swap for the last episode of a season asked for, published a day after it aired', () => {
+    const finale = episodes.map((episode) => ({
+      ...episode,
+      monitored: true,
+      ...(episode.episode_number === 1 ? { files: [{ id: 'plex://episode/1#1' }] } : {}),
+      ...(episode.episode_number === 4 ? { air_date: '2026-09-25' } : {}),
+    }))
+
+    expect(airingUnits(units, finale, since).filter(({ type }) => type === 'season')).toEqual([
+      { type: 'season', season: 3, episodes: [{ season: 3, episode: 4 }], fallback: true, published_after: new Date('2026-09-26').getTime() },
+    ])
+    expect(airingUnits(units, finale.map((episode) => episode.episode_number === 1 ? { ...episode, monitored: false } : episode), since).some(({ type }) => type === 'season')).toBe(false)
+    expect(airingUnits(units, finale.map((episode) => episode.episode_number === 2 ? { ...episode, release: 'abc' } : episode), since).some(({ type }) => type === 'season')).toBe(false)
+    expect(airingUnits(units, finale.map(({ files, ...episode }) => episode), since).some(({ type }) => type === 'season')).toBe(false)
+  })
 })
 
 describe('goneEpisodesOf', () => {

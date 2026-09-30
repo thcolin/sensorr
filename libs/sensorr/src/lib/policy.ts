@@ -143,6 +143,7 @@ export class Policy {
       .map(release => ({ ...release, valid: true, score: 0, meta: release.meta || oleoo.parse(release.title, { strict: false, flagged: true }) }))
       .map(release => Policy.normalizers.bannedReleases(release, query?.banned_releases, ignore))
       .map(release => unit ? Policy.normalizers.showReleaseUnit(release, unit, query?.reach) : Policy.normalizers.collectionReleases(release, query?.banned_releases, ignore))
+      .map(release => unit?.published_after ? Policy.normalizers.showReleasePublished(release, unit.published_after) : release)
       .map(release => unit ? release : Policy.normalizers.movieReleaseType(release, ignore))
       .map(release => unit ? release : Policy.normalizers.releasePublishDate(release, query?.years, ignore))
       .map(release => unit ? Policy.normalizers.showReleaseYears(release, query?.years) : Policy.normalizers.movieReleaseYears(release, query?.years, ignore))
@@ -225,6 +226,20 @@ export class Policy {
         valid,
         reason: valid ? null : `📺 TV show release`,
         warning: valid ? 0 : 60,
+      }
+    },
+    showReleasePublished: (release, after: number) => {
+      if (!release.valid) {
+        return release
+      }
+
+      const valid = !!release.publishDate && new Date(release.publishDate).getTime() >= after
+
+      return {
+        ...release,
+        valid,
+        reason: valid ? null : `📰 Release published ${release.publishDate ? `on ${new Date(release.publishDate).toISOString().slice(0, 10)}` : 'on no date'}, before the season finale aired`,
+        warning: valid ? 0 : 50,
       }
     },
     releasePublishDate: (release, years, ignore = false) => {
