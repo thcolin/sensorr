@@ -75,8 +75,15 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
       frame = progress < 1 ? requestAnimationFrame(step) : null
     }
 
+    // A press on the row takes it back from the slide, for a drag to start from where it is
+    const stop = () => cancelAnimationFrame(frame)
     frame = requestAnimationFrame(step)
-    return () => frame && cancelAnimationFrame(frame)
+    element.addEventListener('pointerdown', stop, { once: true })
+
+    return () => {
+      cancelAnimationFrame(frame)
+      element.removeEventListener('pointerdown', stop)
+    }
   }, [value])
 
   const capsules = capsulesOf([

@@ -14,15 +14,29 @@ const Row = () => {
   )
 }
 
-// jsdom has no layout and no PointerEvent: the row gets a width, the events their pointer type
-const mount = () => {
-  const row = render(<Row />).getByTestId('row')
+const Rows = () => {
+  const outer = useDragScroll<HTMLDivElement>()
+  const inner = useDragScroll<HTMLDivElement>()
+
+  return (
+    <div ref={outer} data-testid='outer'>
+      <div ref={inner} data-testid='row'>
+        <button onClick={() => clicks++}>poster</button>
+      </div>
+    </div>
+  )
+}
+
+// jsdom has no layout and no PointerEvent: the rows get a width, the events their pointer type
+const size = (row) => {
   let left = 0
   Object.defineProperty(row, 'scrollLeft', { get: () => left, set: (value) => { left = Math.max(0, Math.min(value, 1500)) } })
   Object.defineProperty(row, 'scrollWidth', { value: 2000 })
   Object.defineProperty(row, 'clientWidth', { value: 500 })
   return row
 }
+
+const mount = () => size(render(<Row />).getByTestId('row'))
 
 const pointer = (type, target, clientX, pointerType = 'mouse') => {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, button: 0 })
@@ -78,5 +92,19 @@ describe('useDragScroll', () => {
 
     expect(row.scrollLeft).toBe(0)
     expect(clicks).toBe(1)
+  })
+
+  it('moves only the innermost of two rows', () => {
+    const { getByTestId } = render(<Rows />)
+    const outer = size(getByTestId('outer'))
+    const row = size(getByTestId('row'))
+
+    pointer('pointerdown', row.querySelector('button'), 600)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+    pointer('pointerup', window, 380)
+
+    expect(row.scrollLeft).toBe(200)
+    expect(outer.scrollLeft).toBe(0)
   })
 })

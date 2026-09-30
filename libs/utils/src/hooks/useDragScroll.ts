@@ -41,6 +41,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
       getSelection()?.removeAllRanges()
       element.style.cursor = 'grabbing'
       element.style.userSelect = 'none'
+      document.body.style.cursor = 'grabbing'
 
       // The children let the element take the pointer: its cursor shows, and no hover follows the drag
       for (const child of Array.from(element.children) as HTMLElement[]) {
@@ -78,8 +79,9 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
 
     if (dragging) {
       dragging = false
-      element.style.cursor = 'grab'
+      element.style.cursor = max() > 0 ? 'grab' : ''
       element.style.userSelect = ''
+      document.body.style.cursor = ''
 
       for (const child of Array.from(element.children) as HTMLElement[]) {
         child.style.pointerEvents = ''
@@ -108,10 +110,13 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     }) : animate(x, Math.max(0, Math.min(value, limit)), { type: 'spring', stiffness: 400, damping: 40 })
   }
 
-  const onPointerDown = (e: PointerEvent) => {
-    if (!active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0) {
+  const onPointerDown = (e: PointerEvent & { grabbed?: boolean }) => {
+    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0) {
       return
     }
+
+    // A row inside a row: the innermost that scrolls takes the press, the outer one lets it go
+    e.grabbed = true
 
     animation?.stop()
 
@@ -143,6 +148,11 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
 
   return () => {
     release()
+
+    if (dragging) {
+      document.body.style.cursor = ''
+    }
+
     animation?.stop()
     unsubscribe()
     x.destroy()
