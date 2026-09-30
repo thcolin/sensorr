@@ -1,4 +1,5 @@
-import { createContext, memo, useCallback, useContext, useMemo } from 'react'
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { animate } from 'framer-motion'
 import { Movie as MovieInterface, Collection as CollectionInterface, Person as PersonInterface, Cast as CastInterface, Crew as CrewInterface } from '@sensorr/tmdb'
 import { Movie, MovieProps } from '../../components/Movie/Movie'
 import { Person, PersonProps } from '../../components/Person/Person'
@@ -102,6 +103,58 @@ const UIEntities = ({
     ((typeof placeholders === 'number' ? placeholders : entities?.length) || 20)
   ), limit), [limit, ready, length, placeholders, entities?.length])
 
+  const row = useRef<HTMLDivElement>(null)
+  const paging = useRef(null)
+  const [edges, setEdges] = useState({ start: true, end: true })
+
+  useEffect(() => {
+    const element = row.current
+
+    if (!element || display !== 'row') {
+      return
+    }
+
+    const update = () => {
+      const start = element.scrollLeft <= 1
+      const end = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1
+      setEdges(edges => (edges.start === start && edges.end === end) ? edges : { start, end })
+    }
+
+    update()
+    element.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+
+    return () => {
+      element.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [display, total, ready])
+
+  // The first item cut at the far edge comes to the near one, on the route curve
+  const page = (direction: 1 | -1) => {
+    const element = row.current
+    const padding = parseFloat(getComputedStyle(element).paddingLeft)
+    const origin = element.getBoundingClientRect().left - element.scrollLeft
+    const items = (Array.from(element.children) as HTMLElement[]).map((item) => {
+      const box = item.getBoundingClientRect()
+      return { start: box.left - origin, end: box.right - origin }
+    })
+    const view = { start: element.scrollLeft + padding, end: element.scrollLeft + element.clientWidth - padding }
+    const cut = direction > 0 ? items.find(item => item.end > view.end + 1) : [...items].reverse().find(item => item.start < view.start - 1)
+    const start = direction > 0 ? cut?.start : items.find(item => item.start >= (cut?.end ?? 0) - (view.end - view.start) - 1)?.start
+    const to = Math.max(0, Math.min(typeof start === 'number' ? start - padding : direction * Infinity, element.scrollWidth - element.clientWidth))
+
+    paging.current?.stop()
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      element.scrollLeft = to
+      return
+    }
+
+    paging.current = animate(element.scrollLeft, to, { duration: 0.4, ease: [0.4, 0, 0.2, 1], onUpdate: (left) => { element.scrollLeft = left } })
+    element.addEventListener('pointerdown', () => paging.current?.stop(), { once: true })
+  }
+
   const override = useMemo(() => (!total || !!error) ? (
     <Warning
       emoji={error ? ((error as any).emoji || '💢') : empty?.emoji}
@@ -114,14 +167,26 @@ const UIEntities = ({
     <EntitiesContextProvider entities={entities}>
       <div sx={{ ...UIEntities.styles.element, ...UIEntities.styles[display] }}>
         {label && (
-          <DragScroll sx={UIEntities.styles.label}>
-            {(typeof label === 'string' && more) ? (
-              <NavLink to={more.to} state={more.state} viewTransition>
-                {label}
-                <Icon value='chevron' direction={false} />
-              </NavLink>
-            ) : label}
-          </DragScroll>
+          <div sx={UIEntities.styles.head}>
+            <DragScroll sx={UIEntities.styles.label}>
+              {(typeof label === 'string' && more) ? (
+                <NavLink to={more.to} state={more.state} viewTransition>
+                  {label}
+                  <Icon value='chevron' direction={false} />
+                </NavLink>
+              ) : label}
+            </DragScroll>
+            {display === 'row' && !(edges.start && edges.end) && (
+              <div sx={UIEntities.styles.paging}>
+                <button type='button' aria-label='Scroll left' disabled={edges.start} onClick={() => page(-1)}>
+                  <Icon value='chevron' direction={false} />
+                </button>
+                <button type='button' aria-label='Scroll right' disabled={edges.end} onClick={() => page(1)}>
+                  <Icon value='chevron' direction={false} />
+                </button>
+              </div>
+            )}
+          </div>
         )}
         {display === 'grid' ? (
           <Grid
@@ -143,6 +208,7 @@ const UIEntities = ({
             override={override}
             display={display}
             more={more}
+            scroller={row}
             onMore={ready && onMore}
           />
         )}
@@ -172,12 +238,18 @@ UIEntities.styles = {
   grid: {
     paddingY: 4,
   },
+  head: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: [12, 8],
+    marginTop: [4, 12],
+  },
   label: {
+    flex: 1,
+    minWidth: 0,
     display: 'flex',
     alignItems: 'center',
     paddingX: 4,
-    marginBottom: [12, 8],
-    marginTop: [4, 12],
     fontFamily: 'heading',
     fontWeight: 'strong',
     overflowX: 'auto',
@@ -198,6 +270,53 @@ UIEntities.styles = {
         paddingLeft: 9,
         backgroundColor: 'gray',
         borderRadius: '1.5em',
+        transform: 'rotate(-90deg)',
+      },
+    },
+  },
+  // The round chevron of the title's link on a phone, as a pair; a finger scrolls the row there
+  paging: {
+    display: ['none', 'flex'],
+    flexShrink: 0,
+    gap: 9,
+    paddingRight: 4,
+    '>button': {
+      variant: 'button.reset',
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '1.5em',
+      width: '1.5em',
+      padding: 12,
+      borderRadius: '1.5em',
+      backgroundColor: 'gray',
+      transition: 'background-color 200ms ease-in-out, opacity 400ms ease-in-out',
+      // The hit area reaches 2.5em, the round stays 1.5em
+      '::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-0.5em',
+      },
+      ':hover:not(:disabled)': {
+        backgroundColor: 'grayDark',
+      },
+      ':focus-visible': {
+        outline: '2px solid',
+        outlineColor: 'text',
+        outlineOffset: '2px',
+      },
+      ':disabled': {
+        opacity: 0.33,
+      },
+      '>svg': {
+        height: '0.75em',
+        width: '0.75em',
+      },
+      ':first-of-type>svg': {
+        transform: 'rotate(90deg)',
+      },
+      ':last-of-type>svg': {
         transform: 'rotate(-90deg)',
       },
     },

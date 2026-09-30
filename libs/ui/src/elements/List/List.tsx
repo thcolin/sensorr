@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { MutableRefObject, memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Cast, Collection, Crew, Movie, Person } from '@sensorr/tmdb'
 import { useDragScroll, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import nanobounce from 'nanobounce'
@@ -40,6 +40,8 @@ export interface ListProps {
   space?: number
   // Added to the height of a mobile row's cell, like the grid's, for a child that draws something under its poster
   extra?: number
+  // Given the row's element, for a control outside the row that scrolls it
+  scroller?: MutableRefObject<HTMLDivElement>
 }
 
 const UIList = ({
@@ -57,9 +59,11 @@ const UIList = ({
   onMore = null,
   space = 4,
   extra = 0,
+  scroller,
 }: ListProps) => {
   const mobile = useResponsiveValue([true, false])
-  const ref = useRef<HTMLDivElement>()
+  const own = useRef<HTMLDivElement>()
+  const ref = scroller || own
   const drag = useDragScroll(ref, display === 'row')
   const debounce = useMemo(() => nanobounce(100), [])
   const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0], { enabled: !stack })
