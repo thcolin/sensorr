@@ -165,10 +165,7 @@ UIModal.styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 6,
-    paddingRight: 6,
-    paddingBottom: 6,
-    paddingLeft: 5,
+    padding: 2,
     '>h3': {
       variant: 'heading.default',
       margin: 12,
