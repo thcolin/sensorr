@@ -181,12 +181,15 @@ const useStatistics = () => {
   return statistics
 }
 
+// The month grid first, and the agenda on a phone, which has no room for it
+const VIEWS = ['calendar', 'list']
+
 const controls = (fields, hooks = {}) => withControls({
   title: i18n.t('pages.calendar.title'),
   useStatistics,
   hooks,
   layout: { nav, aside },
-  components: { toggle: Toggle, view: ViewSelect },
+  components: { toggle: Toggle, view: withProps({ initial: VIEWS })(ViewSelect) },
   fields: { ...FIELDS, air_date: { ...AIR_DATE, ...fields } },
 })
 
@@ -385,7 +388,7 @@ const ListCalendar = compose(
 )(UIShowsAgenda)
 
 const UICalendar = () => {
-  const [view] = useView()
+  const [view] = useView(VIEWS)
   const controls = useHistoryState('controls', { uri: '', params: {} })
 
   return (
