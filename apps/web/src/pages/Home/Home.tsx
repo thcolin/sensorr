@@ -139,7 +139,7 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
         label={t('items.persons.birthdays.label')}
         display='row'
         child={Person}
-        limit={50}
+        limit={20}
         hide={true}
         props={() => ({
           display: 'poster',
@@ -234,14 +234,14 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
       <RequestedShows
         key='requested_shows'
         id='requested_shows'
-        label={t('items.shows.requests.label')}
+        label={t('items.shows.requested.label')}
         display='row'
         child={Show}
         extra={FOOTER_HEIGHT}
         limit={20}
         hide={true}
         more={{
-          title: t('items.shows.requests.more'),
+          title: t('items.shows.requested.more'),
           to: '/tv/requests',
         }}
       />

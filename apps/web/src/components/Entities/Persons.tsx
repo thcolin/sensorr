@@ -36,5 +36,5 @@ export const BirthdayPersons = compose(
       return { entities: [...res.results].sort((a, b) => nextBirthday(a, today) - nextBirthday(b, today)), total: res.total_results }
     },
   }),
-  withFetchQuery(APIQuery.persons.getPersons({ params: { 'birthday.upcoming': 7, limit: 50 } }), 1, useAPI),
+  withFetchQuery(APIQuery.persons.getPersons({ params: { 'birthday.upcoming': 7, limit: 200 } }), 1, useAPI),
 )(Entities)

@@ -225,7 +225,7 @@ export default {
         title: 'All the shows of your library',
         more: 'More shows of your library',
       },
-      requests: {
+      requested: {
         emoji: '🍻',
         label: emojize('🍻', 'Requests'),
         title: 'Requested shows from your friends',
