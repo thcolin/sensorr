@@ -1,1 +1,1 @@
-tls /certs/sensorr.cert /certs/sensorr.key
+tls /certs/{$SENSORR_SSL_CERT_NAME} /certs/{$SENSORR_SSL_KEY_NAME}

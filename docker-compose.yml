@@ -15,11 +15,12 @@ services:
     environment:
       - CADDY_TLS_MODE=${CADDY_TLS_MODE:-internal}
       - CADDY_DEBUG=${CADDY_DEBUG:-}
+      - SENSORR_SSL_CERT_NAME=${SENSORR_SSL_CERT_NAME:-sensorr.cert}
+      - SENSORR_SSL_KEY_NAME=${SENSORR_SSL_KEY_NAME:-sensorr.key}
     volumes:
       - ./caddy/data:/data
       - ./caddy/config:/config
-      - ${SENSORR_SSL_KEY:-./caddy/certs/sensorr.key}:/certs/sensorr.key
-      - ${SENSORR_SSL_CERT:-./caddy/certs/sensorr.cert}:/certs/sensorr.cert
+      - ${SENSORR_SSL_DIR:-./caddy/certs}:/certs:ro
 
   sensorr-api:
     image: sensorr/sensorr-api

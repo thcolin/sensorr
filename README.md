@@ -48,6 +48,10 @@ mkdir ~/.sensorr && cd ~/.sensorr
 # Download install files
 curl -o docker-compose.yml https://raw.githubusercontent.com/thcolin/sensorr/dev/docker-compose.yml
 curl -o config.json https://raw.githubusercontent.com/thcolin/sensorr/dev/config.default.json
+curl --create-dirs -o docker/sensorr-db/0-init-mongodb.js https://raw.githubusercontent.com/thcolin/sensorr/dev/docker/sensorr-db/0-init-mongodb.js
+
+# Create every folder the stack mounts: Docker on a Synology refuses to start on a missing one
+mkdir -p caddy/data caddy/config caddy/certs db .secrets blackhole tvshows
 
 # Set your own Sensorr secrets, username and password
 echo "SENSORR_AUTH_SECRET=youshouldchangethisvaluetoanythingelse" >> .env
@@ -95,13 +99,24 @@ from *Settings > Jobs*.
 
 ## HTTPS
 
-Use custom key/cert for HTTPS (default to [`tls internal { on_demand }`](https://caddyserver.com/docs/automatic-https#on-demand-tls))
+Use custom key/cert for HTTPS (default to [`tls internal { on_demand }`](https://caddyserver.com/docs/automatic-https#on-demand-tls)). The folder holding them is mounted whole as `/certs`, and the two names are the files inside it (default `sensorr.cert` and `sensorr.key`)
 
 ```sh
 echo "CADDY_TLS_MODE=custom" >> .env
-echo "SENSORR_SSL_KEY=/path/to/domain.key" >> .env
-echo "SENSORR_SSL_CERT=/path/to/domain.cert" >> .env
+echo "SENSORR_SSL_DIR=/path/to/certs" >> .env
+echo "SENSORR_SSL_CERT_NAME=domain.cert" >> .env
+echo "SENSORR_SSL_KEY_NAME=domain.key" >> .env
 ```
+
+On a Synology, point it at the certificate DSM manages, in `/usr/syno/etc/certificate/_archive/<id>`, where `<id>` is the content of `/usr/syno/etc/certificate/_archive/DEFAULT` for the default certificate
+
+```sh
+echo "SENSORR_SSL_DIR=/usr/syno/etc/certificate/_archive/<id>" >> .env
+echo "SENSORR_SSL_CERT_NAME=fullchain.pem" >> .env
+echo "SENSORR_SSL_KEY_NAME=privkey.pem" >> .env
+```
+
+Caddy reads the files when it starts: after a renewal, restart it with `docker container restart sensorr-web`
 
 ## Configuration
 
