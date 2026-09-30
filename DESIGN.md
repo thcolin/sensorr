@@ -584,7 +584,7 @@ commands about one media type share a capsule in `accentDarkest` named `MOVIES` 
 about no media type, `all` or `keep-in-touch`, is a pill alone on the row. A pill is the command's
 emoji, its name in Fira Code `0.8125em` and its count in a round badge `accentDarkest`; the pressed
 one keeps its color, its name turns bold and its badge white. Capsules are `1.75em` tall, the pills
-in them `1.375em`, `0.25em` apart. The row scrolls sideways, and the pressed
+in them `1.375em`, `0.25em` apart. The row scrolls sideways, a mouse can grab it, and the pressed
 pill slides to its start in `400ms` on the route curve. The commands run or notified last come first. While the jobs load, every
 command shows with a `0` count.
 
@@ -708,6 +708,12 @@ instead of writing a bespoke empty state.
   move from one place to the other. Everything else, the comparison pills included,
   belongs to its form: it fades out, or shows as the row's edge uncovers it (`MORPH` in
   `apps/web/src/pages/Proposals/Proposals.tsx`).
+- A row that scrolls sideways, of posters, pills, badges or artworks, is grabbed by a mouse
+  and scrolls with the physics of iOS: past an edge it follows at the resistance
+  `(1 - 1 / (d × 0.55 / w + 1)) × w`, released it glides on framer-motion's inertia,
+  `power: 0.8`, `timeConstant: 325`, and springs back to the edge at stiffness `400`,
+  damping `40`, critically damped. A touch keeps the native scroll, reduced motion drops
+  the glide and the rubber band (`libs/utils/src/hooks/useDragScroll.ts`).
 - Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `placeholder`, `bounce`,
   `pulse`, `blink`, `spin`.
 
