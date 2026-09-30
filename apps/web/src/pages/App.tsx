@@ -89,7 +89,6 @@ const SettingsRedirector = ({ ...props }) => {
   )
 }
 
-// In the PWA each bottom bar tab opens the home of its section, `/` included, which is the movies one
 const SectionHome = ({ section, fallback }) => {
   const { pwa } = useDeviceContext()
 

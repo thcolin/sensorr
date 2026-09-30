@@ -128,7 +128,6 @@ export const LibraryMovies = compose(
   })
 )(Entities)
 
-// The same movies as `/movie/swaps`
 export const SwapsMovies = compose(
   withFetchQuery(APIQuery.movies.getMovies({ params: { 'releases.proposal': true } }), 1, useAPI),
 )(Entities)

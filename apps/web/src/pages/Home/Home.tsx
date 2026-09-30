@@ -359,7 +359,6 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
     ) },
   ].filter((row) => row.sections.includes(section))
 
-  // The first three rows fill the first screen, the others wait for it to be painted
   return (
     <Body overlayScrollbars={true}>
       {(painted ? rows : rows.slice(0, 3)).map(({ element }) => element)}
