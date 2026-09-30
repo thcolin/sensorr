@@ -199,17 +199,17 @@ export const Discover = compose(
         initial: true,
         serialize: () => ({}),
         filter: hideUnknown,
-        component: ({ value, onChange }) => (
-          <div>
+        component: ({ value, onChange, style }) => (
+          <div style={style}>
             <Option
               id='hide_unknown'
               type='checkbox'
               checked={value}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
             >
-              Hide Unknown
+              <span sx={{ fontWeight: 'semibold' }}>{i18n.t('ui.filters.unknown')}</span>
+              <small sx={{ marginLeft: 10 }}><code>({i18n.t('ui.filters.unknownRule')})</code></small>
             </Option>
-            <small>Released over 2 years ago, under 50 votes</small>
           </div>
         ),
       },

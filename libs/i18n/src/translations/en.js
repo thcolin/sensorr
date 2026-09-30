@@ -61,6 +61,8 @@ export default {
       popularity: emojize('📣', 'Popularity'),
       vote_average: emojize('💯', 'Vote Average'),
       vote_count: emojize('🗳', 'Vote Count'),
+      unknown: emojize('🙈', 'Hide Unknown'),
+      unknownRule: '> 2 years, < 50 votes',
       budget: emojize('💸', 'Budget'),
       runtime: emojize('🕒', 'Duration'),
       episode_runtime: emojize('🕒', 'Episode Duration'),
