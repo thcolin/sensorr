@@ -18,7 +18,7 @@ import {
   Option,
 } from '@sensorr/ui'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
-import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
+import { fields, utils, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
@@ -28,6 +28,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+
+const hideUnknown = (movie, value) => !value || !utils.isUnknown(movie)
 
 export const Discover = compose(
   withTitle(i18n.t('pages.discover.title')),
@@ -46,6 +48,9 @@ export const Discover = compose(
   }),
   withFetchQuery({
     uri: 'discover/movie',
+    filters: {
+      hide_unknown: hideUnknown,
+    },
   }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
     title: i18n.t('pages.discover.title'),
@@ -82,6 +87,7 @@ export const Discover = compose(
           "primary_release_date"
           "vote_average"
           "vote_count"
+          "hide_unknown"
           "with_companies"
           "with_keywords"
           "without_keywords"
@@ -189,6 +195,24 @@ export const Discover = compose(
         initial: [0, 15000],
         component: FilterVoteCount,
       },
+      hide_unknown: {
+        initial: true,
+        serialize: () => ({}),
+        filter: hideUnknown,
+        component: ({ value, onChange }) => (
+          <div>
+            <Option
+              id='hide_unknown'
+              type='checkbox'
+              checked={value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+            >
+              Hide Unknown
+            </Option>
+            <small>Released over 2 years ago, under 50 votes</small>
+          </div>
+        ),
+      },
       with_runtime: {
         ...fields.runtime,
         component: FilterRuntime,
@@ -203,6 +227,24 @@ export const Discover = compose(
       },
       without_keywords: {
         ...fields.keywords,
+        // Keywords of softcore and exploitation catalogs; `eroticism` and `sex comedy` also tag
+        // movies with an audience, such as Gregg Araki's "I Want Your Sex"
+        initial: {
+          values: [
+            { value: 155477, label: 'softcore' },
+            { value: 159551, label: 'pink film' },
+            { value: 10053, label: 'sexploitation' },
+            { value: 195222, label: 'nunsploitation' },
+            { value: 445, label: 'pornography' },
+            { value: 5593, label: 'pornographic video' },
+            { value: 238355, label: 'gay pornography' },
+            { value: 195997, label: 'adult filmmaking' },
+            { value: 198385, label: 'hentai' },
+            { value: 190370, label: 'erotic movie' },
+            { value: 343572, label: 'erotic film' },
+          ],
+          behavior: 'or',
+        },
         component: compose(
           withProps({
             label: <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span>,

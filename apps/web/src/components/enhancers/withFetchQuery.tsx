@@ -13,7 +13,9 @@ interface withFetchQueryProps {
 }
 
 const withFetchQuery = (
-  defaultQuery: { uri?: string; params?: {}, init?: {} },
+  // `filters` drop entities in the browser, one predicate per control value that TMDB can't filter on.
+  // Pages then load one after the other and are laid end to end, so a dropped entity leaves no hole.
+  defaultQuery: { uri?: string; params?: {}, init?: {}, filters?: { [key: string]: (entity, value) => boolean } },
   initPage: number = null,
   useService: (() => API) | (() => TMDB),
   useControlsValues?: () => [
@@ -46,7 +48,12 @@ const withFetchQuery = (
       JSON.stringify(controlsQuery),
     ])
 
+    const filters = defaultQuery.filters
+    const filtersValues = JSON.stringify(Object.keys(filters || {}).map((key) => controlsValues?.[key]))
+    const keep = useMemo(() => filters && ((entity) => Object.keys(filters).every((key) => filters[key](entity, controlsValues?.[key]))), [filtersValues])
+
     const [pages, setPages] = useState({})
+    const [wanted, setWanted] = useState(0)
     const processed = useRef([])
 
     const [loading, setLoading] = useState(true)
@@ -58,15 +65,18 @@ const withFetchQuery = (
     const fetcher = useCallback(async (uri, params) => {
       try {
         processed.current.push(params.page)
-        const res = await service.fetch(uri, params, defaultQuery.init)
-        return transform(res)
+        const res = transform(await service.fetch(uri, params, defaultQuery.init))
+        return keep ? { ...res, entities: res.entities.filter(keep) } : res
       } catch (error) {
         processed.current = processed.current.filter((p) => p !== params.page)
         throw error
       }
-    }, [transform])
+    }, [transform, keep])
 
-    const fetchEntities = useCallback((entities) => (
+    // The grid calls `onMore` while it renders, so the index it wants is stored after that render
+    const fetchEntities = useCallback((entities) => keep ? (
+      Promise.resolve().then(() => setWanted(Math.max(0, ...entities.map(({ index }) => index))))
+    ) : (
       Object.keys(entities.reduce((acc, { index }) => ({ ...acc, [Math.ceil(index / steps)]: true }), {}))
         .map((page) => Number(page))
         .filter((page) => !!page && !processed.current.includes(page))
@@ -82,7 +92,23 @@ const withFetchQuery = (
             setLoading(false)
           }
         })
-    ), [fetcher, query])
+    ), [fetcher, query, keep])
+
+    const loaded = useMemo(() => Object.values(pages).reduce((sum: number, entities: any[]) => sum + entities.length, 0) as number, [pages])
+    const next = useMemo(() => Math.max(0, ...Object.keys(pages).map(Number)) + 1, [pages])
+
+    useEffect(() => {
+      if (!keep || loading || total === null || wanted < loaded || (next - 1) * steps >= total || processed.current.includes(next)) {
+        return
+      }
+
+      fetcher(query.uri, { ...query.params, page: next })
+        .then(({ entities }) => setPages((pages) => ({ ...pages, [next]: entities })))
+        .catch((err) => {
+          console.warn(err)
+          toast.error('Error while fetching entities')
+        })
+    }, [keep, wanted, loaded, next, total, loading])
 
     useEffect(() => {
       if ((props as any).error) {
@@ -100,6 +126,7 @@ const withFetchQuery = (
 
       debouncers[debounce ? 'async' : 'sync'](async () => {
         processed.current = []
+        setWanted(0)
 
         try {
           const { entities, total } = await fetcher(query.uri, { ...query.params, page: initPage || 1 })
@@ -113,18 +140,27 @@ const withFetchQuery = (
           setLoading(false)
         }
       })
-    }, [controlsQuery?.ready, query, (props as any).ready, (props as any).loading, (props as any).error])
+    }, [controlsQuery?.ready, query, keep, (props as any).ready, (props as any).loading, (props as any).error])
 
-    const entities = useMemo(() => Object.entries(pages).reduce((acc, [page, entities]: any) => ({
-      ...acc,
-      ...entities.reduce((acc, entity, index) => ({ ...acc, [((page - 1) * steps) + index]: entity }), {}),
-    }), {}), [pages, steps])
+    const entities = useMemo(() => keep ? (
+      Object.keys(pages)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .flatMap((page) => pages[page])
+        .reduce((acc, entity, index) => ({ ...acc, [index]: entity }), {})
+    ) : (
+      Object.entries(pages).reduce((acc, [page, entities]: any) => ({
+        ...acc,
+        ...entities.reduce((acc, entity, index) => ({ ...acc, [((page - 1) * steps) + index]: entity }), {}),
+      }), {})
+    ), [pages, steps, keep])
 
     return (
       <WrappedComponent
         {...props as any}
         entities={entities}
-        length={total}
+        // Filtered, the count is known only once the last page is in
+        length={keep && total !== null && (next - 1) * steps >= total ? loaded : total}
         ready={(props as any).ready !== false && !loading}
         error={error || (props as any).error}
         onMore={fetchEntities}

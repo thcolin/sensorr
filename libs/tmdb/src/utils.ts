@@ -35,8 +35,15 @@ const sortCredits = (credits, priorized = [], includes: ('crew' | 'cast')[] = ['
 
 const SELF = /^(self|himself|herself|themselves)\b|\(archive/i
 
+// Released more than two years ago and still under 50 votes: what `discover/movie` surfaces by
+// popularity without anyone having rated it, mostly softcore and exploitation catalogs
+const isUnknown = ({ release_date, vote_count = 0 }: Pick<Movie, 'release_date' | 'vote_count'>, now = Date.now()) => (
+  !!release_date && vote_count < 50 && now - new Date(release_date).getTime() > 2 * 365 * 24 * 60 * 60 * 1000
+)
+
 export default {
   judge,
   sortCredits,
   SELF,
+  isUnknown,
 }

@@ -19,6 +19,8 @@ export interface ControlsProps {
       initial: any
       statistics?: any
       serialize?: (key: string, value: any) => { [key: string]: any }
+      // Filters entities in the browser, for what the query can't express, see `withFetchQuery`
+      filter?: (entity: any, value: any) => boolean
       hideFromFiltersCount?: boolean,
       props?: {
         [key: string]: any
@@ -224,10 +226,11 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
 
       controls?.onChange && controls?.onChange(values, serialized)
 
-      // Only a change of the serialized query calls `hooks.onChange`, so a display-only field
-      // (serializing to nothing) doesn't trigger it, e.g. pages scrolling back to top.
-      if (JSON.stringify(serialized) !== previous.current) {
-        previous.current = JSON.stringify(serialized)
+      // Only a change of the serialized query or of a `filter` field calls `hooks.onChange`, so a
+      // display-only field (serializing to nothing) doesn't trigger it, e.g. pages scrolling back to top.
+      const query = JSON.stringify([serialized, Object.keys(fields).filter((key) => fields[key].filter).map((key) => values?.[key])])
+      if (query !== previous.current) {
+        previous.current = query
         hooks?.onChange && hooks?.onChange(values, serialized)
       }
     }, [fields, controls?.onChange])
@@ -247,14 +250,6 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
         handleChange(state.values)
       }
     }, [state])
-
-    // TODO: Handle custom filter function other than params
-    // const [entities, setEntities] = useState(props.entities)
-    // useEffect(() => {
-    //   setEntities(props.entities
-    //     .map(entity => Object.keys(fields).every(key => !fields[key].filter || fields[key].filter(entity, values[key])) ? entity : null)
-    //   )
-    // }, [props.entities, values])
 
     return (
       <>
