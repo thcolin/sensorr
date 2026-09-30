@@ -227,8 +227,7 @@ export const Discover = compose(
       },
       without_keywords: {
         ...fields.keywords,
-        // Keywords of softcore and exploitation catalogs; `eroticism` and `sex comedy` also tag
-        // movies with an audience, such as Gregg Araki's "I Want Your Sex"
+        // Not `eroticism` nor `sex comedy`, which also tag movies with an audience
         initial: {
           values: [
             { value: 155477, label: 'softcore' },

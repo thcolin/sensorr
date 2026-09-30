@@ -23,8 +23,8 @@ const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', wid
     toggleOpen()
   }, [reset, defaultValues, toggleOpen])
 
-  // `defaultValues` is a new object on every render of the controls, e.g. each time a page of
-  // entities lands: resetting on its identity would drop what is being edited in the open aside
+  // `defaultValues` is a new object on every render of the controls: resetting on its identity
+  // would drop what is being edited in the open aside
   useEffect(() => {
     reset(defaultValues)
   }, [JSON.stringify(defaultValues)])
