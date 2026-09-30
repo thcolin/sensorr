@@ -1,13 +1,14 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import { throttle } from 'throttle-debounce'
 import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
 import useRipple from 'use-ripple-hook'
-import { Icon, Link } from '@sensorr/ui'
+import { Drawer, Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { usePainted, useResponsiveValue, useTitle } from '@sensorr/utils'
-import { JOB_EMOJIS, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
+import { JOB_EMOJIS, jobLabelOf, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { RecordJob, summary as summaryRecord } from './Job/Record'
@@ -25,7 +26,7 @@ import { cumulate } from './cumulate'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
-import { StartJob } from '../../components/Sensorr/StartJob'
+import { DrawerHead, StartJob } from '../../components/Sensorr/StartJob'
 
 const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { view: SyncJob, summary: summarySync },
@@ -54,6 +55,8 @@ const isEmptyImport = (job) => {
 const LOADING_TABS = Object.keys(JOBS_UI).map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: 0 }))
 
 const summaryOf = (job, summary = job.meta.summary) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(summary, false, job.meta.config)
+
+const durationOf = ({ start, end }) => formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')
 
 const dayOf = (job) => {
   const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
@@ -241,6 +244,46 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   }, [location.key])
 
   const active = jobs.find(j => j.job === job)
+  const label = active && jobLabelOf(jobNameOf(active.meta))
+  const close = useCallback(() => setExpanded(false), [])
+
+  const list = (
+    <nav sx={UISidebar.styles.nav}>
+      <CommandTabs options={options} all={running.length + listed.length} value={filter} onChange={setFilter} />
+      <div sx={UISidebar.styles.jobs} data-scroller={true}>
+        {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
+          <Fragment key={distance}>
+            <h6>
+              {distance === 'running' ? distance : (
+                <button type='button' aria-expanded={!folded[distance]} onClick={() => setFolded(folded => ({ ...folded, [distance]: !folded[distance] }))}>
+                  <span>{distance}</span>
+                  {folded[distance] && <span>{jobs.reduce((count, entry) => count + 1 + (entry.stack?.length || 0), 0)}</span>}
+                  <Icon value='chevron' direction={!folded[distance]} height='0.75em' width='0.75em' />
+                </button>
+              )}
+            </h6>
+            <div sx={{ paddingX: 2 }} hidden={!!folded[distance]}>
+              {jobs.map((entry) => {
+                // A new head joins the pile every cron tick: its oldest job keeps the pile's state
+                const pile = entry.stack?.[entry.stack.length - 1]?.job
+
+                return (
+                  <Pile
+                    key={entry.job}
+                    entry={entry}
+                    pile={pile}
+                    job={job}
+                    unstacked={unstacked[pile] ?? !!entry.stack?.some(s => s.job === job)}
+                    onToggle={onToggle}
+                  />
+                )
+              })}
+            </div>
+          </Fragment>
+        ))}
+      </div>
+    </nav>
+  )
 
   return (
     <aside sx={UISidebar.styles.element}>
@@ -248,27 +291,27 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <h4>Jobs</h4>
         {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
-          <div>
+          <button ref={ref} type='button' onPointerDown={onPointerDown} onClick={() => setExpanded(e => !e)} aria-expanded={expanded} aria-haspopup='dialog' disabled={loading}>
+            <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Icon value='spinner' height='0.5em' width='0.5em' />}</span>
             <span>
-              {(active && JOB_EMOJIS[jobNameOf(active.meta)]) || '⌛'}
+              <span>
+                <code>{label ? label.command : 'Loading'}</code>
+                {!!label?.suffix && <span>{label.suffix}</span>}
+              </span>
+              {!!active && (
+                <span>
+                  <span role='img' aria-label={active.meta.done ? 'done' : 'running'}><Icon value={active.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+                  {active.meta.done && <strong>{durationOf(active)}</strong>}
+                  <time dateTime={new Date(active.start).toISOString()}>
+                    {active.meta.done ? '· ' : ''}{(new Date(active.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} {(new Date(active.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}
+                  </time>
+                  {!!active.meta.error && <span role='img' aria-label='failed'>💢</span>}
+                </span>
+              )}
             </span>
-            <div>
-              <div sx={{ display: 'flex', alignItems: 'center' }}>
-                <div sx={{ marginRight: 7, lineHeight: 'reset' }}><Icon value={active?.meta?.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></div>
-                <h5>{active ? <JobName name={jobNameOf(active.meta)} /> : 'Loading'}</h5>
-                {active?.meta?.done && (
-                  <span>
-                    {formatDuration(intervalToDuration({ start: new Date(active?.start), end: new Date(active?.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}
-                  </span>
-                )}
-              </div>
-              <span><strong>{job}</strong> - {(new Date(active?.start || Date.now())).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(active?.start || Date.now())).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
-            </div>
-          </div>
-          <StartJob />
-          <button ref={ref} onPointerDown={onPointerDown} sx={{ variant: 'button.reset', paddingX: 0, color: 'whitePure' }} onClick={() => setExpanded(e => !e)}>
-            <Icon value="chevron" direction={expanded} height="1em" width="1em" />
+            <span><Icon value='chevron' direction={expanded} height='1.125em' width='1.125em' /></span>
           </button>
+          <StartJob />
         </div>
       </div>
       {loading ? (
@@ -279,43 +322,12 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
             <Icon value='spinner' />
           </div>
         </>
-      ) : (
-        <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <CommandTabs options={options} all={running.length + listed.length} value={filter} onChange={setFilter} />
-          <div sx={UISidebar.styles.jobs} data-scroller={true}>
-            {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
-              <Fragment key={distance}>
-                <h6>
-                  {distance === 'running' ? distance : (
-                    <button type='button' aria-expanded={!folded[distance]} onClick={() => setFolded(folded => ({ ...folded, [distance]: !folded[distance] }))}>
-                      <span>{distance}</span>
-                      {folded[distance] && <span>{jobs.reduce((count, entry) => count + 1 + (entry.stack?.length || 0), 0)}</span>}
-                      <Icon value='chevron' direction={!folded[distance]} height='0.75em' width='0.75em' />
-                    </button>
-                  )}
-                </h6>
-                <div sx={{ paddingX: 2 }} hidden={!!folded[distance]}>
-                  {jobs.map((entry) => {
-                    // A new head joins the pile every cron tick: its oldest job keeps the pile's state
-                    const pile = entry.stack?.[entry.stack.length - 1]?.job
-
-                    return (
-                      <Pile
-                        key={entry.job}
-                        entry={entry}
-                        pile={pile}
-                        job={job}
-                        unstacked={unstacked[pile] ?? !!entry.stack?.some(s => s.job === job)}
-                        onToggle={onToggle}
-                      />
-                    )
-                  })}
-                </div>
-              </Fragment>
-            ))}
-          </div>
-        </nav>
-      )}
+      ) : mobile ? createPortal((
+        <Drawer open={expanded} close={close} height='85vh'>
+          <DrawerHead title='Jobs' close={close} />
+          {list}
+        </Drawer>
+      ), document.body) : list}
     </aside>
   )
 }
@@ -337,6 +349,9 @@ UISidebar.styles = {
     paddingX: [12, 3],
     paddingTop: [12, 3],
     paddingBottom: [12, 5],
+    // The same height whether the job has loaded or not
+    height: ['5.25em', 'auto'],
+    boxSizing: 'border-box',
     alignItems: 'center',
     justifyContent: 'space-between',
     '>h4': {
@@ -345,65 +360,100 @@ UISidebar.styles = {
       color: 'whitePure',
     },
   },
+  // The job shown is the head's title: its type in an `accentDarkest` badge, 5.68:1, its duration and date in an `accentDark` chip, 3.72:1
   selector: {
     flex: 1,
+    minWidth: 0,
     display: ['flex', 'none'],
-    flexDirection: 'row',
-    overflow: 'hidden',
-    '>div': {
+    alignItems: 'center',
+    paddingRight: 6,
+    '>button:first-of-type': {
+      variant: 'button.reset',
       flex: 1,
+      minWidth: 0,
       display: 'flex',
       alignItems: 'center',
-      backgroundColor: 'accentDark',
-      borderRadius: '0.25em',
-      margin: 4,
-      marginRight: 12,
-      paddingX: 6,
-      paddingY: 8,
-      overflow: 'hidden',
-      '>span': {
+      gap: '0.75em',
+      paddingY: 6,
+      paddingLeft: 2,
+      color: 'whitePure',
+      textAlign: 'left',
+      cursor: 'pointer',
+      // The emoji spans both lines, the spinner stands in for it while the jobs load
+      '>span[aria-hidden]': {
         flexShrink: 0,
-        height: '2.5em',
-        width: '2.5em',
-        backgroundColor: 'accentDarkest',
-        borderRadius: '50%',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        marginRight: '0.125em',
+        fontSize: '2.25em',
+        lineHeight: 1,
       },
-      '>div': {
+      '>span:nth-last-of-type(2)': {
+        flex: 1,
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
-        marginX: 4,
-        marginTop: 10,
-        overflow: 'hidden',
-        '>div': {
-          '>h5': {
-            variant: 'heading.reset',
-            margin: 12,
-            lineHeight: 'reset',
-            fontSize: 4,
-            fontWeight: 'bold',
+        alignItems: 'flex-start',
+        gap: '0.375em',
+        // Command and type
+        '>span:first-of-type': {
+          maxWidth: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5em',
+          '>code': {
             fontFamily: 'monospace',
+            fontSize: '1.25em',
+            fontWeight: 'bold',
+            lineHeight: 1.2,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
+            color: 'whitePure',
           },
           '>span': {
-            alignSelf: 'flex-end',
-            marginLeft: 4,
-            fontSize: 7,
-            color: 'whitePure',
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            height: '2em',
+            paddingX: '0.8em',
+            borderRadius: '1em',
+            backgroundColor: 'accentDarkest',
             fontFamily: 'monospace',
+            fontSize: '0.625em',
+            fontWeight: 'bold',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
           },
         },
-        '>span': {
-          marginY: 8,
-          fontSize: 7,
-          color: 'whitePure',
+        // Status, duration and date
+        '>span:nth-of-type(2)': {
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5em',
+          height: '2em',
+          paddingX: '0.8em',
+          borderRadius: '1em',
+          backgroundColor: 'accentDark',
           fontFamily: 'monospace',
-          opacity: 0.75,
+          fontSize: '0.6875em',
+          whiteSpace: 'nowrap',
+          '>span:first-of-type': {
+            display: 'flex',
+          },
+          '>strong': {
+            fontWeight: 'semibold',
+          },
         },
+      },
+      '>span:last-of-type': {
+        flexShrink: 0,
+        display: 'flex',
+        padding: 8,
+      },
+      ':focus-visible': {
+        outline: '2px solid',
+        outlineColor: 'whitePure',
+        outlineOffset: '-2px',
       },
     },
   },
@@ -415,14 +465,10 @@ UISidebar.styles = {
   },
   nav: {
     flex: 1,
+    minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    position: ['absolute', 'relative'],
-    transition: 'height 400ms ease-in-out',
-    top: ['90px', 'unset'],
-    width: ['100%', 'unset'],
-    zIndex: [1, 'unset'],
     backgroundColor: 'grayLightest',
   },
   jobs: {
@@ -708,7 +754,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
               <JobName name={jobNameOf({ command, type: meta.type })} sx={UIJob.styles.title} />
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
-                  {formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}
+                  {durationOf({ start, end })}
                 </span>
               )}
             </span>
