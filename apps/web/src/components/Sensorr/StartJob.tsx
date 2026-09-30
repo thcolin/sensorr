@@ -30,7 +30,7 @@ const UIStartJob = ({ ...props }) => {
       </button>
       {mobile ? createPortal((
         <Drawer open={open} close={close} height='85vh'>
-          <DrawerHead title='Start a job' close={close} />
+          <DrawerHead title='Start a job' />
           <JobList onRun={onRun} close={close} touch={true} />
         </Drawer>
       ), document.body) : (
@@ -60,13 +60,15 @@ UIStartJob.styles = {
 
 export const StartJob = memo(UIStartJob)
 
-// The head of a `Drawer` on `primary`: the Modal's title and close, since a tap on the shadow does not close it on mobile
-const UIDrawerHead = ({ title, close }) => (
+// The head of a `Drawer` on `primary`: the Modal's title, and a close beside the knob when asked for
+const UIDrawerHead = ({ title, close = null }: { title: string, close?: () => void }) => (
   <div sx={UIDrawerHead.styles.element}>
     <h3>{title}</h3>
-    <button type='button' onClick={close} aria-label='Close'>
-      <Icon value='clear' active={true} height='1.25em' width='1.25em' />
-    </button>
+    {close && (
+      <button type='button' onClick={close} aria-label='Close'>
+        <Icon value='clear' active={true} height='1.25em' width='1.25em' />
+      </button>
+    )}
   </div>
 )
 
