@@ -204,7 +204,6 @@ const Header = ({ ...props }) => {
         <SearchResults />
       </div>
       <Navigation display='web' />
-      <Navigation display='secondary' />
       <hr sx={{ variant: 'hr.default' }} {...props} />
     </div>
   )

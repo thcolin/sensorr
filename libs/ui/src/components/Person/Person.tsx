@@ -20,7 +20,7 @@ export interface PersonProps extends Omit<
   entity: PersonInterface | CastInterface | CrewInterface
   display?: 'poster' | 'card' | 'avatar' | 'pretty'
   link?: ((PersonInterface) => LinkProps)
-  focus?: 'popularity'
+  focus?: 'popularity' | 'birthday'
   placeholder?: boolean
   state?: 'loading' | 'ignored' | 'followed'
   setState?: (state: string) => any

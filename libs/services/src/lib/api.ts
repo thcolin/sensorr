@@ -487,10 +487,11 @@ export class API {
         }
       }),
       getPersons: (
-        { init = {}, params: { page = 1 } = {} }: { init?: any, params?: { page?: number } }
+        { init = {}, params: { page = 1, ...params } = {} }: { init?: any, params?: { page?: number, [key: string]: any } }
       ): { uri: string, params: {}, init: {} } => ({
         uri: `persons`,
         params: {
+          ...params,
           page,
         },
         init: {

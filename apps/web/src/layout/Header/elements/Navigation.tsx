@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { NavLink, createPath, useLocation, useNavigate } from 'react-router-dom'
 import useRipple from 'use-ripple-hook'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -46,79 +46,6 @@ const RippleNavLink = ({ to, onClick, ...props }) => {
   )
 }
 
-const Secondary = ({ ...props }) => {
-  const location = useLocation()
-  const container = useRef() as any
-  const mounted = useRef(false)
-  const section = Object.keys(SECONDARY).find((prefix) => location.pathname.startsWith(prefix))
-
-  useEffect(() => {
-    const active = container.current?.querySelector('[aria-current="page"]')
-
-    if (active) {
-      container.current.scrollTo({
-        left: active.offsetLeft - (container.current.clientWidth / 2) + (active.offsetWidth / 2),
-        behavior: mounted.current ? 'smooth' : 'auto',
-      })
-    }
-
-    mounted.current = !!active
-  }, [location.pathname])
-
-  if (!section) {
-    return null
-  }
-
-  return (
-    <nav ref={container} sx={Secondary.styles.element}>
-      {SECONDARY[section].map(({ to, label }) => (
-        <NavLink key={to} onClick={() => { window.SENSORR_BODY_VIEW_TRANSITION_NAME = 'fade' }} to={to} viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>{label}</NavLink>
-      ))}
-    </nav>
-  )
-}
-
-Secondary.styles = {
-  element: {
-    position: 'relative',
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    overflowX: 'auto',
-    overflowY: 'hidden',
-    scrollbarWidth: 'none',
-    '::-webkit-scrollbar': {
-      display: 'none',
-    },
-    paddingX: 8,
-    maskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
-    WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 1em, black calc(100% - 2em), transparent 100%)',
-    '>a': {
-      variant: 'link.reset',
-      flexShrink: 0,
-      display: 'inline-flex',
-      alignItems: 'center',
-      minHeight: '44px',
-      paddingX: 4,
-      fontWeight: 600,
-      fontSize: 6,
-      color: 'text',
-      whiteSpace: 'nowrap',
-      opacity: 0.33,
-      transition: 'opacity ease 300ms',
-      '&:hover': {
-        opacity: [0.33, 0.66],
-      },
-      ':focus-visible': {
-        opacity: 1,
-        outline: '2px solid',
-        outlineColor: 'text',
-        outlineOffset: '-2px',
-      },
-    },
-  },
-}
-
 const Navigation = ({ display = 'web', ...props }) => {
   const { device, pwa } = useDeviceContext()
 
@@ -150,15 +77,15 @@ const Navigation = ({ display = 'web', ...props }) => {
   if (pwa && display === 'app') {
     return (
       <div sx={Navigation.styles.app.element}>
-        <RippleNavLink to='/' viewTransition onClick={location.pathname === '/' ? () => {} : handleAppNavigation} style={(location.pathname === '/' || location.pathname.startsWith('/movie') || location.pathname.startsWith('/collection')) ? Navigation.styles.app.active : {}}>
+        <RippleNavLink to='/movie' viewTransition onClick={location.pathname === '/movie' ? () => {} : handleAppNavigation} style={(location.pathname === '/' || location.pathname.startsWith('/movie') || location.pathname.startsWith('/collection')) ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M5.6 15.1c.3 3.3 1.4 13.1 1.9 17.4.1 1.1 1.1 2 2.3 2h3.7l-1.1-19.4H5.6zM15.7 34.4v.1h4.6v-.1l1.1-19.3h-6.8zM23.6 15.1l-1.1 19.4h3.7c1.1 0 2.1-.9 2.3-2 .5-4.3 1.6-14.1 2-17.4h-6.9zM27.1 10v-.6c0-2.5-2-4.6-4.6-4.6h-.6c-1.2-2.2-4-3-6.2-1.8-.7.4-1.4 1-1.8 1.8h-.6c-2.5 0-4.5 2.1-4.5 4.6v.6c-1.1.6-1.9 1.6-2.2 2.8h22.6c-.2-1.2-1-2.2-2.1-2.8z"/></svg>
           <span>Movies</span>
         </RippleNavLink>
-        <RippleNavLink to='/tv/library' viewTransition onClick={location.pathname === '/tv/library' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/tv') ? Navigation.styles.app.active : {}}>
+        <RippleNavLink to='/tv' viewTransition onClick={location.pathname === '/tv' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/tv') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.5 18 8.5l6.5-6"/><path fill="currentColor" fillRule="evenodd" d="M5 9h26a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3zm2 3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16.5a2 2 0 0 0 2-2V14a2 2 0 0 0-2-2zm1 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h14.5a1 1 0 0 0 1-1V15a1 1 0 0 0-1-1zm21.75 1.25a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zm0 6a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 1 0 0-3.5zM8 31h4v2.5H8zm16 0h4v2.5h-4z"/></svg>
           <span>TV</span>
         </RippleNavLink>
-        <RippleNavLink to='/person/followed' viewTransition onClick={location.pathname === '/person/followed' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>
+        <RippleNavLink to='/person' viewTransition onClick={location.pathname === '/person' ? () => {} : handleAppNavigation} style={location.pathname.startsWith('/person') ? Navigation.styles.app.active : {}}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="currentColor" d="M13.4 17.9c-1.1 1.1-2.6 1.8-4.2 1.8-3.2-.1-5.7-2.7-5.7-5.9C3.6 10.7 6 8.2 9 8.1c-.8 3.8 1 7.8 4.4 9.8zM32.6 13.8c0 3.2-2.6 5.8-5.8 5.8-1.6 0-3.1-.7-4.2-1.8 3.4-2 5.2-5.9 4.4-9.8 3.1.2 5.6 2.7 5.6 5.8zM7.8 23.9c-.6 1.2-.9 2.5-.9 3.9v6.1H2V30c0-3.3 2.6-6 5.8-6.1zM34 30v3.9h-4.9v-6.1c0-1.3-.3-2.7-.9-3.9 3.2.1 5.8 2.8 5.8 6.1zM24.8 9.9c0 3.7-3 6.8-6.8 6.8-3.7 0-6.8-3-6.8-6.8s3-6.8 6.8-6.8c3.7 0 6.7 3.1 6.8 6.8zM26.6 27.7v6.1H9.4v-6.1c0-1.4.5-2.8 1.4-3.9.3-.4.7-.8 1.1-1.1.3-.3.7-.5 1.1-.6.8-.4 1.7-.6 2.6-.5h4.9c.9 0 1.8.2 2.6.5.4.2.7.4 1.1.6.4.3.8.7 1.1 1.1.8 1.1 1.3 2.5 1.3 3.9z"/></svg>
           <span>Stars</span>
         </RippleNavLink>
@@ -172,10 +99,6 @@ const Navigation = ({ display = 'web', ...props }) => {
         </RippleNavLink>
       </div>
     )
-  }
-
-  if (pwa && display === 'secondary') {
-    return <Secondary />
   }
 
   if (!pwa && display === 'web') {

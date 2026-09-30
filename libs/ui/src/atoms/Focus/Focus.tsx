@@ -6,7 +6,7 @@ import { Badge, BadgeProps } from '../Badge/Badge'
 
 export interface FocusProps extends Omit<BadgeProps, 'emoji' | 'label'> {
   entity: Movie | Person | Cast | Crew
-  property: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count'
+  property: 'vote_average' | 'release_date_full' | 'release_date' | 'popularity' | 'runtime' | 'vote_count' | 'birthday'
   label?: ReactNode
   emoji?: ReactNode
   tippy?: ReactNode
@@ -19,6 +19,7 @@ const emojis = {
   popularity: () => '📣',
   runtime: () => '🕙',
   vote_count: () => '🗳',
+  birthday: () => '🎂',
 }
 
 const labels = {
@@ -28,6 +29,7 @@ const labels = {
   popularity: (entity) => `${fields.popularity.humanize(entity as Movie)}`,
   runtime: (entity) => <span style={{ textTransform: 'none' }}>{fields.runtime.humanize(entity as Movie) || 'Unknown'}</span>,
   vote_count: (entity) => `${fields.vote_count.humanize(entity as Movie)}`,
+  birthday: (entity) => (entity as Person).birthday ? new Date((entity as Person).birthday).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', timeZone: 'UTC' }) : 'Unknown',
 }
 
 const UIFocus = ({

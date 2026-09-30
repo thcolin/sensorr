@@ -163,6 +163,18 @@ export default {
         title: 'Requested movies and shows from your friends',
         more: 'More requested movies and shows from your friends',
       },
+      swaps: {
+        emoji: '🔁',
+        label: emojize('🔁', 'Swaps'),
+        title: 'Movies with a better release to swap for',
+        more: 'More movies with a better release to swap for',
+      },
+      requested: {
+        emoji: '🍻',
+        label: emojize('🍻', 'Requests'),
+        title: 'Requested movies from your friends',
+        more: 'More requested movies from your friends',
+      },
       library: {
         emoji: '📚',
         label: emojize('📚', 'Your Library'),
@@ -213,6 +225,12 @@ export default {
         title: 'All the shows of your library',
         more: 'More shows of your library',
       },
+      requests: {
+        emoji: '🍻',
+        label: emojize('🍻', 'Requests'),
+        title: 'Requested shows from your friends',
+        more: 'More requested shows from your friends',
+      },
       discover: {
         emoji: '👀',
         label: emojize('👀', 'Discover Shows'),
@@ -221,6 +239,17 @@ export default {
       },
     },
     persons: {
+      followed: {
+        emoji: '🔔',
+        label: emojize('🔔', 'Followed'),
+        title: 'The stars you follow',
+        more: 'More of the stars you follow',
+      },
+      birthdays: {
+        emoji: '🎂',
+        label: emojize('🎂', 'Birthdays'),
+        title: 'The stars you follow born this week',
+      },
       trending: {
         emoji: '⭐️',
         label: emojize('⭐️', 'Trending'),

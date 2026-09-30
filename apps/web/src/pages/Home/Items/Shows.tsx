@@ -120,19 +120,27 @@ const withFooterExtra = (WrappedComponent) => {
 // A request older than `requested_at` has no date of its own, only the last time its document was written
 const writtenAt = (entity) => new Date(entity.media_type === 'tv' ? entity.refreshed_at : entity.updated_at).getTime() || 0
 
-// Guests requests of both kinds not fulfilled yet, as `/movie/requests` and `/tv/requests` list them: the latest
-// request first, the undated ones after, as the API sorts each kind
+// Guests requests not fulfilled yet, as `/movie/requests` and `/tv/requests` list them: the latest request first,
+// the undated ones after, as the API sorts each kind
+const fetchRequestedMovies = (api, init) => fetchResults(api, APIQuery.movies.getMovies({ params: { state: 'pinned|missing|ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc' }, init }))
+  .then(movies => movies.map(movie => ({ ...movie, media_type: 'movie' })))
+
+const fetchRequestedShows = (api, init) => fetchResults(api, APIQuery.shows.getShows({ params: { state: 'ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc', progress: 'true' }, init }))
+  .then(shows => shows.map(show => ({ ...show, media_type: 'tv' })))
+
+export const RequestedMovies = compose(
+  withFetchRow(fetchRequestedMovies),
+)(Entities)
+
+export const RequestedShows = compose(
+  withFetchRow(fetchRequestedShows),
+)(Entities)
+
 export const RequestedMoviesAndShows = compose(
   withFetchRow(async (api, init) => {
-    const [movies, shows] = await Promise.all([
-      fetchResults(api, APIQuery.movies.getMovies({ params: { state: 'pinned|missing|ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc' }, init })),
-      fetchResults(api, APIQuery.shows.getShows({ params: { state: 'ignored', 'requested_by.gte': 1, sort_by: 'requested_at.desc', progress: 'true' }, init })),
-    ])
+    const [movies, shows] = await Promise.all([fetchRequestedMovies(api, init), fetchRequestedShows(api, init)])
 
-    return [
-      ...movies.map(movie => ({ ...movie, media_type: 'movie' })),
-      ...shows.map(show => ({ ...show, media_type: 'tv' })),
-    ].sort((a, b) => (b.requested_at || 0) - (a.requested_at || 0) || writtenAt(b) - writtenAt(a))
+    return [...movies, ...shows].sort((a, b) => (b.requested_at || 0) - (a.requested_at || 0) || writtenAt(b) - writtenAt(a))
   }),
   withFooterExtra,
 )(Entities)

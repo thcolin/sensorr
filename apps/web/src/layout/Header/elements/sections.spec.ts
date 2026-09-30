@@ -1,19 +1,21 @@
 import { sectionRootOf } from './sections'
 
 describe('sectionRootOf', () => {
-  it('has no root to go back to on a bottom bar target or one of its secondary tabs', () => {
-    expect(['/', '/movie/library', '/movie/discover', '/movie/swaps', '/movie/swaps/tt0133093', '/tv/calendar', '/person/trending', '/jobs', '/jobs/aje9hge', '/settings']
-      .map((pathname) => sectionRootOf(pathname, 'mobile'))).toEqual(Array(10).fill(null))
+  it('has no root to go back to on a bottom bar target', () => {
+    expect(['/', '/movie', '/tv', '/person', '/jobs', '/jobs/aje9hge', '/settings']
+      .map((pathname) => sectionRootOf(pathname, 'mobile'))).toEqual(Array(7).fill(null))
   })
 
-  it('goes back to the bottom bar target of the section a sub-level belongs to', () => {
-    expect(sectionRootOf('/movie/62046', 'mobile')).toBe('/')
-    expect(sectionRootOf('/movie/62046/similar', 'mobile')).toBe('/')
-    expect(sectionRootOf('/collection/10', 'mobile')).toBe('/')
-    expect(sectionRootOf('/movie/search', 'mobile')).toBe('/')
-    expect(sectionRootOf('/tv/108545', 'mobile')).toBe('/tv/library')
-    expect(sectionRootOf('/tv/search', 'mobile')).toBe('/tv/library')
-    expect(sectionRootOf('/person/18898', 'mobile')).toBe('/person/followed')
+  it('goes back to the home of the section a page belongs to', () => {
+    expect(sectionRootOf('/movie/library', 'mobile')).toBe('/movie')
+    expect(sectionRootOf('/movie/swaps/tt0133093', 'mobile')).toBe('/movie')
+    expect(sectionRootOf('/movie/62046', 'mobile')).toBe('/movie')
+    expect(sectionRootOf('/movie/62046/similar', 'mobile')).toBe('/movie')
+    expect(sectionRootOf('/collection/10', 'mobile')).toBe('/movie')
+    expect(sectionRootOf('/tv/calendar', 'mobile')).toBe('/tv')
+    expect(sectionRootOf('/tv/108545', 'mobile')).toBe('/tv')
+    expect(sectionRootOf('/person/trending', 'mobile')).toBe('/person')
+    expect(sectionRootOf('/person/18898', 'mobile')).toBe('/person')
     expect(sectionRootOf('/settings/tmdb', 'mobile')).toBe('/settings')
   })
 

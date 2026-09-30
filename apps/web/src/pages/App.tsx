@@ -89,6 +89,17 @@ const SettingsRedirector = ({ ...props }) => {
   )
 }
 
+// In the PWA each bottom bar tab opens the home of its section, `/` included, which is the movies one
+const SectionHome = ({ section, fallback }) => {
+  const { pwa } = useDeviceContext()
+
+  if (!pwa) {
+    return fallback
+  }
+
+  return section === 'all' ? <Navigate replace={true} to='/movie' /> : <Home key={section} section={section} />
+}
+
 const router = createBrowserRouter(createRoutesFromElements(
   <Route element={<DetailsDrawerProvider children={<Outlet />} />}>
     <Route element={<ScrollPositionProvider children={<Outlet />} />}>
@@ -96,8 +107,8 @@ const router = createBrowserRouter(createRoutesFromElements(
       <Route path='/keep-in-touch' element={<KeepInTouch />} />
       {design}
       <Route path='/' element={<LayoutConfigSecurityContainer />}>
-        <Route path='' element={<Home />} />
-        <Route path='movie' element={<Navigate replace={true} to='/movie/discover' />} />
+        <Route path='' element={<SectionHome section='all' fallback={<Home />} />} />
+        <Route path='movie' element={<SectionHome section='movie' fallback={<Navigate replace={true} to='/movie/discover' />} />} />
         <Route path='movie/discover' element={<Discover />} />
         <Route path='movie/trending' element={<TrendingMovies />} />
         <Route path='movie/library' element={<Library />} />
@@ -111,7 +122,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/:id' element={<Movie />} />
         <Route path='movie/:id/recommendations' element={<Recommendations />} />
         <Route path='movie/:id/similar' element={<Similar />} />
-        <Route path='tv' element={<Navigate replace={true} to='/tv/library' />} />
+        <Route path='tv' element={<SectionHome section='tv' fallback={<Navigate replace={true} to='/tv/library' />} />} />
         <Route path='tv/library' element={<ShowsLibrary />} />
         <Route path='tv/calendar' element={<ShowsCalendar />} />
         <Route path='tv/discover' element={<ShowsDiscover />} />
@@ -122,7 +133,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />
         <Route path='person/search' element={<SearchPersons />} />
-        <Route path='person' element={<Navigate replace={true} to='/person/followed' />} />
+        <Route path='person' element={<SectionHome section='person' fallback={<Navigate replace={true} to='/person/followed' />} />} />
         <Route path='person/:id' element={<Person />} />
         <Route path='collection/:id' element={<Collection />} />
         <Route path='jobs' element={<Jobs />} />

@@ -21,22 +21,20 @@ export const SECONDARY = {
   ],
 }
 
-// null when pathname is itself a root: a bottom bar target or one of its secondary tabs
+// null when pathname is itself a root, a bottom bar target of the PWA: the home of a section, jobs or settings
 export const sectionRootOf = (pathname, device) => {
   if (
-    pathname === '/' ||
-    pathname === '/settings' ||
+    ['/', '/movie', '/tv', '/person', '/settings'].includes(pathname) ||
     pathname.startsWith('/jobs') ||
-    (device !== 'mobile' && pathname.startsWith('/settings/')) ||
-    Object.values(SECONDARY).flat().some(({ to }) => pathname === to || pathname.startsWith(`${to}/`))
+    (device !== 'mobile' && pathname.startsWith('/settings/'))
   ) {
     return null
   }
 
   return (
-    pathname.startsWith('/tv') ? '/tv/library' :
-    pathname.startsWith('/person') ? '/person/followed' :
+    pathname.startsWith('/tv') ? '/tv' :
+    pathname.startsWith('/person') ? '/person' :
     pathname.startsWith('/settings') ? '/settings' :
-    '/'
+    '/movie'
   )
 }
