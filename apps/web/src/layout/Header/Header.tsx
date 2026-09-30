@@ -136,27 +136,22 @@ const Logo = ({ ...props }) => {
   )
 }
 
-const Toolbar = ({ ...props }) => {
-  const { pwa } = useDeviceContext()
-
-  return (
-    <div sx={Toolbar.styles.element}>
-      {!pwa && <LoadingBar />}
-      <div sx={Toolbar.styles.wrapper}>
-        <div sx={Toolbar.styles.left}>
-          <Logo />
-        </div>
-        <div sx={Toolbar.styles.center}>
-          <SearchInput />
-        </div>
-        <div sx={Toolbar.styles.right}>
-          <Notifications />
-        </div>
+const Toolbar = ({ ...props }) => (
+  <div sx={Toolbar.styles.element}>
+    <LoadingBar />
+    <div sx={Toolbar.styles.wrapper}>
+      <div sx={Toolbar.styles.left}>
+        <Logo />
       </div>
-      {pwa && <LoadingBar />}
+      <div sx={Toolbar.styles.center}>
+        <SearchInput />
+      </div>
+      <div sx={Toolbar.styles.right}>
+        <Notifications />
+      </div>
     </div>
-  )
-}
+  </div>
+)
 
 Toolbar.styles = {
   element: {
@@ -199,6 +194,7 @@ Toolbar.styles = {
 
 const Header = ({ ...props }) => {
   const location = useLocation()
+  const { pwa } = useDeviceContext()
   const { results, loading, clear, historyDisplay, history } = useSearchContext() as any
   const extanded = results !== null || loading
 
@@ -209,8 +205,9 @@ const Header = ({ ...props }) => {
   }, [location])
 
   return (
-    <div sx={Header.styles.element} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
-      <div sx={{ ...Header.styles.container, height: extanded ? '100dvh' : 'initial' }}>
+    <div sx={{ ...Header.styles.element, ...(pwa ? { paddingTop: Header.styles.statusBar.height } : {}) }} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
+      {pwa && <div sx={Header.styles.statusBar} />}
+      <div sx={{ ...Header.styles.container, height: extanded ? (pwa ? `calc(100dvh - ${Header.styles.statusBar.height})` : '100dvh') : 'initial' }}>
         <Toolbar />
         <div sx={Header.styles.history}>
           <SearchHistory />
@@ -241,6 +238,15 @@ Header.styles = {
     position: 'absolute',
     top: '100%',
     zIndex: 1
+  },
+  // iOS blurs the band under the status bar of an installed app unless a fixed element at least 6px tall covers the top edge
+  statusBar: {
+    position: 'fixed',
+    top: '0px',
+    left: '0px',
+    width: '100%',
+    height: '6px',
+    backgroundColor: 'white',
   },
 }
 
