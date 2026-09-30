@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import { throttle } from 'throttle-debounce'
@@ -200,6 +200,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const painted = usePainted()
   const mobile = useResponsiveValue([true, false])
   const [unstacked, setUnstacked] = useState({})
+  const onToggle = useCallback((pile, value) => setUnstacked(unstacked => ({ ...unstacked, [pile]: value })), [])
   const running = useMemo(() => jobs.filter(job => !job.meta.done).sort((a, b) => b.start - a.start), [jobs])
   const listed = useMemo(() => listedOf(jobs), [jobs])
   const groups = useMemo(() => {
@@ -261,23 +262,23 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
           <CommandTabs options={options} all={running.length + listed.length} value={filter} onChange={setFilter} />
-          <div sx={UISidebar.styles.jobs}>
+          <div sx={UISidebar.styles.jobs} data-scroller={true}>
             {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
                 <h6>{distance}</h6>
                 <div sx={{ paddingX: 2 }}>
-                  {jobs.map(({ stack = [], ...j }) => {
+                  {jobs.map((entry) => {
                     // A new head joins the pile every cron tick: its oldest job keeps the pile's state
-                    const pile = stack[stack.length - 1]?.job
+                    const pile = entry.stack?.[entry.stack.length - 1]?.job
 
                     return (
                       <Pile
-                        key={j.job}
-                        head={j}
-                        stack={stack}
+                        key={entry.job}
+                        entry={entry}
+                        pile={pile}
                         job={job}
-                        unstacked={unstacked[pile] ?? stack.some(s => s.job === job)}
-                        onToggle={(value) => setUnstacked(unstacked => ({ ...unstacked, [pile]: value }))}
+                        unstacked={unstacked[pile] ?? !!entry.stack?.some(s => s.job === job)}
+                        onToggle={onToggle}
                       />
                     )
                   })}
@@ -417,17 +418,68 @@ UISidebar.styles = {
 
 const Sidebar = memo(UISidebar)
 
-const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
-  const [mounted, setMounted] = useState(unstacked)
+const EASE = 'cubic-bezier(0.2, 0, 0, 1)'
+
+const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// A pile of 80 jobs is thousands of pixels tall: only the part inside the scrolled list moves
+const roomOf = (element) => {
+  const scroller = element.closest('[data-scroller]')
+  const bottom = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight
+  return Math.max(0, Math.min(element.scrollHeight, bottom - element.getBoundingClientRect().top))
+}
+
+const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle }) => {
+  const more = useRef(null)
+  const opening = useRef(false)
+  const [closing, setClosing] = useState(false)
+  const [shown, setShown] = useState(Infinity)
   const oldest = stack[stack.length - 1]
   const selected = [head, ...stack].some(j => j.job === job)
-  const open = unstacked && mounted
+  const open = unstacked && !closing
 
-  useEffect(() => {
-    if (unstacked) {
-      setMounted(true)
+  useLayoutEffect(() => {
+    if (!unstacked || !opening.current || !more.current) {
+      return
     }
+
+    opening.current = false
+
+    if (still()) {
+      setShown(Infinity)
+      return
+    }
+
+    const room = roomOf(more.current)
+    more.current.animate([{ height: '0px' }, { height: `${room}px` }], { duration: 280, easing: EASE }).onfinish = () => setShown(Infinity)
+    Array.from(more.current.firstElementChild.children).forEach((card: any) => card.animate(
+      [{ opacity: 0, transform: 'translateY(-0.75em)' }, { opacity: 1, transform: 'none' }],
+      { duration: 280, easing: EASE },
+    ))
   }, [unstacked])
+
+  const toggle = () => {
+    if (!unstacked) {
+      opening.current = true
+      setShown(6)
+      onToggle(pile, true)
+      return
+    }
+
+    if (!more.current || still()) {
+      onToggle(pile, false)
+      return
+    }
+
+    setClosing(true)
+    const room = roomOf(more.current)
+    const animation = more.current.animate([{ height: `${room}px`, opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 180, easing: EASE, fill: 'forwards' })
+    animation.onfinish = () => {
+      onToggle(pile, false)
+      setClosing(false)
+      animation.cancel()
+    }
+  }
 
   const card = (j, props = {}) => (
     <Job
@@ -447,10 +499,10 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
           since: oldest.start,
           summary: summaryOf(head, stack.reduce((summary, older) => cumulate(summary, older.meta.summary), head.meta.summary)),
         })}
-        {!!stack.length && (
-          <div sx={UIPile.styles.more} aria-hidden={!open}>
+        {!!stack.length && unstacked && (
+          <div ref={more} sx={UIPile.styles.more}>
             <div>
-              {mounted && stack.map(j => card(j))}
+              {stack.slice(0, shown).map(j => card(j))}
             </div>
           </div>
         )}
@@ -463,7 +515,7 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
             sx={UIPile.styles.toggle}
             aria-expanded={open}
             aria-label={`${stack.length + 1}, ${open ? 'stack' : 'show'} the ${stack.length} older ${jobTitleOf(jobNameOf(head.meta))} jobs of the day`}
-            onClick={() => onToggle(!unstacked)}
+            onClick={toggle}
           >
             {stack.length + 1}
             <Icon value='chevron' direction={open} height='0.75em' width='0.75em' />
@@ -473,8 +525,6 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
     </div>
   )
 }
-
-const EASE = 'cubic-bezier(0.2, 0, 0, 1)'
 
 UIPile.styles = {
   element: {
@@ -505,12 +555,6 @@ UIPile.styles = {
     '&:hover>button, &:focus-within>button': {
       opacity: 1,
     },
-    '&[data-pile=unstacked] [aria-hidden=false]': {
-      gridTemplateRows: '1fr',
-    },
-    '&[data-pile=unstacked] [aria-hidden=false]>div>a': {
-      opacity: 1,
-    },
   },
   frame: {
     '>a, >div>div>a': {
@@ -518,21 +562,10 @@ UIPile.styles = {
     },
   },
   more: {
-    display: 'grid',
-    gridTemplateRows: '0fr',
-    transition: `grid-template-rows 320ms ${EASE}`,
-    '@media (prefers-reduced-motion: reduce)': {
-      transition: 'none',
-    },
-    '>div': {
-      minHeight: 0,
-      overflow: 'hidden',
-      '>a': {
-        borderTop: '1px solid',
-        borderColor: 'grayLight',
-        opacity: 0,
-        transition: `opacity 240ms ${EASE}`,
-      },
+    overflow: 'hidden',
+    '>div>a': {
+      borderTop: '1px solid',
+      borderColor: 'grayLight',
     },
   },
   sheets: {
