@@ -473,11 +473,9 @@ const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle
 
     setClosing(true)
     const room = roomOf(more.current)
-    const animation = more.current.animate([{ height: `${room}px`, opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 180, easing: EASE, fill: 'forwards' })
-    animation.onfinish = () => {
+    more.current.animate([{ height: `${room}px`, opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 180, easing: EASE, fill: 'forwards' }).onfinish = () => {
       onToggle(pile, false)
       setClosing(false)
-      animation.cancel()
     }
   }
 
