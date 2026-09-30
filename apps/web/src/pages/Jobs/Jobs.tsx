@@ -201,6 +201,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const mobile = useResponsiveValue([true, false])
   const [unstacked, setUnstacked] = useState({})
   const onToggle = useCallback((pile, value) => setUnstacked(unstacked => ({ ...unstacked, [pile]: value })), [])
+  const [folded, setFolded] = useState({})
   const running = useMemo(() => jobs.filter(job => !job.meta.done).sort((a, b) => b.start - a.start), [jobs])
   const listed = useMemo(() => listedOf(jobs), [jobs])
   const groups = useMemo(() => {
@@ -265,8 +266,16 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
           <div sx={UISidebar.styles.jobs} data-scroller={true}>
             {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
-                <h6>{distance}</h6>
-                <div sx={{ paddingX: 2 }}>
+                <h6>
+                  {distance === 'running' ? distance : (
+                    <button type='button' aria-expanded={!folded[distance]} onClick={() => setFolded(folded => ({ ...folded, [distance]: !folded[distance] }))}>
+                      <span>{distance}</span>
+                      {folded[distance] && <span>{jobs.reduce((count, entry) => count + 1 + (entry.stack?.length || 0), 0)}</span>}
+                      <Icon value='chevron' direction={!folded[distance]} height='0.75em' width='0.75em' />
+                    </button>
+                  )}
+                </h6>
+                <div sx={{ paddingX: 2 }} hidden={!!folded[distance]}>
                   {jobs.map((entry) => {
                     // A new head joins the pile every cron tick: its oldest job keeps the pile's state
                     const pile = entry.stack?.[entry.stack.length - 1]?.job
@@ -412,6 +421,35 @@ UISidebar.styles = {
       borderColor: 'grayLight',
       textTransform: 'capitalize',
       zIndex: 1,
+      '>button': {
+        variant: 'button.reset',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5em',
+        font: 'inherit',
+        color: 'inherit',
+        textTransform: 'inherit',
+        cursor: 'pointer',
+        '>span:first-of-type': {
+          flex: 1,
+          textAlign: 'left',
+        },
+        '>span:nth-of-type(2)': {
+          fontFamily: 'monospace',
+          fontWeight: 'normal',
+          fontSize: 6,
+          backgroundColor: 'grayLight',
+          borderRadius: '1em',
+          paddingX: 5,
+          paddingY: 9,
+        },
+        ':focus-visible': {
+          outline: '2px solid',
+          outlineColor: 'text',
+          outlineOffset: '2px',
+        },
+      },
     },
   }
 }
@@ -603,11 +641,10 @@ UIPile.styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.4em',
+    gap: '0.6em',
     backgroundColor: 'grayLight',
     color: 'text',
     fontFamily: 'monospace',
-    fontWeight: 'bold',
     fontSize: 6,
     borderRadius: '1em',
     paddingX: 5,
