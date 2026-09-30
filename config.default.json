@@ -3,6 +3,7 @@
   "region": "en-US",
   "adult": false,
   "blackhole": "/blackhole",
+  "magnet": false,
   "shows": {
     "library": "/tvshows",
     "blackhole": "/tvshows/.blackhole",
@@ -58,7 +59,8 @@
       "movies": {
         "cron": "0 5 * * 0",
         "paused": false,
-        "proposalOnly": true
+        "proposalOnly": true,
+        "threshold": 4
       }
     },
     "report": {
@@ -80,9 +82,32 @@
         "cron": "*/10 * * * *",
         "paused": true
       }
+    },
+    "wrapped": {
+      "cron": "0 6 * * *",
+      "paused": true
     }
   },
+  "tautulli": {
+    "url": "",
+    "key": ""
+  },
+  "wrapped": {
+    "looks": [
+      "tele",
+      "labo",
+      "videoclub",
+      "scenario",
+      "affiche"
+    ],
+    "theme": "tele",
+    "choice": true,
+    "editions": []
+  },
   "plex": {},
+  "mediux": {
+    "token": ""
+  },
   "znabs": [],
   "policies": []
 }
