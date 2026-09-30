@@ -17,6 +17,19 @@ interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
 
 const GROUPED = ['movies', 'tv']
 
+// cubic-bezier(0.4, 0, 0.2, 1), the curve of the route transitions: solve x for the time, then read y
+const ease = (time) => {
+  const x = (t) => 3 * (1 - t) ** 2 * t * 0.4 + 3 * (1 - t) * t ** 2 * 0.2 + t ** 3
+  const dx = (t) => 3 * (1 - t) ** 2 * 0.4 + 6 * (1 - t) * t * (0.2 - 0.4) + 3 * t ** 2 * (1 - 0.2)
+  let t = time
+
+  for (let i = 0; i < 8; i++) {
+    t = Math.min(1, Math.max(0, t - (x(t) - time) / (dx(t) || 1)))
+  }
+
+  return 3 * (1 - t) * t ** 2 + t ** 3
+}
+
 // Commands about one media type share a capsule named after it, the others stand alone as pills, in the order given
 const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
   const { suffix } = tab.value ? jobLabelOf(tab.value) : { suffix: null }
@@ -34,58 +47,35 @@ const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
 // One command at a time, `null` shows them all. Sits flush under a `primary` head.
 const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsProps) => {
   const row = useRef<HTMLDivElement>(null)
-  const drag = useRef({ x: 0, left: 0, moved: false })
 
-  // The pressed pill comes to the start of the row, where `all` sits at first
+  // The pressed pill slides to the start of the row, where `all` sits at first
   useEffect(() => {
-    const pressed = row.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    const element = row.current
+    const pressed = element?.querySelector<HTMLElement>('[aria-pressed="true"]')
 
-    if (pressed) {
-      row.current.scrollTo({ left: pressed.offsetLeft - parseFloat(getComputedStyle(row.current).paddingLeft), behavior: 'smooth' })
-    }
-  }, [value])
-
-  // A mouse grabs the row to scroll it, a touch scrolls it natively
-  const onPointerDown = (e) => {
-    if (e.pointerType !== 'mouse' || e.button !== 0) {
+    if (!pressed) {
       return
     }
 
-    drag.current = { x: e.clientX, left: row.current.scrollLeft, moved: false }
+    const from = element.scrollLeft
+    const to = Math.max(0, Math.min(pressed.offsetLeft - parseFloat(getComputedStyle(element).paddingLeft), element.scrollWidth - element.clientWidth))
 
-    const onMove = (e) => {
-      const dx = e.clientX - drag.current.x
-
-      if (Math.abs(dx) > 4) {
-        drag.current.moved = true
-        row.current.dataset.dragging = 'true'
-      }
-
-      if (drag.current.moved) {
-        row.current.scrollLeft = drag.current.left - dx
-      }
+    if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      element.scrollLeft = to
+      return
     }
 
-    // The click that follows the release reads `moved` first, the flag drops right after
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      delete row.current?.dataset.dragging
-      setTimeout(() => { drag.current.moved = false })
+    let frame = null
+    const start = performance.now()
+    const step = (now) => {
+      const progress = Math.min(1, (now - start) / 400)
+      element.scrollLeft = from + (to - from) * ease(progress)
+      frame = progress < 1 ? requestAnimationFrame(step) : null
     }
 
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-  }
-
-  // A drag ends on a pill: that release is not a click
-  const onClickCapture = (e) => {
-    if (drag.current.moved) {
-      e.stopPropagation()
-      e.preventDefault()
-      drag.current.moved = false
-    }
-  }
+    frame = requestAnimationFrame(step)
+    return () => frame && cancelAnimationFrame(frame)
+  }, [value])
 
   const capsules = capsulesOf([
     { value: null, emoji: '📼', label: 'all', count: all },
@@ -111,7 +101,7 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
   }
 
   return (
-    <div ref={row} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element} onPointerDown={onPointerDown} onClickCapture={onClickCapture}>
+    <div ref={row} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element}>
       {capsules.map(({ group, tabs }) => group ? (
         <div key={group} role='group' aria-label={group}>
           <span>{group}</span>
@@ -137,14 +127,6 @@ UICommandTabs.styles = {
       display: 'none',
     },
     backgroundColor: 'primary',
-    cursor: 'grab',
-    userSelect: 'none',
-    '&[data-dragging="true"]': {
-      cursor: 'grabbing',
-      button: {
-        cursor: 'grabbing',
-      },
-    },
     paddingX: [4, 3],
     paddingBottom: 4,
     // A capsule: `accentDarkest` behind `accentDarker` pills, white on them measures 5.68:1 and 4.58:1

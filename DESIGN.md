@@ -581,8 +581,8 @@ commands about one media type share a capsule in `accentDarkest` named `MOVIES` 
 about no media type, `all` or `keep-in-touch`, is a pill alone on the row. A pill is the command's
 emoji, its name in Fira Code `0.8125em` and its count in a round badge `accentDarkest`; the pressed
 one keeps its color, its name turns bold and its badge white. Capsules are `1.75em` tall, the pills
-in them `1.375em`, `0.25em` apart. The row scrolls sideways, a mouse can grab it, and the pressed
-pill scrolls to its start. The commands run or notified last come first. While the jobs load, every
+in them `1.375em`, `0.25em` apart. The row scrolls sideways, and the pressed
+pill slides to its start in `400ms` on the route curve. The commands run or notified last come first. While the jobs load, every
 command shows with a `0` count.
 
 ### Cards / Containers
