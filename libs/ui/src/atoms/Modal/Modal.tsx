@@ -89,7 +89,7 @@ const UIModal = ({ title, open, close, width = '36em', background = 'grayLightes
         <div sx={{ ...UIModal.styles.head, backgroundColor: head }}>
           <h3 id={id}>{title}</h3>
           <button type='button' onClick={close} aria-label='Close'>
-            <Icon value='clear' active={true} height='1em' width='1em' />
+            <Icon value='clear' active={true} height='1.25em' width='1.25em' />
           </button>
         </div>
         <div sx={UIModal.styles.body}>
@@ -165,14 +165,14 @@ UIModal.styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 7,
-    paddingRight: 7,
-    paddingBottom: 8,
+    paddingTop: 6,
+    paddingRight: 6,
+    paddingBottom: 6,
     paddingLeft: 5,
     '>h3': {
       variant: 'heading.default',
       margin: 12,
-      fontSize: 4,
+      fontSize: 2,
       lineHeight: 1.3,
       color: 'whitePure',
     },

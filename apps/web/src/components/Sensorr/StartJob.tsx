@@ -61,7 +61,7 @@ UIStartJob.styles = {
     paddingX: 5,
     paddingTop: 2,
     paddingBottom: 8,
-    fontSize: 4,
+    fontSize: 2,
     color: 'whitePure',
   },
 }
