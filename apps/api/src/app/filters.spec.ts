@@ -1,4 +1,4 @@
-import { episodeStatusFilter, movieFilter, oneOf, releasesFilter, showFilter } from './filters'
+import { episodeStatusFilter, movieFilter, oneOf, releasesFilter, showFilter, upcomingBirthdayFilter } from './filters'
 
 describe('oneOf', () => {
   it('matches any value on a pipe, every value on a comma, cast', () => {
@@ -90,5 +90,21 @@ describe('a query string parsed into arrays or objects', () => {
     expect(episodeStatusFilter({ $ne: 'owned' }, new Date())).toEqual({})
     expect(episodeStatusFilter('__proto__', new Date())).toEqual({})
     expect(showFilter({ monitored: 'constructor', 'releases.proposal': '__proto__' })).toEqual({ state: { $nin: ['ignored'] } })
+  })
+})
+
+describe('upcomingBirthdayFilter', () => {
+  const month = (m, d) => ({ $expr: { $and: [{ $eq: [{ $month: '$birthday' }, m] }, { $eq: [{ $dayOfMonth: '$birthday' }, d] }] } })
+
+  it('matches the month and day of each day ahead, across the new year', () => {
+    expect(upcomingBirthdayFilter('3', new Date('2026-12-30T18:00:00.000Z'))).toEqual({
+      $or: [month(12, 30), month(12, 31), month(1, 1)],
+    })
+  })
+
+  it('adds nothing without a positive number of days', () => {
+    expect(upcomingBirthdayFilter(undefined, new Date())).toEqual({})
+    expect(upcomingBirthdayFilter('0', new Date())).toEqual({})
+    expect(upcomingBirthdayFilter('soon', new Date())).toEqual({})
   })
 })

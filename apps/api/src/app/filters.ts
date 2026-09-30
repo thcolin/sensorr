@@ -168,3 +168,18 @@ export const episodeStatusFilter = (value: unknown, now: Date) => {
 
   return cases.length ? { $or: cases } : {}
 }
+
+// Born on one of the `value` days starting from `now`, whatever the year, as Mongo reads a date in UTC
+export const upcomingBirthdayFilter = (value: unknown, now: Date) => {
+  const days = Math.min(Math.floor(Number(value)), 366)
+
+  if (!(days > 0)) {
+    return {}
+  }
+
+  return {
+    $or: Array.from({ length: days }, (_, index) => new Date(now.getTime() + index * 86400000)).map(day => ({
+      $expr: { $and: [{ $eq: [{ $month: '$birthday' }, day.getUTCMonth() + 1] }, { $eq: [{ $dayOfMonth: '$birthday' }, day.getUTCDate()] }] },
+    })),
+  }
+}

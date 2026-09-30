@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { fields } from '@sensorr/tmdb'
 import { PaginateModel, PaginateResult } from 'mongoose'
+import { upcomingBirthdayFilter } from '../filters'
 import { PersonDTO } from './person.dto'
 import { Person as PersonDocument } from './person.schema'
 
@@ -41,6 +42,7 @@ export class PersonsService {
           ...(params['birthday.gte'] ? { $gte: new Date(params['birthday.gte']) } : {}),
         },
       } : {}),
+      ...upcomingBirthdayFilter(params['birthday.upcoming'], new Date()),
       ...((params['popularity.lte'] || params['popularity.gte']) ? {
         popularity: {
           ...(params['popularity.lte'] ? { $lte: Number(params['popularity.lte']) } : {}),
