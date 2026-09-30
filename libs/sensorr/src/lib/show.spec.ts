@@ -136,6 +136,15 @@ describe('Policy.apply on a show', () => {
   const query = new Sensorr({ region: 'fr-FR' }).getShowQuery(friends)
   const validOf = (unit, releases) => Object.fromEntries(policy.apply(releases, { ...query, unit } as any).map(({ original, valid }) => [original, valid]))
 
+  it('refuses a pack published before the day after the finale it stands in for', () => {
+    const pack = { ...release('Friends.S03.MULTi.1080p.WEB.x264-GRP'), valid: true }
+    const validOf = (after, publishDate = pack.publishDate) => Policy.normalizers.showReleasePublished({ ...pack, publishDate }, new Date(after).getTime()).valid
+
+    expect(validOf('2026-01-01')).toBe(true)
+    expect(validOf('2026-01-02')).toBe(false)
+    expect(validOf('2026-01-01', null)).toBe(false)
+  })
+
   it('takes a complete series, a multi-season pack or an INTEGRALE filed under TV for the whole series', () => {
     expect(validOf({ type: 'series', episodes: [] }, [
       release('Friends.Complete.Series.1080p.BluRay.x264-GRP'),

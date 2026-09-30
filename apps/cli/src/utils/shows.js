@@ -1,7 +1,7 @@
 import path from 'node:path'
 import oleoo from 'oleoo'
 import sanitizeFilename from 'sanitize-filename'
-import { MEDIA } from '@sensorr/sensorr'
+import { MEDIA, episodeStatus } from '@sensorr/sensorr'
 import { OVERDUE_AFTER } from './swaps'
 import { fetchShow } from '@sensorr/tmdb'
 export { fetchShow }
@@ -9,6 +9,7 @@ export { fetchShow }
 const AIRING = ['Returning Series', 'In Production', 'Planned', 'Pilot']
 
 export const REFRESH_AFTER = 30 * 24 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
 
 export const isRefreshDue = (show, now) => (
   AIRING.includes(show.status) ||
@@ -58,12 +59,22 @@ export const airingUnits =(units, episodes, since) => {
 
   const airing = units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
   const ofSeason = (season) => episodes.filter(({ season_number }) => season_number === season)
+  const finaleOf = (season) => ofSeason(season).reduce((last, episode) => (!last || episode.episode_number > last.episode_number) ? episode : last, null)
+  // As the last resort pack of searchUnits: every episode asked for, one of them already owned
   const finales = airing.filter(({ season, episode }) => season !== 0 &&
-    episode === Math.max(...ofSeason(season).map(({ episode_number }) => episode_number)) &&
-    ofSeason(season).every(({ monitored }) => monitored))
+    episode === finaleOf(season).episode_number &&
+    ofSeason(season).every((item) => item.monitored && ['wanted', 'owned'].includes(episodeStatus(item))) &&
+    ofSeason(season).some(({ files }) => files?.length))
 
-  // A season pack can be out before the file of its last episode: it stands in for that one, as a swap of the season
-  return [...airing, ...finales.map(({ season, episodes: covered }) => ({ type: 'season', season, episodes: covered, fallback: true }))]
+  // A season pack can be out before the file of its last episode: it stands in for that one, as a swap of the season,
+  // once published a day after its air date, when the episode has aired wherever it airs
+  return [...airing, ...finales.map(({ season, episodes: covered }) => ({
+    type: 'season',
+    season,
+    episodes: covered,
+    fallback: true,
+    published_after: new Date(finaleOf(season).air_date).getTime() + DAY,
+  }))]
 }
 
 // A "Fix match" in Plex can drop the tmdb:// guid of a show: its tvdb:// or imdb:// guid still names it, and its title and year
