@@ -208,7 +208,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
       values: Object.keys(fields).reduce((acc, key) => ({
         ...acc,
         ...(
-          (controls?.values || {})[key] ? { [key]: controls?.values[key] } :
+          (controls?.values || {})[key] != null ? { [key]: controls?.values[key] } :
           typeof fields[key].initial !== 'undefined' ? { [key]: fields[key].initial } :
           {}
         ),

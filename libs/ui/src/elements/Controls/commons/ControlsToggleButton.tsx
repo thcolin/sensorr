@@ -5,7 +5,7 @@ export const ControlsToggleButton = ({ toggleOpen, fields, values, handleChange,
   const { t } = useTranslation()
   const active = Object.keys(values)
     .filter(key => !['sort_by'].includes(key) && !fields[key].hideFromFiltersCount)
-    .reduce((acc, key) => acc + (values[key] && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
+    .reduce((acc, key) => acc + (values[key] != null && (JSON.stringify(values[key]) !== JSON.stringify(fields[key]?.initial) && fields[key]?.serialize) ? 1 : 0), 0)
 
   return (
     <button {...props} sx={ControlsToggleButton.styles.element} type='button' onClick={toggleOpen}>
