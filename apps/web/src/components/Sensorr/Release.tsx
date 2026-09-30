@@ -259,11 +259,17 @@ UIRelease.styles = {
   },
   tags: {
     display: 'flex',
+    flexWrap: ['wrap', 'nowrap'],
+    justifyContent: ['center', 'flex-start'],
     alignItems: 'center',
+    gap: [6, 12],
     marginX: [12, 4],
     marginBottom: [4, 12],
     '>span': {
-      marginRight: 6,
+      marginRight: [12, 6],
+      '>code': {
+        display: ['inline-block', 'inline'],
+      },
     },
   },
   statistics: {
