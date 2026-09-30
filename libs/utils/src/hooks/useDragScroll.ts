@@ -29,6 +29,11 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
   })
 
   const onPointerMove = (e: PointerEvent) => {
+    // The button came up outside the window, where no pointerup reached it
+    if (!(e.buttons & 1)) {
+      return onPointerUp()
+    }
+
     const dx = e.clientX - press.x
 
     if (!dragging) {
@@ -111,7 +116,10 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
   }
 
   const onPointerDown = (e: PointerEvent & { grabbed?: boolean }) => {
-    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0) {
+    // Below the content box is the scrollbar, which scrolls on its own
+    const below = e.clientY - element.getBoundingClientRect().top - element.clientTop >= element.clientHeight
+
+    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0 || below) {
       return
     }
 
@@ -139,7 +147,14 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     }
   }
 
-  const onWheel = () => animation?.stop()
+  // Past an edge the spring still brings the row back, within the bounds the wheel takes over
+  const onWheel = () => {
+    const value = x.get()
+
+    if (value >= 0 && value <= max()) {
+      animation?.stop()
+    }
+  }
 
   element.addEventListener('pointerdown', onPointerDown)
   element.addEventListener('pointerenter', onPointerEnter)

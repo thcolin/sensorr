@@ -1,8 +1,9 @@
 import React from 'react'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, waitFor } from '@testing-library/react'
 import { useDragScroll } from './useDragScroll'
 
 let clicks = 0
+let reduced = false
 
 const Row = () => {
   const drag = useDragScroll<HTMLDivElement>()
@@ -33,13 +34,14 @@ const size = (row) => {
   Object.defineProperty(row, 'scrollLeft', { get: () => left, set: (value) => { left = Math.max(0, Math.min(value, 1500)) } })
   Object.defineProperty(row, 'scrollWidth', { value: 2000 })
   Object.defineProperty(row, 'clientWidth', { value: 500 })
+  Object.defineProperty(row, 'clientHeight', { value: 300 })
   return row
 }
 
 const mount = () => size(render(<Row />).getByTestId('row'))
 
 const pointer = (type, target, clientX, pointerType = 'mouse') => {
-  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, button: 0 })
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, button: 0, buttons: type === 'pointerup' ? 0 : 1 })
   Object.defineProperty(event, 'pointerType', { value: pointerType })
   target.dispatchEvent(event)
 }
@@ -49,7 +51,8 @@ const click = (target) => target.dispatchEvent(new MouseEvent('click', { bubbles
 describe('useDragScroll', () => {
   beforeEach(() => {
     clicks = 0
-    window.matchMedia = (query) => ({ matches: true, media: query }) as MediaQueryList
+    reduced = false
+    window.matchMedia = (query) => ({ matches: reduced && query.includes('reduce'), media: query }) as MediaQueryList
   })
 
   afterEach(cleanup)
@@ -61,10 +64,10 @@ describe('useDragScroll', () => {
     pointer('pointerdown', poster, 600)
     pointer('pointermove', window, 580)
     pointer('pointermove', window, 380)
+    expect(row.scrollLeft).toBe(200)
+
     pointer('pointerup', window, 380)
     click(poster)
-
-    expect(row.scrollLeft).toBe(200)
     expect(clicks).toBe(0)
   })
 
@@ -102,9 +105,36 @@ describe('useDragScroll', () => {
     pointer('pointerdown', row.querySelector('button'), 600)
     pointer('pointermove', window, 580)
     pointer('pointermove', window, 380)
-    pointer('pointerup', window, 380)
 
     expect(row.scrollLeft).toBe(200)
     expect(outer.scrollLeft).toBe(0)
+  })
+
+  it('pulls the children past an edge, and springs them back on release', async () => {
+    const row = mount()
+    const poster = row.querySelector('button')
+
+    pointer('pointerdown', poster, 600)
+    pointer('pointermove', window, 620)
+    pointer('pointermove', window, 820)
+    expect(row.scrollLeft).toBe(0)
+    expect(parseFloat(poster.style.translate)).toBeGreaterThan(0)
+    expect(parseFloat(poster.style.translate)).toBeLessThan(200)
+
+    pointer('pointerup', window, 820)
+    await waitFor(() => expect(poster.style.translate).toBe(''), { timeout: 2000 })
+  })
+
+  it('keeps a reduced motion within the bounds', () => {
+    reduced = true
+    const row = mount()
+    const poster = row.querySelector('button')
+
+    pointer('pointerdown', poster, 600)
+    pointer('pointermove', window, 620)
+    pointer('pointermove', window, 820)
+
+    expect(row.scrollLeft).toBe(0)
+    expect(poster.style.translate || '').toBe('')
   })
 })
