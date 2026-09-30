@@ -574,14 +574,16 @@ Two distinct things, and they do not share a shape.
 
 ### Command Tabs
 The quick filters of `/jobs` and of the Notifications pane
-(`apps/web/src/components/Sensorr/CommandTabs.tsx`) are tabs, not chips: a row flush under
-the `primary` head, one command at a time, `📼 all` first. Each tab is the command's emoji,
-its name in Fira Code `0.8125em` (500, 700 when pressed) and its count in a round badge
-`1.7em` tall, `rgba(0, 0, 0, 0.2)` at rest and `accentDarkest` when pressed. Inactive names
-sit at 74% white; the pressed tab is full white with a `2px` white underline. Tabs are
-`1.5em` apart and the row scrolls sideways when it outgrows the sidebar. A one-digit badge
-shifts its padding `0.05em` to the right, because Fira Code draws a lone digit left of its
-advance.
+(`apps/web/src/components/Sensorr/CommandTabs.tsx`) are one row of pills under the `primary` head,
+one command at a time, `📼 all` first. White text never sits on `primary` itself (2.04:1): the
+commands about one media type share a capsule in `accentDarkest` named `MOVIES` or `TV` in Fira Code
+`0.625em` capitals, and each pill inside is `accentDarker` (white on it measures 4.58:1). A command
+about no media type, `all` or `keep-in-touch`, is a pill alone on the row. A pill is the command's
+emoji, its name in Fira Code `0.8125em` and its count in a round badge `accentDarkest`; the pressed
+one keeps its color, its name turns bold and its badge white. Capsules are `1.75em` tall, the pills
+in them `1.375em`, `0.25em` apart. The row scrolls sideways, a mouse can grab it, and the pressed
+pill scrolls to its start. The commands run or notified last come first. While the jobs load, every
+command shows with a `0` count.
 
 ### Cards / Containers
 - **Corner Style:** square. `Card` sets no radius; its child `Poster` carries the artwork's

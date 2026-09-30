@@ -33,6 +33,8 @@ const COMMANDS = {
   'sync shows': { emoji: '💊', label: 'missing' },
 }
 
+const lastOf = (notifications, name) => Math.max(0, ...notifications.filter(notification => jobNameOf(notification.meta) === name).map(notification => new Date(notification.timestamp).getTime() || 0))
+
 const UINotifications = ({ ...props }) => {
   const { pwa } = useDeviceContext()
   // The list is rendered in a portal: a state, so the virtualizer renders again once its container exists
@@ -50,8 +52,10 @@ const UINotifications = ({ ...props }) => {
   const unseen = useMemo(() => notifications.filter(notification => !notification.meta?.seen).map(notification => notification._id), [notifications])
   const [filter, setFilter] = useState(null)
   const filtered = useMemo(() => notifications.filter(notification => !filter || jobNameOf(notification.meta) === filter), [notifications, filter])
+  // The command that notified last comes first
   const options = useMemo(() => Object.keys(COMMANDS)
     .filter(name => name === filter || notifications.some(notification => jobNameOf(notification.meta) === name))
+    .sort((a, b) => lastOf(notifications, b) - lastOf(notifications, a))
     .map(name => ({ value: name, ...COMMANDS[name], count: notifications.filter(notification => jobNameOf(notification.meta) === name).length })), [notifications, filter])
 
   const listRef = useRef(null)
@@ -236,9 +240,11 @@ UINotifications.styles = {
       },
     },
   },
+  // The tabs stick at its top: a bounce would show the dark ground above them
   container: {
     flex: 1,
     overflow: 'auto',
+    overscrollBehaviorY: 'none',
     paddingBottom: 2,
   },
   push: {

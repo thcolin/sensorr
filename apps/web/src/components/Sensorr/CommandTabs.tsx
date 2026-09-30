@@ -1,5 +1,5 @@
-import { memo } from 'react'
-import { JobName } from './JobName'
+import { memo, useEffect, useRef } from 'react'
+import { jobLabelOf } from '@sensorr/sensorr'
 
 export interface CommandTab {
   value: string
@@ -15,22 +15,109 @@ interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
   onChange: (value: string | null) => void
 }
 
+const GROUPED = ['movies', 'tv']
+
+// Commands about one media type share a capsule named after it, the others stand alone as pills, in the order given
+const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
+  const { suffix } = tab.value ? jobLabelOf(tab.value) : { suffix: null }
+  const group = GROUPED.includes(suffix) ? suffix : null
+  const capsule = group && capsules.find(capsule => capsule.group === group)
+
+  if (capsule) {
+    capsule.tabs.push(tab)
+    return capsules
+  }
+
+  return [...capsules, { group, tabs: [tab] }]
+}, [])
+
 // One command at a time, `null` shows them all. Sits flush under a `primary` head.
 const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsProps) => {
-  const tabs = [
+  const row = useRef<HTMLDivElement>(null)
+  const drag = useRef({ x: 0, left: 0, moved: false })
+
+  // The pressed pill comes to the start of the row, where `all` sits at first
+  useEffect(() => {
+    const pressed = row.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
+
+    if (pressed) {
+      row.current.scrollTo({ left: pressed.offsetLeft - parseFloat(getComputedStyle(row.current).paddingLeft), behavior: 'smooth' })
+    }
+  }, [value])
+
+  // A mouse grabs the row to scroll it, a touch scrolls it natively
+  const onPointerDown = (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) {
+      return
+    }
+
+    drag.current = { x: e.clientX, left: row.current.scrollLeft, moved: false }
+
+    const onMove = (e) => {
+      const dx = e.clientX - drag.current.x
+
+      if (Math.abs(dx) > 4) {
+        drag.current.moved = true
+        row.current.dataset.dragging = 'true'
+      }
+
+      if (drag.current.moved) {
+        row.current.scrollLeft = drag.current.left - dx
+      }
+    }
+
+    // The click that follows the release reads `moved` first, the flag drops right after
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      delete row.current?.dataset.dragging
+      setTimeout(() => { drag.current.moved = false })
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  // A drag ends on a pill: that release is not a click
+  const onClickCapture = (e) => {
+    if (drag.current.moved) {
+      e.stopPropagation()
+      e.preventDefault()
+      drag.current.moved = false
+    }
+  }
+
+  const capsules = capsulesOf([
     { value: null, emoji: '📼', label: 'all', count: all },
     ...options,
-  ]
+  ])
+
+  const pill = (tab, group = null) => {
+    const { command, suffix } = tab.value ? jobLabelOf(tab.value) : { command: tab.label, suffix: null }
+
+    return (
+      <button
+        key={tab.value || 'all'}
+        type='button'
+        aria-pressed={tab.value === value}
+        aria-label={group ? `${tab.label || command} ${group}` : undefined}
+        onClick={() => onChange(tab.value)}
+      >
+        <span aria-hidden={true}>{tab.emoji}</span>
+        <code>{tab.label || command}{!group && suffix ? ` ${suffix}` : ''}</code>
+        <span data-digits={String(tab.count).length}>{tab.count}</span>
+      </button>
+    )
+  }
 
   return (
-    <div role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element}>
-      {tabs.map(tab => (
-        <button key={tab.value || 'all'} type='button' aria-pressed={tab.value === value} onClick={() => onChange(tab.value)}>
-          <span aria-hidden={true}>{tab.emoji}</span>
-          <code>{tab.value ? <JobName name={tab.value} label={tab.label} /> : tab.label}</code>
-          <span data-digits={String(tab.count).length}>{tab.count}</span>
-        </button>
-      ))}
+    <div ref={row} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element} onPointerDown={onPointerDown} onClickCapture={onClickCapture}>
+      {capsules.map(({ group, tabs }) => group ? (
+        <div key={group} role='group' aria-label={group}>
+          <span>{group}</span>
+          {tabs.map(tab => pill(tab, group))}
+        </div>
+      ) : pill(tabs[0]))}
     </div>
   )
 }
@@ -42,31 +129,62 @@ UICommandTabs.styles = {
     zIndex: 2,
     flexShrink: 0,
     display: 'flex',
-    alignItems: 'flex-end',
-    gap: '1.5em',
+    alignItems: 'center',
+    gap: '0.375em',
     overflowX: 'auto',
     scrollbarWidth: 'none',
     '::-webkit-scrollbar': {
       display: 'none',
     },
     backgroundColor: 'primary',
+    cursor: 'grab',
+    userSelect: 'none',
+    '&[data-dragging="true"]': {
+      cursor: 'grabbing',
+      button: {
+        cursor: 'grabbing',
+      },
+    },
     paddingX: [4, 3],
-    '>button': {
-      variant: 'button.reset',
-      position: 'relative',
+    paddingBottom: 4,
+    // A capsule: `accentDarkest` behind `accentDarker` pills, white on them measures 5.68:1 and 4.58:1
+    '>div': {
       flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '0.4em',
-      paddingTop: '0.35em',
-      paddingBottom: '0.65em',
-      color: 'rgba(255, 255, 255, 0.74)',
-      whiteSpace: 'nowrap',
-      cursor: 'pointer',
-      transition: 'color 140ms ease-out',
-      ':hover': {
+      gap: '0.25em',
+      height: '1.75em',
+      paddingX: '0.1875em',
+      boxSizing: 'border-box',
+      borderRadius: '2em',
+      backgroundColor: 'accentDarkest',
+      '>span': {
+        marginLeft: '0.9em',
+        marginRight: '0.6em',
+        fontFamily: 'monospace',
+        fontSize: '0.625em',
+        fontWeight: 'bold',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
         color: 'whitePure',
       },
+    },
+    button: {
+      variant: 'button.reset',
+      flexShrink: 0,
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.375em',
+      height: '1.375em',
+      paddingLeft: '0.6875em',
+      paddingRight: '0.375em',
+      boxSizing: 'border-box',
+      borderRadius: '1.375em',
+      backgroundColor: 'accentDarker',
+      color: 'whitePure',
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      transition: 'background-color 140ms ease-out',
       ':focus-visible': {
         outline: '2px solid',
         outlineColor: 'whitePure',
@@ -75,7 +193,6 @@ UICommandTabs.styles = {
       '>span:first-of-type': {
         fontSize: '0.875em',
         lineHeight: 1,
-        marginRight: '0.25em',
       },
       '>code': {
         fontFamily: 'monospace',
@@ -83,12 +200,12 @@ UICommandTabs.styles = {
         fontWeight: 'medium',
         lineHeight: 1.2,
       },
-      '>span:last-of-type': {
+      '>span:nth-of-type(2)': {
         display: 'inline-block',
         boxSizing: 'border-box',
         minWidth: '1.7em',
         height: '1.7em',
-        paddingX: '0.5em',
+        paddingX: '0.6em',
         borderRadius: '0.85em',
         textAlign: 'center',
         fontFamily: 'monospace',
@@ -96,7 +213,7 @@ UICommandTabs.styles = {
         fontWeight: 'semibold',
         lineHeight: '1.7em',
         fontVariantNumeric: 'tabular-nums',
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        backgroundColor: 'accentDarkest',
         color: 'whitePure',
         // Fira Code draws a lone digit left of its advance
         '&[data-digits="1"]': {
@@ -104,24 +221,23 @@ UICommandTabs.styles = {
           paddingRight: '0.45em',
         },
       },
+      // The pill keeps its color, its name turns bold and its count white
       '&[aria-pressed="true"]': {
-        color: 'whitePure',
-        '::after': {
-          content: '""',
-          position: 'absolute',
-          left: '0px',
-          right: '0px',
-          bottom: '0px',
-          height: '2px',
-          backgroundColor: 'whitePure',
-        },
         '>code': {
           fontWeight: 'strong',
         },
-        '>span:last-of-type': {
-          backgroundColor: 'accentDarkest',
+        '>span:nth-of-type(2)': {
+          backgroundColor: 'whitePure',
+          color: 'accentDarkest',
         },
       },
+    },
+    // A pill alone sits on the row at the capsule's height
+    '>button': {
+      height: '1.75em',
+      paddingLeft: '0.875em',
+      paddingRight: '0.4375em',
+      borderRadius: '2em',
     },
   },
 }
