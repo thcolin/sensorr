@@ -21,6 +21,7 @@ import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch
 import { ProcessShowsJob, summary as summaryProcessShows } from './Job/ProcessShows'
 import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows, summaryMigrateSonarr } from './Job/Shows'
 import { Summary } from './Summary'
+import { cumulate } from './cumulate'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
@@ -48,46 +49,31 @@ const isEmptyImport = (job) => {
   return jobNameOf(job.meta) === 'import shows' && job.meta.done && !job.meta.error && !success && !pending && !warning && !overdue
 }
 
-const REPEATED = ['import shows', 'airing shows']
-
-const isIdle = (job) => {
-  const { imports, recorded, proposal, warning } = job.meta.summary || {}
-  return job.meta.done && !job.meta.error && !imports?.success && !imports?.warning && !imports?.overdue && !recorded && !proposal && !warning
-}
-
-const summaryOf = (job) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(job.meta.summary, false, job.meta.config)
+const summaryOf = (job, summary = job.meta.summary) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(summary, false, job.meta.config)
 
 const dayOf = (job) => {
   const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
   return ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-// Compares what the card shows, since the summary keys come back in any order
-const signatureOf = (job) => summaryOf(job).map(({ key, length }) => `${key} ${length}`).join(',')
-
-// Of idle import or airing shows telling the same summary on the same day, "all" stacks the older ones under the newest
+// "all" stacks the jobs of a command on the same day under the newest, a job that failed stays on its own
 const listedOf = (jobs) => {
   const piles = {}
 
   return jobs.filter(job => job.meta.done && !isEmptyImport(job)).reduce((listed, job) => {
-    const name = jobNameOf(job.meta)
-    const key = `${name} ${dayOf(job)}`
+    const key = `${jobNameOf(job.meta)} ${dayOf(job)}`
 
-    if (!REPEATED.includes(name) || !isIdle(job)) {
-      delete piles[key]
+    if (job.meta.error) {
       return [...listed, { ...job, stack: [] }]
     }
 
-    const signature = signatureOf(job)
-
-    if (piles[key]?.signature === signature) {
-      piles[key].head.stack.push(job)
+    if (piles[key]) {
+      piles[key].stack.push(job)
       return listed
     }
 
-    const head = { ...job, stack: [] }
-    piles[key] = { signature, head }
-    return [...listed, head]
+    piles[key] = { ...job, stack: [] }
+    return [...listed, piles[key]]
   }, [])
 }
 
@@ -432,34 +418,55 @@ UISidebar.styles = {
 const Sidebar = memo(UISidebar)
 
 const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
+  const [mounted, setMounted] = useState(unstacked)
   const oldest = stack[stack.length - 1]
-  const jobs = [head, ...(unstacked ? stack : [])]
-  const selected = jobs.some(j => j.job === job)
+  const selected = [head, ...stack].some(j => j.job === job)
+  const open = unstacked && mounted
+
+  useEffect(() => {
+    if (unstacked) {
+      setMounted(true)
+    }
+  }, [unstacked])
+
+  const card = (j, props = {}) => (
+    <Job
+      key={j.job}
+      emoji={JOB_EMOJIS[jobNameOf(j.meta)]}
+      selected={j.job === job}
+      {...j}
+      summary={summaryOf(j)}
+      {...props}
+    />
+  )
 
   return (
-    <div sx={UIPile.styles.element} data-pile={stack.length ? (unstacked ? 'unstacked' : 'stacked') : null} data-selected={selected}>
-      {jobs.map((j, index) => (
-        <Job
-          key={j.job}
-          emoji={JOB_EMOJIS[jobNameOf(j.meta)]}
-          selected={j.job === job}
-          since={index === 0 && !unstacked ? oldest?.start : null}
-          {...j}
-          summary={summaryOf(j)}
-        />
-      ))}
+    <div sx={UIPile.styles.element} data-pile={!head.meta.done ? null : !stack.length ? 'single' : open ? 'unstacked' : 'stacked'} data-selected={selected}>
+      <div sx={UIPile.styles.frame}>
+        {card(head, open || !stack.length ? {} : {
+          since: oldest.start,
+          summary: summaryOf(head, stack.reduce((summary, older) => cumulate(summary, older.meta.summary), head.meta.summary)),
+        })}
+        {!!stack.length && (
+          <div sx={UIPile.styles.more} aria-hidden={!open}>
+            <div>
+              {mounted && stack.map(j => card(j))}
+            </div>
+          </div>
+        )}
+      </div>
       {!!stack.length && (
         <>
-          {!unstacked && <span sx={UIPile.styles.sheets} aria-hidden={true}><span /><span /></span>}
+          <span sx={UIPile.styles.sheets} aria-hidden={true}><span><span /><span /></span></span>
           <button
             type='button'
             sx={UIPile.styles.toggle}
-            aria-expanded={unstacked}
-            aria-label={`×${stack.length + 1}, ${unstacked ? 'stack' : 'show'} ${stack.length} more ${jobTitleOf(jobNameOf(head.meta))} jobs telling the same`}
+            aria-expanded={open}
+            aria-label={`${stack.length + 1}, ${open ? 'stack' : 'show'} the ${stack.length} older ${jobTitleOf(jobNameOf(head.meta))} jobs of the day`}
             onClick={() => onToggle(!unstacked)}
           >
-            ×{stack.length + 1}
-            <Icon value='chevron' direction={unstacked} height='0.75em' width='0.75em' />
+            {stack.length + 1}
+            <Icon value='chevron' direction={open} height='0.75em' width='0.75em' />
           </button>
         </>
       )}
@@ -467,14 +474,16 @@ const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
   )
 }
 
+const EASE = 'cubic-bezier(0.2, 0, 0, 1)'
+
 UIPile.styles = {
   element: {
     position: 'relative',
     '&[data-pile]': {
-      marginY: 10,
+      marginY: 6,
       marginX: '-0.5em',
     },
-    '&[data-pile=stacked]>a, &[data-pile=unstacked]': {
+    '&[data-pile]>div:first-of-type': {
       backgroundColor: 'grayLighter',
       border: '1px solid',
       borderColor: 'grayLight',
@@ -482,11 +491,12 @@ UIPile.styles = {
       paddingX: '0.5em',
       transition: 'border-color ease 300ms',
     },
-    '&[data-pile=unstacked]>a:last-of-type': {
-      borderBottom: 'none',
-    },
-    '&[data-selected=true][data-pile=stacked]>a, &[data-selected=true][data-pile=unstacked], &[data-pile=stacked]:hover>a, &[data-pile=unstacked]:hover, &[data-selected=true]>span>span, &:hover>span>span': {
+    '&[data-selected=true]>div:first-of-type, &[data-pile]:hover>div:first-of-type, &[data-selected=true]>span>span>span, &:hover>span>span>span': {
       borderColor: 'grayDark',
+    },
+    '&[data-pile=unstacked]>span': {
+      gridTemplateRows: '0fr',
+      opacity: 0,
     },
     '&[data-selected=false]>button': {
       opacity: 0.5,
@@ -495,23 +505,63 @@ UIPile.styles = {
     '&:hover>button, &:focus-within>button': {
       opacity: 1,
     },
+    '&[data-pile=unstacked] [aria-hidden=false]': {
+      gridTemplateRows: '1fr',
+    },
+    '&[data-pile=unstacked] [aria-hidden=false]>div>a': {
+      opacity: 1,
+    },
+  },
+  frame: {
+    '>a, >div>div>a': {
+      borderBottom: 'none',
+    },
+  },
+  more: {
+    display: 'grid',
+    gridTemplateRows: '0fr',
+    transition: `grid-template-rows 320ms ${EASE}`,
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
+    '>div': {
+      minHeight: 0,
+      overflow: 'hidden',
+      '>a': {
+        borderTop: '1px solid',
+        borderColor: 'grayLight',
+        opacity: 0,
+        transition: `opacity 240ms ${EASE}`,
+      },
+    },
   },
   sheets: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    '>span': {
-      height: '0.4em',
-      width: 'calc(100% - 1.5em)',
-      backgroundColor: 'grayLighter',
-      border: '1px solid',
-      borderTop: 'none',
-      borderColor: 'grayLight',
-      transition: 'border-color ease 300ms',
-      borderRadius: '0 0 0.25em 0.25em',
+    display: 'grid',
+    gridTemplateRows: '1fr',
+    transition: `grid-template-rows 320ms ${EASE}, opacity 200ms ${EASE}`,
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
     },
-    '>span:last-of-type': {
-      width: 'calc(100% - 3em)',
+    '>span': {
+      minHeight: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      '>span': {
+        height: '0.4em',
+        flexShrink: 0,
+        width: 'calc(100% - 1.5em)',
+        backgroundColor: 'grayLighter',
+        border: '1px solid',
+        borderTop: 'none',
+        borderColor: 'grayLight',
+        borderRadius: '0 0 0.25em 0.25em',
+        transition: 'border-color ease 300ms',
+      },
+      '>span:last-of-type': {
+        width: 'calc(100% - 3em)',
+      },
     },
   },
   toggle: {
@@ -519,26 +569,23 @@ UIPile.styles = {
     position: 'absolute',
     top: ['0.75em', '1em'],
     right: '0.75em',
-    minHeight: ['44px', '24px'],
-    minWidth: ['44px', '24px'],
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.4em',
     backgroundColor: 'grayLight',
-    border: '1px solid',
-    borderColor: 'grayDark',
     color: 'text',
     fontFamily: 'monospace',
     fontWeight: 'bold',
     fontSize: 6,
-    borderRadius: '0.25em',
-    paddingX: 8,
+    borderRadius: '1em',
+    paddingX: 5,
+    paddingY: 9,
     cursor: 'pointer',
     '::before': {
       content: '""',
       position: 'absolute',
-      inset: ['0px', '-8px'],
+      inset: ['-12px', '-8px'],
     },
     '&[aria-expanded=true]': {
       backgroundColor: 'gray',
