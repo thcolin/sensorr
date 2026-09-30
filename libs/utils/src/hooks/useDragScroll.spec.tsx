@@ -5,13 +5,15 @@ import { useDragScroll } from './useDragScroll'
 let clicks = 0
 let reduced = false
 
+// A row lays out wrappers, as List does around each poster: their padding is the row's background
 const Row = () => {
   const drag = useDragScroll<HTMLDivElement>()
 
   return (
     <div ref={drag} data-testid='row'>
-      <button onClick={() => clicks++}>poster</button>
-      <p data-drag-scroll='off'>overview</p>
+      <div data-testid='cell'>
+        <button onClick={() => clicks++}>poster</button>
+      </div>
     </div>
   )
 }
@@ -23,7 +25,9 @@ const Rows = () => {
   return (
     <div ref={outer} data-testid='outer'>
       <div ref={inner} data-testid='row'>
-        <button onClick={() => clicks++}>poster</button>
+        <div data-testid='cell'>
+          <button onClick={() => clicks++}>poster</button>
+        </div>
       </div>
     </div>
   )
@@ -39,7 +43,10 @@ const size = (row) => {
   return row
 }
 
-const mount = () => size(render(<Row />).getByTestId('row'))
+const mount = () => {
+  const { getByTestId } = render(<Row />)
+  return { row: size(getByTestId('row')), cell: getByTestId('cell'), poster: getByTestId('cell').querySelector('button') }
+}
 
 const pointer = (type, target, clientX, pointerType = 'mouse') => {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, button: 0, buttons: type === 'pointerup' ? 0 : 1 })
@@ -58,11 +65,10 @@ describe('useDragScroll', () => {
 
   afterEach(cleanup)
 
-  it('scrolls the row a mouse drags, and swallows the click its release makes', () => {
-    const row = mount()
-    const poster = row.querySelector('button')
+  it('scrolls the row a mouse drags by its background, and swallows the click its release makes', () => {
+    const { row, cell, poster } = mount()
 
-    pointer('pointerdown', poster, 600)
+    pointer('pointerdown', cell, 600)
     pointer('pointermove', window, 580)
     pointer('pointermove', window, 380)
     expect(row.scrollLeft).toBe(200)
@@ -72,13 +78,13 @@ describe('useDragScroll', () => {
     expect(clicks).toBe(0)
   })
 
-  it('lets a press that does not move click', () => {
-    const row = mount()
-    const poster = row.querySelector('button')
+  it('leaves an item to its click, however far the mouse moves', () => {
+    const { row, poster } = mount()
 
     pointer('pointerdown', poster, 600)
-    pointer('pointermove', window, 595)
-    pointer('pointerup', window, 595)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+    pointer('pointerup', window, 380)
     click(poster)
 
     expect(row.scrollLeft).toBe(0)
@@ -86,16 +92,13 @@ describe('useDragScroll', () => {
   })
 
   it('leaves a touch to the native scroll', () => {
-    const row = mount()
-    const poster = row.querySelector('button')
+    const { row, cell } = mount()
 
-    pointer('pointerdown', poster, 600, 'touch')
+    pointer('pointerdown', cell, 600, 'touch')
     pointer('pointermove', window, 300, 'touch')
     pointer('pointerup', window, 300, 'touch')
-    click(poster)
 
     expect(row.scrollLeft).toBe(0)
-    expect(clicks).toBe(1)
   })
 
   it('moves only the innermost of two rows', () => {
@@ -103,7 +106,7 @@ describe('useDragScroll', () => {
     const outer = size(getByTestId('outer'))
     const row = size(getByTestId('row'))
 
-    pointer('pointerdown', row.querySelector('button'), 600)
+    pointer('pointerdown', getByTestId('cell'), 600)
     pointer('pointermove', window, 580)
     pointer('pointermove', window, 380)
 
@@ -112,40 +115,28 @@ describe('useDragScroll', () => {
   })
 
   it('pulls the children past an edge, and springs them back on release', async () => {
-    const row = mount()
-    const poster = row.querySelector('button')
+    const { row, cell } = mount()
 
-    pointer('pointerdown', poster, 600)
+    pointer('pointerdown', cell, 600)
     pointer('pointermove', window, 620)
     pointer('pointermove', window, 820)
     expect(row.scrollLeft).toBe(0)
-    expect(parseFloat(poster.style.translate)).toBeGreaterThan(0)
-    expect(parseFloat(poster.style.translate)).toBeLessThan(200)
+    expect(parseFloat(cell.style.translate)).toBeGreaterThan(0)
+    expect(parseFloat(cell.style.translate)).toBeLessThan(200)
 
     pointer('pointerup', window, 820)
-    await waitFor(() => expect(poster.style.translate).toBe(''), { timeout: 2000 })
+    await waitFor(() => expect(cell.style.translate).toBe(''), { timeout: 2000 })
   })
 
   it('keeps a reduced motion within the bounds', () => {
     reduced = true
-    const row = mount()
-    const poster = row.querySelector('button')
+    const { row, cell } = mount()
 
-    pointer('pointerdown', poster, 600)
+    pointer('pointerdown', cell, 600)
     pointer('pointermove', window, 620)
     pointer('pointermove', window, 820)
 
     expect(row.scrollLeft).toBe(0)
-    expect(poster.style.translate || '').toBe('')
-  })
-
-  it('leaves the prose marked off to its text selection', () => {
-    const row = mount()
-
-    pointer('pointerdown', row.querySelector('p'), 600)
-    pointer('pointermove', window, 580)
-    pointer('pointermove', window, 380)
-
-    expect(row.scrollLeft).toBe(0)
+    expect(cell.style.translate || '').toBe('')
   })
 })

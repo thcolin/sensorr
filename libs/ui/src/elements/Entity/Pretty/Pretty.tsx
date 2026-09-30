@@ -173,7 +173,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
           </div>
         )}
       </DragScroll>
-      <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }} data-drag-scroll='off'>
+      <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </div>
     </div>
