@@ -55,22 +55,40 @@ const isIdle = (job) => {
   return job.meta.done && !job.meta.error && !imports?.success && !imports?.warning && !imports?.overdue && !recorded && !proposal && !warning
 }
 
-// Of idle import or airing shows telling the same summary in a row, "all" keeps the newest only
+const summaryOf = (job) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(job.meta.summary, false, job.meta.config)
+
+const dayOf = (job) => {
+  const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
+  return ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+// Compares what the card shows, since the summary keys come back in any order
+const signatureOf = (job) => summaryOf(job).map(({ key, length }) => `${key} ${length}`).join(',')
+
+// Of idle import or airing shows telling the same summary on the same day, "all" stacks the older ones under the newest
 const listedOf = (jobs) => {
-  const newer = {}
+  const piles = {}
 
-  return jobs.filter((job) => {
+  return jobs.filter(job => job.meta.done && !isEmptyImport(job)).reduce((listed, job) => {
     const name = jobNameOf(job.meta)
+    const key = `${name} ${dayOf(job)}`
 
-    if (!REPEATED.includes(name)) {
-      return true
+    if (!REPEATED.includes(name) || !isIdle(job)) {
+      delete piles[key]
+      return [...listed, { ...job, stack: [] }]
     }
 
-    const summary = JSON.stringify(job.meta.summary)
-    const repeated = isIdle(job) && newer[name] === summary
-    newer[name] = isIdle(job) ? summary : null
-    return !isEmptyImport(job) && !repeated
-  })
+    const signature = signatureOf(job)
+
+    if (piles[key]?.signature === signature) {
+      piles[key].head.stack.push(job)
+      return listed
+    }
+
+    const head = { ...job, stack: [] }
+    piles[key] = { signature, head }
+    return [...listed, head]
+  }, [])
 }
 
 const UIJobs = ({ controls = null, ...props }) => {
@@ -88,7 +106,7 @@ const UIJobs = ({ controls = null, ...props }) => {
 
   useEffect(() => {
     if ((!job && !loading && jobs.length) || (!loading && !jobs.find(j => j.job === job) && jobs.length && !(location.state as any)?.new)) {
-      navigate(`/jobs/${(listedOf(jobs)[0] || jobs[0]).job}`, { replace: true })
+      navigate(`/jobs/${(jobs.find(job => !job.meta.done) || listedOf(jobs)[0] || jobs[0]).job}`, { replace: true })
       return
     }
   }, [jobs, job, loading])
@@ -195,19 +213,16 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const [filter, setFilter] = useState(null)
   const painted = usePainted()
   const mobile = useResponsiveValue([true, false])
+  const [unstacked, setUnstacked] = useState({})
+  const running = useMemo(() => jobs.filter(job => !job.meta.done && (!filter || jobNameOf(job.meta) === filter)), [jobs, filter])
   const listed = useMemo(() => listedOf(jobs), [jobs])
-  const groups = useMemo(() => (filter ? jobs.filter(job => jobNameOf(job.meta) === filter) : listed).reduce((groups, job) => {
-    const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
-    const key = ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-
-    return {
-      ...groups,
-      [key]: [
-        ...(groups[key] || []),
-        job,
-      ].sort((a, b) => b.start - a.start),
-    }
-  }, {}), [jobs, listed, filter])
+  const groups = useMemo(() => (filter ? jobs.filter(job => job.meta.done && jobNameOf(job.meta) === filter).map(job => ({ ...job, stack: [] })) : listed).reduce((groups, job) => ({
+    ...groups,
+    [dayOf(job)]: [
+      ...(groups[dayOf(job)] || []),
+      job,
+    ].sort((a, b) => b.start - a.start),
+  }), running.length ? { running } : {}), [jobs, listed, running, filter])
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
     .map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
@@ -251,19 +266,20 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </div>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
-          <CommandTabs options={options} all={listed.length} value={filter} onChange={setFilter} />
+          <CommandTabs options={options} all={running.length + listed.length} value={filter} onChange={setFilter} />
           <div sx={UISidebar.styles.jobs}>
             {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
               <Fragment key={distance}>
                 <h6>{distance}</h6>
                 <div sx={{ paddingX: 2 }}>
-                  {jobs.map(j => (
-                    <Job
+                  {jobs.map(({ stack = [], ...j }) => (
+                    <Pile
                       key={j.job}
-                      emoji={JOB_EMOJIS[jobNameOf(j.meta)]}
-                      selected={j.job === job}
-                      {...j}
-                      summary={(JOBS_UI[jobNameOf(j.meta)]?.summary || (() => []))(j.meta.summary, false, j.meta.config)}
+                      head={j}
+                      stack={stack}
+                      job={job}
+                      unstacked={!!unstacked[j.job]}
+                      onToggle={() => setUnstacked(unstacked => ({ ...unstacked, [j.job]: !unstacked[j.job] }))}
                     />
                   ))}
                 </div>
@@ -402,7 +418,102 @@ UISidebar.styles = {
 
 const Sidebar = memo(UISidebar)
 
-const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary }) => {
+const UIPile = ({ head, stack, job, unstacked, onToggle }) => {
+  const oldest = stack[stack.length - 1]
+  const jobs = [head, ...(unstacked ? stack : [])]
+
+  return (
+    <div sx={UIPile.styles.element} data-stacked={!!stack.length && !unstacked}>
+      {jobs.map((j, index) => (
+        <Job
+          key={j.job}
+          emoji={JOB_EMOJIS[jobNameOf(j.meta)]}
+          selected={j.job === job}
+          since={index === 0 && !unstacked ? oldest?.start : null}
+          {...j}
+          summary={summaryOf(j)}
+        />
+      ))}
+      {!!stack.length && (
+        <>
+          {!unstacked && <span sx={UIPile.styles.sheets} aria-hidden={true}><span /><span /></span>}
+          <button
+            type='button'
+            sx={UIPile.styles.toggle}
+            aria-expanded={unstacked}
+            aria-label={`${unstacked ? 'Stack' : 'Show'} ${stack.length} more ${jobTitleOf(jobNameOf(head.meta))} jobs telling the same`}
+            onClick={onToggle}
+          >
+            ×{stack.length + 1}
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+UIPile.styles = {
+  element: {
+    position: 'relative',
+    '&[data-stacked=true]': {
+      marginY: 10,
+      '>a': {
+        backgroundColor: 'grayLighter',
+        border: '1px solid',
+        borderColor: 'grayDark',
+        borderRadius: '0.25em',
+        paddingX: 10,
+      },
+    },
+  },
+  sheets: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    '>span': {
+      height: '0.4em',
+      backgroundColor: 'grayLighter',
+      border: '1px solid',
+      borderTop: 'none',
+      borderColor: 'grayDark',
+      borderRadius: '0 0 0.25em 0.25em',
+    },
+    '>span:first-of-type': {
+      width: 'calc(100% - 1.5em)',
+    },
+    '>span:last-of-type': {
+      width: 'calc(100% - 3em)',
+      opacity: 0.6,
+    },
+  },
+  toggle: {
+    variant: 'button.reset',
+    position: 'absolute',
+    top: '1em',
+    right: '0.75em',
+    backgroundColor: 'grayLight',
+    color: 'text',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    fontSize: 6,
+    borderRadius: '1em',
+    paddingX: 5,
+    paddingY: 9,
+    cursor: 'pointer',
+    '&[aria-expanded=true]': {
+      backgroundColor: 'gray',
+    },
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'text',
+      outlineOffset: '2px',
+    },
+  },
+}
+
+const Pile = memo(UIPile)
+
+const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary, since = null }) => {
   const ref = useRef(null)
 
   // useEffect(() => {
@@ -428,7 +539,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
                 </span>
               )}
             </span>
-            <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+            <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {since && `${(new Date(since)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })} → `}{(new Date(start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
           </span>
         </span>
         <span sx={UIJob.styles.summary}>
