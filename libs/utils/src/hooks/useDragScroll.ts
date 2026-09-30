@@ -9,10 +9,19 @@ const rubber = (distance: number, dimension: number) => (1 - 1 / ((distance * 0.
 const INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [tabindex]'
 
 // The row's background: the row itself, or the padding of a wrapper it lays out. What a wrapper holds, a
-// poster, a card, a pill, keeps its click, hover and text selection.
-const background = (element: HTMLElement, target: EventTarget) => target === element || (
-  (target as Element).parentElement === element && !(target as Element).matches(INTERACTIVE)
-)
+// poster, a card, a pill, keeps its click, hover and text selection. An item marked
+// `data-drag-scroll='grab'`, a row's direct child with nothing to click, is grabbed whole.
+const background = (element: HTMLElement, target: EventTarget) => {
+  const node = target as Element
+  const whole = node.closest?.('[data-drag-scroll="grab"]')
+
+  if (whole?.parentElement === element) {
+    const control = node.closest(INTERACTIVE)
+    return !control || !whole.contains(control)
+  }
+
+  return node === element || (node.parentElement === element && !node.matches(INTERACTIVE))
+}
 
 // Every row the hook holds, and how it glides there: its motion value is the one writer of its scroll
 const glides = new WeakMap<HTMLElement, (left: number) => void>()

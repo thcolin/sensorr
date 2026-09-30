@@ -29,6 +29,20 @@ const Pills = () => {
   )
 }
 
+// Tasks fill their row with nothing to click, as in Progress: each is grabbed whole
+const Tasks = () => {
+  const drag = useDragScroll<HTMLDivElement>()
+
+  return (
+    <div ref={drag} data-testid='row'>
+      <div data-drag-scroll='grab'>
+        <span data-testid='task'>record</span>
+        <button onClick={() => clicks++}>details</button>
+      </div>
+    </div>
+  )
+}
+
 const Rows = () => {
   const outer = useDragScroll<HTMLDivElement>()
   const inner = useDragScroll<HTMLDivElement>()
@@ -164,6 +178,22 @@ describe('useDragScroll', () => {
 
     expect(row.scrollLeft).toBe(0)
     expect(clicks).toBe(1)
+  })
+
+  it('grabs an item marked grab whole, except what it holds to click', () => {
+    const { getByTestId } = render(<Tasks />)
+    const row = size(getByTestId('row'))
+
+    pointer('pointerdown', getByTestId('task'), 600)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+    pointer('pointerup', window, 380)
+    expect(row.scrollLeft).toBe(200)
+
+    pointer('pointerdown', row.querySelector('button'), 600)
+    pointer('pointermove', window, 580)
+    pointer('pointermove', window, 380)
+    expect(row.scrollLeft).toBe(200)
   })
 
   it('shows grab over the background only', () => {

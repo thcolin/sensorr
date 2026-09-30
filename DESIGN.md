@@ -714,7 +714,8 @@ instead of writing a bespoke empty state.
   `apps/web/src/pages/Proposals/Proposals.tsx`).
 - A row that scrolls sideways, of posters, pills, badges or artworks, is grabbed by a mouse
   by its background, the row or the padding around its items, never by an item, which keeps
-  its click, hover and text selection. It scrolls with a short glide: past an edge it follows at the resistance of iOS
+  its click, hover and text selection. An item with nothing to click that fills its row, a
+  job's task in `Progress`, is marked `data-drag-scroll='grab'` and grabbed whole. It scrolls with a short glide: past an edge it follows at the resistance of iOS
   `(1 - 1 / (d × 0.55 / w + 1)) × w`, released it glides on framer-motion's inertia,
   `power: 0.35`, `timeConstant: 250`, and springs back to the edge at stiffness `400`,
   damping `40`, critically damped. A touch keeps the native scroll, reduced motion drops
