@@ -22,29 +22,31 @@ const VIEWS = [
 export const ControlsContext = createContext(null)
 
 // The view lives in the query string so a reload keeps it, and a phone has no room for the month grid. Switching
-// replaces the location, whose history state starts empty: the controls go along in the location state.
-export const useView = () => {
+// replaces the location, whose history state starts empty: the controls go along in the location state. The default
+// is the first of `initial` the device offers, and stays out of the query string.
+export const useView = (initial = ['grid']) => {
   const [params, setParams] = useSearchParams()
   const [controls] = useContext(ControlsContext) || []
   const desktop = useResponsiveValue([false, true])
   const options = useMemo(() => VIEWS.filter(view => desktop || !view.desktop), [desktop])
-  const view = options.find(({ value }) => value === params.get('view'))?.value || 'grid'
+  const fallback = initial.find(value => options.some(option => option.value === value))
+  const view = options.find(({ value }) => value === params.get('view'))?.value || fallback
 
   const setView = useCallback((value: string) => setParams((params) => {
-    if (value === 'grid') {
+    if (value === fallback) {
       params.delete('view')
     } else {
       params.set('view', value)
     }
 
     return params
-  }, { replace: true, state: { controls } }), [setParams, controls])
+  }, { replace: true, state: { controls } }), [setParams, controls, fallback])
 
   return [view, setView, options] as const
 }
 
-const UIViewSelect = ({ style }) => {
-  const [view, setView, options] = useView()
+const UIViewSelect = ({ style = undefined, initial = undefined }) => {
+  const [view, setView, options] = useView(initial)
 
   return (
     <ControlsSelect id='view' value={view} options={options} onChange={setView} fixedWidth={true} style={style} />
