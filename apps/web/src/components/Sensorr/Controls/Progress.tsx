@@ -1,13 +1,14 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import Tippy from '@tippyjs/react'
+import { DragScroll } from '@sensorr/ui'
 
 const UIProgress = ({ progress: { id = null, tasks = [] } = {}, style = {}, ...props }) => (
   <div sx={UIProgress.styles.element} style={style}>
-    <div sx={UIProgress.styles.steps}>
+    <DragScroll sx={UIProgress.styles.steps}>
       {tasks.map((task, index) => (
         <Task key={`${id}-${index}`} {...task} />
       ))}
-    </div>
+    </DragScroll>
   </div>
 )
 

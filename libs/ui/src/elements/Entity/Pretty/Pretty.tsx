@@ -6,6 +6,7 @@ import { Poster, PosterProps } from '../Poster/Poster'
 import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { pictureSrc } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
+import { DragScroll } from '../../../atoms/DragScroll/DragScroll'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
 export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
@@ -160,7 +161,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
           </small>
         )}
       </div>
-      <div sx={UIAbout.styles.badges}>
+      <DragScroll sx={UIAbout.styles.badges}>
         {badges?.reviews?.component && (
           <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
             <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
@@ -171,7 +172,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
             <badges.guests.component {...badges?.guests?.props} />
           </div>
         )}
-      </div>
+      </DragScroll>
       <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </div>

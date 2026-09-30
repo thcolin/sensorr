@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Cast, Collection, Crew, Movie, Person } from '@sensorr/tmdb'
-import { useHistoryState, useResponsiveValue } from '@sensorr/utils'
+import { useDragScroll, useHistoryState, useResponsiveValue } from '@sensorr/utils'
 import nanobounce from 'nanobounce'
 import ResponsiveVirtualGrid from 'react-responsive-virtual-grid'
 import { Badge, BadgeProps } from '../../atoms/Badge/Badge'
@@ -60,6 +60,7 @@ const UIList = ({
 }: ListProps) => {
   const mobile = useResponsiveValue([true, false])
   const ref = useRef<HTMLDivElement>()
+  const drag = useDragScroll(ref, display === 'row')
   const debounce = useMemo(() => nanobounce(100), [])
   const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0], { enabled: !stack })
 
@@ -96,7 +97,7 @@ const UIList = ({
   }), [display, compact, space, mobile, virtual])
 
   return (
-    <div ref={ref} sx={styles.container} onScroll={handleScroll}>
+    <div ref={drag} sx={styles.container} onScroll={handleScroll}>
       {override || (
         (mobile && virtual && display === 'row') ? (
           <ResponsiveVirtualGrid

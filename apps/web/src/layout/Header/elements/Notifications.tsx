@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Button, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
+import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
 import toast from 'react-hot-toast'
 import { Policy, coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
@@ -750,7 +750,7 @@ const NotificationRelease = ({ release, swap = null }) => (
       </Tippy>
     )}
     <div sx={{ display: 'flex', flexDirection: ['column', 'row'], alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-      <div
+      <DragScroll
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -781,7 +781,7 @@ const NotificationRelease = ({ release, swap = null }) => (
             <code>{emojize('💯 ', release?.score || 0)}</code>
           </ReleaseTag>
         )}
-      </div>
+      </DragScroll>
       <div
         sx={{
           display: 'flex',

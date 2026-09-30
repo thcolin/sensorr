@@ -1,8 +1,10 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeUI } from 'theme-ui'
+import { useDragScroll } from '@sensorr/utils'
 import { Shadow } from '../../atoms/Shadow/Shadow'
 import { Icon } from '../../atoms/Icon/Icon'
+import { DragScroll } from '../../atoms/DragScroll/DragScroll'
 
 export interface BulkOption {
   value: any
@@ -44,6 +46,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
   const shown = useRef(count)
   const wrapper = useRef<HTMLDivElement>(null)
   const row = useRef<HTMLDivElement>(null)
+  const drag = useDragScroll(row)
   const overlay = useRef<HTMLDivElement>(null)
   // The box of the opening button inside the options, which can be wider than the bar.
   const from = useRef(null)
@@ -178,7 +181,7 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         aria-hidden={!visible}
         {...(!visible ? { inert: '' } : {})}
       >
-        <div ref={row} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`} {...(action ? { inert: '' } : {})}>
+        <div ref={drag} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`} {...(action ? { inert: '' } : {})}>
           {actions.map(({ key, label, icon = null, disabled: off = false, onClick, options }) => (
             <button
               key={key}
@@ -201,14 +204,14 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
               {!!action.icon && <span data-icon={true} aria-hidden={true}>{action.icon}</span>}
               {action.label}
             </strong>
-            <span>
+            <DragScroll>
               {action.options.map((option, index) => (
                 <button key={index} type='button' sx={UIBulk.styles.segment} data-option={true} disabled={disabled} onClick={() => close(() => action.onChange?.(option))}>
                   {!!option.icon && <span data-icon={true} aria-hidden={true}>{option.icon}</span>}
                   {option.label}
                 </button>
               ))}
-            </span>
+            </DragScroll>
             <button type='button' sx={UIBulk.styles.segment} data-cancel={true} onClick={() => close()} aria-label='Cancel' title='Cancel (Esc)'>
               <Icon value='clear' active={true} width='1em' height='1em' />
             </button>
@@ -370,7 +373,7 @@ UIBulk.styles = {
       fontWeight: 'body',
       whiteSpace: 'nowrap',
     },
-    '>span': {
+    '>div': {
       flex: 1,
       display: 'flex',
       minWidth: 0,

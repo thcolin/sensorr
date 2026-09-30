@@ -14141,6 +14141,11 @@ react-i18next@^14.0.5:
     "@babel/runtime" "^7.23.9"
     html-parse-stringify "^3.0.1"
 
+react-indiana-drag-scroll@3.0.4-alpha:
+  version "3.0.4-alpha"
+  resolved "https://registry.yarnpkg.com/react-indiana-drag-scroll/-/react-indiana-drag-scroll-3.0.4-alpha.tgz#0c2b945a4f47efce9527fa325490632382ac43bf"
+  integrity sha512-gSigi49cMX7iNLW2x6e+K+Gk+PnCgzTOiyx/ERgOE6z0q+aCJl4P1tgX6WSmPmpb4kk6imgEIDgw0YG69ZqCdQ==
+
 react-input-autosize@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-3.0.0.tgz#6b5898c790d4478d69420b55441fcc31d5c50a85"

@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { Button, Pane, Picture, pictureSrc, Warning } from '@sensorr/ui'
+import { Button, DragScroll, Pane, Picture, pictureSrc, Warning } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { artworkOf } from '../../store/plex'
@@ -341,7 +341,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
             {!lists.loading && lists.sets !== null && !lists.sets.length && (
               <p sx={Picker.styles.empty}>No MediUX set for this title</p>
             )}
-            <div sx={Picker.styles.row} onKeyDown={rove}>
+            <DragScroll sx={Picker.styles.row} onKeyDown={rove}>
               {(lists.sets || []).map((set, index) => (
                 <button
                   key={set.id}
@@ -361,7 +361,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
                   <code>{set.author || set.title}</code>
                 </button>
               ))}
-            </div>
+            </DragScroll>
           </section>
         )}
         {kinds.map(({ kind, emoji, label, width, height, size }) => (
@@ -385,7 +385,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
             {(groups[kind].length ? groups[kind] : [{ label: null, items: [] }]).map(({ label: group, items }, row) => (
               <div key={group || 'none'}>
                 {!!group && <small sx={Picker.styles.group}>{group} · {items.length}</small>}
-                <div sx={Picker.styles.row} onKeyDown={rove}>
+                <DragScroll sx={Picker.styles.row} onKeyDown={rove}>
                   {!row && (
                     <button
                       type='button'
@@ -418,7 +418,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
                       <code>{candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.lang || candidate.source}</code>
                     </button>
                   ))}
-                </div>
+                </DragScroll>
               </div>
             ))}
           </section>

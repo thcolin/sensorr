@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef } from 'react'
 import { jobLabelOf } from '@sensorr/sensorr'
+import { useDragScroll } from '@sensorr/utils'
 
 export interface CommandTab {
   value: string
@@ -47,6 +48,7 @@ const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
 // One command at a time, `null` shows them all. Sits flush under a `primary` head.
 const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsProps) => {
   const row = useRef<HTMLDivElement>(null)
+  const drag = useDragScroll(row)
 
   // The pressed pill slides to the start of the row, where `all` sits at first
   useEffect(() => {
@@ -101,7 +103,7 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
   }
 
   return (
-    <div ref={row} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element}>
+    <div ref={drag} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element}>
       {capsules.map(({ group, tabs }) => group ? (
         <div key={group} role='group' aria-label={group}>
           <span>{group}</span>

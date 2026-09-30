@@ -7,6 +7,7 @@ import { AbstractEntity, AbstractEntityProps } from '../../components/AbstractEn
 import { Grid, GridProps } from '../../elements/Grid/Grid'
 import { List, ListProps } from '../../elements/List/List'
 import { Warning, WarningProps } from '../../atoms/Warning/Warning'
+import { DragScroll } from '../../atoms/DragScroll/DragScroll'
 import { NavLink } from 'react-router-dom'
 import { Icon } from '@sensorr/ui'
 
@@ -113,14 +114,14 @@ const UIEntities = ({
     <EntitiesContextProvider entities={entities}>
       <div sx={{ ...UIEntities.styles.element, ...UIEntities.styles[display] }}>
         {label && (
-          <div sx={UIEntities.styles.label}>
+          <DragScroll sx={UIEntities.styles.label}>
             {(typeof label === 'string' && more) ? (
               <NavLink to={more.to} state={more.state} viewTransition>
                 {label}
                 <Icon value='chevron' direction={false} />
               </NavLink>
             ) : label}
-          </div>
+          </DragScroll>
         )}
         {display === 'grid' ? (
           <Grid
