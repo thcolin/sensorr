@@ -7,7 +7,7 @@ let reduced = false
 
 // A row lays out wrappers, as List does around each poster: their padding is the row's background
 const Row = () => {
-  const drag = useDragScroll<HTMLDivElement>()
+  const drag = useDragScroll<HTMLDivElement>(undefined, { byBackground: true })
 
   return (
     <div ref={drag} data-testid='row'>
@@ -18,7 +18,7 @@ const Row = () => {
   )
 }
 
-// Pills lay straight in the row, as in CommandTabs: the gaps between them are its background
+// Pills lay straight in the row, as in CommandTabs: a drag takes over their click
 const Pills = () => {
   const drag = useDragScroll<HTMLDivElement>()
 
@@ -29,23 +29,9 @@ const Pills = () => {
   )
 }
 
-// Tasks fill their row with nothing to click, as in Progress: each is grabbed whole
-const Tasks = () => {
-  const drag = useDragScroll<HTMLDivElement>()
-
-  return (
-    <div ref={drag} data-testid='row'>
-      <div data-drag-scroll='grab'>
-        <span data-testid='task'>record</span>
-        <button onClick={() => clicks++}>details</button>
-      </div>
-    </div>
-  )
-}
-
 const Rows = () => {
-  const outer = useDragScroll<HTMLDivElement>()
-  const inner = useDragScroll<HTMLDivElement>()
+  const outer = useDragScroll<HTMLDivElement>(undefined, { byBackground: true })
+  const inner = useDragScroll<HTMLDivElement>(undefined, { byBackground: true })
 
   return (
     <div ref={outer} data-testid='outer'>
@@ -90,7 +76,7 @@ describe('useDragScroll', () => {
 
   afterEach(cleanup)
 
-  it('scrolls the row a mouse drags by its background, and swallows the click its release makes', () => {
+  it('scrolls a row of posters a mouse drags by its background, and swallows the click its release makes', () => {
     const { row, cell, poster } = mount()
 
     pointer('pointerdown', cell, 600)
@@ -103,7 +89,7 @@ describe('useDragScroll', () => {
     expect(clicks).toBe(0)
   })
 
-  it('leaves an item to its click, however far the mouse moves', () => {
+  it('leaves a poster to its click, however far the mouse moves', () => {
     const { row, poster } = mount()
 
     pointer('pointerdown', poster, 600)
@@ -165,7 +151,7 @@ describe('useDragScroll', () => {
     expect(cell.style.translate || '').toBe('')
   })
 
-  it('leaves a pill laid straight in the row to its click', () => {
+  it('grabs a row of pills by a pill, and swallows the click its release makes', () => {
     const { getByTestId } = render(<Pills />)
     const row = size(getByTestId('row'))
     const pill = row.querySelector('button')
@@ -173,27 +159,11 @@ describe('useDragScroll', () => {
     pointer('pointerdown', pill, 600)
     pointer('pointermove', window, 580)
     pointer('pointermove', window, 380)
+    expect(row.scrollLeft).toBe(200)
+
     pointer('pointerup', window, 380)
     click(pill)
-
-    expect(row.scrollLeft).toBe(0)
-    expect(clicks).toBe(1)
-  })
-
-  it('grabs an item marked grab whole, except what it holds to click', () => {
-    const { getByTestId } = render(<Tasks />)
-    const row = size(getByTestId('row'))
-
-    pointer('pointerdown', getByTestId('task'), 600)
-    pointer('pointermove', window, 580)
-    pointer('pointermove', window, 380)
-    pointer('pointerup', window, 380)
-    expect(row.scrollLeft).toBe(200)
-
-    pointer('pointerdown', row.querySelector('button'), 600)
-    pointer('pointermove', window, 580)
-    pointer('pointermove', window, 380)
-    expect(row.scrollLeft).toBe(200)
+    expect(clicks).toBe(0)
   })
 
   it('shows grab over the background only', () => {

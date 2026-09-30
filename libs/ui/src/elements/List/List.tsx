@@ -64,7 +64,7 @@ const UIList = ({
   const mobile = useResponsiveValue([true, false])
   const own = useRef<HTMLDivElement>()
   const ref = scroller || own
-  const drag = useDragScroll(ref, display === 'row')
+  const drag = useDragScroll(ref, { enabled: display === 'row', byBackground: true })
   const debounce = useMemo(() => nanobounce(100), [])
   const [scroll, setScroll] = useHistoryState(`${id}-scroll`, [0, 0], { enabled: !stack })
 

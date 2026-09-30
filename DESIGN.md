@@ -712,10 +712,11 @@ instead of writing a bespoke empty state.
   move from one place to the other. Everything else, the comparison pills included,
   belongs to its form: it fades out, or shows as the row's edge uncovers it (`MORPH` in
   `apps/web/src/pages/Proposals/Proposals.tsx`).
-- A row that scrolls sideways, of posters, pills, badges or artworks, is grabbed by a mouse
-  by its background, the row or the padding around its items, never by an item, which keeps
-  its click, hover and text selection. An item with nothing to click that fills its row, a
-  job's task in `Progress`, is marked `data-drag-scroll='grab'` and grabbed whole. It scrolls with a short glide: past an edge it follows at the resistance of iOS
+- A row that scrolls sideways, of pills, buttons, tags or artworks, is grabbed by a mouse
+  anywhere: past `10px` the drag takes over the click of the pill or button it starts on. A row
+  of posters or cards, `List` and the badges of `Pretty`, is grabbed by its background only, the
+  row or the padding around its items, and a poster keeps its click, hover and text selection
+  (`byBackground`). It scrolls with a short glide: past an edge it follows at the resistance of iOS
   `(1 - 1 / (d × 0.55 / w + 1)) × w`, released it glides on framer-motion's inertia,
   `power: 0.35`, `timeConstant: 250`, and springs back to the edge at stiffness `400`,
   damping `40`, critically damped. A touch keeps the native scroll, reduced motion drops

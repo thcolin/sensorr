@@ -161,7 +161,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
           </small>
         )}
       </div>
-      <DragScroll sx={UIAbout.styles.badges}>
+      <DragScroll sx={UIAbout.styles.badges} byBackground={true}>
         {badges?.reviews?.component && (
           <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
             <badges.reviews.component {...badges?.reviews?.props} palette={palette} />

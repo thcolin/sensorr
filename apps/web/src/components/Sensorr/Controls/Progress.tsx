@@ -98,7 +98,6 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
     <Tippy disabled={!done} content={<TaskDetails results={results} />} >
       <div
         ref={ref}
-        data-drag-scroll='grab'
         sx={{
           ...UIProgress.styles.step,
           cursor: done ? 'context-menu' : ongoing ? 'progress' : 'default',

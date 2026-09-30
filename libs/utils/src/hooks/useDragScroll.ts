@@ -8,19 +8,16 @@ const rubber = (distance: number, dimension: number) => (1 - 1 / ((distance * 0.
 
 const INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [tabindex]'
 
-// The row's background: the row itself, or the padding of a wrapper it lays out. What a wrapper holds, a
-// poster, a card, a pill, keeps its click, hover and text selection. An item marked
-// `data-drag-scroll='grab'`, a row's direct child with nothing to click, is grabbed whole.
-const background = (element: HTMLElement, target: EventTarget) => {
-  const node = target as Element
-  const whole = node.closest?.('[data-drag-scroll="grab"]')
+// The row's background: the row itself, or the padding of a wrapper it lays out
+const background = (element: HTMLElement, target: EventTarget) => target === element || (
+  (target as Element).parentElement === element && !(target as Element).matches(INTERACTIVE)
+)
 
-  if (whole?.parentElement === element) {
-    const control = node.closest(INTERACTIVE)
-    return !control || !whole.contains(control)
-  }
-
-  return node === element || (node.parentElement === element && !node.matches(INTERACTIVE))
+interface DragScrollOptions {
+  enabled?: boolean
+  // Grabbed by its background only: what its wrappers hold, a poster or a card, keeps its click, hover and
+  // text selection. Otherwise a drag takes over the click of whatever it starts on, a pill or a button.
+  byBackground?: boolean
 }
 
 // Every row the hook holds, and how it glides there: its motion value is the one writer of its scroll
@@ -31,13 +28,14 @@ const swallow = (e: MouseEvent) => {
   e.stopPropagation()
 }
 
-const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
+const attach = (element: HTMLElement, options: MutableRefObject<DragScrollOptions>) => {
   const x = motionValue(element.scrollLeft)
   let animation = null
   let press = null
   let dragging = false
 
   const max = () => element.scrollWidth - element.clientWidth
+  const grabs = (target: EventTarget) => options.current.enabled && (!options.current.byBackground || background(element, target))
 
   const unsubscribe = x.on('change', (value) => {
     const left = Math.max(0, Math.min(value, max()))
@@ -148,7 +146,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     // Below the content box is the scrollbar, which scrolls on its own
     const below = e.clientY - element.getBoundingClientRect().top - element.clientTop >= element.clientHeight
 
-    if (e.grabbed || !active.current || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0 || below || !background(element, e.target)) {
+    if (e.grabbed || e.pointerType !== 'mouse' || e.button !== 0 || max() <= 0 || below || !grabs(e.target)) {
       return
     }
 
@@ -165,10 +163,17 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     window.addEventListener('pointercancel', onPointerUp)
   }
 
-  // An item's content inherits no grab, the pointer shows it where a press would take the row
+  // Where a press would take the row, and there only, the pointer shows grab
   const onPointerOver = (e: PointerEvent) => {
     if (!dragging) {
-      element.style.cursor = active.current && max() > 0 && background(element, e.target) ? 'grab' : ''
+      element.style.cursor = max() > 0 && grabs(e.target) ? 'grab' : ''
+    }
+  }
+
+  // An artwork is an image in a button: a drag that starts on it would be the browser's own
+  const onDragStart = (e: DragEvent) => {
+    if (grabs(e.target)) {
+      e.preventDefault()
     }
   }
 
@@ -183,6 +188,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
 
   element.addEventListener('pointerdown', onPointerDown)
   element.addEventListener('pointerover', onPointerOver)
+  element.addEventListener('dragstart', onDragStart)
   element.addEventListener('wheel', onWheel, { passive: true })
 
   return () => {
@@ -198,6 +204,7 @@ const attach = (element: HTMLElement, active: MutableRefObject<boolean>) => {
     x.destroy()
     element.removeEventListener('pointerdown', onPointerDown)
     element.removeEventListener('pointerover', onPointerOver)
+    element.removeEventListener('dragstart', onDragStart)
     element.removeEventListener('wheel', onWheel)
   }
 }
@@ -235,16 +242,16 @@ export const pageOf = (element: HTMLElement, direction: 1 | -1) => {
   return to < width / 4 ? 0 : to
 }
 
-// A mouse grabs the element by its background to scroll it sideways, with an inertia and the rubber band
-// of iOS; a touch keeps the native scroll. The release that ends a drag is not a click. Returns the ref to put on the element.
-export const useDragScroll = <T extends HTMLElement>(ref?: MutableRefObject<T>, enabled = true) => {
-  const active = useRef(enabled)
+// A mouse grabs the element to scroll it sideways, with an inertia and the rubber band of iOS; a touch keeps
+// the native scroll. The release that ends a drag is not a click. Returns the ref to put on the element.
+export const useDragScroll = <T extends HTMLElement>(ref?: MutableRefObject<T>, { enabled = true, byBackground = false }: DragScrollOptions = {}) => {
+  const options = useRef<DragScrollOptions>({ enabled, byBackground })
   const detach = useRef<() => void>(null)
-  active.current = enabled
+  options.current = { enabled, byBackground }
 
   return useCallback((element: T) => {
     detach.current?.()
-    detach.current = element ? attach(element, active) : null
+    detach.current = element ? attach(element, options) : null
 
     if (ref) {
       ref.current = element
