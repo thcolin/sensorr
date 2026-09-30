@@ -250,7 +250,7 @@ const schema = {
         threshold: {
           doc: "Shrink movies job will only consider movies with releases above this threshold (Gb)",
           format: 'Number',
-          default: true,
+          default: 0,
         },
       },
     },

@@ -43,7 +43,7 @@ const FetchAPIMoviesTask = ({ threshold = 0, ...props }) => {
           state: 'archived',
           shrink: true,
           'releases.proposal': false,
-          ...(threshold ? { 'releases.size': threshold * Math.pow(1024, 3) } : {}),
+          ...(threshold ? { 'release_size.gte': threshold } : {}),
           // 'shrinked_at.lte': new Date(
           //   new Date().getFullYear(),
           //   new Date().getMonth() - 1,

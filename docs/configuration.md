@@ -13,6 +13,7 @@ A `[]` in a name stands for one item of the array above it.
 | `vapidPublicKey` | `string` | `null` | VAPID Public Key for web push notifications |
 | `tmdb` | `string` | `""` | TMDB API Key |
 | `blackhole` | `string` | `/tmp` | Blackhole absolute path to store downloaded .torrent or .nzb files |
+| `magnet` | `boolean` | `false` | Write the magnet link of a movie release to the blackhole as a .magnet file, for a download client that reads them from its watched folder |
 | `region` | `string` | `fr-FR` | Sensorr region (usefull for TMDB requests) |
 | `adult` | `boolean` | `false` | Allow adult content from TMDB on Sensorr |
 
@@ -52,7 +53,7 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.shrink.movies.cron` | `string` | `0 5 * * 0` | Shrink movies job cron |
 | `jobs.shrink.movies.paused` | `boolean` | `false` | Pause Shrink movies job |
 | `jobs.shrink.movies.proposalOnly` | `boolean` | `true` | Shrink movies job will only submit proposal and don't download any release |
-| `jobs.shrink.movies.threshold` | `number` | `true` | Shrink movies job will only consider movies with releases above this threshold (Gb) |
+| `jobs.shrink.movies.threshold` | `number` | `0` | Shrink movies job will only consider movies with releases above this threshold (Gb) |
 | `jobs.report.movies.cron` | `string` | `0 * * * *` | Report movies job cron |
 | `jobs.report.movies.paused` | `boolean` | `true` | Pause Report movies job |
 | `jobs.report.movies.proposalOnly` | `boolean` | `true` | Report movies job will only submit proposal and don't download any release |
@@ -93,6 +94,12 @@ A `[]` in a name stands for one item of the array above it.
 | `plex.pin.id` | `string` | `""` | — |
 | `plex.token` | `string` | `""` | — |
 | `plex.client_identifier` | `string` | `""` | Unique Plex client identifier (X-Plex-Client-Identifier), generated once per installation and persisted |
+
+## Mediux
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `mediux.token` | `string` | `""` | MediUX API token, to list the artwork sets of a movie or a show |
 
 ## Znabs
 

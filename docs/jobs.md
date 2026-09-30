@@ -53,7 +53,7 @@ Same source set as `refine` — `archived`, per-movie `shrink` flag on, no propo
 
 Two things then change. The policy is applied with `sorting: 'size'` and `descending: false`, so among equally scored releases the smallest wins instead of the most seeded (`apps/cli/src/components/Tasks/ProcessMoviesTask.js:220`). And the guard is stricter than `refine`'s: a candidate is rejected if it scores at or below what you own **or** if it is not smaller, sizes being compared rounded to 10 MB so that a few megabytes saved do not justify a re-download (`apps/cli/src/components/Tasks/ProcessMoviesTask.js:336`). It stamps `shrinked_at` the same way `refine` stamps `refined_at`.
 
-`jobs.shrink.movies.threshold` exists to keep the job away from movies that are already small — there is nothing to win shrinking a 700 MB file. Read it before trusting it: the CLI sends the threshold as a `releases.size` query parameter (`apps/cli/src/commands/shrink.js:46`), and the movies endpoint only reads `release_size.gte` and `release_size.lte` (`getMovies` in `apps/api/src/app/movies/movies.service.ts`). The key sent is not one the API knows, so today the threshold does not narrow the set and the strict-mode filter does all the work.
+`jobs.shrink.movies.threshold` exists to keep the job away from movies that are already small — there is nothing to win shrinking a 700 MB file. It is in GB, and `0` turns it off. The CLI sends it as `release_size.gte` (`apps/cli/src/commands/shrink.js:46`), so a movie stays in the set only when one of its releases is at least that large (`releasesFilter` in `apps/api/src/app/filters.ts`). The schema defaults it to `0`, the shipped `config.default.json` sets `4`.
 
 ### `sync`
 
