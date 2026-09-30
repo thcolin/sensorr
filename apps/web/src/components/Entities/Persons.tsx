@@ -20,10 +20,12 @@ export const FollowedPersons = compose(
   withFetchQuery(APIQuery.persons.getPersons({}), 1, useAPI),
 )(Entities)
 
-// Days until the next birthday: the week ahead may run over the new year
-const untilBirthday = ({ birthday }, today) => {
+// The week ahead may run over the new year
+const nextBirthday = ({ birthday }, today) => {
   const date = new Date(birthday)
-  return (Date.UTC(today.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) + 365 * 86400000) % (365 * 86400000)
+  const start = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+  const next = Date.UTC(today.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  return next < start ? Date.UTC(today.getUTCFullYear() + 1, date.getUTCMonth(), date.getUTCDate()) : next
 }
 
 // `transform` is read by `withFetchQuery`, so `withProps` wraps it
@@ -31,7 +33,7 @@ export const BirthdayPersons = compose(
   withProps({
     transform: (res) => {
       const today = new Date()
-      return { entities: [...res.results].sort((a, b) => untilBirthday(a, today) - untilBirthday(b, today)), total: res.total_results }
+      return { entities: [...res.results].sort((a, b) => nextBirthday(a, today) - nextBirthday(b, today)), total: res.total_results }
     },
   }),
   withFetchQuery(APIQuery.persons.getPersons({ params: { 'birthday.upcoming': 7, limit: 50 } }), 1, useAPI),

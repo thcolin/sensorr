@@ -74,6 +74,7 @@ export const Input = ({ ...props }) => {
         sx={Input.styles.input}
         {...props}
         type='text'
+        aria-label='Search'
         ref={ref}
         value={input}
         onChange={(e) => onChange(e.target.value)}

@@ -185,6 +185,7 @@ UIEntities.styles = {
       variant: 'link.reset',
       display: 'flex',
       alignItems: 'center',
+      minHeight: '44px',
       '>svg': {
         display: ['block', 'none'],
         height: '1.5em',

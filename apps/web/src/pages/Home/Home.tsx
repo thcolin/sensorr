@@ -162,7 +162,7 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
         })}
         more={{
           title: t('items.movies.calendar.more'),
-          to: '/movie/calendar',
+          to: section === 'person' ? '/person/calendar' : '/movie/calendar',
         }}
       />
     ) },
@@ -347,7 +347,7 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           display: 'poster',
         })}
         more={{
-          title: t('items.movies.trending.more'),
+          title: t('items.persons.trending.more'),
           to: '/person/trending',
         }}
         empty={{

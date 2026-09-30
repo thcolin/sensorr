@@ -131,6 +131,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='tv/:id' element={<Show />} />
         <Route path='person/followed' element={<Followed />} />
         <Route path='person/trending' element={<TrendingPersons />} />
+        <Route path='person/calendar' element={<Calendar />} />
         <Route path='person/search' element={<SearchPersons />} />
         <Route path='person' element={<SectionHome section='person' fallback={<Navigate replace={true} to='/person/followed' />} />} />
         <Route path='person/:id' element={<Person />} />

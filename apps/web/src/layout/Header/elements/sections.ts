@@ -21,6 +21,12 @@ export const SECONDARY = {
   ],
 }
 
+// The page a sub-route shows, named as its tab in the browser
+export const pageLabelOf = (pathname) => [
+  ...Object.values(SECONDARY).flat(),
+  { to: '/person/calendar', label: 'Calendar' },
+].find(({ to }) => pathname === to || pathname.startsWith(`${to}/`))?.label || null
+
 // null when pathname is itself a root, a bottom bar target of the PWA: the home of a section, jobs or settings
 export const sectionRootOf = (pathname, device) => {
   if (

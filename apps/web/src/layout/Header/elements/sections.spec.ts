@@ -1,4 +1,4 @@
-import { sectionRootOf } from './sections'
+import { pageLabelOf, sectionRootOf } from './sections'
 
 describe('sectionRootOf', () => {
   it('has no root to go back to on a bottom bar target', () => {
@@ -21,5 +21,16 @@ describe('sectionRootOf', () => {
 
   it('treats a settings page as a root where the settings menu sits beside it', () => {
     expect(sectionRootOf('/settings/tmdb', 'tablet')).toBeNull()
+  })
+})
+
+describe('pageLabelOf', () => {
+  it('names a sub-route and what lies below it, and nothing else', () => {
+    expect(pageLabelOf('/movie/library')).toBe('Library')
+    expect(pageLabelOf('/movie/swaps/tt0133093')).toBe('Swaps')
+    expect(pageLabelOf('/tv/calendar')).toBe('Calendar')
+    expect(pageLabelOf('/person/calendar')).toBe('Calendar')
+    expect(pageLabelOf('/movie/62046')).toBeNull()
+    expect(pageLabelOf('/movie')).toBeNull()
   })
 })
