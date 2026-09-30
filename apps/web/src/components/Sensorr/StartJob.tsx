@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Drawer, Icon, Modal } from '@sensorr/ui'
 import { useResponsiveValue } from '@sensorr/utils'
@@ -27,12 +28,12 @@ const UIStartJob = ({ ...props }) => {
       >
         <Icon value='play' height='1.5em' width='1.5em' />
       </button>
-      {mobile ? (
+      {mobile ? createPortal((
         <Drawer open={open} close={close} height='85vh'>
-          <h3 sx={UIStartJob.styles.title}>Start a job</h3>
-          <JobList onRun={onRun} close={close} />
+          <DrawerHead title='Start a job' close={close} />
+          <JobList onRun={onRun} close={close} touch={true} />
         </Drawer>
-      ) : (
+      ), document.body) : (
         <Modal title='Start a job' open={open} close={close} width='30em' background='primary' head='primary' border='accentDarkest'>
           <JobList onRun={onRun} close={close} />
         </Modal>
@@ -47,7 +48,7 @@ UIStartJob.styles = {
     display: 'flex',
     alignSelf: 'center',
     padding: 8,
-    marginLeft: 4,
+    marginLeft: [6, 4],
     color: 'whitePure',
     ':focus-visible': {
       outline: '2px solid',
@@ -55,26 +56,60 @@ UIStartJob.styles = {
       outlineOffset: '2px',
     },
   },
-  title: {
-    variant: 'heading.default',
-    margin: 12,
-    paddingX: 5,
-    paddingTop: 2,
-    paddingBottom: 8,
-    fontSize: 2,
-    color: 'whitePure',
-  },
 }
 
 export const StartJob = memo(UIStartJob)
 
-// A palette: arrows or the pointer move the active job, Enter or a click runs it, or stops it while it runs
-const UIJobList = ({ onRun, close }) => {
+// The head of a `Drawer` on `primary`: the Modal's title and close, since a tap on the shadow does not close it on mobile
+const UIDrawerHead = ({ title, close }) => (
+  <div sx={UIDrawerHead.styles.element}>
+    <h3>{title}</h3>
+    <button type='button' onClick={close} aria-label='Close'>
+      <Icon value='clear' active={true} height='1.25em' width='1.25em' />
+    </button>
+  </div>
+)
+
+UIDrawerHead.styles = {
+  element: {
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingX: 4,
+    paddingTop: 2,
+    paddingBottom: 6,
+    '>h3': {
+      variant: 'heading.default',
+      margin: 12,
+      fontSize: 2,
+      lineHeight: 1.3,
+      color: 'whitePure',
+    },
+    '>button': {
+      variant: 'button.reset',
+      display: 'flex',
+      padding: 8,
+      color: 'whitePure',
+      ':focus-visible': {
+        outline: '2px solid',
+        outlineColor: 'whitePure',
+        outlineOffset: '2px',
+      },
+    },
+  },
+}
+
+export const DrawerHead = memo(UIDrawerHead)
+
+// A palette: arrows or the pointer move the active job, Enter or a click runs it, or stops it while it runs.
+// On touch nothing is active at first: a tap picks a job, a second tap runs it, so a stray tap while scrolling runs nothing.
+const UIJobList = ({ onRun, close, touch = false }) => {
   const { config } = useConfigContext() as any
   const { process } = useJobsContext() as any
   const { runJob, stopJob, ongoing } = useJobRunner({ onRun })
   const entries = useMemo(() => JOB_GROUPS.flatMap(({ label, jobs }) => jobs.map(entry => ({ ...entry, group: label, name: nameOfEntry(entry) }))), [])
-  const [active, setActive] = useState(0)
+  const [active, setActive] = useState(touch ? -1 : 0)
 
   useEffect(() => {
     document.getElementById(`start-job-${active}`)?.scrollIntoView({ block: 'nearest' })
@@ -87,6 +122,10 @@ const UIJobList = ({ onRun, close }) => {
   })
 
   const trigger = (entry) => {
+    if (!entry) {
+      return
+    }
+
     const { running, unconfigured, pending } = stateOf(entry)
 
     if (unconfigured || pending) {
@@ -146,8 +185,8 @@ const UIJobList = ({ onRun, close }) => {
                   aria-selected={index === active}
                   aria-disabled={unconfigured || pending}
                   aria-label={`${running ? 'Stop' : 'Start'} ${jobTitleOf(entry.name)}`}
-                  onPointerMove={() => index !== active && setActive(index)}
-                  onClick={() => trigger(entry)}
+                  onPointerMove={(e) => e.pointerType === 'mouse' && index !== active && setActive(index)}
+                  onClick={() => touch && index !== active ? setActive(index) : trigger(entry)}
                 >
                   <span aria-hidden={true}>{JOB_EMOJIS[entry.name]}</span>
                   <span>
@@ -175,6 +214,10 @@ UIJobList.styles = {
   element: {
     display: 'flex',
     flexDirection: 'column',
+    flex: ['1 1 auto', 'none'],
+    minHeight: 0,
+    overflowY: ['auto', 'visible'],
+    fontSize: ['1.125em', 'inherit'],
     marginX: 8,
     marginBottom: 8,
     paddingX: 10,
