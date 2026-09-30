@@ -25,6 +25,7 @@ import { cumulate } from './cumulate'
 import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
+import { StartJob } from '../../components/Sensorr/StartJob'
 
 const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { view: SyncJob, summary: summarySync },
@@ -48,6 +49,9 @@ const isEmptyImport = (job) => {
   const { success, pending, warning, overdue } = job.meta.summary?.imports || {}
   return jobNameOf(job.meta) === 'import shows' && job.meta.done && !job.meta.error && !success && !pending && !warning && !overdue
 }
+
+// Every command while the jobs load, the ones without a job leave once they are there
+const LOADING_TABS = Object.keys(JOBS_UI).map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: 0 }))
 
 const summaryOf = (job, summary = job.meta.summary) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(summary, false, job.meta.config)
 
@@ -219,9 +223,18 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
       }
     }, shown.length ? { running: shown } : {})
   }, [jobs, listed, running, filter])
+  // The command running or run last comes first
   const options = useMemo(() => Object.keys(JOBS_UI)
     .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
-    .map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: jobs.filter(job => jobNameOf(job.meta) === name).length })), [jobs, filter])
+    .map(name => ({
+      value: name,
+      emoji: JOB_EMOJIS[name],
+      count: jobs.filter(job => jobNameOf(job.meta) === name).length,
+      running: running.some(job => jobNameOf(job.meta) === name),
+      last: Math.max(0, ...jobs.filter(job => jobNameOf(job.meta) === name).map(job => new Date(job.start).getTime() || 0)),
+    }))
+    .sort((a, b) => Number(b.running) - Number(a.running) || b.last - a.last)
+    .map(({ running, last, ...option }) => option), [jobs, running, filter])
 
   useEffect(() => {
     setExpanded(false)
@@ -233,6 +246,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
     <aside sx={UISidebar.styles.element}>
       <div sx={UISidebar.styles.head}>
         <h4>Jobs</h4>
+        {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
           <div>
             <span>
@@ -251,15 +265,20 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
               <span><strong>{job}</strong> - {(new Date(active?.start || Date.now())).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(active?.start || Date.now())).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
             </div>
           </div>
-          <button ref={ref} onPointerDown={onPointerDown} sx={{ variant: 'button.reset', color: 'whitePure' }} onClick={() => setExpanded(e => !e)}>
+          <StartJob />
+          <button ref={ref} onPointerDown={onPointerDown} sx={{ variant: 'button.reset', paddingX: 0, color: 'whitePure' }} onClick={() => setExpanded(e => !e)}>
             <Icon value="chevron" direction={expanded} height="1em" width="1em" />
           </button>
         </div>
       </div>
       {loading ? (
-        <div sx={UISidebar.styles.placeholder}>
-          <Icon value='spinner' />
-        </div>
+        <>
+          {/* The row keeps its place under the head while the jobs load */}
+          {!mobile && <CommandTabs options={LOADING_TABS} all={0} value={null} onChange={setFilter} />}
+          <div sx={UISidebar.styles.placeholder}>
+            <Icon value='spinner' />
+          </div>
+        </>
       ) : (
         <nav sx={{ ...UISidebar.styles.nav, height: [expanded ? 'calc(100% - 90px)' : '0%', 'unset'] }}>
           <CommandTabs options={options} all={running.length + listed.length} value={filter} onChange={setFilter} />
@@ -317,7 +336,9 @@ UISidebar.styles = {
     color: 'whitePure',
     paddingX: [12, 3],
     paddingTop: [12, 3],
-    paddingBottom: [12, 8],
+    paddingBottom: [12, 5],
+    alignItems: 'center',
+    justifyContent: 'space-between',
     '>h4': {
       display: ['none', 'block'],
       margin: '0px',
@@ -385,9 +406,6 @@ UISidebar.styles = {
         },
       },
     },
-    '>button': {
-      paddingX: 0,
-    }
   },
   placeholder: {
     flex: 1,
