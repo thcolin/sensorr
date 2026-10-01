@@ -42,7 +42,8 @@ self.addEventListener('push', function (e) {
 
 self.addEventListener('notificationclick', function (e) {
   e.notification.close()
-  const url = e.notification.data?.url || '/'
+  const target = new URL(e.notification.data?.url || '/', self.location.origin)
+  const url = target.origin === self.location.origin ? `${target.pathname}${target.search}${target.hash}` : '/'
 
   // An open app navigates in place, rather than loading again
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(([client]) => {
