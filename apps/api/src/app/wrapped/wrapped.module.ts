@@ -5,6 +5,7 @@ import { ConfigService } from '../config/config.service'
 import { MailModule } from '../mail/mail.module'
 import { WrappedController } from './wrapped.controller'
 import { WrappedService } from './wrapped.service'
+import { CardsService } from './cards.service'
 import { Play, PlaySchema, Viewer, ViewerSchema, Title, TitleSchema, Edition, EditionSchema } from './wrapped.schema'
 
 @Module({
@@ -19,6 +20,6 @@ import { Play, PlaySchema, Viewer, ViewerSchema, Title, TitleSchema, Edition, Ed
     MailModule,
   ],
   controllers: [WrappedController],
-  providers: [WrappedService, ConfigService],
+  providers: [WrappedService, CardsService, ConfigService],
 })
 export class WrappedModule {}
