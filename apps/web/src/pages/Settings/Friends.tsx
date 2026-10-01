@@ -10,6 +10,7 @@ import { emojize, useTitle } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { WrappedLooks } from './Wrapped'
 import { errorOf } from './Mail'
+import { Invitation } from './Invitation'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
 const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -114,8 +115,14 @@ const Friends = ({ ...props }) => {
     setInviting(true)
 
     try {
-      const { uri, params, init } = api.query.mail.postInvitation({ body: { to: invitee } })
-      await api.fetch(uri, params, init, { rawError: true })
+      const { uri, params, init } = api.query.mail.postInvitation({ body: { to: [{ email: invitee }] } })
+      const [result] = await api.fetch(uri, params, init, { rawError: true })
+
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+
       toast.success(`Invitation sent to "${invitee}"`)
       setInvited((invited) => [...invited, invitee])
       setInvitee('')
@@ -243,14 +250,7 @@ const Friends = ({ ...props }) => {
           {!mailable && (
             <p><small>Set up <Link to='/settings/mail'>Mail</Link> to mail your friends from here.</small></p>
           )}
-          <h3>Invitation</h3>
-          <p sx={{ lineHeight: 'body' }}>
-            Your friend gets a mail asking them to link their Plex account from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferer noopener'>{document.location.origin}/keep-in-touch</a>. Nothing is kept until they do.
-          </p>
-          <form onSubmit={invite} sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
-            <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
-          </form>
+          <Invitation mailable={mailable} />
           <div sx={{ marginTop: 6, marginBottom: 2 }}>
             <Option type='checkbox' id='guests.public' checked={open} disabled={!config.get('plex.token')} onChange={(e: any) => setPublic(e.target.checked)}>
               <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
@@ -260,6 +260,12 @@ const Friends = ({ ...props }) => {
               </div>
             </Option>
           </div>
+          {(open || !config.get('plex.token')) && (
+            <form onSubmit={invite} sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+              <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
+              <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
+            </form>
+          )}
           {!!invited.length && (
             <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
           )}
