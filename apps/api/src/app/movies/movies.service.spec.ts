@@ -164,6 +164,12 @@ describe('MoviesService.upsertMovies', () => {
     expect(writeOf(1).releases).toEqual([expect.objectContaining({ id: 'a' })])
   })
 
+  it('deletes no metafile for a refused manual pick', async () => {
+    await service.upsertMovies({ 1: { id: 1, releases: [proposal('a'), { ...proposal('m', 'https://indexer.org/a'), job: 'manual', choice: false }] } } as any)
+
+    expect(sensorrService.removeRelease).not.toHaveBeenCalled()
+  })
+
   it('pulls a refused proposal before its metafile', async () => {
     await service.upsertMovies({ 1: { id: 1, releases: [{ ...proposal('a'), choice: false }] } } as any)
 
