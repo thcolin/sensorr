@@ -19,6 +19,11 @@ export class GuestsController {
     return this.guestsService.checkRegistration(id)
   }
 
+  @Get('shared')
+  async shared() {
+    return this.guestsService.shared()
+  }
+
   @Post()
   async upsertGuest(@Body() guest: GuestDTO) {
     return this.guestsService.upsertGuest(guest)

@@ -57,6 +57,20 @@ describe('mails.wrapped', () => {
   })
 })
 
+describe('invitation', () => {
+  it('greets a friend read from Plex by their name, escaped, and says why they got it', () => {
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas', name: '<b>Léa</b>' })
+    expect(mail.html).toContain('Hi &lt;b&gt;Léa&lt;/b&gt;,')
+    expect(mail.text).toContain('because Thomas shares their Plex with you')
+  })
+
+  it('says the address was typed when there is no name', () => {
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas' })
+    expect(mail.text).not.toContain('Hi ')
+    expect(mail.text).toContain('because Thomas typed your address')
+  })
+})
+
 describe('text version', () => {
   it('reads the sender as typed, without the HTML entities of the footer', () => {
     const mail = mails.invitation({ url: 'https://sensorr.example', sender: "Tom & O'Brien" })

@@ -5,6 +5,7 @@ import { Guest, GuestSchema } from '../guests/guest.schema'
 import { Movie, MovieSchema } from '../movies/movie.schema'
 import { Show, ShowSchema } from '../shows/show.schema'
 import { Episode, EpisodeSchema } from '../shows/episode.schema'
+import { Invitation, InvitationSchema } from './invitation.schema'
 import { MailController } from './mail.controller'
 import { MailService } from './mail.service'
 
@@ -15,6 +16,7 @@ import { MailService } from './mail.service'
       { name: Movie.name, schema: MovieSchema },
       { name: Show.name, schema: ShowSchema },
       { name: Episode.name, schema: EpisodeSchema },
+      { name: Invitation.name, schema: InvitationSchema },
     ]),
   ],
   controllers: [MailController],

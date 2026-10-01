@@ -1,14 +1,15 @@
-import { PaginateModel, PaginateResult } from 'mongoose'
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Model, PaginateModel, PaginateResult } from 'mongoose'
+import { BadGatewayException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Plex, createPin, checkPin, PlexApp } from '@sensorr/plex'
 import { ConfigService } from '../config/config.service'
 import { MailService } from '../mail/mail.service'
 import { mails } from '../mail/templates'
+import { Play, Viewer } from '../wrapped/wrapped.schema'
 import { Guest as GuestDocument } from './guest.schema'
 import { reminderOf } from './reminders'
-import { sharedIdsOf } from './shared'
+import { sharedIdsOf, sharedUsersOf } from './shared'
 import app from './../../../../../package.json'
 
 @Injectable()
@@ -17,6 +18,8 @@ export class GuestsService {
 
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: PaginateModel<GuestDocument>,
+    @InjectModel(Viewer.name) private readonly viewerModel: Model<Viewer>,
+    @InjectModel(Play.name) private readonly playModel: Model<Play>,
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
     private mailService: MailService,
@@ -75,26 +78,56 @@ export class GuestsService {
     return { done: true }
   }
 
+  private async plexTv(url: string) {
+    const headers = { 'X-Plex-Token': this.configService.config.get('plex.token'), 'X-Plex-Client-Identifier': this.plexApp().plex, 'X-Plex-Product': this.plexApp().name, Accept: 'application/json' }
+    const res = await fetch(url, { headers })
+
+    if (!res.ok) {
+      throw new BadGatewayException(`plex.tv answered ${res.status} on ${url}, is the Plex token of Sensorr still valid?`)
+    }
+
+    return res.text()
+  }
+
   // The owner of the Plex server and the users it is shared with, read from plex.tv with its token
   private async allowed(account: number) {
-    const token = this.configService.config.get('plex.token')
-
-    if (this.configService.config.get('guests.public') || !token) {
+    if (this.configService.config.get('guests.public') || !this.configService.config.get('plex.token')) {
       return true
     }
 
-    const headers = { 'X-Plex-Token': token, 'X-Plex-Client-Identifier': this.plexApp().plex, 'X-Plex-Product': this.plexApp().name, Accept: 'application/json' }
-    const [owner, shared] = await Promise.all(['https://plex.tv/api/v2/user', 'https://plex.tv/api/users'].map(async (url) => {
-      const res = await fetch(url, { headers })
-
-      if (!res.ok) {
-        throw new Error(`plex.tv answered ${res.status} on ${url}, is the Plex token of Sensorr still valid?`)
-      }
-
-      return res.text()
-    }))
-
+    const [owner, shared] = await Promise.all(['https://plex.tv/api/v2/user', 'https://plex.tv/api/users'].map((url) => this.plexTv(url)))
     return Number(account) === Number(JSON.parse(owner).id) || sharedIdsOf(shared).has(Number(account))
+  }
+
+  // The users the Plex server is shared with who are not guests yet, with what Tautulli saw of them as the
+  // `wrapped` job imported it: the most recent viewers first, without Tautulli by name
+  async shared() {
+    if (!this.configService.config.get('plex.token')) {
+      return { plex: false, tautulli: false, results: [] }
+    }
+
+    const guests = new Set((await this.guestModel.find({}, { email: 1 }).lean()).map(({ email }) => email.toLowerCase()))
+    const users = sharedUsersOf(await this.plexTv('https://plex.tv/api/users')).filter(({ email }) => email && !guests.has(email.toLowerCase()))
+    const viewers = await this.viewerModel.find({ email: { $nin: [null, ''] } }, { email: 1 }).lean()
+    const viewerOf = Object.fromEntries(viewers.map(({ _id, email }) => [email.toLowerCase(), _id]))
+    const activity = await this.playModel.aggregate<{ _id: number, plays: number, seen: number }>([
+      { $match: { user_id: { $in: users.map(({ email }) => viewerOf[email.toLowerCase()]).filter(Number.isInteger) } } },
+      { $group: { _id: '$user_id', plays: { $sum: 1 }, seen: { $max: '$started' } } },
+    ])
+    const activityOf = Object.fromEntries(activity.map(({ _id, plays, seen }) => [_id, { plays, seen_at: seen * 1000 }]))
+    const invited = await this.mailService.invitations(users.map(({ email }) => email))
+    const tautulli = viewers.length > 0
+    const results = users
+      .map(({ name, email, avatar }) => ({
+        name,
+        email,
+        avatar,
+        ...(tautulli ? { plays: 0, seen_at: null, ...activityOf[viewerOf[email.toLowerCase()]] } : {}),
+        invited_at: invited[email.toLowerCase()] || null,
+      }))
+      .sort((a, b) => (tautulli ? (b.seen_at || 0) - (a.seen_at || 0) : 0) || (a.name || a.email).localeCompare(b.name || b.email))
+
+    return { plex: true, tautulli, results }
   }
 
   async upsertGuest(guest): Promise<any> {
