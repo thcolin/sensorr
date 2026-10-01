@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
+import { useJobsContext } from '../../contexts/Jobs/Jobs'
 
 export interface JobEntry {
   command: string
@@ -49,7 +50,7 @@ export const nameOfEntry = ({ command, type }: { command: string, type?: string 
 export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void } = {}) => {
   const api = useAPI()
   const [ongoing, setOngoing] = useState([])
-  const [stopping, setStopping] = useState([])
+  const { stopping, setStopping } = useJobsContext() as any
 
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
