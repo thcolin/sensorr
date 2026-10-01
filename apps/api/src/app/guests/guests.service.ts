@@ -9,7 +9,7 @@ import { mails } from '../mail/templates'
 import { Play, Viewer } from '../wrapped/wrapped.schema'
 import { Guest as GuestDocument } from './guest.schema'
 import { reminderOf } from './reminders'
-import { sharedIdsOf, sharedUsersOf } from './shared'
+import { invitableOf, sharedIdsOf, sharedUsersOf } from './shared'
 import app from './../../../../../package.json'
 
 @Injectable()
@@ -80,10 +80,10 @@ export class GuestsService {
 
   private async plexTv(url: string) {
     const headers = { 'X-Plex-Token': this.configService.config.get('plex.token'), 'X-Plex-Client-Identifier': this.plexApp().plex, 'X-Plex-Product': this.plexApp().name, Accept: 'application/json' }
-    const res = await fetch(url, { headers })
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) })
 
     if (!res.ok) {
-      throw new BadGatewayException(`plex.tv answered ${res.status} on ${url}, is the Plex token of Sensorr still valid?`)
+      throw new Error(`plex.tv answered ${res.status} on ${url}, is the Plex token of Sensorr still valid?`)
     }
 
     return res.text()
@@ -105,28 +105,20 @@ export class GuestsService {
       return { plex: false, tautulli: false, results: [] }
     }
 
-    const guests = new Set((await this.guestModel.find({}, { email: 1 }).lean()).map(({ email }) => email.toLowerCase()))
-    const users = sharedUsersOf(await this.plexTv('https://plex.tv/api/users')).filter(({ email }) => email && !guests.has(email.toLowerCase()))
+    const xml = await this.plexTv('https://plex.tv/api/users').catch((error) => {
+      throw new BadGatewayException(error.message)
+    })
+    const users = sharedUsersOf(xml).filter(({ email }) => email)
+    const guests = (await this.guestModel.find({}, { email: 1 }).lean()).map(({ email }) => email)
     const viewers = await this.viewerModel.find({ email: { $nin: [null, ''] } }, { email: 1 }).lean()
-    const viewerOf = Object.fromEntries(viewers.map(({ _id, email }) => [email.toLowerCase(), _id]))
+    const ids = viewers.filter(({ email }) => users.some((user) => user.email.toLowerCase() === email.toLowerCase())).map(({ _id }) => _id)
     const activity = await this.playModel.aggregate<{ _id: number, plays: number, seen: number }>([
-      { $match: { user_id: { $in: users.map(({ email }) => viewerOf[email.toLowerCase()]).filter(Number.isInteger) } } },
+      { $match: { user_id: { $in: ids } } },
       { $group: { _id: '$user_id', plays: { $sum: 1 }, seen: { $max: '$started' } } },
     ])
-    const activityOf = Object.fromEntries(activity.map(({ _id, plays, seen }) => [_id, { plays, seen_at: seen * 1000 }]))
     const invited = await this.mailService.invitations(users.map(({ email }) => email))
-    const tautulli = viewers.length > 0
-    const results = users
-      .map(({ name, email, avatar }) => ({
-        name,
-        email,
-        avatar,
-        ...(tautulli ? { plays: 0, seen_at: null, ...activityOf[viewerOf[email.toLowerCase()]] } : {}),
-        invited_at: invited[email.toLowerCase()] || null,
-      }))
-      .sort((a, b) => (tautulli ? (b.seen_at || 0) - (a.seen_at || 0) : 0) || (a.name || a.email).localeCompare(b.name || b.email))
 
-    return { plex: true, tautulli, results }
+    return { plex: true, tautulli: viewers.length > 0, results: invitableOf({ users, guests, viewers, activity, invited }) }
   }
 
   async upsertGuest(guest): Promise<any> {

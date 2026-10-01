@@ -34,7 +34,7 @@ export class MailController {
       throw new BadRequestException('A list of friends to invite is required')
     }
 
-    return this.mailService.invite(to.map(({ email, name } = {} as any) => ({ email: addressOf(email), name: typeof name === 'string' && name.trim() ? name.trim().slice(0, 100) : undefined })))
+    return this.mailService.invite(to.map((friend) => ({ email: addressOf(friend?.email), name: typeof friend?.name === 'string' && friend.name.trim() ? friend.name.trim().slice(0, 100) : undefined })))
   }
 
   @Post('requests')
