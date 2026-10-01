@@ -53,7 +53,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
 
-    if (!window.confirm(`Do you really want to start ${jobTitleOf(name)} job ?`)) {
+    if (!window.confirm(`Do you really want to start ${jobTitleOf(name)} job?`)) {
       return false
     }
 
@@ -79,7 +79,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
   }, [onRun])
 
   const stopJob = useCallback((name, job) => {
-    if (!window.confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
+    if (!window.confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}"?`)) {
       return
     }
 

@@ -76,7 +76,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
           emoji='🍻'
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <JobState job={job.job} meta={job.meta} />
+              <JobState job={job.job} name={jobNameOf(job.meta)} done={job.meta.done} />
               <JobName name={jobNameOf(job.meta)} sx={UIKeepInTouchJob.styles.title} />
             </span>
           )}

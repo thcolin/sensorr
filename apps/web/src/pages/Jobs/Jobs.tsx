@@ -733,7 +733,7 @@ UIPile.styles = {
 
 const Pile = memo(UIPile)
 
-// The link covers the row, so the running job's dot can be a button above it; the summary keeps its tooltips and its scroll above it too
+// The link is stretched under the row, so the running job's dot can be a button of its own
 const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary, since = null }) => {
   const name = jobNameOf({ command, type: meta.type })
 
@@ -747,7 +747,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
           </span>
           <span sx={UIJob.styles.container}>
             <span sx={{ display: 'flex', alignItems: 'center' }}>
-              <JobState job={job} meta={{ command, done, type: meta.type }} />
+              <JobState job={job} name={name} done={done} />
               <JobName name={name} sx={UIJob.styles.title} />
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
@@ -775,13 +775,13 @@ UIJob.styles = {
     borderColor: 'grayLight',
     paddingY: 3,
     overflow: 'hidden',
-    '&:hover>span': {
+    '&:hover>span, &:focus-within>span': {
       opacity: '1 !important',
     },
   },
   link: {
     position: 'absolute',
-    inset: 0,
+    inset: '0px',
     zIndex: 1,
     ':focus-visible': {
       outline: '2px solid',
@@ -789,12 +789,16 @@ UIJob.styles = {
       outlineOffset: '-2px',
     },
   },
+  // Above the link but transparent to the pointer, except for the stop button and the summary
   wrapper: {
+    position: 'relative',
+    zIndex: 2,
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     transition: 'opacity ease 300ms',
     overflow: 'hidden',
+    pointerEvents: 'none',
   },
   head: {
     display: 'flex',
@@ -829,9 +833,8 @@ UIJob.styles = {
     fontFamily: 'monospace',
   },
   summary: {
-    position: 'relative',
-    zIndex: 2,
     display: 'block',
+    pointerEvents: 'auto',
     fontSize: 6,
     overflowX: 'auto',
     paddingLeft: [12, '4em'],

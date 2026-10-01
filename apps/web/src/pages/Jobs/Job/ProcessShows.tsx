@@ -143,7 +143,7 @@ const UIProcessShowsJob = ({ job, logs }) => {
           emoji={{ 'record': '📹', 'airing': '📡' }[job.meta.command]}
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <JobState job={job.job} meta={job.meta} />
+              <JobState job={job.job} name={jobNameOf(job.meta)} done={job.meta.done} />
               <JobName name={jobNameOf(job.meta)} sx={UIProcessShowsJob.styles.title} />
             </span>
           )}

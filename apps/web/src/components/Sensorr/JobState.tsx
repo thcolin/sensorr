@@ -1,19 +1,19 @@
 import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
-import { jobNameOf, jobTitleOf } from '@sensorr/sensorr'
+import { jobTitleOf } from '@sensorr/sensorr'
 import { useJobRunner } from './Jobs'
 
 interface JobStateProps {
   job: string
-  meta: { command: string, type?: string, done?: boolean }
+  // A `jobNameOf` name
+  name: string
+  done?: boolean
 }
 
-// A job done shows a check; a running one a dot that turns into a stop square under the pointer or the keyboard focus
-const UIJobState = ({ job, meta }: JobStateProps) => {
+const UIJobState = ({ job, name, done = false }: JobStateProps) => {
   const { stopJob } = useJobRunner()
-  const name = jobNameOf(meta)
 
-  if (meta.done) {
+  if (done) {
     return <span sx={UIJobState.styles.done}><Icon value='check' height='0.75em' width='0.75em' /></span>
   }
 
@@ -31,33 +31,42 @@ UIJobState.styles = {
   stop: {
     variant: 'button.reset',
     position: 'relative',
-    zIndex: 2,
     display: 'flex',
     marginRight: 7,
     fontSize: 'inherit',
     cursor: 'pointer',
+    pointerEvents: 'auto',
     '::before': {
       content: '""',
       position: 'absolute',
-      inset: '-0.75em',
+      inset: '-0.875em',
     },
     '::after': {
       content: '""',
       display: 'none',
       height: '0.75em',
       width: '0.75em',
-      borderRadius: '0.125em',
+      borderRadius: '0.25em',
       backgroundColor: 'grayDarkest',
     },
-    ':hover, :focus-visible': {
+    // A tap keeps `:hover` on touch screens, the dot would stay a square after a dismissed confirm
+    '@media (hover: hover)': {
+      ':hover': {
+        '>svg': {
+          display: 'none',
+        },
+        '::after': {
+          display: 'block',
+        },
+      },
+    },
+    ':focus-visible': {
       '>svg': {
         display: 'none',
       },
       '::after': {
         display: 'block',
       },
-    },
-    ':focus-visible': {
       outline: '2px solid',
       outlineColor: 'text',
       outlineOffset: '2px',
