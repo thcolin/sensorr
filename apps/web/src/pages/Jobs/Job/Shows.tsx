@@ -173,7 +173,7 @@ const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.
 const UINotedShow = ({ entity, ...props }) => (
   <div sx={UINotedShow.styles.element}>
     <Show entity={entity} {...props} />
-    <code title={entity.details}>{entity.note}</code>
+    <code title={entity.details || entity.note}>{entity.note}</code>
   </div>
 )
 
@@ -183,6 +183,7 @@ UINotedShow.styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
+    // `width: 0` keeps a long line from widening the card, `minWidth` gives it the card's width back
     '>code': {
       width: 0,
       minWidth: '100%',
@@ -196,7 +197,7 @@ UINotedShow.styles = {
 
 const NotedShow = memo(UINotedShow)
 
-const episodes = (count: number) => `${count} episode${count > 1 ? 's' : ''}`
+const episodesLabel = (count: number) => `${count} episode${count > 1 ? 's' : ''}`
 
 // The footer of a library card, its pill and its bar, counting the downloaded files instead of the owned episodes
 const UIDownloadingShow = ({ entity, ...props }) => {
@@ -267,14 +268,15 @@ const COMMANDS = {
       corrections: { ...summary.corrections, success: sections.corrections.length },
       missings: { ...summary.missings, success: sections.missings.reduce((sum, show) => sum + (show.missing || 0), 0) },
       withdrawals: sections.withdrawals.length,
+      unmatched: sections.unmatched.reduce((sum, show) => sum + show.unmatched.length, 0),
     }),
     // A show whose episodes left Plex is logged as a warning too, with its count
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
-      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, note: emojize('💊', episodes(missing)) }), child: NotedShow, extra: 36 },
+      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, note: emojize('💊', episodesLabel(missing)) }), child: NotedShow, extra: 36 },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
       { key: 'withdrawals', label: emojize('🗑️', 'Withdrawn'), test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', release.title), details: release.title }), child: NotedShow, extra: 36 },
-      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, note: emojize('❓', episodes(unmatched.length)), details: unmatched.join(', ') }), child: NotedShow, extra: 36 },
+      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched, note: emojize('❓', episodesLabel(unmatched.length)), details: unmatched.join(', ') }), child: NotedShow, extra: 36 },
     ],
     empty: 'No fixed shows during this job',
   },
