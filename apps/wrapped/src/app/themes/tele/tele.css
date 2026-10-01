@@ -1915,6 +1915,13 @@ html[data-theme='tele'] {
   width: 250px;
 }
 
+.tele-story .tele-venn-side b {
+  max-width: 70%;
+  font-size: 16px;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
 /* The run's months as bands of days, struck one evening after the other */
 .tele-days {
   display: grid;
@@ -1996,7 +2003,7 @@ html[data-theme='tele'] {
   flex-direction: column;
   justify-content: flex-end;
   gap: 6px;
-  min-height: 310px;
+  min-height: 290px;
   margin: -12px -16px 0;
   padding: 16px;
   color: #fff;
@@ -2029,8 +2036,9 @@ html[data-theme='tele'] {
 }
 
 .tele-story .tele-listing li {
-  grid-template-columns: 4em 28px minmax(0, 1fr);
+  grid-template-columns: 4em 24px minmax(0, 1fr);
   gap: 10px;
+  padding-block: 6px;
 }
 
 .tele-story .tele-listing-title {
@@ -2130,9 +2138,8 @@ html[data-theme='tele'] {
 
 .tele-cover-colophon {
   padding-right: 80px;
-  font: 600 13px/1.2 var(--cond);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 600 14px/1.2 var(--cond);
+  letter-spacing: 0.02em;
   text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
 }
 

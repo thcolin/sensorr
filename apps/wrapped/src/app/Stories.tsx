@@ -36,6 +36,17 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
     return () => window.removeEventListener('resize', resize)
   }, [])
 
+  const frame = useRef<HTMLDivElement>(null)
+  const shown = useRef(index)
+
+  // The story that comes is read next, wherever focus was
+  useEffect(() => {
+    if (shown.current !== index) {
+      shown.current = index
+      frame.current?.focus({ preventScroll: true })
+    }
+  }, [index])
+
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLSelectElement) {
@@ -56,14 +67,19 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
     <main className="stories" data-roomy={roomy || undefined} style={{ '--scale': scale, '--story-width': `${STORY.width}px`, '--story-height': `${STORY.height}px` } as React.CSSProperties}>
       <div className="stories-stage">
         <ol className="stories-segments" aria-hidden="true">
-          {Array.from({ length: count }, (_, at) => <li key={at} data-done={at <= index || undefined} />)}
+          {Array.from({ length: count }, (_, at) => <li key={at} data-done={at < index || undefined} data-current={at === index || undefined} />)}
         </ol>
-        <div className="stories-frame" role="group" aria-roledescription="story" aria-label={`${index + 1} sur ${count}, ${label}`}>
+        <div ref={frame} className="stories-frame" role="group" tabIndex={-1} aria-roledescription="story" aria-label={`${index + 1} sur ${count}, ${label}`}>
           <div className="stories-page">{children}</div>
-          <button type="button" className="stories-tap stories-tap-previous" aria-label="Story précédente" disabled={index === 0} onClick={() => onIndex(index - 1)} />
-          <button type="button" className="stories-tap stories-tap-next" aria-label="Story suivante" disabled={index === count - 1} onClick={() => onIndex(index + 1)} />
+          {/* Touch zones over the page, kept away from screen readers exploring it: the bar has the same steps as buttons */}
+          <button type="button" className="stories-tap stories-tap-previous" tabIndex={-1} aria-hidden="true" disabled={index === 0} onClick={() => onIndex(index - 1)} />
+          <button type="button" className="stories-tap stories-tap-next" tabIndex={-1} aria-hidden="true" disabled={index === count - 1} onClick={() => onIndex(index + 1)} />
         </div>
-        <div className="stories-bar">{bar}</div>
+        <div className="stories-bar">
+          <button type="button" className="stories-step" aria-disabled={index === 0} onClick={() => index > 0 && onIndex(index - 1)}>Story précédente</button>
+          {bar}
+          <button type="button" className="stories-step" aria-disabled={index === count - 1} onClick={() => index < count - 1 && onIndex(index + 1)}>Story suivante</button>
+        </div>
       </div>
       <p className="visually-hidden" aria-live="polite">{`${index + 1} sur ${count}, ${label}`}</p>
     </main>
@@ -149,15 +165,17 @@ export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, nam
   useEffect(() => {
     let cancelled = false
     setShared({ status: 'loading' })
-    fileOf(url, name).then(
+    // The API draws one image at a time: a story tapped through is not drawn ahead of the one read
+    const wait = setTimeout(() => fileOf(url, name).then(
       (file) => !cancelled && setShared({ status: 'ready', file }),
       (error) => {
         console.error('Unable to draw the image', error)
         !cancelled && setShared({ status: 'error' })
       },
-    )
+    ), files.has(url) ? 0 : 700)
     return () => {
       cancelled = true
+      clearTimeout(wait)
     }
   }, [url, name, attempt])
 
@@ -165,6 +183,7 @@ export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, nam
     <button
       type="button"
       className="stories-share"
+      aria-label={shared.status === 'ready' ? `${label}, en image` : undefined}
       disabled={shared.status === 'loading'}
       aria-busy={shared.status === 'loading'}
       onClick={() => shared.status === 'ready' ? send(shared.file) : setAttempt(attempt + 1)}
