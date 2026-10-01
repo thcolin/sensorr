@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
 import { STATUS_GROUPS, entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
-import { episodeStatusFilter, showFilter } from '../filters'
+import { episodeStatusFilter, facetFilter, showFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { LogsService } from '../logs/logs.service'
@@ -262,8 +262,9 @@ export class ShowsService {
     return res
   }
 
-  async getStatistics(context: 'library' | 'followed' = 'library') {
+  async getStatistics(params = {} as any, context: 'library' | 'followed' = 'library') {
     this.logger.log('GetStatistics')
+    const filtered = (...keys: string[]) => ({ $match: facetFilter(showFilter, params, ...keys) })
     const count = { count: { $sum: 1 } }
     const bucket = (key: string, boundaries: number[], groupBy: any = `$${key}`) => [{ $bucket: { groupBy, boundaries, default: -1, output: count } }]
     const unwound = (path: string, _id = `$${path}`) => [{ $unwind: `$${path.split('.')[0]}` }, { $group: { _id, ...count } }]
@@ -272,22 +273,22 @@ export class ShowsService {
       { $match: showFilter(context === 'followed' ? { monitored: 'true' } : {}) },
       {
         $facet: {
-          state: [{ $group: { _id: { $cond: ['$monitored', 'followed', 'unfollowed'] }, ...count } }],
-          status: [{ $group: { _id: '$status', ...count } }],
-          policy: [{ $match: { policy: { $ne: null } } }, { $group: { _id: '$policy', ...count } }],
-          requested_by: unwound('requested_by'),
-          genres: unwound('genres.id'),
-          networks: [{ $unwind: '$networks' }, { $group: { _id: '$networks.id', name: { $first: '$networks.name' }, ...count } }],
-          original_languages: [{ $group: { _id: '$original_language', ...count } }],
-          origin_country: unwound('origin_country'),
-          type: [{ $match: { type: { $ne: null } } }, { $group: { _id: '$type', ...count } }],
-          first_air_date: [{ $match: { first_air_date: { $ne: null } } }, { $group: { _id: { $year: '$first_air_date' }, ...count } }],
-          number_of_seasons: [{ $match: { number_of_seasons: { $gte: 1 } } }, ...bucket('number_of_seasons', fields.number_of_seasons.boundaries)],
-          popularity: bucket('popularity', fields.popularity.boundaries),
-          vote_average: bucket('vote_average', fields.vote_average.boundaries),
-          vote_count: bucket('vote_count', fields.vote_count.boundaries),
+          state: [filtered('monitored'), { $group: { _id: { $cond: ['$monitored', 'followed', 'unfollowed'] }, ...count } }],
+          status: [filtered('status'), { $group: { _id: '$status', ...count } }],
+          policy: [filtered('policy'), { $match: { policy: { $ne: null } } }, { $group: { _id: '$policy', ...count } }],
+          requested_by: [filtered('requested_by'), ...unwound('requested_by')],
+          genres: [filtered('genres'), ...unwound('genres.id')],
+          networks: [filtered('networks'), { $unwind: '$networks' }, { $group: { _id: '$networks.id', name: { $first: '$networks.name' }, ...count } }],
+          original_languages: [filtered('original_languages'), { $group: { _id: '$original_language', ...count } }],
+          origin_country: [filtered('origin_country'), ...unwound('origin_country')],
+          type: [filtered('type'), { $match: { type: { $ne: null } } }, { $group: { _id: '$type', ...count } }],
+          first_air_date: [filtered('first_air_date'), { $match: { first_air_date: { $ne: null } } }, { $group: { _id: { $year: '$first_air_date' }, ...count } }],
+          number_of_seasons: [filtered('number_of_seasons'), { $match: { number_of_seasons: { $gte: 1 } } }, ...bucket('number_of_seasons', fields.number_of_seasons.boundaries)],
+          popularity: [filtered('popularity'), ...bucket('popularity', fields.popularity.boundaries)],
+          vote_average: [filtered('vote_average'), ...bucket('vote_average', fields.vote_average.boundaries)],
+          vote_count: [filtered('vote_count'), ...bucket('vote_count', fields.vote_count.boundaries)],
           // A show without a length would fall in the last bar
-          episode_run_time: [{ $match: { 'episode_run_time.0': { $exists: true } } }, ...bucket('episode_run_time', fields.episode_runtime.boundaries, { $first: '$episode_run_time' })],
+          episode_run_time: [filtered('episode_run_time'), { $match: { 'episode_run_time.0': { $exists: true } } }, ...bucket('episode_run_time', fields.episode_runtime.boundaries, { $first: '$episode_run_time' })],
         },
       },
     ])

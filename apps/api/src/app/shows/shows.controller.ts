@@ -29,9 +29,9 @@ export class ShowsController {
 
   @Get('statistics')
   async getStatistics(
-    @Query('context') context = 'library',
+    @Query() { context = 'library', ...query },
   ): Promise<unknown> {
-    return this.showsService.getStatistics(context as 'library' | 'followed')
+    return this.showsService.getStatistics(query, context as 'library' | 'followed')
   }
 
   @Get('metadata')

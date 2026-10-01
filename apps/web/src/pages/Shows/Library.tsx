@@ -302,7 +302,8 @@ const Library = compose(
 
       useEffect(() => {
         const controller = new AbortController()
-        const { uri, params, init } = APIQuery.shows.getStatistics({ init: { signal: controller.signal } })
+        const { sort_by, ...filters } = state as any
+        const { uri, params, init } = APIQuery.shows.getStatistics({ params: filters, init: { signal: controller.signal } })
 
         api.fetch(uri, params, init)
           .then(setCounts)
@@ -314,7 +315,7 @@ const Library = compose(
           })
 
         return () => controller.abort()
-      }, [])
+      }, [JSON.stringify(state)])
 
       useEffect(() => {
         // The ids of the previous filters must not stand in for the current ones.
