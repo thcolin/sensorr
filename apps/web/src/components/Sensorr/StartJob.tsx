@@ -60,15 +60,10 @@ UIStartJob.styles = {
 
 export const StartJob = memo(UIStartJob)
 
-// The head of a `Drawer` on `primary`: the Modal's title, and a close beside the knob when asked for
-const UIDrawerHead = ({ title, close = null }: { title: string, close?: () => void }) => (
+// The head of a `Drawer` on `primary`: the Modal's title, the knob closes it
+const UIDrawerHead = ({ title }: { title: string }) => (
   <div sx={UIDrawerHead.styles.element}>
     <h3>{title}</h3>
-    {close && (
-      <button type='button' onClick={close} aria-label='Close'>
-        <Icon value='clear' active={true} height='1.25em' width='1.25em' />
-      </button>
-    )}
   </div>
 )
 
@@ -87,17 +82,6 @@ UIDrawerHead.styles = {
       fontSize: 2,
       lineHeight: 1.3,
       color: 'whitePure',
-    },
-    '>button': {
-      variant: 'button.reset',
-      display: 'flex',
-      padding: 8,
-      color: 'whitePure',
-      ':focus-visible': {
-        outline: '2px solid',
-        outlineColor: 'whitePure',
-        outlineOffset: '2px',
-      },
     },
   },
 }

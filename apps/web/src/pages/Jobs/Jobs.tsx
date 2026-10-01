@@ -327,7 +327,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </>
       ) : mobile ? createPortal((
         <Drawer open={expanded} close={close} height='85vh'>
-          <DrawerHead title='Jobs' close={close} />
+          <DrawerHead title='Jobs' />
           {list}
         </Drawer>
       ), document.body) : list}
