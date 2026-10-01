@@ -34,6 +34,18 @@ const showTorrentOf = (buffer: Uint8Array): TorrentFiles => {
   return torrent
 }
 
+// A file name stops at 255 bytes, two a letter in Cyrillic: the title gives way, never the extension
+const filenameOf = ({ title, znab }: ReleaseDTO, extension: string): string => {
+  const suffix = sanitizeFilename(`-${znab}.${extension}`)
+  const stem = [...sanitizeFilename(title)]
+
+  while (Buffer.byteLength(`${stem.join('')}${suffix}`) > 255) {
+    stem.pop()
+  }
+
+  return `${stem.join('')}${suffix}`
+}
+
 @Injectable()
 export class SensorrService {
   private readonly logger = new Logger(SensorrService.name)
@@ -49,7 +61,7 @@ export class SensorrService {
 
   async downloadRelease(release: ReleaseDTO, source: 'enclosure' | 'cache' = 'enclosure', destination: 'fs' | 'cache' = 'fs', kind: 'movie' | 'show' = 'movie'): Promise<TorrentFiles | void> {
     const magnet = isMagnet(release.enclosure)
-    const filename = sanitizeFilename(`${release.title}-${release.znab}.${magnet ? 'magnet' : 'torrent'}`)
+    const filename = filenameOf(release, magnet ? 'magnet' : 'torrent')
     const blackhole = this.configService.config.get(kind === 'show' ? 'shows.blackhole' : 'blackhole')
     let res, buffer
 
