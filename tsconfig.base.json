@@ -25,7 +25,12 @@
       "@sensorr/tmdb": ["libs/tmdb/src/index.ts"],
       "@sensorr/ui": ["libs/ui/src/index.ts"],
       "@sensorr/utils": ["libs/utils/src/index.ts"]
-    }
+    },
+    "strict": false,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "tmp"]
 }
