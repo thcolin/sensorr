@@ -28,7 +28,7 @@ self.addEventListener('push', function (e) {
     // icon: notification.icon,
     image: notification.image,
     body: notification.body,
-    actions: notification.actions,
+    data: { url: notification.url },
   }))
 
   if (navigator.setAppBadge) {
@@ -38,6 +38,21 @@ self.addEventListener('push', function (e) {
       navigator.clearAppBadge()
     }
   }
+})
+
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close()
+  const url = e.notification.data?.url || '/'
+
+  // An open app navigates in place, rather than loading again
+  e.waitUntil(self.clients.matchAll({ type: 'window' }).then(([client]) => {
+    if (client) {
+      client.postMessage({ type: 'navigate', url })
+      return client.focus()
+    }
+
+    return self.clients.openWindow(url)
+  }))
 })
 
 // TODO: Cache more assets and API calls

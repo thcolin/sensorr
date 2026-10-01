@@ -20,32 +20,7 @@ const moviePushOf = (meta) => ({
     'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
   }[meta?.command],
   image: `https://image.tmdb.org/t/p/w185${meta?.movie?.poster_path}`,
-  actions: {
-    'record': [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ],
-    'refine': [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ],
-    'shrink': [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ],
-    'report': [
-      { action: 'accept', title: 'Accept' },
-      { action: 'refuse', title: 'Refuse' },
-    ],
-    'sync': [
-      { action: 'wish-it-back', title: '"Wish" it back' },
-      { action: 'ignore', title: 'Ignore' },
-    ],
-    'keep-in-touch': [
-      { action: 'wish-it', title: '"Wish" it' },
-      { action: 'ignore', title: 'Ignore' },
-    ],
-  }[meta?.command],
+  url: `/movie/${meta?.movie?.id}`,
 })
 
 const showPushOf = (meta) => ({
@@ -60,8 +35,7 @@ const showPushOf = (meta) => ({
     'keep-in-touch': `🍺 Requested by ${(meta?.requested_by || []).join(', ')}`,
   }[meta?.command],
   image: `https://image.tmdb.org/t/p/w185${meta?.show?.poster_path}`,
-  // The service worker handles no `notificationclick`: an action would do nothing
-  actions: [],
+  url: `/tv/${meta?.show?.id}`,
 })
 
 export const pushOf = (meta) => meta?.type === 'show' ? showPushOf(meta) : moviePushOf(meta)

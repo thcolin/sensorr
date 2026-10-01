@@ -179,6 +179,13 @@ const App = ({ ...props }) => {
     return () => clearTimeout(timeout)
   }, [ready])
 
+  // A click on a push notification, sent by the service worker
+  useEffect(() => {
+    const onMessage = ({ data }) => data?.type === 'navigate' && router.navigate(data.url)
+    navigator.serviceWorker?.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker?.removeEventListener('message', onMessage)
+  }, [])
+
   return (
     <RouterProvider router={router} />
   )
