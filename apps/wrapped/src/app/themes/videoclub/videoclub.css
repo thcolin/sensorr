@@ -2033,3 +2033,707 @@ html[data-theme='videoclub'] {
     animation: none;
   }
 }
+
+/* Stories: each sheet on one screen of the shop, 396 × 704, scaled to the phone and shared as the image.
+   The top 28 px and the bottom 72 px stay free of words, Safari lays the stories' chrome over them */
+.videoclub-story {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 396px;
+  height: 704px;
+  padding: 28px 16px 72px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 130px, rgb(0 0 0 / 0.28) 130px 132px, rgb(255 255 255 / 0.035) 132px 133px),
+    linear-gradient(var(--vc-night), var(--vc-wall) 25%, var(--vc-wall) 75%, var(--vc-night));
+  color: var(--vc-text);
+  font-size: 16px;
+  animation: videoclub-box-on 0.6s steps(1, end) both;
+}
+
+.videoclub-story > .videoclub-sheet {
+  flex: 1;
+  justify-content: safe center;
+  gap: 12px;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Each piece slid onto the shelf a beat after the last; the tubes catch instead */
+.videoclub-story > .videoclub-sheet > * {
+  animation: videoclub-shelve 0.5s calc(0.35s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story > .videoclub-sheet > :nth-child(2) { --at: 1; }
+.videoclub-story > .videoclub-sheet > :nth-child(3) { --at: 2; }
+.videoclub-story > .videoclub-sheet > :nth-child(4) { --at: 3; }
+.videoclub-story > .videoclub-sheet > :nth-child(5) { --at: 4; }
+.videoclub-story > .videoclub-sheet > :nth-child(6) { --at: 5; }
+
+.videoclub-story > .videoclub-sheet > .videoclub-neon {
+  animation: none;
+}
+
+.videoclub-story .videoclub-neon > span {
+  animation: videoclub-strike 1.2s steps(1, end) 0.3s both;
+}
+
+.videoclub-story .videoclub-neon > span + span {
+  animation-delay: 0.45s;
+}
+
+.videoclub-story .videoclub-neon {
+  font-size: 42px;
+}
+
+.videoclub-story .videoclub-neon-long {
+  font-size: 30px;
+}
+
+.videoclub-story .videoclub-lede {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.videoclub-story .videoclub-shelf-card {
+  padding: 10px 14px 12px;
+  font-size: 15px;
+}
+
+.videoclub-story .videoclub-shelf-card h3 {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  font-size: 22px;
+}
+
+.videoclub-story .videoclub-front::after,
+.videoclub-story .videoclub-set::after,
+.videoclub-story .videoclub-spot::after,
+.videoclub-story .videoclub-sign::before {
+  width: 396px;
+}
+
+.videoclub-story .videoclub-box-large {
+  width: 150px;
+}
+
+.videoclub-story .videoclub-tag {
+  min-width: 0;
+  padding: 7px 12px 7px 26px;
+}
+
+.videoclub-story .videoclub-tag b {
+  font-size: 34px;
+}
+
+.videoclub-story .videoclub-tag span {
+  font-size: 12px;
+}
+
+/* Opening and summary: the shop front, its tube sized to the name */
+.videoclub-story-opening,
+.videoclub-story-summary {
+  padding-top: 0;
+}
+
+.videoclub-story > .videoclub-opening {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.videoclub-story .videoclub-sign {
+  gap: 8px;
+  padding: 34px 0 8px;
+}
+
+.videoclub-story .videoclub-fascia::before,
+.videoclub-story .videoclub-fascia::after {
+  height: 36px;
+}
+
+.videoclub-story .videoclub-fascia-face {
+  padding: 7px 12px 6px;
+  font-size: 24px;
+}
+
+.videoclub-story .videoclub-tube {
+  font-size: min(62px, calc(520px / var(--letters, 8)));
+}
+
+.videoclub-story .videoclub-plate {
+  padding: 5px 14px 4px;
+  border-width: 4px;
+  font-size: 22px;
+}
+
+.videoclub-story .videoclub-front {
+  gap: 4px;
+  padding-bottom: 12px;
+}
+
+.videoclub-story .videoclub-front .videoclub-box {
+  flex-basis: 17%;
+}
+
+.videoclub-story .videoclub-front .videoclub-box-hero {
+  flex-basis: 23%;
+}
+
+.videoclub-story .videoclub-front .videoclub-sticker {
+  font-size: 10px;
+}
+
+.videoclub-story .videoclub-counter {
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border-top-width: 4px;
+}
+
+.videoclub-story .videoclub-counter .videoclub-lede {
+  max-width: none;
+  font-size: 14px;
+}
+
+.videoclub-story .videoclub-ticket {
+  padding: 12px 14px 16px;
+}
+
+.videoclub-story .videoclub-ticket-head {
+  padding: 2px 0 6px;
+  font-size: 11px;
+}
+
+.videoclub-story .videoclub-ticket-receipt li {
+  padding: 3px 0;
+  font-size: 14px;
+}
+
+.videoclub-story-summary > .videoclub-opening {
+  flex: none;
+}
+
+.videoclub-story-summary .videoclub-sign {
+  padding-bottom: 6px;
+}
+
+.videoclub-story-summary .videoclub-tube {
+  font-size: min(54px, calc(460px / var(--letters, 8)));
+}
+
+.videoclub-story-summary .videoclub-front .videoclub-box {
+  flex-basis: 15%;
+}
+
+.videoclub-story-summary .videoclub-front .videoclub-box-hero {
+  flex-basis: 22%;
+}
+
+/* The figures say it again on the summary: the lede stays on the opening */
+.videoclub-story-summary .videoclub-counter > .videoclub-lede {
+  display: none;
+}
+
+/* The membership card left on the counter, its rank embossed, the closing note beside it */
+.videoclub-story-close {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+}
+
+.videoclub-story-member {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  margin: -24px 0 0;
+  padding: 10px 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2d2168, #6a1f68 55%, #b42a7c);
+  color: #f3ecff;
+  font-size: 13px;
+  font-weight: 700;
+  font-stretch: 80%;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-shadow: -1px -1px 0 rgb(255 255 255 / 0.4), 1px 1px 0 rgb(0 0 0 / 0.55);
+  box-shadow: 0 14px 26px rgb(0 0 0 / 0.6);
+  transform: rotate(-4deg);
+  animation: videoclub-swipe 0.6s 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story-member b {
+  font-size: 34px;
+  font-weight: 600;
+  font-stretch: 72%;
+  line-height: 1;
+}
+
+.videoclub-story-member sup {
+  font-size: 0.5em;
+  text-transform: none;
+  vertical-align: top;
+}
+
+.videoclub-story-colophon {
+  display: grid;
+  gap: 4px;
+  color: var(--vc-soft);
+  font-size: 13px;
+  font-stretch: 85%;
+  line-height: 1.3;
+  text-align: left;
+  animation: videoclub-shelve 0.5s 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story-colophon .videoclub-colophon-short {
+  font-size: 14px;
+}
+
+/* Rank: the card swiped across the counter */
+.videoclub-story .videoclub-card {
+  width: 290px;
+}
+
+.videoclub-story .videoclub-card-face {
+  animation: videoclub-swipe 0.7s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story .videoclub-rank-text {
+  gap: 14px;
+}
+
+.videoclub-story .videoclub-board {
+  padding: 10px 14px 12px;
+  border-width: 8px;
+}
+
+.videoclub-story .videoclub-board-head {
+  font-size: 13px;
+}
+
+.videoclub-story .videoclub-board li {
+  padding: 2px 0;
+  font-size: 18px;
+}
+
+.videoclub-story .videoclub-board .videoclub-board-you {
+  font-size: 22px;
+}
+
+/* Streak: the ticket stamped once per evening, one stamp after the other */
+.videoclub-story .videoclub-pair .videoclub-box-large {
+  width: 116px;
+}
+
+.videoclub-story .videoclub-ticket-stamps {
+  width: 100%;
+  margin-top: -48px;
+}
+
+.videoclub-story .videoclub-ticket-figure {
+  padding-top: 6px;
+  font-size: 76px;
+}
+
+.videoclub-story .videoclub-ticket-unit {
+  font-size: 16px;
+}
+
+.videoclub-story .videoclub-stamps {
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+  margin: 10px 0;
+}
+
+.videoclub-story .videoclub-stamps li {
+  font-size: 11px;
+  animation: videoclub-stamp 0.18s calc(0.9s + var(--day, 0) * 40ms) ease-out both;
+}
+
+.videoclub-story .videoclub-ticket-foot {
+  padding-top: 8px;
+  font-size: 15px;
+}
+
+/* Months: the bookcase in two bays of six shelves, the tapes slid in month after month */
+.videoclub-story .videoclub-rack {
+  grid-template-rows: repeat(6, auto);
+  grid-auto-flow: column;
+  gap: 0 12px;
+  padding: 4px 8px;
+  border-width: 8px;
+}
+
+.videoclub-story .videoclub-rack-row {
+  grid-template-columns: 70px auto auto;
+  gap: 4px;
+  min-height: 0;
+  padding: 6px 0 9px;
+}
+
+.videoclub-story .videoclub-rack-row::after {
+  left: -6px;
+  right: -6px;
+  height: 6px;
+}
+
+.videoclub-story .videoclub-rack-tag {
+  padding: 3px 5px 4px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.videoclub-story .videoclub-rack-tag small {
+  font-size: 11px;
+}
+
+.videoclub-story .videoclub-rack .videoclub-spines {
+  gap: 1px;
+  animation: videoclub-slide 0.4s calc(0.6s + var(--at, 0) * 60ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story .videoclub-rack .videoclub-spine {
+  width: 4px;
+  height: 34px;
+}
+
+.videoclub-story .videoclub-rack .videoclub-spine span {
+  display: none;
+}
+
+.videoclub-story .videoclub-rack .videoclub-box-mini {
+  width: 22px;
+}
+
+/* Binge: the box set, its spines pushed in one after the other */
+.videoclub-story .videoclub-binge-visual,
+.videoclub-story .videoclub-binge-text {
+  gap: 10px;
+}
+
+.videoclub-story .videoclub-set {
+  padding-bottom: 14px;
+}
+
+.videoclub-story .videoclub-set .videoclub-box-large {
+  flex: 0 0 84px;
+  width: 84px;
+}
+
+.videoclub-story .videoclub-set .videoclub-spine {
+  width: clamp(3px, calc(170px / var(--count) - 2px), 14px);
+  height: 116px;
+}
+
+.videoclub-story .videoclub-set .videoclub-spines {
+  animation: videoclub-slide 0.6s 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story .videoclub-binge-text .videoclub-pace,
+.videoclub-story .videoclub-pace {
+  grid-template-columns: 70px 1fr;
+  gap: 14px;
+}
+
+.videoclub-story .videoclub-pace-text {
+  gap: 10px;
+}
+
+.videoclub-story .videoclub-pace-text .videoclub-tag b {
+  font-size: 26px;
+}
+
+.videoclub-story .videoclub-pace-text .videoclub-tag span {
+  font-size: 11px;
+}
+
+/* Night: the last tape falls through the returns slot */
+.videoclub-story .videoclub-returns {
+  width: 200px;
+}
+
+.videoclub-story .videoclub-box-returned {
+  animation: videoclub-return 0.7s 0.7s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+.videoclub-story .videoclub-night-text {
+  gap: 8px;
+}
+
+.videoclub-story .videoclub-night-date {
+  font-size: 15px;
+}
+
+.videoclub-story .videoclub-ticket-returns {
+  margin-top: 4px;
+}
+
+.videoclub-story .videoclub-ticket-returns li {
+  grid-template-columns: 3.4em 26px minmax(0, 1fr);
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.videoclub-story .videoclub-ticket-returns .videoclub-box-mini {
+  width: 26px;
+}
+
+.videoclub-story .videoclub-ticket-time b {
+  font-size: 19px;
+}
+
+.videoclub-story .videoclub-ticket-time span {
+  font-size: 12px;
+}
+
+.videoclub-story .videoclub-ticket-title {
+  font-size: 15px;
+}
+
+/* Server: the spotlight comes on over the case */
+.videoclub-story .videoclub-spot {
+  padding: 18px 0 14px;
+}
+
+.videoclub-story .videoclub-spot::before {
+  inset: -20px 0 14px;
+  animation: videoclub-box-on 0.6s 0.8s steps(1, end) both;
+}
+
+.videoclub-story .videoclub-spot .videoclub-box-large {
+  width: 168px;
+}
+
+/* Personne d’autre: the price tag slapped on with the gun */
+.videoclub-story .videoclub-price {
+  padding: 12px 20px 12px 38px;
+  animation: videoclub-slap 0.35s 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story .videoclub-price > span:first-child {
+  font-size: 92px;
+}
+
+.videoclub-story .videoclub-price-unit {
+  font-size: 14px;
+}
+
+.videoclub-story .videoclub-aisle {
+  gap: 12px;
+}
+
+.videoclub-story .videoclub-aisle-tag {
+  padding: 4px 14px;
+  font-size: 12px;
+}
+
+/* Up to four covers on one plank, their titles on two lines at most */
+.videoclub-story .videoclub-shelf {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.videoclub-story .videoclub-shelf-entry {
+  flex: 1 1 0;
+  max-width: 25%;
+}
+
+.videoclub-story .videoclub-shelf[data-count='1'] .videoclub-shelf-entry {
+  flex: 0 0 110px;
+  max-width: none;
+}
+
+.videoclub-story .videoclub-shelf-title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 6px;
+  font-size: 12px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Ton jumeau: the figure written in by hand on the loan card */
+.videoclub-story .videoclub-twin > .videoclub-loan {
+  padding: 12px 14px 14px 48px;
+}
+
+.videoclub-story .videoclub-loan-figure {
+  padding: 6px 0;
+}
+
+.videoclub-story .videoclub-loan-figure > span:first-child {
+  font-size: 64px;
+  animation: videoclub-write 0.7s 0.7s steps(8, end) both;
+}
+
+.videoclub-story .videoclub-loan-unit {
+  font-size: 16px;
+}
+
+.videoclub-story .videoclub-loan-ledger {
+  margin-bottom: 4px;
+}
+
+.videoclub-story .videoclub-loan-details {
+  font-size: 15px;
+}
+
+/* Vus à deux: the loan cards dealt one under the other, the case beside its title */
+.videoclub-story .videoclub-loans {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.videoclub-story .videoclub-loans[data-count='1'] {
+  grid-template-columns: 1fr;
+}
+
+.videoclub-story .videoclub-loan-small {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 34px;
+}
+
+.videoclub-story .videoclub-loans li {
+  animation: videoclub-deal 0.45s calc(0.7s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.videoclub-story .videoclub-loans li:nth-child(2) { --at: 1; }
+.videoclub-story .videoclub-loans li:nth-child(3) { --at: 2; }
+.videoclub-story .videoclub-loans li:nth-child(4) { --at: 3; }
+
+.videoclub-story .videoclub-loan-hand {
+  font-size: 11px;
+}
+
+/* Two or three cases, their figures slapped on their labels */
+.videoclub-story .videoclub-shelf-large .videoclub-shelf-entry {
+  flex: 1 1 0;
+  max-width: 50%;
+}
+
+.videoclub-story .videoclub-shelf-large[data-count='1'] .videoclub-shelf-entry {
+  flex: 0 0 180px;
+}
+
+.videoclub-story .videoclub-shelf-large .videoclub-shelf-title {
+  font-size: 16px;
+}
+
+.videoclub-story .videoclub-shelf-large .videoclub-label {
+  font-size: 16px;
+  animation: videoclub-slap 0.35s 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Genre: the aisle's board swings on its chains */
+.videoclub-story .videoclub-aisle-sign {
+  margin-top: 26px;
+  padding: 5px 18px 7px;
+  font-size: 40px;
+  transform-origin: 50% -40px;
+  animation: videoclub-swing 1.6s 0.5s ease-out both;
+}
+
+.videoclub-story .videoclub-aisle-sign::before,
+.videoclub-story .videoclub-aisle-sign::after {
+  height: 30px;
+}
+
+/* Two shelves share the page: their covers stand smaller */
+.videoclub-story-genre .videoclub-shelf-entry {
+  flex: 0 0 72px;
+}
+
+/* Finale: the shutter comes down over the window */
+.videoclub-story .videoclub-window {
+  width: 270px;
+  padding-top: 22px;
+}
+
+.videoclub-story .videoclub-window .videoclub-box-large {
+  width: 62%;
+}
+
+.videoclub-story .videoclub-shutter {
+  transform-origin: 50% 0;
+  animation: videoclub-shutter 0.9s 0.8s cubic-bezier(0.5, 0, 0.2, 1) both;
+}
+
+.videoclub-story .videoclub-end {
+  font-size: 40px;
+  animation: videoclub-shelve 0.4s 1.6s ease-out both;
+}
+
+@keyframes videoclub-shelve {
+  from { opacity: 0; transform: translateX(-18px); }
+}
+
+@keyframes videoclub-slide {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes videoclub-stamp {
+  from { opacity: 0; transform: scale(1.8) rotate(var(--turn)); }
+}
+
+@keyframes videoclub-swipe {
+  from { opacity: 0; transform: translateX(-120%) rotate(-10deg); }
+}
+
+@keyframes videoclub-return {
+  from { transform: translateY(-110%) rotate(-4deg); }
+}
+
+@keyframes videoclub-slap {
+  from { opacity: 0; transform: scale(1.4) rotate(6deg); }
+}
+
+@keyframes videoclub-write {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes videoclub-deal {
+  from { opacity: 0; transform: translateY(-24px) rotate(-6deg); }
+}
+
+@keyframes videoclub-swing {
+  0% { transform: rotate(-2deg) translateY(-60px); opacity: 0; }
+  30% { transform: rotate(6deg); opacity: 1; }
+  55% { transform: rotate(-5deg); }
+  80% { transform: rotate(0deg); }
+}
+
+@keyframes videoclub-shutter {
+  from { transform: scaleY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoclub-story,
+  .videoclub-story > .videoclub-sheet > *,
+  .videoclub-story .videoclub-neon > span,
+  .videoclub-story-member,
+  .videoclub-story-colophon,
+  .videoclub-story .videoclub-card-face,
+  .videoclub-story .videoclub-stamps li,
+  .videoclub-story .videoclub-rack .videoclub-spines,
+  .videoclub-story .videoclub-set .videoclub-spines,
+  .videoclub-story .videoclub-box-returned,
+  .videoclub-story .videoclub-spot::before,
+  .videoclub-story .videoclub-price,
+  .videoclub-story .videoclub-loan-figure > span:first-child,
+  .videoclub-story .videoclub-loans li,
+  .videoclub-story .videoclub-shelf-large .videoclub-label,
+  .videoclub-story .videoclub-aisle-sign,
+  .videoclub-story .videoclub-shutter,
+  .videoclub-story .videoclub-end {
+    animation: none;
+  }
+}

@@ -15,7 +15,7 @@ const tilts = (count: number) => Array.from({ length: count }, (_, index) => cou
 const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
 const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
@@ -31,10 +31,10 @@ const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, inde
 })
 
 // A paragraph of the model cut at its sentences
-const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
 
 // Price tags hung side by side, one figure each, the unit under it
-const Tags = ({ stats }: { stats: Stat[] }) => (
+export const Tags = ({ stats }: { stats: Stat[] }) => (
   <ul className="videoclub-tags">
     {stats.map((stat, index) => (
       <li key={stat.unit} className="videoclub-tag" style={{ '--turn': `${index % 2 ? 3 : -3}deg` } as React.CSSProperties}>
@@ -72,14 +72,14 @@ const Videoclub = ({ share, sheets, colophon, art }: ThemeProps) => (
 
 export default Videoclub
 
-const Neon = ({ lines, as: Tag = 'h2', tone = 'pink', className }: { lines: string[], as?: 'h1' | 'h2' | 'p', tone?: 'pink' | 'cyan', className?: string }) => (
+export const Neon = ({ lines, as: Tag = 'h2', tone = 'pink', className }: { lines: string[], as?: 'h1' | 'h2' | 'p', tone?: 'pink' | 'cyan', className?: string }) => (
   <Tag className={`videoclub-neon videoclub-neon-${tone} ${className || ''}`}>
     {lines.map((line) => <span key={line}>{line}</span>)}
   </Tag>
 )
 
 // A VHS case facing out: the sleeve under the plastic lip, a sticker, a handwritten label
-const Box = ({ poster, art, width = 640, tilt = 0, sticker, label, className }: { poster: WrappedPoster, art: Art, width?: 320 | 640 | 1280, tilt?: number, sticker?: string, label?: string, className?: string }) => {
+export const Box = ({ poster, art, width = 640, tilt = 0, sticker, label, className }: { poster: WrappedPoster, art: Art, width?: 320 | 640 | 1280, tilt?: number, sticker?: string, label?: string, className?: string }) => {
   const src = art(poster, 'thumb', width)
 
   return (
@@ -96,7 +96,7 @@ const Box = ({ poster, art, width = 640, tilt = 0, sticker, label, className }: 
 }
 
 // The spine of a tape on its shelf, the title written by hand on its label
-const Spines = ({ poster, count }: { poster: WrappedPoster, count: number }) => (
+export const Spines = ({ poster, count }: { poster: WrappedPoster, count: number }) => (
   <span className="videoclub-spines" aria-hidden="true" style={{ '--tape': tapeOf(poster.key) } as React.CSSProperties}>
     {Array.from({ length: count }, (_, index) => <i key={index} className="videoclub-spine"><span>{poster.title}</span></i>)}
   </span>
@@ -115,7 +115,7 @@ const Shelf = ({ posters, art, titled = true, className }: { posters: WrappedPos
   </ul>
 )
 
-const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?: string }) => {
+export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?: string }) => {
   const [lit, setLit] = useState(false)
   const at = sheet.title.indexOf(sheet.name)
   const [head, tail] = at < 0 ? [sheet.title, ''] : [sheet.title.slice(0, at).trim(), sheet.title.slice(at + sheet.name.length).trim()]
@@ -183,7 +183,7 @@ const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?
 }
 
 // The membership card, its number embossed in the plastic
-const Rank = ({ sheet, name, server }: { sheet: Of<'rank'>, name: string, server: string | null }) => (
+export const Rank = ({ sheet, name, server }: { sheet: Of<'rank'>, name: string, server: string | null }) => (
   <section className="videoclub-sheet videoclub-rank" aria-label={sheet.label}>
     <Neon lines={[sheet.label]} tone="cyan" />
     <div className="videoclub-card">
@@ -308,7 +308,7 @@ const Months = ({ sheet, art }: { sheet: Of<'months'>, art: Art }) => {
 }
 
 // A box set, one spine per episode of that evening
-const Binge = ({ sheet, art, episodes }: { sheet: Of<'binge'>, art: Art, episodes: number }) => (
+export const Binge = ({ sheet, art, episodes }: { sheet: Of<'binge'>, art: Art, episodes: number }) => (
   <section className={`videoclub-sheet videoclub-binge${sheet.paced_stats.length ? '' : ' videoclub-binge-solo'}`} aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-binge-visual">
@@ -371,7 +371,7 @@ const Night = ({ sheet, art }: { sheet: Of<'night'>, art: Art }) => (
   </section>
 )
 
-const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => (
+export const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-server" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-spot">
@@ -385,7 +385,7 @@ const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => (
 )
 
 // Personne d’autre: the shelf of the titles nobody else rents
-const Nobody = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => (
+export const Nobody = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-nobody" aria-label={sheet.label}>
     <Neon lines={[sheet.label]} tone="cyan" />
     <p className="videoclub-price">
@@ -404,7 +404,7 @@ const Nobody = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => (
 )
 
 // Ton jumeau: a loan card both names are written on
-const Twin = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
+export const Twin = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
   const [before, after] = sheet.highlight ? sheet.unit.split(sheet.highlight) : [sheet.unit, '']
   const [chapo, ...more] = sentences(sheet.details)
 
@@ -433,7 +433,7 @@ const Twin = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
 }
 
 // Vus à deux: one loan card per title, the other borrower written in
-const Duo = ({ sheet, art }: { sheet: Of<'duo'>, art: Art }) => (
+export const Duo = ({ sheet, art }: { sheet: Of<'duo'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-duo" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="cyan" />
     <p className="videoclub-lede">{figures(sheet.lede)}</p>
@@ -452,7 +452,7 @@ const Duo = ({ sheet, art }: { sheet: Of<'duo'>, art: Art }) => (
 )
 
 // One case per figure, the figure written on its label
-const Posters = ({ sheet, art }: { sheet: Of<'posters'>, art: Art }) => (
+export const Posters = ({ sheet, art }: { sheet: Of<'posters'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-posters" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone={sheet.variant === 'outliers' ? 'cyan' : 'pink'} />
     <ol className="videoclub-shelf videoclub-shelf-large" data-count={sheet.items.length}>
@@ -469,7 +469,7 @@ const Posters = ({ sheet, art }: { sheet: Of<'posters'>, art: Art }) => (
 )
 
 // The genre's own aisle, its sign hanging over the shelves
-const Genre = ({ sheet, art }: { sheet: Of<'genre'>, art: Art }) => {
+export const Genre = ({ sheet, art }: { sheet: Of<'genre'>, art: Art }) => {
   const { lead } = sheet
 
   return (
@@ -486,7 +486,7 @@ const Genre = ({ sheet, art }: { sheet: Of<'genre'>, art: Art }) => {
 }
 
 // Closing time: the shutter comes down over the last case in the window
-const Finale = ({ sheet, art }: { sheet: Of<'finale'>, art: Art }) => (
+export const Finale = ({ sheet, art }: { sheet: Of<'finale'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-finale" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-window" data-closed={sheet.closed}>
