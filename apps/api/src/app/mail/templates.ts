@@ -197,14 +197,15 @@ export const mails = {
     action: { label: 'Open the Mail settings', href: `${url}/settings/mail` },
     foot: ['Sent by your Sensorr from its Mail settings.'],
   }),
-  invitation: ({ url, sender }: { url: string, sender: string }) => layout({
+  invitation: ({ url, sender, name }: { url: string, sender: string, name?: string }) => layout({
     subject: `${sender} invites you to share your movie wishes`,
     picto: 'invitation',
     word: 'Invitation',
+    greeting: name ? `Hi ${name},` : undefined,
     title: `${sender} invites you to share your movie wishes`,
     paragraphs: [`Add movies to your Plex Watchlist, and ${sender} gets them for you on their Plex. Connect your Plex account once to start, it takes a minute.`],
     action: { label: 'Connect my Plex', href: `${url}/keep-in-touch` },
-    foot: [`Sent by ${escape(sender)} with Sensorr. You got this mail because ${escape(sender)} typed your address.`],
+    foot: [`Sent by ${escape(sender)} with Sensorr. You got this mail because ${escape(sender)} ${name ? 'shares their Plex with you' : 'typed your address'}.`],
   }),
   welcome: ({ url, sender, name, wrapped }: { url: string, sender: string, name: string, wrapped?: string }) => layout({
     subject: "You're all set",

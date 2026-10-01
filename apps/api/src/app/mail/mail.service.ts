@@ -12,6 +12,7 @@ import { Show } from '../shows/show.schema'
 import { Episode } from '../shows/episode.schema'
 import { Mail, mails, senderOf } from './templates'
 import { arrivalsOf } from './arrivals'
+import { Invitation } from './invitation.schema'
 
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
 
@@ -28,6 +29,7 @@ export class MailService {
     @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
     @InjectModel(Show.name) private readonly showModel: Model<Show>,
     @InjectModel(Episode.name) private readonly episodeModel: Model<Episode>,
+    @InjectModel(Invitation.name) private readonly invitationModel: Model<Invitation>,
     private configService: ConfigService,
   ) {}
 
@@ -80,12 +82,16 @@ export class MailService {
     return guest
   }
 
-  async send(to: string, mail: Mail, headers: Record<string, string> = {}) {
+  private ready() {
     const missing = this.missing()
 
     if (missing.length) {
       throw new BadRequestException(`Mail is not set up, fill the ${missing.join(', ')} on the Mail settings page`)
     }
+  }
+
+  async send(to: string, mail: Mail, headers: Record<string, string> = {}) {
+    this.ready()
 
     const transport = createTransport({
       host: this.config.get('mail.host'),
@@ -111,6 +117,31 @@ export class MailService {
     }
 
     this.logger.log(`Send "${mail.subject}" to "${to}"`)
+  }
+
+  // One by one, an address the SMTP server refuses does not stop the others
+  async invite(invitees: { email: string, name?: string }[]) {
+    this.ready()
+    const results = []
+
+    for (const { email, name } of invitees) {
+      try {
+        await this.send(email, mails.invitation({ url: this.url(), sender: this.sender(), name }))
+        const invited_at = Date.now()
+        await this.invitationModel.updateOne({ email: email.toLowerCase() }, { invited_at }, { upsert: true })
+        results.push({ email, invited_at })
+      } catch (error) {
+        this.logger.warn(`Invitation "${email}" not sent: ${error.message}`)
+        results.push({ email, error: error.message })
+      }
+    }
+
+    return results
+  }
+
+  async invitations(emails: string[]) {
+    const invitations = await this.invitationModel.find({ email: { $in: emails.map((email) => email.toLowerCase()) } }).lean()
+    return Object.fromEntries(invitations.map(({ email, invited_at }) => [email, invited_at]))
   }
 
   async mailRequests() {
