@@ -57,14 +57,14 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
   },
   ...(created > 0 ? [{
     key: 'created',
-    emoji: '➕',
-    title: <span><strong>{created}</strong> Shows added from Plex (archived)</span>,
+    emoji: '🆕',
+    title: <span><strong>{created}</strong> Shows added from Plex (archived), among the fixed shows</span>,
     length: created,
   }] : []),
   ...(withdrawals > 0 ? [{
     key: 'withdrawals',
     emoji: '🗑️',
-    title: <span><strong>{withdrawals}</strong> Withdrawn proposals, all their episodes on Plex</span>,
+    title: <span><strong>{withdrawals}</strong> Proposals withdrawn, Plex holds all their episodes</span>,
     length: withdrawals,
   }] : []),
   ...(cleanups?.success > 0 ? [{
@@ -88,7 +88,7 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
   ...(extended && read > 0 ? [{
     key: 'read',
     emoji: '🔍',
-    title: <span><strong>{read}</strong> Episode streams read from Plex</span>,
+    title: <span><strong>{read}</strong> New episode files read from Plex</span>,
     length: read,
   }] : []),
   ...(extended && unmatched > 0 ? [{
