@@ -377,7 +377,6 @@ export class ShowsService {
 
   async upsertEpisodes(changes: { [key: string]: EpisodeDTO }): Promise<any> {
     this.logger.log(`UpsertEpisodes "${Object.keys(changes).length}"`)
-    // The posted episodes getting their first file, the ones that already held one keep their date
     const filled = Object.keys(changes).filter((id) => changes[id].files?.length)
     const held = new Set((filled.length ? await this.episodeModel.find({ _id: { $in: filled }, 'files.0': { $exists: true } }, { _id: 1 }).lean() : []).map(({ _id }) => String(_id)))
     const landed = new Set(filled.filter((id) => !held.has(String(id))))

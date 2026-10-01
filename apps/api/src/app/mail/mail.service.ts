@@ -13,7 +13,6 @@ import { Episode } from '../shows/episode.schema'
 import { Mail, mails, senderOf } from './templates'
 import { arrivalsOf } from './arrivals'
 
-// The mails a friend can stop from their own link, the ones that come back on their own
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -36,7 +35,6 @@ export class MailService {
     return this.configService.config
   }
 
-  // What a mail needs before it can leave: a server to send through, a sender, and an address for its links
   missing(): string[] {
     return [
       !this.config.get('mail.host') && 'SMTP host',
@@ -57,7 +55,6 @@ export class MailService {
     return senderOf(this.config.get('mail.from'))
   }
 
-  // A mail that comes back on its own carries its unsubscribe link, in the footer and in the headers mail clients read
   async unsubscribeOf(email: string, kind: string) {
     const guest = await this.guestModel.findOne({ email }, { mail_token: 1 }).lean()
     const token = guest?.mail_token || (await this.guestModel.findOneAndUpdate({ email }, { mail_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).mail_token
@@ -113,7 +110,6 @@ export class MailService {
     this.logger.log(`Send "${mail.subject}" to "${to}"`)
   }
 
-  // Run by the `mail` job: each friend gets what reached Plex of their requests since their last mail, nothing when nothing did
   async mailRequests() {
     if (!this.enabled('requests')) {
       return { mailed: 0, friends: 0 }

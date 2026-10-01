@@ -8,7 +8,6 @@ interface Episode { show_id: number, season_number: number, files_at: number }
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
 
-// What reached Plex for a friend: each movie, and each show once with the episodes that landed, the latest first
 export const arrivalsOf = ({ movies, shows, episodes }: { movies: Movie[], shows: Show[], episodes: Episode[] }): Arrival[] => {
   const landed = shows
     .map((show) => {

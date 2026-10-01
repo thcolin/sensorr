@@ -73,7 +73,6 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
   },
 }
 
-// The name in `Thomas <sensorr@example.com>` is the one friends read in every mail
 export const senderOf = (from: string) => from.match(/^\s*"?([^"<]*?)"?\s*</)?.[1] || from.split('@')[0] || 'Sensorr'
 
 export const escape = (value: string | number) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
@@ -127,7 +126,6 @@ interface Layout {
   foot: string[]
 }
 
-// The one shape of every mail but the wrapped: a pictogram on a light card under the app's test card, then one call to action
 function layout({ subject, picto, word, greeting, title, paragraphs, arrivals, action, foot }: Layout): Mail {
   const html = document(subject, `
 ${stripe(BARS, 6)}

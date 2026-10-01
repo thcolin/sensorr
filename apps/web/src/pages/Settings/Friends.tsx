@@ -266,7 +266,6 @@ const Friends = ({ ...props }) => {
   )
 }
 
-// What the plex row says of a friend's token, and of the reconnect mails since it died
 const reconnectOf = (guest, sent: any = {}) => {
   const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
   const reminders = Math.max((sent.reconnect_mails ?? guest.reconnect_mails ?? 0) - 1, 0)
