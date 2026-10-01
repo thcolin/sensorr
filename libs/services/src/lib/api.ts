@@ -658,6 +658,20 @@ export class API {
           },
         }
       }),
+      getShared: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'guests/shared',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
       deleteGuest: (
         { body, init = {} }: { body: any, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
