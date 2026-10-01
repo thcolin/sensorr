@@ -1,4 +1,5 @@
 import oleoo from 'oleoo'
+import { unitLabel } from '@sensorr/sensorr'
 
 const LANGUAGES = {
   en: 'ENGLiSH', fa: 'PERSiAN', am: 'AMHARiC', ar: 'ARABiC', km: 'CAMBODiAN', zh: 'CHiNESE', da: 'DANiSH',
@@ -171,10 +172,12 @@ export const episodeVersionsOf = (items) => {
 export const showFilesOf = (episodes, items) => {
   const keyOf = (season, episode) => `${season}:${episode}`
   const read = readOf(episodes)
-  const files = {}, entries = {}, listed = new Set()
+  const files = {}, entries = {}, listed = new Map()
 
   for (const item of items) {
-    listed.add(keyOf(item.parentIndex, item.index))
+    if (Number.isInteger(item.parentIndex) && Number.isInteger(item.index)) {
+      listed.set(keyOf(item.parentIndex, item.index), { type: 'episode', season: item.parentIndex, episode: item.index })
+    }
 
     for (const media of item.Media || []) {
       const entry = entries[media.Part[0].file] = entries[media.Part[0].file] || fileOf(item, media, read)
@@ -190,7 +193,7 @@ export const showFilesOf = (episodes, items) => {
 
   return {
     episodes: episodes.map((episode) => ({ ...episode, files: files[keyOf(episode.season_number, episode.episode_number)] || [] })),
-    unmatched: [...listed].filter((key) => !numbers.has(key)).map((key) => key.split(':').map((number) => number.padStart(2, '0'))).map(([season, episode]) => `S${season}E${episode}`),
+    unmatched: [...listed].filter(([key]) => !numbers.has(key)).map(([, unit]) => unit).sort((a, b) => a.season - b.season || a.episode - b.episode).map(unitLabel),
   }
 }
 
