@@ -14,7 +14,7 @@ const fitOf = () => {
   const { innerWidth: width, innerHeight: height } = window
   const inside = Math.min(width / STORY.width, height / STORY.height)
   const outside = Math.min(width / STORY.width, (height - CHROME.top - CHROME.bottom) / STORY.height)
-  // Safari leaves a phone 699 px of its 844: the chrome then sits over the story rather than shrink it
+  // Safari's toolbars leave too little height: the chrome then sits over the story rather than shrink it
   return outside >= inside * 0.95 ? { scale: outside, roomy: true } : { scale: inside, roomy: false }
 }
 

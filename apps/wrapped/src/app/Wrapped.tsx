@@ -50,7 +50,6 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
   const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}`
-  // « retrospective-thcolin-2026-rank.jpg »
   const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
   // Where the switch that was used sat on screen, so the new look opens at the same place
   const anchor = useRef<{ at: At, top: number } | null>(null)

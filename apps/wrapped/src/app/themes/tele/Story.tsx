@@ -41,7 +41,6 @@ const Sheet = ({ story, name, page, tone, className = '', children }: { story: S
   </section>
 )
 
-// The figure counts up to its value as the page lands
 const Count = ({ value, suffix, spoken }: { value: number, suffix?: string, spoken: string }) => {
   const reduced = useReducedMotion()
   const [shown, setShown] = useState(reduced ? value : 0)
@@ -63,7 +62,6 @@ const Count = ({ value, suffix, spoken }: { value: number, suffix?: string, spok
 
 const Band = ({ text }: { text: string }) => <h2 className="tele-headline"><span className="tele-band">{text}</span></h2>
 
-// Up to four posters in a row, their titles under them
 const Row = ({ posters, art, titles = true, small }: { posters: WrappedPoster[], art: Art, titles?: boolean, small?: boolean }) => (
   <ul className={`tele-story-row${small ? ' tele-story-row-small' : ''}`}>
     {posters.slice(0, 4).map((poster, at) => (

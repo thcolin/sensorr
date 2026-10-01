@@ -1863,7 +1863,6 @@ html[data-theme='tele'] {
   gap: 12px;
 }
 
-/* A row of four posters, each landing a beat after the last */
 .tele-story-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1885,7 +1884,6 @@ html[data-theme='tele'] {
   -webkit-line-clamp: 2;
 }
 
-/* Posters set smaller where two rows share the page */
 .tele-story-row-small {
   grid-template-columns: repeat(4, 64px);
 }
