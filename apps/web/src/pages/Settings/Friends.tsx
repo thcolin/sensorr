@@ -272,8 +272,8 @@ const Friends = ({ ...props }) => {
   )
 }
 
-// A disconnected friend shows the reconnect mails sent since their token died, the first one and its 3 reminders,
-// as four arcs around their picture: filled once sent
+// A linked friend wears a thin Plex ring and the Plex chevron, a disconnected one the reconnect mails sent since their
+// token died, the first one and its 3 reminders, as four arcs filled in red once sent, and a grey chevron
 const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
   const [broken, setBroken] = useState(false)
   const linked = guest.plex_token_valid !== false
@@ -284,7 +284,7 @@ const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
   const label = linked
     ? `Plex account linked${checked}`
     : `Plex account disconnected${checked}, ${count} of 4 reconnect mails sent${at ? `, last on ${dayOf(at)}` : ''}${stopped ? ', stopped the reminders' : ''}`
-  const arcs = [1, 2, 3, 4].map((index) => `var(--theme-ui-colors-${index <= count ? 'grayDarkest' : 'grayDark'})`)
+  const arcs = [1, 2, 3, 4].map((index) => `var(--theme-ui-colors-${index <= count ? 'error' : 'grayDark'})`)
 
   return (
     <span
@@ -296,7 +296,11 @@ const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
       style={linked ? {} : { '--arcs': `conic-gradient(from -45deg, ${arcs[0]} 0 22.5%, transparent 0 25%, ${arcs[1]} 0 47.5%, transparent 0 50%, ${arcs[2]} 0 72.5%, transparent 0 75%, ${arcs[3]} 0 97.5%, transparent 0)` } as any}
     >
       {guest.avatar && !broken ? <img src={guest.avatar} alt='' onError={() => setBroken(true)} /> : <span>{(guest.name || guest.email || '?')[0]}</span>}
-      {!linked && stopped && <b aria-hidden={true}>🔕</b>}
+      <b aria-hidden={true}>
+        <svg viewBox='0 0 512 512'>
+          <path fill='currentColor' d='m256 70h-108l108 186-108 186h108l108-186z' />
+        </svg>
+      </b>
     </span>
   )
 }
@@ -335,7 +339,8 @@ Friends.styles = {
       mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
     },
     '&[data-linked]::before': {
-      display: 'none',
+      background: 'var(--theme-ui-colors-plex)',
+      mask: 'radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1.5px))',
     },
     '>img, >span': {
       width: '34px',
@@ -365,7 +370,14 @@ Friends.styles = {
       height: '18px',
       borderRadius: '50%',
       backgroundColor: 'white',
-      fontSize: 8,
+      color: 'grayDarker',
+      '>svg': {
+        width: '14px',
+        height: '14px',
+      },
+    },
+    '&[data-linked] >b': {
+      color: 'plex',
     },
   },
   who: {
@@ -382,7 +394,7 @@ Friends.styles = {
       color: 'grayDarkest',
     },
   },
-  // A grey pill with the Plex dot, a click mails the friend to reconnect
+  // A grey pill with a red dot, a click mails the friend to reconnect
   disconnected: {
     variant: 'button.reset',
     gridArea: 'disconnected',
@@ -405,7 +417,7 @@ Friends.styles = {
       width: '6px',
       height: '6px',
       borderRadius: '50%',
-      backgroundColor: 'plex',
+      backgroundColor: 'error',
     },
     ':hover:not([aria-disabled])': {
       backgroundColor: 'grayDark',
