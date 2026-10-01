@@ -144,6 +144,7 @@ export class WrappedService {
       token,
       year,
       look: theme,
+      open: year >= editionOf(Date.now() / 1000, TIME_ZONE),
     }))
     await this.guestModel.updateOne({ email: guest.email }, { wrapped_mailed_at: Date.now() })
   }

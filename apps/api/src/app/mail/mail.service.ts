@@ -1,4 +1,5 @@
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { randomBytes } from 'node:crypto'
 import { Model } from 'mongoose'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -15,8 +16,9 @@ import { arrivalsOf } from './arrivals'
 // The mails a friend can stop from their own link, the ones that come back on their own
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
 
-// `nx build api` copies `src/assets` next to `main.js`, which is the script node runs, in dev and in the image
-const PICTOS = path.resolve(path.dirname(process.argv[1]), 'assets', 'mail')
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// `nx build api` copies `src/assets` into the bundle's folder, in dev and in the image
+const PICTOS = path.resolve(`${__dirname}/../../../../../dist/apps/api/assets/mail`)
 
 @Injectable()
 export class MailService {

@@ -228,21 +228,26 @@ export const mails = {
     action: { label: 'Watch on Plex', href: 'https://app.plex.tv' },
     foot: [`Sent by ${escape(sender)} with Sensorr, once a week when something new arrives.`, link(unsubscribe, 'Stop these mails')],
   }),
-  wrapped: ({ url, sender, name, token, year, look }: { url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme }): Mail => {
-    const subject = `Your ${year} on Plex is ready`
+  wrapped: ({ url, sender, name, token, year, look, open = false }: { url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme, open?: boolean }): Mail => {
+    // Sent by hand before the edition closes, the page is still filling up
+    const subject = open ? `Your ${year} on Plex, so far` : `Your ${year} on Plex is ready`
+    const title = open ? 'Your year on Plex, so far' : 'Your year on Plex is ready'
+    const body = open
+      ? `Every evening you spent on ${sender}'s Plex since 1 December ${year - 1}, on one page made for you. It fills up until 1 December ${year}.`
+      : `Every evening you spent on ${sender}'s Plex, from 1 December ${year - 1} to 1 December ${year}, on one page made for you.`
     const href = `${url}/wrapped/${token}`
     const { band, button: colors } = LOOKS[look] || LOOKS.tele
     const html = document(subject, `
 ${band(year)}
 <tr><td style="padding:30px 26px 28px;font:400 16px/1.6 ${BODY};color:#e6e6e6">
   <p style="margin:0 0 14px;color:#bfbfbf">Hi ${escape(name)},</p>
-  <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">Your year on Plex is ready</h1>
-  <p style="margin:0 0 22px">Every evening you spent on ${escape(sender)}'s Plex, from 1 December ${year - 1} to 1 December ${year}, on one page made for you.</p>
+  <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">${escape(title)}</h1>
+  <p style="margin:0 0 22px">${escape(body)}</p>
   <table role="presentation" cellpadding="0" cellspacing="0"><tr><td>${button('Open my wrapped', href, colors).replace('align="center" style="margin:0 auto"', '')}</td></tr></table>
   ${plain(href)}
 </td></tr>
-<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr, once a year.</td></tr>`)
-    const text = [`Hi ${name},`, 'Your year on Plex is ready', `Every evening you spent on ${sender}'s Plex, from 1 December ${year - 1} to 1 December ${year}, on one page made for you.`, `Open my wrapped: ${href}`, `Sent by ${sender} with Sensorr, once a year.`].join('\n\n')
+<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr${open ? '' : ', once a year'}.</td></tr>`)
+    const text = [`Hi ${name},`, title, body, `Open my wrapped: ${href}`, `Sent by ${sender} with Sensorr${open ? '' : ', once a year'}.`].join('\n\n')
     return { subject, html, text }
   },
 }

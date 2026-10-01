@@ -47,3 +47,12 @@ describe('mails', () => {
     expect(labo.picto).toBeUndefined()
   })
 })
+
+describe('mails.wrapped', () => {
+  it('says the page is still filling up when sent before the edition closes', () => {
+    const open = mails.wrapped({ url: 'https://sensorr.example', sender: 'Thomas', name: 'Léa', token: 'abc', year: 2026, look: 'tele', open: true })
+    expect(open.subject).toBe('Your 2026 on Plex, so far')
+    expect(open.text).toContain('It fills up until 1 December 2026.')
+    expect(open.text).not.toContain('once a year')
+  })
+})
