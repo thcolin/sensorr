@@ -193,7 +193,7 @@ const Friends = ({ ...props }) => {
                     <span aria-label='Plex' sx={{ display: 'flex', justifyContent: 'center', width: '1em', fontSize: 3, color: guest.plex_token_valid === false ? 'grayDarkest' : 'plex' }}>❯</span>
                   </h5>
                   <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined} data-prose={true}>
-                    <span>{reconnectOf(guest, mailed[guest.email])}</span>
+                    <Reconnect guest={guest} sent={mailed[guest.email]} />
                   </p>
                   <button
                     type='button'
@@ -227,7 +227,7 @@ const Friends = ({ ...props }) => {
                       <span>No link yet, 📋 creates one</span>
                     )}
                     {wrapped?.[guest.email]?.wrapped_token && (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) && (
-                      <small sx={Friends.styles.mailed}>mailed {dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}</small>
+                      <i role='img' sx={Friends.styles.mailed} aria-label={`Mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}`} title={`Mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}`} />
                     )}
                   </p>
                   <button
@@ -312,19 +312,27 @@ const Friends = ({ ...props }) => {
   )
 }
 
-const reconnectOf = (guest, sent: any = {}) => {
-  const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
-  const reminders = Math.max((sent.reconnect_mails ?? guest.reconnect_mails ?? 0) - 1, 0)
+// The reconnect mails since the token died, the first one and its 3 reminders, as dots: filled once sent
+const Reconnect = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
+  const checked = guest.plex_token_checked_at ? `Checked ${dayOf(guest.plex_token_checked_at)}` : undefined
 
-  if (guest.plex_token_valid === false) {
-    return [
-      `Disconnected${guest.plex_token_checked_at ? `, checked ${dayOf(guest.plex_token_checked_at)}` : ''}`,
-      at && `mailed ${dayOf(at)}${reminders ? `, ${reminders}/3 reminders` : ''}`,
-      guest.mail_unsubscribed?.includes('reconnect') && 'stopped the reminders',
-    ].filter(Boolean).join(' · ')
+  if (guest.plex_token_valid !== false) {
+    return <span title={checked}>Linked</span>
   }
 
-  return `Linked${guest.plex_token_checked_at ? `, checked ${dayOf(guest.plex_token_checked_at)}` : ''}`
+  const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
+  const count = Math.min(Math.max(sent.reconnect_mails ?? guest.reconnect_mails ?? 0, at ? 1 : 0), 4)
+  const stopped = guest.mail_unsubscribed?.includes('reconnect')
+
+  return (
+    <span sx={Friends.styles.reconnect}>
+      <span title={checked}>Disconnected</span>
+      <span role='img' aria-label={`${count} of 4 reconnect mails sent${at ? `, last on ${dayOf(at)}` : ''}`} title={`${count} of 4 mails sent${at ? `, last on ${dayOf(at)}` : ''}`}>
+        {[0, 1, 2, 3].map((index) => <i key={index} data-sent={index < count || undefined} />)}
+      </span>
+      {stopped && <span role='img' aria-label='Stopped the reminders' title='Stopped the reminders'>🔕</span>}
+    </span>
+  )
 }
 
 Friends.styles = {
@@ -448,12 +456,36 @@ Friends.styles = {
       filter: 'grayscale(1)',
     },
   },
+  reconnect: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    '>span[role=img]': {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 10,
+      cursor: 'default',
+    },
+    '>span[role=img]>i': {
+      width: '0.5em',
+      height: '0.5em',
+      borderRadius: '50%',
+      border: '1px solid',
+      borderColor: 'grayDarker',
+    },
+    '>span[role=img]>i[data-sent]': {
+      borderColor: 'grayDarkest',
+      backgroundColor: 'grayDarkest',
+    },
+  },
   mailed: {
     flexShrink: 0,
-    marginLeft: 8,
-    fontFamily: 'body',
-    color: 'grayDarkest',
-    whiteSpace: 'nowrap',
+    marginLeft: 6,
+    width: '0.5em',
+    height: '0.5em',
+    borderRadius: '50%',
+    backgroundColor: 'grayDarkest',
+    cursor: 'default',
   },
   retry: {
     background: 'none',
