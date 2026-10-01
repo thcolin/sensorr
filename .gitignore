@@ -77,3 +77,5 @@ Thumbs.db
 .impeccable/live/*.png
 # impeccable-ignore-end
 **/.impeccable/live/server.json
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
