@@ -91,25 +91,25 @@ npx nx run-many --target=lint --all
 
 Exits 1 on real lint errors. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`. The errors below were already in the code then.
 
-Measured on 2026-10-02 with ESLint 8.57.1, `@nx/enforce-module-boundaries` turned off, 497 errors and 1706 warnings:
+Measured on 2026-10-02 with ESLint 9.39.5 and typescript-eslint 8.71, `@nx/enforce-module-boundaries` turned off, 554 errors and 1737 warnings. Each project is linted from its own root, where its `eslint.config.mjs` lives:
 
 | Project | Errors | Warnings |
 | --- | --- | --- |
-| `api` | 23 | 143 |
-| `cli` | 9 | 68 |
-| `web` | 177 | 770 |
-| `wrapped` | 13 | 15 |
-| `config` | 1 | 0 |
-| `palette` | 9 | 11 |
+| `api` | 25 | 145 |
+| `cli` | 16 | 71 |
+| `web` | 176 | 780 |
+| `wrapped` | 13 | 18 |
+| `config` | 2 | 0 |
+| `palette` | 59 | 13 |
 | `plex` | 0 | 1 |
-| `sensorr` | 1 | 108 |
+| `sensorr` | 2 | 111 |
 | `services` | 142 | 117 |
 | `theme` | 2 | 2 |
 | `tmdb` | 12 | 15 |
-| `ui` | 93 | 442 |
-| `utils` | 15 | 14 |
+| `ui` | 95 | 444 |
+| `utils` | 10 | 20 |
 
-Two rules make most of the errors: `@typescript-eslint/ban-types` (162) and `react-hooks/rules-of-hooks` (150). With the module boundaries rule on, `utils`, `ui` and `web` stop on a crash of its fixer, `ENOENT ... libs/utils/src/regions/index.ts`, before ESLint prints its totals.
+Two rules make most of the errors: `@typescript-eslint/no-empty-object-type` (166) and `react-hooks/rules-of-hooks` (150). With the module boundaries rule on, `utils` stops on a crash of its fixer, `ENOENT ... libs/utils/src/regions/index.ts`, before ESLint prints its totals.
 
 ### Test
 

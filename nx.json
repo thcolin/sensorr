@@ -35,7 +35,7 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
-    "production": ["default"]
+    "production": ["default", "!{projectRoot}/eslint.config.mjs"]
   },
   "parallel": 1
 }
