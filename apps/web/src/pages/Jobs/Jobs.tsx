@@ -24,7 +24,7 @@ import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows, su
 import { Summary } from './Summary'
 import { cumulate } from './cumulate'
 import Body from '../../layout/Body/Body'
-import { CommandTabs } from '../../components/Sensorr/CommandTabs'
+import { CommandTabs, commandTabsOf } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
 import { DrawerHead, StartJob } from '../../components/Sensorr/StartJob'
 import { JobState } from '../../components/Sensorr/JobState'
@@ -54,6 +54,9 @@ const isEmptyImport = (job) => {
 
 // Every command while the jobs load, the ones without a job leave once they are there
 const LOADING_TABS = Object.keys(JOBS_UI).map(name => ({ value: name, emoji: JOB_EMOJIS[name], count: 0 }))
+
+const COMMANDS = Object.fromEntries(Object.keys(JOBS_UI).map(name => [name, { emoji: JOB_EMOJIS[name] }]))
+const startOf = (job) => new Date(job.start).getTime()
 
 const summaryOf = (job, summary = job.meta.summary) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(summary, false, job.meta.config)
 
@@ -227,18 +230,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
       }
     }, shown.length ? { running: shown } : {})
   }, [jobs, listed, running, filter])
-  // The command running or run last comes first
-  const options = useMemo(() => Object.keys(JOBS_UI)
-    .filter(name => name === filter || jobs.some(job => jobNameOf(job.meta) === name))
-    .map(name => ({
-      value: name,
-      emoji: JOB_EMOJIS[name],
-      count: jobs.filter(job => jobNameOf(job.meta) === name).length,
-      running: running.some(job => jobNameOf(job.meta) === name),
-      last: Math.max(0, ...jobs.filter(job => jobNameOf(job.meta) === name).map(job => new Date(job.start).getTime() || 0)),
-    }))
-    .sort((a, b) => Number(b.running) - Number(a.running) || b.last - a.last)
-    .map(({ running, last, ...option }) => option), [jobs, running, filter])
+  const options = useMemo(() => commandTabsOf(jobs, COMMANDS, filter, startOf, name => running.some(job => jobNameOf(job.meta) === name)), [jobs, running, filter])
 
   useEffect(() => {
     setExpanded(false)

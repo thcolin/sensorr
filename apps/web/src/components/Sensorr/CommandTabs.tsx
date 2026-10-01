@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
-import { jobLabelOf } from '@sensorr/sensorr'
+import { jobLabelOf, jobNameOf } from '@sensorr/sensorr'
 import { glide, useDragScroll } from '@sensorr/utils'
 
 export interface CommandTab {
@@ -17,6 +17,20 @@ interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
 }
 
 const GROUPED = ['movies', 'tv']
+
+// The commands met in `items`, or picked, the one running or met last first
+export const commandTabsOf = (
+  items: { meta: any }[],
+  commands: { [name: string]: Omit<CommandTab, 'value' | 'count'> },
+  value: string | null,
+  timeOf: (item) => number,
+  running: (name: string) => boolean = () => false,
+): CommandTab[] => Object.keys(commands)
+  .map(name => ({ name, matching: items.filter(item => jobNameOf(item.meta) === name) }))
+  .filter(({ name, matching }) => name === value || matching.length)
+  .map(({ name, matching }) => ({ name, matching, running: running(name), last: Math.max(0, ...matching.map(item => timeOf(item) || 0)) }))
+  .sort((a, b) => Number(b.running) - Number(a.running) || b.last - a.last)
+  .map(({ name, matching }) => ({ value: name, ...commands[name], count: matching.length }))
 
 // Commands about one media type share a capsule named after it, the others stand alone as pills, in the order given
 const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
