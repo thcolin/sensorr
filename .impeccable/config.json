@@ -50,6 +50,12 @@
         "value": "permanent marker",
         "createdAt": "2026-10-01T11:23:15.483Z",
         "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
+      },
+      {
+        "rule": "overused-font",
+        "value": "open sans",
+        "createdAt": "2026-10-01T11:49:05.965Z",
+        "reason": "Body face of DESIGN.md (libs/theme font.ts), the mails inherit the app's type system"
       }
     ]
   }

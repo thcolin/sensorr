@@ -37,14 +37,17 @@ const JobsSettings = ({ ...props }) => {
     ),
   }
 
+  const mailable = !!(config.get('mail.host') && config.get('mail.from') && config.get('mail.url'))
   const mail = {
-    disabled: !config.get('mail.host'),
-    warning: config.get('mail.host') ? null : (
+    disabled: !mailable,
+    warning: mailable ? null : (
       <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
         <strong>Warning</strong>, you need to set up Mail on dedicated <Link to='/settings/mail'>"Mail" Settings page</Link> first
       </span>
     ),
   }
+
+  const requirements = { 'plex.token': plex, 'tautulli.url': tautulli, 'mail.host': mail }
 
   return (
     <Body>
@@ -79,9 +82,9 @@ const JobsSettings = ({ ...props }) => {
                   <JobSettings
                     key={nameOfEntry(value)}
                     {...value}
-                    {...{ 'plex.token': plex, 'tautulli.url': tautulli, 'mail.host': mail }[value.requires]}
+                    {...requirements[value.requires]}
                     running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
-                    disabled={(!!value.requires && !config.get(value.requires)) || ongoing.includes(nameOfEntry(value))}
+                    disabled={!!requirements[value.requires]?.disabled || ongoing.includes(nameOfEntry(value))}
                     runJob={runJob}
                     stopJob={stopJob}
                     control={form.control}

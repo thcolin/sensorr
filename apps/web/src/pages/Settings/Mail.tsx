@@ -11,7 +11,7 @@ import Body from '../../layout/Body/Body'
 const SENT = [
   { key: 'welcome', emoji: '👋', label: 'Welcome', description: 'Once a friend links their Plex account' },
   { key: 'reconnect', emoji: '🔌', label: 'Reconnect', description: 'When Plex disconnects a friend, then up to 3 weekly reminders' },
-  { key: 'requests', emoji: '🍿', label: 'Ready to watch', description: 'Once a week, the requests of a friend that reached Plex' },
+  { key: 'requests', emoji: '🍿', label: 'Ready to watch', description: 'The requests of a friend that reached Plex, on each run of the 📬 Mail job' },
   { key: 'wrapped', emoji: '🎞️', label: 'Wrapped', description: 'When an edition of the wrapped freezes' },
 ]
 
@@ -29,7 +29,7 @@ const Mail = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const api = useAPI()
-  const form = useForm({ defaultValues: { ...config.getProperties(), mail: { ...config.get('mail'), url: config.get('mail.url') || document.location.origin } } })
+  const form = useForm({ defaultValues: config.getProperties() })
   const [to, setTo] = useState('')
   const [sending, setSending] = useState(false)
 
@@ -66,7 +66,7 @@ const Mail = ({ ...props }) => {
                   </Label>
                 )}
               />
-              <small sx={{ marginTop: 6 }}>The one your friends open, every link of a mail starts with it</small>
+              <small sx={{ marginTop: 6 }}>The one your friends open from home, every link of a mail starts with it, like <code>{document.location.origin}</code> if they reach this page there</small>
             </div>
             <div sx={Mail.styles.row}>
               <div sx={{ ...Mail.styles.field, flex: 3 }}>

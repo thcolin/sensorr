@@ -87,6 +87,7 @@ const Friends = ({ ...props }) => {
   const mailable = !!(config.get('mail.host') && config.get('mail.from') && config.get('mail.url'))
   const [mailed, setMailed] = useState({})
   const [invitee, setInvitee] = useState('')
+  const [invited, setInvited] = useState([])
   const [inviting, setInviting] = useState(false)
 
   // Sent from here, a mail goes whatever the Mail settings and the friend's unsubscribe link say
@@ -115,6 +116,7 @@ const Friends = ({ ...props }) => {
       const { uri, params, init } = api.query.mail.postInvitation({ body: { to: invitee } })
       await api.fetch(uri, params, init, { rawError: true })
       toast.success(`Invitation sent to "${invitee}"`)
+      setInvited((invited) => [...invited, invitee])
       setInvitee('')
     } catch (err) {
       toast.error((await errorOf(err)) || `Error while inviting "${invitee}", try again`)
@@ -170,7 +172,7 @@ const Friends = ({ ...props }) => {
                   Delete
                 </Button>
                 <footer sx={Friends.styles.wrapped}>
-                  <h5 title='plex'>🔌<span>&nbsp;plex</span></h5>
+                  <h5 title='plex' data-broken={guest.plex_token_valid === false || undefined}>🔌<span>&nbsp;plex</span></h5>
                   <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined} data-prose={true}>
                     <span>{reconnectOf(guest, mailed[guest.email])}</span>
                   </p>
@@ -178,9 +180,15 @@ const Friends = ({ ...props }) => {
                     type='button'
                     sx={Friends.styles.action}
                     aria-label={`Mail ${guest.name} to reconnect their Plex account`}
-                    title={!mailable ? 'Set up Mail first' : guest.plex_token_valid !== false ? 'Their Plex account is linked' : 'Mail them to reconnect'}
+                    title={!mailable ? 'Set up Mail first' : guest.plex_token_valid !== false ? 'Their Plex account is linked' : guest.mail_unsubscribed?.includes('reconnect') ? 'They stopped the reminders, mail them anyway' : 'Mail them to reconnect'}
                     disabled={!mailable || guest.plex_token_valid !== false || busy[guest.email]}
-                    onClick={() => mail(guest.email, 'reconnect')}
+                    onClick={() => {
+                      if (confirm(guest.mail_unsubscribed?.includes('reconnect')
+                        ? `${guest.name} stopped the reconnect reminders. Mail them anyway ?`
+                        : `Mail ${guest.name} to reconnect their Plex account ?`)) {
+                        mail(guest.email, 'reconnect')
+                      }
+                    }}
                   >
                     ✉️
                   </button>
@@ -230,7 +238,11 @@ const Friends = ({ ...props }) => {
                     aria-label={`Mail the wrapped link to ${guest.name}`}
                     title={!mailable ? 'Set up Mail first' : (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) ? `Mail the link, last mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}` : 'Mail the link'}
                     disabled={!mailable || !wrapped?.[guest.email]?.viewer || busy[guest.email]}
-                    onClick={() => mail(guest.email, 'wrapped')}
+                    onClick={() => {
+                      if (confirm(`Mail the wrapped link to ${guest.name} ?`)) {
+                        mail(guest.email, 'wrapped')
+                      }
+                    }}
                   >
                     ✉️
                   </button>
@@ -255,6 +267,9 @@ const Friends = ({ ...props }) => {
             <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
             <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
           </form>
+          {!!invited.length && (
+            <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
+          )}
         </article>
         <article>
           <h2>Wrapped</h2>
@@ -337,6 +352,9 @@ Friends.styles = {
       '>span': {
         display: ['none', 'inline'],
       },
+      '&[data-broken]': {
+        color: 'error',
+      },
     },
     '>p': {
       display: 'flex',
@@ -354,6 +372,9 @@ Friends.styles = {
       },
       '&[data-prose]': {
         fontFamily: 'body',
+        '>span': {
+          whiteSpace: ['normal', 'nowrap'],
+        },
       },
       '&[data-muted]': {
         fontFamily: 'body',
