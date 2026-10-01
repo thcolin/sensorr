@@ -15,7 +15,7 @@ const REVISIONS = [
   ['gold', 'or'], ['buff', 'chamois'], ['salmon', 'saumon'], ['cherry', 'cerise'], ['tan', 'havane'],
 ]
 
-const TRANSITIONS = ['Enchaîné', 'Coupe franche', 'Fondu enchaîné', 'Coupe sur']
+export const TRANSITIONS = ['Enchaîné', 'Coupe franche', 'Fondu enchaîné', 'Coupe sur']
 
 // The same lean for the same poster on every visit
 const lean = (seed: string | number) => {
@@ -27,7 +27,7 @@ const lean = (seed: string | number) => {
 }
 
 // How many numbered scenes each sheet writes, so numbering runs on across pages
-const scenesOf = (sheet: SheetModel) => {
+export const scenesOf = (sheet: SheetModel) => {
   switch (sheet.kind) {
     case 'opening': return 0
     case 'months': return sheet.elapsed
@@ -125,7 +125,7 @@ const Holes = ({ brads }: { brads?: boolean }) => (
   </span>
 )
 
-const Page = ({ sheet, index, transition, children }: { sheet: SheetModel, index: number, transition: string | null, children: ReactNode }) => {
+export const Page = ({ sheet, index, transition, children }: { sheet: SheetModel, index: number, transition: string | null, children: ReactNode }) => {
   const [colour, name] = REVISIONS[(index - 1) % REVISIONS.length]
 
   return (
@@ -142,9 +142,9 @@ const Page = ({ sheet, index, transition, children }: { sheet: SheetModel, index
   )
 }
 
-const Act = ({ children }: { children: ReactNode }) => <h2 className="scenario-act">{children}</h2>
+export const Act = ({ children }: { children: ReactNode }) => <h2 className="scenario-act">{children}</h2>
 
-const Slug = ({ scene, children }: { scene: number, children: ReactNode }) => (
+export const Slug = ({ scene, children }: { scene: number, children: ReactNode }) => (
   <p className="scenario-slug">
     <span className="scenario-scene" aria-hidden="true">{scene}</span>
     <span>{children}</span>
@@ -152,14 +152,14 @@ const Slug = ({ scene, children }: { scene: number, children: ReactNode }) => (
   </p>
 )
 
-const Caps = ({ children }: { children: ReactNode }) => <span className="scenario-caps">{children}</span>
-const Mark = ({ children }: { children: ReactNode }) => <mark className="scenario-mark">{children}</mark>
+export const Caps = ({ children }: { children: ReactNode }) => <span className="scenario-caps">{children}</span>
+export const Mark = ({ children }: { children: ReactNode }) => <mark className="scenario-mark">{children}</mark>
 
 // A quantity is typed bold with its unit and underlined in red pencil: not a date, nor the digits of a name or of a title in quotes
 const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
 const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
@@ -175,16 +175,16 @@ const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, inde
 })
 
 // A paragraph of the model cut at its sentences
-const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
 // A key figure said at the scale of the page: centred capitals, like a line shouted from the room
-const Shout = ({ figure, children, long, className = '' }: { figure: ReactNode, children?: ReactNode, long?: number, className?: string }) => (
+export const Shout = ({ figure, children, long, className = '' }: { figure: ReactNode, children?: ReactNode, long?: number, className?: string }) => (
   <div className={`scenario-shout ${className}`} style={long ? { '--length': long } as React.CSSProperties : undefined}>
     <p className={`scenario-shout-figure${long ? ' scenario-shout-word' : ''}`}><Mark>{figure}</Mark></p>
     {children && <p className="scenario-shout-unit">{children}</p>}
   </div>
 )
 
-const Pencil = ({ children, className }: { children: ReactNode, className?: string }) => <p className={`scenario-pencil-note ${className || ''}`}>{children}</p>
+export const Pencil = ({ children, className }: { children: ReactNode, className?: string }) => <p className={`scenario-pencil-note ${className || ''}`}>{children}</p>
 
 const Clip = () => (
   <svg className="scenario-clip" viewBox="0 0 22 58" aria-hidden="true">
@@ -194,7 +194,7 @@ const Clip = () => (
 )
 
 // A poster paper-clipped to the page, a little askew
-const Insert = ({ poster, art, wide, width = 640, caption, className }: { poster: WrappedPoster, art: Art, wide?: boolean, width?: number, caption?: ReactNode, className?: string }) => {
+export const Insert = ({ poster, art, wide, width = 640, caption, className }: { poster: WrappedPoster, art: Art, wide?: boolean, width?: number, caption?: ReactNode, className?: string }) => {
   const src = (wide && art(poster, 'art', 1280)) || art(poster, 'thumb', width)
   const shape = wide && poster.art ? ' scenario-insert-wide' : ''
 
@@ -262,7 +262,7 @@ const useTyped = (text: string) => {
   return { typed: text.slice(0, count), rest: text.slice(count), caret: !reduced }
 }
 
-const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
+export const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
   const { typed, rest, caret } = useTyped(sheet.title)
 
   return (
@@ -296,7 +296,7 @@ const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
 }
 
 // A cast list, the friend's name billed at its rank and the other lines left blank, the hours written where they are known
-const Rank = ({ sheet, name, scene }: { sheet: Of<'rank'>, name: string } & Scene) => {
+export const Rank = ({ sheet, name, scene }: { sheet: Of<'rank'>, name: string } & Scene) => {
   const { rank, users } = sheet
   const middle = Math.ceil(users / 2)
   const shown = [...new Set([1, 2, 3, rank - 1, rank, rank + 1, middle, users])].filter((line) => line >= 1 && line <= users).sort((a, b) => a - b)
@@ -329,7 +329,7 @@ const Rank = ({ sheet, name, scene }: { sheet: Of<'rank'>, name: string } & Scen
 }
 
 // Tally marks in red pencil, one stroke per evening
-const Tally = ({ count }: { count: number }) => {
+export const Tally = ({ count }: { count: number }) => {
   const groups = Math.ceil(count / 5)
   const perRow = 6
   const rows = Math.ceil(groups / perRow)
@@ -410,7 +410,7 @@ const Months = ({ sheet, scene, art }: { sheet: Of<'months'> } & Scene) => (
 )
 
 // The evening's still with its poster, its figures chalked on a clapperboard, the pace of another show as a later scene
-const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
+export const Binge = ({ sheet, scene, art }: { sheet: Of<'binge'> } & Scene) => (
   <>
     <Act>{figures(sheet.lines.join(' '))}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>
@@ -475,7 +475,7 @@ const Server = ({ sheet, scene, art }: { sheet: Of<'server'> } & Scene) => (
 )
 
 // « Personne d’autre » has no lines; « Ton jumeau » names the other viewer as a character, both speaking at once
-const Figure = ({ sheet, scene, art }: { sheet: Of<'figure'> } & Scene) => {
+export const Figure = ({ sheet, scene, art }: { sheet: Of<'figure'> } & Scene) => {
   const unit = sheet.highlight ? sheet.unit.split(sheet.highlight) : [sheet.unit]
   const titles = (count: number) => figures(`${plural(count, 'film et série', 'films et séries')}.`)
   const dual = !!sheet.highlight && sheet.sides?.them != null
@@ -510,7 +510,7 @@ const Figure = ({ sheet, scene, art }: { sheet: Of<'figure'> } & Scene) => {
 }
 
 // Each title watched at two is a line of dialogue: the other viewer's name as the character, the gap as the parenthetical
-const Duo = ({ sheet, scene, art }: { sheet: Of<'duo'> } & Scene) => (
+export const Duo = ({ sheet, scene, art }: { sheet: Of<'duo'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>
@@ -555,7 +555,7 @@ const Posters = ({ sheet, scene, art }: { sheet: Of<'posters'> } & Scene) => (
   </>
 )
 
-const Genre = ({ sheet, scene, art }: { sheet: Of<'genre'> } & Scene) => {
+export const Genre = ({ sheet, scene, art }: { sheet: Of<'genre'> } & Scene) => {
   const { lead } = sheet
 
   return (
@@ -571,7 +571,7 @@ const Genre = ({ sheet, scene, art }: { sheet: Of<'genre'> } & Scene) => {
   )
 }
 
-const Finale = ({ sheet, scene, art }: { sheet: Of<'finale'> } & Scene) => (
+export const Finale = ({ sheet, scene, art }: { sheet: Of<'finale'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
     <Slug scene={scene}>Int. salon – soir</Slug>

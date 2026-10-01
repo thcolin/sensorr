@@ -1196,3 +1196,663 @@ html[data-theme='scenario'] {
     transition: none;
   }
 }
+
+/* Stories: each sheet on one page of the script, 396 × 704, scaled to the phone and shared as the image.
+   The top 28 px and the bottom 72 px stay free of words, Safari lays the stories' chrome over them */
+.scenario-story {
+  position: relative;
+  width: 396px;
+  height: 704px;
+  overflow: hidden;
+  background: var(--scenario-desk);
+}
+
+.scenario-story > .scenario-page {
+  --margin-left: 40px;
+  --margin-right: 18px;
+  display: flex;
+  flex-direction: column;
+  width: 396px;
+  max-width: none;
+  height: 704px;
+  aspect-ratio: auto;
+  padding: 58px var(--margin-right) 72px var(--margin-left);
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: none;
+  transform: none;
+  animation: scenario-feed 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Each line typed a beat after the last, the posters clipped on after it */
+.scenario-story > .scenario-page > :not(.scenario-holes, .scenario-head) {
+  min-width: 0;
+  animation: scenario-type 0.45s calc(0.35s + var(--at, 0) * 100ms) steps(14, end) backwards;
+}
+
+.scenario-story > .scenario-page > :nth-child(4) { --at: 1; }
+.scenario-story > .scenario-page > :nth-child(5) { --at: 2; }
+.scenario-story > .scenario-page > :nth-child(6) { --at: 3; }
+.scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
+.scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
+.scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
+.scenario-story > .scenario-page > :nth-child(n + 10) { --at: 7; }
+
+.scenario-story .scenario-insert {
+  animation: scenario-clip-on 0.45s calc(0.55s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* The highlighter swiped over the figure once its line is typed */
+.scenario-story .scenario-mark {
+  animation: scenario-swipe 0.5s calc(0.8s + var(--at, 0) * 100ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
+}
+
+.scenario-story .scenario-pencil-note {
+  animation: scenario-write 0.7s calc(0.8s + var(--at, 0) * 100ms) ease-out backwards;
+}
+
+.scenario-story .scenario-holes {
+  left: 6px;
+  width: 11px;
+}
+
+.scenario-story .scenario-holes i {
+  width: 11px;
+  height: 11px;
+}
+
+.scenario-story .scenario-head {
+  top: 32px;
+  font-size: 13px;
+}
+
+.scenario-story .scenario-act {
+  margin: 0 0 8px;
+  font-size: 17px;
+  text-underline-offset: 4px;
+}
+
+.scenario-story .scenario-slug {
+  margin: 4px 0 8px;
+  padding-right: 14px;
+  font-size: 14px;
+}
+
+.scenario-story .scenario-scene {
+  left: calc(-1 * var(--margin-left) + 22px);
+  font-size: 12px;
+}
+
+.scenario-story .scenario-scene-right {
+  left: auto;
+  right: -14px;
+}
+
+.scenario-story .scenario-action {
+  margin: 0 0 8px;
+}
+
+.scenario-story .scenario-character {
+  margin: 6px 0 0 32%;
+}
+
+.scenario-story .scenario-parenthetical {
+  margin-left: 24%;
+}
+
+.scenario-story .scenario-dialogue {
+  max-width: none;
+  margin: 0 6% 8px 16%;
+}
+
+.scenario-story .scenario-transition {
+  margin: auto 0 0;
+  padding-top: 8px;
+  font-size: 13px;
+}
+
+.scenario-story .scenario-shout {
+  margin: 4px 0 10px;
+}
+
+.scenario-story .scenario-shout-figure {
+  font-size: 64px;
+}
+
+.scenario-story .scenario-shout-figure .scenario-mark,
+.scenario-story .scenario-verdict-figure .scenario-mark {
+  --swipe: 0.62em;
+}
+
+.scenario-story .scenario-shout-unit {
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.scenario-story .scenario-shout-word {
+  font-size: min(56px, calc(248px / (var(--length) * 0.62)));
+}
+
+.scenario-story .scenario-shout-time .scenario-shout-figure {
+  font-size: 60px;
+}
+
+.scenario-story .scenario-pencil-note {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.scenario-story .scenario-insert {
+  width: 120px;
+  margin: 14px 0 8px;
+}
+
+.scenario-story .scenario-insert figcaption {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.scenario-story .scenario-insert-thumb {
+  width: 30px;
+  margin: 6px 2px 2px 0;
+}
+
+.scenario-story .scenario-insert-thumb .scenario-clip {
+  top: -7px;
+  width: 8px;
+  height: 22px;
+}
+
+.scenario-story .scenario-beside {
+  gap: 14px;
+}
+
+/* Up to four posters on one row, their titles on two lines at most */
+.scenario-story .scenario-inserts {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0 6px;
+}
+
+.scenario-story .scenario-inserts > .scenario-insert {
+  flex: 0 0 calc((100% - 30px) / 4);
+  width: auto;
+  margin: 0;
+}
+
+.scenario-story .scenario-inserts[data-count='1'] > .scenario-insert {
+  flex-basis: 110px;
+}
+
+.scenario-story .scenario-inserts .scenario-clip {
+  top: -11px;
+  width: 13px;
+  height: 36px;
+}
+
+/* Two rows of posters share the genre's page: they stand smaller */
+.scenario-story-genre .scenario-inserts > .scenario-insert {
+  flex-basis: 66px;
+}
+
+.scenario-story-genre .scenario-inserts[data-count='1'] > .scenario-insert {
+  flex-basis: 80px;
+}
+
+.scenario-story-genre .scenario-shout-word {
+  font-size: min(48px, calc(248px / (var(--length) * 0.62)));
+}
+
+/* Rank: the cast list typed tighter */
+.scenario-story .scenario-cast {
+  margin: 0 auto 4px;
+  font-size: 13px;
+}
+
+.scenario-story .scenario-cast li {
+  line-height: 1.55;
+}
+
+.scenario-story .scenario-cast li[data-gap] {
+  margin-top: 1.1em;
+}
+
+.scenario-story .scenario-cast li[data-gap]::before {
+  top: -1.2em;
+}
+
+/* Streak: the figure and its tally beside the poster, three evenings of the run under them */
+.scenario-story-streak .scenario-beside .scenario-insert {
+  width: 100px;
+  margin-top: 10px;
+}
+
+.scenario-story-run {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scenario-story-run .scenario-shout {
+  margin: 0;
+}
+
+.scenario-story-run .scenario-tally {
+  width: 100%;
+  max-width: 170px;
+  max-height: 64px;
+  animation: scenario-type 0.9s 0.9s steps(6, end) backwards;
+}
+
+.scenario-story .scenario-nights {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin: 0;
+}
+
+.scenario-story .scenario-nights li {
+  position: relative;
+  min-height: 0;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.scenario-story .scenario-nights li[data-gap] {
+  grid-column: auto;
+  margin-top: 18px;
+}
+
+.scenario-story .scenario-nights li[data-gap]::before {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  width: auto;
+  font-size: 11px;
+}
+
+.scenario-story .scenario-nights p {
+  line-height: 1.3;
+}
+
+.scenario-story .scenario-nights .scenario-insert-thumb {
+  width: 30px;
+  margin: 4px 0 0;
+}
+
+/* Months: one line per month, the scene number in the margin */
+.scenario-story-months {
+  display: grid;
+  gap: 2px;
+}
+
+.scenario-story-months li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 9.5ch minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.scenario-story-months .scenario-scene {
+  top: auto;
+}
+
+.scenario-story-month {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scenario-story-said {
+  display: flex;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.scenario-story-said > span {
+  flex: none;
+}
+
+.scenario-story-said > .scenario-story-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scenario-story-months .scenario-swipe {
+  height: 5px;
+  margin-top: 3px;
+  transform-origin: left;
+  animation: scenario-stroke 0.4s calc(0.7s + var(--at, 0) * 70ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
+}
+
+.scenario-story-months .scenario-insert-thumb {
+  width: 22px;
+  margin: 4px 0 0;
+}
+
+.scenario-story-months .scenario-month-peak .scenario-figure {
+  margin: -0.35em -0.3em;
+  padding: 0.35em 0.6em;
+}
+
+/* Binge: the still and the clapperboard at the scale of the page */
+.scenario-story .scenario-still {
+  margin: 10px 0 24px;
+  padding-left: 14%;
+}
+
+.scenario-story .scenario-still > img {
+  height: 112px;
+  aspect-ratio: auto;
+}
+
+.scenario-story .scenario-still .scenario-still-poster {
+  width: 64px;
+}
+
+.scenario-story .scenario-slate {
+  margin: 6px auto 8px;
+  padding: 26px 8px 8px;
+  background-size: 100% 16px, auto;
+  animation: scenario-clap 0.5s 0.9s cubic-bezier(0.5, 0, 0.2, 1) backwards;
+}
+
+.scenario-story .scenario-slate li {
+  padding: 6px 6px 5px;
+}
+
+.scenario-story .scenario-slate b {
+  font-size: 30px;
+}
+
+.scenario-story .scenario-slate span {
+  font-size: 11px;
+}
+
+.scenario-story .scenario-slate-small {
+  margin: 0;
+  padding-top: 22px;
+  background-size: 100% 12px, auto;
+}
+
+.scenario-story .scenario-slate-small b {
+  font-size: 26px;
+}
+
+.scenario-story .scenario-slate-small span {
+  font-size: 10px;
+}
+
+.scenario-story-binge .scenario-beside .scenario-insert {
+  width: 76px;
+  margin: 10px 0 0;
+}
+
+/* Night: the last lines of the log */
+.scenario-story .scenario-log-title {
+  margin: 6px 0 6px;
+  font-size: 13px;
+}
+
+.scenario-story .scenario-log li {
+  grid-template-columns: 6ch minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+.scenario-story-night .scenario-beside .scenario-insert {
+  width: 110px;
+}
+
+/* Server and the posters' scenes: the poster beside its words */
+.scenario-story-server .scenario-beside .scenario-insert {
+  width: 150px;
+}
+
+.scenario-story-item .scenario-beside {
+  align-items: start;
+}
+
+.scenario-story-item .scenario-insert {
+  width: 72px;
+  margin: 8px 0 0;
+}
+
+.scenario-story-item .scenario-insert .scenario-clip {
+  top: -10px;
+  width: 12px;
+  height: 32px;
+}
+
+.scenario-story .scenario-verdict {
+  text-align: left;
+}
+
+.scenario-story .scenario-verdict .scenario-pencil-note {
+  margin: 0;
+  transform-origin: left center;
+}
+
+.scenario-story .scenario-verdict-figure {
+  font-size: 30px;
+}
+
+.scenario-story-title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  font-weight: 700;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.scenario-story .scenario-verdict-when {
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+/* Twin and duo: dialogue on the page's width */
+.scenario-story .scenario-dual .scenario-character {
+  margin: 4px 0 0;
+}
+
+.scenario-story .scenario-dual .scenario-dialogue {
+  font-size: 13px;
+}
+
+.scenario-story .scenario-dual .scenario-figure {
+  white-space: normal;
+}
+
+.scenario-story .scenario-exchange {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 6px 0 0;
+}
+
+.scenario-story .scenario-exchange li {
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.scenario-story .scenario-exchange .scenario-insert {
+  width: 100%;
+  margin: 8px 0 0;
+}
+
+.scenario-story .scenario-exchange .scenario-insert .scenario-clip {
+  top: -9px;
+  width: 10px;
+  height: 28px;
+}
+
+.scenario-story .scenario-exchange .scenario-character,
+.scenario-story .scenario-exchange .scenario-dialogue {
+  overflow-wrap: anywhere;
+}
+
+/* Finale: the end typed last */
+.scenario-story .scenario-pencil-stamp {
+  margin: 4px 0 0;
+}
+
+.scenario-story .scenario-end {
+  margin: 10px 0 0;
+  font-size: 52px;
+  animation: scenario-type 0.5s 1.4s steps(4, end) backwards;
+}
+
+/* Opening and summary: the title page */
+.scenario-story > .scenario-title-page {
+  padding-top: 58px;
+}
+
+.scenario-story .scenario-title-block {
+  margin-top: 12px;
+}
+
+.scenario-story .scenario-title {
+  font-size: 32px;
+}
+
+.scenario-story .scenario-byline {
+  margin-top: 1.6em;
+}
+
+.scenario-story .scenario-fan {
+  margin: 30px 0 24px;
+}
+
+.scenario-story .scenario-fan .scenario-insert {
+  width: 27%;
+  margin: 0 0 0 -7%;
+}
+
+.scenario-story .scenario-fan .scenario-insert:nth-child(even) {
+  margin-top: 14px;
+}
+
+.scenario-story .scenario-draft {
+  font-size: 14px;
+}
+
+/* The summary: the title page shortened, the note and the colophon typed at its foot on the same sheet */
+.scenario-story-summary {
+  display: flex;
+  flex-direction: column;
+  background: #fbfaf5;
+}
+
+.scenario-story-summary > .scenario-title-page {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
+.scenario-story-summary .scenario-title {
+  font-size: 28px;
+}
+
+.scenario-story-summary .scenario-byline {
+  margin-top: 1.1em;
+}
+
+.scenario-story-summary .scenario-fan {
+  margin: 16px 0 12px;
+}
+
+.scenario-story-summary .scenario-fan .scenario-insert {
+  width: 22%;
+}
+
+.scenario-story-summary .scenario-draft > p {
+  display: none;
+}
+
+.scenario-story-close {
+  display: grid;
+  gap: 8px;
+  padding: 0 18px 72px 40px;
+}
+
+.scenario-story-rank {
+  margin: 0;
+  font-size: 30px;
+}
+
+.scenario-story-rank sup {
+  margin-left: 1px;
+  font-size: 0.62em;
+  vertical-align: 0.6em;
+}
+
+.scenario-story-colophon {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed rgb(27 26 23 / 0.35);
+  color: var(--scenario-quiet);
+  font-size: 13px;
+  line-height: 1.35;
+  animation: scenario-type 0.45s 1.2s steps(14, end) backwards;
+}
+
+@keyframes scenario-feed {
+  from { transform: translateY(60px); }
+}
+
+@keyframes scenario-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes scenario-clip-on {
+  from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) - 6deg)); }
+}
+
+@keyframes scenario-swipe {
+  from { background-size: 0 var(--swipe, 1.05em); }
+}
+
+@keyframes scenario-write {
+  from { clip-path: inset(-20% 100% -20% 0); }
+  to { clip-path: inset(-20% 0 -20% 0); }
+}
+
+@keyframes scenario-stroke {
+  from { transform: scaleX(0); }
+}
+
+@keyframes scenario-clap {
+  from { transform: rotate(-6deg) translateY(-12px); }
+  60% { transform: rotate(0.5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenario-story > .scenario-page,
+  .scenario-story > .scenario-page > :not(.scenario-holes, .scenario-head),
+  .scenario-story .scenario-insert,
+  .scenario-story .scenario-mark,
+  .scenario-story .scenario-pencil-note,
+  .scenario-story-run .scenario-tally,
+  .scenario-story-months .scenario-swipe,
+  .scenario-story .scenario-slate,
+  .scenario-story .scenario-end,
+  .scenario-story-colophon {
+    animation: none;
+  }
+}
