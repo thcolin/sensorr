@@ -167,22 +167,17 @@ export class MoviesService {
             const size = (files.length && typeof release.size === 'number') ? { accepted: release.size - files.reduce((sum, file) => sum + (file.size || 0), 0) } : {}
             await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1, ...size } })
           }
-        } else {
+        } else if (!manual) {
           // Pulled before the metafile goes: an acceptance in flight keeps what it reserved
-          if (!manual) {
-            const { modifiedCount } = await this.movieModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id, proposal: true } } })
+          const { modifiedCount } = await this.movieModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id, proposal: true } } })
 
-            if (modifiedCount !== 1) {
-              keep(release.id, (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0])
-              continue
-            }
+          if (modifiedCount !== 1) {
+            keep(release.id, (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0])
+            continue
           }
 
           await this.sensorrService.removeRelease(release)
-
-          if (!manual) {
-            await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
-          }
+          await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
         }
       }
 
