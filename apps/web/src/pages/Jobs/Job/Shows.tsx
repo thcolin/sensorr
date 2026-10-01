@@ -91,7 +91,7 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
     title: <span><strong>{read}</strong> Episode streams read from Plex</span>,
     length: read,
   }] : []),
-  ...(unmatched > 0 ? [{
+  ...(extended && unmatched > 0 ? [{
     key: 'unmatched',
     emoji: '❓',
     title: <span><strong>{unmatched}</strong> Plex episodes unknown to TMDB</span>,
