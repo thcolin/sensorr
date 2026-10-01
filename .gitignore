@@ -79,3 +79,7 @@ Thumbs.db
 **/.impeccable/live/server.json
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+.claude/worktrees
+.nx/polygraph
+.nx/self-healing

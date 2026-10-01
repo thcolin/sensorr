@@ -10,6 +10,10 @@ module.exports = composePlugins(
   withReact(),
   (config) => ({
     ...config,
+    output: {
+      ...config.output,
+      clean: true,
+    },
     devServer: {
       ...config.devServer,
       historyApiFallback: { index: '/wrapped/index.html' },
