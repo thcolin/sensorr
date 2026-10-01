@@ -14,6 +14,7 @@ import { ShowDTO, ShowReleaseDTO } from './show.dto'
 import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
+import { landedOf } from './arrivals'
 
 const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'path', 'query', 'plex_artworks', 'plex_seasons', 'releases', 'banned_releases', 'requested_by']
 
@@ -378,8 +379,7 @@ export class ShowsService {
   async upsertEpisodes(changes: { [key: string]: EpisodeDTO }): Promise<any> {
     this.logger.log(`UpsertEpisodes "${Object.keys(changes).length}"`)
     const filled = Object.keys(changes).filter((id) => changes[id].files?.length)
-    const held = new Set((filled.length ? await this.episodeModel.find({ _id: { $in: filled }, 'files.0': { $exists: true } }, { _id: 1 }).lean() : []).map(({ _id }) => String(_id)))
-    const landed = new Set(filled.filter((id) => !held.has(String(id))))
+    const landed = new Set(landedOf(changes, filled.length ? await this.episodeModel.find({ _id: { $in: filled } }, { files: 1, files_at: 1 }).lean() : []))
     const { insertedCount, modifiedCount, upsertedCount } = await this.episodeModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
         filter: { _id: i },

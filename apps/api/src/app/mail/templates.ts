@@ -77,6 +77,8 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
 
 export const senderOf = (from: string) => from.match(/^\s*"?([^"<]*?)"?\s*</)?.[1] || from.split('@')[0] || 'Sensorr'
 
+const unescape = (value: string) => value.replace(/&(amp|lt|gt|quot|#39);/g, (entity, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[name]))
+
 export const escape = (value: string | number) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
 
 function stripe(colors: string[], height: number) {
@@ -88,9 +90,9 @@ function perforations() {
   return `<tr><td style="background:#1d130c;padding:5px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>${holes}</tr></table></td></tr>`
 }
 
-function button(label: string, href: string, look: { background: string, color: string, font?: string } = { background: GREEN, color: '#000000' }) {
+function button(label: string, href: string, look: { background: string, color: string, font?: string } = { background: GREEN, color: '#000000' }, center = true) {
   // Outlook on Windows ignores the padding of a link, the cell holds it there and the link everywhere else
-  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(href)}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
+  return `<table role="presentation" cellpadding="0" cellspacing="0"${center ? ' align="center" style="margin:0 auto"' : ''}><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(href)}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
 }
 
 function plain(href: string) {
@@ -150,7 +152,7 @@ ${stripe(BARS, 6)}
 </td></tr>
 <tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;text-align:center;font:400 13px/1.5 ${BODY};color:#8c8c8c">${foot.join(' ')}</td></tr>`, paragraphs[0])
 
-  const text = [greeting, title, ...paragraphs, ...(arrivals || []).map(({ title, detail }) => `- ${title}, ${detail}`), `${action.label}: ${action.href}`, foot.map((line) => line.replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '$2: $1').replace(/<[^>]+>/g, '')).join(' ')]
+  const text = [greeting, title, ...paragraphs, ...(arrivals || []).map(({ title, detail }) => `- ${title}, ${detail}`), `${action.label}: ${action.href}`, foot.map((line) => line.replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '$2: $1').replace(/<[^>]+>/g, '')).map(unescape).join(' ')]
     .filter(Boolean)
     .join('\n\n')
 
@@ -230,7 +232,7 @@ export const mails = {
     word: 'Ready to watch',
     greeting: `Hi ${name},`,
     title: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
-    paragraphs: [`${arrivals.length === 1 ? 'It reached' : 'They reached'} ${sender}'s Plex this week.`, ...(arrivals.length > SHOWN ? [`And ${arrivals.length - SHOWN} more, all on Plex.`] : [])],
+    paragraphs: [`${arrivals.length === 1 ? 'It just reached' : 'They just reached'} ${sender}'s Plex.`, ...(arrivals.length > SHOWN ? [`And ${arrivals.length - SHOWN} more, all on Plex.`] : [])],
     arrivals: arrivals.slice(0, SHOWN),
     action: { label: 'Open Plex', href: 'https://app.plex.tv' },
     foot: [`Sent by ${escape(sender)} with Sensorr, once a week when something new arrives.`, link(unsubscribe, 'Stop these mails')],
@@ -250,7 +252,7 @@ ${band(year)}
   <p style="margin:0 0 14px;color:#bfbfbf">Hi ${escape(name)},</p>
   <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">${escape(title)}</h1>
   <p style="margin:0 0 22px">${escape(body)}</p>
-  <table role="presentation" cellpadding="0" cellspacing="0"><tr><td>${button('Open my wrapped', href, colors).replace('align="center" style="margin:0 auto"', '')}</td></tr></table>
+  ${button('Open my wrapped', href, colors, false)}
   ${plain(href)}
 </td></tr>
 <tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr${open ? '' : ', once a year'}.</td></tr>`, body)

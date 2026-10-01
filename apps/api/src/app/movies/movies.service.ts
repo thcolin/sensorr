@@ -13,6 +13,7 @@ import { LogsService } from '../logs/logs.service'
 import { ReleaseDTO } from './release.dto'
 import { MovieDTO } from './movie.dto'
 import { Movie as MovieDocument } from './movie.schema'
+import { arrivedOf } from './arrivals'
 
 const SWAPS = ['refine', 'shrink', 'report']
 
@@ -86,12 +87,9 @@ export class MoviesService {
     return this.movieModel.findByIdAndUpdate(movie.id, { ...matched, ...(archived ? { archived_at: Date.now() } : {}) }, { new: true, upsert: true })
   }
 
-  // The posted movies that turn `archived`: `sync` posts the whole library each pass, a movie already archived keeps its date
-  private async archivedNow(changes: { [key: string]: { state?: string } }) {
-    const posted = Object.keys(changes).filter((id) => changes[id].state === 'archived')
-    const already = posted.length ? await this.movieModel.find({ _id: { $in: posted }, state: 'archived' }, { _id: 1 }).lean() : []
-    const kept = new Set(already.map(({ _id }) => String(_id)))
-    return posted.filter((id) => !kept.has(String(id)))
+  private async archivedNow(changes: { [key: string]: { plex_url?: string } }) {
+    const linked = Object.keys(changes).filter((id) => changes[id].plex_url)
+    return arrivedOf(changes, linked.length ? await this.movieModel.find({ _id: { $in: linked } }, { plex_url: 1, archived_at: 1 }).lean() : [])
   }
 
   async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {

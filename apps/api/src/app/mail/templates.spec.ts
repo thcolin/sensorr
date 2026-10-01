@@ -56,3 +56,11 @@ describe('mails.wrapped', () => {
     expect(open.text).not.toContain('once a year')
   })
 })
+
+describe('text version', () => {
+  it('reads the sender as typed, without the HTML entities of the footer', () => {
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: "Tom & O'Brien" })
+    expect(mail.text).toContain("Sent by Tom & O'Brien with Sensorr.")
+    expect(mail.text).not.toContain('&amp;')
+  })
+})

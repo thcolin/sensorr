@@ -2,7 +2,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { randomBytes } from 'node:crypto'
 import { Model } from 'mongoose'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { createTransport } from 'nodemailer'
 import { ConfigService } from '../config/config.service'
@@ -44,7 +44,10 @@ export class MailService {
   }
 
   enabled(kind: 'welcome' | 'reconnect' | 'requests' | 'wrapped') {
-    return !this.missing().length && this.config.get(`mail.send.${kind}`)
+    const missing = this.missing()
+    const reason = missing.length ? `the ${missing.join(', ')} of the Mail settings are missing` : !this.config.get(`mail.send.${kind}`) ? 'it is off in the Mail settings' : null
+    reason && this.logger.log(`Mail "${kind}" not sent, ${reason}`)
+    return !reason
   }
 
   url() {
@@ -101,8 +104,7 @@ export class MailService {
         attachments: mail.picto ? [{ filename: `${mail.picto}.png`, path: path.join(PICTOS, `${mail.picto}.png`), cid: mail.picto }] : [],
       })
     } catch (error) {
-      this.logger.error(`Send "${mail.subject}" to "${to}" failed: ${error.message}`)
-      throw new BadRequestException(`The SMTP server refused the mail: ${error.message}`)
+      throw new BadGatewayException(`The SMTP server refused the mail: ${error.message}`)
     } finally {
       transport.close()
     }
@@ -112,11 +114,12 @@ export class MailService {
 
   async mailRequests() {
     if (!this.enabled('requests')) {
-      return { mailed: 0, friends: 0 }
+      return { mailed: 0, failed: [], friends: 0 }
     }
 
     const guests = await this.guestModel.find({ mail_unsubscribed: { $ne: 'requests' } }).lean()
     let mailed = 0
+    const failed = []
 
     for (const guest of guests) {
       const since = guest.requests_mailed_at || 0
@@ -137,9 +140,10 @@ export class MailService {
         mailed++
       } catch (error) {
         this.logger.warn(`Requests of "${guest.email}" not sent: ${error.message}`)
+        failed.push(guest.email)
       }
     }
 
-    return { mailed, friends: guests.length }
+    return { mailed, failed, friends: guests.length }
   }
 }

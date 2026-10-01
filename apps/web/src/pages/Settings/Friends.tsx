@@ -207,6 +207,9 @@ const Friends = ({ ...props }) => {
                     ) : (
                       <span>No link yet, 📋 creates one</span>
                     )}
+                    {wrapped?.[guest.email]?.wrapped_token && (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) && (
+                      <small sx={Friends.styles.mailed}>mailed {dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}</small>
+                    )}
                   </p>
                   <button
                     type='button'
@@ -419,6 +422,13 @@ Friends.styles = {
       opacity: 0.5,
       filter: 'grayscale(1)',
     },
+  },
+  mailed: {
+    flexShrink: 0,
+    marginLeft: 8,
+    fontFamily: 'body',
+    color: 'grayDarkest',
+    whiteSpace: 'nowrap',
   },
   retry: {
     background: 'none',

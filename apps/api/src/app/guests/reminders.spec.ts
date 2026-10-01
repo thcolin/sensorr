@@ -13,6 +13,10 @@ describe('reminderOf', () => {
     expect(reminderOf({ reconnect_mails: 1, reconnect_mailed_at: now - 7 * DAY }, now)).toBe(1)
   })
 
+  it('waits a week after a mail sent by hand, before the first one too', () => {
+    expect(reminderOf({ reconnect_mails: 0, reconnect_mailed_at: now - DAY }, now)).toBeNull()
+  })
+
   it('stops after the third reminder', () => {
     expect(reminderOf({ reconnect_mails: 3, reconnect_mailed_at: now - 30 * DAY }, now)).toBe(3)
     expect(reminderOf({ reconnect_mails: 4, reconnect_mailed_at: now - 30 * DAY }, now)).toBeNull()

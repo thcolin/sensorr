@@ -35,10 +35,11 @@ const MailRequestsTask = () => {
 
       try {
         const { uri, params, init } = api.query.mail.postRequests({ body: {} })
-        const { mailed, friends } = await api.fetch(uri, params, init)
-        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{mailed}</Text> of {friends} friends mailed</Text> }))
-        setStatus('done')
+        const { mailed, failed, friends } = await api.fetch(uri, params, init)
+        setTask((task) => ({ ...task, output: <Text><Text bold={true}>{mailed}</Text> of {friends} friends mailed{failed.length ? `, not sent to ${failed.join(', ')}` : ''}</Text> }))
+        setStatus(failed.length ? 'warning' : 'done')
         state.logger.info({ message: `📬 ${mailed} of ${friends} friends mailed their requests ready to watch`, metadata: { ...state.metadata, summary: { mailed } } })
+        failed.length && state.logger.warn({ message: `⚠️ Requests not sent to ${failed.join(', ')}, the API log says why`, metadata: { ...state.metadata, summary: { warning: failed.length } } })
       } catch (error) {
         setStatus('error')
         setTask((task) => ({ ...task, error: error.message || error }))

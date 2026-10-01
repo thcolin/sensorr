@@ -210,7 +210,7 @@ export class Movie extends Document {
   @Prop()
   requested_at: number
 
-  // When it turned `archived`, so reached Plex; the movies archived before this field never carry it
+  // When `sync` first linked it to Plex; the movies on Plex before this field never carry it
   @Prop()
   archived_at: number
 

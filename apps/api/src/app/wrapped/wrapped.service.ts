@@ -126,7 +126,8 @@ export class WrappedService {
 
   private async mailFrozen(year: number, users: number[]) {
     const viewers = await this.viewerModel.find({ _id: { $in: users }, email: { $nin: [null, ''] } }, { email: 1 }).lean()
-    const guests = await this.guestModel.find({ email: { $in: viewers.map(({ email }) => email.toLowerCase()) } }).lean()
+    // Plex keeps the case of an address, Tautulli does not
+    const guests = await this.guestModel.find({ email: { $in: viewers.map(({ email }) => email) } }).collation({ locale: 'en', strength: 2 }).lean()
 
     for (const guest of guests) {
       await this.mailWrapped(guest, year).catch((error) => this.logger.warn(`Wrapped "${guest.email}" not sent: ${error.message}`))
