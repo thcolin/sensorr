@@ -162,9 +162,9 @@ describe('showFilesOf', () => {
     expect(synced.map(({ files }) => files.length)).toEqual([1, 0, 0])
   })
 
-  it('counts the Plex episodes no Sensorr episode numbers the same', () => {
-    expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toBe(1)
-    expect(showFilesOf(episodes, [item(1, 3, [media(6, 'Friends.S01E03E04.mkv')])]).unmatched).toBe(0)
+  it('names the Plex episodes no Sensorr episode numbers the same', () => {
+    expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toEqual(['S04E24'])
+    expect(showFilesOf(episodes, [item(1, 3, [media(6, 'Friends.S01E03E04.mkv')])]).unmatched).toEqual([])
   })
 })
 
