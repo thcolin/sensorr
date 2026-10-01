@@ -1203,3 +1203,572 @@ html[data-theme='affiche'] {
     transition: none;
   }
 }
+
+/* Stories: each sheet as one poster of 396 × 704, scaled to the phone and shared as the image.
+   The top 28 px and the bottom 72 px stay free of words, Safari lays the stories' chrome over them */
+.affiche-story {
+  --u: 3.96px;
+  position: relative;
+  width: 396px;
+  height: 704px;
+  overflow: hidden;
+  background: var(--wall);
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.affiche-story > .sheet {
+  width: 396px;
+  height: 704px;
+  min-height: 0;
+  gap: 12px;
+  padding: 28px 24px 80px;
+  animation: affiche-hang 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Each piece pasted on a beat after the last */
+.affiche-story > .sheet > * {
+  animation: affiche-paste 0.5s calc(0.3s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.affiche-story > .sheet > :nth-child(2) { --at: 1; }
+.affiche-story > .sheet > :nth-child(3) { --at: 2; }
+.affiche-story > .sheet > :nth-child(4) { --at: 3; }
+.affiche-story > .sheet > :nth-child(5) { --at: 4; }
+.affiche-story > .sheet > :nth-child(6) { --at: 5; }
+.affiche-story > .sheet > :nth-child(7) { --at: 6; }
+
+/* A brushed heading is painted on from its left */
+.affiche-story .brushed {
+  margin-top: 14px;
+  animation-name: affiche-brush;
+}
+
+.affiche-story .brushed svg {
+  width: 100%;
+  margin-inline: 0;
+}
+
+/* Opening and summary: the collage takes what the words leave; a story is tapped, not scrolled */
+.affiche-story .collage {
+  min-height: 0;
+}
+
+.affiche-story .scroll-hint {
+  display: none;
+}
+
+.affiche-story .opening-title {
+  font-size: 46px;
+}
+
+.affiche-story-opening .lede {
+  font-size: 16px;
+}
+
+.affiche-story .opening-figures {
+  gap: 2px;
+  font-size: 18px;
+}
+
+.affiche-story-summary > .sheet {
+  padding-bottom: 150px;
+}
+
+.affiche-story-summary .lede {
+  display: none;
+}
+
+.affiche-story-place {
+  top: 64px;
+  right: 18px;
+  z-index: 11;
+  font-size: 20px;
+  animation: affiche-stamp 0.4s 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.affiche-story-place b {
+  font-weight: 400;
+  font-size: 1.6em;
+}
+
+.affiche-story-place sup {
+  font-size: 0.5em;
+  vertical-align: top;
+}
+
+.affiche-story-colophon {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 72px;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.3;
+  animation: affiche-paste 0.5s 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.affiche-story-colophon .colophon-short {
+  font-size: 18px;
+}
+
+/* Rank */
+.affiche-story .rank {
+  font-size: 140px;
+}
+
+.affiche-story .crowd {
+  gap: 8px 3px;
+}
+
+.affiche-story .crowd > li {
+  width: 4px;
+  height: 26px;
+}
+
+/* The reader's own stroke in the crowd is struck last */
+.affiche-story .crowd-you {
+  animation: affiche-strike 0.3s 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Evenings in a row: the run's poster at the top, the figure over its foot */
+.affiche-story-streak .figures-poster {
+  width: 220px;
+  margin: -4px -24px -180px 0;
+}
+
+.affiche-story-streak .figure-intro {
+  font-size: 18px;
+}
+
+.affiche-story-streak .figure {
+  font-size: min(120px, calc(360px / var(--digits, 3)));
+}
+
+.affiche-story-streak .figure-unit {
+  font-size: 34px;
+}
+
+.affiche-story .tally {
+  gap: 10px 16px;
+}
+
+.affiche-story .tally-group {
+  gap: 5px;
+}
+
+.affiche-story .tally-group > i {
+  width: 6px;
+  height: 30px;
+  animation: affiche-strike 0.2s calc(0.7s + (var(--g, 0) * 5 + var(--s, 0)) * 18ms) ease-out both;
+}
+
+.affiche-story .tally-group:nth-child(2) { --g: 1; }
+.affiche-story .tally-group:nth-child(3) { --g: 2; }
+.affiche-story .tally-group:nth-child(4) { --g: 3; }
+.affiche-story .tally-group:nth-child(5) { --g: 4; }
+.affiche-story .tally-group:nth-child(6) { --g: 5; }
+.affiche-story .tally-group:nth-child(7) { --g: 6; }
+.affiche-story .tally-group:nth-child(8) { --g: 7; }
+.affiche-story .tally-group:nth-child(9) { --g: 8; }
+.affiche-story .tally-group:nth-child(10) { --g: 9; }
+.affiche-story .tally-group:nth-child(11) { --g: 10; }
+.affiche-story .tally-group:nth-child(12) { --g: 11; }
+.affiche-story .tally-group > i:nth-child(2) { --s: 1; }
+.affiche-story .tally-group > i:nth-child(3) { --s: 2; }
+.affiche-story .tally-group > i:nth-child(4) { --s: 3; }
+.affiche-story .tally-group > i:nth-child(5) { --s: 4; }
+
+.affiche-story .tally-full::after {
+  height: 5px;
+  animation: affiche-strike 0.25s calc(0.8s + var(--g, 0) * 90ms) ease-out both;
+}
+
+.affiche-story-streak .figure-details {
+  font-size: 18px;
+}
+
+/* Months: one painted strip per month, as tall as its episodes */
+.affiche-story-strips {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: 4px;
+  margin-inline: -16px;
+}
+
+.affiche-story-strips > li {
+  height: calc(var(--share) * 100%);
+}
+
+.affiche-story-strips .painted {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.affiche-story .year-months {
+  margin: -6px -16px 0;
+  font-size: 15px;
+}
+
+.affiche-story .year-peak {
+  font-size: 19px;
+}
+
+/* Binge */
+.affiche-story-binge .brushed svg,
+.affiche-story-night .brushed svg {
+  width: 80%;
+  margin-inline: auto;
+}
+
+.affiche-story .show-lead {
+  margin-inline: -24px;
+}
+
+.affiche-story .show-lead-still {
+  height: 170px;
+  aspect-ratio: auto;
+}
+
+.affiche-story .show-lead-poster {
+  width: 84px;
+  bottom: -64px;
+}
+
+.affiche-story .show-lead-text {
+  padding-right: 110px;
+}
+
+.affiche-story .show-lead-title {
+  font-size: 34px;
+}
+
+.affiche-story .meta {
+  font-size: 16px;
+}
+
+.affiche-story .stats {
+  gap: 6px;
+}
+
+.affiche-story .stats b {
+  font-size: 50px;
+}
+
+.affiche-story .stats span {
+  font-size: 22px;
+}
+
+.affiche-story .show-pace {
+  grid-template-columns: 76px 1fr;
+  gap: 16px;
+  margin-top: 0;
+}
+
+.affiche-story .show-pace-title {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.affiche-story .stats-small {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 14px;
+}
+
+.affiche-story .stats-small b {
+  font-size: 34px;
+}
+
+.affiche-story .stats-small span {
+  font-size: 15px;
+}
+
+/* Night: the last poster of the night behind it, the programme over its foot */
+.affiche-story-night > .sheet {
+  justify-content: flex-end;
+}
+
+.affiche-story .night-poster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;
+  margin: 0;
+}
+
+.affiche-story .night-text {
+  gap: 8px;
+  margin-inline: -24px;
+  padding: 40px 24px 0;
+  background: linear-gradient(to bottom, transparent, var(--ink) 90px);
+}
+
+.affiche-story .night-date {
+  font-size: 28px;
+}
+
+.affiche-story .night-figures {
+  font-size: 20px;
+}
+
+.affiche-story-listing {
+  font-size: 15px;
+  color: #c9b99c;
+}
+
+.affiche-story .night-schedule {
+  gap: 8px;
+  margin-top: 0;
+}
+
+.affiche-story .night-schedule > li {
+  grid-template-columns: 56px 30px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.affiche-story .night-schedule-time b {
+  font-size: 24px;
+}
+
+.affiche-story .night-schedule-time span,
+.affiche-story .night-schedule-title {
+  font-size: 15px;
+}
+
+/* Server */
+.affiche-story .server-poster {
+  width: 168px;
+}
+
+.affiche-story .server-title {
+  font-size: 34px;
+}
+
+.affiche-story-server .lede {
+  font-size: 19px;
+}
+
+/* Figures and their strip of posters */
+.affiche-story-only_you .figure {
+  margin-top: 40px;
+}
+
+.affiche-story-figure .figure {
+  font-size: min(150px, calc(440px / var(--digits, 3)));
+}
+
+.affiche-story .figure-unit {
+  font-size: 28px;
+}
+
+.affiche-story .figure-details {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.affiche-story-twins {
+  align-self: center;
+}
+
+.affiche-story .twins {
+  width: 290px;
+  margin-inline: 0;
+}
+
+.affiche-story .twins-side {
+  width: 32%;
+}
+
+.affiche-story .twins-side-you {
+  left: 4%;
+}
+
+.affiche-story .twins-side-them {
+  right: 4%;
+}
+
+.affiche-story .twins-side span {
+  font-size: 14px;
+}
+
+.affiche-story .twins-side-them span {
+  font-size: min(14px, calc(150px / var(--letters, 8)));
+}
+
+.affiche-story .twins-side b {
+  font-size: 32px;
+}
+
+.affiche-story .twins-shared {
+  font-size: min(60px, calc(160px / var(--digits, 2)));
+}
+
+.affiche-story .strip {
+  gap: 10px;
+}
+
+.affiche-story .strip-title,
+.affiche-story .strip-caption {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 14px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.affiche-story .strip-caption {
+  color: var(--ink);
+  -webkit-line-clamp: 3;
+}
+
+/* Duo: the posters one under the other, each with its title and the other viewer beside it */
+.affiche-story .strip[data-layout='grid'] {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+}
+
+.affiche-story .strip[data-layout='grid'] > .strip-entry {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  column-gap: 10px;
+}
+
+.affiche-story .strip[data-layout='grid']:not(:has(> :nth-child(3))) > .strip-entry {
+  grid-template-columns: 120px minmax(0, 1fr);
+}
+
+.affiche-story .strip[data-layout='grid'] .strip-poster {
+  grid-row: span 2;
+}
+
+.affiche-story .strip[data-layout='grid'] .strip-title,
+.affiche-story .strip[data-layout='grid'] .strip-caption {
+  font-size: 16px;
+}
+
+.affiche-story-duo .lede {
+  font-size: 17px;
+}
+
+/* Posters, one per figure */
+.affiche-story .posters {
+  gap: 16px;
+}
+
+.affiche-story .posters[data-count='1'] {
+  grid-template-columns: 190px;
+}
+
+.affiche-story .posters[data-count='3'] > .posters-entry {
+  grid-template-columns: 84px 1fr;
+  column-gap: 16px;
+}
+
+.affiche-story .posters-label {
+  font-size: 24px;
+}
+
+.affiche-story .posters-title {
+  font-size: 18px;
+}
+
+.affiche-story .posters-detail,
+.affiche-story .posters[data-count='3'] .posters-detail {
+  font-size: 26px;
+}
+
+.affiche-story .posters-when {
+  font-size: 15px;
+}
+
+/* Genre */
+.affiche-story .genre-name {
+  font-size: min(80px, calc(360px / var(--letters, 6)));
+}
+
+.affiche-story .genre-count,
+.affiche-story .genre-lead {
+  font-size: 18px;
+}
+
+.affiche-story .genre-lead-name {
+  font-size: 30px;
+}
+
+.affiche-story-genre .strip {
+  grid-template-columns: repeat(4, 66px);
+  justify-content: space-between;
+}
+
+.affiche-story .genre-lead-single {
+  grid-template-columns: 1fr 120px;
+}
+
+/* Finale */
+.affiche-story-finale > .sheet {
+  padding-bottom: 88px;
+}
+
+.affiche-story .finale-text {
+  margin-inline: -24px;
+  padding: 40px 24px 0;
+}
+
+.affiche-story .finale-title {
+  font-size: 34px;
+}
+
+.affiche-story .finale-next {
+  font-size: 19px;
+}
+
+.affiche-story .stamp {
+  font-size: 22px;
+}
+
+.affiche-story .finale-end {
+  font-size: 64px;
+}
+
+@keyframes affiche-hang {
+  from { clip-path: inset(0 0 100% 0); }
+}
+
+@keyframes affiche-paste {
+  from { opacity: 0; translate: 0 -10px; scale: 1.04; }
+}
+
+@keyframes affiche-brush {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes affiche-strike {
+  from { scale: 1 0; }
+}
+
+@keyframes affiche-stamp {
+  from { opacity: 0; scale: 1.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .affiche-story > .sheet,
+  .affiche-story > .sheet > *,
+  .affiche-story-place,
+  .affiche-story-colophon,
+  .affiche-story .crowd-you,
+  .affiche-story .tally-group > i,
+  .affiche-story .tally-full::after {
+    animation: none;
+  }
+}

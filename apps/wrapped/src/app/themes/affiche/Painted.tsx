@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { MotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 
 const RAMP = ['#241a2e', '#5c4668', '#9a7a45', '#e9dcc0'].map((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255))
@@ -205,22 +205,21 @@ export const useRevealProgress = (target: React.RefObject<HTMLElement>) => {
   return useTransform(scrollYProgress, [0.15, 1], [0, 1], { clamp: true })
 }
 
-const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
-  const image = new Image()
-  image.decoding = 'async'
-  image.onload = () => resolve(image)
-  image.onerror = reject
-  image.src = src
-})
-
 type Compose = (width: number, height: number) => Promise<HTMLCanvasElement>
+
+// Set by a story, which is on screen as soon as it is drawn: its posters paint at once
+export const AtOnce = createContext(false)
 
 // A poster only loads and paints once it nears the screen
 export const Painted = ({ src, alt, progress, className, compose }: { src?: string, alt: string, progress: MotionValue<number>, className?: string, compose?: Compose }) => {
   const box = useRef<HTMLDivElement>(null)
-  const [near, setNear] = useState(false)
+  const now = useContext(AtOnce)
+  const [near, setNear] = useState(now)
 
   useEffect(() => {
+    if (now) {
+      return
+    }
     const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && setNear(true), { rootMargin: '100% 0px' })
     box.current && observer.observe(box.current)
     return () => observer.disconnect()
@@ -241,6 +240,7 @@ const Missing = ({ alt }: { alt: string }) => (
 
 const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: Compose, alt: string, progress: MotionValue<number> }) => {
   const canvas = useRef<HTMLCanvasElement>(null)
+  const image = useRef<HTMLImageElement>(null)
   const draw = useRef<((progress: number) => void) | null>(null)
   const [missing, setMissing] = useState(false)
   // A composed canvas is drawn for one box size, it is composed again when the box changes
@@ -253,7 +253,7 @@ const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: Compo
     const current = canvas.current as HTMLCanvasElement
     const dpr = Math.min(window.devicePixelRatio, 2)
 
-    ;(compose ? compose(current.clientWidth * dpr, current.clientHeight * dpr) : loadImage(src as string)).then(
+    ;(compose ? compose(current.clientWidth * dpr, current.clientHeight * dpr) : ready(image.current as HTMLImageElement)).then(
       (loaded) => {
         if (cancelled) {
           return
@@ -289,5 +289,19 @@ const Canvas = ({ src, compose, alt, progress }: { src?: string, compose?: Compo
     return <Missing alt={alt} />
   }
 
-  return <canvas ref={canvas} aria-hidden="true" />
+  return (
+    <>
+      {/* The poster loads in the page, so a card waits for it before it is captured */}
+      {src && <img ref={image} src={src} alt="" hidden decoding="async" />}
+      <canvas ref={canvas} aria-hidden="true" />
+    </>
+  )
 }
+
+const ready = (image: HTMLImageElement) => new Promise<HTMLImageElement>((resolve, reject) => {
+  if (image.complete) {
+    return image.naturalWidth ? resolve(image) : reject(new Error(image.src))
+  }
+  image.addEventListener('load', () => resolve(image), { once: true })
+  image.addEventListener('error', reject, { once: true })
+})
