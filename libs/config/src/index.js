@@ -324,6 +324,66 @@ const schema = {
       },
     },
   },
+  mail: {
+    url: {
+      doc: 'Address of this Sensorr your friends open, the links of every mail start with it',
+      format: 'String',
+      default: '',
+    },
+    host: {
+      doc: 'SMTP server host',
+      format: 'String',
+      default: '',
+    },
+    port: {
+      doc: 'SMTP server port',
+      format: 'port',
+      default: 587,
+    },
+    secure: {
+      doc: 'Connect with TLS from the start, usually on port 465; off, STARTTLS upgrades the connection when the server offers it',
+      format: 'Boolean',
+      default: false,
+    },
+    user: {
+      doc: 'SMTP username',
+      format: 'String',
+      default: '',
+    },
+    password: {
+      doc: 'SMTP password',
+      format: 'String',
+      default: '',
+    },
+    from: {
+      doc: 'Sender of every mail, its name is the one your friends read, like `Thomas <sensorr@example.com>`',
+      format: 'String',
+      default: '',
+    },
+    // The mails Sensorr sends on its own; an invitation, a test, or a mail sent from the Friends page always goes
+    send: {
+      welcome: {
+        doc: 'Welcome a friend once their Plex account is linked',
+        format: 'Boolean',
+        default: true,
+      },
+      reconnect: {
+        doc: 'Ask a friend to link their Plex account again when Plex disconnects it, then up to 3 weekly reminders',
+        format: 'Boolean',
+        default: true,
+      },
+      requests: {
+        doc: 'Tell each friend once a week which of their requests reached Plex',
+        format: 'Boolean',
+        default: true,
+      },
+      wrapped: {
+        doc: 'Send each friend their wrapped when its edition freezes',
+        format: 'Boolean',
+        default: true,
+      },
+    },
+  },
   tautulli: {
     url: {
       doc: 'Tautulli URL, where the Plex watch history is read from',

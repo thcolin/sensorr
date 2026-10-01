@@ -16,6 +16,7 @@ import { MediuxModule } from './mediux/mediux.module'
 import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
 import { WrappedModule } from './wrapped/wrapped.module'
+import { MailModule } from './mail/mail.module'
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { WrappedModule } from './wrapped/wrapped.module'
     ConfigModule,
     SensorrModule,
     WrappedModule,
+    MailModule,
   ],
 })
 export class AppModule {}

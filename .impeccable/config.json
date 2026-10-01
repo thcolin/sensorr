@@ -20,6 +20,36 @@
         "rule": "design-system-font",
         "value": "body",
         "createdAt": "2026-09-25T13:36:20.631Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "barlow condensed",
+        "createdAt": "2026-10-01T11:23:15.405Z",
+        "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "big shoulders display",
+        "createdAt": "2026-10-01T11:23:15.425Z",
+        "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "tilt neon",
+        "createdAt": "2026-10-01T11:23:15.443Z",
+        "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "courier prime",
+        "createdAt": "2026-10-01T11:23:15.466Z",
+        "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "permanent marker",
+        "createdAt": "2026-10-01T11:23:15.483Z",
+        "reason": "Face of a wrapped look from apps/wrapped/src/app/themes, worn by the wrapped mail Thomas chose on 2026-10-01; DESIGN.md does not apply to the wrapped"
       }
     ]
   }
