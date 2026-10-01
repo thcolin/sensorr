@@ -251,7 +251,7 @@ const Friends = ({ ...props }) => {
             <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
             <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
           </form>
-          <div sx={{ marginTop: 6 }}>
+          <div sx={{ marginTop: 6, marginBottom: 2 }}>
             <Option type='checkbox' id='guests.public' checked={open} disabled={!config.get('plex.token')} onChange={(e: any) => setPublic(e.target.checked)}>
               <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
                 <strong>{emojize('🌍', 'Anyone with a Plex account')}</strong>
@@ -263,9 +263,7 @@ const Friends = ({ ...props }) => {
           {!!invited.length && (
             <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
           )}
-        </article>
-        <article>
-          <h2>Wrapped</h2>
+          <h3>Wrapped</h3>
           <p>A yearly page of what each friend watched on Plex.</p>
           <WrappedLooks form={looks} onSave={onSave} />
         </article>
