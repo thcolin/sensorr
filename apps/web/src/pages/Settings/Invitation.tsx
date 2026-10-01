@@ -14,7 +14,6 @@ const activityOf = ({ plays, seen_at }) => !seen_at
   ? 'never seen'
   : `seen ${dayOf(seen_at)} · ${plays.toLocaleString('en-GB')} ${plays === 1 ? 'play' : 'plays'}`
 
-// The people the Plex server is shared with who are not guests yet, invited one by one or by selection
 export const Invitation = ({ mailable }: { mailable: boolean }) => {
   const api = useAPI()
   const [shared, setShared] = useState(null)
@@ -62,7 +61,6 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
   }
 
   const people = shared?.results || []
-  // Select All leaves out who was already invited, they are invited again one by one
   const invitable = people.filter(({ invited_at }) => !invited_at).map(({ email }) => email)
 
   return (
@@ -106,9 +104,9 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
               <Option
                 id={`invitation-${person.email}`}
                 type='checkbox'
-                aria-label={`Select ${person.name}`}
+                aria-label={person.invited_at ? `${person.name} was invited, invite them again one by one` : `Select ${person.name}`}
                 checked={selected.includes(person.email)}
-                disabled={!mailable || sending.includes(person.email)}
+                disabled={!mailable || !!person.invited_at || sending.includes(person.email)}
                 onChange={(e: any) => setSelected((selected) => e.target.checked ? [...selected, person.email] : selected.filter((email) => email !== person.email))}
               />
               <Face person={person} />
@@ -188,7 +186,7 @@ Invitation.styles = {
     gap: 6,
     fontVariantNumeric: 'tabular-nums',
   },
-  // Eight rows, then the list scrolls on its own without pulling the page along
+  // Scrolls on its own without pulling the page along
   people: {
     listStyle: 'none',
     margin: '0px',

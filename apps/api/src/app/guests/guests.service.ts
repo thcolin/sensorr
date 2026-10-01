@@ -99,8 +99,7 @@ export class GuestsService {
     return Number(account) === Number(JSON.parse(owner).id) || sharedIdsOf(shared).has(Number(account))
   }
 
-  // The users the Plex server is shared with who are not guests yet, with what Tautulli saw of them as the
-  // `wrapped` job imported it: the most recent viewers first, without Tautulli by name
+  // Plays come from what the `wrapped` job imports from Tautulli, not from Tautulli itself
   async shared() {
     if (!this.configService.config.get('plex.token')) {
       return { plex: false, tautulli: false, results: [] }
