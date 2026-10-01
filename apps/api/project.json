@@ -4,6 +4,7 @@
   "sourceRoot": "apps/api/src",
   "projectType": "application",
   "prefix": "api",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -52,6 +53,5 @@
         "passWithNoTests": true
       }
     }
-  },
-  "tags": []
+  }
 }
