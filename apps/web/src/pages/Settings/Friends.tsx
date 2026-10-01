@@ -189,8 +189,8 @@ const Friends = ({ ...props }) => {
                   Delete
                 </Button>
                 <footer sx={Friends.styles.wrapped}>
-                  <h5 title={guest.plex_token_valid === false ? 'Plex account disconnected' : 'Plex account linked'} data-broken={guest.plex_token_valid === false || undefined}>
-                    <Icon value='plex' aria-label='Plex' sx={{ height: '1.25em', width: '1.25em' }} />
+                  <h5 title={guest.plex_token_valid === false ? 'Plex account disconnected' : 'Plex account linked'}>
+                    <span aria-label='Plex' sx={{ display: 'flex', justifyContent: 'center', width: '1em', fontSize: 3, color: guest.plex_token_valid === false ? 'grayDarkest' : 'plex' }}>❯</span>
                   </h5>
                   <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined} data-prose={true}>
                     <span>{reconnectOf(guest, mailed[guest.email])}</span>
@@ -382,10 +382,6 @@ Friends.styles = {
       whiteSpace: 'nowrap',
       '>span': {
         display: ['none', 'inline'],
-      },
-      '&[data-broken] >svg': {
-        filter: 'grayscale(1)',
-        opacity: 0.5,
       },
     },
     '>p': {
