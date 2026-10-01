@@ -9,7 +9,7 @@ export interface JobEntry {
   description: string
   options: string[]
   // The settings key that has to be set before the job can run
-  requires?: 'plex.token' | 'tautulli.url'
+  requires?: 'plex.token' | 'tautulli.url' | 'mail.host'
 }
 
 export const JOB_GROUPS: { label: string, jobs: JobEntry[] }[] = [
