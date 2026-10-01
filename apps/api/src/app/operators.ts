@@ -1,0 +1,35 @@
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common'
+
+const operatorOf = (value: unknown, path: string[] = []): string | undefined => {
+  if (!value || typeof value !== 'object') {
+    return undefined
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    if (key.startsWith('$')) {
+      return [...path, key].join('.')
+    }
+
+    const found = operatorOf(child, [...path, key])
+
+    if (found) {
+      return found
+    }
+  }
+
+  return undefined
+}
+
+// A body or a query reaches Mongo as it was sent: a `$` key would run as an operator, in a filter as in an update
+@Injectable()
+export class OperatorsPipe implements PipeTransform {
+  transform(value: unknown) {
+    const operator = operatorOf(value)
+
+    if (operator) {
+      throw new BadRequestException(`Operator "${operator}" refused`)
+    }
+
+    return value
+  }
+}

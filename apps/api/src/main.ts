@@ -5,6 +5,7 @@ import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { urlencoded, json } from 'express'
 import { AppModule } from './app/app.module'
+import { OperatorsPipe } from './app/operators'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -22,6 +23,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const globalPrefix = 'api'
   app.setGlobalPrefix(globalPrefix)
+  app.useGlobalPipes(new OperatorsPipe())
   app.use(json({ limit: '50mb' }))
   app.use(urlencoded({ extended: true, limit: '50mb' }))
   const port = process.env.PORT || process.env.NX_API_PORT || 3333
