@@ -197,6 +197,9 @@ UINotedShow.styles = {
 
 const NotedShow = memo(UINotedShow)
 
+// The show's name already titles the card: a release title is read from its season on
+const fromSeason = (title: string) => title.replace(/^.*?(?=\bS\d{2})/i, '')
+
 const episodesLabel = (count: number) => `${count} episode${count > 1 ? 's' : ''}`
 
 // The footer of a library card, its pill and its bar, counting the downloaded files instead of the owned episodes
@@ -274,9 +277,9 @@ const COMMANDS = {
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
       { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, note: emojize('💊', episodesLabel(missing)) }), child: NotedShow, extra: 36 },
+      { key: 'withdrawals', label: emojize('🗑️', 'Withdrawn'), test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', fromSeason(release.title)), details: release.title }), child: NotedShow, extra: 36 },
+      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched, note: emojize('❓', unmatched.length > 2 ? episodesLabel(unmatched.length) : unmatched.join(', ')), details: unmatched.join(', ') }), child: NotedShow, extra: 36 },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
-      { key: 'withdrawals', label: emojize('🗑️', 'Withdrawn'), test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', release.title), details: release.title }), child: NotedShow, extra: 36 },
-      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched, note: emojize('❓', episodesLabel(unmatched.length)), details: unmatched.join(', ') }), child: NotedShow, extra: 36 },
     ],
     empty: 'No fixed shows during this job',
   },
