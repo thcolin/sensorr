@@ -65,6 +65,24 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.airing.shows.proposalOnly` | `boolean` | `true` | Airing shows job will only submit proposal and don't download any release |
 | `jobs.wrapped.cron` | `string` | `0 6 * * *` | Wrapped job cron |
 | `jobs.wrapped.paused` | `boolean` | `true` | Pause Wrapped job |
+| `jobs.mail.cron` | `string` | `0 9 * * 1` | Mail job cron, it mails each friend their requests that reached Plex since their last mail |
+| `jobs.mail.paused` | `boolean` | `false` | Pause Mail job |
+
+## Mail
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `mail.url` | `string` | `""` | Address of this Sensorr your friends open, the links of every mail start with it |
+| `mail.host` | `string` | `""` | SMTP server host |
+| `mail.port` | `port` | `587` | SMTP server port |
+| `mail.secure` | `boolean` | `false` | Connect with TLS from the start, usually on port 465; off, STARTTLS upgrades the connection when the server offers it |
+| `mail.user` | `string` | `""` | SMTP username |
+| `mail.password` | `string` | `""` | SMTP password |
+| `mail.from` | `string` | `""` | Sender of every mail, its name is the one your friends read, like `Thomas <sensorr@example.com>` |
+| `mail.send.welcome` | `boolean` | `true` | Welcome a friend once their Plex account is linked |
+| `mail.send.reconnect` | `boolean` | `true` | Ask a friend to link their Plex account again when Plex disconnects it, then up to 3 weekly reminders |
+| `mail.send.requests` | `boolean` | `true` | Tell each friend once a week which of their requests reached Plex |
+| `mail.send.wrapped` | `boolean` | `true` | Send each friend their wrapped when its edition freezes |
 
 ## Tautulli
 

@@ -13,13 +13,13 @@ A job is a command and, when it works on one media type, that type as its argume
 | `record`, `refresh`, `sync` | `movies`, `shows` |
 | `refine`, `shrink`, `report` | `movies` |
 | `airing`, `import` | `shows` |
-| `keep-in-touch` | none |
+| `keep-in-touch`, `wrapped`, `mail` | none |
 
-The CLI refuses a type a command does not handle with the list it accepts, `refine shows` among them (`typed` in `apps/cli/src/utils/command.js:22`). Its settings sit under `jobs.<command>.<type>`, `jobs.keep-in-touch` alone staying flat.
+The CLI refuses a type a command does not handle with the list it accepts, `refine shows` among them (`typed` in `apps/cli/src/utils/command.js:22`). Its settings sit under `jobs.<command>.<type>`, `jobs.keep-in-touch`, `jobs.wrapped` and `jobs.mail` staying flat.
 
 At boot the API registers one cron per job that is not `paused` (`apps/api/src/app/jobs/jobs.controller.ts:18`, `apps/api/src/app/jobs/jobs.service.ts:78`). A cron tick spawns the CLI as a child process, the command and its type as arguments (`apps/api/src/app/sensorr/sensorr.service.ts:104`). Started that way the CLI prints a job id as its first line (`apps/cli/src/main.js:41`), and every log line the run emits carries it (`apps/cli/src/utils/command.js:16`), which is what the Jobs screen streams back. A line also carries `meta.command`, the bare command, and `meta.type`, `movie` or `show`. A `refresh movies` line about a person says `person`, and a `keep-in-touch` line about a guest says nothing. A line logged before jobs took a type has none, and is read as a movie one (`jobNameOf`, `libs/sensorr/src/lib/jobs.ts:20`).
 
-The same twelve jobs can be started by hand with `POST /jobs`, `{ command, type }`, and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:31`, `:70`). Nothing else is runnable: the API refuses any command and type outside `JOBS` (`isJob`, `libs/sensorr/src/lib/jobs.ts:16`). Nor does it start a job while the same command and type is still running, from a cron tick or by hand: it logs the refusal and answers 409 (`runProcess`, `apps/api/src/app/sensorr/sensorr.service.ts`). A `record shows` run lasts hours, so it still overlaps `airing shows`; what keeps the two from downloading one episode twice is that a job takes the episodes of a release before downloading it, and only those whose `release` is still empty (`PATCH /api/episodes/release`, `moveEpisodesRelease` in `apps/api/src/app/shows/shows.service.ts`). If another job took one of them meanwhile, the release is skipped and the ones taken are let go.
+The same fourteen jobs can be started by hand with `POST /jobs`, `{ command, type }`, and killed with `DELETE /jobs/:job` (`apps/api/src/app/jobs/jobs.controller.ts:31`, `:70`). Nothing else is runnable: the API refuses any command and type outside `JOBS` (`isJob`, `libs/sensorr/src/lib/jobs.ts:16`). Nor does it start a job while the same command and type is still running, from a cron tick or by hand: it logs the refusal and answers 409 (`runProcess`, `apps/api/src/app/sensorr/sensorr.service.ts`). A `record shows` run lasts hours, so it still overlaps `airing shows`; what keeps the two from downloading one episode twice is that a job takes the episodes of a release before downloading it, and only those whose `release` is still empty (`PATCH /api/episodes/release`, `moveEpisodesRelease` in `apps/api/src/app/shows/shows.service.ts`). If another job took one of them meanwhile, the release is skipped and the ones taken are let go.
 
 `migrate` and `migrate sonarr` are two more CLI commands (`apps/cli/src/main.js:82`) and deliberately not jobs: each imports once, from a legacy dump or from Sonarr, neither has a cron key and the API will start neither.
 
@@ -92,6 +92,14 @@ A watchlisted movie Sensorr does not know is created in state `ignored`, not `wi
 A guest whose token fails is flagged `plex_token_valid: false` rather than skipped silently, so the failure is visible instead of looking like an empty watchlist (`apps/cli/src/commands/keep-in-touch.js:214`).
 
 The shows of the watchlist are read in the same pass, with `type=2` (`apps/cli/src/commands/keep-in-touch.js:201`). A failure there is logged and skipped: the movies were read, so the token is fine (`:195`). A show is resolved to its TMDB id through the Plex metadata provider, and one Sensorr did not know is created `ignored`, unfollowed, every episode unfollowed (`requestedShowOf` in `apps/cli/src/utils/shows.js:28`), for the same reason as a movie: nothing reaches `record shows` until you follow it. A show on the watchlist of the Plex account Sensorr is set up with, the one behind `plex.token`, is its owner's and not a request: it is created `wished`, in the library, still unfollowed, and a show already `ignored` that this account adds is moved to `wished` the same way. The account is read from `plex.tv/api/v2/user` once per run; when that fails, every watchlist is read as a guest's. Movies do not make this distinction. Its Plex guid is kept on the show, so the next run skips the lookup. Its `requested_by` is the guests whose watchlist holds it on this run, as for a movie: a guest who takes it off theirs is no longer named, and `requested_at` keeps the date of the first request.
+
+Each guest it posts goes through `upsertGuest` (`apps/api/src/app/guests/guests.service.ts`), which mails a guest whose token just died, then up to 3 reminders a week apart (`reminderOf` in `apps/api/src/app/guests/reminders.ts`), when Mail is set up and the reconnect mail is on.
+
+### `mail`
+
+Tell each friend which of their requests reached Plex.
+
+It asks the API to send the mail (`POST /api/mail/requests`, `mailRequests` in `apps/api/src/app/mail/mail.service.ts`). A friend gets the movies of their `requested_by` whose `archived_at` is after their last mail, and the episodes of their requested shows whose `files_at` is. `archived_at` is written the first time `sync movies` links a known movie to Plex, `files_at` the first time a known episode gets a file (`arrivedOf` in `apps/api/src/app/movies/arrivals.ts`, `landedOf` in `apps/api/src/app/shows/arrivals.ts`), each once: what was on Plex before these fields never fills a mail. A friend with nothing new gets nothing, one who stopped these mails from their link is skipped.
 
 ### `refresh`
 

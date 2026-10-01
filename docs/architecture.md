@@ -60,7 +60,8 @@ look on the page and the browser keeps it.
 directories and the cron schedule. Every route is behind a global JWT guard (`auth.module.ts:19`,
 `auth.guard.ts:10`); only routes marked `@Public()` escape it: guest
 registration, guest PIN status (`guests.controller.ts:10,16`), a guest's wrapped and its artwork
-(`wrapped.controller.ts:11,18`), and the login route
+(`wrapped.controller.ts:11,18`), the unsubscribe page of a mail and its button
+(`mail.controller.ts`, `unsubscribe/:token`), and the login route
 itself.
 
 **`apps/cli`** is an `ink` terminal app. It carries every long job, one command per job
@@ -282,7 +283,7 @@ created by `apps/api/docker-entrypoint.sh:3-6` and loaded into the environment a
 
 What is actually secret: `NX_SENSORR_AUTH_SECRET`, which signs the 90-day JWT
 (`auth.module.ts:11-12`); the Mongo credentials; the TMDB key and every indexer key, which
-sit inside `config.json`; `plex.token` in the same file; each guest's `plex_token` in Mongo;
+sit inside `config.json`; `plex.token` and `mail.password` in the same file; each guest's `plex_token` in Mongo;
 and the VAPID private key. Everything in that list lives in a gitignored file or in the
 database, none of it in the repository.
 
