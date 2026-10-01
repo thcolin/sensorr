@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { entryPolicy } from '@sensorr/sensorr'
-import { movieFilter } from '../filters'
+import { facetFilter, movieFilter } from '../filters'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
 import { LogsService } from '../logs/logs.service'
@@ -276,6 +276,7 @@ export class MoviesService {
 
   async getStatistics(params = {} as any, context: 'library' | 'requests' = 'library') {
     this.logger.log('GetStatistics')
+    const filtered = (...keys: string[]) => ({ $match: facetFilter(movieFilter, params, ...keys) })
     const raw = await this.movieModel.aggregate([
       {
         $match: {
@@ -293,6 +294,7 @@ export class MoviesService {
       {
         $facet: {
           genres: [
+            filtered('genres'),
             { $unwind: "$genres" },
             {
               $group: {
@@ -301,13 +303,14 @@ export class MoviesService {
               }
             },
           ],
-          original_languages: [{
+          original_languages: [filtered('original_languages'), {
             $group: {
               _id: "$original_language",
               count: { $sum: 1 }
             },
           }],
           spoken_languages: [
+            filtered('spoken_languages'),
             { $unwind: "$spoken_languages" },
             {
               $group: {
@@ -317,6 +320,7 @@ export class MoviesService {
             },
           ],
           production_companies: [
+            filtered('production_companies'),
             { $unwind: "$production_companies" },
             {
               $group: {
@@ -326,6 +330,7 @@ export class MoviesService {
             },
           ],
           requested_by: [
+            filtered('requested_by'),
             { $unwind: "$requested_by" },
             {
               $group: {
@@ -334,7 +339,7 @@ export class MoviesService {
               }
             },
           ],
-          popularity: [{
+          popularity: [filtered('popularity'), {
             $bucket: {
               groupBy: "$popularity",
               boundaries: fields.popularity.boundaries,
@@ -344,13 +349,13 @@ export class MoviesService {
               },
             },
           }],
-          release_date: [{
+          release_date: [filtered('release_date'), {
             $group: {
               _id: { $year: "$release_date" },
               count: { $sum: 1 }
             },
           }],
-          runtime: [{
+          runtime: [filtered('runtime'), {
             $bucket: {
               groupBy: "$runtime",
               boundaries: fields.runtime.boundaries,
@@ -360,23 +365,24 @@ export class MoviesService {
               },
             },
           }],
-          state: [{
+          state: [filtered('state'), {
             $group: {
               _id: "$state",
               count: { $sum: 1 }
             },
           }],
-          policy: [{
+          policy: [filtered('policy'), {
             $group: {
               _id: { $ifNull: ["$policy", (this.configService.config.get('policies') || {})[0]?.name || 'Unknown'] },
               count: { $sum: 1 }
             },
           }],
           proposal: [
+            filtered('releases.proposal'),
             { $match: { state: { $nin: ['ignored'] }, 'releases.proposal': true } },
             { $group: { _id: null, count: { $sum: 1 } } },
           ],
-          vote_average: [{
+          vote_average: [filtered('vote_average'), {
             $bucket: {
               groupBy: "$vote_average",
               boundaries: fields.vote_average.boundaries,
@@ -386,7 +392,7 @@ export class MoviesService {
               },
             },
           }],
-          vote_count: [{
+          vote_count: [filtered('vote_count'), {
             $bucket: {
               groupBy: "$vote_count",
               boundaries: fields.vote_count.boundaries,
@@ -397,6 +403,7 @@ export class MoviesService {
             },
           }],
           budget: [
+            filtered('budget'),
             {
               $addFields: {
                 budgetInMillions: { $divide: ["$budget", 1000000] }

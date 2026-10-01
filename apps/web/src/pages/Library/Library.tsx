@@ -337,18 +337,19 @@ const Library = compose(
         // The ids of the previous filters must not stand in for the current ones.
         setStatistics({})
 
-        const cb = async () => {
-          const { uri, params, init } = APIQuery.movies.getStatistics({ params: state })
+        const controller = new AbortController()
+        const { uri, params, init } = APIQuery.movies.getStatistics({ params: state, init: { signal: controller.signal } })
 
-          try {
-            setStatistics(await api.fetch(uri, params, init))
-          } catch (e) {
-            console.warn(e)
-            setStatistics({})
-          }
-        }
+        api.fetch(uri, params, init)
+          .then(setStatistics)
+          .catch((e) => {
+            if (e.name !== 'AbortError') {
+              console.warn(e)
+              setStatistics({})
+            }
+          })
 
-        cb()
+        return () => controller.abort()
       }, [JSON.stringify(state)])
 
       return statistics
