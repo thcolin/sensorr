@@ -1,6 +1,6 @@
 {
   "affected": {
-    "defaultBase": "master"
+    "defaultBase": "dev"
   },
   "generators": {
     "@nx/react": {
@@ -30,20 +30,11 @@
     },
     "test": {
       "cache": true
-    },
-    "e2e": {
-      "cache": true
     }
   },
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "sharedGlobals": [
-      "{workspaceRoot}/workspace.json",
-      "{workspaceRoot}/tsconfig.base.json",
-      "{workspaceRoot}/tslint.json",
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/babel.config.json"
-    ],
+    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
     "production": ["default"]
   },
   "parallel": 1
