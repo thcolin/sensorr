@@ -165,6 +165,7 @@ describe('showFilesOf', () => {
   it('names the Plex episodes no Sensorr episode numbers the same', () => {
     expect(showFilesOf(episodes, [item(1, 1, []), item(4, 24, [media(7, 'Friends.S04E24.mkv')])]).unmatched).toEqual(['S04E24'])
     expect(showFilesOf(episodes, [item(1, 3, [media(6, 'Friends.S01E03E04.mkv')])]).unmatched).toEqual([])
+    expect(showFilesOf(episodes, [item(5, 2, []), item(4, 24, []), item(undefined, undefined, [])]).unmatched).toEqual(['S04E24', 'S05E02'])
   })
 })
 
