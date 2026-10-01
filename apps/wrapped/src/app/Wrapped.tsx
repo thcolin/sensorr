@@ -4,7 +4,7 @@ import type { Share } from './App'
 import { sheetsOf } from './sheets'
 import { DEFAULT_THEME, LOADERS, STORIES, THEMES, THEME_COLORS } from './themes'
 import type { Art, StoryModel } from './themes/types'
-import { Stories } from './Stories'
+import { Card, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
 
 type At = 'start' | 'end'
@@ -17,6 +17,10 @@ const subscribe = (change: () => void) => {
   return () => query.removeEventListener('change', change)
 }
 const usePhone = () => useSyncExternalStore(subscribe, () => window.matchMedia(PHONE).matches)
+
+// Set by the API's browser when it renders a story as an image: `?card=<story>&look=<look>`
+const query = new URLSearchParams(window.location.search)
+const card = { story: query.get('card'), look: query.get('look') }
 
 const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => (
   <label className="theme-switch" data-at={at}>
@@ -34,7 +38,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const looks = (Object.keys(THEMES) as WrappedTheme[]).filter((id) => !look.looks || look.looks.includes(id))
   const chosen = read('chosen', token)
   // A look chosen earlier and since turned off gives way to the one Thomas set
-  const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : DEFAULT_THEME))
+  const [theme, setTheme] = useState<WrappedTheme>(() => (card.story && known(card.look) ? card.look : null) || (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : DEFAULT_THEME))
   const Theme = THEMES[theme]
   const Story = STORIES[theme]
   const phone = usePhone()
@@ -96,6 +100,19 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   }
 
   const choice = look.choice && looks.length > 1
+
+  if (card.story) {
+    const story = stories.find((other) => idOf(other) === card.story)
+    return (
+      <Card missing={!Story || !story}>
+        {Story && story && (
+          <Suspense fallback={null}>
+            <Story story={story} index={stories.indexOf(story)} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
+          </Suspense>
+        )}
+      </Card>
+    )
+  }
 
   if (phone && Story) {
     const story = stories[Math.min(index, stories.length - 1)]

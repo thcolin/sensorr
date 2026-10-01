@@ -1,9 +1,13 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { StoryModel } from './themes/types'
 
-// The size every story is composed at: a phone's width, in the 9:16 of the image it is shared as
-export const STORY = { width: 390, height: 693 }
+// The size every story is composed at: about a phone's width, in the 9:16 of the 1080 × 1920 image it is shared as
+export const STORY = { width: 396, height: 704 }
 // The segments above a story and the bar under it, outside it when the screen has the room
 const CHROME = { top: 24, bottom: 64 }
+
+// How a story is named in the address of its image: `figure-twin`, `summary`
+export const idOf = (story: StoryModel) => 'variant' in story ? `${story.kind}-${story.variant}` : story.kind
 
 // The scale a story is shown at, and whether its chrome fits outside it
 const fitOf = () => {
@@ -64,4 +68,41 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
       <p className="visually-hidden" aria-live="polite">{`${index + 1} sur ${count}, ${label}`}</p>
     </main>
   )
+}
+
+// A single story at its own size, for the API's browser to capture: `data-card` says when it is ready, or missing
+export const Card = ({ children, missing }: { children: ReactNode, missing: boolean }) => {
+  const frame = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const root = document.documentElement
+
+    if (missing) {
+      root.dataset.card = 'missing'
+      return
+    }
+
+    let cancelled = false
+    const settle = async () => {
+      // The look's chunk loads behind Suspense: wait for the page to be drawn
+      while (!cancelled && !frame.current?.firstElementChild) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+      }
+      await document.fonts.ready
+      const images = Array.from(frame.current?.querySelectorAll('img') || [])
+      await Promise.all(images.map((image) => image.complete ? null : new Promise((resolve) => {
+        image.addEventListener('load', resolve, { once: true })
+        image.addEventListener('error', resolve, { once: true })
+      })))
+      await Promise.all(images.map((image) => image.naturalWidth ? image.decode().catch(() => null) : null))
+      !cancelled && (root.dataset.card = 'ready')
+    }
+    settle()
+
+    return () => {
+      cancelled = true
+    }
+  }, [missing])
+
+  return <div ref={frame} className="stories-card">{children}</div>
 }

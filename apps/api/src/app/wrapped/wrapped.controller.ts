@@ -3,10 +3,11 @@ import { Response } from 'express'
 import { WrappedPlay, WrappedTitle } from '@sensorr/sensorr'
 import { Public } from '../auth/auth.decorators'
 import { WrappedService } from './wrapped.service'
+import { CardsService } from './cards.service'
 
 @Controller('wrapped')
 export class WrappedController {
-  constructor(private readonly wrappedService: WrappedService) {}
+  constructor(private readonly wrappedService: WrappedService, private readonly cardsService: CardsService) {}
 
   @Public()
   @Get('look')
@@ -26,6 +27,14 @@ export class WrappedController {
   async image(@Param('token') token: string, @Param('kind') kind: string, @Query('key') key: string, @Query('width', ParseIntPipe) width: number, @Res() res: Response) {
     const { type, buffer } = await this.wrappedService.image(token, key, kind, width)
     res.set({ 'Content-Type': type, 'Cache-Control': 'private, max-age=604800', 'X-Content-Type-Options': 'nosniff' }).send(buffer)
+  }
+
+  // A story as the 1080 × 1920 image a friend shares; drawn once a day, in a look this friend may wear
+  @Public()
+  @Get('share/:token/cards/:look/:story')
+  async card(@Param('token') token: string, @Param('look') look: string, @Param('story') story: string, @Res() res: Response) {
+    const buffer = await this.cardsService.card(token, look, story)
+    res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=600', 'X-Content-Type-Options': 'nosniff' }).send(buffer)
   }
 
   @Post('viewers')

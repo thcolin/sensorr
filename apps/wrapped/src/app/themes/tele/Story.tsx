@@ -131,7 +131,7 @@ const Summary = ({ sheets, colophon, label, ...page }: { sheets: SheetModel[], c
       sheet={{ ...opening, label }}
       {...page}
       colophon={colophon}
-      sticker={rank && <p className="tele-sticker tele-sticker-rank" aria-hidden="true"><span><b>{rank.rank}<sup>{rank.suffix}</sup></b>{rank.unit}</span></p>}
+      sticker={rank && <p className="tele-sticker tele-sticker-rank" aria-hidden="true"><span>Audience<b>{rank.rank}<sup>{rank.suffix}</sup></b>sur {rank.users}</span></p>}
     />
   )
 }

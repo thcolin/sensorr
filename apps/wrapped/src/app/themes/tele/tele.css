@@ -1777,21 +1777,26 @@ html[data-theme='tele'] {
   }
 }
 
-/* Stories: each sheet on one page of 390 × 693, scaled to the phone and shared as the image.
+/* Stories: each sheet on one page of 396 × 704, scaled to the phone and shared as the image.
    The top 28 px and the bottom 72 px stay free of words, Safari lays the stories' chrome over them */
 .tele-story {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 390px;
-  height: 693px;
+  width: 396px;
+  height: 704px;
   padding: 28px 16px 72px;
   overflow: hidden;
   background: var(--paper);
   color: var(--ink);
   font-size: 16px;
   animation: tele-put 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tele-story.tele-spread-blue {
+  background: var(--blue);
+  color: #fff;
 }
 
 .tele-story-piece {
@@ -2105,15 +2110,36 @@ html[data-theme='tele'] {
   font-size: 44px;
 }
 
+.tele-story-cover .tele-sticker {
+  top: 106px;
+  right: 10px;
+  width: 84px;
+  font-size: 12px;
+}
+
+.tele-story-cover .tele-sticker b {
+  font-size: 24px;
+}
+
+/* The lede keeps clear of the sticker */
+.tele-story-cover .tele-cover-lede {
+  max-width: 280px;
+}
+
+.tele-story .tele-stamp {
+  width: fit-content;
+}
+
 .tele-cover-colophon {
+  padding-right: 80px;
   font: 600 13px/1.2 var(--cond);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
 }
 
-.tele-sticker-rank b {
-  font-size: 44px;
+.tele-story-cover .tele-sticker-rank b {
+  font-size: 36px;
 }
 
 .tele-sticker-rank sup {

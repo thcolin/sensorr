@@ -123,7 +123,7 @@ ol {
   }
 }
 
-/* Stories, on a phone: each sheet a 9:16 page, composed at 390 × 693 and scaled to the screen */
+/* Stories, on a phone: each sheet a 9:16 page, composed at 396 × 704 and scaled to the screen */
 .stories {
   position: fixed;
   inset: 0;
@@ -239,4 +239,10 @@ ol {
 .stories[data-roomy] .stories-bar {
   bottom: auto;
   top: 100%;
+}
+
+.stories-card {
+  width: 396px;
+  height: 704px;
+  overflow: hidden;
 }
