@@ -82,4 +82,46 @@ describe('SensorrService', () => {
       expect(await fs.readdir(blackhole)).toEqual([])
     })
   })
+
+  describe('downloadRelease of a Cyrillic title', () => {
+    let blackhole
+
+    const serviceOf = async (buffer) => {
+      const metafileModel = {
+        exists: jest.fn(async () => true),
+        findById: jest.fn(async () => ({ buffer })),
+        deleteOne: jest.fn(),
+      }
+
+      const module = await Test.createTestingModule({
+        providers: [
+          SensorrService,
+          { provide: getModelToken(MetafileDocument.name), useValue: metafileModel },
+          { provide: ConfigService, useValue: { config: { get: (key) => ({ blackhole })[key] } } },
+        ],
+      }).compile()
+
+      return module.get(SensorrService)
+    }
+
+    beforeEach(async () => {
+      blackhole = await fs.mkdtemp(path.join(os.tmpdir(), 'blackhole-'))
+    })
+
+    afterEach(() => fs.rm(blackhole, { recursive: true }))
+
+    it('writes the title as it is', async () => {
+      await (await serviceOf(Buffer.from('d8:announce'))).downloadRelease({ title: 'Брат (1997) BDRip 1080p', znab: 'RuTracker', link: 'abc', enclosure: 'https://rutracker.org/dl.php?t=1' } as any, 'cache', 'fs')
+      expect(await fs.readdir(blackhole)).toEqual(['Брат (1997) BDRip 1080p-RuTracker.torrent'])
+      expect(await fs.readFile(path.join(blackhole, 'Брат (1997) BDRip 1080p-RuTracker.torrent'), 'utf8')).toBe('d8:announce')
+    })
+
+    it('keeps the indexer and the extension of a title over 255 bytes', async () => {
+      const title = 'Властелин колец: Братство кольца / The Lord of the Rings: The Fellowship of the Ring (Питер Джексон / Peter Jackson) [2001, США, Новая Зеландия, фэнтези, приключения, BDRip 1080p] [Extended Cut] Dub + MVO + AVO + Original + Sub'
+      await (await serviceOf(Buffer.from('d8:announce'))).downloadRelease({ title, znab: 'RuTracker', link: 'abc', enclosure: 'https://rutracker.org/dl.php?t=2' } as any, 'cache', 'fs')
+      const [file] = await fs.readdir(blackhole)
+      expect(file).toMatch(/^Властелин колец Братство кольца  The Lord of the Rings .*-RuTracker\.torrent$/)
+      expect(Buffer.byteLength(file)).toBeLessThanOrEqual(255)
+    })
+  })
 })
