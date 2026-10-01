@@ -24,6 +24,11 @@ export class GuestsController {
     return this.guestsService.upsertGuest(guest)
   }
 
+  @Post('reconnect')
+  async reconnect(@Body('email') email: string) {
+    return this.guestsService.reconnect(email)
+  }
+
   @Get()
   async getGuests(): Promise<{}> {
     return this.guestsService.getGuests()

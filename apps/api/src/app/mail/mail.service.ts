@@ -1,8 +1,15 @@
 import path from 'path'
+import { randomBytes } from 'node:crypto'
+import { Model } from 'mongoose'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { InjectModel } from '@nestjs/mongoose'
 import { createTransport } from 'nodemailer'
 import { ConfigService } from '../config/config.service'
+import { Guest as GuestDocument } from '../guests/guest.schema'
 import { Mail, senderOf } from './templates'
+
+// The mails a friend can stop from their own link, the ones that come back on their own
+export const UNSUBSCRIBABLE = ['reconnect', 'requests']
 
 // `nx build api` copies `src/assets` next to `main.js`, which is the script node runs, in dev and in the image
 const PICTOS = path.resolve(path.dirname(process.argv[1]), 'assets', 'mail')
@@ -11,7 +18,10 @@ const PICTOS = path.resolve(path.dirname(process.argv[1]), 'assets', 'mail')
 export class MailService {
   private readonly logger = new Logger(MailService.name)
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
+    private configService: ConfigService,
+  ) {}
 
   private get config() {
     return this.configService.config
@@ -36,6 +46,28 @@ export class MailService {
 
   sender() {
     return senderOf(this.config.get('mail.from'))
+  }
+
+  // A mail that comes back on its own carries its unsubscribe link, in the footer and in the headers mail clients read
+  async unsubscribeOf(email: string, kind: string) {
+    const guest = await this.guestModel.findOne({ email }, { mail_token: 1 }).lean()
+    const token = guest?.mail_token || (await this.guestModel.findOneAndUpdate({ email }, { mail_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).mail_token
+    const href = `${this.url()}/api/mail/unsubscribe/${token}?kind=${kind}`
+    return { href, headers: { 'List-Unsubscribe': `<${href}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }
+  }
+
+  async tokenExists(token: string) {
+    return typeof token === 'string' && token ? this.guestModel.exists({ mail_token: token }) : null
+  }
+
+  async unsubscribe(token: string, kind: string) {
+    if (!UNSUBSCRIBABLE.includes(kind) || typeof token !== 'string' || !token) {
+      return null
+    }
+
+    const guest = await this.guestModel.findOneAndUpdate({ mail_token: token }, { $addToSet: { mail_unsubscribed: kind } }, { new: true }).lean()
+    guest && this.logger.log(`Unsubscribe "${guest.email}" from "${kind}"`)
+    return guest
   }
 
   async send(to: string, mail: Mail, headers: Record<string, string> = {}) {

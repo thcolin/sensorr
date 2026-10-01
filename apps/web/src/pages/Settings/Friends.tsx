@@ -9,8 +9,10 @@ import Body from '../../layout/Body/Body'
 import { useTitle } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { ChoiceSelect, LookSelect, useFallback, WrappedLooks } from './Wrapped'
+import { errorOf } from './Mail'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
+const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
 const Friends = ({ ...props }) => {
   useTitle('Settings - Friends')
@@ -82,11 +84,44 @@ const Friends = ({ ...props }) => {
     }
   }, [wrapped])
 
-  const [invitation, setInvitation] = useState(
-    `Someone wonderful want to follow your Plex "Watchlist" and consider your movie wishes !\n` +
-    `To accept his invitation, link your Plex account with Sensorr server by following quick instructions,\n` +
-    `${document.location.origin}/keep-in-touch` + `\n`
-  )
+  const mailable = !!(config.get('mail.host') && config.get('mail.from') && config.get('mail.url'))
+  const [mailed, setMailed] = useState({})
+  const [invitee, setInvitee] = useState('')
+  const [inviting, setInviting] = useState(false)
+
+  // Sent from here, a mail goes whatever the Mail settings and the friend's unsubscribe link say
+  const mail = useCallback(async (email, kind) => {
+    const query = { reconnect: api.query.guests.postReconnect, wrapped: api.query.wrapped.postMail }[kind]
+    setBusy((busy) => ({ ...busy, [email]: true }))
+
+    try {
+      const { uri, params, init } = query({ body: { email } })
+      const sent = await api.fetch(uri, params, init, { rawError: true })
+      setMailed((mailed) => ({ ...mailed, [email]: { ...mailed[email], ...sent } }))
+      sent.wrapped_token && setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], wrapped_token: sent.wrapped_token } }))
+      toast.success(kind === 'wrapped' ? `Wrapped link mailed to "${email}"` : `Reconnect mail sent to "${email}"`)
+    } catch (err) {
+      toast.error((await errorOf(err)) || `Error while mailing "${email}", try again`)
+    } finally {
+      setBusy((busy) => ({ ...busy, [email]: false }))
+    }
+  }, [])
+
+  const invite = async (e) => {
+    e.preventDefault()
+    setInviting(true)
+
+    try {
+      const { uri, params, init } = api.query.mail.postInvitation({ body: { to: invitee } })
+      await api.fetch(uri, params, init, { rawError: true })
+      toast.success(`Invitation sent to "${invitee}"`)
+      setInvitee('')
+    } catch (err) {
+      toast.error((await errorOf(err)) || `Error while inviting "${invitee}", try again`)
+    } finally {
+      setInviting(false)
+    }
+  }
 
   return (
     <Body>
@@ -135,6 +170,22 @@ const Friends = ({ ...props }) => {
                   Delete
                 </Button>
                 <footer sx={Friends.styles.wrapped}>
+                  <h5 title='plex'>🔌<span>&nbsp;plex</span></h5>
+                  <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined}>
+                    <span>{reconnectOf(guest, mailed[guest.email])}</span>
+                  </p>
+                  <button
+                    type='button'
+                    sx={Friends.styles.action}
+                    aria-label={`Mail ${guest.name} to reconnect their Plex account`}
+                    title={!mailable ? 'Set up Mail first' : guest.plex_token_valid !== false ? 'Their Plex account is linked' : 'Mail them to reconnect'}
+                    disabled={!mailable || guest.plex_token_valid !== false || busy[guest.email]}
+                    onClick={() => mail(guest.email, 'reconnect')}
+                  >
+                    ✉️
+                  </button>
+                </footer>
+                <footer sx={Friends.styles.wrapped}>
                   <h5 title='wrapped'>🎞️<span>&nbsp;wrapped</span></h5>
                   <p aria-live='polite' data-muted={!(wrapped?.[guest.email]?.viewer && wrapped[guest.email].wrapped_token) || undefined}>
                     {wrappedError ? (
@@ -173,6 +224,16 @@ const Friends = ({ ...props }) => {
                   >
                     🔄
                   </button>
+                  <button
+                    type='button'
+                    sx={Friends.styles.action}
+                    aria-label={`Mail the wrapped link to ${guest.name}`}
+                    title={!mailable ? 'Set up Mail first' : (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) ? `Mail the link, last mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}` : 'Mail the link'}
+                    disabled={!mailable || !wrapped?.[guest.email]?.viewer || busy[guest.email]}
+                    onClick={() => mail(guest.email, 'wrapped')}
+                  >
+                    ✉️
+                  </button>
                   {wrapped?.[guest.email]?.viewer && (
                     <div sx={Friends.styles.look}>
                       <LookSelect label={`Look of the wrapped of ${guest.name}`} value={wrapped[guest.email].wrapped_theme ?? null} fallback={fallback.theme} looks={offered} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
@@ -183,34 +244,17 @@ const Friends = ({ ...props }) => {
               </div>
             ))}
           </div>
+          {!mailable && (
+            <p><small>Set up <Link to='/settings/mail'>Mail</Link> to mail your friends from here.</small></p>
+          )}
           <h3>Invitation</h3>
           <p sx={{ lineHeight: 'body' }}>
-            Copy below invitation, send it to your friends and let them surprise you with their requests !
-            <small>
-              <br/>
-              Guest will be asked to <strong>link</strong> their Plex account to Sensorr server from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferer noopener'>{document.location.origin}/keep-in-touch</a>.
-            </small>
+            Your friend gets a mail asking them to link their Plex account from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferer noopener'>{document.location.origin}/keep-in-touch</a>. Nothing is kept until they do.
           </p>
-          <div sx={{ display: 'flex', flexDirection: 'column', marginTop: 4 }}>
-            <textarea
-              sx={{ variant: 'textarea.default', flex: 1 }}
-              rows={4}
-              onChange={e => setInvitation(e.currentTarget.value)}
-              value={invitation}
-            />
-            <Button
-              type='button'
-              color='primary'
-              variant='contain'
-              sx={{ marginTop: 4 }}
-              onClick={() => {
-                navigator.clipboard.writeText(invitation)
-                toast.success('Invitation copied to Clipboard')
-              }}
-            >
-              Copy Invitation to Clipboard
-            </Button>
-          </div>
+          <form onSubmit={invite} sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
+            <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
+          </form>
         </article>
         <article>
           <h2>Wrapped</h2>
@@ -220,6 +264,22 @@ const Friends = ({ ...props }) => {
       </section>
     </Body>
   )
+}
+
+// What the plex row says of a friend's token, and of the reconnect mails since it died
+const reconnectOf = (guest, sent: any = {}) => {
+  const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
+  const reminders = Math.max((sent.reconnect_mails ?? guest.reconnect_mails ?? 0) - 1, 0)
+
+  if (guest.plex_token_valid === false) {
+    return [
+      `Disconnected${guest.plex_token_checked_at ? `, checked ${dayOf(guest.plex_token_checked_at)}` : ''}`,
+      at && `mailed ${dayOf(at)}${reminders ? `, ${reminders}/3 reminders` : ''}`,
+      guest.mail_unsubscribed?.includes('reconnect') && 'stopped the reminders',
+    ].filter(Boolean).join(' · ')
+  }
+
+  return `Linked${guest.plex_token_checked_at ? `, checked ${dayOf(guest.plex_token_checked_at)}` : ''}`
 }
 
 Friends.styles = {

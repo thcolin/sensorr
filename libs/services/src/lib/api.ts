@@ -700,6 +700,22 @@ export class API {
           },
         }
       }),
+      postReconnect: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'guests/reconnect',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
     },
     wrapped: {
       postViewers: (
@@ -828,6 +844,22 @@ export class API {
         { body, init = {} }: { body: any, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
         uri: 'wrapped/looks',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+      postMail: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'wrapped/mails',
         params: {},
         init: {
           ...init,

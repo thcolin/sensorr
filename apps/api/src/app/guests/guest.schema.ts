@@ -39,6 +39,24 @@ export class Guest extends Document {
 
   @Prop({ type: Boolean, default: null })
   wrapped_choice: boolean | null
+
+  // Opens the unsubscribe link of this guest's mails, created with the first mail that carries one
+  @Prop({ index: { unique: true, sparse: true } })
+  mail_token: string
+
+  // The kinds of mail this guest stopped from their unsubscribe link
+  @Prop({ type: [String], default: [] })
+  mail_unsubscribed: string[]
+
+  // Reconnect mails sent since the token died, the first one and its reminders, back to 0 once it works again
+  @Prop({ default: 0 })
+  reconnect_mails: number
+
+  @Prop()
+  reconnect_mailed_at: number
+
+  @Prop()
+  wrapped_mailed_at: number
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest)

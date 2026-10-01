@@ -7,6 +7,8 @@ import { WRAPPED_THEMES } from '@sensorr/config'
 import { editionBounds, editionOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTheme, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
+import { MailService } from '../mail/mail.service'
+import { mails } from '../mail/templates'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
 
 const IMAGE_WIDTHS = [320, 640, 1280]
@@ -25,6 +27,7 @@ export class WrappedService {
     @InjectModel(Edition.name) private readonly editionModel: Model<Edition>,
     @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async upsertViewers(viewers: { user_id: number, email: string, username: string, friendly_name: string }[]) {
@@ -112,7 +115,50 @@ export class WrappedService {
       },
     })))
     this.logger.log(`Freeze "${year}", ${upsertedCount} users`)
+
+    // Only the edition that just closed: a friend matched late to Tautulli would otherwise get one mail per past year
+    if (upsertedCount && year === editionOf(Date.now() / 1000, TIME_ZONE) - 1 && this.mailService.enabled('wrapped')) {
+      await this.mailFrozen(year, users)
+    }
+
     return { year, frozen: upsertedCount }
+  }
+
+  private async mailFrozen(year: number, users: number[]) {
+    const viewers = await this.viewerModel.find({ _id: { $in: users }, email: { $nin: [null, ''] } }, { email: 1 }).lean()
+    const guests = await this.guestModel.find({ email: { $in: viewers.map(({ email }) => email.toLowerCase()) } }).lean()
+
+    for (const guest of guests) {
+      await this.mailWrapped(guest, year).catch((error) => this.logger.warn(`Wrapped "${guest.email}" not sent: ${error.message}`))
+    }
+  }
+
+  private async mailWrapped(guest, year: number) {
+    const viewer = await this.viewerOf(guest.email)
+    const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).wrapped_token
+    const { theme } = this.lookOf(guest, year)
+    await this.mailService.send(guest.email, mails.wrapped({
+      url: this.mailService.url(),
+      sender: this.mailService.sender(),
+      name: viewer?.username || viewer?.friendly_name || guest.name,
+      token,
+      year,
+      look: theme,
+    }))
+    await this.guestModel.updateOne({ email: guest.email }, { wrapped_mailed_at: Date.now() })
+  }
+
+  // Sent from the Friends page, with the edition the link opens on
+  async mail(email: string) {
+    const guest = typeof email === 'string' ? await this.guestModel.findOne({ email }).lean() : null
+
+    if (!guest || !(await this.viewerOf(guest.email))) {
+      throw new NotFoundException()
+    }
+
+    await this.mailWrapped(guest, this.shownEdition())
+    const { wrapped_token, wrapped_mailed_at } = await this.guestModel.findOne({ email }).lean()
+    return { email, wrapped_token, wrapped_mailed_at }
   }
 
   async wrapped(user_id: number, year: number) {

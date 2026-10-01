@@ -73,6 +73,11 @@ export class WrappedController {
     return this.wrappedService.setLook(email, theme ?? null, choice ?? null)
   }
 
+  @Post('mails')
+  async mail(@Body('email') email: string) {
+    return this.wrappedService.mail(email)
+  }
+
   @Post('tokens')
   async renewToken(@Body('email') email: string) {
     return this.wrappedService.renewToken(email)

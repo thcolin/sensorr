@@ -243,3 +243,22 @@ ${band(year)}
     return { subject, html, text }
   },
 }
+
+const KINDS: Record<string, string> = { reconnect: 'the reminders to reconnect your Plex account', requests: 'the weekly mail of your requests ready to watch' }
+
+// The page behind an unsubscribe link: a mail scanner opens every link, so opening it stops nothing until the button is pressed
+export const unsubscribePage = ({ kind, done, found }: { kind: string, done: boolean, found: boolean }) => {
+  const what = KINDS[kind]
+  const title = !what || !found ? 'This link no longer works' : done ? 'Done, no more of these mails' : 'Stop these mails?'
+  const body = !what || !found
+    ? 'Ask the person who sent you the mail to stop it for you.'
+    : done ? `You will no longer get ${what}.` : `You will no longer get ${what}. The other mails keep coming.`
+
+  return document(title, `
+${stripe(BARS, 6)}
+<tr><td align="center" style="padding:40px 26px;text-align:center;font:400 16px/1.6 ${BODY};color:#e6e6e6">
+  <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">${escape(title)}</h1>
+  <p style="margin:0 0 22px">${escape(body)}</p>
+  ${what && found && !done ? `<form method="post"><button type="submit" style="border:0;cursor:pointer;background:${GREEN};color:#000000;padding:17px 24px;font:600 16px/1 ${BODY}">Stop these mails</button></form>` : ''}
+</td></tr>`)
+}

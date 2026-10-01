@@ -6,6 +6,7 @@ jest.mock('node-fetch', () => ({ __esModule: true, default: jest.fn() }))
 // The schemas and the config service only name injection tokens here; loading them pulls modules the API's jest setup cannot compile
 jest.mock('../config/config.service', () => ({ ConfigService: class ConfigService {} }))
 jest.mock('../guests/guest.schema', () => ({ Guest: class Guest {} }))
+jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }))
 jest.mock('@sensorr/config', () => ({ WRAPPED_THEMES: ['affiche', 'labo'] }))
 jest.mock('./wrapped.schema', () => ({ Play: class Play {}, Viewer: class Viewer {}, Title: class Title {}, Edition: class Edition {} }))
 
@@ -22,7 +23,7 @@ const serviceOf = ({ watched = true, contentType = 'image/jpeg' } = {}) => {
   const configService = { config: { get: (key: string) => ({ 'tautulli.url': 'http://tautulli.local', 'tautulli.key': 'secret' })[key] } }
   ;(fetch as unknown as jest.Mock).mockResolvedValue({ ok: true, status: 200, headers: { get: () => contentType }, arrayBuffer: async () => new TextEncoder().encode('jpeg').buffer })
 
-  const service = new WrappedService(playModel as any, viewerModel as any, titleModel as any, {} as any, guestModel as any, configService as any)
+  const service = new WrappedService(playModel as any, viewerModel as any, titleModel as any, {} as any, guestModel as any, configService as any, {} as any)
   return { service, playModel, guestModel }
 }
 
