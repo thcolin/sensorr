@@ -294,7 +294,7 @@ export class ShowsService {
           episode_run_time: [filtered('episode_run_time'), { $match: { 'episode_run_time.0': { $exists: true } } }, ...bucket('episode_run_time', fields.episode_runtime.boundaries, { $first: '$episode_run_time' })],
         },
       },
-    ])
+    ]).option({ maxTimeMS: 10000 })
 
     raw.status = Object.keys(STATUS_GROUPS)
       .map(group => ({ _id: group, count: raw.status.filter(({ _id }) => STATUS_GROUPS[group].includes(_id)).reduce((sum, { count }) => sum + count, 0) }))

@@ -471,7 +471,7 @@ export class MoviesService {
           ]
         }
       }
-    ])
+    ]).option({ maxTimeMS: 10000 })
 
     raw[0].state.push({ _id: 'proposal', count: raw[0].proposal[0]?.count || 0 })
     delete raw[0].proposal
