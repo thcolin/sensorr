@@ -17,6 +17,7 @@ describe('OperatorsPipe', () => {
     expect(() => pipe.transform({ 603: { $unset: { releases: 1 } } })).toThrow(new BadRequestException('Operator "603.$unset" refused'))
     expect(() => pipe.transform({ 603: { releases: [{ id: 'a', link: { $ne: null } }] } })).toThrow('Operator "603.releases.0.link.$ne" refused')
     expect(() => pipe.transform({ id: { $gt: 0 } })).toThrow('Operator "id.$gt" refused')
+    expect(() => pipe.transform({ 603: { 'releases.$[].enclosure': 'https://example.org' } })).toThrow('Operator "603.releases.$[].enclosure" refused')
   })
 })
 

@@ -6,7 +6,7 @@ const operatorOf = (value: unknown, path: string[] = []): string | undefined => 
   }
 
   for (const [key, child] of Object.entries(value)) {
-    if (key.startsWith('$')) {
+    if (key.includes('$')) {
       return [...path, key].join('.')
     }
 
@@ -20,7 +20,7 @@ const operatorOf = (value: unknown, path: string[] = []): string | undefined => 
   return undefined
 }
 
-// A body or a query reaches Mongo as it was sent: a `$` key would run as an operator, in a filter as in an update
+// A body or a query reaches Mongo as it was sent: a `$` key would run as an operator, and `a.$[]` as a positional path
 @Injectable()
 export class OperatorsPipe implements PipeTransform {
   transform(value: unknown) {
