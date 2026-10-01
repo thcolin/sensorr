@@ -23,6 +23,7 @@ module.exports = composePlugins(
       ],
       output: {
         ...config?.output,
+        clean: true,
         scriptType: 'text/javascript',
       },
       resolve: {
