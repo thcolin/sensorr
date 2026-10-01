@@ -105,7 +105,7 @@ const Cover = ({ sheet, name, art, sticker, colophon }: { sheet: Of<'opening'>, 
           <h1 className="tele-cover-title">{sheet.title}</h1>
           {lead && <p className="tele-cover-line tele-cover-line-lead">{figures(lead)}</p>}
           {rest.map((figure) => <p key={figure} className="tele-cover-line">{figures(figure)}</p>)}
-          {!!inset.length && (
+          {!!inset.length && !colophon?.short && (
             <ul className="tele-inset">
               {inset.map((poster) => <li key={poster.key}><Photo poster={poster} art={art} width={320} eager /></li>)}
             </ul>
@@ -129,7 +129,7 @@ const Summary = ({ sheets, colophon, label, ...page }: { sheets: SheetModel[], c
       sheet={{ ...opening, label }}
       {...page}
       colophon={colophon}
-      sticker={rank && <p className="tele-sticker tele-sticker-rank" aria-hidden="true"><span>Audience<b>{rank.rank}<sup>{rank.suffix}</sup></b>sur {rank.users}</span></p>}
+      sticker={rank && <p className="tele-sticker tele-sticker-rank"><span>Audience<b>{rank.rank}<sup>{rank.suffix}</sup></b>sur {rank.users}</span></p>}
     />
   )
 }
@@ -250,7 +250,7 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => {
   return (
     <Sheet story={sheet} className="tele-story-night" {...page}>
       <div className="tele-story-backdrop">
-        <Photo poster={sheet.poster} art={art} width={1280} />
+        <Photo poster={sheet.poster} art={art} kind="art" width={1280} />
         <Headline lines={sheet.lines} />
         <p className="tele-unit">{sheet.date}</p>
         <p className="tele-clock" aria-hidden="true">{sheet.end}</p>
@@ -280,7 +280,7 @@ const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => {
   return (
     <Sheet story={sheet} className="tele-story-full" {...page}>
       <figure className="tele-exclusive">
-        <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
+        <Photo poster={sheet.poster} art={art} kind="art" width={1280} className="tele-full-poster" />
         <span className="tele-ribbon" aria-hidden="true">Exclusivité</span>
       </figure>
       <Headline lines={sheet.lines} />

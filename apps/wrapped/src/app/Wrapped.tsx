@@ -6,6 +6,7 @@ import { DEFAULT_THEME, LOADERS, STORIES, THEMES, THEME_COLORS } from './themes'
 import type { Art, StoryModel } from './themes/types'
 import { Card, ShareImage, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
+import { anchor as hrefOf } from './anchor'
 
 type At = 'start' | 'end'
 
@@ -43,7 +44,12 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const Story = STORIES[theme]
   const phone = usePhone()
   // Kept here, so a story stays the one being read when the look changes
-  const [index, setIndex] = useState(0)
+  // In the address too, so a reload or a tab the phone dropped opens on the same story
+  const [index, setIndex] = useState(() => Math.max(0, Number(window.location.hash.slice(1)) - 1 || 0))
+  const show = (next: number) => {
+    setIndex(next)
+    window.history.replaceState(null, '', hrefOf(String(next + 1)))
+  }
   const { sheets, colophon, closed } = sheetsOf(share)
   const stories: StoryModel[] = [...sheets, { kind: 'summary', label: `Rétrospective de ${share.name} ${share.year}` }]
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
@@ -123,7 +129,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
       <Stories
         count={stories.length}
         index={index}
-        onIndex={setIndex}
+        onIndex={show}
         label={story.label}
         bar={<>
           {choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}

@@ -160,7 +160,6 @@ ol {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 50%;
   padding: 0;
   border: 0;
   background: none;
@@ -172,17 +171,48 @@ ol {
   cursor: default;
 }
 
-.stories-tap:focus-visible {
-  outline: 3px solid var(--switch-fg, #fff);
-  outline-offset: -6px;
+.stories-frame:focus {
+  outline: none;
 }
 
+/* Back under the left third, as in every stories app: a thumb crossing the page moves on */
 .stories-tap-previous {
   left: 0;
+  width: 33%;
 }
 
 .stories-tap-next {
   right: 0;
+  width: 67%;
+}
+
+/* The same steps for a keyboard or a screen reader, shown when they take focus */
+.stories-step {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+  background: var(--switch-bg, #111);
+  color: var(--switch-fg, #fff);
+  font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
+}
+
+.stories-step:focus-visible {
+  position: static;
+  width: auto;
+  height: 44px;
+  padding: 0 12px;
+  clip-path: none;
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+
+.stories-step[aria-disabled='true'] {
+  opacity: 0.6;
 }
 
 /* Over the story when the screen has no room for them, outside it when it has */
@@ -208,11 +238,16 @@ ol {
   flex: 1;
   border-radius: 2px;
   background: currentColor;
-  opacity: 0.3;
+  opacity: 0.4;
 }
 
 .stories-segments li[data-done] {
+  opacity: 0.75;
+}
+
+.stories-segments li[data-current] {
   opacity: 1;
+  transform: scaleY(1.5);
 }
 
 .stories-bar {
@@ -229,6 +264,7 @@ ol {
   min-height: 44px;
   margin-right: auto;
   padding: 0;
+  white-space: nowrap;
 }
 
 .stories[data-roomy] .stories-segments {
