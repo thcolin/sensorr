@@ -36,7 +36,7 @@ export const summaryRefreshShows = ({ due = 0, show }, extended = true) => [
   }] : []),
 ]
 
-export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missings }, extended = true) => [
+export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missings, created = 0, withdrawals = 0, read = 0, unmatched = 0 }, extended = true) => [
   ...(extended ? [{
     key: 'shows',
     emoji: '🗄️',
@@ -55,6 +55,18 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
     title: <span><strong>{corrections?.success || 0}</strong> Fixed shows with Plex metadata</span>,
     length: corrections?.success || 0,
   },
+  ...(created > 0 ? [{
+    key: 'created',
+    emoji: '➕',
+    title: <span><strong>{created}</strong> Shows added from Plex (archived)</span>,
+    length: created,
+  }] : []),
+  ...(withdrawals > 0 ? [{
+    key: 'withdrawals',
+    emoji: '🗑️',
+    title: <span><strong>{withdrawals}</strong> Withdrawn proposals, all their episodes on Plex</span>,
+    length: withdrawals,
+  }] : []),
   ...(cleanups?.success > 0 ? [{
     key: 'cleanups',
     emoji: '🧹',
@@ -72,6 +84,18 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
     emoji: '💊',
     title: <span><strong>{missings.success}</strong> Episodes no longer on Plex</span>,
     length: missings.success,
+  }] : []),
+  ...(extended && read > 0 ? [{
+    key: 'read',
+    emoji: '🔍',
+    title: <span><strong>{read}</strong> Episode streams read from Plex</span>,
+    length: read,
+  }] : []),
+  ...(unmatched > 0 ? [{
+    key: 'unmatched',
+    emoji: '❓',
+    title: <span><strong>{unmatched}</strong> Plex episodes unknown to TMDB</span>,
+    length: unmatched,
   }] : []),
   ...(((corrections?.warning || 0) + (missings?.warning || 0)) > 0 ? [{
     key: 'warning',
