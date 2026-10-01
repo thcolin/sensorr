@@ -178,11 +178,7 @@ export const Provider = ({ ...props }) => {
         : key !== 'proposal' ? changes
         : ids.reduce((acc, i) => ({ ...acc, [i]: { id: Number(i), releases: changes[i].releases.filter(answered) } }), {})
 
-      try {
-        const { uri, params, init } = api.query.shows.postShows({ body })
-        await api.fetch(uri, params, init)
-        resolve(true)
-      } catch (err) {
+      const undo = (keys: string[]) => {
         const revert = (current, i) => Object.keys(changes[i]).filter(k => k !== 'id').reduce((acc, k) => {
           const { [k]: failed, ...rest } = acc
           return k in initial[i] ? { ...rest, [k]: initial[i][k] } : rest
@@ -190,13 +186,27 @@ export const Provider = ({ ...props }) => {
 
         setMetadata(metadata => ({
           ...metadata,
-          ...Object.keys(changes).reduce((acc, i) => ({ ...acc, [i]: revert(metadata[i], i) }), {}),
+          ...keys.reduce((acc, i) => ({ ...acc, [i]: revert(metadata[i], i) }), {}),
         }))
-        setEpisodes(episodes => Object.keys(previous).reduce((acc, show) => !acc[show] ? acc : {
+        setEpisodes(episodes => Object.keys(previous).filter(show => keys.includes(show)).reduce((acc, show) => !acc[show] ? acc : {
           ...acc,
           [show]: acc[show].map(episode => previous[show].has(episode.id) ? { ...episode, release: previous[show].get(episode.id) } : episode),
         }, episodes))
+      }
 
+      try {
+        const { uri, params, init } = api.query.shows.postShows({ body })
+        // A show whose release did not download comes back in `failed`, the others are written
+        const { failed = [] } = await api.fetch(uri, params, init)
+
+        if (failed.length) {
+          undo(failed.map(String))
+          reject(Object.assign(new Error(), { failed }))
+        } else {
+          resolve(true)
+        }
+      } catch (err) {
+        undo(Object.keys(changes))
         console.warn(err)
         reject(new Error())
       }
@@ -210,7 +220,7 @@ export const Provider = ({ ...props }) => {
     await toast.promise(promise, {
       loading: ids.length === 1 ? `Updating show metadata...` : `Updating **${ids.length}** shows metadata...`,
       success: () => ids.length === 1 ? `Show metadata updated` : `Updated **${ids.length}** shows metadata`,
-      error: () => ids.length === 1 ? `Error while updating show metadata` : `Error while updating **${ids.length}** shows metadata`,
+      error: (err) => err?.failed?.length ? (ids.length === 1 ? `Release not downloaded` : `**${err.failed.length}** of **${ids.length}** shows not downloaded`) : ids.length === 1 ? `Error while updating show metadata` : `Error while updating **${ids.length}** shows metadata`,
     })
   }, [])
 
