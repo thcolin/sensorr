@@ -60,7 +60,7 @@ export class WrappedService {
     return { first: first?.started ?? null, last: last?.started ?? null }
   }
 
-  // The years Tautulli has plays for, the ones Settings lists
+  // The years Tautulli has plays for, up to the one shown now: in December the next one has barely started
   async years(): Promise<number[]> {
     const { first, last } = await this.playsRange()
 
@@ -70,7 +70,7 @@ export class WrappedService {
 
     const years = []
 
-    for (let year = editionOf(first, TIME_ZONE); year <= editionOf(last, TIME_ZONE); year++) {
+    for (let year = editionOf(first, TIME_ZONE); year <= Math.min(editionOf(last, TIME_ZONE), this.shownEdition()); year++) {
       const { start, end } = editionBounds(year, TIME_ZONE)
 
       if (await this.playModel.exists({ started: { $gte: start, $lt: end } })) {

@@ -168,9 +168,10 @@ const Friends = ({ ...props }) => {
                       type='button'
                       sx={Friends.styles.disconnected}
                       title={!mailable ? 'Their Plex account is disconnected, set up Mail to remind them' : stopped ? 'They stopped the reminders, mail them anyway' : 'Mail them to reconnect their Plex account'}
-                      disabled={!mailable || busy[guest.email]}
+                      // Not `disabled`, which hides the reason in the title from the hover and from screen readers
+                      aria-disabled={!mailable || busy[guest.email] || undefined}
                       onClick={() => {
-                        if (confirm(stopped
+                        if (mailable && !busy[guest.email] && confirm(stopped
                           ? `${guest.name} stopped the reconnect reminders. Mail them anyway ?`
                           : `Mail ${guest.name} to reconnect their Plex account ?`)) {
                           mail(guest.email, 'reconnect')
@@ -181,15 +182,24 @@ const Friends = ({ ...props }) => {
                       Disconnected
                     </button>
                   )}
-                  <label sx={Friends.styles.more} title={wrappedTitle}>
+                  <label sx={Friends.styles.more}>
                     <Icon value='chevron' height='0.75em' width='0.75em' />
                     <select
                       aria-label={`Wrapped of ${guest.name}`}
+                      title={wrappedTitle}
                       value=''
                       disabled={!viewer || busy[guest.email]}
+                      onPointerDown={(e) => { e.currentTarget.dataset.key = '' }}
+                      onKeyDown={(e) => { e.currentTarget.dataset.key = e.key }}
                       onChange={(e) => {
                         const action = e.target.value
+                        const key = e.target.dataset.key
                         e.target.value = ''
+
+                        // On Windows and Linux, an arrow or a letter on the closed select changes it: nothing was picked
+                        if (key && key !== 'Enter' && key !== ' ') {
+                          return
+                        }
 
                         if (action === 'mail' && confirm(`Mail the wrapped link to ${guest.name} ?`)) {
                           mail(guest.email, 'wrapped')
@@ -392,18 +402,18 @@ Friends.styles = {
     fontSize: 6,
     fontWeight: 'semibold',
     whiteSpace: 'nowrap',
-    marginRight: [0, 10],
+    marginRight: ['0px', 10],
     '>i': {
       width: '6px',
       height: '6px',
       borderRadius: '50%',
       backgroundColor: 'plex',
     },
-    ':hover:not(:disabled)': {
+    ':hover:not([aria-disabled])': {
       backgroundColor: 'grayDark',
       color: 'text',
     },
-    ':disabled': {
+    '&[aria-disabled]': {
       cursor: 'default',
     },
   },

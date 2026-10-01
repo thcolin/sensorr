@@ -87,6 +87,8 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
   const looks = (form.watch('wrapped.looks') || THEMES) as WrappedTheme[]
   const editions = (form.watch('wrapped.editions') || []) as Edition[]
   const offer = (theme: WrappedTheme, on: boolean) => form.setValue('wrapped.looks', THEMES.filter((other) => other === theme ? on : looks.includes(other)), { shouldDirty: true })
+  // A year turned off stays listed to turn it on again, even once Tautulli no longer has its plays
+  const rows = years && [...new Set([...years, ...editions.map(({ year }) => year)])].sort((a, b) => b - a)
   const change = (year: number, change: Partial<Edition>) => form.setValue('wrapped.editions', editionsWith(editions, year, change), { shouldDirty: true })
 
   const fetchYears = useCallback(() => {
@@ -131,9 +133,9 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
         <p><small>Unable to load the years from Tautulli, <button type='button' sx={WrappedLooks.styles.retry} onClick={fetchYears}>retry</button></small></p>
       ) : !years ? (
         <p aria-busy={true}><small>Looking for them in Tautulli...</small></p>
-      ) : !years.length ? (
+      ) : !rows.length ? (
         <p><small>No play imported from Tautulli yet, the 🎞️ wrapped job imports them.</small></p>
-      ) : years.map((year) => {
+      ) : rows.map((year) => {
         const edition = editions.find((edition) => edition.year === year)
         const enabled = edition?.enabled !== false
         const theme = edition?.theme ?? null
