@@ -246,3 +246,52 @@ ol {
   height: 704px;
   overflow: hidden;
 }
+
+/* Share: the image of the story on screen, or of the whole year under the page */
+.stories-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--switch-radius, 0);
+  background: var(--switch-fg, #fff);
+  color: var(--switch-bg, #111);
+  font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
+  cursor: pointer;
+  transition-property: scale, opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
+}
+
+.stories-share svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stories-share:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.stories-share:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.stories-share:focus-visible {
+  outline: 2px solid var(--switch-fg, #fff);
+  outline-offset: 3px;
+}
+
+.theme-share {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 32px;
+  background: var(--switch-bg, #111);
+}

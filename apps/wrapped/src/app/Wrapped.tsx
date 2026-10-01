@@ -4,7 +4,7 @@ import type { Share } from './App'
 import { sheetsOf } from './sheets'
 import { DEFAULT_THEME, LOADERS, STORIES, THEMES, THEME_COLORS } from './themes'
 import type { Art, StoryModel } from './themes/types'
-import { Card, Stories, idOf } from './Stories'
+import { Card, ShareImage, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
 
 type At = 'start' | 'end'
@@ -49,6 +49,9 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
+  const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}`
+  // « retrospective-thcolin-2026-rank.jpg »
+  const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
   // Where the switch that was used sat on screen, so the new look opens at the same place
   const anchor = useRef<{ at: At, top: number } | null>(null)
 
@@ -118,7 +121,16 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     const story = stories[Math.min(index, stories.length - 1)]
     const at = index === 0 ? 'start' : index === stories.length - 1 ? 'end' : null
     return (
-      <Stories count={stories.length} index={index} onIndex={setIndex} label={story.label} bar={choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}>
+      <Stories
+        count={stories.length}
+        index={index}
+        onIndex={setIndex}
+        label={story.label}
+        bar={<>
+          {choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}
+          <ShareImage key={idOf(story)} url={cardOf(idOf(story))} name={nameOf(idOf(story))} />
+        </>}
+      >
         <Suspense fallback={null}>
           <Story key={index} story={story} index={index} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
         </Suspense>
@@ -133,6 +145,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
         <Theme share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
       </Suspense>
       {choice && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
+      {Story && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label="Partager ma rétrospective" /></div>}
     </>
   )
 }
