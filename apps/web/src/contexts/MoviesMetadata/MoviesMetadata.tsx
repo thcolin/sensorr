@@ -138,7 +138,7 @@ export const Provider = ({ ...props }) => {
       ...metadata,
       ...keys.reduce((acc, i) => ({
         ...acc,
-        [i]: { ...(metadata[i] || {}), ...initial[i] },
+        [i]: initial[i] ? { ...(metadata[i] || {}), ...initial[i] } : {},
       }), {}),
     }))
 
