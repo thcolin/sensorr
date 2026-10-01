@@ -48,6 +48,11 @@ export class WrappedController {
     return this.wrappedService.playsRange()
   }
 
+  @Get('years')
+  async years() {
+    return this.wrappedService.years()
+  }
+
   @Get('titles')
   async titleKeys() {
     return this.wrappedService.titleKeys()
@@ -66,11 +71,6 @@ export class WrappedController {
   @Get('guests')
   async guests() {
     return this.wrappedService.guests()
-  }
-
-  @Post('looks')
-  async setLook(@Body('email') email: string, @Body('theme') theme: string | null, @Body('choice') choice: boolean | null) {
-    return this.wrappedService.setLook(email, theme ?? null, choice ?? null)
   }
 
   @Post('mails')

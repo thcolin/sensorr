@@ -8,7 +8,7 @@ import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
 import { emojize, useTitle } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
-import { ChoiceSelect, LookSelect, useFallback, WrappedLooks } from './Wrapped'
+import { WrappedLooks } from './Wrapped'
 import { errorOf } from './Mail'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
@@ -24,7 +24,6 @@ const Friends = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config, load } = useConfigContext()
   const looks = useForm({ defaultValues: config.getProperties() })
-  const { fallback, looks: offered } = useFallback(looks)
 
   const fetchWrapped = useCallback(() => {
     setWrappedError(false)
@@ -66,21 +65,6 @@ const Friends = ({ ...props }) => {
     } catch (err) {
       console.warn(err)
       toast.error(`Unable to copy to Clipboard, the wrapped link of "${email}" is ${linkOf(token)}`)
-    }
-  }, [wrapped])
-  // Saved as soon as it is picked, like the link beside it
-  const setLook = useCallback(async (email, look) => {
-    const previous = wrapped[email]
-    const next = { wrapped_theme: previous.wrapped_theme ?? null, wrapped_choice: previous.wrapped_choice ?? null, ...look }
-    setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], ...next } }))
-
-    try {
-      const { uri, params, init } = api.query.wrapped.postLook({ body: { email, theme: next.wrapped_theme, choice: next.wrapped_choice } })
-      await api.fetch(uri, params, init)
-    } catch (err) {
-      console.warn(err)
-      setWrapped((wrapped) => ({ ...wrapped, [email]: { ...wrapped[email], wrapped_theme: previous.wrapped_theme, wrapped_choice: previous.wrapped_choice } }))
-      toast.error(`Error while saving the look of "${email}", try again`)
     }
   }, [wrapped])
 
@@ -167,117 +151,85 @@ const Friends = ({ ...props }) => {
             </p>
           )}
           <div sx={Friends.styles.guests}>
-            {Object.values(guests).map((guest: any) => (
-              <div key={guest.email}>
-                <img src={guest.avatar} alt='' />
-                <div>
-                  <strong>{guest.name}</strong>
-                  <br/>
-                  <small>{guest.email}</small>
-                </div>
-                <Button
-                  type='button'
-                  color='error'
-                  variant='contain'
-                  sx={{ flex: 1 }}
-                  onClick={() => {
-                    if(confirm(`Are you sure you want to delete guest "${guest.email}" ?`)) {
-                      deleteGuest(guest.email)
-                    }
-                  }}
-                >
-                  Delete
-                </Button>
-                <footer sx={Friends.styles.wrapped}>
-                  <h5 title={guest.plex_token_valid === false ? 'Plex account disconnected' : 'Plex account linked'}>
-                    <span aria-label='Plex' sx={{ display: 'flex', justifyContent: 'center', width: '1em', fontSize: 3, color: guest.plex_token_valid === false ? 'grayDarkest' : 'plex' }}>❯</span>
-                  </h5>
-                  <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined} data-prose={true}>
-                    <Reconnect guest={guest} sent={mailed[guest.email]} />
-                  </p>
-                  <button
-                    type='button'
-                    sx={Friends.styles.action}
-                    aria-label={`Mail ${guest.name} to reconnect their Plex account`}
-                    title={!mailable ? 'Set up Mail first' : guest.plex_token_valid !== false ? 'Their Plex account is linked' : guest.mail_unsubscribed?.includes('reconnect') ? 'They stopped the reminders, mail them anyway' : 'Mail them to reconnect'}
-                    disabled={!mailable || guest.plex_token_valid !== false || busy[guest.email]}
-                    onClick={() => {
-                      if (confirm(guest.mail_unsubscribed?.includes('reconnect')
-                        ? `${guest.name} stopped the reconnect reminders. Mail them anyway ?`
-                        : `Mail ${guest.name} to reconnect their Plex account ?`)) {
-                        mail(guest.email, 'reconnect')
-                      }
-                    }}
-                  >
-                    ✉️
-                  </button>
-                </footer>
-                <footer sx={Friends.styles.wrapped}>
-                  <h5 title='wrapped'>🎞️<span>&nbsp;wrapped</span></h5>
-                  <p aria-live='polite' data-muted={!(wrapped?.[guest.email]?.viewer && wrapped[guest.email].wrapped_token) || undefined}>
-                    {wrappedError ? (
-                      <span>Unable to load the wrapped links, <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>retry</button></span>
-                    ) : !wrapped ? (
-                      <span aria-busy={true}>Looking for them in Tautulli...</span>
-                    ) : !wrapped[guest.email]?.viewer ? (
-                      <span>No Tautulli user with this email</span>
-                    ) : wrapped[guest.email].wrapped_token ? (
-                      <span><span sx={{ display: ['none', 'inline'] }}>{document.location.origin}</span>/wrapped/{wrapped[guest.email].wrapped_token}</span>
-                    ) : (
-                      <span>No link yet, 📋 creates one</span>
-                    )}
-                    {wrapped?.[guest.email]?.wrapped_token && (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) && (
-                      <i role='img' sx={Friends.styles.mailed} aria-label={`Mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}`} title={`Mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}`} />
-                    )}
-                  </p>
-                  <button
-                    type='button'
-                    sx={Friends.styles.action}
-                    aria-label={`Copy the wrapped link of ${guest.name}`}
-                    title='Copy link'
-                    disabled={!wrapped?.[guest.email]?.viewer || busy[guest.email]}
-                    onClick={() => copyLink(guest.email)}
-                  >
-                    📋
-                  </button>
-                  <button
-                    type='button'
-                    sx={Friends.styles.action}
-                    aria-label={`Replace the wrapped link of ${guest.name}`}
-                    title='New link, the previous one no longer opens'
-                    disabled={!wrapped?.[guest.email]?.viewer || !wrapped[guest.email].wrapped_token || busy[guest.email]}
-                    onClick={() => {
-                      if (confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
-                        copyLink(guest.email, true)
-                      }
-                    }}
-                  >
-                    🔄
-                  </button>
-                  <button
-                    type='button'
-                    sx={Friends.styles.action}
-                    aria-label={`Mail the wrapped link to ${guest.name}`}
-                    title={!mailable ? 'Set up Mail first' : (mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at) ? `Mail the link, last mailed ${dayOf(mailed[guest.email]?.wrapped_mailed_at || guest.wrapped_mailed_at)}` : 'Mail the link'}
-                    disabled={!mailable || !wrapped?.[guest.email]?.viewer || busy[guest.email]}
-                    onClick={() => {
-                      if (confirm(`Mail the wrapped link to ${guest.name} ?`)) {
-                        mail(guest.email, 'wrapped')
-                      }
-                    }}
-                  >
-                    ✉️
-                  </button>
-                  {wrapped?.[guest.email]?.viewer && (
-                    <div sx={Friends.styles.look}>
-                      <LookSelect label={`Look of the wrapped of ${guest.name}`} value={wrapped[guest.email].wrapped_theme ?? null} fallback={fallback.theme} looks={offered} onChange={(wrapped_theme) => setLook(guest.email, { wrapped_theme })} />
-                      <ChoiceSelect label={`Whether ${guest.name} can switch the look`} value={wrapped[guest.email].wrapped_choice ?? null} fallback={fallback.choice} onChange={(wrapped_choice) => setLook(guest.email, { wrapped_choice })} />
-                    </div>
+            {Object.values(guests).map((guest: any) => {
+              const stopped = guest.mail_unsubscribed?.includes('reconnect')
+              const viewer = wrapped?.[guest.email]?.viewer
+              const wrappedTitle = wrappedError ? 'Unable to load the wrapped links' : !wrapped ? 'Looking for them in Tautulli...' : !viewer ? 'No Tautulli user with this email, no wrapped' : 'Their wrapped'
+
+              return (
+                <div key={guest.email} sx={Friends.styles.guest}>
+                  <Avatar guest={guest} sent={mailed[guest.email]} />
+                  <div sx={Friends.styles.who}>
+                    <strong>{guest.name}</strong>
+                    <small>{guest.email}</small>
+                  </div>
+                  {guest.plex_token_valid === false && (
+                    <button
+                      type='button'
+                      sx={Friends.styles.disconnected}
+                      title={!mailable ? 'Their Plex account is disconnected, set up Mail to remind them' : stopped ? 'They stopped the reminders, mail them anyway' : 'Mail them to reconnect their Plex account'}
+                      disabled={!mailable || busy[guest.email]}
+                      onClick={() => {
+                        if (confirm(stopped
+                          ? `${guest.name} stopped the reconnect reminders. Mail them anyway ?`
+                          : `Mail ${guest.name} to reconnect their Plex account ?`)) {
+                          mail(guest.email, 'reconnect')
+                        }
+                      }}
+                    >
+                      <i />
+                      Disconnected
+                    </button>
                   )}
-                </footer>
-              </div>
-            ))}
+                  <label sx={Friends.styles.more} title={wrappedTitle}>
+                    <Icon value='chevron' height='0.75em' width='0.75em' />
+                    <select
+                      aria-label={`Wrapped of ${guest.name}`}
+                      value=''
+                      disabled={!viewer || busy[guest.email]}
+                      onChange={(e) => {
+                        const action = e.target.value
+                        e.target.value = ''
+
+                        if (action === 'mail' && confirm(`Mail the wrapped link to ${guest.name} ?`)) {
+                          mail(guest.email, 'wrapped')
+                        } else if (action === 'copy') {
+                          copyLink(guest.email)
+                        } else if (action === 'renew' && confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
+                          copyLink(guest.email, true)
+                        }
+                      }}
+                    >
+                      <option value='' hidden={true}>Wrapped</option>
+                      <optgroup label='Wrapped'>
+                        <option value='mail' disabled={!mailable}>Send by mail</option>
+                        <option value='copy'>Copy link</option>
+                        <option value='renew' disabled={!wrapped?.[guest.email]?.wrapped_token}>New link</option>
+                      </optgroup>
+                    </select>
+                  </label>
+                  <button
+                    type='button'
+                    sx={Friends.styles.remove}
+                    title={`Remove ${guest.name}`}
+                    aria-label={`Remove ${guest.name}`}
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete guest "${guest.email}" ?`)) {
+                        deleteGuest(guest.email)
+                      }
+                    }}
+                  >
+                    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }} aria-hidden='true'>
+                      <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
+                    </svg>
+                  </button>
+                </div>
+              )
+            })}
           </div>
+          {wrappedError && (
+            <p><small>Unable to load the wrapped links, <button type='button' sx={Friends.styles.retry} onClick={fetchWrapped}>retry</button></small></p>
+          )}
           {!mailable && (
             <p><small>Set up <Link to='/settings/mail'>Mail</Link> to mail your friends from here.</small></p>
           )}
@@ -304,7 +256,7 @@ const Friends = ({ ...props }) => {
         </article>
         <article>
           <h2>Wrapped</h2>
-          <p>Each friend matched to a Tautulli user gets a yearly page of what they watched on Plex, the wrapped. Pick the look it wears, give a year its own, then a friend in their card above.</p>
+          <p>A yearly page of what each friend watched on Plex.</p>
           <WrappedLooks form={looks} onSave={onSave} />
         </article>
       </section>
@@ -312,25 +264,31 @@ const Friends = ({ ...props }) => {
   )
 }
 
-// The reconnect mails since the token died, the first one and its 3 reminders, as dots: filled once sent
-const Reconnect = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
-  const checked = guest.plex_token_checked_at ? `Checked ${dayOf(guest.plex_token_checked_at)}` : undefined
-
-  if (guest.plex_token_valid !== false) {
-    return <span title={checked}>Linked</span>
-  }
-
+// A disconnected friend shows the reconnect mails sent since their token died, the first one and its 3 reminders,
+// as four arcs around their picture: filled once sent
+const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
+  const [broken, setBroken] = useState(false)
+  const linked = guest.plex_token_valid !== false
   const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
-  const count = Math.min(Math.max(sent.reconnect_mails ?? guest.reconnect_mails ?? 0, at ? 1 : 0), 4)
+  const count = linked ? 0 : Math.min(Math.max(sent.reconnect_mails ?? guest.reconnect_mails ?? 0, at ? 1 : 0), 4)
   const stopped = guest.mail_unsubscribed?.includes('reconnect')
+  const checked = guest.plex_token_checked_at ? `, checked ${dayOf(guest.plex_token_checked_at)}` : ''
+  const label = linked
+    ? `Plex account linked${checked}`
+    : `Plex account disconnected${checked}, ${count} of 4 reconnect mails sent${at ? `, last on ${dayOf(at)}` : ''}${stopped ? ', stopped the reminders' : ''}`
+  const arcs = [1, 2, 3, 4].map((index) => `var(--theme-ui-colors-${index <= count ? 'grayDarkest' : 'grayDark'})`)
 
   return (
-    <span sx={Friends.styles.reconnect}>
-      <span title={checked}>Disconnected</span>
-      <span role='img' aria-label={`${count} of 4 reconnect mails sent${at ? `, last on ${dayOf(at)}` : ''}`} title={`${count} of 4 mails sent${at ? `, last on ${dayOf(at)}` : ''}`}>
-        {[0, 1, 2, 3].map((index) => <i key={index} data-sent={index < count || undefined} />)}
-      </span>
-      {stopped && <span role='img' aria-label='Stopped the reminders' title='Stopped the reminders'>🔕</span>}
+    <span
+      role='img'
+      aria-label={label}
+      title={label}
+      sx={Friends.styles.avatar}
+      data-linked={linked || undefined}
+      style={linked ? {} : { '--arcs': `conic-gradient(from -45deg, ${arcs[0]} 0 22.5%, transparent 0 25%, ${arcs[1]} 0 47.5%, transparent 0 50%, ${arcs[2]} 0 72.5%, transparent 0 75%, ${arcs[3]} 0 97.5%, transparent 0)` } as any}
+    >
+      {guest.avatar && !broken ? <img src={guest.avatar} alt='' onError={() => setBroken(true)} /> : <span>{(guest.name || guest.email || '?')[0]}</span>}
+      {!linked && stopped && <b aria-hidden={true}>🔕</b>}
     </span>
   )
 }
@@ -338,159 +296,180 @@ const Reconnect = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
 Friends.styles = {
   guests: {
     marginBottom: 2,
-    '>div': {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginY: 6,
-      border: '1px solid',
-      borderColor: 'grayDark',
-      borderRadius: '0.25rem',
-      paddingX: 6,
-      paddingY: 8,
-      '>img': {
-        height: '48px',
-        width: '48px',
-        borderRadius: '50%',
-      },
-      '>div': {
-        flex: 1,
-        minWidth: 0,
-        marginX: 4,
-      },
-      '>button': {
-        flex: 0,
-      },
-      flexWrap: 'wrap',
-    }
   },
-  wrapped: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'stretch',
-    flex: '1 1 100%',
-    marginTop: 8,
-    marginX: -6,
-    marginBottom: -8,
-    borderTop: '1px solid',
-    borderColor: 'grayDark',
-    borderBottomLeftRadius: '0.25rem',
-    borderBottomRightRadius: '0.25rem',
-    overflow: 'hidden',
-    '>h5': {
-      display: 'flex',
-      alignItems: 'center',
-      margin: 12,
-      paddingY: 12,
-      paddingX: 6,
-      backgroundColor: 'grayLight',
-      borderRight: '1px solid',
-      borderColor: 'grayDark',
-      fontFamily: 'monospace',
-      whiteSpace: 'nowrap',
-      '>span': {
-        display: ['none', 'inline'],
-      },
-    },
-    '>p': {
-      display: 'flex',
-      alignItems: 'center',
-      flex: 1,
-      minWidth: 0,
-      marginY: 12,
-      marginX: 6,
-      fontFamily: 'monospace',
-      fontSize: 5,
-      '>span': {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      },
-      '&[data-prose]': {
-        fontFamily: 'body',
-        '>span': {
-          whiteSpace: ['normal', 'nowrap'],
-        },
-      },
-      '&[data-muted]': {
-        fontFamily: 'body',
-        color: 'grayDarkest',
-        '>span': {
-          whiteSpace: ['normal', 'nowrap'],
-        },
-      },
-    },
-  },
-  // The friend's own look, a second line of the wrapped footer
-  look: {
+  // One row per friend, the two squares of a row of Settings › Indexers at its end
+  guest: {
     display: 'grid',
-    gridTemplateColumns: ['1fr', '1fr 1fr'],
-    gap: 4,
-    flex: '1 1 100%',
-    padding: 6,
-    borderTop: '1px solid',
-    borderColor: 'grayDark',
-    '>select[data-custom]': {
-      borderColor: 'primary',
-    },
-  },
-  action: {
-    variant: 'button.reset',
-    display: 'flex',
+    gridTemplateColumns: ['auto minmax(0, 1fr) auto auto', 'auto minmax(0, 1fr) auto auto auto'],
+    gridTemplateAreas: ['"avatar who more remove" "avatar disconnected more remove"', '"avatar who disconnected more remove"'],
     alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    minWidth: '2.5rem',
-    minHeight: '2.5rem',
+    columnGap: 6,
+    rowGap: 10,
     paddingY: 8,
-    paddingX: 6,
-    fontSize: 5,
-    borderLeft: '1px solid',
-    borderColor: 'grayDark',
-    lineHeight: 1.5,
-    ':hover:not(:disabled)': {
-      backgroundColor: 'gray',
+    paddingX: 10,
+    borderBottom: '1px solid',
+    borderColor: 'grayLight',
+  },
+  avatar: {
+    gridArea: 'avatar',
+    position: 'relative',
+    display: 'grid',
+    placeItems: 'center',
+    width: '44px',
+    height: '44px',
+    cursor: 'default',
+    '::before': {
+      content: '""',
+      position: 'absolute',
+      inset: '0px',
+      borderRadius: '50%',
+      background: 'var(--arcs)',
+      mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
     },
-    ':disabled': {
-      opacity: 0.5,
-      filter: 'grayscale(1)',
+    '&[data-linked]::before': {
+      display: 'none',
+    },
+    '>img, >span': {
+      width: '34px',
+      height: '34px',
+      borderRadius: '50%',
+      objectFit: 'cover',
+    },
+    '>span': {
+      display: 'grid',
+      placeItems: 'center',
+      backgroundColor: 'gray',
+      color: 'grayDarkest',
+      fontFamily: 'heading',
+      fontWeight: 'heading',
+      textTransform: 'uppercase',
+    },
+    '&:not([data-linked]) >img, &:not([data-linked]) >span': {
+      opacity: 0.7,
+    },
+    '>b': {
+      position: 'absolute',
+      right: '-4px',
+      bottom: '-4px',
+      display: 'grid',
+      placeItems: 'center',
+      width: '18px',
+      height: '18px',
+      borderRadius: '50%',
+      backgroundColor: 'white',
+      fontSize: 8,
     },
   },
-  reconnect: {
+  who: {
+    gridArea: 'who',
+    minWidth: '0px',
+    lineHeight: 'normal',
+    '>strong, >small': {
+      display: 'block',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+    '>small': {
+      color: 'grayDarkest',
+    },
+  },
+  // A grey pill with the Plex dot, a click mails the friend to reconnect
+  disconnected: {
+    variant: 'button.reset',
+    gridArea: 'disconnected',
+    justifySelf: 'start',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    '>span[role=img]': {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 10,
+    gap: 9,
+    height: '2em',
+    paddingY: 12,
+    paddingLeft: 6,
+    paddingRight: 5,
+    borderRadius: '2em',
+    backgroundColor: 'gray',
+    color: 'grayDarkest',
+    fontSize: 6,
+    fontWeight: 'semibold',
+    whiteSpace: 'nowrap',
+    marginRight: [0, 10],
+    '>i': {
+      width: '6px',
+      height: '6px',
+      borderRadius: '50%',
+      backgroundColor: 'plex',
+    },
+    ':hover:not(:disabled)': {
+      backgroundColor: 'grayDark',
+      color: 'text',
+    },
+    ':disabled': {
       cursor: 'default',
     },
-    '>span[role=img]>i': {
-      width: '0.5em',
-      height: '0.5em',
-      borderRadius: '50%',
-      border: '1px solid',
-      borderColor: 'grayDarker',
+  },
+  // The chevron with a native select over it, like `State` of @sensorr/ui
+  more: {
+    gridArea: 'more',
+    position: 'relative',
+    display: 'grid',
+    placeItems: 'center',
+    width: '2rem',
+    height: '2rem',
+    borderRadius: '0.25em',
+    color: 'grayDarkest',
+    ':hover:not(:has(select:disabled))': {
+      backgroundColor: 'gray',
+      color: 'text',
     },
-    '>span[role=img]>i[data-sent]': {
-      borderColor: 'grayDarkest',
-      backgroundColor: 'grayDarkest',
+    ':has(select:disabled)': {
+      opacity: 0.4,
+    },
+    ':has(select:focus-visible)': {
+      outline: '2px solid',
+      outlineColor: 'primary',
+      outlineOffset: 2,
+    },
+    '>select': {
+      position: 'absolute',
+      inset: '0px',
+      width: '100%',
+      height: '100%',
+      opacity: 0,
+      appearance: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      ':disabled': {
+        cursor: 'default',
+      },
     },
   },
-  mailed: {
-    flexShrink: 0,
-    marginLeft: 6,
-    width: '0.5em',
-    height: '0.5em',
-    borderRadius: '50%',
-    backgroundColor: 'grayDarkest',
-    cursor: 'default',
+  // The remove button of Settings › Indexers, at the size of the chevron
+  remove: {
+    variant: 'button.reset',
+    gridArea: 'remove',
+    display: 'grid',
+    placeItems: 'center',
+    width: '2rem',
+    height: '2rem',
+    padding: 12,
+    borderRadius: '0.25em',
+    backgroundColor: 'error',
+    color: 'whitePure',
+    '>svg': {
+      width: '0.65em',
+      height: '0.65em',
+    },
+    ':hover': {
+      backgroundColor: 'errorDarker',
+    },
+    ':active': {
+      backgroundColor: 'errorDarkest',
+    },
   },
   retry: {
     background: 'none',
     border: 'none',
-    padding: 0,
+    padding: 12,
     font: 'inherit',
     color: 'primary',
     textDecoration: 'underline',

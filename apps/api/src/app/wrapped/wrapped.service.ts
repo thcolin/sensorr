@@ -3,8 +3,7 @@ import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { WRAPPED_THEMES } from '@sensorr/config'
-import { editionBounds, editionOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTheme, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { editionBounds, editionOf, enabledOf, lookOf, partsOf, watchedHoursOf, wrappedOf, WrappedEdition, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { MailService } from '../mail/mail.service'
@@ -61,6 +60,31 @@ export class WrappedService {
     return { first: first?.started ?? null, last: last?.started ?? null }
   }
 
+  // The years Tautulli has plays for, the ones Settings lists
+  async years(): Promise<number[]> {
+    const { first, last } = await this.playsRange()
+
+    if (first === null) {
+      return []
+    }
+
+    const years = []
+
+    for (let year = editionOf(first, TIME_ZONE); year <= editionOf(last, TIME_ZONE); year++) {
+      const { start, end } = editionBounds(year, TIME_ZONE)
+
+      if (await this.playModel.exists({ started: { $gte: start, $lt: end } })) {
+        years.push(year)
+      }
+    }
+
+    return years
+  }
+
+  private get editions(): WrappedEdition[] {
+    return this.configService.config.get('wrapped.editions')
+  }
+
   // A title read before the actors were kept is read again
   async titleKeys(): Promise<string[]> {
     return (await this.titleModel.find({ actors: { $exists: true } }, { _id: 1 }).lean()).map(({ _id }) => _id)
@@ -97,6 +121,11 @@ export class WrappedService {
   }
 
   async freeze(year: number) {
+    if (!enabledOf(this.editions, year)) {
+      this.logger.log(`Freeze "${year}", turned off in Settings`)
+      return { year, frozen: 0 }
+    }
+
     const frozen = new Set((await this.editionModel.find({ year }, { user_id: 1 }).lean()).map(({ user_id }) => user_id))
     const { plays, titles, history } = await this.editionData(year)
     const users = [...new Set(plays.map((play) => play.user_id))].filter((user_id) => !frozen.has(user_id))
@@ -137,7 +166,7 @@ export class WrappedService {
   private async mailWrapped(guest, year: number) {
     const viewer = await this.viewerOf(guest.email)
     const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).wrapped_token
-    const { theme } = this.lookOf(guest, year)
+    const { theme } = this.lookOf(year)
     await this.mailService.send(guest.email, mails.wrapped({
       url: this.mailService.url(),
       sender: this.mailService.sender(),
@@ -158,7 +187,13 @@ export class WrappedService {
       throw new NotFoundException()
     }
 
-    await this.mailWrapped(guest, this.shownEdition())
+    const year = await this.openedEdition(guest.email)
+
+    if (!year) {
+      throw new BadRequestException('No year of their wrapped is open, turn one on in Settings')
+    }
+
+    await this.mailWrapped(guest, year)
     const { wrapped_token, wrapped_mailed_at } = await this.guestModel.findOne({ email }).lean()
     return { email, wrapped_token, wrapped_mailed_at }
   }
@@ -211,10 +246,27 @@ export class WrappedService {
     return { guest, viewer }
   }
 
+  // The years a friend can open, frozen for them or still open, without the ones turned off
+  private async editionsOf(user_id: number) {
+    const frozen = (await this.editionModel.find({ user_id }, { year: 1 }).lean()).map(({ year }) => year)
+    return [...new Set([...frozen, this.shownEdition()])].filter((year) => enabledOf(this.editions, year)).sort((a, b) => a - b)
+  }
+
+  // The year a link opens on: the one shown now, or the last one still open when it is turned off
+  private async openedEdition(email: string, year?: number) {
+    const viewer = await this.viewerOf(email)
+    const editions = viewer ? await this.editionsOf(viewer._id) : []
+    return year ? (editions.includes(year) ? year : null) : editions.includes(this.shownEdition()) ? this.shownEdition() : editions.at(-1) ?? null
+  }
+
   async share(token: string, year?: number) {
     const { guest, viewer } = await this.shareOf(token)
-    const edition = year || this.shownEdition()
-    const editions = (await this.editionModel.find({ user_id: viewer._id }, { year: 1 }).lean()).map(({ year }) => year)
+    const edition = await this.openedEdition(guest.email, year)
+
+    if (!edition) {
+      throw new NotFoundException()
+    }
+
     this.logger.log(`Share "${guest.email}", edition "${edition}"`)
     const shown = await this.wrapped(viewer._id, edition)
     return {
@@ -222,9 +274,9 @@ export class WrappedService {
       name: viewer.username || viewer.friendly_name || guest.name,
       server: await this.serverNameOf(),
       year: edition,
-      editions: [...new Set([...editions, this.shownEdition()])].sort((a, b) => a - b),
+      editions: await this.editionsOf(viewer._id),
       names: await this.namesOf(shown.wrapped),
-      look: { ...this.lookOf(guest, edition), looks: this.configService.config.get('wrapped.looks') },
+      look: { ...this.lookOf(edition), looks: this.configService.config.get('wrapped.looks') },
       ...shown,
     }
   }
@@ -254,18 +306,19 @@ export class WrappedService {
     return this.serverName
   }
 
-  // Only the artwork of what this guest watched in the shown edition, which covers every title of their wrapped
+  // Only the artwork of what this guest watched in a year they can open, which covers every title of their wrapped
   async image(token: string, key: string, kind: string, width: number) {
     if (typeof key !== 'string' || !['thumb', 'art'].includes(kind) || !IMAGE_WIDTHS.includes(width)) {
       throw new BadRequestException()
     }
 
     const { viewer } = await this.shareOf(token)
-    const { start, end } = editionBounds(this.shownEdition(), TIME_ZONE)
-    const [watched, title] = await Promise.all([
-      this.playModel.exists({ user_id: viewer._id, title: key, started: { $gte: start, $lt: end } }),
+    const [plays, editions, title] = await Promise.all([
+      this.playModel.find({ user_id: viewer._id, title: key }, { started: 1 }).lean(),
+      this.editionsOf(viewer._id),
       this.titleModel.findById(key, { thumb: 1, art: 1 }).lean(),
     ])
+    const watched = plays.some(({ started }) => editions.includes(editionOf(started, TIME_ZONE)))
     const url = this.configService.config.get('tautulli.url')
 
     if (!watched || !title?.[kind] || !url) {
@@ -306,58 +359,25 @@ export class WrappedService {
 
   // The look a page wears before it knows its friend: an unknown link, a revoked one, no link at all
   look() {
-    return { ...this.lookOf({}, this.shownEdition()), looks: this.configService.config.get('wrapped.looks') }
+    return { ...this.lookOf(this.shownEdition()), looks: this.configService.config.get('wrapped.looks') }
   }
 
-  private lookOf(guest: { wrapped_theme?: string | null, wrapped_choice?: boolean | null }, year: number) {
-    const { config } = this.configService
-
-    return lookOf({
-      global: { theme: config.get('wrapped.theme'), choice: config.get('wrapped.choice') },
-      looks: config.get('wrapped.looks'),
-      edition: config.get('wrapped.editions').find((edition) => edition.year === year),
-      // A look since removed from the list falls back to the edition's or the global one
-      guest: { theme: WRAPPED_THEMES.includes(guest.wrapped_theme) ? guest.wrapped_theme as WrappedTheme : null, choice: guest.wrapped_choice },
-    })
+  private lookOf(year: number) {
+    return lookOf({ looks: this.configService.config.get('wrapped.looks'), edition: this.editions.find((edition) => edition.year === year) })
   }
 
   async guests() {
-    const guests = await this.guestModel.find({}, { email: 1, wrapped_token: 1, wrapped_theme: 1, wrapped_choice: 1 }).lean()
-    return Promise.all(guests.map(async ({ email, wrapped_token, wrapped_theme, wrapped_choice }) => {
+    const guests = await this.guestModel.find({}, { email: 1, wrapped_token: 1 }).lean()
+    return Promise.all(guests.map(async ({ email, wrapped_token }) => {
       const viewer = await this.viewerOf(email)
       return {
         email,
         wrapped_token: wrapped_token || null,
-        wrapped_theme: wrapped_theme ?? null,
-        wrapped_choice: wrapped_choice ?? null,
         viewer: viewer?._id ?? null,
         // The name the wrapped page gives this friend
         username: viewer?.username || viewer?.friendly_name || null,
       }
     }))
-  }
-
-  async setLook(email: string, theme: string | null, choice: boolean | null) {
-    if (typeof email !== 'string') {
-      throw new BadRequestException('An email is required')
-    }
-
-    if (theme !== null && !WRAPPED_THEMES.includes(theme)) {
-      throw new BadRequestException(`The theme must be one of ${WRAPPED_THEMES.join(', ')}, or null`)
-    }
-
-    if (choice !== null && typeof choice !== 'boolean') {
-      throw new BadRequestException('The choice must be a boolean, or null')
-    }
-
-    this.logger.log(`SetLook "${email}", theme "${theme}", choice "${choice}"`)
-    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_theme: theme, wrapped_choice: choice }, { new: true }).lean()
-
-    if (!guest) {
-      throw new NotFoundException()
-    }
-
-    return { email, wrapped_theme: guest.wrapped_theme ?? null, wrapped_choice: guest.wrapped_choice ?? null }
   }
 
   async renewToken(email: string) {

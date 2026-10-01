@@ -417,22 +417,12 @@ const schema = {
   },
   wrapped: {
     looks: {
-      doc: 'Looks offered, to the friends who can switch and in every setting below; one left out is never shown',
+      doc: 'Looks offered, the ones a friend picks from and a year can set; one left out is never shown',
       format: 'wrapped-looks',
       default: WRAPPED_THEMES,
     },
-    theme: {
-      doc: `Look of every wrapped, unless an edition or a friend sets its own: ${WRAPPED_THEMES.join(', ')}`,
-      format: WRAPPED_THEMES,
-      default: 'tele',
-    },
-    choice: {
-      doc: 'Let each friend switch to another look on their page, unless an edition or a friend says otherwise',
-      format: 'Boolean',
-      default: true,
-    },
     editions: {
-      doc: 'Per edition overrides of `theme` and `choice`, a null value keeps the global one',
+      doc: 'The years of the wrapped Settings changed, a year left out is open and lets each friend pick their look',
       format: 'wrapped-editions',
       default: [],
       children: {
@@ -442,14 +432,14 @@ const schema = {
           default: null,
         },
         theme: {
-          doc: `Look of this edition: ${WRAPPED_THEMES.join(', ')}`,
+          doc: `Look of this year, null lets each friend pick among the looks offered: ${WRAPPED_THEMES.join(', ')}`,
           format: [...WRAPPED_THEMES, null],
           default: null,
         },
-        choice: {
-          doc: 'Let each friend switch to another look on this edition',
-          format: [true, false, null],
-          default: null,
+        enabled: {
+          doc: 'Whether the friends can open this year, off it is neither frozen nor mailed',
+          format: 'Boolean',
+          default: true,
         },
       },
     },

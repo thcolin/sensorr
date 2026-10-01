@@ -13,16 +13,17 @@ export const WRAPPED_THEME_NAMES: Record<WrappedTheme, string> = {
   affiche: 'Affiche polonaise',
 }
 
-interface WrappedLook { theme?: WrappedTheme | null, choice?: boolean | null }
+// A year of the wrapped as Settings sets it, a year left out is open and lets each friend pick their look
+export interface WrappedEdition { year: number, theme?: WrappedTheme | null, enabled?: boolean }
 
-// A friend's own setting wins over the edition's, which wins over the global one; a look turned off falls back the same way
-export const lookOf = ({ global, edition, guest, looks }: { global: { theme: WrappedTheme, choice: boolean }, edition?: WrappedLook | null, guest?: WrappedLook | null, looks?: WrappedTheme[] }) => {
-  const offered = (theme?: WrappedTheme | null) => theme && (!looks || looks.includes(theme)) ? theme : null
-  return {
-    theme: offered(guest?.theme) ?? offered(edition?.theme) ?? offered(global.theme) ?? looks?.[0] ?? global.theme,
-    choice: guest?.choice ?? edition?.choice ?? global.choice,
-  }
+// The look of a year when it sets one still offered, otherwise the page opens on the first one offered and the friend picks
+export const lookOf = ({ edition, looks }: { edition?: WrappedEdition | null, looks: WrappedTheme[] }) => {
+  const theme = edition?.theme && looks.includes(edition.theme) ? edition.theme : null
+  return { theme: theme ?? looks[0], choice: !theme }
 }
+
+// A year turned off is hidden from the friends: no page, no freeze, no mail
+export const enabledOf = (editions: WrappedEdition[], year: number) => editions.find((edition) => edition.year === year)?.enabled !== false
 
 // `title` is the movie guid, or `show:<grandparent_rating_key>` for an episode.
 export interface WrappedPlay {

@@ -49,12 +49,12 @@ not.
 static files under `/wrapped/<token>`. It has no login: the token is the access, and it reads
 `GET /api/wrapped/share/:token` plus the artwork route beside it. It draws the same sheets,
 worded once in `apps/wrapped/src/app/sheets.ts`, in one of five looks under
-`apps/wrapped/src/app/themes/`, none of which follows `DESIGN.md`. The look is set in Settings ›
-Tautulli, globally and per edition (`wrapped.theme`, `wrapped.choice`, `wrapped.editions` in
-`config.json`), and per friend in Settings › Friends (`wrapped_theme`, `wrapped_choice` on the guest);
-`lookOf` in `libs/sensorr/src/lib/wrapped.ts` resolves the friend over the edition over the global
-one, and the share carries the result as `look`. When `look.choice` is on, the friend switches the
-look on the page and the browser keeps it.
+`apps/wrapped/src/app/themes/`, none of which follows `DESIGN.md`. Settings › Friends lists the
+years Tautulli has plays for (`GET /api/wrapped/years`), each one open or not and with its look
+(`wrapped.editions` in `config.json`, a year left out is open); a year turned off is neither shown,
+frozen nor mailed. `lookOf` in `libs/sensorr/src/lib/wrapped.ts` gives the look of the year, or,
+when the year sets none, the first look offered (`wrapped.looks`) with `look.choice` on: the friend
+then switches the look on the page and the browser keeps it.
 
 **`apps/api`** is the NestJS server. It owns Mongo, `config.json`, the two blackhole
 directories and the cron schedule. Every route is behind a global JWT guard (`auth.module.ts:19`,

@@ -33,13 +33,6 @@ export class Guest extends Document {
   @Prop({ index: { unique: true, sparse: true } })
   wrapped_token: string
 
-  // This friend's look of the wrapped and whether they may switch it, null keeps the edition's or the global one
-  @Prop({ type: String, default: null })
-  wrapped_theme: string | null
-
-  @Prop({ type: Boolean, default: null })
-  wrapped_choice: boolean | null
-
   // Opens the unsubscribe link of this guest's mails, created with the first mail that carries one
   @Prop({ index: { unique: true, sparse: true } })
   mail_token: string

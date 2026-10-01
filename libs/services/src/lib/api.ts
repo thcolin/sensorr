@@ -840,20 +840,18 @@ export class API {
           },
         }
       }),
-      postLook: (
-        { body, init = {} }: { body: any, init?: any }
+      getYears: (
+        { init = {} }: { init?: any } = {}
       ): { uri: string, params: {}, init: {} } => ({
-        uri: 'wrapped/looks',
+        uri: 'wrapped/years',
         params: {},
         init: {
           ...init,
-          method: 'POST',
+          method: 'GET',
           headers: {
             Authorization: `Bearer __ACCESS_TOKEN__`,
             Accept: 'application/json',
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(body)
         }
       }),
       postMail: (

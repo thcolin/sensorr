@@ -1,4 +1,4 @@
-import { editionBounds, editionOf, lookOf, watchedHoursOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
+import { editionBounds, editionOf, enabledOf, lookOf, watchedHoursOf, partsOf, wrappedOf, WrappedPlay, WrappedTitle } from './wrapped'
 
 const at = (iso: string) => Date.parse(iso) / 1000
 let id = 0
@@ -39,25 +39,28 @@ const plays = [
 ]
 
 describe('lookOf', () => {
-  const global = { theme: 'affiche' as const, choice: true }
+  const looks = ['affiche', 'labo', 'tele'] as const
 
-  it('keeps the global look when nothing overrides it', () => {
-    expect(lookOf({ global })).toEqual({ theme: 'affiche', choice: true })
+  it('lets the friend pick when the year sets no look, opening on the first one offered', () => {
+    expect(lookOf({ looks: [...looks] })).toEqual({ theme: 'affiche', choice: true })
+    expect(lookOf({ edition: { year: 2026, theme: null }, looks: [...looks] })).toEqual({ theme: 'affiche', choice: true })
   })
 
-  it('lets the edition override the global look, and the friend override both', () => {
-    expect(lookOf({ global, edition: { theme: 'labo', choice: false } })).toEqual({ theme: 'labo', choice: false })
-    expect(lookOf({ global, edition: { theme: 'labo', choice: false }, guest: { theme: 'tele' } })).toEqual({ theme: 'tele', choice: false })
-    expect(lookOf({ global, edition: { choice: false }, guest: { choice: true } })).toEqual({ theme: 'affiche', choice: true })
+  it('fixes the look the year sets', () => {
+    expect(lookOf({ edition: { year: 2026, theme: 'labo' }, looks: [...looks] })).toEqual({ theme: 'labo', choice: false })
   })
 
-  it('skips a look turned off, down to the first one offered', () => {
-    expect(lookOf({ global, edition: { theme: 'labo' }, guest: { theme: 'tele' }, looks: ['affiche', 'labo'] })).toEqual({ theme: 'labo', choice: true })
-    expect(lookOf({ global, guest: { theme: 'tele' }, looks: ['scenario', 'labo'] })).toEqual({ theme: 'scenario', choice: true })
+  it('lets the friend pick again when the look of the year is no longer offered', () => {
+    expect(lookOf({ edition: { year: 2026, theme: 'scenario' }, looks: [...looks] })).toEqual({ theme: 'affiche', choice: true })
   })
+})
 
-  it('reads a null value as no override', () => {
-    expect(lookOf({ global, edition: { theme: null, choice: null }, guest: { theme: null, choice: null } })).toEqual(global)
+describe('enabledOf', () => {
+  it('opens a year left out or turned on, and hides a year turned off', () => {
+    const editions = [{ year: 2024, enabled: false }, { year: 2025, enabled: true, theme: 'tele' as const }]
+    expect(enabledOf(editions, 2023)).toBe(true)
+    expect(enabledOf(editions, 2024)).toBe(false)
+    expect(enabledOf(editions, 2025)).toBe(true)
   })
 })
 

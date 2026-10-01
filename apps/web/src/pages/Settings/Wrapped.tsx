@@ -1,6 +1,8 @@
-import { Controller, useFieldArray, UseFormReturn } from 'react-hook-form'
-import { Button, Option } from '@sensorr/ui'
-import { editionOf, lookOf, WRAPPED_THEME_NAMES, WRAPPED_TIME_ZONE, WrappedTheme } from '@sensorr/sensorr'
+import { useCallback, useEffect, useState } from 'react'
+import { UseFormReturn } from 'react-hook-form'
+import { Button, Icon, Option } from '@sensorr/ui'
+import { WRAPPED_THEME_NAMES, WrappedTheme } from '@sensorr/sensorr'
+import { useAPI } from '../../store/api'
 
 const THEMES = Object.keys(WRAPPED_THEME_NAMES) as WrappedTheme[]
 
@@ -68,126 +70,92 @@ const Glimpse = ({ theme }: { theme: WrappedTheme }) => {
   }
 }
 
-const inherit = (theme: WrappedTheme) => `Default · ${WRAPPED_THEME_NAMES[theme]}`
-const inheritChoice = (choice: boolean) => `Default · ${choice ? 'can switch' : 'fixed'}`
+type Edition = { year: number, theme?: WrappedTheme | null, enabled?: boolean }
 
-// '' stands for « keep the default » in a select, null in the config and the API
-// A look turned off stays listed only where it is still set, so the setting reads true
-export const LookSelect = ({ value, fallback, looks, onChange, label }: { value: WrappedTheme | null, fallback: WrappedTheme, looks: WrappedTheme[], onChange: (theme: WrappedTheme | null) => void, label: string }) => (
-  <select aria-label={label} value={value ?? ''} onChange={(event) => onChange((event.target.value || null) as WrappedTheme | null)} sx={{ variant: 'select.default' }} data-custom={value !== null || undefined}>
-    <option value=''>{inherit(fallback)}</option>
-    {THEMES.filter((theme) => looks.includes(theme) || theme === value).map((theme) => (
-      <option key={theme} value={theme}>{WRAPPED_THEME_NAMES[theme]}{looks.includes(theme) ? '' : ' · off, uses the default'}</option>
-    ))}
-  </select>
-)
-
-export const ChoiceSelect = ({ value, fallback, onChange, label }: { value: boolean | null, fallback: boolean, onChange: (choice: boolean | null) => void, label: string }) => (
-  <select aria-label={label} value={value === null ? '' : String(value)} onChange={(event) => onChange(event.target.value === '' ? null : event.target.value === 'true')} sx={{ variant: 'select.default' }} data-custom={value !== null || undefined}>
-    <option value=''>{inheritChoice(fallback)}</option>
-    <option value='true'>Can switch</option>
-    <option value='false'>Fixed</option>
-  </select>
-)
-
-type Edition = { year: number, theme: WrappedTheme | null, choice: boolean | null }
-
-// What a friend without a look of their own gets on the current edition, from the values being edited
-export const useFallback = (form: UseFormReturn<any>) => {
-  const global = { theme: form.watch('wrapped.theme') as WrappedTheme, choice: form.watch('wrapped.choice') as boolean }
-  const rows = (form.watch('wrapped.editions') || []) as Edition[]
-  const looks = (form.watch('wrapped.looks') || THEMES) as WrappedTheme[]
-  return { global, rows, looks, fallback: lookOf({ global, looks, edition: rows.find(({ year }) => year === editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)) }) }
+// A year left out of the config is open and lets each friend pick their look, only the years changed are kept
+const editionsWith = (editions: Edition[], year: number, change: Partial<Edition>) => {
+  const edition = { ...editions.find((edition) => edition.year === year), ...change, year }
+  const others = editions.filter((other) => other.year !== year)
+  return (edition.enabled === false || edition.theme) ? [...others, { year, theme: edition.theme ?? null, enabled: edition.enabled !== false }].sort((a, b) => b.year - a.year) : others
 }
 
-// The looks everyone gets and each year's own, saved with the config
+// The looks a friend picks from, then each year Tautulli has plays for, open or not and with its look, saved with the config
 export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSave: (data: any) => void }) => {
-  const editions = useFieldArray({ name: 'wrapped.editions', control: form.control })
-  const { global, rows, looks } = useFallback(form)
-  // Turning a look on or off, the default one always stays on
+  const api = useAPI()
+  const [years, setYears] = useState<number[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const looks = (form.watch('wrapped.looks') || THEMES) as WrappedTheme[]
+  const editions = (form.watch('wrapped.editions') || []) as Edition[]
   const offer = (theme: WrappedTheme, on: boolean) => form.setValue('wrapped.looks', THEMES.filter((other) => other === theme ? on : looks.includes(other)), { shouldDirty: true })
-  const years = rows.map(({ year }) => year)
-  const current = editionOf(Date.now() / 1000, WRAPPED_TIME_ZONE)
-  const next = years.includes(current) ? Math.max(...years) + 1 : current
+  const change = (year: number, change: Partial<Edition>) => form.setValue('wrapped.editions', editionsWith(editions, year, change), { shouldDirty: true })
+
+  const fetchYears = useCallback(() => {
+    setFailed(false)
+    const { uri, params, init } = api.query.wrapped.getYears()
+    api.fetch(uri, params, init)
+      .then((years) => setYears([...years].sort((a, b) => b - a)))
+      .catch((err) => {
+        console.warn(err)
+        setFailed(true)
+      })
+  }, [])
+
+  useEffect(fetchYears, [])
 
   return (
     <form onSubmit={form.handleSubmit(onSave)}>
-      <Controller
-        name='wrapped.theme'
-        control={form.control}
-        render={({ field: { value, onChange } }) => (
-          <div role='radiogroup' aria-label='Default look' sx={WrappedLooks.styles.looks}>
-            {THEMES.map((theme) => (
-              <div key={theme} sx={WrappedLooks.styles.cell} data-off={!looks.includes(theme) || undefined}>
-                <label sx={WrappedLooks.styles.look} data-checked={value === theme || undefined}>
-                  <input
-                    type='radio'
-                    name='wrapped.theme'
-                    value={theme}
-                    checked={value === theme}
-                    onChange={() => {
-                      onChange(theme)
-                      looks.includes(theme) || offer(theme, true)
-                    }}
-                  />
-                  <Glimpse theme={theme} />
-                  <span>{WRAPPED_THEME_NAMES[theme]}</span>
-                </label>
-                <div sx={WrappedLooks.styles.offer}>
-                  <Option
-                    type='checkbox'
-                    id={`wrapped.looks.${theme}`}
-                    checked={looks.includes(theme)}
-                    disabled={value === theme}
-                    title={value === theme ? 'The default look is always offered' : undefined}
-                    onChange={(event: any) => offer(theme, event.target.checked)}
-                  >
-                    <small>{value === theme ? 'Default' : looks.includes(theme) ? 'Offered' : 'Off'}</small>
-                  </Option>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      />
-      <Controller
-        name='wrapped.choice'
-        control={form.control}
-        render={({ field: { value: checked, onChange } }) => (
-          <Option type='checkbox' id='wrapped.choice' checked={checked} onChange={(e: any) => onChange(e.target.checked)}>
-            <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-              <strong>Friends can switch to another look</strong>
-              <br />
-              <small>On their page, and their device remembers it</small>
+      <div sx={WrappedLooks.styles.looks}>
+        {THEMES.map((theme) => (
+          <div key={theme} sx={WrappedLooks.styles.cell} data-off={!looks.includes(theme) || undefined}>
+            <div sx={WrappedLooks.styles.look}>
+              <Glimpse theme={theme} />
+              <span>{WRAPPED_THEME_NAMES[theme]}</span>
             </div>
-          </Option>
-        )}
-      />
-      <h4 sx={WrappedLooks.styles.subtitle}>By year</h4>
-      {!editions.fields.length && <p><small>Every year wears the look above.</small></p>}
-      {editions.fields.map((edition, index) => (
-        <div key={edition.id} sx={WrappedLooks.styles.row}>
-          <strong>{rows[index]?.year}</strong>
-          <Controller
-            name={`wrapped.editions.${index}.theme`}
-            control={form.control}
-            render={({ field: { value, onChange } }) => <LookSelect label={`Look of the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.theme} looks={looks} onChange={onChange} />}
-          />
-          <Controller
-            name={`wrapped.editions.${index}.choice`}
-            control={form.control}
-            render={({ field: { value, onChange } }) => <ChoiceSelect label={`Whether friends switch on the ${rows[index]?.year} edition`} value={value ?? null} fallback={global.choice} onChange={onChange} />}
-          />
-          <button type='button' sx={WrappedLooks.styles.remove} onClick={() => editions.remove(index)} title={`Back to the default look for ${rows[index]?.year}`} aria-label={`Back to the default look for ${rows[index]?.year}`}>
-            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }} aria-hidden='true'>
-              <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
-            </svg>
-          </button>
-        </div>
-      ))}
-      <Button type='button' color='primary' variant='contain' sx={{ width: '100%', marginTop: 6 }} onClick={() => editions.append({ year: next, theme: null, choice: null })}>
-        Add a look for {next}
-      </Button>
+            <div sx={WrappedLooks.styles.offer}>
+              <Option
+                type='checkbox'
+                id={`wrapped.looks.${theme}`}
+                checked={looks.includes(theme)}
+                disabled={looks.length === 1 && looks.includes(theme)}
+                title={looks.length === 1 && looks.includes(theme) ? 'At least one look stays offered' : undefined}
+                onChange={(event: any) => offer(theme, event.target.checked)}
+              >
+                <small>{looks.includes(theme) ? 'Offered' : 'Off'}</small>
+              </Option>
+            </div>
+          </div>
+        ))}
+      </div>
+      <h4 sx={WrappedLooks.styles.subtitle}>Years <small>from Tautulli</small></h4>
+      {failed ? (
+        <p><small>Unable to load the years from Tautulli, <button type='button' sx={WrappedLooks.styles.retry} onClick={fetchYears}>retry</button></small></p>
+      ) : !years ? (
+        <p aria-busy={true}><small>Looking for them in Tautulli...</small></p>
+      ) : !years.length ? (
+        <p><small>No play imported from Tautulli yet, the 🎞️ wrapped job imports them.</small></p>
+      ) : years.map((year) => {
+        const edition = editions.find((edition) => edition.year === year)
+        const enabled = edition?.enabled !== false
+        const theme = edition?.theme ?? null
+
+        return (
+          <div key={year} sx={WrappedLooks.styles.row} data-off={!enabled || undefined}>
+            <div sx={WrappedLooks.styles.tick} title={enabled ? `Friends can open their ${year}` : `Friends cannot open their ${year}`}>
+              <Option type='checkbox' id={`wrapped.editions.${year}`} aria-label={`Open the ${year} wrapped`} checked={enabled} onChange={(event: any) => change(year, { enabled: event.target.checked })} />
+            </div>
+            <strong>{year}</strong>
+            <label sx={WrappedLooks.styles.year}>
+              <select aria-label={`Look of the ${year} wrapped`} value={theme ?? ''} disabled={!enabled} data-any={!theme || undefined} onChange={(event) => change(year, { theme: (event.target.value || null) as WrappedTheme | null })}>
+                <option value=''>Any</option>
+                {THEMES.filter((other) => looks.includes(other) || other === theme).map((other) => (
+                  <option key={other} value={other}>{WRAPPED_THEME_NAMES[other]}{looks.includes(other) ? '' : ' · off, they pick'}</option>
+                ))}
+              </select>
+              <Icon value='chevron' height='0.75em' width='0.75em' />
+            </label>
+          </div>
+        )
+      })}
       <div sx={{ display: 'flex', marginTop: 2 }}>
         <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
       </div>
@@ -206,7 +174,7 @@ WrappedLooks.styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
-    '&[data-off] > label': {
+    '&[data-off] > div:first-of-type': {
       opacity: 0.45,
     },
   },
@@ -218,7 +186,6 @@ WrappedLooks.styles = {
     },
   },
   look: {
-    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -226,12 +193,6 @@ WrappedLooks.styles = {
     border: '2px solid',
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
-    cursor: 'pointer',
-    '>input': {
-      position: 'absolute',
-      opacity: 0,
-      pointerEvents: 'none',
-    },
     '>svg': {
       display: 'block',
       width: '100%',
@@ -243,65 +204,88 @@ WrappedLooks.styles = {
       fontSize: [6, 5],
       textAlign: 'center',
     },
-    ':hover': {
-      borderColor: 'gray',
-    },
-    '&[data-checked]': {
-      borderColor: 'primary',
-    },
-    ':has(input:focus-visible)': {
-      outline: '2px solid',
-      outlineColor: 'primary',
-      outlineOffset: 2,
-    },
   },
   subtitle: {
     marginTop: 4,
     marginBottom: 8,
+    '>small': {
+      marginLeft: 8,
+      fontFamily: 'body',
+      fontWeight: 'body',
+      color: 'grayDarkest',
+    },
   },
+  // A year as a row of Settings › Indexers: on or off, the year, its look
   row: {
-    display: 'grid',
-    gridTemplateColumns: ['1fr auto', '4rem 1fr 1fr auto'],
-    alignItems: 'center',
-    gap: 4,
-    paddingY: 8,
-    borderBottom: '1px solid',
+    display: 'flex',
+    alignItems: 'stretch',
+    minHeight: '2.75rem',
+    marginBottom: 8,
+    border: '1px solid',
     borderColor: 'grayDark',
+    borderRadius: '0.25rem',
+    overflow: 'hidden',
+    '>*+*': {
+      borderLeft: '1px solid',
+      borderColor: 'grayDark',
+    },
     '>strong': {
+      display: 'flex',
+      alignItems: 'center',
+      paddingX: 6,
+      backgroundColor: 'grayLight',
       fontFamily: 'monospace',
     },
-    '>select': {
-      gridColumn: ['1 / -1', 'auto'],
-      '&[data-custom]': {
-        borderColor: 'primary',
-      },
+    '&[data-off] >strong, &[data-off] select, &[data-off] svg': {
+      color: 'grayDarker',
     },
   },
-  // The remove button of Settings › Indexers
-  remove: {
-    variant: 'button.reset',
+  // The look of a year, the select over the whole cell and the chevron of Icon at its end
+  year: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '0px',
+    color: 'grayDarkest',
+    '>select': {
+      variant: 'select.reset',
+      alignSelf: 'stretch',
+      flex: 1,
+      minWidth: '0px',
+      paddingLeft: 6,
+      paddingRight: 1,
+      color: 'text',
+      fontSize: 5,
+      ':hover:not(:disabled)': {
+        backgroundColor: 'grayLight',
+      },
+      '&[data-any]': {
+        color: 'grayDarkest',
+      },
+    },
+    '>svg': {
+      position: 'absolute',
+      right: 6,
+      pointerEvents: 'none',
+    },
+  },
+  tick: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'stretch',
-    minWidth: '2.5rem',
-    minHeight: '2.5rem',
-    gridRow: [1, 'auto'],
-    gridColumn: [2, 'auto'],
-    borderRadius: '0.25em',
-    paddingX: 6,
-    backgroundColor: 'error',
-    color: 'whitePure',
+    width: '2.75rem',
+    '>label': {
+      marginY: 12,
+    },
+  },
+  retry: {
+    background: 'none',
+    border: 'none',
+    padding: 12,
+    font: 'inherit',
+    color: 'primary',
+    textDecoration: 'underline',
     cursor: 'pointer',
-    '>svg': {
-      height: '0.75em',
-      width: '0.75em',
-    },
-    '&:hover': {
-      backgroundColor: 'errorDarker',
-    },
-    '&:active': {
-      backgroundColor: 'errorDarkest',
-    },
   },
 }

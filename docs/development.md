@@ -61,9 +61,9 @@ Serves the wrapped, the « Rétrospective » of its French copy, on **http://loc
 
 1. Mongo as a replica set, empty, and `yarn api` against it, with `tautulli.url` and `tautulli.key` in the local `config.json` (the key is a secret, never commit it).
 2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
-3. A guest whose email is a Tautulli user's, then **Copy link** on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
+3. A guest whose email is a Tautulli user's, then **Copy link** in the chevron menu of their row on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
 
-Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version. Check every look: with `wrapped.choice` on, `localStorage['wrapped-look:<token>']` set to `affiche`, `labo`, `tele`, `videoclub` or `scenario` opens the page in it, and a browser context of its own keeps two looks apart.
+Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version. Check every look: on a year set to `Any` in Settings › Friends, `localStorage['wrapped-look:<token>']` set to `affiche`, `labo`, `tele`, `videoclub` or `scenario` opens the page in it, and a browser context of its own keeps two looks apart.
 
 ### The component gallery
 

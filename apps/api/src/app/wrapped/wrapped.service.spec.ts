@@ -12,26 +12,35 @@ jest.mock('./wrapped.schema', () => ({ Play: class Play {}, Viewer: class Viewer
 
 const lean = (value: unknown) => ({ lean: async () => value })
 
-const serviceOf = ({ watched = true, contentType = 'image/jpeg' } = {}) => {
-  const playModel = { exists: jest.fn(async () => watched ? { _id: 1 } : null) }
+const now = Date.now() / 1000
+
+const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] as { year: number, enabled?: boolean }[] } = {}) => {
+  const playModel = { find: jest.fn(() => lean(watched ? [{ started: now }] : [])) }
+  const editionModel = { find: jest.fn(() => lean([])) }
   const guestModel = {
     findOne: jest.fn(({ wrapped_token }) => lean(wrapped_token === 'token' ? { email: 'guest@example.com', name: 'Guest' } : null)),
     findOneAndUpdate: jest.fn(({ email }, update) => lean(email === 'guest@example.com' ? { email, ...update } : null)),
   }
   const viewerModel = { findOne: jest.fn(() => lean({ _id: 7, email: 'guest@example.com' })) }
   const titleModel = { findById: jest.fn(() => lean({ thumb: '/library/metadata/1/thumb/2', art: '/library/metadata/1/art/2' })) }
-  const configService = { config: { get: (key: string) => ({ 'tautulli.url': 'http://tautulli.local', 'tautulli.key': 'secret' })[key] } }
+  const configService = { config: { get: (key: string) => ({ 'tautulli.url': 'http://tautulli.local', 'tautulli.key': 'secret', 'wrapped.editions': editions })[key] } }
   ;(fetch as unknown as jest.Mock).mockResolvedValue({ ok: true, status: 200, headers: { get: () => contentType }, arrayBuffer: async () => new TextEncoder().encode('jpeg').buffer })
 
-  const service = new WrappedService(playModel as any, viewerModel as any, titleModel as any, {} as any, guestModel as any, configService as any, {} as any)
-  return { service, playModel, guestModel }
+  const service = new WrappedService(playModel as any, viewerModel as any, titleModel as any, editionModel as any, guestModel as any, configService as any, {} as any)
+  return { service, playModel, editionModel, guestModel }
 }
 
 describe('WrappedService.image', () => {
-  it('relays the artwork of a title the guest watched in the shown edition', async () => {
+  it('relays the artwork of a title the guest watched in a year they can open', async () => {
     const { service, playModel } = serviceOf()
     await expect(service.image('token', 'plex://movie/heat', 'thumb', 640)).resolves.toEqual({ type: 'image/jpeg', buffer: Buffer.from('jpeg') })
-    expect(playModel.exists).toHaveBeenCalledWith(expect.objectContaining({ user_id: 7, title: 'plex://movie/heat' }))
+    expect(playModel.find).toHaveBeenCalledWith({ user_id: 7, title: 'plex://movie/heat' }, { started: 1 })
+  })
+
+  it('refuses a title watched only in a year turned off', async () => {
+    const year = new Date().getFullYear()
+    const { service } = serviceOf({ editions: [year, year + 1].map((year) => ({ year, enabled: false })) })
+    await expect(service.image('token', 'plex://movie/heat', 'thumb', 640)).rejects.toBeInstanceOf(NotFoundException)
   })
 
   it('refuses a title the guest did not watch, and an unknown token', async () => {
@@ -61,18 +70,11 @@ describe('WrappedService.image', () => {
   })
 })
 
-describe('WrappedService.setLook', () => {
-  it('writes the look of a friend, null keeping the edition\'s or the global one', async () => {
-    const { service, guestModel } = serviceOf()
-    await expect(service.setLook('guest@example.com', 'labo', null)).resolves.toEqual({ email: 'guest@example.com', wrapped_theme: 'labo', wrapped_choice: null })
-    expect(guestModel.findOneAndUpdate).toHaveBeenCalledWith({ email: 'guest@example.com' }, { wrapped_theme: 'labo', wrapped_choice: null }, { new: true })
-  })
-
-  it('refuses an unknown theme, a choice that is not a boolean, and an unknown friend', async () => {
-    const { service } = serviceOf()
-    await expect(service.setLook('guest@example.com', 'ciel', null)).rejects.toBeInstanceOf(BadRequestException)
-    await expect(service.setLook('guest@example.com', null, 'yes' as any)).rejects.toBeInstanceOf(BadRequestException)
-    await expect(service.setLook({ $ne: 'x' } as any, null, null)).rejects.toBeInstanceOf(BadRequestException)
-    await expect(service.setLook('nobody@example.com', null, true)).rejects.toBeInstanceOf(NotFoundException)
+describe('WrappedService.freeze', () => {
+  it('leaves a year turned off unfrozen', async () => {
+    const { service, editionModel, playModel } = serviceOf({ editions: [{ year: 2024, enabled: false }] })
+    await expect(service.freeze(2024)).resolves.toEqual({ year: 2024, frozen: 0 })
+    expect(editionModel.find).not.toHaveBeenCalled()
+    expect(playModel.find).not.toHaveBeenCalled()
   })
 })
