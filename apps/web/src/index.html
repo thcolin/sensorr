@@ -39,6 +39,12 @@
         `<style type="text/css">:root { --preflight-background-color: ${{ dark: 'black', light: 'white' }[mode || 'dark']}; --preflight-text-color: ${{ dark: '#fbfbfb', light: '#1a1a1a' }[mode || 'dark']}; --preflight-subtext-color: ${{ dark: '#333333', light: '#cccccc' }[mode || 'dark']}; --preflight-scrollbar-color: ${{ dark: 'rgba(255, 255, 255, 0.2)', light: 'rgba(0, 0, 0, 0.2)' }[mode || 'dark']}; }</style>`,
       )
 
+      // Same test and height as Header.styles.statusBar, so the rainbow bar does not move when the app takes over
+      var ios = (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream
+      if (ios && window.matchMedia('(display-mode: standalone)').matches) {
+        document.documentElement.style.setProperty('--preflight-status-bar-height', '6px')
+      }
+
       if (mode) {
         document.querySelector('meta[name="theme-color"]').setAttribute('content', { dark: '#050505', light: '#fafafa' }[mode || 'dark'])
         document.querySelector('meta[name="background-color"]').setAttribute('content', { dark: '#121212', light: '#ededed' }[mode || 'dark'])
@@ -123,7 +129,7 @@
 
       #root-loading > div {
         position: absolute;
-        top: 0;
+        top: var(--preflight-status-bar-height, 0px);
         display: flex;
         height: 2px;
         width: 100%;
