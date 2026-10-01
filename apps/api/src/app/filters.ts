@@ -116,6 +116,14 @@ export const movieFilter = (raw) => {
   }
 }
 
+// What a facet counts under: every filter but its own, so picking a genre leaves the other genres counted
+// and a range keeps its bars outside the picked range. With no state picked, the context sets it.
+export const facetFilter = (filterOf: (params) => { [key: string]: any }, raw, ...keys: string[]) => {
+  const kept = Object.fromEntries(Object.entries(scalars(raw)).filter(([key]) => !keys.includes(key.replace(/\.(gte|lte)$/, ''))))
+  const { state, ...filter } = filterOf(kept)
+  return kept.state ? { state, ...filter } : filter
+}
+
 const monitored = (value) => lookup({
   true: { monitored: true },
   false: { monitored: { $ne: true } },

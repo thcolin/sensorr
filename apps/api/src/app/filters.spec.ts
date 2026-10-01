@@ -1,4 +1,4 @@
-import { episodeStatusFilter, movieFilter, oneOf, releasesFilter, showFilter, upcomingBirthdayFilter } from './filters'
+import { episodeStatusFilter, facetFilter, movieFilter, oneOf, releasesFilter, showFilter, upcomingBirthdayFilter } from './filters'
 
 describe('oneOf', () => {
   it('matches any value on a pipe, every value on a comma, cast', () => {
@@ -37,6 +37,20 @@ describe('movieFilter', () => {
       budget: { $gte: 10000000 },
       release_date: { $lte: new Date('2000-01-01T00:00:00.000Z') },
     })
+  })
+})
+
+describe('facetFilter', () => {
+  const params = { genres: '18|35', 'popularity.gte': '10', 'popularity.lte': '50', state: 'wished', sort_by: 'popularity.desc' }
+
+  it('counts a facet under every filter but its own, its range bounds included', () => {
+    expect(facetFilter(movieFilter, params, 'genres')).toEqual({ state: { $in: ['wished'] }, popularity: { $gte: 10, $lte: 50 } })
+    expect(facetFilter(movieFilter, params, 'popularity')).toEqual({ state: { $in: ['wished'] }, 'genres.id': { $in: [18, 35] } })
+  })
+
+  it('leaves the state to the context when none is picked, as on Requests, where ignored counts', () => {
+    expect(facetFilter(movieFilter, params, 'state')).toEqual({ 'genres.id': { $in: [18, 35] }, popularity: { $gte: 10, $lte: 50 } })
+    expect(facetFilter(showFilter, {}, 'genres')).toEqual({})
   })
 })
 
