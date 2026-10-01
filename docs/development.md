@@ -116,6 +116,8 @@ Inside `ui`:
 
 A change is clean when it adds no new red on top of those.
 
+A red missing from this list is not pre-existing until it survives a `yarn install`. A `node_modules` behind `yarn.lock` fails tests that pass on the locked versions, and a worktree that links the main checkout's `node_modules` inherits it. On 2026-09-29, oleoo 2.0.4 installed in place of the locked 3.1.1 failed 22 tests of `libs/sensorr/src/lib/show.spec.ts` and `drops a result oleoo refuses to parse and keeps the others` in `znab.spec.ts`. Both suites pass on 3.1.1.
+
 ### Build
 
 ```sh
