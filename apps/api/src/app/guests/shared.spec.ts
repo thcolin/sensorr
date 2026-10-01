@@ -15,6 +15,10 @@ describe('sharedUsersOf', () => {
       { id: 34, name: 'greg', email: 'greg@example.com', avatar: undefined },
     ])
   })
+
+  it('reads an entity out of the Unicode range as a replacement character instead of throwing', () => {
+    expect(sharedUsersOf('<User id="1" title="A&#99999999;" email="a@example.com"/>')[0].name).toBe('A\uFFFD')
+  })
 })
 
 describe('invitableOf', () => {

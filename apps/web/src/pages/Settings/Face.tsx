@@ -5,7 +5,7 @@ export const Face = ({ person }: { person: { avatar?: string, name?: string, ema
   const [broken, setBroken] = useState(false)
 
   return person.avatar && !broken
-    ? <img src={person.avatar} alt='' loading='lazy' onError={() => setBroken(true)} sx={Face.styles.picture} />
+    ? <img src={person.avatar} alt='' loading='lazy' referrerPolicy='no-referrer' onError={() => setBroken(true)} sx={Face.styles.picture} />
     : <span sx={Face.styles.initial}>{(person.name || person.email || '?')[0]}</span>
 }
 
