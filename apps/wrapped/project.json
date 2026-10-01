@@ -45,7 +45,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "options": {
         "lintFilePatterns": ["apps/wrapped/**/*.{ts,tsx,js,jsx}"]
       }

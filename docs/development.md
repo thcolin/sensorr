@@ -28,7 +28,7 @@ HTTP/2 is what lets several tabs load. A tab keeps four SSE streams open (`apps/
 
 The front forwards everything to `http://localhost:4200`, `/api` and its SSE streams included, unbuffered. The live-reload websocket follows the page's origin (`publicHost` in `apps/web/project.json`); browsers open it as a separate HTTP/1.1 upgrade, which the front pipes to the dev server and which does not count against the six connections. For other ports, `node tools/dev/h2-front.mjs <listen port> <dev server port>` next to your own `web:serve`.
 
-It needs [mkcert](https://github.com/FiloSottile/mkcert). Without it, `nx run web:serve` alone serves HTTP/1.1 on http://localhost:4200, one tab at a time; `nx e2e web-e2e` starts that target itself and needs nothing but Node.
+It needs [mkcert](https://github.com/FiloSottile/mkcert). Without it, `nx run web:serve` alone serves HTTP/1.1 on http://localhost:4200, one tab at a time.
 
 The first run writes a certificate for `localhost`, `127.0.0.1` and `::1` with `mkcert` into `tmp/h2-front/`, which git ignores. To trust it, run `mkcert -install` once yourself: it asks for your password and adds mkcert's CA to the system keychain, which Chrome reads, and to Firefox's store when `certutil` is installed (`brew install nss`). Until then, browsers show a certificate warning. The origin is new, so the app asks you to sign in again.
 
@@ -77,10 +77,6 @@ Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a
 
 No story throws on render: the 40 pages were opened one by one on 2026-09-18 and none of the 156 figures showed the error boundary. `apps/web/src/pages/Design/Boundary.tsx` catches a story that throws and shows its name and error message in place of the component, so one broken story never blanks the page.
 
-### `nx e2e web-e2e`
-
-Cypress 6.9.1 is installed and the target starts `web:serve` itself. `apps/web-e2e/src/integration/app.spec.ts` is still the generated skeleton, asserting `Welcome to web!`.
-
 ## Verify
 
 Two commands are the gate, `lint` and `test`. Neither exits 0 today, and every red below is pre-existing.
@@ -91,7 +87,27 @@ Two commands are the gate, `lint` and `test`. Neither exits 0 today, and every r
 npx nx run-many --target=lint --all
 ```
 
-Read the `Successfully ran target lint for 15 projects` line, **not** the exit code. Once the lint work is done the command exits 1 on `Cannot read properties of undefined (reading 'hashCommand')`, raised at `node_modules/@nrwl/linter/src/executors/eslint/hasher.js:12`. That is `@nrwl/linter@12.10.1` failing against `nx@18.3.5`, not a lint error.
+Exits 1 on real lint errors. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`. The errors below were already in the code then.
+
+Measured on 2026-10-02 with ESLint 8.57.1, `@nx/enforce-module-boundaries` turned off, 497 errors and 1706 warnings:
+
+| Project | Errors | Warnings |
+| --- | --- | --- |
+| `api` | 23 | 143 |
+| `cli` | 9 | 68 |
+| `web` | 177 | 770 |
+| `wrapped` | 13 | 15 |
+| `config` | 1 | 0 |
+| `palette` | 9 | 11 |
+| `plex` | 0 | 1 |
+| `sensorr` | 1 | 108 |
+| `services` | 142 | 117 |
+| `theme` | 2 | 2 |
+| `tmdb` | 12 | 15 |
+| `ui` | 93 | 442 |
+| `utils` | 15 | 14 |
+
+Two rules make most of the errors: `@typescript-eslint/ban-types` (162) and `react-hooks/rules-of-hooks` (150). With the module boundaries rule on, `utils`, `ui` and `web` stop on a crash of its fixer, `ENOENT ... libs/utils/src/regions/index.ts`, before ESLint prints its totals.
 
 ### Test
 
@@ -130,7 +146,7 @@ Not part of the gate, and the only one of the three that exits 0. It writes a 7.
 
 ## Project layout
 
-`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `web-e2e`. What each one owns is in [architecture.md](architecture.md#containers).
+`apps/` holds `api`, `web`, `wrapped`, `cli` and `db`. What each one owns is in [architecture.md](architecture.md#containers).
 
 `libs/` holds `config` (the schema of `config.json`), `tmdb` and `plex` (the two external clients), `sensorr` (release parsing and policy scoring), `services`, `ui` (the shared components), `theme` and `palette`, `i18n` (English and French) and `utils`.
 

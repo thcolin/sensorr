@@ -29,11 +29,9 @@ npx nx run-many --target=lint --all
 npx nx run-many --target=test --all
 ```
 
-Neither exits 0, and both reds are pre-existing. `lint` finishes its work and *then* exits
-1 on a `@nrwl/linter` crash, which is tooling and not a lint error: read its
-`Successfully ran target lint` line instead of the exit code. `test` exits 1 on reds that
-were already there. A change is clean when it adds no new red on top of those; the
-project-by-project list to compare against, and the exact lint line to read, are in
+Neither exits 0, and both reds are pre-existing: `lint` on errors that were in the code before
+ESLint actually ran, `test` on suites that already failed. A change is clean when it adds no
+new red on top of those; the project-by-project counts to compare against are in
 [`docs/development.md`](docs/development.md#verify).
 
 ## Visual check
