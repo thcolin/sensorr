@@ -49,6 +49,7 @@ export const nameOfEntry = ({ command, type }: { command: string, type?: string 
 export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void } = {}) => {
   const api = useAPI()
   const [ongoing, setOngoing] = useState([])
+  const [stopping, setStopping] = useState([])
 
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
@@ -83,6 +84,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
       return
     }
 
+    setStopping(stopping => [...stopping, job])
     const { uri, params, init } = api.query.jobs.stopJob({ params: { job } })
     const request = api.fetch(uri, params, init)
 
@@ -91,10 +93,11 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
       success: () => `Job "${job}" successfully stop`,
       error: (err) => {
         console.warn(err)
+        setStopping(stopping => stopping.filter(j => j !== job))
         return `Error during Job "${job}" stop`
       },
     })
   }, [])
 
-  return { runJob, stopJob, ongoing }
+  return { runJob, stopJob, ongoing, stopping }
 }

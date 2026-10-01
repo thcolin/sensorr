@@ -11,10 +11,19 @@ interface JobStateProps {
 }
 
 const UIJobState = ({ job, name, done = false }: JobStateProps) => {
-  const { stopJob } = useJobRunner()
+  const { stopJob, stopping } = useJobRunner()
 
   if (done) {
     return <span sx={UIJobState.styles.done}><Icon value='check' height='0.75em' width='0.75em' /></span>
+  }
+
+  // The job stays running until the CLI exits, its `done` replaces this button
+  if (stopping.includes(job)) {
+    return (
+      <button type='button' disabled={true} aria-label={`Stopping ${jobTitleOf(name)} job`} sx={UIJobState.styles.stop}>
+        <Icon value='spinner' height='0.75em' width='0.75em' />
+      </button>
+    )
   }
 
   return (
@@ -36,6 +45,13 @@ UIJobState.styles = {
     fontSize: 'inherit',
     cursor: 'pointer',
     pointerEvents: 'auto',
+    ':disabled': {
+      cursor: 'progress',
+      '>div': {
+        height: '0.75em',
+        width: '0.75em',
+      },
+    },
     '::before': {
       content: '""',
       position: 'absolute',
@@ -47,11 +63,11 @@ UIJobState.styles = {
       height: '0.75em',
       width: '0.75em',
       borderRadius: '0.25em',
-      backgroundColor: 'grayDarkest',
+      backgroundColor: 'error',
     },
     // A tap keeps `:hover` on touch screens, the dot would stay a square after a dismissed confirm
     '@media (hover: hover)': {
-      ':hover': {
+      ':hover:not(:disabled)': {
         '>svg': {
           display: 'none',
         },
