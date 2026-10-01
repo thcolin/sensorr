@@ -4,6 +4,7 @@ import { emojize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
+import { JobState } from '../../../components/Sensorr/JobState'
 import Person from '../../../components/Person/Person'
 import Movie from '../../../components/Movie/Movie'
 import { Summary } from '../Summary'
@@ -50,7 +51,7 @@ const UIRefreshJob = ({ job, logs }) => {
           emoji='🔌'
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              <JobState job={job.job} name={jobNameOf(job.meta)} done={job.meta.done} />
               <JobName name={jobNameOf(job.meta)} sx={UIRefreshJob.styles.title} />
             </span>
           )}

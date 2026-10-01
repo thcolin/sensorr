@@ -27,6 +27,7 @@ import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
 import { DrawerHead, StartJob } from '../../components/Sensorr/StartJob'
+import { JobState } from '../../components/Sensorr/JobState'
 
 const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { view: SyncJob, summary: summarySync },
@@ -324,7 +325,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </>
       ) : mobile ? createPortal((
         <Drawer open={expanded} close={close} height='85vh'>
-          <DrawerHead title='Jobs' close={close} />
+          <DrawerHead title='Jobs' />
           {list}
         </Drawer>
       ), document.body) : list}
@@ -657,13 +658,13 @@ UIPile.styles = {
     },
   },
   frame: {
-    '>a, >div>div>a': {
+    '>[data-job], >div>div>[data-job]': {
       borderBottom: 'none',
     },
   },
   more: {
     overflow: 'hidden',
-    '>div>a': {
+    '>div>[data-job]': {
       borderTop: '1px solid',
       borderColor: 'grayLight',
     },
@@ -732,26 +733,22 @@ UIPile.styles = {
 
 const Pile = memo(UIPile)
 
+// The link is stretched under the row, so the running job's dot can be a button of its own
 const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary, since = null }) => {
-  const ref = useRef(null)
-
-  // useEffect(() => {
-  //   if (selected && ref.current) {
-  //     ref.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-  //   }
-  // }, [selected])
+  const name = jobNameOf({ command, type: meta.type })
 
   return (
-    <Link to={`/jobs/${job}`} sx={UIJob.styles.element} viewTransition={false}>
-      <span ref={ref} sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
+    <div sx={UIJob.styles.element} data-job={job}>
+      <Link to={`/jobs/${job}`} aria-label={`${jobTitleOf(name)} ${job}`} sx={UIJob.styles.link} viewTransition={false} />
+      <span sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
         <span sx={UIJob.styles.head}>
           <span sx={UIJob.styles.icon}>
             {emoji}
           </span>
           <span sx={UIJob.styles.container}>
             <span sx={{ display: 'flex', alignItems: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <JobName name={jobNameOf({ command, type: meta.type })} sx={UIJob.styles.title} />
+              <JobState job={job} name={name} done={done} />
+              <JobName name={name} sx={UIJob.styles.title} />
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
                   {durationOf({ start, end })}
@@ -761,31 +758,47 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
             <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {since && `${(new Date(since)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })} → `}{(new Date(start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
           </span>
         </span>
-        <span sx={UIJob.styles.summary}>
+        <Link to={`/jobs/${job}`} tabIndex={-1} aria-hidden={true} sx={UIJob.styles.summary} viewTransition={false}>
           <Summary error={meta.error} meta={summary} />
-        </span>
+        </Link>
       </span>
-    </Link>
+    </div>
   )
 }
 
 UIJob.styles = {
   element: {
+    position: 'relative',
+    isolation: 'isolate',
     display: 'flex',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
     paddingY: 3,
     overflow: 'hidden',
+    '&:hover>span, &:focus-within>span': {
+      opacity: '1 !important',
+    },
   },
+  link: {
+    position: 'absolute',
+    inset: '0px',
+    zIndex: 1,
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'text',
+      outlineOffset: '-2px',
+    },
+  },
+  // Above the link but transparent to the pointer, except for the stop button and the summary
   wrapper: {
+    position: 'relative',
+    zIndex: 2,
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     transition: 'opacity ease 300ms',
     overflow: 'hidden',
-    '&:hover': {
-      opacity: '1 !important',
-    },
+    pointerEvents: 'none',
   },
   head: {
     display: 'flex',
@@ -820,6 +833,8 @@ UIJob.styles = {
     fontFamily: 'monospace',
   },
   summary: {
+    display: 'block',
+    pointerEvents: 'auto',
     fontSize: 6,
     overflowX: 'auto',
     paddingLeft: [12, '4em'],

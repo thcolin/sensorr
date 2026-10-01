@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
+import { useJobsContext } from '../../contexts/Jobs/Jobs'
 
 export interface JobEntry {
   command: string
@@ -49,9 +50,15 @@ export const nameOfEntry = ({ command, type }: { command: string, type?: string 
 export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void } = {}) => {
   const api = useAPI()
   const [ongoing, setOngoing] = useState([])
+  const { stopping, setStopping } = useJobsContext() as any
 
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
+
+    if (!window.confirm(`Do you really want to start ${jobTitleOf(name)} job?`)) {
+      return false
+    }
+
     setOngoing(ongoing => [...ongoing, name])
     const { uri, params, init } = api.query.jobs.runJob({ body: { command, type } })
     const request = api.fetch(uri, params, init)
@@ -69,13 +76,16 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
         return `Error during Job **${jobTitleOf(name)}** run`
       },
     })
+
+    return true
   }, [onRun])
 
   const stopJob = useCallback((name, job) => {
-    if (!confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
+    if (!window.confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}"?`)) {
       return
     }
 
+    setStopping(stopping => [...stopping, job])
     const { uri, params, init } = api.query.jobs.stopJob({ params: { job } })
     const request = api.fetch(uri, params, init)
 
@@ -84,10 +94,11 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
       success: () => `Job "${job}" successfully stop`,
       error: (err) => {
         console.warn(err)
+        setStopping(stopping => stopping.filter(j => j !== job))
         return `Error during Job "${job}" stop`
       },
     })
   }, [])
 
-  return { runJob, stopJob, ongoing }
+  return { runJob, stopJob, ongoing, stopping }
 }

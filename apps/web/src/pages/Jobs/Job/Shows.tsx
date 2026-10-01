@@ -3,6 +3,7 @@ import { Entities, Icon, Progress, TransitionPill, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
+import { JobState } from '../../../components/Sensorr/JobState'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { Summary, freed, freedLabel } from '../Summary'
@@ -286,7 +287,7 @@ const UIShowsJob = ({ job, logs }) => {
           emoji={command.emoji}
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              <JobState job={job.job} name={jobNameOf(job.meta)} done={job.meta.done} />
               <JobName name={jobNameOf(job.meta)} sx={UIShowsJob.styles.title} />
             </span>
           )}

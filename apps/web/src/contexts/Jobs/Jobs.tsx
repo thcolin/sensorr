@@ -11,6 +11,8 @@ export const Provider = ({ ...props }) => {
   const [loading, setLoading] = useState({ jobs: true, process: true })
   const [jobs, setJobs] = useState({})
   const [process, setProcess] = useState({})
+  // Jobs whose stop was sent, until their `done` comes back
+  const [stopping, setStopping] = useState([])
 
   useEffect(() => {
     if (!authenticated) {
@@ -62,6 +64,8 @@ export const Provider = ({ ...props }) => {
         jobs: sorted,
         setJobs,
         process,
+        stopping,
+        setStopping,
       }}
     />
   )
