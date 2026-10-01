@@ -1,4 +1,4 @@
-FROM node:18-alpine as builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ ENV NODE_ENV=production
 ENV NX_REJECT_UNKNOWN_LOCAL_CACHE=0
 RUN yarn build web --prod && yarn build wrapped --prod
 
-FROM caddy:2.6.4 As production
+FROM caddy:2.11.4 AS production
 
 COPY docker/sensorr-web/Caddyfile /etc/caddy/Caddyfile
 COPY docker/sensorr-web/sslmode /srv/sslmode

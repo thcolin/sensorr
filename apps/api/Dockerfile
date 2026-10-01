@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -18,13 +18,13 @@ RUN yarn --cwd ./dist/apps/cli install
 
 USER node
 
-FROM node:18-alpine As production
+FROM node:26-alpine AS production
 
 WORKDIR /app
 
 COPY --chown=node:node ./apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/bin ./bin
-RUN yarn global add web-push
+RUN npm install -g web-push
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
