@@ -13,7 +13,7 @@ type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
 const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
 const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
@@ -29,7 +29,7 @@ const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, inde
 })
 
 // Figures stacked like the lettering of a poster, each leaning its own way
-const Stats = ({ stats, seed, className = '' }: { stats: Stat[], seed: number, className?: string }) => (
+export const Stats = ({ stats, seed, className = '' }: { stats: Stat[], seed: number, className?: string }) => (
   <ul className={`stats ${className}`}>
     {stats.map((stat, index) => (
       <li key={stat.unit} style={{ '--lean': `${(lean(index, seed) - 0.5) * 9}deg` } as React.CSSProperties}>
@@ -67,7 +67,7 @@ const Affiche = ({ sheets, colophon, art }: ThemeProps) => (
 
 export default Affiche
 
-const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
+export const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
   const reduced = useReducedMotion()
   const progress = useMotionValue(reduced ? 1 : 0)
 
@@ -124,7 +124,7 @@ const Streak = ({ sheet, art }: { sheet: Of<'streak'>, art: Art }) => {
 }
 
 // One brush stroke per evening, struck through by five, crimson on the evenings of the title of the run
-const Tally = ({ nights, lead }: { nights: Of<'streak'>['nights'], lead: string | null }) => (
+export const Tally = ({ nights, lead }: { nights: Of<'streak'>['nights'], lead: string | null }) => (
   <ol className="tally" aria-hidden="true">
     {Array.from({ length: Math.ceil(nights.length / 5) }, (_, group) => (
       <li key={group} className={`tally-group${(group + 1) * 5 <= nights.length ? ' tally-full' : ''}`}>
@@ -274,7 +274,7 @@ const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => {
 }
 
 // A few posters with their titles, the proof behind a count
-const Strip = <P extends WrappedPoster>({ posters, layout, caption, progress, art }: { posters: P[], layout: 'row' | 'grid', caption?: (poster: P) => ReactNode, progress: MotionValue<number>, art: Art }) => (
+export const Strip = <P extends WrappedPoster>({ posters, layout, caption, progress, art }: { posters: P[], layout: 'row' | 'grid', caption?: (poster: P) => ReactNode, progress: MotionValue<number>, art: Art }) => (
   <ul className="strip" data-layout={layout}>
     {posters.map((poster) => (
       <li key={poster.key} className="strip-entry">
@@ -310,7 +310,7 @@ const Figure = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
 }
 
 // Two viewers as two daubs of paint, the titles they share where the paint overlaps
-const Twins = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => {
+export const Twins = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => {
   const id = useId().replace(/:/g, '')
 
   return (
@@ -397,7 +397,7 @@ const Genre = ({ sheet, art }: { sheet: Of<'genre'>, art: Art }) => {
   )
 }
 
-const Rank = ({ sheet }: { sheet: Of<'rank'> }) => {
+export const Rank = ({ sheet }: { sheet: Of<'rank'> }) => {
   // The hours known on the server, each lettered as large as its share of the first viewer's
   const hours = [
     sheet.max !== null && sheet.rank > 1 && { label: 'Le 1er', hours: sheet.max },
