@@ -19,6 +19,7 @@ const FOLDER = join(tmpdir(), 'sensorr-cards')
 const KEEP = 2 * 24 * 3600 * 1000
 // The browser closes after this long without a card to draw, Chromium holds a few hundred MB
 const IDLE = 60 * 1000
+const SHARE = 5 * 60 * 1000
 
 @Injectable()
 export class CardsService implements OnModuleDestroy {
@@ -29,6 +30,8 @@ export class CardsService implements OnModuleDestroy {
   private queue: Promise<unknown> = Promise.resolve()
   // A card asked twice while it is drawn is drawn once
   private drawing = new Map<string, Promise<Buffer>>()
+  // A friend tapping through their stories asks for a card each time: their share is computed once for a while
+  private shares = new Map<string, { until: number, share: ReturnType<WrappedService['share']> }>()
 
   constructor(private readonly wrappedService: WrappedService) {}
 
@@ -37,7 +40,7 @@ export class CardsService implements OnModuleDestroy {
       throw new BadRequestException()
     }
 
-    const share = await this.wrappedService.share(token)
+    const share = await this.shareOf(token)
     const looks = share.look.choice ? (share.look.looks || Object.keys(WRAPPED_THEME_NAMES)) : [share.look.theme]
 
     if (!looks.includes(look as WrappedTheme)) {
@@ -47,7 +50,7 @@ export class CardsService implements OnModuleDestroy {
     const day = new Date().toLocaleDateString('en-CA', { timeZone: TIME_ZONE })
     const key = createHash('sha256').update(JSON.stringify([token, look, story, day, share])).digest('hex')
     const file = join(FOLDER, `${key}.jpg`)
-    const cached = await readFile(file).catch(() => null)
+    const cached = await readFile(file).catch((error) => error.code === 'ENOENT' ? null : Promise.reject(error))
 
     if (cached) {
       return cached
@@ -55,7 +58,8 @@ export class CardsService implements OnModuleDestroy {
 
     if (!this.drawing.has(key)) {
       const drawn = this.queue.then(() => this.draw(token, look, story)).then(async (buffer) => {
-        await this.keep(file, buffer)
+        // The card is sent all the same, only the next ask draws it again
+        await this.keep(file, buffer).catch((error) => this.logger.warn(`Card not kept: ${error.code || error.message}`))
         return buffer
       }).finally(() => this.drawing.delete(key))
       this.queue = drawn.catch(() => null)
@@ -63,6 +67,24 @@ export class CardsService implements OnModuleDestroy {
     }
 
     return this.drawing.get(key)
+  }
+
+  private shareOf(token: string) {
+    const now = Date.now()
+    const kept = this.shares.get(token)
+
+    if (kept && kept.until > now) {
+      return kept.share
+    }
+
+    for (const [other, { until }] of this.shares) {
+      until <= now && this.shares.delete(other)
+    }
+
+    const share = this.wrappedService.share(token)
+    this.shares.set(token, { until: now + SHARE, share })
+    share.catch(() => this.shares.delete(token))
+    return share
   }
 
   private async draw(token: string, look: string, story: string) {
@@ -92,7 +114,7 @@ export class CardsService implements OnModuleDestroy {
       }
 
       // The token is in the address, it stays out of the logs
-      this.logger.warn(`Card "${look}" "${story}" failed: ${error.name} ${error.message?.split('\n')[0].replace(token, '<token>')}`)
+      this.logger.warn(`Card "${look}" "${story}" failed: ${error.name} ${error.message?.split('\n')[0].replaceAll(token, '<token>').replaceAll(encodeURIComponent(token), '<token>')}`)
       throw new ServiceUnavailableException()
     } finally {
       await page?.close().catch(() => null)
@@ -106,8 +128,8 @@ export class CardsService implements OnModuleDestroy {
     if (!this.browser) {
       const launched: Promise<Browser> = puppeteer.launch({
         executablePath: CHROMIUM,
-        // Only the wrapped page, from the compose network, as the container's own user; Alpine's Chromium
-        // times out on its first protocol call with the GPU on
+        // It only opens the wrapped page, from the compose network; Alpine's Chromium times out on its
+        // first protocol call with the GPU on
         args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio'],
       }).then((browser) => {
         // A browser that crashed or was killed is launched again for the next card
