@@ -190,6 +190,7 @@ WrappedLooks.styles = {
   look: {
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
     gap: 4,
     padding: 4,
     border: '2px solid',
@@ -202,6 +203,10 @@ WrappedLooks.styles = {
       borderRadius: '0.125rem',
     },
     '>span': {
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       fontWeight: 'semibold',
       fontSize: [6, 5],
       textAlign: 'center',
