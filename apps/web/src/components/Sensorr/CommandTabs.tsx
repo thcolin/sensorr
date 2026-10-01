@@ -18,7 +18,6 @@ interface CommandTabsProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'o
 
 const GROUPED = ['movies', 'tv']
 
-// The commands met in `items`, or picked, the one running or met last first
 export const commandTabsOf = (
   items: { meta: any }[],
   commands: { [name: string]: Omit<CommandTab, 'value' | 'count'> },
