@@ -52,6 +52,11 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
 
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
+
+    if (!window.confirm(`Do you really want to start ${jobTitleOf(name)} job ?`)) {
+      return false
+    }
+
     setOngoing(ongoing => [...ongoing, name])
     const { uri, params, init } = api.query.jobs.runJob({ body: { command, type } })
     const request = api.fetch(uri, params, init)
@@ -69,10 +74,12 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
         return `Error during Job **${jobTitleOf(name)}** run`
       },
     })
+
+    return true
   }, [onRun])
 
   const stopJob = useCallback((name, job) => {
-    if (!confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
+    if (!window.confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}" ?`)) {
       return
     }
 

@@ -27,6 +27,7 @@ import Body from '../../layout/Body/Body'
 import { CommandTabs } from '../../components/Sensorr/CommandTabs'
 import { JobName } from '../../components/Sensorr/JobName'
 import { DrawerHead, StartJob } from '../../components/Sensorr/StartJob'
+import { useJobRunner } from '../../components/Sensorr/Jobs'
 
 const JOBS_UI: { [name: string]: { view: any, summary: (summary: any, extended?: boolean, config?: any) => any[] } } = {
   'sync movies': { view: SyncJob, summary: summarySync },
@@ -209,6 +210,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   const [unstacked, setUnstacked] = useState({})
   const onToggle = useCallback((pile, value) => setUnstacked(unstacked => ({ ...unstacked, [pile]: value })), [])
   const [folded, setFolded] = useState({})
+  const { stopJob } = useJobRunner()
   const running = useMemo(() => jobs.filter(job => !job.meta.done).sort((a, b) => b.start - a.start), [jobs])
   const listed = useMemo(() => listedOf(jobs), [jobs])
   const groups = useMemo(() => {
@@ -275,6 +277,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
                     job={job}
                     unstacked={unstacked[pile] ?? !!entry.stack?.some(s => s.job === job)}
                     onToggle={onToggle}
+                    onStop={stopJob}
                   />
                 )
               })}
@@ -531,7 +534,7 @@ const roomOf = (element) => {
   return Math.max(0, Math.min(element.scrollHeight, bottom - element.getBoundingClientRect().top))
 }
 
-const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle }) => {
+const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle, onStop }) => {
   const more = useRef(null)
   const opening = useRef(false)
   const [closing, setClosing] = useState(false)
@@ -588,6 +591,7 @@ const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle
       selected={j.job === job}
       {...j}
       summary={summaryOf(j)}
+      onStop={onStop}
       {...props}
     />
   )
@@ -657,13 +661,13 @@ UIPile.styles = {
     },
   },
   frame: {
-    '>a, >div>div>a': {
+    '>[data-job], >div>div>[data-job]': {
       borderBottom: 'none',
     },
   },
   more: {
     overflow: 'hidden',
-    '>div>a': {
+    '>div>[data-job]': {
       borderTop: '1px solid',
       borderColor: 'grayLight',
     },
@@ -732,26 +736,28 @@ UIPile.styles = {
 
 const Pile = memo(UIPile)
 
-const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary, since = null }) => {
-  const ref = useRef(null)
-
-  // useEffect(() => {
-  //   if (selected && ref.current) {
-  //     ref.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-  //   }
-  // }, [selected])
+// The link covers the row, so a running job's state icon can be a button that stops it; the summary keeps its tooltips and its scroll above it
+const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selected = false, summary, since = null, onStop = null }) => {
+  const name = jobNameOf({ command, type: meta.type })
 
   return (
-    <Link to={`/jobs/${job}`} sx={UIJob.styles.element} viewTransition={false}>
-      <span ref={ref} sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
+    <div sx={UIJob.styles.element} data-job={job}>
+      <Link to={`/jobs/${job}`} aria-label={`${jobTitleOf(name)} ${job}`} sx={UIJob.styles.link} viewTransition={false} />
+      <span sx={UIJob.styles.wrapper} style={{ opacity: selected ? 1 : 0.5 }}>
         <span sx={UIJob.styles.head}>
           <span sx={UIJob.styles.icon}>
             {emoji}
           </span>
           <span sx={UIJob.styles.container}>
             <span sx={{ display: 'flex', alignItems: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
-              <JobName name={jobNameOf({ command, type: meta.type })} sx={UIJob.styles.title} />
+              {done || !onStop ? (
+                <span sx={{ marginRight: 7 }}><Icon value={done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              ) : (
+                <button type='button' onClick={() => onStop(name, job)} aria-label={`Stop ${jobTitleOf(name)} job`} title='Stop' sx={UIJob.styles.stop}>
+                  <Icon value='live' height='0.75em' width='0.75em' />
+                </button>
+              )}
+              <JobName name={name} sx={UIJob.styles.title} />
               {done && (
                 <span sx={{ ...UIJob.styles.subtitle, marginY: 12, marginLeft: 4, alignSelf: 'flex-end' }}>
                   {durationOf({ start, end })}
@@ -761,21 +767,36 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
             <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {since && `${(new Date(since)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })} → `}{(new Date(start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
           </span>
         </span>
-        <span sx={UIJob.styles.summary}>
+        <Link to={`/jobs/${job}`} tabIndex={-1} aria-hidden={true} sx={UIJob.styles.summary} viewTransition={false}>
           <Summary error={meta.error} meta={summary} />
-        </span>
+        </Link>
       </span>
-    </Link>
+    </div>
   )
 }
 
 UIJob.styles = {
   element: {
+    position: 'relative',
+    isolation: 'isolate',
     display: 'flex',
     borderBottom: '1px solid',
     borderColor: 'grayLight',
     paddingY: 3,
     overflow: 'hidden',
+    '&:hover>span': {
+      opacity: '1 !important',
+    },
+  },
+  link: {
+    position: 'absolute',
+    inset: 0,
+    zIndex: 1,
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'text',
+      outlineOffset: '-2px',
+    },
   },
   wrapper: {
     flex: 1,
@@ -783,8 +804,40 @@ UIJob.styles = {
     flexDirection: 'column',
     transition: 'opacity ease 300ms',
     overflow: 'hidden',
-    '&:hover': {
-      opacity: '1 !important',
+  },
+  // Above the link, the dot turns into a stop square under the pointer or the keyboard focus
+  stop: {
+    variant: 'button.reset',
+    position: 'relative',
+    zIndex: 2,
+    display: 'flex',
+    marginRight: 7,
+    cursor: 'pointer',
+    '::before': {
+      content: '""',
+      position: 'absolute',
+      inset: '-0.75em',
+    },
+    '::after': {
+      content: '""',
+      display: 'none',
+      height: '0.75em',
+      width: '0.75em',
+      borderRadius: '0.125em',
+      backgroundColor: 'grayDarkest',
+    },
+    ':hover, :focus-visible': {
+      '>svg': {
+        display: 'none',
+      },
+      '::after': {
+        display: 'block',
+      },
+    },
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'text',
+      outlineOffset: '2px',
     },
   },
   head: {
@@ -820,6 +873,9 @@ UIJob.styles = {
     fontFamily: 'monospace',
   },
   summary: {
+    position: 'relative',
+    zIndex: 2,
+    display: 'block',
     fontSize: 6,
     overflowX: 'auto',
     paddingLeft: [12, '4em'],

@@ -139,8 +139,9 @@ const UIJobList = ({ onRun, close, touch = false }) => {
       return
     }
 
-    runJob(entry.command, entry.type)
-    close()
+    if (runJob(entry.command, entry.type)) {
+      close()
+    }
   }
 
   const onKeyDown = (e) => {
