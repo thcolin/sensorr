@@ -68,6 +68,12 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.mail.cron` | `string` | `0 9 * * 1` | Mail job cron, it mails each friend their requests that reached Plex since their last mail |
 | `jobs.mail.paused` | `boolean` | `false` | Pause Mail job |
 
+## Guests
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `guests.public` | `boolean` | `false` | Let any Plex account link itself from /keep-in-touch; off, only the owner of the Plex server set up in Sensorr and the users it is shared with, the guests already linked and a Sensorr without Plex server excepted |
+
 ## Mail
 
 | Name | Type | Default | Description |

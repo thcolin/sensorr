@@ -70,6 +70,16 @@ const KeepInTouch = () => {
           return
         }
 
+        if (raw.refused) {
+          done = true
+          clearStoredPin()
+          if (interval) {
+            clearInterval(interval)
+          }
+          setPin(prev => ({ ...prev, refused: true }))
+          return
+        }
+
         if (raw.expired) {
           clearStoredPin()
           if (interval) {
@@ -163,7 +173,17 @@ const KeepInTouch = () => {
               subtitle='Someone wonderful want to follow your Plex watchlist and consider your movie wishes !'
               children={(
                 <div sx={{ marginY: 0 }}>
-                  {pin?.done ? (
+                  {pin?.refused ? (
+                    <div>
+                      <p sx={{ marginTop: 2 }}>
+                        This Plex account is not one the Plex server of this Sensorr is shared with.
+                      </p>
+                      <br/>
+                      <p sx={{ fontSize: 6 }}>
+                        Ask the person who sent you this link to share their Plex server with you, then open it again. Or sign in to Plex with the account they share it with.
+                      </p>
+                    </div>
+                  ) : pin?.done ? (
                     <div>
                       <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />
                       <p sx={{ marginTop: 2 }}>

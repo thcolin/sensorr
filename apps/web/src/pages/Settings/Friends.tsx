@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Button, Icon, Link } from '@sensorr/ui'
+import { Button, Icon, Link, Option } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
-import { useTitle } from '@sensorr/utils'
+import { emojize, useTitle } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { ChoiceSelect, LookSelect, useFallback, WrappedLooks } from './Wrapped'
 import { errorOf } from './Mail'
@@ -22,7 +22,7 @@ const Friends = ({ ...props }) => {
   const [wrappedError, setWrappedError] = useState(false)
   const [busy, setBusy] = useState({})
   const { onSave } = useOutletContext() as any
-  const { config } = useConfigContext()
+  const { config, load } = useConfigContext()
   const looks = useForm({ defaultValues: config.getProperties() })
   const { fallback, looks: offered } = useFallback(looks)
 
@@ -107,6 +107,23 @@ const Friends = ({ ...props }) => {
       setBusy((busy) => ({ ...busy, [email]: false }))
     }
   }, [])
+
+  const [open, setOpen] = useState(!!config.get('guests.public'))
+
+  const setPublic = async (value) => {
+    setOpen(value)
+
+    try {
+      const put = api.query.config.putConfig({ body: { key: 'guests.public', value } })
+      await api.fetch(put.uri, put.params, put.init)
+      const get = api.query.config.getConfig({})
+      await load(await api.fetch(get.uri, get.params, get.init))
+    } catch (err) {
+      console.warn(err)
+      setOpen(!value)
+      toast.error('Error while saving who can link their Plex account, try again')
+    }
+  }
 
   const invite = async (e) => {
     e.preventDefault()
@@ -270,6 +287,15 @@ const Friends = ({ ...props }) => {
             <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
             <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
           </form>
+          <div sx={{ marginTop: 6 }}>
+            <Option type='checkbox' id='guests.public' checked={open} disabled={!config.get('plex.token')} onChange={(e: any) => setPublic(e.target.checked)}>
+              <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                <strong>{emojize('🌍', 'Anyone with a Plex account')}</strong>
+                <br />
+                <small>{config.get('plex.token') ? 'Off, only you and the people your Plex server is shared with can link their account, besides the friends already linked' : 'Without a Plex server set up in Sensorr, anyone can link their account'}</small>
+              </div>
+            </Option>
+          </div>
           {!!invited.length && (
             <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
           )}

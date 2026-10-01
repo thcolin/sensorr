@@ -59,7 +59,7 @@ look on the page and the browser keeps it.
 **`apps/api`** is the NestJS server. It owns Mongo, `config.json`, the two blackhole
 directories and the cron schedule. Every route is behind a global JWT guard (`auth.module.ts:19`,
 `auth.guard.ts:10`); only routes marked `@Public()` escape it: guest
-registration, guest PIN status (`guests.controller.ts:10,16`), a guest's wrapped and its artwork
+registration, guest PIN status (`guests.controller.ts:10,16`), which links a new account only when it owns the Plex server set up in Sensorr or is shared with it, unless `guests.public` is on, a guest's wrapped and its artwork
 (`wrapped.controller.ts:11,18`), the unsubscribe page of a mail and its button
 (`mail.controller.ts`, `unsubscribe/:token`), and the login route
 itself.

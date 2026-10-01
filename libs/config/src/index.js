@@ -336,6 +336,13 @@ const schema = {
       },
     },
   },
+  guests: {
+    public: {
+      doc: 'Let any Plex account link itself from /keep-in-touch; off, only the owner of the Plex server set up in Sensorr and the users it is shared with, the guests already linked and a Sensorr without Plex server excepted',
+      format: 'Boolean',
+      default: false,
+    },
+  },
   mail: {
     url: {
       doc: 'Address of this Sensorr your friends open, the links of every mail start with it',

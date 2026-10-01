@@ -8,6 +8,7 @@ import { MailService } from '../mail/mail.service'
 import { mails } from '../mail/templates'
 import { Guest as GuestDocument } from './guest.schema'
 import { reminderOf } from './reminders'
+import { sharedIdsOf } from './shared'
 import app from './../../../../../package.json'
 
 @Injectable()
@@ -37,7 +38,7 @@ export class GuestsService {
 
   // One-shot PIN status check, polled by the client (replaces the previous SSE stream whose
   // server-side polling died whenever the client connection dropped — e.g. a backgrounded mobile tab).
-  async checkRegistration(id): Promise<{ done: boolean, expired?: boolean }> {
+  async checkRegistration(id): Promise<{ done: boolean, expired?: boolean, refused?: boolean }> {
     const result = await checkPin(id, this.plexApp())
 
     if (result.status === 'invalid') {
@@ -50,11 +51,17 @@ export class GuestsService {
     }
 
     this.logger.log(`CheckRegistration "${id}", status="authorized", registered`)
-    const { email, thumb: avatar, title, username } = await Plex(
+    const { id: account, email, thumb: avatar, title, username } = await Plex(
       { url: 'https://plex.tv:443', token: result.token, fallbackPort: 443 },
       this.plexApp(),
     ).query(`/api/v2/user`)
     const known = await this.guestModel.exists({ email })
+
+    if (!known && !(await this.allowed(account))) {
+      this.logger.log(`CheckRegistration "${id}", account "${account}" refused, the Plex server is not shared with it`)
+      return { done: false, refused: true }
+    }
+
     // The token was just issued, it works until the next keep-in-touch says otherwise
     const guest = await this.upsertGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token, plex_token_valid: true, plex_token_checked_at: Date.now() })
     // The status is polled, several polls of one PIN may land here: the first to write the date sends the welcome
@@ -66,6 +73,28 @@ export class GuestsService {
     }
 
     return { done: true }
+  }
+
+  // The owner of the Plex server and the users it is shared with, read from plex.tv with its token
+  private async allowed(account: number) {
+    const token = this.configService.config.get('plex.token')
+
+    if (this.configService.config.get('guests.public') || !token) {
+      return true
+    }
+
+    const headers = { 'X-Plex-Token': token, 'X-Plex-Client-Identifier': this.plexApp().plex, 'X-Plex-Product': this.plexApp().name, Accept: 'application/json' }
+    const [owner, shared] = await Promise.all(['https://plex.tv/api/v2/user', 'https://plex.tv/api/users'].map(async (url) => {
+      const res = await fetch(url, { headers })
+
+      if (!res.ok) {
+        throw new Error(`plex.tv answered ${res.status} on ${url}, is the Plex token of Sensorr still valid?`)
+      }
+
+      return res.text()
+    }))
+
+    return Number(account) === Number(JSON.parse(owner).id) || sharedIdsOf(shared).has(Number(account))
   }
 
   async upsertGuest(guest): Promise<any> {

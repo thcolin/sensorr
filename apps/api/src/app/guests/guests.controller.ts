@@ -15,7 +15,7 @@ export class GuestsController {
 
   @Public()
   @Get(':id/status')
-  status(@Param('id') id): Promise<{ done: boolean, expired?: boolean }> {
+  status(@Param('id') id): Promise<{ done: boolean, expired?: boolean, refused?: boolean }> {
     return this.guestsService.checkRegistration(id)
   }
 
