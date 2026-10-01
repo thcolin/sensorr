@@ -106,8 +106,9 @@ export class CardsService implements OnModuleDestroy {
     if (!this.browser) {
       const launched: Promise<Browser> = puppeteer.launch({
         executablePath: CHROMIUM,
-        // The browser only opens the wrapped page, from the compose network, as the container's own user
-        args: ['--no-sandbox', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio'],
+        // Only the wrapped page, from the compose network, as the container's own user; Alpine's Chromium
+        // times out on its first protocol call with the GPU on
+        args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio'],
       }).then((browser) => {
         // A browser that crashed or was killed is launched again for the next card
         browser.on('disconnected', () => this.browser === launched && (this.browser = null))

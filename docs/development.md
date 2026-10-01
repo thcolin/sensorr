@@ -63,6 +63,8 @@ Serves the wrapped, the « Rétrospective » of its French copy, on **http://loc
 2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
 3. A guest whose email is a Tautulli user's, then **Copy link** in the chevron menu of their row on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
 
+On a screen under 1024 px wide, a look that has stories (Télé for now, `STORIES` in `apps/wrapped/src/app/themes/index.ts`) shows them in place of the scrolling page. Each story is composed at 396 × 704 and shared as a 1080 × 1920 JPEG, drawn by the API: `GET /api/wrapped/share/<token>/cards/<look>/<story>` opens `/wrapped/<token>?card=<story>&look=<look>` in a headless Chromium (`apps/api/src/app/wrapped/cards.service.ts`) and keeps the image in `$TMPDIR/sensorr-cards` for the day. The API finds that page at `NX_WRAPPED_URL`, `http://sensorr-web` by default, and Chromium at `NX_CHROMIUM_PATH`, `/usr/bin/chromium` by default, which the API image installs. Locally, start the API with `NX_WRAPPED_URL=http://localhost:4230` and `NX_CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`, and `nx run wrapped:serve` alongside.
+
 Check it at 390 px wide first, then 1440 × 900, on three guests: a heavy one, a median one (about 55 plays in 2026) and one under 10 plays, which gets the short version. Check every look: on a year set to `Any` in Settings › Friends, `localStorage['wrapped-look:<token>']` set to `affiche`, `labo`, `tele`, `videoclub` or `scenario` opens the page in it, and a browser context of its own keeps two looks apart.
 
 ### The component gallery
