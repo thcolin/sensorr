@@ -9,7 +9,7 @@ type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
 type Reel = { name: string, year: number }
 
 // Deterministic, so each frame is cut from the same spot of its picture on every visit
-const rng = (seed: number) => {
+export const rng = (seed: number) => {
   let state = (Math.abs(Math.round(seed)) % 2147483646) + 1
   return () => (state = (state * 16807) % 2147483647) / 2147483647
 }
@@ -20,7 +20,7 @@ const two = (value: number) => String(value).padStart(2, '0')
 const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
 const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
@@ -36,7 +36,7 @@ const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, inde
 })
 
 // A paragraph of the model cut at its sentences
-const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
 
 // The whole page is one strip of film: every sheet is a stretch of it, printed along both edges
 const Labo = ({ share, sheets, colophon, art }: ThemeProps) => {
@@ -97,14 +97,14 @@ const Sheet = ({ sheet, index, reel, className, children }: { sheet: SheetModel,
   </section>
 )
 
-const Title = ({ lines, as: Tag = 'h2', className }: { lines: string[], as?: 'h2' | 'h3', className?: string }) => (
+export const Title = ({ lines, as: Tag = 'h2', className }: { lines: string[], as?: 'h2' | 'h3', className?: string }) => (
   <Tag className={`labo-title ${className || ''}`}>
     {lines.map((line, index) => <span key={index}>{index > 0 && ' '}{line}</span>)}
   </Tag>
 )
 
 // A frame of the film: the poster printed warm, a missing one left unexposed with its title
-const Frame = ({ poster, art, kind = 'thumb', width = 640, code, eager, className, children }: { poster: WrappedPoster, art: Art, kind?: 'thumb' | 'art', width?: 320 | 640 | 1280, code?: string, eager?: boolean, className?: string, children?: ReactNode }) => {
+export const Frame = ({ poster, art, kind = 'thumb', width = 640, code, eager, className, children }: { poster: WrappedPoster, art: Art, kind?: 'thumb' | 'art', width?: 320 | 640 | 1280, code?: string, eager?: boolean, className?: string, children?: ReactNode }) => {
   const src = art(poster, kind, width) || art(poster, kind === 'thumb' ? 'art' : 'thumb', width)
   return (
     <figure className={`labo-frame ${kind === 'art' ? 'labo-frame-wide' : ''} ${className || ''}`}>
@@ -118,7 +118,7 @@ const Frame = ({ poster, art, kind = 'thumb', width = 640, code, eager, classNam
 }
 
 // So many frames cut from one picture, each from its own spot, as many as there are evenings or episodes
-const Cells = ({ count, src, seed, columns, className }: { count: number, src?: string, seed: number, columns?: number, className?: string }) => {
+export const Cells = ({ count, src, seed, columns, className }: { count: number, src?: string, seed: number, columns?: number, className?: string }) => {
   const random = rng(seed)
   return (
     <ol className={`labo-cells ${className || ''}`} aria-hidden="true" style={{ '--src': src ? `url("${src}")` : 'none', gridTemplateColumns: columns ? `repeat(${columns}, 1fr)` : undefined } as React.CSSProperties}>
@@ -155,7 +155,7 @@ const useDraw = <T extends HTMLElement>() => {
   return [ref, state] as const
 }
 
-const Ring = ({ className }: { className?: string }) => (
+export const Ring = ({ className }: { className?: string }) => (
   <svg className={`labo-ring ${className || ''}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
     <path d="M52 4 C 88 1, 98 26, 97 52 C 96 88, 64 98, 32 96 C 8 94, 2 64, 4 38 C 6 10, 34 3, 64 8" />
   </svg>
@@ -173,10 +173,10 @@ const GESTURES = {
 
 type Gesture = keyof typeof GESTURES
 
-const hash = (text: string) => [...text].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 2147483646, 7)
+export const hash = (text: string) => [...text].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 2147483646, 7)
 
 // A different gesture for each frame, and from one sheet of frames to the next
-const gestureOf = (sheet: number, item: number) => {
+export const gestureOf = (sheet: number, item: number) => {
   const gestures = Object.keys(GESTURES) as Gesture[]
   return gestures[(sheet * 2 + item) % gestures.length]
 }
@@ -187,7 +187,7 @@ const cutAt = (at: number) => `M 0 ${at + 1} C 20 ${at - 2}, 60 ${at + 3}, 104 $
 // Every point of the gesture moved a little, so no two frames carry the same stroke
 const wobble = (path: string, random: () => number) => path.replace(/-?\d+(?:\.\d+)?/g, (value) => (Number(value) + (random() - 0.5) * 7).toFixed(1))
 
-const Scrawl = ({ gesture, seed, at }: { gesture: Gesture | 'cut', seed: number, at?: number }) => {
+export const Scrawl = ({ gesture, seed, at }: { gesture: Gesture | 'cut', seed: number, at?: number }) => {
   const random = rng(seed)
   const style = { '--stroke': 2.5 + random() * 2.5, transform: `rotate(${(random() - 0.5) * 5}deg)` } as React.CSSProperties
   return (
@@ -298,7 +298,7 @@ const Rank = ({ sheet, index, reel }: { sheet: Of<'rank'>, index: number, reel: 
 }
 
 // The printer lights of the form: the reader's hours, the median's and the first viewer's, each a density on the strip
-const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
+export const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
   const lights = [
     { label: 'Toi', hours: sheet.hours, you: true },
     { label: 'Médiane', hours: sheet.median },
@@ -320,7 +320,7 @@ const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
   )
 }
 
-const FicheHead = ({ reel, children }: { reel: Reel, children?: ReactNode }) => (
+export const FicheHead = ({ reel, children }: { reel: Reel, children?: ReactNode }) => (
   <header className="labo-fiche-head" aria-hidden="true">
     <span>Fiche d’étalonnage<br />Bobine {reel.year}</span>
     <strong>{reel.name}</strong>
@@ -417,14 +417,14 @@ const Months = ({ sheet, index, reel, art }: { sheet: Of<'months'>, index: numbe
 
 // One evening's binge, a frame per episode
 // The footage counter of the printer, one window per figure
-const Counter = ({ stats }: { stats: Stat[] }) => (
+export const Counter = ({ stats }: { stats: Stat[] }) => (
   <ul className="labo-counter">
     {stats.map((stat) => <li key={stat.unit}><b>{stat.value}</b><span>{stat.unit}</span></li>)}
   </ul>
 )
 
 // A still, its poster clipped to the corner so the show reads at a glance
-const Still = ({ poster, art, code }: { poster: WrappedPoster, art: Art, code: string }) => (
+export const Still = ({ poster, art, code }: { poster: WrappedPoster, art: Art, code: string }) => (
   <div className="labo-still-print">
     <Frame poster={poster} art={art} kind="art" width={1280} code={code} />
     {poster.art && poster.thumb && <Frame poster={poster} art={art} width={320} className="labo-still-poster" />}
@@ -508,7 +508,7 @@ const Server = ({ sheet, index, reel, art }: { sheet: Of<'server'>, index: numbe
 }
 
 // A few frames side by side on a cut of film, the titles under them
-const Strip = <P extends WrappedPoster>({ posters, art, caption, start = 1, titled = true }: { posters: P[], art: Art, caption?: (poster: P) => ReactNode, start?: number, titled?: boolean }) => (
+export const Strip = <P extends WrappedPoster>({ posters, art, caption, start = 1, titled = true }: { posters: P[], art: Art, caption?: (poster: P) => ReactNode, start?: number, titled?: boolean }) => (
   <ul className="labo-strip" data-count={posters.length}>
     {posters.map((poster, frame) => (
       <li key={poster.key}>
@@ -551,7 +551,7 @@ const Figure = ({ sheet, index, reel, art }: { sheet: Of<'figure'>, index: numbe
 }
 
 // Two reels printed on one frame: where they overlap, the titles both viewers saw
-const Exposure = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
+export const Exposure = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
   <div className="labo-exposure">
     <p className="labo-exposure-reel labo-exposure-you" aria-hidden="true"><b>Toi</b><span>{number.format(sides.you)}</span></p>
     <p className="labo-exposure-reel labo-exposure-them" aria-hidden="true"><b>{name}</b>{sides.them !== null && <span>{number.format(sides.them)}</span>}</p>

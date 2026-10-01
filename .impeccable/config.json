@@ -74,6 +74,18 @@
         "value": "rock salt",
         "createdAt": "2026-10-01T23:30:00.870Z",
         "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; videoclub's own self-hosted font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "ibm plex mono",
+        "createdAt": "2026-10-01T23:41:23.885Z",
+        "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; labo's own self-hosted font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "kalam",
+        "createdAt": "2026-10-01T23:41:23.907Z",
+        "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; labo's own self-hosted font"
       }
     ]
   }
