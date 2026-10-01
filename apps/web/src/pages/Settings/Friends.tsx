@@ -171,7 +171,7 @@ const Friends = ({ ...props }) => {
                 </Button>
                 <footer sx={Friends.styles.wrapped}>
                   <h5 title='plex'>🔌<span>&nbsp;plex</span></h5>
-                  <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined}>
+                  <p aria-live='polite' data-muted={guest.plex_token_valid !== false || undefined} data-prose={true}>
                     <span>{reconnectOf(guest, mailed[guest.email])}</span>
                   </p>
                   <button
@@ -351,6 +351,9 @@ Friends.styles = {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+      },
+      '&[data-prose]': {
+        fontFamily: 'body',
       },
       '&[data-muted]': {
         fontFamily: 'body',
