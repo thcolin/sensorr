@@ -87,10 +87,12 @@ export class ShowsService {
     }, changes)
   }
 
-  // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time
+  // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time.
+  // A release that fails to download stays a proposal, and its show is reported in `failed`.
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
+    const failed = new Set<number>()
 
     for (const [i, { releases }] of Object.entries(changes)) {
       const id = Number(i)
@@ -125,10 +127,12 @@ export class ShowsService {
           try {
             torrent = await this.sensorrService.downloadRelease(picked, manual ? 'enclosure' : 'cache', 'fs', 'show')
           } catch (error) {
+            this.logger.error(`UpsertShows "${id}", release "${picked.title}" not downloaded: ${error.message}`)
             await (manual
               ? this.showModel.updateOne({ _id: id }, { $pull: { releases: { id: picked.id } } })
               : this.updateRelease(id, picked.id, { proposal: true }))
-            throw error
+            failed.add(id)
+            continue
           }
 
           const accepted = { accepted_at: Date.now(), ...(torrent ? { torrent } : {}), ...(picked.swap ? { replaces: await this.replacedFilesOf(id, picked.coverage || []) } : {}) }
@@ -172,7 +176,7 @@ export class ShowsService {
       }
     }))
 
-    return { upserted: Number(insertedCount + modifiedCount + upsertedCount) }
+    return { upserted: Number(insertedCount + modifiedCount + upsertedCount), failed: [...failed] }
   }
 
   // Pulled only while still a proposal: an answer accepted meanwhile keeps its release, its metafile and its episodes
