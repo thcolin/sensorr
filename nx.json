@@ -37,5 +37,6 @@
     "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
     "production": ["default"]
   },
-  "parallel": 1
+  "parallel": 1,
+  "useLegacyCache": true
 }

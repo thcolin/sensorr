@@ -18,6 +18,8 @@ Running Sensorr from a clone, and changing it. To run Sensorr as a user, follow 
 yarn install
 ```
 
+If `npx nx --help` then fails on `mixin.stripAnsi is not a function`, look in `yarn.lock` for a `name string-width-cjs`, `name strip-ansi-cjs` or `name wrap-ansi-cjs` line. `@isaacs/cliui` pulls these three packages under `npm:` aliases, and yarn 1 can merge an alias with the real range into one entry named after the alias. It then installs the package under the alias only, so `cliui`, which `yargs` and Jest use, gets the ESM `string-width@5` hoisted at the root. Delete the `name ...-cjs` lines, then `rm -rf node_modules && yarn install`.
+
 The root `.env` is tracked and carries the development defaults for the `NX_*` variables the apps read. Without it the API builds a `mongodb://undefined:undefined@undefined:undefined/sensorr` URI (`apps/api/src/app/app.module.ts:21`) and never connects.
 
 ### `yarn web`
