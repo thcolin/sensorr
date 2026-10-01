@@ -127,13 +127,17 @@ export class MailService {
     for (const { email, name } of invitees) {
       try {
         await this.send(email, mails.invitation({ url: this.url(), sender: this.sender(), name }))
-        const invited_at = Date.now()
-        await this.invitationModel.updateOne({ email: email.toLowerCase() }, { invited_at }, { upsert: true })
-        results.push({ email, invited_at })
       } catch (error) {
         this.logger.warn(`Invitation "${email}" not sent: ${error.message}`)
         results.push({ email, error: error.message })
+        continue
       }
+
+      const invited_at = Date.now()
+      // The mail is gone: a failed write only loses the date, it must not read as not sent
+      await this.invitationModel.updateOne({ email: email.toLowerCase() }, { invited_at }, { upsert: true })
+        .catch((error) => this.logger.warn(`Invitation "${email}" sent, its date not kept: ${error.message}`))
+      results.push({ email, invited_at })
     }
 
     return results

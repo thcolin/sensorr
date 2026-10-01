@@ -11,6 +11,7 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { WrappedLooks } from './Wrapped'
 import { errorOf } from './Mail'
 import { Invitation } from './Invitation'
+import { Face } from './Face'
 
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
 const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -281,7 +282,6 @@ const Friends = ({ ...props }) => {
 // A linked friend wears a thin Plex ring and the Plex chevron, a disconnected one the reconnect mails sent since their
 // token died, the first one and its 3 reminders, as four arcs filled in red once sent, and a grey chevron
 const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
-  const [broken, setBroken] = useState(false)
   const linked = guest.plex_token_valid !== false
   const at = sent.reconnect_mailed_at || guest.reconnect_mailed_at
   const count = linked ? 0 : Math.min(Math.max(sent.reconnect_mails ?? guest.reconnect_mails ?? 0, at ? 1 : 0), 4)
@@ -301,7 +301,7 @@ const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
       data-linked={linked || undefined}
       style={linked ? {} : { '--arcs': `conic-gradient(from -45deg, ${arcs[0]} 0 22.5%, transparent 0 25%, ${arcs[1]} 0 47.5%, transparent 0 50%, ${arcs[2]} 0 72.5%, transparent 0 75%, ${arcs[3]} 0 97.5%, transparent 0)` } as any}
     >
-      {guest.avatar && !broken ? <img src={guest.avatar} alt='' onError={() => setBroken(true)} /> : <span>{(guest.name || guest.email || '?')[0]}</span>}
+      <Face person={guest} />
       <b aria-hidden={true}>
         <svg viewBox='0 0 512 512'>
           <path fill='currentColor' d='m256 70h-108l108 186-108 186h108l108-186z' />
@@ -347,21 +347,6 @@ Friends.styles = {
     '&[data-linked]::before': {
       background: 'var(--theme-ui-colors-plex)',
       mask: 'radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1.5px))',
-    },
-    '>img, >span': {
-      width: '34px',
-      height: '34px',
-      borderRadius: '50%',
-      objectFit: 'cover',
-    },
-    '>span': {
-      display: 'grid',
-      placeItems: 'center',
-      backgroundColor: 'gray',
-      color: 'grayDarkest',
-      fontFamily: 'heading',
-      fontWeight: 'heading',
-      textTransform: 'uppercase',
     },
     '&:not([data-linked]) >img, &:not([data-linked]) >span': {
       opacity: 0.7,

@@ -3,6 +3,8 @@ import toast from 'react-hot-toast'
 import { Bulk, Button, Icon, Link, Option } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { errorOf } from './Mail'
+import { Face } from './Face'
+import { useConfigContext } from '../../contexts/Config/Config'
 
 const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', {
   day: 'numeric',
@@ -16,6 +18,7 @@ const activityOf = ({ plays, seen_at }) => !seen_at
 
 export const Invitation = ({ mailable }: { mailable: boolean }) => {
   const api = useAPI()
+  const { config } = useConfigContext()
   const [shared, setShared] = useState(null)
   const [unreachable, setUnreachable] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
@@ -56,7 +59,9 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
         toast.error(`Invitation sent to ${results.length - errors.length} of ${results.length} friends, the others are marked in the list`)
       }
     } catch (err) {
-      toast.error((await errorOf(err)) || 'Error while sending the invitations, try again')
+      toast.error((await errorOf(err)) || 'Error while sending the invitations, the list shows who got one')
+      // The server may have mailed some of them before the request failed
+      fetchShared()
     } finally {
       setSending((sending) => sending.filter((email) => !emails.includes(email)))
     }
@@ -124,12 +129,14 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
                 type='button'
                 variant='outline'
                 color='gray'
-                disabled={!mailable || sending.includes(person.email)}
+                disabled={sending.includes(person.email)}
+                // Not `disabled` without Mail, which hides the reason in the title from the hover and from screen readers
+                aria-disabled={!mailable || undefined}
                 aria-busy={sending.includes(person.email)}
                 aria-label={person.invited_at ? `Invite ${person.name} again` : `Invite ${person.name}`}
                 title={mailable ? undefined : 'Set up Mail first'}
                 onClick={() => {
-                  if (!person.invited_at || confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`)) {
+                  if (mailable && (!person.invited_at || confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
                     invite([person])
                   }
                 }}
@@ -141,7 +148,9 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
         </ul>
       )}
       {shared?.plex && !shared.tautulli && !!people.length && (
-        <p><small>Set up <Link to='/settings/tautulli'>Tautulli</Link> to see who watched most recently first.</small></p>
+        <p><small>{config.get('tautulli.url')
+          ? <>No Tautulli activity imported yet, the <Link to='/settings/jobs'>wrapped</Link> job imports it to show who watched most recently first.</>
+          : <>Set up <Link to='/settings/tautulli'>Tautulli</Link> to see who watched most recently first.</>}</small></p>
       )}
       <Bulk
         count={selected.length}
@@ -158,16 +167,6 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
         }]}
       />
     </>
-  )
-}
-
-const Face = ({ person }) => {
-  const [broken, setBroken] = useState(false)
-
-  return (
-    <span sx={Invitation.styles.face}>
-      {person.avatar && !broken ? <img src={person.avatar} alt='' onError={() => setBroken(true)} /> : <span>{(person.name || person.email || '?')[0]}</span>}
-    </span>
   )
 }
 
@@ -204,26 +203,15 @@ Invitation.styles = {
     ':last-of-type': {
       borderBottom: 'none',
     },
-    '>label': {
+    '>button[aria-disabled]': {
+      opacity: 0.5,
+      cursor: 'default',
+    },
+    // A target wider than the box itself, the rows are dense
+    '>span>label': {
       marginY: '0px',
-    },
-  },
-  face: {
-    display: 'grid',
-    '>img, >span': {
-      width: '34px',
-      height: '34px',
-      borderRadius: '50%',
-      objectFit: 'cover',
-    },
-    '>span': {
-      display: 'grid',
-      placeItems: 'center',
-      backgroundColor: 'gray',
-      color: 'grayDarkest',
-      fontFamily: 'heading',
-      fontWeight: 'heading',
-      textTransform: 'uppercase',
+      padding: '12px',
+      margin: '-12px',
     },
   },
   who: {
