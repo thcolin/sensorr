@@ -10,6 +10,7 @@ target_fingerprint: "sha256:95975c3b2a112e3efde099b9ac223bfb2bdc82b36e7b0e047262
 target_path: /Users/thcolin/orca/workspaces/sensorr/wrapped-cartes/apps/wrapped/src/app/themes/tele/Story.tsx
 timestamp: 2026-10-01T23-37-13Z
 slug: apps-wrapped-src-app-themes-tele-story-tsx
+closed: true
 ---
 Method: dual-agent (A: design review · B: detector + browser)
 
