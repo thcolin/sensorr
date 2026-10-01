@@ -30,11 +30,12 @@ export class MailController {
   // `to` lists the friends to invite, each with the name the mail greets them with when Plex gave one
   @Post('invitation')
   async invitation(@Body('to') to: { email: string, name?: string }[]) {
-    if (!Array.isArray(to) || !to.length) {
-      throw new BadRequestException('A list of friends to invite is required')
+    if (!Array.isArray(to) || !to.length || to.length > 200) {
+      throw new BadRequestException('Between 1 and 200 friends to invite')
     }
 
-    return this.mailService.invite(to.map((friend) => ({ email: addressOf(friend?.email), name: typeof friend?.name === 'string' && friend.name.trim() ? friend.name.trim().slice(0, 100) : undefined })))
+    const friends = to.map((friend) => ({ email: addressOf(friend?.email), name: typeof friend?.name === 'string' && friend.name.trim() ? friend.name.trim().slice(0, 100) : undefined }))
+    return this.mailService.invite([...new Map(friends.map((friend) => [friend.email.toLowerCase(), friend])).values()])
   }
 
   @Post('requests')
