@@ -106,3 +106,71 @@ export const Card = ({ children, missing }: { children: ReactNode, missing: bool
 
   return <div ref={frame} className="stories-card">{children}</div>
 }
+
+type Shared = { status: 'loading' } | { status: 'ready', file: File } | { status: 'error' }
+// Each image asked once per visit, so coming back to a story finds it ready
+const files = new Map<string, Promise<File>>()
+
+const fileOf = (url: string, name: string) => {
+  if (!files.has(url)) {
+    const file = fetch(url)
+      .then((res) => res.ok ? res.blob() : Promise.reject(new Error(`${res.status}`)))
+      .then((blob) => new File([blob], name, { type: blob.type || 'image/jpeg' }))
+    file.catch(() => files.delete(url))
+    files.set(url, file)
+  }
+  return files.get(url) as Promise<File>
+}
+
+// The phone's own share sheet with the image alone; a browser that cannot share a file downloads it
+const send = async (file: File) => {
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      return await navigator.share({ files: [file] })
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return
+      }
+      // Safari refuses once the tap is too old: the image is still saved
+      console.error('Unable to share the image, downloaded instead', error)
+    }
+  }
+  const href = URL.createObjectURL(file)
+  const link = Object.assign(document.createElement('a'), { href, download: file.name })
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(href), 1000)
+}
+
+// Asks for its image as soon as it shows, so the tap that shares it finds it ready
+export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, name: string, label?: string }) => {
+  const [shared, setShared] = useState<Shared>({ status: 'loading' })
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    setShared({ status: 'loading' })
+    fileOf(url, name).then(
+      (file) => !cancelled && setShared({ status: 'ready', file }),
+      (error) => {
+        console.error('Unable to draw the image', error)
+        !cancelled && setShared({ status: 'error' })
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [url, name, attempt])
+
+  return (
+    <button
+      type="button"
+      className="stories-share"
+      disabled={shared.status === 'loading'}
+      aria-busy={shared.status === 'loading'}
+      onClick={() => shared.status === 'ready' ? send(shared.file) : setAttempt(attempt + 1)}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>
+      {shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}
+    </button>
+  )
+}
