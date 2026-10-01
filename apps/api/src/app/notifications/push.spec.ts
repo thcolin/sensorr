@@ -1,10 +1,5 @@
 import { pushOf } from './push'
 
-const accept = [
-  { action: 'accept', title: 'Accept' },
-  { action: 'refuse', title: 'Refuse' },
-]
-
 describe('pushOf', () => {
   it('names a movie by its title and year, and its release by indexer, size and peers', () => {
     expect(pushOf({
@@ -15,7 +10,7 @@ describe('pushOf', () => {
       title: 'The Matrix (1999)',
       body: '📹 ABN, 5 GB, 12 peers\nThe.Matrix.1999.1080p.BluRay.x264-GRP',
       image: 'https://image.tmdb.org/t/p/w185/matrix.jpg',
-      actions: accept,
+      url: '/movie/603',
     })
   })
 
@@ -24,10 +19,7 @@ describe('pushOf', () => {
       title: 'The Matrix',
       body: '🍺 Requested by a@example.com, b@example.com',
       image: 'https://image.tmdb.org/t/p/w185/matrix.jpg',
-      actions: [
-        { action: 'wish-it', title: '"Wish" it' },
-        { action: 'ignore', title: 'Ignore' },
-      ],
+      url: '/movie/603',
     })
   })
 
@@ -40,17 +32,18 @@ describe('pushOf', () => {
       title: 'Friends S03',
       body: '📹 C411, 1 GB, 3 peers\nFriends.S03.MULTi.1080p.BluRay.x264-GRP',
       image: 'https://image.tmdb.org/t/p/w185/friends.jpg',
-      actions: [],
+      url: '/tv/1668',
     })
     expect(pushOf({ command: 'airing', type: 'show', show, release: { ...release, coverage: range(3, 4, 6), meta: { type: 'tvshow', seasons: [3], episodes: [4, 5, 6] } } }).title).toBe('Friends S03E04-E06')
     expect(pushOf({ command: 'airing', type: 'show', show, release: { ...release, coverage: range(3, 4, 6), meta: { type: 'tvshow', seasons: [3], episodes: [4, 5, 6] } } }).body).toBe('📡 C411, 1 GB, 3 peers\nFriends.S03.MULTi.1080p.BluRay.x264-GRP')
     expect(pushOf({ command: 'record', type: 'show', show, release: { ...release, coverage: [...range(1, 1, 24), ...range(10, 1, 18)], meta: { type: 'tvshow', seasons: [1, 10], episodes: [] } } }).title).toBe('Friends S01-S10')
   })
 
-  it('offers no answer on a show push, nothing would handle it', () => {
+  it('offers no answer, a click opens the movie or the show', () => {
+    expect(pushOf({ command: 'record', movie: { id: 603, title: 'The Matrix' }, release: { proposal: true, valid: true } })).not.toHaveProperty('actions')
     expect(pushOf({ command: 'record', type: 'show', show: { id: 1668, name: 'Friends' }, release: { title: 'Friends.S03E04.1080p.WEB.x264-GRP', coverage: [{ season: 3, episode: 4 }], proposal: false, valid: true } })).toMatchObject({
       title: 'Friends S03E04',
-      actions: [],
+      url: '/tv/1668',
     })
   })
 
@@ -59,7 +52,7 @@ describe('pushOf', () => {
       title: 'The Office',
       body: '💊 20 episodes missing from your Plex Server',
       image: 'https://image.tmdb.org/t/p/w185/office.jpg',
-      actions: [],
+      url: '/tv/2316',
     })
   })
 
@@ -68,7 +61,7 @@ describe('pushOf', () => {
       title: 'Friends',
       body: '🍺 Requested by a@example.com',
       image: 'https://image.tmdb.org/t/p/w185/friends.jpg',
-      actions: [],
+      url: '/tv/1668',
     })
   })
 })
