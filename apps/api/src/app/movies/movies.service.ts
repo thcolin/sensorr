@@ -92,11 +92,16 @@ export class MoviesService {
     return arrivedOf(changes, linked.length ? await this.movieModel.find({ _id: { $in: linked } }, { plex_url: 1, archived_at: 1 }).lean() : [])
   }
 
+  // A choice acts on the release as the database holds it, only a manual pick comes from the body.
+  // A release that fails to download stays a proposal, and its movie is reported in `failed`.
   async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {
     this.logger.log(`UpsertMovies "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
+    const failed: number[] = []
 
-    for (const { id, releases } of Object.values(changes)) {
+    for (const [i, { releases }] of Object.entries(changes)) {
+      const id = Number(i)
+
       if (!releases) {
         continue
       }
@@ -107,45 +112,78 @@ export class MoviesService {
         await this.logsService.ammendLog({ 'meta.job': dropped.job, 'meta.group': id, 'meta.release.id': dropped.id, 'meta.release.proposal': true }, { 'meta.summary.accepted': 0 })
       }
 
-      for (const release of releases) {
-        const { choice } = release as ReleaseDTO & { choice?: boolean }
+      // Written as the database holds it, or dropped when it holds none
+      const keep = (releaseId: string, current) => {
+        changes[i] = { ...changes[i], releases: changes[i].releases.flatMap(posted => posted.id === releaseId ? (current ? [current] : []) : [posted]) }
+      }
 
-        if (release.proposal && choice !== undefined) {
-          if (choice) {
-            // Reserved before the download: a second answer to the same proposal finds nothing left to accept,
-            // and writes the release as the database holds it
-            if (release.job !== 'manual') {
-              const { modifiedCount } = await this.movieModel.updateOne({ _id: id, releases: { $elemMatch: { id: release.id, proposal: true } } }, { $set: { 'releases.$.proposal': false } })
+      let accepted = false
+      let failure = false
 
-              if (modifiedCount !== 1) {
-                const current = (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0]
-                changes[id] = { ...changes[id], releases: changes[id].releases.flatMap(posted => posted.id === release.id ? (current ? [current] : []) : [posted]) }
-                continue
-              }
-            }
+      for (const posted of releases as (ReleaseDTO & { choice?: boolean })[]) {
+        if (!posted.proposal || typeof posted.choice !== 'boolean') {
+          continue
+        }
 
-            try {
-              await this.sensorrService.downloadRelease(release, release.job === 'manual' ? 'enclosure' : 'cache', 'fs')
-            } catch (error) {
-              if (release.job !== 'manual') {
-                await this.movieModel.updateOne({ _id: id, 'releases.id': release.id }, { $set: { 'releases.$.proposal': true } })
-              }
+        const manual = posted.job === 'manual'
+        const release: ReleaseDTO = manual ? posted : (stored?.releases || []).find(({ id: releaseId }) => releaseId === posted.id)
 
-              throw error
-            }
+        if (!manual && !release?.proposal) {
+          keep(posted.id, release)
+          continue
+        }
 
-            if (release.job !== 'manual') {
-              const files = releases.filter(({ from }) => from === 'sync')
-              const accepted = (files.length && typeof release.size === 'number') ? { accepted: release.size - files.reduce((sum, file) => sum + (file.size || 0), 0) } : {}
-              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1, ...accepted } })
-            }
-          } else {
-            await this.sensorrService.removeRelease(release)
+        if (posted.choice) {
+          // Reserved before the download: a second answer to the same proposal finds nothing left to accept,
+          // and writes the release as the database holds it
+          if (!manual) {
+            const { modifiedCount } = await this.movieModel.updateOne({ _id: id, releases: { $elemMatch: { id: release.id, proposal: true } } }, { $set: { 'releases.$.proposal': false } })
 
-            if (release.job !== 'manual') {
-              await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+            if (modifiedCount !== 1) {
+              keep(release.id, (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0])
+              continue
             }
           }
+
+          try {
+            await this.sensorrService.downloadRelease(release, manual ? 'enclosure' : 'cache', 'fs')
+          } catch (error) {
+            this.logger.error(`UpsertMovies "${id}", release "${release.title}" not downloaded: ${error.message}`)
+
+            if (!manual) {
+              await this.movieModel.updateOne({ _id: id, 'releases.id': release.id }, { $set: { 'releases.$.proposal': true } })
+            }
+
+            failure = true
+            keep(release.id, manual ? undefined : { ...release, proposal: true })
+            continue
+          }
+
+          accepted = true
+
+          if (!manual) {
+            const files = releases.filter(({ from }) => from === 'sync')
+            const size = (files.length && typeof release.size === 'number') ? { accepted: release.size - files.reduce((sum, file) => sum + (file.size || 0), 0) } : {}
+            await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1, ...size } })
+          }
+        } else {
+          await this.sensorrService.removeRelease(release)
+
+          if (!manual) {
+            await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': false, 'meta.seen': true, 'meta.summary': { treated: 1 } })
+          }
+        }
+      }
+
+      // Nothing accepted, so the state that came with the choice does not hold: only the releases are written,
+      // and a movie not in the library yet is not created
+      if (failure) {
+        failed.push(id)
+
+        if (!accepted && stored) {
+          changes[i] = { releases: changes[i].releases } as MovieDTO
+        } else if (!accepted) {
+          delete changes[i]
         }
       }
     }
@@ -180,7 +218,7 @@ export class MoviesService {
       },
     })))
 
-    return { upserted: Number(insertedCount + modifiedCount) }
+    return { upserted: Number(insertedCount + modifiedCount), failed }
   }
 
   // Upserted: a release can be banned from the search of a movie not in the library yet
