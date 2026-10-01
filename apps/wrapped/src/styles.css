@@ -122,3 +122,121 @@ ol {
     animation: none;
   }
 }
+
+/* Stories, on a phone: each sheet a 9:16 page, composed at 390 × 693 and scaled to the screen */
+.stories {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--switch-bg, #111);
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.stories-stage {
+  position: relative;
+  width: calc(var(--story-width) * var(--scale));
+  height: calc(var(--story-height) * var(--scale));
+}
+
+.stories-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.stories-page {
+  width: var(--story-width);
+  height: var(--story-height);
+  transform: scale(var(--scale));
+  transform-origin: 0 0;
+}
+
+.stories-tap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stories-tap:disabled {
+  cursor: default;
+}
+
+.stories-tap:focus-visible {
+  outline: 3px solid var(--switch-fg, #fff);
+  outline-offset: -6px;
+}
+
+.stories-tap-previous {
+  left: 0;
+}
+
+.stories-tap-next {
+  right: 0;
+}
+
+/* Over the story when the screen has no room for them, outside it when it has */
+.stories-segments,
+.stories-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  background: var(--switch-bg, #111);
+  color: var(--switch-fg, #fff);
+}
+
+.stories-segments {
+  top: 0;
+  display: flex;
+  gap: 4px;
+  height: 24px;
+  padding: 10px 16px;
+}
+
+.stories-segments li {
+  flex: 1;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.stories-segments li[data-done] {
+  opacity: 1;
+}
+
+.stories-bar {
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  height: 64px;
+  padding: 0 16px;
+}
+
+.stories-bar .theme-switch {
+  min-height: 44px;
+  margin-right: auto;
+  padding: 0;
+}
+
+.stories[data-roomy] .stories-segments {
+  top: auto;
+  bottom: 100%;
+}
+
+.stories[data-roomy] .stories-bar {
+  bottom: auto;
+  top: 100%;
+}

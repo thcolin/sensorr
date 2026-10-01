@@ -1776,3 +1776,377 @@ html[data-theme='tele'] {
     box-shadow: 0 30px 60px -24px rgb(40 30 20 / 0.5), 0 2px 6px rgb(40 30 20 / 0.2);
   }
 }
+
+/* Stories: each sheet on one page of 390 × 693, scaled to the phone and shared as the image.
+   The top 28 px and the bottom 72 px stay free of words, Safari lays the stories' chrome over them */
+.tele-story {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 390px;
+  height: 693px;
+  padding: 28px 16px 72px;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  animation: tele-put 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tele-story-piece {
+  min-width: 0;
+  animation: tele-land 0.5s calc(0.3s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tele-story .tele-headline {
+  margin-top: 4px;
+  font-size: 46px;
+}
+
+.tele-story .tele-band {
+  display: inline-block;
+  animation: tele-wipe 0.45s 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tele-story .tele-big {
+  font-size: 120px;
+}
+
+.tele-story .tele-unit {
+  font-size: 20px;
+}
+
+.tele-story .tele-standfirst {
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.tele-story .tele-body {
+  font-size: 16px;
+}
+
+.tele-story .tele-title {
+  font-size: 30px;
+}
+
+.tele-story .tele-pick {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.tele-story .tele-pick-title {
+  font-size: 26px;
+}
+
+.tele-story .tele-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.tele-story .tele-stats b {
+  font-size: 44px;
+}
+
+.tele-story .tele-pick .tele-stats b {
+  font-size: 36px;
+}
+
+.tele-story-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* A row of four posters, each landing a beat after the last */
+.tele-story-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tele-story-row li {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  animation: tele-drop 0.5s calc(0.7s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tele-story-row .tele-thumb-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Posters set smaller where two rows share the page */
+.tele-story-row-small {
+  grid-template-columns: repeat(4, 64px);
+}
+
+.tele-story .tele-ratings th,
+.tele-story .tele-ratings td {
+  padding: 5px 8px;
+}
+
+.tele-story .tele-ratings th {
+  font-size: 24px;
+}
+
+.tele-story .tele-ratings-you b {
+  padding: 3px 8px;
+  font-size: 17px;
+}
+
+.tele-story .tele-ratings-bar {
+  margin-top: 4px;
+}
+
+.tele-story .tele-still .tele-photo {
+  height: 130px;
+  aspect-ratio: auto;
+}
+
+.tele-story .tele-venn {
+  width: 250px;
+}
+
+/* The run's months as bands of days, struck one evening after the other */
+.tele-days {
+  display: grid;
+  gap: 6px;
+}
+
+.tele-days-month {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.tele-days-month p {
+  font: 800 13px/1 var(--cond);
+  text-transform: uppercase;
+}
+
+.tele-days ol {
+  display: grid;
+  grid-template-columns: repeat(31, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.tele-days li {
+  height: 16px;
+  background: var(--table);
+}
+
+.tele-days .tele-days-on {
+  background: var(--red);
+  animation: tele-strike 0.2s calc(0.6s + var(--day, 0) * 16ms) ease-out both;
+}
+
+.tele-story .tele-grid {
+  gap: 0;
+}
+
+.tele-story .tele-slot {
+  grid-template-columns: 70px 24px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 32px;
+  padding-block: 1px;
+}
+
+.tele-story .tele-slot-month {
+  font-size: 15px;
+}
+
+.tele-story .tele-slot-poster {
+  width: 20px;
+}
+
+.tele-story .tele-slot-title {
+  overflow: hidden;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tele-story .tele-slot-episodes {
+  font-size: 12px;
+}
+
+.tele-story .tele-slot-text {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.tele-story .tele-slot-bar {
+  grid-column: 1 / -1;
+}
+
+/* The night's last poster behind its hour */
+.tele-story-backdrop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 310px;
+  margin: -12px -16px 0;
+  padding: 16px;
+  color: #fff;
+}
+
+.tele-story-backdrop > .tele-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.tele-story-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent 20%, rgb(22 20 15 / 0.85) 75%);
+}
+
+.tele-story-night .tele-story-piece:first-of-type {
+  position: relative;
+  z-index: 0;
+}
+
+.tele-story .tele-clock {
+  color: var(--yellow);
+  font-size: 96px;
+}
+
+.tele-story .tele-listing li {
+  grid-template-columns: 4em 28px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.tele-story .tele-listing-title {
+  font-size: 15px;
+}
+
+.tele-story-full .tele-full-poster {
+  height: 220px;
+  aspect-ratio: auto;
+}
+
+.tele-story .tele-exclusive,
+.tele-story-full > .tele-story-piece:has(> .tele-full-poster) {
+  margin-inline: -16px;
+}
+
+.tele-story-end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tele-story-end .tele-screen {
+  width: 130px;
+  margin: 0;
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.tele-story .tele-letter {
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding-block: 8px;
+}
+
+.tele-story .tele-review {
+  grid-template-columns: 76px minmax(0, 1fr);
+  padding-top: 10px;
+}
+
+.tele-story .tele-sign {
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+
+.tele-story .tele-sign svg {
+  width: 52px;
+}
+
+.tele-story .tele-reading-name {
+  font-size: 34px;
+}
+
+.tele-story .tele-reading dd {
+  font-size: 16px;
+}
+
+.tele-story-cover {
+  padding: 0;
+}
+
+.tele-story-cover .tele-cover {
+  min-height: 0;
+  height: 100%;
+  padding-top: 28px;
+}
+
+.tele-story-cover .tele-cover-lines {
+  padding-bottom: 76px;
+}
+
+.tele-story-cover .tele-cover > .tele-barcode {
+  bottom: 76px;
+}
+
+.tele-story-cover .tele-cover-title {
+  font-size: 44px;
+}
+
+.tele-cover-colophon {
+  font: 600 13px/1.2 var(--cond);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
+}
+
+.tele-sticker-rank b {
+  font-size: 44px;
+}
+
+.tele-sticker-rank sup {
+  font-size: 0.5em;
+  vertical-align: top;
+}
+
+@keyframes tele-put {
+  from { transform: translateY(-24px) scale(1.04) rotate(-1.6deg); }
+}
+
+@keyframes tele-land {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+@keyframes tele-wipe {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes tele-drop {
+  from { opacity: 0; transform: translateY(-12px) rotate(-3deg) scale(1.04); }
+}
+
+@keyframes tele-strike {
+  from { transform: scaleY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tele-story,
+  .tele-story-piece,
+  .tele-story .tele-band,
+  .tele-story-row li,
+  .tele-days .tele-days-on {
+    animation: none;
+  }
+}

@@ -1,12 +1,22 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { WRAPPED_THEME_NAMES, type WrappedTheme } from '@sensorr/sensorr'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
-import { DEFAULT_THEME, LOADERS, THEMES, THEME_COLORS } from './themes'
-import type { Art } from './themes/types'
+import { DEFAULT_THEME, LOADERS, STORIES, THEMES, THEME_COLORS } from './themes'
+import type { Art, StoryModel } from './themes/types'
+import { Stories } from './Stories'
 import { known, read, write } from './look'
 
 type At = 'start' | 'end'
+
+// A phone, or any screen narrower than a look's two facing pages, reads the stories
+const PHONE = '(max-width: 1023px)'
+const subscribe = (change: () => void) => {
+  const query = window.matchMedia(PHONE)
+  query.addEventListener('change', change)
+  return () => query.removeEventListener('change', change)
+}
+const usePhone = () => useSyncExternalStore(subscribe, () => window.matchMedia(PHONE).matches)
 
 const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => (
   <label className="theme-switch" data-at={at}>
@@ -26,7 +36,12 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   // A look chosen earlier and since turned off gives way to the one Thomas set
   const [theme, setTheme] = useState<WrappedTheme>(() => (look.choice && chosen && looks.includes(chosen) ? chosen : null) || (known(look.theme) ? look.theme : DEFAULT_THEME))
   const Theme = THEMES[theme]
+  const Story = STORIES[theme]
+  const phone = usePhone()
+  // Kept here, so a story stays the one being read when the look changes
+  const [index, setIndex] = useState(0)
   const { sheets, colophon, closed } = sheetsOf(share)
+  const stories: StoryModel[] = [...sheets, { kind: 'summary', label: `Rétrospective de ${share.name} ${share.year}` }]
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
@@ -80,13 +95,27 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     write('chosen', token, next)
   }
 
+  const choice = look.choice && looks.length > 1
+
+  if (phone && Story) {
+    const story = stories[Math.min(index, stories.length - 1)]
+    const at = index === 0 ? 'start' : index === stories.length - 1 ? 'end' : null
+    return (
+      <Stories count={stories.length} index={index} onIndex={setIndex} label={story.label} bar={choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}>
+        <Suspense fallback={null}>
+          <Story key={index} story={story} index={index} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
+        </Suspense>
+      </Stories>
+    )
+  }
+
   return (
     <>
-      {look.choice && looks.length > 1 && <Switch at="start" theme={theme} looks={looks} onChoose={choose} />}
+      {choice && <Switch at="start" theme={theme} looks={looks} onChoose={choose} />}
       <Suspense fallback={<div className="theme-loading" aria-busy="true" />}>
         <Theme share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
       </Suspense>
-      {look.choice && looks.length > 1 && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
+      {choice && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
     </>
   )
 }

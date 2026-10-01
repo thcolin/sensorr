@@ -56,6 +56,12 @@
         "value": "open sans",
         "createdAt": "2026-10-01T11:49:05.965Z",
         "reason": "Body face of DESIGN.md (libs/theme font.ts), the mails inherit the app's type system"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "source serif 4",
+        "createdAt": "2026-10-01T22:48:48.947Z",
+        "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md and CLAUDE.md: DESIGN.md does not apply to apps/wrapped; Télé's own self-hosted fonts (critique 2026-09-28T17-59-46Z, false positives)"
       }
     ]
   }

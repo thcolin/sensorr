@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 import type { WrappedTheme } from '@sensorr/sensorr'
-import type { StatesModule, ThemeProps } from './types'
+import type { StatesModule, StoryProps, ThemeProps } from './types'
 
 type Loader = () => Promise<{ default: React.ComponentType<ThemeProps> }>
 
@@ -23,6 +23,11 @@ export const STATES: Record<WrappedTheme, () => Promise<StatesModule>> = {
   videoclub: () => import('./videoclub/States'),
   scenario: () => import('./scenario/States'),
   affiche: () => import('./affiche/States'),
+}
+
+// The looks drawn as stories on a phone; any other keeps its scrolling page there
+export const STORIES: Partial<Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<StoryProps>>>> = {
+  tele: lazy(() => import('./tele/Story')),
 }
 
 export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>
