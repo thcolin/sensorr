@@ -134,6 +134,14 @@ export const Provider = ({ ...props }) => {
       }
     }), {})
 
+    const undo = (keys: string[]) => setMetadata(metadata => ({
+      ...metadata,
+      ...keys.reduce((acc, i) => ({
+        ...acc,
+        [i]: { ...(metadata[i] || {}), ...initial[i] },
+      }), {}),
+    }))
+
     const promise = new Promise(async (resolve, reject) => {
       setMetadata(metadata => ({
         ...metadata,
@@ -153,17 +161,17 @@ export const Provider = ({ ...props }) => {
         }
 
         const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovies' : 'postMovies')]({ body: changes })
-        await api.fetch(uri, params, init)
-        resolve(true)
-      } catch (err) {
-        setMetadata(metadata => ({
-          ...metadata,
-          ...Object.keys(changes).reduce((acc, i) => ({
-            ...acc,
-            [i]: { ...(metadata[i] || {}), ...initial[i] },
-          }), {}),
-        }))
+        // A movie whose release did not download comes back in `failed`, the others are written
+        const { failed = [] } = await api.fetch(uri, params, init)
 
+        if (failed.length) {
+          undo(failed.map(String))
+          reject(Object.assign(new Error(), { failed }))
+        } else {
+          resolve(true)
+        }
+      } catch (err) {
+        undo(Object.keys(changes))
         console.warn(err)
         reject(new Error())
       }
@@ -188,7 +196,7 @@ export const Provider = ({ ...props }) => {
       await toast.promise(promise, {
         loading: `Updating **${ids.length}** movies metadata...`,
         success: () => `Updated **${ids.length}** movies metadata`,
-        error: () => `Error while updating **${ids.length}** movies metadata`,
+        error: (err) => err?.failed?.length ? `**${err.failed.length}** of **${ids.length}** movies not downloaded` : `Error while updating **${ids.length}** movies metadata`,
       })
     }
   }, [setMetadata])
