@@ -3,6 +3,7 @@ import { Entities, Icon, Person, Warning } from '@sensorr/ui'
 import { jobNameOf } from '@sensorr/sensorr'
 import { emojize } from '@sensorr/utils'
 import { JobName } from '../../../components/Sensorr/JobName'
+import { JobState } from '../../../components/Sensorr/JobState'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
 import { Summary } from '../Summary'
@@ -60,7 +61,7 @@ const UIMigrateJob = ({ job, logs }) => {
           emoji='🚚'
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              <JobState job={job.job} meta={job.meta} />
               <JobName name={jobNameOf(job.meta)} sx={UIMigrateJob.styles.title} />
             </span>
           )}

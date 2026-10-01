@@ -4,6 +4,7 @@ import { emojize, filesize } from '@sensorr/utils'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
+import { JobState } from '../../../components/Sensorr/JobState'
 import Movie from '../../../components/Movie/Movie'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { sizeStateOf } from '../../Proposals/queue'
@@ -116,7 +117,7 @@ const UISyncJob = ({ job, logs }) => {
           emoji='🔗'
           title={(
             <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span sx={{ marginRight: 7 }}><Icon value={job.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+              <JobState job={job.job} meta={job.meta} />
               <JobName name={jobNameOf(job.meta)} sx={UISyncJob.styles.title} />
             </span>
           )}
