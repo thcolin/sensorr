@@ -1,6 +1,5 @@
 {
   "jsxSingleQuote": true,
-  "packageManager": "yarn",
   "printWidth": 140,
   "singleQuote": true,
   "trailingComma": "all",
