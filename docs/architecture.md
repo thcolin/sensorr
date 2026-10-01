@@ -56,6 +56,17 @@ frozen nor mailed. `lookOf` in `libs/sensorr/src/lib/wrapped.ts` gives the look 
 when the year sets none, the first look offered (`wrapped.looks`) with `look.choice` on: the friend
 then switches the look on the page and the browser keeps it.
 
+On a screen under 1024 px wide, a look listed in `STORIES` (`apps/wrapped/src/app/themes/index.ts`)
+shows the sheets as stories, one 396 × 704 page each, and each story is shared as a 1080 × 1920
+JPEG. The API draws it: `GET /api/wrapped/share/:token/cards/:look/:story`, public like the share,
+answers only for a look this friend may wear, then opens `/wrapped/<token>?card=<story>&look=<look>`
+in a headless Chromium (`apps/api/src/app/wrapped/cards.service.ts`), one card at a time, and
+captures the page once it sets `data-card="ready"`. The page lives at `NX_WRAPPED_URL`,
+`http://sensorr-web` by default, through Caddy's `http://` block; Chromium at `NX_CHROMIUM_PATH`,
+`/usr/bin/chromium` by default, installed in the API image. Cards are kept for two days in
+`$TMPDIR/sensorr-cards`, inside the container's writable layer: on the server's own disk, and gone
+when the container is recreated.
+
 **`apps/api`** is the NestJS server. It owns Mongo, `config.json`, the two blackhole
 directories and the cron schedule. Every route is behind a global JWT guard (`auth.module.ts:19`,
 `auth.guard.ts:10`); only routes marked `@Public()` escape it: guest
