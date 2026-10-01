@@ -11,7 +11,7 @@ type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
 type Page = { name: string, page: number, art: Art }
 
 // The magazine's sections, printed in the running head of each page
-const rubric = (sheet: SheetModel) => {
+export const rubric = (sheet: SheetModel) => {
   switch (sheet.kind) {
     case 'opening': return 'Couverture'
     case 'rank': return 'Audience'
@@ -73,7 +73,7 @@ const Spread = ({ sheet, name, page, left, right, tone }: { sheet: SheetModel, n
   </section>
 )
 
-const Folio = ({ name, rubric, page }: { name: string, rubric: string, page: number }) => (
+export const Folio = ({ name, rubric, page }: { name: string, rubric: string, page: number }) => (
   <p className="tele-folio" aria-hidden="true">
     <span>Télé {name}</span>
     <b>{rubric}</b>
@@ -82,7 +82,7 @@ const Folio = ({ name, rubric, page }: { name: string, rubric: string, page: num
 )
 
 // The last line, or the last word of a single line, sits on a band of colour
-const Headline = ({ lines, as: Tag = 'h2' }: { lines: string[], as?: 'h2' | 'h3' }) => {
+export const Headline = ({ lines, as: Tag = 'h2' }: { lines: string[], as?: 'h2' | 'h3' }) => {
   const words = lines.length > 1 ? lines : lines[0].split(' ')
   const head = lines.length > 1 ? lines.slice(0, -1).join(' ') : words.slice(0, -1).join(' ')
 
@@ -94,7 +94,7 @@ const Headline = ({ lines, as: Tag = 'h2' }: { lines: string[], as?: 'h2' | 'h3'
   )
 }
 
-const Photo = ({ poster, art, kind = 'thumb', width = 640, className = '', eager }: { poster: WrappedPoster, art: Art, kind?: 'thumb' | 'art', width?: 320 | 640 | 1280, className?: string, eager?: boolean }) => {
+export const Photo = ({ poster, art, kind = 'thumb', width = 640, className = '', eager }: { poster: WrappedPoster, art: Art, kind?: 'thumb' | 'art', width?: 320 | 640 | 1280, className?: string, eager?: boolean }) => {
   const src = art(poster, kind, width) || art(poster, kind === 'thumb' ? 'art' : 'thumb', width)
 
   return src
@@ -102,20 +102,20 @@ const Photo = ({ poster, art, kind = 'thumb', width = 640, className = '', eager
     : <span className={`tele-photo tele-photo-${kind} tele-photo-none ${className}`} role="img" aria-label={poster.title}><span aria-hidden="true">{poster.title}</span></span>
 }
 
-const Big = ({ value, spoken, suffix }: { value: number, spoken: string, suffix?: string }) => (
+export const Big = ({ value, spoken, suffix }: { value: number, spoken: string, suffix?: string }) => (
   <p className="tele-big">
     <span aria-hidden="true">{number.format(value)}{suffix && <sup>{suffix}</sup>}</span>
     <span className="visually-hidden">{spoken}</span>
   </p>
 )
 
-const Barcode = () => <span className="tele-barcode" aria-hidden="true"><i /></span>
+export const Barcode = () => <span className="tele-barcode" aria-hidden="true"><i /></span>
 
 // A quantity stands out with its unit: not a date, nor the digits of a name or of a title in quotes
 const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
 const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
 const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
@@ -201,7 +201,7 @@ const Rank = ({ sheet, name, page }: { sheet: Of<'rank'> } & Page) => (
 )
 
 // The ratings of the server: the first, the reader, the middle and the last, each with the hours known for it
-const Ratings = ({ sheet }: { sheet: Of<'rank'> }) => {
+export const Ratings = ({ sheet }: { sheet: Of<'rank'> }) => {
   const middle = Math.ceil(sheet.users / 2)
   const hoursOf = (rank: number) => rank === sheet.rank ? sheet.hours : rank === 1 ? sheet.max : rank === middle ? sheet.median : null
   const top = sheet.max || sheet.hours
@@ -356,7 +356,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
 }
 
 // A paragraph of the model cut at its sentences, so each can take its own place on the page
-const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
 
 // A photo with its caption and a credit line, as a magazine prints them
 // A still can carry its poster inset, so the title reads at a glance
@@ -400,7 +400,7 @@ const Gallery = <P extends WrappedPoster>({ posters, art, caption }: { posters: 
 }
 
 // Each figure on its own line, set as large as the page allows
-const Stats = ({ stats }: { stats: Stat[] }) => (
+export const Stats = ({ stats }: { stats: Stat[] }) => (
   <ul className="tele-stats">
     {stats.map((stat) => <li key={stat.unit}><b>{stat.value}</b> <span>{stat.unit}</span></li>)}
   </ul>
@@ -527,7 +527,7 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
 }
 
 // Two viewers as two circles, the titles they share where they cross
-const Venn = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
+export const Venn = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
   <div className="tele-venn">
     <p className="tele-venn-side tele-venn-you" aria-hidden="true"><b>Toi</b><span>{number.format(sides.you)}</span></p>
     <p className="tele-venn-side tele-venn-them" aria-hidden="true"><b>{name}</b>{sides.them !== null && <span>{number.format(sides.them)}</span>}</p>
@@ -536,7 +536,7 @@ const Venn = ({ name, count, spoken, sides }: { name: string, count: number, spo
 )
 
 // Each title watched at two is a reader's letter, signed with the other viewer
-const Letter = ({ poster, art, lead }: { poster: Of<'duo'>['posters'][number], art: Art, lead?: boolean }) => (
+export const Letter = ({ poster, art, lead }: { poster: Of<'duo'>['posters'][number], art: Art, lead?: boolean }) => (
   <article className={`tele-letter${lead ? ' tele-letter-lead' : ''}`}>
     <Photo poster={poster} art={art} width={lead ? 640 : 320} />
     <div>
@@ -566,7 +566,7 @@ const Duo = ({ sheet, art, ...page }: { sheet: Of<'duo'> } & Page) => {
 }
 
 // Each figure a review, with its poster
-const Review = ({ item: { what, poster, detail, when }, art, lead }: { item: Of<'posters'>['items'][number], art: Art, lead?: boolean }) => (
+export const Review = ({ item: { what, poster, detail, when }, art, lead }: { item: Of<'posters'>['items'][number], art: Art, lead?: boolean }) => (
   <article className={`tele-review${lead ? ' tele-review-lead' : ''}`}>
     <Photo poster={poster} art={art} />
     <div>
@@ -611,7 +611,7 @@ const Posters = ({ sheet, art, ...page }: { sheet: Of<'posters'> } & Page) => {
   )
 }
 
-const Sign = ({ className }: { className?: string }) => (
+export const Sign = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
     <circle cx="50" cy="50" r="46" />
     <path d="M28 64 C 34 36, 48 30, 50 50 C 52 70, 66 64, 72 36" />

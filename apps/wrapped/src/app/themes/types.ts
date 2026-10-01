@@ -13,6 +13,15 @@ export interface ThemeProps {
   art: Art
 }
 
+// A story is a sheet on its own page, or the summary that closes them and is shared for the whole year
+export type StoryModel = SheetModel | { kind: 'summary', label: string }
+
+export interface StoryProps extends ThemeProps {
+  story: StoryModel
+  // Its place among the stories, from 0
+  index: number
+}
+
 // What a look shows before the share arrives, or instead of it
 export interface NoticeProps {
   lines: string[]
