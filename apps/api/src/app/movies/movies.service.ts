@@ -124,8 +124,9 @@ export class MoviesService {
           continue
         }
 
-        const manual = posted.job === 'manual'
-        const release: ReleaseDTO = manual ? posted : (stored?.releases || []).find(({ id: releaseId }) => releaseId === posted.id)
+        const current: ReleaseDTO = (stored?.releases || []).find(({ id: releaseId }) => releaseId === posted.id)
+        const manual = posted.job === 'manual' && !current
+        const release: ReleaseDTO = manual ? posted : current
 
         if (!manual && !release?.proposal) {
           keep(posted.id, release)
@@ -161,11 +162,22 @@ export class MoviesService {
           accepted = true
 
           if (!manual) {
+            keep(release.id, { ...release, proposal: true, choice: true })
             const files = releases.filter(({ from }) => from === 'sync')
             const size = (files.length && typeof release.size === 'number') ? { accepted: release.size - files.reduce((sum, file) => sum + (file.size || 0), 0) } : {}
             await this.logsService.ammendLog({ 'meta.job': release.job, 'meta.group': id, 'meta.release.id': release.id, 'meta.release.proposal': true }, { 'meta.treated': true, 'meta.choice': true, 'meta.seen': true, 'meta.summary': { treated: 1, ...size } })
           }
         } else {
+          // Pulled before the metafile goes: an acceptance in flight keeps what it reserved
+          if (!manual) {
+            const { modifiedCount } = await this.movieModel.updateOne({ _id: id }, { $pull: { releases: { id: release.id, proposal: true } } })
+
+            if (modifiedCount !== 1) {
+              keep(release.id, (await this.movieModel.findById(id, { releases: { $elemMatch: { id: release.id } } }).lean())?.releases?.[0])
+              continue
+            }
+          }
+
           await this.sensorrService.removeRelease(release)
 
           if (!manual) {
@@ -192,15 +204,16 @@ export class MoviesService {
       updateOne: {
         filter: { _id: i },
         update: {
-          _id: i,
           ...changes[i],
+          _id: i,
+          id: Number(i),
           ...(archived.has(i) ? { archived_at: Date.now() } : {}),
           ...(changes[i].releases ? {
             releases: changes[i].releases
               .filter(release => !release.proposal || (release as ReleaseDTO & { choice?: boolean }).choice !== false)
               .map(({ proposal, choice, overdue, ...release }: ReleaseDTO & { choice?: boolean }) => ({
                 ...release,
-                ...(proposal && choice === undefined ? { proposal: true } : {}),
+                ...(proposal && typeof choice !== 'boolean' ? { proposal: true } : {}),
                 // An accepted swap names the Plex versions it replaces, for `sync` to delete once it lands.
                 // Accepting an overdue swap again starts it over.
                 ...(proposal && choice === true && SWAPS.includes(release.from) ? {
