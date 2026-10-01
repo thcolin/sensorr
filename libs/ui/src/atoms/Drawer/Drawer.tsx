@@ -126,7 +126,22 @@ const UIDrawer = ({
         dragElastic={{ top: 0, bottom: 1 }}
       >
         {device === 'mobile' && (
-          <button sx={UIDrawer.styles.knob(knobColor)} onPointerDown={(e) => controls.start(e)}></button>
+          <button
+            type='button'
+            aria-label='Close'
+            sx={UIDrawer.styles.knob(knobColor)}
+            onPointerDown={(e) => controls.start(e)}
+            onClick={async () => {
+              // A drag that did not reach the threshold ends on a click too
+              if (Math.abs(y.get()) > 2) {
+                return
+              }
+
+              await animateToggle(false)
+              preventEffectAnimation.current = true
+              close()
+            }}
+          ></button>
         )}
         <div sx={UIDrawer.styles.wrapper} style={{ opacity: !hidden ? 1 : 0 }}>
           {!hidden && children}
