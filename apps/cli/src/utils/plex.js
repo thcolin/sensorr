@@ -190,7 +190,7 @@ export const showFilesOf = (episodes, items) => {
 
   return {
     episodes: episodes.map((episode) => ({ ...episode, files: files[keyOf(episode.season_number, episode.episode_number)] || [] })),
-    unmatched: [...listed].filter((key) => !numbers.has(key)).length,
+    unmatched: [...listed].filter((key) => !numbers.has(key)).map((key) => key.split(':').map((number) => number.padStart(2, '0'))).map(([season, episode]) => `S${season}E${episode}`),
   }
 }
 

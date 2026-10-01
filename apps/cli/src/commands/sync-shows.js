@@ -250,7 +250,7 @@ const CheckSensorrShowsTask = ({ ...props }) => {
           // An emptied episode waits for the next task, which writes the losses of the whole run or none
           const changes = settled.filter(({ changed }) => changed).filter((change) => !isEmptied(change))
           const emptied = settled.filter(isEmptied)
-          unmatched += synced.unmatched
+          unmatched += synced.unmatched.length
 
           if (emptied.length) {
             losses.push({ show, changes: emptied })
@@ -264,7 +264,11 @@ const CheckSensorrShowsTask = ({ ...props }) => {
             })
             await api.fetch(uri, params, init)
             corrections.push(show.id)
-            state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata, ${unread.length} read`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched, read: unread.length } })
+            state.logger.info({ message: `🩹 Fix ${changes.length} "${show.name}" episodes files with Plex metadata, ${unread.length} read`, metadata: { ...state.metadata, group: 'corrections', show: lighten.show(show), changes: changes.length, unmatched: synced.unmatched.length, read: unread.length } })
+          }
+
+          if (synced.unmatched.length) {
+            state.logger.info({ message: `❓ ${synced.unmatched.length} Plex episodes of "${show.name}" unknown to TMDB: ${synced.unmatched.join(', ')}`, metadata: { ...state.metadata, group: 'unmatched', show: lighten.show(show), unmatched: synced.unmatched } })
           }
 
           // Refused, never banned: the proposal brings nothing Plex does not already hold
