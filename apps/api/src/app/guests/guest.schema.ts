@@ -58,6 +58,10 @@ export class Guest extends Document {
   @Prop()
   wrapped_mailed_at: number
 
+  // Set with the welcome, sent once to a guest new to Sensorr
+  @Prop()
+  welcome_mailed_at: number
+
   // The weekly mail of requests ready to watch lists what reached Plex since then
   @Prop()
   requests_mailed_at: number

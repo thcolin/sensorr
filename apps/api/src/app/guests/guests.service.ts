@@ -57,8 +57,10 @@ export class GuestsService {
     const known = await this.guestModel.exists({ email })
     // The token was just issued, it works until the next keep-in-touch says otherwise
     const guest = await this.upsertGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token, plex_token_valid: true, plex_token_checked_at: Date.now() })
+    // The status is polled, several polls of one PIN may land here: the first to write the date sends the welcome
+    const first = !known && (await this.guestModel.updateOne({ email, welcome_mailed_at: { $exists: false } }, { welcome_mailed_at: Date.now() })).modifiedCount === 1
 
-    if (!known && this.mailService.enabled('welcome')) {
+    if (first && this.mailService.enabled('welcome')) {
       this.mailService.send(email, mails.welcome({ url: this.mailService.url(), sender: this.mailService.sender(), name: guest.name, wrapped: guest.wrapped_token }))
         .catch((error) => this.logger.warn(`Welcome "${email}" not sent: ${error.message}`))
     }
@@ -99,7 +101,7 @@ export class GuestsService {
 
   // Sent from the Friends page: it goes whatever the settings and the unsubscribe link say, and counts as no reminder
   async reconnect(email: string) {
-    const guest = await this.guestModel.findOne({ email }).lean()
+    const guest = typeof email === 'string' ? await this.guestModel.findOne({ email }).lean() : null
 
     if (!guest) {
       throw new NotFoundException()

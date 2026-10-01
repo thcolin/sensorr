@@ -77,6 +77,9 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
 
 export const senderOf = (from: string) => from.match(/^\s*"?([^"<]*?)"?\s*</)?.[1] || from.split('@')[0] || 'Sensorr'
 
+// Every link of a mail is a web address: a stored value never becomes a `javascript:` or `data:` link
+const safe = (href: string) => /^https?:\/\//i.test(href) ? href : '#'
+
 const unescape = (value: string) => value.replace(/&(amp|lt|gt|quot|#39);/g, (entity, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[name]))
 
 export const escape = (value: string | number) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
@@ -92,7 +95,7 @@ function perforations() {
 
 function button(label: string, href: string, look: { background: string, color: string, font?: string } = { background: GREEN, color: '#000000' }, center = true) {
   // Outlook on Windows ignores the padding of a link, the cell holds it there and the link everywhere else
-  return `<table role="presentation" cellpadding="0" cellspacing="0"${center ? ' align="center" style="margin:0 auto"' : ''}><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(href)}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
+  return `<table role="presentation" cellpadding="0" cellspacing="0"${center ? ' align="center" style="margin:0 auto"' : ''}><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(safe(href))}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
 }
 
 function plain(href: string) {
@@ -166,7 +169,7 @@ function posters(arrivals: Arrival[]) {
     const row = arrivals.slice(index, index + 3)
     rows.push(`<tr>${[...row, ...Array(3 - row.length).fill(null)].map((arrival) => arrival ? `
       <td width="33%" valign="top" style="padding:0 6px 18px;text-align:left">
-        ${arrival.href ? `<a href="${escape(arrival.href)}" style="text-decoration:none">` : ''}
+        ${arrival.href ? `<a href="${escape(safe(arrival.href))}" style="text-decoration:none">` : ''}
         ${arrival.poster
           ? `<img src="${escape(arrival.poster)}" width="160" alt="" style="display:block;width:100%;max-width:160px;height:auto;border:0;border-radius:3px">`
           : `<div style="max-width:160px;height:180px;background:#1a1a1a;border-radius:3px"></div>`}
@@ -182,7 +185,7 @@ function posters(arrivals: Arrival[]) {
 // A busy week stays one screen of posters
 const SHOWN = 12
 
-const link = (href: string, label: string) => `<a href="${escape(href)}" style="color:#b8b8b8">${escape(label)}</a>`
+const link = (href: string, label: string) => `<a href="${escape(safe(href))}" style="color:#b8b8b8">${escape(label)}</a>`
 
 export const mails = {
   test: ({ url }: { url: string }) => layout({

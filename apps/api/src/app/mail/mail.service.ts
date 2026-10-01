@@ -59,8 +59,9 @@ export class MailService {
   }
 
   async unsubscribeOf(email: string, kind: string) {
-    const guest = await this.guestModel.findOne({ email }, { mail_token: 1 }).lean()
-    const token = guest?.mail_token || (await this.guestModel.findOneAndUpdate({ email }, { mail_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).mail_token
+    // Written only when absent: two mails sent at once to a new guest carry the same link
+    await this.guestModel.updateOne({ email, mail_token: { $exists: false } }, { mail_token: randomBytes(18).toString('base64url') })
+    const token = (await this.guestModel.findOne({ email }, { mail_token: 1 }).lean()).mail_token
     const href = `${this.url()}/api/mail/unsubscribe/${token}?kind=${kind}`
     return { href, headers: { 'List-Unsubscribe': `<${href}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }
   }

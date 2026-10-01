@@ -64,3 +64,10 @@ describe('text version', () => {
     expect(mail.text).not.toContain('&amp;')
   })
 })
+
+describe('links', () => {
+  it('turns a stored value that is not a web address into a dead link', () => {
+    const mail = mails.requests({ sender: 'Thomas', name: 'Léa', unsubscribe: 'javascript:alert(1)', arrivals: [{ title: 'Dune', detail: '2021', href: 'data:text/html,x' }] })
+    expect(mail.html).not.toMatch(/href="(javascript|data):/)
+  })
+})
