@@ -11,6 +11,7 @@ export const JOBS: { [command: string]: JobType[] } = {
   'import': ['shows'],
   'keep-in-touch': [],
   'wrapped': [],
+  'mail': [],
 }
 
 // The emoji of each job, keyed by `jobNameOf`
@@ -23,6 +24,7 @@ export const JOB_EMOJIS: { [name: string]: string } = {
   'report movies': '🚩',
   'keep-in-touch': '🍻',
   'wrapped': '🎞️',
+  'mail': '📬',
   'migrate': '🚚',
   'refresh shows': '🔌',
   'sync shows': '🔗',

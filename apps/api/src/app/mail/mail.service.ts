@@ -6,7 +6,11 @@ import { InjectModel } from '@nestjs/mongoose'
 import { createTransport } from 'nodemailer'
 import { ConfigService } from '../config/config.service'
 import { Guest as GuestDocument } from '../guests/guest.schema'
-import { Mail, senderOf } from './templates'
+import { Movie } from '../movies/movie.schema'
+import { Show } from '../shows/show.schema'
+import { Episode } from '../shows/episode.schema'
+import { Mail, mails, senderOf } from './templates'
+import { arrivalsOf } from './arrivals'
 
 // The mails a friend can stop from their own link, the ones that come back on their own
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
@@ -20,6 +24,9 @@ export class MailService {
 
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
+    @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
+    @InjectModel(Show.name) private readonly showModel: Model<Show>,
+    @InjectModel(Episode.name) private readonly episodeModel: Model<Episode>,
     private configService: ConfigService,
   ) {}
 
@@ -102,5 +109,39 @@ export class MailService {
     }
 
     this.logger.log(`Send "${mail.subject}" to "${to}"`)
+  }
+
+  // Run by the `mail` job: each friend gets what reached Plex of their requests since their last mail, nothing when nothing did
+  async mailRequests() {
+    if (!this.enabled('requests')) {
+      return { mailed: 0, friends: 0 }
+    }
+
+    const guests = await this.guestModel.find({ mail_unsubscribed: { $ne: 'requests' } }).lean()
+    let mailed = 0
+
+    for (const guest of guests) {
+      const since = guest.requests_mailed_at || 0
+      const now = Date.now()
+      const movies = await this.movieModel.find({ requested_by: guest.email, archived_at: { $gt: since } }, { title: 1, release_date: 1, poster_path: 1, archived_at: 1 }).lean()
+      const shows = await this.showModel.find({ requested_by: guest.email }, { name: 1, poster_path: 1 }).lean()
+      const episodes = shows.length ? await this.episodeModel.find({ show_id: { $in: shows.map(({ _id }) => _id) }, files_at: { $gt: since } }, { show_id: 1, season_number: 1, files_at: 1 }).lean() : []
+      const arrivals = arrivalsOf({ movies: movies as any, shows: shows as any, episodes: episodes as any })
+
+      if (!arrivals.length) {
+        continue
+      }
+
+      try {
+        const { href, headers } = await this.unsubscribeOf(guest.email, 'requests')
+        await this.send(guest.email, mails.requests({ sender: this.sender(), name: guest.name, arrivals, unsubscribe: href }), headers)
+        await this.guestModel.updateOne({ email: guest.email }, { requests_mailed_at: now })
+        mailed++
+      } catch (error) {
+        this.logger.warn(`Requests of "${guest.email}" not sent: ${error.message}`)
+      }
+    }
+
+    return { mailed, friends: guests.length }
   }
 }

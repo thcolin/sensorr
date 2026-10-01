@@ -37,6 +37,15 @@ const JobsSettings = ({ ...props }) => {
     ),
   }
 
+  const mail = {
+    disabled: !config.get('mail.host'),
+    warning: config.get('mail.host') ? null : (
+      <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
+        <strong>Warning</strong>, you need to set up Mail on dedicated <Link to='/settings/mail'>"Mail" Settings page</Link> first
+      </span>
+    ),
+  }
+
   return (
     <Body>
       <section sx={JobsSettings.styles.element}>
@@ -70,7 +79,7 @@ const JobsSettings = ({ ...props }) => {
                   <JobSettings
                     key={nameOfEntry(value)}
                     {...value}
-                    {...{ 'plex.token': plex, 'tautulli.url': tautulli }[value.requires]}
+                    {...{ 'plex.token': plex, 'tautulli.url': tautulli, 'mail.host': mail }[value.requires]}
                     running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
                     disabled={(!!value.requires && !config.get(value.requires)) || ongoing.includes(nameOfEntry(value))}
                     runJob={runJob}

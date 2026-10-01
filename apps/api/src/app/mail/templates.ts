@@ -170,6 +170,9 @@ function posters(arrivals: Arrival[]) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">${rows.join('')}</table>`
 }
 
+// A busy week stays one screen of posters
+const SHOWN = 12
+
 const link = (href: string, label: string) => `<a href="${escape(href)}" style="color:#b8b8b8">${escape(label)}</a>`
 
 export const mails = {
@@ -220,8 +223,8 @@ export const mails = {
     word: 'Ready to watch',
     greeting: `Hi ${name},`,
     title: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
-    paragraphs: [`${arrivals.length === 1 ? 'It reached' : 'They reached'} ${sender}'s Plex this week.`],
-    arrivals,
+    paragraphs: [`${arrivals.length === 1 ? 'It reached' : 'They reached'} ${sender}'s Plex this week.`, ...(arrivals.length > SHOWN ? [`And ${arrivals.length - SHOWN} more, all on Plex.`] : [])],
+    arrivals: arrivals.slice(0, SHOWN),
     action: { label: 'Watch on Plex', href: 'https://app.plex.tv' },
     foot: [`Sent by ${escape(sender)} with Sensorr, once a week when something new arrives.`, link(unsubscribe, 'Stop these mails')],
   }),

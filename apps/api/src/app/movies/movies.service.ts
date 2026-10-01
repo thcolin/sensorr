@@ -82,7 +82,16 @@ export class MoviesService {
   async upsertMovie(movie: MovieDTO): Promise<any> {
     this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
     const { [movie.id]: matched } = await this.matchPolicies({ [movie.id]: movie })
-    return this.movieModel.findByIdAndUpdate(movie.id, matched, { new: true, upsert: true })
+    const [archived] = await this.archivedNow({ [movie.id]: matched })
+    return this.movieModel.findByIdAndUpdate(movie.id, { ...matched, ...(archived ? { archived_at: Date.now() } : {}) }, { new: true, upsert: true })
+  }
+
+  // The posted movies that turn `archived`: `sync` posts the whole library each pass, a movie already archived keeps its date
+  private async archivedNow(changes: { [key: string]: { state?: string } }) {
+    const posted = Object.keys(changes).filter((id) => changes[id].state === 'archived')
+    const already = posted.length ? await this.movieModel.find({ _id: { $in: posted }, state: 'archived' }, { _id: 1 }).lean() : []
+    const kept = new Set(already.map(({ _id }) => String(_id)))
+    return posted.filter((id) => !kept.has(String(id)))
   }
 
   async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {
@@ -143,12 +152,14 @@ export class MoviesService {
       }
     }
 
+    const archived = new Set(await this.archivedNow(changes))
     const { insertedCount, modifiedCount } = await this.movieModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
         filter: { _id: i },
         update: {
           _id: i,
           ...changes[i],
+          ...(archived.has(i) ? { archived_at: Date.now() } : {}),
           ...(changes[i].releases ? {
             releases: changes[i].releases
               .filter(release => !release.proposal || (release as ReleaseDTO & { choice?: boolean }).choice !== false)

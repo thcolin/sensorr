@@ -57,6 +57,10 @@ export class Guest extends Document {
 
   @Prop()
   wrapped_mailed_at: number
+
+  // The weekly mail of requests ready to watch lists what reached Plex since then
+  @Prop()
+  requests_mailed_at: number
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest)

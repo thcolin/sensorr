@@ -33,6 +33,11 @@ export class MailController {
     return { success: true }
   }
 
+  @Post('requests')
+  async requests() {
+    return this.mailService.mailRequests()
+  }
+
   @Public()
   @Get('unsubscribe/:token')
   async confirm(@Param('token') token: string, @Query('kind') kind: string, @Res() res: Response) {

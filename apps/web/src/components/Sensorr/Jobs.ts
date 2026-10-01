@@ -39,6 +39,7 @@ export const JOB_GROUPS: { label: string, jobs: JobEntry[] }[] = [
     jobs: [
       { command: 'keep-in-touch', description: 'Goes through guests Plex watchlist: requested movies become wished, requested shows arrive not followed', options: ['cron'] },
       { command: 'wrapped', description: 'Import the Plex watch history from Tautulli and compute each friend wrapped', requires: 'tautulli.url', options: ['cron'] },
+      { command: 'mail', description: 'Mail each friend their requests that reached Plex since their last mail', requires: 'mail.host', options: ['cron'] },
     ],
   },
 ]

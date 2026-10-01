@@ -906,6 +906,22 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      postRequests: (
+        { body, init = {} }: { body: any, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'mail/requests',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
       postInvitation: (
         { body, init = {} }: { body: any, init?: any }
       ): { uri: string, params: {}, init: {} } => ({

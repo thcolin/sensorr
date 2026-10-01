@@ -49,6 +49,10 @@ export class Episode extends Document {
   ]))
   files: Record<any, any>
 
+  // When its first file reached Plex; the episodes that held one before this field never carry it
+  @Prop()
+  files_at: number
+
   @Prop({ type: String })
   release: string | null
 }

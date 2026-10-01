@@ -323,6 +323,18 @@ const schema = {
         default: true,
       },
     },
+    mail: {
+      cron: {
+        doc: 'Mail job cron, it mails each friend their requests that reached Plex since their last mail',
+        format: 'String',
+        default: '0 9 * * 1',
+      },
+      paused: {
+        doc: 'Pause Mail job',
+        format: 'Boolean',
+        default: false,
+      },
+    },
   },
   mail: {
     url: {

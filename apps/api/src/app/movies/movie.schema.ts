@@ -210,6 +210,10 @@ export class Movie extends Document {
   @Prop()
   requested_at: number
 
+  // When it turned `archived`, so reached Plex; the movies archived before this field never carry it
+  @Prop()
+  archived_at: number
+
   @Prop(raw([
     {
       id: String,
