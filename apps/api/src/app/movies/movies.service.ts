@@ -378,7 +378,7 @@ export class MoviesService {
             },
           }],
           proposal: [
-            filtered('releases.proposal'),
+            filtered('state', 'releases.proposal'),
             { $match: { state: { $nin: ['ignored'] }, 'releases.proposal': true } },
             { $group: { _id: null, count: { $sum: 1 } } },
           ],
