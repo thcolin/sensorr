@@ -62,6 +62,18 @@
         "value": "source serif 4",
         "createdAt": "2026-10-01T22:48:48.947Z",
         "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md and CLAUDE.md: DESIGN.md does not apply to apps/wrapped; Télé's own self-hosted fonts (critique 2026-09-28T17-59-46Z, false positives)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "archivo",
+        "createdAt": "2026-10-01T23:30:00.840Z",
+        "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; videoclub's own self-hosted font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "rock salt",
+        "createdAt": "2026-10-01T23:30:00.870Z",
+        "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; videoclub's own self-hosted font"
       }
     ]
   }
