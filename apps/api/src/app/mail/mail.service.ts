@@ -121,7 +121,7 @@ export class MailService {
     for (const guest of guests) {
       const since = guest.requests_mailed_at || 0
       const now = Date.now()
-      const movies = await this.movieModel.find({ requested_by: guest.email, archived_at: { $gt: since } }, { title: 1, release_date: 1, poster_path: 1, archived_at: 1 }).lean()
+      const movies = await this.movieModel.find({ requested_by: guest.email, archived_at: { $gt: since } }, { title: 1, release_date: 1, poster_path: 1, plex_url: 1, archived_at: 1 }).lean()
       const shows = await this.showModel.find({ requested_by: guest.email }, { name: 1, poster_path: 1 }).lean()
       const episodes = shows.length ? await this.episodeModel.find({ show_id: { $in: shows.map(({ _id }) => _id) }, files_at: { $gt: since } }, { show_id: 1, season_number: 1, files_at: 1 }).lean() : []
       const arrivals = arrivalsOf({ movies: movies as any, shows: shows as any, episodes: episodes as any })

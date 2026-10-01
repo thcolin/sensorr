@@ -14,7 +14,7 @@ describe('arrivalsOf', () => {
     })
 
     expect(arrivals).toEqual([
-      { title: 'Andor', detail: 'Season 2, 2 episodes', poster: 'https://image.tmdb.org/t/p/w342/andor.jpg' },
+      { title: 'Andor', detail: 'Season 2 · 2 episodes', poster: 'https://image.tmdb.org/t/p/w342/andor.jpg' },
       { title: 'Dune', detail: '2021', poster: 'https://image.tmdb.org/t/p/w342/dune.jpg' },
       { title: 'Severance', detail: '2 episodes', poster: undefined },
     ])

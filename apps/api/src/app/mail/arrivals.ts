@@ -2,7 +2,7 @@ import type { Arrival } from './templates'
 
 const POSTER = 'https://image.tmdb.org/t/p/w342'
 
-interface Movie { title: string, release_date?: string | Date, poster_path?: string, archived_at: number }
+interface Movie { title: string, release_date?: string | Date, poster_path?: string, plex_url?: string, archived_at: number }
 interface Show { _id: number, name: string, poster_path?: string }
 interface Episode { show_id: number, season_number: number, files_at: number }
 
@@ -16,7 +16,7 @@ export const arrivalsOf = ({ movies, shows, episodes }: { movies: Movie[], shows
       return own.length && {
         at: Math.max(...own.map(({ files_at }) => files_at)),
         title: show.name,
-        detail: seasons.length === 1 ? `Season ${seasons[0]}, ${plural(own.length, 'episode')}` : plural(own.length, 'episode'),
+        detail: seasons.length === 1 ? `Season ${seasons[0]} · ${plural(own.length, 'episode')}` : plural(own.length, 'episode'),
         poster: show.poster_path ? `${POSTER}${show.poster_path}` : undefined,
       }
     })
@@ -28,6 +28,7 @@ export const arrivalsOf = ({ movies, shows, episodes }: { movies: Movie[], shows
       title: movie.title,
       detail: movie.release_date ? String(new Date(movie.release_date).getFullYear()) : 'Movie',
       poster: movie.poster_path ? `${POSTER}${movie.poster_path}` : undefined,
+      ...(movie.plex_url ? { href: movie.plex_url } : {}),
     })),
     ...landed,
   ]

@@ -14,6 +14,7 @@ export interface Arrival {
   title: string
   detail: string
   poster?: string
+  href?: string
 }
 
 const FONTS = 'https://fonts.googleapis.com/css2?family=Raleway:wght@800&family=Open+Sans:ital,wght@0,400;0,600;1,600&family=Fira+Code&family=Barlow+Condensed:ital,wght@1,800&family=Big+Shoulders+Display:wght@800&family=Tilt+Neon&family=Courier+Prime:wght@700&family=Permanent+Marker&display=swap'
@@ -39,7 +40,7 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
   labo: {
     band: (year) => `
       ${perforations()}
-      <tr><td style="background:#120c08;padding:18px 26px">
+      <tr><td style="background:#2a1c12;padding:18px 26px">
         <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#ff4b1f">Rétrospective</div>
         <div style="font:800 46px/1 'Big Shoulders Display','Arial Narrow',Arial,sans-serif;color:#ffb238;padding-top:6px">${year}</div>
       </td></tr>
@@ -48,7 +49,8 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
   },
   videoclub: {
     band: (year) => `
-      <tr><td style="background:#0c0a1a;padding:40px 26px 20px">
+      ${stripe(['#ff3fa4', '#3ef2ff', '#ff3fa4'], 6)}
+      <tr><td style="background:#221a3d;padding:34px 26px 20px">
         <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#3ef2ff">Rétrospective</div>
         <div style="font:400 44px/1 'Tilt Neon','Trebuchet MS',sans-serif;color:#ff3fa4;text-shadow:0 0 6px #ff3fa4;padding-top:6px">${year}</div>
       </td></tr>`,
@@ -60,13 +62,13 @@ const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { ba
         <div style="font:700 14px/1 'Courier Prime','Courier New',monospace;color:#a3201a">Rétrospective</div>
         <div style="font:700 28px/1.2 'Courier Prime','Courier New',monospace;color:#1b1a17;padding-top:8px"><span style="background:#fff06a;padding:0 4px">${year}</span></div>
       </td></tr>`,
-    button: { background: '#1b1a17', color: '#fbfaf5', font: `700 16px/1 'Courier Prime','Courier New',monospace` },
+    button: { background: '#fbfaf5', color: '#1b1a17', font: `700 16px/1 'Courier Prime','Courier New',monospace` },
   },
   affiche: {
     band: (year) => `
       <tr><td style="background:#b8955a;padding:40px 26px 20px">
         <div style="font:600 12px/1 ${BODY};letter-spacing:2px;text-transform:uppercase;color:#241a2e">Rétrospective</div>
-        <div style="font:400 42px/1 'Permanent Marker','Comic Sans MS',cursive;color:#e9dcc0;padding-top:6px">${year}</div>
+        <div style="font:400 42px/1 'Permanent Marker',Impact,'Arial Black',sans-serif;color:#241a2e;padding-top:6px">${year}</div>
       </td></tr>
       ${stripe(['#5c4668', '#b3221a', '#5c4668'], 8)}`,
     button: { background: '#b3221a', color: '#e9dcc0' },
@@ -82,18 +84,20 @@ function stripe(colors: string[], height: number) {
 }
 
 function perforations() {
-  return stripe(Array.from({ length: 23 }, (_, index) => index % 2 ? '#f6ecd8' : '#070403'), 10)
+  const holes = Array.from({ length: 24 }, (_, index) => `<td style="background:${index % 2 ? '#f6ecd8' : '#1d130c'};width:${index % 2 ? 4 : 6}%;height:8px;line-height:8px;font-size:0">&nbsp;</td>`).join('')
+  return `<tr><td style="background:#1d130c;padding:5px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>${holes}</tr></table></td></tr>`
 }
 
 function button(label: string, href: string, look: { background: string, color: string, font?: string } = { background: GREEN, color: '#000000' }) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr><td style="background:${look.background}"><a href="${escape(href)}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
+  // Outlook on Windows ignores the padding of a link, the cell holds it there and the link everywhere else
+  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(href)}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
 }
 
 function plain(href: string) {
   return `<p style="margin:16px 0 0;font:400 13px/1.4 ${MONO};color:#808080;word-break:break-all">or open ${escape(href)}</p>`
 }
 
-function document(subject: string, rows: string) {
+function document(subject: string, rows: string, preheader = '') {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -105,10 +109,13 @@ function document(subject: string, rows: string) {
 <link rel="stylesheet" href="${FONTS}">
 </head>
 <body style="margin:0;padding:0;background:${GROUND}">
+${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">${escape(preheader)}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${GROUND}"><tr><td align="center" style="padding:24px 12px">
+<!--[if mso]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;border-collapse:collapse;background:${GROUND}">
 ${rows}
 </table>
+<!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>
 </body>
 </html>`
@@ -141,7 +148,7 @@ ${stripe(BARS, 6)}
   ${button(action.label, action.href)}
   ${plain(action.href)}
 </td></tr>
-<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;text-align:center;font:400 13px/1.5 ${BODY};color:#8c8c8c">${foot.join(' ')}</td></tr>`)
+<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;text-align:center;font:400 13px/1.5 ${BODY};color:#8c8c8c">${foot.join(' ')}</td></tr>`, paragraphs[0])
 
   const text = [greeting, title, ...paragraphs, ...(arrivals || []).map(({ title, detail }) => `- ${title}, ${detail}`), `${action.label}: ${action.href}`, foot.map((line) => line.replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '$2: $1').replace(/<[^>]+>/g, '')).join(' ')]
     .filter(Boolean)
@@ -157,10 +164,12 @@ function posters(arrivals: Arrival[]) {
     const row = arrivals.slice(index, index + 3)
     rows.push(`<tr>${[...row, ...Array(3 - row.length).fill(null)].map((arrival) => arrival ? `
       <td width="33%" valign="top" style="padding:0 6px 18px;text-align:left">
+        ${arrival.href ? `<a href="${escape(arrival.href)}" style="text-decoration:none">` : ''}
         ${arrival.poster
           ? `<img src="${escape(arrival.poster)}" width="160" alt="" style="display:block;width:100%;max-width:160px;height:auto;border:0;border-radius:3px">`
-          : `<div style="max-width:160px;padding-top:150%;background:#1a1a1a;border-radius:3px"></div>`}
+          : `<div style="max-width:160px;height:180px;background:#1a1a1a;border-radius:3px"></div>`}
         <div style="padding-top:8px;font:600 14px/1.3 ${BODY};color:#f2f2f2">${escape(arrival.title)}</div>
+        ${arrival.href ? '</a>' : ''}
         <div style="font:400 13px/1.4 ${BODY};color:#949494">${escape(arrival.detail)}</div>
       </td>` : '<td width="33%"></td>').join('')}</tr>`)
   }
@@ -179,7 +188,7 @@ export const mails = {
     picto: 'test',
     word: 'Test',
     title: 'Mail works',
-    paragraphs: ['Your friends will get their invitations, reminders and wrapped from this address.'],
+    paragraphs: ['Your friends will get their invitation, welcome, reminders, movies ready to watch and wrapped from this address.'],
     action: { label: 'Open the Mail settings', href: `${url}/settings/mail` },
     foot: ['Sent by your Sensorr from its Mail settings.'],
   }),
@@ -199,10 +208,10 @@ export const mails = {
     greeting: `Hi ${name},`,
     title: "You're all set",
     paragraphs: [
-      `Every movie you add to your Plex Watchlist now reaches ${sender}. You will get a mail when they are ready to watch.`,
-      ...(wrapped ? [`Your year on ${sender}'s Plex has its own page too, it fills up as you watch.`] : []),
+      `Every movie you add to your Plex Watchlist now reaches ${sender}. You will get a mail when your movies are ready to watch.`,
+      ...(wrapped ? [`Your year on ${sender}'s Plex has its own page too, it fills up as you watch: ${url}/wrapped/${wrapped}`] : []),
     ],
-    action: wrapped ? { label: 'Open my wrapped', href: `${url}/wrapped/${wrapped}` } : { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
+    action: { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
     foot: [`Sent by ${escape(sender)} with Sensorr.`],
   }),
   reconnect: ({ url, sender, name, reminder, unsubscribe }: { url: string, sender: string, name: string, reminder: number, unsubscribe: string }) => layout({
@@ -211,7 +220,7 @@ export const mails = {
     word: 'Reconnect',
     greeting: `Hi ${name},`,
     title: 'Reconnect your Plex account',
-    paragraphs: [`Plex disconnected your account from ${sender}'s server, so the movies you add to your Watchlist no longer reach them. Reconnect once and it works again.`],
+    paragraphs: [`Plex disconnected your account from ${sender}'s, so the movies you add to your Watchlist no longer reach them. Reconnect once and it works again.`],
     action: { label: 'Reconnect Plex', href: `${url}/keep-in-touch` },
     foot: [`Sent by ${escape(sender)} with Sensorr.`, reminder ? `Reminder ${reminder} of 3.` : '', link(unsubscribe, 'Stop these reminders')].filter(Boolean),
   }),
@@ -223,7 +232,7 @@ export const mails = {
     title: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
     paragraphs: [`${arrivals.length === 1 ? 'It reached' : 'They reached'} ${sender}'s Plex this week.`, ...(arrivals.length > SHOWN ? [`And ${arrivals.length - SHOWN} more, all on Plex.`] : [])],
     arrivals: arrivals.slice(0, SHOWN),
-    action: { label: 'Watch on Plex', href: 'https://app.plex.tv' },
+    action: { label: 'Open Plex', href: 'https://app.plex.tv' },
     foot: [`Sent by ${escape(sender)} with Sensorr, once a week when something new arrives.`, link(unsubscribe, 'Stop these mails')],
   }),
   wrapped: ({ url, sender, name, token, year, look, open = false }: { url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme, open?: boolean }): Mail => {
@@ -244,7 +253,7 @@ ${band(year)}
   <table role="presentation" cellpadding="0" cellspacing="0"><tr><td>${button('Open my wrapped', href, colors).replace('align="center" style="margin:0 auto"', '')}</td></tr></table>
   ${plain(href)}
 </td></tr>
-<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr${open ? '' : ', once a year'}.</td></tr>`)
+<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr${open ? '' : ', once a year'}.</td></tr>`, body)
     const text = [`Hi ${name},`, title, body, `Open my wrapped: ${href}`, `Sent by ${sender} with Sensorr${open ? '' : ', once a year'}.`].join('\n\n')
     return { subject, html, text }
   },
