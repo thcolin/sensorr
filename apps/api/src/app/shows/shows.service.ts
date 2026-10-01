@@ -87,8 +87,7 @@ export class ShowsService {
     }, changes)
   }
 
-  // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time.
-  // A release that fails to download stays a proposal, and its show is reported in `failed`.
+  // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)

@@ -93,7 +93,6 @@ export class MoviesService {
   }
 
   // A choice acts on the release as the database holds it, only a manual pick comes from the body.
-  // A release that fails to download stays a proposal, and its movie is reported in `failed`.
   async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {
     this.logger.log(`UpsertMovies "${Object.keys(raw)}"`)
     const changes = await this.matchPolicies(raw)
