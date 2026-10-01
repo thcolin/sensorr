@@ -35,7 +35,7 @@ export class MailController {
     }
 
     const friends = to.map((friend) => ({ email: addressOf(friend?.email), name: typeof friend?.name === 'string' && friend.name.trim() ? friend.name.trim().slice(0, 100) : undefined }))
-    return this.mailService.invite([...new Map(friends.map((friend) => [friend.email.toLowerCase(), friend])).values()])
+    return this.mailService.invite(friends.filter((friend, index) => friends.findIndex(({ email }) => email.toLowerCase() === friend.email.toLowerCase()) === index))
   }
 
   @Post('requests')
