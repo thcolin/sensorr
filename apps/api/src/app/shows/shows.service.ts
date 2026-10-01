@@ -169,7 +169,7 @@ export class ShowsService {
       return {
         updateOne: {
           filter: { _id: i },
-          update: { _id: i, ...fields },
+          update: { ...fields, _id: i, id: Number(i) },
           upsert: !!(fields.name && fields.state),
         },
       }
