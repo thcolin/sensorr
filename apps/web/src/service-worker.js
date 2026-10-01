@@ -45,10 +45,10 @@ self.addEventListener('notificationclick', function (e) {
   const url = e.notification.data?.url || '/'
 
   // An open app navigates in place, rather than loading again
-  e.waitUntil(self.clients.matchAll({ type: 'window' }).then(([client]) => {
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(([client]) => {
     if (client) {
       client.postMessage({ type: 'navigate', url })
-      return client.focus()
+      return client.focus().catch(() => self.clients.openWindow(url))
     }
 
     return self.clients.openWindow(url)
