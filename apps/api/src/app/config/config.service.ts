@@ -10,12 +10,12 @@ import config, { create } from '@sensorr/config'
 import { JOBS } from '@sensorr/sensorr'
 import { migrateJobs } from './migrate'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 
 @Injectable()
 export class ConfigService implements OnModuleInit {
   private readonly logger = new Logger(ConfigService.name)
-  private readonly file = path.resolve(`${__dirname}/../../../../../config.json`)
+  private readonly file = path.resolve(`${moduleDir}/../../../../../config.json`)
   config: any = config
 
   constructor(

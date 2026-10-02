@@ -160,6 +160,7 @@
     "prettier": "^3.9.9",
     "react-devtools": "^5.0.0",
     "ts-jest": "^29.4.9",
+    "ts-jest-mock-import-meta": "^1.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.0",

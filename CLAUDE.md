@@ -29,9 +29,9 @@ npx nx run-many --target=lint --all
 npx nx run-many --target=test --all
 ```
 
-Neither exits 0, and both reds are pre-existing: `lint` on errors that were in the code before
-ESLint actually ran, `test` on suites that already failed. A change is clean when it adds no
-new red on top of those; the project-by-project counts to compare against are in
+`test` exits 0. `lint` exits 1 on errors that were in the code before ESLint actually ran. A
+change is clean when `test` stays green and `lint` adds no error on top of those; the
+project-by-project counts to compare against are in
 [`docs/development.md`](docs/development.md#verify).
 
 ## Visual check

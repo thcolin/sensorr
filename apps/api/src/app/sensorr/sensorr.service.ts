@@ -15,8 +15,8 @@ import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
 import { lockOf } from './lock'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${__dirname}/../../../../../bin/sensorr`)
+const moduleDir = dirname(fileURLToPath(import.meta.url))
+const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${moduleDir}/../../../../../bin/sensorr`)
 
 const showTorrentOf = (buffer: Uint8Array): TorrentFiles => {
   let torrent: TorrentFiles
