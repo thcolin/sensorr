@@ -36,3 +36,22 @@ FilterKnownForDepartment.argTypes = {
     control: null,
   },
 }
+
+export const WithBadge = (args: any) => (
+  <ColorModeWrapper value='primary'>
+    <UIFilterKnownForDepartment {...args} />
+  </ColorModeWrapper>
+)
+
+WithBadge.args = {
+  ...FilterKnownForDepartment.args,
+  value: ['Acting', 'Directing', 'Writing'],
+  statistics: [
+    { _id: 'Acting', count: 123 },
+    { _id: 'Production', count: 36 },
+    { _id: 'Directing', count: 15 },
+    { _id: 'Writing', count: 13 },
+    { _id: 'Sound', count: 3 },
+  ],
+  badge: { label: 'Top 10', title: 'Acting counts a followed person billed in the first 10 of the cast', onClick: () => {} },
+}
