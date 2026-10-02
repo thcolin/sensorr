@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing'
-import { ConflictException, BadRequestException } from '@nestjs/common'
+import { ConflictException, BadRequestException, NotFoundException } from '@nestjs/common'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { UpdateService } from './update.service'
 
@@ -20,16 +20,17 @@ describe('UpdateService', () => {
     await expect(service.update('beta')).rejects.toThrow('Sensorr job "record movies" is running')
   })
 
-  it('refuses a channel it has no tag for, dev and the prototype included', async () => {
+  it('refuses a channel it has no tag for, the prototype included', async () => {
     const service = await serviceOf([])
-    await expect(service.update('dev')).rejects.toThrow(BadRequestException)
+    await expect(service.update('nightly' as any)).rejects.toThrow(BadRequestException)
     await expect(service.update('constructor' as any)).rejects.toThrow(BadRequestException)
   })
 
-  it('refuses to move an instance that follows dev', async () => {
-    process.env.NX_SENSORR_TAG = 'dev'
+  it('moves an instance onto dev, and off it', async () => {
     const service = await serviceOf([])
-    await expect(service.update('beta')).rejects.toThrow('This instance follows dev')
+    await expect(service.update('dev')).rejects.toThrow(NotFoundException)
+    process.env.NX_SENSORR_TAG = 'dev'
+    await expect(service.update('beta')).rejects.toThrow(NotFoundException)
     delete process.env.NX_SENSORR_TAG
   })
 })

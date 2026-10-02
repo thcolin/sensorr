@@ -15,7 +15,7 @@ const TTL = 15 * 60 * 1000
 @Injectable()
 export class UpdateService {
   private readonly logger = new Logger(UpdateService.name)
-  private readonly available = new Map<string, { at: number, version: Promise<{ version: string | null } | { error: string }> }>()
+  private readonly available = new Map<string, { at: number, version: Promise<{ version: string | null, revision: string | null } | { error: string }> }>()
 
   constructor(private readonly sensorrService: SensorrService) {}
 
@@ -26,14 +26,11 @@ export class UpdateService {
       return cached.version
     }
 
-    const version = versionOn(TAGS[channel]).then(
-      (version) => ({ version }),
-      (err) => {
-        this.logger.warn(`Version of "${TAGS[channel]}" on GHCR, ${err.message}`)
-        this.available.delete(channel)
-        return { error: err.message }
-      },
-    )
+    const version = versionOn(TAGS[channel]).catch((err) => {
+      this.logger.warn(`Version of "${TAGS[channel]}" on GHCR, ${err.message}`)
+      this.available.delete(channel)
+      return { error: err.message }
+    })
 
     this.available.set(channel, { at: Date.now(), version })
     return version
@@ -74,14 +71,14 @@ export class UpdateService {
 
   async status() {
     const tag = process.env.NX_SENSORR_TAG
-    const [beta, stable, updater] = await Promise.all([this.versionOf('beta'), this.versionOf('stable'), this.updaterStatus()])
+    const [beta, stable, dev, updater] = await Promise.all([this.versionOf('beta'), this.versionOf('stable'), this.versionOf('dev'), this.updaterStatus()])
 
     return {
       version: app.version,
       revision: process.env.NX_SENSORR_REVISION || null,
       tag: tag || null,
       channel: channelOf(tag),
-      channels: { beta, stable },
+      channels: { beta, stable, dev },
       updater,
     }
   }
@@ -89,10 +86,6 @@ export class UpdateService {
   async update(channel: Channel) {
     if (!Object.hasOwn(TAGS, channel)) {
       throw new BadRequestException(`Unknown channel "${channel}", expected ${Object.keys(TAGS).join(' or ')}`)
-    }
-
-    if (channelOf(process.env.NX_SENSORR_TAG) === 'dev') {
-      throw new ConflictException('This instance follows dev, set SENSORR_TAG in the env file to leave it')
     }
 
     const [job] = this.sensorrService.runningJobs()
