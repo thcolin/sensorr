@@ -101,6 +101,15 @@
         ],
         "createdAt": "2026-10-02T08:02:43.824Z",
         "reason": "scenario.css .scenario-story .scenario-figure::after is the red pencil underline under a figure (absolute, 0.34em tall, at the bottom), not a side border on a card"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "apps/web/src/pages/Settings/Update.tsx"
+        ],
+        "createdAt": "2026-10-02T16:09:12.830Z",
+        "reason": "Claude: the channel fill is position absolute, out of flow, so its width transition reflows no sibling; scaleX would squash its rounded ends"
       }
     ]
   }
