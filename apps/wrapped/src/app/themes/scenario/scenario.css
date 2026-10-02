@@ -1232,7 +1232,12 @@ html[data-theme='scenario'] {
 }
 
 .scenario-story .scenario-insert {
-  animation: scenario-clip-on 0.45s 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: scenario-clip-on 0.45s var(--mark-delay, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* A poster's row or block shows with the poster, not before it */
+.scenario-story .scenario-arrival {
+  animation: scenario-arrive 0.3s var(--mark-delay, 0.45s) ease-out backwards;
 }
 
 /* The red pencil's underline and ring, drawn over the typed figure rather than printed with it */
@@ -1271,7 +1276,7 @@ html[data-theme='scenario'] {
   transition: opacity 0.4s ease-out;
 }
 
-.scenario-story:has(.scenario-title-page:not([data-typed])) :is(.scenario-insert, .scenario-mark, .scenario-figure, .scenario-pencil-note),
+.scenario-story:has(.scenario-title-page:not([data-typed])) :is(.scenario-insert, .scenario-arrival, .scenario-mark, .scenario-figure, .scenario-pencil-note),
 .scenario-story:has(.scenario-title-page:not([data-typed])) .scenario-figure::after {
   animation-play-state: paused;
 }
@@ -1869,6 +1874,10 @@ html[data-theme='scenario'] {
 }
 
 /* Hidden until struck: a round cap would draw a dot where the stroke is still to come */
+@keyframes scenario-arrive {
+  from { opacity: 0; }
+}
+
 @keyframes scenario-pen {
   0% { stroke-dashoffset: 1; opacity: 0; }
   1% { opacity: 1; }
@@ -1892,6 +1901,7 @@ html[data-theme='scenario'] {
   .scenario-story > .scenario-page,
   .scenario-story > .scenario-page > :not(.scenario-holes, .scenario-head),
   .scenario-story .scenario-insert,
+  .scenario-story .scenario-arrival,
   .scenario-story .scenario-mark,
   .scenario-story .scenario-figure::after,
   .scenario-story .scenario-pencil-note,
