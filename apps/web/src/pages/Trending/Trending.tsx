@@ -1,5 +1,5 @@
 import { withControls, Option } from '@sensorr/ui'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
@@ -9,12 +9,10 @@ import { useShowsMetadataContext } from '../../contexts/ShowsMetadata/ShowsMetad
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
-import withFetchQuery from '../../components/enhancers/withFetchQuery'
+import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
-
-const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
 
 export const Trending = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.trending.title') : `${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),

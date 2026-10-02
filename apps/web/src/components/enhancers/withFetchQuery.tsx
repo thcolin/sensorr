@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import nanobounce from 'nanobounce'
 import toast from 'react-hot-toast'
 import { useControlsState } from '@sensorr/ui'
+import { useHistoryState } from '@sensorr/utils'
 import { API } from '@sensorr/services'
 import { TMDB } from '@sensorr/tmdb'
 
@@ -14,6 +15,8 @@ interface withFetchQueryProps {
 
 // Pages requested at once while filtered entities don't fill the grid yet
 const BATCH = 5
+
+export const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
 
 const withFetchQuery = (
   // `filters` turn a control value TMDB can't filter on into a predicate, or `null` when inactive. While

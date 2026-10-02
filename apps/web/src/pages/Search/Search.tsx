@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import nanobounce from 'nanobounce'
 import { Entities, withControls } from '@sensorr/ui'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
@@ -10,11 +10,9 @@ import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
-import withFetchQuery from '../../components/enhancers/withFetchQuery'
+import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
-
-const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
 
 export const Search = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.search.title') : `${i18n.t('pages.search.title')} ${resource}`),

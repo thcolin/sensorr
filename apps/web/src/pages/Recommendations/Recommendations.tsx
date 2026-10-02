@@ -1,18 +1,16 @@
 import { useMemo } from 'react'
 import { Entities, withControls } from '@sensorr/ui'
 import { useParams } from 'react-router-dom'
-import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
+import { compose, scrollToTop } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
 import withTitle from '../../components/enhancers/withTitle'
-import withFetchQuery from '../../components/enhancers/withFetchQuery'
+import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
-
-const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
 
 export const Recommendations = (id) => compose(
   withTitle(i18n.t('pages.recommendations.title')),
