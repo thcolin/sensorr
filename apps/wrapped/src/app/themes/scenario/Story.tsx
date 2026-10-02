@@ -1,4 +1,5 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
+import { useReducedMotion } from 'framer-motion'
 import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
 import type { Art, StoryProps } from '../types'
 import { Act, Binge, Caps, Duo, Figure, Finale, Genre, Insert, Mark, Opening, Page, Pencil, Rank, Shout, Slug, TRANSITIONS, Tally, figures, scenesOf, sentences } from './Scenario'
@@ -39,8 +40,83 @@ const Story = ({ story, index, share, sheets, colophon, art }: StoryProps) => {
 
 export default Story
 
-// The page fed out of the typewriter, then its lines typed one after the other
-const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => <div className={`scenario-story scenario-story-${kind}`}>{children}</div>
+// What the machine types: the words on the page, not the running head, the hole punches, the title page's
+// own title, nor what only a screen reader hears
+const SKIP = '.scenario-head, .scenario-holes, .scenario-title, .visually-hidden'
+const BLOCK = 'p, h2, h3, li, figcaption, footer'
+
+// Types the page key after key once it is fed in: every character is laid out from the start and only
+// shown when struck, so nothing moves under the caret; a screen reader gets each text whole
+const useTypewriter = (root: React.RefObject<HTMLElement>, off: boolean) => {
+  const reduced = useReducedMotion()
+
+  useEffect(() => {
+    const page = root.current
+
+    if (reduced || off || !page) {
+      return
+    }
+
+    const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => node.nodeValue?.trim() && !node.parentElement?.closest(SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+    })
+    const texts: Text[] = []
+    while (walker.nextNode()) texts.push(walker.currentNode as Text)
+
+    const keys: { char: HTMLSpanElement, block: Element | null }[] = []
+    const swapped = texts.map((text) => {
+      const typed = document.createElement('span')
+      typed.setAttribute('aria-hidden', 'true')
+      const heard = Object.assign(document.createElement('span'), { className: 'visually-hidden', textContent: text.nodeValue })
+      const block = text.parentElement?.closest(BLOCK) || null
+      for (const letter of text.nodeValue || '') {
+        const char = Object.assign(document.createElement('span'), { className: 'scenario-unstruck', textContent: letter })
+        typed.append(char)
+        keys.push({ char, block })
+      }
+      text.replaceWith(heard, typed)
+      return { text, heard, typed }
+    })
+
+    const caret = Object.assign(document.createElement('span'), { className: 'scenario-caret' })
+    caret.setAttribute('aria-hidden', 'true')
+    // A page in under two seconds, never slower than a quick typist
+    const pace = Math.min(24, Math.max(4, 1600 / Math.max(keys.length, 1)))
+    let at = 0
+    let timer: ReturnType<typeof setTimeout>
+    // A timer fires every few milliseconds at best: a dense page strikes several keys per tick
+    const tick = Math.max(pace, 12)
+    const strike = () => {
+      const { block } = keys[at]
+      for (let count = Math.round(tick / pace); count > 0 && at < keys.length && keys[at].block === block; count -= 1) {
+        keys[at].char.classList.remove('scenario-unstruck')
+        keys[at].char.after(caret)
+        at += 1
+      }
+      if (at < keys.length) {
+        const carriage = keys[at].block !== block ? 60 : 0
+        timer = setTimeout(strike, tick * (0.7 + Math.random() * 0.6) + carriage)
+      }
+    }
+    timer = setTimeout(strike, 500)
+
+    return () => {
+      clearTimeout(timer)
+      caret.remove()
+      swapped.forEach(({ text, heard, typed }) => {
+        heard.replaceWith(text)
+        typed.remove()
+      })
+    }
+  }, [root, reduced, off])
+}
+
+// The page fed out of the typewriter, then typed; the title page types its own title, and only that
+const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
+  const root = useRef<HTMLDivElement>(null)
+  useTypewriter(root, kind === 'opening' || kind === 'summary')
+  return <div ref={root} className={`scenario-story scenario-story-${kind}`}>{children}</div>
+}
 
 // The title page again, the friend's place among the viewers noted in red pencil and the closing note typed under it
 const Summary = ({ sheets, colophon, label, art }: { sheets: SheetModel[], colophon: Colophon, label: string, art: Art }) => {
