@@ -43,6 +43,7 @@ const Update = ({ ...props }) => {
   const current = selected === update?.channel
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = update?.revision?.slice(0, 7)
+  const pinned = update?.channel in CHANNELS && update.tag !== CHANNELS[update.channel].tag ? update.tag : null
 
   // Settings stays mounted across its pages: its answer may predate an update started here
   useEffect(() => {
@@ -154,10 +155,10 @@ const Update = ({ ...props }) => {
     }
 
     if (current) {
-      return availableOf(update) ? `Update to v${target}` : 'Up to date'
+      return availableOf(update) ? `Update to v${target}${pinned ? ', replaces your pin' : ''}` : 'Up to date'
     }
 
-    return `Switch to ${CHANNELS[selected].label.toLowerCase()}, v${target}`
+    return `Switch to ${CHANNELS[selected].label.toLowerCase()}, v${target}${pinned ? ', replaces your pin' : ''}`
   })()
 
   const ready = !!updater && !updater.error
@@ -189,6 +190,7 @@ const Update = ({ ...props }) => {
             <p sx={Update.styles.running}>
               <code>{update?.version ? `v${update.version}` : '…'}</code>
               {update?.tag && <> · <code>{update.channel}</code></>}
+              {pinned && <> · <code title='SENSORR_TAG pins this version'>{emojize('📍', pinned)}</code></>}
               {revision && <> · <code title={update.revision}>{revision}</code></>}
             </p>
           )}
