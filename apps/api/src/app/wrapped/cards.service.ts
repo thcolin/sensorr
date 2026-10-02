@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import puppeteer, { Browser, Page } from 'puppeteer-core'
+import puppeteer, { Browser, BrowserContext } from 'puppeteer-core'
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common'
 import { WRAPPED_THEME_NAMES, WRAPPED_TIME_ZONE as TIME_ZONE, WrappedTheme } from '@sensorr/sensorr'
 import { WrappedService } from './wrapped.service'
@@ -10,7 +10,7 @@ import { WrappedService } from './wrapped.service'
 // Every story is composed at 396 × 704 and shared at 1080 × 1920: whole CSS pixels at both sizes, a capture rounds to them
 const VIEWPORT = { width: 396, height: 704, deviceScaleFactor: 1080 / 396 }
 // A story's name in the address: `opening`, `figure-twin`, `summary`; the page says when it has none
-const STORY = /^[a-z]+(?:-[a-z_]+)?$/
+const STORY = /^[a-z]{1,16}(?:-[a-z_]{1,16})?$/
 // The wrapped page the browser opens, served with the API behind it: `sensorr-web` in the compose stack
 const ORIGIN = process.env.NX_WRAPPED_URL || 'http://sensorr-web'
 const CHROMIUM = process.env.NX_CHROMIUM_PATH || '/usr/bin/chromium'
@@ -20,6 +20,10 @@ const KEEP = 2 * 24 * 3600 * 1000
 // The browser closes after this long without a card to draw, Chromium holds a few hundred MB
 const IDLE = 60 * 1000
 const SHARE = 5 * 60 * 1000
+// Cards drawn at once, by one friend and in all: past it the friend is asked to try again
+const BUSY = { token: 3, all: 24 }
+// The folder never grows past this, the oldest cards go first
+const SIZE = 512 * 1024 * 1024
 
 @Injectable()
 export class CardsService implements OnModuleDestroy {
@@ -32,6 +36,7 @@ export class CardsService implements OnModuleDestroy {
   private drawing = new Map<string, Promise<Buffer>>()
   // A friend tapping through their stories asks for a card each time: their share is computed once for a while
   private shares = new Map<string, { until: number, share: ReturnType<WrappedService['share']> }>()
+  private busy = new Map<string, number>()
 
   constructor(private readonly wrappedService: WrappedService) {}
 
@@ -57,11 +62,20 @@ export class CardsService implements OnModuleDestroy {
     }
 
     if (!this.drawing.has(key)) {
+      if ((this.busy.get(token) || 0) >= BUSY.token || this.drawing.size >= BUSY.all) {
+        throw new ServiceUnavailableException()
+      }
+
+      this.busy.set(token, (this.busy.get(token) || 0) + 1)
       const drawn = this.queue.then(() => this.draw(token, look, story)).then(async (buffer) => {
         // The card is sent all the same, only the next ask draws it again
         await this.keep(file, buffer).catch((error) => this.logger.warn(`Card not kept: ${error.code || error.message}`))
         return buffer
-      }).finally(() => this.drawing.delete(key))
+      }).finally(() => {
+        this.drawing.delete(key)
+        const busy = (this.busy.get(token) || 1) - 1
+        busy ? this.busy.set(token, busy) : this.busy.delete(token)
+      })
       this.queue = drawn.catch(() => null)
       this.drawing.set(key, drawn)
     }
@@ -90,10 +104,12 @@ export class CardsService implements OnModuleDestroy {
   private async draw(token: string, look: string, story: string) {
     const url = new URL(`/wrapped/${encodeURIComponent(token)}`, ORIGIN)
     url.search = new URLSearchParams({ card: story, look }).toString()
-    let page: Page | null = null
+    let context: BrowserContext | null = null
 
     try {
-      page = await (await this.open()).newPage()
+      // A context of its own per card: nothing a friend's page stored is there for the next one
+      context = await (await this.open()).createBrowserContext()
+      const page = await context.newPage()
       // The page only reaches its own origin: its chunks, its fonts, the API and the images it relays
       await page.setRequestInterception(true)
       page.on('request', (request) => new URL(request.url()).origin === url.origin ? request.continue() : request.abort())
@@ -117,7 +133,7 @@ export class CardsService implements OnModuleDestroy {
       this.logger.warn(`Card "${look}" "${story}" failed: ${error.name} ${error.message?.split('\n')[0].replaceAll(token, '<token>').replaceAll(encodeURIComponent(token), '<token>')}`)
       throw new ServiceUnavailableException()
     } finally {
-      await page?.close().catch(() => null)
+      await context?.close().catch(() => null)
       this.sleep()
     }
   }
@@ -128,6 +144,12 @@ export class CardsService implements OnModuleDestroy {
     if (!this.browser) {
       const launched: Promise<Browser> = puppeteer.launch({
         executablePath: CHROMIUM,
+        // Through a pipe rather than a debugging port: Chromium also quits when the API does
+        pipe: true,
+        // Puppeteer's own signal handlers would keep the API from stopping on SIGTERM
+        handleSIGINT: false,
+        handleSIGTERM: false,
+        handleSIGHUP: false,
         // It only opens the wrapped page, from the compose network; Alpine's Chromium times out on its
         // first protocol call with the GPU on
         args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio'],
@@ -163,10 +185,18 @@ export class CardsService implements OnModuleDestroy {
     await writeFile(file, buffer)
     const now = Date.now()
 
-    for (const name of await readdir(FOLDER)) {
+    const files = await Promise.all((await readdir(FOLDER)).map(async (name) => {
       const path = join(FOLDER, name)
-      const { mtimeMs } = await stat(path).catch(() => ({ mtimeMs: now }))
-      now - mtimeMs > KEEP && await rm(path, { force: true })
+      const { mtimeMs, size } = await stat(path).catch(() => ({ mtimeMs: now, size: 0 }))
+      return { path, mtimeMs, size }
+    }))
+    let total = files.reduce((sum, { size }) => sum + size, 0)
+
+    for (const { path, mtimeMs, size } of files.sort((a, b) => a.mtimeMs - b.mtimeMs)) {
+      if (now - mtimeMs > KEEP || total > SIZE) {
+        await rm(path, { force: true })
+        total -= size
+      }
     }
   }
 
