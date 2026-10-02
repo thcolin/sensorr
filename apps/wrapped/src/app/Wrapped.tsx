@@ -33,6 +33,33 @@ const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, l
   </label>
 )
 
+// Another year is another page: it opens on its first sheet, and the browser's back returns to this one
+const Edition = ({ token, year, editions, compact }: { token: string, year: number, editions: number[], compact?: boolean }) => {
+  // The year chosen while its page loads; a page restored by the back button starts over from its own
+  const [pending, setPending] = useState<number | null>(null)
+
+  useEffect(() => {
+    const restored = (event: PageTransitionEvent) => event.persisted && setPending(null)
+    window.addEventListener('pageshow', restored)
+    return () => window.removeEventListener('pageshow', restored)
+  }, [])
+
+  const choose = (next: number) => {
+    setPending(next)
+    window.location.assign(`/wrapped/${encodeURIComponent(token)}/${next}`)
+  }
+
+  return (
+    <label className="theme-switch edition-switch" aria-busy={pending !== null}>
+      <span className={compact ? 'visually-hidden' : undefined}>Année</span>
+      <select name="edition" value={pending ?? year} onChange={(event) => choose(Number(event.target.value))}>
+        {[...editions].reverse().map((edition) => <option key={edition} value={edition}>{edition}</option>)}
+      </select>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
+    </label>
+  )
+}
+
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { look } = share
   // In the order of the list, whatever order the config keeps them in
@@ -57,7 +84,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
-  const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}`
+  const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}?year=${share.year}`
   const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
   // Where the switch that was used sat on screen, so the new look opens at the same place
   const anchor = useRef<{ at: At, top: number } | null>(null)
@@ -110,6 +137,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   }
 
   const choice = look.choice && looks.length > 1
+  const years = share.editions.length > 1
 
   if (card.story) {
     const story = stories.find((other) => idOf(other) === card.story)
@@ -135,7 +163,8 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
         label={story.label}
         bar={<>
           {choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}
-          <ShareImage key={idOf(story)} url={cardOf(idOf(story))} name={nameOf(idOf(story))} />
+          {years && at && <Edition token={token} year={share.year} editions={share.editions} compact={choice} />}
+          <ShareImage key={idOf(story)} url={cardOf(idOf(story))} name={nameOf(idOf(story))} compact={choice && years && !!at} />
         </>}
       >
         <Suspense fallback={null}>
@@ -147,11 +176,21 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
 
   return (
     <>
-      {choice && <Switch at="start" theme={theme} looks={looks} onChoose={choose} />}
+      {(choice || years) && (
+        <div className="theme-switches">
+          {choice && <Switch at="start" theme={theme} looks={looks} onChoose={choose} />}
+          {years && <Edition token={token} year={share.year} editions={share.editions} />}
+        </div>
+      )}
       <Suspense fallback={<div className="theme-loading" aria-busy="true" />}>
         <Theme share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
       </Suspense>
-      {choice && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
+      {(choice || years) && (
+        <div className="theme-switches">
+          {choice && <Switch at="end" theme={theme} looks={looks} onChoose={choose} />}
+          {years && <Edition token={token} year={share.year} editions={share.editions} />}
+        </div>
+      )}
       {Story && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label="Partager ma rétrospective" /></div>}
     </>
   )

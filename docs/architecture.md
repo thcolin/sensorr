@@ -46,7 +46,9 @@ the `proxify` option is set, which `apps/web/src/store/sensorr.tsx:7` sets and t
 not.
 
 **`apps/wrapped`** is the yearly wrapped a guest opens from a link, a React page served as
-static files under `/wrapped/<token>`. It has no login: the token is the access, and it reads
+static files under `/wrapped/<token>`, and `/wrapped/<token>/<year>` for one of the friend's past
+years, passed to the API as `?year=`; a year turned off or empty for this friend opens the default
+one, and the page drops the year from its address. It has no login: the token is the access, and it reads
 `GET /api/wrapped/share/:token` plus the artwork route beside it. It draws the same sheets,
 worded once in `apps/wrapped/src/app/sheets.ts`, in one of five looks under
 `apps/wrapped/src/app/themes/`, none of which follows `DESIGN.md`. Settings › Friends lists the
@@ -58,8 +60,9 @@ then switches the look on the page and the browser keeps it.
 
 On a screen under 1024 px wide, a look listed in `STORIES` (`apps/wrapped/src/app/themes/index.ts`)
 shows the sheets as stories, one 396 × 704 page each, and each story is shared as a 1080 × 1920
-JPEG. The API draws it: `GET /api/wrapped/share/:token/cards/:look/:story`, public like the share,
-answers only for a look this friend may wear, then opens `/wrapped/<token>?card=<story>&look=<look>`
+JPEG. The API draws it: `GET /api/wrapped/share/:token/cards/:look/:story?year=<year>`, public like the share,
+answers only for a look this friend may wear, then opens `/wrapped/<token>/<year>?card=<story>&look=<look>`,
+in the year the share resolved to,
 in a headless Chromium (`apps/api/src/app/wrapped/cards.service.ts`), one card at a time, three at
 most per friend, and captures the page once it sets `data-card="ready"`. The page lives at
 `NX_WRAPPED_URL`, `http://sensorr-web` by default, through Caddy's `http://` block. The Chromium is

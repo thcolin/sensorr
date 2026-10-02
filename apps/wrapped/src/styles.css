@@ -64,6 +64,14 @@ ol {
   font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
 }
 
+.theme-switches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 24px;
+  background: var(--switch-bg, #111);
+}
+
 .theme-switch select {
   appearance: none;
   border: 0;
@@ -75,6 +83,11 @@ ol {
   padding: 12px 22px 10px 2px;
   margin-right: -22px;
   cursor: pointer;
+}
+
+.edition-switch[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .theme-switch select option {
@@ -267,6 +280,16 @@ ol {
   white-space: nowrap;
 }
 
+.stories-bar .theme-switch:has(+ .edition-switch) {
+  min-width: 0;
+  margin-right: 0;
+}
+
+.stories-bar .theme-switch:has(+ .edition-switch) select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
 .stories[data-roomy] .stories-segments {
   top: auto;
   bottom: 100%;
@@ -299,6 +322,13 @@ ol {
   transition-property: scale, opacity;
   transition-duration: 0.15s;
   transition-timing-function: ease-out;
+}
+
+.stories-share[data-compact] {
+  flex-shrink: 0;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
 }
 
 .stories-share svg {

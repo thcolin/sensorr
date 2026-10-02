@@ -250,11 +250,11 @@ export class WrappedService {
     return [...new Set([...frozen, this.shownEdition()])].filter((year) => enabledOf(this.editions, year)).sort((a, b) => a - b)
   }
 
-  // The year a link opens on: the one shown now, or the last one still open when it is turned off
+  // The year a link opens on: the one it asks for, else the one shown now, or the last one still open when it is turned off
   private async openedEdition(email: string, year?: number) {
     const viewer = await this.viewerOf(email)
     const editions = viewer ? await this.editionsOf(viewer._id) : []
-    return year ? (editions.includes(year) ? year : null) : editions.includes(this.shownEdition()) ? this.shownEdition() : editions.at(-1) ?? null
+    return year && editions.includes(year) ? year : editions.includes(this.shownEdition()) ? this.shownEdition() : editions.at(-1) ?? null
   }
 
   async share(token: string, year?: number) {
