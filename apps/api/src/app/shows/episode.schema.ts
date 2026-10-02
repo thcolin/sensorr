@@ -35,6 +35,9 @@ export class Episode extends Document<number> {
   still_path: string
 
   @Prop()
+  episode_type: string
+
+  @Prop()
   monitored: boolean
 
   @Prop(raw([

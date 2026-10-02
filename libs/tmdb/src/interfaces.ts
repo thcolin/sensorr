@@ -202,6 +202,7 @@ export interface Episode {
   air_date: string | null
   runtime: number | null
   still_path: string | null
+  episode_type?: 'standard' | 'mid_season' | 'finale'
 }
 
 export interface Season {

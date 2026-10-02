@@ -61,6 +61,7 @@ export const lightenEpisodes = (season: Season, showId: number): Episode[] => se
   air_date,
   runtime,
   still_path,
+  episode_type,
 }) => ({
   id,
   show_id: showId,
@@ -71,6 +72,7 @@ export const lightenEpisodes = (season: Season, showId: number): Episode[] => se
   air_date,
   runtime,
   still_path,
+  episode_type,
 }))
 
 // TMDB caps `append_to_response` at 20 items
