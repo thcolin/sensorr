@@ -73,12 +73,13 @@ const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
     const marks = Array.from(root.current?.querySelectorAll<Element>(MARKS) || []).map((mark) => ({ mark, ...placeOf(mark) }))
     marks.sort((a, b) => Math.abs(a.top - b.top) < LINE ? a.left - b.left : a.top - b.top)
     // One timeline: a mark starts when the one before it has had its time, quicker down a list
-    let delay = FIRST
+    // On the title page the marks wait for the title, then only for the rest of the page to fade in
+    let delay = kind === 'opening' || kind === 'summary' ? 400 : FIRST
     marks.forEach(({ mark }) => {
       (mark as HTMLElement).style.setProperty('--mark-delay', `${delay}ms`)
       delay += mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
     })
-  }, [])
+  }, [kind])
 
   return <div ref={root} className={`scenario-story scenario-story-${kind}`}>{children}</div>
 }

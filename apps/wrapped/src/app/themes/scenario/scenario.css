@@ -1262,6 +1262,20 @@ html[data-theme='scenario'] {
   animation-duration: 0.55s;
 }
 
+/* The title page shows the rest of itself once its title is typed, and only then are its marks added */
+.scenario-story:has(.scenario-title-page:not([data-typed])) :is(.scenario-byline, .scenario-author, .scenario-fan, .scenario-draft, .scenario-story-close) {
+  opacity: 0;
+}
+
+.scenario-story :is(.scenario-byline, .scenario-author, .scenario-fan, .scenario-draft, .scenario-story-close) {
+  transition: opacity 0.4s ease-out;
+}
+
+.scenario-story:has(.scenario-title-page:not([data-typed])) :is(.scenario-insert, .scenario-mark, .scenario-figure, .scenario-pencil-note),
+.scenario-story:has(.scenario-title-page:not([data-typed])) .scenario-figure::after {
+  animation-play-state: paused;
+}
+
 /* The page lands typed whole; its marks are added after, one by one, in reading order (`--mark-delay`) */
 .scenario-story .scenario-mark {
   animation: scenario-swipe 0.5s var(--mark-delay, 0.9s) cubic-bezier(0.5, 0, 0.2, 1) backwards;

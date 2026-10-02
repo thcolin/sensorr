@@ -266,7 +266,7 @@ export const Opening = ({ sheet, art }: { sheet: Of<'opening'>, art: Art }) => {
   const { typed, rest, caret } = useTyped(sheet.title)
 
   return (
-    <section id="scenario-p0" className="scenario-page scenario-title-page" data-revision="white" aria-label={sheet.label}>
+    <section id="scenario-p0" className="scenario-page scenario-title-page" data-revision="white" data-typed={rest ? undefined : ''} aria-label={sheet.label}>
       <Holes brads />
       <div className="scenario-title-block">
         <h1 className="scenario-title">
