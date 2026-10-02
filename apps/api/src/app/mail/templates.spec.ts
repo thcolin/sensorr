@@ -31,7 +31,7 @@ describe('mails', () => {
   })
 
   it('writes every link in the text version too', () => {
-    const mail = mails.reconnect({ url: 'https://sensorr.example', sender: 'Thomas', name: 'Léa', reminder: 2, unsubscribe: 'https://sensorr.example/api/mail/unsubscribe/abc?kind=reconnect' })
+    const mail = mails.reconnect({ url: 'https://sensorr.example', sender: 'Thomas', service: "Living Room's Sensorr", name: 'Léa', reminder: 2, unsubscribe: 'https://sensorr.example/api/mail/unsubscribe/abc?kind=reconnect' })
     expect(mail.text).toContain('Reconnect Plex: https://sensorr.example/keep-in-touch')
     expect(mail.text).toContain('Stop these reminders: https://sensorr.example/api/mail/unsubscribe/abc?kind=reconnect')
     expect(mail.text).toContain('Reminder 2 of 3.')
@@ -48,6 +48,19 @@ describe('mails', () => {
   })
 })
 
+describe('naming', () => {
+  it('names the Sensorr that receives the wishes, and the person who sends', () => {
+    const service = "Living Room's Sensorr"
+    const reconnect = mails.reconnect({ url: 'https://sensorr.example', sender: 'Thomas', service, name: 'Léa', reminder: 0, unsubscribe: 'u' })
+    expect(reconnect.subject).toBe("Your movie wishes no longer reach Living Room's Sensorr")
+    expect(reconnect.text).toContain("Plex disconnected your account from Living Room's Sensorr, so")
+    expect(mails.welcome({ url: 'https://sensorr.example', sender: 'Thomas', service, name: 'Léa' }).text).toContain("now reaches Living Room's Sensorr.")
+    const invitation = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas', service })
+    expect(invitation.text).toContain("Living Room's Sensorr gets them for you on Thomas's Plex.")
+    expect(invitation.subject).toBe('Thomas invites you to share your movie wishes')
+  })
+})
+
 describe('mails.wrapped', () => {
   it('says the page is still filling up when sent before the edition closes', () => {
     const open = mails.wrapped({ url: 'https://sensorr.example', sender: 'Thomas', name: 'Léa', token: 'abc', year: 2026, look: 'tele', open: true })
@@ -59,13 +72,13 @@ describe('mails.wrapped', () => {
 
 describe('invitation', () => {
   it('greets a friend read from Plex by their name, escaped, and says why they got it', () => {
-    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas', name: '<b>Léa</b>' })
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas', service: "Living Room's Sensorr", name: '<b>Léa</b>' })
     expect(mail.html).toContain('Hi &lt;b&gt;Léa&lt;/b&gt;,')
     expect(mail.text).toContain('because Thomas shares their Plex with you')
   })
 
   it('says the address was typed when there is no name', () => {
-    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas' })
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: 'Thomas', service: "Living Room's Sensorr" })
     expect(mail.text).not.toContain('Hi ')
     expect(mail.text).toContain('because Thomas typed your address')
   })
@@ -73,7 +86,7 @@ describe('invitation', () => {
 
 describe('text version', () => {
   it('reads the sender as typed, without the HTML entities of the footer', () => {
-    const mail = mails.invitation({ url: 'https://sensorr.example', sender: "Tom & O'Brien" })
+    const mail = mails.invitation({ url: 'https://sensorr.example', sender: "Tom & O'Brien", service: "Tom & O'Brien's Sensorr" })
     expect(mail.text).toContain("Sent by Tom & O'Brien with Sensorr.")
     expect(mail.text).not.toContain('&amp;')
   })

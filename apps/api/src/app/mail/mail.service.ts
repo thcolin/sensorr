@@ -1,6 +1,7 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { randomBytes } from 'node:crypto'
+import fetch from 'node-fetch'
 import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
@@ -23,6 +24,8 @@ const PICTOS = path.resolve(`${moduleDir}/../../../../../dist/apps/api/assets/ma
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name)
+
+  private serverName: string | null = null
 
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
@@ -58,6 +61,29 @@ export class MailService {
 
   sender() {
     return senderOf(this.config.get('mail.from'))
+  }
+
+  // Read once from Tautulli; without it the wrapped page names no server
+  async server() {
+    const url = this.config.get('tautulli.url')
+
+    if (!this.serverName && url) {
+      const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
+      uri.search = new URLSearchParams({ apikey: this.config.get('tautulli.key'), cmd: 'get_server_friendly_name' }).toString()
+      // node-fetch errors carry the URL, so the key, and are not logged
+      const body = await fetch(uri, { signal: AbortSignal.timeout(5000) }).then((res) => res.ok ? res.json() as Promise<{ response?: { data?: unknown } }> : null).catch((error) => {
+        this.logger.warn(`Server name, Tautulli unreachable: ${error.name} ${error.code || ''}`)
+        return null
+      })
+      this.serverName = typeof body?.response?.data === 'string' ? body.response.data : null
+    }
+
+    return this.serverName
+  }
+
+  // What the mails call the Sensorr that receives the wishes: the Plex server it serves, else the sender
+  async service() {
+    return `${(await this.server()) || this.sender()}'s Sensorr`
   }
 
   async unsubscribeOf(email: string, kind: string) {
@@ -122,11 +148,12 @@ export class MailService {
   // One by one, an address the SMTP server refuses does not stop the others
   async invite(invitees: { email: string, name?: string }[]) {
     this.ready()
+    const service = await this.service()
     const results = []
 
     for (const { email, name } of invitees) {
       try {
-        await this.send(email, mails.invitation({ url: this.url(), sender: this.sender(), name }))
+        await this.send(email, mails.invitation({ url: this.url(), sender: this.sender(), service, name }))
       } catch (error) {
         this.logger.warn(`Invitation "${email}" not sent: ${error.message}`)
         results.push({ email, error: error.message })

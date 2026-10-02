@@ -73,7 +73,8 @@ export class GuestsService {
     const first = !known && (await this.guestModel.updateOne({ email, welcome_mailed_at: { $exists: false } }, { welcome_mailed_at: Date.now() })).modifiedCount === 1
 
     if (first && this.mailService.enabled('welcome')) {
-      this.mailService.send(email, mails.welcome({ url: this.mailService.url(), sender: this.mailService.sender(), name: guest.name, wrapped: guest.wrapped_token }))
+      this.mailService.service()
+        .then((service) => this.mailService.send(email, mails.welcome({ url: this.mailService.url(), sender: this.mailService.sender(), service, name: guest.name, wrapped: guest.wrapped_token })))
         .catch((error) => this.logger.warn(`Welcome "${email}" not sent: ${error.message}`))
     }
 
@@ -150,7 +151,7 @@ export class GuestsService {
 
   async mailReconnect(guest, reminder = 0) {
     const { href, headers } = await this.mailService.unsubscribeOf(guest.email, 'reconnect')
-    await this.mailService.send(guest.email, mails.reconnect({ url: this.mailService.url(), sender: this.mailService.sender(), name: guest.name, reminder, unsubscribe: href }), headers)
+    await this.mailService.send(guest.email, mails.reconnect({ url: this.mailService.url(), sender: this.mailService.sender(), service: await this.mailService.service(), name: guest.name, reminder, unsubscribe: href }), headers)
     await this.guestModel.updateOne({ email: guest.email }, { reconnect_mailed_at: Date.now() })
   }
 
