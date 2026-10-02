@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'rea
 import { WRAPPED_THEME_NAMES, type WrappedTheme } from '@sensorr/sensorr'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
-import { DEFAULT_THEME, LOADERS, STORIES, THEMES, THEME_COLORS } from './themes'
+import { DEFAULT_THEME, LOADERS, STORIES, STORY_LOADERS, THEMES, THEME_COLORS } from './themes'
 import type { Art, StoryModel } from './themes/types'
 import { Card, ShareImage, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
@@ -45,18 +45,20 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   const phone = usePhone()
   // Kept here, so a story stays the one being read when the look changes
   // In the address too, so a reload or a tab the phone dropped opens on the same story
-  const [index, setIndex] = useState(() => Math.max(0, Number(window.location.hash.slice(1)) - 1 || 0))
+  const [index, setIndex] = useState(() => Math.max(0, (Number.parseInt(window.location.hash.slice(1), 10) || 1) - 1))
   const show = (next: number) => {
     setIndex(next)
     window.history.replaceState(null, '', hrefOf(String(next + 1)))
   }
   const { sheets, colophon, closed } = sheetsOf(share)
   const stories: StoryModel[] = [...sheets, { kind: 'summary', label: `Rétrospective de ${share.name} ${share.year}` }]
+  // An address from another day can name a story this one no longer has
+  const current = Math.min(index, stories.length - 1)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
   const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}`
-  const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
+  const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
   // Where the switch that was used sat on screen, so the new look opens at the same place
   const anchor = useRef<{ at: At, top: number } | null>(null)
 
@@ -95,8 +97,8 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     const top = from.getBoundingClientRect().top
 
     try {
-      // Loaded first, so the page never shows the new look's colours without its sheet
-      await LOADERS[next]()
+      // Loaded first, so the page never shows the new look's colours without its sheet, or its stories
+      await Promise.all([LOADERS[next](), phone && STORY_LOADERS[next]?.()])
     } catch (error) {
       console.error(`Unable to load the "${next}" look`, error)
       return
@@ -123,12 +125,12 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   }
 
   if (phone && Story) {
-    const story = stories[Math.min(index, stories.length - 1)]
-    const at = index === 0 ? 'start' : index === stories.length - 1 ? 'end' : null
+    const story = stories[current]
+    const at = current === 0 ? 'start' : current === stories.length - 1 ? 'end' : null
     return (
       <Stories
         count={stories.length}
-        index={index}
+        index={current}
         onIndex={show}
         label={story.label}
         bar={<>
@@ -137,7 +139,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
         </>}
       >
         <Suspense fallback={null}>
-          <Story key={index} story={story} index={index} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
+          <Story key={current} story={story} index={current} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
         </Suspense>
       </Stories>
     )

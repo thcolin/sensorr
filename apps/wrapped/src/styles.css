@@ -311,11 +311,15 @@ ol {
   stroke-linejoin: round;
 }
 
-.stories-share:active:not(:disabled) {
+.stories-share:hover:not([aria-disabled='true']) {
+  opacity: 0.85;
+}
+
+.stories-share:active:not([aria-disabled='true']) {
   scale: 0.96;
 }
 
-.stories-share:disabled {
+.stories-share[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.6;
 }

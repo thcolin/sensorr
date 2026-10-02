@@ -26,9 +26,15 @@ export const STATES: Record<WrappedTheme, () => Promise<StatesModule>> = {
 }
 
 // The looks drawn as stories on a phone; any other keeps its scrolling page there
-export const STORIES: Partial<Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<StoryProps>>>> = {
-  tele: lazy(() => import('./tele/Story')),
+export const STORY_LOADERS: Partial<Record<WrappedTheme, () => Promise<{ default: React.ComponentType<StoryProps> }>>> = {
+  tele: () => import('./tele/Story'),
+  labo: () => import('./labo/Story'),
+  videoclub: () => import('./videoclub/Story'),
+  scenario: () => import('./scenario/Story'),
+  affiche: () => import('./affiche/Story'),
 }
+
+export const STORIES = Object.fromEntries(Object.entries(STORY_LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Partial<Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<StoryProps>>>>
 
 export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>
 

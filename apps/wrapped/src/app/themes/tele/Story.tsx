@@ -1,10 +1,10 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { animate, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
+import { MONTHS, THIN, plural, type Colophon, type SheetModel } from '../../sheets'
 import type { Art, StoryModel, StoryProps } from '../types'
 import { TestCard } from './States'
-import { Barcode, Folio, Headline, Photo, Ratings, Review, Sign, Stats, Venn, Letter, figures, rubric, sentences } from './Tele'
+import { Big, Cover, Folio, Headline, Photo, Ratings, Review, Sign, Stats, Venn, Letter, figures, rubric, sentences } from './Tele'
 import './tele.css'
 
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
@@ -16,7 +16,7 @@ const Story = ({ story, index, share, sheets, colophon, art }: StoryProps) => {
 
   switch (story.kind) {
     case 'summary': return <Summary sheets={sheets} colophon={colophon} label={story.label} {...page} />
-    case 'opening': return <Cover sheet={story} {...page} />
+    case 'opening': return <Opening sheet={story} {...page} />
     case 'rank': return <Rank sheet={story} {...page} />
     case 'streak': return <Streak sheet={story} {...page} />
     case 'months': return <Months sheet={story} {...page} />
@@ -52,12 +52,7 @@ const Count = ({ value, suffix, spoken }: { value: number, suffix?: string, spok
     }
   }, [reduced, value])
 
-  return (
-    <p className="tele-big">
-      <span aria-hidden="true">{number.format(shown)}{suffix && <sup>{suffix}</sup>}</span>
-      <span className="visually-hidden">{spoken}</span>
-    </p>
-  )
+  return <Big value={shown} suffix={suffix} spoken={spoken} />
 }
 
 const Band = ({ text }: { text: string }) => <h2 className="tele-headline"><span className="tele-band">{text}</span></h2>
@@ -83,41 +78,11 @@ const Pick = ({ poster, art, children }: { poster: WrappedPoster, art: Art, chil
   </article>
 )
 
-const Masthead = ({ name, year }: { name: string, year: number }) => (
-  <header className="tele-mast" aria-hidden="true">
-    <p className="tele-logo" style={{ '--letters': name.length + 4 } as React.CSSProperties}>Télé<span>{name}</span></p>
-    <p className="tele-issue">N°<b>{year}</b>Édition annuelle</p>
-  </header>
+const Opening = ({ sheet, name, art, sticker, colophon }: { sheet: Of<'opening'>, sticker?: ReactNode, colophon?: Colophon } & Page) => (
+  <section className="tele-story tele-story-cover" aria-label={sheet.label}>
+    <Cover sheet={sheet} name={name} art={art} sticker={sticker} colophon={colophon} />
+  </section>
 )
-
-const Cover = ({ sheet, name, art, sticker, colophon }: { sheet: Of<'opening'>, sticker?: ReactNode, colophon?: Colophon } & Page) => {
-  const [star, ...inset] = sheet.posters
-  const [lead, ...rest] = sheet.figures
-
-  return (
-    <section className="tele-story tele-story-cover" aria-label={sheet.label}>
-      <div className="tele-cover">
-        {star && <div className="tele-cover-star"><Photo poster={star} art={art} width={1280} eager /></div>}
-        <Masthead name={name} year={sheet.year} />
-        {sticker || <p className="tele-sticker" aria-hidden="true"><span>Numéro<b>spécial</b>rétro</span></p>}
-        <div className="tele-cover-lines">
-          {sheet.lede && <p className="tele-cover-lede">{sheet.lede}</p>}
-          <h1 className="tele-cover-title">{sheet.title}</h1>
-          {lead && <p className="tele-cover-line tele-cover-line-lead">{figures(lead)}</p>}
-          {rest.map((figure) => <p key={figure} className="tele-cover-line">{figures(figure)}</p>)}
-          {!!inset.length && !colophon?.short && (
-            <ul className="tele-inset">
-              {inset.map((poster) => <li key={poster.key}><Photo poster={poster} art={art} width={320} eager /></li>)}
-            </ul>
-          )}
-          {colophon?.short && <p className="tele-cover-lede">{colophon.short}</p>}
-          {colophon && <p className="tele-cover-colophon">{colophon.text}</p>}
-        </div>
-        <Barcode />
-      </div>
-    </section>
-  )
-}
 
 // The cover again, the reader's place among the viewers stuck on it
 const Summary = ({ sheets, colophon, label, ...page }: { sheets: SheetModel[], colophon: Colophon, label: string } & Page) => {
@@ -125,7 +90,7 @@ const Summary = ({ sheets, colophon, label, ...page }: { sheets: SheetModel[], c
   const rank = sheets.find((sheet): sheet is Of<'rank'> => sheet.kind === 'rank')
 
   return (
-    <Cover
+    <Opening
       sheet={{ ...opening, label }}
       {...page}
       colophon={colophon}
