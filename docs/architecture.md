@@ -375,7 +375,9 @@ to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/upd
 since GHCR sends no CORS headers to a browser, and kept 15 minutes, until the next update; and what `sensorr-updater` answers, `null`
 when its host name does not resolve, that is without the `updater` profile.
 
-The `dev` image always carries the version `dev`: only its revision tells a newer push.
+The `dev` image always carries the version `dev`: a newer push shows as a `channels.dev.revision`
+other than `revision`. Only `sensorr-api` is read: right after a push its image can be newer than
+the `sensorr-web` one, still building.
 `POST /api/update {channel}`, `beta`, `stable` or `dev`, is refused with a 409 while a job runs
 ([jobs.md](jobs.md)), with a 404 without the `updater` profile, and is otherwise forwarded to
 `sensorr-updater` as `POST /update {tag}`: `beta` and `dev` keep their name, `stable` becomes
