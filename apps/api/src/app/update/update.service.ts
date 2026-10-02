@@ -106,7 +106,16 @@ export class UpdateService {
     }
 
     this.logger.log(`Update to "${TAGS[channel]}"`)
-    await this.updater('/update', { method: 'POST', body: JSON.stringify({ tag: TAGS[channel] }) })
+    try {
+      await this.updater('/update', { method: 'POST', body: JSON.stringify({ tag: TAGS[channel] }) })
+    } catch (err) {
+      if (['ENOTFOUND', 'EAI_AGAIN'].includes(err.cause?.code || err.code)) {
+        throw new NotFoundException('No sensorr-updater, turn on the updater profile')
+      }
+
+      throw err
+    }
+
     this.available.clear()
     return { tag: TAGS[channel] }
   }
