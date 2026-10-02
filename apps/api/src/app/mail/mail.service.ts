@@ -16,9 +16,9 @@ import { Invitation } from './invitation.schema'
 
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 // `nx build api` copies `src/assets` into the bundle's folder, in dev and in the image
-const PICTOS = path.resolve(`${__dirname}/../../../../../dist/apps/api/assets/mail`)
+const PICTOS = path.resolve(`${moduleDir}/../../../../../dist/apps/api/assets/mail`)
 
 @Injectable()
 export class MailService {

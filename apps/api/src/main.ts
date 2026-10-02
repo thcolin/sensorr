@@ -7,11 +7,11 @@ import { urlencoded, json } from 'express'
 import { AppModule } from './app/app.module'
 import { OperatorsPipe } from './app/operators'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 
 async function bootstrap() {
   try {
-    const raw = await fs.readFile(path.resolve(`${__dirname}/../../../.secrets/vapid`), 'utf-8')
+    const raw = await fs.readFile(path.resolve(`${moduleDir}/../../../.secrets/vapid`), 'utf-8')
     const vapid = JSON.parse(raw)
     process.env.NX_SENSORR_VAPID_PUBLIC_KEY = vapid.publicKey
     process.env.NX_SENSORR_VAPID_PRIVATE_KEY = vapid.privateKey

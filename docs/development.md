@@ -81,7 +81,7 @@ No story throws on render: the 40 pages were opened one by one on 2026-09-18 and
 
 ## Verify
 
-Two commands are the gate, `lint` and `test`. Neither exits 0 today, and every red below is pre-existing.
+Two commands are the gate, `lint` and `test`. `test` exits 0. `lint` does not, on errors that were already in the code, counted below.
 
 ### Lint
 
@@ -117,26 +117,11 @@ Two rules make most of the errors: `@typescript-eslint/no-empty-object-type` (16
 npx nx run-many --target=test --all
 ```
 
-Exits 1. Four of the thirteen projects fail: `api`, `plex`, `tmdb` and `ui`. Jest reports 4 failed suites in `ui`, but two of those four do run and simply hold a failing test.
+Exits 0: 512 tests, none failing, measured on 2026-10-02. A change is clean when it keeps it that way.
 
-| Project | Failure |
-| --- | --- |
-| `api` | 1 suite of 3 never runs. `apps/api/src/app/sensorr/sensorr.service.spec.ts` imports `config.service.ts`, which ts-jest fails to compile: `TS1192: Module '"fs/promises"' has no default export`, `TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag`, `TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', or 'nodenext'`. `apps/api/tsconfig.spec.json` sets `"module": "commonjs"` and no `esModuleInterop`. `notifications/push.spec.ts` and `config/migrate.spec.ts` pass |
-| `tmdb` | 1 suite of 2 never runs: `libs/tmdb/src/__tests__/tmdb.spec.ts`, `TS2307: Cannot find module 'jest-fetch-mock'`, the package is not installed. `shows.spec.ts` passes |
-| `plex` | 1 suite of 2 never runs: `libs/plex/src/lib/plex.spec.ts`, `TS2724: '"./plex"' has no exported member named 'plex'. Did you mean 'Plex'?`. `reports.spec.ts` passes |
-| `ui` | 2 suites of 9 never run, and 2 tests of 7 fail, see below |
+`apps/api/jest.config.cjs` runs the API specs through `ts-jest-mock-import-meta`, which turns `import.meta.url` into the URL of the file under test, because ts-jest compiles them to CommonJS. Webpack does the same at build time: the API bundle carries the source path of each service, which is how `config.service.ts` finds `config.json` from `dist/`.
 
-Inside `ui`:
-
-| Suite or test | Failure |
-| --- | --- |
-| `atoms/Focus/Focus.spec.tsx`, `atoms/Picture/Picture.spec.tsx` | `SyntaxError: Cannot use import statement outside a module`, from `node_modules/query-string/index.js`, which is ESM and left untransformed, reached through `libs/tmdb/src/tmdb.ts:1` |
-| `State › should render successfully` (`components/Person/State/State.spec.tsx`) | `Element type is invalid ... but got: undefined` |
-| `Link › should render successfully` (`atoms/Link/Link.spec.tsx`) | `TypeError: Cannot destructure property 'basename' ... as it is null`, the component is rendered outside a router |
-
-A change is clean when it adds no new red on top of those.
-
-A red missing from this list is not pre-existing until it survives a `yarn install`. A `node_modules` behind `yarn.lock` fails tests that pass on the locked versions, and a worktree that links the main checkout's `node_modules` inherits it. On 2026-09-29, oleoo 2.0.4 installed in place of the locked 3.1.1 failed 22 tests of `libs/sensorr/src/lib/show.spec.ts` and `drops a result oleoo refuses to parse and keeps the others` in `znab.spec.ts`. Both suites pass on 3.1.1.
+A new red is not real until it survives a `yarn install`. A `node_modules` behind `yarn.lock` fails tests that pass on the locked versions, and a worktree that links the main checkout's `node_modules` inherits it. On 2026-09-29, oleoo 2.0.4 installed in place of the locked 3.1.1 failed 22 tests of `libs/sensorr/src/lib/show.spec.ts` and `drops a result oleoo refuses to parse and keeps the others` in `znab.spec.ts`. Both suites pass on 3.1.1.
 
 ### Build
 

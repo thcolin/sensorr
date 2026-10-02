@@ -1,13 +1,26 @@
+const { pathToFileURL } = require('url')
+
 module.exports = {
   displayName: 'api',
   preset: '../../jest.preset.js',
-  globals: {
-    'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
-  },
   transform: {
-    '^.+\\.[tj]s$': 'ts-jest',
+    '^.+\\.[tj]s$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+        diagnostics: { ignoreCodes: [1343] },
+        astTransformers: {
+          before: [
+            {
+              path: 'ts-jest-mock-import-meta',
+              options: { metaObjectReplacement: { url: ({ fileName }) => pathToFileURL(fileName).href } },
+            },
+          ],
+        },
+      },
+    ],
   },
-  transformIgnorePatterns: ['node_modules/(?!(oleoo|nanoid)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(oleoo|nanoid|node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill)/)'],
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/api',
   testEnvironment: 'node',
