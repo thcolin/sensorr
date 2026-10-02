@@ -4,7 +4,7 @@ Running Sensorr from a clone, and changing it. To run Sensorr as a user, follow 
 
 ## Prerequisites
 
-**Node 18.** Nothing in the repo pins a version: `package.json` has no `engines` field and there is no `.nvmrc`. Node 18 is what the images build on, `apps/api/Dockerfile:1` and `apps/web/Dockerfile:1` both start from `node:18-alpine`, so it is the version Sensorr is known to run on. For the CLI it is a requirement, see [`bin/sensorr` needs Node 18](#binsensorr-needs-node-18).
+**Node 24 or later.** `apps/api/package.json` and `apps/cli/package.json` require it in their `engines`, and the API specs need 24.9 for Jest's ESM support (see [Test](#test)). The images run Node 26, `apps/api/Dockerfile:1` and `apps/web/Dockerfile:1` start from `node:26-alpine`. The root `package.json` pins nothing and there is no `.nvmrc`.
 
 **Yarn 1.** `yarn.lock` is a v1 lockfile and there is no `packageManager` field, so nothing stops `npm install` from ignoring it. Install with yarn.
 
@@ -51,18 +51,14 @@ bin/sensorr record movies
 
 `bin/sensorr` runs the last build and not the working tree ([architecture.md](architecture.md#how-the-api-runs-the-cli)). A job about one media type takes it as its argument: `record`, `refresh` and `sync` take `movies` or `shows`, `refine`, `shrink` and `report` take `movies`, `airing` and `import` take `shows`. A type the command does not handle is refused with the list it accepts. `keep-in-touch` takes none. `migrate <archive>` imports a legacy dump and `migrate sonarr --url <Sonarr URL>` the series of a Sonarr server. An unknown command, `record-shows` among them, fails with `Unknown command`. Each one signs into the API and loads the configuration from it, so the API has to be up and `NX_SENSORR_USERNAME` / `NX_SENSORR_PASSWORD` set.
 
-#### `bin/sensorr` needs Node 18
-
-`bin/sensorr:3` runs `node --experimental-specifier-resolution=node`, and the bundle keeps extensionless imports of packages that have no `exports` map, `stream-json/jsonl/Parser` from `apps/cli/src/commands/migrate.js` among them. Node 19 removed what that flag did. Node 24 still accepts the flag and ignores it, so every command fails at load, before its first line, with `ERR_MODULE_NOT_FOUND` and `Did you mean to import "stream-json/jsonl/Parser.js"?`. Run the CLI on Node 18, like the images.
-
-A local API spawns the same wrapper, so on Node 24 its jobs fail the same way: the child exits without printing the job id, and `POST /api/jobs` fails with `exited (1) before it started` (`runProcess` in `apps/api/src/app/sensorr/sensorr.service.ts`).
+The bundle keeps its packages as ESM imports, and Node resolves an ESM import only with its extension: a deep import of a package without an `exports` map, such as `stream-json/jsonl/parser.js` in `apps/cli/src/commands/migrate.js`, spells out its `.js` and its exact case.
 
 ### `nx run wrapped:serve`
 
 Serves the wrapped, the « Rétrospective » of its French copy, on **http://localhost:4230/wrapped/<token>**. Requests to `/api` go through `apps/wrapped/proxy.conf.json` to `http://localhost:4300`, a local `yarn api`; `--proxyConfig=<file>` points them elsewhere. The page has nothing to show until that API holds a Tautulli import, and Cortex has none before the wrapped ships, so run it on a local stack:
 
 1. Mongo as a replica set, empty, and `yarn api` against it, with `tautulli.url` and `tautulli.key` in the local `config.json` (the key is a secret, never commit it).
-2. `nx build cli`, then `bin/sensorr wrapped` on Node 18: about 30 minutes the first time for the whole history, a few seconds after.
+2. `nx build cli`, then `bin/sensorr wrapped`: about 30 minutes the first time for the whole history, a few seconds after.
 3. A guest whose email is a Tautulli user's, then **Copy link** in the chevron menu of their row on Settings › Friends, or `POST /api/wrapped/tokens` with that email.
 
 On a screen under 1024 px wide, a look that has stories (Télé for now, `STORIES` in `apps/wrapped/src/app/themes/index.ts`) shows them in place of the scrolling page. Each story is composed at 396 × 704 and shared as a 1080 × 1920 JPEG, drawn by the API: `GET /api/wrapped/share/<token>/cards/<look>/<story>` opens `/wrapped/<token>?card=<story>&look=<look>` in a headless Chromium (`apps/api/src/app/wrapped/cards.service.ts`) and keeps the image in `$TMPDIR/sensorr-cards` for the day. The API finds that page at `NX_WRAPPED_URL`, `http://sensorr-web` by default. In the compose stack it drives the `sensorr-chromium` container through `NX_CHROMIUM_URL`; locally, leave that variable out and point `NX_CHROMIUM_PATH` at a Chromium the API launches itself. Start the API with `NX_WRAPPED_URL=http://localhost:4230` and `NX_CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`, and `nx run wrapped:serve` alongside. The Mac's Chrome paints the Affiche with the GPU; the container does it in software, as on the server.
@@ -111,7 +107,7 @@ A new red is not real until it survives a `yarn install`. A `node_modules` behin
 npx nx build web
 ```
 
-Not part of the gate, and the only one of the three that exits 0. It writes a 7.5 MB `dist/apps/web`, measured on 2026-09-25 with the Shows section in, which is the figure to compare a bundle change against. `npx nx build api`, `npx nx build cli` and `npx nx build wrapped` exit 0 as well.
+Not part of the gate; it exits 0. It writes a 7.9 MB `dist/apps/web`, measured on 2026-10-02, which is the figure to compare a bundle change against. `npx nx build api`, `npx nx build cli` and `npx nx build wrapped` exit 0 as well.
 
 ## Project layout
 
