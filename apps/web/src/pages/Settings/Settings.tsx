@@ -41,7 +41,7 @@ const Settings = ({ ...props }) => {
   useEffect(() => {
     const callback = async () => {
       try {
-        const res = await fetch('https://raw.githubusercontent.com/thcolin/sensorr/master/package.json')
+        const res = await fetch('https://raw.githubusercontent.com/thcolin/sensorr/main/package.json')
         const data = await res.json()
         setRemoteApp(data)
         const updateAvailable = semver.gt(data.version, SENSORR_VERSION)
