@@ -61,6 +61,17 @@ describe('naming', () => {
   })
 })
 
+describe('mails.reconnected', () => {
+  it('says the wishes arrive again, with no unsubscribe link', () => {
+    const mail = mails.reconnected({ sender: 'Thomas', service: "Living Room's <Sensorr>", name: 'Léa' })
+    expect(mail.subject).toBe("Your movie wishes reach Living Room's <Sensorr> again")
+    expect(mail.html).toContain('Living Room&#39;s &lt;Sensorr&gt; again.')
+    expect(mail.text).toContain('Open my Watchlist: https://app.plex.tv/desktop/#!/watchlist')
+    expect(mail.text).not.toContain('unsubscribe')
+    expect(mail.picto).toBe('reconnect')
+  })
+})
+
 describe('mails.wrapped', () => {
   it('says the page is still filling up when sent before the edition closes', () => {
     const open = mails.wrapped({ url: 'https://sensorr.example', sender: 'Thomas', name: 'Léa', token: 'abc', year: 2026, look: 'tele', open: true })

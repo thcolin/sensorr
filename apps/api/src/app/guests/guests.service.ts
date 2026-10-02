@@ -68,7 +68,7 @@ export class GuestsService {
     }
 
     // The token was just issued, it works until the next keep-in-touch says otherwise
-    const guest = await this.upsertGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token, plex_token_valid: true, plex_token_checked_at: Date.now() })
+    const { updated: guest, reconnected } = await this.writeGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token, plex_token_valid: true, plex_token_checked_at: Date.now() })
     // The status is polled, several polls of one PIN may land here: the first to write the date sends the welcome
     const first = !known && (await this.guestModel.updateOne({ email, welcome_mailed_at: { $exists: false } }, { welcome_mailed_at: Date.now() })).modifiedCount === 1
 
@@ -76,6 +76,13 @@ export class GuestsService {
       this.mailService.service()
         .then((service) => this.mailService.send(email, mails.welcome({ url: this.mailService.url(), sender: this.mailService.sender(), service, name: guest.name, wrapped: guest.wrapped_token })))
         .catch((error) => this.logger.warn(`Welcome "${email}" not sent: ${error.message}`))
+    }
+
+    // Only a friend who links again gets it: a token keep-in-touch finds working again sends nothing
+    if (reconnected && this.mailService.enabled('reconnect')) {
+      this.mailService.service()
+        .then((service) => this.mailService.send(email, mails.reconnected({ sender: this.mailService.sender(), service, name: guest.name })))
+        .catch((error) => this.logger.warn(`Reconnected "${email}" not sent: ${error.message}`))
     }
 
     return { done: true }
@@ -125,16 +132,26 @@ export class GuestsService {
   }
 
   async upsertGuest(guest): Promise<any> {
+    return (await this.writeGuest(guest)).updated
+  }
+
+  // The previous state is read by the write itself: of two polls of one PIN, only one sees the reconnection
+  private async writeGuest(guest) {
     this.logger.log(`UpsertGuest "${guest.email}"`)
-    const previous = await this.guestModel.findOne({ email: guest.email }).lean()
+    const previous = await this.guestModel.findOneAndUpdate({ email: guest.email }, guest, { returnDocument: 'before', upsert: true }).lean()
     const reconnected = guest.plex_token_valid === true && previous?.plex_token_valid === false
-    const updated = await this.guestModel.findOneAndUpdate({ email: guest.email }, { ...guest, ...(reconnected ? { reconnect_mails: 0, reconnect_mailed_at: null } : {}) }, { returnDocument: 'after', upsert: true }).lean()
+
+    if (reconnected) {
+      await this.guestModel.updateOne({ email: guest.email }, { reconnect_mails: 0, reconnect_mailed_at: null })
+    }
+
+    const updated = await this.guestModel.findOne({ email: guest.email }).lean()
 
     if (guest.plex_token_valid === false && previous && this.mailService.enabled('reconnect') && !updated.mail_unsubscribed?.includes('reconnect')) {
       await this.remind(updated).catch((error) => this.logger.warn(`Reconnect "${guest.email}" not sent: ${error.message}`))
     }
 
-    return updated
+    return { updated, reconnected }
   }
 
   // Keep-in-touch calls this on every pass of a dead token

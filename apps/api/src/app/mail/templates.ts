@@ -230,6 +230,16 @@ export const mails = {
     action: { label: 'Reconnect Plex', href: `${url}/keep-in-touch` },
     foot: [`Sent by ${escape(sender)} with Sensorr.`, reminder ? `Reminder ${reminder} of 3.` : '', link(unsubscribe, 'Stop these reminders')].filter(Boolean),
   }),
+  reconnected: ({ sender, service, name }: { sender: string, service: string, name: string }) => layout({
+    subject: `Your movie wishes reach ${service} again`,
+    picto: 'reconnect',
+    word: 'Reconnected',
+    greeting: `Hi ${name},`,
+    title: "You're reconnected",
+    paragraphs: [`Every movie you add to your Plex Watchlist reaches ${service} again.`],
+    action: { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
+    foot: [`Sent by ${escape(sender)} with Sensorr.`],
+  }),
   requests: ({ sender, name, arrivals, unsubscribe }: { sender: string, name: string, arrivals: Arrival[], unsubscribe: string }) => layout({
     subject: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
     picto: 'requests',

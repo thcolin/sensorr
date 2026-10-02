@@ -10,7 +10,7 @@ import Body from '../../layout/Body/Body'
 
 const SENT = [
   { key: 'welcome', emoji: '👋', label: 'Welcome', description: 'Once a friend links their Plex account' },
-  { key: 'reconnect', emoji: '🔌', label: 'Reconnect', description: 'When Plex disconnects a friend, then up to 3 weekly reminders' },
+  { key: 'reconnect', emoji: '🔌', label: 'Reconnect', description: 'When Plex disconnects a friend, then up to 3 weekly reminders, and once they reconnect' },
   { key: 'requests', emoji: '🍿', label: 'Ready to watch', description: 'The requests of a friend that reached Plex, on each run of the 📬 Mail job' },
   { key: 'wrapped', emoji: '🎞️', label: 'Wrapped', description: 'When an edition of the wrapped freezes' },
 ]
