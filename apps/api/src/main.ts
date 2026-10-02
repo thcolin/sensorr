@@ -1,8 +1,10 @@
+import 'reflect-metadata'
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import { ExpressAdapter } from '@nestjs/platform-express'
 import { urlencoded, json } from 'express'
 import { AppModule } from './app/app.module'
 import { OperatorsPipe } from './app/operators'
@@ -20,7 +22,7 @@ async function bootstrap() {
     Logger.warn('Unable to load VAPID keys, web-push feature disabled')
   }
 
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule, new ExpressAdapter())
   const globalPrefix = 'api'
   app.setGlobalPrefix(globalPrefix)
   app.useGlobalPipes(new OperatorsPipe())
