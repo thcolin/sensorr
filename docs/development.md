@@ -129,7 +129,7 @@ Measured on 2026-10-02. Each stays below its latest major until the reason goes 
 
 ## Project layout
 
-`apps/` holds `api`, `web`, `wrapped`, `cli` and `db`. What each one owns is in [architecture.md](architecture.md#containers).
+`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `updater`. What each one owns is in [architecture.md](architecture.md#containers).
 
 `libs/` holds `config` (the schema of `config.json`), `tmdb` and `plex` (the two external clients), `sensorr` (release parsing and policy scoring), `services`, `ui` (the shared components), `theme` and `palette`, `i18n` (English and French) and `utils`.
 

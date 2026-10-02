@@ -34,7 +34,7 @@ qBittorrent's `.!qB` suffix on an incomplete file and the sizes the `.torrent` a
 
 ## Containers
 
-Four applications and a database.
+Five applications and a database.
 
 **`apps/web`** is a React PWA, served as static files. Talks to the API over HTTP under
 `/api`, with a JWT in the `Authorization` header, and keeps Server-Sent Events streams open
@@ -81,6 +81,10 @@ itself.
 the API and load the configuration from it (`apps/cli/src/utils/command.js:9-13`), and
 importing its logger opens a Mongo connection at module load
 (`apps/cli/src/store/logger.js:5`).
+
+**`apps/updater`** is one Node file without dependencies, `apps/updater/src/main.mjs`, run by
+`sensorr-updater`. It holds the Docker socket and moves the stack to another image tag on
+`sensorr-api`'s request, see [The updater](#the-updater).
 
 **`apps/db`** is a `mongo:8.0` image with a replacement entrypoint. It is the only
 container that is not an Nx project: it has no `project.json`, Docker builds it and
@@ -306,14 +310,15 @@ authenticated caller can use the API as an open forwarder. The TODO is in the co
 
 ## Deployment
 
-One `docker compose up` on a self-hosted server. `docker-compose.yml` defines four
-services.
+One `docker compose up` on a self-hosted server. `docker-compose.yml` defines five
+services, `sensorr-updater` only under the `updater` profile.
 
 | Service | Image | Built from | Boundary it owns |
 | --- | --- | --- | --- |
 | `sensorr-web` | `ghcr.io/thcolin/sensorr-web` | `apps/web/Dockerfile`, where `node:26-alpine` builds the PWA and the wrapped page, and `caddy:2.11.4` serves them | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300`, serves `/wrapped/*` from the wrapped build with its own `index.html`, and falls back to the PWA's `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-25`) |
 | `sensorr-api` | `ghcr.io/thcolin/sensorr-api` | `apps/api/Dockerfile`, which builds **both** the api and the cli bundles and copies `dist/` and `bin/` into the runtime stage | Mongo, `config.json`, `.secrets/`, the blackhole and the shows directory, the last four mounted as volumes |
 | `sensorr-chromium` | `chromedp/headless-shell`, pinned | pulled, not built | Debian's Chromium, whose software WebGL paints the Affiche's posters (Alpine's has none); the API drives it over the DevTools protocol on port `9222`. No secret, no volume, a 1 GB memory limit, and only the `cards` network, `internal`, shared with `sensorr-web` and `sensorr-api`: it reaches the wrapped page and nothing outside |
+| `sensorr-updater` | `ghcr.io/thcolin/sensorr-updater` | `apps/updater/Dockerfile`, `node:26-alpine` with the Docker CLI and its compose plugin | the Docker socket, mounted from the host; no port, and only the `updater` network, `internal`, shared with `sensorr-api`. See [The updater](#the-updater) |
 | `sensorr-db` | `ghcr.io/thcolin/sensorr-db` | `apps/db/Dockerfile`, `mongo:8.0` with the replica set entrypoint | the data, under `./db` |
 
 The shows directory is one volume and not three, for the hard link, see
@@ -329,7 +334,7 @@ The API image builds the CLI because the API spawns it
 
 ### Images
 
-`.github/workflows/ci.yml` builds the three Sensorr images once a push to `dev`, a
+`.github/workflows/ci.yml` builds the four Sensorr images once a push to `dev`, a
 `vX.Y.Z-beta.N` tag or a `vX.Y.Z` tag has passed lint, test and the production build. A tag
 first goes through `tools/release/check-tag.mjs`, which refuses it unless it matches the
 `package.json` version and tags `dev` for a beta, `main` for a stable release. The steps of a
@@ -357,6 +362,37 @@ docker compose --env-file <env file> up -d sensorr-api sensorr-web
 Recreating `sensorr-api` kills a running job, see
 [How the API runs the CLI](#how-the-api-runs-the-cli). The `build:` blocks stay in
 `docker-compose.yml` for a build from a clone, `docker compose build`.
+
+### The updater
+
+Settings › Update reads `GET /api/update` (`apps/api/src/app/update/update.service.ts`): the
+running version, from the root `package.json`; the tag, from `NX_SENSORR_TAG`, which compose sets
+to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/update/update.ts`,
+`dev` for `dev` and `sha-` tags); the version each channel offers, the version label of
+`sensorr-api:beta` and `sensorr-api:latest` read on GHCR with an anonymous token and kept 15 minutes,
+because GHCR sends no CORS headers to a browser; the running jobs; and what `sensorr-updater` answers,
+`null` when its host name does not resolve, that is without the `updater` profile.
+
+`POST /api/update {channel}` is refused with a 409 while a job runs, then forwarded to
+`sensorr-updater` as `POST /update {tag}`, `beta` or `latest`. Both sides read the secret in
+`.secrets/updater`, which `apps/api/docker-entrypoint.sh` generates on first boot; `sensorr-updater`
+mounts `.secrets/` read-only.
+
+`sensorr-updater` does not recreate the services itself, since it is one of them. It starts
+`sensorr-updater-run`, a container of its own image with the Docker socket, no network, and the
+project's folders mounted at their host paths: the working directory, the env file and the compose
+files compose wrote in the labels of `sensorr-updater` (`com.docker.compose.project.*`). That
+container rewrites every `SENSORR_TAG=` line of the env file (`withTag`), then runs `docker compose
+pull` and `up -d` on `sensorr-api`, `sensorr-web` and `sensorr-updater`, under the same project name
+and the `updater` profile. It is removed by the next update only, so its logs and exit code stay:
+`GET /status` reports them, and the page stops waiting on a non-zero exit. The page reloads once
+`/api/update` answers with the version it waited for, and gives up after five minutes.
+
+The boundary is the Docker socket: whoever reaches `sensorr-updater` with the secret controls every
+container of the host. So it publishes no port, sits on a network with no way out that only
+`sensorr-api` joins, and only takes `beta` or `latest`. It leaves `sensorr-db` alone, but the image
+of `sensorr-db` follows `SENSORR_TAG` too: the next `docker compose up -d` recreates it on the new
+tag. A Mongo major goes through its FCV by hand, see [Upgrading Mongo](#upgrading-mongo).
 
 ### Upgrading Mongo
 

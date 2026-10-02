@@ -144,6 +144,18 @@ To pin a version, set it in `.env`, for example `SENSORR_TAG=1.0.0`. `SENSORR_TA
 
 Until `v1.0.0` is tagged, no `latest` image exists: set `SENSORR_TAG=dev` in `.env` before `docker compose up -d`.
 
+## Update from the app
+
+Settings › Update shows the version that runs and the one each channel offers, beta or stable. With the `updater` profile on, it also updates the stack: `sensorr-updater` writes `SENSORR_TAG` into your env file, pulls the images of the channel you picked, and recreates `sensorr-api`, `sensorr-web` and itself. `sensorr-db` stays as it is.
+
+```sh
+cd ~/.sensorr
+echo "COMPOSE_PROFILES=updater" >> .env
+docker compose up -d
+```
+
+`sensorr-updater` holds the Docker socket, which controls every container of the host. It publishes no port and only talks to `sensorr-api`, over a network of their own, with the secret `sensorr-api` writes to `.secrets/updater` on its first boot. An update is refused while a job runs: recreating `sensorr-api` would kill it. Without the profile, the page gives the commands to run instead.
+
 # Documentation
 
 - [Configuration](docs/configuration.md), every key of `config.json`
