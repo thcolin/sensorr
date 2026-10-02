@@ -52,6 +52,7 @@ jobs:
       push: true
       file: apps/${{ matrix.app }}/Dockerfile
       platforms: linux/amd64,linux/arm64
+      build-args: SENSORR_REVISION=${{ github.sha }}
       job-name-prefix: ${{ matrix.app }}
       meta-images: ghcr.io/thcolin/sensorr-${{ matrix.app }}
       meta-tags: |

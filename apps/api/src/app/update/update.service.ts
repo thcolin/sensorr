@@ -44,6 +44,7 @@ export class UpdateService {
     const res = await fetch(`${UPDATER}${route}`, {
       ...init,
       headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(10000),
     })
     const body = (await res.json()) as any
 
@@ -77,17 +78,21 @@ export class UpdateService {
 
     return {
       version: app.version,
+      revision: process.env.NX_SENSORR_REVISION || null,
       tag: tag || null,
       channel: channelOf(tag),
       channels: { beta, stable },
       updater,
-      jobs: this.sensorrService.runningJobs(),
     }
   }
 
   async update(channel: Channel) {
-    if (!(channel in TAGS)) {
+    if (!Object.hasOwn(TAGS, channel)) {
       throw new BadRequestException(`Unknown channel "${channel}", expected ${Object.keys(TAGS).join(' or ')}`)
+    }
+
+    if (channelOf(process.env.NX_SENSORR_TAG) === 'dev') {
+      throw new ConflictException('This instance follows dev, set SENSORR_TAG in the env file to leave it')
     }
 
     const [job] = this.sensorrService.runningJobs()
