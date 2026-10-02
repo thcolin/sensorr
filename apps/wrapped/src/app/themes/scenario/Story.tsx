@@ -66,14 +66,20 @@ const placeOf = (mark: Element): { top: number, left: number } => {
   return { top, left }
 }
 
-// The page lands typed, then the marks are added to it one by one
+// The page lands typed, then its posters, each with what is written about it, and its marks, one by one
 const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
   const root = useRef<HTMLDivElement>(null)
 
   // Numbered as they are read on the page, top to bottom then left to right: in a two-column scene the
   // order of the markup is not the order of the eye. Set before the first paint
   useLayoutEffect(() => {
-    const marks = Array.from(root.current?.querySelectorAll<Element>(MARKS) || []).map((mark) => ({ mark, ...placeOf(mark) }))
+    const page = root.current
+    // A poster comes with what is written about it: its row of a list, or the block it stands beside
+    const arrivals = new Set(Array.from(page?.querySelectorAll('.scenario-insert') || []).map((insert) => insert.closest('li, .scenario-beside') || insert))
+    // A list comes row after row, its rows without a poster included
+    arrivals.forEach((arrival) => arrival.matches('li') && Array.from(arrival.parentElement?.children || []).forEach((row) => arrivals.add(row)))
+    arrivals.forEach((arrival) => arrival.classList.add('scenario-arrival'))
+    const marks = [...arrivals, ...Array.from(page?.querySelectorAll<Element>(MARKS) || [])].map((mark) => ({ mark, ...placeOf(mark) }))
     marks.sort((a, b) => Math.abs(a.top - b.top) < LINE ? a.left - b.left : a.top - b.top)
     // One timeline: a mark starts when the one before it has had its time, quicker down a list
     // On the title page the marks wait for the title, then only for the rest of the page to fade in
@@ -99,7 +105,7 @@ const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
         delay = at + 200
         return
       }
-      delay += mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
+      delay += arrivals.has(mark) ? (mark.matches('li') ? 220 : 350) : mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
     })
   }, [kind])
 
