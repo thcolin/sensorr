@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import semver from 'semver'
@@ -12,9 +12,9 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { errorOf } from './Mail'
 
 const CHANNELS = {
-  stable: { emoji: '📦', tag: 'latest', source: 'vX.Y.Z tag of main' },
-  beta: { emoji: '🧪', tag: 'beta', source: 'vX.Y.Z-beta.N tag of dev' },
-  dev: { emoji: '🚧', tag: 'dev', source: 'push to dev' },
+  stable: { emoji: '📦', tag: 'latest', source: 'vX.Y.Z tag of the main branch' },
+  beta: { emoji: '🧪', tag: 'beta', source: 'vX.Y.Z-beta.N tag of the dev branch' },
+  dev: { emoji: '🚧', tag: 'dev', source: 'push to the dev branch' },
 }
 
 // Pulling the images and recreating three containers takes a minute or two
@@ -23,7 +23,8 @@ const PATIENCE = 5 * 60 * 1000
 // The dev image always carries the version "dev": its revision tells one push from the next
 const labelOf = (key, { version = null, revision = null } = {}) => key === 'dev' ? revision?.slice(0, 7) : version && `v${version}`
 
-const runs = (update, key, { version = null, revision = null } = {}) => key === 'dev' ? update.tag === 'dev' && update.revision === revision : update.version === version
+// A dev build carries the package.json version of a release: only the tag tells the two apart
+const runs = (update, key, { version = null, revision = null } = {}) => update.tag === CHANNELS[key].tag && (key === 'dev' ? update.revision === revision : update.version === version)
 
 export const availableOf = (update) => {
   const { version, revision } = update?.channels?.[update?.channel] || {}
@@ -177,8 +178,8 @@ const Update = ({ ...props }) => {
   }
 
   const source = (key) => [
-    <>Every {CHANNELS[key].source}, {reasonOf(key) || `latest ${labelOf(key, update.channels[key])}`}.</>,
-    ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <> {other[0].toUpperCase() + other.slice(1)}: {reasonOf(other)}.</>),
+    <Fragment key={key}>Every {CHANNELS[key].source}, {reasonOf(key) || `latest ${labelOf(key, update.channels[key])}`}.</Fragment>,
+    ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <Fragment key={other}> {other[0].toUpperCase() + other.slice(1)}: {reasonOf(other)}.</Fragment>),
   ]
 
   const ready = !!updater && !updater.error
