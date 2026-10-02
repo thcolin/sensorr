@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import semver from 'semver'
@@ -46,6 +46,8 @@ const Update = ({ ...props }) => {
   const [updating, setUpdating] = useState(null)
   const [failure, setFailure] = useState(null)
   const [now, setNow] = useState(Date.now())
+  const capsule = useRef(null)
+  const [pill, setPill] = useState(null)
 
   const loading = !update
   const updater = update?.updater
@@ -55,6 +57,12 @@ const Update = ({ ...props }) => {
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = update?.revision?.slice(0, 7)
   const pinned = update?.channel in CHANNELS && update.tag !== CHANNELS[update.channel].tag ? update.tag : null
+
+  // Measured after layout, once the checked label has its bold width; no slide on the first render
+  useLayoutEffect(() => {
+    const label = capsule.current?.querySelector('label:has(>input:checked)')
+    setPill((previous) => label ? { x: label.offsetLeft, width: label.offsetWidth, slide: !!previous } : null)
+  }, [selected, loading])
 
   // Settings stays mounted across its pages: its answer may predate an update started here
   useEffect(() => {
@@ -222,7 +230,8 @@ const Update = ({ ...props }) => {
             {update?.channel !== 'dev' && !update?.error && (
               <div sx={Update.styles.channel}>
                 <h3 id='update-channel'>Channel</h3>
-                <div role='radiogroup' aria-labelledby='update-channel' sx={Update.styles.channels}>
+                <div ref={capsule} role='radiogroup' aria-labelledby='update-channel' sx={Update.styles.channels}>
+                  {pill && <span aria-hidden={true} style={{ width: pill.width, transform: `translateX(${pill.x}px)`, transition: pill.slide ? undefined : 'none' }} />}
                   {Object.entries(CHANNELS).map(([key, { emoji }]) => (
                     <label key={key} htmlFor={`update-${key}`} title={!loading && reasonOf(key) ? `${key}: ${reasonOf(key)}` : undefined}>
                       <input
@@ -358,6 +367,19 @@ Update.styles = {
     padding: '0.25rem',
     borderRadius: '2em',
     backgroundColor: 'accentDarkest',
+    position: 'relative',
+    '>span': {
+      position: 'absolute',
+      top: '0.25rem',
+      bottom: '0.25rem',
+      left: '0px',
+      borderRadius: '2em',
+      backgroundColor: 'accentDarker',
+      transition: 'transform 400ms cubic-bezier(0.4, 0, 0.2, 1), width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+      '@media (prefers-reduced-motion: reduce)': {
+        transition: 'none',
+      },
+    },
     '>label': {
       position: 'relative',
       paddingY: '0.375rem',
@@ -368,10 +390,10 @@ Update.styles = {
       color: 'primaryLightest',
       whiteSpace: 'nowrap',
       cursor: 'pointer',
-      transition: 'background-color 140ms ease-out',
+      transition: 'color 400ms cubic-bezier(0.4, 0, 0.2, 1)',
       '>input': {
         position: 'absolute',
-        inset: 0,
+        inset: '0px',
         opacity: 0,
         width: '100%',
         height: '100%',
@@ -379,7 +401,6 @@ Update.styles = {
         cursor: 'inherit',
       },
       ':has(>input:checked)': {
-        backgroundColor: 'accentDarker',
         color: 'whitePure',
         fontWeight: 'strong',
       },
@@ -418,8 +439,8 @@ Update.styles = {
     '::after': {
       content: '""',
       position: 'absolute',
-      top: 0,
-      bottom: 0,
+      top: '0px',
+      bottom: '0px',
       // The keyframes move it by 80% of its width: this size takes the light band past both ends of the bar
       left: '30%',
       width: '200%',
