@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react'
+import { ReactNode, useLayoutEffect, useRef } from 'react'
 import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
 import type { Art, StoryProps } from '../types'
 import { Act, Binge, Caps, Duo, Figure, Finale, Genre, Insert, Mark, Opening, Page, Pencil, Rank, Shout, Slug, TRANSITIONS, Tally, figures, scenesOf, sentences } from './Scenario'
@@ -39,15 +39,45 @@ const Story = ({ story, index, share, sheets, colophon, art }: StoryProps) => {
 
 export default Story
 
-// The pencil's marks on the page, numbered in reading order so they come one after the other
-const MARKS = '.scenario-mark, .scenario-pencil-note, .scenario-tally, .scenario-swipe, .scenario-slate'
+// The pencil's marks on the page: highlighter, red underlines and rings, notes, tally, month strokes, the slate
+const MARKS = '.scenario-mark, .scenario-figure:not(.scenario-act .scenario-figure), .scenario-pencil-note, .scenario-tally, .scenario-swipe, .scenario-slate'
+// Marks whose tops are this close sit on one line, read left to right
+const LINE = 12
+// When the first mark is drawn, once the page has landed
+const FIRST = 900
+
+// Where a mark sits in the layout, before any transform: the page is still being fed in when it is read
+const placeOf = (mark: Element): { top: number, left: number } => {
+  // A drawing has no offset of its own: its parent's, plus where it sits in it
+  if (!(mark instanceof HTMLElement)) {
+    const parent = mark.parentElement as HTMLElement
+    const [inner, outer] = [mark.getBoundingClientRect(), parent.getBoundingClientRect()]
+    const { top, left } = placeOf(parent)
+    return { top: top + inner.top - outer.top, left: left + inner.left - outer.left }
+  }
+  let [top, left] = [0, 0]
+  for (let node: HTMLElement | null = mark; node; node = node.offsetParent as HTMLElement | null) {
+    top += node.offsetTop
+    left += node.offsetLeft
+  }
+  return { top, left }
+}
 
 // The page lands typed, then the marks are added to it one by one
 const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
   const root = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    root.current?.querySelectorAll<HTMLElement>(MARKS).forEach((mark, at) => mark.style.setProperty('--mark', String(at)))
+  // Numbered as they are read on the page, top to bottom then left to right: in a two-column scene the
+  // order of the markup is not the order of the eye. Set before the first paint
+  useLayoutEffect(() => {
+    const marks = Array.from(root.current?.querySelectorAll<Element>(MARKS) || []).map((mark) => ({ mark, ...placeOf(mark) }))
+    marks.sort((a, b) => Math.abs(a.top - b.top) < LINE ? a.left - b.left : a.top - b.top)
+    // One timeline: a mark starts when the one before it has had its time, quicker down a list
+    let delay = FIRST
+    marks.forEach(({ mark }) => {
+      (mark as HTMLElement).style.setProperty('--mark-delay', `${delay}ms`)
+      delay += mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
+    })
   }, [])
 
   return <div ref={root} className={`scenario-story scenario-story-${kind}`}>{children}</div>
