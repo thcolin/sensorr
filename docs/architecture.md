@@ -374,8 +374,9 @@ to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/upd
 because GHCR sends no CORS headers to a browser; the running jobs; and what `sensorr-updater` answers,
 `null` when its host name does not resolve, that is without the `updater` profile.
 
-`POST /api/update {channel}` is refused with a 409 while a job runs, then forwarded to
-`sensorr-updater` as `POST /update {tag}`, `beta` or `latest`. Both sides read the secret in
+`POST /api/update {channel}` is refused with a 409 while a job runs or on a `dev` instance, then
+forwarded to `sensorr-updater` as `POST /update {tag}`, `beta` or `latest`; a cron that ticks during the pull
+still starts its job, and the recreation of `sensorr-api` kills it. Both sides read the secret in
 `.secrets/updater`, which `apps/api/docker-entrypoint.sh` generates on first boot; `sensorr-updater`
 mounts `.secrets/` read-only.
 

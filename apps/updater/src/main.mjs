@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process'
 import { timingSafeEqual } from 'node:crypto'
-import { chown, readFile, rename, stat, writeFile } from 'node:fs/promises'
+import { chmod, chown, readFile, rename, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,7 +14,8 @@ const SERVICES = ['sensorr-api', 'sensorr-web', 'sensorr-updater']
 export const TAGS = ['beta', 'latest']
 
 const run = promisify(execFile)
-const docker = async (...args) => (await run('docker', args, { maxBuffer: 1 << 20 })).stdout
+// Below the 10 s sensorr-api waits for an answer
+const docker = async (...args) => (await run('docker', args, { maxBuffer: 1 << 20, timeout: 8000, killSignal: 'SIGKILL' })).stdout
 
 // Compose reads the last `SENSORR_TAG=` line, so every one takes the tag
 export const withTag = (text, tag) => {
@@ -83,7 +84,7 @@ const update = async (tag) => {
   const folders = [...new Set([project.directory, ...project.envs.map(dirname), ...project.files.map(dirname)])]
 
   if (last) {
-    await docker('rm', '-f', RUN)
+    await docker('rm', RUN)
   }
 
   await docker(
@@ -111,7 +112,8 @@ const apply = async (project, tag) => {
 
   const owner = await stat(env).catch(() => null)
 
-  await writeFile(`${env}.updating`, withTag(texts.at(index), tag), { mode: owner ? owner.mode & 0o777 : 0o600 })
+  await writeFile(`${env}.updating`, withTag(texts.at(index), tag))
+  await chmod(`${env}.updating`, owner ? owner.mode & 0o777 : 0o600)
 
   if (owner) {
     await chown(`${env}.updating`, owner.uid, owner.gid)
@@ -141,6 +143,8 @@ const authorized = async (header = '') => {
   return secret.length > 'Bearer '.length && given.length === secret.length && timingSafeEqual(given, secret)
 }
 
+let busy = null
+
 const reply = (res, code, body) => {
   res.writeHead(code, { 'Content-Type': 'application/json' })
   res.end(JSON.stringify(body))
@@ -161,6 +165,10 @@ const serve = () => createServer(async (req, res) => {
 
       for await (const chunk of req) {
         body += chunk
+
+        if (body.length > 1024) {
+          return reply(res, 413, { message: 'Body too large' })
+        }
       }
 
       const { tag } = JSON.parse(body || '{}')
@@ -169,7 +177,15 @@ const serve = () => createServer(async (req, res) => {
         return reply(res, 400, { message: `Unknown tag "${tag}", expected ${TAGS.join(' or ')}` })
       }
 
-      await update(tag)
+      if (busy) {
+        return reply(res, 409, { message: 'An update is already running' })
+      }
+
+      busy = update(tag).finally(() => {
+        busy = null
+      })
+
+      await busy
       return reply(res, 202, { tag })
     }
 

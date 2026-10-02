@@ -68,6 +68,8 @@ services:
     hostname: sensorr-updater
     restart: unless-stopped
     profiles: [updater]
+    security_opt:
+      - no-new-privileges:true
     build:
       context: .
       dockerfile: apps/updater/Dockerfile
