@@ -21,6 +21,9 @@ services:
       - ./caddy/data:/data
       - ./caddy/config:/config
       - ${SENSORR_SSL_DIR:-./caddy/certs}:/certs:ro
+    networks:
+      - default
+      - cards
 
   sensorr-api:
     image: sensorr/sensorr-api
@@ -45,11 +48,27 @@ services:
       - NX_SENSORR_USERNAME=${SENSORR_USERNAME:-sensorr}
       - NX_SENSORR_PASSWORD=${SENSORR_PASSWORD:-sensorr}
       - NX_SENSORR_VAPID_SUBJECT=${SENSORR_VAPID_SUBJECT:-mailto:mail@example.com}
+      - NX_CHROMIUM_URL=http://sensorr-chromium:9222
     volumes:
       - ./config.json:/app/config.json
       - ./.secrets:/app/.secrets
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
       - ${SENSORR_TVSHOWS:-./tvshows}:/tvshows
+    networks:
+      - default
+      - cards
+
+  # Draws the wrapped's story cards for the API. Debian's Chromium, for its software WebGL; no secret,
+  # no volume, and a network that only reaches sensorr-web and sensorr-api
+  sensorr-chromium:
+    image: chromedp/headless-shell:151.0.7922.109
+    container_name: sensorr-chromium
+    hostname: sensorr-chromium
+    restart: unless-stopped
+    command: ['--enable-unsafe-swiftshader', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio']
+    mem_limit: 1g
+    networks:
+      - cards
 
   sensorr-db:
     image: sensorr/sensorr-db
@@ -72,3 +91,8 @@ services:
       test: |
         test $$(mongosh --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'sensorr-db' }] }).ok } catch (_) { rs.status().ok }") -eq 1
       interval: 30s
+
+networks:
+  # No way out: Chromium only opens the wrapped page
+  cards:
+    internal: true

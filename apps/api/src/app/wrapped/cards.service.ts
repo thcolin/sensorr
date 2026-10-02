@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { lookup } from 'node:dns/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import puppeteer, { Browser, BrowserContext } from 'puppeteer-core'
@@ -13,11 +14,14 @@ const VIEWPORT = { width: 396, height: 704, deviceScaleFactor: 1080 / 396 }
 const STORY = /^[a-z]{1,16}(?:-[a-z_]{1,16})?$/
 // The wrapped page the browser opens, served with the API behind it: `sensorr-web` in the compose stack
 const ORIGIN = process.env.NX_WRAPPED_URL || 'http://sensorr-web'
-const CHROMIUM = process.env.NX_CHROMIUM_PATH || '/usr/bin/chromium'
+// The `sensorr-chromium` container of the compose stack, which has software WebGL for the Affiche's paint;
+// without it, a Chromium installed here is launched, as in development
+const REMOTE = process.env.NX_CHROMIUM_URL
+const CHROMIUM = process.env.NX_CHROMIUM_PATH
 const FOLDER = join(tmpdir(), 'sensorr-cards')
 // A card is drawn again each day, its date and figures move; older files are removed
 const KEEP = 2 * 24 * 3600 * 1000
-// The browser closes after this long without a card to draw, Chromium holds a few hundred MB
+// The browser closes, or is let go, after this long without a card to draw
 const IDLE = 60 * 1000
 const SHARE = 5 * 60 * 1000
 // Cards drawn at once, by one friend and in all: past it the friend is asked to try again
@@ -142,7 +146,7 @@ export class CardsService implements OnModuleDestroy {
     this.idle && clearTimeout(this.idle)
 
     if (!this.browser) {
-      const launched: Promise<Browser> = puppeteer.launch({
+      const launched: Promise<Browser> = (REMOTE ? this.connect(REMOTE) : puppeteer.launch({
         executablePath: CHROMIUM,
         // Through a pipe rather than a debugging port: Chromium also quits when the API does
         pipe: true,
@@ -150,16 +154,14 @@ export class CardsService implements OnModuleDestroy {
         handleSIGINT: false,
         handleSIGTERM: false,
         handleSIGHUP: false,
-        // It only opens the wrapped page, from the compose network; Alpine's Chromium times out on its
-        // first protocol call with the GPU on
-        args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--mute-audio'],
-      }).then((browser) => {
+        args: ['--hide-scrollbars', '--mute-audio'],
+      })).then((browser) => {
         // A browser that crashed or was killed is launched again for the next card
         browser.on('disconnected', () => this.browser === launched && (this.browser = null))
         return browser
       })
       launched.catch((error) => {
-        this.logger.warn(`Chromium did not start: ${error.message?.split('\n')[0]}`)
+        this.logger.warn(`Chromium unreachable: ${error.message?.split('\n')[0]}`)
         this.browser === launched && (this.browser = null)
       })
       this.browser = launched
@@ -173,10 +175,17 @@ export class CardsService implements OnModuleDestroy {
     this.idle = setTimeout(() => this.close(), IDLE)
   }
 
+  // DevTools answers a Host that is an address or `localhost`, never a container's name
+  private async connect(remote: string) {
+    const url = new URL(remote)
+    url.hostname = (await lookup(url.hostname, { family: 4 })).address
+    return puppeteer.connect({ browserURL: url.toString() })
+  }
+
   private async close() {
     const browser = this.browser
     this.browser = null
-    await browser?.then((opened) => opened.close()).catch(() => null)
+    await browser?.then((opened) => REMOTE ? opened.disconnect() : opened.close()).catch(() => null)
   }
 
   // Written for the next ask, the ones older than two days removed on the way
