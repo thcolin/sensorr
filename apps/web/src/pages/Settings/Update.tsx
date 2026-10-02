@@ -24,6 +24,14 @@ export const availableOf = (update) => {
   return (version && semver.valid(version) && semver.valid(update.version) && semver.gt(version, update.version)) ? version : null
 }
 
+const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => (
+  <div sx={Update.styles.failure}>
+    <strong>{emojize('🚨', title)}</strong>
+    {cause && <span>{cause}</span>}
+    {logs && <span>Logs: <code>docker logs {logs}</code></span>}
+  </div>
+)
+
 const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 
 const Update = ({ ...props }) => {
@@ -64,7 +72,7 @@ const Update = ({ ...props }) => {
       setFailure(null)
       setUpdating({ version, since: Date.parse(run.started) })
     } else if (run.code !== 0) {
-      setFailure(`The last update, to v${version}, exited (${run.code}), see docker logs sensorr-updater-run`)
+      setFailure({ title: `The last update, to v${version}, failed`, cause: `sensorr-updater-run exited (${run.code})`, logs: 'sensorr-updater-run' })
     }
   }, [update])
 
@@ -87,7 +95,7 @@ const Update = ({ ...props }) => {
         }
 
         if (raw.updater?.run?.status === 'exited' && raw.updater.run.code !== 0) {
-          setFailure(`sensorr-updater-run exited (${raw.updater.run.code}), see docker logs sensorr-updater-run`)
+          setFailure({ title: `Update to v${updating.version} failed`, cause: `sensorr-updater-run exited (${raw.updater.run.code})`, logs: 'sensorr-updater-run' })
           return setUpdating(null)
         }
       } catch (err) {
@@ -95,7 +103,7 @@ const Update = ({ ...props }) => {
       }
 
       if (Date.now() - updating.since > PATIENCE) {
-        setFailure(`v${updating.version} still does not answer after ${PATIENCE / 60000} minutes, see docker logs sensorr-updater-run`)
+        setFailure({ title: `Update to v${updating.version} failed`, cause: `v${updating.version} still does not answer after ${PATIENCE / 60000} minutes`, logs: 'sensorr-updater-run' })
         return setUpdating(null)
       }
 
@@ -185,7 +193,7 @@ const Update = ({ ...props }) => {
         <article>
           <h2>Update</h2>
           {update?.error ? (
-            <p sx={{ color: 'error' }}>Can't read the update status, {update.error}</p>
+            <Failure title="Can't read the update status" cause={update.error} logs='sensorr-api' />
           ) : (
             <p sx={Update.styles.running}>
               <code>{update?.version ? `v${update.version}` : '…'}</code>
@@ -235,9 +243,15 @@ const Update = ({ ...props }) => {
                   {!disabled && <p><small>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></small></p>}
                 </>
               )}
-              <p role='status' sx={{ ...Update.styles.status, ...((failure || updater?.error) && !updating ? { color: 'error' } : {}) }}>
-                {updating ? <small>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></small> : (failure || updater?.error || null)}
-              </p>
+              <div role='status' sx={Update.styles.status}>
+                {updating ? (
+                  <p><small>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></small></p>
+                ) : failure ? (
+                  <Failure {...failure} />
+                ) : updater?.error ? (
+                  <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />
+                ) : null}
+              </div>
               {ready && !failure ? (
                 <details sx={Update.styles.details}>
                   <summary><strong>Manual update</strong></summary>
@@ -289,9 +303,20 @@ Update.styles = {
     },
   },
   status: {
-    ':empty': {
-      margin: 0,
-    },
+    width: '100%',
+  },
+  failure: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    marginY: 8,
+    paddingX: 4,
+    paddingY: 8,
+    backgroundColor: 'grayLighter',
+    border: '1px solid',
+    borderColor: 'error',
+    borderRadius: '0.25em',
+    lineHeight: 'body',
   },
   details: {
     marginY: 8,
