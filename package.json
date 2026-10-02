@@ -108,7 +108,7 @@
     "util": "^0.12.5",
     "web-push": "^3.6.7",
     "winston": "^3.11.0",
-    "winston-mongodb": "^7.0.1",
+    "winston-mongodb": "^5.1.1",
     "xml2json-light": "^1.0.6",
     "yargs": "^18.2.0"
   },
