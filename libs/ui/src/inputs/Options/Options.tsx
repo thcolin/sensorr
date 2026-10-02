@@ -47,7 +47,7 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
 
   return (
     <div sx={styles.element} {...props}>
-      <label sx={UIOptions.styles.label}>
+      <div sx={UIOptions.styles.label}>
         <span
           onClick={() => !disabled && onReset && onReset()}
           style={!disabled && onReset ? { cursor: 'pointer' } : {}}
@@ -74,7 +74,7 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
             {badge.label}
           </button>
         )}
-      </label>
+      </div>
       <div sx={styles.option}>
         {options.map((input) => (
           <Option

@@ -47,7 +47,7 @@ export const judge = (summary, { with_release_type, with_credits_departments, wi
     return true
   }
 
-  if (summary.runtime > 0 && (summary.runtime < Number(runtime_gte || 0) || summary.runtime > Number(runtime_lte ?? Infinity))) {
+  if (summary.runtime > 0 && (summary.runtime < Number(runtime_gte || 0) || summary.runtime > Number(runtime_lte || Infinity))) {
     return false
   }
 
