@@ -202,7 +202,7 @@ const Update = ({ ...props }) => {
             ) : (
               <div sx={Update.styles.panel} aria-busy={loading}>
                 <div sx={Update.styles.running}>
-                  <span>{loading ? <Placeholder width='12.5rem' height='1.75rem' /> : `v${update.version}`}</span>
+                  <span>{loading ? <Placeholder width='10.5rem' height='1.25rem' /> : `v${update.version}`}</span>
                   {loading ? <small><Placeholder width='11.25rem' height='0.875rem' /></small> : (
                     <small>
                       {update.channel || 'no'} channel
@@ -269,7 +269,7 @@ const Update = ({ ...props }) => {
                   {manual}
                 </details>
               ) : (
-                <div>
+                <div sx={Update.styles.manual}>
                   <h3>Manual update</h3>
                   {manual}
                 </div>
@@ -316,11 +316,13 @@ Update.styles = {
     minWidth: 0,
     '>span': {
       fontFamily: 'monospace',
-      fontSize: '1.5rem',
-      lineHeight: '2rem',
+      fontSize: 3,
+      fontWeight: 'bold',
+      lineHeight: '1.75rem',
       whiteSpace: 'nowrap',
     },
     '>small': {
+      fontSize: 5,
       color: 'grayDarkest',
     },
   },
@@ -329,11 +331,12 @@ Update.styles = {
     alignItems: 'center',
     flexShrink: 0,
     gap: 8,
+    fontSize: 5,
     fontWeight: 'semibold',
     '>i': {
       display: 'block',
-      height: '0.625rem',
-      width: '0.625rem',
+      height: '0.5rem',
+      width: '0.5rem',
       borderRadius: '50%',
       transition: 'background-color 400ms ease-in-out',
     },
@@ -458,7 +461,11 @@ Update.styles = {
     fontSize: 5,
     lineHeight: 'body',
   },
+  manual: {
+    marginTop: 8,
+  },
   details: {
+    marginTop: 8,
     '>summary': {
       cursor: 'pointer',
     },
