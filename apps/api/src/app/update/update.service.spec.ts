@@ -4,6 +4,10 @@ import { SensorrService } from '../sensorr/sensorr.service'
 import { UpdateService } from './update.service'
 
 jest.mock('../sensorr/sensorr.service', () => ({ SensorrService: class {} }))
+jest.mock('./update', () => ({
+  ...jest.requireActual('./update'),
+  versionOn: async (tag: string) => ({ version: tag === 'dev' ? 'dev' : null, revision: tag === 'dev' ? '00459262b2ee61622d0a10ae14a411759bf9d186' : null }),
+}))
 
 describe('UpdateService', () => {
   const serviceOf = async (running: string[]) => {
@@ -26,7 +30,14 @@ describe('UpdateService', () => {
     await expect(service.update('constructor' as any)).rejects.toThrow(BadRequestException)
   })
 
-  it('moves an instance onto dev, and off it', async () => {
+  it('offers the dev channel with its revision', async () => {
+    const service = await serviceOf([])
+    await expect(service.status()).resolves.toMatchObject({
+      channels: { dev: { version: 'dev', revision: '00459262b2ee61622d0a10ae14a411759bf9d186' }, beta: { version: null }, stable: { version: null } },
+    })
+  })
+
+  it('no longer refuses dev, nor an instance on dev, and goes on to look for sensorr-updater', async () => {
     const service = await serviceOf([])
     await expect(service.update('dev')).rejects.toThrow(NotFoundException)
     process.env.NX_SENSORR_TAG = 'dev'
