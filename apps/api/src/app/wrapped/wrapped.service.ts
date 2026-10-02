@@ -17,8 +17,6 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export class WrappedService {
   private readonly logger = new Logger(WrappedService.name)
 
-  private serverName: string | null = null
-
   constructor(
     @InjectModel(Play.name) private readonly playModel: Model<Play>,
     @InjectModel(Viewer.name) private readonly viewerModel: Model<Viewer>,
@@ -272,7 +270,7 @@ export class WrappedService {
     return {
       // The Plex username, never the first and last name a Plex account may carry
       name: viewer.username || viewer.friendly_name || guest.name,
-      server: await this.serverNameOf(),
+      server: await this.mailService.server(),
       year: edition,
       editions: await this.editionsOf(viewer._id),
       names: await this.namesOf(shown.wrapped),
@@ -286,24 +284,6 @@ export class WrappedService {
     const ids = [wrapped.twin?.user_id, ...(wrapped.duo?.posters || []).map((poster) => poster.with)].filter(Number.isInteger)
     const viewers = ids.length ? await this.viewerModel.find({ _id: { $in: ids } }, { friendly_name: 1, username: 1 }).lean() : []
     return Object.fromEntries(viewers.map(({ _id, friendly_name, username }) => [_id, username || friendly_name]))
-  }
-
-  // Read once from Tautulli; without it the page names no server
-  private async serverNameOf() {
-    const url = this.configService.config.get('tautulli.url')
-
-    if (!this.serverName && url) {
-      const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
-      uri.search = new URLSearchParams({ apikey: this.configService.config.get('tautulli.key'), cmd: 'get_server_friendly_name' }).toString()
-      // node-fetch errors carry the URL, so the key, and are not logged
-      const body = await fetch(uri, { signal: AbortSignal.timeout(5000) }).then((res) => res.ok ? res.json() as Promise<{ response?: { data?: unknown } }> : null).catch((error) => {
-        this.logger.warn(`Server name, Tautulli unreachable: ${error.name} ${error.code || ''}`)
-        return null
-      })
-      this.serverName = typeof body?.response?.data === 'string' ? body.response.data : null
-    }
-
-    return this.serverName
   }
 
   // Only the artwork of what this guest watched in a year they can open, which covers every title of their wrapped

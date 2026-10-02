@@ -197,36 +197,36 @@ export const mails = {
     action: { label: 'Open the Mail settings', href: `${url}/settings/mail` },
     foot: ['Sent by your Sensorr from its Mail settings.'],
   }),
-  invitation: ({ url, sender, name }: { url: string, sender: string, name?: string }) => layout({
+  invitation: ({ url, sender, service, name }: { url: string, sender: string, service: string, name?: string }) => layout({
     subject: `${sender} invites you to share your movie wishes`,
     picto: 'invitation',
     word: 'Invitation',
     greeting: name ? `Hi ${name},` : undefined,
     title: `${sender} invites you to share your movie wishes`,
-    paragraphs: [`Add movies to your Plex Watchlist, and ${sender} gets them for you on their Plex. Connect your Plex account once to start, it takes a minute.`],
+    paragraphs: [`Add movies to your Plex Watchlist, and ${service} gets them for you on ${sender}'s Plex. Connect your Plex account once to start, it takes a minute.`],
     action: { label: 'Connect my Plex', href: `${url}/keep-in-touch` },
     foot: [`Sent by ${escape(sender)} with Sensorr. You got this mail because ${escape(sender)} ${name ? 'shares their Plex with you' : 'typed your address'}.`],
   }),
-  welcome: ({ url, sender, name, wrapped }: { url: string, sender: string, name: string, wrapped?: string }) => layout({
+  welcome: ({ url, sender, service, name, wrapped }: { url: string, sender: string, service: string, name: string, wrapped?: string }) => layout({
     subject: "You're all set",
     picto: 'welcome',
     word: 'Welcome',
     greeting: `Hi ${name},`,
     title: "You're all set",
     paragraphs: [
-      `Every movie you add to your Plex Watchlist now reaches ${sender}. You will get a mail when your movies are ready to watch.`,
+      `Every movie you add to your Plex Watchlist now reaches ${service}. You will get a mail when your movies are ready to watch.`,
       ...(wrapped ? [`Your year on ${sender}'s Plex has its own page too, it fills up as you watch: ${url}/wrapped/${wrapped}`] : []),
     ],
     action: { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
     foot: [`Sent by ${escape(sender)} with Sensorr.`],
   }),
-  reconnect: ({ url, sender, name, reminder, unsubscribe }: { url: string, sender: string, name: string, reminder: number, unsubscribe: string }) => layout({
-    subject: `Your movie wishes no longer reach ${sender}`,
+  reconnect: ({ url, sender, service, name, reminder, unsubscribe }: { url: string, sender: string, service: string, name: string, reminder: number, unsubscribe: string }) => layout({
+    subject: `Your movie wishes no longer reach ${service}`,
     picto: 'reconnect',
     word: 'Reconnect',
     greeting: `Hi ${name},`,
     title: 'Reconnect your Plex account',
-    paragraphs: [`Plex disconnected your account from ${sender}'s, so the movies you add to your Watchlist no longer reach them. Reconnect once and it works again.`],
+    paragraphs: [`Plex disconnected your account from ${service}, so the movies you add to your Watchlist no longer reach it. Reconnect once and it works again.`],
     action: { label: 'Reconnect Plex', href: `${url}/keep-in-touch` },
     foot: [`Sent by ${escape(sender)} with Sensorr.`, reminder ? `Reminder ${reminder} of 3.` : '', link(unsubscribe, 'Stop these reminders')].filter(Boolean),
   }),
