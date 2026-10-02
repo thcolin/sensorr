@@ -4,7 +4,7 @@ import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS, jobTitleOf } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
-import cronParser from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import cronstrue from 'cronstrue'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
@@ -140,7 +140,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
   let cronString = ''
 
   try {
-    cronParser.parseExpression(cronValue)
+    CronExpressionParser.parse(cronValue)
     cronString = cronstrue.toString(cronValue, {
       throwExceptionOnParseError: true,
       use24HourTimeFormat: true,
@@ -216,7 +216,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                   }
 
                   try {
-                    cronParser.parseExpression(value)
+                    CronExpressionParser.parse(value)
                     return true
                   } catch (e) {
                     return false

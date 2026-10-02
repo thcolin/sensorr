@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState } from 'react'
-import jwtDecode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import { useAPI } from '../../store/api'
 import { useSensorr } from '../../store/sensorr'
 
