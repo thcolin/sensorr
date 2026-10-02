@@ -1225,15 +1225,25 @@ html[data-theme='scenario'] {
   animation: scenario-feed 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Each line typed a beat after the last, the posters clipped on after it */
+/* The machine works down the page: each block lands whole when it reaches it, and only the one-line
+   scene heading is seen being typed, key after key */
 .scenario-story > .scenario-page > :not(.scenario-holes, .scenario-head) {
   min-width: 0;
-  animation: scenario-type 0.45s calc(0.35s + var(--at, 0) * 100ms) steps(14, end) backwards;
+  animation: scenario-strike 0.16s calc(0.45s + var(--at, 0) * 180ms) ease-out backwards;
+}
+
+.scenario-story > .scenario-page > .scenario-slug {
+  animation: scenario-type 0.6s calc(0.45s + var(--at, 0) * 180ms) steps(20, end) backwards;
 }
 
 .scenario-story > .scenario-page > :nth-child(4) { --at: 1; }
 .scenario-story > .scenario-page > :nth-child(5) { --at: 2; }
 .scenario-story > .scenario-page > :nth-child(6) { --at: 3; }
+.scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
+.scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
+.scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
+.scenario-story > .scenario-page > :nth-child(10) { --at: 7; }
+.scenario-story > .scenario-page > :nth-child(n + 11) { --at: 8; }
 .scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
 .scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
 .scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
@@ -1808,11 +1818,15 @@ html[data-theme='scenario'] {
   color: var(--scenario-quiet);
   font-size: 13px;
   line-height: 1.35;
-  animation: scenario-type 0.45s 1.2s steps(14, end) backwards;
+  animation: scenario-strike 0.16s 1.2s ease-out backwards;
 }
 
 @keyframes scenario-feed {
   from { transform: translateY(60px); }
+}
+
+@keyframes scenario-strike {
+  from { opacity: 0; transform: translateY(-3px); }
 }
 
 @keyframes scenario-type {
