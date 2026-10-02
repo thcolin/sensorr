@@ -130,7 +130,7 @@ JobsSettings.styles = {
 
 export default JobsSettings
 
-export const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
+const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
   const name = [command, type].filter(Boolean).join(' ')
   const emoji = JOB_EMOJIS[name]
   const key = ['jobs', command, type].filter(Boolean).join('.')
