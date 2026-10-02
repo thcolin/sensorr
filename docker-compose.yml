@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   sensorr-web:
     image: ghcr.io/thcolin/sensorr-web:${SENSORR_TAG:-latest}
