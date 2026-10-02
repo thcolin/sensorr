@@ -3,16 +3,12 @@
 What stands between `dev` and the first stable release, `1.0.0`, and what comes after it.
 Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 
-## In progress
-
-- **Update from the app**: pick the beta or stable channel in Settings › Update, see which
-  version runs and which one is available on that channel, and update in one click through an
-  opt-in `sensorr-updater` service.
-
 ## Before 1.0.0
 
 ### Install and first steps
 
+- **Interactive installer**: a quick command-line installer that asks what it needs and leaves a
+  running Sensorr behind, without editing files by hand.
 - **First launch**: what the first connection asks for, so that a fresh install reaches a
   working library without editing files.
 - **Migration from 0.x**: bring a 0.x configuration and database over to the current format.
