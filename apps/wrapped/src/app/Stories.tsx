@@ -81,7 +81,6 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
           <button type="button" className="stories-step" aria-disabled={index === count - 1} onClick={() => index < count - 1 && onIndex(index + 1)}>Story suivante</button>
         </div>
       </div>
-      <p className="visually-hidden" aria-live="polite">{`${index + 1} sur ${count}, ${label}`}</p>
     </main>
   )
 }
@@ -106,6 +105,8 @@ export const Card = ({ children, missing }: { children: ReactNode, missing: bool
       }
       await document.fonts.ready
       const images = Array.from(frame.current?.querySelectorAll('img') || [])
+      // A lazy image clipped out of the page would never load, and the card would never be ready
+      images.forEach((image) => (image.loading = 'eager'))
       await Promise.all(images.map((image) => image.complete ? null : new Promise((resolve) => {
         image.addEventListener('load', resolve, { once: true })
         image.addEventListener('error', resolve, { once: true })
@@ -184,9 +185,10 @@ export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, nam
       type="button"
       className="stories-share"
       aria-label={shared.status === 'ready' ? `${label}, en image` : undefined}
-      disabled={shared.status === 'loading'}
+      // Not `disabled`: a retry tapped would drop focus while the image is drawn again
+      aria-disabled={shared.status === 'loading'}
       aria-busy={shared.status === 'loading'}
-      onClick={() => shared.status === 'ready' ? send(shared.file) : setAttempt(attempt + 1)}
+      onClick={() => shared.status === 'ready' ? send(shared.file) : shared.status === 'error' && setAttempt(attempt + 1)}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>
       {shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}

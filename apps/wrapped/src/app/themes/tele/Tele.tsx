@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, type SheetModel, type Stat } from '../../sheets'
+import { MONTHS, THIN, number, plural, type Colophon, type SheetModel, type Stat } from '../../sheets'
 import type { Art, ThemeProps } from '../types'
 import { TestCard } from './States'
 import { anchor } from '../../anchor'
@@ -130,10 +130,39 @@ export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((par
   return [...bits, part.slice(from)]
 })
 
-const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: SheetModel[] } & Page) => {
-  const reduced = useReducedMotion()
+// The cover of the issue: the first poster full bleed, the masthead, the year's figures
+export const Cover = ({ sheet, name, art, sticker, colophon }: { sheet: Of<'opening'>, name: string, art: Art, sticker?: ReactNode, colophon?: Colophon }) => {
   const [star, ...inset] = sheet.posters
   const [lead, ...rest] = sheet.figures
+
+  return (
+    <div className="tele-cover">
+      {star && <div className="tele-cover-star"><Photo poster={star} art={art} width={1280} eager /></div>}
+      <header className="tele-mast" aria-hidden="true">
+        <p className="tele-logo" style={{ '--letters': name.length + 4 } as React.CSSProperties}>Télé<span>{name}</span></p>
+        <p className="tele-issue">N°<b>{sheet.year}</b>Édition annuelle</p>
+      </header>
+      {sticker || <p className="tele-sticker" aria-hidden="true"><span>Numéro<b>spécial</b>rétro</span></p>}
+      <div className="tele-cover-lines">
+        {sheet.lede && <p className="tele-cover-lede">{sheet.lede}</p>}
+        <h1 className="tele-cover-title">{sheet.title}</h1>
+        {lead && <p className="tele-cover-line tele-cover-line-lead">{figures(lead)}</p>}
+        {rest.map((figure) => <p key={figure} className="tele-cover-line">{figures(figure)}</p>)}
+        {!!inset.length && !colophon?.short && (
+          <ul className="tele-inset">
+            {inset.map((poster) => <li key={poster.key}><Photo poster={poster} art={art} width={320} eager /></li>)}
+          </ul>
+        )}
+        {colophon?.short && <p className="tele-cover-lede">{colophon.short}</p>}
+        {colophon && <p className="tele-cover-colophon">{colophon.text}</p>}
+      </div>
+      <Barcode />
+    </div>
+  )
+}
+
+const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: SheetModel[] } & Page) => {
+  const reduced = useReducedMotion()
 
   return (
     <motion.section
@@ -144,26 +173,7 @@ const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: S
       animate={{ y: 0, scale: 1, rotate: 0, '--lift': 0 }}
       transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="tele-cover">
-        {star && <div className="tele-cover-star"><Photo poster={star} art={art} width={1280} eager /></div>}
-        <header className="tele-mast" aria-hidden="true">
-          <p className="tele-logo" style={{ '--letters': name.length + 4 } as React.CSSProperties}>Télé<span>{name}</span></p>
-          <p className="tele-issue">N°<b>{sheet.year}</b>Édition annuelle</p>
-        </header>
-        <p className="tele-sticker" aria-hidden="true"><span>Numéro<b>spécial</b>rétro</span></p>
-        <div className="tele-cover-lines">
-          {sheet.lede && <p className="tele-cover-lede">{sheet.lede}</p>}
-          <h1 className="tele-cover-title">{sheet.title}</h1>
-          {lead && <p className="tele-cover-line tele-cover-line-lead">{figures(lead)}</p>}
-          {rest.map((figure) => <p key={figure} className="tele-cover-line">{figures(figure)}</p>)}
-          {!!inset.length && (
-            <ul className="tele-inset">
-              {inset.map((poster) => <li key={poster.key}><Photo poster={poster} art={art} width={320} eager /></li>)}
-            </ul>
-          )}
-        </div>
-        <Barcode />
-      </div>
+      <Cover sheet={sheet} name={name} art={art} />
       <nav className="tele-contents" aria-label="Sommaire">
         <p className="tele-folio" aria-hidden="true"><span>Télé {name}</span><b>Sommaire</b><span>p. 1</span></p>
         <p className="tele-headline" aria-hidden="true">Au <span className="tele-band">sommaire</span></p>
