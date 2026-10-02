@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 
 export type Channel = 'dev' | 'beta' | 'stable'
 
-export const TAGS = { beta: 'beta', stable: 'latest' } as const
+export const TAGS = { beta: 'beta', stable: 'latest', dev: 'dev' } as const
 
 export const channelOf = (tag?: string): Channel | null => {
   if (!tag) {
@@ -25,7 +25,7 @@ const MANIFESTS = [
   'application/vnd.docker.distribution.manifest.v2+json',
 ].join(',')
 
-export const versionOn = async (tag: string): Promise<string | null> => {
+export const versionOn = async (tag: string): Promise<{ version: string | null, revision: string | null }> => {
   const get = async (url: string, headers = {}) => {
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) })
 
@@ -41,7 +41,7 @@ export const versionOn = async (tag: string): Promise<string | null> => {
   let manifest = await get(`${REGISTRY}/v2/${IMAGE}/manifests/${tag}`, headers)
 
   if (!manifest) {
-    return null
+    return { version: null, revision: null }
   }
 
   if (manifest.manifests) {
@@ -50,5 +50,10 @@ export const versionOn = async (tag: string): Promise<string | null> => {
   }
 
   const blob = await get(`${REGISTRY}/v2/${IMAGE}/blobs/${manifest.config.digest}`, headers)
-  return blob?.config?.Labels?.['org.opencontainers.image.version'] || null
+  const labels = blob?.config?.Labels || {}
+
+  return {
+    version: labels['org.opencontainers.image.version'] || null,
+    revision: labels['org.opencontainers.image.revision'] || null,
+  }
 }

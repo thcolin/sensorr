@@ -11,7 +11,7 @@ const SECRET = process.env.UPDATER_SECRET_FILE || '/secrets/updater'
 const SELF = 'sensorr-updater'
 const RUN = 'sensorr-updater-run'
 const SERVICES = ['sensorr-api', 'sensorr-web', 'sensorr-updater']
-export const TAGS = ['beta', 'latest']
+export const TAGS = ['beta', 'latest', 'dev']
 
 const run = promisify(execFile)
 // Below the 10 s sensorr-api waits for an answer

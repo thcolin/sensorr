@@ -18,6 +18,6 @@ describe('channelOf', () => {
   })
 
   it('moves each channel to the tag the CI publishes it under', () => {
-    expect(TAGS).toEqual({ beta: 'beta', stable: 'latest' })
+    expect(TAGS).toEqual({ beta: 'beta', stable: 'latest', dev: 'dev' })
   })
 })
