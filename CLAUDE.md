@@ -29,8 +29,7 @@ npx nx run-many --target=lint --all
 npx nx run-many --target=test --all
 ```
 
-`test` exits 0. `lint` exits 1 on a single known error. A change is clean when `test` stays green
-and `lint` adds nothing to it; the error and the rules the config relaxes are in
+Both exit 0, and a change keeps them there. The rules the lint config relaxes are in
 [`docs/development.md`](docs/development.md#verify).
 
 ## Visual check

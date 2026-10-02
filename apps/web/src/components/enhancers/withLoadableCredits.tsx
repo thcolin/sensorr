@@ -7,14 +7,12 @@ import { useTMDB } from '../../store/tmdb'
 
 type withLoadableCreditsProps = MovieProps
 
-const placeholders = Array(length).fill({ entity: { profile_path: false } })
 const empty = []
 
 export const useLoadableCredits = (id, includes, more) => {
   const tmdb = useTMDB()
   const { metadata: persons, loading: personsLoading } = usePersonsMetadataContext() as any
   const [credits, setCredits] = useState(null)
-  const [loading, setLoading] = useState(false)
 
   const loadCredits = useCallback(async () => {
     if (!id || credits) {
@@ -22,7 +20,6 @@ export const useLoadableCredits = (id, includes, more) => {
     }
 
     try {
-      setLoading(true)
       const raw = await tmdb.fetch(`movie/${id}/credits`)
       setCredits(utils
         .sortCredits(raw, Object.keys(persons), includes)
@@ -32,8 +29,6 @@ export const useLoadableCredits = (id, includes, more) => {
       setCredits([])
       console.warn(err)
       toast.error('Error while fetching credits')
-    } finally {
-      setLoading(false)
     }
   }, [id, persons, credits])
 
@@ -44,9 +39,9 @@ export const useLoadableCredits = (id, includes, more) => {
   const value = useMemo(() => (
     credits === null ? null : [
       ...(more ? more : []),
-      ...((personsLoading || !id) ? placeholders : credits ? credits : loading ? placeholders : empty)
+      ...((personsLoading || !id) ? empty : credits)
     ].filter((a, index, self) => index === self.findIndex(b => a.entity.id === b.entity.id))
-  ), [more, personsLoading, id, credits, loading])
+  ), [more, personsLoading, id, credits])
 
   return { credits: value, loadCredits }
 }
