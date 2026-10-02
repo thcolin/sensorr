@@ -165,7 +165,7 @@ export class WrappedService {
 
   private async mailWrapped(guest, year: number) {
     const viewer = await this.viewerOf(guest.email)
-    const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { new: true }).lean()).wrapped_token
+    const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { returnDocument: 'after' }).lean()).wrapped_token
     const { theme } = this.lookOf(year)
     await this.mailService.send(guest.email, mails.wrapped({
       url: this.mailService.url(),
@@ -386,7 +386,7 @@ export class WrappedService {
     }
 
     this.logger.log(`RenewToken "${email}"`)
-    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_token: randomBytes(18).toString('base64url') }, { new: true }).lean()
+    const guest = await this.guestModel.findOneAndUpdate({ email }, { wrapped_token: randomBytes(18).toString('base64url') }, { returnDocument: 'after' }).lean()
 
     if (!guest) {
       throw new NotFoundException()

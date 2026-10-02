@@ -77,7 +77,7 @@ export class MailService {
       return null
     }
 
-    const guest = await this.guestModel.findOneAndUpdate({ mail_token: token }, { $addToSet: { mail_unsubscribed: kind } }, { new: true }).lean()
+    const guest = await this.guestModel.findOneAndUpdate({ mail_token: token }, { $addToSet: { mail_unsubscribed: kind } }, { returnDocument: 'after' }).lean()
     guest && this.logger.log(`Unsubscribe "${guest.email}" from "${kind}"`)
     return guest
   }

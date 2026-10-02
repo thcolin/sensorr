@@ -1,6 +1,4 @@
 export class SubscriptionDTO {
-  _id: number
-
   readonly endpoint: string
   readonly expirationTime?: number
   readonly keys: {

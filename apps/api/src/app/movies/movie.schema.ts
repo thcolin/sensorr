@@ -204,7 +204,7 @@ export class Movie extends Document<number> {
   banned_releases: Record<any, any>
 
   @Prop(raw([String]))
-  requested_by: Record<any, any>
+  requested_by: string[]
 
   // When the first guest watchlisted it, written once by `keep-in-touch`
   @Prop()

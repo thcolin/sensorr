@@ -1,5 +1,3 @@
-const { pathToFileURL } = require('url')
-
 module.exports = {
   displayName: 'api',
   preset: '../../jest.preset.js',
@@ -9,14 +7,7 @@ module.exports = {
       {
         tsconfig: '<rootDir>/tsconfig.spec.json',
         diagnostics: { ignoreCodes: [1343] },
-        astTransformers: {
-          before: [
-            {
-              path: 'ts-jest-mock-import-meta',
-              options: { metaObjectReplacement: { url: ({ fileName }) => pathToFileURL(fileName).href } },
-            },
-          ],
-        },
+        astTransformers: { before: ['<rootDir>/jest.import-meta.cjs'] },
       },
     ],
   },

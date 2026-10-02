@@ -23,7 +23,7 @@ export class PersonsService {
         res.state = 'ignored'
         return res
       default:
-        return this.personModel.findByIdAndUpdate(person.id, person, { new: true, upsert: true })
+        return this.personModel.findByIdAndUpdate(person.id, person, { returnDocument: 'after', upsert: true })
     }
   }
 
