@@ -10,6 +10,8 @@ import { Play, Viewer } from '../wrapped/wrapped.schema'
 import { Guest as GuestDocument } from './guest.schema'
 import { reminderOf } from './reminders'
 import { invitableOf, sharedIdsOf, sharedUsersOf } from './shared'
+// The app version lives in the workspace package.json, outside any project
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import app from './../../../../../package.json'
 
 @Injectable()

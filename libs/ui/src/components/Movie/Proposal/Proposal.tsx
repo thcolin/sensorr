@@ -25,7 +25,7 @@ const UIProposal = ({ proposals, releases, proceed, summary = null, labelize = n
       appendTo={document.body}
       content={(
         <div sx={UIProposal.styles.content}>
-          {!!summary ? <small><code>{summary}</code></small> : releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
+          {summary ? <small><code>{summary}</code></small> : releases.map(release => <small key={release.id}><code>{emojize('📼', `${release.title} (${filesize.stringify(release.size)})`)}</code></small>)}
           {(!!summary || !!releases.length) && <hr/>}
           {proposals.map(proposal => (
             <Fragment key={proposal.id}>

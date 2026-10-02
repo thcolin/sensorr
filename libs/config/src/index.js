@@ -6,7 +6,7 @@ const validateSources = (sources, schema) => {
     throw new Error('must be of type Array')
   }
 
-  for (let source of sources) {
+  for (const source of sources) {
     convict(schema.children).load(source).validate({ output: () => {} })
   }
 }

@@ -115,7 +115,7 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
             ) : done ? (
               <span style={{ display: 'flex', alignItems: 'center' }}>
                 {(
-                  !!results.matches ? '⭐' :
+                  results.matches ? '⭐' :
                   (results.withdrawn && !results.ignored) ? '🚨' :
                   (results.ignored && !results.withdrawn) ? '🗑️ ' :
                   '📭'

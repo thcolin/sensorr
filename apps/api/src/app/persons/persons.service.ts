@@ -18,16 +18,17 @@ export class PersonsService {
     this.logger.log(`UpsertPerson "${person?.id}", state="${person?.state}"`)
 
     switch (person.state) {
-      case 'ignored':
+      case 'ignored': {
         const res = await this.personModel.findByIdAndDelete(person.id) as any
         res.state = 'ignored'
         return res
+      }
       default:
         return this.personModel.findByIdAndUpdate(person.id, person, { returnDocument: 'after', upsert: true })
     }
   }
 
-  async getPersons(params = {} as any, page: number = 1, limit: number = 20): Promise<PaginateResult<PersonDocument>> {
+  async getPersons(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<PersonDocument>> {
     this.logger.log(`GetPersons, params=${JSON.stringify(params)}, page=${page}`)
     const res = await this.personModel.paginate({
       ...(params.known_for_department ? {
@@ -61,7 +62,7 @@ export class PersonsService {
     return res
   }
 
-  async getMetadata(page: number = 1) {
+  async getMetadata(page = 1) {
     this.logger.log(`GetMetadata, page="${page}"`)
     const res = await this.personModel.paginate({}, {
       page,

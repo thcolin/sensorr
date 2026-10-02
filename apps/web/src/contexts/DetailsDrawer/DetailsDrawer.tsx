@@ -161,7 +161,7 @@ export const Provider = ({ children, ...props }) => {
                     )}
                     {(!!details?.meaningful?.genres || !!details?.caption) && (
                       <small title={details?.caption}>
-                        {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+                        {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
                       </small>
                     )}
                   </div>

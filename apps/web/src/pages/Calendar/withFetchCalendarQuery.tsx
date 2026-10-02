@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 // import toast from 'react-hot-toast'
 import nanobounce from 'nanobounce'
 import { useControlsState } from '@sensorr/ui'
@@ -130,21 +130,22 @@ export const refine = ({ entities, summaries }, refinements, sort_by = 'primary_
   }
 }
 
+// A calendar page holds its controls in its context; a row of the home has none and keeps its own
+const useControlsValues = () => {
+  const context = useContext(ControlsContext)
+  const local = useState({ uri: '', params: {} })
+  return context || local
+}
+
 const withFetchCalendarQuery = (
   defaultQuery?: { params?: {} },
 ) => (WrappedComponent) => {
-  const withFetchCalendarQuery = ({ ...props }) => {
+  const WithFetchCalendarQuery = ({ ...props }) => {
     const tmdb = useTMDB()
     const persons = usePersonsMetadataContext() as any
     const debouncer = useMemo(() => nanobounce(0), [])
 
     // Wait for first controlsQuery hydration by serializing initial state
-    // A calendar page holds its controls in its context; a row of the home has none and keeps its own
-    const useControlsValues = useCallback(() => {
-      const context = useContext(ControlsContext)
-      const local = useState({ uri: '', params: {} })
-      return context || local
-    }, [])
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
 
     const [query, refinements] = useMemo(() => {
@@ -231,8 +232,8 @@ const withFetchCalendarQuery = (
     )
   }
 
-  withFetchCalendarQuery.displayName = `withFetchCalendarQuery(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withFetchCalendarQuery
+  WithFetchCalendarQuery.displayName = `withFetchCalendarQuery(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithFetchCalendarQuery
 }
 
 export default withFetchCalendarQuery

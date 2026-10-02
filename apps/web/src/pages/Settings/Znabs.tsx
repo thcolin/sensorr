@@ -238,7 +238,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
             type='button'
             sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.remove }}
             onClick={() => {
-              if (confirm('Do you really want to delete this Indexer? All references to this indexer in policies will be removed')) {
+              if (window.confirm('Do you really want to delete this Indexer? All references to this indexer in policies will be removed')) {
                 remove(index)
                 form.setValue(
                   'policies',

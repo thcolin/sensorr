@@ -28,8 +28,8 @@ const UIAvatar = ({
     ...UIAvatar.styles,
     element: {
       ...UIAvatar.styles.element,
-      ...(!!compact ? { height: '6em', width: '6em', borderWidth: '0.25em' } : {}),
-      ...(!!highlight ? { borderColor: 'primary' } : {}),
+      ...(compact ? { height: '6em', width: '6em', borderWidth: '0.25em' } : {}),
+      ...(highlight ? { borderColor: 'primary' } : {}),
     },
   }), [highlight, compact])
 

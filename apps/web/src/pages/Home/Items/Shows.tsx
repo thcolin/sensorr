@@ -12,7 +12,7 @@ import { day } from '../../Shows/agenda'
 
 // Fetches a whole row at once, for the rows built from more than one request
 const withFetchRow = (fetcher: (api: API, init: { signal: AbortSignal }) => Promise<any[]>) => (WrappedComponent) => {
-  const withFetchRow = (props) => {
+  const WithFetchRow = (props) => {
     const api = useAPI() as API
     const [entities, setEntities] = useState(null)
     const [error, setError] = useState(null)
@@ -44,7 +44,7 @@ const withFetchRow = (fetcher: (api: API, init: { signal: AbortSignal }) => Prom
     )
   }
 
-  return withFetchRow
+  return WithFetchRow
 }
 
 const fetchResults = (api: API, { uri, params, init }: { uri: string, params: {}, init: {} }) => api.fetch(uri, params, init).then(({ results }) => results)

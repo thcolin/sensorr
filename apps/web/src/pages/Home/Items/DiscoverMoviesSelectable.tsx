@@ -4,7 +4,7 @@ import { compose, useHistoryState } from '@sensorr/utils'
 import { Entities } from '@sensorr/ui'
 import { useTMDB } from '../../../store/tmdb'
 import { withTabsBehavior } from '../../../components/Entities/Tabs'
-import withFetchQuery from 'apps/web/src/components/enhancers/withFetchQuery'
+import withFetchQuery from '../../../components/enhancers/withFetchQuery'
 
 const Tabs = compose(
   withTabsBehavior(),

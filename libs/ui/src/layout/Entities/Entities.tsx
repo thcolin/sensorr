@@ -10,10 +10,10 @@ import { List, ListProps } from '../../elements/List/List'
 import { Warning, WarningProps } from '../../atoms/Warning/Warning'
 import { DragScroll } from '../../atoms/DragScroll/DragScroll'
 import { NavLink } from 'react-router-dom'
-import { Icon } from '@sensorr/ui'
+import { Icon } from '../../atoms/Icon/Icon'
 
 const withEntity = (context) => (WrappedComponent) => {
-  const withEntity = ({ index, placeholder = false, props, ready, ...rest }) => {
+  const WithEntity = ({ index, placeholder = false, props, ready, ...rest }) => {
     const { findEntity } = useContext(context) as any
     const entity = findEntity(index)
 
@@ -28,8 +28,8 @@ const withEntity = (context) => (WrappedComponent) => {
     )
   }
 
-  withEntity.displayName = `withEntity(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withEntity
+  WithEntity.displayName = `withEntity(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithEntity
 }
 
 type EntityInterface = MovieInterface | CollectionInterface | PersonInterface | CastInterface | CrewInterface

@@ -44,7 +44,7 @@ const detailsOf = (tmdb, id: number) => {
 // The progress footer of a poster whose entity comes without one: from Sensorr when it holds the show, from its
 // TMDB details otherwise. Until the metadata loads, which one is unknown
 export const withShowProgress = () => (WrappedComponent) => {
-  const withShowProgress = ({ entity, metadata, display, placeholder, state, ...props }) => {
+  const WithShowProgress = ({ entity, metadata, display, placeholder, state, ...props }) => {
     const api = useAPI()
     const tmdb = useTMDB()
     const [fetched, setFetched] = useState(null)
@@ -105,6 +105,6 @@ export const withShowProgress = () => (WrappedComponent) => {
     )
   }
 
-  withShowProgress.displayName = `withShowProgress(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withShowProgress
+  WithShowProgress.displayName = `withShowProgress(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithShowProgress
 }

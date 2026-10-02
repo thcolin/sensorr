@@ -5,7 +5,7 @@ import { utils } from '@sensorr/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useTMDB } from '../../store/tmdb'
 
-interface withLoadableCreditsProps extends MovieProps {}
+type withLoadableCreditsProps = MovieProps
 
 const placeholders = Array(length).fill({ entity: { profile_path: false } })
 const empty = []
@@ -54,7 +54,7 @@ export const useLoadableCredits = (id, includes, more) => {
 const withLoadableCredits = (
   includes: ('crew' | 'cast')[] = [],
 ) => (WrappedComponent) => {
-  const withLoadableCredits = ({ entity, ...props }: withLoadableCreditsProps) => {
+  const WithLoadableCredits = ({ entity, ...props }: withLoadableCreditsProps) => {
     const { credits, loadCredits } = useLoadableCredits(entity?.id, includes, props?.credits)
 
     return (
@@ -67,8 +67,8 @@ const withLoadableCredits = (
     )
   }
 
-  withLoadableCredits.displayName = `withLoadableCredits(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withLoadableCredits
+  WithLoadableCredits.displayName = `withLoadableCredits(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithLoadableCredits
 }
 
 export default withLoadableCredits

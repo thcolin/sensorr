@@ -94,7 +94,7 @@ export class Sensorr {
     // With a show unit, each term is searched on TV from that unit's level up to the whole series
     query: { terms: string[], unit?: ShowUnit, [key: string]: any },
     excludedZnabs: string[] = [],
-    onTasksChange: ({}: any) => void,
+    onTasksChange: (tasks: any) => void,
     signal?: any,
     silent?: boolean,
   ) {

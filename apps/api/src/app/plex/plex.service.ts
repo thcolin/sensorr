@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import { ConfigService } from '../config/config.service'
 import { ImageRequest, transcodeOf } from './image'
 import { ArtworkChoices, PLEX_ARTWORKS, writeOf } from './artworks'
+// The app version lives in the workspace package.json, outside any project
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import app from './../../../../../package.json'
 
 const IMAGES = ['image/jpeg', 'image/png', 'image/webp']

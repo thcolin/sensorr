@@ -31,7 +31,7 @@ export class Movie extends Document<number> {
       name: String,
     },
   ])
-  genres: { id: number, name: String }[]
+  genres: { id: number, name: string }[]
 
   @Prop()
   homepage: string

@@ -1,8 +1,8 @@
 import qs from 'query-string'
 
 export class API {
-  private base: string = `/api/`
-  public access_token: string = ''
+  private base = `/api/`
+  public access_token = ''
 
   public query = {
     auth: (

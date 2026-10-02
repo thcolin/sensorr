@@ -102,7 +102,7 @@ export const Provider = ({ ...props }) => {
 export const usePersonsMetadataContext = () => useContext(personsMetadataContext)
 
 export const withPersonsMetadataContext = () => (WrappedComponent) => {
-  const withPersonsMetadataContext = ({ entity, ...props }) => {
+  const WithPersonsMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata, setPersonState } = usePersonsMetadataContext() as any
     const setState = useCallback(state => setPersonState(entity.id, state), [entity?.id])
 
@@ -116,6 +116,6 @@ export const withPersonsMetadataContext = () => (WrappedComponent) => {
     )
   }
 
-  withPersonsMetadataContext.displayName = `withPersonsMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withPersonsMetadataContext
+  WithPersonsMetadataContext.displayName = `withPersonsMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithPersonsMetadataContext
 }

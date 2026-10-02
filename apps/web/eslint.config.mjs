@@ -1,4 +1,9 @@
 import baseConfig from '../../eslint.config.mjs'
 import nx from '@nx/eslint-plugin'
 
-export default [...baseConfig, ...nx.configs['flat/react']]
+export default [
+  ...baseConfig,
+  ...nx.configs['flat/react'],
+  // A service worker's global is self
+  { files: ['**/web/src/service-worker.js'], rules: { 'no-restricted-globals': 'off' } },
+]

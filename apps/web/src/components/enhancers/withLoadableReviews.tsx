@@ -31,10 +31,10 @@ export const useLoadableReviews = (id) => {
   return { reviews, loadReviews }
 }
 
-interface withLoadableReviewsProps extends MovieProps {}
+type withLoadableReviewsProps = MovieProps
 
 const withLoadableReviews = () => (WrappedComponent) => {
-  const withLoadableReviews = ({ entity, ...props }: withLoadableReviewsProps) => {
+  const WithLoadableReviews = ({ entity, ...props }: withLoadableReviewsProps) => {
     const { reviews, loadReviews } = useLoadableReviews(entity?.id)
 
     return (
@@ -47,8 +47,8 @@ const withLoadableReviews = () => (WrappedComponent) => {
     )
   }
 
-  withLoadableReviews.displayName = `withLoadableReviews(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withLoadableReviews
+  WithLoadableReviews.displayName = `withLoadableReviews(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithLoadableReviews
 }
 
 export default withLoadableReviews

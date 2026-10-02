@@ -23,7 +23,7 @@ const FALLBACK = {
 }
 
 const withFollowedShows = () => (WrappedComponent) => {
-  const withFollowedShows = ({ ...props }) => {
+  const WithFollowedShows = ({ ...props }) => {
     const api = useAPI()
     const [shows, setShows] = useState(null)
     const [error, setError] = useState(null)
@@ -54,8 +54,8 @@ const withFollowedShows = () => (WrappedComponent) => {
     )
   }
 
-  withFollowedShows.displayName = `withFollowedShows(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withFollowedShows
+  WithFollowedShows.displayName = `withFollowedShows(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithFollowedShows
 }
 
 const summarize = ({ show_id, status, episodes }, show) => {
@@ -235,7 +235,7 @@ const UIEpisodeCard = ({ entity, ...props }) => {
 // The episodes of the month in one card per show, day and status, in the order they air. The month comes whole
 // (`limit: ''`): no `onMore`, or the grid asks for a next page at its 20th card and gets the same month again
 const withEpisodeCards = () => (WrappedComponent) => {
-  const withEpisodeCards = ({ entities, shows, onMore, ...props }) => {
+  const WithEpisodeCards = ({ entities, shows, onMore, ...props }) => {
     const cards = useMemo(() => groupByDay(Object.values(entities || {}), shows)
       .flatMap(({ key, entries }) => entries.map(entry => ({ ...entry, key, id: keyOf(entry), show: shows[entry.show_id] }))), [entities, shows])
 
@@ -244,8 +244,8 @@ const withEpisodeCards = () => (WrappedComponent) => {
     )
   }
 
-  withEpisodeCards.displayName = `withEpisodeCards(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withEpisodeCards
+  WithEpisodeCards.displayName = `withEpisodeCards(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithEpisodeCards
 }
 
 const GridCalendar = compose(
@@ -309,7 +309,7 @@ const STREAMS = {
 }
 
 const withShowsAgenda = () => (WrappedComponent) => {
-  const withShowsAgenda = ({ ready, error, shows, ...props }) => {
+  const WithShowsAgenda = ({ ready, error, shows, ...props }) => {
     const api = useAPI()
     const context = useContext(ControlsContext)
     const [query, controls] = useControlsState(() => context, ({ uri, ...params }) => ({ ready: true, params }))
@@ -355,8 +355,8 @@ const withShowsAgenda = () => (WrappedComponent) => {
     )
   }
 
-  withShowsAgenda.displayName = `withShowsAgenda(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withShowsAgenda
+  WithShowsAgenda.displayName = `withShowsAgenda(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithShowsAgenda
 }
 
 const UIShowsAgenda = ({ shows, controls, ...props }) => {

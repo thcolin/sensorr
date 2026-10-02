@@ -14,6 +14,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 
+const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
+
 export const Search = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.search.title') : `${i18n.t('pages.search.title')} ${resource}`),
   withProps({
@@ -51,7 +53,7 @@ export const Search = (resource) => compose(
       },
     }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person', shows: 'search/tv' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person', shows: 'search/tv' }[resource] }, 1, useTMDB, useControlsHistoryState),
   withControls({
     title: i18n.t('pages.search.title'),
     useStatistics,
@@ -77,7 +79,7 @@ export const Search = (resource) => compose(
       query: {
         initial: '',
         serialize: (key, raw) => ({ [key]: raw }),
-        component: ({ value = '', onChange, style, ...props }) => {
+        component: function QueryField({ value = '', onChange, style, ...props }) {
           const debounce = useMemo(() => nanobounce(400), [])
           const [temp, setTemp] = useState(value)
 

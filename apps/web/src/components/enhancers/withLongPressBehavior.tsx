@@ -1,10 +1,10 @@
 import { MovieProps } from '@sensorr/ui'
 import { useDetailsDrawerContext } from '../../contexts/DetailsDrawer/DetailsDrawer'
 
-interface withLongPressBehaviorProps extends MovieProps {}
+type withLongPressBehaviorProps = MovieProps
 
 const withLongPressBehavior = () => (WrappedComponent) => {
-  const withLongPressBehavior = ({ ...props }: withLongPressBehaviorProps) => {
+  const WithLongPressBehavior = ({ ...props }: withLongPressBehaviorProps) => {
     const { open } = useDetailsDrawerContext()
 
     return (
@@ -12,8 +12,8 @@ const withLongPressBehavior = () => (WrappedComponent) => {
     )
   }
 
-  withLongPressBehavior.displayName = `withLongPressBehavior(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withLongPressBehavior
+  WithLongPressBehavior.displayName = `withLongPressBehavior(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithLongPressBehavior
 }
 
 export default withLongPressBehavior

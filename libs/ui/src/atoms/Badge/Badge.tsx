@@ -39,7 +39,7 @@ const UIBadge = ({
   return (
     <span {...props} sx={styles.element}>
       {!!emoji && <span sx={UIBadge.styles.emoji}>{emoji}</span>}
-      {hasLabel && <span sx={{ ...UIBadge.styles.label, marginLeft: !!emoji ? 4 : 12 }}>{label}</span>}
+      {hasLabel && <span sx={{ ...UIBadge.styles.label, marginLeft: emoji ? 4 : 12 }}>{label}</span>}
     </span>
   )
 }

@@ -81,7 +81,7 @@ function getMostDominantPrimaryColor(WCAGCompliantColorPairs) {
   let highestDominanceScore = 0
   let mostDominantColor = ''
 
-  for (let dominantColor in WCAGCompliantColorPairs) {
+  for (const dominantColor in WCAGCompliantColorPairs) {
     const pairs = WCAGCompliantColorPairs[dominantColor]
     const dominance = getPixelDominance(dominantColor)
     const totalPairScore = calculateTotalPairScore(pairs)

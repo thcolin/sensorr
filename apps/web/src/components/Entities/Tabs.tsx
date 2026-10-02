@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import nanobounce from 'nanobounce'
 
 export const withTabsBehavior = () => (WrappedComponent) => {
-  const withTabsBehavior = ({ id, tabs, ...props }) => {
+  const WithTabsBehavior = ({ id, tabs, ...props }) => {
     const { t } = useTranslation()
     const [current, setCurrent] = useHistoryState(`${id}-tab`, null)
     const [optimistic, setOptimistic] = useState(null)
@@ -16,12 +16,12 @@ export const withTabsBehavior = () => (WrappedComponent) => {
       setOptimistic(current || Object.keys(tabs)[0])
     }, [tabs, current])
 
+    const tab = tabs[current] || tabs[Object.keys(tabs)[0]]
+    const [, setScroll] = useHistoryState(`${tab?.id}-scroll`, [0, 0])
+
     if (!Object.keys(tabs).length) {
       return null
     }
-
-    const tab = tabs[current] || tabs[Object.keys(tabs)[0]]
-    const [, setScroll] = useHistoryState(`${tab?.id}-scroll`, [0, 0])
 
     return (
       <WrappedComponent
@@ -66,8 +66,8 @@ export const withTabsBehavior = () => (WrappedComponent) => {
     )
   }
 
-  withTabsBehavior.displayName = `withTabsBehavior(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withTabsBehavior
+  WithTabsBehavior.displayName = `withTabsBehavior(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithTabsBehavior
 }
 
 export const Tabs = withTabsBehavior()(Entities)

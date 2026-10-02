@@ -208,7 +208,7 @@ const countsOf = (values) => Object.entries(values.reduce((acc, value) => ({ ...
 
 // Every requested show comes in one page, so the one followed from its badge leaves the unfulfilled grid at once
 const withUnfulfilledShows = () => (WrappedComponent) => {
-  const withUnfulfilledShows = ({ entities, length, onMore, ...props }: any) => {
+  const WithUnfulfilledShows = ({ entities, length, onMore, ...props }: any) => {
     const { loading, metadata } = useShowsMetadataContext() as any
     const unfulfilled = (props.controls?.values?.state ?? SHOWS_UNFULFILLED) === SHOWS_UNFULFILLED
     const listed = useMemo(() => Object.values(entities || {}).filter((show: any) => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [entities, loading, unfulfilled, metadata])
@@ -216,7 +216,7 @@ const withUnfulfilledShows = () => (WrappedComponent) => {
     return <WrappedComponent {...props} entities={listed} length={props.ready ? listed.length : length} />
   }
 
-  return withUnfulfilledShows
+  return WithUnfulfilledShows
 }
 
 export const ShowsRequests = compose(

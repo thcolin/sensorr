@@ -8,7 +8,7 @@ export const freedLabel = (change) => change > 0 ? 'more on disk' : 'freed on di
 
 export const Summary = ({ error = null, meta }) => (
   <span sx={Summary.styles.element}>
-    {!!error ? (
+    {error ? (
       <Tippy maxWidth='80vw' content={<code>💢 <span>{error?.message || error}</span></code>}>
         <span>💢</span>
       </Tippy>

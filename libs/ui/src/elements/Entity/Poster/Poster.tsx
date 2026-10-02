@@ -299,7 +299,7 @@ const UIPoster = ({
             )}
             {(!!details?.meaningful?.genres || !!details?.caption) && (
               <small title={details?.caption}>
-                {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} disabled={device === 'mobile'} /> : details?.caption}
+                {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} disabled={device === 'mobile'} /> : details?.caption}
               </small>
             )}
           </div>

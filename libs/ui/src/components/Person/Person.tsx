@@ -131,7 +131,7 @@ export const transformPersonDetails = (entity: PersonInterface | CrewInterface |
   poster: entity.profile_path,
   billboard: null,
   meaningful: {
-    known_for_department: !!(entity as PersonInterface).known_for_department ? () => (
+    known_for_department: (entity as PersonInterface).known_for_department ? () => (
       <Link
         sx={{ whiteSpace: 'nowrap' }}
         to='/movie/discover'
@@ -147,32 +147,32 @@ export const transformPersonDetails = (entity: PersonInterface | CrewInterface |
         {emojize('💼', (entity as PersonInterface).known_for_department)}
       </Link>
     ) : null,
-    job: !!(entity as CrewInterface).job ? () => (
+    job: (entity as CrewInterface).job ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('💼', (entity as CrewInterface).job)}
       </span>
     ) : null,
-    character: !!(entity as CastInterface).character ? () => (
+    character: (entity as CastInterface).character ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('🎞️', (entity as CastInterface).character )}
       </span>
     ) : null,
-    place_of_birth: !!(entity as PersonInterface).place_of_birth ? () => (
+    place_of_birth: (entity as PersonInterface).place_of_birth ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('🏡', (entity as PersonInterface).place_of_birth)}
       </span>
     ) : null,
-    age: !!(entity as PersonInterface).birthday ? () => (
+    age: (entity as PersonInterface).birthday ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('📅', (((entity as PersonInterface).deathday ? new Date((entity as PersonInterface).deathday) : new Date()).getFullYear() - new Date((entity as PersonInterface).birthday).getFullYear()))} {i18n.t('yearsOld')}
       </span>
     ) : null,
-    birthday: !!(entity as PersonInterface).birthday ? () => (
+    birthday: (entity as PersonInterface).birthday ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('🎂', new Date((entity as PersonInterface).birthday).toLocaleDateString())}
       </span>
     ) : null,
-    deathday: !!(entity as PersonInterface).deathday ? () => (
+    deathday: (entity as PersonInterface).deathday ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
         {emojize('🥀', new Date((entity as PersonInterface).deathday).toLocaleDateString())}
       </span>

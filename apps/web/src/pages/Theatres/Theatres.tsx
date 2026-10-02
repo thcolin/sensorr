@@ -87,7 +87,7 @@ export const Theatres = compose(
       region: {
         initial: i18n.language.slice(-2),
         serialize: (key, raw) => ({ [key]: raw }),
-        component: ({ value = i18n.language.slice(-2), onChange, style }) => {
+        component: function RegionField({ value = i18n.language.slice(-2), onChange, style }) {
           const [options, setOptions] = useState([])
 
           useEffect(() => {

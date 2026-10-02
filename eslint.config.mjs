@@ -5,6 +5,10 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'prefer-const': ['error', { destructuring: 'all' }],
+      'no-irregular-whitespace': ['error', { skipTemplates: true }],
+      '@typescript-eslint/no-unused-expressions': ['error', { allowShortCircuit: true, allowTernary: true }],
       '@nx/enforce-module-boundaries': [
         'error',
         {
@@ -25,6 +29,8 @@ export default [
     files: ['**/*.ts', '**/*.tsx'],
     rules: {
       'no-extra-semi': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
     },
     languageOptions: {
       parserOptions: {
@@ -37,6 +43,7 @@ export default [
     files: ['**/*.js', '**/*.jsx'],
     rules: {
       'no-extra-semi': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
     },
   },
 ]

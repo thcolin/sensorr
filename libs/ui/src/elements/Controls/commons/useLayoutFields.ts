@@ -1,11 +1,11 @@
 import { useResponsiveValue } from '@sensorr/utils'
 
 export const useLayoutFields = (layout, fields, custom = {}) => {
+  const gridTemplateAreas = useResponsiveValue(Array.isArray(layout?.gridTemplateAreas) ? layout.gridTemplateAreas : [layout?.gridTemplateAreas])
+
   if (!layout?.gridTemplateAreas) {
     return {}
   }
-
-  const gridTemplateAreas = useResponsiveValue(Array.isArray(layout.gridTemplateAreas) ? layout.gridTemplateAreas : [layout.gridTemplateAreas])
 
   return (gridTemplateAreas as any)
     .replaceAll('"', '')

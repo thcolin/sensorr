@@ -97,7 +97,7 @@ const FetchTMDBChangesTask = ({ type = 'movie', dependencies = [], ...props }) =
       let success = 0, warning = 0
       setStatus('loading')
 
-      for (let id of (state?.[type]?.entities || [])) {
+      for (const id of (state?.[type]?.entities || [])) {
         // Fallback to Sensorr stored title/name so a failed refresh (e.g. entity deleted from TMDB) stays identifiable
         let title = state?.[type]?.metadata?.[id]?.title || state?.[type]?.metadata?.[id]?.name || `#${id}`
         const link = `https://www.themoviedb.org/${type}/${id}`

@@ -246,12 +246,12 @@ export const transformShowDetails = (entity) => {
           {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : (isAiring(entity.status) && new Date(entity.first_air_date).getTime() <= Date.now()) ? `${first} - Airing` : `${first}`)}
         </span>
       ) : null,
-      runtime: !!entity.episode_run_time?.length ? () => (
+      runtime: entity.episode_run_time?.length ? () => (
         <span title='Episode runtime' sx={{ whiteSpace: 'nowrap' }}>
           {emojize('🕙', humanize.time(`${entity.episode_run_time[0]}`))}
         </span>
       ) : null,
-      genres: !!entity.genres?.length ? ({ emoji = true, disabled = false } = {}) => (
+      genres: entity.genres?.length ? ({ emoji = true, disabled = false } = {}) => (
         <span>
           {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>
@@ -275,7 +275,7 @@ export const transformShowDetails = (entity) => {
           ))}
         </span>
       ) : null,
-      original_language: !!entity.original_language ? () => {
+      original_language: entity.original_language ? () => {
         const language = useMemo(() => clanguages.getLanguage(entity.original_language), [entity.original_language])
 
         return language?.name?.length && (
@@ -284,7 +284,7 @@ export const transformShowDetails = (entity) => {
       } : null,
       vote_average: typeof entity.vote_average !== 'undefined' ? () => (
         <Link
-          title={`Discover more "${tmdb.judge(entity)}" shows${!!entity?.vote_count ? ` (${fields.vote_count.humanize(entity)} users rating)` : ''}`}
+          title={`Discover more "${tmdb.judge(entity)}" shows${entity?.vote_count ? ` (${fields.vote_count.humanize(entity)} users rating)` : ''}`}
           sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
           to='/tv/discover'
           state={{
@@ -297,10 +297,10 @@ export const transformShowDetails = (entity) => {
           {Math.round(entity.vote_average * 10)}%
         </Link>
       ) : null,
-      vote_count: !!entity.vote_count ? () => (
+      vote_count: entity.vote_count ? () => (
         <span title='Vote count' sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
       ) : null,
-      popularity: !!entity.popularity ? () => (
+      popularity: entity.popularity ? () => (
         <span title='Popularity' sx={{ whiteSpace: 'nowrap' }}>{emojize('📣', entity.popularity.toLocaleString())}</span>
       ) : null,
     },

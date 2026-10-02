@@ -9,7 +9,7 @@ import { Link } from '../../../atoms/Link/Link'
 import { DragScroll } from '../../../atoms/DragScroll/DragScroll'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
-export interface PrettyProps extends Omit<PosterProps, 'palette' | 'onReady'> {}
+export type PrettyProps = Omit<PosterProps, 'palette' | 'onReady'>
 
 const UIPretty = ({
   details,
@@ -157,7 +157,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
         )}
         {(!!details?.meaningful?.genres || !!details?.caption) && (
           <small title={details?.caption}>
-            {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+            {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
           </small>
         )}
       </div>
