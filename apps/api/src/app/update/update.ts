@@ -1,6 +1,5 @@
 import fetch from 'node-fetch'
 
-// The channels and their image tags are in RELEASING.md; `dev` and a `sha-` tag follow every push to dev
 export type Channel = 'dev' | 'beta' | 'stable'
 
 export const TAGS = { beta: 'beta', stable: 'latest' } as const
@@ -26,8 +25,6 @@ const MANIFESTS = [
   'application/vnd.docker.distribution.manifest.v2+json',
 ].join(',')
 
-// The version label of the image a tag points at, null while the tag does not exist: an anonymous token,
-// the index, the manifest of its first platform, then the config blob that carries the labels
 export const versionOn = async (tag: string): Promise<string | null> => {
   const get = async (url: string, headers = {}) => {
     const res = await fetch(url, { headers })

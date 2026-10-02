@@ -6,11 +6,6 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
-// Holds the Docker socket for Sensorr: `sensorr-api` asks it what runs and to move to another tag,
-// over the `updater` network, with the secret both read from `.secrets/updater`. The steps live in
-// the `apply` command, run by a container of this same image that outlives the recreation of the
-// services, `sensorr-updater` among them. See docs/architecture.md#the-updater.
-
 const PORT = Number(process.env.UPDATER_PORT || 4310)
 const SECRET = process.env.UPDATER_SECRET_FILE || '/secrets/updater'
 const SELF = 'sensorr-updater'
@@ -21,7 +16,7 @@ export const TAGS = ['beta', 'latest']
 const run = promisify(execFile)
 const docker = async (...args) => (await run('docker', args, { maxBuffer: 1 << 20 })).stdout
 
-// Every `SENSORR_TAG=` line of the env file takes the tag, compose reading the last one; a file without one gets it appended
+// Compose reads the last `SENSORR_TAG=` line, so every one takes the tag
 export const withTag = (text, tag) => {
   const lines = text.split('\n')
   const found = lines.some((line) => line.startsWith('SENSORR_TAG='))
@@ -33,7 +28,6 @@ export const withTag = (text, tag) => {
   return `${text}${text && !text.endsWith('\n') ? '\n' : ''}SENSORR_TAG=${tag}\n`
 }
 
-// Where compose found the project of a container, from the labels it sets on it
 export const projectOf = (labels) => {
   const directory = labels['com.docker.compose.project.working_dir']
 
@@ -75,7 +69,7 @@ const status = async () => {
   }
 }
 
-// Starts the container that applies the tag, its own image and the project's folders mounted at their host paths
+// `apply` runs in a container of its own, which outlives the recreation of sensorr-updater
 const update = async (tag) => {
   const self = await inspect(SELF)
 

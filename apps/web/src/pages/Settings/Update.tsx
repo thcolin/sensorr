@@ -15,10 +15,9 @@ const CHANNELS = {
   stable: { emoji: '📦', label: 'Stable', tag: 'latest', source: <>Every <code>vX.Y.Z</code> tag of <code>main</code></> },
 }
 
-// The restart pulls two images then recreates three containers: past this, something went wrong
+// Pulling the images and recreating three containers takes a minute or two
 const PATIENCE = 5 * 60 * 1000
 
-// The version the running channel offers above the running one, for the badge and the toast of Settings
 export const availableOf = (update) => {
   const version = update?.channels?.[update?.channel]?.version
 
@@ -45,7 +44,6 @@ const Update = ({ ...props }) => {
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = updater?.api?.revision?.slice(0, 7)
 
-  // The page reloads on the new bundle once the API answers with the target version
   useEffect(() => {
     if (!updating) {
       return
