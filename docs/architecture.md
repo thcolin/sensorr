@@ -366,36 +366,42 @@ Recreating `sensorr-api` kills a running job, see
 ### The updater
 
 Settings › Update reads `GET /api/update` (`apps/api/src/app/update/update.service.ts`): the
-running version, from the root `package.json`; its commit, `NX_SENSORR_REVISION`, which
-`ci.yml` passes to `apps/api/Dockerfile` as a build argument; the tag, from `NX_SENSORR_TAG`, which compose sets
-to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/update/update.ts`,
-`dev` for `dev` and `sha-` tags); the version each channel offers, the version label of
-`sensorr-api:beta` and `sensorr-api:latest` read on GHCR with an anonymous token and kept 15 minutes,
-because GHCR sends no CORS headers to a browser; the running jobs; and what `sensorr-updater` answers,
-`null` when its host name does not resolve, that is without the `updater` profile.
+running version, from the root `package.json`; its commit, `NX_SENSORR_REVISION`, which `ci.yml`
+passes to `apps/api/Dockerfile` as a build argument; the tag, `NX_SENSORR_TAG`, which compose sets
+to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/update/update.ts`:
+`dev` for `dev` and the `sha-<short sha>` tags of [Images](#images), `beta` for `beta` and
+`X.Y.Z-beta.N`, stable for the rest); the version each channel offers, the version label of
+`sensorr-api:beta` and `sensorr-api:latest`, read on GHCR by the API with an anonymous token,
+since GHCR sends no CORS headers to a browser, and kept 15 minutes, until the next update; and what `sensorr-updater` answers, `null`
+when its host name does not resolve, that is without the `updater` profile.
 
-`POST /api/update {channel}` is refused with a 409 while a job runs or on a `dev` instance, then
-forwarded to `sensorr-updater` as `POST /update {tag}`, `beta` or `latest`; a cron that ticks during the pull
-still starts its job, and the recreation of `sensorr-api` kills it. Both sides read the secret in
-`.secrets/updater`, which `apps/api/docker-entrypoint.sh` generates on first boot; `sensorr-updater`
-mounts `.secrets/` read-only.
+`POST /api/update {channel}`, `beta` or `stable`, is refused with a 409 while a job runs
+([jobs.md](jobs.md)) or on a `dev` instance, with a 404 without the `updater` profile, and is
+otherwise forwarded to `sensorr-updater` as `POST /update {tag}`: `beta` stays `beta`, `stable`
+becomes `latest`. A cron of `sensorr-api` that ticks during the pull still starts its job, and the
+recreation of `sensorr-api` kills it.
+Both sides read the secret in `.secrets/updater`, which `apps/api/docker-entrypoint.sh` generates
+on first boot; `sensorr-updater` mounts `.secrets/` read-only.
 
 `sensorr-updater` does not recreate the services itself, since it is one of them. It starts
-`sensorr-updater-run`, a container of its own image with the Docker socket, no network, and the
-project's folders mounted at their host paths: the working directory, the env files and the compose
-files compose wrote in the labels of `sensorr-updater` (`com.docker.compose.project.*`). That
-container rewrites every `SENSORR_TAG=` line of the last env file that has one, or appends the line
-to the last env file (`withTag`), keeping its owner and mode, then runs `docker compose
-pull` and `up -d` on `sensorr-api`, `sensorr-web` and `sensorr-updater`, under the same project name
-and the `updater` profile. It is removed by the next update only, so its logs and exit code stay:
-`GET /status` reports them, and the page stops waiting on a non-zero exit. The page reloads once
-`/api/update` answers with the version it waited for, and gives up after five minutes.
+`sensorr-updater-run`, a one-off container outside `docker-compose.yml`, of its own image, with the
+Docker socket, no network, and the project's folders mounted at their host paths: the working
+directory, the env files and the compose files. `sensorr-updater` reads their paths in its own
+labels, `com.docker.compose.project.*`, which compose sets on every container it creates.
+`sensorr-updater-run` runs the `apply` command of `apps/updater/src/main.mjs`: it rewrites every
+`SENSORR_TAG=` line of the last env file that has one, or appends the line to the last env file
+(`withTag`), keeping its owner and mode, then runs `docker compose pull` and `up -d` on
+`sensorr-api`, `sensorr-web` and `sensorr-updater`, under the same project name and the `updater`
+profile. The next update removes `sensorr-updater-run`, so its logs and exit code stay until then: `GET /status`
+reports them, and the page stops waiting on a non-zero exit. The page reloads once `/api/update`
+answers with the version it waited for, and gives up after five minutes.
 
 The boundary is the Docker socket: whoever reaches `sensorr-updater` with the secret controls every
-container of the host. So it publishes no port, sits on a network with no way out that only
-`sensorr-api` joins, and only takes `beta` or `latest`. It leaves `sensorr-db` alone, but the image
-of `sensorr-db` follows `SENSORR_TAG` too: the next `docker compose up -d` recreates it on the new
-tag. A Mongo major goes through its FCV by hand, see [Upgrading Mongo](#upgrading-mongo).
+container of the host. So it publishes no port, sits on the `updater` network, `internal`, that only
+`sensorr-api` joins, takes one update at a time, and only takes `beta` or `latest`. It leaves
+`sensorr-db` running, but the image of `sensorr-db` follows `SENSORR_TAG` too: the next `docker
+compose up -d` recreates it on the new tag, and a new tag can carry a new Mongo major, which goes
+through its feature compatibility version by hand, see [Upgrading Mongo](#upgrading-mongo).
 
 ### Upgrading Mongo
 
@@ -455,7 +461,7 @@ C up -d sensorr-api
 
 ## Project graph
 
-Fourteen Nx projects, and the dependency edges between them are worth looking at rather
+Fifteen Nx projects, and the dependency edges between them are worth looking at rather
 than reading. Generate the graph:
 
 ```sh

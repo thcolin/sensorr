@@ -29,7 +29,7 @@ node tools/release/check-tag.mjs v1.0.0-beta.1
 
 An installed Sensorr reads what its channel offers on GHCR, the `org.opencontainers.image.version`
 label of `sensorr-api:beta` or `sensorr-api:latest` (`GET /api/update`,
-`apps/api/src/app/update/update.ts`): a release reaches it once the CI has pushed its images.
+`apps/api/src/app/update/update.ts`): a release reaches it once `ci.yml` has pushed its images.
 
 ## Beta
 
