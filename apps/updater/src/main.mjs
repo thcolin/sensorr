@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process'
 import { timingSafeEqual } from 'node:crypto'
-import { readFile, writeFile } from 'node:fs/promises'
+import { chown, readFile, rename, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,11 +18,8 @@ const docker = async (...args) => (await run('docker', args, { maxBuffer: 1 << 2
 
 // Compose reads the last `SENSORR_TAG=` line, so every one takes the tag
 export const withTag = (text, tag) => {
-  const lines = text.split('\n')
-  const found = lines.some((line) => line.startsWith('SENSORR_TAG='))
-
-  if (found) {
-    return lines.map((line) => (line.startsWith('SENSORR_TAG=') ? `SENSORR_TAG=${tag}` : line)).join('\n')
+  if (/^SENSORR_TAG=/m.test(text)) {
+    return text.replace(/^SENSORR_TAG=[^\r\n]*/gm, `SENSORR_TAG=${tag}`)
   }
 
   return `${text}${text && !text.endsWith('\n') ? '\n' : ''}SENSORR_TAG=${tag}\n`
@@ -35,7 +32,7 @@ export const projectOf = (labels) => {
     name: labels['com.docker.compose.project'],
     directory,
     files: (labels['com.docker.compose.project.config_files'] || '').split(',').filter(Boolean),
-    env: labels['com.docker.compose.project.environment_file'] || join(directory, '.env'),
+    envs: (labels['com.docker.compose.project.environment_file'] || join(directory, '.env')).split(','),
   }
 }
 
@@ -54,11 +51,10 @@ const imageOf = (container) => container && {
 }
 
 const status = async () => {
-  const [api, web, last] = await Promise.all(['sensorr-api', 'sensorr-web', RUN].map(inspect))
+  const [api, last] = await Promise.all(['sensorr-api', RUN].map(inspect))
 
   return {
     api: imageOf(api),
-    web: imageOf(web),
     run: last && {
       status: last.State.Status,
       code: last.State.ExitCode,
@@ -84,7 +80,7 @@ const update = async (tag) => {
   }
 
   const project = projectOf(self.Config.Labels || {})
-  const folders = [...new Set([project.directory, dirname(project.env), ...project.files.map(dirname)])]
+  const folders = [...new Set([project.directory, ...project.envs.map(dirname), ...project.files.map(dirname)])]
 
   if (last) {
     await docker('rm', '-f', RUN)
@@ -99,13 +95,34 @@ const update = async (tag) => {
   )
 }
 
+const read = (file) => readFile(file, 'utf8').catch((err) => {
+  if (err.code === 'ENOENT') {
+    return ''
+  }
+
+  throw err
+})
+
+// The env file holds the credentials: a write cut short must leave the previous one whole
 const apply = async (project, tag) => {
-  await writeFile(project.env, withTag(await readFile(project.env, 'utf8').catch(() => ''), tag))
-  console.log(`SENSORR_TAG=${tag} in ${project.env}`)
+  const texts = await Promise.all(project.envs.map(read))
+  const index = texts.findLastIndex((text) => /^SENSORR_TAG=/m.test(text))
+  const env = project.envs.at(index)
+
+  const owner = await stat(env).catch(() => null)
+
+  await writeFile(`${env}.updating`, withTag(texts.at(index), tag), { mode: owner ? owner.mode & 0o777 : 0o600 })
+
+  if (owner) {
+    await chown(`${env}.updating`, owner.uid, owner.gid)
+  }
+
+  await rename(`${env}.updating`, env)
+  console.log(`SENSORR_TAG=${tag} in ${env}`)
 
   const compose = [
     'compose', '--project-name', project.name, '--project-directory', project.directory,
-    ...project.files.flatMap((file) => ['--file', file]), '--env-file', project.env, '--profile', 'updater',
+    ...project.files.flatMap((file) => ['--file', file]), ...project.envs.flatMap((env) => ['--env-file', env]), '--profile', 'updater',
   ]
 
   for (const step of [['pull', ...SERVICES], ['up', '--detach', ...SERVICES]]) {
