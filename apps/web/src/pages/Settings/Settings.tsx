@@ -38,23 +38,24 @@ const Settings = ({ ...props }) => {
     })
   }, [])
 
-  useEffect(() => {
-    const callback = async () => {
-      try {
-        const { uri, params, init } = api.query.update.getUpdate()
-        const raw = await api.fetch(uri, params, init, { rawError: true })
-        setUpdate(raw)
-
-        if (availableOf(raw) && !location.pathname.startsWith('/settings/update')) {
-          toast(`New version available **v${availableOf(raw)}**`, { id: 'update-available' })
-        }
-      } catch (err) {
-        console.warn(err)
-        setUpdate({ error: (await errorOf(err)) || (err.status ? `the API answered ${err.status}` : err.message) })
-      }
+  const loadUpdate = useCallback(async () => {
+    try {
+      const { uri, params, init } = api.query.update.getUpdate()
+      const raw = await api.fetch(uri, params, init, { rawError: true })
+      setUpdate(raw)
+      return raw
+    } catch (err) {
+      console.warn(err)
+      setUpdate({ error: (await errorOf(err)) || (err.status ? `the API answered ${err.status}` : err.message) })
     }
+  }, [])
 
-    callback()
+  useEffect(() => {
+    loadUpdate().then((raw) => {
+      if (availableOf(raw) && !location.pathname.startsWith('/settings/update')) {
+        toast(`New version available **v${availableOf(raw)}**`, { id: 'update-available' })
+      }
+    })
   }, [])
 
   return (
@@ -89,7 +90,7 @@ const Settings = ({ ...props }) => {
         </footer>
       </aside>
       <div sx={Settings.styles.container} style={(device === 'mobile' && location.pathname === '/settings') ? { display: 'none' } : {}}>
-        <Outlet context={{ onSave, update }} />
+        <Outlet context={{ onSave, update, loadUpdate }} />
       </div>
     </section>
   )
