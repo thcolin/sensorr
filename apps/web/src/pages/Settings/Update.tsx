@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import semver from 'semver'
 import { Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS } from '@sensorr/sensorr'
@@ -10,31 +9,10 @@ import Body from '../../layout/Body/Body'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { errorOf } from './Mail'
-
-const CHANNELS = {
-  stable: { emoji: '📦', tag: 'latest', source: 'vX.Y.Z tag of the main branch' },
-  beta: { emoji: '🧪', tag: 'beta', source: 'vX.Y.Z-beta.N tag of the dev branch' },
-  dev: { emoji: '🚧', tag: 'dev', source: 'push to the dev branch' },
-}
+import { CHANNELS, arrived, availableOf, labelOf, runs } from './channels'
 
 // Pulling the images and recreating three containers takes a minute or two
 const PATIENCE = 5 * 60 * 1000
-
-// The dev image always carries the version "dev": its revision tells one push from the next
-const labelOf = (key, { version = null, revision = null } = {}) => key === 'dev' ? revision?.slice(0, 7) : version && `v${version}`
-
-// A dev build carries the package.json version of a release: only the tag tells the two apart
-const runs = (update, key, { version = null, revision = null } = {}) => update.tag === CHANNELS[key].tag && (key === 'dev' ? update.revision === revision : update.version === version)
-
-export const availableOf = (update) => {
-  const { version, revision } = update?.channels?.[update?.channel] || {}
-
-  if (update?.channel === 'dev') {
-    return (revision && update.revision && revision !== update.revision) ? labelOf('dev', { revision }) : null
-  }
-
-  return (version && semver.valid(version) && semver.valid(update.version) && semver.gt(version, update.version)) ? labelOf(update.channel, { version }) : null
-}
 
 const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => (
   <div role='alert' sx={Update.styles.failure}>
@@ -93,7 +71,7 @@ const Update = ({ ...props }) => {
 
     if (run.status === 'running') {
       setFailure(null)
-      setUpdating({ key, image, label, since: Date.parse(run.started) })
+      setUpdating({ key, image, label, from: update, since: Date.parse(run.started) })
     } else if (run.code !== 0) {
       setFailure({ title: `The last update, to ${label}, failed`, cause: `sensorr-updater-run exited (${run.code})`, logs: 'sensorr-updater-run' })
     }
@@ -113,7 +91,7 @@ const Update = ({ ...props }) => {
         const { uri, params, init } = api.query.update.getUpdate()
         const raw = await api.fetch(uri, params, init)
 
-        if (runs(raw, updating.key, updating.image)) {
+        if (arrived(raw, updating)) {
           return window.location.reload()
         }
 
@@ -144,7 +122,7 @@ const Update = ({ ...props }) => {
       const { uri, params, init } = api.query.update.postUpdate({ body: { channel: selected } })
       await api.fetch(uri, params, init, { rawError: true })
       setNow(Date.now())
-      setUpdating({ key: selected, image: update.channels[selected], label: target, since: Date.now() })
+      setUpdating({ key: selected, image: update.channels[selected], label: target, from: update, since: Date.now() })
     } catch (err) {
       toast.error((await errorOf(err)) || `Error while updating to ${target}, try again`)
     }

@@ -5,7 +5,7 @@ import { useThemeUI } from 'theme-ui'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
-import { availableOf } from './Update'
+import { availableOf } from './channels'
 import { errorOf } from './Mail'
 
 declare const SENSORR_VERSION: string
