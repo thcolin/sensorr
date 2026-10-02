@@ -109,7 +109,7 @@ UIOptions.styles = {
     paddingBottom: 4,
     alignItems: 'center',
     fontWeight: 'semibold',
-    '>*:first-of-type': {
+    '>*:first-child': {
       flex: 1,
     },
   },
