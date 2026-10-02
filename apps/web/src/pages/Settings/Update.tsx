@@ -9,7 +9,6 @@ import { animations } from '@sensorr/theme'
 import Body from '../../layout/Body/Body'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
-import { JobSettings } from './Jobs'
 import { errorOf } from './Mail'
 
 const CHANNELS = {
@@ -34,7 +33,7 @@ const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?:
   </div>
 )
 
-const Placeholder = ({ width }: { width: string }) => <span aria-hidden={true} sx={{ ...Update.styles.placeholder, width }} />
+const Placeholder = ({ width, height }: { width: string, height: string }) => <span aria-hidden={true} sx={{ ...Update.styles.placeholder, width, height }} />
 
 const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 
@@ -134,28 +133,24 @@ const Update = ({ ...props }) => {
   const available = availableOf(update)
   const unreachable = !!update?.channels?.[update?.channel]?.error
 
-  const sentence = (() => {
+  const status = (() => {
     if (updating) {
-      return `Updating to v${updating.version}`
+      return <>Updating<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
     }
 
     if (update?.channel === 'dev') {
-      return <>Follows every push to <code>dev</code></>
+      return 'Follows every push'
     }
 
     if (!update?.channel) {
-      return <>Follows no channel, <code>SENSORR_TAG</code> is not set</>
+      return 'SENSORR_TAG is not set'
     }
 
     if (unreachable) {
-      return `Can't reach GHCR, the latest ${update.channel} is unknown`
+      return "Can't reach GHCR"
     }
 
-    if (pinned) {
-      return available ? <>SENSORR_TAG pins this version, <code>v{available}</code> is out on {update.channel}</> : `SENSORR_TAG pins this version, up to date on ${update.channel}`
-    }
-
-    return available ? <><code>v{available}</code> is out on {update.channel}</> : `Up to date on ${update.channel}`
+    return available ? `v${available} available` : 'Up to date'
   })()
 
   const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : (update?.channel === 'dev' || !update?.channel) ? 'grayDarker' : 'success'
@@ -165,6 +160,11 @@ const Update = ({ ...props }) => {
 
     return version ? null : error ? `can't reach GHCR, ${error}` : 'no release yet'
   }
+
+  const source = (key) => [
+    <>Every {key === 'beta' ? 'vX.Y.Z-beta.N tag of dev' : 'vX.Y.Z tag of main'}, {reasonOf(key) || `latest v${update.channels[key].version}`}.</>,
+    ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <> {other[0].toUpperCase() + other.slice(1)}: {reasonOf(other)}.</>),
+  ]
 
   const ready = !!updater && !updater.error
   const actionable = !!updating || (!!target && (!current || !!available))
@@ -191,12 +191,6 @@ const Update = ({ ...props }) => {
     </>
   )
 
-  const source = (key) => loading ? <small><Placeholder width='20em' /></small> : (
-    <small>
-      {CHANNELS[key].source}, {reasonOf(key) || <>latest <code>v{update.channels[key].version}</code></>}
-    </small>
-  )
-
   return (
     <Body>
       <section>
@@ -206,25 +200,29 @@ const Update = ({ ...props }) => {
             {update?.error ? (
               <Failure title="Can't read the update status" cause={update.error} logs='sensorr-api' />
             ) : (
-              <div sx={JobSettings.styles.container} aria-busy={loading}>
-                <div sx={{ ...JobSettings.styles.metadata, flex: 1 }}>
-                  <h5 aria-level={3} title={pinned ? 'SENSORR_TAG pins this version' : undefined}>
-                    {loading ? <Placeholder width='9em' /> : pinned ? emojize('📍', `v${update.version}`) : CHANNELS[update.channel] ? emojize(CHANNELS[update.channel].emoji, `v${update.version}`) : `v${update.version}`}
-                  </h5>
-                  <p role='status' sx={Update.styles.state}>
-                    <span>{loading ? <Placeholder width='12em' /> : sentence}</span>
-                    {loading ? <small><Placeholder width='8em' /></small> : revision && <small title={update.revision}>revision <span sx={{ fontFamily: 'monospace' }}>{revision}</span></small>}
-                  </p>
+              <div sx={Update.styles.panel} aria-busy={loading}>
+                <div sx={Update.styles.running}>
+                  <span>{loading ? <Placeholder width='12.5rem' height='1.75rem' /> : `v${update.version}`}</span>
+                  {loading ? <small><Placeholder width='11.25rem' height='0.875rem' /></small> : (
+                    <small>
+                      {update.channel || 'no'} channel
+                      {pinned && <> · <span title='SENSORR_TAG pins this version'>📍 pinned</span></>}
+                      {revision && <> · revision <span title={update.revision}>{revision}</span></>}
+                    </small>
+                  )}
                 </div>
-                <span sx={Update.styles.dot}>
-                  <i sx={{ backgroundColor: loading ? 'gray' : state }} />
-                </span>
+                {loading ? <Placeholder width='6.875rem' height='1.125rem' /> : (
+                  <span role='status' sx={Update.styles.status}>
+                    <i sx={{ backgroundColor: state }} />
+                    <span>{status}</span>
+                  </span>
+                )}
               </div>
             )}
             {update?.channel !== 'dev' && !update?.error && (
               <div sx={Update.styles.channel}>
-                <div role='radiogroup' aria-label='Channel' sx={Update.styles.channels}>
-                  <span aria-hidden={true}>channel</span>
+                <h3 id='update-channel'>Channel</h3>
+                <div role='radiogroup' aria-labelledby='update-channel' sx={Update.styles.channels}>
                   {Object.entries(CHANNELS).map(([key, { emoji }]) => (
                     <label key={key} htmlFor={`update-${key}`} title={!loading && reasonOf(key) ? `${key}: ${reasonOf(key)}` : undefined}>
                       <input
@@ -236,14 +234,11 @@ const Update = ({ ...props }) => {
                         disabled={loading || !!updating || (key !== update.channel && !!reasonOf(key))}
                         onChange={() => setChannel(key)}
                       />
-                      <span aria-hidden={true}>{emoji}</span>
-                      <span data-name={true}>{key}</span>
-                      {!loading && key === update.channel && <span data-current={true}>current</span>}
-                      {!loading && reasonOf(key) && <span sx={Update.styles.hidden}>, {reasonOf(key)}</span>}
+                      {emojize(emoji, key)}
                     </label>
                   ))}
                 </div>
-                {source(selected)}
+                <small sx={Update.styles.muted}>{loading ? <Placeholder width='20rem' height='0.75rem' /> : source(selected)}</small>
               </div>
             )}
             {update?.channel === 'dev' && (
@@ -259,12 +254,8 @@ const Update = ({ ...props }) => {
                     <strong>Warning</strong>, {jobs.length > 2 ? `${emojize(JOB_EMOJIS[jobs[0]], jobs[0])} and ${jobs.length - 1} more` : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {jobs.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                   </p>
                 ) : (
-                  <small>
-                    {updating ? (
-                      <>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
-                    ) : (
-                      <>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></>
-                    )}
+                  <small sx={Update.styles.muted}>
+                    {updating ? `The page reloads once v${updating.version} answers` : 'Recreates sensorr-api, sensorr-web and sensorr-updater'}
                   </small>
                 )}
               </div>
@@ -292,7 +283,7 @@ const Update = ({ ...props }) => {
 }
 
 Update.styles = {
-  // One gap between blocks, the margins of Settings' paragraphs left out
+  // One gap between blocks, the margins of Settings' paragraphs and titles left out
   stack: {
     display: 'flex',
     flexDirection: 'column',
@@ -305,29 +296,44 @@ Update.styles = {
       marginTop: 12,
     },
   },
-  state: {
-    '&&': {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      gap: 8,
-      lineHeight: 'normal',
-      whiteSpace: 'normal',
+  panel: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 4,
+    rowGap: 8,
+    paddingY: 4,
+    paddingX: 3,
+    borderRadius: '0.25em',
+    backgroundColor: 'grayLight',
+  },
+  running: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 10,
+    minWidth: 0,
+    '>span': {
+      fontFamily: 'monospace',
+      fontSize: '1.5rem',
+      lineHeight: '2rem',
+      whiteSpace: 'nowrap',
+    },
+    '>small': {
+      color: 'grayDarkest',
     },
   },
-  // The dot of an indexer's test (Znabs.tsx), in the cell where a job has its run button (Jobs.tsx)
-  dot: {
+  status: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     flexShrink: 0,
-    minWidth: '2.5rem',
-    borderLeft: '1px solid',
-    borderColor: 'grayDark',
+    gap: 8,
+    fontWeight: 'semibold',
     '>i': {
       display: 'block',
-      height: '0.5em',
-      width: '0.5em',
+      height: '0.625rem',
+      width: '0.625rem',
       borderRadius: '50%',
       transition: 'background-color 400ms ease-in-out',
     },
@@ -337,82 +343,42 @@ Update.styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: 8,
+    marginTop: 8,
+    '&& >h3': {
+      marginBottom: 12,
+    },
   },
-  // The capsule and pills of CommandTabs.tsx, the pressed pill filled, the other one let through
+  // The capsule of CommandTabs.tsx, the pressed pill filled, the other one let through
   channels: {
     display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.25em',
-    height: '1.75em',
-    paddingX: '0.1875em',
-    boxSizing: 'border-box',
+    gap: '0.25rem',
+    padding: '0.25rem',
     borderRadius: '2em',
     backgroundColor: 'accentDarkest',
-    color: 'whitePure',
-    '>span': {
-      marginLeft: '0.9em',
-      marginRight: '0.6em',
-      fontFamily: 'monospace',
-      fontSize: '0.625em',
-      fontWeight: 'bold',
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-    },
     '>label': {
       position: 'relative',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.375em',
-      height: '1.375em',
-      paddingX: '0.6875em',
-      boxSizing: 'border-box',
-      borderRadius: '1.375em',
+      paddingY: '0.375rem',
+      paddingX: '1rem',
+      borderRadius: '2em',
+      fontFamily: 'monospace',
+      fontSize: 5,
+      color: 'primaryLightest',
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       transition: 'background-color 140ms ease-out',
       '>input': {
         position: 'absolute',
+        inset: 0,
         opacity: 0,
         width: '100%',
         height: '100%',
         margin: 12,
         cursor: 'inherit',
       },
-      '>span:first-of-type': {
-        fontSize: '0.875em',
-        lineHeight: 1,
-      },
-      '>[data-name]': {
-        fontFamily: 'monospace',
-        fontSize: '0.8125em',
-        fontWeight: 'medium',
-        lineHeight: 1.2,
-      },
-      // The count badge of a command tab
-      '>[data-current]': {
-        display: 'inline-block',
-        height: '1.7em',
-        paddingX: '0.6em',
-        borderRadius: '0.85em',
-        fontFamily: 'monospace',
-        fontSize: '0.625em',
-        fontWeight: 'semibold',
-        lineHeight: '1.7em',
-        backgroundColor: 'accentDarkest',
-        color: 'whitePure',
-      },
-      ':has(>[data-current])': {
-        paddingRight: '0.375em',
-      },
       ':has(>input:checked)': {
         backgroundColor: 'accentDarker',
-        '>[data-name]': {
-          fontWeight: 'strong',
-        },
-        '>[data-current]': {
-          backgroundColor: 'whitePure',
-          color: 'accentDarkest',
-        },
+        color: 'whitePure',
+        fontWeight: 'strong',
       },
       ':has(>input:focus-visible)': {
         outline: '2px solid',
@@ -423,17 +389,12 @@ Update.styles = {
         cursor: 'default',
       },
       ':has(>input:disabled:not(:checked))': {
-        opacity: 0.5,
+        opacity: 0.45,
       },
     },
   },
-  hidden: {
-    position: 'absolute',
-    width: '1px',
-    height: '1px',
-    overflow: 'hidden',
-    clipPath: 'inset(50%)',
-    whiteSpace: 'nowrap',
+  muted: {
+    color: 'grayDarkest',
   },
   action: {
     display: 'flex',
@@ -447,7 +408,6 @@ Update.styles = {
     position: 'relative',
     display: 'inline-block',
     maxWidth: '100%',
-    height: '1em',
     overflow: 'hidden',
     borderRadius: '0.25em',
     backgroundColor: 'grayDark',
