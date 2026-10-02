@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: npx nx run-many --target=lint --all
+      - run: npx nx run-many --target=test --all
+      - run: npx nx run-many --target=build --projects=api,cli,web,wrapped --configuration=production
+
+  # amd64 and arm64 each build on a native runner, then one manifest per image
+  image:
+    if: github.event_name == 'push'
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, web, db]
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    with:
+      output: image
+      push: true
+      file: apps/${{ matrix.app }}/Dockerfile
+      platforms: linux/amd64,linux/arm64
+      job-name-prefix: ${{ matrix.app }}
+      meta-images: ghcr.io/thcolin/sensorr-${{ matrix.app }}
+      meta-tags: |
+        type=ref,event=branch
+        type=sha
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+      set-meta-labels: true
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
