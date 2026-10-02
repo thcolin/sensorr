@@ -36,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [api, web, db]
-    uses: docker/github-builder/.github/workflows/build.yml@v1
+    uses: docker/github-builder/.github/workflows/build.yml@58cb9f5b71b1836d6f690c1e95effdeb9b98cb8a # v1.17.0
     permissions:
       contents: read
       packages: write
@@ -50,7 +50,7 @@ jobs:
       meta-images: ghcr.io/thcolin/sensorr-${{ matrix.app }}
       meta-tags: |
         type=ref,event=branch
-        type=sha
+        type=sha,enable=${{ github.ref_type == 'branch' }}
         type=semver,pattern={{version}}
         type=semver,pattern={{major}}.{{minor}}
       set-meta-labels: true

@@ -142,6 +142,8 @@ docker compose up -d
 
 To pin a version, set it in `.env`, for example `SENSORR_TAG=1.0.0`. `SENSORR_TAG=dev` follows the `dev` branch, rebuilt on every push.
 
+Until `v1.0.0` is tagged, no `latest` image exists: set `SENSORR_TAG=dev` in `.env` before `docker compose up -d`.
+
 # Documentation
 
 - [Configuration](docs/configuration.md), every key of `config.json`
