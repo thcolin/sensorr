@@ -28,7 +28,7 @@ const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?:
   <div sx={Update.styles.failure}>
     <strong>{emojize('🚨', title)}</strong>
     {cause && <span>{cause}</span>}
-    {logs && <span>Logs: <code>docker logs {logs}</code></span>}
+    {logs && <span>Logs: <strong sx={{ variant: 'code.reset' }}>docker logs {logs}</strong></span>}
   </div>
 )
 
@@ -293,18 +293,26 @@ Update.styles = {
       marginTop: 10,
     },
   },
+  // The warning of Settings, as a job's missing requirement draws it (Jobs.tsx)
   warning: {
-    color: 'warningDark',
-    // Settings sets every link of the page primary, with a longer selector
+    marginY: 8,
+    paddingX: 4,
+    paddingY: 8,
+    backgroundColor: '#FFE9A4',
+    color: '#664D06',
+    border: '1px solid #664D06',
+    borderRadius: '0.25em',
+    fontSize: 5,
     '&& > a': {
       color: 'warningDark',
-      textDecoration: 'underline',
       ':hover': { color: 'warningDarker' },
+      ':active': { color: 'warningDarkest' },
     },
   },
   status: {
     width: '100%',
   },
+  // The alert of Settings, as an indexer's error draws it (Znabs.tsx)
   failure: {
     display: 'flex',
     flexDirection: 'column',
@@ -312,10 +320,11 @@ Update.styles = {
     marginY: 8,
     paddingX: 4,
     paddingY: 8,
-    backgroundColor: 'grayLighter',
-    border: '1px solid',
-    borderColor: 'error',
+    backgroundColor: '#ffa4a4',
+    color: '#660606',
+    border: '1px solid #660606',
     borderRadius: '0.25em',
+    fontSize: 5,
     lineHeight: 'body',
   },
   details: {
