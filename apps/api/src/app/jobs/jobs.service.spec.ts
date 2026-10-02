@@ -75,6 +75,6 @@ describe('JobsService.setupCrons', () => {
     events.emit('config.write')
     expect(crons()['sync shows']).toBe('*/5 * * * *')
     expect(registry.getCronJob('sync shows')).not.toBe(untouched)
-    expect(untouched.running).toBe(false)
+    expect(untouched.isActive).toBe(false)
   })
 })
