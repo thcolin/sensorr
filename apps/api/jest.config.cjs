@@ -20,7 +20,6 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!(oleoo|nanoid|node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill)/)'],
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/api',
   testEnvironment: 'node',
