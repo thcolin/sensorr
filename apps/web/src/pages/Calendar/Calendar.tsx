@@ -52,7 +52,6 @@ const NOBODY = {
 
 const ORDERS = [3, 5, 10, 20, null]
 
-// Acting counts a followed person down to the billing of the badge, each click going to the next one
 const FilterCredits = ({ value, onChange, ...props }: any) => (
   <FilterKnownForDepartment
     {...props}

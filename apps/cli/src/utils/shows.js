@@ -59,7 +59,7 @@ export const airingUnits =(units, episodes, since) => {
 
   const airing = units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
   const ofSeason = (season) => episodes.filter(({ season_number }) => season_number === season)
-  // TMDB marks a season's last episode `finale` once announced; episodes stored before `episode_type` was kept fall back on the last listed
+  // TMDB marks a season's last episode `finale` once announced; episodes stored without `episode_type` fall back on the last listed
   const finaleOf = (season) => ofSeason(season).some(({ episode_type }) => episode_type)
     ? ofSeason(season).find(({ episode_type }) => episode_type === 'finale')
     : ofSeason(season).reduce((last, episode) => (!last || episode.episode_number > last.episode_number) ? episode : last, null)

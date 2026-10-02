@@ -3,7 +3,7 @@ import { utils } from '@sensorr/tmdb'
 const { SELF } = utils
 
 // TMDB discover can filter neither on the job of a person nor, with `primary_release_date`, on the release type,
-// and drops a movie of unknown runtime from any `with_runtime` bound
+// and drops a movie of unknown runtime from any `with_runtime.gte` above 0
 export const refinementsOf = ({
   with_release_type,
   with_credits_departments,
@@ -13,7 +13,7 @@ export const refinementsOf = ({
   ...params
 }: Record<string, any>) => [params, { with_release_type, with_credits_departments, with_credits_order, runtime_gte, runtime_lte }]
 
-// `order` is the best billing of a followed person in a real part, Acting counting only once judged against the order asked for
+// `order` is the best billing of a followed person in a real part, judged against the billing asked for without fetching again
 export const summarize = (details, followed) => {
   const orders = (details.credits?.cast || [])
     .filter(credit => followed[credit.id] && !SELF.test(credit.character || ''))
