@@ -1225,15 +1225,8 @@ html[data-theme='scenario'] {
   animation: scenario-feed 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* The machine works down the page: each block lands whole when it reaches it, and only the one-line
-   scene heading is seen being typed, key after key */
 .scenario-story > .scenario-page > :not(.scenario-holes, .scenario-head) {
   min-width: 0;
-  animation: scenario-strike 0.16s calc(0.45s + var(--at, 0) * 180ms) ease-out backwards;
-}
-
-.scenario-story > .scenario-page > .scenario-slug {
-  animation: scenario-type 0.6s calc(0.45s + var(--at, 0) * 180ms) steps(20, end) backwards;
 }
 
 .scenario-story > .scenario-page > :nth-child(4) { --at: 1; }
@@ -1244,6 +1237,11 @@ html[data-theme='scenario'] {
 .scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
 .scenario-story > .scenario-page > :nth-child(10) { --at: 7; }
 .scenario-story > .scenario-page > :nth-child(n + 11) { --at: 8; }
+
+/* A character laid out but not yet struck */
+.scenario-unstruck {
+  visibility: hidden;
+}
 .scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
 .scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
 .scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
@@ -1722,7 +1720,6 @@ html[data-theme='scenario'] {
 .scenario-story .scenario-end {
   margin: 10px 0 0;
   font-size: 52px;
-  animation: scenario-type 0.5s 1.4s steps(4, end) backwards;
 }
 
 /* Opening and summary: the title page */
@@ -1818,15 +1815,10 @@ html[data-theme='scenario'] {
   color: var(--scenario-quiet);
   font-size: 13px;
   line-height: 1.35;
-  animation: scenario-strike 0.16s 1.2s ease-out backwards;
 }
 
 @keyframes scenario-feed {
   from { transform: translateY(60px); }
-}
-
-@keyframes scenario-strike {
-  from { opacity: 0; transform: translateY(-3px); }
 }
 
 @keyframes scenario-type {
