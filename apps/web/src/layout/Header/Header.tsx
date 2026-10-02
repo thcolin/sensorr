@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import useRipple from 'use-ripple-hook'
+import { useRipple } from 'use-ripple-hook'
 import { Link } from '@sensorr/ui'
 import { scrollToTop } from '@sensorr/utils'
 import { LoadingBar } from '../LoadingBar'

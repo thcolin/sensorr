@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { NavLink, createPath, useLocation, useNavigate } from 'react-router-dom'
-import useRipple from 'use-ripple-hook'
+import { useRipple } from 'use-ripple-hook'
 import { scrollToTop } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { SECONDARY } from './sections'

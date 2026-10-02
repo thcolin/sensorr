@@ -4,7 +4,7 @@ import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Pictu
 import toast from 'react-hot-toast'
 import { Policy, coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
-import useRipple from 'use-ripple-hook'
+import { useRipple } from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
 import { formatDistanceToNowStrict } from 'date-fns'
