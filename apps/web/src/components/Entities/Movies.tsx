@@ -89,6 +89,8 @@ export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit
       params: {
         with_release_type: '3|2|1',
         with_credits_departments: 'Acting|Directing|Writing',
+        with_credits_order: 10,
+        'with_runtime.gte': 40,
         without_genres: '99|10770', // Documentary & TV Movie -- sorry
         'primary_release_date.gte': dateMin.toISOString().substring(0, 10),
         ...(dateMax ? { 'primary_release_date.lte': dateMax.toISOString().substring(0, 10) } : {}),

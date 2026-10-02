@@ -33,6 +33,7 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { Agenda, Cell, ControlsContext, Line, Month, Stream, Toggle, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
 import { dateOf, day, monthRange, monthWeeks, originOf, withToday } from '../../components/Calendar/agenda'
 import withFetchCalendarQuery, { discoverCalendar, refine, summarizeCalendar } from './withFetchCalendarQuery'
+import { refinementsOf } from './refine'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
@@ -131,6 +132,7 @@ const FIELDS = {
   },
   with_runtime: {
     ...fields.runtime,
+    initial: [40, 240],
     component: FilterRuntime,
   },
   with_companies: {
@@ -383,8 +385,7 @@ const withMoviesAgenda = () => (WrappedComponent) => {
     const key = (query?.ready && !persons.loading && !nobody) ? `${origin} ${filters}` : null
 
     const fetchPage = useCallback(async (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => {
-      const { with_release_type, with_credits_departments, ...params } = JSON.parse(filters)
-      const refinements = { with_release_type, with_credits_departments }
+      const [params, refinements] = refinementsOf(JSON.parse(filters))
       const { month, gte, lte } = pageRange(origin, stream, page)
       const discovered = await discoverCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, signal)
       const entities = [...discovered].sort((a, b) => (stream === 'past' ? -1 : 1) * (a.release_date || '').localeCompare(b.release_date || ''))

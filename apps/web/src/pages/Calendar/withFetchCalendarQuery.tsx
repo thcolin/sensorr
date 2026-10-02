@@ -5,7 +5,7 @@ import { useControlsState } from '@sensorr/ui'
 import { useTMDB } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { ControlsContext } from '../../components/Calendar/Calendar'
-import { judge, summarize } from './refine'
+import { departmentsOf, judge, refinementsOf, summarize } from './refine'
 
 // The requests a calendar keeps out at once, its discover pages as the details of its movies
 const POOL = 20
@@ -119,7 +119,7 @@ export const refine = ({ entities, summaries }, refinements, sort_by = 'primary_
   })
 
   const counts = released
-    .flatMap(entity => summaries[entity.id]?.departments || [])
+    .flatMap(entity => summaries[entity.id] ? departmentsOf(summaries[entity.id], refinements.with_credits_order) : [])
     .reduce((acc, department) => ({ ...acc, [department]: (acc[department] || 0) + 1 }), {})
 
   return {
@@ -149,12 +149,12 @@ const withFetchCalendarQuery = (
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
 
     const [query, refinements] = useMemo(() => {
-      const { with_release_type, with_credits_departments, ...params } = {
+      const [params, refinements] = refinementsOf({
         ...defaultQuery?.params,
         ...controlsQuery?.params,
-      } as any
+      })
 
-      return [{ uri: 'discover/movie', params }, { with_release_type, with_credits_departments }]
+      return [{ uri: 'discover/movie', params }, refinements]
     }, [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
 
     const [loading, setLoading] = useState(true)
