@@ -20,5 +20,6 @@ import { Metafile, MetafileSchema } from '../sensorr/metafile.schema'
     SensorrService,
     ConfigService,
   ],
+  exports: [SensorrService],
 })
 export class JobsModule {}

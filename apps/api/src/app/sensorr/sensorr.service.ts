@@ -196,6 +196,10 @@ export class SensorrService {
     })
   }
 
+  runningJobs(): string[] {
+    return [...this.running]
+  }
+
   stopProcess(job: string) {
     if (!this.process[job]) {
       throw new NotFoundException(`Job ${job} not found or not running`)
