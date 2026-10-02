@@ -4,7 +4,7 @@ import fs from 'fs'
 import stream from 'stream'
 import { render, Text } from 'ink'
 import unzipper from 'unzipper'
-import JsonlParser from 'stream-json/jsonl/Parser.js'
+import jsonl from 'stream-json/jsonl/parser.js'
 import { TMDB } from '@sensorr/tmdb'
 import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import { lighten } from '../store/logger'
@@ -72,7 +72,7 @@ const ExtractDumpTask = ({ archive, ...props }) => {
                 return
               }
 
-              entry.pipe(new JsonlParser())
+              entry.pipe(jsonl.asStream())
                 .on('data', data => {
                   if (!data.value) {
                     return
