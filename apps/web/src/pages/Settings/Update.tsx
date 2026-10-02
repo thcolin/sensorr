@@ -13,8 +13,8 @@ import { JobSettings } from './Jobs'
 import { errorOf } from './Mail'
 
 const CHANNELS = {
-  beta: { emoji: '🧪', label: 'Beta', tag: 'beta', source: <>Every <code>vX.Y.Z-beta.N</code> tag of <code>dev</code></> },
-  stable: { emoji: '📦', label: 'Stable', tag: 'latest', source: <>Every <code>vX.Y.Z</code> tag of <code>main</code></> },
+  beta: { emoji: '🧪', tag: 'beta', source: <>Every <code>vX.Y.Z-beta.N</code> tag of <code>dev</code></> },
+  stable: { emoji: '📦', tag: 'latest', source: <>Every <code>vX.Y.Z</code> tag of <code>main</code></> },
 }
 
 // Pulling the images and recreating three containers takes a minute or two
@@ -143,18 +143,28 @@ const Update = ({ ...props }) => {
       return <>Follows every push to <code>dev</code></>
     }
 
+    if (!update?.channel) {
+      return <>Follows no channel, <code>SENSORR_TAG</code> is not set</>
+    }
+
     if (unreachable) {
       return `Can't reach GHCR, the latest ${update.channel} is unknown`
     }
 
     if (pinned) {
-      return available ? `SENSORR_TAG pins this version, v${available} is out on ${update.channel}` : `SENSORR_TAG pins this version, up to date on ${update.channel}`
+      return available ? <>SENSORR_TAG pins this version, <code>v{available}</code> is out on {update.channel}</> : `SENSORR_TAG pins this version, up to date on ${update.channel}`
     }
 
-    return available ? `v${available} is out on ${update?.channel}` : `Up to date on ${update?.channel}`
+    return available ? <><code>v{available}</code> is out on {update.channel}</> : `Up to date on ${update.channel}`
   })()
 
-  const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : update?.channel === 'dev' ? 'grayDarker' : 'success'
+  const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : (update?.channel === 'dev' || !update?.channel) ? 'grayDarker' : 'success'
+
+  const reasonOf = (key) => {
+    const { version, error } = update?.channels?.[key] || {}
+
+    return version ? null : error ? `can't reach GHCR, ${error}` : 'no release yet'
+  }
 
   const ready = !!updater && !updater.error
   const actionable = !!updating || (!!target && (!current || !!available))
@@ -181,15 +191,11 @@ const Update = ({ ...props }) => {
     </>
   )
 
-  const source = (key) => {
-    const { version, error } = update?.channels?.[key] || {}
-
-    return (
-      <small>
-        {CHANNELS[key].source}, {loading ? <Placeholder width='7em' /> : error ? "can't reach GHCR" : version ? <>latest <code>v{version}</code></> : 'no release yet'}
-      </small>
-    )
-  }
+  const source = (key) => loading ? <small><Placeholder width='20em' /></small> : (
+    <small>
+      {CHANNELS[key].source}, {reasonOf(key) || <>latest <code>v{update.channels[key].version}</code></>}
+    </small>
+  )
 
   return (
     <Body>
@@ -202,12 +208,12 @@ const Update = ({ ...props }) => {
             ) : (
               <div sx={JobSettings.styles.container} aria-busy={loading}>
                 <div sx={{ ...JobSettings.styles.metadata, flex: 1 }}>
-                  <h5>
-                    {loading ? <Placeholder width='9em' /> : CHANNELS[update.channel] ? emojize(CHANNELS[update.channel].emoji, `v${update.version}`) : `v${update.version}`}
+                  <h5 aria-level={3} title={pinned ? 'SENSORR_TAG pins this version' : undefined}>
+                    {loading ? <Placeholder width='9em' /> : pinned ? emojize('📍', `v${update.version}`) : CHANNELS[update.channel] ? emojize(CHANNELS[update.channel].emoji, `v${update.version}`) : `v${update.version}`}
                   </h5>
                   <p role='status' sx={Update.styles.state}>
                     <span>{loading ? <Placeholder width='12em' /> : sentence}</span>
-                    {loading ? <small><Placeholder width='8em' /></small> : revision && <small title={update.revision}>revision {revision}</small>}
+                    {loading ? <small><Placeholder width='8em' /></small> : revision && <small title={update.revision}>revision <span sx={{ fontFamily: 'monospace' }}>{revision}</span></small>}
                   </p>
                 </div>
                 <span sx={Update.styles.dot}>
@@ -220,22 +226,24 @@ const Update = ({ ...props }) => {
                 <div role='radiogroup' aria-label='Channel' sx={Update.styles.channels}>
                   <span aria-hidden={true}>channel</span>
                   {Object.entries(CHANNELS).map(([key, { emoji }]) => (
-                    <label key={key} htmlFor={`update-${key}`} title={!loading && !update.channels?.[key]?.version ? (update.channels?.[key]?.error ? "Can't reach GHCR" : `No ${key} release yet`) : undefined}>
+                    <label key={key} htmlFor={`update-${key}`} title={!loading && reasonOf(key) ? `${key}: ${reasonOf(key)}` : undefined}>
                       <input
                         type='radio'
                         id={`update-${key}`}
                         name='channel'
                         value={key}
                         checked={selected === key}
-                        disabled={loading || !!updating || !update.channels?.[key]?.version}
+                        disabled={loading || !!updating || (key !== update.channel && !!reasonOf(key))}
                         onChange={() => setChannel(key)}
                       />
                       <span aria-hidden={true}>{emoji}</span>
-                      <span>{key}</span>
+                      <span data-name={true}>{key}</span>
+                      {!loading && key === update.channel && <span data-current={true}>current</span>}
+                      {!loading && reasonOf(key) && <span sx={Update.styles.hidden}>, {reasonOf(key)}</span>}
                     </label>
                   ))}
                 </div>
-                {source(selected || 'beta')}
+                {source(selected)}
               </div>
             )}
             {update?.channel === 'dev' && (
@@ -290,10 +298,10 @@ Update.styles = {
     flexDirection: 'column',
     gap: 4,
     marginTop: 4,
-    '>p': {
+    '&& >p': {
       marginY: 12,
     },
-    '>div >h3': {
+    '&& >div >h3': {
       marginTop: 12,
     },
   },
@@ -302,7 +310,7 @@ Update.styles = {
       flexDirection: 'column',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      gap: 10,
+      gap: 8,
       lineHeight: 'normal',
       whiteSpace: 'normal',
     },
@@ -374,16 +382,36 @@ Update.styles = {
         fontSize: '0.875em',
         lineHeight: 1,
       },
-      '>span:last-of-type': {
+      '>[data-name]': {
         fontFamily: 'monospace',
         fontSize: '0.8125em',
         fontWeight: 'medium',
         lineHeight: 1.2,
       },
+      // The count badge of a command tab
+      '>[data-current]': {
+        display: 'inline-block',
+        height: '1.7em',
+        paddingX: '0.6em',
+        borderRadius: '0.85em',
+        fontFamily: 'monospace',
+        fontSize: '0.625em',
+        fontWeight: 'semibold',
+        lineHeight: '1.7em',
+        backgroundColor: 'accentDarkest',
+        color: 'whitePure',
+      },
+      ':has(>[data-current])': {
+        paddingRight: '0.375em',
+      },
       ':has(>input:checked)': {
         backgroundColor: 'accentDarker',
-        '>span:last-of-type': {
+        '>[data-name]': {
           fontWeight: 'strong',
+        },
+        '>[data-current]': {
+          backgroundColor: 'whitePure',
+          color: 'accentDarkest',
         },
       },
       ':has(>input:focus-visible)': {
@@ -399,15 +427,22 @@ Update.styles = {
       },
     },
   },
+  hidden: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
+  },
   action: {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
-    '>p': {
+    '&& >p': {
       marginY: 12,
     },
   },
-  // A bar shaped like the text it stands for, swept by the theme's placeholder keyframes
   placeholder: {
     position: 'relative',
     display: 'inline-block',
@@ -420,8 +455,12 @@ Update.styles = {
     '::after': {
       content: '""',
       position: 'absolute',
-      inset: 0,
-      background: (theme) => `linear-gradient(90deg, transparent, color-mix(in srgb, ${theme.colors.grayDarker} 50%, transparent), transparent)`,
+      top: 0,
+      bottom: 0,
+      // The keyframes move it by 80% of its width: this size takes the light band past both ends of the bar
+      left: '30%',
+      width: '200%',
+      background: (theme) => `linear-gradient(90deg, transparent 40%, color-mix(in srgb, ${theme.colors.grayDarker} 50%, transparent) 50%, transparent 60%)`,
       animation: `${animations.placeholder} 1.2s ease-in-out infinite`,
     },
     '@media (prefers-reduced-motion: reduce)': {
