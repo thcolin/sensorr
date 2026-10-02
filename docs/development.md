@@ -119,7 +119,7 @@ npx nx run-many --target=test --all
 
 Exits 0: 512 tests, none failing, measured on 2026-10-02. A change is clean when it keeps it that way.
 
-`apps/api/jest.config.cjs` runs the API specs through `ts-jest-mock-import-meta`, which turns `import.meta.url` into the URL of the file under test, because ts-jest compiles them to CommonJS. Webpack does the same at build time: the API bundle carries the source path of each service, which is how `config.service.ts` finds `config.json` from `dist/`.
+ts-jest compiles the API specs to CommonJS, where `import.meta` does not exist: `apps/api/jest.import-meta.cjs` turns `import.meta.url` into the URL of the file under test. NestJS 12 ships ESM only and loads optional packages through `import()`, so `apps/api/.env.test` runs that project's Jest with `--experimental-vm-modules`. Webpack does the same at build time: the API bundle carries the source path of each service, which is how `config.service.ts` finds `config.json` from `dist/`.
 
 A new red is not real until it survives a `yarn install`. A `node_modules` behind `yarn.lock` fails tests that pass on the locked versions, and a worktree that links the main checkout's `node_modules` inherits it. On 2026-09-29, oleoo 2.0.4 installed in place of the locked 3.1.1 failed 22 tests of `libs/sensorr/src/lib/show.spec.ts` and `drops a result oleoo refuses to parse and keeps the others` in `znab.spec.ts`. Both suites pass on 3.1.1.
 

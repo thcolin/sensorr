@@ -71,7 +71,7 @@ export class MoviesService {
       return changes
     }
 
-    const stored = new Map((await this.movieModel.find({ _id: { $in: candidates } }, { policy: 1, state: 1, original_language: 1 }).lean()).map(movie => [`${movie._id}`, movie]))
+    const stored = new Map((await this.movieModel.find({ _id: { $in: candidates.map(Number) } }, { policy: 1, state: 1, original_language: 1 }).lean()).map(movie => [`${movie._id}`, movie]))
 
     return candidates.reduce((acc, id) => {
       const movie = stored.get(`${id}`)
@@ -84,12 +84,12 @@ export class MoviesService {
     this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
     const { [movie.id]: matched } = await this.matchPolicies({ [movie.id]: movie })
     const [archived] = await this.archivedNow({ [movie.id]: matched })
-    return this.movieModel.findByIdAndUpdate(movie.id, { ...matched, ...(archived ? { archived_at: Date.now() } : {}) }, { new: true, upsert: true })
+    return this.movieModel.findByIdAndUpdate(movie.id, { ...matched, ...(archived ? { archived_at: Date.now() } : {}) }, { returnDocument: 'after', upsert: true })
   }
 
   private async archivedNow(changes: { [key: string]: { plex_url?: string } }) {
     const linked = Object.keys(changes).filter((id) => changes[id].plex_url)
-    return arrivedOf(changes, linked.length ? await this.movieModel.find({ _id: { $in: linked } }, { plex_url: 1, archived_at: 1 }).lean() : [])
+    return arrivedOf(changes, linked.length ? await this.movieModel.find({ _id: { $in: linked.map(Number) } }, { plex_url: 1, archived_at: 1 }).lean() : [])
   }
 
   // A choice acts on the release as the database holds it, only a manual pick comes from the body.
@@ -197,7 +197,7 @@ export class MoviesService {
     const archived = new Set(await this.archivedNow(changes))
     const { insertedCount, modifiedCount } = await this.movieModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
-        filter: { _id: i },
+        filter: { _id: Number(i) },
         update: {
           ...changes[i],
           _id: i,
@@ -220,7 +220,6 @@ export class MoviesService {
               })),
           } : {}),
         },
-        new: true,
         upsert: true,
       },
     })))

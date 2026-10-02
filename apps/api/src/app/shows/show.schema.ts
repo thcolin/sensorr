@@ -146,7 +146,7 @@ export class Show extends Document<number> {
   plex_seasons: Record<string, PlexSeason>
 
   @Prop(raw([String]))
-  requested_by: Record<any, any>
+  requested_by: string[]
 
   // When the first guest watchlisted it, written once by `keep-in-touch`
   @Prop()

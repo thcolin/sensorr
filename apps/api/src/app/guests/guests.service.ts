@@ -125,7 +125,7 @@ export class GuestsService {
     this.logger.log(`UpsertGuest "${guest.email}"`)
     const previous = await this.guestModel.findOne({ email: guest.email }).lean()
     const reconnected = guest.plex_token_valid === true && previous?.plex_token_valid === false
-    const updated = await this.guestModel.findOneAndUpdate({ email: guest.email }, { ...guest, ...(reconnected ? { reconnect_mails: 0, reconnect_mailed_at: null } : {}) }, { new: true, upsert: true }).lean()
+    const updated = await this.guestModel.findOneAndUpdate({ email: guest.email }, { ...guest, ...(reconnected ? { reconnect_mails: 0, reconnect_mailed_at: null } : {}) }, { returnDocument: 'after', upsert: true }).lean()
 
     if (guest.plex_token_valid === false && previous && this.mailService.enabled('reconnect') && !updated.mail_unsubscribed?.includes('reconnect')) {
       await this.remind(updated).catch((error) => this.logger.warn(`Reconnect "${guest.email}" not sent: ${error.message}`))

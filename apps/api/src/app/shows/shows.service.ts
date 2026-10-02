@@ -78,7 +78,7 @@ export class ShowsService {
       return changes
     }
 
-    const stored = new Map((await this.showModel.find({ _id: { $in: candidates } }, { policy: 1, state: 1, original_language: 1 }).lean()).map(show => [`${show._id}`, show]))
+    const stored = new Map((await this.showModel.find({ _id: { $in: candidates.map(Number) } }, { policy: 1, state: 1, original_language: 1 }).lean()).map(show => [`${show._id}`, show]))
 
     return candidates.reduce((acc, id) => {
       const show = stored.get(`${id}`)
@@ -168,8 +168,8 @@ export class ShowsService {
 
       return {
         updateOne: {
-          filter: { _id: i },
-          update: { ...fields, _id: i, id: Number(i) },
+          filter: { _id: Number(i) },
+          update: { ...fields, _id: Number(i), id: Number(i) },
           upsert: !!(fields.name && fields.state),
         },
       }
@@ -383,11 +383,11 @@ export class ShowsService {
   async upsertEpisodes(changes: { [key: string]: EpisodeDTO }): Promise<any> {
     this.logger.log(`UpsertEpisodes "${Object.keys(changes).length}"`)
     const filled = Object.keys(changes).filter((id) => changes[id].files?.length)
-    const landed = new Set(landedOf(changes, filled.length ? await this.episodeModel.find({ _id: { $in: filled } }, { files: 1, files_at: 1 }).lean() : []))
+    const landed = new Set(landedOf(changes, filled.length ? await this.episodeModel.find({ _id: { $in: filled.map(Number) } }, { files: 1, files_at: 1 }).lean() : []))
     const { insertedCount, modifiedCount, upsertedCount } = await this.episodeModel.bulkWrite(Object.keys(changes).map(i => ({
       updateOne: {
-        filter: { _id: i },
-        update: { _id: i, ...changes[i], ...(landed.has(i) ? { files_at: Date.now() } : {}) },
+        filter: { _id: Number(i) },
+        update: { _id: Number(i), ...changes[i], ...(landed.has(i) ? { files_at: Date.now() } : {}) },
         upsert: true,
       },
     })))

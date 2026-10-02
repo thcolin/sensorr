@@ -110,7 +110,7 @@ export class SensorrService {
         break
       case 'cache':
         this.logger.log(`Download "${filename}" from ${source} to ${destination}, blackhole="database"`)
-        await this.metafileModel.findByIdAndUpdate(release.link, { buffer }, { new: true, upsert: true })
+        await this.metafileModel.findByIdAndUpdate(release.link, { buffer }, { returnDocument: 'after', upsert: true })
         break
     }
 

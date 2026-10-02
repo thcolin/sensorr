@@ -2,7 +2,7 @@ import winston from 'winston'
 import mongoose from 'mongoose'
 import 'winston-mongodb'
 
-mongoose.connect(`mongodb://${process.env.NX_MONGO_USERNAME || 'sensorr'}:${process.env.NX_MONGO_PASSWORD || 'sensorr'}@${process.env.NX_MONGO_HOST || 'localhost'}:${process.env.NX_MONGO_PORT || 27017}/sensorr?authSource=admin&authMechanism=SCRAM-SHA-1&directConnection=true`, { useNewUrlParser: true, useUnifiedTopology: true })
+const connection = mongoose.connect(`mongodb://${process.env.NX_MONGO_USERNAME || 'sensorr'}:${process.env.NX_MONGO_PASSWORD || 'sensorr'}@${process.env.NX_MONGO_HOST || 'localhost'}:${process.env.NX_MONGO_PORT || 27017}/sensorr?authSource=admin&authMechanism=SCRAM-SHA-1&directConnection=true`)
 
 export default winston.createLogger({
   level: 'info',
@@ -12,7 +12,7 @@ export default winston.createLogger({
   ),
   transports: [
     new winston.transports.MongoDB({
-      db: mongoose.connections[0].getClient(),
+      db: connection.then(({ connection }) => connection.getClient()),
     }),
   ],
 })
