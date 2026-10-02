@@ -17,8 +17,9 @@ export class ProxyController {
         return ''
       },
       on: {
-        proxyReq: (proxyReq, req) => {
-          const url = new URL(req.query.target as string)
+        proxyReq: (proxyReq, req: Request) => {
+          // pathRewrite empties req.url, and req.query with it: the target is read back from the original url
+          const url = new URL(new URL(req.originalUrl, 'http://localhost').searchParams.get('target'))
           proxyReq.setHeader('host', url.host)
           proxyReq.setHeader('origin', url.origin)
         },
