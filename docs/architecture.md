@@ -370,15 +370,16 @@ running version, from the root `package.json`; its commit, `NX_SENSORR_REVISION`
 passes to `apps/api/Dockerfile` as a build argument; the tag, `NX_SENSORR_TAG`, which compose sets
 to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/update/update.ts`:
 `dev` for `dev` and the `sha-<short sha>` tags of [Images](#images), `beta` for `beta` and
-`X.Y.Z-beta.N`, stable for the rest); the version each channel offers, the version label of
-`sensorr-api:beta` and `sensorr-api:latest`, read on GHCR by the API with an anonymous token,
+`X.Y.Z-beta.N`, stable for the rest); what each channel offers, the version and revision labels of
+`sensorr-api:beta`, `sensorr-api:latest` and `sensorr-api:dev`, read on GHCR by the API with an anonymous token,
 since GHCR sends no CORS headers to a browser, and kept 15 minutes, until the next update; and what `sensorr-updater` answers, `null`
 when its host name does not resolve, that is without the `updater` profile.
 
-`POST /api/update {channel}`, `beta` or `stable`, is refused with a 409 while a job runs
-([jobs.md](jobs.md)) or on a `dev` instance, with a 404 without the `updater` profile, and is
-otherwise forwarded to `sensorr-updater` as `POST /update {tag}`: `beta` stays `beta`, `stable`
-becomes `latest`. A cron of `sensorr-api` that ticks during the pull still starts its job, and the
+The `dev` image always carries the version `dev`: only its revision tells a newer push.
+`POST /api/update {channel}`, `beta`, `stable` or `dev`, is refused with a 409 while a job runs
+([jobs.md](jobs.md)), with a 404 without the `updater` profile, and is otherwise forwarded to
+`sensorr-updater` as `POST /update {tag}`: `beta` and `dev` keep their name, `stable` becomes
+`latest`. A cron of `sensorr-api` that ticks during the pull still starts its job, and the
 recreation of `sensorr-api` kills it.
 Both sides read the secret in `.secrets/updater`, which `apps/api/docker-entrypoint.sh` generates
 on first boot; `sensorr-updater` mounts `.secrets/` read-only.
