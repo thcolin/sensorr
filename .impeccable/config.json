@@ -92,6 +92,15 @@
         "value": "caveat",
         "createdAt": "2026-10-01T23:47:07.593Z",
         "reason": "apps/wrapped/.impeccable/surfaces/apps-wrapped.md: DESIGN.md does not apply to apps/wrapped; scenario's own self-hosted font"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "apps/wrapped/src/app/themes/scenario/scenario.css"
+        ],
+        "createdAt": "2026-10-02T08:02:43.824Z",
+        "reason": "scenario.css .scenario-story .scenario-figure::after is the red pencil underline under a figure (absolute, 0.34em tall, at the bottom), not a side border on a card"
       }
     ]
   }
