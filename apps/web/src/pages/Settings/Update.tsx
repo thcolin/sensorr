@@ -45,6 +45,7 @@ const Update = ({ ...props }) => {
   const current = selected === update?.channel
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = update?.revision?.slice(0, 7)
+  const build = update?.channel === 'dev' && !!revision
   const pinned = update?.channel in CHANNELS && update.tag !== CHANNELS[update.channel].tag ? update.tag : null
 
   // Measured after layout, once the checked label has its bold width; no slide on the first render
@@ -196,12 +197,12 @@ const Update = ({ ...props }) => {
             ) : (
               <div sx={Update.styles.panel} aria-busy={loading}>
                 <div sx={Update.styles.running}>
-                  <span>{loading ? <Placeholder width='10.5rem' height='1.25rem' /> : `v${update.version}`}</span>
+                  <span title={build ? update.revision : undefined}>{loading ? <Placeholder width='10.5rem' height='1.25rem' /> : build ? revision : `v${update.version}`}</span>
                   {loading ? <small><Placeholder width='11.25rem' height='0.875rem' /></small> : (
                     <small>
                       {update.channel || 'no'} channel
                       {pinned && <> · <span title='SENSORR_TAG pins this version'>📍 pinned</span></>}
-                      {revision && <> · revision <span title={update.revision}>{revision}</span></>}
+                      {build ? <> · based on v{update.version}</> : revision && <> · revision <span title={update.revision}>{revision}</span></>}
                     </small>
                   )}
                 </div>
@@ -245,7 +246,7 @@ const Update = ({ ...props }) => {
                   </p>
                 ) : (
                   <small sx={Update.styles.muted}>
-                    {updating ? `The page reloads once ${updating.label} answers` : 'Recreates sensorr-api, sensorr-web and sensorr-updater'}
+                    {updating ? `The page reloads once ${updating.label} answers` : `${selected === 'dev' && !current ? 'Untested build of every push to the dev branch. ' : ''}Recreates sensorr-api, sensorr-web and sensorr-updater`}
                   </small>
                 )}
               </div>
