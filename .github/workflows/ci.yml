@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
   push:
     branches: [dev]
     tags: ['v*.*.*']
@@ -21,10 +21,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # a release tag is checked against the history of dev and main
+          fetch-depth: ${{ github.ref_type == 'tag' && '0' || '1' }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
           cache: yarn
+      - if: github.ref_type == 'tag'
+        run: node tools/release/check-tag.mjs "$GITHUB_REF_NAME" "$GITHUB_SHA"
       - run: yarn install --frozen-lockfile
       - run: npx nx run-many --target=lint --all
       - run: npx nx run-many --target=test --all
@@ -55,6 +59,7 @@ jobs:
         type=sha,enable=${{ github.ref_type == 'branch' }}
         type=semver,pattern={{version}}
         type=semver,pattern={{major}}.{{minor}}
+        type=raw,value=beta,enable=${{ github.ref_type == 'tag' && contains(github.ref_name, '-beta.') }}
       set-meta-labels: true
     secrets:
       registry-auths: |
