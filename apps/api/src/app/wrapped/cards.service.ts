@@ -44,12 +44,12 @@ export class CardsService implements OnModuleDestroy {
 
   constructor(private readonly wrappedService: WrappedService) {}
 
-  async card(token: string, look: string, story: string) {
+  async card(token: string, look: string, story: string, year?: number) {
     if (!Object.hasOwn(WRAPPED_THEME_NAMES, look) || typeof story !== 'string' || !STORY.test(story)) {
       throw new BadRequestException()
     }
 
-    const share = await this.shareOf(token)
+    const share = await this.shareOf(token, year)
     const looks = share.look.choice ? (share.look.looks || Object.keys(WRAPPED_THEME_NAMES)) : [share.look.theme]
 
     if (!looks.includes(look as WrappedTheme)) {
@@ -71,7 +71,7 @@ export class CardsService implements OnModuleDestroy {
       }
 
       this.busy.set(token, (this.busy.get(token) || 0) + 1)
-      const drawn = this.queue.then(() => this.draw(token, look, story)).then(async (buffer) => {
+      const drawn = this.queue.then(() => this.draw(token, share.year, look, story)).then(async (buffer) => {
         // The card is sent all the same, only the next ask draws it again
         await this.keep(file, buffer).catch((error) => this.logger.warn(`Card not kept: ${error.code || error.message}`))
         return buffer
@@ -87,9 +87,10 @@ export class CardsService implements OnModuleDestroy {
     return this.drawing.get(key)
   }
 
-  private shareOf(token: string) {
+  private shareOf(token: string, year?: number) {
     const now = Date.now()
-    const kept = this.shares.get(token)
+    const id = `${token}:${year ?? ''}`
+    const kept = this.shares.get(id)
 
     if (kept && kept.until > now) {
       return kept.share
@@ -99,14 +100,14 @@ export class CardsService implements OnModuleDestroy {
       until <= now && this.shares.delete(other)
     }
 
-    const share = this.wrappedService.share(token)
-    this.shares.set(token, { until: now + SHARE, share })
-    share.catch(() => this.shares.delete(token))
+    const share = this.wrappedService.share(token, year)
+    this.shares.set(id, { until: now + SHARE, share })
+    share.catch(() => this.shares.delete(id))
     return share
   }
 
-  private async draw(token: string, look: string, story: string) {
-    const url = new URL(`/wrapped/${encodeURIComponent(token)}`, ORIGIN)
+  private async draw(token: string, year: number, look: string, story: string) {
+    const url = new URL(`/wrapped/${encodeURIComponent(token)}/${year}`, ORIGIN)
     url.search = new URLSearchParams({ card: story, look }).toString()
     let context: BrowserContext | null = null
 

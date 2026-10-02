@@ -14,9 +14,9 @@ const lean = (value: unknown) => ({ lean: async () => value })
 
 const now = Date.now() / 1000
 
-const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] as { year: number, enabled?: boolean }[] } = {}) => {
+const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] as { year: number, enabled?: boolean }[], frozen = [] as number[] } = {}) => {
   const playModel = { find: jest.fn(() => lean(watched ? [{ started: now }] : [])) }
-  const editionModel = { find: jest.fn(() => lean([])) }
+  const editionModel = { find: jest.fn(() => lean(frozen.map((year) => ({ year })))) }
   const guestModel = {
     findOne: jest.fn(({ wrapped_token }) => lean(wrapped_token === 'token' ? { email: 'guest@example.com', name: 'Guest' } : null)),
     findOneAndUpdate: jest.fn(({ email }, update) => lean(email === 'guest@example.com' ? { email, ...update } : null)),
@@ -67,6 +67,26 @@ describe('WrappedService.image', () => {
     const error = await serviceOf({ contentType: 'image/svg+xml' }).service.image('token', 'plex://movie/heat', 'thumb', 640).catch((error) => error)
     expect(error).toBeInstanceOf(BadGatewayException)
     expect(JSON.stringify(error.getResponse())).not.toMatch(/tautulli|secret/i)
+  })
+})
+
+describe('WrappedService.openedEdition', () => {
+  const shown = new Date().getFullYear()
+
+  it('opens the year a link asks for, when the friend can open it', async () => {
+    const { service } = serviceOf({ frozen: [2023, 2024] })
+    await expect((service as any).openedEdition('guest@example.com', 2023)).resolves.toBe(2023)
+  })
+
+  it('falls back to the year shown now for a year turned off, or one the friend has nothing in', async () => {
+    const { service } = serviceOf({ frozen: [2023, 2024], editions: [{ year: 2023, enabled: false }] })
+    await expect((service as any).openedEdition('guest@example.com', 2023)).resolves.toBe(shown)
+    await expect((service as any).openedEdition('guest@example.com', 1990)).resolves.toBe(shown)
+  })
+
+  it('falls back to the last year still open when the one shown now is turned off', async () => {
+    const { service } = serviceOf({ frozen: [2023, 2024], editions: [{ year: shown, enabled: false }] })
+    await expect((service as any).openedEdition('guest@example.com', 1990)).resolves.toBe(2024)
   })
 })
 
