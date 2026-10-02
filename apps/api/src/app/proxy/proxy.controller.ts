@@ -2,6 +2,13 @@ import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware'
 import { All, Controller, Logger, Next, Req, Res } from '@nestjs/common'
 import { Request } from 'express'
 
+// pathRewrite empties req.url, and req.query with it: the target is read back from the original url
+export const setTargetHeaders = (proxyReq: { setHeader: (name: string, value: string) => void }, req: Pick<Request, 'originalUrl'>) => {
+  const url = new URL(new URL(req.originalUrl, 'http://localhost').searchParams.get('target'))
+  proxyReq.setHeader('host', url.host)
+  proxyReq.setHeader('origin', url.origin)
+}
+
 @Controller('/proxy')
 export class ProxyController {
   private readonly logger = new Logger(ProxyController.name)
@@ -17,12 +24,7 @@ export class ProxyController {
         return ''
       },
       on: {
-        proxyReq: (proxyReq, req: Request) => {
-          // pathRewrite empties req.url, and req.query with it: the target is read back from the original url
-          const url = new URL(new URL(req.originalUrl, 'http://localhost').searchParams.get('target'))
-          proxyReq.setHeader('host', url.host)
-          proxyReq.setHeader('origin', url.origin)
-        },
+        proxyReq: (proxyReq, req) => setTargetHeaders(proxyReq, req as Request),
       },
       changeOrigin: true,
       // logger: console,
