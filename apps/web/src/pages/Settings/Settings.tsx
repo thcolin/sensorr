@@ -45,8 +45,8 @@ const Settings = ({ ...props }) => {
         const raw = await api.fetch(uri, params, init, { rawError: true })
         setUpdate(raw)
 
-        if (availableOf(raw)) {
-          toast(`New version available **v${availableOf(raw)}**`)
+        if (availableOf(raw) && !location.pathname.startsWith('/settings/update')) {
+          toast(`New version available **v${availableOf(raw)}**`, { id: 'update-available' })
         }
       } catch (err) {
         console.warn(err)
