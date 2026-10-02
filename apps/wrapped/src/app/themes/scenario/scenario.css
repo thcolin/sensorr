@@ -1229,35 +1229,17 @@ html[data-theme='scenario'] {
   min-width: 0;
 }
 
-.scenario-story > .scenario-page > :nth-child(4) { --at: 1; }
-.scenario-story > .scenario-page > :nth-child(5) { --at: 2; }
-.scenario-story > .scenario-page > :nth-child(6) { --at: 3; }
-.scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
-.scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
-.scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
-.scenario-story > .scenario-page > :nth-child(10) { --at: 7; }
-.scenario-story > .scenario-page > :nth-child(n + 11) { --at: 8; }
-
-/* A character laid out but not yet struck */
-.scenario-unstruck {
-  visibility: hidden;
-}
-.scenario-story > .scenario-page > :nth-child(7) { --at: 4; }
-.scenario-story > .scenario-page > :nth-child(8) { --at: 5; }
-.scenario-story > .scenario-page > :nth-child(9) { --at: 6; }
-.scenario-story > .scenario-page > :nth-child(n + 10) { --at: 7; }
-
 .scenario-story .scenario-insert {
-  animation: scenario-clip-on 0.45s calc(0.55s + var(--at, 0) * 100ms) cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: scenario-clip-on 0.45s 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* The highlighter swiped over the figure once its line is typed */
+/* The page lands typed whole; its marks are added after, one by one, in reading order (`--mark`) */
 .scenario-story .scenario-mark {
-  animation: scenario-swipe 0.5s calc(0.8s + var(--at, 0) * 100ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
+  animation: scenario-swipe 0.5s calc(0.9s + var(--mark, 0) * 350ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
 }
 
 .scenario-story .scenario-pencil-note {
-  animation: scenario-write 0.7s calc(0.8s + var(--at, 0) * 100ms) ease-out backwards;
+  animation: scenario-write 0.7s calc(0.9s + var(--mark, 0) * 350ms) ease-out backwards;
 }
 
 .scenario-story .scenario-holes {
@@ -1458,7 +1440,7 @@ html[data-theme='scenario'] {
   width: 100%;
   max-width: 170px;
   max-height: 64px;
-  animation: scenario-type 0.9s 0.9s steps(6, end) backwards;
+  animation: scenario-type 0.9s calc(0.9s + var(--mark, 0) * 350ms) steps(6, end) backwards;
 }
 
 .scenario-story .scenario-nights {
@@ -1542,7 +1524,7 @@ html[data-theme='scenario'] {
   height: 5px;
   margin-top: 3px;
   transform-origin: left;
-  animation: scenario-stroke 0.4s calc(0.7s + var(--at, 0) * 70ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
+  animation: scenario-stroke 0.4s calc(0.9s + var(--mark, 0) * 120ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
 }
 
 .scenario-story-months .scenario-insert-thumb {
@@ -1574,7 +1556,7 @@ html[data-theme='scenario'] {
   margin: 6px auto 8px;
   padding: 26px 8px 8px;
   background-size: 100% 16px, auto;
-  animation: scenario-clap 0.5s 0.9s cubic-bezier(0.5, 0, 0.2, 1) backwards;
+  animation: scenario-clap 0.5s calc(0.9s + var(--mark, 0) * 350ms) cubic-bezier(0.5, 0, 0.2, 1) backwards;
 }
 
 .scenario-story .scenario-slate li {
