@@ -9,7 +9,7 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 
 - **Interactive installer**: a quick command-line installer that asks what it needs and leaves a
   running Sensorr behind, without editing files by hand.
-- **First launch**: what the first connection asks for, so that a fresh install reaches a
+- **Onboarding**: what the first connection asks for, so that a fresh install reaches a
   working library without editing files.
 - **Migration from 0.x**: bring a 0.x configuration and database over to the current format.
 - **Online demo**: a public instance on demo data.
@@ -25,8 +25,6 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 
 ### Features
 
-- **Plex reports**: a movie reported from Plex becomes a swap proposal, checked end to end on a
-  real server.
 - **Policy sandbox**: a panel in the policy settings that ranks sample releases, to see how each
   policy sorts every kind of release.
 - **Season finales**: read the finale TMDB marks on an episode before looking for a season pack.
