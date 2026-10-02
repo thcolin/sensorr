@@ -26,7 +26,5 @@ COPY --chown=node:node ./apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/bin ./bin
 RUN yarn global add web-push
-# Draws the wrapped's stories as images
-RUN apk add --no-cache chromium
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
