@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TMDB, certifications } from '@sensorr/tmdb'
-import cemoji from 'country-emoji'
+import { flag, name } from 'country-emoji'
 import { Select, SelectProps } from '../../../../inputs/Select/Select'
 import { languages } from '@sensorr/utils'
 
@@ -169,9 +169,9 @@ export const FilterCertification = memo(({ ...props }: any) => {
       menuPlacement='auto'
       {...props as any}
       options={Object.keys(certifications)
-        .filter(country => cemoji.flag(country) && cemoji.name(country))
+        .filter(country => flag(country) && name(country))
         .map(country => ({
-          label: `${cemoji.flag(country)}  ${cemoji.name(country)}`,
+          label: `${flag(country)}  ${name(country)}`,
           options: certifications[country]
             .sort((a, b) => a.order - b.order)
             .map(certification => ({
