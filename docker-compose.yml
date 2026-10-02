@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   sensorr-web:
-    image: sensorr/sensorr-web
+    image: ghcr.io/thcolin/sensorr-web:${SENSORR_TAG:-latest}
     container_name: sensorr-web
     hostname: sensorr-web
     restart: unless-stopped
@@ -26,7 +26,7 @@ services:
       - cards
 
   sensorr-api:
-    image: sensorr/sensorr-api
+    image: ghcr.io/thcolin/sensorr-api:${SENSORR_TAG:-latest}
     container_name: sensorr-api
     hostname: sensorr-api
     restart: unless-stopped
@@ -71,7 +71,7 @@ services:
       - cards
 
   sensorr-db:
-    image: sensorr/sensorr-db
+    image: ghcr.io/thcolin/sensorr-db:${SENSORR_TAG:-latest}
     container_name: sensorr-db
     hostname: sensorr-db
     restart: unless-stopped

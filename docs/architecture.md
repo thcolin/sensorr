@@ -311,10 +311,10 @@ services.
 
 | Service | Image | Built from | Boundary it owns |
 | --- | --- | --- | --- |
-| `sensorr-web` | `sensorr/sensorr-web` | `apps/web/Dockerfile`, where `node:26-alpine` builds the PWA and the wrapped page, and `caddy:2.11.4` serves them | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300`, serves `/wrapped/*` from the wrapped build with its own `index.html`, and falls back to the PWA's `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-25`) |
-| `sensorr-api` | `sensorr/sensorr-api` | `apps/api/Dockerfile`, which builds **both** the api and the cli bundles and copies `dist/` and `bin/` into the runtime stage | Mongo, `config.json`, `.secrets/`, the blackhole and the shows directory, the last four mounted as volumes |
+| `sensorr-web` | `ghcr.io/thcolin/sensorr-web` | `apps/web/Dockerfile`, where `node:26-alpine` builds the PWA and the wrapped page, and `caddy:2.11.4` serves them | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300`, serves `/wrapped/*` from the wrapped build with its own `index.html`, and falls back to the PWA's `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-25`) |
+| `sensorr-api` | `ghcr.io/thcolin/sensorr-api` | `apps/api/Dockerfile`, which builds **both** the api and the cli bundles and copies `dist/` and `bin/` into the runtime stage | Mongo, `config.json`, `.secrets/`, the blackhole and the shows directory, the last four mounted as volumes |
 | `sensorr-chromium` | `chromedp/headless-shell`, pinned | pulled, not built | Debian's Chromium, whose software WebGL paints the Affiche's posters (Alpine's has none); the API drives it over the DevTools protocol on port `9222`. No secret, no volume, a 1 GB memory limit, and only the `cards` network, `internal`, shared with `sensorr-web` and `sensorr-api`: it reaches the wrapped page and nothing outside |
-| `sensorr-db` | `sensorr/sensorr-db` | `apps/db/Dockerfile`, `mongo:8.0` with the replica set entrypoint | the data, under `./db` |
+| `sensorr-db` | `ghcr.io/thcolin/sensorr-db` | `apps/db/Dockerfile`, `mongo:8.0` with the replica set entrypoint | the data, under `./db` |
 
 The shows directory is one volume and not three, for the hard link, see
 [One volume for the hard link](#one-volume-for-the-hard-link).
@@ -326,6 +326,33 @@ The API image builds the CLI because the API spawns it
 ([How the API runs the CLI](#how-the-api-runs-the-cli)): compose sets
 `NX_SENSORR_BIN=/app/bin/sensorr`, and both bundles were produced by
 `apps/api/Dockerfile:14-17`. One image, two bundles, one spawn boundary between them.
+
+### Images
+
+`.github/workflows/ci.yml` builds the three Sensorr images once a push to `dev` or a
+`vX.Y.Z` tag has passed lint, test and the production build. Each image is built for
+`linux/amd64` and `linux/arm64`, each platform on a native GitHub runner, by
+`docker/github-builder`, and pushed to GHCR with the workflow's own `GITHUB_TOKEN`.
+
+| Event | Tags |
+| --- | --- |
+| push to `dev` | `dev`, `sha-<short sha>` |
+| tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest` |
+
+Every image carries the OCI labels `org.opencontainers.image.version`, the first tag above,
+and `org.opencontainers.image.revision`, the full commit SHA.
+
+`docker-compose.yml` pulls `${SENSORR_TAG:-latest}`. A server that follows `dev` sets
+`SENSORR_TAG=dev` in the env file it passes to compose, and updates with:
+
+```sh
+docker compose --env-file <env file> pull sensorr-api sensorr-web
+docker compose --env-file <env file> up -d sensorr-api sensorr-web
+```
+
+Recreating `sensorr-api` kills a running job, see
+[How the API runs the CLI](#how-the-api-runs-the-cli). The `build:` blocks stay in
+`docker-compose.yml` for a build from a clone, `docker compose build`.
 
 ### Upgrading Mongo
 

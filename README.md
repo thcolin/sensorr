@@ -41,6 +41,8 @@ person hosting their own library at home.
 
 # Install
 
+The images are published on GHCR for `linux/amd64` and `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
+
 ```sh
 # Choose an install folder for Sensorr install and config files
 mkdir ~/.sensorr && cd ~/.sensorr
@@ -130,15 +132,15 @@ docker container restart sensorr-api
 
 # Update
 
-To update Sensorr you need to update Sensorr Docker images. You can either use a tool to automatically update images, like [`watchtower`](https://github.com/containrrr/watchtower) or manually take down the stack, pull updated images and start the stack back
+The stack follows the latest release. Pull the new images and recreate the containers:
 
 ```sh
 cd ~/.sensorr
-docker compose down --remove-orphans
-docker compose pull sensorr/sensorr-web
-docker compose pull sensorr/sensorr-api
+docker compose pull
 docker compose up -d
 ```
+
+To pin a version, set it in `.env`, for example `SENSORR_TAG=1.0.0`. `SENSORR_TAG=dev` follows the `dev` branch, rebuilt on every push.
 
 # Documentation
 
