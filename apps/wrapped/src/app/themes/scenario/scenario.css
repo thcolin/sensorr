@@ -1483,7 +1483,11 @@ html[data-theme='scenario'] {
   width: 100%;
   max-width: 170px;
   max-height: 64px;
-  animation: scenario-type 0.9s var(--mark-delay, 0.9s) steps(6, end) backwards;
+}
+
+.scenario-story-run .scenario-tally path {
+  stroke-dasharray: 1;
+  animation: scenario-pen 0.12s var(--stroke-delay, 0.9s) ease-out backwards;
 }
 
 .scenario-story .scenario-nights {
@@ -1864,6 +1868,10 @@ html[data-theme='scenario'] {
   to { clip-path: inset(-20% 0 -20% 0); }
 }
 
+@keyframes scenario-pen {
+  from { stroke-dashoffset: 1; }
+}
+
 @keyframes scenario-draw {
   from { clip-path: inset(-20% 100% -20% 0); }
   to { clip-path: inset(-20% 0 -20% 0); }
@@ -1885,7 +1893,7 @@ html[data-theme='scenario'] {
   .scenario-story .scenario-mark,
   .scenario-story .scenario-figure::after,
   .scenario-story .scenario-pencil-note,
-  .scenario-story-run .scenario-tally,
+  .scenario-story-run .scenario-tally path,
   .scenario-story-months .scenario-swipe,
   .scenario-story .scenario-slate,
   .scenario-story .scenario-end,

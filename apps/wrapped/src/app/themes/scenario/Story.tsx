@@ -45,6 +45,8 @@ const MARKS = '.scenario-mark, .scenario-figure:not(.scenario-act .scenario-figu
 const LINE = 12
 // When the first mark is drawn, once the page has landed
 const FIRST = 900
+// Between two strokes of the tally
+const STROKE = 40
 
 // Where a mark sits in the layout, before any transform: the page is still being fed in when it is read
 const placeOf = (mark: Element): { top: number, left: number } => {
@@ -77,7 +79,14 @@ const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
     let delay = kind === 'opening' || kind === 'summary' ? 400 : FIRST
     marks.forEach(({ mark }) => {
       (mark as HTMLElement).style.setProperty('--mark-delay', `${delay}ms`)
-      delay += mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
+      // The tally is struck one stroke after the other, in the order it was drawn: row by row, each group's
+      // four strokes then its bar; the next mark waits for the last stroke
+      const strokes = mark.classList.contains('scenario-tally') ? Array.from(mark.querySelectorAll('path')) : []
+      strokes.forEach((stroke, at) => {
+        stroke.setAttribute('pathLength', '1')
+        stroke.style.setProperty('--stroke-delay', `${delay + at * STROKE}ms`)
+      })
+      delay += strokes.length ? strokes.length * STROKE + 200 : mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
     })
   }, [kind])
 
