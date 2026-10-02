@@ -1,6 +1,6 @@
 {
   "name": "sensorr",
-  "version": "0.0.0",
+  "version": "1.0.0-beta.1",
   "license": "MIT",
   "plex": "56dc3686-4a64-4e26-9389-4d04fe588850",
   "scripts": {
