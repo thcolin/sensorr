@@ -30,6 +30,17 @@ test('projectOf reads the compose labels, the env file defaulting to .env', () =
     name: 'sensorr',
     directory: '/srv/sensorr',
     files: ['/srv/sensorr/docker-compose.yml', '/srv/sensorr/docker-compose.override.yml'],
-    env: '/srv/sensorr/.env',
+    envs: ['/srv/sensorr/.env'],
   })
+})
+
+test('projectOf splits the env files compose joins with a comma', () => {
+  assert.deepEqual(projectOf({
+    'com.docker.compose.project.working_dir': '/srv/sensorr',
+    'com.docker.compose.project.environment_file': '/srv/sensorr/.env,/srv/sensorr/.env.production',
+  }).envs, ['/srv/sensorr/.env', '/srv/sensorr/.env.production'])
+})
+
+test('withTag keeps the line endings of a CRLF file', () => {
+  assert.equal(withTag('A=1\r\nSENSORR_TAG=dev\r\n', 'beta'), 'A=1\r\nSENSORR_TAG=beta\r\n')
 })
