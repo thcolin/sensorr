@@ -82,7 +82,7 @@ the API and load the configuration from it (`apps/cli/src/utils/command.js:9-13`
 importing its logger opens a Mongo connection at module load
 (`apps/cli/src/store/logger.js:5`).
 
-**`apps/db`** is a `mongo:6.0.6` image with a replacement entrypoint. It is the only
+**`apps/db`** is a `mongo:8.0` image with a replacement entrypoint. It is the only
 container that is not an Nx project: it has no `project.json`, Docker builds it and
 nothing else knows about it.
 
@@ -314,7 +314,7 @@ services.
 | `sensorr-web` | `sensorr/sensorr-web` | `apps/web/Dockerfile`, where `node:26-alpine` builds the PWA and the wrapped page, and `caddy:2.11.4` serves them | the only ports published, `5070` for HTTP and `5071` for HTTPS, from the `ports:` block of its `docker-compose.yml` service; Caddy reverse-proxies `/api/*` to `sensorr-api:4300`, serves `/wrapped/*` from the wrapped build with its own `index.html`, and falls back to the PWA's `index.html` for everything else (`docker/sensorr-web/Caddyfile:11-25`) |
 | `sensorr-api` | `sensorr/sensorr-api` | `apps/api/Dockerfile`, which builds **both** the api and the cli bundles and copies `dist/` and `bin/` into the runtime stage | Mongo, `config.json`, `.secrets/`, the blackhole and the shows directory, the last four mounted as volumes |
 | `sensorr-chromium` | `chromedp/headless-shell`, pinned | pulled, not built | Debian's Chromium, whose software WebGL paints the Affiche's posters (Alpine's has none); the API drives it over the DevTools protocol on port `9222`. No secret, no volume, a 1 GB memory limit, and only the `cards` network, `internal`, shared with `sensorr-web` and `sensorr-api`: it reaches the wrapped page and nothing outside |
-| `sensorr-db` | `sensorr/sensorr-db` | `apps/db/Dockerfile`, `mongo:6.0.6` with the replica set entrypoint | the data, under `./db` |
+| `sensorr-db` | `sensorr/sensorr-db` | `apps/db/Dockerfile`, `mongo:8.0` with the replica set entrypoint | the data, under `./db` |
 
 The shows directory is one volume and not three, for the hard link, see
 [One volume for the hard link](#one-volume-for-the-hard-link).
@@ -326,6 +326,62 @@ The API image builds the CLI because the API spawns it
 ([How the API runs the CLI](#how-the-api-runs-the-cli)): compose sets
 `NX_SENSORR_BIN=/app/bin/sensorr`, and both bundles were produced by
 `apps/api/Dockerfile:14-17`. One image, two bundles, one spawn boundary between them.
+
+### Upgrading Mongo
+
+`mongod` 8.0 only opens data files written by 7.0, once their feature compatibility
+version (FCV) reads `7.0`, and 7.0 only opens those of 6.0 with an FCV of `6.0`. Data written by
+`mongo:6.0.6` therefore reaches 8.0 through two upgrades, 6.0 to 7.0 then 7.0 to 8.0, and
+`apps/db/Dockerfile` takes the Mongo version as the `MONGO_VERSION` build argument for the
+7.0 image. Replayed locally on a throwaway `./db` on 2026-10-02, rollback included: the
+data stayed, and `mongod` reported 7.0.43 then 8.0.32.
+
+Set `ENV_FILE` to the env file the deployment runs compose with. `mongosh` and `mongodump`
+read their credentials from the `sensorr-db` container's environment, and a container
+recreated with the default `.env` gets the wrong ones.
+
+```sh
+C() { docker compose --env-file "$ENV_FILE" "$@"; }
+M='mongosh --quiet -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin'
+
+# 1. Stop the API, and with it every cron. Check the FCV reads 6.0, then back up.
+C stop sensorr-api
+C exec -T sensorr-db sh -c "$M --eval 'db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 }).featureCompatibilityVersion.version'"
+C exec -T sensorr-db sh -c 'mongodump -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --db sensorr --gzip --archive' > sensorr.archive.gz && ls -lh sensorr.archive.gz
+
+# 2. The 7.0 image, then FCV 7.0
+C stop -t 60 sensorr-db
+C build --build-arg MONGO_VERSION=7.0 sensorr-db
+C up -d --wait sensorr-db
+C exec -T sensorr-db sh -c "$M --eval 'db.adminCommand({ setFeatureCompatibilityVersion: \"7.0\", confirm: true })'"
+
+# 3. The 8.0 image, the Dockerfile default, then FCV 8.0
+C stop -t 60 sensorr-db
+C build sensorr-db
+C up -d --wait sensorr-db
+C exec -T sensorr-db sh -c "$M --eval 'db.adminCommand({ setFeatureCompatibilityVersion: \"8.0\", confirm: true })'"
+
+C up -d sensorr-api
+```
+
+`ls -lh` only prints when `mongodump` exited 0; without that line, a failed dump still
+leaves an empty `sensorr.archive.gz`. `stop -t 60` matters: within the default 10
+seconds `mongod` may not close its files, and the next version then refuses to start on
+them. `--wait` returns once the `sensorr-db` healthcheck passes, and it runs every 30
+seconds.
+
+Going back means starting over from the archive, the only copy of the data once `./db`
+is emptied. `mongo:6.0.6` is the image this repo ran before 8.0, and an empty `./db`
+makes it create the root user again:
+
+```sh
+C stop -t 60 sensorr-db
+sudo find ./db -mindepth 1 -delete
+C build --build-arg MONGO_VERSION=6.0.6 sensorr-db
+C up -d --wait sensorr-db
+C exec -T sensorr-db sh -c 'mongorestore -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --gzip --archive' < sensorr.archive.gz
+C up -d sensorr-api
+```
 
 ## Project graph
 

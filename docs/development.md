@@ -126,7 +126,6 @@ Measured on 2026-10-02. Each stays below its latest major until the reason goes 
 | `@babel/*` | 7 | Nx 23 and its React preset build on Babel 7 |
 | `winston-mongodb` | 5 | version 7 stores a log's properties under `metadata.metadata`, and the API reads `meta.job` |
 | `@dicebear/core`, `@dicebear/collection` | 7 | a new major may redraw every avatar; not decided |
-| `mongo` image | 6.0.6 | the move to 8 is a deployment step: two `setFeatureCompatibilityVersion` steps, 6 to 7 then 7 to 8, with `mongod` stopped cleanly between images |
 
 ## Project layout
 
