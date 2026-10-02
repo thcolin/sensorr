@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import semver from 'semver'
-import { Button, Link, Option } from '@sensorr/ui'
+import { Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS } from '@sensorr/sensorr'
+import { animations } from '@sensorr/theme'
 import Body from '../../layout/Body/Body'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
+import { JobSettings } from './Jobs'
 import { errorOf } from './Mail'
 
 const CHANNELS = {
@@ -25,12 +27,14 @@ export const availableOf = (update) => {
 }
 
 const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => (
-  <div sx={Update.styles.failure}>
+  <div role='alert' sx={Update.styles.failure}>
     <strong>{emojize('🚨', title)}</strong>
     {cause && <span>{cause}</span>}
     {logs && <span>Logs: <strong sx={{ variant: 'code.reset' }}>docker logs {logs}</strong></span>}
   </div>
 )
+
+const Placeholder = ({ width }: { width: string }) => <span aria-hidden={true} sx={{ ...Update.styles.placeholder, width }} />
 
 const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 
@@ -46,7 +50,7 @@ const Update = ({ ...props }) => {
 
   const loading = !update
   const updater = update?.updater
-  const selected = channel || (update?.channel in CHANNELS ? update.channel : 'stable')
+  const selected = channel || (update?.channel in CHANNELS ? update.channel : loading ? null : 'stable')
   const target = update?.channels?.[selected]?.version
   const current = selected === update?.channel
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
@@ -127,54 +131,44 @@ const Update = ({ ...props }) => {
     }
   }
 
-  const stateOf = (key) => {
-    const { version, error } = update?.channels?.[key] || {}
+  const available = availableOf(update)
+  const unreachable = !!update?.channels?.[update?.channel]?.error
 
-    if (loading) {
-      return '…'
-    }
-
-    if (error) {
-      return "can't reach GHCR"
-    }
-
-    if (!version) {
-      return 'no release yet'
-    }
-
-    if (key !== update.channel) {
-      return <code>v{version}</code>
-    }
-
-    return <><code>v{version}</code> {availableOf(update) ? 'available' : 'up to date'}</>
-  }
-
-  const action = (() => {
+  const sentence = (() => {
     if (updating) {
-      return `⌛ Updating to v${updating.version}`
+      return `Updating to v${updating.version}`
     }
 
-    if (loading) {
-      return '…'
+    if (update?.channel === 'dev') {
+      return <>Follows every push to <code>dev</code></>
     }
 
-    if (!target) {
-      return update?.channels?.[selected]?.error ? `Can't reach GHCR` : `No ${CHANNELS[selected].label.toLowerCase()} release yet`
+    if (unreachable) {
+      return `Can't reach GHCR, the latest ${update.channel} is unknown`
     }
 
-    if (current) {
-      return availableOf(update) ? `Update to v${target}${pinned ? ', replaces your pin' : ''}` : 'Up to date'
+    if (pinned) {
+      return available ? `SENSORR_TAG pins this version, v${available} is out on ${update.channel}` : `SENSORR_TAG pins this version, up to date on ${update.channel}`
     }
 
-    return `Switch to ${CHANNELS[selected].label.toLowerCase()}, v${target}${pinned ? ', replaces your pin' : ''}`
+    return available ? `v${available} is out on ${update?.channel}` : `Up to date on ${update?.channel}`
   })()
 
+  const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : update?.channel === 'dev' ? 'grayDarker' : 'success'
+
   const ready = !!updater && !updater.error
-  const disabled = loading || !!updating || !target || (current && !availableOf(update)) || !!jobs.length
+  const actionable = !!updating || (!!target && (!current || !!available))
+  const disabled = !!updating || !!jobs.length
+
+  const action = updating
+    ? `⌛ Updating to v${updating.version}`
+    : current
+      ? `Update to v${target}${pinned ? ', replaces your pin' : ''}`
+      : `Switch to ${selected}, v${target}${pinned ? ', replaces your pin' : ''}`
 
   const manual = (
     <>
-      <p>Set <code>SENSORR_TAG={CHANNELS[selected].tag}</code> in the env file you pass to compose, then:</p>
+      <p>Set <code>SENSORR_TAG={CHANNELS[selected || 'stable'].tag}</code> in the env file you pass to compose, then:</p>
       <code sx={Update.styles.commands}>
         docker compose --env-file &lt;env file&gt; pull sensorr-api sensorr-web<br />
         docker compose --env-file &lt;env file&gt; up -d sensorr-api sensorr-web
@@ -187,84 +181,102 @@ const Update = ({ ...props }) => {
     </>
   )
 
+  const source = (key) => {
+    const { version, error } = update?.channels?.[key] || {}
+
+    return (
+      <small>
+        {CHANNELS[key].source}, {loading ? <Placeholder width='7em' /> : error ? "can't reach GHCR" : version ? <>latest <code>v{version}</code></> : 'no release yet'}
+      </small>
+    )
+  }
+
   return (
     <Body>
       <section>
         <article>
           <h2>Update</h2>
-          {update?.error ? (
-            <Failure title="Can't read the update status" cause={update.error} logs='sensorr-api' />
-          ) : (
-            <p sx={Update.styles.running}>
-              <code>{update?.version ? `v${update.version}` : '…'}</code>
-              {update?.tag && <> · <code>{update.channel}</code></>}
-              {pinned && <> · <code title='SENSORR_TAG pins this version'>{emojize('📍', pinned)}</code></>}
-              {revision && <> · <code title={update.revision}>{revision}</code></>}
-            </p>
-          )}
-          {update?.channel === 'dev' ? (
-            <p>
-              This instance follows every push to <code>dev</code>. Set <code>SENSORR_TAG</code> to <code>beta</code> or <code>latest</code> in the env file you pass to compose to follow a release.
-            </p>
-          ) : (
-            <>
-              {!update?.error && <div role='radiogroup' aria-label='Channel' sx={{ paddingY: 8 }}>
-                {Object.entries(CHANNELS).map(([key, { emoji, label, source }]) => (
-                  <Option
-                    key={key}
-                    type='radio'
-                    id={`update-${key}`}
-                    name='channel'
-                    value={key}
-                    checked={selected === key}
-                    disabled={loading || !!updating}
-                    onChange={() => setChannel(key)}
-                  >
-                    <div sx={Update.styles.channel}>
-                      <span>
-                        <strong>{emojize(emoji, label)}</strong>
-                        <span>{stateOf(key)}</span>
-                      </span>
-                      <small>{update?.channels?.[key]?.error || source}</small>
-                    </div>
-                  </Option>
-                ))}
-              </div>}
-              {(ready || loading) && (
-                <>
-                  <div sx={{ display: 'flex', marginTop: 4 }}>
-                    <Button type='button' color='primary' sx={{ flex: 1 }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
-                  </div>
-                  {!updating && !!jobs.length && (
-                    <p sx={Update.styles.warning}>
-                      <strong>Warning</strong>, {jobs.length > 2 ? `${emojize(JOB_EMOJIS[jobs[0]], jobs[0])} and ${jobs.length - 1} more` : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {jobs.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
-                    </p>
-                  )}
-                  {!disabled && <p><small>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></small></p>}
-                </>
-              )}
-              <div role='status' sx={Update.styles.status}>
-                {updating ? (
-                  <p><small>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></small></p>
-                ) : failure ? (
-                  <Failure {...failure} />
-                ) : updater?.error ? (
-                  <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />
-                ) : null}
+          <div sx={Update.styles.stack}>
+            {update?.error ? (
+              <Failure title="Can't read the update status" cause={update.error} logs='sensorr-api' />
+            ) : (
+              <div sx={JobSettings.styles.container} aria-busy={loading}>
+                <div sx={{ ...JobSettings.styles.metadata, flex: 1 }}>
+                  <h5>
+                    {loading ? <Placeholder width='9em' /> : CHANNELS[update.channel] ? emojize(CHANNELS[update.channel].emoji, `v${update.version}`) : `v${update.version}`}
+                  </h5>
+                  <p role='status' sx={Update.styles.state}>
+                    <span>{loading ? <Placeholder width='12em' /> : sentence}</span>
+                    {loading ? <small><Placeholder width='8em' /></small> : revision && <small title={update.revision}>revision {revision}</small>}
+                  </p>
+                </div>
+                <span sx={Update.styles.dot}>
+                  <i sx={{ backgroundColor: loading ? 'gray' : state }} />
+                </span>
               </div>
-              {ready && !failure ? (
+            )}
+            {update?.channel !== 'dev' && !update?.error && (
+              <div sx={Update.styles.channel}>
+                <div role='radiogroup' aria-label='Channel' sx={Update.styles.channels}>
+                  <span aria-hidden={true}>channel</span>
+                  {Object.entries(CHANNELS).map(([key, { emoji }]) => (
+                    <label key={key} htmlFor={`update-${key}`} title={!loading && !update.channels?.[key]?.version ? (update.channels?.[key]?.error ? "Can't reach GHCR" : `No ${key} release yet`) : undefined}>
+                      <input
+                        type='radio'
+                        id={`update-${key}`}
+                        name='channel'
+                        value={key}
+                        checked={selected === key}
+                        disabled={loading || !!updating || !update.channels?.[key]?.version}
+                        onChange={() => setChannel(key)}
+                      />
+                      <span aria-hidden={true}>{emoji}</span>
+                      <span>{key}</span>
+                    </label>
+                  ))}
+                </div>
+                {source(selected || 'beta')}
+              </div>
+            )}
+            {update?.channel === 'dev' && (
+              <p>
+                Set <code>SENSORR_TAG</code> to <code>beta</code> or <code>latest</code> in the env file you pass to compose to follow a release.
+              </p>
+            )}
+            {update?.channel !== 'dev' && ready && actionable && (
+              <div sx={Update.styles.action}>
+                <Button type='button' color='primary' sx={{ width: '100%' }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
+                {!updating && !!jobs.length ? (
+                  <p sx={Update.styles.warning}>
+                    <strong>Warning</strong>, {jobs.length > 2 ? `${emojize(JOB_EMOJIS[jobs[0]], jobs[0])} and ${jobs.length - 1} more` : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {jobs.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
+                  </p>
+                ) : (
+                  <small>
+                    {updating ? (
+                      <>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
+                    ) : (
+                      <>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></>
+                    )}
+                  </small>
+                )}
+              </div>
+            )}
+            {!updating && failure && <Failure {...failure} />}
+            {!updating && !failure && updater?.error && <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />}
+            {update?.channel !== 'dev' && !loading && (
+              ready && !failure ? (
                 <details sx={Update.styles.details}>
                   <summary><strong>Manual update</strong></summary>
                   {manual}
                 </details>
-              ) : !loading && (
-                <>
+              ) : (
+                <div>
                   <h3>Manual update</h3>
                   {manual}
-                </>
-              )}
-            </>
-          )}
+                </div>
+              )
+            )}
+          </div>
         </article>
       </section>
     </Body>
@@ -272,30 +284,154 @@ const Update = ({ ...props }) => {
 }
 
 Update.styles = {
-  running: {
+  // One gap between blocks, the margins of Settings' paragraphs left out
+  stack: {
     display: 'flex',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
+    gap: 4,
+    marginTop: 4,
+    '>p': {
+      marginY: 12,
+    },
+    '>div >h3': {
+      marginTop: 12,
+    },
+  },
+  state: {
+    '&&': {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      gap: 10,
+      lineHeight: 'normal',
+      whiteSpace: 'normal',
+    },
+  },
+  // The dot of an indexer's test (Znabs.tsx), in the cell where a job has its run button (Jobs.tsx)
+  dot: {
+    display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    flexShrink: 0,
+    minWidth: '2.5rem',
+    borderLeft: '1px solid',
+    borderColor: 'grayDark',
+    '>i': {
+      display: 'block',
+      height: '0.5em',
+      width: '0.5em',
+      borderRadius: '50%',
+      transition: 'background-color 400ms ease-in-out',
+    },
   },
   channel: {
-    lineHeight: 'normal',
-    paddingY: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  // The capsule and pills of CommandTabs.tsx, the pressed pill filled, the other one let through
+  channels: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25em',
+    height: '1.75em',
+    paddingX: '0.1875em',
+    boxSizing: 'border-box',
+    borderRadius: '2em',
+    backgroundColor: 'accentDarkest',
+    color: 'whitePure',
     '>span': {
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      columnGap: 4,
-      rowGap: 10,
+      marginLeft: '0.9em',
+      marginRight: '0.6em',
+      fontFamily: 'monospace',
+      fontSize: '0.625em',
+      fontWeight: 'bold',
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
     },
-    '>small': {
-      display: 'block',
-      marginTop: 10,
+    '>label': {
+      position: 'relative',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.375em',
+      height: '1.375em',
+      paddingX: '0.6875em',
+      boxSizing: 'border-box',
+      borderRadius: '1.375em',
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      transition: 'background-color 140ms ease-out',
+      '>input': {
+        position: 'absolute',
+        opacity: 0,
+        width: '100%',
+        height: '100%',
+        margin: 12,
+        cursor: 'inherit',
+      },
+      '>span:first-of-type': {
+        fontSize: '0.875em',
+        lineHeight: 1,
+      },
+      '>span:last-of-type': {
+        fontFamily: 'monospace',
+        fontSize: '0.8125em',
+        fontWeight: 'medium',
+        lineHeight: 1.2,
+      },
+      ':has(>input:checked)': {
+        backgroundColor: 'accentDarker',
+        '>span:last-of-type': {
+          fontWeight: 'strong',
+        },
+      },
+      ':has(>input:focus-visible)': {
+        outline: '2px solid',
+        outlineColor: 'whitePure',
+        outlineOffset: '-2px',
+      },
+      ':has(>input:disabled)': {
+        cursor: 'default',
+      },
+      ':has(>input:disabled:not(:checked))': {
+        opacity: 0.5,
+      },
+    },
+  },
+  action: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    '>p': {
+      marginY: 12,
+    },
+  },
+  // A bar shaped like the text it stands for, swept by the theme's placeholder keyframes
+  placeholder: {
+    position: 'relative',
+    display: 'inline-block',
+    maxWidth: '100%',
+    height: '1em',
+    overflow: 'hidden',
+    borderRadius: '0.25em',
+    backgroundColor: 'grayDark',
+    verticalAlign: 'middle',
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      background: (theme) => `linear-gradient(90deg, transparent, color-mix(in srgb, ${theme.colors.grayDarker} 50%, transparent), transparent)`,
+      animation: `${animations.placeholder} 1.2s ease-in-out infinite`,
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      '::after': {
+        animation: 'none',
+      },
     },
   },
   // The warning of Settings, as a job's missing requirement draws it (Jobs.tsx)
   warning: {
-    marginY: 8,
     paddingX: 4,
     paddingY: 8,
     backgroundColor: '#FFE9A4',
@@ -309,15 +445,11 @@ Update.styles = {
       ':active': { color: 'warningDarkest' },
     },
   },
-  status: {
-    width: '100%',
-  },
   // The alert of Settings, as an indexer's error draws it (Znabs.tsx)
   failure: {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
-    marginY: 8,
     paddingX: 4,
     paddingY: 8,
     backgroundColor: '#ffa4a4',
@@ -328,7 +460,6 @@ Update.styles = {
     lineHeight: 'body',
   },
   details: {
-    marginY: 8,
     '>summary': {
       cursor: 'pointer',
     },
