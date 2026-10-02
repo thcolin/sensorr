@@ -5,15 +5,15 @@ import { Genre } from './interfaces'
 
 export class TMDB {
   // TODO: Remove last /
-  base: string = 'https://api.themoviedb.org/3/'
+  base = 'https://api.themoviedb.org/3/'
   key: string
-  region: string = 'en-US'
+  region = 'en-US'
   genres: Genre[] = []
   tvGenres: Genre[] = []
   studios = studios
   certifications = certifications
-  adult: boolean = false
-  ready: boolean = false
+  adult = false
+  ready = false
   events: { fetchStart?: (uri: string, params: {}) => void; fetchEnd?: (uri: string, params: {}) => void } = {}
 
   constructor({

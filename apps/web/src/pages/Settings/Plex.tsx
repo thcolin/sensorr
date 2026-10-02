@@ -120,7 +120,7 @@ const UIPlex = ({ ...props }) => {
   }, [step])
 
   const handleReset = useCallback(async () => {
-    if (!confirm('Are you sure you want to unregister your Plex server ? Every releases from this server will be removed from Sensorr, but movies will still be "archived"')) {
+    if (!window.confirm('Are you sure you want to unregister your Plex server ? Every releases from this server will be removed from Sensorr, but movies will still be "archived"')) {
       return
     }
 

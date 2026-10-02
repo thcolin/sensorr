@@ -120,7 +120,7 @@ describe('SensorrService', () => {
       const title = 'Властелин колец: Братство кольца / The Lord of the Rings: The Fellowship of the Ring (Питер Джексон / Peter Jackson) [2001, США, Новая Зеландия, фэнтези, приключения, BDRip 1080p] [Extended Cut] Dub + MVO + AVO + Original + Sub'
       await (await serviceOf(Buffer.from('d8:announce'))).downloadRelease({ title, znab: 'RuTracker', link: 'abc', enclosure: 'https://rutracker.org/dl.php?t=2' } as any, 'cache', 'fs')
       const [file] = await fs.readdir(blackhole)
-      expect(file).toMatch(/^Властелин колец Братство кольца  The Lord of the Rings .*-RuTracker\.torrent$/)
+      expect(file).toMatch(/^Властелин колец Братство кольца {2}The Lord of the Rings .*-RuTracker\.torrent$/)
       expect(Buffer.byteLength(file)).toBeLessThanOrEqual(255)
     })
   })

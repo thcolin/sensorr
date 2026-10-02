@@ -12,6 +12,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
 
+const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
+
 export const Recommendations = (id) => compose(
   withTitle(i18n.t('pages.recommendations.title')),
   withProps({
@@ -29,7 +31,7 @@ export const Recommendations = (id) => compose(
     },
     props: () => ({ focus: 'vote_average' }),
   }),
-  withFetchQuery({ uri: `movie/${id}/recommendations` }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: `movie/${id}/recommendations` }, 1, useTMDB, useControlsHistoryState),
   withControls({
     title: i18n.t('pages.recommendations.title'),
     useStatistics,

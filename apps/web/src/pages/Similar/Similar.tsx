@@ -12,6 +12,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
 
+const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
+
 export const Similar = (id) => compose(
   withTitle(i18n.t('pages.similar.title')),
   withProps({
@@ -29,7 +31,7 @@ export const Similar = (id) => compose(
     },
     props: () => ({ focus: 'vote_average' }),
   }),
-  withFetchQuery({ uri: `movie/${id}/similar` }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: `movie/${id}/similar` }, 1, useTMDB, useControlsHistoryState),
   withControls({
     title: i18n.t('pages.similar.title'),
     useStatistics,

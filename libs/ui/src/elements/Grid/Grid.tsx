@@ -72,7 +72,7 @@ const UIGrid = ({
   const scrollContainer = useScrollContainer()
   const WrappedChild = useMemo(() => withGridItemContainer()(Child), [Child])
 
-  return !!override ? (
+  return override ? (
     <div sx={UIGrid.styles.block}>
       {override}
     </div>
@@ -85,6 +85,7 @@ const UIGrid = ({
       childProps={childProps}
       viewportRowOffset={6}
       scrollContainer={scrollContainer}
+      scrollDirection={'vertical'}
     />
   )
 }

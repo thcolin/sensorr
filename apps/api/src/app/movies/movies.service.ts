@@ -251,7 +251,7 @@ export class MoviesService {
     return { deleted: deletedCount }
   }
 
-  async getMovies(params = {} as any, page: number = 1, limit: number = 20): Promise<PaginateResult<MovieDocument>> {
+  async getMovies(params = {} as any, page = 1, limit = 20): Promise<PaginateResult<MovieDocument>> {
     this.logger.log(`GetMovies, params=${JSON.stringify(params)}, page=${page}`)
     const res = await this.movieModel.paginate(movieFilter(params), {
       page,
@@ -269,7 +269,7 @@ export class MoviesService {
     return res
   }
 
-  async getMetadata(page: number = 1) {
+  async getMetadata(page = 1) {
     this.logger.log(`GetMetadata, page="${page}"`)
     const res = await this.movieModel.paginate({}, {
       page,

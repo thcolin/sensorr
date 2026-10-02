@@ -179,7 +179,7 @@ const Friends = ({ ...props }) => {
                       // Not `disabled`, which hides the reason in the title from the hover and from screen readers
                       aria-disabled={!mailable || busy[guest.email] || undefined}
                       onClick={() => {
-                        if (mailable && !busy[guest.email] && confirm(stopped
+                        if (mailable && !busy[guest.email] && window.confirm(stopped
                           ? `${guest.name} stopped the reconnect reminders. Mail them anyway ?`
                           : `Mail ${guest.name} to reconnect their Plex account ?`)) {
                           mail(guest.email, 'reconnect')
@@ -209,11 +209,11 @@ const Friends = ({ ...props }) => {
                           return
                         }
 
-                        if (action === 'mail' && confirm(`Mail the wrapped link to ${guest.name} ?`)) {
+                        if (action === 'mail' && window.confirm(`Mail the wrapped link to ${guest.name} ?`)) {
                           mail(guest.email, 'wrapped')
                         } else if (action === 'copy') {
                           copyLink(guest.email)
-                        } else if (action === 'renew' && confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
+                        } else if (action === 'renew' && window.confirm(`Create a new wrapped link for "${guest.email}" ? The previous one will no longer open.`)) {
                           copyLink(guest.email, true)
                         }
                       }}
@@ -232,7 +232,7 @@ const Friends = ({ ...props }) => {
                     title={`Remove ${guest.name}`}
                     aria-label={`Remove ${guest.name}`}
                     onClick={() => {
-                      if (confirm(`Are you sure you want to delete guest "${guest.email}" ?`)) {
+                      if (window.confirm(`Are you sure you want to delete guest "${guest.email}" ?`)) {
                         deleteGuest(guest.email)
                       }
                     }}

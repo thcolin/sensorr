@@ -6,7 +6,7 @@ const tmdb = new TMDB({})
 export const useTMDB = () => tmdb
 
 export const withTMDB = () => (WrappedComponent) => {
-  const withTMDB = ({ entity, ...props }) => {
+  const WithTMDB = ({ entity, ...props }) => {
     const tmdb = useTMDB() as TMDB
 
     return (
@@ -14,8 +14,8 @@ export const withTMDB = () => (WrappedComponent) => {
     )
   }
 
-  withTMDB.displayName = `withTMDB(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withTMDB
+  WithTMDB.displayName = `withTMDB(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithTMDB
 }
 
 export const useTMDBRequest = (uri, params = {}, { transform, ready }: any = { transform: (data) => data, ready: true }) => {

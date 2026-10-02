@@ -6,7 +6,7 @@ import { useConfigContext } from '../../contexts/Config/Config'
 
 export const withSensorrRequest = () => (WrappedComponent) => {
   // `unit` searches a show from that level up to the whole series, and keeps only the releases that hold it
-  const withSensorrRequest = ({ entity, metadata, onChange, ready, unit = null, ...props }) => {
+  const WithSensorrRequest = ({ entity, metadata, onChange, ready, unit = null, ...props }) => {
     const [serialized, state] = useSensorrControlsState(metadata)
     const { call, reset, id, loading, done, tasks, releases } = useSensorrRequest() as any
     const request = useRef(null)
@@ -110,8 +110,8 @@ export const withSensorrRequest = () => (WrappedComponent) => {
     )
   }
 
-  withSensorrRequest.displayName = `withSensorrRequest(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withSensorrRequest
+  WithSensorrRequest.displayName = `withSensorrRequest(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithSensorrRequest
 }
 
 const styles = {

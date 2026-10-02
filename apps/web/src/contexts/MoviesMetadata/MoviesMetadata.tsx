@@ -142,7 +142,7 @@ export const Provider = ({ ...props }) => {
       }), {}),
     }))
 
-    const promise = new Promise(async (resolve, reject) => {
+    const promise = (async () => {
       setMetadata(metadata => ({
         ...metadata,
         ...Object.keys(changes).reduce((acc, i) => ({
@@ -150,6 +150,8 @@ export const Provider = ({ ...props }) => {
           [i]: key === 'state' && value === 'ignored' ? {} : { ...(metadata[i] || {}), ...changes[i] },
         }), {}),
       }))
+
+      let failed = []
 
       try {
         if (Object.keys(changes).length === 1) {
@@ -162,20 +164,21 @@ export const Provider = ({ ...props }) => {
 
         const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovies' : 'postMovies')]({ body: changes })
         // A movie whose release did not download comes back in `failed`, the others are written
-        const { failed = [] } = await api.fetch(uri, params, init)
-
-        if (failed.length) {
-          undo(failed.map(String))
-          reject(Object.assign(new Error(), { failed }))
-        } else {
-          resolve(true)
-        }
+        const res = await api.fetch(uri, params, init)
+        failed = res.failed || []
       } catch (err) {
         undo(Object.keys(changes))
         console.warn(err)
-        reject(new Error())
+        throw new Error()
       }
-    })
+
+      if (failed.length) {
+        undo(failed.map(String))
+        throw Object.assign(new Error(), { failed })
+      }
+
+      return true
+    })()
 
     // A caller that tells the outcome itself, as the swaps' own toast, asks for no second one.
     if (silent) {
@@ -242,7 +245,7 @@ export const Provider = ({ ...props }) => {
 export const useMoviesMetadataContext = () => useContext(moviesMetadataContext)
 
 export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedComponent) => {
-  const withMovieMetadataContext = ({ entity, ...props }) => {
+  const WithMovieMetadataContext = ({ entity, ...props }) => {
     const sensorr = useSensorr()
     const { loading, metadata: { [entity.id]: _metadata = {} }, artworks: known = {}, setMovieMetadata, removeMovieRelease } = useMoviesMetadataContext() as any
     const setMetadata = useCallback((key, value) => setMovieMetadata(entity.id, key, value), [entity?.id])
@@ -280,6 +283,6 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
     )
   }
 
-  withMovieMetadataContext.displayName = `withMovieMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withMovieMetadataContext
+  WithMovieMetadataContext.displayName = `withMovieMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithMovieMetadataContext
 }

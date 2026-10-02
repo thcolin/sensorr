@@ -371,7 +371,7 @@ const pageRange = (origin: string, stream: Stream, page: number) => {
 
 // The movies of a page go out a day at a time, from the origin outwards, once every movie of the day is judged
 const withMoviesAgenda = () => (WrappedComponent) => {
-  const withMoviesAgenda = ({ ...props }) => {
+  const WithMoviesAgenda = ({ ...props }) => {
     const tmdb = useTMDB()
     const persons = usePersonsMetadataContext() as any
     const context = useContext(ControlsContext)
@@ -434,8 +434,8 @@ const withMoviesAgenda = () => (WrappedComponent) => {
     )
   }
 
-  withMoviesAgenda.displayName = `withMoviesAgenda(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withMoviesAgenda
+  WithMoviesAgenda.displayName = `withMoviesAgenda(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithMoviesAgenda
 }
 
 const UIMoviesAgenda = ({ controls, ...props }) => {

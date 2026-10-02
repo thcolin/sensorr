@@ -1,4 +1,4 @@
-import { useBreakpointIndex } from '@sensorr/utils'
+import { useBreakpointIndex } from './useMatchMedia'
 
 export const useDevice = () => {
   const breakpoint = useBreakpointIndex()

@@ -457,7 +457,7 @@ const PolicySettings = forwardRef<any, any>(({
                 sx={{ ...styles.button, ...styles.remove }}
                 title={value ? '' : 'Remove policy'}
                 onClick={() => {
-                  if (confirm('Do you really want to remove this policy ? Movies with deleted policy defined will fallback to "default" policy')) {
+                  if (window.confirm('Do you really want to remove this policy ? Movies with deleted policy defined will fallback to "default" policy')) {
                     policies.update(policies.fields.findIndex(p => p.id === id), { ...policies.fields[policies.fields.findIndex(p => p.id === id)], removed: true })
                   }
                 }}

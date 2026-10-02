@@ -155,7 +155,7 @@ const Library = compose(
       },
       bulk: {
         initial: null,
-        component: ({ total, statistics, ...props }) => {
+        component: function BulkField({ total, statistics, ...props }) {
           const { setShowMetadata } = useShowsMetadataContext() as any
           const { selection, setSelection } = useBulkContext()
           const sensorr = useSensorr()
@@ -169,7 +169,7 @@ const Library = compose(
 
           // The metadata context already tells a failure in its toast.
           const apply = async (key, value, question) => {
-            if (!confirm(question)) {
+            if (!window.confirm(question)) {
               return
             }
 

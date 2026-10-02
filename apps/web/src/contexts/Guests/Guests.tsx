@@ -60,7 +60,7 @@ export const Provider = ({ ...props }) => {
 export const useGuestsContext = () => useContext(guestsContext)
 
 export const withMovieGuestsContext = ({} = {}) => (WrappedComponent) => {
-  const withMovieGuestsContext = ({ ...props }) => {
+  const WithMovieGuestsContext = ({ ...props }) => {
     const { loading, guests } = useGuestsContext() as any
 
     const metadata = useMemo(() => ({
@@ -73,7 +73,7 @@ export const withMovieGuestsContext = ({} = {}) => (WrappedComponent) => {
     )
   }
 
-  withMovieGuestsContext.displayName = `withMovieGuestsContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withMovieGuestsContext
+  WithMovieGuestsContext.displayName = `withMovieGuestsContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithMovieGuestsContext
 }
 

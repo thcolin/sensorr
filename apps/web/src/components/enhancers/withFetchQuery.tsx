@@ -25,9 +25,9 @@ const withFetchQuery = (
     ({ uri: string, params: { [key: string]: string }}),
     (query: { uri: string, params: { [key: string]: string} }) => void,
   ],
-  steps: number = 20,
+  steps = 20,
 ) => <TProps,>(WrappedComponent: React.JSXElementConstructor<TProps>) => {
-  const withFetchQuery = ({
+  const WithFetchQuery = ({
     debounce = false,
     query: propsQuery = { uri: defaultQuery.uri, params: defaultQuery.params },
     transform = (res) => ({ entities: res.results, total: res.total_results }),
@@ -208,8 +208,8 @@ const withFetchQuery = (
     )
   }
 
-  withFetchQuery.displayName = `withFetchQuery(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withFetchQuery
+  WithFetchQuery.displayName = `withFetchQuery(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithFetchQuery
 }
 
 export default withFetchQuery

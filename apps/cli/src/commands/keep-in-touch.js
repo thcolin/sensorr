@@ -170,7 +170,7 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
       const shows = {}
       let expired = 0
 
-      for (let guest of state.guests) {
+      for (const guest of state.guests) {
         try {
           // Keep-alive: refresh the token's last-seen so Plex doesn't expire it on inactivity
           // (profile/watchlist reads don't refresh it, /api/v2/ping does)
@@ -297,7 +297,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
         [guest.email]: Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app),
       }), {})
 
-      for (let [plex_guid, requested_by] of Object.entries(state.requests)) {
+      for (const [plex_guid, requested_by] of Object.entries(state.requests)) {
         setTask((task) => ({ ...task, output: `Look at movie "${plex_guid}" requested by ${requested_by.join(', ')}` }))
         let movie
         movie = state.library.find(m => m.plex_guid === plex_guid)
@@ -419,7 +419,7 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
         [guest.email]: Plex({ url: 'https://metadata.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app),
       }), {})
 
-      for (let [plex_guid, requested_by] of Object.entries(state.showRequests || {})) {
+      for (const [plex_guid, requested_by] of Object.entries(state.showRequests || {})) {
         try {
           setTask((task) => ({ ...task, output: `Look at show "${plex_guid}" requested by ${requested_by.join(', ')}` }))
           let show = state.shows.find(s => s.plex_guid === plex_guid)

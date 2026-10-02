@@ -17,10 +17,12 @@ export const useHistoryState = (key, defaultValue, {
   hydrateFromLocationState = true,
   transferStateOnSamePathnameLocationReplace = true,
 } = {}) => {
+  // `enabled` is fixed for a call site, so the hooks below run in the same order on every render of a component
   if (!enabled) {
     return [defaultValue, () => {}]
   }
 
+  /* eslint-disable react-hooks/rules-of-hooks */
   const location = useLocation()
   const navigationType = useNavigationType()
   const previousLocation = useRef(null)
@@ -89,4 +91,5 @@ export const useHistoryState = (key, defaultValue, {
   }, [location.key])
 
   return [getHistoryState.current(), setState]
+  /* eslint-enable react-hooks/rules-of-hooks */
 }

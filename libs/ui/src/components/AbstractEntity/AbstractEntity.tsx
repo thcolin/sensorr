@@ -104,12 +104,12 @@ export const transformCollectionDetails = (entity) => {
     billboard: entity.backdrop_path,
     parts: entity.parts,
     meaningful: {
-      popularity: !!entity.popularity ? () => (
+      popularity: entity.popularity ? () => (
         <span title={`Popularity`} sx={{ whiteSpace: 'nowrap' }}>
           {emojize('📣', entity.popularity.toLocaleString())}
         </span>
       ) : null,
-      release_dates_range: !!entity.parts.length ? () => (
+      release_dates_range: entity.parts.length ? () => (
         <Link
           title={`Discover more movies from ${release_dates_range.slice(0, 1).pop()}-${release_dates_range.slice(-1).pop()}`}
           sx={{ whiteSpace: 'nowrap' }}
@@ -126,7 +126,7 @@ export const transformCollectionDetails = (entity) => {
           {emojize('📆', `${release_dates_range.slice(0, 1).pop()} - ${release_dates_range.slice(-1).pop()}`)}
         </Link>
       ) : null,
-      vote_average: !!entity.vote_average ? () => (
+      vote_average: entity.vote_average ? () => (
         <Link
           title={`Discover more "${tmdb.judge(entity)}" movies`}
           sx={{ whiteSpace: 'nowrap' }}
@@ -140,7 +140,7 @@ export const transformCollectionDetails = (entity) => {
           {emojize(tmdb.judge(entity), entity.vote_average.toLocaleString())}
         </Link>
       ) : null,
-      vote_count: !!entity.vote_count ? () => (
+      vote_count: entity.vote_count ? () => (
         <Link
           title={`Discover more movies with "~${entity.vote_count}" vote count`}
           sx={{ whiteSpace: 'nowrap' }}
@@ -157,7 +157,7 @@ export const transformCollectionDetails = (entity) => {
           {emojize('🗳️', entity.vote_count.toLocaleString())}
         </Link>
       ) : null,
-      genres: !!entity.genres.length ? () => (
+      genres: entity.genres.length ? () => (
         <span>
           {emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>

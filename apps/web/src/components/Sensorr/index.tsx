@@ -297,8 +297,8 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, portal = null, ...props }) => {
-  const { Portal, closePortal, togglePortal, isOpen: open } = portal || usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, ...props }) => {
+  const { Portal, closePortal, togglePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
     props.setPortalToggle(togglePortal)

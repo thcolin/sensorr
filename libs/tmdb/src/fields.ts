@@ -6,13 +6,13 @@ const commarize = (input) => {
 
   // Alter numbers larger than 1k
   if (value >= 1e3) {
-    var units = ['k', 'M', 'B', 'T'];
+    const units = ['k', 'M', 'B', 'T'];
 
     // Divide to get SI Unit engineering style numbers (1e3,1e6,1e9, etc)
-    let unit = Math.floor(((value).toFixed(0).length - 1) / 3) * 3
+    const unit = Math.floor(((value).toFixed(0).length - 1) / 3) * 3
     // Calculate the remainder
-    var num = (value / (`1e+${unit}` as any)).toFixed(0)
-    var unitname = units[Math.floor(unit / 3) - 1]
+    const num = (value / (`1e+${unit}` as any)).toFixed(0)
+    const unitname = units[Math.floor(unit / 3) - 1]
 
     // output number remainder + unitname
     return num + unitname

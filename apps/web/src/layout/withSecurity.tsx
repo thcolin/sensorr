@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuthContext } from '../contexts/Auth/Auth'
 
 export const withSecurity = (WrappedComponent, name = '') => {
-  const withSecurity = (props) => {
+  const WithSecurity = (props) => {
     const { authenticated } = useAuthContext()
 
     if (!authenticated) {
@@ -12,8 +12,8 @@ export const withSecurity = (WrappedComponent, name = '') => {
     return <WrappedComponent {...props} />
   }
 
-  withSecurity.displayName = `withSecurity(${name || (WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withSecurity
+  WithSecurity.displayName = `withSecurity(${name || (WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithSecurity
 }
 
 export default withSecurity

@@ -85,6 +85,8 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
     onChange({ ...values, ...next })
   }, [values, onChange, closePortal])
 
+  // A layout keeps its number of asides, so the hook runs as many times on every render
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const asides = (Array.isArray(layout.aside) ? layout.aside : [layout.aside]).map((aside, index) => useLayoutFields(aside, fields, index ? {} : {
     ...(subAsides.reduce((acc, subAside, i) => ({ ...acc, [`toggle_sub_asides_${i}`]: {
         initial: null,
@@ -204,7 +206,7 @@ export interface withControlsArgs extends Omit<ControlsProps, 'values' | 'onChan
 }
 
 export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields }: withControlsArgs) => (WrappedComponent) => {
-  const withControls = ({ controls, ...props }: any) => {
+  const WithControls = ({ controls, ...props }: any) => {
     const state = useMemo(() => ({
       props: controls?.props,
       values: Object.keys(fields).reduce((acc, key) => ({
@@ -272,8 +274,8 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
     )
   }
 
-  withControls.displayName = `withControls(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withControls
+  WithControls.displayName = `withControls(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithControls
 }
 
 export const useControlsState = (useControlsValues, transform = null) => {

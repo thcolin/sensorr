@@ -8,7 +8,7 @@ export const query = wikidata.query
 export const useWikiData = () => wikidata
 
 export const withWikiData = () => (WrappedComponent) => {
-  const withWikiData = ({ entity, ...props }) => {
+  const WithWikiData = ({ entity, ...props }) => {
     const wikidata = useWikiData() as WikiData
 
     return (
@@ -16,8 +16,8 @@ export const withWikiData = () => (WrappedComponent) => {
     )
   }
 
-  withWikiData.displayName = `withWikiData(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withWikiData
+  WithWikiData.displayName = `withWikiData(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithWikiData
 }
 
 export const useWikiDataRequest = (query, transform, { ready }: any = { ready: true }) => {

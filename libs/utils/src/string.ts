@@ -1,6 +1,6 @@
 export const truncate = (
   str: string,
-  limit: number = 300,
+  limit = 300,
   options: { ellipsis?: string } = { ellipsis: '...' },
 ): string => {
   const sentences = str.split(/[\.\,\;\?\!]+/)

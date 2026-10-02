@@ -106,7 +106,7 @@ const UINotifications = ({ ...props }) => {
                       title='Mark all as read'
                       sx={{ cursor: 'pointer' }}
                       onClick={() => {
-                        if (confirm(`Mark all ${unseen.length} notification${unseen.length > 1 ? 's' : ''} as read ?`)) {
+                        if (window.confirm(`Mark all ${unseen.length} notification${unseen.length > 1 ? 's' : ''} as read ?`)) {
                           dismissNotifications(unseen)
                         }
                       }}

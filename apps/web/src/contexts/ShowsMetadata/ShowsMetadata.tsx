@@ -160,7 +160,7 @@ export const Provider = ({ ...props }) => {
         .map(episode => [episode.id, episode.release])]),
     }), {})
 
-    const promise = new Promise(async (resolve, reject) => {
+    const promise = (async () => {
       setMetadata(metadata => ({
         ...metadata,
         ...Object.keys(changes).reduce((acc, i) => ({ ...acc, [i]: { ...(metadata[i] || {}), ...changes[i] } }), {}),
@@ -194,23 +194,26 @@ export const Provider = ({ ...props }) => {
         }, episodes))
       }
 
+      let failed = []
+
       try {
         const { uri, params, init } = api.query.shows.postShows({ body })
         // A show whose release did not download comes back in `failed`, the others are written
-        const { failed = [] } = await api.fetch(uri, params, init)
-
-        if (failed.length) {
-          undo(failed.map(String))
-          reject(Object.assign(new Error(), { failed }))
-        } else {
-          resolve(true)
-        }
+        const res = await api.fetch(uri, params, init)
+        failed = res.failed || []
       } catch (err) {
         undo(Object.keys(changes))
         console.warn(err)
-        reject(new Error())
+        throw new Error()
       }
-    })
+
+      if (failed.length) {
+        undo(failed.map(String))
+        throw Object.assign(new Error(), { failed })
+      }
+
+      return true
+    })()
 
     // One show's toggle or answer tells its outcome on screen, only a policy change and a bulk get a toast.
     if (!Array.isArray(id) && key !== 'policy') {
@@ -228,7 +231,7 @@ export const Provider = ({ ...props }) => {
     const initial = new Map((episodesRef.current[show] || []).map(episode => [episode.id, episode]))
     const changes = ids.reduce((acc, i) => ({ ...acc, [i]: { id: i, [key]: value } }), {})
 
-    const promise = new Promise(async (resolve, reject) => {
+    const promise = (async () => {
       setEpisodes(episodes => ({
         ...episodes,
         [show]: (episodes[show] || []).map(episode => changes[episode.id] ? { ...episode, ...changes[episode.id] } : episode),
@@ -237,16 +240,16 @@ export const Provider = ({ ...props }) => {
       try {
         const { uri, params, init } = api.query.episodes.postEpisodes({ body: changes })
         await api.fetch(uri, params, init)
-        resolve(true)
+        return true
       } catch (err) {
         setEpisodes(episodes => ({
           ...episodes,
           [show]: (episodes[show] || []).map(episode => changes[episode.id] ? { ...episode, [key]: initial.get(episode.id)?.[key] } : episode),
         }))
         console.warn(err)
-        reject(new Error())
+        throw new Error()
       }
-    })
+    })()
 
     if (ids.length === 1) {
       return promise
@@ -336,7 +339,7 @@ export const Provider = ({ ...props }) => {
     const show = ref.current[id]
     const count = episodesRef.current[id]?.length
 
-    if (!show || !confirm(`Do you want to remove "${show.name}"${typeof count === 'number' ? ` and its ${count} episodes` : ''} from the library ? Their files stay on disk`)) {
+    if (!show || !window.confirm(`Do you want to remove "${show.name}"${typeof count === 'number' ? ` and its ${count} episodes` : ''} from the library ? Their files stay on disk`)) {
       return
     }
 
@@ -369,7 +372,7 @@ export const useShowsMetadataContext = () => useContext(showsMetadataContext)
 export const showStateOf = (metadata) => (!metadata?.state || metadata.state === 'ignored') ? 'ignored' : metadata.monitored ? 'followed' : 'unfollowed'
 
 export const withShowMetadataContext = () => (WrappedComponent) => {
-  const withShowMetadataContext = ({ entity, ...props }) => {
+  const WithShowMetadataContext = ({ entity, ...props }) => {
     const { loading, metadata: { [entity?.id]: metadata = {} }, setShowMetadata, setShowState } = useShowsMetadataContext() as any
     const artworked = usePlexArtworks(entity, (props as any).details, metadata?.plex_artworks, loading)
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
@@ -392,6 +395,6 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
     )
   }
 
-  withShowMetadataContext.displayName = `withShowMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withShowMetadataContext
+  WithShowMetadataContext.displayName = `withShowMetadataContext(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithShowMetadataContext
 }

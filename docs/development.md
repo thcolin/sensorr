@@ -81,7 +81,7 @@ No story throws on render: the 40 pages were opened one by one on 2026-09-18 and
 
 ## Verify
 
-Two commands are the gate, `lint` and `test`. `test` exits 0. `lint` does not, on errors that were already in the code, counted below.
+Two commands are the gate, `lint` and `test`. `test` exits 0, `lint` exits 1 on the one error below.
 
 ### Lint
 
@@ -89,27 +89,9 @@ Two commands are the gate, `lint` and `test`. `test` exits 0. `lint` does not, o
 npx nx run-many --target=lint --all
 ```
 
-Exits 1 on real lint errors. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`. The errors below were already in the code then.
+Exits 1 on one error, `no-restricted-globals` at `apps/web/src/components/enhancers/withLoadableCredits.tsx:10`: `Array(length)` reads `window.length`, the number of frames, so the credits never show a placeholder while they load. It stays until someone picks how many placeholders to show. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`.
 
-Measured on 2026-10-02 with ESLint 9.39.5 and typescript-eslint 8.71, `@nx/enforce-module-boundaries` turned off, 554 errors and 1737 warnings. Each project is linted from its own root, where its `eslint.config.mjs` lives:
-
-| Project | Errors | Warnings |
-| --- | --- | --- |
-| `api` | 25 | 145 |
-| `cli` | 16 | 71 |
-| `web` | 176 | 780 |
-| `wrapped` | 13 | 18 |
-| `config` | 2 | 0 |
-| `palette` | 59 | 13 |
-| `plex` | 0 | 1 |
-| `sensorr` | 2 | 111 |
-| `services` | 142 | 117 |
-| `theme` | 2 | 2 |
-| `tmdb` | 12 | 15 |
-| `ui` | 95 | 444 |
-| `utils` | 10 | 20 |
-
-Two rules make most of the errors: `@typescript-eslint/no-empty-object-type` (166) and `react-hooks/rules-of-hooks` (150). With the module boundaries rule on, `utils` stops on a crash of its fixer, `ENOENT ... libs/utils/src/regions/index.ts`, before ESLint prints its totals.
+The root `eslint.config.mjs` turns off `@typescript-eslint/no-empty-object-type` and `@typescript-eslint/no-empty-function`, and lets `no-empty` accept an empty `catch`, `no-unused-expressions` accept `a && b()`, `no-irregular-whitespace` accept the non-breaking spaces of template literals, and `prefer-const` accept a destructuring that reassigns part of its names. `libs/palette/src/lib/colorthief.js` is vendored and not linted.
 
 ### Test
 

@@ -29,9 +29,8 @@ npx nx run-many --target=lint --all
 npx nx run-many --target=test --all
 ```
 
-`test` exits 0. `lint` exits 1 on errors that were in the code before ESLint actually ran. A
-change is clean when `test` stays green and `lint` adds no error on top of those; the
-project-by-project counts to compare against are in
+`test` exits 0. `lint` exits 1 on a single known error. A change is clean when `test` stays green
+and `lint` adds nothing to it; the error and the rules the config relaxes are in
 [`docs/development.md`](docs/development.md#verify).
 
 ## Visual check

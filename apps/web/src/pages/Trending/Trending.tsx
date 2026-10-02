@@ -14,6 +14,8 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 
+const useControlsHistoryState = () => useHistoryState('controls', { uri: '', params: {} }) as any
+
 export const Trending = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.trending.title') : `${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
   withProps({
@@ -49,7 +51,7 @@ export const Trending = (resource) => compose(
     }[resource],
     props: { movies: () => ({ focus: 'vote_average' }), persons: () => ({ focus: 'popularity' }), shows: () => ({ focus: 'vote_average' }) }[resource],
   }),
-  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day', shows: 'trending/tv/day' }[resource] }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day', shows: 'trending/tv/day' }[resource] }, 1, useTMDB, useControlsHistoryState),
   withControls({
     title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource]),
     useStatistics,

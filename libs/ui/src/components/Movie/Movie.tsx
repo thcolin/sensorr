@@ -209,7 +209,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         ))}
       </span>
     ) : null,
-    year: !!entity.release_date ? ({ disabled } = {}) => (
+    year: entity.release_date ? ({ disabled } = {}) => (
       <Link
         title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
         sx={{ whiteSpace: 'nowrap' }}
@@ -227,7 +227,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {new Date(entity.release_date).getFullYear()}
       </Link>
     ) : null,
-    release_date: !!entity.release_date ? () => (
+    release_date: entity.release_date ? () => (
       <Link
         title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
         sx={{ whiteSpace: 'nowrap' }}
@@ -250,7 +250,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     vote_average: typeof entity.vote_average !== 'undefined' ? () => (
       <Link
-        title={`Discover more "${tmdb.judge(entity)}" movies${!!entity?.vote_count ? ` (${fields.vote_count.humanize(entity as any)} users rating)` : ''}`}
+        title={`Discover more "${tmdb.judge(entity)}" movies${entity?.vote_count ? ` (${fields.vote_count.humanize(entity as any)} users rating)` : ''}`}
         sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
@@ -263,7 +263,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {Math.round(entity.vote_average * 10)}%
       </Link>
     ) : null,
-    vote_count: !!entity.vote_count ? () => (
+    vote_count: entity.vote_count ? () => (
       <Link
         title={`Discover more movies with "~${entity.vote_count}" vote count`}
         sx={{ whiteSpace: 'nowrap' }}
@@ -280,12 +280,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('🗳️', entity.vote_count.toLocaleString())}
       </Link>
     ) : null,
-    popularity: !!entity.popularity ? () => (
+    popularity: entity.popularity ? () => (
       <span title={`Popularity`} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('📣', entity.popularity.toLocaleString())}
       </span>
     ) : null,
-    genres: !!entity.genres?.length ? ({ emoji = true, disabled } = {}) => (
+    genres: entity.genres?.length ? ({ emoji = true, disabled } = {}) => (
       <span>
         {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
           <Fragment key={genre.id}>
@@ -309,7 +309,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         ))}
       </span>
     ) : null,
-    runtime: !!entity.runtime ? () => (
+    runtime: entity.runtime ? () => (
       <Link
         title={`Discover more movies with similar runtime`}
         sx={{ whiteSpace: 'nowrap' }}
@@ -326,7 +326,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('🕙', humanize.time(`${entity.runtime || 0}`))}
       </Link>
     ) : null,
-    original_language: !!entity.original_language ? () => {
+    original_language: entity.original_language ? () => {
       const language = useMemo(() => clanguages.getLanguage(entity.original_language), [entity.original_language])
 
       return language?.name?.length && (
@@ -352,17 +352,17 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         </Link>
       )
     } : null,
-    budget: !!entity.budget ? () => (
+    budget: entity.budget ? () => (
       <span title={`Budget`} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('💸', entity.budget.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, maximumSignificantDigits: 3 }))}
       </span>
     ) : null,
-    revenue: !!entity.revenue ? () => (
+    revenue: entity.revenue ? () => (
       <span title={`Revenue`} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('💰', entity.revenue.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, maximumSignificantDigits: 3 }))}
       </span>
     ) : null,
-    production_companies: !!entity.production_companies?.length ? () => (
+    production_companies: entity.production_companies?.length ? () => (
       <span>
         {emojize('🏛️')}{entity.production_companies.map((company, index, arr) => (
           <Fragment key={company.id}>
@@ -385,7 +385,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         ))}
       </span>
     ) : null,
-    keywords: !!(entity as any).keywords?.keywords?.length ? () => (
+    keywords: (entity as any).keywords?.keywords?.length ? () => (
       <span>
         {emojize('🔗')}{(entity as any).keywords?.keywords.map((keyword, index, arr) => (
           <Fragment key={keyword.id}>

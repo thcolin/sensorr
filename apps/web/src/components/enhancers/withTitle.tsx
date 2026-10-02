@@ -1,7 +1,7 @@
 import { useTitle } from '@sensorr/utils'
 
 const withTitle = (title: string) => (WrappedComponent) => {
-  const withTitle = (props) => {
+  const WithTitle = (props) => {
     useTitle(title)
 
     return (
@@ -9,8 +9,8 @@ const withTitle = (title: string) => (WrappedComponent) => {
     )
   }
 
-  withTitle.displayName = `withTitle(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withTitle
+  WithTitle.displayName = `withTitle(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithTitle
 }
 
 export default withTitle

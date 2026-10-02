@@ -7,7 +7,7 @@ export const query = api.query
 export const useAPI = () => api
 
 export const withAPI = () => (WrappedComponent) => {
-  const withAPI = ({ entity, ...props }) => {
+  const WithAPI = ({ entity, ...props }) => {
     const api = useAPI() as API
 
     return (
@@ -15,6 +15,6 @@ export const withAPI = () => (WrappedComponent) => {
     )
   }
 
-  withAPI.displayName = `withAPI(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
-  return withAPI
+  WithAPI.displayName = `withAPI(${(WrappedComponent as any).displayName || (WrappedComponent as any).type?.name || 'Component'})`
+  return WithAPI
 }

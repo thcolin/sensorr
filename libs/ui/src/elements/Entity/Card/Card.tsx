@@ -1,9 +1,9 @@
-import { Link } from 'libs/ui/src/atoms/Link/Link'
+import { Link } from '../../../atoms/Link/Link'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Poster, PosterProps } from '../Poster/Poster'
 
-export interface CardProps extends PosterProps {}
+export type CardProps = PosterProps
 
 const UICard = ({
   details,
@@ -83,7 +83,7 @@ const UIAbout = ({ details, link, ready, ...props }) => {
         )}
         {(!!details?.meaningful?.genres || !!details?.caption) && (
           <small title={details?.caption}>
-            {!!details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+            {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
           </small>
         )}
       </span>

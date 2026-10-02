@@ -19,18 +19,18 @@ const Settings = ({ ...props }) => {
 
   const onSave = useCallback((data) => {
     // console.log('onSave', data)
-    toast.promise(new Promise(async (resolve, reject) => {
+    toast.promise((async () => {
       const { uri, params, init } = api.query.config.postConfig({ body: data })
 
       try {
         const raw = await api.fetch(uri, params, init)
         await load(raw)
-        resolve(true)
+        return true
       } catch (err) {
         console.warn(err)
-        reject(err)
+        throw err
       }
-    }), {
+    })(), {
       loading: `Updating **config**...`,
       success: () => `Config **updated** !`,
       error: () => `Error while updating **config**`,
