@@ -77,7 +77,7 @@ No story throws on render: the 40 pages were opened one by one on 2026-09-18 and
 
 ## Verify
 
-Two commands are the gate, `lint` and `test`. `test` exits 0, `lint` exits 1 on the one error below.
+Two commands are the gate, `lint` and `test`, and both exit 0.
 
 ### Lint
 
@@ -85,7 +85,7 @@ Two commands are the gate, `lint` and `test`. `test` exits 0, `lint` exits 1 on 
 npx nx run-many --target=lint --all
 ```
 
-Exits 1 on one error, `no-restricted-globals` at `apps/web/src/components/enhancers/withLoadableCredits.tsx:10`: `Array(length)` reads `window.length`, the number of frames, so the credits never show a placeholder while they load. It stays until someone picks how many placeholders to show. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`.
+Exits 0, with warnings only. Until `@nx/eslint` replaced `@nrwl/linter@12.10.1`, the target never ran ESLint at all: it printed `Successfully ran target lint` with no output, then crashed on `hashCommand`.
 
 The root `eslint.config.mjs` turns off `@typescript-eslint/no-empty-object-type` and `@typescript-eslint/no-empty-function`, and lets `no-empty` accept an empty `catch`, `no-unused-expressions` accept `a && b()`, `no-irregular-whitespace` accept the non-breaking spaces of template literals, and `prefer-const` accept a destructuring that reassigns part of its names. `libs/palette/src/lib/colorthief.js` is vendored and not linted.
 

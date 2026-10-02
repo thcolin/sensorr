@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 const webpack = require('webpack')
 const { composePlugins, withNx } = require('@nx/webpack')
 const { withReact } = require('@nx/react')
@@ -47,6 +49,7 @@ module.exports = composePlugins(
           SENSORR_DEFAULTS: {
             region: 'en', // local.region,
           },
+          SENSORR_VERSION: JSON.stringify(JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'))).version),
         }),
         new webpack.ProvidePlugin({
           // Make a global `process` variable that points to the `process` package,
