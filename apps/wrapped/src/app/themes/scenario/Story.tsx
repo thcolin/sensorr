@@ -45,8 +45,9 @@ const MARKS = '.scenario-mark, .scenario-figure:not(.scenario-act .scenario-figu
 const LINE = 12
 // When the first mark is drawn, once the page has landed
 const FIRST = 900
-// Between two strokes of the tally
-const STROKE = 40
+// Between two strokes of the tally at most, and the whole tally at most
+const STROKE = 45
+const TALLY = 1200
 
 // Where a mark sits in the layout, before any transform: the page is still being fed in when it is read
 const placeOf = (mark: Element): { top: number, left: number } => {
@@ -81,12 +82,24 @@ const Sheet = ({ kind, children }: { kind: string, children: ReactNode }) => {
       (mark as HTMLElement).style.setProperty('--mark-delay', `${delay}ms`)
       // The tally is struck one stroke after the other, in the order it was drawn: row by row, each group's
       // four strokes then its bar; the next mark waits for the last stroke
-      const strokes = mark.classList.contains('scenario-tally') ? Array.from(mark.querySelectorAll('path')) : []
-      strokes.forEach((stroke, at) => {
-        stroke.setAttribute('pathLength', '1')
-        stroke.style.setProperty('--stroke-delay', `${delay + at * STROKE}ms`)
-      })
-      delay += strokes.length ? strokes.length * STROKE + 200 : mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
+      const groups = mark.classList.contains('scenario-tally') ? Array.from(mark.querySelectorAll('g')) : []
+      if (groups.length) {
+        // A hand counting: a group's strokes in a quick run, a breath before the next group, about a second in all
+        const strokes = groups.reduce((count, group) => count + group.children.length, 0)
+        const pace = Math.min(STROKE, TALLY / (strokes + groups.length * 2))
+        let at = delay
+        groups.forEach((group) => {
+          Array.from(group.children).forEach((stroke) => {
+            stroke.setAttribute('pathLength', '1')
+            ;(stroke as SVGElement).style.setProperty('--stroke-delay', `${Math.round(at)}ms`)
+            at += pace
+          })
+          at += pace * 2
+        })
+        delay = at + 200
+        return
+      }
+      delay += mark.closest('li') || mark.classList.contains('scenario-swipe') ? 120 : 350
     })
   }, [kind])
 

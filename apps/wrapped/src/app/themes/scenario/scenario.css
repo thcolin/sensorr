@@ -1487,7 +1487,7 @@ html[data-theme='scenario'] {
 
 .scenario-story-run .scenario-tally path {
   stroke-dasharray: 1;
-  animation: scenario-pen 0.12s var(--stroke-delay, 0.9s) ease-out backwards;
+  animation: scenario-pen 0.14s var(--stroke-delay, 0.9s) cubic-bezier(0.3, 0, 0.2, 1) backwards;
 }
 
 .scenario-story .scenario-nights {
@@ -1868,8 +1868,10 @@ html[data-theme='scenario'] {
   to { clip-path: inset(-20% 0 -20% 0); }
 }
 
+/* Hidden until struck: a round cap would draw a dot where the stroke is still to come */
 @keyframes scenario-pen {
-  from { stroke-dashoffset: 1; }
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  1% { opacity: 1; }
 }
 
 @keyframes scenario-draw {
