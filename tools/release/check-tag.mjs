@@ -13,14 +13,21 @@ const fail = (reason) => {
   process.exit(1)
 }
 
-const match = /^v(\d+\.\d+\.\d+)(-beta\.\d+)?$/.exec(tag || '')
+const match = /^v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(-beta\.(?:0|[1-9]\d*))?$/.exec(tag || '')
 
 if (!match) {
   fail('expected vX.Y.Z or vX.Y.Z-beta.N')
 }
 
-const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
-const { version } = JSON.parse(git('show', `${commit}:package.json`))
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+
+let version
+
+try {
+  version = JSON.parse(git('show', `${commit}:package.json`)).version
+} catch (err) {
+  fail(`cannot read package.json at ${commit}: ${String(err.stderr || err.message).trim()}`)
+}
 
 if (tag !== `v${version}`) {
   fail(`package.json is at ${version}, bump it to ${tag.slice(1)} first`)
@@ -29,7 +36,17 @@ if (tag !== `v${version}`) {
 const branch = match[2] ? 'dev' : 'main'
 
 try {
-  git('merge-base', '--is-ancestor', commit, `origin/${branch}`)
+  git('rev-parse', '--verify', '--quiet', `origin/${branch}`)
 } catch {
+  fail(`origin/${branch} is missing, run git fetch origin --prune`)
+}
+
+try {
+  git('merge-base', '--is-ancestor', commit, `origin/${branch}`)
+} catch (err) {
+  if (err.status !== 1) {
+    fail(String(err.stderr).trim())
+  }
+
   fail(`${commit} is not on origin/${branch}, a ${match[2] ? 'beta' : 'stable'} release tags ${branch}`)
 }
