@@ -148,14 +148,10 @@ const withFetchCalendarQuery = (
     // Wait for first controlsQuery hydration by serializing initial state
     const [controlsQuery, controls] = useControlsState(useControlsValues, ({ uri, ...params }) => ({ uri, params }))
 
-    const [query, refinements] = useMemo(() => {
-      const [params, refinements] = refinementsOf({
-        ...defaultQuery?.params,
-        ...controlsQuery?.params,
-      })
-
-      return [{ uri: 'discover/movie', params }, refinements]
-    }, [JSON.stringify(defaultQuery), JSON.stringify(controlsQuery)])
+    // Only what TMDB discover receives fetches again, the refinements judge what is already fetched
+    const [params, judged] = refinementsOf({ ...defaultQuery?.params, ...controlsQuery?.params })
+    const query = useMemo(() => ({ uri: 'discover/movie', params }), [JSON.stringify(params)])
+    const refinements = useMemo(() => judged, [JSON.stringify(judged)])
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)

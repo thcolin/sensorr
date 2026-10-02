@@ -391,7 +391,8 @@ const pageRange = (origin: string, stream: Stream, page: number) => {
   }
 }
 
-// The movies of a page go out a day at a time, from the origin outwards, once every movie of the day is judged
+// The movies of a page go out a day at a time, from the origin outwards, once every movie of the day is summarized.
+// The pages keep every movie with its summary, and the refinements judge them as they show, without fetching again.
 const withMoviesAgenda = () => (WrappedComponent) => {
   const WithMoviesAgenda = ({ ...props }) => {
     const tmdb = useTMDB()
@@ -400,12 +401,14 @@ const withMoviesAgenda = () => (WrappedComponent) => {
     const [query, controls] = useControlsState(() => context, ({ uri, ...params }) => ({ ready: true, params }))
     const [today] = useState(() => day(new Date()))
     const [origin, setOrigin] = useState(() => originOf(context?.[0]?.primary_release_date, today))
-    const filters = JSON.stringify(query?.params || {})
+    const [params, judged] = refinementsOf(query?.params || {})
+    const filters = JSON.stringify(params)
+    const refinements = useMemo(() => judged, [JSON.stringify(judged)])
     const nobody = !persons.loading && !Object.keys(persons.metadata).length
     const key = (query?.ready && !persons.loading && !nobody) ? `${origin} ${filters}` : null
 
     const fetchPage = useCallback(async (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => {
-      const [params, refinements] = refinementsOf(JSON.parse(filters))
+      const params = JSON.parse(filters)
       const { month, gte, lte } = pageRange(origin, stream, page)
       const discovered = await discoverCalendar(tmdb, persons.metadata, { ...params, 'primary_release_date.gte': gte, 'primary_release_date.lte': lte }, signal)
       const entities = [...discovered].sort((a, b) => (stream === 'past' ? -1 : 1) * (a.release_date || '').localeCompare(b.release_date || ''))
@@ -422,18 +425,27 @@ const withMoviesAgenda = () => (WrappedComponent) => {
 
         if (count > shown) {
           shown = count
-          emit(refine({ entities: entities.slice(0, count), summaries }, refinements).entities)
+          emit(entities.slice(0, count).map(entity => ({ ...entity, summary: summaries[entity.id] })))
         }
       })
 
       return {
-        items: refine({ entities, summaries }, refinements).entities,
+        items: entities.map(entity => ({ ...entity, summary: summaries[entity.id] })),
+        shown: refine({ entities, summaries }, refinements).entities,
         done: stream === 'past' ? month <= FIRST : month >= LAST,
       }
-    }, [tmdb, persons.metadata, origin, filters])
+    }, [tmdb, persons.metadata, origin, filters, refinements])
 
     const { streams, more, ready, failure } = useStreams(key, fetchPage, 'movies')
-    const days = useMemo(() => ready ? withToday(byDay([...streams.past.items, ...streams.future.items]), today, origin, streams) : [], [ready, streams, today, origin])
+    const days = useMemo(() => {
+      if (!ready) {
+        return []
+      }
+
+      const entities = [...streams.past.items, ...streams.future.items]
+      const summaries = Object.fromEntries(entities.map(({ id, summary }) => [id, summary]))
+      return withToday(byDay(refine({ entities, summaries }, refinements).entities), today, origin, streams)
+    }, [ready, streams, today, origin, refinements])
     const setValues = context?.[1]
     const onMonth = useCallback((month: Date) => setValues(values => ({ ...values, primary_release_date: month })), [setValues])
 
