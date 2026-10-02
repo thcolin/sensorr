@@ -366,7 +366,8 @@ Recreating `sensorr-api` kills a running job, see
 ### The updater
 
 Settings › Update reads `GET /api/update` (`apps/api/src/app/update/update.service.ts`): the
-running version, from the root `package.json`; the tag, from `NX_SENSORR_TAG`, which compose sets
+running version, from the root `package.json`; its commit, `NX_SENSORR_REVISION`, which
+`ci.yml` passes to `apps/api/Dockerfile` as a build argument; the tag, from `NX_SENSORR_TAG`, which compose sets
 to `SENSORR_TAG`, and the channel it means (`channelOf` in `apps/api/src/app/update/update.ts`,
 `dev` for `dev` and `sha-` tags); the version each channel offers, the version label of
 `sensorr-api:beta` and `sensorr-api:latest` read on GHCR with an anonymous token and kept 15 minutes,
@@ -380,9 +381,10 @@ mounts `.secrets/` read-only.
 
 `sensorr-updater` does not recreate the services itself, since it is one of them. It starts
 `sensorr-updater-run`, a container of its own image with the Docker socket, no network, and the
-project's folders mounted at their host paths: the working directory, the env file and the compose
+project's folders mounted at their host paths: the working directory, the env files and the compose
 files compose wrote in the labels of `sensorr-updater` (`com.docker.compose.project.*`). That
-container rewrites every `SENSORR_TAG=` line of the env file (`withTag`), then runs `docker compose
+container rewrites every `SENSORR_TAG=` line of the last env file that has one, or appends the line
+to the last env file (`withTag`), keeping its owner and mode, then runs `docker compose
 pull` and `up -d` on `sensorr-api`, `sensorr-web` and `sensorr-updater`, under the same project name
 and the `updater` profile. It is removed by the next update only, so its logs and exit code stay:
 `GET /status` reports them, and the page stops waiting on a non-zero exit. The page reloads once

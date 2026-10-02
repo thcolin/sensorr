@@ -29,7 +29,7 @@ const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floo
 const Update = ({ ...props }) => {
   useTitle('Settings - Update')
   const api = useAPI()
-  const { update } = useOutletContext() as any
+  const { update, loadUpdate } = useOutletContext() as any
   const { process } = useJobsContext() as any
   const [channel, setChannel] = useState(null)
   const [updating, setUpdating] = useState(null)
@@ -42,7 +42,12 @@ const Update = ({ ...props }) => {
   const target = update?.channels?.[selected]?.version
   const current = selected === update?.channel
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
-  const revision = updater?.api?.revision?.slice(0, 7)
+  const revision = update?.revision?.slice(0, 7)
+
+  // Settings stays mounted across its pages: its answer may predate an update started here
+  useEffect(() => {
+    loadUpdate()
+  }, [])
 
   // A run still going, or failed, outlives the page: a reload, or a visit elsewhere in Settings
   useEffect(() => {
@@ -55,6 +60,7 @@ const Update = ({ ...props }) => {
     }
 
     if (run.status === 'running') {
+      setFailure(null)
       setUpdating({ version, since: Date.parse(run.started) })
     } else if (run.code !== 0) {
       setFailure(`The last update, to v${version}, exited (${run.code}), see docker logs sensorr-updater-run`)
@@ -66,18 +72,22 @@ const Update = ({ ...props }) => {
       return
     }
 
-    const timer = setInterval(async () => {
+    let timer
+
+    const poll = async () => {
       setNow(Date.now())
 
       try {
-        const res = await fetch('/api/update', { headers: { Authorization: `Bearer ${api.access_token}`, Accept: 'application/json' } })
-        const raw = res.ok ? await res.json() : null
+        const { uri, params, init } = api.query.update.getUpdate()
+        const raw = await api.fetch(uri, params, init)
 
-        if (raw?.version === updating.version) {
-          window.location.reload()
-        } else if (raw?.updater?.run?.status === 'exited' && raw.updater.run.code !== 0) {
+        if (raw.version === updating.version) {
+          return window.location.reload()
+        }
+
+        if (raw.updater?.run?.status === 'exited' && raw.updater.run.code !== 0) {
           setFailure(`sensorr-updater-run exited (${raw.updater.run.code}), see docker logs sensorr-updater-run`)
-          setUpdating(null)
+          return setUpdating(null)
         }
       } catch (err) {
         // sensorr-api and sensorr-web are being recreated
@@ -85,11 +95,14 @@ const Update = ({ ...props }) => {
 
       if (Date.now() - updating.since > PATIENCE) {
         setFailure(`v${updating.version} still does not answer after ${PATIENCE / 60000} minutes, see docker logs sensorr-updater-run`)
-        setUpdating(null)
+        return setUpdating(null)
       }
-    }, 3000)
 
-    return () => clearInterval(timer)
+      timer = setTimeout(poll, 3000)
+    }
+
+    timer = setTimeout(poll, 3000)
+    return () => clearTimeout(timer)
   }, [updating])
 
   const start = async () => {
@@ -132,6 +145,10 @@ const Update = ({ ...props }) => {
       return `⌛ Updating to v${updating.version}`
     }
 
+    if (loading) {
+      return '…'
+    }
+
     if (!target) {
       return update?.channels?.[selected]?.error ? `Can't reach GHCR` : `No ${CHANNELS[selected].label.toLowerCase()} release yet`
     }
@@ -172,7 +189,7 @@ const Update = ({ ...props }) => {
             <p sx={Update.styles.running}>
               <code>{update?.version ? `v${update.version}` : '…'}</code>
               {update?.tag && <> · <code>{update.channel}</code></>}
-              {revision && <> · <code title={updater.api.revision}>{revision}</code></>}
+              {revision && <> · <code title={update.revision}>{revision}</code></>}
             </p>
           )}
           {update?.channel === 'dev' ? (
@@ -203,7 +220,7 @@ const Update = ({ ...props }) => {
                   </Option>
                 ))}
               </div>}
-              {ready && (
+              {(ready || loading) && (
                 <>
                   <div sx={{ display: 'flex', marginTop: 4 }}>
                     <Button type='button' color='primary' sx={{ flex: 1 }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
@@ -217,7 +234,7 @@ const Update = ({ ...props }) => {
                 </>
               )}
               <p role='status' sx={{ ...Update.styles.status, ...((failure || updater?.error) && !updating ? { color: 'error' } : {}) }}>
-                {updating ? <small>The page reloads once v{updating.version} answers<span aria-hidden='true'> · {durationOf(now - updating.since)}</span></small> : (failure || updater?.error || null)}
+                {updating ? <small>The page reloads once v{updating.version} answers<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></small> : (failure || updater?.error || null)}
               </p>
               {ready && !failure ? (
                 <details sx={Update.styles.details}>
