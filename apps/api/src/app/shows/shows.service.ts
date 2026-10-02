@@ -373,7 +373,7 @@ export class ShowsService {
       filter((change: any) => change?.documentKey),
       mergeMap(async (change: any) => {
         const id = change?.documentKey?._id
-        const show = await this.showModel.findById(id, METADATA_FIELDS).lean().exec()
+        const show = await this.showModel.findById(id, METADATA_FIELDS.join(' ')).lean().exec()
         return { data: { [id]: show || null } } as MessageEvent
       }),
       tap(() => this.logger.log(`ListenMetadata, message=""`)),

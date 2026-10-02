@@ -3,7 +3,7 @@ import mongoose, { Document } from 'mongoose'
 
 // One grouped row of the Tautulli history, `_id` is the id of its first session
 @Schema({ collection: 'plays' })
-export class Play extends Document {
+export class Play extends Document<number> {
   @Prop()
   declare _id: number
 
@@ -39,7 +39,7 @@ export class Play extends Document {
 export const PlaySchema = SchemaFactory.createForClass(Play)
 
 @Schema({ collection: 'viewers' })
-export class Viewer extends Document {
+export class Viewer extends Document<number> {
   @Prop()
   declare _id: number
 
@@ -57,7 +57,7 @@ export const ViewerSchema = SchemaFactory.createForClass(Viewer)
 
 // A movie or a show watched on Plex, `_id` is the `title` of its plays
 @Schema({ collection: 'titles' })
-export class Title extends Document {
+export class Title extends Document<string> {
   @Prop()
   declare _id: string
 

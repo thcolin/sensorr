@@ -4,7 +4,7 @@ import pagination from 'mongoose-paginate-v2'
 import { PlexArtworks, PlexSeason } from '@sensorr/plex'
 
 @Schema({ collection: 'shows' })
-export class Show extends Document {
+export class Show extends Document<number> {
   @Prop()
   declare _id: number
 
