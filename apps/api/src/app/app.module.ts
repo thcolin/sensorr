@@ -17,6 +17,7 @@ import { ConfigModule } from './config/config.module'
 import { SensorrModule } from './sensorr/sensorr.module'
 import { WrappedModule } from './wrapped/wrapped.module'
 import { MailModule } from './mail/mail.module'
+import { UpdateModule } from './update/update.module'
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MailModule } from './mail/mail.module'
     SensorrModule,
     WrappedModule,
     MailModule,
+    UpdateModule,
   ],
 })
 export class AppModule {}
