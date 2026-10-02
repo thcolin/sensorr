@@ -16,13 +16,14 @@ export interface OptionsProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   onChange: (e: React.ChangeEvent<HTMLInputElement>, input: InputInterface, value: any) => void
   behavior?: 'or' | 'and'
   onBehavior?: (value: 'or' | 'and') => void
+  badge?: { label: string, title: string, onClick: () => void, disabled?: boolean }
   testChecked: (input: InputInterface, value: any) => boolean
   onReset?: () => void
   disabled?: boolean
   display?: 'grid' | 'column'
 }
 
-const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
+const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, badge, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
   // Two fields of a panel share values, `airing` or a TMDB index: a bare value as id checks the other field's box
   const uid = useId()
   const styles = useMemo(() => ({
@@ -61,6 +62,17 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
           >
             {behavior}
           </span>
+        )}
+        {!!badge && (
+          <button
+            type='button'
+            sx={{ variant: 'button.reset', ...UIOptions.styles.badge, '&:disabled': { opacity: 0.5 }, '&:focus-visible': { boxShadow: '0 0 0 0.15em currentColor' } }}
+            title={badge.title}
+            onClick={badge.onClick}
+            disabled={disabled || badge.disabled}
+          >
+            {badge.label}
+          </button>
         )}
       </label>
       <div sx={styles.option}>

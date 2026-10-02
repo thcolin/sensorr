@@ -50,6 +50,24 @@ const NOBODY = {
   subtitle: "Calendar is based on people you follow, check trending stars or look at casting from your favorite movies",
 }
 
+const ORDERS = [3, 5, 10, 20, null]
+
+// Acting counts a followed person down to the billing of the badge, each click going to the next one
+const FilterCredits = ({ value, onChange, ...props }: any) => (
+  <FilterKnownForDepartment
+    {...props}
+    label={i18n.t('ui.filters.credits')}
+    value={value?.values}
+    onChange={(values) => onChange({ ...value, values })}
+    badge={{
+      label: value?.order ? `Top ${value.order}` : 'All',
+      title: `Acting counts a followed person billed ${value?.order ? `in the first ${value.order} of the cast` : 'anywhere in the cast'}`,
+      onClick: () => onChange({ ...value, order: ORDERS[(ORDERS.indexOf(value?.order) + 1) % ORDERS.length] }),
+      disabled: !value?.values?.includes('Acting'),
+    }}
+  />
+)
+
 const FIELDS = {
   // TODO: Should hide entity.popularity === 0
   hide_library: {
@@ -80,9 +98,12 @@ const FIELDS = {
     component: FilterReleaseType,
   },
   with_credits_departments: {
-    initial: ['Acting', 'Directing', 'Writing'],
-    serialize: (key, raw) => raw?.length ? { [key]: raw.join('|') } : {},
-    component: withProps({ label: i18n.t('ui.filters.credits') })(FilterKnownForDepartment),
+    initial: { values: ['Acting', 'Directing', 'Writing'], order: 10 },
+    serialize: (key, raw) => ({
+      ...(raw?.values?.length ? { [key]: raw.values.join('|') } : {}),
+      ...(raw?.order ? { with_credits_order: raw.order } : {}),
+    }),
+    component: FilterCredits,
   },
   head: {
     initial: null,
