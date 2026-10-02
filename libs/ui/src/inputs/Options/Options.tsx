@@ -16,13 +16,14 @@ export interface OptionsProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   onChange: (e: React.ChangeEvent<HTMLInputElement>, input: InputInterface, value: any) => void
   behavior?: 'or' | 'and'
   onBehavior?: (value: 'or' | 'and') => void
+  badge?: { label: string, title: string, onClick: () => void, disabled?: boolean }
   testChecked: (input: InputInterface, value: any) => boolean
   onReset?: () => void
   disabled?: boolean
   display?: 'grid' | 'column'
 }
 
-const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
+const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior, badge, testChecked, onReset, disabled, display = 'grid', ...props }: OptionsProps) => {
   // Two fields of a panel share values, `airing` or a TMDB index: a bare value as id checks the other field's box
   const uid = useId()
   const styles = useMemo(() => ({
@@ -46,7 +47,7 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
 
   return (
     <div sx={styles.element} {...props}>
-      <label sx={UIOptions.styles.label}>
+      <div sx={UIOptions.styles.label}>
         <span
           onClick={() => !disabled && onReset && onReset()}
           style={!disabled && onReset ? { cursor: 'pointer' } : {}}
@@ -62,7 +63,18 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
             {behavior}
           </span>
         )}
-      </label>
+        {!!badge && (
+          <button
+            type='button'
+            sx={{ variant: 'button.reset', ...UIOptions.styles.badge, position: 'relative', '&::before': { content: '""', position: 'absolute', inset: '-12px 0px' }, '&:disabled': { opacity: 0.5 }, '&:focus-visible': { boxShadow: '0 0 0 0.15em currentColor' } }}
+            title={badge.title}
+            onClick={badge.onClick}
+            disabled={disabled || badge.disabled}
+          >
+            {badge.label}
+          </button>
+        )}
+      </div>
       <div sx={styles.option}>
         {options.map((input) => (
           <Option
@@ -97,7 +109,7 @@ UIOptions.styles = {
     paddingBottom: 4,
     alignItems: 'center',
     fontWeight: 'semibold',
-    '>*:first-of-type': {
+    '>*:first-child': {
       flex: 1,
     },
   },

@@ -10,6 +10,7 @@ export class EpisodeDTO {
   readonly air_date: Date
   readonly runtime: number
   readonly still_path: string
+  readonly episode_type: string
   readonly monitored: boolean
   readonly files: { id: string, size: number, title: string, original: string, from?: 'import' | 'sonarr' }[]
   readonly release: string | null

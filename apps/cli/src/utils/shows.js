@@ -59,10 +59,13 @@ export const airingUnits =(units, episodes, since) => {
 
   const airing = units.filter(({ type, season, episode }) => type === 'episode' && aired.has(`${season}:${episode}`))
   const ofSeason = (season) => episodes.filter(({ season_number }) => season_number === season)
-  const finaleOf = (season) => ofSeason(season).reduce((last, episode) => (!last || episode.episode_number > last.episode_number) ? episode : last, null)
+  // TMDB marks a season's last episode `finale` once announced; episodes stored without `episode_type` fall back on the last listed
+  const finaleOf = (season) => ofSeason(season).some(({ episode_type }) => episode_type)
+    ? ofSeason(season).find(({ episode_type }) => episode_type === 'finale')
+    : ofSeason(season).reduce((last, episode) => (!last || episode.episode_number > last.episode_number) ? episode : last, null)
   // As the last resort pack of searchUnits: every episode asked for, one of them already owned
   const finales = airing.filter(({ season, episode }) => season !== 0 &&
-    episode === finaleOf(season).episode_number &&
+    episode === finaleOf(season)?.episode_number &&
     ofSeason(season).every((item) => item.monitored && ['wanted', 'owned'].includes(episodeStatus(item))) &&
     ofSeason(season).some(({ files }) => files?.length))
 

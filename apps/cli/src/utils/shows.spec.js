@@ -501,6 +501,22 @@ describe('airingUnits', () => {
     expect(airingUnits(units, finale.map((episode) => episode.episode_number === 2 ? { ...episode, release: 'abc' } : episode), since).some(({ type }) => type === 'season')).toBe(false)
     expect(airingUnits(units, finale.map(({ files, ...episode }) => episode), since).some(({ type }) => type === 'season')).toBe(false)
   })
+
+  it('packs only after the episode TMDB marks `finale`, none while the last one listed is still `standard`', () => {
+    const marked = (type) => episodes.map((episode) => ({
+      ...episode,
+      monitored: true,
+      episode_type: episode.episode_number === 4 ? type : 'standard',
+      ...(episode.episode_number === 1 ? { files: [{ id: 'plex://episode/1#1' }] } : {}),
+      ...(episode.episode_number === 4 ? { air_date: '2026-09-25' } : {}),
+    }))
+    const packs = (episodes) => airingUnits(units, episodes, since).filter(({ type }) => type === 'season')
+
+    expect(packs(marked('finale'))).toEqual([
+      { type: 'season', season: 3, episodes: [{ season: 3, episode: 4 }], fallback: true, published_after: new Date('2026-09-26').getTime() },
+    ])
+    expect(packs(marked('standard'))).toEqual([])
+  })
 })
 
 describe('goneEpisodesOf', () => {

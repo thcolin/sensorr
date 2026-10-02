@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fixtures } from '@sensorr/tmdb'
 import { Checkbox } from '../../../../inputs/Checkbox/Checkbox'
+import { OptionsProps } from '../../../../inputs/Options/Options'
 
 export interface FilterKnownForDepartmentProps {
   display?: 'checkbox' | 'select'
@@ -9,6 +10,7 @@ export interface FilterKnownForDepartmentProps {
   statistics: { _id: any, count: number }[]
   value: any
   onChange: any
+  badge?: OptionsProps['badge']
 }
 
 const UIFilterKnownForDepartment = ({ statistics, display, label, ...props }: FilterKnownForDepartmentProps) => {

@@ -457,10 +457,10 @@ export type Streams = { past: typeof EMPTY, future: typeof EMPTY }
 
 // The two streams of a list, read page by page out from its origin. A new key starts both over, and `null` waits.
 // A page can put its first items out before it is done, through `emit`. The list opens once the future stream,
-// which holds the origin, has something: the past loads above it.
+// which holds the origin, has something: the past loads above it. `shown` is what a page shows of its items, when it hides some.
 export const useStreams = (
   key: string | null,
-  fetchPage: (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => Promise<{ items: any[], total?: number, done: boolean }>,
+  fetchPage: (stream: Stream, page: number, signal: AbortSignal, emit: (items: any[]) => void) => Promise<{ items: any[], shown?: any[], total?: number, done: boolean }>,
   noun: string,
 ) => {
   const [streams, setStreams] = useState({ key: null, past: EMPTY, future: EMPTY })
@@ -490,14 +490,14 @@ export const useStreams = (
     // Only a click loads a paused stream, and its empty pages count again from there
     update(stream, () => ({ loading: true, failed: false, paused: false, ...(current.paused ? { empties: 0 } : {}) }))
     fetcher.current(stream, page, signal, emit)
-      .then(({ items, total = null, done }) => !signal.aborted && update(stream, (current) => ({
+      .then(({ items, shown = items, total = null, done }) => !signal.aborted && update(stream, (current) => ({
         items: [...before, ...items],
         page,
         total,
         done,
         loading: false,
         partial: false,
-        ...settle(current.empties, items, done),
+        ...settle(current.empties, shown, done),
       })))
       .catch((error) => {
         if (signal.aborted) {
