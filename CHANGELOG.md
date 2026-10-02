@@ -7,3 +7,5 @@ their notes on [GitHub](https://github.com/thcolin/sensorr/releases) list what c
 the previous tag. How a release is cut is in [RELEASING.md](RELEASING.md).
 
 ## [Unreleased]
+
+[Unreleased]: https://github.com/thcolin/sensorr/commits/dev
