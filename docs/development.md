@@ -141,3 +141,5 @@ Measured on 2026-10-02. Each stays below its latest major until the reason goes 
 | [architecture.md](architecture.md) | what talks to what |
 | [jobs.md](jobs.md) | what each job is for, and how a release gets ranked |
 | [../README.md](../README.md) | what Sensorr is, and the Docker install |
+| [../RELEASING.md](../RELEASING.md) | the beta and stable channels, and how to cut a release |
+| [../CHANGELOG.md](../CHANGELOG.md) | what changed in each release |

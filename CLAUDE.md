@@ -9,7 +9,8 @@ one user: me. The [README](README.md) is the user-facing version, and
 
 ## Repo
 
-`thcolin/sensorr` on GitHub, **public**. Base branch is `dev`, not `master`. Nx 23
+`thcolin/sensorr` on GitHub, **public**. Base branch is `dev`; `main` only
+receives the stable releases ([`RELEASING.md`](RELEASING.md)). Nx 23
 monorepo on yarn; what each app and lib is for is in
 [`docs/development.md`](docs/development.md#project-layout).
 
