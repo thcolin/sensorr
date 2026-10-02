@@ -3,6 +3,11 @@ import mongoose from 'mongoose'
 import 'winston-mongodb'
 
 const connection = mongoose.connect(`mongodb://${process.env.NX_MONGO_USERNAME || 'sensorr'}:${process.env.NX_MONGO_PASSWORD || 'sensorr'}@${process.env.NX_MONGO_HOST || 'localhost'}:${process.env.NX_MONGO_PORT || 27017}/sensorr?authSource=admin&authMechanism=SCRAM-SHA-1&directConnection=true`)
+// The transport only prints a failed connection, so the command would go on without its logs
+connection.catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
 
 export default winston.createLogger({
   level: 'info',
