@@ -136,7 +136,7 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
                 aria-label={person.invited_at ? `Invite ${person.name} again` : `Invite ${person.name}`}
                 title={mailable ? undefined : 'Set up Mail first'}
                 onClick={() => {
-                  if (mailable && (!person.invited_at || confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
+                  if (mailable && (!person.invited_at || window.confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
                     invite([person])
                   }
                 }}
@@ -160,7 +160,7 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
           icon: '✉️',
           label: 'Invite',
           onClick: () => {
-            if (confirm(`Invite ${selected.length} ${selected.length === 1 ? 'friend' : 'friends'} by mail ?`)) {
+            if (window.confirm(`Invite ${selected.length} ${selected.length === 1 ? 'friend' : 'friends'} by mail ?`)) {
               invite(people.filter(({ email }) => selected.includes(email)))
             }
           },
