@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 
 @Schema({ collection: 'blackhole' })
-export class Metafile extends Document {
+export class Metafile extends Document<string> {
   @Prop()
   declare _id: string
 

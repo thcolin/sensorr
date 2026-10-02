@@ -243,7 +243,7 @@ export class MoviesService {
 
   async deleteMovie(movie: MovieDTO): Promise<any> {
     this.logger.log(`DeleteMovie "${movie?.id}"`)
-    return this.movieModel.findByIdAndRemove(movie.id)
+    return this.movieModel.findByIdAndDelete(movie.id)
   }
 
   async deleteMovies(changes: { [key: string]: MovieDTO }): Promise<any> {
@@ -304,7 +304,7 @@ export class MoviesService {
 
     return this.changes$.pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
-      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, [...METADATA_FIELDS, 'plex_artworks']).lean().exec()),
+      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, [...METADATA_FIELDS, 'plex_artworks'].join(' ')).lean().exec()),
       map(metadata => ({
         data: metadata.reduce((acc, curr) => ({
           ...acc,

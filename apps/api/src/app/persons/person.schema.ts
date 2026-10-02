@@ -3,7 +3,7 @@ import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
 
 @Schema({ collection: 'persons' })
-export class Person extends Document {
+export class Person extends Document<number> {
   @Prop()
   declare _id: number
 

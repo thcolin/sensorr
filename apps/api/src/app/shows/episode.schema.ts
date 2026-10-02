@@ -3,7 +3,7 @@ import { Document } from 'mongoose'
 import pagination from 'mongoose-paginate-v2'
 
 @Schema({ collection: 'episodes' })
-export class Episode extends Document {
+export class Episode extends Document<number> {
   @Prop()
   declare _id: number
 
@@ -47,7 +47,7 @@ export class Episode extends Document {
       from: String,
     }
   ]))
-  files: Record<any, any>
+  files: Record<string, any>[]
 
   // When its first file reached Plex; the episodes that held one before this field never carry it
   @Prop()
