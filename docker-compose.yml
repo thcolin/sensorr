@@ -47,6 +47,8 @@ services:
       - NX_SENSORR_PASSWORD=${SENSORR_PASSWORD:-sensorr}
       - NX_SENSORR_VAPID_SUBJECT=${SENSORR_VAPID_SUBJECT:-mailto:mail@example.com}
       - NX_CHROMIUM_URL=http://sensorr-chromium:9222
+      - NX_SENSORR_TAG=${SENSORR_TAG:-latest}
+      - NX_UPDATER_URL=http://sensorr-updater:4310
     volumes:
       - ./config.json:/app/config.json
       - ./.secrets:/app/.secrets
@@ -55,6 +57,25 @@ services:
     networks:
       - default
       - cards
+      - updater
+
+  # Moves sensorr-api, sensorr-web and itself to another tag from Settings > Update. Opt-in, through
+  # COMPOSE_PROFILES=updater in the env file. It holds the Docker socket, so it publishes no port and
+  # only shares the updater network with sensorr-api
+  sensorr-updater:
+    image: ghcr.io/thcolin/sensorr-updater:${SENSORR_TAG:-latest}
+    container_name: sensorr-updater
+    hostname: sensorr-updater
+    restart: unless-stopped
+    profiles: [updater]
+    build:
+      context: .
+      dockerfile: apps/updater/Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.secrets:/secrets:ro
+    networks:
+      - updater
 
   # Draws the wrapped's story cards for the API. Debian's Chromium, for its software WebGL; no secret,
   # no volume, and a network that only reaches sensorr-web and sensorr-api
@@ -93,4 +114,7 @@ services:
 networks:
   # No way out: Chromium only opens the wrapped page
   cards:
+    internal: true
+  # No way out either: the updater pulls through the Docker daemon, not through its network
+  updater:
     internal: true
