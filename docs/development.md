@@ -109,6 +109,25 @@ npx nx build web
 
 Not part of the gate; it exits 0. It writes a 7.9 MB `dist/apps/web`, measured on 2026-10-02, which is the figure to compare a bundle change against. `npx nx build api`, `npx nx build cli` and `npx nx build wrapped` exit 0 as well.
 
+## Dependencies held back
+
+Measured on 2026-10-02. Each stays below its latest major until the reason goes away:
+
+| Package | Held at | Reason |
+| --- | --- | --- |
+| `react`, `react-dom`, `@types/react` | 18 | `libs/ui/src/inputs/Range/Range.tsx` uses the `Slider` of `@material-ui/core` 4, which calls `findDOMNode`, gone in React 19 |
+| `ink` | 5 | ink 6 needs React 19 |
+| `react-router`, `react-router-dom` | 7 | react-router 8 needs React 19.2 |
+| `eslint-plugin-react-hooks` | 5 | version 7 adds the React Compiler rules, which belong with React 19 |
+| `eslint` | 9 | `eslint-plugin-react`, `eslint-plugin-jsx-a11y` and `eslint-plugin-import` do not declare ESLint 10 yet |
+| `typescript` | 6.0 | typescript-eslint 8 accepts `<6.1.0` |
+| `webpack-dev-server` | 5 | `@nx/webpack` 23 declares `^5` |
+| `intl-messageformat` | 11 | `i18next-icu` declares `<12` |
+| `@babel/*` | 7 | Nx 23 and its React preset build on Babel 7 |
+| `winston-mongodb` | 5 | version 7 stores a log's properties under `metadata.metadata`, and the API reads `meta.job` |
+| `@dicebear/core`, `@dicebear/collection` | 7 | a new major may redraw every avatar; not decided |
+| `mongo` image | 6.0.6 | the move to 8 is a deployment step: two `setFeatureCompatibilityVersion` steps, 6 to 7 then 7 to 8, with `mongod` stopped cleanly between images |
+
 ## Project layout
 
 `apps/` holds `api`, `web`, `wrapped`, `cli` and `db`. What each one owns is in [architecture.md](architecture.md#containers).
