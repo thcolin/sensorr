@@ -251,25 +251,26 @@ const Friends = ({ ...props }) => {
           {!mailable && (
             <p><small>Set up <Link to='/settings/mail'>Mail</Link> to mail your friends from here.</small></p>
           )}
-          <Invitation mailable={mailable} />
-          <div sx={{ marginTop: 6, marginBottom: 2 }}>
-            <Option type='checkbox' id='guests.public' checked={open} disabled={!config.get('plex.token')} onChange={(e: any) => setPublic(e.target.checked)}>
-              <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                <strong>{emojize('🌍', 'Anyone with a Plex account')}</strong>
-                <br />
-                <small>{config.get('plex.token') ? 'Off, only you and the people your Plex server is shared with can link their account, besides the friends already linked' : 'Without a Plex server set up in Sensorr, anyone can link their account'}</small>
-              </div>
-            </Option>
-          </div>
-          {(open || !config.get('plex.token')) && (
-            <form onSubmit={invite} sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-              <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
-              <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
-            </form>
-          )}
-          {!!invited.length && (
-            <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
-          )}
+          <Invitation mailable={mailable}>
+            <div sx={{ marginTop: 4 }}>
+              <Option type='checkbox' id='guests.public' checked={open} disabled={!config.get('plex.token')} onChange={(e: any) => setPublic(e.target.checked)}>
+                <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                  <strong>{emojize('🌍', 'Open to anyone with a Plex account')}</strong>
+                  <br />
+                  <small>{config.get('plex.token') ? 'Let people outside your Plex server link their account from /keep-in-touch, and invite them by address.' : 'Without a Plex server set up in Sensorr, anyone can link their account'}</small>
+                </div>
+              </Option>
+            </div>
+            {(open || !config.get('plex.token')) && (
+              <form onSubmit={invite} sx={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4, marginBottom: 6 }}>
+                <input type='email' id='invitation-to' aria-label='Address of the friend to invite' placeholder='friend@example.com' value={invitee} onChange={(e) => setInvitee(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
+                <Button type='submit' color='primary' disabled={!mailable || inviting} aria-busy={inviting} title={mailable ? undefined : 'Set up Mail first'}>Invite</Button>
+              </form>
+            )}
+            {!!invited.length && (
+              <p aria-live='polite'><small>Invited {invited.join(', ')}, they show up in Guests once they link their Plex account.</small></p>
+            )}
+          </Invitation>
           <h3>Wrapped</h3>
           <p>A yearly page of what each friend watched on Plex.</p>
           <WrappedLooks form={looks} onSave={onSave} />
