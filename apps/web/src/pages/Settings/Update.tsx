@@ -44,6 +44,23 @@ const Update = ({ ...props }) => {
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = updater?.api?.revision?.slice(0, 7)
 
+  // A run still going, or failed, outlives the page: a reload, or a visit elsewhere in Settings
+  useEffect(() => {
+    const run = updater?.run
+    const key = Object.keys(CHANNELS).find((key) => CHANNELS[key].tag === run?.tag)
+    const version = update?.channels?.[key]?.version
+
+    if (!key || !version || version === update.version) {
+      return
+    }
+
+    if (run.status === 'running') {
+      setUpdating({ version, since: Date.parse(run.started) })
+    } else if (run.code !== 0) {
+      setFailure(`The last update, to v${version}, exited (${run.code}), see docker logs sensorr-updater-run`)
+    }
+  }, [update])
+
   useEffect(() => {
     if (!updating) {
       return
@@ -67,7 +84,7 @@ const Update = ({ ...props }) => {
       }
 
       if (Date.now() - updating.since > PATIENCE) {
-        setFailure(`v${updating.version} still does not answer after ${durationOf(PATIENCE)}, see docker logs sensorr-updater-run`)
+        setFailure(`v${updating.version} still does not answer after ${PATIENCE / 60000} minutes, see docker logs sensorr-updater-run`)
         setUpdating(null)
       }
     }, 3000)
@@ -96,7 +113,7 @@ const Update = ({ ...props }) => {
     }
 
     if (error) {
-      return <span title={error}>can't reach GHCR</span>
+      return "can't reach GHCR"
     }
 
     if (!version) {
@@ -181,7 +198,7 @@ const Update = ({ ...props }) => {
                         <strong>{emojize(emoji, label)}</strong>
                         <span>{stateOf(key)}</span>
                       </span>
-                      <small>{source}</small>
+                      <small>{update?.channels?.[key]?.error || source}</small>
                     </div>
                   </Option>
                 ))}
@@ -191,22 +208,20 @@ const Update = ({ ...props }) => {
                   <div sx={{ display: 'flex', marginTop: 4 }}>
                     <Button type='button' color='primary' sx={{ flex: 1 }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
                   </div>
-                  {updating ? (
-                    <p aria-live='polite'><small>The page reloads once v{updating.version} answers · {durationOf(now - updating.since)}</small></p>
-                  ) : !!jobs.length && (
+                  {!updating && !!jobs.length && (
                     <p sx={Update.styles.warning}>
                       <strong>Warning</strong>, {jobs.length > 2 ? `${emojize(JOB_EMOJIS[jobs[0]], jobs[0])} and ${jobs.length - 1} more` : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {jobs.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                     </p>
                   )}
-                  {!updating && !jobs.length && <p><small>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></small></p>}
+                  {!disabled && <p><small>Recreates <code>sensorr-api</code>, <code>sensorr-web</code> and <code>sensorr-updater</code></small></p>}
                 </>
               )}
-              {(failure || updater?.error) && (
-                <p sx={{ color: 'error' }} aria-live='polite'>{failure || updater.error}</p>
-              )}
+              <p role='status' sx={{ ...Update.styles.status, ...((failure || updater?.error) && !updating ? { color: 'error' } : {}) }}>
+                {updating ? <small>The page reloads once v{updating.version} answers<span aria-hidden='true'> · {durationOf(now - updating.since)}</span></small> : (failure || updater?.error || null)}
+              </p>
               {ready && !failure ? (
                 <details sx={Update.styles.details}>
-                  <summary><h3>Manual update</h3></summary>
+                  <summary><strong>Manual update</strong></summary>
                   {manual}
                 </details>
               ) : !loading && (
@@ -247,22 +262,30 @@ Update.styles = {
   },
   warning: {
     color: 'warningDark',
-    '>a': {
+    // Settings sets every link of the page primary, with a longer selector
+    '&& > a': {
       color: 'warningDark',
+      textDecoration: 'underline',
       ':hover': { color: 'warningDarker' },
     },
   },
+  status: {
+    ':empty': {
+      margin: 0,
+    },
+  },
   details: {
+    marginY: 8,
     '>summary': {
       cursor: 'pointer',
-      '>h3': {
-        display: 'inline',
-      },
     },
   },
   commands: {
     display: 'block',
-    padding: '1em 1.5em !important',
+    '&&': {
+      paddingX: 2,
+      paddingY: 4,
+    },
     overflowX: 'auto',
     whiteSpace: 'nowrap',
   },
