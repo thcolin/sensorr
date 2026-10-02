@@ -12,17 +12,27 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { errorOf } from './Mail'
 
 const CHANNELS = {
-  beta: { emoji: '🧪', tag: 'beta', source: <>Every <code>vX.Y.Z-beta.N</code> tag of <code>dev</code></> },
-  stable: { emoji: '📦', tag: 'latest', source: <>Every <code>vX.Y.Z</code> tag of <code>main</code></> },
+  stable: { emoji: '📦', tag: 'latest', source: 'vX.Y.Z tag of main' },
+  beta: { emoji: '🧪', tag: 'beta', source: 'vX.Y.Z-beta.N tag of dev' },
+  dev: { emoji: '🚧', tag: 'dev', source: 'push to dev' },
 }
 
 // Pulling the images and recreating three containers takes a minute or two
 const PATIENCE = 5 * 60 * 1000
 
-export const availableOf = (update) => {
-  const version = update?.channels?.[update?.channel]?.version
+// The dev image always carries the version "dev": its revision tells one push from the next
+const labelOf = (key, { version = null, revision = null } = {}) => key === 'dev' ? revision?.slice(0, 7) : version && `v${version}`
 
-  return (version && semver.valid(version) && semver.valid(update.version) && semver.gt(version, update.version)) ? version : null
+const runs = (update, key, { version = null, revision = null } = {}) => key === 'dev' ? update.tag === 'dev' && update.revision === revision : update.version === version
+
+export const availableOf = (update) => {
+  const { version, revision } = update?.channels?.[update?.channel] || {}
+
+  if (update?.channel === 'dev') {
+    return (revision && update.revision && revision !== update.revision) ? labelOf('dev', { revision }) : null
+  }
+
+  return (version && semver.valid(version) && semver.valid(update.version) && semver.gt(version, update.version)) ? labelOf(update.channel, { version }) : null
 }
 
 const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => (
@@ -52,7 +62,7 @@ const Update = ({ ...props }) => {
   const loading = !update
   const updater = update?.updater
   const selected = channel || (update?.channel in CHANNELS ? update.channel : loading ? null : 'stable')
-  const target = update?.channels?.[selected]?.version
+  const target = labelOf(selected, update?.channels?.[selected])
   const current = selected === update?.channel
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
   const revision = update?.revision?.slice(0, 7)
@@ -73,17 +83,18 @@ const Update = ({ ...props }) => {
   useEffect(() => {
     const run = updater?.run
     const key = Object.keys(CHANNELS).find((key) => CHANNELS[key].tag === run?.tag)
-    const version = update?.channels?.[key]?.version
+    const image = update?.channels?.[key]
+    const label = labelOf(key, image)
 
-    if (!key || !version || version === update.version) {
+    if (!key || !label || runs(update, key, image)) {
       return
     }
 
     if (run.status === 'running') {
       setFailure(null)
-      setUpdating({ version, since: Date.parse(run.started) })
+      setUpdating({ key, image, label, since: Date.parse(run.started) })
     } else if (run.code !== 0) {
-      setFailure({ title: `The last update, to v${version}, failed`, cause: `sensorr-updater-run exited (${run.code})`, logs: 'sensorr-updater-run' })
+      setFailure({ title: `The last update, to ${label}, failed`, cause: `sensorr-updater-run exited (${run.code})`, logs: 'sensorr-updater-run' })
     }
   }, [update])
 
@@ -101,12 +112,12 @@ const Update = ({ ...props }) => {
         const { uri, params, init } = api.query.update.getUpdate()
         const raw = await api.fetch(uri, params, init)
 
-        if (raw.version === updating.version) {
+        if (runs(raw, updating.key, updating.image)) {
           return window.location.reload()
         }
 
         if (raw.updater?.run?.status === 'exited' && raw.updater.run.code !== 0) {
-          setFailure({ title: `Update to v${updating.version} failed`, cause: `sensorr-updater-run exited (${raw.updater.run.code})`, logs: 'sensorr-updater-run' })
+          setFailure({ title: `Update to ${updating.label} failed`, cause: `sensorr-updater-run exited (${raw.updater.run.code})`, logs: 'sensorr-updater-run' })
           return setUpdating(null)
         }
       } catch (err) {
@@ -114,7 +125,7 @@ const Update = ({ ...props }) => {
       }
 
       if (Date.now() - updating.since > PATIENCE) {
-        setFailure({ title: `Update to v${updating.version} failed`, cause: `v${updating.version} still does not answer after ${PATIENCE / 60000} minutes`, logs: 'sensorr-updater-run' })
+        setFailure({ title: `Update to ${updating.label} failed`, cause: `${updating.label} still does not answer after ${PATIENCE / 60000} minutes`, logs: 'sensorr-updater-run' })
         return setUpdating(null)
       }
 
@@ -132,9 +143,9 @@ const Update = ({ ...props }) => {
       const { uri, params, init } = api.query.update.postUpdate({ body: { channel: selected } })
       await api.fetch(uri, params, init, { rawError: true })
       setNow(Date.now())
-      setUpdating({ version: target, since: Date.now() })
+      setUpdating({ key: selected, image: update.channels[selected], label: target, since: Date.now() })
     } catch (err) {
-      toast.error((await errorOf(err)) || `Error while updating to v${target}, try again`)
+      toast.error((await errorOf(err)) || `Error while updating to ${target}, try again`)
     }
   }
 
@@ -146,10 +157,6 @@ const Update = ({ ...props }) => {
       return <>Updating<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
     }
 
-    if (update?.channel === 'dev') {
-      return 'Follows every push'
-    }
-
     if (!update?.channel) {
       return 'SENSORR_TAG is not set'
     }
@@ -158,19 +165,19 @@ const Update = ({ ...props }) => {
       return "Can't reach GHCR"
     }
 
-    return available ? `v${available} available` : 'Up to date'
+    return available ? `${available} available` : 'Up to date'
   })()
 
-  const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : (update?.channel === 'dev' || !update?.channel) ? 'grayDarker' : 'success'
+  const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : !update?.channel ? 'grayDarker' : 'success'
 
   const reasonOf = (key) => {
-    const { version, error } = update?.channels?.[key] || {}
+    const { error } = update?.channels?.[key] || {}
 
-    return version ? null : error ? `can't reach GHCR, ${error}` : 'no release yet'
+    return labelOf(key, update?.channels?.[key]) ? null : error ? `can't reach GHCR, ${error}` : key === 'dev' ? 'no build yet' : 'no release yet'
   }
 
   const source = (key) => [
-    <>Every {key === 'beta' ? 'vX.Y.Z-beta.N tag of dev' : 'vX.Y.Z tag of main'}, {reasonOf(key) || `latest v${update.channels[key].version}`}.</>,
+    <>Every {CHANNELS[key].source}, {reasonOf(key) || `latest ${labelOf(key, update.channels[key])}`}.</>,
     ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <> {other[0].toUpperCase() + other.slice(1)}: {reasonOf(other)}.</>),
   ]
 
@@ -179,10 +186,10 @@ const Update = ({ ...props }) => {
   const disabled = !!updating || !!jobs.length
 
   const action = updating
-    ? `⌛ Updating to v${updating.version}`
+    ? `⌛ Updating to ${updating.label}`
     : current
-      ? `Update to v${target}${pinned ? ', replaces your pin' : ''}`
-      : `Switch to ${selected}, v${target}${pinned ? ', replaces your pin' : ''}`
+      ? `Update to ${target}${pinned ? ', replaces your pin' : ''}`
+      : `Switch to ${selected}, ${target}${pinned ? ', replaces your pin' : ''}`
 
   const manual = (
     <>
@@ -227,7 +234,7 @@ const Update = ({ ...props }) => {
                 )}
               </div>
             )}
-            {update?.channel !== 'dev' && !update?.error && (
+            {!update?.error && (
               <div sx={Update.styles.channel}>
                 <h3 id='update-channel'>Channel</h3>
                 <div ref={capsule} role='radiogroup' aria-labelledby='update-channel' sx={Update.styles.channels}>
@@ -250,12 +257,7 @@ const Update = ({ ...props }) => {
                 <small sx={Update.styles.muted}>{loading ? <Placeholder width='20rem' height='0.75rem' /> : source(selected)}</small>
               </div>
             )}
-            {update?.channel === 'dev' && (
-              <p>
-                Set <code>SENSORR_TAG</code> to <code>beta</code> or <code>latest</code> in the env file you pass to compose to follow a release.
-              </p>
-            )}
-            {update?.channel !== 'dev' && ready && actionable && (
+            {ready && actionable && (
               <div sx={Update.styles.action}>
                 <Button type='button' color='primary' sx={{ width: '100%' }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
                 {!updating && !!jobs.length ? (
@@ -264,14 +266,14 @@ const Update = ({ ...props }) => {
                   </p>
                 ) : (
                   <small sx={Update.styles.muted}>
-                    {updating ? `The page reloads once v${updating.version} answers` : 'Recreates sensorr-api, sensorr-web and sensorr-updater'}
+                    {updating ? `The page reloads once ${updating.label} answers` : 'Recreates sensorr-api, sensorr-web and sensorr-updater'}
                   </small>
                 )}
               </div>
             )}
             {!updating && failure && <Failure {...failure} />}
             {!updating && !failure && updater?.error && <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />}
-            {update?.channel !== 'dev' && !loading && (
+            {!loading && (
               ready && !failure ? (
                 <details sx={Update.styles.details}>
                   <summary><strong>Manual update</strong></summary>

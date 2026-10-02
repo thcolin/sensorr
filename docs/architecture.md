@@ -397,7 +397,8 @@ labels, `com.docker.compose.project.*`, which compose sets on every container it
 `sensorr-api`, `sensorr-web` and `sensorr-updater`, under the same project name and the `updater`
 profile. The next update removes `sensorr-updater-run`, so its logs and exit code stay until then: `GET /status`
 reports them, and the page stops waiting on a non-zero exit. The page reloads once `/api/update`
-answers with the version it waited for, and gives up after five minutes.
+answers with the version it waited for, or on `dev` with the `dev` tag and the revision it waited
+for, and gives up after five minutes.
 
 The boundary is the Docker socket: whoever reaches `sensorr-updater` with the secret controls every
 container of the host. So it publishes no port, sits on the `updater` network, `internal`, that only

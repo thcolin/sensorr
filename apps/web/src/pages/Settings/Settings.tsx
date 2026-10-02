@@ -53,7 +53,7 @@ const Settings = ({ ...props }) => {
   useEffect(() => {
     loadUpdate().then((raw) => {
       if (availableOf(raw) && !location.pathname.startsWith('/settings/update')) {
-        toast(`New version available **v${availableOf(raw)}**`, { id: 'update-available' })
+        toast(`New version available **${availableOf(raw)}**`, { id: 'update-available' })
       }
     })
   }, [])
