@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Bulk, Button, Icon, Link, Option } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
@@ -16,7 +16,7 @@ const activityOf = ({ plays, seen_at }) => !seen_at
   ? 'never seen'
   : `seen ${dayOf(seen_at)} · ${plays.toLocaleString('en-GB')} ${plays === 1 ? 'play' : 'plays'}`
 
-export const Invitation = ({ mailable }: { mailable: boolean }) => {
+export const Invitation = ({ mailable, children }: { mailable: boolean, children?: ReactNode }) => {
   const api = useAPI()
   const { config } = useConfigContext()
   const [shared, setShared] = useState(null)
@@ -72,8 +72,13 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
 
   return (
     <>
+      <h3>Invitation</h3>
+      <p sx={{ lineHeight: 'body' }}>
+        Your friend gets a mail asking them to link their Plex account from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a>.
+      </p>
+      {children}
       <div sx={Invitation.styles.heading}>
-        <h3>Invitation</h3>
+        <p>People your Plex server is shared with who are not guests yet</p>
         {!!people.length && (
           <Option
             id='invitation-all'
@@ -86,67 +91,65 @@ export const Invitation = ({ mailable }: { mailable: boolean }) => {
           </Option>
         )}
       </div>
-      <p sx={{ lineHeight: 'body' }}>
-        Your friend gets a mail asking them to link their Plex account from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a>.
-        {shared?.plex && ' Here are the people your Plex server is shared with who are not guests yet.'}
-      </p>
-      {!shared && !unreachable && (
-        <div>
-          <Icon value='spinner' />
-        </div>
-      )}
-      {unreachable && (
-        <p><small>Unable to read who your Plex server is shared with, <button type='button' sx={Invitation.styles.retry} onClick={fetchShared}>retry</button></small></p>
-      )}
-      {shared && !shared.plex && (
-        <p><small>Set up <Link to='/settings/plex'>Plex</Link> to list the people your Plex server is shared with.</small></p>
-      )}
-      {shared?.plex && !people.length && (
-        <p sx={{ textAlign: 'center' }}>Everyone your Plex server is shared with is a guest</p>
-      )}
-      {!!people.length && (
-        <ul sx={Invitation.styles.people}>
-          {people.map((person) => (
-            <li key={person.email} sx={Invitation.styles.person}>
-              <span sx={person.invited_at ? { visibility: 'hidden' } : {}}>
-                <Option
-                  id={`invitation-${person.email}`}
-                  type='checkbox'
-                  aria-label={`Select ${person.name}`}
-                  checked={selected.includes(person.email)}
-                  disabled={!mailable || !!person.invited_at || sending.includes(person.email)}
-                  onChange={(e: any) => setSelected((selected) => e.target.checked ? [...selected, person.email] : selected.filter((email) => email !== person.email))}
-                />
-              </span>
-              <Face person={person} />
-              <div sx={Invitation.styles.who}>
-                <span><strong>{person.name}</strong> <small>{person.email}</small></span>
-                {failed[person.email]
-                  ? <small data-failed={true}>not sent, {failed[person.email]}</small>
-                  : (shared.tautulli || person.invited_at) && <small>{[person.invited_at && `invited ${dayOf(person.invited_at)}`, shared.tautulli && activityOf(person)].filter(Boolean).join(' · ')}</small>}
-              </div>
-              <Button
-                type='button'
-                variant='outline'
-                color='gray'
-                disabled={sending.includes(person.email)}
-                // Not `disabled` without Mail, which hides the reason in the title from the hover and from screen readers
-                aria-disabled={!mailable || undefined}
-                aria-busy={sending.includes(person.email)}
-                aria-label={person.invited_at ? `Invite ${person.name} again` : `Invite ${person.name}`}
-                title={mailable ? undefined : 'Set up Mail first'}
-                onClick={() => {
-                  if (mailable && (!person.invited_at || window.confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
-                    invite([person])
-                  }
-                }}
-              >
-                {person.invited_at ? 'Again' : 'Invite'}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div sx={Invitation.styles.people}>
+        {!shared && !unreachable && (
+          <div sx={Invitation.styles.state}>
+            <Icon value='spinner' />
+          </div>
+        )}
+        {unreachable && (
+          <p sx={Invitation.styles.state}><small>Unable to read who your Plex server is shared with, <button type='button' sx={Invitation.styles.retry} onClick={fetchShared}>retry</button></small></p>
+        )}
+        {shared && !shared.plex && (
+          <p sx={Invitation.styles.state}><small>Set up <Link to='/settings/plex'>Plex</Link> to list the people your Plex server is shared with.</small></p>
+        )}
+        {shared?.plex && !people.length && (
+          <p sx={Invitation.styles.state}>Everyone your Plex server is shared with is a guest</p>
+        )}
+        {!!people.length && (
+          <ul sx={Invitation.styles.list}>
+            {people.map((person) => (
+              <li key={person.email} sx={Invitation.styles.person}>
+                <span sx={person.invited_at ? { visibility: 'hidden' } : {}}>
+                  <Option
+                    id={`invitation-${person.email}`}
+                    type='checkbox'
+                    aria-label={`Select ${person.name}`}
+                    checked={selected.includes(person.email)}
+                    disabled={!mailable || !!person.invited_at || sending.includes(person.email)}
+                    onChange={(e: any) => setSelected((selected) => e.target.checked ? [...selected, person.email] : selected.filter((email) => email !== person.email))}
+                  />
+                </span>
+                <Face person={person} />
+                <div sx={Invitation.styles.who}>
+                  <span><strong>{person.name}</strong> <small>{person.email}</small></span>
+                  {failed[person.email]
+                    ? <small data-failed={true}>not sent, {failed[person.email]}</small>
+                    : (shared.tautulli || person.invited_at) && <small>{[person.invited_at && `invited ${dayOf(person.invited_at)}`, shared.tautulli && activityOf(person)].filter(Boolean).join(' · ')}</small>}
+                </div>
+                <Button
+                  type='button'
+                  variant='outline'
+                  color='gray'
+                  disabled={sending.includes(person.email)}
+                  // Not `disabled` without Mail, which hides the reason in the title from the hover and from screen readers
+                  aria-disabled={!mailable || undefined}
+                  aria-busy={sending.includes(person.email)}
+                  aria-label={person.invited_at ? `Invite ${person.name} again` : `Invite ${person.name}`}
+                  title={mailable ? undefined : 'Set up Mail first'}
+                  onClick={() => {
+                    if (mailable && (!person.invited_at || window.confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
+                      invite([person])
+                    }
+                  }}
+                >
+                  {person.invited_at ? 'Again' : 'Invite'}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {shared?.plex && !shared.tautulli && !!people.length && (
         <p><small>{config.get('tautulli.url')
           ? <>No Tautulli activity imported yet, the <Link to='/settings/jobs'>wrapped</Link> job imports it to show who watched most recently first.</>
@@ -176,19 +179,35 @@ Invitation.styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 6,
+    fontSize: '0.75em',
+    color: 'grayDarkest',
     fontVariantNumeric: 'tabular-nums',
+    '>:last-child:not(p)': {
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+    },
   },
-  // Scrolls on its own without pulling the page along
+  // Same height whatever it holds, and scrolls on its own without pulling the page along
   people: {
-    listStyle: 'none',
-    margin: '0px',
-    marginTop: 4,
-    padding: '0px',
-    maxHeight: 'calc(8 * 56px)',
+    height: 'calc(8 * 56px)',
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     border: '1px solid',
     borderColor: 'grayLight',
+  },
+  list: {
+    listStyle: 'none',
+    margin: '0px',
+    padding: '0px',
+  },
+  state: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    margin: '0px',
+    padding: 10,
+    textAlign: 'center',
   },
   person: {
     display: 'grid',
