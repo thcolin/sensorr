@@ -27,6 +27,8 @@ export class MailService {
 
   private serverName: string | null = null
 
+  private serverAsked = 0
+
   constructor(
     @InjectModel(GuestDocument.name) private readonly guestModel: Model<GuestDocument>,
     @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
@@ -63,11 +65,12 @@ export class MailService {
     return senderOf(this.config.get('mail.from'))
   }
 
-  // Read once from Tautulli; without it the wrapped page names no server
+  // Read once from Tautulli, asked again an hour after a failure; without it the wrapped page names no server
   async server() {
     const url = this.config.get('tautulli.url')
 
-    if (!this.serverName && url) {
+    if (!this.serverName && url && Date.now() - this.serverAsked > 60 * 60 * 1000) {
+      this.serverAsked = Date.now()
       const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
       uri.search = new URLSearchParams({ apikey: this.config.get('tautulli.key'), cmd: 'get_server_friendly_name' }).toString()
       // node-fetch errors carry the URL, so the key, and are not logged

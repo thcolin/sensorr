@@ -142,7 +142,7 @@ export class GuestsService {
     const reconnected = guest.plex_token_valid === true && previous?.plex_token_valid === false
 
     if (reconnected) {
-      await this.guestModel.updateOne({ email: guest.email }, { reconnect_mails: 0, reconnect_mailed_at: null })
+      await this.guestModel.updateOne({ email: guest.email, plex_token_valid: true }, { reconnect_mails: 0, reconnect_mailed_at: null })
     }
 
     const updated = await this.guestModel.findOne({ email: guest.email }).lean()
