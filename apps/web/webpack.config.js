@@ -34,10 +34,15 @@ module.exports = composePlugins(
           tty: false,
           net: false,
           fs: false,
+          'fs/promises': false,
         },
       },
       plugins: [
         ...config.plugins,
+        // Node built-ins imported as node:x resolve like x, to the fallbacks above
+        new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+          resource.request = resource.request.replace(/^node:/, '')
+        }),
         new webpack.DefinePlugin({
           SENSORR_DEFAULTS: {
             region: 'en', // local.region,
