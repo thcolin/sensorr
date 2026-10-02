@@ -191,7 +191,9 @@ export const ShareImage = ({ url, name, label = 'Partager', compact }: { url: st
       aria-busy={shared.status === 'loading'}
       onClick={() => shared.status === 'ready' ? send(shared.file) : shared.status === 'error' && setAttempt(attempt + 1)}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>
+      {compact && shared.status === 'error'
+        ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" /></svg>
+        : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>}
       <span className={compact ? 'visually-hidden' : undefined}>{shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}</span>
     </button>
   )

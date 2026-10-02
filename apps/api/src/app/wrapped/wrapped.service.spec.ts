@@ -71,7 +71,9 @@ describe('WrappedService.image', () => {
 })
 
 describe('WrappedService.openedEdition', () => {
-  const shown = new Date().getFullYear()
+  const shown = 2026
+  beforeEach(() => jest.spyOn(WrappedService.prototype, 'shownEdition').mockReturnValue(shown))
+  afterEach(() => jest.restoreAllMocks())
 
   it('opens the year a link asks for, when the friend can open it', async () => {
     const { service } = serviceOf({ frozen: [2023, 2024] })

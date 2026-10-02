@@ -96,7 +96,7 @@ export const App = () => {
       const share: Share = await res.json()
 
       // A year turned off, or one this friend has nothing in, opened another: the address stops naming it
-      if (year && share.year !== year) {
+      if (asked && share.year !== year) {
         window.history.replaceState(null, '', `/wrapped/${encodeURIComponent(token)}${window.location.search}${window.location.hash}`)
       }
 

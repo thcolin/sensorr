@@ -85,6 +85,11 @@ ol {
   cursor: pointer;
 }
 
+.edition-switch[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .theme-switch select option {
   color: initial;
   background: initial;

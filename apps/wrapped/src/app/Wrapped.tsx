@@ -34,15 +34,31 @@ const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, l
 )
 
 // Another year is another page: it opens on its first sheet, and the browser's back returns to this one
-const Edition = ({ token, year, editions, compact }: { token: string, year: number, editions: number[], compact?: boolean }) => (
-  <label className="theme-switch edition-switch">
-    <span className={compact ? 'visually-hidden' : undefined}>Année</span>
-    <select name="edition" value={year} onChange={(event) => window.location.assign(`/wrapped/${encodeURIComponent(token)}/${event.target.value}`)}>
-      {[...editions].reverse().map((edition) => <option key={edition} value={edition}>{edition}</option>)}
-    </select>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
-  </label>
-)
+const Edition = ({ token, year, editions, compact }: { token: string, year: number, editions: number[], compact?: boolean }) => {
+  // The year chosen while its page loads; a page restored by the back button starts over from its own
+  const [pending, setPending] = useState<number | null>(null)
+
+  useEffect(() => {
+    const restored = (event: PageTransitionEvent) => event.persisted && setPending(null)
+    window.addEventListener('pageshow', restored)
+    return () => window.removeEventListener('pageshow', restored)
+  }, [])
+
+  const choose = (next: number) => {
+    setPending(next)
+    window.location.assign(`/wrapped/${encodeURIComponent(token)}/${next}`)
+  }
+
+  return (
+    <label className="theme-switch edition-switch" aria-busy={pending !== null}>
+      <span className={compact ? 'visually-hidden' : undefined}>Année</span>
+      <select name="edition" value={pending ?? year} onChange={(event) => choose(Number(event.target.value))}>
+        {[...editions].reverse().map((edition) => <option key={edition} value={edition}>{edition}</option>)}
+      </select>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
+    </label>
+  )
+}
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
   const { look } = share
