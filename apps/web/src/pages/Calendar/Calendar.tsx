@@ -59,7 +59,7 @@ const FilterCredits = ({ value, onChange, ...props }: any) => (
     value={value?.values}
     onChange={(values) => onChange({ ...value, values })}
     badge={{
-      label: value?.order ? `Top ${value.order}` : 'All',
+      label: value?.order ? `Top ${value.order} cast` : 'Any cast',
       title: `Acting counts a followed person billed ${value?.order ? `in the first ${value.order} of the cast` : 'anywhere in the cast'}`,
       onClick: () => onChange({ ...value, order: ORDERS[(ORDERS.indexOf(value?.order) + 1) % ORDERS.length] }),
       disabled: !value?.values?.includes('Acting'),

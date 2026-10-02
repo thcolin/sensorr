@@ -66,7 +66,7 @@ const UIOptions = ({ type, label, options, value, onChange, behavior, onBehavior
         {!!badge && (
           <button
             type='button'
-            sx={{ variant: 'button.reset', ...UIOptions.styles.badge, '&:disabled': { opacity: 0.5 }, '&:focus-visible': { boxShadow: '0 0 0 0.15em currentColor' } }}
+            sx={{ variant: 'button.reset', ...UIOptions.styles.badge, position: 'relative', '&::before': { content: '""', position: 'absolute', inset: '-12px 0px' }, '&:disabled': { opacity: 0.5 }, '&:focus-visible': { boxShadow: '0 0 0 0.15em currentColor' } }}
             title={badge.title}
             onClick={badge.onClick}
             disabled={disabled || badge.disabled}

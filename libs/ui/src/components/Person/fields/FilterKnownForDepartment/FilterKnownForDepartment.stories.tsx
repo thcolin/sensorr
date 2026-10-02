@@ -53,5 +53,5 @@ WithBadge.args = {
     { _id: 'Writing', count: 13 },
     { _id: 'Sound', count: 3 },
   ],
-  badge: { label: 'Top 10', title: 'Acting counts a followed person billed in the first 10 of the cast', onClick: () => {} },
+  badge: { label: 'Top 10 cast', title: 'Acting counts a followed person billed in the first 10 of the cast', onClick: () => {} },
 }
