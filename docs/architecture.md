@@ -329,14 +329,18 @@ The API image builds the CLI because the API spawns it
 
 ### Images
 
-`.github/workflows/ci.yml` builds the three Sensorr images once a push to `dev` or a
-`vX.Y.Z` tag has passed lint, test and the production build. Each image is built for
+`.github/workflows/ci.yml` builds the three Sensorr images once a push to `dev`, a
+`vX.Y.Z-beta.N` tag or a `vX.Y.Z` tag has passed lint, test and the production build. A tag
+first goes through `tools/release/check-tag.mjs`, which refuses it unless it matches the
+`package.json` version and tags `dev` for a beta, `main` for a stable release. The steps of a
+release are in [`RELEASING.md`](../RELEASING.md). Each image is built for
 `linux/amd64` and `linux/arm64`, each platform on a native GitHub runner, by
 `docker/github-builder`, and pushed to GHCR with the workflow's own `GITHUB_TOKEN`.
 
 | Event | Tags |
 | --- | --- |
 | push to `dev` | `dev`, `sha-<short sha>` |
+| tag `vX.Y.Z-beta.N` | `X.Y.Z-beta.N`, `beta` |
 | tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest` |
 
 Every image carries the OCI labels `org.opencontainers.image.version`, the first tag above,
