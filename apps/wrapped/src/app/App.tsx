@@ -32,6 +32,9 @@ const tokenOf = (path: string) => {
 }
 
 const token = tokenOf(window.location.pathname)
+// `/wrapped/<token>/<year>` opens that edition, a bare link the one shown now
+const asked = window.location.pathname.replace(/^\/wrapped\/?/, '').split('/')[1] || ''
+const year = /^\d{4}$/.test(asked) ? Number(asked) : null
 // The look this link last showed on this device, so the wait and the notices already wear it
 const shown = read('shown', token)
 
@@ -80,7 +83,7 @@ export const App = () => {
     setState({ status: 'loading' })
 
     try {
-      const res = token ? await fetch(`/api/wrapped/share/${encodeURIComponent(token)}`) : null
+      const res = token ? await fetch(`/api/wrapped/share/${encodeURIComponent(token)}${year ? `?year=${year}` : ''}`) : null
 
       if (!res || res.status === 404) {
         return setState({ status: 'gone' })
@@ -91,6 +94,12 @@ export const App = () => {
       }
 
       const share: Share = await res.json()
+
+      // A year turned off, or one this friend has nothing in, opened another: the address stops naming it
+      if (year && share.year !== year) {
+        window.history.replaceState(null, '', `/wrapped/${encodeURIComponent(token)}${window.location.search}${window.location.hash}`)
+      }
+
       document.title = `Rétrospective de ${share.name} ${share.year}`
       setState({ status: 'done', share })
     } catch (error) {

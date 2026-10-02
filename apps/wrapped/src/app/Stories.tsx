@@ -159,7 +159,7 @@ const send = async (file: File) => {
 }
 
 // Asks for its image as soon as it shows, so the tap that shares it finds it ready
-export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, name: string, label?: string }) => {
+export const ShareImage = ({ url, name, label = 'Partager', compact }: { url: string, name: string, label?: string, compact?: boolean }) => {
   const [shared, setShared] = useState<Shared>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
@@ -184,6 +184,7 @@ export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, nam
     <button
       type="button"
       className="stories-share"
+      data-compact={compact || undefined}
       aria-label={shared.status === 'ready' ? `${label}, en image` : undefined}
       // Not `disabled`: a retry tapped would drop focus while the image is drawn again
       aria-disabled={shared.status === 'loading'}
@@ -191,7 +192,7 @@ export const ShareImage = ({ url, name, label = 'Partager' }: { url: string, nam
       onClick={() => shared.status === 'ready' ? send(shared.file) : shared.status === 'error' && setAttempt(attempt + 1)}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>
-      {shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}
+      <span className={compact ? 'visually-hidden' : undefined}>{shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}</span>
     </button>
   )
 }

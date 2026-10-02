@@ -64,6 +64,14 @@ ol {
   font: var(--switch-font, 600 15px/1 system-ui, sans-serif);
 }
 
+.theme-switches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 24px;
+  background: var(--switch-bg, #111);
+}
+
 .theme-switch select {
   appearance: none;
   border: 0;
@@ -267,6 +275,11 @@ ol {
   white-space: nowrap;
 }
 
+/* The look and the year sit together on the left, the share button on the right */
+.stories-bar .theme-switch:has(+ .edition-switch) {
+  margin-right: 0;
+}
+
 .stories[data-roomy] .stories-segments {
   top: auto;
   bottom: 100%;
@@ -299,6 +312,12 @@ ol {
   transition-property: scale, opacity;
   transition-duration: 0.15s;
   transition-timing-function: ease-out;
+}
+
+.stories-share[data-compact] {
+  justify-content: center;
+  width: 44px;
+  padding: 0;
 }
 
 .stories-share svg {
