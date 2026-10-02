@@ -951,6 +951,38 @@ export class API {
         }
       }),
     },
+    update: {
+      getUpdate: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'update',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      postUpdate: (
+        { body, init = {} }: { body: { channel: 'beta' | 'stable' }, init?: any }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'update',
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body)
+        }
+      }),
+    },
     config: {
       getConfig: (
         { init = {} }: { init?: any }
