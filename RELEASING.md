@@ -34,30 +34,29 @@ On `dev`:
 
 ```sh
 npm pkg set version=1.0.0-beta.1
-git commit -am "chore(release): 1.0.0-beta.1"
+git commit -m "chore(release): 1.0.0-beta.1" package.json
 git push origin dev
 node tools/release/check-tag.mjs v1.0.0-beta.1
 git tag v1.0.0-beta.1
 git push origin v1.0.0-beta.1
+gh release create v1.0.0-beta.1 --prerelease --generate-notes
 ```
 
-Then publish the GitHub prerelease, its notes listing what changed since the previous tag:
-
-```sh
-gh release create v1.0.0-beta.1 --prerelease --notes-file <notes>
-```
-
-A beta gets no section in the [changelog](CHANGELOG.md): the next stable section covers it.
+`--generate-notes` lists the pull requests merged since the previous tag. A beta gets no
+section in the [changelog](CHANGELOG.md): the next stable section covers it.
 
 ## Stable
 
-1. On `dev`, bump the version and write the release section of the [changelog](CHANGELOG.md),
-   what changed since the previous stable release, read from
-   `git log --oneline <previous stable tag>..dev`:
+1. On `dev`, bump the version and turn `## [Unreleased]` of the [changelog](CHANGELOG.md)
+   into the release section: rename it `## [1.0.0] - YYYY-MM-DD`, fill it with what changed
+   since the previous stable release, `git log --oneline <previous stable tag>..dev`, open a
+   new empty `## [Unreleased]` above it, and add its link at the bottom,
+   `[1.0.0]: https://github.com/thcolin/sensorr/releases/tag/v1.0.0`. Copy the section into
+   `notes.md`, outside the repository, for the pull request and the release.
 
    ```sh
    npm pkg set version=1.0.0
-   git commit -am "chore(release): 1.0.0"
+   git commit -m "chore(release): 1.0.0" package.json CHANGELOG.md
    git push origin dev
    ```
 
@@ -66,30 +65,36 @@ A beta gets no section in the [changelog](CHANGELOG.md): the next stable section
    not, and the next pull request would conflict.
 
    ```sh
-   gh pr create --base main --head dev --title "Release 1.0.0" --body "<changelog section>"
-   gh pr merge --merge
+   gh pr create --base main --head dev --title "Release 1.0.0" --body-file notes.md
+   gh pr checks dev --watch
+   gh pr merge dev --merge
    ```
 
-3. Tag the merge commit, and publish the release with the changelog section as notes:
+3. Tag the merge commit, and publish the release:
 
    ```sh
    git fetch origin
    node tools/release/check-tag.mjs v1.0.0 origin/main
    git tag v1.0.0 origin/main
    git push origin v1.0.0
-   gh release create v1.0.0 --notes-file <changelog section>
+   gh release create v1.0.0 --notes-file notes.md
    ```
 
 ## First stable release only
 
 `main` still carries the 0.x history, and `dev` shares no commit with it: `dev` starts over
 at `3fbf049a`, on 2022-02-06. GitHub cannot open a pull request between two unrelated
-histories, so the first stable release replaces `main` with `dev` instead of step 2:
+histories, so the first stable release replaces `main` with `dev` instead of step 2. Its
+changelog section has no previous stable tag in the history of `dev`: it sums up what
+changed since 0.9.0.
 
 ```sh
-git fetch origin
+git fetch origin --prune
 git push --force-with-lease=main:origin/main origin origin/dev:main
 ```
 
-The 0.x history stays reachable through the tags `v0.2.0` to `v0.9.0`. Then tag as in step 3,
-and delete this section.
+The force-push needs `origin/main` locally, hence the fetch, and no branch protection on
+`main`. The 0.x history stays on the `legacy` branch, which points at the last commit of
+`master`, `361d0937`: never delete it. The tags `v0.2.0`, `v0.3.0`, `v0.4.0`, `v0.4.1`,
+`v0.5.3` and `v0.9.0` mark the versions published then, on commits `master` does not
+contain: none of them keeps its history. Then tag as in step 3, and delete this section.
