@@ -20,6 +20,9 @@ USER node
 
 FROM node:26-alpine AS production
 
+ARG SENSORR_REVISION
+ENV NX_SENSORR_REVISION=$SENSORR_REVISION
+
 WORKDIR /app
 
 COPY --chown=node:node ./apps/api/docker-entrypoint.sh ./docker-entrypoint.sh

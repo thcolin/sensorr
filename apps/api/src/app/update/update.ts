@@ -27,7 +27,7 @@ const MANIFESTS = [
 
 export const versionOn = async (tag: string): Promise<string | null> => {
   const get = async (url: string, headers = {}) => {
-    const res = await fetch(url, { headers })
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) })
 
     if (!res.ok && res.status !== 404) {
       throw new Error(`GHCR answered ${res.status} for ${url.replace(REGISTRY, '')}`)
