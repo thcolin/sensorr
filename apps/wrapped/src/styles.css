@@ -275,9 +275,14 @@ ol {
   white-space: nowrap;
 }
 
-/* The look and the year sit together on the left, the share button on the right */
 .stories-bar .theme-switch:has(+ .edition-switch) {
+  min-width: 0;
   margin-right: 0;
+}
+
+.stories-bar .theme-switch:has(+ .edition-switch) select {
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 
 .stories[data-roomy] .stories-segments {
@@ -315,6 +320,7 @@ ol {
 }
 
 .stories-share[data-compact] {
+  flex-shrink: 0;
   justify-content: center;
   width: 44px;
   padding: 0;
