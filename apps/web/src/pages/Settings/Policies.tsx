@@ -32,7 +32,7 @@ export const PoliciesIntro = () => (
   <>Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.</>
 )
 
-export const PoliciesFields = ({ form, onSubmit, children }) => {
+export const PoliciesFields = ({ form, onSubmit, children, examples = [] }) => {
   const policies = useFieldArray({ name: 'policies', control: form.control })
   const policy = useForm({ defaultValues: { name: '', sorting: 'size', descending: false, require: {}, prefer: {}, avoid: {} } })
 
@@ -48,6 +48,23 @@ export const PoliciesFields = ({ form, onSubmit, children }) => {
           <PolicySettings form={policy} siblings={form.watch('policies')} behavior='create' />
         </div>
       </form>
+      {!!examples.length && (
+        <div sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingTop: 6 }}>
+          <small>Or start from</small>
+          {examples.map((example) => (
+            <Button
+              key={example.name}
+              type='button'
+              variant='outline'
+              color='gray'
+              disabled={(form.watch('policies') || []).some(({ name }) => name === example.name)}
+              onClick={() => policies.append(example)}
+            >
+              + {example.name}
+            </Button>
+          ))}
+        </div>
+      )}
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
       <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSubmit)}>
         <SortablePolicies
