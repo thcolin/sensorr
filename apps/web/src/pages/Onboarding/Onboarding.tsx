@@ -230,7 +230,7 @@ const Onboarding = () => {
       settings: '/settings/indexers',
       subtitle: <ZnabsIntro />,
       skippable: true,
-      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><ZnabsFields form={form} onSubmit={next}>{footer}</ZnabsFields></div>,
+      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><ZnabsFields form={form} onSubmit={next} guard={true}>{footer}</ZnabsFields></div>,
       submit: save,
     },
     {
@@ -242,7 +242,7 @@ const Onboarding = () => {
       settings: '/settings/policies',
       subtitle: <PoliciesIntro />,
       skippable: true,
-      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><PoliciesFields form={form} onSubmit={next} examples={policyExamplesOf(form.watch('region'))}>{footer}</PoliciesFields></div>,
+      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><PoliciesFields form={form} onSubmit={next} examples={policyExamplesOf(form.watch('region'))} guard={true}>{footer}</PoliciesFields></div>,
       submit: save,
     },
     {

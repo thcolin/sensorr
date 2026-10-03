@@ -32,7 +32,7 @@ export const PoliciesIntro = () => (
   <>Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.</>
 )
 
-export const PoliciesFields = ({ form, onSubmit, children, examples = [] }) => {
+export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard = false }) => {
   const policies = useFieldArray({ name: 'policies', control: form.control })
   const policy = useForm({ defaultValues: { name: '', sorting: 'size', descending: false, require: {}, prefer: {}, avoid: {} } })
 
@@ -66,7 +66,7 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [] }) => {
         </div>
       )}
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-      <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSubmit)}>
+      <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error('Add the policy with +, or clear its name') : onSubmit(values))}>
         <SortablePolicies
           policies={policies}
           form={form}
