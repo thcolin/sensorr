@@ -10,8 +10,8 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 - **Interactive installer**: a quick command-line installer that asks what it needs and leaves a
   running Sensorr behind, without editing files by hand.
 - **Onboarding**: what the first connection asks for, so that a fresh install reaches a
-  working library without editing files.
-- **Migration from 0.x**: bring a 0.x configuration and database over to the current format.
+  working library without editing files, and brings a 0.x configuration and database over.
+- **Dump and import**: dump the data of an instance and import it back, so that it stays yours.
 - **Online demo**: a public instance on demo data.
 - **Translations**: no hard-coded string left in the interface.
 
