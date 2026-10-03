@@ -16,6 +16,17 @@ import { Face } from './Face'
 const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
 const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
+export const FriendsIntro = () => (
+  <>
+    Fullfill your friends movie <Link to='/movie/requests'>requests</Link> on Sensorr by following their <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferrer noopener'>Plex "Watchlist"</a>.
+    Invite them as Sensorr guest, they will be asked to "link" their Plex account to the Sensorr server in order to keep a token for each of them to follow their Plex "Watchlist" regulary through <code>keep-in-touch</code> jobs.
+    <small>
+      <br/>
+      Note: You don't need to own a Plex Media Server to use this feature, just invite your friends who use Plex.
+    </small>
+  </>
+)
+
 const Friends = ({ ...props }) => {
   useTitle('Settings - Friends')
   const api = useAPI()
@@ -140,12 +151,7 @@ const Friends = ({ ...props }) => {
         <article>
           <h2>Friends</h2>
           <p>
-            Fullfill your friends movie <Link to='/movie/requests'>requests</Link> on Sensorr by following their <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferrer noopener'>Plex "Watchlist"</a>.
-            Invite them as Sensorr guest, they will be asked to "link" their Plex account to the Sensorr server in order to keep a token for each of them to follow their Plex "Watchlist" regulary through <code>keep-in-touch</code> jobs.
-            <small>
-              <br/>
-              Note: You don't need to own a Plex Media Server to use this feature, just invite your friends who use Plex.
-            </small>
+            <FriendsIntro />
           </p>
           <h3>Guests</h3>
           {loading && (
