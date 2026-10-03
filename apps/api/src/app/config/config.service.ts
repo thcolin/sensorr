@@ -12,6 +12,14 @@ import { migrateJobs, migrateLegacy } from './migrate'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 
+// A policy the page created has no `oldName`: renaming `undefined` would hand it every movie without a policy
+export const policyChangesOf = (policies?: any[]) => ({
+  renames: (policies || [])
+    .filter(policy => policy.oldName !== undefined && (policy.removed || policy.oldName !== policy.name))
+    .map(policy => ({ oldName: policy.oldName, newName: policy.removed ? null : policy.name })),
+  policies: policies && policies.filter(policy => !policy.removed).map(({ oldName, ...policy }) => policy),
+})
+
 @Injectable()
 export class ConfigService implements OnModuleInit {
   private readonly logger = new Logger(ConfigService.name)
@@ -109,16 +117,10 @@ export class ConfigService implements OnModuleInit {
     // The Settings pages post the whole config they loaded: the report job's cursor would go back with it.
     delete changes?.jobs?.report?.movies?.since
 
-    const renames = []
+    const { renames, policies } = policyChangesOf(changes.policies)
 
-    if (changes.policies && changes.policies.some(policy => policy.removed || (policy.oldName !== policy.name))) {
-      for (const policy of changes.policies) {
-        if (policy.removed || policy.oldName !== policy.name) {
-          renames.push({ oldName: policy.oldName, newName: policy.removed ? null : policy.name })
-        }
-      }
-
-      changes.policies = changes.policies.filter(policy => !policy.removed).map(({ oldName, ...policy }) => ({ ...policy }))
+    if (policies) {
+      changes.policies = policies
     }
 
     this.validate((candidate) => candidate.load(changes))
