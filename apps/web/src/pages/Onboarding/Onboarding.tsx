@@ -13,6 +13,7 @@ import { useSaveConfig } from '../Settings/Settings'
 import { TMDBFields, TMDBIntro } from '../Settings/TMDB'
 import { ZnabsFields, ZnabsIntro, znabsOf } from '../Settings/Znabs'
 import { BlackholeFields, BlackholeIntro } from '../Settings/Blackhole'
+import { PoliciesFields, PoliciesIntro, policiesOf } from '../Settings/Policies'
 import { errorOf } from '../Settings/Mail'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
@@ -112,7 +113,7 @@ const Onboarding = () => {
   const { config } = useConfigContext()
   const save = useSaveConfig()
   // The placeholder of config.default.json is not a key to show in the field
-  const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config) } })
+  const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) } })
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState('next')
   const [skipped, setSkipped] = useState([])
@@ -185,6 +186,17 @@ const Onboarding = () => {
       subtitle: <ZnabsIntro />,
       skippable: true,
       form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><ZnabsFields form={form} onSubmit={next}>{footer}</ZnabsFields></div>,
+      submit: save,
+    },
+    {
+      key: 'policies',
+      emblem: <EmojiEmblem emoji='📏' label='Policies' />,
+      emoji: '📏',
+      title: 'Policies',
+      settings: '/settings/policies',
+      subtitle: <PoliciesIntro />,
+      skippable: true,
+      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><PoliciesFields form={form} onSubmit={next}>{footer}</PoliciesFields></div>,
       submit: save,
     },
     {

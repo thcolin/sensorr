@@ -26,18 +26,13 @@ import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilte
 import { emojize, languages, useTitle } from '@sensorr/utils'
 import { rankOf, ranked, unranked } from '@sensorr/sensorr'
 
-const Policies = ({ ...props }) => {
-  useTitle('Settings - Policies')
-  const { onSave } = useOutletContext() as any
-  const { config } = useConfigContext()
+export const policiesOf = (config) => (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false }))
 
-  const form = useForm({
-    defaultValues: {
-      ...config.getProperties(),
-      policies: (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false })),
-    }
-  })
+export const PoliciesIntro = () => (
+  <>Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.</>
+)
 
+export const PoliciesFields = ({ form, onSubmit, children }) => {
   const policies = useFieldArray({ name: 'policies', control: form.control })
   const policy = useForm({ defaultValues: { name: '', sorting: 'size', descending: false, require: {}, prefer: {}, avoid: {} } })
 
@@ -47,13 +42,51 @@ const Policies = ({ ...props }) => {
   }, [policies.append, policy.reset])
 
   return (
+    <>
+      <form onSubmit={policy.handleSubmit(onAppend)}>
+        <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
+          <PolicySettings form={policy} siblings={form.watch('policies')} behavior='create' />
+        </div>
+      </form>
+      <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
+      <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSubmit)}>
+        <SortablePolicies
+          policies={policies}
+          form={form}
+          onSortEnd={({ from, to }) => {
+            if (from === 0 || to === 0) {
+              toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
+            }
+
+            policies.swap(from, to)
+          }}
+        />
+        {children}
+      </form>
+    </>
+  )
+}
+
+const Policies = ({ ...props }) => {
+  useTitle('Settings - Policies')
+  const { onSave } = useOutletContext() as any
+  const { config } = useConfigContext()
+
+  const form = useForm({
+    defaultValues: {
+      ...config.getProperties(),
+      policies: policiesOf(config),
+    }
+  })
+
+  return (
     <Body>
 
       <section>
         <article>
           <h2>Policies</h2>
           <p>
-            Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.
+            <PoliciesIntro />
           </p>
           <ul>
             <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
@@ -73,28 +106,11 @@ const Policies = ({ ...props }) => {
             <br/>
             The release with the highest total score is always chosen. In case of a tie, <code>sort</code> setting acts as the tie-breaker.
           </p>
-          <form onSubmit={policy.handleSubmit(onAppend)}>
-            <div sx={{ display: 'flex', flexDirection: 'column', paddingTop: 8 }}>
-              <PolicySettings form={policy} siblings={form.watch('policies')} behavior='create' />
-            </div>
-          </form>
-          <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-          <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit(onSave)}>
-            <SortablePolicies
-              policies={policies}
-              form={form}
-              onSortEnd={({ from, to }) => {
-                if (from === 0 || to === 0) {
-                  toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
-                }
-
-                policies.swap(from, to)
-              }}
-            />
+          <PoliciesFields form={form} onSubmit={onSave}>
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
             </div>
-          </form>
+          </PoliciesFields>
         </article>
       </section>
     </Body>
