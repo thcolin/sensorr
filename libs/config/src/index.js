@@ -68,6 +68,11 @@ const schema = {
       format: 'Boolean',
       default: false,
     },
+    defaultPassword: {
+      doc: 'Whether the password of .env is still sensorr, the default of the installer, set at boot',
+      format: 'Boolean',
+      default: false,
+    },
   },
   tmdb: {
     doc: 'TMDB API Key',

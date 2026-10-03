@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Query, Sse } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, Logger, OnApplicationBootstrap, Param, Post, Query, Sse, UploadedFile, UseInterceptors } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
 import { Observable } from 'rxjs'
 import { isJob } from '@sensorr/sensorr'
 import { JobsService } from './jobs.service'
@@ -37,6 +38,22 @@ export class JobsController implements OnApplicationBootstrap {
 
     try {
       const job = await this.sensorrService.runProcess(body.command, body.type)
+      return { success: true, job }
+    } catch (err) {
+      this.logger.error(err)
+      throw err instanceof HttpException ? err : new HttpException(err, 500)
+    }
+  }
+
+  @Post('migrate')
+  @UseInterceptors(FileInterceptor('archive'))
+  async runMigrate(@UploadedFile() archive) {
+    if (!archive?.buffer) {
+      throw new BadRequestException('No archive, send the 0.x dump as the "archive" field')
+    }
+
+    try {
+      const job = await this.sensorrService.runMigrate(archive.buffer)
       return { success: true, job }
     } catch (err) {
       this.logger.error(err)

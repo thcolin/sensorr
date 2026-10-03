@@ -3,6 +3,8 @@ import sanitizeFilename from 'sanitize-filename'
 import fs from 'fs/promises'
 import path from 'path'
 import cp from 'child_process'
+import os from 'os'
+import unzipper from 'unzipper'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Observable, Subject, merge, of, tap } from 'rxjs'
@@ -137,10 +139,29 @@ export class SensorrService {
       throw new NotFoundException(`Unknown Sensorr job "${name}"`)
     }
 
+    return this.spawn(name, [command, type].filter(Boolean), { command, type, cron })
+  }
+
+  // A 0.x dump is not a job of the schedule: it runs once, from the onboarding, and its archive goes once it exits
+  async runMigrate(buffer: Buffer) {
+    const entries = await unzipper.Open.buffer(buffer).then(({ files }) => files.map(({ path }) => path), () => [])
+
+    if (!entries.some((entry) => ['movies.txt', 'stars.txt'].includes(entry))) {
+      throw new UnprocessableEntityException('Not a 0.x dump, the archive has neither movies.txt nor stars.txt')
+    }
+
+    const archive = path.join(os.tmpdir(), `sensorr-migrate-${Date.now()}.zip`)
+    await fs.writeFile(archive, buffer)
+
+    return this.spawn('migrate', ['migrate', archive], { command: 'migrate', onClose: () => fs.rm(archive, { force: true }) })
+  }
+
+  private spawn(name: string, args: string[], { command, type, cron, onClose }: { command: string, type?: string, cron?: string, onClose?: () => void }) {
     const unlock = lockOf(this.running, name)
 
     if (!unlock) {
       this.logger.warn(`RunProcess "${name}" refused, it is already running` + (cron ? `, from cron "${cron}"` : ''))
+      onClose?.()
       return Promise.reject(new ConflictException(`Sensorr job "${name}" is already running`))
     }
 
@@ -148,7 +169,7 @@ export class SensorrService {
       let job
       let fulfilled = false
       this.logger.log(`RunProcess "${name}"` + (cron ? `, from cron "${cron}"` : ''))
-      const child = cp.spawn(SENSORR_BIN, [command, type].filter(Boolean))
+      const child = cp.spawn(SENSORR_BIN, args)
       child.stdout.on('data', (data) => {
         if (fulfilled) {
           return
@@ -172,6 +193,7 @@ export class SensorrService {
       child.on('error', (err) => {
         this.logger.log(`Command "${name}" error (${err})`)
         unlock()
+        onClose?.()
 
         if (!fulfilled) {
           fulfilled = true
@@ -181,6 +203,7 @@ export class SensorrService {
       child.on('close', code => {
         this.logger.log(`Command "${name}" exit (${code})`)
         unlock()
+        onClose?.()
 
         if (!fulfilled) {
           fulfilled = true
