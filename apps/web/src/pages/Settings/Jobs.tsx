@@ -11,11 +11,12 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
 import { JOB_GROUPS, nameOfEntry, useJobRunner } from '../../components/Sensorr/Jobs'
 
-const JobsSettings = ({ ...props }) => {
-  useTitle('Settings - Jobs')
+export const JobsIntro = () => (
+  <>Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually</>
+)
+
+export const JobsFields = ({ form }) => {
   const { config } = useConfigContext()
-  const { onSave } = useOutletContext() as any
-  const form = useForm({ defaultValues: config.getProperties() })
   const { process } = useJobsContext() as any
   const { runJob, stopJob, ongoing } = useJobRunner()
 
@@ -50,6 +51,36 @@ const JobsSettings = ({ ...props }) => {
   const requirements = { 'plex.token': plex, 'tautulli.url': tautulli, 'mail.host': mail }
 
   return (
+    <>
+      {JOB_GROUPS.map(({ label, jobs }) => (
+        <React.Fragment key={label}>
+          <h3>{label}</h3>
+          {jobs.map((value) => (
+            <JobSettings
+              key={nameOfEntry(value)}
+              {...value}
+              {...requirements[value.requires]}
+              running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
+              disabled={!!requirements[value.requires]?.disabled || ongoing.includes(nameOfEntry(value))}
+              runJob={runJob}
+              stopJob={stopJob}
+              control={form.control}
+              watch={form.watch}
+            />
+          ))}
+        </React.Fragment>
+      ))}
+    </>
+  )
+}
+
+const JobsSettings = ({ ...props }) => {
+  useTitle('Settings - Jobs')
+  const { config } = useConfigContext()
+  const { onSave } = useOutletContext() as any
+  const form = useForm({ defaultValues: config.getProperties() })
+
+  return (
     <Body>
       <section sx={JobsSettings.styles.element}>
         <article>
@@ -70,29 +101,12 @@ const JobsSettings = ({ ...props }) => {
           </p>
           <h2>Jobs</h2>
           <p>
-            Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
+            <JobsIntro />
           </p>
         </article>
         <article>
           <form onSubmit={form.handleSubmit(onSave)} >
-            {JOB_GROUPS.map(({ label, jobs }) => (
-              <React.Fragment key={label}>
-                <h3>{label}</h3>
-                {jobs.map((value) => (
-                  <JobSettings
-                    key={nameOfEntry(value)}
-                    {...value}
-                    {...requirements[value.requires]}
-                    running={Object.values(process).find((p: any) => p.command === value.command && p.type === value.type)}
-                    disabled={!!requirements[value.requires]?.disabled || ongoing.includes(nameOfEntry(value))}
-                    runJob={runJob}
-                    stopJob={stopJob}
-                    control={form.control}
-                    watch={form.watch}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
+            <JobsFields form={form} />
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
             </div>
