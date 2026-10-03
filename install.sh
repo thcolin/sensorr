@@ -124,12 +124,9 @@ fi
 
 if ! has SENSORR_PASSWORD; then
   while :; do
-    ask_hidden 'Password'
-    password=$answer
-    if [ -z "$password" ]; then
-      printf '  A password, please\n' >/dev/tty
-      continue
-    fi
+    ask_hidden 'Password [sensorr]'
+    password=${answer:-sensorr}
+    [ -n "$answer" ] || break
     quotable "$password" || continue
     ask_hidden 'Password, again'
     [ "$answer" = "$password" ] && break
