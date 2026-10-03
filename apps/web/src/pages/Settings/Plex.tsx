@@ -20,6 +20,7 @@ export const usePlexLink = () => {
 
     try {
       const pin = await api.fetch(uri, params, init)
+      config.set('plex.url', e.target.url.value)
       config.set('plex.pin', { id: pin.id, code: pin.code })
       setStep('pin')
     } catch (err) {
