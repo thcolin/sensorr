@@ -27,7 +27,6 @@ const clearStoredPin = () => {
   } catch (err) {}
 }
 
-// The emblem of a page sits on the mosaic, joined to Sensorr by a +; `step` slides the mosaic one notch per step
 export const Emblem = ({ icon, label }) => (
   <div sx={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
     <span sx={{ marginRight: 5 }}>
@@ -55,7 +54,6 @@ export const Splash = ({ emblem, step = 0 }) => (
   </div>
 )
 
-// The page around a splash: the splash on the left, the panel on the right, the panel first on a phone
 Splash.styles = {
   page: {
     flex: 1,

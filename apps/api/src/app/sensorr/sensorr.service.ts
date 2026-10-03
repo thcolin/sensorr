@@ -142,7 +142,6 @@ export class SensorrService {
     return this.spawn(name, [command, type].filter(Boolean), { command, type, cron })
   }
 
-  // A 0.x dump is not a job of the schedule: it runs once, from the onboarding, and its archive goes once it exits
   async runMigrate(buffer: Buffer) {
     const entries = await unzipper.Open.buffer(buffer).then(({ files }) => files.map(({ path }) => path), () => [])
 

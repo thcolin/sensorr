@@ -73,7 +73,7 @@ describe('migrateJobs', () => {
   })
 })
 
-// The shape `server/store/config.js` wrote on `thcolin/sensorr` 0.9 (`git show origin/legacy:server/store/config.js`)
+// The shape `server/store/config.js` of 0.9 wrote
 const legacy = () => ({
   disabled: false,
   tmdb: 'key',
