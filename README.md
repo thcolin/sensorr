@@ -51,7 +51,7 @@ curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/
 
 It asks for the install folder, `~/.sensorr` by default, the channel, the blackhole and shows folders, your username and password, `sensorr` and `sensorr` by default, the time zone, whether to [update from the app](#update-from-the-app), off by default, and your TMDB API key. It generates the auth secret and the database password, starts the stack, and gives the URL once the login works. Run it again in the same folder to repair an install: it keeps every value its `.env` holds, asks only for the missing ones, then pulls and restarts the stack.
 
-The first login opens an onboarding: TMDB, your indexers, a first policy, the blackhole, Plex, the jobs, your friends and mail. Only TMDB is required, every other step can be skipped and changed later in *Settings*.
+The first login opens an onboarding: TMDB, your indexers, a first policy, the blackhole, Plex, your friends and mail, then the jobs. Only TMDB is required, every other step can be skipped and changed later in *Settings*.
 
 ## Manual install
 
