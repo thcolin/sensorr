@@ -280,6 +280,8 @@ const PolicySettings = forwardRef<any, any>(({
     remove: {
       backgroundColor: 'error',
       color: 'whitePure',
+      borderTopLeftRadius: '0rem !important',
+      borderBottomLeftRadius: '0rem !important',
       '&:hover': {
         backgroundColor: 'errorDarker',
       },
