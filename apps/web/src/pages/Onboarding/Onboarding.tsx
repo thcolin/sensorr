@@ -22,6 +22,7 @@ import { errorOf, MailFields, MailIntro } from '../Settings/Mail'
 import { FriendsIntro } from '../Settings/Friends'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
+import { policyExamplesOf } from './policyExamples'
 
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
@@ -241,7 +242,7 @@ const Onboarding = () => {
       settings: '/settings/policies',
       subtitle: <PoliciesIntro />,
       skippable: true,
-      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><PoliciesFields form={form} onSubmit={next}>{footer}</PoliciesFields></div>,
+      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><PoliciesFields form={form} onSubmit={next} examples={policyExamplesOf(form.watch('region'))}>{footer}</PoliciesFields></div>,
       submit: save,
     },
     {
