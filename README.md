@@ -51,6 +51,8 @@ curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/
 
 It asks for the install folder, `~/.sensorr` by default, the channel, the blackhole and shows folders, your username and password, `sensorr` and `sensorr` by default, the time zone, whether to [update from the app](#update-from-the-app), off by default, and your TMDB API key. It generates the auth secret and the database password, starts the stack, and gives the URL once the login works. Run it again in the same folder to repair an install: it keeps every value its `.env` holds, asks only for the missing ones, then pulls and restarts the stack.
 
+The first login opens an onboarding: TMDB, your indexers, a first policy, the blackhole, Plex, the jobs, your friends and mail. Only TMDB is required, every other step can be skipped and changed later in *Settings*.
+
 ## Manual install
 
 ```sh
@@ -91,6 +93,15 @@ docker compose up -d
 # * https://localhost:5071
 # Use previously defined username/password to login
 ```
+
+## From 0.x
+
+Sensorr 0.x ran as the `thcolin/sensorr` image, its config mounted on `/app/sensorr/config` and its downloads on `/app/sensorr/blackhole`.
+
+1. In the 0.x, *Settings > Database > Dump* downloads a `.zip` of your movies and stars.
+2. Stop the 0.x container, it listens on `5070` too.
+3. Run the installer with the 0.x config folder as install folder, and its downloads folder as blackhole. The installer keeps the `config.json` it finds there, and the API converts it on its first boot: the TMDB key, the region, the indexers and the policy stay, the login moves to `.env`, Plex is linked again from the onboarding. The 0.x file is kept as `.secrets/config.json.bak`.
+4. On the first login, the onboarding asks where you come from: pick *From a 0.x* and send the `.zip`. It is imported by the `migrate` job once TMDB answers, follow it in *Jobs*. Movies keep their `wished` or `archived` state, stars become `followed`, and `ignored` movies are left behind.
 
 ## Series
 
