@@ -39,7 +39,7 @@ const EmojiEmblem = ({ emoji, label }) => (
 // A key the installer checked is valid: TMDB answers 401 on a wrong one, anything else keeps the key unchecked, as `install.sh` does
 const checkTMDB = async (key) => {
   try {
-    await new TMDB({ key }).fetch('configuration')
+    await new TMDB({ key }).fetch('configuration', {}, {}, true)
     return null
   } catch (err) {
     return /Invalid TMDB API key/.test(err.message) ? err.message : null
@@ -49,11 +49,11 @@ const checkTMDB = async (key) => {
 const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
   <>
     {config.get('onboarding.defaultPassword') && (
-      <p sx={{ ...Update.styles.warning, textAlign: 'left', marginBottom: 6 }}>
+      <p sx={{ ...Update.styles.warning, marginBottom: 6 }}>
         <strong>Warning</strong>, the password is still <code sx={{ variant: 'code.reset' }}>sensorr</code>: change <code sx={{ variant: 'code.reset' }}>SENSORR_PASSWORD</code> in the <code sx={{ variant: 'code.reset' }}>.env</code> of your install folder, then run <code sx={{ variant: 'code.reset' }}>docker compose up -d</code> there
       </p>
     )}
-    <div sx={{ display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left' }}>
+    <div sx={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Option type='radio' id='onboarding-fresh' name='onboarding-origin' checked={!legacy} onChange={() => setLegacy(false)}>
         <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
           <strong>New instance</strong>
@@ -70,7 +70,7 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
       </Option>
     </div>
     {legacy && (
-      <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6, textAlign: 'left' }}>
+      <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
         {config.get('onboarding.legacy') && (
           <small>
             Its <code>config.json</code> was converted at boot: {(config.get('znabs') || []).length} indexers and its policy are already set, Plex has to be linked again
@@ -92,7 +92,7 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
 )
 
 const End = ({ skipped, steps }) => (
-  <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, textAlign: 'left', '>li': { paddingY: 10 } }}>
+  <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingY: 10 } }}>
     {steps.filter(({ key }) => !['welcome', 'end'].includes(key)).map(({ key, title, settings }) => (
       <li key={key}>
         {skipped.includes(key) ? (
@@ -111,7 +111,8 @@ const Onboarding = () => {
   const navigate = useNavigate()
   const { config } = useConfigContext()
   const save = useSaveConfig()
-  const form = useForm({ defaultValues: { ...config.getProperties(), znabs: znabsOf(config) } })
+  // The placeholder of config.default.json is not a key to show in the field
+  const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config) } })
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState('next')
   const [skipped, setSkipped] = useState([])
@@ -183,7 +184,7 @@ const Onboarding = () => {
       settings: '/settings/indexers',
       subtitle: <ZnabsIntro />,
       skippable: true,
-      form: (footer) => <ZnabsFields form={form} onSubmit={next}>{footer}</ZnabsFields>,
+      form: (footer) => <div sx={{ width: '100%', textAlign: 'left' }}><ZnabsFields form={form} onSubmit={next}>{footer}</ZnabsFields></div>,
       submit: save,
     },
     {
@@ -194,7 +195,7 @@ const Onboarding = () => {
       settings: '/settings/blackhole',
       subtitle: <BlackholeIntro />,
       skippable: true,
-      content: <div sx={{ textAlign: 'left' }}><BlackholeFields form={form} /></div>,
+      content: <BlackholeFields form={form} />,
       submit: save,
     },
     {
@@ -249,7 +250,7 @@ const Onboarding = () => {
         <Button type='button' color='gray' variant='outline' onClick={skip} disabled={pending}>Skip</Button>
       )}
       <Button type='submit' color='primary' disabled={pending}>
-        {pending ? <Icon value='spinner' /> : last ? 'Open Sensorr' : 'Continue'}
+        {last ? 'Open Sensorr' : 'Continue'}
       </Button>
     </div>
   )
@@ -268,7 +269,7 @@ const Onboarding = () => {
             </Steps>
             <Warning key={current.key} data-direction={direction} emoji={current.emoji} title={current.title} subtitle={current.subtitle} sx={Onboarding.styles.step}>
               {current.form ? current.form(footer) : (
-                <form onSubmit={form.handleSubmit(next)} sx={{ width: '100%' }}>
+                <form onSubmit={form.handleSubmit(next)} sx={{ width: '100%', textAlign: 'left' }}>
                   {current.key === 'end' ? <End skipped={skipped} steps={steps} /> : current.content}
                   {footer}
                 </form>
