@@ -16,7 +16,7 @@ fail() {
 }
 
 # Under `curl | sh`, stdin is the script itself: answers come from the terminal
-[ -r /dev/tty ] || fail 'no terminal to ask from, run the installer from an interactive shell'
+( : </dev/tty ) 2>/dev/null || fail 'no terminal to ask from, run the installer from an interactive shell'
 trap 'stty echo </dev/tty 2>/dev/null || true' EXIT
 trap 'exit 130' INT TERM
 
@@ -46,9 +46,9 @@ ask_folder() {
       \~/*) answer=$HOME/${answer#\~/} ;;
     esac
     case $answer in
-      /*) return ;;
+      /*) quotable "$answer" && return ;;
+      *) printf '  An absolute path, please\n' >/dev/tty ;;
     esac
-    printf '  An absolute path, please\n' >/dev/tty
   done
 }
 
@@ -64,9 +64,11 @@ quotable() {
 
 has() { grep -q "^$1=" .env; }
 
-get() { sed -n "s/^$1=//p" .env | tail -n 1 | sed "s/^'\(.*\)'$/\1/"; }
+get() { sed -n "s/^$1=//p" .env | tr -d '\r' | tail -n 1 | sed "s/^'\(.*\)'$/\1/"; }
 
 set_value() { printf "%s='%s'\n" "$1" "$2" >>.env; }
+
+tag_of() { if [ "$1" = stable ]; then printf latest; else printf '%s' "$1"; fi; }
 
 random() { LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32; }
 
@@ -86,20 +88,21 @@ if [ -f .env ]; then
 else
   (umask 077 && : >.env)
 fi
+# An .env edited by hand may end without a newline, the next key would land on its last line
+[ -z "$(tail -c 1 .env)" ] || printf '\n' >>.env
 
 if ! has SENSORR_TAG; then
-  if docker manifest inspect "$IMAGE:latest" >/dev/null 2>&1; then
-    channel=stable
-  elif docker manifest inspect "$IMAGE:beta" >/dev/null 2>&1; then
-    channel=beta
-  else
-    channel=dev
-  fi
+  offered=
+  for channel in stable beta dev; do
+    if docker manifest inspect "$IMAGE:$(tag_of "$channel")" >/dev/null 2>&1; then
+      offered="$offered${offered:+, }$channel"
+    fi
+  done
+  [ -n "$offered" ] || fail "GHCR does not answer, no image of $IMAGE found"
   while :; do
-    ask 'Channel, stable, beta or dev' "$channel"
-    case $answer in
-      stable) printf 'SENSORR_TAG=latest\n' >>.env && break ;;
-      beta | dev) printf 'SENSORR_TAG=%s\n' "$answer" >>.env && break ;;
+    ask "Channel, $offered" "${offered%%,*}"
+    case ", $offered," in
+      *", $answer,"*) printf 'SENSORR_TAG=%s\n' "$(tag_of "$answer")" >>.env && break ;;
     esac
   done
 fi
@@ -136,13 +139,23 @@ if ! has SENSORR_PASSWORD; then
 fi
 
 has SENSORR_AUTH_SECRET || set_value SENSORR_AUTH_SECRET "$(random)"
-# Never generated again: the database keeps the password it was created with
-has SENSORR_DATABASE_PASSWORD || set_value SENSORR_DATABASE_PASSWORD "$(random)"
+# The database keeps the password it was created with, compose's default when .env had none
+if ! has SENSORR_DATABASE_PASSWORD; then
+  if [ -n "$(ls -A db 2>/dev/null)" ]; then
+    printf 'Existing database found, it keeps the default password\n'
+    set_value SENSORR_DATABASE_PASSWORD sensorr
+  else
+    set_value SENSORR_DATABASE_PASSWORD "$(random)"
+  fi
+fi
 
 if ! has TZ; then
   zone=$(readlink /etc/localtime 2>/dev/null | sed -n 's|.*zoneinfo/||p')
   [ -n "$zone" ] || zone=$(cat /etc/timezone 2>/dev/null || true)
-  ask 'Time zone' "${zone:-UTC}"
+  while :; do
+    ask 'Time zone' "${zone:-UTC}"
+    quotable "$answer" && break
+  done
   set_value TZ "$answer"
 fi
 
@@ -171,10 +184,14 @@ if [ ! -f config.json ]; then
     key=$answer
     [ -n "$key" ] || break
     case $key in
-      *[!A-Za-z0-9]*) ;;
-      *) curl -fsS -o /dev/null "https://api.themoviedb.org/3/configuration?api_key=$key" 2>/dev/null && break ;;
+      *[!A-Za-z0-9]*) status=401 ;;
+      *) status=$(curl -s -o /dev/null --max-time 10 -w '%{http_code}' "https://api.themoviedb.org/3/configuration?api_key=$key" || true) ;;
     esac
-    printf '  TMDB refused this key\n' >/dev/tty
+    case $status in
+      2??) break ;;
+      401) printf '  TMDB refused this key\n' >/dev/tty ;;
+      *) printf '  TMDB does not answer (HTTP %s), the key is kept unchecked\n' "$status" >/dev/tty && break ;;
+    esac
   done
   [ -z "$key" ] || sed "s/\"tmdb-api-key\"/\"$key\"/" config.json.tmp >config.json
   [ -f config.json ] || mv config.json.tmp config.json
@@ -188,10 +205,11 @@ docker compose pull
 docker compose up -d
 
 port=$(docker compose port sensorr-web 80 | sed 's/.*://')
+[ -n "$port" ] || fail 'sensorr-web publishes no port, see docker compose ps'
 printf 'Waiting for Sensorr to answer'
 tries=0
 while :; do
-  status=$(printf '%s' "$(get SENSORR_PASSWORD)" | curl -s -o /dev/null -w '%{http_code}' \
+  status=$(printf '%s' "$(get SENSORR_PASSWORD)" | curl -s --max-time 5 -o /dev/null -w '%{http_code}' \
     --data-urlencode "username=$(get SENSORR_USERNAME)" --data-urlencode 'password@-' \
     "http://localhost:$port/api/auth" || true)
   case $status in
@@ -199,7 +217,7 @@ while :; do
     401) printf '\n' && fail 'Sensorr refused the login of .env' ;;
   esac
   tries=$((tries + 1))
-  [ "$tries" -lt 100 ] || { printf '\n' && fail 'Sensorr did not answer in 5 minutes, see docker compose logs sensorr-api'; }
+  [ "$tries" -lt 100 ] || { printf '\n' && fail "Sensorr did not answer in 5 minutes, last HTTP status $status, see docker compose logs sensorr-api"; }
   printf '.'
   sleep 3
 done
