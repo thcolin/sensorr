@@ -22,10 +22,8 @@ import { FriendsIntro } from '../Settings/Friends'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
 
-// The route curve of DESIGN.md, Motion
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
-// A step slides a short way in from the side it comes from while it fades in, as a month of the Calendar does
 const STEP = {
   next: keyframes`from { opacity: 0; transform: translateX(2.5rem); } 50% { opacity: 1; }`,
   previous: keyframes`from { opacity: 0; transform: translateX(-2.5rem); } 50% { opacity: 1; }`,
@@ -41,7 +39,7 @@ const EmojiEmblem = ({ emoji, label }) => (
   <Emblem icon={<span sx={{ display: 'block', fontSize: '4em', lineHeight: 1 }}>{emoji}</span>} label={label} />
 )
 
-// A key the installer checked is valid: TMDB answers 401 on a wrong one, anything else keeps the key unchecked, as `install.sh` does
+// Only a 401 says the key is wrong: any other failure keeps it unchecked, as `install.sh` does
 const checkTMDB = async (key) => {
   try {
     await new TMDB({ key }).fetch('configuration', {}, {}, true)
@@ -116,7 +114,6 @@ const Onboarding = () => {
   const navigate = useNavigate()
   const { config } = useConfigContext()
   const save = useSaveConfig()
-  // The placeholder of config.default.json is not a key to show in the field
   const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) } })
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState('next')
@@ -388,7 +385,6 @@ Onboarding.styles = {
       },
     },
   },
-  // The emblem of the step rises on the mosaic while the mosaic slides a notch
   emblem: {
     flex: 1,
     display: 'flex',
@@ -397,7 +393,6 @@ Onboarding.styles = {
       animationName: `${STEP.fade}`,
     },
   },
-  // The browser draws the button of a file field, this one draws it as the outline gray Button of libs/ui
   file: {
     variant: 'input.default',
     fontFamily: 'monospace',

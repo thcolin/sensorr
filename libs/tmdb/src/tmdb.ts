@@ -66,7 +66,7 @@ export class TMDB {
       include_video: false,
     }
 
-    // `base` ends with a slash, and TMDB answers 404 on a doubled one for some ids (`3//movie/603`)
+    // `base` ends with a slash, and TMDB answers 404 on a doubled one
     return `${this.base}${uri.replace(/^\/+/, '')}?${qs.stringify(query)}`
   }
 

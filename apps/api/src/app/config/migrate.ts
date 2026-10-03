@@ -5,9 +5,8 @@ import defaults from './../../../../../config.default.json'
 
 const AXES = ['source', 'encoding', 'resolution', 'language', 'dub', 'flags']
 
-// A 0.x config.json (`thcolin/sensorr` up to 0.9) has `xznabs`, a single `policy` and its own `auth`.
-// It becomes a fresh one with what still applies: `auth` lives in .env now, `blackhole` is a compose mount,
-// `plex` is linked again from the onboarding, `filter` was stored but never read, and `custom` regexes have no axis.
+// `auth` lives in .env, `blackhole` is a compose mount and Plex is linked again from the onboarding;
+// 0.x stored `filter` without ever reading it, and its `custom` regexes have no axis to go to.
 export const migrateLegacy = (raw) => {
   if (raw?.znabs || !(raw?.xznabs || raw?.auth)) {
     return raw

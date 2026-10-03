@@ -7,7 +7,6 @@ import { useTitle } from '@sensorr/utils'
 
 const POLL_INTERVAL = 3000
 
-// The three steps of linking the Plex server, shared by Settings > Plex and the onboarding
 export const usePlexLink = () => {
   const { config } = useConfigContext()
   const api = useAPI()
