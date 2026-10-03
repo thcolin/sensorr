@@ -66,7 +66,8 @@ export class TMDB {
       include_video: false,
     }
 
-    return `${this.base}${uri}?${qs.stringify(query)}`
+    // `base` ends with a slash, and TMDB answers 404 on a doubled one for some ids (`3//movie/603`)
+    return `${this.base}${uri.replace(/^\/+/, '')}?${qs.stringify(query)}`
   }
 
   // TMDB tags some shows with a movie genre, History or Romance, that `genre/tv/list` does not carry
