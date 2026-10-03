@@ -86,7 +86,7 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
           accept='.zip,application/zip'
           aria-label='0.x dump'
           onChange={(e) => setArchive(e.target.files?.[0] || null)}
-          sx={{ variant: 'input.default', fontFamily: 'monospace' }}
+          sx={Onboarding.styles.file}
         />
         <small>
           The <code>.zip</code> the <strong>Dump</strong> button of a 0.x gives, in <code>Settings &#x3E; Database</code>. {archive ? `It is imported once TMDB answers, follow it in Jobs.` : ''}
@@ -395,6 +395,32 @@ Onboarding.styles = {
     animation: `${STEP.rise} 400ms ${EASING} both`,
     '@media (prefers-reduced-motion: reduce)': {
       animationName: `${STEP.fade}`,
+    },
+  },
+  // The browser draws the button of a file field, this one draws it as the outline gray Button of libs/ui
+  file: {
+    variant: 'input.default',
+    fontFamily: 'monospace',
+    '::file-selector-button': {
+      marginRight: 6,
+      paddingY: 8,
+      paddingX: 4,
+      fontFamily: 'body',
+      fontWeight: 'semibold',
+      fontSize: 5,
+      color: 'text',
+      background: 'none',
+      border: '0.125em solid',
+      borderColor: 'grayDark',
+      borderRadius: '0.25em',
+      cursor: 'pointer',
+      transition: 'border-color 200ms ease-in-out',
+    },
+    ':hover::file-selector-button': {
+      borderColor: 'grayDarker',
+    },
+    ':active::file-selector-button': {
+      borderColor: 'grayDarkest',
     },
   },
   footer: {
