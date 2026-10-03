@@ -147,8 +147,9 @@ const Onboarding = () => {
   const api = useAPI()
   const navigate = useNavigate()
   const { config } = useConfigContext()
-  const save = useSaveConfig()
-  const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) } })
+  const saveConfig = useSaveConfig()
+  const valuesOf = () => ({ ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) })
+  const form = useForm({ defaultValues: valuesOf() })
   const [step, setStep] = useState(() => {
     try {
       return Number(sessionStorage.getItem(STEP_KEY)) || 0
@@ -163,6 +164,13 @@ const Onboarding = () => {
   const [migration, setMigration] = useState(null)
   const [tmdbError, setTMDBError] = useState(null)
   const plex = usePlexLink()
+
+  // Plex and MediUX are written by their own endpoints: a step posting its loaded values would empty them.
+  // The form starts again from the config the API sent back, so a policy saved once is no longer new.
+  const save = async ({ plex, mediux, ...values }: any) => {
+    await saveConfig(values)
+    form.reset(valuesOf())
+  }
   const panel = useRef(null)
   const moved = useRef(false)
 
@@ -203,11 +211,6 @@ const Onboarding = () => {
       title: 'Welcome',
       subtitle: 'A few steps get this Sensorr searching: TMDB, your indexers, where releases go. Only TMDB is required, and everything stays in Settings afterwards',
       content: <Welcome config={config} legacy={legacy} setLegacy={setLegacy} archive={archive} setArchive={setArchive} />,
-      submit: async () => {
-        if (hasTMDBKey(config)) {
-          await migrate()
-        }
-      },
     },
     {
       key: 'tmdb',
