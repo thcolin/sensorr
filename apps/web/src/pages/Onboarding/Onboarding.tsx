@@ -326,8 +326,7 @@ const Onboarding = () => {
   return (
     <div sx={Splash.styles.page}>
       <LoadingBar />
-      <div sx={Splash.styles.wrapper}>
-        <Splash step={step} emblem={<div key={current.key} data-direction={direction} sx={Onboarding.styles.emblem}>{current.emblem}</div>} />
+      <div sx={Onboarding.styles.wrapper}>
         <div sx={Onboarding.styles.panel}>
           <div sx={Onboarding.styles.content}>
             <Steps value={step}>
@@ -353,12 +352,18 @@ const Onboarding = () => {
             )}
           </div>
         </div>
+        <Splash step={step} emblem={<div key={current.key} data-direction={direction} sx={Onboarding.styles.emblem}>{current.emblem}</div>} />
       </div>
     </div>
   )
 }
 
 Onboarding.styles = {
+  // The panel comes first, so a phone opens on it, at the top of the page
+  wrapper: {
+    ...Splash.styles.wrapper,
+    flexDirection: ['column', 'row-reverse'],
+  },
   panel: {
     flex: 1,
     display: 'flex',
