@@ -101,7 +101,7 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
 
 // What a step left in the config, read again on the recap: a Continue on an empty step sets nothing
 const statusOf = (key, config) => {
-  const count = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`
+  const count = (n, one, many = `${one}s`) => `${n} ${n > 1 ? many : one}`
   const jobs = Object.entries(JOBS).flatMap(([command, types]) => types.length ? types.map((type) => `jobs.${command}.${type}`) : [`jobs.${command}`])
 
   switch (key) {
@@ -110,7 +110,7 @@ const statusOf = (key, config) => {
     case 'indexers':
       return (config.get('znabs') || []).length ? count(config.get('znabs').length, 'indexer') : null
     case 'policies':
-      return (config.get('policies') || []).length ? count(config.get('policies').length, 'policy').replace('policys', 'policies') : null
+      return (config.get('policies') || []).length ? count(config.get('policies').length, 'policy', 'policies') : null
     case 'blackhole':
       return config.get('blackhole') ? 'set' : null
     case 'plex':
@@ -517,6 +517,9 @@ Onboarding.styles = {
   },
   setup: {
     variant: 'button.reset',
+    paddingY: 8,
+    paddingX: 6,
+    marginRight: -6,
     justifySelf: 'end',
     color: 'primary',
     fontWeight: 'semibold',

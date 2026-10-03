@@ -12,6 +12,37 @@ export const BlackholeIntro = () => (
 export const BlackholeFields = ({ form, compact = false }) => {
   const { config } = useConfigContext()
 
+  const shows = (
+    <>
+      <p>
+        Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
+      </p>
+      <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
+        {[
+          { name: 'shows.blackhole', label: 'Blackhole directory' },
+          { name: 'shows.staging', label: 'Staging directory' },
+          { name: 'shows.library', label: 'Library directory' },
+        ].map(({ name, label }) => (
+          <Controller
+            key={name}
+            name={name}
+            control={form.control}
+            rules={{ required: true }}
+            disabled={config.get('docker')}
+            render={({ field: { ref, ...field } }) => (
+              <Label label={label}>
+                <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+              </Label>
+            )}
+          />
+        ))}
+        {config.get('docker') && (
+          <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
+        )}
+      </div>
+    </>
+  )
+
   return (
     <>
       <h3>Movies</h3>
@@ -49,62 +80,12 @@ export const BlackholeFields = ({ form, compact = false }) => {
       {compact ? (
         <details sx={{ marginTop: 6, '>summary': { cursor: 'pointer', fontWeight: 'semibold', paddingY: 8 } }}>
           <summary>Shows</summary>
-          <p>
-            Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
-          </p>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
-            {[
-              { name: 'shows.blackhole', label: 'Blackhole directory' },
-              { name: 'shows.staging', label: 'Staging directory' },
-              { name: 'shows.library', label: 'Library directory' },
-            ].map(({ name, label }) => (
-              <Controller
-                key={name}
-                name={name}
-                control={form.control}
-                rules={{ required: true }}
-                disabled={config.get('docker')}
-                render={({ field: { ref, ...field } }) => (
-                  <Label label={label}>
-                    <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                  </Label>
-                )}
-              />
-            ))}
-            {config.get('docker') && (
-              <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
-            )}
-          </div>
+          {shows}
         </details>
       ) : (
         <>
           <h3>Shows</h3>
-          <p>
-            Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
-          </p>
-          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
-            {[
-              { name: 'shows.blackhole', label: 'Blackhole directory' },
-              { name: 'shows.staging', label: 'Staging directory' },
-              { name: 'shows.library', label: 'Library directory' },
-            ].map(({ name, label }) => (
-              <Controller
-                key={name}
-                name={name}
-                control={form.control}
-                rules={{ required: true }}
-                disabled={config.get('docker')}
-                render={({ field: { ref, ...field } }) => (
-                  <Label label={label}>
-                    <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                  </Label>
-                )}
-              />
-            ))}
-            {config.get('docker') && (
-              <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
-            )}
-          </div>
+          {shows}
         </>
       )}
     </>

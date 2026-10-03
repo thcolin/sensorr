@@ -227,7 +227,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                 </Option>
               )}
             />
-            {!compact && <Controller
+            <Controller
               name={`${key}.cron`}
               control={control}
               rules={{
@@ -265,7 +265,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                   }}
                 />
               )}
-            />}
+            />
           </React.Fragment>
         </div>
       )}
