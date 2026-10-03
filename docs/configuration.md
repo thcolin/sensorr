@@ -17,6 +17,13 @@ A `[]` in a name stands for one item of the array above it.
 | `region` | `string` | `fr-FR` | Sensorr region (usefull for TMDB requests) |
 | `adult` | `boolean` | `false` | Allow adult content from TMDB on Sensorr |
 
+## Onboarding
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `onboarding.done` | `boolean` | `false` | Whether the onboarding was finished or skipped, the app no longer opens it after login |
+| `onboarding.legacy` | `boolean` | `false` | Whether this config was converted from a 0.x one at boot, the app then opens the onboarding to bring the rest over |
+
 ## Shows
 
 | Name | Type | Default | Description |
