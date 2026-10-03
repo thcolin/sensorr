@@ -16,6 +16,7 @@ import { ZnabsFields, ZnabsIntro, znabsOf } from '../Settings/Znabs'
 import { BlackholeFields, BlackholeIntro } from '../Settings/Blackhole'
 import { PoliciesFields, PoliciesIntro, policiesOf } from '../Settings/Policies'
 import { PLEX_STEPS, usePlexLink } from '../Settings/Plex'
+import JobsSettings, { JobsFields, JobsIntro } from '../Settings/Jobs'
 import { errorOf } from '../Settings/Mail'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
@@ -235,6 +236,17 @@ const Onboarding = () => {
           throw new Error('Plex not linked')
         }
       },
+    },
+    {
+      key: 'jobs',
+      emblem: <EmojiEmblem emoji='⏰' label='Jobs' />,
+      emoji: '⏰',
+      title: 'Jobs',
+      settings: '/settings/jobs',
+      subtitle: <JobsIntro />,
+      skippable: true,
+      content: <div sx={JobsSettings.styles.element}><JobsFields form={form} /></div>,
+      submit: save,
     },
     {
       key: 'end',
