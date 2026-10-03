@@ -57,6 +57,18 @@ const schema = {
     format: 'String',
     default: null,
   },
+  onboarding: {
+    done: {
+      doc: 'Whether the onboarding was finished or skipped, the app no longer opens it after login',
+      format: 'Boolean',
+      default: false,
+    },
+    legacy: {
+      doc: 'Whether this config was converted from a 0.x one at boot, the app then opens the onboarding to bring the rest over',
+      format: 'Boolean',
+      default: false,
+    },
+  },
   tmdb: {
     doc: 'TMDB API Key',
     format: 'String',

@@ -8,7 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import { CronTime } from 'cron'
 import config, { create } from '@sensorr/config'
 import { JOBS } from '@sensorr/sensorr'
-import { migrateJobs } from './migrate'
+import { migrateJobs, migrateLegacy } from './migrate'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,11 +39,12 @@ export class ConfigService implements OnModuleInit {
     }
   }
 
-  // Runs before the file is loaded: convict would keep the old job keys next to the new ones.
+  // Runs before the file is loaded: convict would keep the old keys next to the new ones.
   // Compose mounts config.json alone but .secrets/ whole, so the copy goes there to outlive the container.
   private migrate() {
     const raw = JSON.parse(readFileSync(this.file, 'utf8'))
-    const migrated = migrateJobs(raw)
+    const legacy = migrateLegacy(raw)
+    const migrated = migrateJobs(legacy)
 
     if (migrated === raw) {
       return
@@ -54,7 +55,9 @@ export class ConfigService implements OnModuleInit {
     copyFileSync(this.file, backup)
     chmodSync(backup, 0o600)
     writeFileSync(this.file, JSON.stringify(migrated, null, 2))
-    this.logger.log(`Migrate jobs of "${this.file}" to jobs.<command>.<type>, previous file kept as "${backup}"`)
+    this.logger.log(legacy === raw
+      ? `Migrate jobs of "${this.file}" to jobs.<command>.<type>, previous file kept as "${backup}"`
+      : `Convert the 0.x config "${this.file}", previous file kept as "${backup}"`)
   }
 
   async get() {

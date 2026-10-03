@@ -1,4 +1,6 @@
-import { migrateJobs } from './migrate'
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import defaults from './../../../../../config.default.json'
+import { migrateJobs, migrateLegacy } from './migrate'
 
 const old = () => ({
   tmdb: 'key',
@@ -68,5 +70,73 @@ describe('migrateJobs', () => {
   it('leaves a config without jobs alone', () => {
     const raw = { tmdb: 'key' }
     expect(migrateJobs(raw)).toBe(raw)
+  })
+})
+
+// The shape `server/store/config.js` wrote on `thcolin/sensorr` 0.9 (`git show origin/legacy:server/store/config.js`)
+const legacy = () => ({
+  disabled: false,
+  tmdb: 'key',
+  blackhole: '/app/sensorr/blackhole',
+  xznabs: [
+    { name: 'ABN', url: 'http://jackett/api/v2.0/indexers/abn/results/torznab/', key: 'key', disabled: false },
+    { name: 'YGG', url: 'http://jackett/api/v2.0/indexers/ygg/results/torznab/', key: 'key', disabled: true },
+  ],
+  filter: 'resolution=720p|1080p',
+  policy: {
+    prefer: { resolution: ['1080p', '720p'], language: ['MULTI', 'FRENCH'], custom: ['^FR'], flags: ['REMUX', 'GONE'] },
+    avoid: { source: ['CAM', 'TS'], encoding: [] },
+  },
+  sort: 'size',
+  descending: false,
+  region: 'fr-FR',
+  adult: false,
+  auth: { username: 'sensorr', password: 'secret' },
+  plex: { url: 'http://plex:32400', pin: { code: 'ABCD', id: '1' }, token: 'token' },
+  logs: { limit: 10 },
+})
+
+describe('migrateLegacy', () => {
+  it('starts from config.default.json and keeps what still applies', () => {
+    const migrated = migrateLegacy(legacy())
+
+    expect(migrated).toEqual({
+      ...defaults,
+      tmdb: 'key',
+      region: 'fr-FR',
+      adult: false,
+      znabs: [
+        { name: 'ABN', url: 'http://jackett/api/v2.0/indexers/abn/results/torznab/', key: 'key', disabled: false },
+        { name: 'YGG', url: 'http://jackett/api/v2.0/indexers/ygg/results/torznab/', key: 'key', disabled: true },
+      ],
+      policies: [{
+        name: 'default',
+        sorting: 'size',
+        descending: false,
+        prefer: { source: [], encoding: [], resolution: ['1080p', '720p'], language: ['MULTi', 'FRENCH'], dub: [], flags: ['REMUX'] },
+        avoid: { source: ['CAM'], encoding: [], resolution: [], language: [], dub: [], flags: [] },
+      }],
+      onboarding: { done: false, legacy: true },
+    })
+  })
+
+  it('drops the keys the API no longer reads', () => {
+    const migrated = migrateLegacy(legacy())
+
+    for (const key of ['xznabs', 'policy', 'auth', 'filter', 'sort', 'descending', 'logs', 'disabled']) {
+      expect(migrated).not.toHaveProperty(key)
+    }
+    expect(migrated.blackhole).toBe(defaults.blackhole)
+    expect(migrated.plex).toEqual({})
+  })
+
+  it('keeps the placeholder key of config.default.json when the 0.x had none', () => {
+    expect(migrateLegacy({ ...legacy(), tmdb: '' }).tmdb).toBe(defaults.tmdb)
+  })
+
+  it('leaves a 1.x config alone', () => {
+    const raw = { ...old(), auth: { username: 'stray' } }
+    expect(migrateLegacy(raw)).toBe(raw)
+    expect(migrateLegacy(defaults)).toBe(defaults)
   })
 })
