@@ -24,6 +24,7 @@ export class ConfigService implements OnModuleInit {
     this.migrate()
     this.config.loadFile(this.file)
     this.config.set('docker', process.env.NX_API_DOCKER_ENV === 'true')
+    this.config.set('onboarding.defaultPassword', process.env.NX_SENSORR_PASSWORD === 'sensorr')
     this.config.set('vapidPublicKey', process.env.NX_SENSORR_VAPID_PUBLIC_KEY)
   }
 

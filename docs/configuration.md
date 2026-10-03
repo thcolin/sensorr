@@ -23,6 +23,7 @@ A `[]` in a name stands for one item of the array above it.
 | --- | --- | --- | --- |
 | `onboarding.done` | `boolean` | `false` | Whether the onboarding was finished or skipped, the app no longer opens it after login |
 | `onboarding.legacy` | `boolean` | `false` | Whether this config was converted from a 0.x one at boot, the app then opens the onboarding to bring the rest over |
+| `onboarding.defaultPassword` | `boolean` | `false` | Whether the password of .env is still sensorr, the default of the installer, set at boot |
 
 ## Shows
 

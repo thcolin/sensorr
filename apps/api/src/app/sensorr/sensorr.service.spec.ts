@@ -23,6 +23,20 @@ describe('SensorrService', () => {
     expect(metafileModel.deleteOne).toHaveBeenCalledWith({ _id: 'abc' })
   })
 
+  it('refuses an archive that is not a 0.x dump, and writes nothing', async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        SensorrService,
+        { provide: getModelToken(MetafileDocument.name), useValue: {} },
+        { provide: ConfigService, useValue: {} },
+      ],
+    }).compile()
+
+    const before = await fs.readdir(os.tmpdir())
+    await expect(module.get(SensorrService).runMigrate(Buffer.from('not a zip'))).rejects.toThrow('Not a 0.x dump')
+    expect((await fs.readdir(os.tmpdir())).filter((file) => file.startsWith('sensorr-migrate-') && !before.includes(file))).toEqual([])
+  })
+
   describe('downloadRelease of a magnet link', () => {
     const enclosure = 'magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8&dn=Dune+(2021)+%5B1080p%5D+%5BWEBRip%5D'
     const release = { title: 'Dune (2021) [1080p] [WEBRip]', znab: 'TPB', link: 'https://thepiratebay.org/description.php?id=53190554', enclosure } as any
