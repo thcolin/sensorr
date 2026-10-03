@@ -17,7 +17,8 @@ import { BlackholeFields, BlackholeIntro } from '../Settings/Blackhole'
 import { PoliciesFields, PoliciesIntro, policiesOf } from '../Settings/Policies'
 import { PLEX_STEPS, usePlexLink } from '../Settings/Plex'
 import JobsSettings, { JobsFields, JobsIntro } from '../Settings/Jobs'
-import { errorOf } from '../Settings/Mail'
+import { errorOf, MailFields, MailIntro } from '../Settings/Mail'
+import { FriendsIntro } from '../Settings/Friends'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
 
@@ -246,6 +247,26 @@ const Onboarding = () => {
       subtitle: <JobsIntro />,
       skippable: true,
       content: <div sx={JobsSettings.styles.element}><JobsFields form={form} /></div>,
+      submit: save,
+    },
+    {
+      key: 'friends',
+      emblem: <EmojiEmblem emoji='🍻' label='Friends' />,
+      emoji: '🍻',
+      title: 'Friends',
+      settings: '/settings/friends',
+      subtitle: <FriendsIntro />,
+      skippable: true,
+      content: (
+        <>
+          <p>
+            Share <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a> with them, or set up Mail below to invite them from <code>Settings &#x3E; Friends</code>.
+          </p>
+          <h3>Mail</h3>
+          <p><MailIntro /></p>
+          <MailFields form={form} />
+        </>
+      ),
       submit: save,
     },
     {

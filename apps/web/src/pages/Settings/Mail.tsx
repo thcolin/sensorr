@@ -24,6 +24,125 @@ export const errorOf = async (err) => {
   }
 }
 
+export const MailIntro = () => (
+  <>Sensorr mails your friends: their invitation, a welcome once their Plex account is linked, a reminder when Plex disconnects it, their requests ready to watch and their wrapped. Any SMTP server works, the one of your mail provider included.</>
+)
+
+export const MailFields = ({ form }) => (
+  <>
+      <div sx={Mail.styles.field}>
+        <Controller
+          name='mail.url'
+          control={form.control}
+          rules={{ required: true }}
+          render={({ field: { ref, ...field } }) => (
+            <Label label='Address of Sensorr'>
+              <input type='url' {...field} placeholder='https://sensorr.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+            </Label>
+          )}
+        />
+        <small sx={{ marginTop: 6 }}>The one your friends open from home, every link of a mail starts with it, like <code>{document.location.origin}</code> if they reach this page there</small>
+      </div>
+      <div sx={Mail.styles.row}>
+        <div sx={{ ...Mail.styles.field, flex: 3 }}>
+          <Controller
+            name='mail.host'
+            control={form.control}
+            rules={{ required: true }}
+            render={({ field: { ref, ...field } }) => (
+              <Label label='SMTP host'>
+                <input type='text' {...field} placeholder='smtp.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+              </Label>
+            )}
+          />
+        </div>
+        <div sx={{ ...Mail.styles.field, flex: 1 }}>
+          <Controller
+            name='mail.port'
+            control={form.control}
+            rules={{ required: true }}
+            render={({ field: { ref, onChange, ...field } }) => (
+              <Label label='Port'>
+                <input type='number' min={1} max={65535} {...field} onChange={(e) => onChange(Number(e.target.value))} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+              </Label>
+            )}
+          />
+        </div>
+      </div>
+      <div sx={Mail.styles.field}>
+        <Controller
+          name='mail.secure'
+          control={form.control}
+          render={({ field: { value, onChange } }) => (
+            <Option type='checkbox' id='mail.secure' checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
+              <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                <strong>{emojize('🔒', 'TLS from the start')}</strong>
+                <br />
+                <small>Usually on port <code>465</code>. Off, the connection still upgrades to TLS when the server offers it, usually on port <code>587</code></small>
+              </div>
+            </Option>
+          )}
+        />
+      </div>
+      <div sx={Mail.styles.row}>
+        <div sx={{ ...Mail.styles.field, flex: 1 }}>
+          <Controller
+            name='mail.user'
+            control={form.control}
+            render={({ field: { ref, ...field } }) => (
+              <Label label='Username'>
+                <input type='text' autoComplete='off' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
+              </Label>
+            )}
+          />
+        </div>
+        <div sx={{ ...Mail.styles.field, flex: 1 }}>
+          <Controller
+            name='mail.password'
+            control={form.control}
+            render={({ field: { ref, ...field } }) => (
+              <Label label='Password'>
+                <input type='password' autoComplete='new-password' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
+              </Label>
+            )}
+          />
+        </div>
+      </div>
+      <div sx={Mail.styles.field}>
+        <Controller
+          name='mail.from'
+          control={form.control}
+          rules={{ required: true }}
+          render={({ field: { ref, ...field } }) => (
+            <Label label='Sender'>
+              <input type='text' {...field} placeholder='Thomas <sensorr@example.com>' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+            </Label>
+          )}
+        />
+        <small sx={{ marginTop: 6 }}>Its name is the one your friends read in every mail, give yours</small>
+      </div>
+      <h3>Sent on their own</h3>
+      <p>An invitation, a test, or a mail sent from <code>Friends</code> always goes.</p>
+      {SENT.map(({ key, emoji, label, description }) => (
+        <div key={key} sx={{ paddingY: 10 }}>
+          <Controller
+            name={`mail.send.${key}`}
+            control={form.control}
+            render={({ field: { value, onChange } }) => (
+              <Option type='checkbox' id={`mail.send.${key}`} checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
+                <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                  <strong>{emojize(emoji, label)}</strong>
+                  <br />
+                  <small>{description}</small>
+                </div>
+              </Option>
+            )}
+          />
+        </div>
+      ))}
+  </>
+)
+
 const Mail = ({ ...props }) => {
   useTitle('Settings - Mail')
   const { onSave } = useOutletContext() as any
@@ -53,118 +172,9 @@ const Mail = ({ ...props }) => {
       <section>
         <article>
           <h2>Mail</h2>
-          <p>Sensorr mails your friends: their invitation, a welcome once their Plex account is linked, a reminder when Plex disconnects it, their requests ready to watch and their wrapped. Any SMTP server works, the one of your mail provider included.</p>
+          <p><MailIntro /></p>
           <form onSubmit={form.handleSubmit(onSave)}>
-            <div sx={Mail.styles.field}>
-              <Controller
-                name='mail.url'
-                control={form.control}
-                rules={{ required: true }}
-                render={({ field: { ref, ...field } }) => (
-                  <Label label='Address of Sensorr'>
-                    <input type='url' {...field} placeholder='https://sensorr.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                  </Label>
-                )}
-              />
-              <small sx={{ marginTop: 6 }}>The one your friends open from home, every link of a mail starts with it, like <code>{document.location.origin}</code> if they reach this page there</small>
-            </div>
-            <div sx={Mail.styles.row}>
-              <div sx={{ ...Mail.styles.field, flex: 3 }}>
-                <Controller
-                  name='mail.host'
-                  control={form.control}
-                  rules={{ required: true }}
-                  render={({ field: { ref, ...field } }) => (
-                    <Label label='SMTP host'>
-                      <input type='text' {...field} placeholder='smtp.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                    </Label>
-                  )}
-                />
-              </div>
-              <div sx={{ ...Mail.styles.field, flex: 1 }}>
-                <Controller
-                  name='mail.port'
-                  control={form.control}
-                  rules={{ required: true }}
-                  render={({ field: { ref, onChange, ...field } }) => (
-                    <Label label='Port'>
-                      <input type='number' min={1} max={65535} {...field} onChange={(e) => onChange(Number(e.target.value))} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                    </Label>
-                  )}
-                />
-              </div>
-            </div>
-            <div sx={Mail.styles.field}>
-              <Controller
-                name='mail.secure'
-                control={form.control}
-                render={({ field: { value, onChange } }) => (
-                  <Option type='checkbox' id='mail.secure' checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
-                    <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                      <strong>{emojize('🔒', 'TLS from the start')}</strong>
-                      <br />
-                      <small>Usually on port <code>465</code>. Off, the connection still upgrades to TLS when the server offers it, usually on port <code>587</code></small>
-                    </div>
-                  </Option>
-                )}
-              />
-            </div>
-            <div sx={Mail.styles.row}>
-              <div sx={{ ...Mail.styles.field, flex: 1 }}>
-                <Controller
-                  name='mail.user'
-                  control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <Label label='Username'>
-                      <input type='text' autoComplete='off' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
-                    </Label>
-                  )}
-                />
-              </div>
-              <div sx={{ ...Mail.styles.field, flex: 1 }}>
-                <Controller
-                  name='mail.password'
-                  control={form.control}
-                  render={({ field: { ref, ...field } }) => (
-                    <Label label='Password'>
-                      <input type='password' autoComplete='new-password' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
-                    </Label>
-                  )}
-                />
-              </div>
-            </div>
-            <div sx={Mail.styles.field}>
-              <Controller
-                name='mail.from'
-                control={form.control}
-                rules={{ required: true }}
-                render={({ field: { ref, ...field } }) => (
-                  <Label label='Sender'>
-                    <input type='text' {...field} placeholder='Thomas <sensorr@example.com>' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-                  </Label>
-                )}
-              />
-              <small sx={{ marginTop: 6 }}>Its name is the one your friends read in every mail, give yours</small>
-            </div>
-            <h3>Sent on their own</h3>
-            <p>An invitation, a test, or a mail sent from <code>Friends</code> always goes.</p>
-            {SENT.map(({ key, emoji, label, description }) => (
-              <div key={key} sx={{ paddingY: 10 }}>
-                <Controller
-                  name={`mail.send.${key}`}
-                  control={form.control}
-                  render={({ field: { value, onChange } }) => (
-                    <Option type='checkbox' id={`mail.send.${key}`} checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
-                      <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                        <strong>{emojize(emoji, label)}</strong>
-                        <br />
-                        <small>{description}</small>
-                      </div>
-                    </Option>
-                  )}
-                />
-              </div>
-            ))}
+            <MailFields form={form} />
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
             </div>
