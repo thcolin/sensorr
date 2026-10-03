@@ -11,7 +11,7 @@ import { useTitle } from '@sensorr/utils'
 
 export const znabsOf = (config) => (config.get('znabs') || []).map(znab => ({ ...znab, oldName: znab.name }))
 
-export const ZnabsFields = ({ form, onSubmit, children }) => {
+export const ZnabsFields = ({ form, onSubmit, children, guard = false }) => {
   const znabs = useFieldArray({ name: 'znabs', control: form.control })
   const znab = useForm({ defaultValues: { name: '', url:'', key:'' } })
 
@@ -36,7 +36,7 @@ export const ZnabsFields = ({ form, onSubmit, children }) => {
         </li>
       </ul>
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit((values) => (guard && Object.values(znab.getValues()).some(Boolean)) ? toast.error('Add the indexer with +, or clear its row') : onSubmit(values))}>
         <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
           {znabs.fields.map((znab: any, index) => (
             <ZnabSettings key={znab.id} form={form} prefix={`znabs[${index}]`} index={index} remove={znabs.remove} />
