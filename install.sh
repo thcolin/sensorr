@@ -42,8 +42,8 @@ ask_folder() {
   while :; do
     ask "$1" "$2"
     case $answer in
-      \~) answer=$HOME ;;
-      \~/*) answer=$HOME/${answer#\~/} ;;
+      \~) answer=$home ;;
+      \~/*) answer=$home/${answer#\~/} ;;
     esac
     case $answer in
       /*) quotable "$answer" && return ;;
@@ -81,7 +81,14 @@ main() {
 
   printf 'Sensorr installer\n\n'
 
-  ask_folder 'Install folder' "$HOME/.sensorr"
+  # Under sudo, HOME is often root's: the install goes to the home of the user who ran sudo
+  home=$HOME
+  if [ "$(id -u)" = 0 ] && [ -n "${SUDO_USER:-}" ]; then
+    eval "home=~$SUDO_USER"
+    printf 'Running under sudo, the files will belong to root\n'
+  fi
+
+  ask_folder 'Install folder' "$home/.sensorr"
   mkdir -p "$answer"
   cd "$answer"
 
@@ -163,7 +170,7 @@ main() {
   fi
 
   if ! has COMPOSE_PROFILES; then
-    ask 'Update from Settings > Update? It gives sensorr-updater the Docker socket, y or n' 'y'
+    ask 'Update from Settings > Update? It gives sensorr-updater the Docker socket, root on this host, y or n' 'n'
     case $answer in
       y | Y | yes) printf 'COMPOSE_PROFILES=updater\n' >>.env ;;
       *) printf 'COMPOSE_PROFILES=\n' >>.env ;;
