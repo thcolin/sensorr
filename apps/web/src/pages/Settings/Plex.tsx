@@ -7,26 +7,11 @@ import { useTitle } from '@sensorr/utils'
 
 const POLL_INTERVAL = 3000
 
-const UIPlex = ({ ...props }) => {
-  useTitle('Settings - Plex')
+// The three steps of linking the Plex server, shared by Settings > Plex and the onboarding
+export const usePlexLink = () => {
   const { config } = useConfigContext()
   const api = useAPI()
   const [registering, setRegistering] = useState(false)
-
-  const handleMediux = useCallback(async (e) => {
-    e.preventDefault()
-    const value = e.target.elements.mediux.value.trim()
-
-    try {
-      const { uri, params, init } = api.query.config.putConfig({ body: { key: 'mediux.token', value } })
-      await api.fetch(uri, params, init)
-      config.set('mediux.token', value)
-      toast.success(value ? 'MediUX token saved' : 'MediUX token removed')
-    } catch (err) {
-      console.warn(err)
-      toast.error('Error while saving the MediUX token')
-    }
-  }, [])
   const [step, setStep] = useState(config.get('plex.token') ? 'token' : config.get('plex.url') ? 'pin' : 'url')
 
   const handleRegister = useCallback(async (e) => {
@@ -139,6 +124,105 @@ const UIPlex = ({ ...props }) => {
     }
   }, [])
 
+  return { step, registering, handleRegister, handleReset }
+}
+
+export const PlexServerInputs = ({ link }) => {
+  const { config } = useConfigContext()
+
+  return (
+    <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <form onSubmit={link.handleRegister} sx={UIPlex.styles.inputs}>
+        <input name='url' type='url' placeholder='http://192.168.0.42:32400' defaultValue={config.get('plex.url')} disabled={link.step !== 'url'} />
+        <button type='submit' disabled={link.step !== 'url'}>Register</button>
+      </form>
+      {link.registering && (
+        <Icon value='spinner' sx={{ position: 'absolute', bottom: '-1em' }} />
+      )}
+    </div>
+  )
+}
+
+export const PlexPinInputs = ({ link }) => {
+  const { config } = useConfigContext()
+
+  return (
+    <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <div sx={UIPlex.styles.inputs}>
+        <label>PIN</label>
+        <input type='text' value={config.get('plex.pin.code')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
+        <button
+          type='button'
+          onClick={() =>  {
+            navigator.clipboard.writeText(config.get('plex.pin.code'))
+            toast.success('PIN copied to clipboard !')
+          }}
+          disabled={link.step !== 'pin'}
+        >
+          Copy
+        </button>
+      </div>
+      {link.step === 'pin' && (
+        <Icon value='spinner' sx={{ position: 'absolute', bottom: '-1em' }} />
+      )}
+    </div>
+  )
+}
+
+export const PlexTokenInputs = ({ link }) => {
+  const { config } = useConfigContext()
+
+  return (
+    <div sx={UIPlex.styles.inputs}>
+      <label>Token</label>
+      <input type='text' value={config.get('plex.token')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
+      <button type='button' onClick={link.handleReset} disabled={link.step !== 'token'}>Unregister</button>
+    </div>
+  )
+}
+
+export const PLEX_STEPS: { [step: string]: { emoji: string, title: string, subtitle: (step: string) => React.ReactNode, Inputs: (props: { link: any }) => React.ReactElement } } = {
+  url: {
+    emoji: '📡',
+    title: 'Your Plex Server',
+    subtitle: () => 'Connect your Plex server to enable library synchronization between your Plex library and Sensorr movies releases',
+    Inputs: PlexServerInputs,
+  },
+  pin: {
+    emoji: '🔑',
+    title: 'Authorize Sensorr',
+    subtitle: (step) => <span>Complete your Plex server registration with Sensorr on <a href={step === 'pin' ? 'https://plex.tv/pin' : null} target='_blank' rel='norefer noopener' sx={{ color: 'accentDarkest' }}>Plex website</a> using 4-character PIN code below</span>,
+    Inputs: PlexPinInputs,
+  },
+  token: {
+    emoji: '🔗',
+    title: 'Plex Server Linked !',
+    subtitle: () => <span>The connection between your Plex Server and Sensorr is now successful, you're now able to sync your Plex movie library with <code sx={{ backgroundColor: 'accent', paddingY: 11, paddingX: 9, borderRadius: '0.25em' }}>sync</code> job</span>,
+    Inputs: PlexTokenInputs,
+  },
+}
+
+const UIPlex = ({ ...props }) => {
+  useTitle('Settings - Plex')
+  const { config } = useConfigContext()
+  const api = useAPI()
+  const handleMediux = useCallback(async (e) => {
+    e.preventDefault()
+    const value = e.target.elements.mediux.value.trim()
+
+    try {
+      const { uri, params, init } = api.query.config.putConfig({ body: { key: 'mediux.token', value } })
+      await api.fetch(uri, params, init)
+      config.set('mediux.token', value)
+      toast.success(value ? 'MediUX token saved' : 'MediUX token removed')
+    } catch (err) {
+      console.warn(err)
+      toast.error('Error while saving the MediUX token')
+    }
+  }, [])
+  const link = usePlexLink()
+  const { step } = link
+
   return (
     <div
       sx={{
@@ -190,64 +274,28 @@ const UIPlex = ({ ...props }) => {
       <div sx={{ opacity: step === 'url' ? 1 : 0.5 }}>
         <div sx={UIPlex.styles.step}>1</div>
         <Warning
-          emoji='📡'
-          title='Your Plex Server'
-          subtitle='Connect your Plex server to enable library synchronization between your Plex library and Sensorr movies releases'
-          children={(
-            <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <form onSubmit={handleRegister} sx={UIPlex.styles.inputs}>
-                <input name='url' type='url' placeholder='http://192.168.0.42:32400' defaultValue={config.get('plex.url')} disabled={step !== 'url'} />
-                <button type='submit' disabled={step !== 'url'}>Register</button>
-              </form>
-              {registering && (
-                <Icon value='spinner' sx={{ position: 'absolute', bottom: '-1em' }} />
-              )}
-            </div>
-          )}
+          emoji={PLEX_STEPS.url.emoji}
+          title={PLEX_STEPS.url.title}
+          subtitle={PLEX_STEPS.url.subtitle(step)}
+          children={<PLEX_STEPS.url.Inputs link={link} />}
         />
       </div>
       <div sx={{ opacity: step === 'pin' ? 1 : 0.5 }}>
         <div sx={UIPlex.styles.step}>2</div>
         <Warning
-          emoji='🔑'
-          title='Authorize Sensorr'
-          subtitle={<span>Complete your Plex server registration with Sensorr on <a href={step === 'pin' ? 'https://plex.tv/pin' : null} target='_blank' rel='norefer noopener' sx={{ color: 'accentDarkest' }}>Plex website</a> using 4-character PIN code below</span>}
-          children={(
-            <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div sx={UIPlex.styles.inputs}>
-                <label>PIN</label>
-                <input type='text' value={config.get('plex.pin.code')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
-                <button
-                  type='button'
-                  onClick={() =>  {
-                    navigator.clipboard.writeText(config.get('plex.pin.code'))
-                    toast.success('PIN copied to clipboard !')
-                  }}
-                  disabled={step !== 'pin'}
-                >
-                  Copy
-                </button>
-              </div>
-              {step === 'pin' && (
-                <Icon value='spinner' sx={{ position: 'absolute', bottom: '-1em' }} />
-              )}
-            </div>
-          )}
+          emoji={PLEX_STEPS.pin.emoji}
+          title={PLEX_STEPS.pin.title}
+          subtitle={PLEX_STEPS.pin.subtitle(step)}
+          children={<PLEX_STEPS.pin.Inputs link={link} />}
         />
       </div>
       <div sx={{ opacity: step === 'token' ? 1 : 0.5 }}>
         <div sx={UIPlex.styles.step}>3</div>
         <Warning
-          emoji='🔗'
-          title='Plex Server Linked !'
-          subtitle={<span>The connection between your Plex Server and Sensorr is now successful, you're now able to sync your Plex movie library with <code sx={{ backgroundColor: 'accent', paddingY: 11, paddingX: 9, borderRadius: '0.25em' }}>sync</code> job</span>}
-          children={(
-            <div sx={UIPlex.styles.inputs}>
-              <label>Token</label>
-              <input type='text' value={config.get('plex.token')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
-              <button type='button' onClick={handleReset} disabled={step !== 'token'}>Unregister</button>
-            </div>
-          )}
+          emoji={PLEX_STEPS.token.emoji}
+          title={PLEX_STEPS.token.title}
+          subtitle={PLEX_STEPS.token.subtitle(step)}
+          children={<PLEX_STEPS.token.Inputs link={link} />}
         />
       </div>
       <div>

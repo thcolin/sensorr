@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { keyframes } from '@emotion/react'
@@ -14,6 +15,7 @@ import { TMDBFields, TMDBIntro } from '../Settings/TMDB'
 import { ZnabsFields, ZnabsIntro, znabsOf } from '../Settings/Znabs'
 import { BlackholeFields, BlackholeIntro } from '../Settings/Blackhole'
 import { PoliciesFields, PoliciesIntro, policiesOf } from '../Settings/Policies'
+import { PLEX_STEPS, usePlexLink } from '../Settings/Plex'
 import { errorOf } from '../Settings/Mail'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
@@ -122,6 +124,8 @@ const Onboarding = () => {
   const [archive, setArchive] = useState(null)
   const [migration, setMigration] = useState(null)
   const [tmdbError, setTMDBError] = useState(null)
+  const plex = usePlexLink()
+  const PlexInputs = PLEX_STEPS[plex.step].Inputs
 
   // `migrate` asks TMDB for every movie of the dump, so the archive waits for a working key
   const migrate = useCallback(async () => {
@@ -209,6 +213,28 @@ const Onboarding = () => {
       skippable: true,
       content: <BlackholeFields form={form} />,
       submit: save,
+    },
+    {
+      key: 'plex',
+      emblem: <Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />,
+      emoji: PLEX_STEPS[plex.step].emoji,
+      title: PLEX_STEPS[plex.step].title,
+      settings: '/settings/plex',
+      subtitle: PLEX_STEPS[plex.step].subtitle(plex.step),
+      skippable: true,
+      // The server persists every step of the link itself, Continue only checks it is done
+      form: (footer) => (
+        <div sx={{ width: '100%' }}>
+          <PlexInputs link={plex} />
+          <form onSubmit={form.handleSubmit(next)}>{footer}</form>
+        </div>
+      ),
+      submit: async () => {
+        if (plex.step !== 'token') {
+          toast.error('Link your Plex server, or skip this step')
+          throw new Error('Plex not linked')
+        }
+      },
     },
     {
       key: 'end',
