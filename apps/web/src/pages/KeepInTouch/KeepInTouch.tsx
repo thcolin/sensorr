@@ -27,6 +27,81 @@ const clearStoredPin = () => {
   } catch (err) {}
 }
 
+// The emblem of a page sits on the mosaic, joined to Sensorr by a +; `step` slides the mosaic one notch per step
+export const Emblem = ({ icon, label }) => (
+  <div sx={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+    <span sx={{ marginRight: 5 }}>
+      {icon}
+      <span sx={{ position: 'absolute', display: 'block', marginLeft: 4, marginTop: 8, fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>{label}</span>
+    </span>
+    <span sx={{ fontSize: '2em', paddingLeft: 8, paddingRight: 4, fontFamily: 'monospace' }}>
+      +
+    </span>
+    <span>
+      <span sx={{ fontSize: '4em', height: '' }}>🍿</span>
+      <br/>
+      <span sx={{ display: 'block', marginBottom: '-12px', paddingTop: '7px', fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>sensorr</span>
+    </span>
+  </div>
+)
+
+export const Splash = ({ emblem, step = 0 }) => (
+  <div sx={Splash.styles.element} style={{ '--step': step } as any}>
+    {emblem}
+    <div sx={{ width: '100%' }}>
+      <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
+      <p>A Friendly Digital Video Recorder. Think VCR but in modern times.</p>
+    </div>
+  </div>
+)
+
+// The page around a splash: the splash on the left, the panel on the right, the panel first on a phone
+Splash.styles = {
+  page: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'grayLightest',
+    overflow: 'hidden',
+  },
+  wrapper: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: ['column-reverse', 'row'],
+    overflow: ['scroll', 'hidden'],
+  },
+  element: {
+    flex: 1,
+    minHeight: '20em',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    position: 'relative',
+    padding: '1em 2em',
+    overflow: 'hidden',
+    zIndex: 0,
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      width: '200%',
+      height: '200%',
+      top: '-50%',
+      left: '-50%',
+      flex: 1,
+      backgroundImage: "url('https://i.pinimg.com/originals/3c/f6/56/3cf656908a2481110485bac3bf1297d9.jpg')",
+      backgroundPosition: 'calc(50% - var(--step) * 12em) center',
+      backgroundSize: '75%',
+      transform: 'rotate(30deg)',
+      transition: 'background-position 800ms ease-in-out',
+      '@media (prefers-reduced-motion: reduce)': {
+        transition: 'none',
+      },
+      opacity: 0.25,
+      zIndex: -1,
+    },
+  },
+}
+
 const KeepInTouch = () => {
   useTitle('Keep in touch')
   const api = useAPI()
@@ -142,29 +217,10 @@ const KeepInTouch = () => {
   }, [])
 
   return (
-    <div sx={KeepInTouch.styles.element}>
+    <div sx={Splash.styles.page}>
       <LoadingBar />
-      <div sx={KeepInTouch.styles.wrapper}>
-        <div sx={KeepInTouch.styles.splash}>
-          <div sx={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-            <span sx={{ marginRight: 5 }}>
-              <Icon value='plex' sx={{ height: '4em' }} />
-              <span sx={{ position: 'absolute', display: 'block', marginLeft: 4, marginTop: 8, fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>Plex</span>
-            </span>
-            <span sx={{ fontSize: '2em', paddingLeft: 8, paddingRight: 4, fontFamily: 'monospace' }}>
-              +
-            </span>
-            <span>
-              <span sx={{ fontSize: '4em', height: '' }}>🍿</span>
-              <br/>
-              <span sx={{ display: 'block', marginBottom: '-12px', paddingTop: '7px', fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>sensorr</span>
-            </span>
-          </div>
-          <div sx={{ width: '100%' }}>
-          <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
-            <p>A Friendly Digital Video Recorder. Think VCR but in modern times.</p>
-          </div>
-        </div>
+      <div sx={Splash.styles.wrapper}>
+        <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
         <div sx={KeepInTouch.styles.register}>
           <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
             <Warning
@@ -252,45 +308,6 @@ const KeepInTouch = () => {
 }
 
 KeepInTouch.styles = {
-  element: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: 'grayLightest',
-    overflow: 'hidden',
-  },
-  wrapper: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: ['column-reverse', 'row'],
-    overflow: ['scroll', 'hidden'],
-  },
-  splash: {
-    flex: 1,
-    minHeight: '20em',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'relative',
-    padding: '1em 2em',
-    overflow: 'hidden',
-    zIndex: 0,
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      width: '200%',
-      height: '200%',
-      top: '-50%',
-      left: '-50%',
-      flex: 1,
-      backgroundImage: "url('https://i.pinimg.com/originals/3c/f6/56/3cf656908a2481110485bac3bf1297d9.jpg')",
-      backgroundPosition: 'center',
-      backgroundSize: '75%',
-      transform: 'rotate(30deg)',
-      opacity: 0.25,
-      zIndex: -1,
-    },
-  },
   register: {
     flex: 1,
     display: 'flex',

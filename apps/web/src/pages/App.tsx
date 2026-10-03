@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import withSecurity from '../layout/withSecurity'
 import withConfigLoaded from '../layout/withConfigLoaded'
 import withLayout from '../layout/withLayout'
+import withOnboarding from '../layout/withOnboarding'
 
 // import { withSuspenseFallback } from '../components/enhancers/withSuspenseFallback'
 
@@ -24,6 +25,7 @@ import withLayout from '../layout/withLayout'
 
 import Login from './Login/Login'
 import KeepInTouch from './KeepInTouch/KeepInTouch'
+import Onboarding from './Onboarding/Onboarding'
 import Home from './Home/Home'
 import Library from './Library/Library'
 import Discover from './Discover/Discover'
@@ -67,7 +69,8 @@ import 'overlayscrollbars/overlayscrollbars.css'
 // `require`, not `import`, so webpack folds the branch and leaves the gallery and its stories out of production builds
 const design = process.env.NODE_ENV !== 'production' ? require('./Design/Design').routes : null
 
-const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withLayout(Outlet)))
+const LayoutConfigSecurityContainer = withSecurity(withConfigLoaded(withOnboarding(withLayout(Outlet))))
+const OnboardingContainer = withSecurity(withConfigLoaded(Onboarding))
 
 const TrendingMovies = Trending('movies')
 const TrendingPersons = Trending('persons')
@@ -105,6 +108,7 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route element={<ScrollPositionProvider children={<Outlet />} />}>
       <Route path='/login' element={<Login />} />
       <Route path='/keep-in-touch' element={<KeepInTouch />} />
+      <Route path='/onboarding' element={<OnboardingContainer />} />
       {design}
       <Route path='/' element={<LayoutConfigSecurityContainer />}>
         <Route path='' element={<SectionHome section='all' fallback={<Home />} />} />

@@ -1109,6 +1109,27 @@ export class API {
           body: JSON.stringify(body)
         }
       }),
+      // No Content-Type: the browser sets the multipart one, boundary included
+      runMigrate: (
+        { body, init = {} }: { body: { archive: Blob }, init?: any }
+      ): { uri: string, params: {}, init: {} } => {
+        const data = new FormData()
+        data.append('archive', body.archive)
+
+        return {
+          uri: 'jobs/migrate',
+          params: {},
+          init: {
+            ...init,
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer __ACCESS_TOKEN__`,
+              Accept: 'application/json',
+            },
+            body: data,
+          }
+        }
+      },
       stopJob: (
         { init = {}, params: { job } }: { init?: any, params: { job: string } }
       ): { uri: string, params: {}, init: {} } => ({
