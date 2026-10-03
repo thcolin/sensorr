@@ -94,7 +94,10 @@ request between two unrelated histories, so the first stable release runs step 1
 replaces `main` with `dev` instead of step 2, then runs step 3.
 
 In step 1, no stable tag is in the history of `dev`: `git log --oneline dev` lists every
-commit since the rewrite, and the section sums up what changed since 0.9.0.
+commit since the rewrite, and the section sums up what changed since 0.9.0. The same commit
+serves the installer from `main`, which only receives releases, instead of `dev`, where any
+push runs at once on every new install: replace `sensorr/dev/install.sh` with
+`sensorr/main/install.sh` in `README.md` and in the header of `install.sh`.
 
 In place of step 2, once `gh api repos/thcolin/sensorr/branches/main/protection` answers 404,
 no protection blocking a force-push:
