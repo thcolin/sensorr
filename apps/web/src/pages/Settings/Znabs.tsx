@@ -49,7 +49,7 @@ export const ZnabsFields = ({ form, onSubmit, children }) => {
 }
 
 export const ZnabsIntro = () => (
-  <>Sensorr use <strong>Indexer Proxy</strong> (like <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer'>Jackett</a> and <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer'>Prowlarr</a>) which offers a standardized API (<a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer'>Torznab</a>) to search for releases on your favorite torrent trackers or usenest indexers, add and configure indexers you want to use</>
+  <>Sensorr uses an <strong>Indexer Proxy</strong> (like <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer'>Jackett</a> and <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer'>Prowlarr</a>) which offers a standardized API (<a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer'>Torznab</a>) to search for releases on your favorite torrent trackers or usenet indexers, add and configure indexers you want to use</>
 )
 
 const Znabs = ({ ...props }) => {
