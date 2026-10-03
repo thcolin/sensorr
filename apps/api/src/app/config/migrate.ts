@@ -37,7 +37,7 @@ export const migrateLegacy = (raw) => {
   }
 }
 
-const FLAT ={ 'record': 'movies', 'refresh': 'movies', 'sync': 'movies', 'refine': 'movies', 'shrink': 'movies', 'report': 'movies', 'airing': 'shows' }
+const FLAT = { 'record': 'movies', 'refresh': 'movies', 'sync': 'movies', 'refine': 'movies', 'shrink': 'movies', 'report': 'movies', 'airing': 'shows' }
 const RENAMED = { 'record-shows': 'record', 'refresh-shows': 'refresh', 'sync-shows': 'sync', 'import-shows': 'import' }
 
 export const migrateJobs = (raw) => {
