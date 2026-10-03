@@ -149,10 +149,16 @@ export class SensorrService {
       throw new UnprocessableEntityException('Not a 0.x dump, the archive has neither movies.txt nor stars.txt')
     }
 
-    const archive = path.join(os.tmpdir(), `sensorr-migrate-${Date.now()}.zip`)
-    await fs.writeFile(archive, buffer)
+    // A second upload would write its archive before the lock refuses it, and its cleanup would take the running one's
+    if (this.running.has('migrate')) {
+      throw new ConflictException('Sensorr job "migrate" is already running')
+    }
 
-    return this.spawn('migrate', ['migrate', archive], { command: 'migrate', onClose: () => fs.rm(archive, { force: true }) })
+    const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'sensorr-migrate-'))
+    const archive = path.join(folder, 'dump.zip')
+    await fs.writeFile(archive, buffer, { mode: 0o600 })
+
+    return this.spawn('migrate', ['migrate', archive], { command: 'migrate', onClose: () => fs.rm(folder, { recursive: true, force: true }) })
   }
 
   private spawn(name: string, args: string[], { command, type, cron, onClose }: { command: string, type?: string, cron?: string, onClose?: () => void }) {

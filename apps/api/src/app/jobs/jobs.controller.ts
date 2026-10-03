@@ -46,7 +46,8 @@ export class JobsController implements OnApplicationBootstrap {
   }
 
   @Post('migrate')
-  @UseInterceptors(FileInterceptor('archive'))
+  // Held in memory: a 0.x dump of 12 movies and 4 stars weighs 1.7 kB, this leaves room for any real library
+  @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
   async runMigrate(@UploadedFile() archive) {
     if (!archive?.buffer) {
       throw new BadRequestException('No archive, send the 0.x dump as the "archive" field')
