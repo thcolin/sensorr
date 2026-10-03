@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -163,6 +163,20 @@ const Onboarding = () => {
   const [migration, setMigration] = useState(null)
   const [tmdbError, setTMDBError] = useState(null)
   const plex = usePlexLink()
+  const panel = useRef(null)
+  const moved = useRef(false)
+
+  // A keyboard or a screen reader follows the step that slid in, not the button that left with the last one
+  useEffect(() => {
+    if (!moved.current) {
+      moved.current = true
+      return
+    }
+
+    const title = panel.current?.querySelector('h2')
+    title?.setAttribute('tabindex', '-1')
+    title?.focus({ preventScroll: true })
+  }, [step])
   const PlexInputs = PLEX_STEPS[plex.step].Inputs
 
   // `migrate` asks TMDB for every movie of the dump, so the archive waits for a working key
@@ -383,7 +397,7 @@ const Onboarding = () => {
     <div sx={Splash.styles.page}>
       <LoadingBar />
       <div sx={Onboarding.styles.wrapper}>
-        <div sx={Onboarding.styles.panel}>
+        <div ref={panel} sx={Onboarding.styles.panel}>
           <div sx={Onboarding.styles.content}>
             <p role='status' sx={Onboarding.styles.hidden}>Step {steps.indexOf(current) + 1} of {steps.length}, {current.label}</p>
             <Steps value={steps.indexOf(current)}>
@@ -435,6 +449,9 @@ Onboarding.styles = {
   },
   step: {
     padding: '1em 0 2em 0',
+    "h2[tabindex='-1']:focus": {
+      outline: 'none',
+    },
     '&[data-direction="next"]': {
       animation: `${STEP.next} 400ms ${EASING} both`,
     },
