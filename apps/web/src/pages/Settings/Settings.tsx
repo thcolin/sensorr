@@ -10,33 +10,37 @@ import { errorOf } from './Mail'
 
 declare const SENSORR_VERSION: string
 
-const Settings = ({ ...props }) => {
+// Returns the toast's promise, so a caller can wait for the config to be written
+export const useSaveConfig = () => {
   const api = useAPI()
   const { load } = useConfigContext()
+
+  return useCallback((data) => toast.promise((async () => {
+    const { uri, params, init } = api.query.config.postConfig({ body: data })
+
+    try {
+      const raw = await api.fetch(uri, params, init)
+      await load(raw)
+      return true
+    } catch (err) {
+      console.warn(err)
+      throw err
+    }
+  })(), {
+    loading: `Updating **config**...`,
+    success: () => `Config **updated** !`,
+    error: () => `Error while updating **config**`,
+  }), [])
+}
+
+const Settings = ({ ...props }) => {
+  const api = useAPI()
   const { theme } = useThemeUI()
   const { device } = useDeviceContext()
   const location = useLocation()
   const [update, setUpdate] = useState(null)
 
-  const onSave = useCallback((data) => {
-    // console.log('onSave', data)
-    toast.promise((async () => {
-      const { uri, params, init } = api.query.config.postConfig({ body: data })
-
-      try {
-        const raw = await api.fetch(uri, params, init)
-        await load(raw)
-        return true
-      } catch (err) {
-        console.warn(err)
-        throw err
-      }
-    })(), {
-      loading: `Updating **config**...`,
-      success: () => `Config **updated** !`,
-      error: () => `Error while updating **config**`,
-    })
-  }, [])
+  const onSave = useSaveConfig()
 
   const loadUpdate = useCallback(async () => {
     try {
