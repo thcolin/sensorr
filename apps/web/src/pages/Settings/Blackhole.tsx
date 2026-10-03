@@ -9,7 +9,7 @@ export const BlackholeIntro = () => (
   <>Sensorr will download releases <code>.torrent</code> or <code>.nzb</code> files, and the <code>.magnet</code> files of movies once turned on below, to your defined blackhole directory, then on your own, configure your download client to watch this directory and automatically download the releases</>
 )
 
-export const BlackholeFields = ({ form }) => {
+export const BlackholeFields = ({ form, compact = false }) => {
   const { config } = useConfigContext()
 
   return (
@@ -46,33 +46,67 @@ export const BlackholeFields = ({ form }) => {
           )}
         />
       </div>
-      <h3>Shows</h3>
-      <p>
-        Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
-      </p>
-      <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
-        {[
-          { name: 'shows.blackhole', label: 'Blackhole directory' },
-          { name: 'shows.staging', label: 'Staging directory' },
-          { name: 'shows.library', label: 'Library directory' },
-        ].map(({ name, label }) => (
-          <Controller
-            key={name}
-            name={name}
-            control={form.control}
-            rules={{ required: true }}
-            disabled={config.get('docker')}
-            render={({ field: { ref, ...field } }) => (
-              <Label label={label}>
-                <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
-              </Label>
+      {compact ? (
+        <details sx={{ marginTop: 6, '>summary': { cursor: 'pointer', fontWeight: 'semibold', paddingY: 8 } }}>
+          <summary>Shows</summary>
+          <p>
+            Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
+          </p>
+          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
+            {[
+              { name: 'shows.blackhole', label: 'Blackhole directory' },
+              { name: 'shows.staging', label: 'Staging directory' },
+              { name: 'shows.library', label: 'Library directory' },
+            ].map(({ name, label }) => (
+              <Controller
+                key={name}
+                name={name}
+                control={form.control}
+                rules={{ required: true }}
+                disabled={config.get('docker')}
+                render={({ field: { ref, ...field } }) => (
+                  <Label label={label}>
+                    <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+                  </Label>
+                )}
+              />
+            ))}
+            {config.get('docker') && (
+              <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
             )}
-          />
-        ))}
-        {config.get('docker') && (
-          <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
-        )}
-      </div>
+          </div>
+        </details>
+      ) : (
+        <>
+          <h3>Shows</h3>
+          <p>
+            Shows <code>.torrent</code> files go to their own blackhole, and a show release that only has a magnet link is withdrawn. Your download client saves their files to the staging directory, from where Sensorr hard links the wanted episodes into the library: all three must sit on the same mount
+          </p>
+          <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8, gap: 6 }}>
+            {[
+              { name: 'shows.blackhole', label: 'Blackhole directory' },
+              { name: 'shows.staging', label: 'Staging directory' },
+              { name: 'shows.library', label: 'Library directory' },
+            ].map(({ name, label }) => (
+              <Controller
+                key={name}
+                name={name}
+                control={form.control}
+                rules={{ required: true }}
+                disabled={config.get('docker')}
+                render={({ field: { ref, ...field } }) => (
+                  <Label label={label}>
+                    <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+                  </Label>
+                )}
+              />
+            ))}
+            {config.get('docker') && (
+              <small sx={{ display: 'block' }}>Sensorr is currently running from <strong>Docker</strong> images, the shows directories live under <code>/tvshows</code>: to move them, edit your <code>SENSORR_TVSHOWS</code> environment variable from your <code>.env</code> file</small>
+            )}
+          </div>
+        </>
+      )}
     </>
   )
 }

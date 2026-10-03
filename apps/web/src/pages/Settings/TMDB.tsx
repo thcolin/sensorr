@@ -73,7 +73,7 @@ export const TMDBFields = ({ form, after = null }) => {
 }
 
 export const TMDBIntro = () => (
-  <>Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, to works properly, you will need to configure a few settings,</>
+  <>Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, which needs a few settings to work properly</>
 )
 
 const TMDB = ({ ...props }) => {

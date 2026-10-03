@@ -11,11 +11,7 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
 import { JOB_GROUPS, nameOfEntry, useJobRunner } from '../../components/Sensorr/Jobs'
 
-export const JobsIntro = () => (
-  <>Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually</>
-)
-
-export const JobsFields = ({ form }) => {
+export const JobsFields = ({ form, compact = false }) => {
   const { config } = useConfigContext()
   const { process } = useJobsContext() as any
   const { runJob, stopJob, ongoing } = useJobRunner()
@@ -66,6 +62,7 @@ export const JobsFields = ({ form }) => {
               stopJob={stopJob}
               control={form.control}
               watch={form.watch}
+              compact={compact}
             />
           ))}
         </React.Fragment>
@@ -101,7 +98,7 @@ const JobsSettings = ({ ...props }) => {
           </p>
           <h2>Jobs</h2>
           <p>
-            <JobsIntro />
+            Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
           </p>
         </article>
         <article>
@@ -144,7 +141,7 @@ JobsSettings.styles = {
 
 export default JobsSettings
 
-const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, ...props }) => {
+const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, compact = false, ...props }) => {
   const name = [command, type].filter(Boolean).join(' ')
   const emoji = JOB_EMOJIS[name]
   const key = ['jobs', command, type].filter(Boolean).join('.')
@@ -171,7 +168,18 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           <h5>{emojize(emoji, command)}</h5>
           <p>{description}</p>
         </div>
-        <div sx={{ display: 'flex' }}>
+        {compact && (
+          <Controller
+            name={`${key}.paused`}
+            control={control}
+            render={({ field: { value: checked, onChange } }) => (
+              <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)} title={checked ? 'Paused' : cronString}>
+                <small sx={{ whiteSpace: 'nowrap', paddingRight: 4 }}>{checked ? 'Paused' : cronString}</small>
+              </Option>
+            )}
+          />
+        )}
+        {!compact && <div sx={{ display: 'flex' }}>
           <button
             type='button'
             sx={JobSettings.styles.run}
@@ -182,7 +190,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           >
             <Icon value={running ? 'live' : 'play'} height='1em' width='1em' />
           </button>
-        </div>
+        </div>}
       </div>
       {!!warning && (
         <div
@@ -200,7 +208,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           {warning}
         </div>
       )}
-      {options.includes('cron') && (
+      {!compact && options.includes('cron') && (
         <div
           sx={JobSettings.styles.options}
           style={options.length > 1 ? { borderBottomLeftRadius: '0rem', borderBottomRightRadius: '0rem' } : {}}
@@ -219,7 +227,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                 </Option>
               )}
             />
-            <Controller
+            {!compact && <Controller
               name={`${key}.cron`}
               control={control}
               rules={{
@@ -257,11 +265,11 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                   }}
                 />
               )}
-            />
+            />}
           </React.Fragment>
         </div>
       )}
-      {options.includes('proposalOnly') && (
+      {!compact && options.includes('proposalOnly') && (
         <div sx={JobSettings.styles.options}>
           <Controller
             name={`${key}.proposalOnly`}
@@ -286,7 +294,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           />
         </div>
       )}
-      {options.includes('cleanup') && (
+      {!compact && options.includes('cleanup') && (
         <div sx={JobSettings.styles.options}>
           <Controller
             name={`${key}.cleanup`}
@@ -310,7 +318,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           />
         </div>
       )}
-      {options.includes('threshold') && (
+      {!compact && options.includes('threshold') && (
         <div sx={JobSettings.styles.options}>
           <Controller
             name={`${key}.threshold`}

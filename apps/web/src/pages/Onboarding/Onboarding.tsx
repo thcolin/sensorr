@@ -17,8 +17,8 @@ import { ZnabsFields, ZnabsIntro, znabsOf } from '../Settings/Znabs'
 import { BlackholeFields, BlackholeIntro } from '../Settings/Blackhole'
 import { PoliciesFields, PoliciesIntro, policiesOf } from '../Settings/Policies'
 import { PLEX_STEPS, usePlexLink } from '../Settings/Plex'
-import JobsSettings, { JobsFields, JobsIntro } from '../Settings/Jobs'
-import { errorOf, MailFields, MailIntro } from '../Settings/Mail'
+import JobsSettings, { JobsFields } from '../Settings/Jobs'
+import { errorOf, MailFields } from '../Settings/Mail'
 import { FriendsIntro } from '../Settings/Friends'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
@@ -254,7 +254,7 @@ const Onboarding = () => {
       settings: '/settings/blackhole',
       subtitle: <BlackholeIntro />,
       skippable: true,
-      content: <BlackholeFields form={form} />,
+      content: <BlackholeFields form={form} compact={true} />,
       submit: save,
     },
     {
@@ -295,8 +295,7 @@ const Onboarding = () => {
             Share <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a> with them, or set up Mail below to invite them from <code>Settings &#x3E; Friends</code>.
           </p>
           <h3>Mail</h3>
-          <p><MailIntro /></p>
-          <MailFields form={form} />
+          <MailFields form={form} compact={true} />
         </>
       ),
       submit: save,
@@ -308,9 +307,14 @@ const Onboarding = () => {
       emoji: '⏰',
       title: 'Jobs',
       settings: '/settings/jobs',
-      subtitle: <JobsIntro />,
+      subtitle: 'Sensorr runs these jobs on its own. Pause the ones you do not want yet',
       skippable: true,
-      content: <div sx={JobsSettings.styles.element}><JobsFields form={form} /></div>,
+      content: (
+        <div sx={JobsSettings.styles.element}>
+          <JobsFields form={form} compact={true} />
+          <p><small>Schedules, proposals and manual runs stay in <code>Settings &#x3E; Jobs</code>.</small></p>
+        </div>
+      ),
       submit: save,
     },
     {
@@ -381,6 +385,7 @@ const Onboarding = () => {
       <div sx={Onboarding.styles.wrapper}>
         <div sx={Onboarding.styles.panel}>
           <div sx={Onboarding.styles.content}>
+            <p role='status' sx={Onboarding.styles.hidden}>Step {steps.indexOf(current) + 1} of {steps.length}, {current.label}</p>
             <Steps value={steps.indexOf(current)}>
               {steps.map(({ key }) => (
                 <div key={key} />
@@ -499,6 +504,15 @@ Onboarding.styles = {
     ':hover': {
       color: 'accent',
     },
+  },
+  // Read by a screen reader, the dots say nothing to it
+  hidden: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
   },
   footer: {
     display: 'flex',

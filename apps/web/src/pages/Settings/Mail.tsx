@@ -28,8 +28,51 @@ export const MailIntro = () => (
   <>Sensorr mails your friends: their invitation, a welcome once their Plex account is linked, a reminder when Plex disconnects it, their requests ready to watch and their wrapped. Any SMTP server works, the one of your mail provider included.</>
 )
 
-export const MailFields = ({ form }) => (
-  <>
+export const MailFields = ({ form, compact = false }) => {
+  const secure = (
+    <div sx={Mail.styles.field}>
+      <Controller
+        name='mail.secure'
+        control={form.control}
+        render={({ field: { value, onChange } }) => (
+          <Option type='checkbox' id='mail.secure' checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
+            <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+              <strong>{emojize('🔒', 'TLS from the start')}</strong>
+              <br />
+              <small>Usually on port <code>465</code>. Off, the connection still upgrades to TLS when the server offers it, usually on port <code>587</code></small>
+            </div>
+          </Option>
+        )}
+      />
+    </div>
+  )
+
+  const sent = (
+    <>
+      <h3>Sent on their own</h3>
+      <p>An invitation, a test, or a mail sent from <code>Friends</code> always goes.</p>
+      {SENT.map(({ key, emoji, label, description }) => (
+        <div key={key} sx={{ paddingY: 10 }}>
+          <Controller
+            name={`mail.send.${key}`}
+            control={form.control}
+            render={({ field: { value, onChange } }) => (
+              <Option type='checkbox' id={`mail.send.${key}`} checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
+                <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+                  <strong>{emojize(emoji, label)}</strong>
+                  <br />
+                  <small>{description}</small>
+                </div>
+              </Option>
+            )}
+          />
+        </div>
+      ))}
+    </>
+  )
+
+  return (
+    <>
       <div sx={Mail.styles.field}>
         <Controller
           name='mail.url'
@@ -69,21 +112,7 @@ export const MailFields = ({ form }) => (
           />
         </div>
       </div>
-      <div sx={Mail.styles.field}>
-        <Controller
-          name='mail.secure'
-          control={form.control}
-          render={({ field: { value, onChange } }) => (
-            <Option type='checkbox' id='mail.secure' checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
-              <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                <strong>{emojize('🔒', 'TLS from the start')}</strong>
-                <br />
-                <small>Usually on port <code>465</code>. Off, the connection still upgrades to TLS when the server offers it, usually on port <code>587</code></small>
-              </div>
-            </Option>
-          )}
-        />
-      </div>
+      {!compact && secure}
       <div sx={Mail.styles.row}>
         <div sx={{ ...Mail.styles.field, flex: 1 }}>
           <Controller
@@ -121,27 +150,16 @@ export const MailFields = ({ form }) => (
         />
         <small sx={{ marginTop: 6 }}>Its name is the one your friends read in every mail, give yours</small>
       </div>
-      <h3>Sent on their own</h3>
-      <p>An invitation, a test, or a mail sent from <code>Friends</code> always goes.</p>
-      {SENT.map(({ key, emoji, label, description }) => (
-        <div key={key} sx={{ paddingY: 10 }}>
-          <Controller
-            name={`mail.send.${key}`}
-            control={form.control}
-            render={({ field: { value, onChange } }) => (
-              <Option type='checkbox' id={`mail.send.${key}`} checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
-                <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                  <strong>{emojize(emoji, label)}</strong>
-                  <br />
-                  <small>{description}</small>
-                </div>
-              </Option>
-            )}
-          />
-        </div>
-      ))}
-  </>
-)
+      {compact ? (
+        <details sx={Mail.styles.more}>
+          <summary>More</summary>
+          {secure}
+          {sent}
+        </details>
+      ) : sent}
+    </>
+  )
+}
 
 const Mail = ({ ...props }) => {
   useTitle('Settings - Mail')
@@ -192,6 +210,14 @@ const Mail = ({ ...props }) => {
 }
 
 Mail.styles = {
+  more: {
+    marginTop: 6,
+    '>summary': {
+      cursor: 'pointer',
+      fontWeight: 'semibold',
+      paddingY: 8,
+    },
+  },
   field: {
     display: 'flex',
     flexDirection: 'column',
