@@ -27,22 +27,58 @@ const clearStoredPin = () => {
   } catch (err) {}
 }
 
+const EmblemSide = ({ icon, label }) => (
+  <span sx={Emblem.styles.side}>
+    <span sx={Emblem.styles.icon}>{icon}</span>
+    <span sx={Emblem.styles.label}>{label}</span>
+  </span>
+)
+
 export const Emblem = ({ icon, label }) => (
-  <div sx={{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-    <span sx={{ marginRight: 5 }}>
-      {icon}
-      <span sx={{ position: 'absolute', display: 'block', marginLeft: 4, marginTop: 8, fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>{label}</span>
-    </span>
-    <span sx={{ fontSize: '2em', paddingLeft: 8, paddingRight: 4, fontFamily: 'monospace' }}>
-      +
-    </span>
-    <span>
-      <span sx={{ fontSize: '4em', height: '' }}>🍿</span>
-      <br/>
-      <span sx={{ display: 'block', marginBottom: '-12px', paddingTop: '7px', fontFamily: 'heading', fontWeight: 'heading', lineHeight: 'heading' }}>sensorr</span>
-    </span>
+  <div sx={Emblem.styles.element}>
+    <EmblemSide icon={icon} label={label} />
+    <span sx={Emblem.styles.plus}>+</span>
+    <EmblemSide icon={<span sx={{ fontSize: '4em', lineHeight: 1 }}>🍿</span>} label='sensorr' />
   </div>
 )
+
+Emblem.styles = {
+  element: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginY: 'auto',
+    gap: 4,
+  },
+  side: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+  icon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '4em',
+    fontSize: '1em',
+  },
+  label: {
+    fontFamily: 'heading',
+    fontWeight: 'heading',
+    lineHeight: 'heading',
+  },
+  plus: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '2em',
+    fontSize: '2em',
+    fontFamily: 'monospace',
+  },
+}
 
 export const Splash = ({ emblem, step = 0 }) => (
   <div sx={Splash.styles.element} style={{ '--step': step } as any}>

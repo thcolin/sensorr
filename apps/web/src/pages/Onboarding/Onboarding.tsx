@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { keyframes } from '@emotion/react'
 import { TMDB } from '@sensorr/tmdb'
-import { Button, Icon, Option, Steps, Warning } from '@sensorr/ui'
+import { Badge, Button, Icon, Option, Steps, Warning } from '@sensorr/ui'
+import { JOBS } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -31,12 +32,15 @@ const STEP = {
   fade: keyframes`from { opacity: 0; }`,
 }
 
+// A reload, or an installed PWA the phone evicted, comes back to the step it left
+const STEP_KEY = 'sensorr_onboarding_step'
+
 const Brand = () => (
   <div sx={{ flex: 1, display: 'flex', alignItems: 'center', fontSize: '4em' }}>🍿📼</div>
 )
 
 const EmojiEmblem = ({ emoji, label }) => (
-  <Emblem icon={<span sx={{ display: 'block', fontSize: '4em', lineHeight: 1 }}>{emoji}</span>} label={label} />
+  <Emblem icon={<span sx={{ fontSize: '4em', lineHeight: 1 }}>{emoji}</span>} label={label} />
 )
 
 // Only a 401 says the key is wrong: any other failure keeps it unchecked, as `install.sh` does
@@ -94,14 +98,43 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
   </>
 )
 
-const End = ({ skipped, steps }) => (
-  <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingY: 10 } }}>
-    {steps.filter(({ key }) => !['welcome', 'end'].includes(key)).map(({ key, title, settings }) => (
+// What a step left in the config, read again on the recap: a Continue on an empty step sets nothing
+const statusOf = (key, config) => {
+  const count = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`
+  const jobs = Object.entries(JOBS).flatMap(([command, types]) => types.length ? types.map((type) => `jobs.${command}.${type}`) : [`jobs.${command}`])
+
+  switch (key) {
+    case 'tmdb':
+      return hasTMDBKey(config) ? 'set' : null
+    case 'indexers':
+      return (config.get('znabs') || []).length ? count(config.get('znabs').length, 'indexer') : null
+    case 'policies':
+      return (config.get('policies') || []).length ? count(config.get('policies').length, 'policy').replace('policys', 'policies') : null
+    case 'blackhole':
+      return config.get('blackhole') ? 'set' : null
+    case 'plex':
+      return config.get('plex.token') ? 'linked' : null
+    case 'friends':
+      return (config.get('mail.host') && config.get('mail.from') && config.get('mail.url')) ? 'mail set' : null
+    case 'jobs':
+      return `${jobs.filter((job) => !config.get(`${job}.paused`)).length} / ${jobs.length} on`
+  }
+}
+
+const End = ({ steps, config, go }) => (
+  <ul sx={Onboarding.styles.recap}>
+    {steps.map(({ key, emoji, label }, index) => ({ key, emoji: key === 'plex' ? PLEX_STEPS.url.emoji : emoji, label, index, status: statusOf(key, config) })).filter(({ key }) => !['welcome', 'end'].includes(key)).map(({ key, emoji, label, index, status }) => (
       <li key={key}>
-        {skipped.includes(key) ? (
-          <>⏭️ <strong>{title}</strong>, skipped: <Link to={settings}>Settings &#x3E; {title}</Link></>
-        ) : (
-          <>✅ <strong>{title}</strong></>
+        <span>{emoji} <strong>{label}</strong></span>
+        <Badge
+          emoji={null}
+          label={status || 'skipped'}
+          compact={true}
+          size='small'
+          palette={status ? { color: 'primaryDarkest', backgroundColor: 'whitePure' } : undefined}
+        />
+        {status ? <span /> : (
+          <button type='button' onClick={() => go(index)} sx={Onboarding.styles.setup}>Set up ›</button>
         )}
       </li>
     ))}
@@ -115,9 +148,14 @@ const Onboarding = () => {
   const { config } = useConfigContext()
   const save = useSaveConfig()
   const form = useForm({ defaultValues: { ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) } })
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(() => {
+    try {
+      return Number(sessionStorage.getItem(STEP_KEY)) || 0
+    } catch (err) {
+      return 0
+    }
+  })
   const [direction, setDirection] = useState('next')
-  const [skipped, setSkipped] = useState([])
   const [pending, setPending] = useState(false)
   const [legacy, setLegacy] = useState(!!config.get('onboarding.legacy'))
   const [archive, setArchive] = useState(null)
@@ -144,6 +182,7 @@ const Onboarding = () => {
   const steps = [
     {
       key: 'welcome',
+      label: 'Welcome',
       emblem: <Brand />,
       emoji: '👋',
       title: 'Welcome',
@@ -157,6 +196,7 @@ const Onboarding = () => {
     },
     {
       key: 'tmdb',
+      label: 'TMDB',
       emblem: <Emblem icon={<Icon value='tmdb' sx={{ height: '4em', width: '4em' }} />} label='TMDB' />,
       emoji: '🎬',
       title: 'TMDB',
@@ -182,6 +222,7 @@ const Onboarding = () => {
     },
     {
       key: 'indexers',
+      label: 'Indexers',
       emblem: <EmojiEmblem emoji='🔎' label='Indexers' />,
       emoji: '🔎',
       title: 'Indexers',
@@ -193,8 +234,9 @@ const Onboarding = () => {
     },
     {
       key: 'policies',
-      emblem: <EmojiEmblem emoji='📏' label='Policies' />,
-      emoji: '📏',
+      label: 'Policies',
+      emblem: <EmojiEmblem emoji='🚨' label='Policies' />,
+      emoji: '🚨',
       title: 'Policies',
       settings: '/settings/policies',
       subtitle: <PoliciesIntro />,
@@ -204,6 +246,7 @@ const Onboarding = () => {
     },
     {
       key: 'blackhole',
+      label: 'Blackhole',
       emblem: <EmojiEmblem emoji='🕳️' label='Blackhole' />,
       emoji: '🕳️',
       title: 'Blackhole',
@@ -215,6 +258,7 @@ const Onboarding = () => {
     },
     {
       key: 'plex',
+      label: 'Plex',
       emblem: <Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />,
       emoji: PLEX_STEPS[plex.step].emoji,
       title: PLEX_STEPS[plex.step].title,
@@ -236,18 +280,8 @@ const Onboarding = () => {
       },
     },
     {
-      key: 'jobs',
-      emblem: <EmojiEmblem emoji='⏰' label='Jobs' />,
-      emoji: '⏰',
-      title: 'Jobs',
-      settings: '/settings/jobs',
-      subtitle: <JobsIntro />,
-      skippable: true,
-      content: <div sx={JobsSettings.styles.element}><JobsFields form={form} /></div>,
-      submit: save,
-    },
-    {
       key: 'friends',
+      label: 'Friends',
       emblem: <EmojiEmblem emoji='🍻' label='Friends' />,
       emoji: '🍻',
       title: 'Friends',
@@ -267,26 +301,42 @@ const Onboarding = () => {
       submit: save,
     },
     {
+      key: 'jobs',
+      label: 'Jobs',
+      emblem: <EmojiEmblem emoji='⏰' label='Jobs' />,
+      emoji: '⏰',
+      title: 'Jobs',
+      settings: '/settings/jobs',
+      subtitle: <JobsIntro />,
+      skippable: true,
+      content: <div sx={JobsSettings.styles.element}><JobsFields form={form} /></div>,
+      submit: save,
+    },
+    {
       key: 'end',
+      label: 'Ready',
       emblem: <Brand />,
       emoji: '📼',
       title: 'Ready',
-      subtitle: 'Sensorr is set. What you skipped waits for you in Settings',
+      subtitle: 'What Sensorr knows now. Set up › goes back to a step, and everything stays in Settings',
       submit: (values) => save({ ...values, onboarding: { ...values.onboarding, done: true } }),
     },
   ]
 
-  const current = steps[step]
-  const last = step === steps.length - 1
+  const current = steps[Math.min(step, steps.length - 1)]
+  const last = current.key === 'end'
 
   async function next(values) {
     setPending(true)
 
     try {
       await current.submit?.(values)
-      setSkipped((skipped) => skipped.filter((key) => key !== current.key))
 
       if (last) {
+        try {
+          sessionStorage.removeItem(STEP_KEY)
+        } catch (err) {}
+
         navigate('/', { replace: true })
       } else {
         go(step + 1)
@@ -301,12 +351,13 @@ const Onboarding = () => {
   const go = (to) => {
     setDirection(to > step ? 'next' : 'previous')
     setStep(to)
+
+    try {
+      sessionStorage.setItem(STEP_KEY, `${to}`)
+    } catch (err) {}
   }
 
-  const skip = () => {
-    setSkipped((skipped) => [...new Set([...skipped, current.key])])
-    go(step + 1)
-  }
+  const skip = () => go(step + 1)
 
   const footer = (
     <div sx={Onboarding.styles.footer}>
@@ -329,7 +380,7 @@ const Onboarding = () => {
       <div sx={Onboarding.styles.wrapper}>
         <div sx={Onboarding.styles.panel}>
           <div sx={Onboarding.styles.content}>
-            <Steps value={step}>
+            <Steps value={steps.indexOf(current)}>
               {steps.map(({ key }) => (
                 <div key={key} />
               ))}
@@ -337,7 +388,7 @@ const Onboarding = () => {
             <Warning key={current.key} data-direction={direction} emoji={current.emoji} title={current.title} subtitle={current.subtitle} sx={Onboarding.styles.step}>
               {current.form ? current.form(footer) : (
                 <form onSubmit={form.handleSubmit(next)} sx={{ width: '100%', textAlign: 'left' }}>
-                  {current.key === 'end' ? <End skipped={skipped} steps={steps} /> : current.content}
+                  {current.key === 'end' ? <End steps={steps} config={config} go={go} /> : current.content}
                   {footer}
                 </form>
               )}
@@ -352,7 +403,7 @@ const Onboarding = () => {
             )}
           </div>
         </div>
-        <Splash step={step} emblem={<div key={current.key} data-direction={direction} sx={Onboarding.styles.emblem}>{current.emblem}</div>} />
+        <Splash step={steps.indexOf(current)} emblem={<div key={current.key} data-direction={direction} sx={Onboarding.styles.emblem}>{current.emblem}</div>} />
       </div>
     </div>
   )
@@ -421,6 +472,31 @@ Onboarding.styles = {
     },
     ':active::file-selector-button': {
       borderColor: 'grayDarkest',
+    },
+  },
+  recap: {
+    listStyleType: 'none',
+    padding: 12,
+    margin: 12,
+    marginBottom: 6,
+    '>li': {
+      display: 'grid',
+      gridTemplateColumns: '1fr auto 6em',
+      alignItems: 'center',
+      gap: 6,
+      paddingY: 8,
+      borderBottom: '1px solid',
+      borderColor: 'gray',
+    },
+  },
+  setup: {
+    variant: 'button.reset',
+    justifySelf: 'end',
+    color: 'primary',
+    fontWeight: 'semibold',
+    fontSize: 5,
+    ':hover': {
+      color: 'accent',
     },
   },
   footer: {
