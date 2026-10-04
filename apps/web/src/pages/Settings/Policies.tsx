@@ -24,10 +24,22 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
-import { Release } from '../../components/Sensorr/Release'
+import { Release, ReleaseTag, statisticsOf } from '../../components/Sensorr/Release'
 import { emojize, languages, useTitle } from '@sensorr/utils'
 import { rankOf, ranked, unranked } from '@sensorr/sensorr'
 import { sandboxOf, summaryOf } from './sandbox'
+
+const SUMMARY = {
+  cursor: 'pointer',
+  paddingX: 3,
+  paddingY: 7,
+  '>span': {
+    fontFamily: 'monospace',
+    fontWeight: 'semibold',
+    fontSize: 5,
+    marginLeft: 8,
+  },
+}
 
 export const policiesOf = (config) => (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false }))
 
@@ -70,6 +82,7 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
       )}
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
       <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error('Add the policy with +, or clear its name') : onSubmit(values))}>
+        <PoliciesSandbox form={form} fields={policies.fields} />
         <SortablePolicies
           policies={policies}
           form={form}
@@ -81,59 +94,63 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
             policies.swap(from, to)
           }}
         />
-        <PoliciesSandbox form={form} />
         {children}
       </form>
     </>
   )
 }
 
-const PoliciesSandbox = ({ form }) => {
+const PoliciesSandbox = ({ form, fields }) => {
   const { device } = useDeviceContext()
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState(null)
-  const policies = (form.watch('policies') || []).filter((policy) => !policy.removed)
-  const znabs = (form.watch('znabs') || []).map((znab) => znab.name)
-  const policy = policies.find((policy) => policy.name === name) || policies[0]
-  const options = policies.map((policy) => ({ value: policy.name, label: policy.name || '(no name)' }))
+  const [selected, setSelected] = useState(null)
+  const values = form.watch('policies') || []
+  const policies = fields.map((field, index) => ({ id: field.id, policy: values[index] })).filter(({ policy }) => policy && !policy.removed)
+  const znabs = (form.watch('znabs') || []).filter((znab) => !znab.disabled).map((znab) => znab.name)
+  const { id, policy } = policies.find(({ id }) => id === selected) || policies[0] || {}
   const key = open && policy ? JSON.stringify([policy, znabs]) : null
   const releases = useMemo(() => key ? sandboxOf(policy, znabs) : [], [key])
+  const statistics = useMemo(() => statisticsOf(releases), [releases])
+  const summary = summaryOf(releases)
 
   return (
     <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PoliciesSandbox.styles.element}>
       <summary>
         <span>Sandbox</span>
+        <small>Fake <em>Big Buck Bunny</em> (2008) releases, nothing is saved</small>
       </summary>
       {open && (
         <div>
-          <p>How a policy ranks fake releases of <em>Big Buck Bunny</em> (2008), as a search for this movie would. Nothing is saved or downloaded.</p>
           {!policy ? (
             <p>Add a policy to try it.</p>
           ) : (
             <>
-              <Select
-                aria-label='Policy to try'
-                options={options}
-                value={options[policies.indexOf(policy)]}
-                onChange={(option) => setName(option.value)}
-                resetable={false}
-                isSearchable={false}
-                menuPortalTarget={document.body}
-                closeMenuOnScroll={true}
-                menuPlacement='auto'
-                styles={{
-                  menuPortal: (style) => ({ ...style, zIndex: 10 }),
-                }}
-              />
-              <p>{summaryOf(releases, policy)}</p>
-              <div>
+              <div sx={PoliciesSandbox.styles.toolbar}>
+                <label>
+                  <strong>Policy</strong>
+                  <select value={id} onChange={(e) => setSelected(e.target.value)}>
+                    {policies.map(({ id, policy }) => (
+                      <option key={id} value={id}>{policy.name || '(no name)'}</option>
+                    ))}
+                  </select>
+                </label>
+                <div>
+                  <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
+                  <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
+                  <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
+                  {!!summary.tied && <ReleaseTag title='In case of a tie, sort setting acts as the tie-breaker'><code>{summary.tied} tied at 💯 {summary.pick.score} · Sort by {policy.sorting === 'size' || !policy.sorting ? '📦' : '🌍'} {policy.sorting || 'size'}</code></ReleaseTag>}
+                </div>
+              </div>
+              <div sx={PoliciesSandbox.styles.releases}>
                 {releases.map((release) => (
                   <Release
                     key={release.id}
                     entity={release}
+                    statistics={statistics}
+                    bars={true}
                     display={device === 'mobile' ? 'column' : 'row'}
                     actions={false}
-                    note={release.goal ? '✨ End-goal of the refine job' : null}
+                    note={[release === summary.pick && '🏆 Picked', release.goal && '✨ End-goal of the refine job'].filter(Boolean).join(' · ') || null}
                   />
                 ))}
               </div>
@@ -145,36 +162,84 @@ const PoliciesSandbox = ({ form }) => {
   )
 }
 
-// The box of a policy's Rules, standing on its own
 PoliciesSandbox.styles = {
   element: {
     marginX: 8,
     marginY: 6,
     fontSize: 5,
-    lineHeight: 'body',
     backgroundColor: 'grayLighter',
     border: '1px solid',
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
     '>summary': {
-      cursor: 'pointer',
-      paddingX: 3,
-      paddingY: 7,
-      '>span': {
-        fontFamily: 'monospace',
-        fontWeight: 'semibold',
-        fontSize: 5,
-        marginLeft: 8,
+      ...SUMMARY,
+      lineHeight: 'body',
+      overflow: 'hidden',
+      '>small': {
+        float: ['none', 'right'],
+        display: ['block', 'inline'],
+        color: 'grayDarker',
+        lineHeight: 'inherit',
       },
+    },
+    // Settings boxes every `section code`, the release search leaves its titles and reasons bare
+    '&& code:not(span[title] > code)': {
+      backgroundColor: 'transparent',
+      padding: '0px',
+      fontSize: 'inherit',
     },
     '>div': {
       borderTop: '1px solid',
       borderColor: 'grayDark',
-      paddingX: 3,
-      paddingY: 4,
       '>p': {
-        marginY: 4,
+        paddingX: 3,
       },
+    },
+  },
+  releases: {
+    maxHeight: '50vh',
+    overflowY: 'auto',
+    overscrollBehavior: 'contain',
+  },
+  toolbar: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+    paddingX: 3,
+    paddingY: 6,
+    borderBottom: '1px solid',
+    borderColor: 'grayDark',
+    '>label': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      '>strong': {
+        fontWeight: 'strong',
+      },
+      '>select': {
+        variant: 'select.reset',
+        color: 'whitePure',
+        fontWeight: 'semibold',
+        fontSize: 5,
+        paddingY: '3px',
+        paddingX: '6px',
+        backgroundColor: 'accentDarkest',
+        borderRadius: '2px',
+        cursor: 'pointer',
+        ':focus-visible': {
+          outline: '2px solid',
+          outlineColor: 'primary',
+          outlineOffset: '2px',
+        },
+      },
+    },
+    '>div': {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8,
+      fontVariantNumeric: 'tabular-nums',
     },
   },
 }
@@ -411,17 +476,7 @@ const PolicySettings = forwardRef<any, any>(({
       borderTopRightRadius: '0rem',
       lineHeight: 'body',
       '>details': {
-        '>summary': {
-          cursor: 'pointer',
-          paddingX: 3,
-          paddingY: 7,
-          '>span': {
-            fontFamily: 'monospace',
-            fontWeight: 'semibold',
-            fontSize: 5,
-            marginLeft: 8,
-          },
-        },
+        '>summary': SUMMARY,
         '>div': {
           maxHeight: '30em',
           borderTop: '1px solid',

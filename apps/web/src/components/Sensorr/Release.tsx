@@ -19,6 +19,7 @@ const UIRelease = ({
   statistics = null,
   actions = true,
   note = null,
+  bars = downloadable,
 }) => {
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
@@ -94,7 +95,11 @@ const UIRelease = ({
                   {!!entity?.znab && (
                     <span sx={UIRelease.styles.subtitle}>
                       <span>&nbsp;&nbsp;&nbsp;</span>
-                      <a href={safeUrl(entity?.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
+                      {entity?.link ? (
+                        <a href={safeUrl(entity.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({entity.znab})</small></code></a>
+                      ) : (
+                        <code sx={{ color: 'primary' }}><small>({entity.znab})</small></code>
+                      )}
                       {!!entity?.enclosure && (
                         <>
                           <span>&nbsp;&nbsp;&nbsp;</span>
@@ -127,7 +132,7 @@ const UIRelease = ({
                   {TAGGED.map(axis => !!meta[axis] && <ReleaseAxis key={axis} axis={axis} value={meta[axis]} account={entity?.account} />)}
                   {(meta.flags || []).map(flag => <ReleaseAxis key={flag} axis='flags' value={flag} account={entity?.account} />)}
                 </div>
-                {!downloadable ? (
+                {!bars ? (
                   <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
                     {typeof entity?.peers !== 'undefined' && (
                       <ReleaseTag title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
@@ -416,6 +421,19 @@ UIStatistic.styles = {
 }
 
 export const Statistic = memo(UIStatistic)
+
+export const statisticsOf = (entities = []) => ({
+  lowest: {
+    score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,
+    peers: ([...entities].sort((a, b) => b.peers - a.peers).pop() || { peers: 0 }).peers,
+    size: ([...entities].sort((a, b) => b.size - a.size).pop() || { size: 0 }).size,
+  },
+  highest: {
+    score: ([...entities].sort((a, b) => a.score - b.score).pop() || { score: 0 }).score,
+    peers: ([...entities].sort((a, b) => a.peers - b.peers).pop() || { peers: 0 }).peers,
+    size: ([...entities].sort((a, b) => a.size - b.size).pop() || { size: 0 }).size,
+  },
+})
 
 export const Release = memo(UIRelease)
 

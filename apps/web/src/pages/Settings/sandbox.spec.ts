@@ -29,6 +29,7 @@ describe('sampleReleasesOf', () => {
     for (const axis of ['source', 'encoding', 'resolution']) {
       expect(Object.keys(oleoo.rules[axis]).filter(value => !releases.some(release => release.meta[axis] === value))).toEqual([])
     }
+    expect(['MULTi-VF2', 'MULTi-VFF', 'MULTi-VFQ', 'MULTi', 'VFQ', 'TRUEFRENCH', 'FRENCH', 'VOSTFR', 'VOSTA', 'VO', 'ENGLiSH'].filter(language => !releases.some(release => release.meta.language === language))).toEqual([])
   })
 
   it('takes every release from an indexer the policy does not avoid, plus one from each avoided indexer', () => {
@@ -50,7 +51,7 @@ describe('sandboxOf', () => {
 
   it('withdraws what the policy avoids, with its reason, after every valid release', () => {
     expect(byGroup(releases, 'NETTLE')).toMatchObject({ valid: false, reason: '🚨 Withdrawn by policy (source=CAM)' })
-    expect(releases.find(release => release.znab === 'indexer-2')).toMatchObject({ valid: false, reason: '🚨 Withdrawn by policy (znab=indexer-2)' })
+    expect(releases.find(release => release.znab === 'indexer-2')).toMatchObject({ valid: false, reason: '🔕 Not searched, the policy avoids this indexer' })
     expect(releases.findIndex(release => !release.valid)).toBeGreaterThan(releases.findLastIndex(release => release.valid))
   })
 
@@ -71,11 +72,11 @@ describe('sandboxOf', () => {
 })
 
 describe('summaryOf', () => {
-  it('counts each kind of release and names the pick, with the tie-breaker of the policy', () => {
-    expect(summaryOf(sandboxOf(MULTI, ['indexer-1', 'indexer-2']), MULTI)).toBe('25 ⭐ · 15 🚨 · 5 🗑️ · picks Big.Buck.Bunny.2008.MULTi-VF2.MD.1080p.BLURAY.mHD.x264.AC3-5.1-THICKET (smallest on a tie)')
+  it('counts each kind of release, names the pick and how many releases tie with it', () => {
+    expect(summaryOf(sandboxOf(MULTI, ['indexer-1', 'indexer-2']))).toMatchObject({ valid: 25, withdrawn: 14, rejected: 6, pick: { meta: { group: 'THICKET' } }, tied: 3 })
   })
 
   it('says when nothing would be picked', () => {
-    expect(summaryOf([], MULTI)).toBe('0 ⭐ · 0 🚨 · 0 🗑️ · picks nothing')
+    expect(summaryOf([])).toEqual({ valid: 0, withdrawn: 0, rejected: 0, pick: null, tied: 0 })
   })
 })

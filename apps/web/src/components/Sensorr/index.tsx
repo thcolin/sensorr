@@ -12,7 +12,7 @@ import sensorr from '../../store/sensorr'
 import { withSensorrRequest } from './withSensorrRequest'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from './Controls/Oleoo'
 import { Progress } from './Controls/Progress'
-import { Release } from './Release'
+import { Release, statisticsOf } from './Release'
 
 const UISensorr = compose(
   withSensorrRequest(),
@@ -251,18 +251,7 @@ const UISensorr = compose(
   const banned = (onBan !== null ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
     .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))
-  const statistics = useMemo(() => ({
-    lowest: {
-      score: ([...entities].sort((a, b) => b.score - a.score).pop() || { score: 0 }).score,
-      peers: ([...entities].sort((a, b) => b.peers - a.peers).pop() || { peers: 0 }).peers,
-      size: ([...entities].sort((a, b) => b.size - a.size).pop() || { size: 0 }).size,
-    },
-    highest: {
-      score: ([...entities].sort((a, b) => a.score - b.score).pop() || { score: 0 }).score,
-      peers: ([...entities].sort((a, b) => a.peers - b.peers).pop() || { peers: 0 }).peers,
-      size: ([...entities].sort((a, b) => a.size - b.size).pop() || { size: 0 }).size,
-    },
-  }), [entities])
+  const statistics = useMemo(() => statisticsOf(entities), [entities])
 
   return (
     <div sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: ['visible', 'hidden'] }}>
