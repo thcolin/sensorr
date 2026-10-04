@@ -24,6 +24,7 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
     const [pins, setPins] = useState<HomeKey[]>(['all'])
     const [saving, setSaving] = useState(false)
 
+    const options = lists.map((list) => ({ value: list.id, label: list.name }))
     const source = { kind, values }
     const disabled = saving || (mode === 'new' && !name.trim()) || (mode === 'add' && !target)
 
@@ -100,8 +101,8 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
         {mode === 'add' && (
           <div sx={SaveAsList.styles.nested}>
             <Select
-              options={lists.map((list) => ({ value: list.id, label: list.name }))}
-              value={target}
+              options={options}
+              value={options.find((option) => option.value === target)}
               onChange={(option: any) => setTarget(option?.value)}
               isSearchable={false}
               menuPlacement='top'
