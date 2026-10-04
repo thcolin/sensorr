@@ -382,10 +382,15 @@ Lists.styles = {
       color: 'text',
     },
   },
+  // The Sorting of the green bars of Discover and Library, without the green it hovers with there
   sort: {
     flex: '0 0 auto',
     fontSize: 6,
     color: 'grayDarkest',
+    '>div:hover, >div >button:hover, >div >div:hover': {
+      backgroundColor: 'transparent',
+      color: 'text',
+    },
   },
   // The posters of the mobile, a sample of the list rather than the list
   row: {
