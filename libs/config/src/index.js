@@ -33,6 +33,22 @@ convict.addFormat({
   },
 })
 
+// The sort of a whole list, or none: the fields every source of Discover and Library sorts on
+export const LIST_SORTS = ['popularity', 'release_date', 'vote_average', 'vote_count']
+
+convict.addFormat({
+  name: 'list-sort',
+  validate: function (sort) {
+    if (sort === null) {
+      return
+    }
+
+    if (!sort || !LIST_SORTS.includes(sort.by) || typeof sort.descending !== 'boolean') {
+      throw new Error(`must be null, or by one of ${LIST_SORTS.join(', ')} with a boolean descending`)
+    }
+  },
+})
+
 // A `source-array` where each list id shows once, the rows of `home` point to it
 convict.addFormat({
   name: 'lists',
@@ -556,7 +572,7 @@ const schema = {
       },
       sort: {
         doc: 'How the whole list sorts, its sources merged: `by` popularity, release_date, vote_average or vote_count, `descending`; none, its sources one after the other',
-        format: '*',
+        format: 'list-sort',
         default: null,
       },
       sources: {
