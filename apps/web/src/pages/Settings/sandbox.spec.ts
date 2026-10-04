@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { sampleReleasesOf, sandboxOf } from './sandbox'
+import { AVOIDED_TITLE, sampleReleasesOf, sandboxOf, summaryOf } from './sandbox'
 
 const MULTI = {
   name: 'MULTi-VF2',
@@ -31,8 +31,11 @@ describe('sampleReleasesOf', () => {
     }
   })
 
-  it('deals the releases to the indexers in turn', () => {
-    expect(sampleReleasesOf(['indexer-1', 'indexer-2']).slice(0, 3).map(release => release.meta.znab)).toEqual(['indexer-1', 'indexer-2', 'indexer-1'])
+  it('takes every release from an indexer the policy does not avoid, plus one from each avoided indexer', () => {
+    const releases = sampleReleasesOf(['indexer-1', 'indexer-2', 'indexer-3'], ['indexer-1', 'indexer-3'])
+
+    expect(new Set(releases.filter(release => release.title !== AVOIDED_TITLE).map(release => release.znab))).toEqual(new Set(['indexer-2']))
+    expect(releases.filter(release => release.title === AVOIDED_TITLE).map(release => release.znab)).toEqual(['indexer-1', 'indexer-3'])
     expect(sampleReleasesOf()[0].znab).toBeUndefined()
   })
 })
@@ -47,21 +50,32 @@ describe('sandboxOf', () => {
 
   it('withdraws what the policy avoids, with its reason, after every valid release', () => {
     expect(byGroup(releases, 'NETTLE')).toMatchObject({ valid: false, reason: '🚨 Withdrawn by policy (source=CAM)' })
-    expect(byGroup(releases, 'ORCHARD')).toMatchObject({ valid: false, reason: '🚨 Withdrawn by policy (znab=indexer-2)' })
+    expect(releases.find(release => release.znab === 'indexer-2')).toMatchObject({ valid: false, reason: '🚨 Withdrawn by policy (znab=indexer-2)' })
     expect(releases.findIndex(release => !release.valid)).toBeGreaterThan(releases.findLastIndex(release => release.valid))
   })
 
   it('rejects what a movie search rejects whatever the policy', () => {
-    for (const group of ['WARREN', 'DELL', 'COPSE', 'HOLLOW', 'GLADE']) {
+    expect(byGroup(releases, 'HOLLOW').reason).toBe('🌍 No seeders')
+    for (const group of ['WARREN', 'DELL', 'COPSE', 'GLADE']) {
       expect(byGroup(releases, group).valid).toBe(false)
     }
   })
 
   it('marks as end-goal only the valid releases that meet the require', () => {
-    expect(releases.filter(release => release.goal).map(release => release.meta.group)).toEqual(['THICKET', 'PEACH'])
+    expect(releases.filter(release => release.goal).map(release => release.meta.group)).toEqual(['THICKET', 'PEACH', 'ORCHARD'])
   })
 
   it('keeps a release flagged MD when the policy avoids MD as a dub', () => {
     expect(byGroup(releases, 'THICKET').meta.flags).toContain('MD')
+  })
+})
+
+describe('summaryOf', () => {
+  it('counts each kind of release and names the pick, with the tie-breaker of the policy', () => {
+    expect(summaryOf(sandboxOf(MULTI, ['indexer-1', 'indexer-2']), MULTI)).toBe('25 ⭐ · 15 🚨 · 5 🗑️ · picks Big.Buck.Bunny.2008.MULTi-VF2.MD.1080p.BLURAY.mHD.x264.AC3-5.1-THICKET (smallest on a tie)')
+  })
+
+  it('says when nothing would be picked', () => {
+    expect(summaryOf([], MULTI)).toBe('0 ⭐ · 0 🚨 · 0 🗑️ · picks nothing')
   })
 })

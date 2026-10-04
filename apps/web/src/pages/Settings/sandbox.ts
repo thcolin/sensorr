@@ -53,26 +53,46 @@ export const SAMPLE_RELEASES: [string, number, number][] = [
 
 export const SAMPLE_QUERY = { terms: ['big buck bunny'], titles: ['big buck bunny'], years: [2008], banned_releases: [] }
 
-export const sampleReleasesOf = (znabs: string[] = []) => SAMPLE_RELEASES.map(([title, size, seeders], index) => {
-  const znab = znabs.length ? znabs[index % znabs.length] : undefined
+// Shown once for each configured indexer the policy avoids, the other releases come from an indexer it does not
+export const AVOIDED_TITLE = 'Big.Buck.Bunny.2008.MULTi.1080p.BluRay.x264-DEN'
 
-  return {
-    id: title,
-    title,
-    original: title,
-    size: Math.round(size * GB),
-    seeders,
-    peers: seeders,
-    publishDate: '2024-05-01T00:00:00Z',
-    znab,
-    meta: { ...oleoo.parse(title, { strict: false, flagged: true }), znab },
-  }
+const sampleOf = (title: string, size: number, seeders: number, znab?: string) => ({
+  id: znab ? `${title}@${znab}` : title,
+  title,
+  original: title,
+  size: Math.round(size * GB),
+  seeders,
+  peers: seeders,
+  publishDate: '2024-05-01T00:00:00Z',
+  znab,
+  meta: { ...oleoo.parse(title, { strict: false, flagged: true }), znab },
 })
+
+export const sampleReleasesOf = (znabs: string[] = [], avoided: string[] = []) => {
+  const neutral = znabs.find(znab => !avoided.includes(znab))
+
+  return [
+    ...SAMPLE_RELEASES.map(([title, size, seeders]) => sampleOf(title, size, seeders, neutral)),
+    ...znabs.filter(znab => avoided.includes(znab)).map(znab => sampleOf(AVOIDED_TITLE, 4.4, 40, znab)),
+  ]
+}
 
 // A valid release that also meets the `require` is the end-goal of the refine job
 export const sandboxOf = (raw, znabs: string[] = []) => {
   const policy = new Policy(raw)
-  const goals = new Set(policy.apply(sampleReleasesOf(znabs), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
+  const goals = new Set(policy.apply(sampleReleasesOf(znabs, policy.avoid.znab), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
 
-  return policy.apply(sampleReleasesOf(znabs), SAMPLE_QUERY).map(release => ({ ...release, goal: release.valid && goals.has(release.id) }))
+  return policy.apply(sampleReleasesOf(znabs, policy.avoid.znab), SAMPLE_QUERY).map(release => ({ ...release, goal: release.valid && goals.has(release.id) }))
+}
+
+const TIES = { size: ['smallest', 'largest'], seeders: ['fewest seeders', 'most seeders'] }
+
+// 🚨 and 🗑️ split the invalid releases as `ReleaseState` does
+export const summaryOf = (releases, { sorting = 'size', descending = false } = {}) => {
+  const valid = releases.filter(release => release.valid)
+  const withdrawn = releases.filter(release => !release.valid && release.warning <= 10).length
+  const [first, second] = valid
+  const pick = !first ? 'picks nothing' : `picks ${first.title}${second?.score === first.score ? ` (${TIES[sorting]?.[descending ? 1 : 0] || sorting} on a tie)` : ''}`
+
+  return `${valid.length} ⭐ · ${withdrawn} 🚨 · ${releases.length - valid.length - withdrawn} 🗑️ · ${pick}`
 }

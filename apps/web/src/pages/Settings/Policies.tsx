@@ -27,7 +27,7 @@ import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilte
 import { Release } from '../../components/Sensorr/Release'
 import { emojize, languages, useTitle } from '@sensorr/utils'
 import { rankOf, ranked, unranked } from '@sensorr/sensorr'
-import { sandboxOf } from './sandbox'
+import { sandboxOf, summaryOf } from './sandbox'
 
 export const policiesOf = (config) => (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false }))
 
@@ -91,11 +91,13 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
 const PoliciesSandbox = ({ form }) => {
   const { device } = useDeviceContext()
   const [open, setOpen] = useState(false)
-  const [index, setIndex] = useState(0)
+  const [name, setName] = useState(null)
   const policies = (form.watch('policies') || []).filter((policy) => !policy.removed)
   const znabs = (form.watch('znabs') || []).map((znab) => znab.name)
-  const policy = policies[index] || policies[0]
-  const options = policies.map((policy, index) => ({ value: `${index}`, label: policy.name }))
+  const policy = policies.find((policy) => policy.name === name) || policies[0]
+  const options = policies.map((policy) => ({ value: policy.name, label: policy.name || '(no name)' }))
+  const key = open && policy ? JSON.stringify([policy, znabs]) : null
+  const releases = useMemo(() => key ? sandboxOf(policy, znabs) : [], [key])
 
   return (
     <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PoliciesSandbox.styles.element}>
@@ -104,23 +106,28 @@ const PoliciesSandbox = ({ form }) => {
       </summary>
       {open && (
         <div>
-          <p>
-            <small>How the policy ranks fake releases of <em>Big Buck Bunny</em> (2008), as a search for this movie would, before you save.</small>
-          </p>
+          <p>How a policy ranks fake releases of <em>Big Buck Bunny</em> (2008), as a search for this movie would. Nothing is saved or downloaded.</p>
           {!policy ? (
-            <p><small>Add a policy to try it.</small></p>
+            <p>Add a policy to try it.</p>
           ) : (
             <>
               <Select
-                label='Policy'
+                aria-label='Policy to try'
                 options={options}
                 value={options[policies.indexOf(policy)]}
-                onChange={(option) => setIndex(Number(option.value))}
+                onChange={(option) => setName(option.value)}
                 resetable={false}
                 isSearchable={false}
+                menuPortalTarget={document.body}
+                closeMenuOnScroll={true}
+                menuPlacement='auto'
+                styles={{
+                  menuPortal: (style) => ({ ...style, zIndex: 10 }),
+                }}
               />
-              <div sx={{ marginTop: 6 }}>
-                {sandboxOf(policy, znabs).map((release) => (
+              <p>{summaryOf(releases, policy)}</p>
+              <div>
+                {releases.map((release) => (
                   <Release
                     key={release.id}
                     entity={release}
@@ -138,11 +145,17 @@ const PoliciesSandbox = ({ form }) => {
   )
 }
 
+// The box of a policy's Rules, standing on its own
 PoliciesSandbox.styles = {
   element: {
+    marginX: 8,
     marginY: 6,
     fontSize: 5,
     lineHeight: 'body',
+    backgroundColor: 'grayLighter',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25rem',
     '>summary': {
       cursor: 'pointer',
       paddingX: 3,
@@ -155,8 +168,13 @@ PoliciesSandbox.styles = {
       },
     },
     '>div': {
+      borderTop: '1px solid',
+      borderColor: 'grayDark',
       paddingX: 3,
-      paddingBottom: 6,
+      paddingY: 4,
+      '>p': {
+        marginY: 4,
+      },
     },
   },
 }
