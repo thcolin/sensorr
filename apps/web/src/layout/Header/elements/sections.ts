@@ -2,6 +2,7 @@ export const SECONDARY = {
   '/movie': [
     { to: '/movie/library', label: 'Library' },
     { to: '/movie/discover', label: 'Discover' },
+    { to: '/movie/lists', label: 'Lists' },
     { to: '/movie/calendar', label: 'Calendar' },
     { to: '/movie/trending', label: 'Trending' },
     { to: '/movie/theatres', label: 'Theatres' },
@@ -11,6 +12,7 @@ export const SECONDARY = {
   '/tv': [
     { to: '/tv/library', label: 'Library' },
     { to: '/tv/discover', label: 'Discover' },
+    { to: '/tv/lists', label: 'Lists' },
     { to: '/tv/calendar', label: 'Calendar' },
     { to: '/tv/trending', label: 'Trending' },
     { to: '/tv/requests', label: 'Requests' },

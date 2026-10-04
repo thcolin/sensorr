@@ -39,6 +39,7 @@ import Followed from './Followed/Followed'
 import Person from './Person/Person'
 import Collection from './Collection/Collection'
 import ShowsLibrary from './Shows/Library'
+import { ListPage, ListsPage } from './Lists/Lists'
 import ShowsCalendar from './Shows/Calendar'
 import ShowsDiscover from './Shows/Discover'
 import Show from './Shows/Show'
@@ -118,6 +119,8 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/discover' element={<Discover />} />
         <Route path='movie/trending' element={<TrendingMovies />} />
         <Route path='movie/library' element={<Library />} />
+        <Route path='movie/lists' element={<ListsPage media='movie' />} />
+        <Route path='movie/lists/:id' element={<ListPage media='movie' />} />
         <Route path='movie/calendar' element={<Calendar />} />
         <Route path='movie/theatres' element={<Theatres />} />
         <Route path='movie/requests' element={<Requests />} />
@@ -130,6 +133,8 @@ const router = createBrowserRouter(createRoutesFromElements(
         <Route path='movie/:id/similar' element={<Similar />} />
         <Route path='tv' element={<SectionHome section='tv' fallback={<Navigate replace={true} to='/tv/library' />} />} />
         <Route path='tv/library' element={<ShowsLibrary />} />
+        <Route path='tv/lists' element={<ListsPage media='tv' />} />
+        <Route path='tv/lists/:id' element={<ListPage media='tv' />} />
         <Route path='tv/calendar' element={<ShowsCalendar />} />
         <Route path='tv/discover' element={<ShowsDiscover />} />
         <Route path='tv/trending' element={<TrendingShows />} />
