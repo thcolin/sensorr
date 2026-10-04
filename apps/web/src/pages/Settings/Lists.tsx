@@ -184,7 +184,7 @@ const NONE = []
 // The filters of a source as their panel titles them: a click opens the panel on them
 const SourceFilters = ({ list, source, summary, open = false, onOpened = null, onChange }) => {
   const controls = CONTROLS[source.kind][list.media]
-  const values = valuesOfControls(controls.fields, source.values)
+  const values: { [key: string]: any } = valuesOfControls(controls.fields, source.values)
   const statistics = controls.useStatistics(NONE, controls.fields, serializeControls(controls.fields, values))
   const Summary = useCallback(({ toggleOpen }) => {
     // Once: a second run, as StrictMode does, would close it again
@@ -201,18 +201,28 @@ const SourceFilters = ({ list, source, summary, open = false, onOpened = null, o
     return <button type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
   }, [summary])
 
+  // Discover and Library sort in their bar, out of the panel: the sort sits on the line of the source
+  const SortBy = controls.fields.sort_by?.component
+
   return (
-    <Controls
-      title=''
-      fields={controls.fields}
-      values={values}
-      onChange={onChange}
-      layout={{ aside: controls.layout.aside }}
-      components={{ ...controls.components, toggle: Summary }}
-      statistics={statistics}
-      loading={false}
-      total={0}
-    />
+    <>
+      <Controls
+        title=''
+        fields={controls.fields}
+        values={values}
+        onChange={onChange}
+        layout={{ aside: controls.layout.aside }}
+        components={{ ...controls.components, toggle: Summary }}
+        statistics={statistics}
+        loading={false}
+        total={0}
+      />
+      {SortBy && (
+        <span sx={Lists.styles.sort}>
+          <SortBy {...controls.fields.sort_by.props} value={values.sort_by} onChange={(sort_by) => onChange({ ...values, sort_by })} />
+        </span>
+      )}
+    </>
   )
 }
 
@@ -358,6 +368,11 @@ Lists.styles = {
     ':hover, :focus-visible': {
       color: 'text',
     },
+  },
+  sort: {
+    flex: '0 0 auto',
+    fontSize: 6,
+    color: 'grayDarkest',
   },
   // The posters of the mobile, a sample of the list rather than the list
   row: {
