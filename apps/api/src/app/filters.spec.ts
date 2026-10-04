@@ -1,4 +1,4 @@
-import { episodeStatusFilter, facetFilter, movieFilter, oneOf, releasesFilter, showFilter, upcomingBirthdayFilter } from './filters'
+import { episodeStatusFilter, facetFilter, movieFilter, oneOf, releasesFilter, showFilter, stateFilter, upcomingBirthdayFilter } from './filters'
 
 describe('oneOf', () => {
   it('matches any value on a pipe, every value on a comma, cast', () => {
@@ -120,5 +120,24 @@ describe('upcomingBirthdayFilter', () => {
     expect(upcomingBirthdayFilter(undefined, new Date())).toEqual({})
     expect(upcomingBirthdayFilter('0', new Date())).toEqual({})
     expect(upcomingBirthdayFilter('soon', new Date())).toEqual({})
+  })
+})
+
+describe('stateFilter', () => {
+  it('leaves the ignored ones out, unless a state is picked', () => {
+    expect(stateFilter({})).toEqual({ state: { $nin: ['ignored'] } })
+    expect(stateFilter({ state: 'ignored|wished' })).toEqual({ state: { $in: ['ignored', 'wished'] } })
+  })
+
+  it('keeps the ignored ones a list or a guest watchlist holds', () => {
+    expect(stateFilter({ lists: 'a1' })).toEqual({})
+    expect(stateFilter({ requested_by: 'guest@example.com' })).toEqual({})
+  })
+})
+
+describe('lists', () => {
+  it('filters movies and shows on the lists that hold them, the ignored ones included', () => {
+    expect(movieFilter({ lists: 'a1|b2' })).toEqual({ lists: { $in: ['a1', 'b2'] } })
+    expect(showFilter({ lists: 'a1' })).toEqual({ lists: { $in: ['a1'] } })
   })
 })

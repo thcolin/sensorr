@@ -69,14 +69,17 @@ export const releasesFilter = (raw) => {
   return $and.length ? { $and } : {}
 }
 
+// `ignored` is what Sensorr does not keep: left out unless a state is picked, or a list or a guest's
+// watchlist asks for what it holds, which is often not kept
+export const stateFilter = (params) => params.state
+  ? { state: { $in: params.state.split('|') } }
+  : (params.lists || params.requested_by) ? {} : { state: { $nin: ['ignored'] } }
+
 export const movieFilter = (raw) => {
   const params = scalars(raw)
 
   return {
-  state: { $nin: ['ignored'] },
-  ...(params.state ? {
-    state: { $in: params.state.split('|') }
-  } : {}),
+  ...stateFilter(params),
   ...(params.policy ? {
     policy: { $in: params.policy.split('|') }
   } : {}),
@@ -94,6 +97,7 @@ export const movieFilter = (raw) => {
   ...oneOf(params.spoken_languages, 'spoken_languages.iso_639_1'),
   ...oneOf(params.production_companies, 'production_companies.name'),
   ...requested(params),
+  ...oneOf(params.lists, 'lists'),
   ...((params['refined_at.lte'] || params['refined_at.gte']) ? {
     refined_at: {
       ...(params['refined_at.lte'] ? { $not: { $gte: params['refined_at.lte'] }  } : {}),
@@ -133,10 +137,7 @@ export const showFilter = (raw) => {
   const params = scalars(raw)
 
   return {
-  state: { $nin: ['ignored'] },
-  ...(params.state ? {
-    state: { $in: params.state.split('|') }
-  } : {}),
+  ...stateFilter(params),
   ...(params.policy ? {
     policy: { $in: params.policy.split('|') }
   } : {}),
@@ -152,6 +153,7 @@ export const showFilter = (raw) => {
   ...oneOf(params.original_languages, 'original_language'),
   ...oneOf(params.origin_country, 'origin_country'),
   ...requested(params),
+  ...oneOf(params.lists, 'lists'),
   ...between(params, 'first_air_date', 'first_air_date', date),
   ...between(params, 'number_of_seasons'),
   ...between(params, 'popularity'),

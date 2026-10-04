@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { entryPolicy } from '@sensorr/sensorr'
-import { facetFilter, movieFilter } from '../filters'
+import { facetFilter, movieFilter, stateFilter } from '../filters'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
 import { LogsService } from '../logs/logs.service'
@@ -17,7 +17,7 @@ import { arrivedOf } from './arrivals'
 
 const SWAPS = ['refine', 'shrink', 'report']
 
-const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by', 'lists']
 
 @Injectable()
 export class MoviesService {
@@ -325,9 +325,7 @@ export class MoviesService {
       {
         $match: {
           ...({
-            library: {
-              state: { $nin: ['ignored'] },
-            },
+            library: stateFilter({ lists: params.lists, requested_by: params.requested_by }),
             requests: {
               state: { $in: 'archived|wished|proposal|pinned|missing|ignored'.split('|') },
               [`requested_by.0`]: { $exists: true },

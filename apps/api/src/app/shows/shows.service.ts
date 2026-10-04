@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
 import { STATUS_GROUPS, entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
-import { episodeStatusFilter, facetFilter, showFilter } from '../filters'
+import { episodeStatusFilter, facetFilter, showFilter, stateFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { LogsService } from '../logs/logs.service'
@@ -16,7 +16,7 @@ import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
 import { landedOf } from './arrivals'
 
-const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'path', 'query', 'plex_artworks', 'plex_seasons', 'releases', 'banned_releases', 'requested_by']
+const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'path', 'query', 'plex_artworks', 'plex_seasons', 'releases', 'banned_releases', 'requested_by', 'lists']
 
 const RELEASE_FIELDS = ['imported_at', 'overdue', 'proposal', 'accepted_at', 'torrent', 'replaces']
 
@@ -273,7 +273,7 @@ export class ShowsService {
     const unwound = (path: string, _id = `$${path}`) => [{ $unwind: `$${path.split('.')[0]}` }, { $group: { _id, ...count } }]
 
     const [raw] = await this.showModel.aggregate([
-      { $match: showFilter(context === 'followed' ? { monitored: 'true' } : {}) },
+      { $match: { ...stateFilter({ lists: params.lists, requested_by: params.requested_by }), ...(context === 'followed' ? { monitored: true } : {}) } },
       {
         $facet: {
           state: [filtered('monitored'), { $group: { _id: { $cond: ['$monitored', 'followed', 'unfollowed'] }, ...count } }],
