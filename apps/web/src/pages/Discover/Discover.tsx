@@ -14,6 +14,7 @@ import {
   FilterVoteAverage,
   FilterVoteCount,
   withControls,
+  withControlsArgs,
   Warning,
   Option,
 } from '@sensorr/ui'
@@ -200,6 +201,57 @@ export const FIELDS = {
   },
 }
 
+// The filters panel, Settings › Lists opens it on a saved list too
+export const CONTROLS: withControlsArgs = {
+  title: i18n.t('pages.discover.title'),
+  useStatistics,
+  hooks: {
+    onChange: () => scrollToTop(),
+  },
+  layout: {
+    nav: {
+      display: 'grid',
+      gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: [
+        `"results hide_library toggle sort_by"`,
+        `"title results hide_library toggle sort_by"`,
+      ],
+      '>h4': {
+        display: ['none', 'block'],
+      },
+    },
+    aside: {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: `
+        "head"
+        "with_people"
+        "with_crew"
+        "with_cast"
+        "with_genres"
+        "without_genres"
+        "primary_release_date"
+        "vote_average"
+        "vote_count"
+        "hide_unknown"
+        "with_companies"
+        "with_keywords"
+        "without_keywords"
+        "with_original_language"
+        "with_runtime"
+        "with_release_type"
+        "certification"
+      `,
+    },
+  },
+  fields: FIELDS,
+  footer: saveAsListOf('discover', 'movie'),
+}
+
 export const Discover = compose(
   withTitle(i18n.t('pages.discover.title')),
   withProps({
@@ -221,55 +273,7 @@ export const Discover = compose(
       hide_unknown: (value) => value ? (movie) => !utils.isUnknown(movie) : null,
     },
   }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
-  withControls({
-    title: i18n.t('pages.discover.title'),
-    useStatistics,
-    hooks: {
-      onChange: () => scrollToTop(),
-    },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results hide_library toggle sort_by"`,
-          `"title results hide_library toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: {
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: `
-          "head"
-          "with_people"
-          "with_crew"
-          "with_cast"
-          "with_genres"
-          "without_genres"
-          "primary_release_date"
-          "vote_average"
-          "vote_count"
-          "hide_unknown"
-          "with_companies"
-          "with_keywords"
-          "without_keywords"
-          "with_original_language"
-          "with_runtime"
-          "with_release_type"
-          "certification"
-        `,
-      },
-    },
-    fields: FIELDS,
-    footer: saveAsListOf('discover', 'movie'),
-  }),
+  withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
 )(EntitiesHideable)
