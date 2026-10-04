@@ -57,11 +57,8 @@ const UISelect = forwardRef(({
       borderColor: 'inherit !important',
       boxShadow: 'none',
       cursor: 'pointer',
+      // react-select lays the placeholder and the input on one grid cell until there are values, then flexes
       '>div:first-of-type': {
-        display: 'flex',
-        // flexWrap: 'nowrap',
-        // width: 0,
-        // overflowX: 'auto',
         padding: '0.5em',
         '>input': {
           left: 0,
