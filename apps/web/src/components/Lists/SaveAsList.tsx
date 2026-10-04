@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 import { Button, Option, Select } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
@@ -12,12 +11,9 @@ const HOMES: { [home in HomeKey]: string } = { all: 'Browser', movie: 'Movies', 
 export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv') => {
   const SaveAsList = ({ values }: { values: { [key: string]: any } }) => {
     const { config } = useConfigContext()
-    const location = useLocation()
     const onSave = useSaveConfig()
     const lists: List[] = listsOf(config).filter((list) => list.media === media)
-    const editing = (location.state as any)?.editing
-    const edited = lists.find((list) => list.id === editing?.list && list.sources[editing?.source]?.kind === kind)
-    const [mode, setMode] = useState<'new' | 'add' | 'replace'>(edited ? 'replace' : 'new')
+    const [mode, setMode] = useState<'new' | 'add'>('new')
     const [name, setName] = useState('')
     const [target, setTarget] = useState(lists[0]?.id || '')
     const [pins, setPins] = useState<HomeKey[]>(['all', media])
@@ -35,7 +31,6 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
       const next = {
         new: () => [...all, { id, name: name.trim(), media, sources: [source] }],
         add: () => all.map((list) => list.id === target ? { ...list, sources: [...list.sources, source] } : list),
-        replace: () => all.map((list) => list.id === edited.id ? { ...list, sources: list.sources.map((other, index) => index === editing.source ? source : other) } : list),
       }[mode]()
 
       setSaving(true)
@@ -59,11 +54,6 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
     return (
       <section sx={SaveAsList.styles.element} aria-labelledby={`save-as-list-${kind}`}>
         <h3 id={`save-as-list-${kind}`}>{emojize('🗂️', 'Save as list')}</h3>
-        {edited && (
-          <Option id='save-as-list-replace' type='radio' name='save-as-list' checked={mode === 'replace'} onChange={() => setMode('replace')}>
-            Replace source {editing.source + 1} of <strong>{edited.name}</strong>
-          </Option>
-        )}
         <Option id='save-as-list-new' type='radio' name='save-as-list' checked={mode === 'new'} onChange={() => setMode('new')}>
           New list
         </Option>
