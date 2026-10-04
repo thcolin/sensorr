@@ -1,7 +1,8 @@
-import { memo, useMemo, useRef } from 'react'
+import { memo, useId, useMemo, useRef } from 'react'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { Icon, QuerySelect, Option } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
+import { useCustomLists } from '../../../components/Lists/useCustomLists'
 import { useThemeUI } from 'theme-ui'
 
 export const termsValuesOf = (query) => [
@@ -10,10 +11,12 @@ export const termsValuesOf = (query) => [
   ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
 ]
 
-const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) => {
+const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false, ...props }) => {
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
   const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, metadata.state, entity?.original_language, sensorr.policies])
+
+  const ids = { terms: useId(), years: useId() }
 
   const values = useMemo(() => ({
     terms: termsValuesOf(query),
@@ -25,10 +28,11 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
 
   return (
     <div>
-      <div sx={UIMetadata.styles.container}>
+      <div sx={lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container}>
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide, ...UIMetadata.styles.line }}>
-          <span>Terms</span>
+          <span id={ids.terms}>Terms</span>
           <QueryInput
+            aria-labelledby={ids.terms}
             value={values.terms}
             onChange={(values) => {
               setMetadata('query', {
@@ -40,8 +44,9 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           {help && <small title="Sensorr will search for all selected terms on configured indexers">Sensorr will search for all selected terms on configured indexers</small>}
         </div>
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
-          <span>Years</span>
+          <span id={ids.years}>Years</span>
           <QueryInput
+            aria-labelledby={ids.years}
             value={values.years}
             onChange={(values) => {
               setMetadata('query', {
@@ -52,6 +57,13 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, ...props }) =>
           />
           {help && <small title="Sensorr will filter releases with selected years">Sensorr will filter releases with selected years</small>}
         </div>
+        {lists && (
+          <ListsInput
+            media='movie'
+            value={metadata?.lists}
+            onChange={(lists) => setMetadata('lists', lists)}
+          />
+        )}
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
           <span>Policy</span>
           <PolicyInput
@@ -121,6 +133,11 @@ UIMetadata.styles = {
   wide: {
     overflow: 'hidden',
   },
+  // With Lists, two columns from the first breakpoint: Terms | Years, Lists | Policy, then the options
+  listed: {
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0, 1fr)', 'minmax(0, 2fr) minmax(12em, 1fr)'],
+  },
   // Once the row wraps, Terms and each option take a line of their own, and Years and Policy share one
   // from the width of their column
   line: {
@@ -133,13 +150,49 @@ UIMetadata.styles = {
   option: {
     whiteSpace: 'normal',
   },
+  fieldset: {
+    minWidth: 0,
+    margin: 12,
+    padding: 12,
+    border: 'none',
+    transition: 'opacity 200ms ease-in-out',
+    ':disabled': {
+      opacity: 0.5,
+    },
+  },
 }
 
 export const Metadata = memo(UIMetadata)
 
 export const MetadataStyles = UIMetadata.styles
 
-const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
+// The custom lists of a movie or a show; a name typed starts a new one
+const UIListsInput = ({ media, value = [], onChange, disabled = false }) => {
+  const { lists, idsOf } = useCustomLists(media)
+  const options = useMemo(() => lists.map((list) => ({ value: list.id, label: list.name })), [lists])
+  const id = useId()
+
+  return (
+    <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide, ...UIMetadata.styles.line }}>
+      <span id={id}>Lists</span>
+      <fieldset disabled={disabled} aria-labelledby={id} sx={UIMetadata.styles.fieldset}>
+        <QueryInput
+          options={options}
+          placeholder='Add to a list'
+          aria-labelledby={id}
+          value={options.filter((option) => (value || []).includes(option.value))}
+          // The metadata contexts tell a failure in their toast
+          onChange={(values) => idsOf(values).then(onChange).catch(() => null)}
+        />
+      </fieldset>
+      <small title='Type a new name to create a list'>Type a new name to create a list</small>
+    </div>
+  )
+}
+
+export const ListsInput = memo(UIListsInput)
+
+const UIQueryInput = ({ value, onChange, direction = 'row', options = [], placeholder = '', ...props }) => {
   const { theme } = useThemeUI()
 
   const ref = useRef()
@@ -173,6 +226,13 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
         fontSize: '0.75em !important',
         fontFamily: (theme.fonts as any).body,
       },
+    }),
+    placeholder: (style) => ({
+      ...style,
+      marginLeft: '0.25em',
+      fontSize: '0.75em',
+      fontFamily: (theme.fonts as any).body,
+      color: theme.rawColors['gray-500'],
     }),
     valueContainer: (style) => ({
       ...style,
@@ -285,11 +345,13 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       <div>
         <QuerySelect
           ref={ref}
-          options={[]}
+          options={options}
           isClearable={false}
           defaultOptions={true}
           resetable={false}
           direction='column'
+          placeholder={placeholder}
+          aria-labelledby={props['aria-labelledby']}
           value={value}
           onChange={onChange}
           styles={styles}

@@ -17,7 +17,7 @@ import Person from '../../components/Person/Person'
 import { ReleaseSize } from '../../components/Sensorr/Release'
 import Details from '../Details/Details'
 import { Skeleton } from '../Details/components/Skeleton'
-import { ShowActions } from './components/Actions'
+import { ShowActions, ShowLists } from './components/Actions'
 import { useProposals } from './components/Proposals'
 import { useShowSearch } from './components/Search'
 import { Seasons } from './components/Seasons'
@@ -228,7 +228,9 @@ const Show = ({ ...props }) => {
           ready={actionsReady}
           setMetadata={setMetadata}
         />
-      ) : null}
+      ) : metadataLoading ? null : (
+        <ShowLists entity={show.data} metadata={metadata} />
+      )}
     >
       {episodesError ? (
         <Warning

@@ -2,7 +2,8 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
-import { MetadataStyles, OptionInput, PolicyInput, QueryInput, termsValuesOf } from '../../Details/components/Metadata'
+import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
+import { ListsInput, MetadataStyles, OptionInput, PolicyInput, QueryInput, termsValuesOf } from '../../Details/components/Metadata'
 
 export const useShowPolicy = (entity, metadata) => {
   const sensorr = useSensorr()
@@ -25,7 +26,7 @@ const usePendingMetadata = (setMetadata) => {
   return { pending, set }
 }
 
-const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, children = null }) => {
+const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, lists = null, children = null }) => {
   const sensorr = useSensorr()
   const { pending, set } = usePendingMetadata(setMetadata)
   const policy = useShowPolicy(entity, metadata)
@@ -48,11 +49,12 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
   }
 
   return (
-    <div sx={MetadataStyles.container}>
+    <div sx={lists ? { ...MetadataStyles.container, ...MetadataStyles.listed } : MetadataStyles.container}>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...MetadataStyles.line }}>
         <span id={ids.terms}>Terms</span>
-        <fieldset disabled={!ready || !!pending['query']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.terms}>
+        <fieldset disabled={!ready || !!pending['query']} sx={MetadataStyles.fieldset} aria-labelledby={ids.terms}>
           <QueryInput
+            aria-labelledby={ids.terms}
             value={termsValuesOf(query)}
             onChange={values => setQuery({ terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value) })}
           />
@@ -61,7 +63,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
       </div>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
         <span id={ids.years}>Years</span>
-        <fieldset disabled={!ready || !!pending['query']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.years}>
+        <fieldset disabled={!ready || !!pending['query']} sx={MetadataStyles.fieldset} aria-labelledby={ids.years}>
           <YearsInput
             value={years.length ? [Math.min(...years), Math.max(...years)] : [null, null]}
             onChange={([from, to]) => setQuery({ years: Array.from({ length: to - from + 1 }, (_, index) => `${from + index}`) })}
@@ -69,9 +71,10 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, chi
         </fieldset>
         {help && <small title={helps.years}>{helps.years}</small>}
       </div>
+      {lists}
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
         <span id={ids.policy}>Policy</span>
-        <fieldset disabled={!ready || !!pending['policy']} sx={UIShowSettings.styles.fieldset} aria-labelledby={ids.policy}>
+        <fieldset disabled={!ready || !!pending['policy']} sx={MetadataStyles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
             value={policy}
             onChange={value => set('policy', value)}
@@ -189,6 +192,20 @@ UIYearsInput.styles = {
 
 const YearsInput = memo(UIYearsInput)
 
+// `setShowLists` writes a show Sensorr does not keep yet, as `ignored`
+const ShowListsInput = ({ entity, metadata, ready = true }) => {
+  const { setShowLists } = useShowsMetadataContext() as any
+
+  return <ListsInput media='tv' value={metadata?.lists} disabled={!ready} onChange={(lists) => setShowLists(entity.id, () => lists)} />
+}
+
+// A show outside the library: its lists only
+export const ShowLists = memo(({ entity, metadata }: { entity: any, metadata: any }) => (
+  <div sx={{ ...MetadataStyles.container, ...MetadataStyles.listed }}>
+    <ShowListsInput entity={entity} metadata={metadata} />
+  </div>
+))
+
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
   const { pending, set } = usePendingMetadata(setMetadata)
   const ids = {
@@ -202,7 +219,13 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
   })
 
   return (
-    <ShowSettings entity={entity} metadata={metadata} ready={ready} setMetadata={setMetadata}>
+    <ShowSettings
+      entity={entity}
+      metadata={metadata}
+      ready={ready}
+      setMetadata={setMetadata}
+      lists={<ShowListsInput entity={entity} metadata={metadata} ready={ready} />}
+    >
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option }}>
         <span id={`${ids.monitored}-label`}>Follow episodes</span>
         <OptionInput
@@ -232,16 +255,3 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
 }
 
 export const ShowActions = memo(UIShowActions)
-
-UIShowSettings.styles = {
-  fieldset: {
-    minWidth: 0,
-    margin: 12,
-    padding: 12,
-    border: 'none',
-    transition: 'opacity 200ms ease-in-out',
-    ':disabled': {
-      opacity: 0.5,
-    },
-  },
-}

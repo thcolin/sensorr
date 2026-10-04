@@ -147,6 +147,7 @@ const UIDetails = ({
                           entity={entity || {}}
                           metadata={metadata}
                           setMetadata={setMetadata}
+                          lists={true}
                         />
                       </div>
                     </details>
