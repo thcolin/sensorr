@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
 import CreatableSelect from 'react-select/creatable'
-import { Option, Select } from '@sensorr/ui'
+import { Select } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
-import { HomeKey, List, Row, listRowId, listsOf } from '../../pages/Home/rows'
-
-const HOMES: { [home in HomeKey]: string } = { all: 'Browser', movie: 'Movies', tv: 'TV' }
+import { List, listsOf } from '../../pages/Home/rows'
 
 export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv') => {
   // One field: a name typed makes a new list, offered first, a list picked gets the filters as one more source
@@ -16,7 +14,6 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
     const onSave = useSaveConfig()
     const lists: List[] = listsOf(config).filter((list) => list.media === media)
     const [choice, setChoice] = useState<{ value: string, label: string, __isNew__?: boolean } | null>(null)
-    const [pins, setPins] = useState<HomeKey[]>(['all', media])
     const [saving, setSaving] = useState(false)
 
     const options = lists.map((list) => ({ value: list.id, label: list.name }))
@@ -24,18 +21,16 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
 
     const save = async () => {
       const all = listsOf(config)
-      const home: { [home in HomeKey]: Row[] } = config.get('home')
       const source = { kind, values }
-      const id = nanoid(8)
 
       setSaving(true)
 
       try {
-        await onSave(choice.__isNew__ ? {
-          lists: [...all, { id, name, media, sources: [source] }],
-          home: Object.fromEntries(pins.map((key) => [key, [...home[key], { id: listRowId({ id } as List), hidden: false }]])),
-        } : {
-          lists: all.map((list) => list.id === choice.value ? { ...list, sources: [...list.sources, source] } : list),
+        // A new list shows on no Home: Settings › Home places it
+        await onSave({
+          lists: choice.__isNew__
+            ? [...all, { id: nanoid(8), name, media, sources: [source] }]
+            : all.map((list) => list.id === choice.value ? { ...list, sources: [...list.sources, source] } : list),
         })
 
         setChoice(null)
@@ -67,22 +62,6 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
             Save
           </button>
         </div>
-        {choice?.__isNew__ && (
-          <div sx={SaveAsList.styles.pins}>
-            <span>Pin on</span>
-            {(['all', media] as HomeKey[]).map((key) => (
-              <Option
-                key={key}
-                id={`save-as-list-pin-${key}`}
-                type='checkbox'
-                checked={pins.includes(key)}
-                onChange={() => setPins((pins) => pins.includes(key) ? pins.filter((pin) => pin !== key) : [...pins, key])}
-              >
-                {HOMES[key]}
-              </Option>
-            ))}
-          </div>
-        )}
       </section>
     )
   }
@@ -128,15 +107,6 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
           cursor: 'default',
         },
       },
-    },
-    pins: {
-      marginTop: 8,
-      display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      columnGap: 4,
-      rowGap: 8,
-      fontSize: 5,
     },
   }
 
