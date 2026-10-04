@@ -134,6 +134,9 @@ export default {
         more: 'Discover more movies from themoviedb.org',
       },
       discoverSelectable: {
+        emoji: '🎲',
+        label: emojize('🎲', 'Discover by year, genre or studio'),
+        title: 'Movies of a random year, genre and studio',
         year: {
           emoji: '📅',
           title: 'Discover movies by random year',
