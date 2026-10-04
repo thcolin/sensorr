@@ -77,22 +77,29 @@ export const sampleReleasesOf = (znabs: string[] = [], avoided: string[] = []) =
   ]
 }
 
-// A valid release that also meets the `require` is the end-goal of the refine job
+// A search never queries an indexer the policy avoids, its rows say so instead of a policy verdict.
+// Each `apply` gets its own samples: it rewrites `meta` in place.
 export const sandboxOf = (raw, znabs: string[] = []) => {
   const policy = new Policy(raw)
-  const goals = new Set(policy.apply(sampleReleasesOf(znabs, policy.avoid.znab), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
+  const avoided = policy.avoid.znab
+  const goals = new Set(policy.apply(sampleReleasesOf(znabs, avoided), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
 
-  return policy.apply(sampleReleasesOf(znabs, policy.avoid.znab), SAMPLE_QUERY).map(release => ({ ...release, goal: release.valid && goals.has(release.id) }))
+  return policy.apply(sampleReleasesOf(znabs, avoided), SAMPLE_QUERY)
+    .map(release => avoided.includes(release.znab) ? { ...release, valid: false, reason: '🔕 Not searched, the policy avoids this indexer', warning: 70 } : release)
+    .map(release => ({ ...release, goal: release.valid && goals.has(release.id) }))
 }
 
-const TIES = { size: ['smallest', 'largest'], seeders: ['fewest seeders', 'most seeders'] }
-
 // 🚨 and 🗑️ split the invalid releases as `ReleaseState` does
-export const summaryOf = (releases, { sorting = 'size', descending = false } = {}) => {
+export const summaryOf = (releases) => {
   const valid = releases.filter(release => release.valid)
   const withdrawn = releases.filter(release => !release.valid && release.warning <= 10).length
-  const [first, second] = valid
-  const pick = !first ? 'picks nothing' : `picks ${first.title}${second?.score === first.score ? ` (${TIES[sorting]?.[descending ? 1 : 0] || sorting} on a tie)` : ''}`
+  const tied = valid.filter(release => release.score === valid[0].score).length
 
-  return `${valid.length} ⭐ · ${withdrawn} 🚨 · ${releases.length - valid.length - withdrawn} 🗑️ · ${pick}`
+  return {
+    valid: valid.length,
+    withdrawn,
+    rejected: releases.length - valid.length - withdrawn,
+    pick: valid[0] || null,
+    tied: tied > 1 ? tied : 0,
+  }
 }
