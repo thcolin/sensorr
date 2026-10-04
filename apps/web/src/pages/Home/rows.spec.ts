@@ -6,7 +6,7 @@ jest.mock('@dicebear/collection', () => ({}))
 
 const lists: List[] = [
   { id: 'w', name: 'Westerns', media: 'movie', sources: [{ kind: 'discover', values: {} }] },
-  { id: 's', name: 'Sitcoms', media: 'tv', sources: [{ kind: 'manual' }] },
+  { id: 's', name: 'Sitcoms', media: 'tv', sources: [{ kind: 'custom' }] },
 ]
 
 describe('rowsOf', () => {

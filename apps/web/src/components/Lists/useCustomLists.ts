@@ -4,14 +4,14 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
 import { listsOf } from '../../pages/Home/rows'
 
-export const useManualLists = (media: 'movie' | 'tv') => {
+export const useCustomLists = (media: 'movie' | 'tv') => {
   const { config } = useConfigContext()
   const onSave = useSaveConfig()
-  const lists = listsOf(config).filter((list) => list.media === media && list.sources.some(({ kind }) => kind === 'manual'))
+  const lists = listsOf(config).filter((list) => list.media === media && list.sources.some(({ kind }) => kind === 'custom'))
 
   const create = useCallback(async (name: string) => {
     const id = nanoid(8)
-    await onSave({ lists: [...listsOf(config), { id, name, media, sources: [{ kind: 'manual' }] }] })
+    await onSave({ lists: [...listsOf(config), { id, name, media, sources: [{ kind: 'custom' }] }] })
     return id
   }, [config, media])
 
@@ -29,7 +29,7 @@ export const useManualLists = (media: 'movie' | 'tv') => {
 }
 
 export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value: any, question: string) => Promise<any>, selection: string) => {
-  const { lists, idsOf } = useManualLists(media)
+  const { lists, idsOf } = useCustomLists(media)
 
   return {
     key: 'lists',

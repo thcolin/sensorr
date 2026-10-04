@@ -555,8 +555,8 @@ const schema = {
         default: [],
         children: {
           kind: {
-            doc: 'TMDB discover filters, library filters, or the entities added to this list by hand',
-            format: ['discover', 'library', 'manual'],
+            doc: 'TMDB discover filters, library filters, or the movies and shows added to this custom list',
+            format: ['discover', 'library', 'custom'],
             default: 'discover',
           },
           values: {

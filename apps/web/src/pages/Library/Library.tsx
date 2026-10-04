@@ -36,7 +36,7 @@ import { untouched } from '../../components/Sensorr/Controls/serialize'
 import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
-import { useListsAction } from '../../components/Lists/useManualLists'
+import { useListsAction } from '../../components/Lists/useCustomLists'
 
 const SLICE = 50
 
