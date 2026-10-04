@@ -27,7 +27,7 @@ const useListAll = (list: List) => {
   const [entities, setEntities] = useState([])
   const [length, setLength] = useState(null)
   const [error, setError] = useState(null)
-  const fresh = () => ({ buffers: (list?.sources || []).map(() => []), pages: (list?.sources || []).map(() => 1), done: (list?.sources || []).map(() => false), totals: [], seen: new Set(), loading: false })
+  const fresh = () => ({ controller: new AbortController(), buffers: (list?.sources || []).map(() => []), pages: (list?.sources || []).map(() => 1), done: (list?.sources || []).map(() => false), totals: [], seen: new Set(), loading: false })
   const cursor = useRef(fresh())
 
   const next = useCallback(async () => {
@@ -50,7 +50,7 @@ const useListAll = (list: List) => {
 
         if (empty.length) {
           await Promise.all(empty.map(async (i) => {
-            const page = await fetchSource(api, tmdb, list, list.sources[i], current.pages[i], { signal: undefined })
+            const page = await fetchSource(api, tmdb, list, list.sources[i], current.pages[i], { signal: current.controller.signal })
             current.buffers[i].push(...page.results)
             current.totals[i] = Math.min(page.total_results, PAGES * 20)
             current.done[i] = current.pages[i] >= Math.min(page.total_pages, PAGES)
@@ -77,8 +77,10 @@ const useListAll = (list: List) => {
       // Until every source is used up, the grid holds room for what they announce
       setLength(playing().length ? current.totals.reduce((sum, total) => sum + (total || 0), 0) : null)
     } catch (e) {
-      console.warn(e)
-      setError(e)
+      if (e.name !== 'AbortError') {
+        console.warn(e)
+        setError(e)
+      }
     } finally {
       current.loading = false
     }
@@ -90,6 +92,10 @@ const useListAll = (list: List) => {
     setLength(null)
     setError(null)
     next()
+
+    // A grid left, or another list, stops what the previous one still fetches
+    const { controller } = cursor.current
+    return () => controller.abort()
   }, [JSON.stringify(list)])
 
   const onMore = useCallback((visible) => {
