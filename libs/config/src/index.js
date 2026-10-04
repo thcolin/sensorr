@@ -33,6 +33,19 @@ convict.addFormat({
   },
 })
 
+// A `source-array` where each list id shows once, the rows of `home` point to it
+convict.addFormat({
+  name: 'lists',
+  validate: function (lists, schema) {
+    validateSources(lists, schema)
+    const ids = lists.map(({ id }) => id)
+
+    if (ids.some((id) => !id) || new Set(ids).size !== ids.length) {
+      throw new Error('each list must have its own id')
+    }
+  },
+})
+
 // A `source-array` where each year shows once, the API reads the first one it finds
 convict.addFormat({
   name: 'wrapped-editions',
@@ -43,6 +56,25 @@ convict.addFormat({
     if (new Set(years).size !== years.length) {
       throw new Error('each year must show once')
     }
+  },
+})
+
+// The rows of a Home, each one a built-in row or `list:<id>`
+const rowsOf = (doc, ids) => ({
+  doc,
+  format: 'source-array',
+  default: ids.map((id) => ({ id, hidden: false })),
+  children: {
+    id: {
+      doc: 'A built-in row, or `list:<id>`',
+      format: 'String',
+      default: '',
+    },
+    hidden: {
+      doc: 'Hide the row',
+      format: 'Boolean',
+      default: false,
+    },
   },
 })
 
@@ -496,6 +528,50 @@ const schema = {
       format: 'String',
       default: '',
     },
+  },
+  lists: {
+    doc: 'Lists a Home shows as rows',
+    format: 'lists',
+    default: [],
+    children: {
+      id: {
+        doc: 'Id of the list, `list:<id>` in the rows of a Home',
+        format: 'String',
+        default: '',
+      },
+      name: {
+        doc: 'Name of the list',
+        format: 'String',
+        default: '',
+      },
+      media: {
+        doc: 'Movies or shows, a list holds one of them',
+        format: ['movie', 'tv'],
+        default: 'movie',
+      },
+      sources: {
+        doc: 'Where the entities of the list come from, shown one source after the other',
+        format: 'source-array',
+        default: [],
+        children: {
+          kind: {
+            doc: 'TMDB discover filters, library filters, or the entities added to this list by hand',
+            format: ['discover', 'library', 'manual'],
+            default: 'discover',
+          },
+          values: {
+            doc: 'Values of the filters panel, as Discover or Library hold them',
+            format: Object,
+            default: {},
+          },
+        },
+      },
+    },
+  },
+  home: {
+    all: rowsOf('Rows of the browser Home, in order', ['trending_movies', 'trending_shows', 'library', 'library_shows', 'calendar', 'airing', 'requests', 'discover', 'discover_shows', 'theatres', 'upcoming', 'discover_selectable', 'trending_persons']),
+    movie: rowsOf('Rows of the Movies Home of the PWA, in order', ['trending_movies', 'library', 'calendar', 'swaps', 'requested_movies', 'discover', 'theatres', 'upcoming', 'discover_selectable']),
+    tv: rowsOf('Rows of the TV Home of the PWA, in order', ['trending_shows', 'library_shows', 'airing', 'requested_shows', 'discover_shows']),
   },
   znabs: {
     doc: 'ZNAB sources',

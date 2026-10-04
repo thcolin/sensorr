@@ -131,6 +131,32 @@ A `[]` in a name stands for one item of the array above it.
 | --- | --- | --- | --- |
 | `mediux.token` | `string` | `""` | MediUX API token, to list the artwork sets of a movie or a show |
 
+## Lists
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `lists` | `lists` | `[]` | Lists a Home shows as rows |
+| `lists[].id` | `String` | `""` | Id of the list, `list:<id>` in the rows of a Home |
+| `lists[].name` | `String` | `""` | Name of the list |
+| `lists[].media` | `movie`, `tv` | `movie` | Movies or shows, a list holds one of them |
+| `lists[].sources` | `source-array` | `[]` | Where the entities of the list come from, shown one source after the other |
+| `lists[].sources[].kind` | `discover`, `library`, `manual` | `discover` | TMDB discover filters, library filters, or the entities added to this list by hand |
+| `lists[].sources[].values` | — | `{}` | Values of the filters panel, as Discover or Library hold them |
+
+## Home
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `home.all` | `source-array` | `[{"id":"trending_movies","hidden":false},{"id":"trending_shows","hidden":false},{"id":"library","hidden":false},{"id":"library_shows","hidden":false},{"id":"calendar","hidden":false},{"id":"airing","hidden":false},{"id":"requests","hidden":false},{"id":"discover","hidden":false},{"id":"discover_shows","hidden":false},{"id":"theatres","hidden":false},{"id":"upcoming","hidden":false},{"id":"discover_selectable","hidden":false},{"id":"trending_persons","hidden":false}]` | Rows of the browser Home, in order |
+| `home.all[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.all[].hidden` | `Boolean` | `false` | Hide the row |
+| `home.movie` | `source-array` | `[{"id":"trending_movies","hidden":false},{"id":"library","hidden":false},{"id":"calendar","hidden":false},{"id":"swaps","hidden":false},{"id":"requested_movies","hidden":false},{"id":"discover","hidden":false},{"id":"theatres","hidden":false},{"id":"upcoming","hidden":false},{"id":"discover_selectable","hidden":false}]` | Rows of the Movies Home of the PWA, in order |
+| `home.movie[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.movie[].hidden` | `Boolean` | `false` | Hide the row |
+| `home.tv` | `source-array` | `[{"id":"trending_shows","hidden":false},{"id":"library_shows","hidden":false},{"id":"airing","hidden":false},{"id":"requested_shows","hidden":false},{"id":"discover_shows","hidden":false}]` | Rows of the TV Home of the PWA, in order |
+| `home.tv[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.tv[].hidden` | `Boolean` | `false` | Hide the row |
+
 ## Znabs
 
 | Name | Type | Default | Description |
