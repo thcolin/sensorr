@@ -80,7 +80,6 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
           ))}
         </div>
       )}
-      <PoliciesSandbox form={form} fields={policies.fields} />
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
       <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error('Add the policy with +, or clear its name') : onSubmit(values))}>
         <SortablePolicies
@@ -100,93 +99,66 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
   )
 }
 
-const PoliciesSandbox = ({ form, fields }) => {
+// A policy of the form, saved or not, ranking the sample releases
+const PolicySandbox = ({ form, prefix }) => {
   const { device } = useDeviceContext()
+  const { config } = useConfigContext()
   const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState(null)
-  const values = form.watch('policies') || []
-  const policies = fields.map((field, index) => ({ id: field.id, policy: values[index] })).filter(({ policy }) => policy && !policy.removed)
-  const znabs = (form.watch('znabs') || []).filter((znab) => !znab.disabled).map((znab) => znab.name)
-  const { id, policy } = policies.find(({ id }) => id === selected) || policies[0] || {}
-  const key = open && policy ? JSON.stringify([policy, znabs]) : null
+  const policy = prefix ? form.watch(prefix) : form.watch()
+  const znabs = (config.get('znabs') || []).filter((znab) => !znab.disabled).map((znab) => znab.name)
+  const key = open ? JSON.stringify([policy, znabs]) : null
   const releases = useMemo(() => key ? sandboxOf(policy, znabs) : [], [key])
   const statistics = useMemo(() => statisticsOf(releases), [releases])
   const summary = summaryOf(releases)
 
   return (
-    <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PoliciesSandbox.styles.element}>
+    <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PolicySandbox.styles.element}>
       <summary>
         <span>Sandbox</span>
         <small>Fake <em>Big Buck Bunny</em> (2008) releases, nothing is saved</small>
       </summary>
       {open && (
         <div>
-          {!policy ? (
-            <p>Add a policy to try it.</p>
-          ) : (
-            <>
-              <div sx={PoliciesSandbox.styles.toolbar}>
-                <label>
-                  <strong>Policy</strong>
-                  <select value={id} onChange={(e) => setSelected(e.target.value)}>
-                    {policies.map(({ id, policy }) => (
-                      <option key={id} value={id}>{policy.name || '(no name)'}</option>
-                    ))}
-                  </select>
-                </label>
-                <div>
-                  <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
-                  <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
-                  <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
-                  {!!summary.tied && <ReleaseTag title='In case of a tie, sort setting acts as the tie-breaker'><code>{summary.tied} tied at 💯 {summary.pick.score} · Sort by {policy.sorting === 'size' || !policy.sorting ? '📦' : '🌍'} {policy.sorting || 'size'}</code></ReleaseTag>}
-                </div>
-              </div>
-              <div sx={PoliciesSandbox.styles.releases}>
-                {releases.map((release) => (
-                  <Release
-                    key={release.id}
-                    entity={release}
-                    statistics={statistics}
-                    bars={true}
-                    display={device === 'mobile' ? 'column' : 'row'}
-                    actions={false}
-                    note={[release === summary.pick && '🏆 Picked', release.goal && '✨ End-goal of the refine job'].filter(Boolean).join(' · ') || null}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+          <div sx={PolicySandbox.styles.toolbar}>
+            <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
+            <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
+            <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
+            {!!summary.tied && <ReleaseTag title='In case of a tie, sort setting acts as the tie-breaker'><code>{summary.tied} tied at 💯 {summary.pick.score} · Sort by {policy.sorting === 'size' || !policy.sorting ? '📦' : '🌍'} {policy.sorting || 'size'}</code></ReleaseTag>}
+          </div>
+          <div sx={PolicySandbox.styles.releases}>
+            {releases.map((release) => (
+              <Release
+                key={release.id}
+                entity={release}
+                statistics={statistics}
+                bars={true}
+                display={device === 'mobile' ? 'column' : 'row'}
+                actions={false}
+                note={[release === summary.pick && '🏆 Picked', release.goal && '✨ End-goal of the refine job'].filter(Boolean).join(' · ') || null}
+              />
+            ))}
+          </div>
         </div>
       )}
     </details>
   )
 }
 
-PoliciesSandbox.styles = {
+// Under Rules in the box of a policy, whose `>details >div` rules it undoes
+PolicySandbox.styles = {
   element: {
-    marginX: 8,
-    marginY: 6,
-    fontSize: 5,
-    backgroundColor: 'grayLighter',
-    border: '1px solid',
+    borderTop: '1px solid',
     borderColor: 'grayDark',
-    borderRadius: '0.25rem',
-    overflow: 'hidden',
-    // The bands of the release search: `primary` title, `accent` controls
     '>summary': {
-      ...SUMMARY,
-      lineHeight: 'body',
       position: 'relative',
-      backgroundColor: 'primary',
-      color: 'whitePure',
       '>small': {
         display: 'block',
         position: ['static', 'absolute'],
         top: '50%',
         right: 3,
         transform: ['none', 'translateY(-50%)'],
-        color: 'whitePure',
-        opacity: 0.8,
+        color: 'grayDarker',
+        fontFamily: 'body',
         lineHeight: 'inherit',
       },
     },
@@ -196,61 +168,31 @@ PoliciesSandbox.styles = {
       padding: '0px',
       fontSize: 'inherit',
     },
-    '>div': {
-      '>p': {
+    '&& >div': {
+      maxHeight: 'none',
+      overflow: 'visible',
+      '>div': {
+        margin: '0px',
+        paddingX: '0px',
+      },
+      '>div:first-of-type': {
         paddingX: 3,
       },
     },
+  },
+  toolbar: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingY: 6,
+    borderBottom: '1px solid',
+    borderColor: 'grayDark',
+    fontVariantNumeric: 'tabular-nums',
   },
   releases: {
     maxHeight: '50vh',
     overflowY: 'auto',
     overscrollBehavior: 'contain',
-  },
-  toolbar: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-    paddingX: 3,
-    paddingY: 6,
-    backgroundColor: 'accent',
-    color: 'whitePure',
-    '>label': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      '>strong': {
-        fontWeight: 'strong',
-      },
-      '>select': {
-        variant: 'select.reset',
-        color: 'whitePure',
-        fontWeight: 'semibold',
-        fontSize: 5,
-        paddingY: '3px',
-        paddingX: '6px',
-        backgroundColor: 'accentDarkest',
-        borderRadius: '2px',
-        cursor: 'pointer',
-        ':focus-visible': {
-          outline: '2px solid',
-          outlineColor: 'primary',
-          outlineOffset: '2px',
-        },
-      },
-    },
-    '>div': {
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: 8,
-      fontVariantNumeric: 'tabular-nums',
-    },
-    '&& >div code': {
-      backgroundColor: 'accentDark',
-      color: 'whitePure',
-    },
   },
 }
 
@@ -717,6 +659,7 @@ const PolicySettings = forwardRef<any, any>(({
             </div>
           )}
         </details>
+        <PolicySandbox form={form} prefix={prefix} />
       </div>
     </div>
   )
