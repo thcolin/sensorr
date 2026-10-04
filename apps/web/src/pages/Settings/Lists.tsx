@@ -5,7 +5,7 @@ import { Button } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
-import { HomeKey, List, Row, listRowId } from '../Home/rows'
+import { HomeKey, List, Row, listRowId, listsOf } from '../Home/rows'
 import { screenOf, summaryOf } from '../Home/Items/List'
 import { useTMDB } from '../../store/tmdb'
 
@@ -19,7 +19,7 @@ const Lists = ({ ...props }) => {
   const { config } = useConfigContext()
   const tmdb = useTMDB()
   const genres = { ...tmdb.genres, ...tmdb.tvGenres }
-  const [lists, setLists] = useState<List[]>(() => config.get('lists'))
+  const [lists, setLists] = useState<List[]>(() => listsOf(config))
   const [name, setName] = useState('')
   const [media, setMedia] = useState<'movie' | 'tv'>('movie')
   const home: { [home in HomeKey]: Row[] } = config.get('home')

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 
-function reviver(key, value) {
+// Brings back the dates JSON turned into strings, a range filter holds two of them
+export function reviver(key, value) {
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) {
     return new Date(value)
   }

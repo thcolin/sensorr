@@ -1,3 +1,5 @@
+import { reviver } from '@sensorr/utils'
+
 export type HomeKey = 'all' | 'movie' | 'tv'
 export type Row = { id: string, hidden: boolean }
 export type List = { id: string, name: string, media: 'movie' | 'tv', sources: { kind: 'discover' | 'library' | 'manual', values?: { [key: string]: any } }[] }
@@ -31,6 +33,9 @@ export const LOCKED: { [home in HomeKey]: string[] } = {
 }
 
 export const listRowId = (list: List) => `list:${list.id}`
+
+// The lists of the config, their filters values with the dates `config.json` keeps as strings back as dates
+export const listsOf = (config): List[] => JSON.parse(JSON.stringify(config.get('lists')), reviver)
 
 // Whether a row can stand on a Home: the browser Home takes every row, a PWA Home its own media
 export const fits = (home: HomeKey, id: string, lists: List[]) => {
