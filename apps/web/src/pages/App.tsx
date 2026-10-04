@@ -52,6 +52,7 @@ import JobsSettings from './Settings/Jobs'
 import BlackholeSettings from './Settings/Blackhole'
 import ZnabsSettings from './Settings/Znabs'
 import PoliciesSettings from './Settings/Policies'
+import HomeSettings from './Settings/Home'
 import FriendsSettings from './Settings/Friends'
 import PlexSettings from './Settings/Plex'
 import TautulliSettings from './Settings/Tautulli'
@@ -149,6 +150,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path='blackhole' element={<BlackholeSettings />} />
           <Route path='indexers' element={<ZnabsSettings />} />
           <Route path='policies' element={<PoliciesSettings />} />
+          <Route path='home' element={<HomeSettings />} />
           <Route path='jobs' element={<JobsSettings />} />
           <Route path='friends' element={<FriendsSettings />} />
           <Route path='mail' element={<MailSettings />} />
