@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { keyframes } from '@emotion/react'
 import { TMDB } from '@sensorr/tmdb'
 import { Badge, Button, Icon, Option, Steps, Warning } from '@sensorr/ui'
-import { JOBS } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -23,6 +22,7 @@ import { FriendsIntro } from '../Settings/Friends'
 import Update from '../Settings/Update'
 import { hasTMDBKey, TMDB_PLACEHOLDER } from './needsOnboarding'
 import { policyExamplesOf } from './policyExamples'
+import { MISSING, nextRunsOf, statusOf } from './recap'
 
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
@@ -99,48 +99,56 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
   </>
 )
 
-// What a step left in the config, read again on the recap: a Continue on an empty step sets nothing
-const statusOf = (key, config) => {
-  const count = (n, one, many = `${one}s`) => `${n} ${n > 1 ? many : one}`
-  const jobs = Object.entries(JOBS).flatMap(([command, types]) => types.length ? types.map((type) => `jobs.${command}.${type}`) : [`jobs.${command}`])
+const End = ({ steps, config, go }) => {
+  const runs = nextRunsOf(config)
+  const listed = steps
+    .map(({ key, emoji, label }, index) => ({ key, emoji: key === 'plex' ? PLEX_STEPS.url.emoji : emoji, label, index, status: statusOf(key, config) }))
+    .filter(({ key }) => !['welcome', 'jobs', 'end'].includes(key))
+  const missing = listed.filter(({ status }) => !status)
+  const set = listed.filter(({ status }) => status)
 
-  switch (key) {
-    case 'tmdb':
-      return hasTMDBKey(config) ? 'set' : null
-    case 'indexers':
-      return (config.get('znabs') || []).length ? count(config.get('znabs').length, 'indexer') : null
-    case 'policies':
-      return (config.get('policies') || []).length ? count(config.get('policies').length, 'policy', 'policies') : null
-    case 'blackhole':
-      return config.get('blackhole') ? 'set' : null
-    case 'plex':
-      return config.get('plex.token') ? 'linked' : null
-    case 'friends':
-      return (config.get('mail.host') && config.get('mail.from') && config.get('mail.url')) ? 'mail set' : null
-    case 'jobs':
-      return `${jobs.filter((job) => !config.get(`${job}.paused`)).length} / ${jobs.length} on`
-  }
-}
-
-const End = ({ steps, config, go }) => (
-  <ul sx={Onboarding.styles.recap}>
-    {steps.map(({ key, emoji, label }, index) => ({ key, emoji: key === 'plex' ? PLEX_STEPS.url.emoji : emoji, label, index, status: statusOf(key, config) })).filter(({ key }) => !['welcome', 'end'].includes(key)).map(({ key, emoji, label, index, status }) => (
-      <li key={key}>
-        <span>{emoji} <strong>{label}</strong></span>
-        <Badge
-          emoji={null}
-          label={status || 'skipped'}
-          compact={true}
-          size='small'
-          palette={status ? { color: 'primaryDarkest', backgroundColor: 'whitePure' } : undefined}
-        />
-        {status ? <span /> : (
-          <button type='button' onClick={() => go(index)} sx={Onboarding.styles.setup}>Set up ›</button>
+  return (
+    <div sx={Onboarding.styles.recap}>
+      <section>
+        <h4>Next</h4>
+        {runs.length ? (
+          <ul sx={Onboarding.styles.next}>
+            {runs.map(({ name, emoji, when }) => (
+              <li key={name}>
+                <span>{emoji} <code>{name}</code></span>
+                <span>{when}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p sx={Onboarding.styles.missing}>Every job is paused, nothing runs on its own</p>
         )}
-      </li>
-    ))}
-  </ul>
-)
+      </section>
+      {!!missing.length && (
+        <section>
+          <h4>Still to set up</h4>
+          <ul sx={Onboarding.styles.todo}>
+            {missing.map(({ key, emoji, label, index }) => (
+              <li key={key}>
+                <span>{emoji} <strong>{label}</strong></span>
+                <span sx={Onboarding.styles.missing}>{MISSING[key]}</span>
+                <button type='button' onClick={() => go(index)} sx={Onboarding.styles.setup}>Set up ›</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!!set.length && (
+        <section sx={Onboarding.styles.set}>
+          <h4>Set</h4>
+          {set.map(({ key, emoji, status }) => (
+            <Badge key={key} emoji={emoji} label={status} compact={true} size='small' palette={{ color: 'primaryDarkest', backgroundColor: 'whitePure' }} />
+          ))}
+        </section>
+      )}
+    </div>
+  )
+}
 
 const Onboarding = () => {
   useTitle('Onboarding')
@@ -340,7 +348,7 @@ const Onboarding = () => {
       emblem: <Brand />,
       emoji: '📼',
       title: 'Ready',
-      subtitle: 'What Sensorr knows now. Set up › goes back to a step, and everything stays in Settings',
+      subtitle: 'Sensorr is programmed. Settings keeps everything for later',
       submit: (values) => save({ ...values, onboarding: { ...values.onboarding, done: true } }),
     },
   ]
@@ -501,18 +509,76 @@ Onboarding.styles = {
     },
   },
   recap: {
-    listStyleType: 'none',
-    padding: 12,
-    margin: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    marginTop: 4,
     marginBottom: 6,
+    'h4': {
+      margin: 12,
+      marginBottom: 8,
+    },
+    'ul': {
+      listStyleType: 'none',
+      padding: 12,
+      margin: 12,
+    },
+  },
+  next: {
+    backgroundColor: 'grayLighter',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25em',
     '>li': {
-      display: 'grid',
-      gridTemplateColumns: '1fr auto 6em',
+      display: 'flex',
+      justifyContent: 'space-between',
       alignItems: 'center',
       gap: 6,
+      paddingX: 4,
       paddingY: 8,
-      borderBottom: '1px solid',
-      borderColor: 'gray',
+      '&:not(:last-of-type)': {
+        borderBottom: '1px solid',
+        borderColor: 'gray',
+      },
+      code: {
+        fontFamily: 'monospace',
+        fontWeight: 'semibold',
+      },
+    },
+  },
+  todo: {
+    '>li': {
+      display: 'grid',
+      gridTemplateColumns: ['1fr auto', 'auto 1fr auto'],
+      alignItems: 'center',
+      columnGap: 6,
+      paddingY: 10,
+      '&:not(:last-of-type)': {
+        borderBottom: '1px solid',
+        borderColor: 'gray',
+      },
+      '>:nth-child(2)': {
+        gridRow: [2, 'auto'],
+      },
+      '>button': {
+        gridRow: ['1 / span 2', 'auto'],
+        gridColumn: [2, 'auto'],
+      },
+    },
+  },
+  missing: {
+    margin: 12,
+    color: 'grayDarkest',
+    fontSize: 6,
+  },
+  set: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    'h4': {
+      marginBottom: 12,
+      marginRight: 6,
     },
   },
   setup: {
