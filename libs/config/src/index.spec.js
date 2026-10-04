@@ -10,9 +10,9 @@ const loaded = (raw) => {
 describe('lists', () => {
   it('keeps the values of the filters panel as they were saved', () => {
     const values = { with_genres: { behavior: 'or', values: [{ value: 37, label: 'Western' }] } }
-    const config = loaded({ lists: [{ id: 'a1', name: 'Western', media: 'movie', sources: [{ kind: 'discover', values }, { kind: 'manual' }] }] })
+    const config = loaded({ lists: [{ id: 'a1', name: 'Western', media: 'movie', sources: [{ kind: 'discover', values }, { kind: 'custom' }] }] })
 
-    expect(config.get('lists')[0].sources).toEqual([{ kind: 'discover', values }, { kind: 'manual' }])
+    expect(config.get('lists')[0].sources).toEqual([{ kind: 'discover', values }, { kind: 'custom' }])
   })
 
   it('refuses two lists with the same id', () => {

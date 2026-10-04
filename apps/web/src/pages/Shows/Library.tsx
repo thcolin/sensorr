@@ -37,7 +37,7 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
-import { useListsAction } from '../../components/Lists/useManualLists'
+import { useListsAction } from '../../components/Lists/useCustomLists'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')

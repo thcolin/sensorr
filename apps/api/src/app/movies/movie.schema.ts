@@ -206,7 +206,7 @@ export class Movie extends Document<number> {
   @Prop(raw([String]))
   requested_by: string[]
 
-  // The ids of the lists added to by hand that hold it, `lists` of the config
+  // The ids of the custom lists that hold it, `lists` of the config
   @Prop(raw([String]))
   lists: string[]
 

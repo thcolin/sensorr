@@ -5,7 +5,7 @@ import Color from 'color'
 import { useThemeUI } from 'theme-ui'
 import { useSensorr } from '../../../store/sensorr'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
-import { useManualLists } from '../../../components/Lists/useManualLists'
+import { useCustomLists } from '../../../components/Lists/useCustomLists'
 
 const animations = {
   dots: keyframes`
@@ -388,7 +388,7 @@ const UIPreferences = ({
   hover,
   ...props
 }) => {
-  const { lists, idsOf } = useManualLists(media)
+  const { lists, idsOf } = useCustomLists(media)
   const options = useMemo(() => lists.map((list) => ({ value: list.id, label: list.name })), [lists])
 
   return (

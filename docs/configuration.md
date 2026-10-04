@@ -140,7 +140,7 @@ A `[]` in a name stands for one item of the array above it.
 | `lists[].name` | `String` | `""` | Name of the list |
 | `lists[].media` | `movie`, `tv` | `movie` | Movies or shows, a list holds one of them |
 | `lists[].sources` | `source-array` | `[]` | Where the entities of the list come from, shown one source after the other |
-| `lists[].sources[].kind` | `discover`, `library`, `manual` | `discover` | TMDB discover filters, library filters, or the entities added to this list by hand |
+| `lists[].sources[].kind` | `discover`, `library`, `custom` | `discover` | TMDB discover filters, library filters, or the movies and shows added to this custom list |
 | `lists[].sources[].values` | — | `{}` | Values of the filters panel, as Discover or Library hold them |
 
 ## Home
