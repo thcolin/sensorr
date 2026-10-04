@@ -1,11 +1,14 @@
 import { memo, useMemo } from 'react'
-import { Entities, Icon, Progress, TransitionPill, Warning } from '@sensorr/ui'
-import { emojize, filesize } from '@sensorr/utils'
+import { Entities, Icon, Progress, Show as UIShow, TransitionPill, Warning } from '@sensorr/ui'
+import { compose, emojize, filesize } from '@sensorr/utils'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
 import { formatDuration, intervalToDuration } from 'date-fns'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
+import { withShowProgress } from '../../../components/Show/withShowProgress'
+import { withShowMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
+import { withMovieGuestsContext } from '../../../contexts/Guests/Guests'
 import { Summary, freed, freedLabel } from '../Summary'
 import { Warnings } from '../Warnings'
 
@@ -252,6 +255,52 @@ const showsOf = (logs, test) => logs
   .map(({ meta }) => meta.show || meta.entity)
   .filter((show, index, shows) => shows.findIndex(({ id }) => id === show.id) === index)
 
+const unmatchedTitle = (unmatched: string[]) => `${unmatched.length} Plex episode${unmatched.length > 1 ? 's' : ''} unknown to TMDB: ${unmatched.join(', ')}`
+
+// Read left to right, the Plex episodes TMDB knows in gray, then the ones it does not know in blue. The bar draws each
+// season the same way, its known episodes then its unknown ones right after
+const UIUnmatchedShow = ({ entity, ...props }) => {
+  const progress = entity.progress
+  const seasons = useMemo(() => {
+    if (!progress) {
+      return []
+    }
+
+    const unknown = entity.unmatched.reduce((acc, label) => {
+      const season = Number(/^S(\d+)/i.exec(label)?.[1])
+      return { ...acc, [season]: (acc[season] || 0) + 1 }
+    }, {})
+    const numbers = [...new Set([...progress.seasons.map(({ season_number }) => season_number), ...Object.keys(unknown).map(Number)])].sort((a, b) => a - b)
+    return numbers.flatMap((season) => [
+      { value: 0, max: progress.seasons.find(({ season_number }) => season_number === season)?.owned || 0 },
+      { value: unknown[season] || 0, max: unknown[season] || 0 },
+    ])
+  }, [progress, entity.unmatched])
+  const title = progress ? `${progress.owned} Plex episodes known to TMDB, ${unmatchedTitle(entity.unmatched)}` : null
+
+  return (
+    <UIShow
+      entity={entity}
+      {...props}
+      footer={progress && (
+        <span sx={UIDownloadingShow.styles.footer}>
+          <span sx={UIDownloadingShow.styles.pill}>
+            <TransitionPill from={progress.owned} to={`+${entity.unmatched.length}`} state='unknown' compact={true} role='img' aria-label={title} title={title} />
+          </span>
+          <Progress value={entity.unmatched.length} max={progress.owned + entity.unmatched.length} tint='info' segments={seasons} title={title} />
+        </span>
+      )}
+    />
+  )
+}
+
+// `withShowProgress` gets no `footer` here, so it loads the progress the footer counts from
+const UnmatchedShow = compose(
+  withShowMetadataContext(),
+  withShowProgress(),
+  withMovieGuestsContext(),
+)(memo(UIUnmatchedShow))
+
 // Keyed by `jobNameOf`
 const COMMANDS = {
   'refresh shows': {
@@ -278,7 +327,7 @@ const COMMANDS = {
     sections: [
       { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, note: emojize('💊', episodesLabel(missing)) }), child: NotedShow, extra: 36 },
       { key: 'withdrawals', label: emojize('🗑️', 'Withdrawn'), test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', fromSeason(release.title)), details: release.title }), child: NotedShow, extra: 36 },
-      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched, note: emojize('❓', unmatched.length > 2 ? episodesLabel(unmatched.length) : unmatched.join(', ')), details: unmatched.join(', ') }), child: NotedShow, extra: 36 },
+      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched }), child: UnmatchedShow },
       { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
     ],
     empty: 'No fixed shows during this job',

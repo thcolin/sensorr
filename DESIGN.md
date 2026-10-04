@@ -223,6 +223,12 @@ components:
   transition-pill-downloading-before:
     backgroundColor: "{colors.warningDarkest}"
     textColor: "{colors.warningLightest}"
+  transition-pill-unknown:
+    backgroundColor: "{colors.infoDarker}"
+    textColor: "{colors.whitePure}"
+  transition-pill-unknown-before:
+    backgroundColor: "{colors.gray}"
+    textColor: "{colors.grayDarkest}"
   transition-pill-unfollowed:
     backgroundColor: "{colors.white}"
     textColor: "{colors.airingLight}"
@@ -326,7 +332,8 @@ meaning and never for decoration.
   destructive button, a failed job.
 - **Signal Amber** (`warning`): a job that ran but did not finish its work, and a show release
   whose files are still downloading, on its `TransitionPill` and its bar.
-- **Signal Blue** (`info`): a neutral notice.
+- **Signal Blue** (`info`, `infoDark`, `infoDarker`): a neutral notice, and the Plex episodes TMDB
+  does not know, on their `TransitionPill` and their bar.
 - **Signal Violet** (`airing`, `airingLight`, `airingDark`, `airingDarkest`, `airingLightest`): a
   series whose aired count still grows, on its `ProgressPill`. On one Sensorr does not follow,
   the aired side is hollow: `airing` is its ring and `airingLight` its number.
@@ -647,6 +654,11 @@ tint of the same hue. Both halves are set in regular weight:
   `airingLight`; the old side is the `quiet` gray. The ring is an inset `box-shadow`, so the pill
   keeps the size of the others. In dark mode `airingLight` on `white` measures 10.49:1, and the
   ring 4.81:1 against it.
+- `unknown` (Plex episodes TMDB does not know, on the Unknown to TMDB section of a `sync tv` job):
+  `infoDarker` over the `quiet` gray. The gray side counts the Plex episodes TMDB knows, the blue
+  side the `+N` it does not; the bar beside it draws each season the same way, its known episodes
+  in gray then its unknown ones in `info` (`apps/web/src/pages/Jobs/Job/Shows.tsx`). White on
+  `infoDarker` measures 3.94:1, below AA, like `held`.
 - `same`: the new value alone, at `opacity: 0.3`.
 - A side without a verdict is `neutral`: it keeps the `quiet` gray whatever the state. That is
   an axis value the release name does not give, drawn `?` by `Proposal.tsx`, or owned episodes
