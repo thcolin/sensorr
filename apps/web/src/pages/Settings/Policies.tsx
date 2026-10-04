@@ -175,6 +175,7 @@ PolicySandbox.styles = {
         paddingX: '0px',
       },
       '>div:first-of-type': {
+        marginTop: '0px',
         paddingX: 3,
       },
     },
