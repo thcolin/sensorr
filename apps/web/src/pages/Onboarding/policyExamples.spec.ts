@@ -1,8 +1,8 @@
+import { policyExamplesOf } from './policyExamples'
+
 // `@sensorr/utils` reaches `@dicebear/core`, which ships as ESM only
 jest.mock('@dicebear/core', () => ({}))
 jest.mock('@dicebear/collection', () => ({}))
-
-import { policyExamplesOf } from './policyExamples'
 
 describe('policyExamplesOf', () => {
   it('prefers MULTi then the language of the region, and gives the VO to its original language', () => {
