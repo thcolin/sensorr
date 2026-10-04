@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 import { Button, Controls, Entities, Sorting, serializeControls, valuesOfControls } from '@sensorr/ui'
@@ -198,25 +198,29 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
 // The statistics of Discover recompute on each new array of entities: a source has none, always the same
 const NONE = []
 
+// The filters of a source as a button that opens their panel; a source just added opens it at once
+const SourceSummary = ({ toggleOpen, summary, open, onOpened }) => {
+  const button = useRef(null)
+  // Once: a second run, as StrictMode does, would close it again
+  const opened = useRef(false)
+
+  // The portal of the panel opens on an event of the element it hangs from: this button
+  useEffect(() => {
+    if (open && !opened.current) {
+      opened.current = true
+      toggleOpen({ currentTarget: button.current, target: button.current, stopPropagation: () => null })
+      onOpened()
+    }
+  }, [])
+
+  return <button ref={button} type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
+}
+
 // The filters of a source as their panel titles them: a click opens the panel on them
 const SourceFilters = ({ list, source, summary, open = false, onOpened = null, onChange }) => {
   const controls = CONTROLS[source.kind][list.media]
   const values: { [key: string]: any } = valuesOfControls(controls.fields, source.values)
   const statistics = controls.useStatistics(NONE, controls.fields, serializeControls(controls.fields, values))
-  const Summary = useCallback(({ toggleOpen }) => {
-    // Once: a second run, as StrictMode does, would close it again
-    const opened = useRef(false)
-
-    useEffect(() => {
-      if (open && !opened.current) {
-        opened.current = true
-        toggleOpen()
-        onOpened()
-      }
-    }, [])
-
-    return <button type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
-  }, [summary])
 
   return (
     <Controls
@@ -225,7 +229,8 @@ const SourceFilters = ({ list, source, summary, open = false, onOpened = null, o
       values={values}
       onChange={onChange}
       layout={{ aside: controls.layout.aside }}
-      components={{ ...controls.components, toggle: Summary }}
+      components={{ ...controls.components, toggle: SourceSummary }}
+      props={{ summary, open, onOpened }}
       statistics={statistics}
       loading={false}
       total={0}

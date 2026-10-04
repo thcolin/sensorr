@@ -160,7 +160,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
           statistics={statistics}
         />
       ) : components.toggle ? (
-        <components.toggle toggleOpen={togglePortal} />
+        <components.toggle toggleOpen={togglePortal} {...props} />
       ) : null}
       {layout.aside && (
         <Portal>
