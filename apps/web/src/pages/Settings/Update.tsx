@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Button, Link } from '@sensorr/ui'
@@ -10,6 +10,7 @@ import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { errorOf } from './Mail'
 import { CHANNELS, arrived, availableOf, labelOf, runs } from './channels'
+import { Capsule } from './Capsule'
 
 // Pulling the images and recreating three containers takes a minute or two
 const PATIENCE = 5 * 60 * 1000
@@ -35,8 +36,6 @@ const Update = ({ ...props }) => {
   const [updating, setUpdating] = useState(null)
   const [failure, setFailure] = useState(null)
   const [now, setNow] = useState(Date.now())
-  const capsule = useRef(null)
-  const [pill, setPill] = useState(null)
 
   const loading = !update
   const updater = update?.updater
@@ -47,12 +46,6 @@ const Update = ({ ...props }) => {
   const revision = update?.revision?.slice(0, 7)
   const build = update?.channel === 'dev' && !!revision
   const pinned = update?.channel in CHANNELS && update.tag !== CHANNELS[update.channel].tag ? update.tag : null
-
-  // Measured after layout, once the checked label has its bold width; no slide on the first render
-  useLayoutEffect(() => {
-    const label = capsule.current?.querySelector('label:has(>input:checked)')
-    setPill((previous) => label ? { x: label.offsetLeft, width: label.offsetWidth, slide: !!previous } : null)
-  }, [selected, loading])
 
   // Settings stays mounted across its pages: its answer may predate an update started here
   useEffect(() => {
@@ -217,23 +210,18 @@ const Update = ({ ...props }) => {
             {!update?.error && (
               <div sx={Update.styles.channel}>
                 <h3 id='update-channel'>Channel</h3>
-                <div ref={capsule} role='radiogroup' aria-labelledby='update-channel' sx={Update.styles.channels}>
-                  {pill && <span aria-hidden={true} style={{ width: pill.width, transform: `translateX(${pill.x}px)`, transition: pill.slide ? undefined : 'none' }} />}
-                  {Object.entries(CHANNELS).map(([key, { emoji }]) => (
-                    <label key={key} htmlFor={`update-${key}`} title={!loading && reasonOf(key) ? `${key}: ${reasonOf(key)}` : undefined}>
-                      <input
-                        type='radio'
-                        id={`update-${key}`}
-                        name='channel'
-                        value={key}
-                        checked={selected === key}
-                        disabled={loading || !!updating || (key !== update.channel && !!reasonOf(key))}
-                        onChange={() => setChannel(key)}
-                      />
-                      {emojize(emoji, key)}
-                    </label>
-                  ))}
-                </div>
+                <Capsule
+                  name='channel'
+                  labelledBy='update-channel'
+                  value={selected}
+                  onChange={setChannel}
+                  options={Object.entries(CHANNELS).map(([key, { emoji }]) => ({
+                    value: key,
+                    label: emojize(emoji, key),
+                    title: !loading && reasonOf(key) ? `${key}: ${reasonOf(key)}` : undefined,
+                    disabled: loading || !!updating || (key !== update.channel && !!reasonOf(key)),
+                  }))}
+                />
                 <small sx={Update.styles.muted}>{loading ? <Placeholder width='20rem' height='0.75rem' /> : source(selected)}</small>
               </div>
             )}
@@ -340,63 +328,6 @@ Update.styles = {
     marginTop: 8,
     '&& >h3': {
       marginBottom: 12,
-    },
-  },
-  // The capsule of CommandTabs.tsx, the pressed pill filled, the other one let through
-  channels: {
-    display: 'inline-flex',
-    gap: '0.25rem',
-    padding: '0.25rem',
-    borderRadius: '2em',
-    backgroundColor: 'accentDarkest',
-    position: 'relative',
-    '>span': {
-      position: 'absolute',
-      top: '0.25rem',
-      bottom: '0.25rem',
-      left: '0px',
-      borderRadius: '2em',
-      backgroundColor: 'accentDarker',
-      transition: 'transform 400ms cubic-bezier(0.4, 0, 0.2, 1), width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
-      '@media (prefers-reduced-motion: reduce)': {
-        transition: 'none',
-      },
-    },
-    '>label': {
-      position: 'relative',
-      paddingY: '0.375rem',
-      paddingX: '1rem',
-      borderRadius: '2em',
-      fontFamily: 'monospace',
-      fontSize: 5,
-      color: 'primaryLightest',
-      whiteSpace: 'nowrap',
-      cursor: 'pointer',
-      transition: 'color 400ms cubic-bezier(0.4, 0, 0.2, 1)',
-      '>input': {
-        position: 'absolute',
-        inset: '0px',
-        opacity: 0,
-        width: '100%',
-        height: '100%',
-        margin: 12,
-        cursor: 'inherit',
-      },
-      ':has(>input:checked)': {
-        color: 'whitePure',
-        fontWeight: 'strong',
-      },
-      ':has(>input:focus-visible)': {
-        outline: '2px solid',
-        outlineColor: 'whitePure',
-        outlineOffset: '-2px',
-      },
-      ':has(>input:disabled)': {
-        cursor: 'default',
-      },
-      ':has(>input:disabled:not(:checked))': {
-        opacity: 0.45,
-      },
     },
   },
   muted: {
