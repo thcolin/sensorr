@@ -15,7 +15,7 @@ interface CapsuleProps {
   onChange: (value: string) => void
 }
 
-// The capsule of CommandTabs.tsx as a radio group: the checked pill filled and sliding, the others let through
+// A radio group as a capsule: the checked pill filled with the green of a primary button and sliding, the others let through
 export const Capsule = ({ name, labelledBy, options, value, onChange }: CapsuleProps) => {
   const capsule = useRef(null)
   const [pill, setPill] = useState(null)
@@ -53,7 +53,7 @@ Capsule.styles = {
     gap: '0.25rem',
     padding: '0.25rem',
     borderRadius: '2em',
-    backgroundColor: 'accentDarkest',
+    backgroundColor: 'primaryDarkest',
     position: 'relative',
     '>span': {
       position: 'absolute',
@@ -61,7 +61,7 @@ Capsule.styles = {
       bottom: '0.25rem',
       left: '0px',
       borderRadius: '2em',
-      backgroundColor: 'accentDarker',
+      backgroundColor: 'primary',
       transition: 'transform 400ms cubic-bezier(0.4, 0, 0.2, 1), width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
       '@media (prefers-reduced-motion: reduce)': {
         transition: 'none',
