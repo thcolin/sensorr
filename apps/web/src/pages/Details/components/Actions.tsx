@@ -437,7 +437,8 @@ const UIPreferences = ({
                 direction='column'
                 options={options}
                 value={options.filter((option) => value.includes(option.value))}
-                onChange={async (values) => onChange(await idsOf(values))}
+                // The metadata contexts tell a failure in their toast
+                onChange={(values) => idsOf(values).then(onChange).catch(() => null)}
               />
               <small>Pick the lists that hold it, or type a name to start one</small>
             </div>
