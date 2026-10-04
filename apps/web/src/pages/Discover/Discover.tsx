@@ -28,6 +28,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+import { saveAsListOf } from '../../components/Lists/SaveAsList'
 
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {
@@ -267,6 +268,7 @@ export const Discover = compose(
       },
     },
     fields: FIELDS,
+    footer: saveAsListOf('discover', 'movie'),
   }),
   withPlacehodersHistoryState(),
   withBody(),

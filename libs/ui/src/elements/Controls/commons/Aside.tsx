@@ -11,9 +11,11 @@ export interface AsideProps extends Omit<InputsProps, 'control'> {
   shadow?: boolean
   dimmed?: boolean
   onDimmedClick?: () => void
+  // Drawn after the fields, with their values as the form holds them, applied or not
+  footer?: (values: { [key: string]: any }) => React.ReactNode
 }
 
-const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, background = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, dimmed = false, onDimmedClick = undefined, controls = true, watch: watcher, ...props }) => {
+const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, background = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, dimmed = false, onDimmedClick = undefined, controls = true, watch: watcher, footer = undefined, ...props }) => {
   const { t } = useTranslation()
   const { control, reset, watch, handleSubmit } = useForm({ defaultValues })
   const watching = !!(watcher || [])[0] && watch(watcher[0]).reduce((acc, curr, i) => ({ ...acc, [watcher[i]]: curr }), {})
@@ -52,6 +54,7 @@ const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', wid
       <form sx={{ ...UIAside.styles.form, backgroundColor, background }} onSubmit={handleSubmit(onChange)} onKeyPress={e => e.key === 'Enter' && e.preventDefault()}>
         <div sx={UIAside.styles.container}>
           <Inputs layout={layout as any} fields={fields} statistics={statistics} control={control} />
+          {footer && footer(watch())}
         </div>
         {controls && (
           <div sx={UIAside.styles.buttons}>
