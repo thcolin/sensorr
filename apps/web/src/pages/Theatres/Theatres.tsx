@@ -31,7 +31,8 @@ export const Theatres = compose(
       focus: 'release_date_full',
     }),
   }),
-  withFetchQuery({}, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
+  // The history holds the values of the fields, and the `uri` field starts empty if it holds `uri: ''`: TMDB is then asked nothing
+  withFetchQuery({}, 1, useTMDB, () => useHistoryState('controls', {}) as any),
   withControls({
     title: i18n.t('pages.theatres.title'),
     useStatistics,
