@@ -10,27 +10,11 @@ import { FIELDS as DISCOVER_MOVIES } from '../../Discover/Discover'
 import { FIELDS as DISCOVER_SHOWS } from '../../Shows/Discover'
 import { FIELDS as LIBRARY_MOVIES } from '../../Library/Library'
 import { FIELDS as LIBRARY_SHOWS } from '../../Shows/Library'
-import { List } from '../rows'
+import { List, SORTS, compareOf } from '../rows'
 
 const FIELDS = {
   discover: { movie: DISCOVER_MOVIES, tv: DISCOVER_SHOWS },
   library: { movie: LIBRARY_MOVIES, tv: LIBRARY_SHOWS },
-}
-
-// The param each source sorts a list on, and the field of an entity it reads; a custom source asks the library
-const SORTS = {
-  popularity: { movie: { discover: 'popularity', library: 'popularity', field: 'popularity' }, tv: { discover: 'popularity', library: 'popularity', field: 'popularity' } },
-  release_date: { movie: { discover: 'primary_release_date', library: 'release_date', field: 'release_date' }, tv: { discover: 'first_air_date', library: 'first_air_date', field: 'first_air_date' } },
-  vote_average: { movie: { discover: 'vote_average', library: 'vote_average', field: 'vote_average' }, tv: { discover: 'vote_average', library: 'vote_average', field: 'vote_average' } },
-  vote_count: { movie: { discover: 'vote_count', library: 'vote_count', field: 'vote_count' }, tv: { discover: 'vote_count', library: 'vote_count', field: 'vote_count' } },
-}
-
-// The order of a sorted list, an entity without the field last
-export const compareOf = ({ media, sort }: List) => (a, b) => {
-  const field = SORTS[sort.by][media].field
-  const [x, y] = [a[field], b[field]].map((value) => value == null || value === '' ? null : typeof value === 'number' ? value : new Date(value).getTime())
-
-  return x === y ? 0 : x === null ? 1 : y === null ? -1 : (sort.descending ? y - x : x - y)
 }
 
 export const paramsOf = (list: List, { kind, values }: List['sources'][number]) => ({

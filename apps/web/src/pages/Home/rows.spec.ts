@@ -1,4 +1,4 @@
-import { rowsOf, listsOf, dropRow, LOCKED, List } from './rows'
+import { rowsOf, listsOf, dropRow, compareOf, LOCKED, List } from './rows'
 
 // `@sensorr/utils` reaches ESM that this jest setup leaves untransformed
 jest.mock('@dicebear/core', () => ({}))
@@ -76,5 +76,15 @@ describe('groups', () => {
 
     expect(rows[0]).toEqual({ id: 'group:g', hidden: false, tabs: ['swaps', 'list:w'] })
     expect(rows.filter(({ id }) => id === 'swaps')).toHaveLength(0)
+  })
+})
+
+describe('compareOf', () => {
+  const list = (descending): List => ({ id: 's', name: 'Sorted', media: 'movie', sort: { by: 'release_date', descending }, sources: [] })
+  const movies = [{ release_date: '1999-01-01' }, { release_date: null }, { release_date: '2010-01-01' }]
+
+  it('puts a movie without the field where Mongo does, first ascending and last descending', () => {
+    expect([...movies].sort(compareOf(list(false))).map(({ release_date }) => release_date)).toEqual([null, '1999-01-01', '2010-01-01'])
+    expect([...movies].sort(compareOf(list(true))).map(({ release_date }) => release_date)).toEqual(['2010-01-01', '1999-01-01', null])
   })
 })

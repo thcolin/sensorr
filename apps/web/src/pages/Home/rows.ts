@@ -113,3 +113,21 @@ export const dropRow = (rows: Row[], active: string, over: string, zone: 'before
     return { ...row, tabs: [...tabs.slice(0, index), active, ...tabs.slice(index)] }
   }))
 }
+
+// The param each source sorts a list on, and the field of an entity it reads; a custom source asks the library
+export const SORTS = {
+  popularity: { movie: { discover: 'popularity', library: 'popularity', field: 'popularity' }, tv: { discover: 'popularity', library: 'popularity', field: 'popularity' } },
+  release_date: { movie: { discover: 'primary_release_date', library: 'release_date', field: 'release_date' }, tv: { discover: 'first_air_date', library: 'first_air_date', field: 'first_air_date' } },
+  vote_average: { movie: { discover: 'vote_average', library: 'vote_average', field: 'vote_average' }, tv: { discover: 'vote_average', library: 'vote_average', field: 'vote_average' } },
+  vote_count: { movie: { discover: 'vote_count', library: 'vote_count', field: 'vote_count' }, tv: { discover: 'vote_count', library: 'vote_count', field: 'vote_count' } },
+}
+
+// The order of a sorted list, an entity without the field where Mongo puts it, first ascending and last
+// descending: a source answers in that order, and the merge reads its head
+export const compareOf = ({ media, sort }: List) => (a, b) => {
+  const field = SORTS[sort.by][media].field
+  const [x, y] = [a[field], b[field]].map((value) => value == null || value === '' ? null : typeof value === 'number' ? value : new Date(value).getTime())
+  const missing = sort.descending ? 1 : -1
+
+  return x === y ? 0 : x === null ? missing : y === null ? -missing : (sort.descending ? y - x : x - y)
+}
