@@ -61,163 +61,163 @@ const ShowWithBulk = ({ entity, ...props }) => {
 
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {
-    head_main: {
-      initial: null,
-      component: ({ ...props }) => (
-        <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head_main' }}>
-          <Warning
-            emoji="📚"
-            title="Library"
-            subtitle={(
-              <span>
-                Explore shows from your library with various filters about shows like <strong>state</strong>, <strong>genres</strong>, <strong>networks</strong>, <strong>first air date</strong>, etc...
-              </span>
-            )}
-          />
-        </div>
-      ),
-    },
-    bulk: {
-      initial: null,
-      component: function BulkField({ total, statistics, ...props }) {
-        const { setShowMetadata } = useShowsMetadataContext() as any
-        const { selection, setSelection } = useBulkContext()
-        const sensorr = useSensorr()
-        const location = useLocation()
-        const [sending, setSending] = useState(false)
-        const entities = statistics?.[0]?.entities
-        const visible = useMemo(() => entities ? new Set(entities) : null, [entities])
-        // A filter that hides a checked show takes it out of the selection it acts on, and
-        // nothing is acted on until the ids of the current filters are known.
-        const selected = useMemo(() => visible ? (selection[location.key] || []).filter(id => visible.has(id)) : [], [selection, location.key, visible])
+  head_main: {
+    initial: null,
+    component: ({ ...props }) => (
+      <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head_main' }}>
+        <Warning
+          emoji="📚"
+          title="Library"
+          subtitle={(
+            <span>
+              Explore shows from your library with various filters about shows like <strong>state</strong>, <strong>genres</strong>, <strong>networks</strong>, <strong>first air date</strong>, etc...
+            </span>
+          )}
+        />
+      </div>
+    ),
+  },
+  bulk: {
+    initial: null,
+    component: function BulkField({ total, statistics, ...props }) {
+      const { setShowMetadata } = useShowsMetadataContext() as any
+      const { selection, setSelection } = useBulkContext()
+      const sensorr = useSensorr()
+      const location = useLocation()
+      const [sending, setSending] = useState(false)
+      const entities = statistics?.[0]?.entities
+      const visible = useMemo(() => entities ? new Set(entities) : null, [entities])
+      // A filter that hides a checked show takes it out of the selection it acts on, and
+      // nothing is acted on until the ids of the current filters are known.
+      const selected = useMemo(() => visible ? (selection[location.key] || []).filter(id => visible.has(id)) : [], [selection, location.key, visible])
 
-        // The metadata context already tells a failure in its toast.
-        const apply = async (key, value, question) => {
-          if (!window.confirm(question)) {
-            return
-          }
-
-          setSending(true)
-          await setShowMetadata(selected, key, value).catch(() => null)
-          setSending(false)
+      // The metadata context already tells a failure in its toast.
+      const apply = async (key, value, question) => {
+        if (!window.confirm(question)) {
+          return
         }
 
-        return (
-          <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
-            <Option
-              id='shows'
-              type='checkbox'
-              checked={selected.length !== 0}
-              disabled={!entities && selected.length === 0}
-              onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
-            >
-              {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
-            </Option>
-            <Bulk
-              count={selected.length}
-              disabled={sending}
-              actions={[
-                {
-                  key: 'monitored',
-                  icon: '📚',
-                  label: 'State',
-                  options: [
-                    { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
-                    { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
-                  ],
-                  onChange: ({ value, label }) => apply('monitored', value, `Do you want to change the state of ${shows(selected.length)} to "${label}"?`),
-                },
-                {
-                  key: 'policy',
-                  icon: '🚨',
-                  label: 'Policy',
-                  options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
-                  onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
-                },
-              ]}
-            />
-          </div>
-        )
+        setSending(true)
+        await setShowMetadata(selected, key, value).catch(() => null)
+        setSending(false)
       }
+
+      return (
+        <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
+          <Option
+            id='shows'
+            type='checkbox'
+            checked={selected.length !== 0}
+            disabled={!entities && selected.length === 0}
+            onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
+          >
+            {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
+          </Option>
+          <Bulk
+            count={selected.length}
+            disabled={sending}
+            actions={[
+              {
+                key: 'monitored',
+                icon: '📚',
+                label: 'State',
+                options: [
+                  { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
+                  { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
+                ],
+                onChange: ({ value, label }) => apply('monitored', value, `Do you want to change the state of ${shows(selected.length)} to "${label}"?`),
+              },
+              {
+                key: 'policy',
+                icon: '🚨',
+                label: 'Policy',
+                options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
+                onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
+              },
+            ]}
+          />
+        </div>
+      )
+    }
+  },
+  sort_by: {
+    initial: {
+      value: 'refreshed_at',
+      sort: true,
     },
-    sort_by: {
-      initial: {
-        value: 'refreshed_at',
-        sort: true,
-      },
-      serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
-      component: withProps({
-        label: i18n.t('ui.sorting'),
-        options: [
-          { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
-          { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-          { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
-          { label: i18n.t('ui.sortings.last_air_date'), value: 'last_air_date' },
-          { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-          { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
-          { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
-        ]
-      })(Sorting)
-    },
-    // Named as the movie's, a show's state is its `monitored` flag
-    state: {
-      initial: [],
-      serialize: (key, raw) => raw?.length === 1 ? { monitored: `${raw[0] === 'followed'}` } : {},
-      component: withProps({ type: 'show' })(FilterStates),
-    },
-    status,
-    proposal: {
-      initial: { values: [] },
-      serialize: (key, raw) => (!raw?.values?.length || raw?.values?.length === 2) ? {} : { 'releases.proposal': raw?.values[0] },
-      component: FilterProposal,
-    },
-    policy: {
-      initial: { values: [] },
-      serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
-      component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
-    },
-    requested_by: {
-      initial: { values: [], behavior: 'or' },
-      serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
-      component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
-    },
-    genres: {
-      ...fields.genres,
-      initial: { values: [], behavior: 'or' },
-      serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
-      component: compose(withProps({ display: 'checkbox', type: 'tv' }), withTMDB())(FilterGenres),
-    },
-    type,
-    networks,
-    original_languages: {
-      ...fields.original_languages,
-      initial: { values: [], behavior: 'or' },
-      serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
-      component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
-    },
-    origin_country,
-    first_air_date: untouched({
-      ...fields.release_date,
-      component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
-    }),
-    number_of_seasons,
-    popularity: untouched({
-      ...fields.popularity,
-      component: FilterPopularity,
-    }),
-    vote_average: untouched({
-      ...fields.vote_average,
-      component: FilterVoteAverage,
-    }),
-    vote_count: untouched({
-      ...fields.vote_count,
-      component: FilterVoteCount,
-    }),
-    episode_run_time: untouched({
-      ...fields.episode_runtime,
-      component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
-    }),
-    ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
+    serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
+    component: withProps({
+      label: i18n.t('ui.sorting'),
+      options: [
+        { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
+        { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
+        { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+        { label: i18n.t('ui.sortings.last_air_date'), value: 'last_air_date' },
+        { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
+        { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+        { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
+      ]
+    })(Sorting)
+  },
+  // Named as the movie's, a show's state is its `monitored` flag
+  state: {
+    initial: [],
+    serialize: (key, raw) => raw?.length === 1 ? { monitored: `${raw[0] === 'followed'}` } : {},
+    component: withProps({ type: 'show' })(FilterStates),
+  },
+  status,
+  proposal: {
+    initial: { values: [] },
+    serialize: (key, raw) => (!raw?.values?.length || raw?.values?.length === 2) ? {} : { 'releases.proposal': raw?.values[0] },
+    component: FilterProposal,
+  },
+  policy: {
+    initial: { values: [] },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
+    component: withProps({ label: 'ui.filters.policy' })(FilterStatistics),
+  },
+  requested_by: {
+    initial: { values: [], behavior: 'or' },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+    component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
+  },
+  genres: {
+    ...fields.genres,
+    initial: { values: [], behavior: 'or' },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+    component: compose(withProps({ display: 'checkbox', type: 'tv' }), withTMDB())(FilterGenres),
+  },
+  type,
+  networks,
+  original_languages: {
+    ...fields.original_languages,
+    initial: { values: [], behavior: 'or' },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+    component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+  },
+  origin_country,
+  first_air_date: untouched({
+    ...fields.release_date,
+    component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
+  }),
+  number_of_seasons,
+  popularity: untouched({
+    ...fields.popularity,
+    component: FilterPopularity,
+  }),
+  vote_average: untouched({
+    ...fields.vote_average,
+    component: FilterVoteAverage,
+  }),
+  vote_count: untouched({
+    ...fields.vote_count,
+    component: FilterVoteCount,
+  }),
+  episode_run_time: untouched({
+    ...fields.episode_runtime,
+    component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
+  }),
+  ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
 }
 
 const Library = compose(

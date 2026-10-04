@@ -100,129 +100,129 @@ const useStatistics = (entities, fields) => {
 // The filters of the movies Discover that `discover/tv` also takes, people and release types aside, and its own
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {
-    hide_library: {
-      initial: false,
-      hideFromFiltersCount: true,
-      serialize: () => ({}),
-      component: ({ value, onChange, ...props }) => (
-        <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
-          <Option
-            id='hide_library'
-            type='checkbox'
-            checked={value}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
-          >
-            Hide Library
-          </Option>
-        </div>
-      ),
+  hide_library: {
+    initial: false,
+    hideFromFiltersCount: true,
+    serialize: () => ({}),
+    component: ({ value, onChange, ...props }) => (
+      <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+        <Option
+          id='hide_library'
+          type='checkbox'
+          checked={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+        >
+          Hide Library
+        </Option>
+      </div>
+    ),
+  },
+  head: {
+    initial: null,
+    component: ({ ...props }) => (
+      <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
+        <Warning
+          emoji="🌐"
+          title="Discover"
+          subtitle={(
+            <span>
+              Discover shows with various filters like <strong>genres</strong>, <strong>networks</strong>, <strong>type</strong>, <strong>first air date</strong>, etc...
+              <br/>
+              <small><em>Combine filters to discover new shows !</em></small>
+            </span>
+          )}
+        />
+      </div>
+    ),
+  },
+  sort_by: {
+    initial: {
+      value: 'popularity',
+      sort: true,
     },
-    head: {
-      initial: null,
-      component: ({ ...props }) => (
-        <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
-          <Warning
-            emoji="🌐"
-            title="Discover"
-            subtitle={(
-              <span>
-                Discover shows with various filters like <strong>genres</strong>, <strong>networks</strong>, <strong>type</strong>, <strong>first air date</strong>, etc...
-                <br/>
-                <small><em>Combine filters to discover new shows !</em></small>
-              </span>
-            )}
-          />
-        </div>
-      ),
-    },
-    sort_by: {
-      initial: {
-        value: 'popularity',
-        sort: true,
-      },
-      serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
-      component: withProps({
-        label: i18n.t('ui.sorting'),
-        options: [
-          { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-          { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
-          { label: i18n.t('ui.sortings.name'), value: 'name' },
-          { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-          { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
-        ]
-      })(Sorting)
-    },
-    with_genres: {
-      ...fields.genres,
-      statistics: null,
-      component: compose(
-        withProps({ display: 'select', type: 'tv' }),
-        withTMDB()
-      )(FilterGenres),
-    },
-    without_genres: {
-      ...fields.genres,
-      // Talk and news shows fill the first screen of a popularity sort
-      initial: { values: [{ value: 10767, label: 'Talk' }, { value: 10763, label: 'News' }], behavior: 'or' },
-      statistics: null,
-      component: compose(
-        withProps({
-          display: 'select',
-          type: 'tv',
-          label: <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span>,
-        }),
-        withTMDB()
-      )(FilterGenres),
-    },
-    first_air_date: {
-      ...fields.release_date,
-      statistics: (entities, field) => fields.release_date.statistics(entities.map(entity => ({ release_date: entity.first_air_date })), field),
-      component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
-    },
-    vote_average: {
-      ...fields.vote_average,
-      component: FilterVoteAverage,
-    },
-    vote_count: {
-      ...fields.vote_count,
-      initial: [0, 15000],
-      component: FilterVoteCount,
-    },
-    with_runtime: {
-      ...fields.episode_runtime,
-      statistics: null,
-      component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
-    },
-    with_type: oneOf(i18n.t('ui.filters.type'), TYPES),
-    with_status: oneOf(i18n.t('ui.filters.status'), STATUSES),
-    with_networks: networks,
-    with_companies: {
-      ...fields.companies,
-      component: withTMDB()(FilterCompanies),
-    },
-    with_keywords: {
-      ...fields.keywords,
-      component: withTMDB()(FilterKeywords),
-    },
-    without_keywords: {
-      ...fields.keywords,
-      component: compose(
-        withProps({
-          label: <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span>,
-        }),
-        withTMDB(),
-      )(FilterKeywords),
-    },
-    with_original_language: {
-      ...fields.original_language,
-      component: FilterLanguages,
-      props: { menuPlacement: 'top' },
-    },
-    with_origin_country: {
-      ...fields.original_language,
-      component: FilterCountries,
-      props: { menuPlacement: 'top' },
-    },
+    serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
+    component: withProps({
+      label: i18n.t('ui.sorting'),
+      options: [
+        { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
+        { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
+        { label: i18n.t('ui.sortings.name'), value: 'name' },
+        { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
+        { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+      ]
+    })(Sorting)
+  },
+  with_genres: {
+    ...fields.genres,
+    statistics: null,
+    component: compose(
+      withProps({ display: 'select', type: 'tv' }),
+      withTMDB()
+    )(FilterGenres),
+  },
+  without_genres: {
+    ...fields.genres,
+    // Talk and news shows fill the first screen of a popularity sort
+    initial: { values: [{ value: 10767, label: 'Talk' }, { value: 10763, label: 'News' }], behavior: 'or' },
+    statistics: null,
+    component: compose(
+      withProps({
+        display: 'select',
+        type: 'tv',
+        label: <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span>,
+      }),
+      withTMDB()
+    )(FilterGenres),
+  },
+  first_air_date: {
+    ...fields.release_date,
+    statistics: (entities, field) => fields.release_date.statistics(entities.map(entity => ({ release_date: entity.first_air_date })), field),
+    component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
+  },
+  vote_average: {
+    ...fields.vote_average,
+    component: FilterVoteAverage,
+  },
+  vote_count: {
+    ...fields.vote_count,
+    initial: [0, 15000],
+    component: FilterVoteCount,
+  },
+  with_runtime: {
+    ...fields.episode_runtime,
+    statistics: null,
+    component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
+  },
+  with_type: oneOf(i18n.t('ui.filters.type'), TYPES),
+  with_status: oneOf(i18n.t('ui.filters.status'), STATUSES),
+  with_networks: networks,
+  with_companies: {
+    ...fields.companies,
+    component: withTMDB()(FilterCompanies),
+  },
+  with_keywords: {
+    ...fields.keywords,
+    component: withTMDB()(FilterKeywords),
+  },
+  without_keywords: {
+    ...fields.keywords,
+    component: compose(
+      withProps({
+        label: <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span>,
+      }),
+      withTMDB(),
+    )(FilterKeywords),
+  },
+  with_original_language: {
+    ...fields.original_language,
+    component: FilterLanguages,
+    props: { menuPlacement: 'top' },
+  },
+  with_origin_country: {
+    ...fields.original_language,
+    component: FilterCountries,
+    props: { menuPlacement: 'top' },
+  },
 }
 
 export const Discover = compose(
