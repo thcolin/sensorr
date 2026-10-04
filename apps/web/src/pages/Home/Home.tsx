@@ -17,7 +17,7 @@ import { useConfigContext } from '../../contexts/Config/Config'
 
 const TITLES = { all: 'Home', movie: 'Movies', tv: 'TV', person: 'Stars' }
 
-// The Stars Home stays as it was, the others draw the rows of `config.home`
+// The Stars Home keeps fixed rows, the others draw `config.home`
 const PERSON = ['followed_persons', 'birthday_persons', 'calendar', 'trending_persons']
 
 // `all` is the home of the browser, the other sections the home of a bottom bar tab in the PWA

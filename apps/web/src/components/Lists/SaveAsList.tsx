@@ -9,7 +9,6 @@ import { HomeKey, List, Row, listRowId, listsOf } from '../../pages/Home/rows'
 
 const HOMES: { [home in HomeKey]: string } = { all: 'Browser', movie: 'Movies', tv: 'TV' }
 
-// The end of the filters panel of Discover or Library: its filters, applied or not, kept as a list
 export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv') => {
   const SaveAsList = ({ values }: { values: { [key: string]: any } }) => {
     const { config } = useConfigContext()

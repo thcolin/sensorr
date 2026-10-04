@@ -17,7 +17,6 @@ const HOMES: { [home in HomeKey]: { emoji: string, label: string } } = {
   tv: { emoji: '📺', label: 'TV' },
 }
 
-// What a row is called, built-in or list, as its Home titles it
 export const useRowLabel = (lists: List[]) => {
   const { t } = useTranslation()
 
