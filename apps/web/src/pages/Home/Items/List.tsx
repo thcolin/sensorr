@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Entities, serializeControls, valuesOfControls } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
+import i18n from '@sensorr/i18n'
 import { MovieWithCreditsAndReviews } from '../../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { useTMDB } from '../../../store/tmdb'
@@ -16,24 +17,32 @@ const FIELDS = {
   library: { movie: LIBRARY_MOVIES, tv: LIBRARY_SHOWS },
 }
 
-export const paramsOf = (list: List, { kind, values }: List['sources'][number]) => kind === 'manual'
+export const paramsOf = (list: List, { kind, values }: List['sources'][number]) => kind === 'custom'
   ? { lists: list.id }
   : serializeControls(FIELDS[kind][list.media], valuesOfControls(FIELDS[kind][list.media], values))
 
 // `names` gives the label of a value saved as a bare id, a genre of Library
-const textOf = (value, names = {}) => Array.isArray(value)
-  ? value.map((item) => textOf(item, names)).join('–')
-  : value && typeof value === 'object'
-    ? (Array.isArray(value.values) ? value.values.map((item) => item?.label ?? names[item]?.name ?? item).join(value.behavior === 'and' ? ' + ' : ', ') : '')
-    : String(value)
+const textOf = (value, names = {}) => value instanceof Date
+  ? String(value.getFullYear())
+  : Array.isArray(value)
+    ? value.map((item) => textOf(item, names)).join('–')
+    : value && typeof value === 'object'
+      ? (Array.isArray(value.values) ? value.values.map((item) => item?.label ?? names[item]?.name ?? item).join(value.behavior === 'and' ? ' + ' : ', ') : '')
+      : String(value)
 
-export const summaryOf = (list: List, { kind, values }: List['sources'][number], names = {}) => kind === 'manual'
-  ? 'added by hand'
-  : Object.entries(values || {})
-    .filter(([key, value]) => FIELDS[kind][list.media][key] && JSON.stringify(value) !== JSON.stringify(FIELDS[kind][list.media][key].initial))
-    .map(([key, value]) => `${key}: ${textOf(value, names)}`)
-    .filter((text) => !text.endsWith(': '))
-    .join(' · ') || 'no filter'
+// The `ui.filters` label of a field, named as Discover and Library title it
+const FILTER = { primary_release_date: 'release_date', original_language: 'languages', original_languages: 'languages', production_companies: 'companies', episode_run_time: 'episode_runtime' }
+
+// The filters a source moved off their initial value, as their panels title them
+export const summaryOf = (list: List, { kind, values }: List['sources'][number], names = {}): string[] => kind === 'custom' ? [] : Object.entries(values || {})
+  .filter(([key, value]) => FIELDS[kind][list.media][key] && JSON.stringify(value) !== JSON.stringify(FIELDS[kind][list.media][key].initial))
+  .map(([key, value]) => {
+    const name = key.replace(/^with(out)?_/, '')
+    const label = `ui.filters.${FILTER[name] || name}`
+    const text = textOf(value, names)
+    return text && i18n.exists(label) ? `${i18n.t(label)}: ${key.startsWith('without_') ? 'not ' : ''}${text}` : null
+  })
+  .filter(Boolean)
 
 // `editing` lets the filters panel write its values back in place of the source
 export const screenOf = (list: List, index = 0, editing = false) => {
@@ -42,7 +51,7 @@ export const screenOf = (list: List, index = 0, editing = false) => {
   return {
     to: `/${list.media}/${source?.kind === 'discover' ? 'discover' : 'library'}`,
     state: {
-      controls: source?.kind === 'manual' ? { lists: { values: [list.id], behavior: 'or' } } : source?.values || {},
+      controls: source?.kind === 'custom' ? { lists: { values: [list.id], behavior: 'or' } } : source?.values || {},
       ...(editing ? { editing: { list: list.id, source: index } } : {}),
     },
   }
@@ -88,7 +97,6 @@ export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) 
 
   return (
     <Entities
-      {...props}
       id={`list_${list.id}`}
       label={emojize('🗂️', list.name)}
       display='row'
@@ -101,6 +109,7 @@ export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) 
       length={entities?.length}
       ready={!!entities}
       error={error}
+      {...props}
     />
   )
 }
