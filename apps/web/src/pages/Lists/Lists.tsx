@@ -8,8 +8,8 @@ import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
-import { List, listsOf } from '../Home/rows'
-import { ListRow, compareOf, fetchSource } from '../Home/Items/List'
+import { List, compareOf, listsOf } from '../Home/rows'
+import { ListRow, fetchSource } from '../Home/Items/List'
 
 const NOUNS = { movie: 'movies', tv: 'shows' }
 

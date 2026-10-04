@@ -71,6 +71,16 @@ const Home = ({ ...props }) => {
   const [target, setTarget] = useState(null)
   const locked = (id: string) => LOCKED[home].includes(id)
   const toggle = (id: string) => setRows(rows.map((other) => other.id === id ? { ...other, hidden: !other.hidden } : other))
+  // ↑ and ↓ on a handle move its row among its neighbours, the rows of the Home or the tabs of its group
+  const move = (id: string, step: -1 | 1) => {
+    const group = rows.find((row) => isGroup(row) && row.tabs.includes(id))
+    const siblings = group ? group.tabs : rows.map((row) => row.id)
+    const other = siblings[siblings.indexOf(id) + step]
+
+    if (other) {
+      setRows(dropRow(rows, id, other, step < 0 ? 'before' : 'after', `group:${nanoid(8)}`))
+    }
+  }
 
   return (
     <Body>
@@ -151,6 +161,7 @@ const Home = ({ ...props }) => {
                     kind='tabs'
                     locked={row.tabs.some(locked)}
                     onToggle={() => toggle(row.id)}
+                    onMove={(step) => move(row.id, step)}
                   >
                     <ol sx={Home.styles.tabs}>
                       {row.tabs.map((id) => (
@@ -161,6 +172,7 @@ const Home = ({ ...props }) => {
                           {...labelOf(id)}
                           locked={locked(id)}
                           onUngroup={() => setRows(dropRow(rows, id, row.id, 'after', `group:${nanoid(8)}`))}
+                          onMove={(step) => move(id, step)}
                         />
                       ))}
                     </ol>
@@ -173,6 +185,7 @@ const Home = ({ ...props }) => {
                     {...labelOf(row.id)}
                     locked={locked(row.id)}
                     onToggle={() => toggle(row.id)}
+                    onMove={(step) => move(row.id, step)}
                   />
                 ))}
               </ol>
@@ -192,10 +205,22 @@ const Home = ({ ...props }) => {
   )
 }
 
-const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle = null, onUngroup = null, handle, zone, children, ...props }, ref) => (
+const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle = null, onUngroup = null, onMove, handle, zone, children, ...props }, ref) => (
   <li ref={ref} {...props} sx={Home.styles.row} data-hidden={row.hidden || undefined} data-zone={zone || undefined} data-group={!!children || undefined}>
     <div>
-      <span {...handle} sx={Home.styles.handle} aria-label={`Move ${label}`}>⁝</span>
+      <span
+        {...handle}
+        onKeyDown={(e) => {
+          if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault()
+            onMove(e.key === 'ArrowUp' ? -1 : 1)
+          }
+        }}
+        sx={Home.styles.handle}
+        aria-label={`Move ${label}, with the up and down arrows`}
+      >
+        ⁝
+      </span>
       <span sx={Home.styles.label}>
         <span>{label}</span>
         {title && <small>{title}</small>}
