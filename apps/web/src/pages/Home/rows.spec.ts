@@ -1,4 +1,8 @@
-import { rowsOf, LOCKED, List } from './rows'
+import { rowsOf, listsOf, LOCKED, List } from './rows'
+
+// `@sensorr/utils` reaches ESM that this jest setup leaves untransformed
+jest.mock('@dicebear/core', () => ({}))
+jest.mock('@dicebear/collection', () => ({}))
 
 const lists: List[] = [
   { id: 'w', name: 'Westerns', media: 'movie', sources: [{ kind: 'discover', values: {} }] },
@@ -27,5 +31,15 @@ describe('rowsOf', () => {
 
     expect(rows[0]).toEqual({ id: 'swaps', hidden: false })
     expect(rows.map(({ id }) => id).sort()).toEqual([...LOCKED.movie].sort())
+  })
+})
+
+describe('listsOf', () => {
+  it('brings back as dates the dates config.json keeps as strings', () => {
+    const saved = [{ id: 'd', name: 'Nineties', media: 'movie', sources: [{ kind: 'discover', values: { primary_release_date: ['1990-01-01T00:00:00.000Z', '1999-12-31T00:00:00.000Z'] } }] }]
+    const [list] = listsOf({ get: () => saved })
+
+    expect(list.sources[0].values.primary_release_date[0]).toBeInstanceOf(Date)
+    expect(list.sources[0].values.primary_release_date[1].toISOString()).toBe('1999-12-31T00:00:00.000Z')
   })
 })

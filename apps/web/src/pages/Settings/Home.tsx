@@ -8,7 +8,7 @@ import { Button, Option } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
-import { BUILTINS, LOCKED, HomeKey, List, Row, fits, listRowId, rowsOf } from '../Home/rows'
+import { BUILTINS, LOCKED, HomeKey, List, Row, fits, listRowId, listsOf, rowsOf } from '../Home/rows'
 import { Capsule } from './Capsule'
 
 const HOMES: { [home in HomeKey]: { emoji: string, label: string } } = {
@@ -35,7 +35,7 @@ const Home = ({ ...props }) => {
   useTitle('Settings - Home')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
-  const lists: List[] = config.get('lists')
+  const lists = listsOf(config)
   const [home, setHome] = useState<HomeKey>('all')
   const [homes, setHomes] = useState<{ [home in HomeKey]: Row[] }>(() => ({
     all: rowsOf('all', config.get('home.all'), lists),

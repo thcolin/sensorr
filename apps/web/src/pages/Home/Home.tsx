@@ -12,7 +12,7 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { TrendingShows, LibraryShows, AiringShows, DiscoverShows, RequestedMoviesAndShows, RequestedMovies, RequestedShows, MovieOrShow } from './Items/Shows'
 import { ListRow } from './Items/List'
-import { rowsOf, listRowId, List } from './rows'
+import { rowsOf, listRowId, listsOf } from './rows'
 import { useConfigContext } from '../../contexts/Config/Config'
 
 const TITLES = { all: 'Home', movie: 'Movies', tv: 'TV', person: 'Stars' }
@@ -366,7 +366,7 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
     ),
   }
 
-  const lists: List[] = config.get('lists')
+  const lists = listsOf(config)
   const rows = section === 'person'
     ? PERSON.map((id) => builtins[id])
     : rowsOf(section, config.get(`home.${section}`), lists)
