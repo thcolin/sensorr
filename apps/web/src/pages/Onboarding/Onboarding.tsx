@@ -189,6 +189,10 @@ const Onboarding = () => {
       return
     }
 
+    // The panel scrolls on a desktop, the whole page under it on a phone: a new step starts at the top of both
+    panel.current?.scrollTo({ top: 0 })
+    panel.current?.parentElement?.scrollTo({ top: 0 })
+
     const title = panel.current?.querySelector('h2')
     title?.setAttribute('tabindex', '-1')
     title?.focus({ preventScroll: true })
