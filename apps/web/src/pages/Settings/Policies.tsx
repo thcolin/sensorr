@@ -80,9 +80,9 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
           ))}
         </div>
       )}
+      <PoliciesSandbox form={form} fields={policies.fields} />
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
       <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error('Add the policy with +, or clear its name') : onSubmit(values))}>
-        <PoliciesSandbox form={form} fields={policies.fields} />
         <SortablePolicies
           policies={policies}
           form={form}
@@ -174,10 +174,13 @@ PoliciesSandbox.styles = {
     '>summary': {
       ...SUMMARY,
       lineHeight: 'body',
-      overflow: 'hidden',
+      position: 'relative',
       '>small': {
-        float: ['none', 'right'],
-        display: ['block', 'inline'],
+        display: 'block',
+        position: ['static', 'absolute'],
+        top: '50%',
+        right: 3,
+        transform: ['none', 'translateY(-50%)'],
         color: 'grayDarker',
         lineHeight: 'inherit',
       },
