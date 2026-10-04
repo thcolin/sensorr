@@ -205,26 +205,32 @@ export interface withControlsArgs extends Omit<ControlsProps, 'values' | 'onChan
   }
 }
 
+// The query params of the controls values, as each field serializes its own
+export const serializeControls = (fields, values) => Object.keys(values || {}).reduce((acc, key) => ({
+  ...acc,
+  ...(fields[key]?.serialize && fields[key].serialize(key, values[key])),
+}), {})
+
+// The values of the fields a saved set of values leaves out are their initial ones, as `withControls` fills them
+export const valuesOfControls = (fields, values) => Object.keys(fields).reduce((acc, key) => ({
+  ...acc,
+  ...(
+    (values || {})[key] != null ? { [key]: values[key] } :
+    typeof fields[key].initial !== 'undefined' ? { [key]: fields[key].initial } :
+    {}
+  ),
+}), {})
+
 export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields }: withControlsArgs) => (WrappedComponent) => {
   const WithControls = ({ controls, ...props }: any) => {
     const state = useMemo(() => ({
       props: controls?.props,
-      values: Object.keys(fields).reduce((acc, key) => ({
-        ...acc,
-        ...(
-          (controls?.values || {})[key] != null ? { [key]: controls?.values[key] } :
-          typeof fields[key].initial !== 'undefined' ? { [key]: fields[key].initial } :
-          {}
-        ),
-      }), {}),
+      values: valuesOfControls(fields, controls?.values),
     }), [fields, JSON.stringify(controls?.values), JSON.stringify(controls?.props)])
 
     const previous = useRef<string>(null)
     const handleChange = useCallback(values => {
-      const serialized = Object.keys(values).reduce((acc, key) => ({
-        ...acc,
-        ...(fields[key]?.serialize && fields[key].serialize(key, (values || {})[key])),
-      }), {})
+      const serialized = serializeControls(fields, values)
 
       controls?.onChange && controls?.onChange(values, serialized)
 
@@ -240,10 +246,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
     const computed = useStatistics(
       props.entities,
       fields,
-      Object.keys(state?.values || {}).reduce((acc, key) => ({
-        ...acc,
-        ...(fields[key]?.serialize && fields[key].serialize(key, (state?.values || {})[key])),
-      }), {})
+      serializeControls(fields, state?.values)
     )
     const statistics = useMemo(() => ({ ...computed, ...props.statistics }), [computed, props.statistics])
 
