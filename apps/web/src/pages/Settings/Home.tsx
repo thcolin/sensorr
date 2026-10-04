@@ -1,14 +1,14 @@
 import { forwardRef, useCallback, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { createPortal } from 'react-dom'
+import { nanoid } from 'nanoid'
+import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button, Option } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
-import { BUILTINS, LOCKED, HomeKey, List, Row, fits, listRowId, listsOf, rowsOf } from '../Home/rows'
+import { BUILTINS, GROUPABLE, LOCKED, HomeKey, List, Row, dropRow, fits, isGroup, listRowId, listsOf, rowsOf } from '../Home/rows'
 import { Capsule } from './Capsule'
 
 const HOMES: { [home in HomeKey]: { emoji: string, label: string } } = {
@@ -30,6 +30,22 @@ export const useRowLabel = (lists: List[]) => {
   }, [lists, t])
 }
 
+// On the middle of a row a dragged row makes a group with it, on an edge it goes before or after it,
+// as a ⭐ prefer tag does on another in Policies
+const zoneOf = ({ active, over, activatorEvent, delta }) => {
+  const y = (activatorEvent.touches?.[0] ?? activatorEvent).clientY + delta.y
+  const ratio = (y - over.rect.top) / over.rect.height
+  const grouping = !String(active.id).startsWith('group:') && GROUPABLE(String(active.id)) && GROUPABLE(String(over.id))
+
+  return (grouping && ratio > 0.3 && ratio < 0.7) ? 'group' : ratio < 0.5 ? 'before' : 'after'
+}
+
+// A pointer over a group and one of its tabs drops on the tab, the innermost
+const collide = (args) => {
+  const within = pointerWithin(args)
+  return within.length ? [...within].sort((a, b) => (args.droppableRects.get(a.id)?.height || 0) - (args.droppableRects.get(b.id)?.height || 0)) : closestCenter(args)
+}
+
 const Home = ({ ...props }) => {
   useTitle('Settings - Home')
   const { onSave } = useOutletContext() as any
@@ -47,10 +63,14 @@ const Home = ({ ...props }) => {
   const rows = homes[home]
   const dirty = (Object.keys(HOMES) as HomeKey[]).some((key) => JSON.stringify(homes[key]) !== JSON.stringify(rowsOf(key, config.get(`home.${key}`), lists)))
   const addable = useMemo(() => [...Object.keys(BUILTINS), ...lists.map(listRowId)]
-    .filter((id) => fits(home, id, lists) && !rows.some((row) => row.id === id)), [home, rows, lists])
+    .filter((id) => fits(home, id, lists) && !rows.some((row) => row.id === id || row.tabs?.includes(id))), [home, rows, lists])
 
   const setRows = (next: Row[]) => setHomes((homes) => ({ ...homes, [home]: next }))
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const [dragged, setDragged] = useState(null)
+  const [target, setTarget] = useState(null)
+  const locked = (id: string) => LOCKED[home].includes(id)
+  const toggle = (id: string) => setRows(rows.map((other) => other.id === id ? { ...other, hidden: !other.hidden } : other))
 
   return (
     <Body>
@@ -58,7 +78,7 @@ const Home = ({ ...props }) => {
         <article>
           <h2 id='home-home'>Home</h2>
           <p>
-            The rows of each Home, in order. Drag a row to move it, uncheck it to hide it. The <strong>Browser</strong> Home is the one of a browser, <strong>Movies</strong> and <strong>TV</strong> the ones of the installed app.
+            The rows of each Home, in order. Drag a row to move it, drop it on the middle of another to show both as the tabs of one row, uncheck it to hide it. The <strong>Browser</strong> Home is the one of a browser, <strong>Movies</strong> and <strong>TV</strong> the ones of the installed app.
             {' '}A <code>🔒</code> row opens a screen the app reaches only from its Home: it moves, it stays shown.
           </p>
           <Capsule
@@ -104,26 +124,63 @@ const Home = ({ ...props }) => {
           >
             <DndContext
               sensors={sensors}
-              collisionDetection={closestCenter}
+              collisionDetection={collide}
+              onDragStart={({ active }) => setDragged(active.id)}
+              onDragMove={(event) => setTarget(event.over && event.over.id !== event.active.id ? { id: event.over.id, zone: zoneOf(event) } : null)}
+              onDragCancel={() => {
+                setDragged(null)
+                setTarget(null)
+              }}
               onDragEnd={({ active, over }) => {
-                if (over && active.id !== over.id) {
-                  setRows(arrayMove(rows, rows.findIndex(({ id }) => id === active.id), rows.findIndex(({ id }) => id === over.id)))
+                if (over && target && active.id !== over.id) {
+                  setRows(dropRow(rows, String(active.id), String(over.id), target.zone, `group:${nanoid(8)}`))
                 }
+
+                setDragged(null)
+                setTarget(null)
               }}
             >
-              <SortableContext items={rows.map(({ id }) => id)} strategy={verticalListSortingStrategy}>
-                <ol sx={Home.styles.rows}>
-                  {rows.map((row) => (
-                    <SortableRow
-                      key={row.id}
-                      row={row}
-                      {...labelOf(row.id)}
-                      locked={LOCKED[home].includes(row.id)}
-                      onToggle={() => setRows(rows.map((other) => other.id === row.id ? { ...other, hidden: !other.hidden } : other))}
-                    />
-                  ))}
-                </ol>
-              </SortableContext>
+              <ol sx={Home.styles.rows}>
+                {rows.map((row) => isGroup(row) ? (
+                  <DraggableRow
+                    key={row.id}
+                    row={row}
+                    target={target}
+                    label={emojize('🗂️', 'Group')}
+                    title={row.tabs.map((id) => labelOf(id).label).join(' · ')}
+                    kind='tabs'
+                    locked={row.tabs.some(locked)}
+                    onToggle={() => toggle(row.id)}
+                  >
+                    <ol sx={Home.styles.tabs}>
+                      {row.tabs.map((id) => (
+                        <DraggableRow
+                          key={id}
+                          row={{ id, hidden: false }}
+                          target={target}
+                          {...labelOf(id)}
+                          locked={locked(id)}
+                          onUngroup={() => setRows(dropRow(rows, id, row.id, 'after', `group:${nanoid(8)}`))}
+                        />
+                      ))}
+                    </ol>
+                  </DraggableRow>
+                ) : (
+                  <DraggableRow
+                    key={row.id}
+                    row={row}
+                    target={target}
+                    {...labelOf(row.id)}
+                    locked={locked(row.id)}
+                    onToggle={() => toggle(row.id)}
+                  />
+                ))}
+              </ol>
+              {createPortal((
+                <DragOverlay dropAnimation={null}>
+                  {dragged && <div sx={Home.styles.overlay}>{String(dragged).startsWith('group:') ? emojize('🗂️', 'Group') : labelOf(String(dragged)).label}</div>}
+                </DragOverlay>
+              ), document.body)}
             </DndContext>
             <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
@@ -135,32 +192,42 @@ const Home = ({ ...props }) => {
   )
 }
 
-const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle, handle, ...props }, ref) => (
-  <li ref={ref} {...props} sx={Home.styles.row} data-hidden={row.hidden || undefined}>
-    <span {...handle} sx={Home.styles.handle} aria-label={`Move ${label}`}>⁝</span>
-    <span sx={Home.styles.label}>
-      <span>{label}</span>
-      {title && <small>{title}</small>}
-    </span>
-    <span sx={Home.styles.kind}>{kind}</span>
-    {locked ? (
-      <span sx={Home.styles.toggle} title='Opens a screen the app reaches only from this Home' aria-label='Always shown'>🔒</span>
-    ) : (
-      <span sx={Home.styles.toggle}>
-        <Option id={`row-${row.id}`} type='checkbox' checked={!row.hidden} onChange={onToggle} title={row.hidden ? 'Show the row' : 'Hide the row'} aria-label={`Show ${label}`} />
+const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle = null, onUngroup = null, handle, zone, children, ...props }, ref) => (
+  <li ref={ref} {...props} sx={Home.styles.row} data-hidden={row.hidden || undefined} data-zone={zone || undefined} data-group={!!children || undefined}>
+    <div>
+      <span {...handle} sx={Home.styles.handle} aria-label={`Move ${label}`}>⁝</span>
+      <span sx={Home.styles.label}>
+        <span>{label}</span>
+        {title && <small>{title}</small>}
       </span>
-    )}
+      {kind && <span sx={Home.styles.kind}>{kind}</span>}
+      {onUngroup ? (
+        <button type='button' onClick={onUngroup} title='Take it out of the group' sx={Home.styles.ungroup}>✕</button>
+      ) : locked ? (
+        <span sx={Home.styles.toggle} title='Opens a screen the app reaches only from this Home' aria-label='Always shown'>🔒</span>
+      ) : (
+        <span sx={Home.styles.toggle}>
+          <Option id={`row-${row.id}`} type='checkbox' checked={!row.hidden} onChange={onToggle} title={row.hidden ? 'Show the row' : 'Hide the row'} aria-label={`Show ${label}`} />
+        </span>
+      )}
+    </div>
+    {children}
   </li>
 ))
 
-const SortableRow = (props) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.row.id })
+const DraggableRow = ({ target, ...props }) => {
+  const draggable = useDraggable({ id: props.row.id })
+  const droppable = useDroppable({ id: props.row.id })
 
   return (
     <RowSettings
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : undefined }}
-      handle={{ ...attributes, ...listeners }}
+      ref={(node) => {
+        draggable.setNodeRef(node)
+        droppable.setNodeRef(node)
+      }}
+      style={{ opacity: draggable.isDragging ? 0.4 : undefined }}
+      handle={{ ...draggable.attributes, ...draggable.listeners }}
+      zone={target?.id === props.row.id ? target.zone : null}
       {...props}
     />
   )
@@ -204,17 +271,61 @@ Home.styles = {
   },
   row: {
     display: 'flex',
-    alignItems: 'stretch',
-    minHeight: '3em',
+    flexDirection: 'column',
     border: '1px solid',
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
     backgroundColor: 'whiteDark',
-    '&[data-hidden]': {
+    '>div': {
+      display: 'flex',
+      alignItems: 'stretch',
+      minHeight: '3em',
+    },
+    '&[data-hidden] >div': {
       '>span:not(:first-of-type)': {
         opacity: 0.45,
       },
     },
+    '&[data-zone="group"]': {
+      outline: '2px dashed',
+      outlineColor: 'primary',
+      outlineOffset: '2px',
+    },
+    '&[data-zone="before"]': {
+      boxShadow: (theme) => `0 -5px 0 -3px ${theme.rawColors.primary}`,
+    },
+    '&[data-zone="after"]': {
+      boxShadow: (theme) => `0 5px 0 -3px ${theme.rawColors.primary}`,
+    },
+  },
+  tabs: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    listStyle: 'none',
+    padding: 8,
+    margin: 12,
+    borderTop: '1px solid',
+    borderColor: 'grayDark',
+  },
+  ungroup: {
+    variant: 'button.reset',
+    minWidth: '3em',
+    borderLeft: '1px solid',
+    borderColor: 'grayDark',
+    color: 'error',
+  },
+  overlay: {
+    display: 'inline-flex',
+    paddingX: 6,
+    paddingY: 8,
+    border: '1px solid',
+    borderColor: 'primary',
+    borderRadius: '0.25rem',
+    backgroundColor: 'whiteDark',
+    fontWeight: 'semibold',
+    whiteSpace: 'nowrap',
+    cursor: 'grabbing',
   },
   handle: {
     display: 'flex',
