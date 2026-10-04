@@ -45,6 +45,7 @@ const Home = ({ ...props }) => {
   const labelOf = useRowLabel(lists)
 
   const rows = homes[home]
+  const dirty = (Object.keys(HOMES) as HomeKey[]).some((key) => JSON.stringify(homes[key]) !== JSON.stringify(rowsOf(key, config.get(`home.${key}`), lists)))
   const addable = useMemo(() => [...Object.keys(BUILTINS), ...lists.map(listRowId)]
     .filter((id) => fits(home, id, lists) && !rows.some((row) => row.id === id)), [home, rows, lists])
 
@@ -89,7 +90,7 @@ const Home = ({ ...props }) => {
               sx={{ variant: 'select.default', flex: 1 }}
             >
               <option value=''>{addable.length ? 'Add a row…' : 'Every row is on this Home'}</option>
-              {addable.map((id) => <option key={id} value={id}>{labelOf(id).label}</option>)}
+              {addable.map((id) => <option key={id} value={id}>{[labelOf(id).label, labelOf(id).title].filter(Boolean).join(' · ')}</option>)}
             </select>
             <button type='submit' title='Add the row' disabled={!adding} sx={Home.styles.plus}>+</button>
           </form>
@@ -97,7 +98,8 @@ const Home = ({ ...props }) => {
             sx={{ display: 'flex', flexDirection: 'column' }}
             onSubmit={(e) => {
               e.preventDefault()
-              onSave({ home: homes })
+              // The config reloads in place: a new state redraws Save as saved
+              onSave({ home: homes }).then(() => setHomes((homes) => ({ ...homes })), () => null)
             }}
           >
             <DndContext
@@ -123,8 +125,8 @@ const Home = ({ ...props }) => {
                 </ol>
               </SortableContext>
             </DndContext>
-            <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+            <div sx={Home.styles.save}>
+              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
             </div>
           </form>
         </article>
@@ -165,6 +167,15 @@ const SortableRow = (props) => {
 }
 
 Home.styles = {
+  // The save of the three Homes stays in reach below a long list of rows
+  save: {
+    position: 'sticky',
+    bottom: '0px',
+    display: 'flex',
+    marginTop: 4,
+    paddingY: 8,
+    backgroundColor: 'white',
+  },
   add: {
     display: 'flex',
     alignItems: 'stretch',

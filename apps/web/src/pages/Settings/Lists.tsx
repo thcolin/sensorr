@@ -9,7 +9,7 @@ import { HomeKey, List, Row, listRowId, listsOf } from '../Home/rows'
 import { screenOf, summaryOf } from '../Home/Items/List'
 import { useTMDB } from '../../store/tmdb'
 
-const MEDIA = { movie: emojize('🍿', 'movie'), tv: emojize('📺', 'tv') }
+const MEDIA = { movie: emojize('🍿', 'Movies'), tv: emojize('📺', 'TV') }
 const KINDS = { discover: '🌍', library: '📚', manual: '✋' }
 const HOMES: { [home in HomeKey]: string } = { all: 'Browser', movie: 'Movies', tv: 'TV' }
 
@@ -25,6 +25,7 @@ const Lists = ({ ...props }) => {
   const [media, setMedia] = useState<'movie' | 'tv'>('movie')
   const home: { [home in HomeKey]: Row[] } = config.get('home')
 
+  const dirty = JSON.stringify(lists) !== JSON.stringify(listsOf(config))
   const setList = (id: string, change: (list: List) => List) => setLists((lists) => lists.map((list) => list.id === id ? change(list) : list))
 
   return (
@@ -45,7 +46,7 @@ const Lists = ({ ...props }) => {
               setName('')
             }}
           >
-            <input type='text' value={name} onChange={(e) => setName(e.target.value)} placeholder='Name of a list added to by hand' aria-label='Name of the new list' required={true} sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', minWidth: 0 }} />
+            <input type='text' value={name} onChange={(e) => setName(e.target.value)} placeholder='New list, added to by hand' aria-label='Name of the new list' required={true} sx={{ variant: 'input.default', flex: 1, minWidth: 0 }} />
             <select value={media} onChange={(e) => setMedia(e.target.value as 'movie' | 'tv')} aria-label='Media of the new list' sx={{ variant: 'select.default', width: 'auto', flex: '0 0 auto' }}>
               <option value='movie'>{MEDIA.movie}</option>
               <option value='tv'>{MEDIA.tv}</option>
@@ -59,7 +60,8 @@ const Lists = ({ ...props }) => {
               const ids = lists.map(listRowId)
               // A deleted list leaves every Home with it
               const rows = Object.fromEntries(Object.entries(home).map(([key, rows]) => [key, rows.filter(({ id }) => !id.startsWith('list:') || ids.includes(id))]))
-              onSave({ lists, home: rows })
+              // The config reloads in place: a new state redraws Save as saved
+              onSave({ lists, home: rows }).then(() => setLists((lists) => [...lists]), () => null)
             }}
           >
             {!lists.length ? (
@@ -96,7 +98,7 @@ const Lists = ({ ...props }) => {
                             onClick={(e) => {
                               e.preventDefault()
 
-                              if (window.confirm(`Delete the list "${list.name}"? It leaves every Home once saved.`)) {
+                              if (window.confirm(`Delete the list "${list.name}"? It leaves every Home once you Save.`)) {
                                 setLists((lists) => lists.filter(({ id }) => id !== list.id))
                               }
                             }}
@@ -111,9 +113,9 @@ const Lists = ({ ...props }) => {
                               <span title={source.kind}>{KINDS[source.kind]}</span>
                               <code title={summaryOf(list, source, names)}>{summaryOf(list, source, names)}</code>
                               {source.kind !== 'manual' ? (
-                                <Link {...screenOf(list, index, true)}>Edit</Link>
+                                <SourceLink dirty={dirty} {...screenOf(list, index, true)}>Edit</SourceLink>
                               ) : (
-                                <Link {...screenOf(list, index)}>Open</Link>
+                                <SourceLink dirty={dirty} {...screenOf(list, index)}>Open</SourceLink>
                               )}
                               <button
                                 type='button'
@@ -133,8 +135,8 @@ const Lists = ({ ...props }) => {
                 })}
               </ul>
             )}
-            <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+            <div sx={Lists.styles.save}>
+              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
             </div>
           </form>
         </article>
@@ -143,7 +145,21 @@ const Lists = ({ ...props }) => {
   )
 }
 
+// Leaving for Discover or Library would drop what is not saved yet
+const SourceLink = ({ dirty, children, ...props }) => dirty
+  ? <span title='Save first, leaving drops the changes' sx={{ opacity: 0.45, cursor: 'not-allowed', fontSize: 6, fontWeight: 'semibold' }}>{children}</span>
+  : <Link {...props as any}>{children}</Link>
+
 Lists.styles = {
+  // The save of the whole page stays in reach below a long list
+  save: {
+    position: 'sticky',
+    bottom: '0px',
+    display: 'flex',
+    marginTop: 4,
+    paddingY: 8,
+    backgroundColor: 'white',
+  },
   create: {
     display: 'flex',
     alignItems: 'stretch',

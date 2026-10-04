@@ -20,7 +20,7 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
     const [mode, setMode] = useState<'new' | 'add' | 'replace'>(edited ? 'replace' : 'new')
     const [name, setName] = useState('')
     const [target, setTarget] = useState(lists[0]?.id || '')
-    const [pins, setPins] = useState<HomeKey[]>(['all'])
+    const [pins, setPins] = useState<HomeKey[]>(['all', media])
     const [saving, setSaving] = useState(false)
 
     const options = lists.map((list) => ({ value: list.id, label: list.name }))
@@ -58,7 +58,7 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
 
     return (
       <section sx={SaveAsList.styles.element} aria-labelledby={`save-as-list-${kind}`}>
-        <h5 id={`save-as-list-${kind}`}>{emojize('🗂️', 'Save as list')}</h5>
+        <h3 id={`save-as-list-${kind}`}>{emojize('🗂️', 'Save as list')}</h3>
         {edited && (
           <Option id='save-as-list-replace' type='radio' name='save-as-list' checked={mode === 'replace'} onChange={() => setMode('replace')}>
             Replace source {editing.source + 1} of <strong>{edited.name}</strong>
@@ -73,7 +73,13 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
               type='text'
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+              onKeyDown={(e) => {
+                // Enter submits the panel, which applies: here it saves
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  !disabled && save()
+                }
+              }}
               placeholder='Name'
               aria-label='Name of the list'
               sx={SaveAsList.styles.input}
@@ -108,7 +114,7 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
             />
           </div>
         )}
-        <Button type='button' variant='outline' disabled={disabled} aria-busy={saving} onClick={save} sx={SaveAsList.styles.button}>
+        <Button type='button' variant='outline' disabled={disabled} aria-busy={saving} title={mode === 'new' && !name.trim() ? 'Name the list' : undefined} onClick={save} sx={SaveAsList.styles.button}>
           {emojize('💾', 'Save')}
         </Button>
       </section>
@@ -125,10 +131,11 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
       borderTop: '1px solid',
       borderColor: 'primaryDarker',
       whiteSpace: 'normal',
-      '>h5': {
+      '>h3': {
         margin: 12,
         marginBottom: 8,
         fontSize: 4,
+        color: 'whitePure',
       },
     },
     nested: {

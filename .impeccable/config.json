@@ -110,6 +110,15 @@
         ],
         "createdAt": "2026-10-02T16:09:12.830Z",
         "reason": "Claude: the channel fill is position absolute, out of flow, so its width transition reflows no sibling; scaleX would squash its rounded ends"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "apps/web/src/pages/Settings/Capsule.tsx"
+        ],
+        "createdAt": "2026-10-04T12:55:20.099Z",
+        "reason": "Claude: pill width transition moved unchanged from Settings/Update.tsx (a5debe54), the capsule slides between labels of different widths"
       }
     ]
   }
