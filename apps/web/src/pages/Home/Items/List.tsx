@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Entities, serializeControls, valuesOfControls } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import i18n from '@sensorr/i18n'
+import { utils } from '@sensorr/tmdb'
 import { MovieWithCreditsAndReviews } from '../../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { useTMDB } from '../../../store/tmdb'
@@ -52,7 +53,11 @@ export const fetchSource = (api, tmdb, list: List, source: List['sources'][numbe
   const params = { ...paramsOf(list, source), page }
 
   if (source.kind === 'discover') {
+    // Discover drops the unknown movies in the browser, out of the query: a list drops them the same way
+    const unknown = !!(valuesOfControls(FIELDS.discover[list.media], source.values) as { hide_unknown?: boolean }).hide_unknown
+
     return tmdb.fetch(`discover/${list.media}`, params, init)
+      .then((page) => unknown ? { ...page, results: page.results.filter((entity) => !utils.isUnknown(entity)) } : page)
   }
 
   const query = list.media === 'movie'
