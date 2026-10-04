@@ -106,8 +106,8 @@ const PolicySandbox = ({ form, prefix }) => {
   const [open, setOpen] = useState(false)
   const policy = prefix ? form.watch(prefix) : form.watch()
   const znabs = (config.get('znabs') || []).filter((znab) => !znab.disabled).map((znab) => znab.name)
-  const key = open ? JSON.stringify([policy, znabs]) : null
-  const releases = useMemo(() => key ? sandboxOf(policy, znabs) : [], [key])
+  const key = JSON.stringify([policy, znabs])
+  const releases = useMemo(() => sandboxOf(policy, znabs), [key])
   const statistics = useMemo(() => statisticsOf(releases), [releases])
   const summary = summaryOf(releases)
 
@@ -117,13 +117,9 @@ const PolicySandbox = ({ form, prefix }) => {
         <span>Sandbox</span>
         <small>
           <span>Fake <em>Big Buck Bunny</em> (2008) releases</span>
-          {open && (
-            <>
-              <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
-              <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
-              <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
-            </>
-          )}
+          <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
+          <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
+          <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
         </small>
       </summary>
       {open && (
