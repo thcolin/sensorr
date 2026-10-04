@@ -3,7 +3,7 @@ import { memo } from 'react'
 export interface TransitionPillProps extends React.HTMLAttributes<HTMLSpanElement> {
   from?: React.ReactNode
   to: React.ReactNode
-  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing' | 'unfollowed' | 'downloading'
+  state?: 'held' | 'broken' | 'moved' | 'quiet' | 'same' | 'airing' | 'unfollowed' | 'downloading' | 'unknown'
   compact?: boolean
   // A side without a verdict stays gray whatever the state: an unknown value, or owned episodes behind the aired ones
   neutral?: { from?: boolean, to?: boolean }
@@ -84,6 +84,11 @@ UITransitionPill.styles = {
     airing: {
       before: { backgroundColor: 'airingDarkest', color: 'airingLightest' },
       after: { backgroundColor: 'airingDark', color: 'whitePure' },
+    },
+    // Plex episodes TMDB does not know, after the ones it knows
+    unknown: {
+      before: quiet.before,
+      after: { backgroundColor: 'infoDarker', color: 'whitePure' },
     },
     // Files still on their way to the staging folder
     downloading: {
