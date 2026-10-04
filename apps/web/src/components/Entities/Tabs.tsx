@@ -4,6 +4,20 @@ import { useHistoryState } from '@sensorr/utils'
 import { useTranslation } from 'react-i18next'
 import nanobounce from 'nanobounce'
 
+// A tab of a row, the one not shown let through
+export const TAB = {
+  variant: 'button.reset',
+  transition: 'opacity 400ms ease-in-out',
+  paddingY: 8,
+  marginX: 4,
+  fontFamily: 'heading',
+  fontWeight: 'strong',
+  whiteSpace: 'nowrap',
+  ':first-of-type': {
+    marginLeft: 12,
+  },
+}
+
 export const withTabsBehavior = () => (WrappedComponent) => {
   const WithTabsBehavior = ({ id, tabs, ...props }) => {
     const { t } = useTranslation()
@@ -34,19 +48,7 @@ export const withTabsBehavior = () => (WrappedComponent) => {
             {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: t('tabs.loading') }]]) as [string, any]).map(([key, { label: children }]) => (
               <button
                 key={key}
-                sx={{
-                  variant: 'button.reset',
-                  transition: 'opacity 400ms ease-in-out',
-                  paddingY: 8,
-                  marginX: 4,
-                  fontFamily: 'heading',
-                  fontWeight: 'strong',
-                  ...(key !== optimistic && { opacity: 0.5 }),
-                  whiteSpace: 'nowrap',
-                  ':first-of-type': {
-                    marginLeft: 12,
-                  },
-                }}
+                sx={{ ...TAB, ...(key !== optimistic && { opacity: 0.5 }) }}
                 onClick={() => {
                   setScroll([0, 0])
                   setReady(false)

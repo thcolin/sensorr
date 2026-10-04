@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigationType } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { usePainted, useTitle } from '@sensorr/utils'
+import { emojize, usePainted, useTitle } from '@sensorr/utils'
 import { TrendingMovies, ArchivedMovies, TheatresMovies, UpcomingMovies, CalendarMovies, DiscoverMovies, LibraryMovies, SwapsMovies } from '../../components/Entities/Movies'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
@@ -12,7 +12,8 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { TrendingShows, LibraryShows, AiringShows, DiscoverShows, RequestedMoviesAndShows, RequestedMovies, RequestedShows, MovieOrShow } from './Items/Shows'
 import { ListRow } from './Items/List'
-import { rowsOf, listRowId, listsOf } from './rows'
+import { rowsOf, listRowId, listsOf, isGroup } from './rows'
+import { RowGroup } from './Items/Group'
 import { useConfigContext } from '../../contexts/Config/Config'
 
 const TITLES = { all: 'Home', movie: 'Movies', tv: 'TV', person: 'Stars' }
@@ -367,11 +368,19 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
   }
 
   const lists = listsOf(config)
+  const listOf = (id: string) => lists.find((list) => listRowId(list) === id)
+  const elementOf = (id: string) => id.startsWith('list:') ? <ListRow key={id} list={listOf(id)} props={pretty} /> : builtins[id]
   const rows = section === 'person'
     ? PERSON.map((id) => builtins[id])
     : rowsOf(section, config.get(`home.${section}`), lists)
       .filter(({ hidden }) => !hidden)
-      .map(({ id }) => id.startsWith('list:') ? <ListRow key={id} list={lists.find((list) => listRowId(list) === id)} props={pretty} /> : builtins[id])
+      .map((row) => !isGroup(row) ? elementOf(row.id) : (
+        <RowGroup
+          key={row.id}
+          id={row.id}
+          tabs={row.tabs.map((id) => ({ id, label: id.startsWith('list:') ? emojize('🗂️', listOf(id).name) : builtins[id].props.label, element: elementOf(id) }))}
+        />
+      ))
 
   return (
     <Body overlayScrollbars={true}>
