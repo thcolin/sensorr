@@ -148,14 +148,17 @@ A `[]` in a name stands for one item of the array above it.
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `home.all` | `source-array` | `[{"id":"trending_movies","hidden":false},{"id":"trending_shows","hidden":false},{"id":"library","hidden":false},{"id":"library_shows","hidden":false},{"id":"calendar","hidden":false},{"id":"airing","hidden":false},{"id":"requests","hidden":false},{"id":"discover","hidden":false},{"id":"discover_shows","hidden":false},{"id":"theatres","hidden":false},{"id":"upcoming","hidden":false},{"id":"discover_selectable","hidden":false},{"id":"trending_persons","hidden":false}]` | Rows of the browser Home, in order |
-| `home.all[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.all[].id` | `String` | `""` | A built-in row, `list:<id>` or `group:<id>` |
 | `home.all[].hidden` | `Boolean` | `false` | Hide the row |
+| `home.all[].tabs` | — | `[]` | For a group, `group:<id>`, the rows it shows as tabs |
 | `home.movie` | `source-array` | `[{"id":"trending_movies","hidden":false},{"id":"library","hidden":false},{"id":"calendar","hidden":false},{"id":"swaps","hidden":false},{"id":"requested_movies","hidden":false},{"id":"discover","hidden":false},{"id":"theatres","hidden":false},{"id":"upcoming","hidden":false},{"id":"discover_selectable","hidden":false}]` | Rows of the Movies Home of the PWA, in order |
-| `home.movie[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.movie[].id` | `String` | `""` | A built-in row, `list:<id>` or `group:<id>` |
 | `home.movie[].hidden` | `Boolean` | `false` | Hide the row |
+| `home.movie[].tabs` | — | `[]` | For a group, `group:<id>`, the rows it shows as tabs |
 | `home.tv` | `source-array` | `[{"id":"trending_shows","hidden":false},{"id":"library_shows","hidden":false},{"id":"airing","hidden":false},{"id":"requested_shows","hidden":false},{"id":"discover_shows","hidden":false}]` | Rows of the TV Home of the PWA, in order |
-| `home.tv[].id` | `String` | `""` | A built-in row, or `list:<id>` |
+| `home.tv[].id` | `String` | `""` | A built-in row, `list:<id>` or `group:<id>` |
 | `home.tv[].hidden` | `Boolean` | `false` | Hide the row |
+| `home.tv[].tabs` | — | `[]` | For a group, `group:<id>`, the rows it shows as tabs |
 
 ## Znabs
 

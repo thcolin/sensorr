@@ -33,6 +33,12 @@ describe('home', () => {
     expect(config.get('home.tv')).toHaveLength(5)
   })
 
+  it('keeps a group of rows as it was saved', () => {
+    const config = loaded({ home: { all: [{ id: 'group:g', hidden: false, tabs: ['trending_movies', 'list:a1'] }, { id: 'airing', hidden: false }] } })
+
+    expect(config.get('home.all')).toEqual([{ id: 'group:g', hidden: false, tabs: ['trending_movies', 'list:a1'] }, { id: 'airing', hidden: false }])
+  })
+
   it('changes one Home without touching the others', () => {
     const config = loaded({ home: { tv: [{ id: 'airing', hidden: true }] } })
 

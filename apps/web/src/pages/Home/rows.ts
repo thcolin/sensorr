@@ -1,7 +1,8 @@
 import { reviver } from '@sensorr/utils'
 
 export type HomeKey = 'all' | 'movie' | 'tv'
-export type Row = { id: string, hidden: boolean }
+// A group, `group:<id>`, shows its `tabs` as one row with a tab for each
+export type Row = { id: string, hidden: boolean, tabs?: string[] }
 export type List = { id: string, name: string, media: 'movie' | 'tv', sources: { kind: 'discover' | 'library' | 'custom', values?: { [key: string]: any } }[] }
 
 // The rows the app draws itself: `media` says which PWA Home takes them, none means the browser Home only.
@@ -47,13 +48,67 @@ export const fits = (home: HomeKey, id: string, lists: List[]) => {
   return home === 'all' || media === home
 }
 
+// A tabbed row holds its own tabs: it stays out of a group
+export const GROUPABLE = (id: string) => id !== 'discover_selectable'
+
+export const isGroup = (row: Row) => row.id.startsWith('group:')
+
+const idsOf = (row: Row) => isGroup(row) ? row.tabs || [] : [row.id]
+
+// A group of one tab is that row again, a group of none is gone
+const normalized = (rows: Row[]): Row[] => rows.flatMap((row) => !isGroup(row) ? [row]
+  : row.tabs.length > 1 ? [row]
+  : row.tabs.length === 1 ? [{ id: row.tabs[0], hidden: row.hidden }]
+  : [])
+
+// The rows a Home draws: unknown ids dropped, a locked row shown, and put back at the end when missing
 export const rowsOf = (home: HomeKey, rows: Row[], lists: List[]): Row[] => {
-  const kept = rows
-    .filter((row) => fits(home, row.id, lists))
-    .map((row) => LOCKED[home].includes(row.id) ? { ...row, hidden: false } : row)
+  const kept = normalized(rows
+    .map((row) => isGroup(row) ? { ...row, tabs: idsOf(row).filter((id) => fits(home, id, lists)) } : row)
+    .filter((row) => isGroup(row) || fits(home, row.id, lists)))
+    .map((row) => idsOf(row).some((id) => LOCKED[home].includes(id)) ? { ...row, hidden: false } : row)
 
   return [
     ...kept,
-    ...LOCKED[home].filter((id) => !kept.some((row) => row.id === id)).map((id) => ({ id, hidden: false })),
+    ...LOCKED[home].filter((id) => !kept.some((row) => idsOf(row).includes(id))).map((id) => ({ id, hidden: false })),
   ]
+}
+
+// A row dropped on another: on its middle they make a group, or it joins the group there; on an edge it goes
+// before or after it. A group only moves.
+export const dropRow = (rows: Row[], active: string, over: string, zone: 'before' | 'after' | 'group', id: string): Row[] => {
+  const dragged = rows.find((row) => row.id === active)
+  const without = rows
+    .filter((row) => row.id !== active)
+    .map((row) => isGroup(row) && idsOf(row).includes(active) ? { ...row, tabs: idsOf(row).filter((tab) => tab !== active) } : row)
+  const moved: Row = dragged || { id: active, hidden: false }
+  const at = without.findIndex((row) => row.id === over)
+
+  if (at !== -1) {
+    const target = without[at]
+
+    if (zone === 'group' && !isGroup(moved) && GROUPABLE(active) && GROUPABLE(over)) {
+      return normalized(without.map((row, index) => index !== at ? row
+        : isGroup(target) ? { ...target, tabs: [...idsOf(target), active] }
+        : { id, hidden: target.hidden && moved.hidden, tabs: [over, active] }))
+    }
+
+    const index = zone === 'before' ? at : at + 1
+    return normalized([...without.slice(0, index), moved, ...without.slice(index)])
+  }
+
+  // `over` is a tab: a row lands in its group, beside it; a group cannot nest
+  if (isGroup(moved)) {
+    return rows
+  }
+
+  return normalized(without.map((row) => {
+    if (!isGroup(row) || !idsOf(row).includes(over)) {
+      return row
+    }
+
+    const tabs = idsOf(row)
+    const index = tabs.indexOf(over) + (zone === 'before' ? 0 : 1)
+    return { ...row, tabs: [...tabs.slice(0, index), active, ...tabs.slice(index)] }
+  }))
 }

@@ -1,4 +1,4 @@
-import { rowsOf, listsOf, LOCKED, List } from './rows'
+import { rowsOf, listsOf, dropRow, LOCKED, List } from './rows'
 
 // `@sensorr/utils` reaches ESM that this jest setup leaves untransformed
 jest.mock('@dicebear/core', () => ({}))
@@ -41,5 +41,40 @@ describe('listsOf', () => {
 
     expect(list.sources[0].values.primary_release_date[0]).toBeInstanceOf(Date)
     expect(list.sources[0].values.primary_release_date[1].toISOString()).toBe('1999-12-31T00:00:00.000Z')
+  })
+})
+
+describe('groups', () => {
+  const row = (id, hidden = false) => ({ id, hidden })
+
+  it('makes a group of a row dropped on the middle of another', () => {
+    expect(dropRow([row('a'), row('b'), row('c')], 'c', 'a', 'group', 'group:g')).toEqual([{ id: 'group:g', hidden: false, tabs: ['a', 'c'] }, row('b')])
+  })
+
+  it('adds a row to a group, beside the tab it is dropped on', () => {
+    const rows = [{ id: 'group:g', hidden: false, tabs: ['a', 'b'] }, row('c')]
+
+    expect(dropRow(rows, 'c', 'group:g', 'group', 'group:h')).toEqual([{ id: 'group:g', hidden: false, tabs: ['a', 'b', 'c'] }])
+    expect(dropRow(rows, 'c', 'a', 'after', 'group:h')).toEqual([{ id: 'group:g', hidden: false, tabs: ['a', 'c', 'b'] }])
+  })
+
+  it('takes a tab out of its group on an edge, and a group of one tab is that row again', () => {
+    const rows = [{ id: 'group:g', hidden: false, tabs: ['a', 'b'] }, row('c')]
+
+    expect(dropRow(rows, 'b', 'c', 'after', 'group:h')).toEqual([row('a'), row('c'), row('b')])
+  })
+
+  it('moves a group but never nests it, and leaves the tabbed row out of groups', () => {
+    const rows = [{ id: 'group:g', hidden: false, tabs: ['a', 'b'] }, row('c'), row('discover_selectable')]
+
+    expect(dropRow(rows, 'group:g', 'c', 'group', 'group:h')).toEqual([row('c'), { id: 'group:g', hidden: false, tabs: ['a', 'b'] }, row('discover_selectable')])
+    expect(dropRow(rows, 'discover_selectable', 'c', 'group', 'group:h')).toEqual([{ id: 'group:g', hidden: false, tabs: ['a', 'b'] }, row('c'), row('discover_selectable')])
+  })
+
+  it('keeps a group holding a locked row shown, and counts that row as there', () => {
+    const rows = rowsOf('movie', [{ id: 'group:g', hidden: true, tabs: ['swaps', 'list:w'] }], lists)
+
+    expect(rows[0]).toEqual({ id: 'group:g', hidden: false, tabs: ['swaps', 'list:w'] })
+    expect(rows.filter(({ id }) => id === 'swaps')).toHaveLength(0)
   })
 })

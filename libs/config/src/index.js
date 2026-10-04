@@ -59,14 +59,14 @@ convict.addFormat({
   },
 })
 
-// The rows of a Home, each one a built-in row or `list:<id>`
+// The rows of a Home, each one a built-in row, `list:<id>` or a group of them, `group:<id>`
 const rowsOf = (doc, ids) => ({
   doc,
   format: 'source-array',
   default: ids.map((id) => ({ id, hidden: false })),
   children: {
     id: {
-      doc: 'A built-in row, or `list:<id>`',
+      doc: 'A built-in row, `list:<id>` or `group:<id>`',
       format: 'String',
       default: '',
     },
@@ -74,6 +74,11 @@ const rowsOf = (doc, ids) => ({
       doc: 'Hide the row',
       format: 'Boolean',
       default: false,
+    },
+    tabs: {
+      doc: 'For a group, `group:<id>`, the rows it shows as tabs',
+      format: Array,
+      default: [],
     },
   },
 })
