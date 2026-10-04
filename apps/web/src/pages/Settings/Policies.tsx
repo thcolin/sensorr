@@ -171,17 +171,22 @@ PoliciesSandbox.styles = {
     border: '1px solid',
     borderColor: 'grayDark',
     borderRadius: '0.25rem',
+    overflow: 'hidden',
+    // The bands of the release search: `primary` title, `accent` controls
     '>summary': {
       ...SUMMARY,
       lineHeight: 'body',
       position: 'relative',
+      backgroundColor: 'primary',
+      color: 'whitePure',
       '>small': {
         display: 'block',
         position: ['static', 'absolute'],
         top: '50%',
         right: 3,
         transform: ['none', 'translateY(-50%)'],
-        color: 'grayDarker',
+        color: 'whitePure',
+        opacity: 0.8,
         lineHeight: 'inherit',
       },
     },
@@ -192,8 +197,6 @@ PoliciesSandbox.styles = {
       fontSize: 'inherit',
     },
     '>div': {
-      borderTop: '1px solid',
-      borderColor: 'grayDark',
       '>p': {
         paddingX: 3,
       },
@@ -212,8 +215,8 @@ PoliciesSandbox.styles = {
     gap: 6,
     paddingX: 3,
     paddingY: 6,
-    borderBottom: '1px solid',
-    borderColor: 'grayDark',
+    backgroundColor: 'accent',
+    color: 'whitePure',
     '>label': {
       display: 'flex',
       alignItems: 'center',
@@ -243,6 +246,10 @@ PoliciesSandbox.styles = {
       flexWrap: 'wrap',
       gap: 8,
       fontVariantNumeric: 'tabular-nums',
+    },
+    '&& >div code': {
+      backgroundColor: 'accentDark',
+      color: 'whitePure',
     },
   },
 }
