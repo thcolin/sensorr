@@ -98,8 +98,9 @@ export const FIELDS = {
       const selected = useMemo(() => visible ? (selection[location.key] || []).filter(id => visible.has(id)) : [], [selection, location.key, visible])
 
       // The metadata context already tells a failure in its toast.
+      // Without a question, the action asked already
       const apply = async (key, value, question) => {
-        if (!window.confirm(question)) {
+        if (question && !window.confirm(question)) {
           return
         }
 

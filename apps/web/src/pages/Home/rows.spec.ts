@@ -1,4 +1,4 @@
-import { rowsOf, listsOf, dropRow, compareOf, LOCKED, List } from './rows'
+import { rowsOf, listsOf, dropRow, compareOf, pruned, LOCKED, List } from './rows'
 
 // `@sensorr/utils` reaches ESM that this jest setup leaves untransformed
 jest.mock('@dicebear/core', () => ({}))
@@ -86,5 +86,13 @@ describe('compareOf', () => {
   it('puts a movie without the field where Mongo does, first ascending and last descending', () => {
     expect([...movies].sort(compareOf(list(false))).map(({ release_date }) => release_date)).toEqual([null, '1999-01-01', '2010-01-01'])
     expect([...movies].sort(compareOf(list(true))).map(({ release_date }) => release_date)).toEqual(['2010-01-01', '1999-01-01', null])
+  })
+})
+
+describe('pruned', () => {
+  it('takes a deleted list out of the Home and out of its group, a group of one tab back to that row', () => {
+    const rows = [{ id: 'list:a', hidden: false }, { id: 'group:g', hidden: false, tabs: ['trending_movies', 'list:a'] }, { id: 'list:b', hidden: true }]
+
+    expect(pruned(rows, ['list:b'])).toEqual([{ id: 'trending_movies', hidden: false }, { id: 'list:b', hidden: true }])
   })
 })

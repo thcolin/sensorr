@@ -62,6 +62,11 @@ const normalized = (rows: Row[]): Row[] => rows.flatMap((row) => !isGroup(row) ?
   : row.tabs.length === 1 ? [{ id: row.tabs[0], hidden: row.hidden }]
   : [])
 
+// The rows of a Home once the lists left out of `ids` are deleted, from the groups too
+export const pruned = (rows: Row[], ids: string[]): Row[] => normalized(rows
+  .filter((row) => !row.id.startsWith('list:') || ids.includes(row.id))
+  .map((row) => isGroup(row) ? { ...row, tabs: idsOf(row).filter((id) => !id.startsWith('list:') || ids.includes(id)) } : row))
+
 // The rows a Home draws: unknown ids dropped, a locked row shown, and put back at the end when missing
 export const rowsOf = (home: HomeKey, rows: Row[], lists: List[]): Row[] => {
   const kept = normalized(rows
