@@ -125,7 +125,7 @@ const Home = ({ ...props }) => {
                 </ol>
               </SortableContext>
             </DndContext>
-            <div sx={Home.styles.save}>
+            <div sx={{ display: 'flex', marginTop: 4 }}>
               <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
             </div>
           </form>
@@ -167,15 +167,6 @@ const SortableRow = (props) => {
 }
 
 Home.styles = {
-  // The save of the three Homes stays in reach below a long list of rows
-  save: {
-    position: 'sticky',
-    bottom: '0px',
-    display: 'flex',
-    marginTop: 4,
-    paddingY: 8,
-    backgroundColor: 'white',
-  },
   add: {
     display: 'flex',
     alignItems: 'stretch',
