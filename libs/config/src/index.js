@@ -554,8 +554,13 @@ const schema = {
         format: ['movie', 'tv'],
         default: 'movie',
       },
+      sort: {
+        doc: 'How the whole list sorts, its sources merged: `by` popularity, release_date, vote_average or vote_count, `descending`; none, its sources one after the other',
+        format: '*',
+        default: null,
+      },
       sources: {
-        doc: 'Where the entities of the list come from, shown one source after the other',
+        doc: 'Where the entities of the list come from',
         format: 'source-array',
         default: [],
         children: {
