@@ -95,8 +95,12 @@ const UIRelease = ({
                     <span sx={UIRelease.styles.subtitle}>
                       <span>&nbsp;&nbsp;&nbsp;</span>
                       <a href={safeUrl(entity?.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({entity?.znab})</small></code></a>
-                      <span>&nbsp;&nbsp;&nbsp;</span>
-                      <a href={safeUrl(entity?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+                      {!!entity?.enclosure && (
+                        <>
+                          <span>&nbsp;&nbsp;&nbsp;</span>
+                          <a href={safeUrl(entity?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+                        </>
+                      )}
                     </span>
                   )}
                 </div>
