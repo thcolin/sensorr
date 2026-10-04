@@ -13,7 +13,7 @@ import { CONTROLS as DISCOVER_MOVIES } from '../Discover/Discover'
 import { CONTROLS as DISCOVER_SHOWS } from '../Shows/Discover'
 import { CONTROLS as LIBRARY_MOVIES } from '../Library/Library'
 import { CONTROLS as LIBRARY_SHOWS } from '../Shows/Library'
-import { List, listRowId, listsOf } from '../Home/rows'
+import { List, Row, listRowId, listsOf, pruned } from '../Home/rows'
 import { summaryOf, useListPages } from '../Home/Items/List'
 
 const MEDIA = { movie: emojize('🍿', 'Movies'), tv: emojize('📺', 'TV') }
@@ -77,7 +77,7 @@ const Lists = ({ ...props }) => {
               e.preventDefault()
               const ids = lists.map(listRowId)
               // A deleted list leaves every Home with it
-              const home = Object.fromEntries(Object.entries(config.get('home')).map(([key, rows]: [string, any[]]) => [key, rows.filter(({ id }) => !id.startsWith('list:') || ids.includes(id))]))
+              const home = Object.fromEntries(Object.entries(config.get('home')).map(([key, rows]: [string, Row[]]) => [key, pruned(rows, ids)]))
               // The config reloads in place: a new state redraws Save as saved
               onSave({ lists, home }).then(() => setLists((lists) => [...lists]), () => null)
             }}

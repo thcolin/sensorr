@@ -9,26 +9,21 @@ export const useCustomLists = (media: 'movie' | 'tv') => {
   const onSave = useSaveConfig()
   const lists = listsOf(config).filter((list) => list.media === media && list.sources.some(({ kind }) => kind === 'custom'))
 
-  const create = useCallback(async (name: string) => {
-    const id = nanoid(8)
-    await onSave({ lists: [...listsOf(config), { id, name, media, sources: [{ kind: 'custom' }] }] })
-    return id
-  }, [config, media])
-
+  // The ids picked in a creatable select: the names typed become custom lists, all in one write of the config
   const idsOf = useCallback(async (values: { value: string, label: string, __isNew__?: boolean }[]) => {
-    const ids = []
+    const made = (values || []).filter(({ __isNew__ }) => __isNew__).map(({ value }) => ({ id: nanoid(8), name: value, media, sources: [{ kind: 'custom' as const }] }))
 
-    for (const value of values || []) {
-      ids.push(value.__isNew__ ? await create(value.value) : value.value)
+    if (made.length) {
+      await onSave({ lists: [...listsOf(config), ...made] })
     }
 
-    return ids
-  }, [create])
+    return (values || []).map((value) => value.__isNew__ ? made.find(({ name }) => name === value.value).id : value.value)
+  }, [config, media])
 
   return { lists, idsOf }
 }
 
-export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value: any, question: string) => Promise<any>, selection: string) => {
+export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value: any, question: string | null) => Promise<any>, selection: string) => {
   const { lists, idsOf } = useCustomLists(media)
 
   return {
@@ -46,8 +41,13 @@ export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value
         return
       }
 
+      // Asked before a new list is made, so a refusal leaves no empty list behind
+      if (!window.confirm(`Do you want to add ${selection} to "${name}"?`)) {
+        return
+      }
+
       const [id] = value ? [value] : await idsOf([{ value: name, label: name, __isNew__: true }])
-      await apply('lists', (current) => [...new Set([...(current?.lists || []), id])], `Do you want to add ${selection} to "${name}"?`)
+      await apply('lists', (current) => [...new Set([...(current?.lists || []), id])], null)
     },
   }
 }
