@@ -86,6 +86,7 @@ export default {
       credits: emojize('💼', 'Credits'),
       gender: emojize('⚧️', 'Gender'),
       requested_by: emojize('🤖', 'Requested by'),
+      lists: emojize('🗂️', 'Lists'),
       policy: emojize('🚨', 'Policies'),
       size: emojize('📦', 'Size'),
       job: emojize('🏗️', 'Source Job'),

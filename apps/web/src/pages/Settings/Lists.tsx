@@ -18,7 +18,8 @@ const Lists = ({ ...props }) => {
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const tmdb = useTMDB()
-  const genres = { ...tmdb.genres, ...tmdb.tvGenres }
+  // A filter saved as bare ids, the genres or the lists of Library, reads by name
+  const names = { ...tmdb.genres, ...tmdb.tvGenres, ...Object.fromEntries(listsOf(config).map((list) => [list.id, list])) }
   const [lists, setLists] = useState<List[]>(() => listsOf(config))
   const [name, setName] = useState('')
   const [media, setMedia] = useState<'movie' | 'tv'>('movie')
@@ -108,7 +109,7 @@ const Lists = ({ ...props }) => {
                           {list.sources.map((source, index) => (
                             <li key={index}>
                               <span title={source.kind}>{KINDS[source.kind]}</span>
-                              <code title={summaryOf(list, source, genres)}>{summaryOf(list, source, genres)}</code>
+                              <code title={summaryOf(list, source, names)}>{summaryOf(list, source, names)}</code>
                               {source.kind !== 'manual' ? (
                                 <Link {...screenOf(list, index, true)}>Edit</Link>
                               ) : (

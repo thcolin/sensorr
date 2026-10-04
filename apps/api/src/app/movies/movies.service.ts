@@ -381,6 +381,16 @@ export class MoviesService {
               }
             },
           ],
+          lists: [
+            filtered('lists'),
+            { $unwind: "$lists" },
+            {
+              $group: {
+                _id: "$lists",
+                count: { $sum: 1 },
+              }
+            },
+          ],
           popularity: [filtered('popularity'), {
             $bucket: {
               groupBy: "$popularity",

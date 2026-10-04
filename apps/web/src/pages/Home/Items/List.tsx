@@ -45,7 +45,7 @@ export const screenOf = (list: List, index = 0, editing = false) => {
   return {
     to: `/${list.media}/${source?.kind === 'discover' ? 'discover' : 'library'}`,
     state: {
-      controls: source?.kind === 'manual' ? { lists: [list.id] } : source?.values || {},
+      controls: source?.kind === 'manual' ? { lists: { values: [list.id], behavior: 'or' } } : source?.values || {},
       ...(editing ? { editing: { list: list.id, source: index } } : {}),
     },
   }

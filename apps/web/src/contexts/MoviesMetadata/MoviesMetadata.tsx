@@ -113,7 +113,7 @@ export const Provider = ({ ...props }) => {
 
   const setMovieMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | null,
+    key: 'state' | 'query' | 'policy' | 'refine' | 'shrink' | 'release' | 'releases' | 'proposal' | 'lists' | null,
     value: any,
     { silent = false } = {},
   ) => {
@@ -125,12 +125,14 @@ export const Provider = ({ ...props }) => {
         id: i,
         updated_at: new Date().getTime(),
         ...(
-          ['state', 'query', 'policy', 'refine', 'shrink', 'releases'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}, i) : value }
+          ['state', 'query', 'policy', 'refine', 'shrink', 'releases', 'lists'].includes(key) ? { [key]: typeof value === 'function' ? value(initial[i] || {}, i) : value }
           : typeof value === 'function' ? value(initial[i] || {}, i) : {}
         ),
         ...(key === 'state' && ['pinned', 'wished', 'archived'].includes(value) && initial[i]?.releases ? { releases: (initial[i]?.releases || []).filter(({ proposal }) => !proposal) } : {}),
         ...(key === 'proposal' && initial[i]?.releases ? { ...((typeof value === 'object' ? value.choice : value) ? { state: 'archived' } : {}), releases: (initial[i]?.releases || []).map(r => ({ ...r, ...(r.proposal && (typeof value !== 'object' || r.id === value.id) ? { choice: typeof value === 'object' ? value.choice : value } : {}) })) } : {}),
         ...(key === 'release' ? { state: 'archived', releases: [...(initial[i]?.releases || []), value] } : {}),
+        // A movie Sensorr does not keep yet enters a list as `ignored`, as a guest's watchlist brings it
+        ...(key === 'lists' && !initial[i]?.state ? { state: 'ignored' } : {}),
       }
     }), {})
 
@@ -186,7 +188,7 @@ export const Provider = ({ ...props }) => {
     }
 
     if (ids.length === 1) {
-      if (!['query', 'policy', 'refine', 'shrink'].includes(key)) {
+      if (!['query', 'policy', 'refine', 'shrink', 'lists'].includes(key)) {
         return promise
       }
 
