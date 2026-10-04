@@ -1,4 +1,4 @@
-import { Policy, entryPolicy, matchPolicy, ranked, unranked } from './policy'
+import { Policy, entryPolicy, listPolicy, matchPolicy, ranked, unranked } from './policy'
 
 describe('matchPolicy', () => {
   const policies = [
@@ -34,6 +34,21 @@ describe('entryPolicy', () => {
   it('leaves a movie already in the library, or with a stored policy, as it is', () => {
     expect(entryPolicy(movie, { state: 'wished' }, policies)).toBeUndefined()
     expect(entryPolicy(movie, { state: 'ignored', policy: 'MULTi' }, policies)).toBeUndefined()
+  })
+})
+
+describe('listPolicy', () => {
+  const policies = [{ name: 'VOF' }, { name: '4K' }]
+  const lists = [{ id: 'kids', policy: 'VOF' }, { id: 'big', policy: '4K' }, { id: 'none', policy: null }, { id: 'gone', policy: 'Removed' }]
+
+  it('takes the policy of the last list entered that has a known one', () => {
+    expect(listPolicy(['kids', 'big'], lists, policies)).toBe('4K')
+    expect(listPolicy(['big', 'kids', 'none', 'gone'], lists, policies)).toBe('VOF')
+  })
+
+  it('gives none without such a list', () => {
+    expect(listPolicy(['none', 'gone', 'unknown'], lists, policies)).toBeUndefined()
+    expect(listPolicy([], lists, policies)).toBeUndefined()
   })
 })
 

@@ -20,6 +20,18 @@ export const policyChangesOf = (policies?: any[]) => ({
   policies: policies && policies.filter(policy => !policy.removed).map(({ oldName, ...policy }) => policy),
 })
 
+// A renamed policy keeps its lists, a removed one leaves them without; a list given another policy hands it to its titles
+export const listChangesOf = (previous: any[] = [], lists?: any[], renames: { oldName: string, newName: string | null }[] = []) => {
+  const renamed = (policy) => renames.reduce((name, { oldName, newName }) => name === oldName ? newName : name, policy ?? null)
+  const next = lists && lists.map(list => ({ ...list, policy: renamed(list.policy) }))
+  const before = new Map(previous.map(list => [list.id, renamed(list.policy)]))
+
+  return {
+    lists: next,
+    policies: (next || []).filter(list => list.policy && list.policy !== before.get(list.id)).map(({ id, media, policy }) => ({ id, media, policy })),
+  }
+}
+
 @Injectable()
 export class ConfigService implements OnModuleInit {
   private readonly logger = new Logger(ConfigService.name)
@@ -123,10 +135,17 @@ export class ConfigService implements OnModuleInit {
       changes.policies = policies
     }
 
+    const { lists, policies: listPolicies } = listChangesOf(this.config.get('lists'), changes.lists || (renames.length ? this.config.get('lists') : undefined), renames)
+
+    if (lists) {
+      changes.lists = lists
+    }
+
     this.validate((candidate) => candidate.load(changes))
     renames.forEach((rename) => this.eventEmitter.emit('policy.rename', rename))
     this.config.load(changes)
     await this.write()
+    listPolicies.forEach((list) => this.eventEmitter.emit('list.policy', list))
     this.logger.log(`Update "${changes}"`)
     return this.config.toString()
   }

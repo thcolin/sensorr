@@ -49,6 +49,16 @@ convict.addFormat({
   },
 })
 
+// The policy a custom list gives the titles added to it, by name, or none
+convict.addFormat({
+  name: 'list-policy',
+  validate: function (policy) {
+    if (policy !== null && (typeof policy !== 'string' || !policy)) {
+      throw new Error('must be null, or the name of a policy')
+    }
+  },
+})
+
 // A `source-array` where each list id shows once, the rows of `home` point to it
 convict.addFormat({
   name: 'lists',
@@ -573,6 +583,11 @@ const schema = {
       sort: {
         doc: 'How the whole list sorts, its sources merged: `by` popularity, release_date, vote_average or vote_count, `descending`; none, its sources one after the other',
         format: 'list-sort',
+        default: null,
+      },
+      policy: {
+        doc: 'Policy given to the movies and shows added to the list by hand, refining the archived movies again; none, they keep theirs',
+        format: 'list-policy',
         default: null,
       },
       sources: {
