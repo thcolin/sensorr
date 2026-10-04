@@ -118,7 +118,7 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
   if (!list) {
     return (
       <Body>
-        <Warning emoji='🗂️' title='No such list' subtitle={<Link to='/settings/lists'>See the lists in Settings</Link>} />
+        <Warning emoji='🗂️' title='No such list' subtitle={<span>It may have been deleted. Your lists are in <Link to='/settings/lists'>Settings</Link>.</span>} />
       </Body>
     )
   }
@@ -136,7 +136,7 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
         onMore={onMore as any}
         ready={ready}
         error={error}
-        empty={{ emoji: '🗂️', title: 'Nothing in it yet', subtitle: <Link to='/settings/lists'>Edit the list in Settings</Link> }}
+        empty={{ emoji: '🗂️', title: 'Nothing in it yet', subtitle: <span>Add {NOUNS[media]} from their page or from <Link to={`/${media}/library`}>Library</Link>, or change its filters in <Link to='/settings/lists'>Settings</Link>.</span> }}
       />
     </Body>
   )
@@ -149,9 +149,14 @@ export const ListsPage = ({ media }: { media: 'movie' | 'tv' }) => {
   useTitle('Lists')
 
   return (
-    <Body overlayScrollbars={true}>
+    // Without the scrollbars the empty state takes the height of the page, centered in it
+    <Body overlayScrollbars={!!lists.length}>
       {lists.length ? lists.map((list) => <ListRow key={list.id} list={list} hide={false} />) : (
-        <Warning emoji='🗂️' title={`No list of ${NOUNS[media]} yet`} subtitle={<Link to='/settings/lists'>Make one in Settings</Link>} />
+        <Warning
+          emoji='🗂️'
+          title={`No list of ${NOUNS[media]} yet`}
+          subtitle={<span>Save the filters of <Link to={`/${media}/discover`}>Discover</Link> or <Link to={`/${media}/library`}>Library</Link> as a list, or name a custom list in <Link to='/settings/lists'>Settings</Link>.</span>}
+        />
       )}
     </Body>
   )
