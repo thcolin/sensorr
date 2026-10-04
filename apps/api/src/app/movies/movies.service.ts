@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { entryPolicy } from '@sensorr/sensorr'
-import { facetFilter, movieFilter, stateFilter } from '../filters'
+import { facetFilter, libraryStateFilter, movieFilter } from '../filters'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
 import { LogsService } from '../logs/logs.service'
@@ -320,12 +320,12 @@ export class MoviesService {
 
   async getStatistics(params = {} as any, context: 'library' | 'requests' = 'library') {
     this.logger.log('GetStatistics')
-    const filtered = (...keys: string[]) => ({ $match: facetFilter(movieFilter, params, ...keys) })
+    const filtered = (...keys: string[]) => ({ $match: { ...(context === 'library' ? libraryStateFilter(params, ...keys) : {}), ...facetFilter(movieFilter, params, ...keys) } })
     const raw = await this.movieModel.aggregate([
       {
         $match: {
           ...({
-            library: stateFilter({ lists: params.lists, requested_by: params.requested_by }),
+            library: {},
             requests: {
               state: { $in: 'archived|wished|proposal|pinned|missing|ignored'.split('|') },
               [`requested_by.0`]: { $exists: true },

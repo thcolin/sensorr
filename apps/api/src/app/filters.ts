@@ -120,6 +120,19 @@ export const movieFilter = (raw) => {
   }
 }
 
+// The state a facet of the library counts under: a list or a guest's watchlist holds ignored entities, so their
+// own facets count them, and so do the others once one is picked. A picked state reaches every facet but its own
+// through `facetFilter`, and the state facet keeps the ignored ones out.
+export const libraryStateFilter = (raw, ...keys: string[]) => {
+  const params = scalars(raw)
+
+  if (keys.some((key) => ['lists', 'requested_by'].includes(key)) || (params.state && !keys.includes('state'))) {
+    return {}
+  }
+
+  return stateFilter({ lists: params.lists, requested_by: params.requested_by })
+}
+
 // What a facet counts under: every filter but its own, so picking a genre leaves the other genres counted
 // and a range keeps its bars outside the picked range. With no state picked, the context sets it.
 export const facetFilter = (filterOf: (params) => { [key: string]: any }, raw, ...keys: string[]) => {

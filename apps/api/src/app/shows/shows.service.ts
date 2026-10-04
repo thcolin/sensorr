@@ -6,7 +6,7 @@ import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
 import { STATUS_GROUPS, entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
-import { episodeStatusFilter, facetFilter, showFilter, stateFilter } from '../filters'
+import { episodeStatusFilter, facetFilter, libraryStateFilter, showFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { LogsService } from '../logs/logs.service'
@@ -267,13 +267,13 @@ export class ShowsService {
 
   async getStatistics(params = {} as any, context: 'library' | 'followed' = 'library') {
     this.logger.log('GetStatistics')
-    const filtered = (...keys: string[]) => ({ $match: facetFilter(showFilter, params, ...keys) })
+    const filtered = (...keys: string[]) => ({ $match: { ...libraryStateFilter(params, ...keys), ...facetFilter(showFilter, params, ...keys) } })
     const count = { count: { $sum: 1 } }
     const bucket = (key: string, boundaries: number[], groupBy: any = `$${key}`) => [{ $bucket: { groupBy, boundaries, default: -1, output: count } }]
     const unwound = (path: string, _id = `$${path}`) => [{ $unwind: `$${path.split('.')[0]}` }, { $group: { _id, ...count } }]
 
     const [raw] = await this.showModel.aggregate([
-      { $match: { ...stateFilter({ lists: params.lists, requested_by: params.requested_by }), ...(context === 'followed' ? { monitored: true } : {}) } },
+      { $match: context === 'followed' ? { monitored: true } : {} },
       {
         $facet: {
           state: [filtered('monitored'), { $group: { _id: { $cond: ['$monitored', 'followed', 'unfollowed'] }, ...count } }],
