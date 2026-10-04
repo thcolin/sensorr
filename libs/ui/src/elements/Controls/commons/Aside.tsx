@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../../../atoms/Button/Button'
 import { Inputs, InputsProps } from './Inputs'
@@ -14,6 +14,9 @@ export interface AsideProps extends Omit<InputsProps, 'control'> {
   // Drawn after the fields, with their values as the form holds them, applied or not
   footer?: (values: { [key: string]: any }) => React.ReactNode
 }
+
+// Only the footer follows the fields as they change: watching them from the aside would redraw it all on each one
+const Footer = ({ control, render }) => render(useWatch({ control }))
 
 const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', width = undefined, background = undefined, ...layout }, fields, defaultValues, onChange, statistics, open, toggleOpen, level, order, shadow = true, dimmed = false, onDimmedClick = undefined, controls = true, watch: watcher, footer = undefined, ...props }) => {
   const { t } = useTranslation()
@@ -54,7 +57,7 @@ const UIAside = ({ layout: { backgroundColor = 'primary', position = 'left', wid
       <form sx={{ ...UIAside.styles.form, backgroundColor, background }} onSubmit={handleSubmit(onChange)} onKeyPress={e => e.key === 'Enter' && e.preventDefault()}>
         <div sx={UIAside.styles.container}>
           <Inputs layout={layout as any} fields={fields} statistics={statistics} control={control} />
-          {footer && footer(watch())}
+          {footer && <Footer control={control} render={footer} />}
         </div>
         {controls && (
           <div sx={UIAside.styles.buttons}>
