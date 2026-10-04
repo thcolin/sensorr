@@ -182,6 +182,7 @@ PolicySandbox.styles = {
   toolbar: {
     display: 'flex',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 8,
     paddingY: 6,
     borderBottom: '1px solid',
