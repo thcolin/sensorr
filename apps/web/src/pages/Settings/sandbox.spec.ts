@@ -72,11 +72,11 @@ describe('sandboxOf', () => {
 })
 
 describe('summaryOf', () => {
-  it('counts each kind of release, names the pick and how many releases tie with it', () => {
-    expect(summaryOf(sandboxOf(MULTI, ['indexer-1', 'indexer-2']))).toMatchObject({ valid: 25, withdrawn: 14, rejected: 6, pick: { meta: { group: 'THICKET' } }, tied: 3 })
+  it('counts each kind of release, and names the pick', () => {
+    expect(summaryOf(sandboxOf(MULTI, ['indexer-1', 'indexer-2']))).toMatchObject({ valid: 25, withdrawn: 14, rejected: 6, pick: { meta: { group: 'THICKET' } } })
   })
 
   it('says when nothing would be picked', () => {
-    expect(summaryOf([])).toEqual({ valid: 0, withdrawn: 0, rejected: 0, pick: null, tied: 0 })
+    expect(summaryOf([])).toEqual({ valid: 0, withdrawn: 0, rejected: 0, pick: null })
   })
 })
