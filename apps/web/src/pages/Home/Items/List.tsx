@@ -44,56 +44,55 @@ export const summaryOf = (list: List, { kind, values }: List['sources'][number],
   })
   .filter(Boolean)
 
-// `editing` lets the filters panel write its values back in place of the source
-export const screenOf = (list: List, index = 0, editing = false) => {
-  const source = list.sources[index]
+// A page of the results of a source, from TMDB or from the library
+export const fetchSource = (api, tmdb, list: List, source: List['sources'][number], page: number, init: { signal: AbortSignal }) => {
+  const params = { ...paramsOf(list, source), page }
 
-  return {
-    to: `/${list.media}/${source?.kind === 'discover' ? 'discover' : 'library'}`,
-    state: {
-      controls: source?.kind === 'custom' ? { lists: { values: [list.id], behavior: 'or' } } : source?.values || {},
-      ...(editing ? { editing: { list: list.id, source: index } } : {}),
-    },
+  if (source.kind === 'discover') {
+    return tmdb.fetch(`discover/${list.media}`, params, init)
   }
+
+  const query = list.media === 'movie'
+    ? api.query.movies.getMovies({ params, init })
+    : api.query.shows.getShows({ params: { ...params, progress: 'true' }, init })
+
+  return api.fetch(query.uri, query.params, query.init)
 }
 
-export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) => {
+// The first page of each source laid end to end, an entity shown once, and how many each source holds
+export const useListPages = (list: List) => {
   const api = useAPI()
   const tmdb = useTMDB()
-  const [entities, setEntities] = useState(null)
+  const [pages, setPages] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
-    const init = { signal: controller.signal }
 
-    Promise.all(list.sources.map((source) => {
-      const params = paramsOf(list, source)
-
-      if (source.kind === 'discover') {
-        return tmdb.fetch(`discover/${list.media}`, params, init)
-      }
-
-      const query = list.media === 'movie'
-        ? api.query.movies.getMovies({ params, init })
-        : api.query.shows.getShows({ params: { ...params, progress: 'true' }, init })
-
-      return api.fetch(query.uri, query.params, query.init)
-    }))
-      .then((pages) => {
-        const seen = new Set()
-        setEntities(pages.flatMap(({ results }) => results).filter(({ id }) => !seen.has(id) && seen.add(id)))
-      })
+    Promise.all(list.sources.map((source) => fetchSource(api, tmdb, list, source, 1, { signal: controller.signal })))
+      .then(setPages)
       .catch((e) => {
         if (e.name !== 'AbortError') {
           console.warn(e)
-          setEntities([])
+          setPages([])
           setError(e)
         }
       })
 
     return () => controller.abort()
   }, [api, tmdb, JSON.stringify(list)])
+
+  const seen = new Set()
+
+  return {
+    entities: pages && pages.flatMap(({ results }) => results).filter(({ id }) => !seen.has(id) && seen.add(id)),
+    totals: (pages || []).map(({ total_results }) => total_results),
+    error,
+  }
+}
+
+export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) => {
+  const { entities, error } = useListPages(list)
 
   return (
     <Entities
@@ -104,7 +103,7 @@ export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) 
       extra={list.media === 'tv' ? FOOTER_HEIGHT : 0}
       limit={20}
       hide={true}
-      more={{ title: list.name, ...screenOf(list) }}
+      more={{ title: list.name, to: `/${list.media}/lists/${list.id}` }}
       entities={entities || []}
       length={entities?.length}
       ready={!!entities}
