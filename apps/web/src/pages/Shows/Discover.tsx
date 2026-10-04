@@ -9,6 +9,7 @@ import {
   FilterVoteAverage,
   FilterVoteCount,
   withControls,
+  withControlsArgs,
   Warning,
   Option,
   Checkbox,
@@ -226,6 +227,55 @@ export const FIELDS = {
   },
 }
 
+// The filters panel, Settings › Lists opens it on a saved list too
+export const CONTROLS: withControlsArgs = {
+  title: i18n.t('pages.discover.title'),
+  useStatistics,
+  hooks: {
+    onChange: () => scrollToTop(),
+  },
+  layout: {
+    nav: {
+      display: 'grid',
+      gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: [
+        `"results hide_library toggle sort_by"`,
+        `"title results hide_library toggle sort_by"`,
+      ],
+      '>h4': {
+        display: ['none', 'block'],
+      },
+    },
+    aside: {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: `
+        "head"
+        "with_genres"
+        "without_genres"
+        "with_type"
+        "with_status"
+        "first_air_date"
+        "vote_average"
+        "vote_count"
+        "with_networks"
+        "with_companies"
+        "with_keywords"
+        "without_keywords"
+        "with_original_language"
+        "with_origin_country"
+        "with_runtime"
+      `,
+    },
+  },
+  fields: FIELDS,
+  footer: saveAsListOf('discover', 'tv'),
+}
+
 export const Discover = compose(
   withTitle(i18n.t('pages.shows.discover.title')),
   withProps({
@@ -247,53 +297,7 @@ export const Discover = compose(
   withFetchQuery({
     uri: 'discover/tv',
   }, 1, useTMDB, () => useHistoryState('controls', { uri: '', params: {} }) as any),
-  withControls({
-    title: i18n.t('pages.discover.title'),
-    useStatistics,
-    hooks: {
-      onChange: () => scrollToTop(),
-    },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results hide_library toggle sort_by"`,
-          `"title results hide_library toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: {
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: `
-          "head"
-          "with_genres"
-          "without_genres"
-          "with_type"
-          "with_status"
-          "first_air_date"
-          "vote_average"
-          "vote_count"
-          "with_networks"
-          "with_companies"
-          "with_keywords"
-          "without_keywords"
-          "with_original_language"
-          "with_origin_country"
-          "with_runtime"
-        `,
-      },
-    },
-    fields: FIELDS,
-    footer: saveAsListOf('discover', 'tv'),
-  }),
+  withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
 )(EntitiesHideable)

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import {
   Entities,
   withControls,
+  withControlsArgs,
   FilterGenres,
   FilterStatistics,
   FilterProposal,
@@ -231,6 +232,115 @@ export const FIELDS = {
   ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
 }
 
+// The filters panel, Settings › Lists opens it on a saved list too
+export const CONTROLS: withControlsArgs = {
+  title: i18n.t('pages.library.title'),
+  hooks: {
+    onChange: () => scrollToTop(),
+  },
+  layout: {
+    nav: {
+      display: 'grid',
+      gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: [
+        `"results bulk toggle sort_by"`,
+        `"title results bulk toggle sort_by"`,
+      ],
+      '>h4': {
+        display: ['none', 'block'],
+      },
+    },
+    aside: [
+      {
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        gridTemplateRows: 'auto',
+        gap: '2em',
+        gridTemplateAreas: `
+          "head_main"
+          "state"
+          "status"
+          "proposal"
+          "policy"
+          "toggle_sub_asides_0"
+          "requested_by"
+          "lists"
+          "genres"
+          "type"
+          "networks"
+          "original_languages"
+          "origin_country"
+          "first_air_date"
+          "number_of_seasons"
+          "popularity"
+          "vote_average"
+          "vote_count"
+          "episode_run_time"
+        `,
+      },
+      {
+        display: 'grid',
+        backgroundColor: 'primaryDark',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        gridTemplateRows: 'auto',
+        gap: '2em',
+        gridTemplateAreas: RELEASES_AREAS,
+      },
+    ],
+  },
+  components: {
+    toggle_sub_asides_0: ReleasesToggle,
+  },
+  fields: FIELDS,
+  footer: saveAsListOf('library', 'tv'),
+  useStatistics: (entities, fields, state) => {
+    const api = useAPI()
+    const [counts, setCounts] = useState({})
+    const [bulk, setBulk] = useState(null)
+
+    useEffect(() => {
+      const controller = new AbortController()
+      const { sort_by, ...filters } = state as any
+      const { uri, params, init } = APIQuery.shows.getStatistics({ params: filters, init: { signal: controller.signal } })
+
+      api.fetch(uri, params, init)
+        .then(setCounts)
+        .catch((e) => {
+          if (e.name !== 'AbortError') {
+            console.warn(e)
+            toast.error('Error while loading library statistics')
+          }
+        })
+
+      return () => controller.abort()
+    }, [JSON.stringify(state)])
+
+    useEffect(() => {
+      // The ids of the previous filters must not stand in for the current ones.
+      setBulk(null)
+
+      const controller = new AbortController()
+      const { sort_by, ...filters } = state as any
+      const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
+
+      api.fetch(matching.uri, matching.params, matching.init)
+        .then(({ results: ids }) => setBulk([{ entities: ids.map(({ id }) => id) }]))
+        .catch((e) => {
+          if (e.name !== 'AbortError') {
+            console.warn(e)
+            toast.error('Error while loading library statistics')
+          }
+        })
+
+      return () => controller.abort()
+    }, [JSON.stringify(state)])
+
+    return useMemo(() => ({ ...counts, ...(bulk ? { bulk } : {}) }), [counts, bulk])
+  },
+}
+
 const Library = compose(
   withTitle(i18n.t('pages.shows.library.title')),
   withProps({
@@ -249,113 +359,7 @@ const Library = compose(
     },
   }),
   withFetchQuery(APIQuery.shows.getShows({ params: { progress: true } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
-  withControls({
-    title: i18n.t('pages.library.title'),
-    hooks: {
-      onChange: () => scrollToTop(),
-    },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results bulk toggle sort_by"`,
-          `"title results bulk toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: [
-        {
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gridTemplateRows: 'auto',
-          gap: '2em',
-          gridTemplateAreas: `
-            "head_main"
-            "state"
-            "status"
-            "proposal"
-            "policy"
-            "toggle_sub_asides_0"
-            "requested_by"
-            "lists"
-            "genres"
-            "type"
-            "networks"
-            "original_languages"
-            "origin_country"
-            "first_air_date"
-            "number_of_seasons"
-            "popularity"
-            "vote_average"
-            "vote_count"
-            "episode_run_time"
-          `,
-        },
-        {
-          display: 'grid',
-          backgroundColor: 'primaryDark',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gridTemplateRows: 'auto',
-          gap: '2em',
-          gridTemplateAreas: RELEASES_AREAS,
-        },
-      ],
-    },
-    components: {
-      toggle_sub_asides_0: ReleasesToggle,
-    },
-    fields: FIELDS,
-    footer: saveAsListOf('library', 'tv'),
-    useStatistics: (entities, fields, state) => {
-      const api = useAPI()
-      const [counts, setCounts] = useState({})
-      const [bulk, setBulk] = useState(null)
-
-      useEffect(() => {
-        const controller = new AbortController()
-        const { sort_by, ...filters } = state as any
-        const { uri, params, init } = APIQuery.shows.getStatistics({ params: filters, init: { signal: controller.signal } })
-
-        api.fetch(uri, params, init)
-          .then(setCounts)
-          .catch((e) => {
-            if (e.name !== 'AbortError') {
-              console.warn(e)
-              toast.error('Error while loading library statistics')
-            }
-          })
-
-        return () => controller.abort()
-      }, [JSON.stringify(state)])
-
-      useEffect(() => {
-        // The ids of the previous filters must not stand in for the current ones.
-        setBulk(null)
-
-        const controller = new AbortController()
-        const { sort_by, ...filters } = state as any
-        const matching = APIQuery.shows.getShows({ params: { ...filters, fields: 'id', limit: '' }, init: { signal: controller.signal } })
-
-        api.fetch(matching.uri, matching.params, matching.init)
-          .then(({ results: ids }) => setBulk([{ entities: ids.map(({ id }) => id) }]))
-          .catch((e) => {
-            if (e.name !== 'AbortError') {
-              console.warn(e)
-              toast.error('Error while loading library statistics')
-            }
-          })
-
-        return () => controller.abort()
-      }, [JSON.stringify(state)])
-
-      return useMemo(() => ({ ...counts, ...(bulk ? { bulk } : {}) }), [counts, bulk])
-    },
-  }),
+  withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
 )(Entities)

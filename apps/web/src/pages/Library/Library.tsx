@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Entities,
   withControls,
+  withControlsArgs,
   FilterGenres,
   FilterStatistics,
   FilterStates,
@@ -268,6 +269,94 @@ export const FIELDS = {
   ...releasesFields({ noun: 'movies', jobs: ['sync', 'record', 'refine', 'shrink'] }),
 }
 
+// The filters panel, Settings › Lists opens it on a saved list too
+export const CONTROLS: withControlsArgs = {
+  title: i18n.t('pages.library.title'),
+  hooks: {
+    onChange: () => scrollToTop(),
+  },
+  layout: {
+    nav: {
+      display: 'grid',
+      gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateRows: 'auto',
+      gap: '2em',
+      gridTemplateAreas: [
+        `"results bulk toggle sort_by"`,
+        `"title results bulk toggle sort_by"`,
+      ],
+      '>h4': {
+        display: ['none', 'block'],
+      },
+    },
+    aside: [
+      {
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        gridTemplateRows: 'auto',
+        gap: '2em',
+        gridTemplateAreas: `
+          "head_main"
+          "state"
+          "proposal"
+          "policy"
+          "toggle_sub_asides_0"
+          "requested_by"
+          "lists"
+          "genres"
+          "original_languages"
+          "spoken_languages"
+          "production_companies"
+          "release_date"
+          "popularity"
+          "vote_average"
+          "vote_count"
+          "budget"
+          "runtime"
+        `,
+      },
+      {
+        display: 'grid',
+        backgroundColor: 'primaryDark',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        gridTemplateRows: 'auto',
+        gap: '2em',
+        gridTemplateAreas: RELEASES_AREAS,
+      }
+    ],
+  },
+  components: {
+    toggle_sub_asides_0: ReleasesToggle,
+  },
+  fields: FIELDS,
+  footer: saveAsListOf('library', 'movie'),
+  useStatistics: (entities, fields, state) => {
+    const api = useAPI()
+    const [statistics, setStatistics] = useState({})
+
+    useEffect(() => {
+      // The ids of the previous filters must not stand in for the current ones.
+      setStatistics({})
+
+      const controller = new AbortController()
+      const { uri, params, init } = APIQuery.movies.getStatistics({ params: state, init: { signal: controller.signal } })
+
+      api.fetch(uri, params, init)
+        .then(setStatistics)
+        .catch((e) => {
+          if (e.name !== 'AbortError') {
+            console.warn(e)
+            setStatistics({})
+          }
+        })
+
+      return () => controller.abort()
+    }, [JSON.stringify(state)])
+
+    return statistics
+  },
+}
+
 const Library = compose(
   withTitle(i18n.t('pages.library.title')),
   withProps({
@@ -285,92 +374,7 @@ const Library = compose(
     },
   }),
   withFetchQuery(APIQuery.movies.getMovies({}), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
-  withControls({
-    title: i18n.t('pages.library.title'),
-    hooks: {
-      onChange: () => scrollToTop(),
-    },
-    layout: {
-      nav: {
-        display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
-        gridTemplateRows: 'auto',
-        gap: '2em',
-        gridTemplateAreas: [
-          `"results bulk toggle sort_by"`,
-          `"title results bulk toggle sort_by"`,
-        ],
-        '>h4': {
-          display: ['none', 'block'],
-        },
-      },
-      aside: [
-        {
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gridTemplateRows: 'auto',
-          gap: '2em',
-          gridTemplateAreas: `
-            "head_main"
-            "state"
-            "proposal"
-            "policy"
-            "toggle_sub_asides_0"
-            "requested_by"
-            "lists"
-            "genres"
-            "original_languages"
-            "spoken_languages"
-            "production_companies"
-            "release_date"
-            "popularity"
-            "vote_average"
-            "vote_count"
-            "budget"
-            "runtime"
-          `,
-        },
-        {
-          display: 'grid',
-          backgroundColor: 'primaryDark',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gridTemplateRows: 'auto',
-          gap: '2em',
-          gridTemplateAreas: RELEASES_AREAS,
-        }
-      ],
-    },
-    components: {
-      toggle_sub_asides_0: ReleasesToggle,
-    },
-    fields: FIELDS,
-    footer: saveAsListOf('library', 'movie'),
-    useStatistics: (entities, fields, state) => {
-      const api = useAPI()
-      const [statistics, setStatistics] = useState({})
-
-      useEffect(() => {
-        // The ids of the previous filters must not stand in for the current ones.
-        setStatistics({})
-
-        const controller = new AbortController()
-        const { uri, params, init } = APIQuery.movies.getStatistics({ params: state, init: { signal: controller.signal } })
-
-        api.fetch(uri, params, init)
-          .then(setStatistics)
-          .catch((e) => {
-            if (e.name !== 'AbortError') {
-              console.warn(e)
-              setStatistics({})
-            }
-          })
-
-        return () => controller.abort()
-      }, [JSON.stringify(state)])
-
-      return statistics
-    },
-  }),
+  withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
 )(Entities)
