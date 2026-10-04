@@ -5,7 +5,7 @@ import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
-import { entryPolicy } from '@sensorr/sensorr'
+import { entryPolicy, listPolicy } from '@sensorr/sensorr'
 import { facetFilter, libraryStateFilter, movieFilter } from '../filters'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
@@ -57,6 +57,17 @@ export class MoviesService {
     await this.movieModel.updateMany({ policy: oldName }, { policy: newName })
   }
 
+  @OnEvent('list.policy')
+  async handleListPolicy({ id, media, policy }: { id: string, media: string, policy: string }) {
+    if (media !== 'movie') {
+      return
+    }
+
+    this.logger.log(`Handling list.policy event: ${JSON.stringify({ id, policy })}`)
+    await this.movieModel.updateMany({ lists: id, state: 'archived' }, { policy, refine: true })
+    await this.movieModel.updateMany({ lists: id, state: { $ne: 'archived' } }, { policy })
+  }
+
   @OnEvent('plex.reset')
   async handlePlexReset() {
     this.logger.log(`Handling plex.reset event`)
@@ -80,9 +91,27 @@ export class MoviesService {
     }, changes)
   }
 
+  // A movie added to a list with a policy takes it, and an archived one is refined again with it
+  private async listPolicies(changes: { [key: string]: MovieDTO }): Promise<{ [key: string]: MovieDTO }> {
+    const candidates = Object.keys(changes).filter(id => Array.isArray(changes[id].lists))
+    const lists = (this.configService.config.get('lists') || []).filter(list => list.media === 'movie' && list.policy)
+    if (!candidates.length || !lists.length) {
+      return changes
+    }
+
+    const policies = this.configService.config.get('policies') || []
+    const stored = new Map((await this.movieModel.find({ _id: { $in: candidates.map(Number) } }, { lists: 1, state: 1 }).lean()).map(movie => [`${movie._id}`, movie]))
+
+    return candidates.reduce((acc, id) => {
+      const movie: any = stored.get(`${id}`)
+      const policy = listPolicy(changes[id].lists.filter(list => !(movie?.lists || []).includes(list)), lists, policies)
+      return policy ? { ...acc, [id]: { ...changes[id], policy, ...((changes[id].state || movie?.state) === 'archived' ? { refine: true } : {}) } } : acc
+    }, changes)
+  }
+
   async upsertMovie(movie: MovieDTO): Promise<any> {
     this.logger.log(`UpsertMovie "${movie?.id}", state="${movie?.state}"`)
-    const { [movie.id]: matched } = await this.matchPolicies({ [movie.id]: movie })
+    const { [movie.id]: matched } = await this.listPolicies(await this.matchPolicies({ [movie.id]: movie }))
     const [archived] = await this.archivedNow({ [movie.id]: matched })
     return this.movieModel.findByIdAndUpdate(movie.id, { ...matched, ...(archived ? { archived_at: Date.now() } : {}) }, { returnDocument: 'after', upsert: true })
   }
@@ -95,7 +124,7 @@ export class MoviesService {
   // A choice acts on the release as the database holds it, only a manual pick comes from the body.
   async upsertMovies(raw: { [key: string]: MovieDTO }): Promise<any> {
     this.logger.log(`UpsertMovies "${Object.keys(raw)}"`)
-    const changes = await this.matchPolicies(raw)
+    const changes = await this.listPolicies(await this.matchPolicies(raw))
     const failed: number[] = []
 
     for (const [i, { releases }] of Object.entries(changes)) {

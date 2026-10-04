@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
 import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
-import { STATUS_GROUPS, entryPolicy, swapReplacesOf } from '@sensorr/sensorr'
+import { entryPolicy, listPolicy, STATUS_GROUPS, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
 import { episodeStatusFilter, facetFilter, libraryStateFilter, showFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
@@ -65,6 +65,16 @@ export class ShowsService {
     await this.showModel.updateMany({}, { '$pull': { requested_by: email } })
   }
 
+  @OnEvent('list.policy')
+  async handleListPolicy({ id, media, policy }: { id: string, media: string, policy: string }) {
+    if (media !== 'tv') {
+      return
+    }
+
+    this.logger.log(`Handling list.policy event: ${JSON.stringify({ id, policy })}`)
+    await this.showModel.updateMany({ lists: id }, { policy })
+  }
+
   @OnEvent('policy.rename')
   async handlePolicyRename({ oldName, newName }: { oldName: string, newName: string }) {
     this.logger.log(`Handling policy.rename event: ${JSON.stringify({ oldName, newName })}`)
@@ -87,10 +97,28 @@ export class ShowsService {
     }, changes)
   }
 
+  // A show added to a list with a policy takes it, for the episodes searched from then on
+  private async listPolicies(changes: { [key: string]: ShowDTO }): Promise<{ [key: string]: ShowDTO }> {
+    const candidates = Object.keys(changes).filter(id => Array.isArray(changes[id].lists))
+    const lists = (this.configService.config.get('lists') || []).filter(list => list.media === 'tv' && list.policy)
+    if (!candidates.length || !lists.length) {
+      return changes
+    }
+
+    const policies = this.configService.config.get('policies') || []
+    const stored = new Map((await this.showModel.find({ _id: { $in: candidates.map(Number) } }, { lists: 1 }).lean()).map(show => [`${show._id}`, show]))
+
+    return candidates.reduce((acc, id) => {
+      const show: any = stored.get(`${id}`)
+      const policy = listPolicy(changes[id].lists.filter(list => !(show?.lists || []).includes(list)), lists, policies)
+      return policy ? { ...acc, [id]: { ...changes[id], policy } } : acc
+    }, changes)
+  }
+
   // `releases` only carries a choice on a proposal, read back from the database: jobs write the array one release at a time
   async upsertShows(raw: { [key: string]: ShowDTO }): Promise<any> {
     this.logger.log(`UpsertShows "${Object.keys(raw)}"`)
-    const changes = await this.matchPolicies(raw)
+    const changes = await this.listPolicies(await this.matchPolicies(raw))
     const failed = new Set<number>()
 
     for (const [i, { releases }] of Object.entries(changes)) {

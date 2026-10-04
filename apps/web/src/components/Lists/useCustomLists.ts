@@ -41,8 +41,12 @@ export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value
         return
       }
 
+      // A list with a policy hands it to them, and an archived movie is refined again with it
+      const policy = lists.find((list) => list.id === value)?.policy
+      const handed = policy ? ` Their policy becomes ${policy}${media === 'movie' ? ', and the archived ones are refined again' : ''}.` : ''
+
       // Asked before a new list is made, so a refusal leaves no empty list behind
-      if (!window.confirm(`Do you want to add ${selection} to "${name}"?`)) {
+      if (!window.confirm(`Do you want to add ${selection} to "${name}"?${handed}`)) {
         return
       }
 

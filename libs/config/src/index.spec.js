@@ -27,6 +27,14 @@ describe('lists', () => {
     expect(() => loaded({ lists: [list({ by: '__proto__', descending: false })] })).toThrow('sort')
   })
 
+  it('gives a list a policy by name, or none', () => {
+    const list = (policy) => ({ id: 'a', name: 'x', media: 'movie', policy, sources: [] })
+
+    expect(loaded({ lists: [list('VOF'), { ...list(null), id: 'b' }] }).get('lists').map(({ policy }) => policy)).toEqual(['VOF', null])
+    expect(() => loaded({ lists: [list('')] })).toThrow('policy')
+    expect(() => loaded({ lists: [list({ name: 'VOF' })] })).toThrow('policy')
+  })
+
   it('refuses a list mixing media', () => {
     expect(() => loaded({ lists: [{ id: 'a', name: 'x', media: 'person', sources: [] }] })).toThrow('media')
   })

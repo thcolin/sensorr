@@ -6,6 +6,7 @@ import i18n from '@sensorr/i18n'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
+import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
@@ -14,7 +15,7 @@ import { CONTROLS as DISCOVER_SHOWS } from '../Shows/Discover'
 import { CONTROLS as LIBRARY_MOVIES } from '../Library/Library'
 import { CONTROLS as LIBRARY_SHOWS } from '../Shows/Library'
 import { List, Row, listRowId, listsOf, pruned } from '../Home/rows'
-import { summaryOf, useListPages } from '../Home/Items/List'
+import { fetchSource, summaryOf, useListPages } from '../Home/Items/List'
 
 const MEDIA = { movie: emojize('🍿', 'Movies'), tv: emojize('📺', 'TV') }
 const NOUNS = { movie: 'movies', tv: 'shows' }
@@ -37,6 +38,7 @@ const Lists = ({ ...props }) => {
   useTitle('Settings - Lists')
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
+  const api = useAPI()
   const tmdb = useTMDB()
   const [lists, setLists] = useState<List[]>(() => listsOf(config))
   const [name, setName] = useState('')
@@ -47,6 +49,15 @@ const Lists = ({ ...props }) => {
   // A filter saved as bare ids, the genres or the lists of Library, reads by name
   const names = { ...tmdb.genres, ...tmdb.tvGenres, ...Object.fromEntries(lists.map((list) => [list.id, list])) }
   const setList = (id: string, change: (list: List) => List) => setLists((lists) => lists.map((list) => list.id === id ? change(list) : list))
+  const policies = (config.get('policies') || []).map(({ name }) => name)
+
+  // A list given another policy hands it to the titles added to it by hand: said with their count before it does
+  const confirmPolicies = async () => {
+    const given = lists.filter((list) => list.policy && list.policy !== saved.find(({ id }) => id === list.id)?.policy && list.sources.some(({ kind }) => kind === 'custom'))
+    const counts = await Promise.all(given.map((list) => fetchSource(api, tmdb, list, { kind: 'custom' }, 1, { signal: undefined }).then(({ total_results }) => total_results, () => null)))
+    const lines = given.map((list, index) => `"${list.name}" gives ${list.policy} to its ${counts[index] ?? 'unknown number of'} ${NOUNS[list.media]}${list.media === 'movie' ? ', and refines the archived ones again' : ''}.`)
+    return !lines.length || window.confirm(`${lines.join('\n')}\n\nSave?`)
+  }
 
   return (
     <Body>
@@ -73,8 +84,13 @@ const Lists = ({ ...props }) => {
           </form>
           <form
             sx={{ display: 'flex', flexDirection: 'column' }}
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
+
+              if (!await confirmPolicies()) {
+                return
+              }
+
               const ids = lists.map(listRowId)
               // A deleted list leaves every Home with it
               const home = Object.fromEntries(Object.entries(config.get('home')).map(([key, rows]: [string, Row[]]) => [key, pruned(rows, ids)]))
@@ -91,6 +107,7 @@ const Lists = ({ ...props }) => {
                 key={list.id}
                 list={list}
                 names={names}
+                policies={policies}
                 saved={saved.some(({ id }) => id === list.id)}
                 onChange={(change) => setList(list.id, change)}
                 onDelete={() => window.confirm(`Delete "${list.name}"? It leaves every Home once you Save.`) && setLists((lists) => lists.filter(({ id }) => id !== list.id))}
@@ -106,8 +123,9 @@ const Lists = ({ ...props }) => {
   )
 }
 
-const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
+const ListSettings = ({ list, names, policies, saved, onChange, onDelete }) => {
   const [open, setOpen] = useState(true)
+  const custom = list.sources.some(({ kind }) => kind === 'custom')
 
   return (
     <div sx={Lists.styles.list} role='group' aria-label={list.name}>
@@ -122,6 +140,17 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
           aria-label='Name of the list'
           required={true}
         />
+        <label sx={Lists.styles.policy} title={custom ? `Policy given to the ${NOUNS[list.media]} you add by hand` : 'A policy goes to the titles added by hand: add Custom to the list first'}>
+          <span>Policy</span>
+          <select
+            value={list.policy || ''}
+            onChange={(e) => onChange((list) => ({ ...list, policy: e.target.value || null }))}
+            disabled={!custom}
+          >
+            <option value=''>None</option>
+            {policies.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
         <span sx={Lists.styles.sort}>
           <Sorting
             options={sortings(list.media)}
@@ -404,6 +433,30 @@ Lists.styles = {
     color: 'grayDarkest',
     ':hover, :focus-visible': {
       color: 'text',
+    },
+  },
+  // Read as the Sorting next to it: the label quiet, the policy in the text color
+  policy: {
+    flex: '0 0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontSize: 6,
+    color: 'grayDarkest',
+    '>select': {
+      variant: 'select.reset',
+      maxWidth: '12em',
+      color: 'text',
+      fontWeight: 'semibold',
+      cursor: 'pointer',
+      ':hover:not(:disabled), :focus-visible': {
+        textDecoration: 'underline',
+        textUnderlineOffset: '0.25em',
+      },
+      ':disabled': {
+        opacity: 0.45,
+        cursor: 'default',
+      },
     },
   },
   // The Sorting of the green bars of Discover and Library, without the green it hovers with there

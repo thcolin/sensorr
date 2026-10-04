@@ -57,6 +57,13 @@ export const matchPolicy = (movie: { original_language?: string }, policies = []
 export const entryPolicy = (movie: { original_language?: string }, stored: { policy?: string, state?: string } = null, policies = []) =>
   (!stored?.policy && (!stored?.state || stored.state === 'ignored')) ? matchPolicy(movie, policies) : undefined
 
+// The policy of the last list a title just entered that has one, among the known policies
+export const listPolicy = (entered: string[] = [], lists: { id: string, policy?: string | null }[] = [], policies: { name: string }[] = []) =>
+  entered
+    .map(id => lists.find(list => list.id === id)?.policy)
+    .filter(name => name && policies.some(policy => policy.name === name))
+    .pop()
+
 export class Policy {
   name: string
   sorting: string
