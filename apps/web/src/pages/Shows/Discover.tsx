@@ -29,6 +29,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+import { saveAsListOf } from '../../components/Lists/SaveAsList'
 
 // `discover/tv` takes a status and a type by their index in TMDB's lists. Talk Show and News are left to the
 // genres, which the default already excludes
@@ -291,6 +292,7 @@ export const Discover = compose(
       },
     },
     fields: FIELDS,
+    footer: saveAsListOf('discover', 'tv'),
   }),
   withPlacehodersHistoryState(),
   withBody(),

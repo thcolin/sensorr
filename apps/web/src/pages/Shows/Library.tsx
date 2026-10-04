@@ -35,6 +35,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
+import { saveAsListOf } from '../../components/Lists/SaveAsList'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
@@ -298,6 +299,7 @@ const Library = compose(
       toggle_sub_asides_0: ReleasesToggle,
     },
     fields: FIELDS,
+    footer: saveAsListOf('library', 'tv'),
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
       const [counts, setCounts] = useState({})

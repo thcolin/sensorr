@@ -60,9 +60,11 @@ export interface ControlsProps {
   loading: boolean
   total?: number
   props?: any
+  // Drawn at the end of the first aside, given every value with the ones edited in it
+  footer?: React.ComponentType<{ values: { [key: string]: any } }>
 }
 
-const UIControls = ({ title, components, fields, values, onChange, layout, statistics, loading, total, level, watch, props }: ControlsProps) => {
+const UIControls = ({ title, components, fields, values, onChange, layout, statistics, loading, total, level, watch, props, footer: Footer }: ControlsProps) => {
   const { Portal, togglePortal: _togglePortal, closePortal: _closePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: true })
 
   const [subAsides, setSubAsides] = useState(Array(Math.max(0, (Array.isArray(layout.aside) ? layout.aside : [layout.aside]).length - 1)).fill(false))
@@ -176,6 +178,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
                   level,
                 })}
                 {...(index === 0 ? {
+                  footer: Footer ? (current) => <Footer values={{ ...values, ...current }} /> : undefined,
                   open,
                   toggleOpen: togglePortal,
                   dimmed: subAsides.some(v => v),
@@ -221,7 +224,7 @@ export const valuesOfControls = (fields, values) => Object.keys(fields).reduce((
   ),
 }), {})
 
-export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields }: withControlsArgs) => (WrappedComponent) => {
+export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields, footer }: withControlsArgs) => (WrappedComponent) => {
   const WithControls = ({ controls, ...props }: any) => {
     const state = useMemo(() => ({
       props: controls?.props,
@@ -271,6 +274,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
           statistics={statistics}
           level={level}
           watch={watch}
+          footer={footer}
         />
         <WrappedComponent controls={state} {...props} />
       </>

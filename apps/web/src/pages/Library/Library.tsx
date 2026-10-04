@@ -34,6 +34,7 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { RELEASES_AREAS, ReleasesToggle, releasesFields } from '../../components/Sensorr/Controls/Releases'
 import { untouched } from '../../components/Sensorr/Controls/serialize'
 import { withBody } from '../../layout/withLayout'
+import { saveAsListOf } from '../../components/Lists/SaveAsList'
 
 const SLICE = 50
 
@@ -332,6 +333,7 @@ const Library = compose(
       toggle_sub_asides_0: ReleasesToggle,
     },
     fields: FIELDS,
+    footer: saveAsListOf('library', 'movie'),
     useStatistics: (entities, fields, state) => {
       const api = useAPI()
       const [statistics, setStatistics] = useState({})
