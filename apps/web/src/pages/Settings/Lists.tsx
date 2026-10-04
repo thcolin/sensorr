@@ -107,13 +107,14 @@ const Lists = ({ ...props }) => {
 }
 
 const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
-  const { entities, totals, error } = useListPages(list)
-  // The source just added opens its filters panel at once
-  const [added, setAdded] = useState(null)
+  const [open, setOpen] = useState(true)
 
   return (
     <div sx={Lists.styles.list} role='group' aria-label={list.name}>
       <div>
+        <button type='button' aria-expanded={open} title={open ? 'Fold the list' : 'Unfold the list'} onClick={() => setOpen((open) => !open)} sx={Lists.styles.fold}>
+          {open ? '▾' : '▸'}
+        </button>
         <input
           type='text'
           value={list.name}
@@ -130,6 +131,19 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
         </span>
         <button type='button' title='Delete the list' onClick={onDelete}>✕</button>
       </div>
+      {open && <ListBody list={list} names={names} saved={saved} onChange={onChange} />}
+    </div>
+  )
+}
+
+// What fills a list and a sample of it, loaded only while the list is unfolded
+const ListBody = ({ list, names, saved, onChange }) => {
+  const { entities, totals, error } = useListPages(list)
+  // The source just added opens its filters panel at once
+  const [added, setAdded] = useState(null)
+
+  return (
+    <>
       {/* `article` indents every list of Settings */}
       <ul style={{ paddingLeft: 0 }}>
         {list.sources.map((source, index) => (
@@ -191,7 +205,7 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
         />
       </div>
       {saved && <Link to={`/${list.media}/lists/${list.id}`} sx={Lists.styles.see}>See the whole list ›</Link>}
-    </div>
+    </>
   )
 }
 
@@ -306,7 +320,7 @@ Lists.styles = {
           borderColor: 'primary',
         },
       },
-      '>button': {
+      '>button:last-of-type': {
         variant: 'button.reset',
         paddingX: 8,
         color: 'error',
@@ -378,6 +392,15 @@ Lists.styles = {
     textDecorationStyle: 'dotted',
     textUnderlineOffset: '0.25em',
     cursor: 'pointer',
+    ':hover, :focus-visible': {
+      color: 'text',
+    },
+  },
+  fold: {
+    variant: 'button.reset',
+    width: '1.5em',
+    fontFamily: 'monospace',
+    color: 'grayDarkest',
     ':hover, :focus-visible': {
       color: 'text',
     },
