@@ -3,7 +3,8 @@ import { reviver } from '@sensorr/utils'
 export type HomeKey = 'all' | 'movie' | 'tv'
 // A group, `group:<id>`, shows its `tabs` as one row with a tab for each
 export type Row = { id: string, hidden: boolean, tabs?: string[] }
-export type List = { id: string, name: string, media: 'movie' | 'tv', sources: { kind: 'discover' | 'library' | 'custom', values?: { [key: string]: any } }[] }
+export type Sort = { by: 'popularity' | 'release_date' | 'vote_average' | 'vote_count', descending: boolean }
+export type List = { id: string, name: string, media: 'movie' | 'tv', sort?: Sort | null, sources: { kind: 'discover' | 'library' | 'custom', values?: { [key: string]: any } }[] }
 
 // The rows the app draws itself: `media` says which PWA Home takes them, none means the browser Home only.
 // `item` is their key in the `items` translations.

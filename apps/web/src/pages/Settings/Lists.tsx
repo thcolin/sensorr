@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { nanoid } from 'nanoid'
-import { Button, Controls, Entities, serializeControls, valuesOfControls } from '@sensorr/ui'
+import { Button, Controls, Entities, Sorting, serializeControls, valuesOfControls } from '@sensorr/ui'
+import i18n from '@sensorr/i18n'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
@@ -18,6 +19,15 @@ import { summaryOf, useListPages } from '../Home/Items/List'
 const MEDIA = { movie: emojize('🍿', 'Movies'), tv: emojize('📺', 'TV') }
 const NOUNS = { movie: 'movies', tv: 'shows' }
 const KINDS = { discover: emojize('🌍', 'TMDB'), library: emojize('📚', 'Library'), custom: emojize('✍️', 'Custom') }
+// The sorts a whole list takes, its sources merged; none keeps them one after the other
+const sortings = (media: 'movie' | 'tv') => [
+  { value: 'none', label: emojize('🗂️', 'Sources in order') },
+  { value: 'popularity', label: i18n.t('ui.sortings.popularity') },
+  { value: 'release_date', label: i18n.t(media === 'movie' ? 'ui.sortings.primary_release_date' : 'ui.sortings.first_air_date') },
+  { value: 'vote_average', label: i18n.t('ui.sortings.vote_average') },
+  { value: 'vote_count', label: i18n.t('ui.sortings.vote_count') },
+]
+
 const CONTROLS = {
   discover: { movie: DISCOVER_MOVIES, tv: DISCOVER_SHOWS },
   library: { movie: LIBRARY_MOVIES, tv: LIBRARY_SHOWS },
@@ -111,6 +121,13 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
           aria-label='Name of the list'
           required={true}
         />
+        <span sx={Lists.styles.sort}>
+          <Sorting
+            options={sortings(list.media)}
+            value={list.sort ? { value: list.sort.by, sort: list.sort.descending } : { value: 'none', sort: true }}
+            onChange={({ value, sort }) => onChange((list) => ({ ...list, sort: value === 'none' ? null : { by: value, descending: sort } }))}
+          />
+        </span>
         <button type='button' title='Delete the list' onClick={onDelete}>✕</button>
       </div>
       {/* `article` indents every list of Settings */}
@@ -201,28 +218,18 @@ const SourceFilters = ({ list, source, summary, open = false, onOpened = null, o
     return <button type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
   }, [summary])
 
-  // Discover and Library sort in their bar, out of the panel: the sort sits on the line of the source
-  const SortBy = controls.fields.sort_by?.component
-
   return (
-    <>
-      <Controls
-        title=''
-        fields={controls.fields}
-        values={values}
-        onChange={onChange}
-        layout={{ aside: controls.layout.aside }}
-        components={{ ...controls.components, toggle: Summary }}
-        statistics={statistics}
-        loading={false}
-        total={0}
-      />
-      {SortBy && (
-        <span sx={Lists.styles.sort}>
-          <SortBy {...controls.fields.sort_by.props} value={values.sort_by} onChange={(sort_by) => onChange({ ...values, sort_by })} />
-        </span>
-      )}
-    </>
+    <Controls
+      title=''
+      fields={controls.fields}
+      values={values}
+      onChange={onChange}
+      layout={{ aside: controls.layout.aside }}
+      components={{ ...controls.components, toggle: Summary }}
+      statistics={statistics}
+      loading={false}
+      total={0}
+    />
   )
 }
 
@@ -325,7 +332,8 @@ Lists.styles = {
   },
   add: {
     alignItems: 'center',
-    '>span': {
+    '&& >span': {
+      flex: '0 0 auto',
       color: 'grayDarkest',
     },
     '>button': {

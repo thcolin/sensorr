@@ -9,48 +9,73 @@ import { useTMDB } from '../../store/tmdb'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { List, listsOf } from '../Home/rows'
-import { ListRow, fetchSource } from '../Home/Items/List'
+import { ListRow, compareOf, fetchSource } from '../Home/Items/List'
 
 const NOUNS = { movie: 'movies', tv: 'shows' }
 
 // TMDB answers 500 pages of a discover query at most
 const PAGES = 500
 
-// The whole list, page after page of each source in turn, an entity shown once
+// The entities a step of the grid adds at most
+const STEP = 40
+
+// The whole list, page after page: each source in turn, or, sorted, the best head of them all at each step since
+// each source answers sorted on the same field. An entity is shown once.
 const useListAll = (list: List) => {
   const api = useAPI()
   const tmdb = useTMDB()
   const [entities, setEntities] = useState([])
   const [length, setLength] = useState(null)
   const [error, setError] = useState(null)
-  const cursor = useRef({ source: 0, page: 1, totals: [], seen: new Set(), loading: false })
+  const fresh = () => ({ buffers: (list?.sources || []).map(() => []), pages: (list?.sources || []).map(() => 1), done: (list?.sources || []).map(() => false), totals: [], seen: new Set(), loading: false })
+  const cursor = useRef(fresh())
 
   const next = useCallback(async () => {
     const current = cursor.current
 
-    if (!list || current.loading || current.source >= list.sources.length) {
+    if (!list || current.loading) {
       return
     }
 
     current.loading = true
+    const open = (i: number) => !current.done[i] || current.buffers[i].length
+    // Unsorted, only the first source not used up takes part
+    const playing = () => list.sources.map((_, i) => i).filter(open).slice(0, list.sort ? undefined : 1)
+    const compare = list.sort ? compareOf(list) : null
+    const out = []
 
     try {
-      const page = await fetchSource(api, tmdb, list, list.sources[current.source], current.page, { signal: undefined })
+      while (out.length < STEP && playing().length) {
+        const empty = playing().filter((i) => !current.buffers[i].length)
 
-      if (cursor.current !== current) {
-        return
+        if (empty.length) {
+          await Promise.all(empty.map(async (i) => {
+            const page = await fetchSource(api, tmdb, list, list.sources[i], current.pages[i], { signal: undefined })
+            current.buffers[i].push(...page.results)
+            current.totals[i] = Math.min(page.total_results, PAGES * 20)
+            current.done[i] = current.pages[i] >= Math.min(page.total_pages, PAGES)
+            current.pages[i] += 1
+          }))
+
+          if (cursor.current !== current) {
+            return
+          }
+
+          continue
+        }
+
+        const [best] = playing().sort((a, b) => compare ? compare(current.buffers[a][0], current.buffers[b][0]) : 0)
+        const entity = current.buffers[best].shift()
+
+        if (!current.seen.has(entity.id)) {
+          current.seen.add(entity.id)
+          out.push(entity)
+        }
       }
 
-      current.totals[current.source] = page.total_results
-      const fresh = page.results.filter(({ id }) => !current.seen.has(id) && current.seen.add(id))
-      const last = current.page >= Math.min(page.total_pages, PAGES)
-      Object.assign(current, last ? { source: current.source + 1, page: 1 } : { page: current.page + 1 })
-
-      setEntities((entities) => [...entities, ...fresh])
-      // Until every source answered, the grid holds room for what they announce
-      setLength((length) => current.source >= list.sources.length
-        ? null
-        : current.totals.reduce((sum, total) => sum + Math.min(total, PAGES * 20), 0))
+      setEntities((entities) => [...entities, ...out])
+      // Until every source is used up, the grid holds room for what they announce
+      setLength(playing().length ? current.totals.reduce((sum, total) => sum + (total || 0), 0) : null)
     } catch (e) {
       console.warn(e)
       setError(e)
@@ -60,7 +85,7 @@ const useListAll = (list: List) => {
   }, [api, tmdb, list])
 
   useEffect(() => {
-    cursor.current = { source: 0, page: 1, totals: [], seen: new Set(), loading: false }
+    cursor.current = fresh()
     setEntities([])
     setLength(null)
     setError(null)
@@ -73,7 +98,7 @@ const useListAll = (list: List) => {
     }
   }, [entities.length, next])
 
-  return { entities, length: length ?? entities.length, onMore, error, ready: !!entities.length || cursor.current.source >= (list?.sources.length || 0) }
+  return { entities, length: length ?? entities.length, onMore, error, ready: !!entities.length || !cursor.current.done.some((done) => !done) }
 }
 
 // One list of the config, whole, as a grid

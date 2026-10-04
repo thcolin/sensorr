@@ -139,7 +139,8 @@ A `[]` in a name stands for one item of the array above it.
 | `lists[].id` | `String` | `""` | Id of the list, `list:<id>` in the rows of a Home |
 | `lists[].name` | `String` | `""` | Name of the list |
 | `lists[].media` | `movie`, `tv` | `movie` | Movies or shows, a list holds one of them |
-| `lists[].sources` | `source-array` | `[]` | Where the entities of the list come from, shown one source after the other |
+| `lists[].sort` | `*` | `null` | How the whole list sorts, its sources merged: `by` popularity, release_date, vote_average or vote_count, `descending`; none, its sources one after the other |
+| `lists[].sources` | `source-array` | `[]` | Where the entities of the list come from |
 | `lists[].sources[].kind` | `discover`, `library`, `custom` | `discover` | TMDB discover filters, library filters, or the movies and shows added to this custom list |
 | `lists[].sources[].values` | — | `{}` | Values of the filters panel, as Discover or Library hold them |
 
