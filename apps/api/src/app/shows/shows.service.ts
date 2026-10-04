@@ -280,6 +280,7 @@ export class ShowsService {
           status: [filtered('status'), { $group: { _id: '$status', ...count } }],
           policy: [filtered('policy'), { $match: { policy: { $ne: null } } }, { $group: { _id: '$policy', ...count } }],
           requested_by: [filtered('requested_by'), ...unwound('requested_by')],
+          lists: [filtered('lists'), ...unwound('lists')],
           genres: [filtered('genres'), ...unwound('genres.id')],
           networks: [filtered('networks'), { $unwind: '$networks' }, { $group: { _id: '$networks.id', name: { $first: '$networks.name' }, ...count } }],
           original_languages: [filtered('original_languages'), { $group: { _id: '$original_language', ...count } }],

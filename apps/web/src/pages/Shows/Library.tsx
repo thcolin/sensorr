@@ -36,6 +36,8 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
+import { FilterLists } from '../../components/Lists/FilterLists'
+import { useListsAction } from '../../components/Lists/useManualLists'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
@@ -103,6 +105,8 @@ export const FIELDS = {
         setSending(false)
       }
 
+      const lists = useListsAction('tv', apply, shows(selected.length))
+
       return (
         <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
           <Option
@@ -135,6 +139,7 @@ export const FIELDS = {
                 options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
                 onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
               },
+              lists,
             ]}
           />
         </div>
@@ -181,6 +186,11 @@ export const FIELDS = {
     initial: { values: [], behavior: 'or' },
     serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
     component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
+  },
+  lists: {
+    initial: { values: [], behavior: 'or' },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+    component: FilterLists,
   },
   genres: {
     ...fields.genres,
@@ -272,6 +282,7 @@ const Library = compose(
             "policy"
             "toggle_sub_asides_0"
             "requested_by"
+            "lists"
             "genres"
             "type"
             "networks"

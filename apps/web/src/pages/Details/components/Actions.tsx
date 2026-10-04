@@ -4,6 +4,8 @@ import { keyframes } from '@emotion/react'
 import Color from 'color'
 import { useThemeUI } from 'theme-ui'
 import { useSensorr } from '../../../store/sensorr'
+import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
+import { useManualLists } from '../../../components/Lists/useManualLists'
 
 const animations = {
   dots: keyframes`
@@ -105,16 +107,15 @@ const UIMovieActions = ({
         metadata={metadata}
         ready={ready}
         palette={modePalette}
-        expandable={false}
         expanded={expanded}
         setExpanded={setExpanded}
         setHover={setHover}
         toggleSensorr={toggleSensorr}
       />
       <Preferences
-        entity={entity}
-        metadata={metadata}
-        setMetadata={setMetadata}
+        media='movie'
+        value={metadata?.lists}
+        onChange={(lists) => setMetadata('lists', lists)}
         expanded={expanded}
         hover={hover}
       />
@@ -134,20 +135,35 @@ UIMovieActions.styles = {
 
 export const MovieActions = memo(UIMovieActions)
 
-const UIShowTicket = ({ palette = null, ...props }) => (
-  <div sx={UIMovieActions.styles.element}>
-    <Ticket
-      {...props as any}
-      palette={useModePalette(palette)}
-      title='Search releases for this show from your indexers'
-      expandable={false}
-      expanded={false}
-      setExpanded={() => null}
-      setHover={() => null}
-    />
-    <Preferences entity={props.entity} metadata={{}} setMetadata={() => null} expanded={false} hover={false} />
-  </div>
-)
+const UIShowTicket = ({ palette = null, ...props }) => {
+  const [hover, setHover] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const { metadata, setShowLists } = useShowsMetadataContext() as any
+
+  useEffect(() => {
+    setExpanded(false)
+  }, [props.entity?.id])
+
+  return (
+    <div sx={UIMovieActions.styles.element}>
+      <Ticket
+        {...props as any}
+        palette={useModePalette(palette)}
+        title='Search releases for this show from your indexers'
+        expanded={expanded}
+        setExpanded={setExpanded}
+        setHover={setHover}
+      />
+      <Preferences
+        media='tv'
+        value={metadata[props.entity?.id]?.lists}
+        onChange={(lists) => setShowLists(props.entity.id, () => lists)}
+        expanded={expanded}
+        hover={hover}
+      />
+    </div>
+  )
+}
 
 export const ShowTicket = memo(UIShowTicket)
 
@@ -365,27 +381,15 @@ UITicket.styles = {
 export const Ticket = memo(UITicket)
 
 const UIPreferences = ({
-  entity,
-  metadata,
-  setMetadata,
+  media,
+  value = [],
+  onChange = null,
   expanded,
   hover,
   ...props
 }) => {
-  const sensorr = useSensorr()
-  const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
-
-  const values = useMemo(() => ({
-    terms: [
-      ...(query?._defaults?.terms || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.terms?.includes(term) })),
-      ...(query?.titles || []).filter(title => !(query?._defaults?.terms || []).includes(title)).map(title => ({ value: title, label: title, pinned: true, disabled: !(query?.terms || []).includes(title) })),
-      ...(query?.terms || []).filter(term => !(query?._defaults?.terms || []).includes(term) && !(query?.titles || []).includes(term)).map(term => ({ value: term, label: term })),
-    ],
-    years: [
-      ...(query?._defaults?.years || []).map(term => ({ value: term, label: term, pinned: true, disabled: !query?.years?.includes(term) })),
-      ...(query?.years || []).filter(term => !query?._defaults?.years?.includes(term)).map(term => ({ value: term, label: term })),
-    ],
-  }), [query?._defaults, query?.titles, query])
+  const { lists, idsOf } = useManualLists(media)
+  const options = useMemo(() => lists.map((list) => ({ value: list.id, label: list.name })), [lists])
 
   return (
     <div
@@ -395,7 +399,7 @@ const UIPreferences = ({
           top: '100%',
           left: '0em',
           marginTop: 8,
-          height: '20em',
+          height: '12em',
           transform: 'rotate(0deg)',
           transition: 'left 400ms ease-in-out, top 400ms ease-in-out, margin 400ms ease-in-out, transform 400ms ease-in-out, height 400ms ease-in-out 200ms',
           '>div': {
@@ -428,57 +432,14 @@ const UIPreferences = ({
         {expanded && (
           <div sx={UIPreferences.styles.container}>
             <div sx={UIPreferences.styles.block}>
-              <span>Terms</span>
+              <span>Lists</span>
               <QueryInput
                 direction='column'
-                value={values.terms}
-                onChange={(values) => {
-                  setMetadata('query', {
-                    ...metadata.query,
-                    terms: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                  })
-                }}
+                options={options}
+                value={options.filter((option) => value.includes(option.value))}
+                onChange={async (values) => onChange(await idsOf(values))}
               />
-              <small>Sensorr will search for all selected terms on configured indexers</small>
-            </div>
-            <div sx={UIPreferences.styles.block}>
-              <span>Years</span>
-              <QueryInput
-                value={values.years}
-                onChange={(values) => {
-                  setMetadata('query', {
-                    ...metadata.query,
-                    years: values.filter(({ disabled }) => !disabled).map(({ value }) => value),
-                  })
-                }}
-              />
-              <small>Sensorr will filter releases with selected years</small>
-            </div>
-            <div sx={UIPreferences.styles.block}>
-              <span>Policy</span>
-              <PolicyInput
-                value={metadata?.policy}
-                onChange={value => setMetadata('policy', value)}
-              />
-              <small>Sensorr will apply selected policy to sort and select the best release</small>
-            </div>
-            <div sx={UIPreferences.styles.block}>
-              <span>Refine for better release</span>
-              <OptionInput
-                id={`refine-${entity?.id}`}
-                children="Sensorr will regularly search for better release than the current archived one"
-                value={metadata?.refine}
-                onChange={value => setMetadata('refine', value)}
-              />
-            </div>
-            <div sx={UIPreferences.styles.block}>
-              <span>Shrink for smaller release</span>
-              <OptionInput
-                id={`shrink-${entity?.id}`}
-                children="Sensorr will regularly search for smaller release than the current archived one"
-                value={metadata?.shrink}
-                onChange={value => setMetadata('shrink', value)}
-              />
+              <small>Pick the lists that hold it, or type a name to start one</small>
             </div>
           </div>
         )}
@@ -549,7 +510,7 @@ UIPreferences.styles = {
 
 const Preferences = memo(UIPreferences)
 
-const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
+const UIQueryInput = ({ value, onChange, direction = 'row', options = [], ...props }) => {
   const { theme } = useThemeUI()
 
   const ref = useRef()
@@ -695,7 +656,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
       <div>
         <QuerySelect
           ref={ref}
-          options={[]}
+          options={options}
           isClearable={false}
           defaultOptions={true}
           resetable={false}

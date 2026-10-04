@@ -35,6 +35,8 @@ import { RELEASES_AREAS, ReleasesToggle, releasesFields } from '../../components
 import { untouched } from '../../components/Sensorr/Controls/serialize'
 import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
+import { FilterLists } from '../../components/Lists/FilterLists'
+import { useListsAction } from '../../components/Lists/useManualLists'
 
 const SLICE = 50
 
@@ -112,6 +114,8 @@ export const FIELDS = {
         setSending(false)
       }
 
+      const lists = useListsAction('movie', apply, `${selected.length} movies`)
+
       return (
         <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
           <Option
@@ -166,6 +170,7 @@ export const FIELDS = {
                 ],
                 onChange: ({ value }) => apply(job, value, `Do you want to ${value ? 'enable' : 'disable'} ${job} job for ${selected.length} movies ?`),
               })),
+              lists,
             ]}
           />
         </div>
@@ -210,6 +215,11 @@ export const FIELDS = {
     initial: { values: [], behavior: 'or' },
     serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
     component: withProps({ label: 'ui.filters.requested_by' })(FilterStatistics),
+  },
+  lists: {
+    initial: { values: [], behavior: 'or' },
+    serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
+    component: FilterLists,
   },
   genres: {
     ...fields.genres,
@@ -307,6 +317,7 @@ const Library = compose(
             "policy"
             "toggle_sub_asides_0"
             "requested_by"
+            "lists"
             "genres"
             "original_languages"
             "spoken_languages"

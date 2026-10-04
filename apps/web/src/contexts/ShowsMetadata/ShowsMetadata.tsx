@@ -125,7 +125,7 @@ export const Provider = ({ ...props }) => {
 
   const setShowMetadata = useCallback(async (
     id: number | number[],
-    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'query' | 'proposal' | 'release' | 'releases',
+    key: 'state' | 'monitored' | 'monitor_new_seasons' | 'policy' | 'query' | 'proposal' | 'release' | 'releases' | 'lists',
     value: any,
   ) => {
     const ids = Array.isArray(id) ? id : [id]
@@ -292,6 +292,21 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
+  // A show Sensorr does not keep yet enters a list as `ignored`, written from TMDB without its episodes
+  const setShowLists = useCallback(async (id: number, lists: (current: string[]) => string[]) => {
+    const current = ref.current[id]
+
+    if (current?.state) {
+      return setShowMetadata(id, 'lists', (show) => lists(show?.lists || []))
+    }
+
+    const { show } = await fetchShow(tmdb, id)
+    const body = { [show.id]: { ...show, state: 'ignored', lists: lists([]), refreshed_at: new Date() } }
+    const { uri, params, init } = api.query.shows.postShows({ body })
+    await api.fetch(uri, params, init)
+    setMetadata(metadata => ({ ...metadata, [show.id]: { ...(metadata[show.id] || {}), ...body[show.id] } }))
+  }, [setShowMetadata])
+
   const followShow = useCallback(async (id: number, followed: boolean) => {
     const current = ref.current[id]
 
@@ -357,6 +372,7 @@ export const Provider = ({ ...props }) => {
         setShowMetadata,
         setEpisodesMetadata,
         addShow,
+        setShowLists,
         followShow,
         removeShow,
         setShowState,
