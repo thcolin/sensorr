@@ -11,14 +11,21 @@ import DiscoverMoviesSelectable from './Items/DiscoverMoviesSelectable'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { TrendingShows, LibraryShows, AiringShows, DiscoverShows, RequestedMoviesAndShows, RequestedMovies, RequestedShows, MovieOrShow } from './Items/Shows'
+import { ListRow } from './Items/List'
+import { rowsOf, listRowId, List } from './rows'
+import { useConfigContext } from '../../contexts/Config/Config'
 
 const TITLES = { all: 'Home', movie: 'Movies', tv: 'TV', person: 'Stars' }
+
+// The Stars Home stays as it was, the others draw the rows of `config.home`
+const PERSON = ['followed_persons', 'birthday_persons', 'calendar', 'trending_persons']
 
 // `all` is the home of the browser, the other sections the home of a bottom bar tab in the PWA
 const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' | 'person' }) => {
   useTitle(TITLES[section])
   const { t } = useTranslation()
   const { device } = useDeviceContext()
+  const { config } = useConfigContext()
   const navigationType = useNavigationType()
   // Going back restores a scroll position that may need every row, so they all mount at once
   const painted = usePainted() || navigationType === 'POP'
@@ -26,8 +33,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
     display: (((device !== 'mobile') && index < 5) ? 'pretty' : 'poster') as 'pretty' | 'poster',
   }), [device])
 
-  const rows = [
-    { sections: ['all', 'movie'], element: (
+  const builtins = {
+    trending_movies: (
       <TrendingMovies
         key='trending_movies'
         id='trending_movies'
@@ -46,8 +53,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           subtitle: '',
         }}
       />
-    ) },
-    { sections: ['all', 'tv'], element: (
+    ),
+    trending_shows: (
       <TrendingShows
         key='trending_shows'
         id='trending_shows'
@@ -67,8 +74,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           subtitle: '',
         }}
       />
-    ) },
-    { sections: ['all', 'movie'], element: (device === 'mobile' || section === 'movie') ? (
+    ),
+    library: (device === 'mobile' || section === 'movie') ? (
       <LibraryMovies
         key='library'
         id='library'
@@ -97,8 +104,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           state: { controls: { state: ['archived'] } },
         }}
       />
-    ) },
-    { sections: ['all', 'tv'], element: (
+    ),
+    library_shows: (
       <LibraryShows
         key='library_shows'
         id='library_shows'
@@ -113,8 +120,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/tv/library',
         }}
       />
-    ) },
-    { sections: ['person'], element: (
+    ),
+    followed_persons: (
       <FollowedPersons
         key='followed_persons'
         id='followed_persons'
@@ -131,8 +138,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/person/followed',
         }}
       />
-    ) },
-    { sections: ['person'], element: (
+    ),
+    birthday_persons: (
       <BirthdayPersons
         key='birthday_persons'
         id='birthday_persons'
@@ -146,8 +153,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           focus: 'birthday',
         })}
       />
-    ) },
-    { sections: ['all', 'movie', 'person'], element: (
+    ),
+    calendar: (
       <CalendarMovies
         key='calendar'
         id='calendar'
@@ -165,8 +172,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: section === 'person' ? '/person/calendar' : '/movie/calendar',
         }}
       />
-    ) },
-    { sections: ['movie'], element: (
+    ),
+    swaps: (
       <SwapsMovies
         key='swaps'
         id='swaps'
@@ -180,8 +187,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/movie/swaps',
         }}
       />
-    ) },
-    { sections: ['all', 'tv'], element: (
+    ),
+    airing: (
       <AiringShows
         key='airing'
         id='airing'
@@ -199,8 +206,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/tv/calendar',
         }}
       />
-    ) },
-    { sections: ['all'], element: (
+    ),
+    requests: (
       <RequestedMoviesAndShows
         key='requests'
         id='requests'
@@ -214,8 +221,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/movie/requests',
         }}
       />
-    ) },
-    { sections: ['movie'], element: (
+    ),
+    requested_movies: (
       <RequestedMovies
         key='requested_movies'
         id='requested_movies'
@@ -229,8 +236,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/movie/requests',
         }}
       />
-    ) },
-    { sections: ['tv'], element: (
+    ),
+    requested_shows: (
       <RequestedShows
         key='requested_shows'
         id='requested_shows'
@@ -245,8 +252,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           to: '/tv/requests',
         }}
       />
-    ) },
-    { sections: ['all', 'movie'], element: (
+    ),
+    discover: (
       <DiscoverMovies
         key='discover'
         id='discover'
@@ -265,8 +272,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           subtitle: '',
         }}
       />
-    ) },
-    { sections: ['all', 'tv'], element: (
+    ),
+    discover_shows: (
       <DiscoverShows
         key='discover_shows'
         id='discover_shows'
@@ -286,8 +293,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           subtitle: '',
         }}
       />
-    ) },
-    { sections: ['all', 'movie'], element: (
+    ),
+    theatres: (
       <TheatresMovies
         key='theatres'
         id='theatres'
@@ -305,8 +312,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           state: { controls: { uri: 'movie/now_playing' } },
         }}
       />
-    ) },
-    { sections: ['all', 'movie'], element: (
+    ),
+    upcoming: (
       <UpcomingMovies
         key='upcoming'
         id='upcoming'
@@ -324,8 +331,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           state: { controls: { uri: 'movie/upcoming' } },
         }}
       />
-    ) },
-    { sections: ['all', 'movie'], element: (
+    ),
+    discover_selectable: (
       <DiscoverMoviesSelectable
         key='discover_selectable'
         id='discover_selectable'
@@ -334,8 +341,8 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
         limit={20}
         props={pretty}
       />
-    ) },
-    { sections: ['all', 'person'], element: (
+    ),
+    trending_persons: (
       <TrendingPersons
         key='trending_persons'
         id='trending_persons'
@@ -356,12 +363,19 @@ const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' 
           subtitle: '',
         }}
       />
-    ) },
-  ].filter((row) => row.sections.includes(section))
+    ),
+  }
+
+  const lists: List[] = config.get('lists')
+  const rows = section === 'person'
+    ? PERSON.map((id) => builtins[id])
+    : rowsOf(section, config.get(`home.${section}`), lists)
+      .filter(({ hidden }) => !hidden)
+      .map(({ id }) => id.startsWith('list:') ? <ListRow key={id} list={lists.find((list) => listRowId(list) === id)} props={pretty} /> : builtins[id])
 
   return (
     <Body overlayScrollbars={true}>
-      {(painted ? rows : rows.slice(0, 3)).map(({ element }) => element)}
+      {painted ? rows : rows.slice(0, 3)}
     </Body>
   )
 }
