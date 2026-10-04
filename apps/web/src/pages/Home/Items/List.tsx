@@ -21,13 +21,33 @@ export const paramsOf = (list: List, { kind, values }: List['sources'][number]) 
   ? { lists: list.id }
   : serializeControls(FIELDS[kind][list.media], valuesOfControls(FIELDS[kind][list.media], values))
 
-// Where the `more` link of the row goes: the screen of its first source, on the same filters
-export const screenOf = (list: List) => {
-  const [source] = list.sources
+// `names` gives the label of a value saved as a bare id, a genre of Library
+const textOf = (value, names = {}) => Array.isArray(value)
+  ? value.map((item) => textOf(item, names)).join('–')
+  : value && typeof value === 'object'
+    ? (Array.isArray(value.values) ? value.values.map((item) => item?.label ?? names[item]?.name ?? item).join(value.behavior === 'and' ? ' + ' : ', ') : '')
+    : String(value)
+
+// The filters a source moved off their initial value, as `field: value`
+export const summaryOf = (list: List, { kind, values }: List['sources'][number], names = {}) => kind === 'manual'
+  ? 'added by hand'
+  : Object.entries(values || {})
+    .filter(([key, value]) => FIELDS[kind][list.media][key] && JSON.stringify(value) !== JSON.stringify(FIELDS[kind][list.media][key].initial))
+    .map(([key, value]) => `${key}: ${textOf(value, names)}`)
+    .filter((text) => !text.endsWith(': '))
+    .join(' · ') || 'no filter'
+
+// The screen of a source on its filters, the first one for the `more` link of the row; `editing` lets
+// the filters panel write them back in place of the source
+export const screenOf = (list: List, index = 0, editing = false) => {
+  const source = list.sources[index]
 
   return {
     to: `/${list.media}/${source?.kind === 'discover' ? 'discover' : 'library'}`,
-    state: { controls: source?.kind === 'manual' ? { lists: [list.id] } : source?.values || {} },
+    state: {
+      controls: source?.kind === 'manual' ? { lists: [list.id] } : source?.values || {},
+      ...(editing ? { editing: { list: list.id, source: index } } : {}),
+    },
   }
 }
 
