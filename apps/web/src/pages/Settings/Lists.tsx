@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { nanoid } from 'nanoid'
 import { Button, Controls, Entities, serializeControls, valuesOfControls } from '@sensorr/ui'
@@ -98,6 +98,8 @@ const Lists = ({ ...props }) => {
 
 const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
   const { entities, totals, error } = useListPages(list)
+  // The source just added opens its filters panel at once
+  const [added, setAdded] = useState(null)
 
   return (
     <div sx={Lists.styles.list} role='group' aria-label={list.name}>
@@ -122,6 +124,8 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
               <SourceFilters
                 list={list}
                 source={source}
+                open={added === index}
+                onOpened={() => setAdded(null)}
                 summary={summaryOf(list, source, names).join(' · ') || 'Every one'}
                 onChange={(values) => onChange((list) => ({ ...list, sources: list.sources.map((other, i) => i === index ? { ...other, values } : other) }))}
               />
@@ -137,6 +141,23 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
             </button>
           </li>
         ))}
+        <li sx={Lists.styles.add}>
+          <span>Add</span>
+          {(['discover', 'library', 'custom'] as const).map((kind) => (
+            <button
+              key={kind}
+              type='button'
+              disabled={kind === 'custom' && list.sources.some((source) => source.kind === 'custom')}
+              title={kind === 'custom' ? `The ${NOUNS[list.media]} you add from their page or from Library` : `Filters of ${kind === 'discover' ? 'Discover' : 'Library'}`}
+              onClick={() => {
+                setAdded(kind === 'custom' ? null : list.sources.length)
+                onChange((list) => ({ ...list, sources: [...list.sources, kind === 'custom' ? { kind } : { kind, values: {} }] }))
+              }}
+            >
+              {KINDS[kind]}
+            </button>
+          ))}
+        </li>
       </ul>
       <div sx={Lists.styles.row}>
         <Entities
@@ -161,13 +182,24 @@ const ListSettings = ({ list, names, saved, onChange, onDelete }) => {
 const NONE = []
 
 // The filters of a source as their panel titles them: a click opens the panel on them
-const SourceFilters = ({ list, source, summary, onChange }) => {
+const SourceFilters = ({ list, source, summary, open = false, onOpened = null, onChange }) => {
   const controls = CONTROLS[source.kind][list.media]
   const values = valuesOfControls(controls.fields, source.values)
   const statistics = controls.useStatistics(NONE, controls.fields, serializeControls(controls.fields, values))
-  const Summary = useCallback(({ toggleOpen }) => (
-    <button type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
-  ), [summary])
+  const Summary = useCallback(({ toggleOpen }) => {
+    // Once: a second run, as StrictMode does, would close it again
+    const opened = useRef(false)
+
+    useEffect(() => {
+      if (open && !opened.current) {
+        opened.current = true
+        toggleOpen()
+        onOpened()
+      }
+    }, [])
+
+    return <button type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
+  }, [summary])
 
   return (
     <Controls
@@ -278,6 +310,29 @@ Lists.styles = {
           flex: 1,
           color: 'grayDarkest',
         },
+      },
+    },
+  },
+  add: {
+    alignItems: 'center',
+    '>span': {
+      color: 'grayDarkest',
+    },
+    '>button': {
+      variant: 'button.reset',
+      paddingX: 8,
+      paddingY: 10,
+      border: '1px dashed',
+      borderColor: 'grayDark',
+      borderRadius: '0.25rem',
+      color: 'grayDarkest',
+      ':hover:not(:disabled), :focus-visible': {
+        color: 'text',
+        borderColor: 'grayDarker',
+      },
+      ':disabled': {
+        opacity: 0.45,
+        cursor: 'default',
       },
     },
   },
