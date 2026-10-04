@@ -174,7 +174,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
             control={control}
             render={({ field: { value: checked, onChange } }) => (
               <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)} title={checked ? 'Paused' : cronString}>
-                <small sx={{ whiteSpace: 'nowrap', paddingRight: 4 }}>{checked ? 'Paused' : cronString}</small>
+                <small sx={{ whiteSpace: ['normal', 'nowrap'], paddingRight: 4 }}>{checked ? 'Paused' : cronString}</small>
               </Option>
             )}
           />
