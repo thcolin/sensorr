@@ -20,7 +20,7 @@ export const Capsule = ({ name, labelledBy, options, value, onChange }: CapsuleP
   const capsule = useRef(null)
   const [pill, setPill] = useState(null)
 
-  // Measured after layout, once the checked label has its bold width; no slide on the first render
+  // Measured after layout, once the checked label is laid out; no slide on the first render
   useLayoutEffect(() => {
     const label = capsule.current?.querySelector('label:has(>input:checked)')
     setPill((previous) => label ? { x: label.offsetLeft, width: label.offsetWidth, slide: !!previous } : null)
@@ -89,7 +89,6 @@ Capsule.styles = {
       },
       ':has(>input:checked)': {
         color: 'whitePure',
-        fontWeight: 'strong',
       },
       ':has(>input:focus-visible)': {
         outline: '2px solid',
