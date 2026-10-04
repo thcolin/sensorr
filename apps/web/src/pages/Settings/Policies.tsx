@@ -21,10 +21,13 @@ import { CSS } from '@dnd-kit/utilities'
 import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useConfigContext } from '../../contexts/Config/Config'
+import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
 import { DubFilter, EncodingFilter, FlagsFilter, LanguageFilter, ResolutionFilter, SourceFilter, ZNABFilter } from '../../components/Sensorr/Controls/Oleoo'
+import { Release } from '../../components/Sensorr/Release'
 import { emojize, languages, useTitle } from '@sensorr/utils'
 import { rankOf, ranked, unranked } from '@sensorr/sensorr'
+import { sandboxOf } from './sandbox'
 
 export const policiesOf = (config) => (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false }))
 
@@ -78,10 +81,85 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
             policies.swap(from, to)
           }}
         />
+        <PoliciesSandbox form={form} />
         {children}
       </form>
     </>
   )
+}
+
+// How a policy of the form, saved or not, ranks fake releases of one movie
+const PoliciesSandbox = ({ form }) => {
+  const { device } = useDeviceContext()
+  const [open, setOpen] = useState(false)
+  const [index, setIndex] = useState(0)
+  const policies = (form.watch('policies') || []).filter((policy) => !policy.removed)
+  const znabs = (form.watch('znabs') || []).map((znab) => znab.name)
+  const policy = policies[index] || policies[0]
+  const options = policies.map((policy, index) => ({ value: `${index}`, label: policy.name }))
+
+  return (
+    <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PoliciesSandbox.styles.element}>
+      <summary>
+        <span>Sandbox</span>
+      </summary>
+      {open && (
+        <div>
+          <p>
+            <small>How the policy ranks fake releases of <em>Big Buck Bunny</em> (2008), as a search for this movie would, before you save.</small>
+          </p>
+          {!policy ? (
+            <p><small>Add a policy to try it.</small></p>
+          ) : (
+            <>
+              <Select
+                label='Policy'
+                options={options}
+                value={options[policies.indexOf(policy)]}
+                onChange={(option) => setIndex(Number(option.value))}
+                resetable={false}
+                isSearchable={false}
+              />
+              <div sx={{ marginTop: 6 }}>
+                {sandboxOf(policy, znabs).map((release) => (
+                  <Release
+                    key={release.id}
+                    entity={release}
+                    display={device === 'mobile' ? 'column' : 'row'}
+                    actions={false}
+                    note={release.goal ? '✨ End-goal of the refine job' : null}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </details>
+  )
+}
+
+PoliciesSandbox.styles = {
+  element: {
+    marginY: 6,
+    fontSize: 5,
+    lineHeight: 'body',
+    '>summary': {
+      cursor: 'pointer',
+      paddingX: 3,
+      paddingY: 7,
+      '>span': {
+        fontFamily: 'monospace',
+        fontWeight: 'semibold',
+        fontSize: 5,
+        marginLeft: 8,
+      },
+    },
+    '>div': {
+      paddingX: 3,
+      paddingBottom: 6,
+    },
+  },
 }
 
 const Policies = ({ ...props }) => {
