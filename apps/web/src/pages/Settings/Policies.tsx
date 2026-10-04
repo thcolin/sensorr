@@ -88,7 +88,6 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
   )
 }
 
-// How a policy of the form, saved or not, ranks fake releases of one movie
 const PoliciesSandbox = ({ form }) => {
   const { device } = useDeviceContext()
   const [open, setOpen] = useState(false)

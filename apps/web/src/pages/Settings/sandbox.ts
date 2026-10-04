@@ -3,8 +3,7 @@ import { Policy } from '@sensorr/sensorr'
 
 const GB = 1024 ** 3
 
-// Fake releases of Big Buck Bunny (2008): every oleoo source and encoding, the common languages, dubs and flags,
-// then the cases a movie search rejects whatever the policy, as [title, size in GB, seeders]
+// [title, size in GB, seeders]: every oleoo source and encoding, then the cases a movie search rejects whatever the policy
 export const SAMPLE_RELEASES: [string, number, number][] = [
   ['Big.Buck.Bunny.2008.MULTi-VF2.1080p.BluRay.x264.AC3-5.1-PEACH', 4.4, 120],
   ['Big.Buck.Bunny.2008.MULTi-VFF.1080p.WEB-DL.H264.EAC3-5.1-ORCHARD', 5.1, 80],
@@ -54,7 +53,6 @@ export const SAMPLE_RELEASES: [string, number, number][] = [
 
 export const SAMPLE_QUERY = { terms: ['big buck bunny'], titles: ['big buck bunny'], years: [2008], banned_releases: [] }
 
-// Each release goes to a configured indexer in turn, as a search over all of them would bring it
 export const sampleReleasesOf = (znabs: string[] = []) => SAMPLE_RELEASES.map(([title, size, seeders], index) => {
   const znab = znabs.length ? znabs[index % znabs.length] : undefined
 
@@ -71,7 +69,7 @@ export const sampleReleasesOf = (znabs: string[] = []) => SAMPLE_RELEASES.map(([
   }
 })
 
-// The policy's ranking of the sample, each release that also meets its `require` noted as the refine job's end-goal
+// A valid release that also meets the `require` is the end-goal of the refine job
 export const sandboxOf = (raw, znabs: string[] = []) => {
   const policy = new Policy(raw)
   const goals = new Set(policy.apply(sampleReleasesOf(znabs), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
