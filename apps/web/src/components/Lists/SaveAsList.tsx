@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
-import { Button, Option, Select } from '@sensorr/ui'
+import CreatableSelect from 'react-select/creatable'
+import { Option, Select } from '@sensorr/ui'
 import { emojize } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
@@ -9,104 +10,79 @@ import { HomeKey, List, Row, listRowId, listsOf } from '../../pages/Home/rows'
 const HOMES: { [home in HomeKey]: string } = { all: 'Browser', movie: 'Movies', tv: 'TV' }
 
 export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv') => {
+  // One field: a name typed makes a new list, offered first, a list picked gets the filters as one more source
   const SaveAsList = ({ values }: { values: { [key: string]: any } }) => {
     const { config } = useConfigContext()
     const onSave = useSaveConfig()
     const lists: List[] = listsOf(config).filter((list) => list.media === media)
-    const [mode, setMode] = useState<'new' | 'add'>('new')
-    const [name, setName] = useState('')
-    const [target, setTarget] = useState(lists[0]?.id || '')
+    const [choice, setChoice] = useState<{ value: string, label: string, __isNew__?: boolean } | null>(null)
     const [pins, setPins] = useState<HomeKey[]>(['all', media])
     const [saving, setSaving] = useState(false)
 
     const options = lists.map((list) => ({ value: list.id, label: list.name }))
-    const source = { kind, values }
-    const disabled = saving || (mode === 'new' && !name.trim()) || (mode === 'add' && !target)
+    const name = choice?.label?.trim()
 
     const save = async () => {
       const all = listsOf(config)
       const home: { [home in HomeKey]: Row[] } = config.get('home')
+      const source = { kind, values }
       const id = nanoid(8)
-
-      const next = {
-        new: () => [...all, { id, name: name.trim(), media, sources: [source] }],
-        add: () => all.map((list) => list.id === target ? { ...list, sources: [...list.sources, source] } : list),
-      }[mode]()
 
       setSaving(true)
 
       try {
-        await onSave({
-          lists: next,
-          ...(mode === 'new' ? {
-            home: Object.fromEntries(pins.map((key) => [key, [...home[key], { id: listRowId({ id } as List), hidden: false }]])),
-          } : {}),
+        await onSave(choice.__isNew__ ? {
+          lists: [...all, { id, name, media, sources: [source] }],
+          home: Object.fromEntries(pins.map((key) => [key, [...home[key], { id: listRowId({ id } as List), hidden: false }]])),
+        } : {
+          lists: all.map((list) => list.id === choice.value ? { ...list, sources: [...list.sources, source] } : list),
         })
 
-        setName('')
+        setChoice(null)
       } catch (e) {
-        // The toast of `useSaveConfig` tells the failure, the panel keeps what was typed
+        // The toast of `useSaveConfig` tells the failure, the panel keeps the choice
       } finally {
         setSaving(false)
       }
     }
 
     return (
-      <section sx={SaveAsList.styles.element} aria-labelledby={`save-as-list-${kind}`}>
-        <h3 id={`save-as-list-${kind}`}>{emojize('🗂️', 'Save as list')}</h3>
-        <Option id='save-as-list-new' type='radio' name='save-as-list' checked={mode === 'new'} onChange={() => setMode('new')}>
-          New list
-        </Option>
-        {mode === 'new' && (
-          <div sx={SaveAsList.styles.nested}>
-            <input
-              type='text'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                // Enter submits the panel, which applies: here it saves
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  !disabled && save()
-                }
-              }}
-              placeholder='Name'
-              aria-label='Name of the list'
-              sx={SaveAsList.styles.input}
-            />
-            <div sx={SaveAsList.styles.pins}>
-              <span>Pin on</span>
-              {(['all', media] as HomeKey[]).map((key) => (
-                <Option
-                  key={key}
-                  id={`save-as-list-pin-${key}`}
-                  type='checkbox'
-                  checked={pins.includes(key)}
-                  onChange={() => setPins((pins) => pins.includes(key) ? pins.filter((pin) => pin !== key) : [...pins, key])}
-                >
-                  {HOMES[key]}
-                </Option>
-              ))}
-            </div>
+      <section sx={SaveAsList.styles.element}>
+        <label htmlFor={`save-as-list-${kind}`} sx={SaveAsList.styles.label}>{emojize('🗂️', 'Save as list')}</label>
+        <div sx={SaveAsList.styles.field}>
+          <Select
+            inputId={`save-as-list-${kind}`}
+            classNamePrefix='save-as-list'
+            components={{ root: CreatableSelect }}
+            options={options}
+            value={choice}
+            onChange={(option: any) => setChoice(option?.label?.trim() ? option : null)}
+            placeholder={options.length ? 'Name a new list, or pick one' : 'Name a new list'}
+            formatCreateLabel={(input: string) => `New list "${input}"`}
+            createOptionPosition='first'
+            noOptionsMessage={() => 'Type a name to make a list'}
+            menuPlacement='top'
+          />
+          <button type='button' disabled={!name || saving} aria-busy={saving} title={!name ? 'Name a new list, or pick one' : choice.__isNew__ ? `Create "${name}"` : `Add these filters to "${name}"`} onClick={save}>
+            Save
+          </button>
+        </div>
+        {choice?.__isNew__ && (
+          <div sx={SaveAsList.styles.pins}>
+            <span>Pin on</span>
+            {(['all', media] as HomeKey[]).map((key) => (
+              <Option
+                key={key}
+                id={`save-as-list-pin-${key}`}
+                type='checkbox'
+                checked={pins.includes(key)}
+                onChange={() => setPins((pins) => pins.includes(key) ? pins.filter((pin) => pin !== key) : [...pins, key])}
+              >
+                {HOMES[key]}
+              </Option>
+            ))}
           </div>
         )}
-        <Option id='save-as-list-add' type='radio' name='save-as-list' checked={mode === 'add'} disabled={!lists.length} onChange={() => setMode('add')}>
-          {lists.length ? 'Add to a list' : `Add to a list, none of ${media === 'movie' ? 'movies' : 'shows'} yet`}
-        </Option>
-        {mode === 'add' && (
-          <div sx={SaveAsList.styles.nested}>
-            <Select
-              options={options}
-              value={options.find((option) => option.value === target)}
-              onChange={(option: any) => setTarget(option?.value)}
-              isSearchable={false}
-              menuPlacement='top'
-            />
-          </div>
-        )}
-        <Button type='button' variant='outline' disabled={disabled} aria-busy={saving} title={mode === 'new' && !name.trim() ? 'Name the list' : undefined} onClick={save} sx={SaveAsList.styles.button}>
-          {emojize('💾', 'Save')}
-        </Button>
       </section>
     )
   }
@@ -115,53 +91,52 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
     element: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 10,
-      marginTop: 2,
-      paddingY: 4,
-      borderTop: '1px solid',
-      borderColor: 'primaryDarker',
+      // The space between two fields of the panel
+      marginTop: '2em',
+      paddingBottom: 4,
       whiteSpace: 'normal',
-      '>h3': {
-        margin: 12,
-        marginBottom: 8,
-        fontSize: 4,
-        color: 'whitePure',
-      },
     },
-    nested: {
+    // The label of the Select of the other fields
+    label: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      paddingBottom: '1em',
+      fontWeight: 'semibold',
+    },
+    // The field and its button as one, as the + of the metadata fields
+    field: {
       display: 'flex',
-      flexDirection: 'column',
-      gap: 8,
-      paddingLeft: 4,
-    },
-    input: {
-      variant: 'input.reset',
-      paddingX: 6,
-      paddingY: 8,
-      border: '1px solid',
-      borderColor: 'inherit',
-      borderRadius: '0.25rem',
-      color: 'inherit',
-      '::placeholder': {
-        color: 'inherit',
-        opacity: 0.7,
+      '.save-as-list__control': {
+        borderTopRightRadius: '0px',
+        borderBottomRightRadius: '0px',
       },
-      ':focus-visible': {
-        outline: '2px solid',
-        outlineColor: 'whitePure',
-        outlineOffset: '-2px',
+      '>button': {
+        variant: 'button.reset',
+        paddingX: 6,
+        // The green of the footer of the panel
+        backgroundColor: 'primaryDarker',
+        color: 'whitePure',
+        fontWeight: 'semibold',
+        whiteSpace: 'nowrap',
+        borderTopRightRadius: '0.25rem',
+        borderBottomRightRadius: '0.25rem',
+        '&:hover:not(:disabled)': {
+          backgroundColor: 'primaryDarkest',
+        },
+        '&:disabled': {
+          opacity: 0.6,
+          cursor: 'default',
+        },
       },
     },
     pins: {
+      marginTop: 8,
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'wrap',
-      gap: 4,
+      columnGap: 4,
+      rowGap: 8,
       fontSize: 5,
-    },
-    button: {
-      alignSelf: 'flex-end',
-      marginTop: 8,
     },
   }
 
