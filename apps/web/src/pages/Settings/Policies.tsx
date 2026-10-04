@@ -115,15 +115,19 @@ const PolicySandbox = ({ form, prefix }) => {
     <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PolicySandbox.styles.element}>
       <summary>
         <span>Sandbox</span>
-        <small>Fake <em>Big Buck Bunny</em> (2008) releases, nothing is saved</small>
+        <small>
+          <span>Fake <em>Big Buck Bunny</em> (2008) releases</span>
+          {open && (
+            <>
+              <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
+              <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
+              <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
+            </>
+          )}
+        </small>
       </summary>
       {open && (
         <div>
-          <div sx={PolicySandbox.styles.toolbar}>
-            <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
-            <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
-            <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
-          </div>
           <div sx={PolicySandbox.styles.releases}>
             {releases.map((release) => (
               <Release
@@ -151,14 +155,21 @@ PolicySandbox.styles = {
     '>summary': {
       position: 'relative',
       '>small': {
-        display: 'block',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 8,
         position: ['static', 'absolute'],
         top: '50%',
         right: 3,
         transform: ['none', 'translateY(-50%)'],
-        color: 'grayDarker',
-        fontFamily: 'body',
-        lineHeight: 'inherit',
+        marginTop: [6, '0px'],
+        fontVariantNumeric: 'tabular-nums',
+        '>span:first-of-type': {
+          color: 'grayDarker',
+          fontFamily: 'body',
+          marginRight: 4,
+        },
       },
     },
     // Settings boxes every `section code`, the release search leaves its titles and reasons bare
@@ -176,19 +187,8 @@ PolicySandbox.styles = {
       },
       '>div:first-of-type': {
         marginTop: '0px',
-        paddingX: 3,
       },
     },
-  },
-  toolbar: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    paddingY: 6,
-    borderBottom: '1px solid',
-    borderColor: 'grayDark',
-    fontVariantNumeric: 'tabular-nums',
   },
   releases: {
     maxHeight: '50vh',
