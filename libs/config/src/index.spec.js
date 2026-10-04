@@ -19,6 +19,14 @@ describe('lists', () => {
     expect(() => loaded({ lists: [{ id: 'a', name: 'x', media: 'movie', sources: [] }, { id: 'a', name: 'y', media: 'tv', sources: [] }] })).toThrow('own id')
   })
 
+  it('sorts a list on a known field only', () => {
+    const list = (sort) => ({ id: 'a', name: 'x', media: 'movie', sort, sources: [] })
+
+    expect(loaded({ lists: [list({ by: 'popularity', descending: true }), { ...list(null), id: 'b' }] }).get('lists')).toHaveLength(2)
+    expect(() => loaded({ lists: [list({ by: 'title', descending: true })] })).toThrow('sort')
+    expect(() => loaded({ lists: [list({ by: '__proto__', descending: false })] })).toThrow('sort')
+  })
+
   it('refuses a list mixing media', () => {
     expect(() => loaded({ lists: [{ id: 'a', name: 'x', media: 'person', sources: [] }] })).toThrow('media')
   })
