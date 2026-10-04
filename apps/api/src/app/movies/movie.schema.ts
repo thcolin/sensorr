@@ -206,6 +206,10 @@ export class Movie extends Document<number> {
   @Prop(raw([String]))
   requested_by: string[]
 
+  // The ids of the lists added to by hand that hold it, `lists` of the config
+  @Prop(raw([String]))
+  lists: string[]
+
   // When the first guest watchlisted it, written once by `keep-in-touch`
   @Prop()
   requested_at: number
