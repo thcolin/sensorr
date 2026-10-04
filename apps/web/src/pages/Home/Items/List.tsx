@@ -88,6 +88,8 @@ export const useListPages = (list: List) => {
 
   useEffect(() => {
     const controller = new AbortController()
+    setPages(null)
+    setError(null)
 
     Promise.all(list.sources.map((source) => fetchSource(api, tmdb, list, source, 1, { signal: controller.signal })))
       .then(setPages)
@@ -124,7 +126,9 @@ export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) 
       child={list.media === 'movie' ? MovieWithCreditsAndReviews : Show}
       extra={list.media === 'tv' ? FOOTER_HEIGHT : 0}
       limit={20}
-      hide={true}
+      // An empty row leaves the Home, a failed one tells why
+      hide={!error}
+      empty={{ emoji: '', title: '', subtitle: '' }}
       more={{ title: list.name, to: `/${list.media}/lists/${list.id}` }}
       entities={entities || []}
       length={entities?.length}

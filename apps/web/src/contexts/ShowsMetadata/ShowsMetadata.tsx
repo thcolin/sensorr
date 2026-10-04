@@ -293,7 +293,7 @@ export const Provider = ({ ...props }) => {
   }, [])
 
   // A show Sensorr does not keep yet enters a list as `ignored`, written from TMDB without its episodes
-  const setShowLists = useCallback(async (id: number, lists: (current: string[]) => string[]) => {
+  const setShowLists = useCallback((id: number, lists: (current: string[]) => string[]) => toast.promise((async () => {
     const current = ref.current[id]
 
     if (current?.state) {
@@ -305,7 +305,14 @@ export const Provider = ({ ...props }) => {
     const { uri, params, init } = api.query.shows.postShows({ body })
     await api.fetch(uri, params, init)
     setMetadata(metadata => ({ ...metadata, [show.id]: { ...(metadata[show.id] || {}), ...body[show.id] } }))
-  }, [setShowMetadata])
+  })(), {
+    loading: `Updating the lists of the show...`,
+    success: () => `Lists of the show updated`,
+    error: (err) => {
+      console.warn(err)
+      return `Error while updating the lists of the show`
+    },
+  }), [setShowMetadata])
 
   const followShow = useCallback(async (id: number, followed: boolean) => {
     const current = ref.current[id]

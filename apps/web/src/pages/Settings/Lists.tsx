@@ -147,7 +147,8 @@ const ListBody = ({ list, names, saved, onChange }) => {
       {/* `article` indents every list of Settings */}
       <ul style={{ paddingLeft: 0 }}>
         {list.sources.map((source, index) => (
-          <li key={index}>
+          // A source changes its hooks with its kind: its key changes with it
+          <li key={`${source.kind}-${index}`}>
             <strong>{KINDS[source.kind]}</strong>
             {source.kind === 'custom' ? (
               <span>{typeof totals[index] === 'number' ? `${totals[index]} ${NOUNS[list.media]}` : '…'}</span>
