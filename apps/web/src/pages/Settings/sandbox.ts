@@ -93,13 +93,11 @@ export const sandboxOf = (raw, znabs: string[] = []) => {
 export const summaryOf = (releases) => {
   const valid = releases.filter(release => release.valid)
   const withdrawn = releases.filter(release => !release.valid && release.warning <= 10).length
-  const tied = valid.filter(release => release.score === valid[0].score).length
 
   return {
     valid: valid.length,
     withdrawn,
     rejected: releases.length - valid.length - withdrawn,
     pick: valid[0] || null,
-    tied: tied > 1 ? tied : 0,
   }
 }

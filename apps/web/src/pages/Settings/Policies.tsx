@@ -123,7 +123,6 @@ const PolicySandbox = ({ form, prefix }) => {
             <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
             <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
             <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
-            {!!summary.tied && <ReleaseTag title='In case of a tie, sort setting acts as the tie-breaker'><code>{summary.tied} tied at 💯 {summary.pick.score} · Sort by {policy.sorting === 'size' || !policy.sorting ? '📦' : '🌍'} {policy.sorting || 'size'}</code></ReleaseTag>}
           </div>
           <div sx={PolicySandbox.styles.releases}>
             {releases.map((release) => (
