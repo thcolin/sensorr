@@ -20,8 +20,7 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 - **Responsive pass**: every screen checked and fixed at phone width.
 - **Quick access**: the panel a long press on a poster opens.
 - **Skeletons**: loading placeholders shaped like the content they stand for.
-- **Home and Discover**: Home rows picked, ordered and saved from the Discover filters, and a
-  Random button in Discover.
+- **Home and Discover**: Home rows picked, ordered and saved from the Discover filters.
 
 ### Features
 
