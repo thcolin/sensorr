@@ -37,7 +37,6 @@ export const listRowId = (list: List) => `list:${list.id}`
 // The lists of the config, their filters values with the dates `config.json` keeps as strings back as dates
 export const listsOf = (config): List[] => JSON.parse(JSON.stringify(config.get('lists')), reviver)
 
-// Whether a row can stand on a Home: the browser Home takes every row, a PWA Home its own media
 export const fits = (home: HomeKey, id: string, lists: List[]) => {
   const media = id.startsWith('list:') ? lists.find((list) => listRowId(list) === id)?.media : BUILTINS[id]?.media
 
@@ -48,7 +47,6 @@ export const fits = (home: HomeKey, id: string, lists: List[]) => {
   return home === 'all' || media === home
 }
 
-// The rows a Home draws: unknown ids dropped, a locked row shown and put back at the end when missing
 export const rowsOf = (home: HomeKey, rows: Row[], lists: List[]): Row[] => {
   const kept = rows
     .filter((row) => fits(home, row.id, lists))

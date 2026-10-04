@@ -4,7 +4,6 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
 import { listsOf } from '../../pages/Home/rows'
 
-// The lists of a media a movie or a show is added to by hand, and a new one made on the spot
 export const useManualLists = (media: 'movie' | 'tv') => {
   const { config } = useConfigContext()
   const onSave = useSaveConfig()
@@ -16,7 +15,6 @@ export const useManualLists = (media: 'movie' | 'tv') => {
     return id
   }, [config, media])
 
-  // The ids picked in a creatable select, the new names made into lists first
   const idsOf = useCallback(async (values: { value: string, label: string, __isNew__?: boolean }[]) => {
     const ids = []
 
@@ -30,7 +28,6 @@ export const useManualLists = (media: 'movie' | 'tv') => {
   return { lists, idsOf }
 }
 
-// The `Lists` action of the bulk of Library: adds the selection to a list, or to a new one named on the spot
 export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value: any, question: string) => Promise<any>, selection: string) => {
   const { lists, idsOf } = useManualLists(media)
 

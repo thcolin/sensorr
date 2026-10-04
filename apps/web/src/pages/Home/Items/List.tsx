@@ -16,7 +16,6 @@ const FIELDS = {
   library: { movie: LIBRARY_MOVIES, tv: LIBRARY_SHOWS },
 }
 
-// The query params of a source, as Discover or Library would send them with the same filters
 export const paramsOf = (list: List, { kind, values }: List['sources'][number]) => kind === 'manual'
   ? { lists: list.id }
   : serializeControls(FIELDS[kind][list.media], valuesOfControls(FIELDS[kind][list.media], values))
@@ -28,7 +27,6 @@ const textOf = (value, names = {}) => Array.isArray(value)
     ? (Array.isArray(value.values) ? value.values.map((item) => item?.label ?? names[item]?.name ?? item).join(value.behavior === 'and' ? ' + ' : ', ') : '')
     : String(value)
 
-// The filters a source moved off their initial value, as `field: value`
 export const summaryOf = (list: List, { kind, values }: List['sources'][number], names = {}) => kind === 'manual'
   ? 'added by hand'
   : Object.entries(values || {})
@@ -37,8 +35,7 @@ export const summaryOf = (list: List, { kind, values }: List['sources'][number],
     .filter((text) => !text.endsWith(': '))
     .join(' · ') || 'no filter'
 
-// The screen of a source on its filters, the first one for the `more` link of the row; `editing` lets
-// the filters panel write them back in place of the source
+// `editing` lets the filters panel write its values back in place of the source
 export const screenOf = (list: List, index = 0, editing = false) => {
   const source = list.sources[index]
 
@@ -51,7 +48,6 @@ export const screenOf = (list: List, index = 0, editing = false) => {
   }
 }
 
-// The first page of each source, laid end to end, an entity shown once
 export const ListRow = ({ list, ...props }: { list: List, [key: string]: any }) => {
   const api = useAPI()
   const tmdb = useTMDB()

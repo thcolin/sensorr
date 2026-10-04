@@ -208,7 +208,6 @@ export interface withControlsArgs extends Omit<ControlsProps, 'values' | 'onChan
   }
 }
 
-// The query params of the controls values, as each field serializes its own
 export const serializeControls = (fields, values) => Object.keys(values || {}).reduce((acc, key) => ({
   ...acc,
   ...(fields[key]?.serialize && fields[key].serialize(key, values[key])),
