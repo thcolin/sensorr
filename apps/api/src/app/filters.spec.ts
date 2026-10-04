@@ -1,4 +1,4 @@
-import { episodeStatusFilter, facetFilter, movieFilter, oneOf, releasesFilter, showFilter, stateFilter, upcomingBirthdayFilter } from './filters'
+import { episodeStatusFilter, facetFilter, libraryStateFilter, movieFilter, oneOf, releasesFilter, showFilter, stateFilter, upcomingBirthdayFilter } from './filters'
 
 describe('oneOf', () => {
   it('matches any value on a pipe, every value on a comma, cast', () => {
@@ -139,5 +139,22 @@ describe('lists', () => {
   it('filters movies and shows on the lists that hold them, the ignored ones included', () => {
     expect(movieFilter({ lists: 'a1|b2' })).toEqual({ lists: { $in: ['a1', 'b2'] } })
     expect(showFilter({ lists: 'a1' })).toEqual({ lists: { $in: ['a1'] } })
+  })
+})
+
+describe('libraryStateFilter', () => {
+  it('counts the ignored ones in the facets of the lists and of the watchlists', () => {
+    expect(libraryStateFilter({}, 'lists')).toEqual({})
+    expect(libraryStateFilter({}, 'requested_by')).toEqual({})
+  })
+
+  it('leaves the ignored ones out of the other facets, unless a list or a watchlist is picked', () => {
+    expect(libraryStateFilter({}, 'genres')).toEqual({ state: { $nin: ['ignored'] } })
+    expect(libraryStateFilter({ lists: 'a1' }, 'genres')).toEqual({})
+  })
+
+  it('leaves a picked state to facetFilter, and keeps the ignored ones out of the state facet', () => {
+    expect(libraryStateFilter({ state: 'wished' }, 'genres')).toEqual({})
+    expect(libraryStateFilter({ state: 'wished' }, 'state')).toEqual({ state: { $nin: ['ignored'] } })
   })
 })
