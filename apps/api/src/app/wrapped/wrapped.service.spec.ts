@@ -14,7 +14,7 @@ const lean = (value: unknown) => ({ lean: async () => value })
 
 const now = Date.now() / 1000
 
-const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] as { year: number, enabled?: boolean }[], frozen = [] as number[] } = {}) => {
+const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] as { year: number, enabled?: boolean }[], frozen = [] as number[], thumb = '/library/metadata/1/thumb/2' } = {}) => {
   const playModel = { find: jest.fn(() => lean(watched ? [{ started: now }] : [])) }
   const editionModel = { find: jest.fn(() => lean(frozen.map((year) => ({ year })))) }
   const guestModel = {
@@ -22,7 +22,7 @@ const serviceOf = ({ watched = true, contentType = 'image/jpeg', editions = [] a
     findOneAndUpdate: jest.fn(({ email }, update) => lean(email === 'guest@example.com' ? { email, ...update } : null)),
   }
   const viewerModel = { findOne: jest.fn(() => lean({ _id: 7, email: 'guest@example.com' })) }
-  const titleModel = { findById: jest.fn(() => lean({ thumb: '/library/metadata/1/thumb/2', art: '/library/metadata/1/art/2' })) }
+  const titleModel = { findById: jest.fn(() => lean({ thumb, art: '/library/metadata/1/art/2' })) }
   const configService = { config: { get: (key: string) => ({ 'tautulli.url': 'http://tautulli.local', 'tautulli.key': 'secret', 'wrapped.editions': editions })[key] } }
   ;(fetch as unknown as jest.Mock).mockResolvedValue({ ok: true, status: 200, headers: { get: () => contentType }, arrayBuffer: async () => new TextEncoder().encode('jpeg').buffer })
 
@@ -35,6 +35,12 @@ describe('WrappedService.image', () => {
     const { service, playModel } = serviceOf()
     await expect(service.image('token', 'plex://movie/heat', 'thumb', 640)).resolves.toEqual({ type: 'image/jpeg', buffer: Buffer.from('jpeg') })
     expect(playModel.find).toHaveBeenCalledWith({ user_id: 7, title: 'plex://movie/heat' }, { started: 1 })
+  })
+
+  it('fetches the TMDB poster of a movie gone from Plex, without the Tautulli key', async () => {
+    const { service } = serviceOf({ thumb: '/wNxuxnFhMhFhPgvbR6MB8dwYLMM.jpg' })
+    await expect(service.image('token', 'com.plexapp.agents.imdb://tt0351283?lang=fr', 'thumb', 640)).resolves.toEqual({ type: 'image/jpeg', buffer: Buffer.from('jpeg') })
+    expect(String((fetch as unknown as jest.Mock).mock.calls.at(-1)[0])).toBe('https://image.tmdb.org/t/p/w780/wNxuxnFhMhFhPgvbR6MB8dwYLMM.jpg')
   })
 
   it('refuses a title watched only in a year turned off', async () => {

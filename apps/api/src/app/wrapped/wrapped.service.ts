@@ -7,10 +7,12 @@ import { editionBounds, editionOf, enabledOf, lookOf, partsOf, watchedHoursOf, w
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { ConfigService } from '../config/config.service'
 import { MailService } from '../mail/mail.service'
+import { TMDB } from '../plex/image'
 import { mails } from '../mail/templates'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
 
 const IMAGE_WIDTHS = [320, 640, 1280]
+const TMDB_SIZES = { 320: 'w342', 640: 'w780', 1280: 'w1280' }
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 @Injectable()
@@ -83,9 +85,9 @@ export class WrappedService {
     return this.configService.config.get('wrapped.editions')
   }
 
-  // A title read before the actors were kept is read again
+  // A title read before the actors were kept, or still without a poster, is read again
   async titleKeys(): Promise<string[]> {
-    return (await this.titleModel.find({ actors: { $exists: true } }, { _id: 1 }).lean()).map(({ _id }) => _id)
+    return (await this.titleModel.find({ actors: { $exists: true }, thumb: { $nin: [null, ''] } }, { _id: 1 }).lean()).map(({ _id }) => _id)
   }
 
   async upsertTitles(titles: WrappedTitle[]) {
@@ -300,38 +302,44 @@ export class WrappedService {
     ])
     const watched = plays.some(({ started }) => editions.includes(editionOf(started, TIME_ZONE)))
     const url = this.configService.config.get('tautulli.url')
+    // A movie gone from Plex carries a TMDB poster
+    const tmdb = TMDB.test(title?.[kind] || '')
 
-    if (!watched || !title?.[kind] || !url) {
+    if (!watched || !title?.[kind] || (!tmdb && !url)) {
       throw new NotFoundException()
     }
 
-    const uri = new URL('api/v2', url.replace(/\/?$/, '/'))
-    uri.search = new URLSearchParams({
-      apikey: this.configService.config.get('tautulli.key'),
-      cmd: 'pms_image_proxy',
-      img: title[kind],
-      width: String(width),
-      height: String(Math.round(kind === 'thumb' ? width * 1.5 : width * 9 / 16)),
-      fallback: kind === 'thumb' ? 'poster' : 'art',
-      // PNG by default, seven times heavier
-      img_format: 'jpg',
-    }).toString()
+    const uri = tmdb ? new URL(`https://image.tmdb.org/t/p/${TMDB_SIZES[width]}${title[kind]}`) : new URL('api/v2', url.replace(/\/?$/, '/'))
+
+    if (!tmdb) {
+      uri.search = new URLSearchParams({
+        apikey: this.configService.config.get('tautulli.key'),
+        cmd: 'pms_image_proxy',
+        img: title[kind],
+        width: String(width),
+        height: String(Math.round(kind === 'thumb' ? width * 1.5 : width * 9 / 16)),
+        fallback: kind === 'thumb' ? 'poster' : 'art',
+        // PNG by default, seven times heavier
+        img_format: 'jpg',
+      }).toString()
+    }
+
     // The route is public, the guest only gets a bare 502; node-fetch errors carry the URL, so the key, and are not logged
     const failed = (reason: string) => {
       this.logger.warn(`Image "${key}", ${reason}`)
       return new BadGatewayException()
     }
     const res = await fetch(uri, { signal: AbortSignal.timeout(10000) }).catch((error) => {
-      throw failed(`Tautulli unreachable: ${error.name} ${error.code || ''}`)
+      throw failed(`${tmdb ? 'TMDB' : 'Tautulli'} unreachable: ${error.name} ${error.code || ''}`)
     })
     const type = (res.headers.get('content-type') || '').split(';')[0].trim()
 
     if (!res.ok || !IMAGE_TYPES.includes(type)) {
-      throw failed(`Tautulli answered ${res.status} with "${type}"`)
+      throw failed(`${tmdb ? 'TMDB' : 'Tautulli'} answered ${res.status} with "${type}"`)
     }
 
     const body = await res.arrayBuffer().catch((error) => {
-      throw failed(`Tautulli body failed: ${error.name} ${error.code || ''}`)
+      throw failed(`${tmdb ? 'TMDB' : 'Tautulli'} body failed: ${error.name} ${error.code || ''}`)
     })
 
     return { type, buffer: Buffer.from(body) }

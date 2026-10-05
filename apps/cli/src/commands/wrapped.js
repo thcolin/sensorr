@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 import { render, Text } from 'ink'
 import { editionOf, WRAPPED_TIME_ZONE as TIME_ZONE } from '@sensorr/sensorr'
+import { TMDB } from '@sensorr/tmdb'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import command from '../utils/command'
+import { sameMovieOf, tmdbOf } from '../utils/wrapped'
 
 const meta = {
   command: 'wrapped',
@@ -34,9 +36,11 @@ export default (job, handlers) => ({
     }
 
     const tautulli = Tautulli({ url: config.get('tautulli.url'), key: config.get('tautulli.key') })
+    const tmdb = new TMDB({ key: config.get('tmdb'), region: config.get('region') || 'en-US', adult: config.get('adult') })
+    await tmdb.init()
 
     const { waitUntilExit } = render((
-      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tautulli }}>
+      <Tasks handlers={handlers} state={{ metadata: { job, command: meta.command }, logger, tautulli, tmdb }}>
         <ImportViewersTask />
         <ImportPlaysTask />
         <ImportTitlesTask />
@@ -101,8 +105,8 @@ const ImportPlaysTask = () => {
       try {
         // The whole history every time: Tautulli filters sessions by date before grouping them, so a
         // date window would split a play resumed days later into two rows
-        const titles = {}
-        let imported = 0
+        const plays = []
+        const latest = {}
         let total = 0
 
         for (let start = 0; start === 0 || start < total; start += PAGE) {
@@ -110,35 +114,46 @@ const ImportPlaysTask = () => {
           total = recordsFiltered
 
           // A session still playing has no id yet, the next run imports it
-          const plays = data
-            .filter((row) => row.id && ['movie', 'episode'].includes(row.media_type))
-            .map((row) => {
-              const movie = row.media_type === 'movie'
-              const title = movie ? row.guid : `show:${row.grandparent_rating_key}`
-              titles[title] = { rating_key: movie ? row.rating_key : row.grandparent_rating_key, media_type: movie ? 'movie' : 'show', title: movie ? row.title : row.grandparent_title }
-              // The first session of a group stays while the group grows, `reference_id` can point to a session years older
-              const sessions = String(row.group_ids || row.id).split(',').map(Number)
-              return {
-                id: Math.min(...sessions),
-                seen: state.metadata.job,
-                user_id: row.user_id,
-                media_type: row.media_type,
-                title,
-                started: row.started,
-                stopped: row.stopped,
-                play_duration: row.play_duration,
-                ...(movie ? {} : { parent_media_index: Number(row.parent_media_index) || undefined, media_index: Number(row.media_index) || undefined }),
-              }
+          for (const row of data.filter((row) => row.id && ['movie', 'episode'].includes(row.media_type))) {
+            const movie = row.media_type === 'movie'
+            const rating_key = movie ? row.rating_key : row.grandparent_rating_key
+            latest[rating_key] = { guid: row.guid, title: movie ? row.title : row.grandparent_title }
+            // The first session of a group stays while the group grows, `reference_id` can point to a session years older
+            const sessions = String(row.group_ids || row.id).split(',').map(Number)
+            plays.push({
+              id: Math.min(...sessions),
+              seen: state.metadata.job,
+              user_id: row.user_id,
+              media_type: row.media_type,
+              title: movie ? null : `show:${rating_key}`,
+              rating_key,
+              started: row.started,
+              stopped: row.stopped,
+              play_duration: row.play_duration,
+              ...(movie ? {} : { parent_media_index: Number(row.parent_media_index) || undefined, media_index: Number(row.media_index) || undefined }),
             })
-
-          if (plays.length) {
-            const { uri, params, init } = api.query.wrapped.postPlays({ body: plays })
-            await api.fetch(uri, params, init)
-            imported += plays.length
           }
 
-          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{imported}</Text> plays imported</Text> }))
+          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{plays.length}</Text> plays read</Text> }))
         }
+
+        const titles = {}
+
+        // Tautulli keeps the guid a movie had when it was played: one Plex matched again since takes the guid of its last play
+        for (const play of plays) {
+          const movie = play.media_type === 'movie'
+          play.title = movie ? latest[play.rating_key].guid : play.title
+          titles[play.title] = { rating_key: play.rating_key, media_type: movie ? 'movie' : 'show', title: latest[play.rating_key].title }
+          delete play.rating_key
+        }
+
+        for (let start = 0; start < plays.length; start += PAGE) {
+          const { uri, params, init } = api.query.wrapped.postPlays({ body: plays.slice(start, start + PAGE) })
+          await api.fetch(uri, params, init)
+          setTask((task) => ({ ...task, output: <Text><Text bold={true}>{Math.min(start + PAGE, plays.length)}</Text> plays imported</Text> }))
+        }
+
+        const imported = plays.length
 
         const prune = api.query.wrapped.prunePlays({ body: { seen: state.metadata.job } })
         const { deleted } = await api.fetch(prune.uri, prune.params, prune.init)
@@ -198,16 +213,24 @@ const ImportTitlesTask = () => {
 
           try {
             metadata = await state.tautulli('get_metadata', { rating_key }) || {}
+
+            // Its rating key now belongs to another movie
+            if (media_type === 'movie' && !sameMovieOf(key, metadata)) {
+              metadata = {}
+            }
           } catch (error) {
-            // Left out, so the next run looks it up again
-            failed++
+            // Gone from Plex: TMDB describes it, else only the name from the history holds. Without a poster, the next run looks it up again
             state.logger.warn({ message: `Unable to read "${title}" metadata from Tautulli: "${error.message || error}"`, metadata: { ...state.metadata, title: key } })
-            continue
+            metadata = {}
           }
 
-          // Gone from Plex, or its rating key now belongs to another movie: only the name from the history holds
-          if (media_type === 'movie' && metadata.guid !== key) {
-            metadata = {}
+          if (media_type === 'movie' && !metadata.guid) {
+            try {
+              metadata = await tmdbOf(state.tmdb, key)
+            } catch (error) {
+              failed++
+              state.logger.warn({ message: `Unable to read "${title}" metadata from TMDB: "${error.message || error}"`, metadata: { ...state.metadata, title: key } })
+            }
           }
 
           const tmdb = (metadata.guids || []).find((guid) => guid.startsWith('tmdb://'))

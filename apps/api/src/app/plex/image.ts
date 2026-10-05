@@ -18,7 +18,7 @@ const artworkOf = (path: string) => {
     return false
   }
 }
-const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
+export const TMDB = /^\/[\w-]+\.(jpg|jpeg|png|svg)$/
 // The sizes `Picture` asks for: each other width would be one more transcode kept by Plex
 const SIZE = /^(w92|w154|w185|w300|w342|w500|w780|original)$/
 
