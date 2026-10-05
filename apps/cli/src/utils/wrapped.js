@@ -1,3 +1,5 @@
+export const isOldGuid = (guid) => guid.startsWith('com.plexapp.agents.')
+
 // The ids an old Plex agent kept in its guid, `com.plexapp.agents.imdb://tt0351283?lang=fr`, as the new agent lists them
 export const idsOf = (guid) => {
   const [, agent, id] = guid.match(/^com\.plexapp\.agents\.(imdb|themoviedb):\/\/([^?]+)/) || []

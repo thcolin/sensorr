@@ -1,4 +1,12 @@
-import { idsOf, sameMovieOf, tmdbOf } from './wrapped'
+import { idsOf, isOldGuid, sameMovieOf, tmdbOf } from './wrapped'
+
+describe('isOldGuid', () => {
+  it('tells an old agent guid from a new or local one', () => {
+    expect(isOldGuid('com.plexapp.agents.imdb://tt0351283?lang=fr')).toBe(true)
+    expect(isOldGuid('plex://movie/5d776828961905001eb919e2')).toBe(false)
+    expect(isOldGuid('local://1234')).toBe(false)
+  })
+})
 
 describe('idsOf', () => {
   it('reads the IMDb or TMDB id an old agent kept in its guid', () => {

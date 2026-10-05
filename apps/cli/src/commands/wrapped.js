@@ -5,7 +5,7 @@ import { TMDB } from '@sensorr/tmdb'
 import { Task, Tasks, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import command from '../utils/command'
-import { sameMovieOf, tmdbOf } from '../utils/wrapped'
+import { isOldGuid, sameMovieOf, tmdbOf } from '../utils/wrapped'
 
 const meta = {
   command: 'wrapped',
@@ -117,7 +117,7 @@ const ImportPlaysTask = () => {
           for (const row of data.filter((row) => row.id && ['movie', 'episode'].includes(row.media_type))) {
             const movie = row.media_type === 'movie'
             const rating_key = movie ? row.rating_key : row.grandparent_rating_key
-            latest[rating_key] = { guid: row.guid, title: movie ? row.title : row.grandparent_title }
+            latest[`${row.media_type}:${rating_key}`] = { guid: row.guid, title: movie ? row.title : row.grandparent_title }
             // The first session of a group stays while the group grows, `reference_id` can point to a session years older
             const sessions = String(row.group_ids || row.id).split(',').map(Number)
             plays.push({
@@ -125,7 +125,7 @@ const ImportPlaysTask = () => {
               seen: state.metadata.job,
               user_id: row.user_id,
               media_type: row.media_type,
-              title: movie ? null : `show:${rating_key}`,
+              title: movie ? row.guid : `show:${rating_key}`,
               rating_key,
               started: row.started,
               stopped: row.stopped,
@@ -139,11 +139,12 @@ const ImportPlaysTask = () => {
 
         const titles = {}
 
-        // Tautulli keeps the guid a movie had when it was played: one Plex matched again since takes the guid of its last play
+        // Tautulli keeps the guid a movie had when it was played: one the new agent matched since takes the guid of its last play
         for (const play of plays) {
           const movie = play.media_type === 'movie'
-          play.title = movie ? latest[play.rating_key].guid : play.title
-          titles[play.title] = { rating_key: play.rating_key, media_type: movie ? 'movie' : 'show', title: latest[play.rating_key].title }
+          const last = latest[`${play.media_type}:${play.rating_key}`]
+          play.title = movie && isOldGuid(play.title) && last.guid.startsWith('plex://') ? last.guid : play.title
+          titles[play.title] = { rating_key: play.rating_key, media_type: movie ? 'movie' : 'show', title: last.title }
           delete play.rating_key
         }
 
@@ -219,8 +220,15 @@ const ImportTitlesTask = () => {
               metadata = {}
             }
           } catch (error) {
-            // Gone from Plex: TMDB describes it, else only the name from the history holds. Without a poster, the next run looks it up again
             state.logger.warn({ message: `Unable to read "${title}" metadata from Tautulli: "${error.message || error}"`, metadata: { ...state.metadata, title: key } })
+
+            // Tautulli or Plex unreachable: left out, so the next run looks it up again
+            if (!/^Unable to retrieve metadata/.test(error.message)) {
+              failed++
+              continue
+            }
+
+            // Gone from Plex: TMDB describes it, else only the name from the history holds
             metadata = {}
           }
 
