@@ -232,7 +232,7 @@ export class TMDB {
 
     const res = await fetch(this.build(uri, params), init)
     const body = (await res.json().catch(() => {
-      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url}`)
+      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url.replace(/api_key=[^&]+/, 'api_key=***')}`)
     })) as any
 
     if (
@@ -255,7 +255,7 @@ export class TMDB {
     }
 
     if (!res.ok) {
-      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url}`)
+      throw new Error(`[TMDB] ${res.status} (${res.statusText}): ${res.url.replace(/api_key=[^&]+/, 'api_key=***')}`)
     }
 
     if (typeof this.events.fetchEnd === 'function') {
