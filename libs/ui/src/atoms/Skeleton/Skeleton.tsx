@@ -139,7 +139,7 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
   return (
     <span {...props} ref={cell} sx={{ ...Skeleton.styles.element, alignItems: align }}>
       <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
-      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, opacity: shown ? 0 : 1 }}>
+      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: shown ? 0 : 1 }}>
         {placeholder || <Bar {...bar} />}
       </span>
       {ready && (
@@ -153,6 +153,7 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
 
 Skeleton.styles = {
   element: {
+    position: 'relative',
     display: 'grid',
     minWidth: '0px',
     '>*': {
@@ -170,6 +171,14 @@ Skeleton.styles = {
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
     },
+  },
+  // Out of the flow once the content is there, so the cell takes the content's height and never the bars'
+  out: {
+    position: 'absolute',
+    inset: '0px',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
   },
   // A flex row lays a text out at its own width, the one a lone bar takes, without the line box an
   // inline block would add under it

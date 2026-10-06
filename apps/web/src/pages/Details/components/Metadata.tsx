@@ -185,14 +185,18 @@ export const MetadataPlaceholder = ({ lists = false }) => {
     </div>
   )
 
+  // Under the summary, as the editor's panel: 8px above the fields, its 1px rule under them
   return (
-    <div sx={{ ...(lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container), marginTop: '0.5em' }}>
-      {field(3, '0.25em', '2.3125em', 30, true)}
-      {field(2.75, '0.25em', '2.3125em', 21)}
-      {lists && field(2.25, '0.25em', '2.3125em', 15, true)}
-      {field(2.75, '0.25em', '2.25em', 31)}
-      {option(12, 39)}
-      {option(12.5, 40, true)}
+    <div sx={{ paddingTop: '0.5em' }}>
+      <div sx={lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container}>
+        {field(3, '0.25em', '2.3125em', 30, true)}
+        {field(2.75, '0.25em', '2.3125em', 21)}
+        {lists && field(2.25, '0.25em', '2.3125em', 15, true)}
+        {field(2.75, '0.25em', '2.25em', 31)}
+        {option(12, 39)}
+        {option(12.5, 40, true)}
+      </div>
+      <Bar height='1px' radius='0px' />
     </div>
   )
 }
@@ -201,14 +205,14 @@ MetadataPlaceholder.styles = {
   // From under the label to the help text, as the fields' own boxes and margins leave it
   field: {
     display: 'block',
-    height: '2.84375em',
+    height: '2.8125em',
   },
   option: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5em',
     height: '2em',
-    marginTop: '0.25em',
+    marginY: '0.25em',
   },
 }
 
