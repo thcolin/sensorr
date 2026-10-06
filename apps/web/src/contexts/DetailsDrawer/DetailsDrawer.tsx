@@ -25,6 +25,8 @@ export const Provider = ({ children, ...props }) => {
   const navigationType = useNavigationType()
   const scroll = useRef<HTMLDivElement>(null)
   const opened = useRef(null)
+  const loaded = useRef(location.key)
+  const navigated = useRef(false)
 
   const open = useCallback(({ link, palette }) => {
     opened.current = { link: { to: link?.to }, palette }
@@ -52,7 +54,14 @@ export const Provider = ({ children, ...props }) => {
     closePortal()
   }, [])
 
+  // Only after a navigation within the app: on a fresh load, the page would render before the config it reads
   useEffect(() => {
+    navigated.current = navigated.current || location.key !== loaded.current
+
+    if (!navigated.current) {
+      return
+    }
+
     const saved = navigationType === 'POP' && JSON.parse(sessionStorage.getItem(`${historyEntryOf(location)}-drawer`) || 'null')
 
     if (!saved) {
@@ -85,8 +94,7 @@ export const Provider = ({ children, ...props }) => {
         <Drawer
           close={close}
           open={isOpen}
-          height='80vh'
-          inset='4.5em'
+          height='85vh'
           background='transparent'
           knob={palette?.color || 'whitePure'}
         >
