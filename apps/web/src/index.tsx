@@ -19,7 +19,7 @@ import { Provider as BulkProvider } from './contexts/Bulk/Bulk'
 import { Toasts } from './contexts/Toasts/Toasts'
 import App from './pages/App'
 import 'tippy.js/dist/tippy.css'
-import './store/i18n'
+import '@sensorr/i18n'
 
 declare global {
   interface Window { SENSORR_BODY_VIEW_TRANSITION_NAME: string }

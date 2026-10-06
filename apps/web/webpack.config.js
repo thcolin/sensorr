@@ -46,9 +46,6 @@ module.exports = composePlugins(
           resource.request = resource.request.replace(/^node:/, '')
         }),
         new webpack.DefinePlugin({
-          SENSORR_DEFAULTS: {
-            region: 'en', // local.region,
-          },
           SENSORR_VERSION: JSON.stringify(JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'))).version),
         }),
         new webpack.ProvidePlugin({
