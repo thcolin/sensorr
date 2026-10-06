@@ -243,7 +243,7 @@ const UIPoster = ({
           sx={{
             ...UIPoster.styles.right,
             ...pills,
-            top: aside ? '1.25em' : UIPoster.styles.right.top,
+            top: aside ? '0.75em' : UIPoster.styles.right.top,
             // Like a hover on the badges at left, the focus opens the ratings over these
             opacity: (ready && !focused) ? 1 : 0,
             transition: focused ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
