@@ -1,7 +1,9 @@
 import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
+import yazl from 'yazl'
 import { Test } from '@nestjs/testing'
+import { DUMP_FORMAT } from '@sensorr/sensorr'
 import { getModelToken } from '@nestjs/mongoose'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -35,6 +37,54 @@ describe('SensorrService', () => {
     const before = await fs.readdir(os.tmpdir())
     await expect(module.get(SensorrService).runMigrate(Buffer.from('not a zip'))).rejects.toThrow('Not a 0.x dump')
     expect((await fs.readdir(os.tmpdir())).filter((file) => file.startsWith('sensorr-migrate-') && !before.includes(file))).toEqual([])
+  })
+
+  describe('runRestore', () => {
+    const serviceOf = async () => {
+      const module = await Test.createTestingModule({
+        providers: [
+          SensorrService,
+          { provide: getModelToken(MetafileDocument.name), useValue: {} },
+          { provide: ConfigService, useValue: {} },
+        ],
+      }).compile()
+
+      return module.get(SensorrService)
+    }
+
+    const zipOf = (files: { [name: string]: string }) => {
+      const zip = new yazl.ZipFile()
+      Object.entries(files).forEach(([name, content]) => zip.addBuffer(Buffer.from(content), name))
+      zip.end()
+      return new Promise<Buffer>((resolve) => {
+        const chunks = []
+        zip.outputStream.on('data', (chunk) => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks)))
+      })
+    }
+
+    const manifest = (format = DUMP_FORMAT) => JSON.stringify({ format, version: '1.0.0', date: '2026-10-05T04:00:00.000Z', counts: { movies: 0 } })
+
+    it('refuses a 0.x dump, and a format it does not read, and writes nothing', async () => {
+      const service = await serviceOf()
+      const before = await fs.readdir(os.tmpdir())
+      await expect(service.runRestore(await zipOf({ 'movies.txt': '', 'stars.txt': '' }))).rejects.toThrow('the archive has no manifest.json')
+      await expect(service.runRestore(Buffer.from('not a zip'))).rejects.toThrow('the archive has no manifest.json')
+      await expect(service.runRestore(await zipOf({ 'manifest.json': manifest(DUMP_FORMAT + 1) }))).rejects.toThrow(`this Sensorr reads format ${DUMP_FORMAT}`)
+      expect((await fs.readdir(os.tmpdir())).filter((file) => file.startsWith('sensorr-restore-') && !before.includes(file))).toEqual([])
+    })
+
+    it('refuses while a job runs', async () => {
+      const service = await serviceOf()
+      ;(service as any).running.add('refresh movies')
+      await expect(service.runRestore(await zipOf({ 'manifest.json': manifest() }))).rejects.toThrow('Sensorr job "refresh movies" is running, restore once it ends')
+    })
+
+    it('starts no job while a restore runs', async () => {
+      const service = await serviceOf()
+      ;(service as any).running.add('restore')
+      await expect(service.runProcess('record', 'movies')).rejects.toThrow('Sensorr job "record movies" refused, a restore is running')
+      expect(service.runningJobs()).toEqual(['restore'])
+    })
   })
 
   describe('downloadRelease of a magnet link', () => {

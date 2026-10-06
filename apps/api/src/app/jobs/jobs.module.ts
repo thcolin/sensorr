@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { JobsController } from './jobs.controller'
+import { DumpsController } from './dumps.controller'
 import { JobsService } from './jobs.service'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
@@ -14,7 +15,7 @@ import { Metafile, MetafileSchema } from '../sensorr/metafile.schema'
     MongooseModule.forFeature([{ name: Log.name, schema: LogSchema }]),
     MongooseModule.forFeature([{ name: Metafile.name, schema: MetafileSchema }]),
   ],
-  controllers: [JobsController],
+  controllers: [JobsController, DumpsController],
   providers: [
     JobsService,
     SensorrService,

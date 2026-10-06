@@ -62,6 +62,23 @@ export class JobsController implements OnApplicationBootstrap {
     }
   }
 
+  @Post('restore')
+  // Held in memory like a 0.x dump: a dump of Cortex, 9 134 movies and 59 097 episodes, weighs about 20 MB
+  @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
+  async runRestore(@UploadedFile() archive) {
+    if (!archive?.buffer) {
+      throw new BadRequestException('No archive, send the dump as the "archive" field')
+    }
+
+    try {
+      const job = await this.sensorrService.runRestore(archive.buffer)
+      return { success: true, job }
+    } catch (err) {
+      this.logger.error(err)
+      throw err instanceof HttpException ? err : new HttpException(err.message, 500)
+    }
+  }
+
   @Sse(':job')
   listenJob(@Param() params, @Query('summarize') summarize): Observable<MessageEvent> {
     return this.jobsService.listenJob(params.job, summarize ? {

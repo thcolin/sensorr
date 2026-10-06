@@ -101,3 +101,12 @@ export const isDumpManifest = (manifest: any): manifest is DumpManifest => !!man
   && typeof manifest.version === 'string'
   && typeof manifest.date === 'string'
   && !!manifest.counts && typeof manifest.counts === 'object'
+
+// Why a manifest cannot be restored, null when it can
+export const dumpManifestError = (manifest: any): string | null => {
+  if (!isDumpManifest(manifest)) {
+    return 'Not a Sensorr dump, its manifest.json is not one'
+  }
+
+  return manifest.format === DUMP_FORMAT ? null : `Dump format ${manifest.format}, this Sensorr reads format ${DUMP_FORMAT}`
+}
