@@ -7,7 +7,7 @@ import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { pictureSrc } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
 import { DragScroll } from '../../../atoms/DragScroll/DragScroll'
-import { Lines, Skeleton, reveal } from '../../../atoms/Skeleton/Skeleton'
+import { Lines, Skeleton, reveal, barTintOf } from '../../../atoms/Skeleton/Skeleton'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
 export type PrettyProps = Omit<PosterProps, 'palette' | 'onReady'>
@@ -78,7 +78,8 @@ const UIPretty = ({
           }}
           ready={revealed}
           meaningful={false}
-          palette={palette.palette}
+          // Its block in the bars' color, gray then the poster's tint, until its picture shows
+          palette={{ ...palette.palette, backgroundColor: barTintOf(palette.palette) }}
           onReady={onPosterReady}
         />
       </div>
@@ -154,7 +155,7 @@ const UIAbout = ({ details, palette, ready, revealed, onTitled, link, badges, pa
   const { t } = useTranslation()
 
   return (
-    <div sx={UIAbout.styles.element} style={{ '--theme-ui-colors-gray': `color-mix(in oklab, ${palette.color} 14%, ${palette.backgroundColor})` } as React.CSSProperties}>
+    <div sx={UIAbout.styles.element} style={{ '--theme-ui-colors-gray': barTintOf(palette) } as React.CSSProperties}>
       <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
         <Skeleton ready={ready} bar={{ width: '12em', height: '1em' }} onShown={onTitled}>
           <Link to={link?.to} state={link?.state}>{details.title}</Link>
