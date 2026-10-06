@@ -374,7 +374,6 @@ UIDetails.styles = {
       marginTop: '-4.5em',
       paddingX: 4,
     },
-    // Once the drawer is up, the poster rises out of it and its glow lights up
     poster: {
       flexShrink: 0,
       animation: `400ms cubic-bezier(0.4, 0, 0.2, 1) 300ms both ${rise}`,
