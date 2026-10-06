@@ -16,15 +16,12 @@ export interface BarProps {
   width?: string
   height?: string
   pill?: boolean
-  // In place of the bar's corners, for the round of an emoji or an avatar
   radius?: string
-  // On the line of a text, as a word would sit
   inline?: boolean
   color?: string
   [prop: string]: any
 }
 
-// Where a text or a pill goes while it loads: still, like an empty poster anywhere else.
 export const Bar = ({ width = '100%', height = '1em', pill = false, radius = null, inline = false, color = 'gray', ...props }: BarProps) => (
   <span
     {...props}
@@ -41,7 +38,6 @@ export const Bar = ({ width = '100%', height = '1em', pill = false, radius = nul
   />
 )
 
-// The lines of a paragraph, the last one shorter
 export const Lines = ({ widths = ['100%', '92%', '64%'], height = '0.625em', ...props }: { widths?: string[], height?: string, [prop: string]: any }) => (
   <span {...props} aria-hidden={true} sx={{ display: 'flex', flexDirection: 'column', gap: '0.625em', paddingY: '0.25em' }}>
     {widths.map((width, index) => <Bar key={index} width={width} height={height} />)}
@@ -51,9 +47,7 @@ export const Lines = ({ widths = ['100%', '92%', '64%'], height = '0.625em', ...
 export interface SkeletonProps {
   ready: boolean
   bar?: BarProps
-  // In place of the bar, for a content of several parts drawn in its own shape
   placeholder?: React.ReactNode
-  // Where the bar sits in the cell: on the line of a text, or at the top of a paragraph
   align?: 'center' | 'start'
   // Cut a text that overflows with an ellipsis, which a block holding menus or badges cannot afford
   clip?: boolean

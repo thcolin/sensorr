@@ -157,7 +157,6 @@ const UIPlayer = ({ entity, behavior = 'movie', ready, ...props }) => {
             height: '2rem',
             width: '2rem',
           },
-          // Shown once its videos are known, at the house pace
           opacity: ready && playlistReady && !expanded && !!playlist.length ? 1 : 0,
           visibility: expanded || !ready || !playlistReady || !playlist.length ? 'hidden' : 'visible',
           transition: `

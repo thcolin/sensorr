@@ -625,7 +625,6 @@ const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, 
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
   if (loading) {
-    // A bar per episode row, three before TMDB says how many
     return <Lines widths={['100%', '100%', '100%']} height='2.5em' sx={UIEpisodes.styles.status} />
   }
 

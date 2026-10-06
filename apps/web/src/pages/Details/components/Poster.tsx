@@ -9,7 +9,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
     { entity: { id: 0, name: guestsContext.guests[email].name, override: email, profile_path: guestsContext.guests[email].avatar } },
   ], []), [requested_by, guestsContext.loading, guestsContext.guests])
 
-  // In the drawer, the badges sit where a grid poster carries them. Each mounts once known, and fades in then
+  // In the drawer, the badges sit where a grid poster carries them
   const drawer = variant === 'drawer'
   const badge = (style) => ({ ...style, ...reveal })
   const States = { movie: MovieState, tv: ShowState, person: PersonState }

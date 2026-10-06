@@ -183,7 +183,6 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, followed,
   </div>
 )
 
-// The pill and the bar, at the height of the pill
 const ShowProgressPlaceholder = ({ compact }) => (
   <div sx={ShowProgress.styles.element}>
     <span sx={ShowProgress.styles.pill}><Bar pill={true} width='4.5em' height='calc(0.75em * 1.2 + 0.375em)' /></span>

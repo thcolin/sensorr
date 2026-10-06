@@ -93,7 +93,6 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
       </div>
       <div sx={Invitation.styles.people}>
         {!shared && !unreachable && (
-          // A person's row: the checkbox, the face, the name and the email
           <ul sx={Invitation.styles.list} aria-hidden={true}>
             {[[6, 12], [7.5, 14], [5, 11]].map(([name, email], index) => (
               <li key={index} sx={Invitation.styles.person}>

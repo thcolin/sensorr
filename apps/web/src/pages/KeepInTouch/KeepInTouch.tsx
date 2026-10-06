@@ -287,7 +287,6 @@ const KeepInTouch = () => {
                       </p>
                     </div>
                   ) : (
-                    // The steps show at once, the code is a bar until Plex gives it
                     <div>
                       <a
                         href='https://plex.tv/link'

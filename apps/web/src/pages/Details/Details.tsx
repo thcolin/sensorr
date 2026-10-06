@@ -321,7 +321,6 @@ const UIDetails = ({
     </>
   )
 
-  // A pill per group: the reviews, the platforms, the links
   const externalsShape = (
     <span sx={UIDetails.styles.pills}>
       {['5em', '4em', '7em'].map((width, index) => <Bar key={index} pill={true} width={width} height='2em' />)}

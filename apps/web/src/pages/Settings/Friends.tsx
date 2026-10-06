@@ -155,7 +155,6 @@ const Friends = ({ ...props }) => {
           </p>
           <h3>Guests</h3>
           {loading && (
-            // A guest's row: the avatar, the name over the email
             <div sx={Friends.styles.guests} aria-hidden={true}>
               {[[7, 13], [5.5, 11], [8, 15]].map(([name, email], index) => (
                 <div key={index} sx={Friends.styles.guest}>

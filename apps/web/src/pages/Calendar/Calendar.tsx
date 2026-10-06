@@ -331,7 +331,6 @@ const UIMovieEntry = ({ entity, as: Entry, hideLibrary }) => {
       empty={Empty.movie}
       name={entity.title}
       title={genres}
-      // Known after the card, from the metadata: it fades in then
       badge={(state && !state.hide) ? <Badge role='img' aria-label={state.label} title={state.label} emoji={state.emoji} size='normal' compact={true} sx={reveal} /> : null}
       dimmed={!loading && hideLibrary && !!metadata && metadata.state !== 'ignored'}
     />
