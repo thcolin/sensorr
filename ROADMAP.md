@@ -5,7 +5,6 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 
 ## Before 1.0.0
 
-- **Dump and import**: dump the data of an instance and import it back, so that it stays yours.
 - **Online demo**: a public instance on demo data.
 - **Translations**: no hard-coded string left in the interface.
 - **Responsive pass**: every screen checked and fixed at phone width.
