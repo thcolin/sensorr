@@ -552,8 +552,7 @@ UIPoster.styles = {
 
 export const Poster = memo(UIPoster)
 
-// Each `[data-cutout]` badge of `wrapper` cuts its border box out of the picture in `frame`, as opaque as the badge is
-// over the image. Every poster waiting for a frame is measured first and masked after, so a grid lays out once per frame
+// Every poster waiting for a frame is measured before any is masked, so a grid lays out once per frame
 const cutouts = new Map<HTMLElement, () => { mask: string, moving: boolean }>()
 let request = null
 
