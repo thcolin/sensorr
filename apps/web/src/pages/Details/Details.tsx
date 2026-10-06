@@ -106,8 +106,16 @@ const UIDetails = ({
   // A show opens its settings once it is in the library, which is known only once its metadata loads
   const page = variant === 'page'
   // In the drawer, every movie opened from a grid would share the grid's history entry: its toggles stay local
+  // The editor opens on the movie's first known state: a state that loads again on the way would close it and open it
+  // again, its bars with it
+  const opening = useRef({ id: undefined, open: false })
+
+  if (state && state !== 'loading' && opening.current.id !== entity?.id) {
+    opening.current = { id: entity?.id, open: ['wished', 'archived', 'missing'].includes(state) }
+  }
+
   const remembered = {
-    metadata: useHistoryState('metadata', behavior === 'tv' ? null : ['wished', 'archived', 'missing'].includes(state), { enabled: page }),
+    metadata: useHistoryState('metadata', behavior === 'tv' ? null : opening.current.open, { enabled: page }),
     meaningful: useHistoryState('meaningful', false, { enabled: page }),
   }
   const local = {
