@@ -59,7 +59,7 @@ const UIPoster = ({
   footer = null,
   ...props
 }: PosterProps) => {
-  const ref = useRef()
+  const ref = useRef<HTMLDivElement>()
   const device = useDevice()
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
   const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
@@ -77,6 +77,47 @@ const UIPoster = ({
     details?.poster,
   )
 
+  // On a phone, a long press checks the poster where a selection is possible, and focuses it elsewhere:
+  // what a hover shows on a desktop, until the next touch or scroll
+  const [focused, setFocused] = useState(false)
+  const raised = !!selected || focused
+
+  useEffect(() => {
+    if (!focused) {
+      return
+    }
+
+    const onTouchStart = (e) => !ref.current?.contains(e.target) && setFocused(false)
+    const onScroll = () => setFocused(false)
+    document.addEventListener('touchstart', onTouchStart, true)
+    window.addEventListener('scroll', onScroll, true)
+
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart, true)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [focused])
+
+  const onLongPress = useCallback(() => {
+    if (selected !== null) {
+      onSelectedChange(details?.id)
+    } else {
+      setFocused(true)
+    }
+  }, [selected, onSelectedChange, details?.id])
+
+  // While a selection is open, a tap checks or unchecks the poster instead of opening it
+  const handleOnPress = useMemo(() => {
+    if (selected !== null && (selected || selectedVisible)) {
+      return () => onSelectedChange(details?.id)
+    }
+
+    return typeof onPress === 'function' ? () => {
+      setFocused(false)
+      onPress({ details, link, palette })
+    } : null
+  }, [selected, selectedVisible, onSelectedChange, onPress, details, link, palette])
+
   return (
     <div
       ref={ref}
@@ -84,6 +125,7 @@ const UIPoster = ({
       sx={{
         ...UIPoster.styles.element,
         opacity: ready ? opacity : 1,
+        zIndex: (interactive && raised) ? 5 : 'auto',
         ':hover': {
           zIndex: 5,
           ...(selected !== null ? {
@@ -102,7 +144,13 @@ const UIPoster = ({
         },
       }}
     >
-      <div sx={UIPoster.styles.wrapper}>
+      <div
+        sx={{
+          ...UIPoster.styles.wrapper,
+          transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
+          transform: (interactive && raised) ? 'scale(1.05)' : 'none',
+        }}
+      >
         <div
           sx={{
             ...UIPoster.styles.left,
@@ -168,6 +216,14 @@ const UIPoster = ({
                 zIndex: 2,
                 ...(selected !== null ? {} : {}),
                 ...((badges?.reviews?.component && badges?.focus?.component) ? {
+                  ...(focused ? {
+                    '>span:first-of-type': {
+                      visibility: 'visible !important',
+                    },
+                    '>span:last-of-type': {
+                      visibility: 'hidden !important',
+                    },
+                  } : {}),
                   ':not(:hover)>span:first-of-type': {
                     transition: 'visibility ease 0ms 200ms',
                   },
@@ -187,7 +243,7 @@ const UIPoster = ({
             >
               {badges?.reviews?.component && (
                 <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
-                  <badges.reviews.component {...badges?.reviews?.props} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }} />
+                  <badges.reviews.component {...badges?.reviews?.props} forceOpen={focused} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }} />
                 </span>
               )}
               {badges?.focus?.component && (
@@ -202,8 +258,9 @@ const UIPoster = ({
           sx={{
             ...UIPoster.styles.right,
             ...pills,
-            opacity: ready ? 1 : 0,
-            transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+            // Like a hover on the badges at left, the focus opens the ratings over these
+            opacity: (ready && !focused) ? 1 : 0,
+            transition: focused ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
           }}
         >
           {badges?.state?.component && <div sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
@@ -234,7 +291,9 @@ const UIPoster = ({
             disabled={!link?.to}
             interactive={interactive && typeof onPress === 'function'}
             onTouchStart={loadExternals}
-            onPress={typeof onPress === 'function' ? () => onPress({ details, link, palette }) : null}
+            onPress={handleOnPress}
+            onLongPress={onLongPress}
+            raised={raised}
             palette={palette}
           >
             <Picture
@@ -265,15 +324,15 @@ const UIPoster = ({
               }}
             />
           </PressableLink>
-          {(!interactive && credits !== false) && (
+          {((!interactive || focused) && credits !== false) && (
             <div
               sx={{
                 ...UIPoster.styles.credits,
-                opacity: 0,
-                visibility: 'hidden',
+                opacity: focused ? 1 : 0,
+                visibility: focused ? 'visible' : 'hidden',
                 transition: 'opacity 400ms ease-in-out, visibility 0ms ease 400ms',
               }}
-              >
+            >
               <Credits credits={credits || []} length={device === 'mobile' ? 4 : 5} />
             </div>
           )}
@@ -459,25 +518,27 @@ UIPoster.styles = {
 
 export const Poster = memo(UIPoster)
 
-// On a phone, a tap calls `onPress` and a long press follows the link
+// On a phone, a tap calls `onPress` and a long press calls `onLongPress` while the finger is still down
 const PressableLink = ({
   children,
   palette,
   interactive,
+  raised,
   onTouchStart,
   onPress,
+  onLongPress,
   ...props
 }: any) => {
   const ref = useRef<any>()
   const timer = useRef<any>()
   const origin = useRef<{ x: number, y: number }>(null)
-  const follow = useRef<boolean>(false)
-  const [action, setAction] = useState<'press' | 'longpress' | null>(null)
+  const pressed = useRef<boolean>(false)
+  const [press, setPress] = useState(false)
 
   const reset = () => {
     clearTimeout(timer.current)
     origin.current = null
-    setAction(null)
+    setPress(false)
   }
 
   const handleOnTouchStart = (e) => {
@@ -489,11 +550,17 @@ const PressableLink = ({
       return
     }
 
+    pressed.current = false
     origin.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
     // Pressed only once the finger stays a moment: the start of a scroll does not shrink the poster
     timer.current = setTimeout(() => {
-      setAction('press')
-      timer.current = setTimeout(() => setAction('longpress'), 320)
+      setPress(true)
+      timer.current = setTimeout(() => {
+        reset()
+        pressed.current = true
+        navigator.vibrate?.(10)
+        onLongPress?.()
+      }, 320)
     }, 80)
   }
 
@@ -503,23 +570,19 @@ const PressableLink = ({
     }
   }
 
+  // The long press already acted: the click that follows the touch must not open the poster as well
   const handleOnTouchEnd = (e) => {
-    const longpress = action === 'longpress' && !!origin.current
     reset()
 
-    if (longpress) {
-      if (e.cancelable) {
-        e.preventDefault()
-      }
-
-      follow.current = true
-      ref.current?.click()
+    if (pressed.current && e.cancelable) {
+      e.preventDefault()
     }
   }
 
   const handleOnClick = (e) => {
-    if (follow.current) {
-      follow.current = false
+    if (pressed.current) {
+      pressed.current = false
+      e.preventDefault()
       return
     }
 
@@ -546,11 +609,12 @@ const PressableLink = ({
       onTouchMove={handleOnTouchMove}
       onTouchEnd={handleOnTouchEnd}
       onTouchCancel={reset}
+      onContextMenu={interactive ? (e) => e.preventDefault() : undefined}
       sx={{
         position: 'relative',
         display: 'block',
         transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
-        transform: `scale(${{ press: 0.96, longpress: 1.05 }[action] || 1})`,
+        transform: press ? 'scale(0.96)' : 'none',
         userSelect: 'none',
         // WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',
@@ -563,14 +627,9 @@ const PressableLink = ({
           width: '100%',
           height: '100%',
           boxShadow: (theme) => `0px 3px 30px ${palette?.colorfulColor || theme.colors.primary}`,
-          opacity: action === 'longpress' ? 1 : 0,
+          opacity: (interactive && raised) ? 1 : 0,
           transition: 'opacity 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
         },
-        ...(action === 'longpress' ? {
-          '>span': {
-            maskSize: '110% !important'
-          },
-        } : {}),
       }}
     >
       {children}
