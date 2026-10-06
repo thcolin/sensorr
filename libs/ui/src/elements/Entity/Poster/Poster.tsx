@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LinkProps } from 'react-router-dom'
 import { useDevice } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
@@ -83,6 +83,28 @@ const UIPoster = ({
   const raised = !!selected || focused
   // On a phone an open selection moves the ratings to the right corner, over the state, and shows the whole checkbox
   const aside = interactive && (!!selected || selectedVisible)
+  const ratings = useRef<HTMLDivElement>()
+  const state = useRef<HTMLDivElement>()
+  const placed = useRef<{ left: number, top: number }>(null)
+
+  // The badges slide to their new corner instead of jumping there, which reveals the checkbox under the ratings
+  useLayoutEffect(() => {
+    if (!ratings.current || !state.current) {
+      return
+    }
+
+    const now = { left: ratings.current.offsetLeft, top: state.current.offsetTop }
+    const before = placed.current
+    placed.current = now
+
+    if (!before || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+
+    const timing = { duration: aside ? 250 : 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
+    ratings.current.animate([{ transform: `translateX(${before.left - now.left}px)` }, { transform: 'none' }], timing)
+    state.current.animate([{ transform: `translateY(${before.top - now.top}px)` }, { transform: 'none' }], timing)
+  }, [aside])
 
   useEffect(() => {
     if (!focused) {
@@ -165,13 +187,14 @@ const UIPoster = ({
         sx={{
           ...UIPoster.styles.wrapper,
           transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
-          transform: (interactive && raised) ? 'scale(1.05)' : 'none',
+          transform: (interactive && focused) ? 'scale(1.05)' : 'none',
           '@media (prefers-reduced-motion: reduce)': {
             transition: 'none',
           },
         }}
       >
         <div
+          ref={ratings}
           sx={{
             ...UIPoster.styles.left,
             // Au repos le badge recouvre totalement la coche (position d'origine, identique aux
@@ -180,8 +203,8 @@ const UIPoster = ({
             opacity: ready ? 1 : 0,
             transition: [
               ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
-              'left 150ms ease-in-out, right 150ms ease-in-out',
-            ].join(', '),
+              interactive ? null : 'left 150ms ease-in-out, right 150ms ease-in-out',
+            ].filter(Boolean).join(', '),
             ...((!badges?.focus?.component || !badges?.reviews?.component) ? {
               '>div>span>span': {
                 minWidth: ['4.7em', '5.5em'],
@@ -240,6 +263,7 @@ const UIPoster = ({
           )}
         </div>
         <div
+          ref={state}
           sx={{
             ...UIPoster.styles.right,
             ...pills,
