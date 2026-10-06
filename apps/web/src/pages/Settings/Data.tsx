@@ -90,14 +90,14 @@ const Data = ({ ...props }) => {
       <section>
         <article>
           <h2>Data</h2>
-          <p>Your library and its settings in a <code>.zip</code>, as JSON a text editor opens: movies, TV shows, episodes and stars, then every setting but the keys and passwords, which never leave this Sensorr.</p>
+          <p>Your library and its settings in a <code>.zip</code> of plain JSON: movies, TV shows, episodes and stars, then every setting but the keys and passwords, which never leave this Sensorr.</p>
           <div sx={Update.styles.stack}>
             <div sx={Update.styles.action}>
               <Button type='button' color='primary' sx={{ width: '100%' }} disabled={dumping || restoring} aria-busy={dumping} onClick={() => runJob('dump', undefined)}>
                 {dumping ? '⌛ Dumping' : 'Dump now'}
               </Button>
               <small sx={Update.styles.muted}>
-                Keeps the last {DUMP_KEPT}. The {emojize(JOB_EMOJIS.dump, 'dump')} job {schedule?.paused ? 'is paused' : `runs ${cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true }).toLowerCase()}`}, in <Link to='/settings/jobs'>Jobs</Link>
+                Keeps the last {DUMP_KEPT}. The {emojize(JOB_EMOJIS.dump, 'dump')} job {schedule?.paused ? 'is paused' : `runs ${cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true }).toLowerCase()}`}, in <Link to='/settings/jobs'>Settings › Jobs</Link>
               </small>
             </div>
             {failure && (
@@ -124,17 +124,17 @@ const Data = ({ ...props }) => {
             )}
             <div sx={Update.styles.action}>
               <h3>Import</h3>
-              <p>A dump of this Sensorr or of another one. The library and the settings it holds replace these, the keys and passwords of this Sensorr stay.</p>
+              <p>A dump of this Sensorr or of another one replaces the library and the settings of this Sensorr. Its keys and passwords stay.</p>
               <input
                 ref={input}
                 type='file'
                 accept='.zip,application/zip'
-                aria-label='Dump'
+                aria-label='Dump to import'
                 onChange={(e) => setArchive(e.target.files?.[0] || null)}
                 sx={Onboarding.styles.file}
               />
               {archive && !others.length && state && (
-                <p sx={Update.styles.warning}>
+                <p role='status' sx={Update.styles.warning}>
                   <strong>Warning</strong>, replaces {countsOf(state.counts)}
                 </p>
               )}
@@ -143,7 +143,7 @@ const Data = ({ ...props }) => {
                   <strong>Warning</strong>, {others.length > 2 ? `${emojize(JOB_EMOJIS[others[0]], others[0])} and ${others.length - 1} more` : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {others.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                 </p>
               )}
-              <Button type='button' color='primary' sx={{ width: '100%' }} disabled={!archive || importing || !!jobs.length} aria-busy={importing || restoring} onClick={restore}>
+              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!archive || importing || !!jobs.length} aria-busy={importing || restoring} onClick={restore}>
                 {restoring ? '⌛ Importing' : 'Import'}
               </Button>
             </div>
@@ -166,6 +166,7 @@ Data.styles = {
     },
     '>li': {
       display: 'flex',
+      flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 4,
@@ -181,10 +182,9 @@ Data.styles = {
         // A file name is data: monospace, without the pill of a code sample
         '>strong': {
           fontFamily: 'monospace',
+          lineHeight: 'heading',
           fontWeight: 'semibold',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          overflowWrap: 'anywhere',
         },
         '>small': {
           fontSize: 5,
