@@ -769,6 +769,8 @@ const PressableLink = ({
         // WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',
         WebkitUserDrag: 'none',
+        isolation: 'isolate',
+        // The aura lies under the picture, so a badge's cutout shows it as well
         '::after': {
           content: '""',
           position: 'absolute',
@@ -776,7 +778,10 @@ const PressableLink = ({
           left: '0px',
           width: '100%',
           height: '100%',
-          boxShadow: (theme) => `0px 3px 30px ${palette?.colorfulColor || theme.colors.primary}`,
+          zIndex: -1,
+          backgroundColor: (theme) => palette?.colorfulColor || theme.colors.primary,
+          filter: 'blur(15px)',
+          transform: 'translateY(3px)',
           opacity: (interactive && raised) ? 1 : 0,
           transition: 'opacity 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
         },
