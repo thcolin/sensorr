@@ -552,8 +552,34 @@ UIPoster.styles = {
 
 export const Poster = memo(UIPoster)
 
-// Each `[data-cutout]` badge of `wrapper` cuts its border box out of the picture in `frame`, as opaque as the badge.
-// The mask is drawn again on every frame while a transition or an animation runs in the poster, so the hole follows the badge
+// Each `[data-cutout]` badge of `wrapper` cuts its border box out of the picture in `frame`, as opaque as the badge is
+// over the image. Every poster waiting for a frame is measured first and masked after, so a grid lays out once per frame
+const cutouts = new Map<HTMLElement, () => { mask: string, moving: boolean }>()
+let request = null
+
+const redraw = () => {
+  const measured = Array.from(cutouts).map(([picture, measure]) => [picture, measure, measure()] as const)
+
+  cutouts.clear()
+  request = null
+
+  measured.forEach(([picture, measure, { mask, moving }]) => {
+    if (picture.style.getPropertyValue('-webkit-mask-image') !== mask) {
+      picture.style.setProperty('mask-image', mask)
+      picture.style.setProperty('-webkit-mask-image', mask)
+    }
+
+    if (moving) {
+      scheduleCutout(picture, measure)
+    }
+  })
+}
+
+const scheduleCutout = (picture: HTMLElement, measure: () => { mask: string, moving: boolean }) => {
+  cutouts.set(picture, measure)
+  request = request || requestAnimationFrame(redraw)
+}
+
 const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.MutableRefObject<HTMLElement>) => {
   const schedule = useRef<() => void>(null)
 
@@ -565,18 +591,19 @@ const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.Mu
       return
     }
 
-    let request = null
-    let mask = null
-
-    const draw = () => {
+    const measure = () => {
       const box = picture.getBoundingClientRect()
+      const moving = element.getAnimations({ subtree: true })
+        .some((animation) => animation.playState === 'running' && animation.effect?.getTiming().iterations !== Infinity)
 
       if (!box.width || !picture.offsetWidth) {
-        return
+        return { mask: 'none', moving }
       }
 
       // From the screen, where transforms apply, to the picture's own pixels
       const scale = picture.offsetWidth / box.width
+      // The image fades in with the badges: a hole as opaque as the badge over the image stays whole meanwhile
+      const image = Number(getComputedStyle(picture.querySelector('img') || picture).opacity)
       const holes = Array.from(element.querySelectorAll<HTMLElement>('[data-cutout]')).map((badge) => {
         const style = getComputedStyle(badge)
 
@@ -589,6 +616,8 @@ const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.Mu
         for (let node = badge; node && node !== element; node = node.parentElement) {
           opacity *= Number(getComputedStyle(node).opacity)
         }
+
+        opacity = image ? Math.min(1, opacity / image) : 1
 
         if (opacity < 0.01) {
           return null
@@ -609,40 +638,24 @@ const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.Mu
         return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${rx}" fill-opacity="${opacity.toFixed(2)}"/>`
       }).filter(Boolean)
 
-      const next = holes.length ? `url("data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${picture.offsetWidth}" height="${picture.offsetHeight}"><mask id="m"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${holes.join('')}</g></mask><rect width="100%" height="100%" mask="url(#m)"/></svg>`,
-      )}")` : 'none'
-
-      if (next !== mask) {
-        mask = next
-        picture.style.maskImage = next
-        picture.style.setProperty('-webkit-mask-image', next)
+      return {
+        moving,
+        mask: holes.length ? `url("data:image/svg+xml,${encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${picture.offsetWidth}" height="${picture.offsetHeight}"><mask id="m"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${holes.join('')}</g></mask><rect width="100%" height="100%" mask="url(#m)"/></svg>`,
+        )}")` : 'none',
       }
     }
 
-    const moving = () => element.getAnimations({ subtree: true })
-      .some((animation) => animation.playState === 'running' && animation.effect?.getTiming().iterations !== Infinity)
-
-    const tick = () => {
-      draw()
-      request = moving() ? requestAnimationFrame(tick) : null
-    }
-
-    schedule.current = () => {
-      if (request === null) {
-        request = requestAnimationFrame(tick)
-      }
-    }
+    schedule.current = () => scheduleCutout(picture, measure)
 
     const observer = new ResizeObserver(schedule.current)
     observer.observe(picture)
 
     const events = ['transitionrun', 'animationstart', 'pointerenter', 'pointerleave', 'focusin', 'focusout']
     events.forEach((event) => element.addEventListener(event, schedule.current))
-    draw()
 
     return () => {
-      cancelAnimationFrame(request)
+      cutouts.delete(picture)
       observer.disconnect()
       events.forEach((event) => element.removeEventListener(event, schedule.current))
       schedule.current = null
