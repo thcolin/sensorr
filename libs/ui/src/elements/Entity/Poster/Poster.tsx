@@ -106,7 +106,6 @@ const UIPoster = ({
     }
   }, [selected, onSelectedChange, details?.id])
 
-  // While a selection is open, a tap checks or unchecks the poster instead of opening it
   const handleOnPress = useMemo(() => {
     if (selected !== null && (selected || selectedVisible)) {
       return () => onSelectedChange(details?.id)
