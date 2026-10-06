@@ -65,7 +65,7 @@ curl -o config.json https://raw.githubusercontent.com/thcolin/sensorr/dev/config
 curl --create-dirs -o docker/sensorr-db/0-init-mongodb.js https://raw.githubusercontent.com/thcolin/sensorr/dev/docker/sensorr-db/0-init-mongodb.js
 
 # Create every folder the stack mounts: Docker on a Synology refuses to start on a missing one
-mkdir -p caddy/data caddy/config caddy/certs db .secrets blackhole tvshows
+mkdir -p caddy/data caddy/config caddy/certs db .secrets dumps blackhole tvshows
 
 # Set your own Sensorr secrets, username and password
 echo "SENSORR_AUTH_SECRET=youshouldchangethisvaluetoanythingelse" >> .env
@@ -176,6 +176,14 @@ docker compose up -d
 ```
 
 `sensorr-updater` holds the Docker socket, which controls every container of the host. It publishes no port and only talks to `sensorr-api`, over the `updater` network, which has no way out, with the secret `sensorr-api` generates in `.secrets/updater` on its first boot. An update is refused while a [job](docs/jobs.md) runs, since recreating `sensorr-api` would kill it. Without the profile, the page gives the commands to run instead.
+
+# Dump and import
+
+Settings › Data writes your library and its settings into a `.zip` in `dumps/` of the install folder: movies, TV shows, episodes and stars as JSON lines, `config.json`, and a `manifest.json` with the version of Sensorr and the count of each. The keys and passwords stay out, the TMDB key, every indexer key, the Plex token, the mail password, the Tautulli and MediUX keys, and so does the key Jackett and Prowlarr leave in a release link. The wrapped, the jobs' logs and your friends' Plex tokens stay out too.
+
+The `dump` job does the same every Sunday at 4:00 once turned on in Settings › Jobs, and keeps the last 4. A dump only reaches `dumps/` with the `./dumps:/app/dumps` volume of `docker-compose.yml`: an install made before Settings › Data needs that line in its compose file, and a `mkdir dumps` in its install folder.
+
+The same page imports a dump, and so does the onboarding of a new instance, under *From a dump*. The import replaces the movies, TV shows, episodes and stars, and the settings but their keys and passwords: those of the instance that imports stay, and an indexer of the same name keeps its key. It is refused while a job runs, and it runs as the `restore` job, all at once: a dump that breaks halfway leaves the library as it was. From a shell, `docker exec sensorr-api bin/sensorr dump` writes one, and `docker exec sensorr-api bin/sensorr restore dumps/<file>.zip` imports one of `dumps/`.
 
 # Documentation
 
