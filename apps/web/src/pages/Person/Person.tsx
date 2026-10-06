@@ -126,7 +126,7 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             without_genres: {
               behavior: 'or',
               values: [
-                { value: 99, label: 'Docuemntary' },
+                { value: 99, label: 'Documentary' },
                 { value: 10770, label: 'TV Movie' },
               ],
             },
@@ -224,7 +224,7 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             without_genres: {
               behavior: 'or',
               values: [
-                { value: 99, label: 'Docuemntary' },
+                { value: 99, label: 'Documentary' },
                 { value: 10770, label: 'TV Movie' },
               ],
             },
