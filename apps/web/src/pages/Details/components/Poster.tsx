@@ -89,13 +89,16 @@ UIPoster.styles = {
       width: 'calc(100% + 0.75em)',
     },
   },
-  // Astride the corner, half its size out of the poster
+  // Astride the corner, half its size out of the poster, a quarter smaller than the state badge: 30px on 40px
   artworks: {
     position: 'absolute',
-    bottom: ['-1.1em', '-1em'],
-    left: ['-1.1em', '-1em'],
+    bottom: ['-0.825em', '-0.75em'],
+    left: ['-0.825em', '-0.75em'],
     fontSize: 3,
     zIndex: 1,
+    '>button': {
+      fontSize: '0.75em',
+    },
   },
 }
 
