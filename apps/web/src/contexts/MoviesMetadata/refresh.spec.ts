@@ -1,4 +1,4 @@
-import { refresh } from './refresh'
+import { refresh, refreshAll } from './refresh'
 
 const gone = { fetch: async () => { throw new Error('The resource you requested could not be found.') } }
 
@@ -38,5 +38,35 @@ describe('refresh', () => {
     ['wished a moment ago, its write failed', { state: 'wished' }],
   ])('writes no movie %s when TMDB fails, it would have no title', async (_, current) => {
     await expect(refresh(gone, 185789, current)).rejects.toThrow('could not be found')
+  })
+})
+
+describe('refreshAll', () => {
+  beforeEach(() => jest.spyOn(console, 'warn').mockImplementation(() => null))
+  afterEach(() => jest.restoreAllMocks())
+
+  it('skips the movie TMDB does not answer for and keeps the others, a few calls at a time', async () => {
+    let running = 0
+    let most = 0
+    const tmdb = {
+      fetch: async (uri) => {
+        running++
+        most = Math.max(most, running)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        running--
+
+        if (uri === 'movie/2') {
+          throw new Error('The resource you requested could not be found.')
+        }
+
+        return { id: Number(uri.split('/')[1]), title: uri, release_dates: { results: [] } }
+      },
+    }
+
+    const { refreshed, skipped } = await refreshAll(tmdb, ['1', '2', '3', '4', '5'], {}, 2)
+
+    expect(Object.keys(refreshed)).toEqual(['1', '3', '4', '5'])
+    expect(skipped).toEqual(['2'])
+    expect(most).toBe(2)
   })
 })

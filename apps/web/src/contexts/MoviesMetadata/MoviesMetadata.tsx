@@ -8,7 +8,7 @@ import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
 import { usePlexArtworks } from '../../store/plex'
-import { refresh } from './refresh'
+import { refresh, refreshAll } from './refresh'
 
 const moviesMetadataContext = createContext({})
 
@@ -154,25 +154,32 @@ export const Provider = ({ ...props }) => {
       }))
 
       let failed = []
+      const skipped = []
 
       try {
         // Several ids at once come from a selection: the ones Sensorr already keeps have their title, the others
         // only TMDB can give one, without it a grid's selection would write documents with no title
         const refreshed = Object.keys(changes).length === 1 ? Object.keys(changes) : key === 'state' && value === 'ignored' ? [] : Object.keys(changes).filter(i => !initial[i]?.title)
 
-        await Promise.all(refreshed.map(async (i) => {
-          changes[i] = {
-            ...(await refresh(tmdb, i, initial[i])),
-            ...changes[i],
-          }
-        }))
+        if (ids.length === 1) {
+          const [i] = refreshed
+          changes[i] = { ...(await refresh(tmdb, i, initial[i])), ...changes[i] }
+        } else {
+          // A movie TMDB does not answer for is left out of the write, and told in the toast with the others that failed
+          const { refreshed: fetched, skipped: missing } = await refreshAll(tmdb, refreshed, initial)
+          Object.entries(fetched).forEach(([i, movie]) => (changes[i] = { ...(movie as any), ...changes[i] }))
+          missing.forEach((i) => {
+            delete changes[i]
+            skipped.push(i)
+          })
+        }
 
         const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovies' : 'postMovies')]({ body: changes })
         // A movie whose release did not download comes back in `failed`, the others are written
-        const res = await api.fetch(uri, params, init)
-        failed = res.failed || []
+        const res = Object.keys(changes).length ? await api.fetch(uri, params, init) : {}
+        failed = [...skipped, ...(res.failed || [])]
       } catch (err) {
-        undo(Object.keys(changes))
+        undo(ids.map(String))
         console.warn(err)
         throw new Error()
       }
@@ -190,7 +197,7 @@ export const Provider = ({ ...props }) => {
       return promise
     }
 
-    if (ids.length === 1) {
+    if (!Array.isArray(id)) {
       if (!['query', 'policy', 'refine', 'shrink', 'lists'].includes(key)) {
         return promise
       }
@@ -204,7 +211,7 @@ export const Provider = ({ ...props }) => {
       await toast.promise(promise, {
         loading: `Updating **${ids.length}** movies metadata...`,
         success: () => `Updated **${ids.length}** movies metadata`,
-        error: (err) => err?.failed?.length ? `**${err.failed.length}** of **${ids.length}** movies not downloaded` : `Error while updating **${ids.length}** movies metadata`,
+        error: (err) => err?.failed?.length ? `**${err.failed.length}** of **${ids.length}** movies not ${key === 'proposal' ? 'downloaded' : 'updated'}` : `Error while updating **${ids.length}** movies metadata`,
       })
     }
   }, [setMetadata])

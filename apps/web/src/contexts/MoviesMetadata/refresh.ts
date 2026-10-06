@@ -22,3 +22,17 @@ export const refresh = async (tmdb: { fetch: (uri: string, params?: any) => Prom
     return {}
   }
 }
+
+// Several new movies at once, `size` TMDB calls at a time: a movie TMDB does not answer for is `skipped`, the others go on
+export const refreshAll = async (tmdb: { fetch: (uri: string, params?: any) => Promise<any> }, ids: string[], initial: { [id: string]: { title?: string } }, size = 20) => {
+  const refreshed = {}
+  const skipped = []
+
+  for (let index = 0; index < ids.length; index += size) {
+    const slice = ids.slice(index, index + size)
+    const results = await Promise.allSettled(slice.map((id) => refresh(tmdb, id, initial[id])))
+    results.forEach((result, j) => result.status === 'fulfilled' ? (refreshed[slice[j]] = result.value) : skipped.push(slice[j]))
+  }
+
+  return { refreshed, skipped }
+}
