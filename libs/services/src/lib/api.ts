@@ -1271,7 +1271,6 @@ export class API {
       }
     }
 
-    // A file, a dump for one, comes back as it is
     if (options?.blob) {
       return res.blob()
     }

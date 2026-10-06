@@ -241,7 +241,7 @@ const Onboarding = () => {
     }
   }, [legacy, archive, migration])
 
-  // The next steps show the settings of the dump: they wait for the restore, a few seconds for 9 000 movies
+  // The next steps show the settings of the dump, so they wait for the restore
   const restore = async () => {
     if (origin !== 'dump' || restoration?.done) {
       return

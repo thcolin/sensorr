@@ -16,7 +16,6 @@ export class DumpsController {
 
   constructor(@InjectConnection() private readonly connection: Connection) {}
 
-  // The dumps kept, newest first, and what a restore would replace
   @Get()
   async list() {
     this.logger.log('List')

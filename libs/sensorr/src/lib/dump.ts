@@ -4,7 +4,6 @@ export const DUMP_COLLECTIONS = ['movies', 'shows', 'episodes', 'persons'] as co
 // Bumped when a dump changes shape: `restore` refuses a format it does not know
 export const DUMP_FORMAT = 1
 
-// The dumps the `dump` job keeps, the oldest goes once a new one is written
 export const DUMP_KEPT = 4
 
 // Resolved against the working directory, `/app` in Docker, where compose mounts it
@@ -58,7 +57,6 @@ const deleteAt = (object: any, key: string) => {
 // An indexer link carries its key in the query, as Jackett's `jackett_apikey=`: the name stays, the value goes
 export const stripUrl = (url: string) => typeof url === 'string' ? url.replace(/([?&][^=&#]*(?:api_?key|passkey|token))=[^&#]*/gi, '$1=') : url
 
-// A movie or a show keeps each release's links, without the keys they hold
 export const stripDocument = <T extends object>(doc: T & { releases?: any[] }): T => Array.isArray(doc?.releases)
   ? { ...doc, releases: doc.releases.map((release) => ({ ...release, link: stripUrl(release?.link), enclosure: stripUrl(release?.enclosure) })) }
   : doc
