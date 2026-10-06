@@ -20,6 +20,8 @@ export const countsOf = (counts: { [collection: string]: number }) => Object.ent
   .map(([collection, label]) => `${(counts?.[collection] || 0).toLocaleString('en-US')} ${label}`)
   .join(', ')
 
+const sourceOf = (manifest) => `a dump of ${new Date(manifest.date).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}, Sensorr ${manifest.version}`
+
 const Data = ({ ...props }) => {
   useTitle('Settings - Data')
   const api = useAPI()
@@ -29,6 +31,7 @@ const Data = ({ ...props }) => {
   const [state, setState] = useState(null)
   const [failure, setFailure] = useState(null)
   const [archive, setArchive] = useState(null)
+  const [preview, setPreview] = useState(null)
   const [importing, setImporting] = useState(false)
   const [downloading, setDownloading] = useState(null)
   const input = useRef(null)
@@ -70,25 +73,49 @@ const Data = ({ ...props }) => {
     }
   }
 
-  const restore = async () => {
-    if (!window.confirm(`Replace ${countsOf(state?.counts)} with the ones of ${archive.name}?`)) {
+  // What a picked dump holds, read by the API, so the warning and the confirmation say what comes in
+  const pick = async (file) => {
+    setArchive(file)
+    setPreview(file && { loading: true })
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const { uri, params, init } = api.query.dumps.previewDump({ body: { archive: file } })
+      setPreview({ manifest: await api.fetch(uri, params, init, { rawError: true }) })
+    } catch (err) {
+      setPreview({ error: (await errorOf(err)) || `Can't read ${file.name}, ${err.message}` })
+    }
+  }
+
+  const restore = async ({ label, manifest, request }) => {
+    if (!window.confirm(`Replace ${countsOf(state?.counts)} with ${countsOf(manifest.counts)} of ${sourceOf(manifest)}?`)) {
       return
     }
 
     setImporting(true)
 
     try {
-      const { uri, params, init } = api.query.jobs.runRestore({ body: { archive } })
+      const { uri, params, init } = request
       await api.fetch(uri, params, init, { rawError: true })
-      toast.success(`${archive.name} is being imported, follow it in Jobs`)
-      setArchive(null)
-      input.current.value = ''
+      toast.success(`${label} is being imported, follow it in Jobs`)
     } catch (err) {
-      toast.error((await errorOf(err)) || `Error while importing ${archive.name}, try again`)
+      toast.error((await errorOf(err)) || `Error while importing ${label}, try again`)
     } finally {
       setImporting(false)
     }
   }
+
+  const restoreArchive = async () => {
+    await restore({ label: archive.name, manifest: preview.manifest, request: api.query.jobs.runRestore({ body: { archive } }) })
+    setArchive(null)
+    setPreview(null)
+    input.current.value = ''
+  }
+
+  const blocked = importing || restoring || !!jobs.length
 
   return (
     <Body>
@@ -113,13 +140,26 @@ const Data = ({ ...props }) => {
             {state && (
               state.dumps.length ? (
                 <ul sx={Data.styles.dumps} aria-label='Dumps'>
-                  {state.dumps.map(({ name, size, date }) => (
+                  {state.dumps.map(({ name, size, date, manifest }) => (
                     <li key={name}>
                       <div>
                         <strong>{name}</strong>
                         <small>{formatDistanceToNowStrict(new Date(date), { addSuffix: true })} · {filesize.stringify(size)}</small>
                       </div>
-                      <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={`Download ${name}`}>{downloading === name ? '⌛ Downloading' : 'Download'}</Button>
+                      <div>
+                        <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={`Download ${name}`}>{downloading === name ? '⌛ Downloading' : 'Download'}</Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          color='error'
+                          disabled={!manifest || blocked}
+                          title={manifest ? undefined : `${name} has no manifest.json this Sensorr reads`}
+                          onClick={() => restore({ label: name, manifest, request: api.query.dumps.restoreDump({ params: { name } }) })}
+                          aria-label={`Import ${name}`}
+                        >
+                          Import
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -136,12 +176,17 @@ const Data = ({ ...props }) => {
                 accept='.zip,application/zip'
                 aria-label='Dump to import'
                 disabled={importing || restoring}
-                onChange={(e) => setArchive(e.target.files?.[0] || null)}
+                onChange={(e) => pick(e.target.files?.[0] || null)}
                 sx={Onboarding.styles.file}
               />
-              {archive && !others.length && state && (
+              {preview?.error && (
+                <div role='alert' sx={Update.styles.failure}>
+                  <strong>{emojize('🚨', preview.error)}</strong>
+                </div>
+              )}
+              {preview?.manifest && !others.length && state && (
                 <p role='status' sx={Update.styles.warning}>
-                  <strong>Warning</strong>, replaces {countsOf(state.counts)}
+                  <strong>Warning</strong>, replaces {countsOf(state.counts)} with {countsOf(preview.manifest.counts)} of {sourceOf(preview.manifest)}
                 </p>
               )}
               {!!others.length && (
@@ -149,7 +194,7 @@ const Data = ({ ...props }) => {
                   <strong>Warning</strong>, {others.length > 2 ? `${emojize(JOB_EMOJIS[others[0]], others[0])} and ${others.length - 1} more` : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {others.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                 </p>
               )}
-              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!archive || !state || importing || !!jobs.length} aria-busy={importing || restoring} onClick={restore}>
+              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!preview?.manifest || !state || blocked} aria-busy={importing || restoring || !!preview?.loading} onClick={restoreArchive}>
                 {importing || restoring ? '⌛ Importing' : 'Import'}
               </Button>
             </div>
@@ -197,8 +242,10 @@ Data.styles = {
           color: 'grayDarkest',
         },
       },
-      '>button': {
+      '>div:last-of-type': {
+        flexDirection: 'row',
         flexShrink: 0,
+        gap: 8,
       },
     },
   },

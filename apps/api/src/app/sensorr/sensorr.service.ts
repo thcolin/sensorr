@@ -11,7 +11,7 @@ import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
+import { DumpManifest, dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -46,6 +46,32 @@ const filenameOf = ({ title, znab }: ReleaseDTO, extension: string): string => {
   }
 
   return `${stem.join('')}${suffix}`
+}
+
+// What a dump holds, from an archive in memory or on disk, or why it is not one this Sensorr restores
+export const manifestOf = async (archive: Promise<any>): Promise<DumpManifest> => {
+  const directory = await archive.catch(() => null)
+  const entry = directory?.files.find(({ path }) => path === 'manifest.json')
+
+  if (!entry) {
+    throw new UnprocessableEntityException('Not a Sensorr dump, the archive has no manifest.json')
+  }
+
+  let manifest
+
+  try {
+    manifest = JSON.parse((await entry.buffer()).toString())
+  } catch {
+    throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is not JSON')
+  }
+
+  const error = dumpManifestError(manifest)
+
+  if (error) {
+    throw new UnprocessableEntityException(error)
+  }
+
+  return manifest
 }
 
 @Injectable()
@@ -162,26 +188,7 @@ export class SensorrService {
   }
 
   async runRestore(buffer: Buffer) {
-    const directory = await unzipper.Open.buffer(buffer).catch(() => null)
-    const entry = directory?.files.find(({ path }) => path === 'manifest.json')
-
-    if (!entry) {
-      throw new UnprocessableEntityException('Not a Sensorr dump, the archive has no manifest.json')
-    }
-
-    let manifest
-
-    try {
-      manifest = JSON.parse((await entry.buffer()).toString())
-    } catch {
-      throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is not JSON')
-    }
-
-    const error = dumpManifestError(manifest)
-
-    if (error) {
-      throw new UnprocessableEntityException(error)
-    }
+    await manifestOf(unzipper.Open.buffer(buffer))
 
     // A job running meanwhile would write into a library about to be replaced
     const [running] = this.runningJobs()

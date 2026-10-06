@@ -980,6 +980,40 @@ export class API {
           },
         }
       }),
+      previewDump: (
+        { body, init = {} }: { body: { archive: Blob }, init?: any }
+      ): { uri: string, params: {}, init: {} } => {
+        const data = new FormData()
+        data.append('archive', body.archive)
+
+        return {
+          uri: 'dumps/preview',
+          params: {},
+          init: {
+            ...init,
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer __ACCESS_TOKEN__`,
+              Accept: 'application/json',
+            },
+            body: data,
+          }
+        }
+      },
+      restoreDump: (
+        { init = {}, params: { name } }: { init?: any, params: { name: string } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `dumps/${encodeURIComponent(name)}/restore`,
+        params: {},
+        init: {
+          ...init,
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
     },
     update: {
       getUpdate: (
