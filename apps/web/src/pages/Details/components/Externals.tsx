@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
 import { platformsOf } from './platforms'
+import { safeUrl } from '../../../components/Sensorr/Release'
 
 const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => {
   const watch = (entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]
@@ -39,7 +40,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true })
         <div>
           {!!metadata?.plex_url && (
             <a
-              href={metadata?.plex_url}
+              href={safeUrl(metadata?.plex_url)}
               target='_blank'
               rel='noopener noreferrer'
               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
