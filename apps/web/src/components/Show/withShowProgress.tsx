@@ -77,6 +77,8 @@ export const withShowProgress = () => (WrappedComponent) => {
         } catch (error) {
           if (!controller.signal.aborted) {
             console.warn(error)
+            // Known missing, so the card gives up the line it kept for the pill
+            setFetched({ id, progress: null })
           }
         }
       }

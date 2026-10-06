@@ -8,6 +8,7 @@ import { Empty } from '../../atoms/Picture/Picture'
 import { Link } from '../../atoms/Link/Link'
 import { Icon } from '../../atoms/Icon/Icon'
 import { Progress } from '../../atoms/Progress/Progress'
+import { Bar } from '../../atoms/Skeleton/Skeleton'
 import { Focus } from '../../atoms/Focus/Focus'
 import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
@@ -79,7 +80,8 @@ const UIShow = ({
     }
 
     return {
-      state: { component: ShowState, props: { value: state, onChange: setState, compact: true } },
+      // Mounted once known, so it fades in instead of turning from ⌛ to its emoji in place
+      ...(state === 'loading' ? {} : { state: { component: ShowState, props: { value: state, onChange: setState, compact: true } } }),
       reviews: { component: ReviewsBadge, props: { entity, display } },
       ...(!proposal.proposals.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { to: '/tv/requests', guests: (metadata?.requested_by || []).filter(Boolean).map(guest => ({ entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } })) } } } : {}),
@@ -127,6 +129,8 @@ const UIShow = ({
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
       footer={footer || (!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.detail} compact={device === 'mobile'} />)}
+      // `progress` is null once known to be missing: the line it held goes with it
+      footerPlaceholder={!footer && progress !== null && <ShowProgressPlaceholder compact={device === 'mobile'} />}
     />
   )
 }
@@ -176,6 +180,14 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, followed,
         </time>
       </>
     )}
+  </div>
+)
+
+// The pill and the bar, at the height of the pill
+const ShowProgressPlaceholder = ({ compact }) => (
+  <div sx={ShowProgress.styles.element}>
+    <span sx={ShowProgress.styles.pill}><Bar pill={true} width='4.5em' height='calc(0.75em * 1.2 + 0.375em)' /></span>
+    {!compact && <Bar pill={true} height='0.25em' sx={{ flex: 1 }} />}
   </div>
 )
 

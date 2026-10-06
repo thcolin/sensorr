@@ -39,7 +39,7 @@ const UIPerson = ({
   ...props
 }: PersonProps) => {
   const device = useDevice()
-  const entity = useMemo(() => data || { profile_path: false, id: null }, [data, placeholder]) as PersonInterface
+  const entity = useMemo(() => (!placeholder && data) || { profile_path: false, id: null }, [data, placeholder]) as PersonInterface
   const details = useMemo(() => transformPersonDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to: `/person/${entity.id}` }))(entity), [entity, props.link])
 
@@ -49,7 +49,8 @@ const UIPerson = ({
     }
 
     return {
-      state: { component: PersonState, props: { value: state, onChange: setState, compact: true } },
+      // Mounted once known, so it fades in instead of turning from ⌛ to its emoji in place
+      ...(state === 'loading' ? {} : { state: { component: PersonState, props: { value: state, onChange: setState, compact: true } } }),
       ...(props.focus ? { focus: { component: Focus, props: { entity, property: props.focus, compact: true, size: 'small' } } } : {}),
     }
   }, [

@@ -65,4 +65,12 @@ export const animations = {
       transform: rotate3d(0, 0, 1, 360deg);
     }
   `,
+  reveal: keyframes`
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  `,
 }

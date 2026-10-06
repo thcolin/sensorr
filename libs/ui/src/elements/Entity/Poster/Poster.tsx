@@ -1,9 +1,10 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LinkProps } from 'react-router-dom'
 import { useDevice } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps, pictureSrc } from '../../../atoms/Picture/Picture'
+import { Skeleton, reveal } from '../../../atoms/Skeleton/Skeleton'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 import { Option } from '../../../inputs/Option/Option'
 import { useCutout } from './cutout'
@@ -18,6 +19,9 @@ const pills = {
   '--theme-ui-colors-gray': (theme) => `var(--poster-pill, ${theme.rawColors.gray})`,
   '--theme-ui-colors-text': (theme) => `var(--poster-pill-text, ${theme.rawColors.text})`,
 }
+
+// The widths of the title's bar and the subtitle's, in em, so the cards of a row do not repeat
+const SHAPES = [[7.5, 5.5], [5, 6.5], [8.5, 4.5], [6, 7], [9, 5], [6.5, 3.5]]
 
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: any // MovieDetails | PersonDetails
@@ -41,6 +45,8 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
   loadExternals?: () => void
   opacity?: number
   footer?: React.ReactNode
+  // Drawn where `footer` will go, from the first frame, so a footer that loads apart moves nothing
+  footerPlaceholder?: React.ReactNode
 }
 
 const UIPoster = ({
@@ -58,6 +64,7 @@ const UIPoster = ({
   loadExternals,
   opacity = 1,
   footer = null,
+  footerPlaceholder = null,
   ...props
 }: PosterProps) => {
   const ref = useRef<HTMLDivElement>()
@@ -65,6 +72,8 @@ const UIPoster = ({
   const device = useDevice()
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
   const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
+  const id = useId()
+  const shape = SHAPES[[...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % SHAPES.length]
   const onPosterReady = useCallback(() => {
     setLoaded(true)
 
@@ -205,11 +214,7 @@ const UIPoster = ({
             // Au repos le badge recouvre totalement la coche (position d'origine, identique aux
             // pages sans sélection). Il se décale (hover ou coché) pour révéler la coche.
             ...(aside ? { left: 'auto', right: '-1.25em' } : { left: (selected || selectedVisible) ? ['1.25em', '0.5em'] : ['-0.75em', '-1.5em'] }),
-            opacity: ready ? 1 : 0,
-            transition: [
-              ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
-              interactive ? null : 'left 150ms ease-in-out, right 150ms ease-in-out',
-            ].filter(Boolean).join(', '),
+            transition: interactive ? null : 'left 150ms ease-in-out, right 150ms ease-in-out',
             ...((!badges?.focus?.component || !badges?.reviews?.component) ? {
               '>div>span>span': {
                 minWidth: ['4.7em', '5.5em'],
@@ -221,10 +226,11 @@ const UIPoster = ({
             },
           }}
         >
-          {(badges?.focus?.component || badges?.reviews?.component) && (
+          {ready && (badges?.focus?.component || badges?.reviews?.component) && (
             <div
               sx={{
                 ...UIPoster.styles.focus,
+                ...reveal,
                 ...pills,
                 zIndex: 2,
                 ...(selected !== null ? {} : {}),
@@ -274,21 +280,15 @@ const UIPoster = ({
             ...pills,
             top: aside ? '0.75em' : UIPoster.styles.right.top,
             // Like a hover on the badges at left, the focus opens the ratings over these: without ratings, they stay
-            opacity: (ready && !(focused && badges?.reviews?.component)) ? 1 : 0,
-            transition: (focused && badges?.reviews?.component) ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+            opacity: (focused && badges?.reviews?.component) ? 0 : 1,
+            transition: 'opacity 200ms ease-in-out',
           }}
         >
-          {badges?.state?.component && <div data-cutout={true} sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
-          {badges?.proposal?.component && <div data-cutout={true} sx={UIPoster.styles.proposal}><badges.proposal.component {...badges?.proposal?.props} /></div>}
+          {ready && badges?.state?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.state, ...reveal }}><badges.state.component {...badges?.state?.props} /></div>}
+          {ready && badges?.proposal?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.proposal, ...reveal }}><badges.proposal.component {...badges?.proposal?.props} /></div>}
         </div>
-        <div
-          sx={{
-            ...UIPoster.styles.guests,
-            opacity: ready ? 1 : 0,
-            transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
-          }}
-        >
-          {badges?.guests?.component && <badges.guests.component {...badges?.guests?.props} />}
+        <div sx={UIPoster.styles.guests}>
+          {ready && badges?.guests?.component && <div sx={reveal}><badges.guests.component {...badges?.guests?.props} /></div>}
         </div>
         <div
           sx={{
@@ -335,11 +335,13 @@ const UIPoster = ({
             </div>
           )}
         </div>
-        {selected !== null && (
+        {ready && selected !== null && (
           <div
             data-select={true}
             data-cutout={true}
             sx={{
+              // Shown at once where no hover hides it
+              '@media (hover: none)': reveal,
               position: 'absolute',
               top: '-1em',
               left: ['-0.75em', '-1.25em'],
@@ -374,47 +376,32 @@ const UIPoster = ({
       </div>
       {meaningful && (
         <div sx={UIPoster.styles.meaningful}>
-          <div
-            sx={{
-              ...UIPoster.styles.skeleton,
-              backgroundColor: props.palette?.backgroundColor || 'grayLight',
-              opacity: ready ? 0 : 1,
-              transition: ready ? 'opacity 400ms ease-in-out 400ms, z-index 0ms ease 600ms' : 'opacity 400ms ease-in-out, z-index 0ms ease',
-              zIndex: ready ? -1 : 0,
-            }}
-          ></div>
           <strong sx={UIPoster.styles.title} title={details?.title}>
-            <Link to={link?.to} state={link?.state} disabled={!link?.to}>
-              {details?.title || 'Loading'}
-            </Link>
+            <Skeleton ready={ready} bar={{ width: `${shape[0]}em`, height: '0.75em' }}>
+              <Link to={link?.to} state={link?.state} disabled={!link?.to}>
+                {details?.title}
+              </Link>
+            </Skeleton>
           </strong>
-          <div sx={UIPoster.styles.subtitle}>
-            {!ready && (
-              <span>Loading</span>
-            )}
-            {!!details?.meaningful?.year && (
-              <span>
-                <details.meaningful.year disabled={device === 'mobile'} />
-                {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
-              </span>
-            )}
-            {(!!details?.meaningful?.genres || !!details?.caption) && (
-              <small title={details?.caption}>
-                {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} disabled={device === 'mobile'} /> : details?.caption}
-              </small>
-            )}
-          </div>
-          {/* Out of sight while the skeleton covers the card, like the badges: a positioned pill would sit over it */}
-          {!!footer && (
-            <div
-              sx={{
-                ...UIPoster.styles.footer,
-                opacity: ready ? 1 : 0,
-                transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
-              }}
-            >
+          <Skeleton ready={ready} bar={{ width: `${shape[1]}em`, height: '0.5em' }} sx={UIPoster.styles.subtitle}>
+            <span sx={UIPoster.styles.caption}>
+              {!!details?.meaningful?.year && (
+                <span>
+                  <details.meaningful.year disabled={device === 'mobile'} />
+                  {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
+                </span>
+              )}
+              {(!!details?.meaningful?.genres || !!details?.caption) && (
+                <small title={details?.caption}>
+                  {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} disabled={device === 'mobile'} /> : details?.caption}
+                </small>
+              )}
+            </span>
+          </Skeleton>
+          {(!!footer || !!footerPlaceholder) && (
+            <Skeleton ready={ready && !!footer} placeholder={footerPlaceholder} sx={UIPoster.styles.footer}>
               {footer}
-            </div>
+            </Skeleton>
           )}
         </div>
       )}
@@ -505,11 +492,6 @@ UIPoster.styles = {
     marginTop: 8,
     paddingY: 10,
   },
-  skeleton: {
-    position: 'absolute',
-    height: '100%',
-    width: '100%',
-  },
   title: {
     fontSize: [6, 5],
     lineHeight: 'reset',
@@ -527,9 +509,11 @@ UIPoster.styles = {
     marginTop: 8,
   },
   subtitle: {
+    marginTop: 10,
+  },
+  caption: {
     display: 'flex',
     alignItems: 'center',
-    marginTop: 10,
     color: 'grayDarker',
     overflow: 'hidden',
     whiteSpace: 'nowrap',

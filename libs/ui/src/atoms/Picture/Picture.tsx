@@ -118,8 +118,6 @@ function UIPicture({
     },
     image: {
       opacity: loaded && ready && src && !error ? 1 : 0,
-      transitionDelay: loaded && ready ? '400ms' : '0ms',
-      // transitionDuration: loaded && ready ? '400ms' : '0ms',
     },
   }
 
