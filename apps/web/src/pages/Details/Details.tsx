@@ -341,7 +341,7 @@ const UIDetails = ({
                 )}
               </Link>
             </Skeleton>
-            <div style={tintOf(shown.alternativeColor)}>{metadataBlock}</div>
+            <div style={tintOf(shown.alternativeColor)} sx={{ 'details > div': tintOf(shown.negativeColor) }}>{metadataBlock}</div>
             {['movie', 'tv'].includes(behavior) && (
               <>
                 <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
