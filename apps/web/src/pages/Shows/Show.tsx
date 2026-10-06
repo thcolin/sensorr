@@ -25,7 +25,7 @@ import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 // The page of `/tv/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
-export const ShowContent = ({ id: drawn = null, variant = 'page', ...props }) => {
+export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
   const params = useParams() as any
   const id = drawn ?? params.id
@@ -212,6 +212,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', ...props }) =>
   return (
     <Details
       variant={variant}
+      initialPalette={palette}
       details={details}
       entity={show.data}
       additional={additional}

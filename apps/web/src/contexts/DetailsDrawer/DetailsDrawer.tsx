@@ -119,8 +119,8 @@ export const Provider = ({ children, ...props }) => {
             <div sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: past ? 1 : 0 }} />
             {/* A poster in the drawer follows its link: the drawer does not open over itself */}
             <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
-              {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' />}
-              {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' />}
+              {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' palette={palette} />}
+              {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' palette={palette} />}
             </detailsDrawerContext.Provider>
           </div>
         </Drawer>

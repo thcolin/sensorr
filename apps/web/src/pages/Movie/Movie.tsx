@@ -29,7 +29,7 @@ const MovieDetails = compose(
 )(Details)
 
 // The page of `/movie/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
-export const MovieContent = ({ id: drawn = null, variant = 'page', ...props }) => {
+export const MovieContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
   const params = useParams() as any
   const id = drawn ?? params.id
@@ -266,6 +266,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', ...props }) =
   return (
     <MovieDetails
       variant={variant}
+      initialPalette={palette}
       details={movie.details}
       entity={movie.data}
       additional={additional.data}

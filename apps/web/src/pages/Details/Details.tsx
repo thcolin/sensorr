@@ -2,7 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useSt
 import { useThemeUI } from '@theme-ui/core'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
-import { Billboard, Link, pictureSrc } from '@sensorr/ui'
+import { Billboard, Link, ReviewsBadge, pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -26,7 +26,7 @@ const pendingReducer = createPendingReducer({
 })
 
 // The theme's neutrals retinted from the poster, so every block keeps its own styles on the poster's colors
-const paintOf = ({ backgroundColor, color, colorfulColor }) => {
+const paintOf = ({ backgroundColor, color }) => {
   const mix = (amount) => `color-mix(in srgb, ${color} ${amount}%, ${backgroundColor})`
   const tokens = {
     text: color,
@@ -51,8 +51,7 @@ const paintOf = ({ backgroundColor, color, colorfulColor }) => {
     color,
     transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
     '--poster-cutout': backgroundColor,
-    '--poster-glow': colorfulColor,
-    ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
+      ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
   }
 }
 
@@ -74,6 +73,7 @@ const UIDetails = ({
   summary = null,
   children = null,
   variant = 'page',
+  initialPalette = null,
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
@@ -96,7 +96,9 @@ const UIDetails = ({
     },
     poster,
   )
-  const paint = useMemo(() => paintOf(palette.palette), [palette.palette])
+  // The drawer knows the poster's palette from the poster tapped, before this one resolves
+  const shown = (palette.loading || palette.initial) && initialPalette ? initialPalette : palette.palette
+  const paint = useMemo(() => paintOf(shown), [shown])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
   const ready = props.ready !== false && Object.values(pending).every(pending => !pending) && !!entity?.id
@@ -233,18 +235,22 @@ const UIDetails = ({
     </Skeleton>
   )
 
+  const releasesBlock = behavior === 'movie' && (
+    <Releases
+      movie={entity}
+      metadata={metadata}
+      proceedRelease={proceedRelease}
+      removeRelease={removeRelease}
+      entities={metadata?.releases || []}
+      ready={ready}
+    />
+  )
+
   const restBlock = (
     <>
-      {behavior === 'movie' && (
-        <Releases
-          movie={entity}
-          metadata={metadata}
-          proceedRelease={proceedRelease}
-          removeRelease={removeRelease}
-          entities={metadata?.releases || []}
-          ready={ready}
-        />
-      )}
+      {variant === 'drawer' ? (
+        <div style={paintOf({ backgroundColor: shown.color, color: shown.backgroundColor })}>{releasesBlock}</div>
+      ) : releasesBlock}
       {children}
       <div>
         <div sx={UIDetails.styles.tabs}>
@@ -280,7 +286,7 @@ const UIDetails = ({
           {metadataBlock}
           <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
             <div sx={UIDetails.styles.drawer.ratings}>
-              <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} links={false} platforms={false} />
+              <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
             </div>
           </Skeleton>
           <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
@@ -361,7 +367,6 @@ UIDetails.styles = {
       '>div': {
         height: '15em',
         width: '10em',
-        boxShadow: (theme) => `0px 3px 30px var(--poster-glow, ${theme.colors.primary})`,
       },
     },
     title: {
@@ -390,8 +395,9 @@ UIDetails.styles = {
       },
     },
     ratings: {
+      display: 'flex',
+      justifyContent: 'center',
       fontSize: 3,
-      fontWeight: 'strong',
     },
     // One wrapping row: the column a phone gets on the page leaves the Plex chevron alone on its line
     externals: {
