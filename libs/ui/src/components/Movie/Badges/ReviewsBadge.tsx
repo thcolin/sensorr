@@ -4,7 +4,7 @@ import deltaE from 'delta-e'
 import { utils } from '@sensorr/tmdb'
 import { Badge } from '../../../atoms/Badge/Badge'
 
-export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews, display, palette, forceOpen = false, ...props }) => {
+export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews = null, display = null, palette, forceOpen = false, ...props }) => {
   // const ref = useRef<HTMLSpanElement>()
 
   const reviews = useMemo(() => {
