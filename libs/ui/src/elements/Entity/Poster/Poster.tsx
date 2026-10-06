@@ -87,7 +87,21 @@ const UIPoster = ({
       return
     }
 
-    const onTouchStart = (e) => !ref.current?.contains(e.target) && setFocused(false)
+    // The touch that clears the focus does only that: the click it ends with opens nothing
+    const onTouchStart = (e) => {
+      if (ref.current?.contains(e.target)) {
+        return
+      }
+
+      const swallow = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      setFocused(false)
+      document.addEventListener('click', swallow, { capture: true, once: true })
+      setTimeout(() => document.removeEventListener('click', swallow, true), 800)
+    }
     const onScroll = () => setFocused(false)
     document.addEventListener('touchstart', onTouchStart, true)
     window.addEventListener('scroll', onScroll, true)
