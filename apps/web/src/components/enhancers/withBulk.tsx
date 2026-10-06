@@ -9,6 +9,18 @@ import { useListsAction } from '../Lists/useCustomLists'
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
 
+export const MOVIE_STATES = [
+  { value: 'ignored', icon: '🔕', label: 'Ignored' },
+  { value: 'wished', icon: '🍿', label: 'Wished' },
+  { value: 'pinned', icon: '📍', label: 'Pinned' },
+  { value: 'archived', icon: '📼', label: 'Archived' },
+]
+
+export const SHOW_STATES = [
+  { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
+  { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
+]
+
 export const movies = (count) => `${count} ${count === 1 ? 'movie' : 'movies'}`
 export const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
 
@@ -38,7 +50,7 @@ export const withSelection = (WrappedComponent) => {
 
 export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
   const { setMovieMetadata } = useMoviesMetadataContext() as any
-  const { followShow, setShowLists } = useShowsMetadataContext() as any
+  const { metadata: keptShows, setShowMetadata, followShow, setShowLists } = useShowsMetadataContext() as any
   const { selection, setSelection } = useBulkContext()
   const location = useLocation()
   const [sending, setSending] = useState(false)
@@ -57,8 +69,11 @@ export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
     if (media === 'movie') {
       await setMovieMetadata(selected, key, value).catch(() => null)
     } else {
+      const kept = selected.filter(id => keptShows[id]?.state && (key === 'lists' || keptShows[id].state !== 'ignored'))
+      await (kept.length ? setShowMetadata(kept, key, value) : Promise.resolve()).catch(() => null)
+
       // A show Sensorr does not keep yet is added from TMDB with its episodes, one at a time
-      for (const id of selected) {
+      for (const id of selected.filter(id => !kept.includes(id))) {
         await (key === 'lists' ? setShowLists(id, (lists) => value({ lists })) : followShow(id, value)).catch(() => null)
       }
     }
@@ -78,21 +93,13 @@ export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
           key: 'state',
           icon: '📚',
           label: 'State',
-          options: [
-            { value: 'ignored', icon: '🔕', label: 'Ignored' },
-            { value: 'wished', icon: '🍿', label: 'Wished' },
-            { value: 'pinned', icon: '📍', label: 'Pinned' },
-            { value: 'archived', icon: '📼', label: 'Archived' },
-          ],
+          options: MOVIE_STATES,
           onChange: ({ value }) => apply('state', value, `Do you want to change ${label} state to "${value}" ?`),
         } : {
           key: 'monitored',
           icon: '📚',
           label: 'State',
-          options: [
-            { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
-            { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
-          ],
+          options: SHOW_STATES,
           onChange: ({ value, label: state }) => apply('monitored', value, `Do you want to change the state of ${label} to "${state}"?`),
         },
         lists,

@@ -38,7 +38,7 @@ import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
 import { useListsAction } from '../../components/Lists/useCustomLists'
-import { withSelection } from '../../components/enhancers/withBulk'
+import { MOVIE_STATES, withSelection } from '../../components/enhancers/withBulk'
 
 const SLICE = 50
 
@@ -121,12 +121,7 @@ export const FIELDS = {
                 key: 'state',
                 icon: '📚',
                 label: 'State',
-                options: [
-                  { value: 'ignored', icon: '🔕', label: 'Ignored' },
-                  { value: 'wished', icon: '🍿', label: 'Wished' },
-                  { value: 'pinned', icon: '📍', label: 'Pinned' },
-                  { value: 'archived', icon: '📼', label: 'Archived' },
-                ],
+                options: MOVIE_STATES,
                 onChange: ({ value }) => apply('state', value, `Do you want to change ${selected.length} movies state to "${value}" ?`),
               },
               {

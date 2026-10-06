@@ -17,7 +17,6 @@ import {
   Warning,
   Option,
   Bulk,
-  ShowStateOptions,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { fields } from '@sensorr/tmdb'
@@ -39,10 +38,7 @@ import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
 import { useListsAction } from '../../components/Lists/useCustomLists'
-import { shows, withSelection } from '../../components/enhancers/withBulk'
-
-const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
-const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
+import { SHOW_STATES, shows, withSelection } from '../../components/enhancers/withBulk'
 
 const ShowWithBulk = withSelection(Show)
 
@@ -111,10 +107,7 @@ export const FIELDS = {
                 key: 'monitored',
                 icon: '📚',
                 label: 'State',
-                options: [
-                  { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
-                  { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
-                ],
+                options: SHOW_STATES,
                 onChange: ({ value, label }) => apply('monitored', value, `Do you want to change the state of ${shows(selected.length)} to "${label}"?`),
               },
               {
