@@ -38,27 +38,11 @@ import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
 import { useListsAction } from '../../components/Lists/useCustomLists'
+import { withSelection } from '../../components/enhancers/withBulk'
 
 const SLICE = 50
 
-const MovieWithCreditsAndReviewsAndBulk = ({ entity, ...props }) => {
-  const { selection, setSelection } = useBulkContext()
-  const location = useLocation()
-
-  return (
-    <MovieWithCreditsAndReviews
-      {...props as any}
-      entity={entity}
-      // A placeholder has no id yet, so it gets no checkbox.
-      selected={entity?.id ? !!selection[location.key]?.includes(entity.id) : null}
-      selectedVisible={selection[location.key]?.length > 0}
-      onSelectedChange={(id) => setSelection(selection => ({
-        ...selection,
-        [location.key]: selection[location.key]?.includes(id) ? selection[location.key]?.filter(v => v !== id) : [...(selection[location.key] || []), id],
-      }))}
-    />
-  )
-}
+const MovieWithCreditsAndReviewsAndBulk = withSelection(MovieWithCreditsAndReviews)
 
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {

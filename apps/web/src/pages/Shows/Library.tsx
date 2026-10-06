@@ -39,29 +39,12 @@ import { withBody } from '../../layout/withLayout'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
 import { FilterLists } from '../../components/Lists/FilterLists'
 import { useListsAction } from '../../components/Lists/useCustomLists'
+import { shows, withSelection } from '../../components/enhancers/withBulk'
 
 const FOLLOWED = ShowStateOptions.find(({ value }) => value === 'followed')
 const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
 
-const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
-
-const ShowWithBulk = ({ entity, ...props }) => {
-  const { selection, setSelection } = useBulkContext()
-  const location = useLocation()
-
-  return (
-    <Show
-      {...props as any}
-      entity={entity}
-      selected={entity?.id ? !!selection[location.key]?.includes(entity.id) : null}
-      selectedVisible={selection[location.key]?.length > 0}
-      onSelectedChange={(id) => setSelection(selection => ({
-        ...selection,
-        [location.key]: selection[location.key]?.includes(id) ? selection[location.key]?.filter(v => v !== id) : [...(selection[location.key] || []), id],
-      }))}
-    />
-  )
-}
+const ShowWithBulk = withSelection(Show)
 
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {
