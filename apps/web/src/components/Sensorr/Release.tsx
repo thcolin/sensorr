@@ -26,17 +26,16 @@ const UIRelease = ({
   return (
     <div>
       <div sx={UIRelease.styles.element}>
-        {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink', 'report'].includes(entity?.from) && (
-          <div sx={UIRelease.styles.remove}>
-            <button sx={{ variant: 'button.reset' }} title="Remove release" onClick={() => remove(entity)}>
-              <Icon value='clear' width='1em' height='1em' />
-            </button>
-          </div>
-        )}
         <div key={entity?.link} sx={UIRelease.styles.wrapper} data-disabled={!downloadable}>
           <div sx={{ flexDirection: ['column', display], paddingY: [8, compact ? 12 : 8] }}>
             <div sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%', overflow: 'hidden' }}>
               <div sx={{ display: 'flex', alignItems: 'center' }}>
+                {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink', 'report'].includes(entity?.from) && (
+                  // In the text's gray, which the details' drawer retints: the icon's own white reads on no poster color
+                  <button sx={UIRelease.styles.remove} title="Remove release" onClick={() => remove(entity)}>
+                    <Icon value='clear' width='1em' height='1em' active={true} style={{ color: 'inherit' }} />
+                  </button>
+                )}
                 {(
                   typeof ban === 'function' &&
                   (downloadable || (entity?.proposal && entity?.choice === false))
@@ -188,7 +187,8 @@ UIRelease.styles = {
     fontSize: 6,
     paddingRight: [12, 0],
     paddingLeft: [12, 2],
-    overflow: ['scroll', 'hidden'],
+    // Each line scrolls on its own, the release does not
+    overflow: 'hidden',
     '>div': {
       display: 'flex',
       alignItems: 'center',
@@ -209,7 +209,7 @@ UIRelease.styles = {
     flexDirection: 'column',
     marginRight: 0,
     overflowY: 'hidden',
-    overflowX: ['scroll', 'hidden'],
+    overflowX: ['auto', 'hidden'],
   },
   title: {
     display: 'flex',
@@ -246,7 +246,8 @@ UIRelease.styles = {
   reason: {
     color: 'grayDarker',
     maxWidth: '100%',
-    overflow: 'scroll',
+    overflowX: 'auto',
+    overflowY: 'hidden',
     '>code': {
       fontSize: 5,
       whiteSpace: 'nowrap',
@@ -266,14 +267,29 @@ UIRelease.styles = {
   invalid: {
     textDecoration: 'line-through',
   },
+  // On a phone, one line that scrolls, centered while it fits
   tags: {
     display: 'flex',
-    flexWrap: ['wrap', 'nowrap'],
-    justifyContent: ['center', 'flex-start'],
+    flexWrap: 'nowrap',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    alignSelf: ['stretch', 'auto'],
+    // Sideways only: a flag stands taller than the line
+    overflowX: ['auto', 'visible'],
+    overflowY: ['hidden', 'visible'],
+    scrollbarWidth: 'none',
     gap: [6, 12],
     marginX: [12, 4],
     marginBottom: [4, 12],
+    '>*': {
+      flexShrink: 0,
+    },
+    '>:first-child': {
+      marginLeft: ['auto', 0],
+    },
+    '>:last-child': {
+      marginRight: ['auto', 0],
+    },
     '>span': {
       marginRight: [12, 6],
       '>code': {
@@ -285,9 +301,13 @@ UIRelease.styles = {
     display: 'flex',
     flexDirection: 'column',
   },
+  // On the release's line, before its state, into the room the state leaves on its left
   remove: {
-    marginLeft: '-14px',
+    variant: 'button.reset',
+    display: 'flex',
+    color: 'grayDarker',
     fontSize: 5,
+    marginRight: '-10px',
   },
   proposal: {
     marginTop: 2,
@@ -302,10 +322,8 @@ const UIReleaseState = ({ entity = null }) => (
   ) : entity?.from === 'sync' ? (
     <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
       <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-        {/* On a tile, as among the details' externals: bare, Plex's yellow reads on no light background */}
-        <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.25em', height: '1.25em', borderRadius: '0.25em', backgroundColor: 'blackPure', color: 'plex' }}>
-          ❯
-        </span>
+        {/* Plex's tile: bare, its yellow reads on no light background */}
+        <Icon value='plex' width='1.25em' height='1.25em' style={{ display: 'block' }} />
       </span>
     </Tippy>
   ) : !entity?.valid && entity?.warning <= 10 ? (
