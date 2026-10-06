@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
 import { keyframes } from '@emotion/react'
-import { useDevice, useHistoryState, createPendingReducer } from '@sensorr/utils'
+import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Billboard, pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
@@ -108,7 +108,6 @@ const UIDetails = ({
     },
     poster,
   )
-  const device = useDevice()
   const paint = useMemo(() => (palette.loading || palette.initial) ? undefined : paintOf(palette.palette), [palette.palette, palette.loading, palette.initial])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
@@ -320,7 +319,7 @@ const UIDetails = ({
   }
 
   return (
-    <div sx={UIDetails.styles.element} style={device === 'mobile' ? paint : undefined}>
+    <div sx={UIDetails.styles.element}>
       <Head billboard={billboard} palette={palette.palette} entity={entity} behavior={behavior} ready={ready} onReady={onReady.billboard} />
       <div sx={UIDetails.styles.body}>
         <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
