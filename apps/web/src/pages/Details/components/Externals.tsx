@@ -2,14 +2,14 @@ import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
 import { platformsOf } from './platforms'
 
-const UIExternals = ({ entity, metadata, additional, meaningful, links = true }) => {
+const UIExternals = ({ entity, metadata, additional, meaningful, links = true, reviews = true, platforms: showPlatforms = true }) => {
   const watch = (entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]
   const platforms = platformsOf(watch?.flatrate)
 
   return (
     <div sx={UIExternals.styles.element}>
       {/* An empty group would still carry the margin that separates it from the next one */}
-      {(!!meaningful?.vote_average || !!additional?.reviews?.length) && (
+      {reviews && (!!meaningful?.vote_average || !!additional?.reviews?.length) && (
         <div>
           {meaningful?.vote_average && <meaningful.vote_average />}
           {(additional?.reviews || [])?.map(review => (
@@ -35,7 +35,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true })
           ))}
         </div>
       )}
-      {(!!metadata?.plex_url || !!platforms.length) && (
+      {showPlatforms && (!!metadata?.plex_url || !!platforms.length) && (
         <div>
           {!!metadata?.plex_url && (
             <a

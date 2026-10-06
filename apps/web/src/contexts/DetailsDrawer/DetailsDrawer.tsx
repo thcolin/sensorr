@@ -1,6 +1,8 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigationType } from 'react-router-dom'
 import usePortal from 'react-useportal'
 import { Drawer } from '@sensorr/ui'
+import { historyEntryOf } from '@sensorr/utils'
 import { MovieContent } from '../../pages/Movie/Movie'
 import { ShowContent } from '../../pages/Shows/Show'
 
@@ -19,30 +21,78 @@ export const Provider = ({ children, ...props }) => {
   const { Portal, openPortal, closePortal, isOpen } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, programmaticallyOpen: true })
   const [{ link, palette }, setData] = useState({ link: null, palette: null })
   const [, behavior, id] = `${link?.to || ''}`.match(/^\/(movie|tv)\/(\d+)/) || []
+  const location = useLocation()
+  const navigationType = useNavigationType()
+  const scroll = useRef<HTMLDivElement>(null)
+  const opened = useRef(null)
 
-  const open = useCallback(data => {
-    setData(data)
+  const open = useCallback(({ link, palette }) => {
+    opened.current = { link: { to: link?.to }, palette }
+    setData(opened.current)
     openPortal()
   }, [])
 
   const close = useCallback(() => {
+    opened.current = null
+    sessionStorage.removeItem(`${historyEntryOf(location)}-drawer`)
+    closePortal()
+  }, [location.key])
+
+  // Before a navigation: the drawer open on the page left is written down, to open again when coming back to it
+  const leave = useCallback((from) => {
+    const key = `${historyEntryOf(from)}-drawer`
+
+    if (opened.current) {
+      sessionStorage.setItem(key, JSON.stringify({ ...opened.current, scroll: scroll.current?.scrollTop || 0 }))
+    } else {
+      sessionStorage.removeItem(key)
+    }
+
+    opened.current = null
     closePortal()
   }, [])
 
+  useEffect(() => {
+    const saved = navigationType === 'POP' && JSON.parse(sessionStorage.getItem(`${historyEntryOf(location)}-drawer`) || 'null')
+
+    if (!saved) {
+      return
+    }
+
+    open(saved)
+
+    // The page in the drawer loads before it is as tall as it was
+    const started = Date.now()
+    const restore = () => {
+      if (!scroll.current || scroll.current.scrollHeight - scroll.current.clientHeight < saved.scroll) {
+        if (Date.now() - started < 5000) {
+          requestAnimationFrame(restore)
+        }
+
+        return
+      }
+
+      scroll.current.scrollTop = saved.scroll
+    }
+
+    requestAnimationFrame(restore)
+  }, [location.key, navigationType])
+
   return (
-    <detailsDrawerContext.Provider {...props} value={{ open, close }}>
+    <detailsDrawerContext.Provider {...props} value={{ open, close, leave }}>
       {children}
       <Portal>
         <Drawer
           close={close}
           open={isOpen}
-          height='75vh'
-          background={palette?.backgroundColor || 'grayLight'}
+          height='80vh'
+          inset='4.5em'
+          background='transparent'
           knob={palette?.color || 'whitePure'}
         >
-          {/* A poster in the drawer follows its link: the drawer does not open over itself */}
-          <div sx={styles.scroll}>
-            <detailsDrawerContext.Provider value={{ open: null, close }}>
+          <div ref={scroll} sx={styles.scroll}>
+            {/* A poster in the drawer follows its link: the drawer does not open over itself */}
+            <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
               {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' />}
               {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' />}
             </detailsDrawerContext.Provider>
@@ -53,4 +103,8 @@ export const Provider = ({ children, ...props }) => {
   )
 }
 
-export const useDetailsDrawerContext = () => useContext(detailsDrawerContext) as ({ open: (details: any) => void, close: () => void })
+export const useDetailsDrawerContext = () => useContext(detailsDrawerContext) as ({
+  open: (details: any) => void
+  close: () => void
+  leave: (from: { key: string, pathname: string }) => void
+})

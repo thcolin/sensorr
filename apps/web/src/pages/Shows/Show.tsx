@@ -45,7 +45,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', ...props }) =>
   const [episodesError, setEpisodesError] = useState(null)
 
   const show = useTMDBRequest(`tv/${id}`, {
-    append_to_response: 'videos,external_ids,alternative_titles,aggregate_credits,recommendations,similar,watch/providers',
+    append_to_response: 'images,videos,external_ids,alternative_titles,aggregate_credits,recommendations,similar,watch/providers',
     include_image_language: 'en,null',
   }, { transform: transformShowDetails })
 
