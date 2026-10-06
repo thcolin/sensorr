@@ -1,5 +1,5 @@
 import { MovieProps } from '@sensorr/ui'
-import { useDetailsDrawerContext } from '../../contexts/DetailsDrawer/DetailsDrawer'
+import { useDetailsDrawerContext } from '../../contexts/DetailsDrawer/context'
 
 type withDetailsDrawerProps = MovieProps
 

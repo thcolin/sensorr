@@ -2,7 +2,7 @@ import { MutableRefObject, createContext, useCallback, useContext, useEffect, us
 import { useBlocker, useLocation, useNavigationType } from 'react-router-dom'
 import { historyEntryOf } from '@sensorr/utils'
 import { useDeviceContext } from '../Device/Device'
-import { useDetailsDrawerContext } from '../DetailsDrawer/DetailsDrawer'
+import { useDetailsDrawerContext } from '../DetailsDrawer/context'
 
 const scrollPositionContext = createContext({})
 

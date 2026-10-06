@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 import usePortal from 'react-useportal'
 import { Drawer } from '@sensorr/ui'
@@ -6,8 +6,7 @@ import { historyEntryOf } from '@sensorr/utils'
 import { MovieContent } from '../../pages/Movie/Movie'
 import { ShowContent } from '../../pages/Shows/Show'
 import { PersonContent } from '../../pages/Person/Person'
-
-const detailsDrawerContext = createContext({})
+import { detailsDrawerContext } from './context'
 
 // The scroll, in px past the poster, over which the band under the knob fades in
 const BAND_FADE = 24
@@ -154,9 +153,3 @@ export const Provider = ({ children, ...props }) => {
     </detailsDrawerContext.Provider>
   )
 }
-
-export const useDetailsDrawerContext = () => useContext(detailsDrawerContext) as ({
-  open: (details: any) => void
-  close: () => void
-  leave: (from: { key: string, pathname: string }) => void
-})
