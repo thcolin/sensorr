@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
+import { keyframes } from '@emotion/react'
 import { useDevice, useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Billboard, pictureSrc } from '@sensorr/ui'
@@ -18,6 +19,17 @@ import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Ar
 import { ratingKeyOf } from '../../components/Artworks/candidates'
 import { artworkOf } from '../../store/plex'
 import { useAPI } from '../../store/api'
+
+const rise = keyframes`
+  from {
+    opacity: 0;
+    transform: translate3d(0, 2em, 0) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+`
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -362,12 +374,17 @@ UIDetails.styles = {
       marginTop: '-4.5em',
       paddingX: 4,
     },
+    // Once the drawer is up, the poster rises out of it and its glow lights up
     poster: {
       flexShrink: 0,
+      animation: `400ms cubic-bezier(0.4, 0, 0.2, 1) 300ms both ${rise}`,
       '>div': {
         height: '13.5em',
         width: '9em',
         boxShadow: (theme) => `0px 3px 30px var(--poster-glow, ${theme.colors.primary})`,
+      },
+      '@media (prefers-reduced-motion: reduce)': {
+        animation: 'none',
       },
     },
     heading: {
