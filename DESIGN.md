@@ -746,8 +746,8 @@ instead of writing a bespoke empty state.
   "Loading" text: a bar per line of text, as high as the text's font size, a pill per pill, in
   `gray`, or in the poster's colors on a details page. `Skeleton` holds a bar and its content in
   the same grid cell. Once the content is known, the cell eases to its height and a lone bar to
-  its width in `400ms ease-in-out`, then the bar fades out as the content fades in. A poster's
-  picture and badges wait for its title to settle. Whatever arrives after the rest, a badge, a
+  its width in `250ms ease-in-out`; `150ms` in, the content fades in over the bar in `250ms`, and
+  the bar fades out under it `150ms` later. A poster's picture and badges show with its title. Whatever arrives after the rest, a badge, a
   pill, a row of links, fades in on mount with `reveal`, `400ms ease-in-out`, the house
   transition as an animation, since a transition never plays on an element that mounts
   (`libs/ui/src/atoms/Skeleton/Skeleton.tsx`).

@@ -68,7 +68,7 @@ export interface SkeletonProps {
   align?: 'center' | 'start'
   // Cut a text that overflows with an ellipsis, which a block holding menus or badges cannot afford
   clip?: boolean
-  // Once the bar has taken the content's size and left, as the content starts to show, for what waits on it
+  // As the content starts to show over its bar, for what shows with it
   onShown?: () => void
   // The width the placeholder's `[data-fit]` bar takes, read on the content laid out unseen, when the content is a
   // block wider than its text
@@ -78,14 +78,16 @@ export interface SkeletonProps {
 }
 
 const EASING = 'ease-in-out'
-const DURATION = 400
-// The bar leaves before its content comes: the two never show over each other
-const HIDE = 200
+const DURATION = 250
+// The content inks in over its bar while the bar ends its size, then the bar fades out under it: no time where
+// neither shows
+const INK = 150
+const FADE = 250
 
 // A bar that becomes its content. Once the content is there, it is laid out unseen in the bar's grid
 // cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
-// width, then the bar fades out, then the content fades in. A blank line holds the cell at the height of
-// one line of the text it waits for.
+// width; on the way the content fades in over the bar, then the bar fades out under it. A blank line holds
+// the cell at the height of one line of the text it waits for.
 export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, fit = null, children, ...props }: SkeletonProps) => {
   const cell = useRef<HTMLSpanElement>(null)
   const cover = useRef<HTMLSpanElement>(null)
@@ -96,20 +98,23 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
 
   const running = useRef<Animation[]>([])
 
-  // Called as the content starts to show, once the bar has left: what waits on it shows with it
-  useEffect(() => {
-    if (!shown || typeof onShown !== 'function') {
-      return
-    }
+  const inking = useRef<ReturnType<typeof setTimeout>>(null)
 
-    const timeout = setTimeout(onShown, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : HIDE)
-    return () => clearTimeout(timeout)
+  // Called as the content starts to show: what waits on it shows with it
+  useEffect(() => {
+    if (shown && typeof onShown === 'function') {
+      onShown()
+    }
   }, [shown])
 
-  useLayoutEffect(() => () => running.current.forEach(animation => animation.cancel()), [])
+  useLayoutEffect(() => () => {
+    clearTimeout(inking.current)
+    running.current.forEach(animation => animation.cancel())
+  }, [])
 
   useLayoutEffect(() => {
     if (!ready) {
+      clearTimeout(inking.current)
       running.current.forEach(animation => animation.cancel())
       running.current = []
       height.current = cell.current.getBoundingClientRect().height
@@ -141,13 +146,13 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
       running.current.push(morphed.animate([{ width: `${morphed.getBoundingClientRect().width}px` }, { width: `${target}px` }], { ...timing, fill: 'forwards' }))
     }
 
-    running.current[0].finished.then(() => setShown(true)).catch(() => null)
+    inking.current = setTimeout(() => setShown(true), INK)
   }, [ready])
 
   return (
     <span {...props} ref={cell} sx={{ ...Skeleton.styles.element, alignItems: align }}>
       <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
-      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: shown ? 0 : 1 }}>
+      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: shown ? 0 : 1, transition: `opacity ${FADE}ms ${EASING} ${shown ? INK : 0}ms` }}>
         {placeholder || <Bar {...bar} />}
       </span>
       {ready && (
@@ -175,9 +180,8 @@ Skeleton.styles = {
   },
   cover: {
     display: 'block',
-    transition: `opacity ${HIDE}ms ${EASING}`,
     '@media (prefers-reduced-motion: reduce)': {
-      transition: 'none',
+      transition: 'none !important',
     },
   },
   // Out of the flow once the content is there, so the cell takes the content's height and never the bars'
@@ -189,10 +193,12 @@ Skeleton.styles = {
     overflow: 'hidden',
   },
   // A flex row lays a text out at its own width, the one a lone bar takes, without the line box an
-  // inline block would add under it
-  content: {},
+  // inline block would add under it. Positioned, it paints over the bars once they leave the flow
+  content: {
+    position: 'relative',
+  },
   after: {
-    animation: `${animations.reveal} ${REVEAL} ${HIDE}ms backwards`,
+    animation: `${animations.reveal} ${FADE}ms ${EASING} backwards`,
     '@media (prefers-reduced-motion: reduce)': {
       animation: 'none',
     },
