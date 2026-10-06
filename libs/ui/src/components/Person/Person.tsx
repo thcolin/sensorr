@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react'
 import { LinkProps } from 'react-router-dom'
 import i18n from '@sensorr/i18n'
-import { emojize } from '@sensorr/utils'
+import { emojize, useDevice } from '@sensorr/utils'
 import { Person as PersonInterface, Crew as CrewInterface, Cast as CastInterface } from '@sensorr/tmdb'
 import { Empty } from '../../atoms/Picture/Picture'
 import { Focus } from '../../atoms/Focus/Focus'
@@ -35,8 +35,10 @@ const UIPerson = ({
   state,
   setState,
   ready = true,
+  onPress = null,
   ...props
 }: PersonProps) => {
+  const device = useDevice()
   const entity = useMemo(() => data || { profile_path: false, id: null }, [data, placeholder]) as PersonInterface
   const details = useMemo(() => transformPersonDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to: `/person/${entity.id}` }))(entity), [entity, props.link])
@@ -102,6 +104,8 @@ const UIPerson = ({
           empty={Empty.person}
           badges={badges}
           credits={false}
+          interactive={device === 'mobile'}
+          onPress={onPress}
         />
       )
   }

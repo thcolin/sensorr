@@ -308,18 +308,22 @@ const UIDetails = ({
             </Link>
           </Skeleton>
           {metadataBlock}
-          <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
-            <div sx={UIDetails.styles.drawer.ratings}>
-              <span>
-                <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
-              </span>
-            </div>
-          </Skeleton>
-          <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
-            <div sx={UIDetails.styles.drawer.externals}>
-              <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
-            </div>
-          </Skeleton>
+          {['movie', 'tv'].includes(behavior) && (
+            <>
+              <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+                <div sx={UIDetails.styles.drawer.ratings}>
+                  <span>
+                    <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
+                  </span>
+                </div>
+              </Skeleton>
+              <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+                <div sx={UIDetails.styles.drawer.externals}>
+                  <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
+                </div>
+              </Skeleton>
+            </>
+          )}
           {meaningfulBlock}
         </div>
         <div sx={UIDetails.styles.drawer.body}>

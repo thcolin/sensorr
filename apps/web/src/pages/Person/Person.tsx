@@ -19,9 +19,11 @@ const PersonDetails = compose(
   withProps({ behavior: 'person' }),
 )(Details)
 
-const Person = ({ ...props }) => {
+// The page of `/person/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
+export const PersonContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
-  const { id } = useParams() as any
+  const params = useParams() as any
+  const id = drawn ?? params.id
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { metadata: { [id]: metadata } } = usePersonsMetadataContext() as any
@@ -43,13 +45,20 @@ const Person = ({ ...props }) => {
 
   const ready = !loading && !!(data?.id || error)
 
-  useTitle(ready && details.title)
+  useTitle(variant !== 'page' ? null : ready && details.title)
 
   useEffect(() => {
-    if (ready) {
+    if (ready && variant === 'page') {
       restoreScrollPosition()
     }
   }, [ready])
+
+  // A person has no backdrop, and TMDB tags them mostly on posters: the drawer shows their best known movie's
+  const billboard = useMemo(() => variant === 'drawer'
+    ? [...(data?.movie_credits?.cast || []), ...(data?.movie_credits?.crew || [])]
+      .filter(credit => credit.backdrop_path)
+      .sort((a, b) => b.vote_count - a.vote_count)[0]?.backdrop_path || null
+    : null, [variant, data])
 
   const tabs = useMemo(() => {
     const known = {
@@ -332,7 +341,9 @@ const Person = ({ ...props }) => {
 
   return (
     <PersonDetails
-      details={details}
+      variant={variant}
+      initialPalette={palette}
+      details={billboard ? { ...details, billboard } : details}
       entity={data}
       tabs={tabs}
       loading={loading}
@@ -341,4 +352,4 @@ const Person = ({ ...props }) => {
   )
 }
 
-export default withBody({ overlayScrollbars: true })(Person)
+export default withBody({ overlayScrollbars: true })(PersonContent)
