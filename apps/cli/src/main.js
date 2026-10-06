@@ -22,6 +22,7 @@ import keepInTouch from './commands/keep-in-touch'
 import wrapped from './commands/wrapped'
 import mail from './commands/mail'
 import migrate from './commands/migrate'
+import dump from './commands/dump'
 import migrateSonarr from './commands/migrate-sonarr'
 
 globalThis.fetch = nodeFetch
@@ -83,6 +84,7 @@ const main = async () => {
     .command(keepInTouch(job, handlers))
     .command(wrapped(job, handlers))
     .command(mail(job, handlers))
+    .command(dump(job, handlers))
     .command({ ...migrate(job, handlers), builder: (yargs) => yargs.command(migrateSonarr(job, handlers)) })
     .scriptName('sensorr')
     .locale('en')

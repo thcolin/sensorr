@@ -75,6 +75,8 @@ A `[]` in a name stands for one item of the array above it.
 | `jobs.wrapped.paused` | `boolean` | `true` | Pause Wrapped job |
 | `jobs.mail.cron` | `string` | `0 9 * * 1` | Mail job cron, it mails each friend their requests that reached Plex since their last mail |
 | `jobs.mail.paused` | `boolean` | `false` | Pause Mail job |
+| `jobs.dump.cron` | `string` | `0 4 * * 0` | Dump job cron, it writes the library and the settings without any secret into dumps/ and keeps the last 4 |
+| `jobs.dump.paused` | `boolean` | `true` | Pause Dump job |
 
 ## Guests
 
