@@ -381,7 +381,10 @@ UIDetails.styles = {
         whiteSpace: 'normal',
       },
     },
+    // Above the drawer's knob, which passes behind it
     poster: {
+      position: 'relative',
+      zIndex: 3,
       alignSelf: 'center',
       marginBottom: 2,
       '--theme-ui-colors-gray': 'var(--poster-pill)',
