@@ -13,6 +13,8 @@ export interface DrawerProps {
   open: boolean
   close: (e?: any) => void
   level?: number
+  // Pulled down from its content scrolled to the top, the drawer closes like from its knob
+  pullable?: boolean
   children: React.ReactNode
 }
 
@@ -34,6 +36,7 @@ const UIDrawer = ({
   close,
   children,
   level = 0,
+  pullable = false,
 }: DrawerProps) => {
   const device = useDevice()
   const { theme } = useThemeUI()
@@ -112,6 +115,10 @@ const UIDrawer = ({
       <button
         sx={UIDrawer.styles.shadow}
         onClick={async (e) => {
+          if (device === 'mobile') {
+            return
+          }
+
           await animateToggle(false)
           preventEffectAnimation.current = true
           close()
@@ -164,15 +171,20 @@ const UIDrawer = ({
         <div
           sx={UIDrawer.styles.wrapper}
           style={{ opacity: !hidden ? 1 : 0 }}
-          onPointerDown={(e) => pull.current = { y: e.clientY, atTop: isAtTop(e.target as HTMLElement, e.currentTarget) }}
-          onPointerMove={(e) => {
-            // Pulled down from content scrolled to its top, the drawer follows the finger like the knob
-            if (pull.current?.atTop && e.clientY - pull.current.y > 8) {
-              pull.current = null
-              controls.start(e)
-            }
-          }}
-          onPointerUp={() => pull.current = null}
+          {...(pullable ? {
+            onPointerDown: (e) => {
+              const pullable = e.pointerType === 'touch' && !(e.target as HTMLElement).closest('input, select, textarea, button, [contenteditable]')
+              pull.current = pullable ? { y: e.clientY, atTop: isAtTop(e.target as HTMLElement, e.currentTarget) } : null
+            },
+            onPointerMove: (e) => {
+              if (pull.current?.atTop && e.clientY - pull.current.y > 8) {
+                pull.current = null
+                controls.start(e)
+              }
+            },
+            onPointerUp: () => pull.current = null,
+            onPointerCancel: () => pull.current = null,
+          } : {})}
         >
           {!hidden && children}
         </div>
@@ -199,6 +211,8 @@ UIDrawer.styles = {
     height: '100%',
     width: '100%',
     transition: 'opacity 200ms ease',
+    // Under the knob, unless a content standing out of the drawer sets `--drawer-content-layer`
+    zIndex: 'var(--drawer-content-layer, 1)',
   },
   spinner: {
     position: 'absolute',

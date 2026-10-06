@@ -490,8 +490,11 @@ const PressableLink = ({
     }
 
     origin.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-    setAction('press')
-    timer.current = setTimeout(() => setAction('longpress'), 400)
+    // Pressed only once the finger stays a moment: the start of a scroll does not shrink the poster
+    timer.current = setTimeout(() => {
+      setAction('press')
+      timer.current = setTimeout(() => setAction('longpress'), 320)
+    }, 80)
   }
 
   const handleOnTouchMove = (e) => {
@@ -547,7 +550,7 @@ const PressableLink = ({
         position: 'relative',
         display: 'block',
         transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
-        transform: `scale(${{ press: 0.97, longpress: 1.05 }[action] || 1})`,
+        transform: `scale(${{ press: 0.96, longpress: 1.05 }[action] || 1})`,
         userSelect: 'none',
         // WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',

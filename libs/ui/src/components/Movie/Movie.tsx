@@ -57,6 +57,7 @@ const UIMovie = ({
   metadata,
   setMetadata,
   proceedRelease,
+  onPress = null,
   removeRelease,
   ready = true,
   selected = null,
@@ -150,6 +151,7 @@ const UIMovie = ({
     default:
       return (
         <Poster
+          onPress={onPress}
           {...props}
           details={details}
           link={link}

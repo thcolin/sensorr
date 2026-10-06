@@ -50,6 +50,7 @@ const UIShow = ({
   metadata,
   setMetadata,
   proceedRelease,
+  onPress = null,
   ready = true,
   selected = null,
   selectedVisible = false,
@@ -114,6 +115,7 @@ const UIShow = ({
 
   return (
     <Poster
+      onPress={onPress}
       {...props}
       details={details}
       link={link}

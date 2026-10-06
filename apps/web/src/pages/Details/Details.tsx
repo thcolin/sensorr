@@ -14,9 +14,8 @@ import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
 import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
-import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Artworks'
+import { Artworks, TitleLogo, logoSrcOf, useArtworksOf } from '../../components/Artworks/Artworks'
 import { ratingKeyOf } from '../../components/Artworks/candidates'
-import { artworkOf } from '../../store/plex'
 import { useAPI } from '../../store/api'
 
 const pendingReducer = createPendingReducer({
@@ -53,7 +52,7 @@ const paintOf = ({ backgroundColor, color }) => {
     '--poster-cutout': backgroundColor,
     '--poster-pill': color,
     '--poster-pill-text': backgroundColor,
-      ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
+    ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
   }
 }
 
@@ -127,7 +126,20 @@ const UIDetails = ({
 
   const api = useAPI()
   const tmdbLogo = entity?.images?.logos?.[0]?.file_path
-  const logo = variant === 'drawer' && (artworks?.logo ? pictureSrc(artworkOf(artworks.logo, null, api.access_token), 'w500') : tmdbLogo ? pictureSrc(tmdbLogo, 'w500') : null)
+  const logoSrc = variant === 'drawer' ? (artworks?.logo ? logoSrcOf(artworks.logo, api.access_token) : tmdbLogo ? pictureSrc(tmdbLogo, 'w500') : null) : null
+  const [failedLogo, setFailedLogo] = useState(null)
+  const logo = logoSrc !== failedLogo ? logoSrc : null
+
+  // A logo that does not load leaves the title, as TitleLogo does
+  useEffect(() => {
+    if (!logoSrc) {
+      return
+    }
+
+    const image = new Image()
+    image.onerror = () => setFailedLogo(logoSrc)
+    image.src = logoSrc
+  }, [logoSrc])
 
   const posterBlock = (
     <Poster
@@ -243,7 +255,7 @@ const UIDetails = ({
     <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
       <div>
         {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
-        <Overview children={overview} />
+        <Overview children={overview} remembered={page} />
       </div>
     </Skeleton>
   )
@@ -286,7 +298,7 @@ const UIDetails = ({
             {posterBlock}
           </div>
           <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
-            <Link to={`/${behavior}/${entity?.id}`} sx={{ variant: 'link.reset', display: 'block' }}>
+            <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block' }}>
               {logo ? (
                 <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
                   <span>{title}</span>
@@ -356,7 +368,7 @@ UIDetails.styles = {
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100%',
-      marginTop: 'calc(15dvh + 6em)',
+      marginTop: 'calc(var(--drawer-rest, 15dvh) + 6em)',
     },
     backdrop: {
       position: 'absolute',

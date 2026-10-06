@@ -86,12 +86,14 @@ UIArtworks.styles = {
 
 export const Artworks = memo(UIArtworks)
 
+export const logoSrcOf = (path: string, token: string) => pictureSrc(artworkOf(path, null, token), 'w500')
+
 // Keyed by its path where it is drawn, so that a new logo starts over
 const UITitleLogo = ({ path, title, className = undefined }) => {
   const api = useAPI()
   const [tone, setTone] = useState<LogoTone | null>(null)
   const [failed, setFailed] = useState(false)
-  const src = pictureSrc(artworkOf(path, null, api.access_token), 'w500')
+  const src = logoSrcOf(path, api.access_token)
 
   if (failed) {
     return <>{title}</>
