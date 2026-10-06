@@ -198,7 +198,8 @@ const UIEntities = ({
     <EntitiesContextProvider entities={entities}>
       {hide ? (
         <div sx={{ ...UIEntities.styles.fold, ...(collapsed ? UIEntities.styles.folded : {}) }} aria-hidden={collapsed || undefined}>
-          {content}
+          {/* Without padding of its own, so the row's padding folds with it */}
+          <div>{content}</div>
         </div>
       ) : content}
     </EntitiesContextProvider>
@@ -210,8 +211,10 @@ UIEntities.styles = {
     display: 'grid',
     gridTemplateRows: '1fr',
     transition: 'grid-template-rows 400ms ease-in-out, opacity 400ms ease-in-out',
+    // As narrow as the page: a row as wide as its entities would scroll the page sideways
     '>div': {
       minHeight: '0px',
+      minWidth: '0px',
     },
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
