@@ -214,9 +214,11 @@ const withUnfulfilledShows = () => (WrappedComponent) => {
   const WithUnfulfilledShows = ({ entities, length, onMore, ...props }: any) => {
     const { loading, metadata } = useShowsMetadataContext() as any
     const unfulfilled = (props.controls?.values?.state ?? SHOWS_UNFULFILLED) === SHOWS_UNFULFILLED
-    const listed = useMemo(() => Object.values(entities || {}).filter((show: any) => loading || !unfulfilled || metadata[show.id]?.state === 'ignored'), [entities, loading, unfulfilled, metadata])
+    // Their states filter the grid: until known, the cards stay skeletons instead of showing and leaving
+    const listed = useMemo(() => loading ? [] : Object.values(entities || {}).filter((show: any) => !unfulfilled || metadata[show.id]?.state === 'ignored'), [entities, loading, unfulfilled, metadata])
+    const ready = props.ready && !loading
 
-    return <WrappedComponent {...props} entities={listed} length={props.ready ? listed.length : length} />
+    return <WrappedComponent {...props} ready={ready} entities={listed} length={ready ? listed.length : length} />
   }
 
   return WithUnfulfilledShows

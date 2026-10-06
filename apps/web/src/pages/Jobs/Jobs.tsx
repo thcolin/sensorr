@@ -5,7 +5,7 @@ import ReconnectingEventSource from 'reconnecting-eventsource'
 import { throttle } from 'throttle-debounce'
 import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
 import { useRipple } from 'use-ripple-hook'
-import { Drawer, Icon, Link } from '@sensorr/ui'
+import { Bar, Drawer, Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { usePainted, useResponsiveValue, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS, jobLabelOf, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
@@ -154,13 +154,7 @@ const UIJobs = ({ controls = null, ...props }) => {
       <Body>
         <div sx={UIJobs.styles.content}>
           {loading ? (
-            <div sx={UIJobs.styles.placeholder}>
-              <Warning
-                emoji="🏗️"
-                title="Loading jobs"
-                subtitle="Please wait a few moments..."
-              />
-            </div>
+            <HeadPlaceholder />
           ) : View ? (
             <View job={active} logs={logs} />
           ) : (
@@ -285,10 +279,10 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
           <button ref={ref} type='button' onPointerDown={onPointerDown} onClick={() => setExpanded(e => !e)} aria-expanded={expanded} aria-haspopup='dialog' disabled={loading}>
-            <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Icon value='spinner' height='0.5em' width='0.5em' />}</span>
+            <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Bar width='1em' height='1em' radius='50%' />}</span>
             <span>
               <span>
-                <code>{label ? label.command : 'Loading'}</code>
+                <code>{label ? label.command : <Bar width='6em' height='0.75em' />}</code>
                 {!!label?.suffix && <span>{label.suffix}</span>}
               </span>
               {!!active && (
@@ -311,8 +305,8 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         <>
           {/* The row keeps its place under the head while the jobs load */}
           {!mobile && <CommandTabs options={LOADING_TABS} all={0} value={null} onChange={setFilter} />}
-          <div sx={UISidebar.styles.placeholder}>
-            <Icon value='spinner' />
+          <div sx={UISidebar.styles.placeholder} aria-hidden={true}>
+            {[[5.5, 2], [6.5, 2], [5, 3], [6, 2]].map(([title, pills], index) => <JobPlaceholder key={index} title={title} pills={pills} />)}
           </div>
         </>
       ) : mobile ? createPortal((
@@ -451,10 +445,10 @@ UISidebar.styles = {
     },
   },
   placeholder: {
-    flex: 1,
-    display: ['none', 'flex'],
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: ['none', 'block'],
+    paddingX: 2,
+    paddingTop: '2.5em',
+    overflow: 'hidden',
   },
   nav: {
     flex: 1,
@@ -834,3 +828,49 @@ UIJob.styles = {
 }
 
 const Job = memo(UIJob)
+
+// A job while the list loads: the card's own boxes, with a bar where each text goes and a pill per count
+const JobPlaceholder = ({ title, pills }) => (
+  <div sx={UIJob.styles.element}>
+    <span sx={{ ...UIJob.styles.wrapper, opacity: 0.5 }}>
+      <span sx={UIJob.styles.head}>
+        <span sx={UIJob.styles.icon} />
+        <span sx={{ ...UIJob.styles.container, gap: 6 }}>
+          <Bar width={`${title}em`} height='1em' />
+          <Bar width='11em' height='0.625em' />
+        </span>
+      </span>
+      <span sx={{ ...UIJob.styles.summary, display: 'flex', gap: 8 }}>
+        {Array.from({ length: pills }).map((_, index) => <Bar key={index} pill={true} width='3.5em' height='1.75em' />)}
+      </span>
+    </span>
+  </div>
+)
+
+// The open job's head while the jobs load: the emoji, its command, its id and date, its counts
+const HeadPlaceholder = () => (
+  <div sx={HeadPlaceholder.styles.element} aria-hidden={true}>
+    <Bar width='5em' height='5em' radius='50%' />
+    <Bar width='10em' height='1.5em' />
+    <Bar width='14em' height='0.875em' />
+    <span sx={HeadPlaceholder.styles.pills}>
+      {[0, 1, 2].map(index => <Bar key={index} pill={true} width='4em' height='2.25em' />)}
+    </span>
+  </div>
+)
+
+HeadPlaceholder.styles = {
+  element: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    padding: '2.5em',
+  },
+  pills: {
+    display: 'flex',
+    gap: 8,
+    marginTop: 8,
+  },
+}

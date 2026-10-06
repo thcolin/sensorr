@@ -742,7 +742,14 @@ instead of writing a bespoke empty state.
   chevron at an end dims to `opacity: 0.33` and keeps its focus. The pressed pill of the command
   tabs slides by the same glide (`glide` and `pageOf` in `libs/utils/src/hooks/useDragScroll.ts`,
   `paging` in `libs/ui/src/layout/Entities/Entities.tsx`).
-- Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `placeholder`, `bounce`,
+- Loading draws the content's own shape in still bars, `Bar`, never a spinner, a shimmer or a
+  "Loading" text: a bar per line of text, a pill per pill, in `gray`, or in the poster's colors
+  on a details page. `Skeleton` holds a bar and its content in the same grid cell, so the bar
+  fades out as the content fades in and nothing moves. Whatever arrives after the rest, a badge,
+  a pill, a row of links, fades in on mount with `reveal`, `400ms ease-in-out`, the house
+  transition as an animation, since a transition never plays on an element that mounts
+  (`libs/ui/src/atoms/Skeleton/Skeleton.tsx`).
+- Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `reveal`, `bounce`,
   `pulse`, `blink`, `spin`.
 
 ## Do's and Don'ts

@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Warning, Icon } from '@sensorr/ui'
+import { Bar, Warning, Icon } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
@@ -286,7 +286,8 @@ const KeepInTouch = () => {
                         Sensorr server will be listed as an <a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>authorized device</a> on your <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex account</a> where you can manage it.
                       </p>
                     </div>
-                  ) : pin?.code ? (
+                  ) : (
+                    // The steps show at once, the code is a bar until Plex gives it
                     <div>
                       <a
                         href='https://plex.tv/link'
@@ -319,16 +320,14 @@ const KeepInTouch = () => {
                       <br/>
                       <span>And enter below code to link your Plex account with Sensorr server :</span>
                       <br/>
-                      <code sx={{ fontSize: '4em', fontWeight: 'bold', color: 'black' }}>{pin.code}</code>
+                      <code sx={{ fontSize: '4em', fontWeight: 'bold', color: 'black' }}>
+                        {pin?.code || <Bar inline={true} width='2.75em' height='0.75em' />}
+                      </code>
                       <p sx={{ fontSize: 6, marginTop: '2rem', textAlign: 'left', color: 'grayDark' }}>
                         Linking your Plex account with Sensorr server will allow administrator to follow movies from your <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex "Watchlist"</a> and consider adding them to his library.
                         <br/><br/>
                         Sensorr server will be listed as an <a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>authorized device</a> on your <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex account</a> where you can manage it.
                       </p>
-                    </div>
-                  ) : (
-                    <div sx={{ fontSize: '4em' }}>
-                      <Icon value='spinner' />
                     </div>
                   )}
                 </div>

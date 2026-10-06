@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning } from '@sensorr/ui'
+import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning, reveal } from '@sensorr/ui'
 import toast from 'react-hot-toast'
 import { Policy, coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
@@ -83,7 +83,7 @@ const UINotifications = ({ ...props }) => {
   return (
     <>
       <button {...(pwa ? { ref: pointerRef, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
-        {!!unseen.length && <span>{unseen.length}</span>}
+        {!!unseen.length && <span sx={reveal}>{unseen.length}</span>}
         🔔
       </button>
       <Portal>

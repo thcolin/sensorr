@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { Button, Icon, Link, Option, Picture, pictureSrc, transformMovieDetails } from '@sensorr/ui'
+import { Bar, Button, Icon, Link, Option, Picture, Skeleton, pictureSrc, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
 import { useWikiData } from '../../store/wikidata'
@@ -219,7 +219,21 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                 <code>#{item.proposal?.job}</code>
               </aside>
             </div>
-            {movie ? (
+            <Skeleton
+              ready={!!movie}
+              align='start'
+              clip={false}
+              placeholder={(
+                // The facts' line, and the pills of the ratings and the platforms beside it, or under it on a phone
+                <div sx={UIActive.styles.facts}>
+                  <Bar width='18em' height='0.75em' />
+                  <span sx={UIActive.styles.skeleton}>
+                    <Bar pill={true} width='4.5em' height='2em' />
+                    <Bar pill={true} width='6em' height='2em' />
+                  </span>
+                </div>
+              )}
+            >
               <div sx={UIActive.styles.facts}>
                 {mobile ? (
                   <>
@@ -235,9 +249,7 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                   />
                 )}
               </div>
-            ) : (
-              <div sx={UIActive.styles.skeleton}><span /></div>
-            )}
+            </Skeleton>
             {/* The movie page's releases band, with the swap drawn under it. */}
             <div sx={UIActive.styles.releases} data-releases={true}>
               <div>
@@ -433,20 +445,9 @@ UIActive.styles = {
       borderColor: 'grayLight',
     },
   },
-  // Both sit right above the releases band on a wide screen: they keep it at a distance.
   skeleton: {
     display: 'flex',
-    flexDirection: 'column',
     gap: 8,
-    marginBottom: [0, 4],
-    '>span': {
-      display: 'block',
-      height: '2em',
-      width: '32em',
-      maxWidth: '100%',
-      backgroundColor: 'grayLight',
-      borderRadius: '0.25em',
-    },
   },
   // The movie page's releases band. It stays in the body column, and its shadow paints
   // the same grey out to both edges of the card, behind the poster.
@@ -920,12 +921,12 @@ export const Placeholder = ({ shape }: { shape: number[] }) => {
       <span sx={{ ...UICompact.styles.poster, ...Placeholder.styles.bar, ...Placeholder.styles.poster }} />
       <span sx={UICompact.styles.body}>
         <span sx={UICompact.styles.title}>
-          <span sx={{ ...Placeholder.styles.bar, width: `${title}em`, height: '1em' }} />
-          <span sx={{ ...Placeholder.styles.bar, width: '2.25em', height: '0.75em' }} />
+          <Bar width={`${title}em`} height='1em' />
+          <Bar width='2.25em' height='0.75em' />
         </span>
         <span sx={UICompact.styles.diff}>
           <span>
-            {pills.map((width, i) => <span key={i} sx={{ ...Placeholder.styles.bar, ...Placeholder.styles.pill, width: `${width}em` }} />)}
+            {pills.map((width, i) => <Bar key={i} pill={true} width={`${width}em`} height='1.25rem' />)}
           </span>
         </span>
       </span>
@@ -1032,6 +1033,6 @@ export const GroupTitle = memo(UIGroupTitle)
 
 export const GroupPlaceholder = () => (
   <h6 sx={UIGroupTitle.styles.element} aria-hidden={true}>
-    <span sx={{ ...Placeholder.styles.bar, width: '7.5em', height: '1em' }} />
+    <Bar width='7.5em' height='1em' />
   </h6>
 )
