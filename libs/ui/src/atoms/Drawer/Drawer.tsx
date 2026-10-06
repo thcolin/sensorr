@@ -146,6 +146,8 @@ const UIDrawer = ({
             type='button'
             aria-label='Close'
             sx={UIDrawer.styles.knob(knobColor)}
+            // A content taller than the visible drawer sets where the knob sits, through `--drawer-knob`
+            style={{ top: 'var(--drawer-knob, 0px)' }}
             onPointerDown={(e) => controls.start(e)}
             onClick={async () => {
               // A drag that did not reach the threshold ends on a click too
