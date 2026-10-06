@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { Icon } from '@sensorr/ui'
 import { platformsOf } from './platforms'
 
-const UIExternals = ({ entity, metadata, additional, meaningful, links = true, reviews = true, platforms: showPlatforms = true }) => {
+const UIExternals = ({ entity, metadata, additional, meaningful, links = true, reviews = true }) => {
   const watch = (entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]
   const platforms = platformsOf(watch?.flatrate)
 
@@ -35,7 +35,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true, r
           ))}
         </div>
       )}
-      {showPlatforms && (!!metadata?.plex_url || !!platforms.length) && (
+      {(!!metadata?.plex_url || !!platforms.length) && (
         <div>
           {!!metadata?.plex_url && (
             <a

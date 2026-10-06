@@ -86,7 +86,7 @@ UIPoster.styles = {
   reveal: (ready) => ({
     opacity: ready ? 1 : 0,
     visibility: ready ? 'visible' : 'hidden',
-    // After the poster's own fade, 400ms from 400ms
+    // After the poster's own fade, 400ms after a 400ms delay
     transition: ready ? 'opacity 400ms ease-in-out 900ms' : 'none',
   }),
   // At the size of the state badge

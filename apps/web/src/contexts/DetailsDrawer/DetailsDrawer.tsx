@@ -128,12 +128,13 @@ export const Provider = ({ children, ...props }) => {
     <detailsDrawerContext.Provider {...props} value={{ open, close, leave }}>
       {children}
       <Portal>
-        <div ref={layer} style={{ '--drawer-knob': `${KNOB}dvh` } as any}>
+        <div ref={layer} style={{ '--drawer-knob': `${KNOB}dvh`, '--drawer-rest': `${KNOB}dvh`, '--drawer-content-layer': 'auto' } as any}>
           <Drawer
             close={close}
             open={isOpen}
             height='100dvh'
             background='transparent'
+            pullable={true}
             knob={palette?.color || 'whitePure'}
           >
             <div ref={scroll} sx={styles.scroll} onScroll={onScroll} onClick={(e) => e.target === e.currentTarget && close()}>
