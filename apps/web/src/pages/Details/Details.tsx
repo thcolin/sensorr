@@ -1,6 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
-import { keyframes } from '@emotion/react'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Billboard, Link, pictureSrc } from '@sensorr/ui'
@@ -19,17 +18,6 @@ import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Ar
 import { ratingKeyOf } from '../../components/Artworks/candidates'
 import { artworkOf } from '../../store/plex'
 import { useAPI } from '../../store/api'
-
-const rise = keyframes`
-  from {
-    opacity: 0;
-    transform: translate3d(0, 2em, 0) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-`
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -275,7 +263,7 @@ const UIDetails = ({
           <Billboard path={billboard} palette={palette.palette} ready={ready} onReady={onReady.billboard} lazy={false} fade={0.5} blur={4} />
         </div>
         <div sx={UIDetails.styles.drawer.head}>
-          <div sx={UIDetails.styles.drawer.poster}>
+          <div sx={UIDetails.styles.drawer.poster} data-drawer-poster>
             {posterBlock}
           </div>
           <Skeleton palette={palette.palette} ready={ready} sx={{ alignSelf: 'stretch', marginBottom: 10 }}>
@@ -370,14 +358,10 @@ UIDetails.styles = {
     },
     poster: {
       marginBottom: 2,
-      animation: `400ms cubic-bezier(0.4, 0, 0.2, 1) 300ms both ${rise}`,
       '>div': {
         height: '15em',
         width: '10em',
         boxShadow: (theme) => `0px 3px 30px var(--poster-glow, ${theme.colors.primary})`,
-      },
-      '@media (prefers-reduced-motion: reduce)': {
-        animation: 'none',
       },
     },
     title: {
