@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useThemeUI } from '@theme-ui/core'
-import { Badge, EpisodeStatusOptions, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
+import { Badge, EpisodeStatusOptions, Lines, ProgressPill, transformShowDetails, Warning } from '@sensorr/ui'
 import { diffusionOf, episodeStatus, nextAirDateOf, progressOf } from '@sensorr/sensorr'
 import { useTitle } from '@sensorr/utils'
 import { useParams } from 'react-router'
@@ -25,6 +25,9 @@ import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 // The page of `/tv/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
+// The height of a season's row in `Seasons`, measured
+const SEASON_HEIGHT = '3em'
+
 export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
   const params = useParams() as any
@@ -224,6 +227,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
       tabs={tabs}
       loading={show.loading}
       ready={ready}
+      subtitleReady={seasonsReady}
       search={openSearch}
       actions={inLibrary ? (
         <ShowActions
@@ -243,9 +247,12 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
           subtitle={episodesError.message}
         />
       ) : (
-        // The page's skeleton, in the palette Details starts from. Under it, a library row per season without an
-        // episode: the block's height, no drawer to open
-        <Skeleton palette={{ backgroundColor: theme.rawColors.grayLight }} ready={seasonsReady} placeholder={false}>
+        // A bar per season, in the palette Details starts from, at the height of a season's row
+        <Skeleton
+          palette={{ backgroundColor: theme.rawColors.grayLightest, color: theme.rawColors.text }}
+          ready={seasonsReady}
+          shape={<Lines widths={(show.data?.seasons || []).map(() => '100%')} height={SEASON_HEIGHT} />}
+        >
           <Seasons
             entity={show.data}
             episodes={(seasonsReady && inLibrary) ? episodes : []}
