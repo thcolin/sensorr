@@ -951,6 +951,36 @@ export class API {
         }
       }),
     },
+    dumps: {
+      getDumps: (
+        { init = {} }: { init?: any } = {}
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: 'dumps',
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/json',
+          },
+        }
+      }),
+      getDump: (
+        { init = {}, params: { name } }: { init?: any, params: { name: string } }
+      ): { uri: string, params: {}, init: {} } => ({
+        uri: `dumps/${encodeURIComponent(name)}`,
+        params: {},
+        init: {
+          ...init,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer __ACCESS_TOKEN__`,
+            Accept: 'application/zip',
+          },
+        }
+      }),
+    },
     update: {
       getUpdate: (
         { init = {} }: { init?: any } = {}
@@ -1130,6 +1160,26 @@ export class API {
           }
         }
       },
+      runRestore: (
+        { body, init = {} }: { body: { archive: Blob }, init?: any }
+      ): { uri: string, params: {}, init: {} } => {
+        const data = new FormData()
+        data.append('archive', body.archive)
+
+        return {
+          uri: 'jobs/restore',
+          params: {},
+          init: {
+            ...init,
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer __ACCESS_TOKEN__`,
+              Accept: 'application/json',
+            },
+            body: data,
+          }
+        }
+      },
       stopJob: (
         { init = {}, params: { job } }: { init?: any, params: { job: string } }
       ): { uri: string, params: {}, init: {} } => ({
@@ -1219,6 +1269,11 @@ export class API {
       } else {
         throw Object.assign(new Error(`[API] ${res.status} (${res.statusText}): ${res.url}`), { status: res.status })
       }
+    }
+
+    // A file, a dump for one, comes back as it is
+    if (options?.blob) {
+      return res.blob()
     }
 
     const body = await res.json()
