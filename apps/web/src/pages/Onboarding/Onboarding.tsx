@@ -90,7 +90,7 @@ const Welcome = ({ config, origin, setOrigin, archive, setArchive }) => (
         <input
           type='file'
           accept='.zip,application/zip'
-          aria-label='Dump'
+          aria-label='Dump to import'
           onChange={(e) => setArchive(e.target.files?.[0] || null)}
           sx={Onboarding.styles.file}
         />

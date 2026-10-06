@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useOutlet } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useThemeUI } from 'theme-ui'
@@ -38,6 +38,7 @@ const Settings = ({ ...props }) => {
   const { theme } = useThemeUI()
   const { device } = useDeviceContext()
   const location = useLocation()
+  const nav = useRef(null)
   const [update, setUpdate] = useState(null)
 
   const onSave = useSaveConfig()
@@ -62,11 +63,16 @@ const Settings = ({ ...props }) => {
     })
   }, [])
 
+  // The nav scrolls on a short window: the page open stays in sight, the last ones included
+  useEffect(() => {
+    nav.current?.querySelector('a.active')?.scrollIntoView({ block: 'nearest' })
+  }, [location.pathname])
+
   return (
     <section sx={Settings.styles.element}>
       <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
         <h1>Settings</h1>
-        <nav>
+        <nav ref={nav}>
           <NavLink to='tmdb' viewTransition={device === 'mobile'}>TMDB</NavLink>
           <NavLink to='blackhole' viewTransition={device === 'mobile'}>Blackhole</NavLink>
           <NavLink to='indexers' viewTransition={device === 'mobile'}>Indexers</NavLink>
