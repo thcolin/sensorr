@@ -105,6 +105,17 @@ export const restoreConfig = (current: any, dumped: any) => {
     restored.znabs = restored.znabs.map((znab) => keys.has(znab.name) ? { ...znab, key: keys.get(znab.name) } : znab)
   }
 
+  // A job runs only once this Sensorr turns it on: its keys may not be set yet
+  for (const [command, job] of Object.entries<any>(restored.jobs || {})) {
+    for (const [type, settings] of Object.entries<any>('paused' in (job || {}) ? { '': job } : job || {})) {
+      const paused = getAt(current, ['jobs', command, type, 'paused'].filter(Boolean).join('.'))
+
+      if (settings && typeof settings === 'object' && typeof paused === 'boolean') {
+        settings.paused = paused
+      }
+    }
+  }
+
   return restored
 }
 

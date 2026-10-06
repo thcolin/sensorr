@@ -121,6 +121,16 @@ describe('restoreConfig', () => {
     expect(restored.plex.client_identifier).toBe('new-uuid')
   })
 
+  it('keeps whether each job is paused on the config that restores, and the rest of the jobs of the dump', () => {
+    const jobs = restoreConfig(
+      { jobs: { record: { movies: { cron: '0 1 * * *', paused: true } }, mail: { cron: '0 9 * * 1', paused: true } } },
+      { jobs: { record: { movies: { cron: '0 17 * * *', paused: false, proposalOnly: true } }, mail: { cron: '0 8 * * 1', paused: false }, dump: { cron: '0 4 * * 0', paused: false } } },
+    ).jobs
+    expect(jobs.record.movies).toEqual({ cron: '0 17 * * *', paused: true, proposalOnly: true })
+    expect(jobs.mail).toEqual({ cron: '0 8 * * 1', paused: true })
+    expect(jobs.dump).toEqual({ cron: '0 4 * * 0', paused: false })
+  })
+
   it('gives each indexer the key of the indexer of the same name, and none to an unknown one', () => {
     expect(restored.znabs).toEqual([{ name: 'YGG', url: 'http://jackett/ygg', key: 'new-ygg' }, { name: 'TPB', url: 'http://jackett/tpb' }])
   })

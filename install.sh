@@ -213,7 +213,7 @@ main() {
   fi
 
   # Docker on a Synology refuses to start on a missing mount
-  mkdir -p caddy/data caddy/config caddy/certs db .secrets "$(get SENSORR_BLACKHOLE)" "$(get SENSORR_TVSHOWS)"
+  mkdir -p caddy/data caddy/config caddy/certs db .secrets dumps "$(get SENSORR_BLACKHOLE)" "$(get SENSORR_TVSHOWS)"
 
   docker compose pull
   docker compose up -d
