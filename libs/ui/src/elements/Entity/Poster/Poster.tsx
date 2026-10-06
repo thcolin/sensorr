@@ -616,7 +616,7 @@ const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.Mu
           opacity *= Number(getComputedStyle(node).opacity)
         }
 
-        opacity = image ? Math.min(1, opacity / image) : 1
+        opacity = image ? Math.min(1, opacity / image) : opacity
 
         if (opacity < 0.01) {
           return null
