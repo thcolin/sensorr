@@ -174,41 +174,6 @@ const UIPoster = ({
             },
           }}
         >
-          {selected !== null && (
-            <div
-              data-select={true}
-              sx={{
-                position: 'fixed',
-                left: '1em',
-                zIndex: 1,
-                // Hidden at rest where a hover shows it: a poster without a focus badge has nothing to cover it,
-                // and on a touch screen a hidden pill would still take the touch
-                '@media (hover: hover)': {
-                  opacity: (selected || selectedVisible) ? 1 : 0,
-                },
-                transition: 'opacity 150ms ease-in-out',
-                backgroundColor: selected ? 'primary' : 'gray',
-                width: '2em',
-                height: '2em',
-                borderRadius: '2em',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderStyle: 'solid',
-                borderWidth: '0.25em',
-                borderColor: cutout,
-              }}
-            >
-              <Option
-                id={`select-${details?.id}`}
-                type='checkbox'
-                behavior='radio'
-                borderless={true}
-                checked={selected}
-                onChange={() => onSelectedChange(details?.id)}
-              />
-            </div>
-          )}
           {(badges?.focus?.component || badges?.reviews?.component) && (
             <div
               sx={{
@@ -338,6 +303,43 @@ const UIPoster = ({
             </div>
           )}
         </div>
+        {selected !== null && (
+          <div
+            data-select={true}
+            sx={{
+              position: 'absolute',
+              top: '-1em',
+              left: ['1px', '-2.5px'],
+              fontSize: [5, 4],
+              zIndex: 1,
+              // Hidden at rest where a hover shows it: a poster without a focus badge has nothing to cover it,
+              // and on a touch screen a hidden pill would still take the touch
+              '@media (hover: hover)': {
+                opacity: (selected || selectedVisible) ? 1 : 0,
+              },
+              transition: 'opacity 150ms ease-in-out',
+              backgroundColor: selected ? 'primary' : 'gray',
+              width: '2em',
+              height: '2em',
+              borderRadius: '2em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderStyle: 'solid',
+              borderWidth: '0.25em',
+              borderColor: cutout,
+            }}
+          >
+            <Option
+              id={`select-${details?.id}`}
+              type='checkbox'
+              behavior='radio'
+              borderless={true}
+              checked={selected}
+              onChange={() => onSelectedChange(details?.id)}
+            />
+          </div>
+        )}
       </div>
       {meaningful && (
         <div sx={UIPoster.styles.meaningful}>
