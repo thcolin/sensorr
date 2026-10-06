@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, QuerySelect, Option } from '@sensorr/ui'
 import { keyframes } from '@emotion/react'
 import Color from 'color'
+import { readableOn } from '@sensorr/palette'
 import { useThemeUI } from 'theme-ui'
 import { useSensorr } from '../../../store/sensorr'
 
@@ -69,12 +70,11 @@ export const useModePalette = (palette) => {
       return palette
     }
 
+    // On the ticket drawn in the poster's color, its lines and its small texts move away from it until they read
     return {
       backgroundColor: palette?.color,
-      alternativeColor: Color(palette?.accentColor)[{ dark: 'darken', light: 'lighten' }[colorMode]](0.25).hexa(),
-      accentColor: Color(palette?.alternativeColor)[{ dark: 'darken', light: 'lighten' }[colorMode]](
-        Math.max(0.5, Color(palette?.alternativeColor).luminosity() - 0.15)
-      ).hexa(),
+      alternativeColor: readableOn(palette?.accentColor, palette?.color, 3),
+      accentColor: readableOn(palette?.alternativeColor, palette?.color, 4.5),
       color: palette?.backgroundColor,
     }
   }, [palette, colorMode])

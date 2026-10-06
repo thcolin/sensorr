@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
+import Color from 'color'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Billboard, Icon, Link, ReviewsBadge, pictureSrc } from '@sensorr/ui'
@@ -304,10 +305,15 @@ const UIDetails = ({
   const restBlock = (
     <>
       {variant === 'drawer' ? (
-        // Nothing until the movie's releases are known, and nothing without any: an empty band says nothing
-        ready && !!metadata?.releases?.length && (
-          <div style={paintOf({ backgroundColor: shown.color, color: shown.backgroundColor })}>{releasesBlock}</div>
-        )
+        // The poster's colors fade to the page's black behind the releases, so that the rows start on black
+        <div sx={UIDetails.styles.drawer.dusk} style={{ backgroundImage: `linear-gradient(to bottom, ${shown.backgroundColor}, ${theme.rawColors.grayLightest})` }}>
+          {/* Nothing until the movie's releases are known, and nothing without any: an empty band says nothing */}
+          {ready && !!metadata?.releases?.length && (
+            // The releases' dimmed details need more contrast than the head's text: their background steps a fifth
+            // further from the drawer's. The indexers' links take their text color, the app's green reads on none
+            <div style={{ ...paintOf({ backgroundColor: `color-mix(in oklab, ${shown.color}, ${Color(shown.backgroundColor).isLight() ? 'black' : 'white'} 20%)`, color: shown.backgroundColor }), '--theme-ui-colors-primary': shown.backgroundColor } as React.CSSProperties}>{releasesBlock}</div>
+          )}
+        </div>
       ) : releasesBlock}
       {children}
       <div>
@@ -369,15 +375,10 @@ const UIDetails = ({
           <div style={tintOf(shown.negativeColor)}>{overviewBlock}</div>
           {ticketBlock}
         </div>
-        {/* The rows go back to the app's black, as on the page, through a gradient behind the releases */}
+        {/* The rows go back to the app's black, as on the page: the page's black is `html`'s, `grayLightest` */}
         <div
           sx={{ ...UIDetails.styles.drawer.fade, ...UIDetails.styles.drawer.rest }}
-          style={{
-            ...reveal,
-            ...plainOf(theme.rawColors),
-            // The page's black is `html`'s, `grayLightest`
-            backgroundImage: `linear-gradient(to bottom, ${shown.backgroundColor}, ${theme.rawColors.grayLightest} 12em)`,
-          }}
+          style={{ ...reveal, ...plainOf(theme.rawColors), backgroundColor: theme.rawColors.grayLightest }}
         >
           {restBlock}
         </div>
@@ -463,6 +464,10 @@ UIDetails.styles = {
     },
     rest: {
       flex: 1,
+    },
+    // Without releases, the gradient still needs room to reach the black
+    dusk: {
+      minHeight: '4em',
     },
     // What loads under the poster shows at once, once all of it has
     fade: {

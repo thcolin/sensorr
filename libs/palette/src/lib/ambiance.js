@@ -1,6 +1,7 @@
 import Color from 'color'
 
-const MINIMUM_CONTRAST_RATIO = 4.5
+// AA asks 4.5, a margin keeps a color that antialiasing or a translucent layer dims above it
+const MINIMUM_CONTRAST_RATIO = 5
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
@@ -40,6 +41,21 @@ const readable = ([l, c, h], background, dark, ratio = MINIMUM_CONTRAST_RATIO) =
   return dark ? Color('#FFFFFF') : Color('#000000')
 }
 
+// A color moved in lightness only, keeping its hue and chroma, until it reads on a background
+export const readableOn = (color, background, ratio = MINIMUM_CONTRAST_RATIO) => {
+  const surface = Color(background)
+  const [l, c, h] = Color(color).lch().array()
+  for (let L = l; surface.isDark() ? L <= 100 : L >= 0; L += surface.isDark() ? 1 : -1) {
+    const candidate = drawable(L, c, h)
+
+    if (candidate.contrast(surface) >= ratio) {
+      return candidate.hex()
+    }
+  }
+
+  return surface.isDark() ? '#FFFFFF' : '#000000'
+}
+
 /**
  * The poster's colors as a surface to read on, from the swatches `Colorthief` found and their pixel count:
  *  - the background keeps the lightness of the poster's dominant swatch, so a dark poster stays dark and a light one
@@ -71,7 +87,8 @@ export const ambianceOf = (swatches) => {
   const main = vivid[0] || mood
   const other = vivid.find(({ lch: [, c, h], share }) => c > 20 && share > 0.03 && hueDistance(h, main.lch[2]) > 45)
 
-  const color = readable(main.lch, backgroundColor, dark)
+  // The color also paints the releases, whose chips mix it a little into the background: it keeps more contrast
+  const color = readable(main.lch, backgroundColor, dark, 6)
   const alternativeColor = other
     ? readable(other.lch, backgroundColor, dark)
     : readable([main.lch[0] + (dark ? 15 : -15), main.lch[1] * 0.6, main.lch[2]], backgroundColor, dark)

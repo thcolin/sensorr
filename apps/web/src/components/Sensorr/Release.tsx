@@ -302,7 +302,8 @@ const UIReleaseState = ({ entity = null }) => (
   ) : entity?.from === 'sync' ? (
     <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
       <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-        <span sx={{ display: 'flex', justifyContent: 'center', width: '1em', color: 'plex' }}>
+        {/* On a tile, as among the details' externals: bare, Plex's yellow reads on no light background */}
+        <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.25em', height: '1.25em', borderRadius: '0.25em', backgroundColor: 'blackPure', color: 'plex' }}>
           ❯
         </span>
       </span>

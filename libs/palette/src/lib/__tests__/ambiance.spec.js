@@ -1,5 +1,5 @@
 import Color from 'color'
-import { ambianceOf } from '../ambiance'
+import { ambianceOf, readableOn } from '../ambiance'
 
 // What `Colorthief` finds in the w92 posters of Spider-Man: Brand New Day, Barbie and Insidious
 const posters = {
@@ -33,5 +33,13 @@ describe('ambianceOf', () => {
 
   it('keeps a light poster light', () => {
     expect(Color(ambiance('barbie').backgroundColor).isLight()).toBe(true)
+  })
+
+  it('moves a color away from its background until it reads, keeping its hue', () => {
+    // The Matrix ticket: its subtitle's green on the poster's green
+    const color = readableOn('#A4D1AF', '#60AE78', 4.5)
+
+    expect(Color(color).contrast(Color('#60AE78'))).toBeGreaterThanOrEqual(4.5)
+    expect(Math.abs(hue(color) - hue('#A4D1AF'))).toBeLessThan(10)
   })
 })
