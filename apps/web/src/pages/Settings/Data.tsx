@@ -13,6 +13,7 @@ import { useJobRunner } from '../../components/Sensorr/Jobs'
 import Onboarding from '../Onboarding/Onboarding'
 import { errorOf } from './Mail'
 import Update from './Update'
+import Lists from './Lists'
 
 const LABELS = { movies: 'movies', shows: 'TV shows', episodes: 'episodes', persons: 'stars' }
 
@@ -170,15 +171,20 @@ const Data = ({ ...props }) => {
             <div sx={Update.styles.action}>
               <h3>Import</h3>
               <p>A dump of this Sensorr or of another one replaces the library and the settings of this Sensorr. Its keys and passwords stay.</p>
-              <input
-                ref={input}
-                type='file'
-                accept='.zip,application/zip'
-                aria-label='Dump to import'
-                disabled={importing || restoring}
-                onChange={(e) => pick(e.target.files?.[0] || null)}
-                sx={Onboarding.styles.file}
-              />
+              <div sx={Data.styles.pick}>
+                <input
+                  ref={input}
+                  type='file'
+                  accept='.zip,application/zip'
+                  aria-label='Dump to import'
+                  disabled={importing || restoring}
+                  onChange={(e) => pick(e.target.files?.[0] || null)}
+                  sx={Onboarding.styles.file}
+                />
+                <button type='button' disabled={!preview?.manifest || !state || blocked} aria-busy={importing || restoring || !!preview?.loading} onClick={restoreArchive} sx={Data.styles.import}>
+                  {importing || restoring ? '⌛ Importing' : 'Import'}
+                </button>
+              </div>
               {preview?.error && (
                 <div role='alert' sx={Update.styles.failure}>
                   <strong>{emojize('🚨', preview.error)}</strong>
@@ -194,9 +200,6 @@ const Data = ({ ...props }) => {
                   <strong>Warning</strong>, {others.length > 2 ? `${emojize(JOB_EMOJIS[others[0]], others[0])} and ${others.length - 1} more` : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {others.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                 </p>
               )}
-              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!preview?.manifest || !state || blocked} aria-busy={importing || restoring || !!preview?.loading} onClick={restoreArchive}>
-                {importing || restoring ? '⌛ Importing' : 'Import'}
-              </Button>
             </div>
           </div>
         </article>
@@ -206,6 +209,29 @@ const Data = ({ ...props }) => {
 }
 
 Data.styles = {
+  // The field and its action on one line, as Settings › Lists creates a list
+  pick: {
+    display: 'flex',
+    alignItems: 'stretch',
+    '>input': {
+      flex: 1,
+      minWidth: 0,
+      borderTopRightRadius: '0rem',
+      borderBottomRightRadius: '0rem',
+    },
+  },
+  import: {
+    ...Lists.styles.plus,
+    fontFamily: 'heading',
+    fontWeight: 'semibold',
+    backgroundColor: 'error',
+    '&:hover:not(:disabled)': {
+      backgroundColor: 'errorDarker',
+    },
+    '&:active:not(:disabled)': {
+      backgroundColor: 'errorDarkest',
+    },
+  },
   dumps: {
     display: 'flex',
     flexDirection: 'column',
