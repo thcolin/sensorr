@@ -9,7 +9,17 @@ import { Link, LinkProps } from '../../atoms/Link/Link'
 
 const withGridItemContainer = () => (WrappedComponent) => {
   const withGridItemContainer = ({ style, index, readyInViewport, scrolling, more, moreIndex, total, ...props }) => (
-    <div sx={{ display: 'flex', justifyContent: 'center', ...style, ':focus-within, :has([data-raised])': { zIndex: 1 } }}>
+    <div
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        ...style,
+        transition: 'filter 300ms ease-out',
+        ':focus-within, :has([data-raised])': { zIndex: 1 },
+        // A focused poster dims the rest of its row
+        '*:has(> * [data-raised]) > &:not(:has([data-raised]))': { filter: 'brightness(0.5)' },
+      }}
+    >
       {moreIndex === index ? (
         <div sx={UIList.styles.row.more}>
           <More {...more} />
