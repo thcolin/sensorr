@@ -30,6 +30,8 @@ export function usePalette(url, initial, id) {
       return
     }
 
+    // Back to the initial colors while the new one computes: the previous image's would show for this one
+    setPalette(null)
     const controller = new AbortController()
     getImagePalette(url).then((p) => {
       if (controller.signal.aborted) {

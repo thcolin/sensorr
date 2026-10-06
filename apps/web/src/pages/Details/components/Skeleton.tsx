@@ -1,5 +1,5 @@
 import { memo, useRef } from 'react'
-import { Skeleton as Base } from '@sensorr/ui'
+import { Skeleton as Base, barTintOf } from '@sensorr/ui'
 
 // A block of the page while it loads: its `shape` in bars, in the poster's colors, which becomes the block once ready.
 // Their color stops following the palette once the block is ready: a palette resolved with the data would turn the
@@ -8,7 +8,7 @@ const UISkeleton = ({ children, palette, ready, shape, ...props }) => {
   const tint = useRef(null)
 
   if (!ready || !tint.current) {
-    tint.current = `color-mix(in oklab, ${palette?.color || 'currentColor'} 14%, ${palette?.backgroundColor || 'transparent'})`
+    tint.current = barTintOf(palette)
   }
 
   return (

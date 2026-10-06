@@ -3,7 +3,7 @@ import { useThemeUI } from '@theme-ui/core'
 import Color from 'color'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
-import { Bar, Billboard, Lines, Link, ReviewsBadge, pictureSrc, reveal } from '@sensorr/ui'
+import { Bar, Billboard, Lines, Link, ReviewsBadge, pictureSrc, reveal, barTintOf } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -121,8 +121,10 @@ const UIDetails = ({
 
   const { expanded } = useExpandContext() as any
   const { theme } = useThemeUI() as any
+  // Only the loaded entity's poster: while the next one loads, the request still holds the previous one, whose colors
+  // would paint the skeleton
   const resolved = usePalette(
-    !!poster && pictureSrc(poster, 'w92'),
+    !loading && !!poster && pictureSrc(poster, 'w92'),
     {
       backgroundColor: theme.rawColors.grayLight,
       color: theme.rawColors.text,
@@ -239,7 +241,8 @@ const UIDetails = ({
   const posterBlock = (
     <Poster
       path={poster}
-      palette={palette.palette}
+      // Its block in the bars' color, gray then the poster's tint, until its picture shows
+      palette={{ ...shown, backgroundColor: barTintOf(shown) }}
       behavior={behavior}
       ready={ready}
       onReady={onReady.poster}
@@ -292,13 +295,18 @@ const UIDetails = ({
     </h1>
   )
 
-  // A bar on the line of its text: the subtitle's covers its chevron and takes its width, the meaningful line's starts
-  // after its emoji
-  const lineOf = (bar, height, indent = '0em') => <span sx={{ display: 'flex', alignItems: 'center', height, paddingLeft: indent }}>{bar}</span>
+  // A bar on the line of its text, over its chevron, which takes the line's width once known
+  const lineOf = (bar, height) => <span sx={{ display: 'flex', alignItems: 'center', height }}>{bar}</span>
   const subtitleShape = lineOf(<Bar width='14em' height='1.25em' data-fit={true} />, '2em')
   const subtitleFit = (content) => {
     const subtitle = content.querySelector('h4')
     return subtitle && subtitle.getBoundingClientRect().right - content.getBoundingClientRect().left
+  }
+  // To the end of the summary's text: the line closed, its details are not laid out
+  const meaningfulFit = (content) => {
+    const range = document.createRange()
+    range.selectNodeContents(content.querySelector('summary') || content)
+    return range.getBoundingClientRect().right - content.getBoundingClientRect().left
   }
 
   const metadataBlock = (
@@ -366,7 +374,7 @@ const UIDetails = ({
   )
 
   const meaningfulBlock = (
-    <Skeleton palette={shown} ready={ready} shape={lineOf(<Bar width='22em' height='1em' />, '2em', '1.75em')} sx={{ marginBottom: 4 }}>
+    <Skeleton palette={shown} ready={ready} shape={lineOf(<Bar width='22em' height='1em' data-fit={true} />, '2em')} fit={meaningfulFit} sx={{ marginBottom: 4 }}>
       <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
     </Skeleton>
   )

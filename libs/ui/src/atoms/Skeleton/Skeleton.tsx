@@ -13,6 +13,10 @@ export const reveal = {
   },
 }
 
+// The bars' color in a poster's colors, and the poster's own block while its picture loads: a seventh of its text
+// color into its background
+export const barTintOf = (palette) => `color-mix(in oklab, ${palette?.color || 'currentColor'} 14%, ${palette?.backgroundColor || 'transparent'})`
+
 export interface BarProps {
   width?: string
   height?: string
