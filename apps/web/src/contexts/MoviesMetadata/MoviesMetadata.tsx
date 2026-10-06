@@ -156,13 +156,16 @@ export const Provider = ({ ...props }) => {
       let failed = []
 
       try {
-        if (Object.keys(changes).length === 1) {
-          const [i] = Object.keys(changes)
+        // Several ids at once come from a selection: the ones Sensorr already keeps have their title, the others
+        // only TMDB can give one, without it a grid's selection would write documents with no title
+        const refreshed = Object.keys(changes).length === 1 ? Object.keys(changes) : key === 'state' && value === 'ignored' ? [] : Object.keys(changes).filter(i => !initial[i]?.title)
+
+        await Promise.all(refreshed.map(async (i) => {
           changes[i] = {
             ...(await refresh(tmdb, i, initial[i])),
             ...changes[i],
           }
-        }
+        }))
 
         const { uri, params, init } = api.query.movies[(key === 'state' && value === 'ignored' ? 'deleteMovies' : 'postMovies')]({ body: changes })
         // A movie whose release did not download comes back in `failed`, the others are written
