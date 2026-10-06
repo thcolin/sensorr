@@ -17,6 +17,7 @@ import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
 import { Artworks, TitleLogo, logoSrcOf, useArtworksOf } from '../../components/Artworks/Artworks'
 import { ratingKeyOf } from '../../components/Artworks/candidates'
+import { logoFilterOf, toneOfImage } from '../../components/Artworks/tone'
 import { useAPI } from '../../store/api'
 
 const pendingReducer = createPendingReducer({
@@ -150,27 +151,65 @@ const UIDetails = ({
   }, [loading])
 
   const api = useAPI()
-  const tmdbLogo = entity?.images?.logos?.[0]?.file_path
-  const logoSrc = variant === 'drawer' ? (artworks?.logo ? logoSrcOf(artworks.logo, api.access_token) : tmdbLogo ? pictureSrc(tmdbLogo, 'w500') : null) : null
-  const [failedLogo, setFailedLogo] = useState(null)
-  const [loadedLogo, setLoadedLogo] = useState(null)
-  const logo = logoSrc !== failedLogo ? logoSrc : null
-  // In the drawer, what is under the poster shows with it, once the logo it opens on has loaded or failed
-  const revealed = ready && (!logo || loadedLogo === logo)
+  // In the drawer, the first logo that reads on the poster's colors, the one chosen in Artworks before TMDB's: a white
+  // logo on a light background leaves its place to another
+  const logos = useMemo(() => variant !== 'drawer' ? [] : [
+    ...(artworks?.logo ? [logoSrcOf(artworks.logo, api.access_token)] : []),
+    ...(entity?.images?.logos || []).slice(0, 8).map(({ file_path }) => pictureSrc(file_path, 'w500')),
+  ], [variant, artworks?.logo, api.access_token, entity?.images?.logos])
+  const background = useMemo(() => Color(shown.backgroundColor).luminosity(), [shown.backgroundColor])
+  const [chosenLogo, setChosenLogo] = useState(null)
+  const logo = chosenLogo?.logos === logos.join() ? chosenLogo.src : null
+  // In the drawer, what is under the poster shows with it, once its logo is chosen, or none loaded
+  const revealed = ready && (!logos.length || chosenLogo?.logos === logos.join())
   // The poster shows 400ms after `ready`, as `Picture` does
   const reveal = { opacity: revealed ? 1 : 0, transitionDelay: revealed ? '400ms' : '0ms' }
 
-  // A logo that does not load leaves the title, as TitleLogo does
+  // A logo that reads on none keeps the first, with the tone the page would give it; none loaded leaves the title
   useEffect(() => {
-    if (!logoSrc) {
+    if (!logos.length) {
       return
     }
 
-    const image = new Image()
-    image.onload = () => setLoadedLogo(logoSrc)
-    image.onerror = () => setFailedLogo(logoSrc)
-    image.src = logoSrc
-  }, [logoSrc])
+    let cancelled = false
+    const load = (src) => new Promise<HTMLImageElement>((resolve) => {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => resolve(image)
+      image.onerror = () => resolve(null)
+      image.src = src
+    })
+
+    const choose = async () => {
+      let first = null
+
+      for (const src of logos) {
+        const image = await load(src)
+
+        if (cancelled) {
+          return
+        }
+
+        if (!image) {
+          continue
+        }
+
+        const tone = toneOfImage(image, background)
+        first = first || { src, tone }
+
+        if (tone === 'as-is') {
+          return setChosenLogo({ logos: logos.join(), src, tone })
+        }
+      }
+
+      setChosenLogo({ logos: logos.join(), src: first?.src || null, tone: first?.tone })
+    }
+
+    choose()
+    return () => {
+      cancelled = true
+    }
+  }, [logos, background])
 
   const posterBlock = (
     <Poster
@@ -311,7 +350,7 @@ const UIDetails = ({
           {ready && !!metadata?.releases?.length && (
             // The releases' dimmed details need more contrast than the head's text: their background steps a fifth
             // further from the drawer's. The indexers' links take their text color, the app's green reads on none
-            <div style={{ ...paintOf({ backgroundColor: `color-mix(in oklab, ${shown.color}, ${Color(shown.backgroundColor).isLight() ? 'black' : 'white'} 20%)`, color: shown.backgroundColor }), '--theme-ui-colors-primary': shown.backgroundColor } as React.CSSProperties}>{releasesBlock}</div>
+            <div sx={UIDetails.styles.drawer.releases} style={{ ...paintOf({ backgroundColor: `color-mix(in oklab, ${shown.color}, ${Color(shown.backgroundColor).isLight() ? 'black' : 'white'} 20%)`, color: shown.backgroundColor }), '--theme-ui-colors-primary': shown.backgroundColor } as React.CSSProperties}>{releasesBlock}</div>
           )}
         </div>
       ) : releasesBlock}
@@ -343,8 +382,8 @@ const UIDetails = ({
             <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
               <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block' }}>
                 {logo ? (
-                  <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
-                    <span>{title}</span>
+                  <h1 sx={UIDetails.styles.drawer.logo}>
+                    <img src={logo} alt={title} crossOrigin='anonymous' style={{ filter: logoFilterOf(chosenLogo.tone, background) }} />
                   </h1>
                 ) : (
                   <h1 sx={UIDetails.styles.drawer.title}>{title}</h1>
@@ -469,6 +508,16 @@ UIDetails.styles = {
     dusk: {
       minHeight: '4em',
     },
+    // The releases' panel sits against the gradient: its page margins opened a black band above it and lighter ones
+    // around it
+    releases: {
+      '>div': {
+        marginY: '0em',
+        '>div': {
+          marginBottom: '0em',
+        },
+      },
+    },
     // What loads under the poster shows at once, once all of it has
     fade: {
       transition: 'opacity 400ms ease-in-out',
@@ -502,22 +551,14 @@ UIDetails.styles = {
       overflowWrap: 'anywhere',
     },
     logo: {
-      width: '100%',
-      maxWidth: '20em',
+      display: 'flex',
+      justifyContent: 'center',
       height: '5rem',
-      marginX: 'auto',
       marginY: '0em',
-      backgroundColor: 'currentColor',
-      maskSize: 'contain',
-      maskRepeat: 'no-repeat',
-      maskPosition: 'center',
-      '>span': {
-        position: 'absolute',
-        width: '1px',
-        height: '1px',
-        overflow: 'hidden',
-        clip: 'rect(0 0 0 0)',
-        whiteSpace: 'nowrap',
+      '>img': {
+        maxWidth: 'min(100%, 20em)',
+        maxHeight: '100%',
+        objectFit: 'contain',
       },
     },
     // Open at the width of its scores, not of the drawer

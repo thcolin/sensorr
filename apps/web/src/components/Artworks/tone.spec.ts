@@ -21,4 +21,10 @@ describe('toneOfPixels', () => {
     expect(toneOfPixels(pixels([0, 0, 0, 0], [0, 0, 0, 10], [255, 255, 255, 255]))).toBe('as-is')
     expect(toneOfPixels(pixels([0, 0, 0, 0]))).toBe('as-is')
   })
+
+  it('reads a logo against the background it is drawn on', () => {
+    // A white logo on a light pink, as Barbie's drawer
+    expect(toneOfPixels(pixels([250, 250, 250, 255], [240, 240, 240, 255]), 0.7)).toBe('invert')
+    expect(toneOfPixels(pixels([180, 20, 140, 255], [30, 30, 30, 255]), 0.7)).toBe('as-is')
+  })
 })
