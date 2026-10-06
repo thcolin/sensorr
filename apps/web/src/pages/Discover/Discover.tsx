@@ -30,6 +30,7 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
+import withBulk from '../../components/enhancers/withBulk'
 
 // The fields of the filters panel, a saved list serializes its values with them
 export const FIELDS = {
@@ -257,6 +258,7 @@ export const Discover = compose(
   withProps({
     display: 'grid',
     child: MovieWithCreditsAndReviews,
+    bulk: 'movie',
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -276,6 +278,7 @@ export const Discover = compose(
   withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(EntitiesHideable)
 
 export default Discover

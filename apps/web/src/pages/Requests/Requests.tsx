@@ -27,6 +27,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
+import withBulk from '../../components/enhancers/withBulk'
 
 const Movie = ({ ...props }) => (
   <MovieWithCreditsAndReviews {...props as any} />
@@ -81,6 +82,7 @@ const Requests = compose(
     id: 'requests',
     display: 'grid',
     child: Movie,
+    bulk: 'movie',
     empty: {
       emoji: '🍻',
       title: "No requests found",
@@ -196,6 +198,7 @@ const Requests = compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(Entities)
 
 export default Requests
@@ -225,6 +228,7 @@ export const ShowsRequests = compose(
     id: 'shows-requests',
     display: 'grid',
     child: Show,
+    bulk: 'tv',
     extra: FOOTER_HEIGHT,
     empty: {
       emoji: '🍻',
@@ -325,4 +329,5 @@ export const ShowsRequests = compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(Entities)

@@ -10,8 +10,11 @@ import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { List, compareOf, listsOf } from '../Home/rows'
 import { ListRow, fetchSource } from '../Home/Items/List'
+import withBulk from '../../components/enhancers/withBulk'
 
 const NOUNS = { movie: 'movies', tv: 'shows' }
+
+const EntitiesWithBulk = withBulk()(Entities)
 
 // TMDB answers 500 pages of a discover query at most
 const PAGES = 500
@@ -125,8 +128,9 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
 
   return (
     <Body>
-      <Entities
+      <EntitiesWithBulk
         id={`list_page_${list.id}`}
+        bulk={media}
         label={emojize('🗂️', list.name)}
         display='grid'
         child={media === 'movie' ? MovieWithCreditsAndReviews : Show}

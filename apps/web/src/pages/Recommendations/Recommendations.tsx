@@ -11,6 +11,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
+import withBulk from '../../components/enhancers/withBulk'
 
 export const Recommendations = (id) => compose(
   withTitle(i18n.t('pages.recommendations.title')),
@@ -18,6 +19,7 @@ export const Recommendations = (id) => compose(
     id: 'recommendations',
     display: 'grid',
     child: MovieWithCreditsAndReviews,
+    bulk: 'movie',
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -54,6 +56,7 @@ export const Recommendations = (id) => compose(
     fields: {},
   }),
   withPlacehodersHistoryState(),
+  withBulk(),
 )(Entities)
 
 const RecommendationsWrapper = ({ ...props }) => {

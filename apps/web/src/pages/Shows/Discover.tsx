@@ -31,6 +31,7 @@ import withPlacehodersHistoryState from '../../components/enhancers/withPlacehod
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
 import { saveAsListOf } from '../../components/Lists/SaveAsList'
+import withBulk from '../../components/enhancers/withBulk'
 
 // `discover/tv` takes a status and a type by their index in TMDB's lists. Talk Show and News are left to the
 // genres, which the default already excludes
@@ -281,6 +282,7 @@ export const Discover = compose(
   withProps({
     display: 'grid',
     child: Show,
+    bulk: 'tv',
     extra: FOOTER_HEIGHT,
     useMetadataContext: useShowsMetadataContext,
     props: () => ({ focus: 'vote_average' }),
@@ -300,6 +302,7 @@ export const Discover = compose(
   withControls(CONTROLS),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(EntitiesHideable)
 
 export default Discover

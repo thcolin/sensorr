@@ -13,6 +13,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
+import withBulk from '../../components/enhancers/withBulk'
 
 export const Search = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.search.title') : `${i18n.t('pages.search.title')} ${resource}`),
@@ -20,6 +21,7 @@ export const Search = (resource) => compose(
     id: 'search',
     display: 'grid',
     child: { movies: MovieWithCreditsAndReviews, persons: Person, shows: Show }[resource],
+    bulk: { movies: 'movie', shows: 'tv' }[resource] || null,
     extra: { shows: FOOTER_HEIGHT }[resource],
     empty: {
       movies: {
@@ -115,6 +117,7 @@ export const Search = (resource) => compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(Entities)
 
 export default Search
