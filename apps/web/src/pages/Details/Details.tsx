@@ -472,9 +472,11 @@ UIDetails.styles = {
       '>*': {
         width: '100%',
       },
+      // The ticket: the one behind it, tilted, stands out of its box down to the releases
       '>div:last-of-type': {
         width: '100%',
         maxWidth: '17em',
+        marginBottom: '3em',
       },
     },
   },
