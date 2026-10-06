@@ -2,10 +2,11 @@ import { Injectable, Logger } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
-import { Observable, defer, fromEventPattern } from 'rxjs'
-import { bufferTime, concatMap, filter, finalize, map, share, tap } from 'rxjs/operators'
+import { Observable } from 'rxjs'
+import { bufferTime, concatMap, filter, map, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { entryPolicy, listPolicy } from '@sensorr/sensorr'
+import { changesOf } from '../changes'
 import { facetFilter, libraryStateFilter, movieFilter } from '../filters'
 import { SensorrService } from '../sensorr/sensorr.service'
 import { ConfigService } from '../config/config.service'
@@ -26,20 +27,7 @@ const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query'
 export class MoviesService {
   private readonly logger = new Logger(MoviesService.name)
 
-  private readonly changes$: Observable<any> = defer(() => {
-    this.logger.log('Changes, opened')
-    const stream = this.movieModel.watch()
-
-    return fromEventPattern(
-      (handler) => stream.on('change', handler),
-      (handler) => stream.removeListener('change', handler),
-    ).pipe(
-      finalize(() => {
-        this.logger.log('Changes, closed')
-        stream.close()
-      }),
-    )
-  }).pipe(share())
+  private readonly changes$: Observable<any> = changesOf(() => this.movieModel.watch(), this.logger)
 
   constructor(
     @InjectModel(MovieDocument.name) private readonly movieModel: PaginateModel<MovieDocument>,
@@ -334,7 +322,7 @@ export class MoviesService {
     this.logger.log('ListenMetadata')
 
     return this.changes$.pipe(
-      filter((change: any) => change?.ns?.coll === 'movies'),
+      filter((change: any) => change?.ns?.coll === 'movies' && change?.documentKey),
       bufferTime(METADATA_BATCH),
       filter((changes: any[]) => changes.length > 0),
       concatMap((changes: any[]) => this.movieModel.find({ '_id': { $in: [...new Set(changes.map((change) => change?.documentKey?._id))] } }, [...METADATA_FIELDS, 'plex_artworks'].join(' ')).lean().exec()),

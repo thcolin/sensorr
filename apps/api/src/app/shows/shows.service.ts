@@ -2,10 +2,11 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
-import { Observable, defer, fromEventPattern } from 'rxjs'
-import { bufferTime, concatMap, filter, finalize, share, tap } from 'rxjs/operators'
+import { Observable } from 'rxjs'
+import { bufferTime, concatMap, filter, tap } from 'rxjs/operators'
 import { entryPolicy, listPolicy, STATUS_GROUPS, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
+import { changesOf } from '../changes'
 import { episodeStatusFilter, facetFilter, libraryStateFilter, showFilter } from '../filters'
 import { ConfigService } from '../config/config.service'
 import { SensorrService } from '../sensorr/sensorr.service'
@@ -39,20 +40,7 @@ const SHOW_PARAMS = ['networks', 'genres', 'policy', 'requested_by']
 export class ShowsService {
   private readonly logger = new Logger(ShowsService.name)
 
-  private readonly changes$: Observable<any> = defer(() => {
-    this.logger.log('Changes, opened')
-    const stream = this.showModel.watch()
-
-    return fromEventPattern(
-      (handler) => stream.on('change', handler),
-      (handler) => stream.removeListener('change', handler),
-    ).pipe(
-      finalize(() => {
-        this.logger.log('Changes, closed')
-        stream.close()
-      }),
-    )
-  }).pipe(share())
+  private readonly changes$: Observable<any> = changesOf(() => this.showModel.watch(), this.logger)
 
   constructor(
     @InjectModel(ShowDocument.name) private readonly showModel: PaginateModel<ShowDocument>,

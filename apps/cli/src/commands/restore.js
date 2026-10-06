@@ -57,46 +57,55 @@ const documentsOf = async function* (entry) {
   }
 }
 
-// One transaction: a dump that breaks halfway leaves the library as it was
+const stagingOf = (name) => `${name}_restore`
+
+// Each collection is filled and counted aside first, then takes the place of the current one: a dump that breaks
+// before the swap leaves the library as it was. One transaction for the whole dump does not fit a 1 GB cache.
 const restore = async ({ directory, manifest, onCollection }) => {
-  const connection = await mongoose.connection.asPromise()
-  const session = connection.getClient().startSession()
+  const { db } = await mongoose.connection.asPromise()
   const counts = {}
 
   try {
-    await session.withTransaction(async () => {
-      for (const name of DUMP_COLLECTIONS) {
-        const entry = directory.files.find(({ path }) => path === `${name}.jsonl`)
-        const collection = connection.db.collection(name)
-        let batch = []
-        counts[name] = 0
+    for (const name of DUMP_COLLECTIONS) {
+      const entry = directory.files.find(({ path }) => path === `${name}.jsonl`)
+      const indexes = (await db.collection(name).indexes().catch(() => [])).filter((index) => index.name !== '_id_')
+      await db.collection(stagingOf(name)).drop().catch(() => null)
+      const staging = await db.createCollection(stagingOf(name))
+      let batch = []
+      counts[name] = 0
 
-        await collection.deleteMany({}, { session })
-
-        for await (const doc of entry ? documentsOf(entry) : []) {
-          batch.push(doc)
-
-          if (batch.length === BATCH) {
-            await collection.insertMany(batch, { session, ordered: true })
-            counts[name] += batch.length
-            batch = []
-          }
-        }
-
-        if (batch.length) {
-          await collection.insertMany(batch, { session, ordered: true })
-          counts[name] += batch.length
-        }
-
-        if (counts[name] !== (manifest.counts[name] || 0)) {
-          throw new Error(`${name}.jsonl holds ${counts[name]} documents, its manifest.json says ${manifest.counts[name] || 0}`)
-        }
-
-        onCollection(name, counts[name])
+      if (indexes.length) {
+        await staging.createIndexes(indexes.map(({ v, ns, ...index }) => index))
       }
-    })
+
+      for await (const doc of entry ? documentsOf(entry) : []) {
+        batch.push(doc)
+
+        if (batch.length === BATCH) {
+          await staging.insertMany(batch, { ordered: true })
+          counts[name] += batch.length
+          batch = []
+        }
+      }
+
+      if (batch.length) {
+        await staging.insertMany(batch, { ordered: true })
+        counts[name] += batch.length
+      }
+
+      if (counts[name] !== (manifest.counts[name] || 0)) {
+        throw new Error(`${name}.jsonl holds ${counts[name]} documents, its manifest.json says ${manifest.counts[name] || 0}`)
+      }
+    }
+
+    for (const name of DUMP_COLLECTIONS) {
+      await db.renameCollection(stagingOf(name), name, { dropTarget: true })
+      onCollection(name, counts[name])
+    }
   } finally {
-    await session.endSession()
+    for (const name of DUMP_COLLECTIONS) {
+      await db.collection(stagingOf(name)).drop().catch(() => null)
+    }
   }
 
   return counts
