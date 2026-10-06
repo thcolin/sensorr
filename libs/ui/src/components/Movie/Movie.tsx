@@ -82,7 +82,8 @@ const UIMovie = ({
     }
 
     return {
-      state: { component: MovieState, props: { value: state, onChange: setState, compact: true } },
+      // Mounted once known, so it fades in instead of turning from ⌛ to its emoji in place
+      ...(state === 'loading' ? {} : { state: { component: MovieState, props: { value: state, onChange: setState, compact: true } } }),
       reviews: { component: ReviewsBadge, props: { entity, reviews, loadReviews, display } },
       ...(!proposal.proposals?.length ? {} : { proposal: { component: Proposal, props: proposal } }),
       ...(metadata?.requested_by?.length ? { guests: { component: Guests, props: { guests: (metadata?.requested_by || []).reduce((guests, guest) => [...guests, { entity: { id: 0, name: guest.name, override: guest.email, profile_path: guest.avatar } }], []) } } } : {}),
