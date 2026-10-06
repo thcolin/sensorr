@@ -16,6 +16,8 @@ import { Metadata } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
 import { Artworks, TitleLogo, useArtworksOf } from '../../components/Artworks/Artworks'
 import { ratingKeyOf } from '../../components/Artworks/candidates'
+import { artworkOf } from '../../store/plex'
+import { useAPI } from '../../store/api'
 
 const pendingReducer = createPendingReducer({
   entity: true,
@@ -109,6 +111,10 @@ const UIDetails = ({
     mutatePending({ poster: loading || !!poster })
     mutatePending({ billboard: loading || !!billboard })
   }, [loading])
+
+  const api = useAPI()
+  const tmdbLogo = entity?.images?.logos?.[0]?.file_path
+  const logo = variant === 'drawer' && (artworks?.logo ? pictureSrc(artworkOf(artworks.logo, null, api.access_token), 'w500') : tmdbLogo ? pictureSrc(tmdbLogo, 'w500') : null)
 
   const posterBlock = (
     <Poster
@@ -262,7 +268,15 @@ const UIDetails = ({
             {posterBlock}
           </div>
           <div sx={UIDetails.styles.drawer.heading}>
-            {titleBlock}
+            <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
+              {logo ? (
+                <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
+                  <span>{title}</span>
+                </h1>
+              ) : (
+                <h1 sx={UIDetails.styles.drawer.title}>{title}</h1>
+              )}
+            </Skeleton>
             <Skeleton palette={palette.palette} ready={ready}>
               <p sx={UIDetails.styles.drawer.caption}>
                 {!!meaningful?.year && <strong><meaningful.year /></strong>}
@@ -270,14 +284,23 @@ const UIDetails = ({
                 {!!meaningful?.genres && <meaningful.genres emoji={false} />}
               </p>
             </Skeleton>
+            <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+              <div sx={UIDetails.styles.drawer.ratings}>
+                <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} links={false} platforms={false} />
+              </div>
+            </Skeleton>
           </div>
         </div>
         <div sx={UIDetails.styles.drawer.body}>
           {overviewBlock}
-          {metadataBlock}
-          {externalsBlock}
+          <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+            <div sx={UIDetails.styles.drawer.externals}>
+              <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
+            </div>
+          </Skeleton>
           {meaningfulBlock}
           {ticketBlock}
+          {metadataBlock}
         </div>
         {restBlock}
       </div>
@@ -314,12 +337,13 @@ const UIDetails = ({
 
 UIDetails.styles = {
   drawer: {
+    // Transparent above its top, where the poster stands out of the drawer
     element: {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100%',
-      paddingTop: '2.25em',
+      marginTop: '4.5em',
     },
     backdrop: {
       position: 'absolute',
@@ -335,6 +359,7 @@ UIDetails.styles = {
       display: 'flex',
       alignItems: 'flex-end',
       gap: 4,
+      marginTop: '-4.5em',
       paddingX: 4,
     },
     poster: {
@@ -348,11 +373,34 @@ UIDetails.styles = {
     heading: {
       flex: 1,
       minWidth: '0em',
-      paddingBottom: 2,
-      '>*:first-of-type h1': {
-        fontSize: 1,
-        lineHeight: 'heading',
-        overflowWrap: 'anywhere',
+    },
+    title: {
+      margin: '0em',
+      fontSize: 1,
+      lineHeight: 'heading',
+      overflowWrap: 'anywhere',
+    },
+    logo: {
+      height: '4.5rem',
+      margin: '0em',
+      backgroundColor: 'currentColor',
+      maskSize: 'contain',
+      maskRepeat: 'no-repeat',
+      maskPosition: 'left bottom',
+      '>span': {
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        overflow: 'hidden',
+        clip: 'rect(0 0 0 0)',
+        whiteSpace: 'nowrap',
+      },
+    },
+    ratings: {
+      marginTop: 8,
+      fontSize: 5,
+      '>div': {
+        alignItems: 'flex-start',
       },
     },
     caption: {
@@ -361,6 +409,18 @@ UIDetails.styles = {
       color: 'grayDarkest',
       '>strong': {
         color: 'text',
+      },
+    },
+    // One wrapping row: the column a phone gets on the page leaves the Plex chevron alone on its line
+    externals: {
+      '>div': {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 6,
+        '>div': {
+          margin: '0em !important',
+        },
       },
     },
     body: {

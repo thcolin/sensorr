@@ -19,7 +19,7 @@ export const Provider = ({ ...props }) => {
       return
     }
 
-    detailsDrawer.close()
+    detailsDrawer.leave(currentLocation)
 
     sessionStorage.setItem(`${historyEntryOf(location)}-scroll`, (ref.current as any).scrollTop)
 

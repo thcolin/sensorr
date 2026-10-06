@@ -10,6 +10,8 @@ export interface DrawerProps {
   height?: string
   background?: string
   knob?: string
+  // Where the drawer's surface starts, under a transparent top its content can stand out into
+  inset?: string
   open: boolean
   close: (e?: any) => void
   level?: number
@@ -20,6 +22,7 @@ const UIDrawer = ({
   height = '75vh',
   background: backgroundColor = 'primary',
   knob: knobColor = 'whitePure',
+  inset = '0em',
   open,
   close,
   children,
@@ -130,6 +133,7 @@ const UIDrawer = ({
             type='button'
             aria-label='Close'
             sx={UIDrawer.styles.knob(knobColor)}
+            style={{ top: inset }}
             onPointerDown={(e) => controls.start(e)}
             onClick={async () => {
               // A drag that did not reach the threshold ends on a click too
