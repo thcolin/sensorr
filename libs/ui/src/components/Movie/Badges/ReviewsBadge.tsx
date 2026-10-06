@@ -59,6 +59,7 @@ export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews = null, di
         label={`${vote_average || '-'} %`}
         sx={{ zIndex: 1, minWidth: '6.75em' }}
       />
+      {/* Too close to the badge's color, the scores step away from the background their text is drawn in */}
       <span
         sx={{
           display: 'flex',
@@ -66,7 +67,7 @@ export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews = null, di
           backgroundColor: (palette?.alternativeColor ? (deltaE.getDeltaE00(
             Color(palette?.alternativeColor).lab().array().slice(0, 3).reduce((acc, v, i) => ({ ...acc, [['L', 'A', 'B'][i]]: v }), {}),
             Color(palette?.color).lab().array().slice(0, 3).reduce((acc, v, i) => ({ ...acc, [['L', 'A', 'B'][i]]: v }), {}),
-          ) < 8 ? Color(palette?.alternativeColor)[(Color(palette?.alternativeColor).luminosity() > 0.5 ? 'darken' : 'lighten')](0.2).hexa() : palette?.alternativeColor) : 'grayDark'),
+          ) < 8 ? Color(palette?.alternativeColor)[(Color(palette?.backgroundColor).isLight() ? 'darken' : 'lighten')](0.2).hexa() : palette?.alternativeColor) : 'grayDark'),
           color: palette?.backgroundColor || 'text',
           marginLeft: '-2em',
           paddingLeft: 1,

@@ -46,8 +46,9 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true, r
               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
               title={`Available on your own Plex server`}
             >
-              <span sx={{ display: 'flex', justifyContent: 'center', fontSize: '1.7em', width: '0.75em', color: 'plex' }}>
-                ❯
+              {/* On a tile as the platforms' logos: bare, Plex's yellow reads on no light background */}
+              <span sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '2em', width: '2em', borderRadius: '0.25em', backgroundColor: 'blackPure', color: 'plex' }}>
+                <span sx={{ fontSize: '1.4em' }}>❯</span>
               </span>
             </a>
           )}
