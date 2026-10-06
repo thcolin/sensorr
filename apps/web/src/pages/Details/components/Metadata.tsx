@@ -165,8 +165,8 @@ UIMetadata.styles = {
 export const Metadata = memo(UIMetadata)
 
 // The editor while the movie loads, on its own grid and in its own blocks: a bar in each label and help text, at
-// their font size, and a bar per field at the height measured on the field (Terms and Years 37px under a 4px gap,
-// Lists 45px, Policy 36px under a 4px gap, an option's checkbox 16px)
+// their font size, and a bar per field on the field's visible frame, measured: 37px under a 4px gap, 36px for
+// Policy, an option's checkbox 16px
 export const MetadataPlaceholder = ({ lists = false }) => {
   const field = (label, top, height, help, line = false) => (
     <div sx={{ ...UIMetadata.styles.block, ...(line ? UIMetadata.styles.line : UIMetadata.styles.column) }}>
@@ -189,7 +189,7 @@ export const MetadataPlaceholder = ({ lists = false }) => {
     <div sx={{ ...(lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container), marginTop: '0.5em' }}>
       {field(3, '0.25em', '2.3125em', 30, true)}
       {field(2.75, '0.25em', '2.3125em', 21)}
-      {lists && field(2.25, '0em', '2.8125em', 15, true)}
+      {lists && field(2.25, '0.25em', '2.3125em', 15, true)}
       {field(2.75, '0.25em', '2.25em', 31)}
       {option(12, 39)}
       {option(12.5, 40, true)}

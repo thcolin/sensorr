@@ -292,10 +292,14 @@ const UIDetails = ({
     </h1>
   )
 
-  // A bar on the line of its text, where the text starts: after the chevron of the subtitle's summary, after the emoji
-  // of the meaningful line
-  const lineOf = (bar, height, indent) => <span sx={{ display: 'flex', alignItems: 'center', height, paddingLeft: indent }}>{bar}</span>
-  const subtitleShape = lineOf(<Bar width='14em' height='1.25em' />, '2em', '1.5em')
+  // A bar on the line of its text: the subtitle's covers its chevron and takes its width, the meaningful line's starts
+  // after its emoji
+  const lineOf = (bar, height, indent = '0em') => <span sx={{ display: 'flex', alignItems: 'center', height, paddingLeft: indent }}>{bar}</span>
+  const subtitleShape = lineOf(<Bar width='14em' height='1.25em' data-fit={true} />, '2em')
+  const subtitleFit = (content) => {
+    const subtitle = content.querySelector('h4')
+    return subtitle && subtitle.getBoundingClientRect().right - content.getBoundingClientRect().left
+  }
 
   const metadataBlock = (
     <>
@@ -306,6 +310,7 @@ const UIDetails = ({
           ready={ready && state !== 'loading'}
           // Once its state is known, the editor it opens takes its own place among the bars
           shape={metadataState ? <span sx={{ display: 'block' }}>{subtitleShape}<MetadataPlaceholder lists={true} /></span> : subtitleShape}
+          fit={subtitleFit}
           sx={{ marginBottom: 4 }}
         >
           <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
@@ -329,7 +334,7 @@ const UIDetails = ({
         </Skeleton>
       )}
       {behavior === 'tv' && (
-        <Skeleton palette={shown} ready={ready && subtitleReady} shape={subtitleShape} sx={{ marginBottom: 4 }}>
+        <Skeleton palette={shown} ready={ready && subtitleReady} shape={subtitleShape} fit={subtitleFit} sx={{ marginBottom: 4 }}>
           {actions ? (
             <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? variant !== 'drawer'}>
               <summary>
