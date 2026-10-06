@@ -472,8 +472,9 @@ appears only inside its branch (`apps/web/src/layout/Header/elements/Navigation.
 registers it (`index.ts:24`), and **nothing else in `apps/` or `libs/` references
 `shadows`** — zero consumers, verified by grep. Across the whole of `libs/ui` there are 10
 `boxShadow` declarations: 3 are `boxShadow: 'none'` resetting `react-select`, 4 are the
-`Range` thumb's focus ring, 1 is the `Option` focus ring, 1 is the Poster glow described
-below, and 1 is the hollow ring of the `unfollowed` transition pill.
+`Range` thumb's focus ring, 2 are the `Option` and `Options` focus rings, and 1 is the
+hollow ring of the `unfollowed` transition pill. The Poster glow described below is a
+blurred fill, not a `box-shadow`.
 
 Depth comes from tone instead. Surfaces step through `white` → `grayLightest` →
 `grayLighter` → `grayLight` → `gray`, which in dark mode is 0% → 2% → 4% → 7% → 10%
@@ -483,11 +484,12 @@ must overlap another it uses `zIndex` and a transform, never a cast shadow (`Pan
 in on `translate3d`, `libs/ui/src/atoms/Pane/Pane.tsx:46-63`).
 
 ### Shadow Vocabulary
-- **Poster glow** (`box-shadow: 0px 3px 30px <poster colorfulColor>`): the single
-  intentional shadow in the system, at
-  `libs/ui/src/elements/Entity/Poster/Poster.tsx:565`. It is not a drop shadow — it is a
-  30px blur with no spread, tinted with the *poster's own* most chromatic color, falling
-  back to `primary`. It reads as a lamp behind the artwork.
+- **Poster glow** (`filter: blur(15px)` on a fill of `<poster colorfulColor>`, moved
+  `3px` down): the single intentional shadow in the system, the `::after` of the poster's
+  link in `libs/ui/src/elements/Entity/Poster/Poster.tsx`. It lies *under* the artwork, in
+  an `isolation: isolate` link, so it shows around the poster and through the cutouts of
+  its badges. Tinted with the *poster's own* most chromatic color, falling back to
+  `primary`. It reads as a lamp behind the artwork.
 - **Focus ring** (`box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.1)`, growing to `8px` on
   hover and `14px` on drag): the `Range` thumb
   (`libs/ui/src/inputs/Range/Range.tsx:183-192`). A spread-only halo, zero blur — a ring,
@@ -520,9 +522,11 @@ times, `0.25rem` 6 times, `1.5em` twice.
   `50%` when a badge has an emoji and no label
   (`libs/ui/src/atoms/Badge/Badge.tsx:52-79`). A pill means *a state*; a rectangle means
   *an action*. Transition pills take `1em`.
-- **Avatars and status dots** are circles, ringed with a `0.25em` solid `grayLightest`
-  border so they read as stickers on top of a poster
-  (`libs/ui/src/elements/Entity/Poster/Poster.tsx:352-365`).
+- **Badges on a poster** (ratings, focus, state, proposal, selection) are ringed with a
+  `0.25em` transparent border that each badge cuts out of the artwork, so they read as
+  set into the poster whatever the surface behind it
+  (`libs/ui/src/elements/Entity/Poster/cutout.ts`). Guest avatars keep the painted white
+  ring of `borders.avatar`.
 
 Borders are the system's main drawing tool and they are almost always `1px solid`, colored
 `grayDark` at rest. The only registered border token is `borders.avatar`
