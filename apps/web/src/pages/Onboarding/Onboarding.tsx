@@ -8,6 +8,7 @@ import { Badge, Button, Icon, Option, Steps, Warning } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
+import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { LoadingBar } from '../../layout/LoadingBar'
 import { Emblem, Splash } from '../KeepInTouch/KeepInTouch'
 import { useSaveConfig } from '../Settings/Settings'
@@ -54,7 +55,7 @@ const checkTMDB = async (key) => {
   }
 }
 
-const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
+const Welcome = ({ config, origin, setOrigin, archive, setArchive }) => (
   <>
     {config.get('onboarding.defaultPassword') && (
       <p sx={{ ...Update.styles.warning, marginBottom: 6 }}>
@@ -62,14 +63,21 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
       </p>
     )}
     <div sx={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Option type='radio' id='onboarding-fresh' name='onboarding-origin' checked={!legacy} onChange={() => setLegacy(false)}>
+      <Option type='radio' id='onboarding-fresh' name='onboarding-origin' checked={origin === 'fresh'} onChange={() => setOrigin('fresh')}>
         <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
           <strong>New instance</strong>
           <br />
           <small>Start from an empty library</small>
         </div>
       </Option>
-      <Option type='radio' id='onboarding-legacy' name='onboarding-origin' checked={legacy} onChange={() => setLegacy(true)}>
+      <Option type='radio' id='onboarding-dump' name='onboarding-origin' checked={origin === 'dump'} onChange={() => setOrigin('dump')}>
+        <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+          <strong>From a dump</strong>
+          <br />
+          <small>Bring the library and the settings of another Sensorr over</small>
+        </div>
+      </Option>
+      <Option type='radio' id='onboarding-legacy' name='onboarding-origin' checked={origin === 'legacy'} onChange={() => setOrigin('legacy')}>
         <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
           <strong>From a 0.x</strong>
           <br />
@@ -77,7 +85,21 @@ const Welcome = ({ config, legacy, setLegacy, archive, setArchive }) => (
         </div>
       </Option>
     </div>
-    {legacy && (
+    {origin === 'dump' && (
+      <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
+        <input
+          type='file'
+          accept='.zip,application/zip'
+          aria-label='Dump'
+          onChange={(e) => setArchive(e.target.files?.[0] || null)}
+          sx={Onboarding.styles.file}
+        />
+        <small>
+          The <code>.zip</code> of <code>Settings &#x3E; Data</code>, on the other Sensorr. Imported as you continue, its settings then fill the next steps, all but the keys and passwords.
+        </small>
+      </div>
+    )}
+    {origin === 'legacy' && (
       <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
         {config.get('onboarding.legacy') && (
           <small>
@@ -154,7 +176,7 @@ const Onboarding = () => {
   useTitle('Onboarding')
   const api = useAPI()
   const navigate = useNavigate()
-  const { config } = useConfigContext()
+  const { config, load } = useConfigContext() as any
   const saveConfig = useSaveConfig()
   const valuesOf = () => ({ ...config.getProperties(), tmdb: hasTMDBKey(config) ? config.get('tmdb') : '', znabs: znabsOf(config), policies: policiesOf(config) })
   const form = useForm({ defaultValues: valuesOf() })
@@ -167,9 +189,14 @@ const Onboarding = () => {
   })
   const [direction, setDirection] = useState('next')
   const [pending, setPending] = useState(false)
-  const [legacy, setLegacy] = useState(!!config.get('onboarding.legacy'))
+  const [origin, setOrigin] = useState(config.get('onboarding.legacy') ? 'legacy' : 'fresh')
+  const legacy = origin === 'legacy'
   const [archive, setArchive] = useState(null)
   const [migration, setMigration] = useState(null)
+  const [restoration, setRestoration] = useState(null)
+  const { jobs } = useJobsContext() as any
+  const latest = useRef(jobs)
+  latest.current = jobs
   const [tmdbError, setTMDBError] = useState(null)
   const plex = usePlexLink()
 
@@ -214,6 +241,41 @@ const Onboarding = () => {
     }
   }, [legacy, archive, migration])
 
+  // The next steps show the settings of the dump: they wait for the restore, a few seconds for 9 000 movies
+  const restore = async () => {
+    if (origin !== 'dump' || restoration?.done) {
+      return
+    }
+
+    if (!archive) {
+      setRestoration({ error: "Choose the dump's .zip, or start from a new instance" })
+      throw new Error('No dump')
+    }
+
+    try {
+      const { uri, params, init } = api.query.jobs.runRestore({ body: { archive } })
+      const { job } = await api.fetch(uri, params, init, { rawError: true })
+      setRestoration({ job })
+
+      let ended
+      while (!(ended = latest.current?.find((entry) => entry.job === job && entry.meta?.done))) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+
+      if (ended.meta.error) {
+        throw new Error(ended.messages?.[ended.messages.length - 1] || `The restore ${job} failed`)
+      }
+
+      const query = api.query.config.getConfig({})
+      await load(await api.fetch(query.uri, query.params, query.init))
+      form.reset(valuesOf())
+      setRestoration({ job, done: true })
+    } catch (err) {
+      setRestoration({ error: (await errorOf(err)) || err.message })
+      throw err
+    }
+  }
+
   const steps = [
     {
       key: 'welcome',
@@ -222,7 +284,8 @@ const Onboarding = () => {
       emoji: '👋',
       title: 'Welcome',
       subtitle: 'A few steps get this Sensorr searching: TMDB, your indexers, where releases go. Only TMDB is required, and everything stays in Settings afterwards',
-      content: <Welcome config={config} legacy={legacy} setLegacy={setLegacy} archive={archive} setArchive={setArchive} />,
+      content: <Welcome config={config} origin={origin} setOrigin={setOrigin} archive={archive} setArchive={setArchive} />,
+      submit: restore,
     },
     {
       key: 'tmdb',
@@ -428,6 +491,14 @@ const Onboarding = () => {
                 </form>
               )}
             </Warning>
+            {restoration?.error && (
+              <div sx={{ ...Update.styles.failure, marginBottom: 6 }}>{restoration.error}</div>
+            )}
+            {restoration?.job && !restoration.error && (
+              <small sx={{ display: 'block', textAlign: 'center', marginBottom: 6 }}>
+                📦 {restoration.done ? 'The dump is imported' : 'The dump is being imported'}, follow it in <Link to={`/jobs/${restoration.job}`} target='_blank'>Jobs</Link>
+              </small>
+            )}
             {migration?.error && (
               <div sx={{ ...Update.styles.failure, marginBottom: 6 }}>{migration.error}</div>
             )}
