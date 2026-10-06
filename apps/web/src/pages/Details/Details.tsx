@@ -51,6 +51,8 @@ const paintOf = ({ backgroundColor, color }) => {
     color,
     transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
     '--poster-cutout': backgroundColor,
+    '--poster-pill': color,
+    '--poster-pill-text': backgroundColor,
       ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
   }
 }
@@ -79,8 +81,18 @@ const UIDetails = ({
   const { title, tagline, overview, poster, billboard, meaningful } = details
   const artworks = useArtworksOf(behavior, entity?.id, metadata)
   // A show opens its settings once it is in the library, which is known only once its metadata loads
-  const [metadataState, setMetadataState] = useHistoryState(`${variant}-metadata`, (behavior === 'tv' || variant === 'drawer') ? null : ['wished', 'archived', 'missing'].includes(state))
-  const [meaningfulState, setMeaningfulState] = useHistoryState(`${variant}-meaningful`, false)
+  const page = variant === 'page'
+  // In the drawer, every movie opened from a grid would share the grid's history entry: its toggles stay local
+  const remembered = {
+    metadata: useHistoryState('metadata', behavior === 'tv' ? null : ['wished', 'archived', 'missing'].includes(state), { enabled: page }),
+    meaningful: useHistoryState('meaningful', false, { enabled: page }),
+  }
+  const local = {
+    metadata: useState(null),
+    meaningful: useState(false),
+  }
+  const [metadataState, setMetadataState] = page ? remembered.metadata : local.metadata
+  const [meaningfulState, setMeaningfulState] = page ? remembered.meaningful : local.meaningful
 
   const toggleSensorr = useRef() as any
 
@@ -401,6 +413,7 @@ UIDetails.styles = {
     },
     // One wrapping row: the column a phone gets on the page leaves the Plex chevron alone on its line
     externals: {
+      marginY: 8,
       '>div': {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -417,6 +430,7 @@ UIDetails.styles = {
       alignItems: 'center',
       paddingX: 4,
       paddingTop: 4,
+      paddingBottom: 2,
       textAlign: 'center',
       '>*': {
         width: '100%',
