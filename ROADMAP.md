@@ -8,7 +8,6 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 - **Online demo**: a public instance on demo data.
 - **Translations**: no hard-coded string left in the interface.
 - **Responsive pass**: every screen checked and fixed at phone width.
-- **Quick access**: the panel a long press on a poster opens.
 - **Skeletons**: loading placeholders shaped like the content they stand for.
 
 ## After 1.0.0
