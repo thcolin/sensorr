@@ -285,6 +285,7 @@ export const withMovieMetadataContext = ({ enhanced = false } = {}) => (WrappedC
         {...props}
         {...(artworked.details ? { details: artworked.details } : {})}
         entity={artworked.entity}
+        ready={(props as any).ready !== false && !artworked.pending}
         state={loading ? 'loading' : (metadata?.state || 'ignored')}
         setState={setState}
         metadata={metadata}

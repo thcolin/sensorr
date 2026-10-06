@@ -26,6 +26,7 @@ describe('withPlexArtworks', () => {
     expect(withPlexArtworks(movie, { poster: '/poster.jpg', billboard: '/backdrop.jpg' }, null, 'token', true)).toEqual({
       entity: { ...movie, poster_path: null, backdrop_path: null },
       details: { poster: null, billboard: null },
+      pending: true,
     })
   })
 })

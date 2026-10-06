@@ -15,6 +15,8 @@ export const withPlexArtworks = (entity, details, artworks, token, pending = fal
     return {
       entity: entity && { ...entity, poster_path: null, backdrop_path: null },
       details: details && { ...details, poster: null, billboard: null },
+      // Its pictures are unknown, not missing: the card waits for them
+      pending: true,
     }
   }
 
