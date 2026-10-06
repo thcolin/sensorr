@@ -16,7 +16,7 @@ export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onRe
   details: any // MovieDetails | PersonDetails
   link?: LinkProps
   interactive?: boolean
-  onLongPress?: (data: any) => void
+  onPress?: (data: any) => void
   ready?: boolean
   selected?: boolean | null
   selectedVisible?: boolean
@@ -40,7 +40,7 @@ const UIPoster = ({
   details,
   link = null,
   interactive = false,
-  onLongPress = null,
+  onPress = null,
   meaningful = true,
   badges = {},
   onReady,
@@ -220,13 +220,13 @@ const UIPoster = ({
             },
           }}
         >
-          <InteractiveLongPressLink
+          <PressableLink
             to={link?.to}
             state={link?.state}
             disabled={!link?.to}
-            interactive={interactive && typeof onLongPress === 'function'}
+            interactive={interactive && typeof onPress === 'function'}
             onTouchStart={loadExternals}
-            onLongPress={typeof onLongPress === 'function' ? () => onLongPress({ details, link, palette }) : null}
+            onPress={typeof onPress === 'function' ? () => onPress({ details, link, palette }) : null}
             palette={palette}
           >
             <Picture
@@ -256,7 +256,7 @@ const UIPoster = ({
                 // )}"></path></svg>')`,
               }}
             />
-          </InteractiveLongPressLink>
+          </PressableLink>
           {(!interactive && credits !== false) && (
             <div
               sx={{
@@ -451,86 +451,71 @@ UIPoster.styles = {
 
 export const Poster = memo(UIPoster)
 
-const InteractiveLongPressLink = ({
+// On a phone, a tap calls `onPress` and a long press follows the link
+const PressableLink = ({
   children,
   palette,
   interactive,
   onTouchStart,
-  onLongPress,
+  onPress,
   ...props
 }: any) => {
   const ref = useRef<any>()
-  const triggerTimer = useRef<any>()
-  const longpressTimer = useRef<any>()
-  const canceled = useRef<boolean>(false)
-  const longpress = useRef<boolean>(false)
-  const trigger = useRef<boolean>(false)
-  const [action, setAction] = useState(null)
-  const [, setTriggered] = useState(false)
+  const timer = useRef<any>()
+  const origin = useRef<{ x: number, y: number }>(null)
+  const follow = useRef<boolean>(false)
+  const [action, setAction] = useState<'press' | 'longpress' | null>(null)
 
-  const startPressTimer = () => {
-    longpress.current = false
-    trigger.current = false
-    canceled.current = false
+  const reset = () => {
+    clearTimeout(timer.current)
+    origin.current = null
+    setAction(null)
+  }
+
+  const handleOnTouchStart = (e) => {
+    if (typeof onTouchStart === 'function') {
+      onTouchStart()
+    }
 
     if (!interactive) {
       return
     }
 
-    longpressTimer.current = setTimeout(() => {
-      longpress.current = true
-      setAction('longpress')
-    }, 200)
-
-    triggerTimer.current = setTimeout(() => {
-      trigger.current = true
-      setTriggered(true)
-    }, 400)
-  }
-
-  const handleOnClick = (e) => {
-    if (longpress.current) {
-      e.preventDefault()
-      return false
-    }
-
-    setAction('click')
-  }
-
-  const handleOnTouchStart = () => {
-    startPressTimer()
-
-    if (typeof onTouchStart === 'function') {
-      onTouchStart()
-    }
+    origin.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    setAction('press')
+    timer.current = setTimeout(() => setAction('longpress'), 400)
   }
 
   const handleOnTouchMove = (e) => {
-    canceled.current = true
-    setAction(null)
-    setTriggered(false)
-    clearTimeout(longpressTimer.current)
-    clearTimeout(triggerTimer.current)
+    if (origin.current && Math.hypot(e.touches[0].clientX - origin.current.x, e.touches[0].clientY - origin.current.y) > 10) {
+      reset()
+    }
   }
 
   const handleOnTouchEnd = (e) => {
-    if (longpress.current) {
+    const longpress = action === 'longpress' && !!origin.current
+    reset()
+
+    if (longpress) {
       if (e.cancelable) {
         e.preventDefault()
       }
 
-      setAction(null)
-      setTriggered(false)
+      follow.current = true
+      ref.current?.click()
+    }
+  }
 
-      if (!canceled.current && trigger.current && typeof onLongPress === 'function') {
-        onLongPress()
-      }
-
+  const handleOnClick = (e) => {
+    if (follow.current) {
+      follow.current = false
       return
     }
 
-    clearTimeout(longpressTimer.current)
-    clearTimeout(triggerTimer.current)
+    if (interactive && typeof onPress === 'function') {
+      e.preventDefault()
+      onPress()
+    }
   }
 
   useEffect(() => {
@@ -549,11 +534,12 @@ const InteractiveLongPressLink = ({
       onTouchStart={handleOnTouchStart}
       onTouchMove={handleOnTouchMove}
       onTouchEnd={handleOnTouchEnd}
+      onTouchCancel={reset}
       sx={{
         position: 'relative',
         display: 'block',
         transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
-        transform: `scale(${action === 'longpress' ? '1.05, 1.05' : '1, 1'})`,
+        transform: `scale(${{ press: 0.97, longpress: 1.05 }[action] || 1})`,
         userSelect: 'none',
         // WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',
