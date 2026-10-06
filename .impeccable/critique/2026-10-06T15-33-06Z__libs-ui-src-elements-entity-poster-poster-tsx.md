@@ -10,6 +10,7 @@ target_fingerprint: "sha256:ccfb8f71b853dc5a48e1d518f65f9dd9748411a79c305e17b127
 target_path: /Users/thcolin/orca/workspaces/sensorr/encoche-badges/libs/ui/src/elements/Entity/Poster/Poster.tsx
 timestamp: 2026-10-06T15-33-06Z
 slug: libs-ui-src-elements-entity-poster-poster-tsx
+closed: true
 ---
 Method: dual-agent (A: design review · B: detector + browser)
 
