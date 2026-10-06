@@ -329,7 +329,7 @@ const UIPoster = ({
             sx={{
               position: 'absolute',
               top: '-1em',
-              left: ['1px', '-2.5px'],
+              left: ['-0.75em', '-2.5px'],
               fontSize: [5, 4],
               zIndex: 1,
               // Hidden at rest where a hover shows it: a poster without a focus badge has nothing to cover it,
