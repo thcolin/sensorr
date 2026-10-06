@@ -5,6 +5,7 @@ import { Drawer } from '@sensorr/ui'
 import { historyEntryOf } from '@sensorr/utils'
 import { MovieContent } from '../../pages/Movie/Movie'
 import { ShowContent } from '../../pages/Shows/Show'
+import { PersonContent } from '../../pages/Person/Person'
 
 const detailsDrawerContext = createContext({})
 
@@ -35,7 +36,7 @@ const styles = {
 export const Provider = ({ children, ...props }) => {
   const { Portal, openPortal, closePortal, isOpen } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, programmaticallyOpen: true })
   const [{ link, palette }, setData] = useState({ link: null, palette: null })
-  const [, behavior, id] = `${link?.to || ''}`.match(/^\/(movie|tv)\/(\d+)/) || []
+  const [, behavior, id] = `${link?.to || ''}`.match(/^\/(movie|tv|person)\/(\d+)/) || []
   const location = useLocation()
   const navigationType = useNavigationType()
   const scroll = useRef<HTMLDivElement>(null)
@@ -143,6 +144,7 @@ export const Provider = ({ children, ...props }) => {
               <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
                 {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' palette={palette} />}
                 {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' palette={palette} />}
+                {behavior === 'person' && <PersonContent key={id} id={id} variant='drawer' palette={palette} />}
               </detailsDrawerContext.Provider>
             </div>
           </Drawer>
