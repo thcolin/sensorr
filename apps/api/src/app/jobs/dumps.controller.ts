@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import { createReadStream } from 'fs'
 import path from 'path'
+import { pipeline } from 'stream/promises'
 import { Controller, Get, Logger, NotFoundException, Param, Res } from '@nestjs/common'
 import { InjectConnection } from '@nestjs/mongoose'
 import { Connection } from 'mongoose'
@@ -43,6 +44,9 @@ export class DumpsController {
 
     this.logger.log(`Download "${name}"`)
     res.set({ 'Content-Type': 'application/zip', 'Content-Length': `${size}`, 'Content-Disposition': `attachment; filename="${name}"`, 'X-Content-Type-Options': 'nosniff' })
-    createReadStream(file).pipe(res)
+    pipeline(createReadStream(file), res).catch((err) => {
+      // Headers are sent: the client sees a cut download, the API stays up
+      this.logger.error(`Download "${name}" failed, ${err.message}`)
+    })
   }
 }

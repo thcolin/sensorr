@@ -197,6 +197,11 @@ const Onboarding = () => {
   const { jobs } = useJobsContext() as any
   const latest = useRef(jobs)
   latest.current = jobs
+  const mounted = useRef(true)
+
+  useEffect(() => () => {
+    mounted.current = false
+  }, [])
   const [tmdbError, setTMDBError] = useState(null)
   const plex = usePlexLink()
 
@@ -259,6 +264,10 @@ const Onboarding = () => {
 
       let ended
       while (!(ended = latest.current?.find((entry) => entry.job === job && entry.meta?.done))) {
+        if (!mounted.current) {
+          return
+        }
+
         await new Promise((resolve) => setTimeout(resolve, 500))
       }
 

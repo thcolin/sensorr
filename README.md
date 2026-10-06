@@ -183,7 +183,7 @@ Settings › Data writes your library and its settings into a `.zip` in `dumps/`
 
 The `dump` job does the same every Sunday at 4:00 once turned on in Settings › Jobs, and keeps the last 4. A dump only reaches `dumps/` with the `./dumps:/app/dumps` volume of `docker-compose.yml`: an install made before Settings › Data needs that line in its compose file, and a `mkdir dumps` in its install folder.
 
-The same page imports a dump, and so does the onboarding of a new instance, under *From a dump*. The import replaces the movies, TV shows, episodes and stars, and the settings but their keys and passwords: those of the instance that imports stay, and an indexer of the same name keeps its key. It is refused while a job runs, and it runs as the `restore` job, all at once: a dump that breaks halfway leaves the library as it was. From a shell, `docker exec sensorr-api bin/sensorr dump` writes one, and `docker exec sensorr-api bin/sensorr restore dumps/<file>.zip` imports one of `dumps/`.
+The same page imports a dump, and so does the onboarding of a new instance, under *From a dump*. The import replaces the movies, TV shows, episodes and stars, and the settings but their keys and passwords: those of the instance that imports stay, and an indexer of the same name keeps its key. It is refused while a job runs, and it runs as the `restore` job, all at once: a dump that breaks halfway leaves the library as it was. From a shell, `docker exec sensorr-api bin/sensorr dump` writes one. Import from the page only: started from a shell, a restore would run next to the jobs the API starts.
 
 # Documentation
 

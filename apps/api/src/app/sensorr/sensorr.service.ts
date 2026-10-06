@@ -198,11 +198,12 @@ export class SensorrService {
   }
 
   private spawn(name: string, args: string[], { command, type, cron, onClose }: { command: string, type?: string, cron?: string, onClose?: () => void }) {
-    // A restore empties then refills the library: no job starts before it ends
-    if (this.running.has('restore')) {
-      this.logger.warn(`RunProcess "${name}" refused, a restore is running` + (cron ? `, from cron "${cron}"` : ''))
+    // A restore empties then refills the library: no job starts before it ends, and it starts after none
+    if (this.running.has('restore') || (name === 'restore' && this.running.size)) {
+      const reason = name === 'restore' ? `Sensorr job "${[...this.running][0]}" is running, restore once it ends` : `Sensorr job "${name}" refused, a restore is running`
+      this.logger.warn(`RunProcess "${name}" refused: ${reason}` + (cron ? `, from cron "${cron}"` : ''))
       onClose?.()
-      return Promise.reject(new ConflictException(`Sensorr job "${name}" refused, a restore is running`))
+      return Promise.reject(new ConflictException(reason))
     }
 
     const unlock = lockOf(this.running, name)
