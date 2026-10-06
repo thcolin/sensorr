@@ -7,7 +7,7 @@ import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { pictureSrc } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
 import { DragScroll } from '../../../atoms/DragScroll/DragScroll'
-import { Lines, Skeleton, reveal, barTintOf } from '../../../atoms/Skeleton/Skeleton'
+import { Bar, Lines, Skeleton, barTintOf } from '../../../atoms/Skeleton/Skeleton'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
 export type PrettyProps = Omit<PosterProps, 'palette' | 'onReady'>
@@ -89,7 +89,6 @@ const UIPretty = ({
           link={link}
           badges={badges}
           ready={ready}
-          revealed={revealed}
           onTitled={onTitled}
           palette={palette.palette}
           parent={ref}
@@ -151,7 +150,7 @@ UIPretty.styles = {
 
 export const Pretty = memo(UIPretty)
 
-const UIAbout = ({ details, palette, ready, revealed, onTitled, link, badges, parent, ...props }) => {
+const UIAbout = ({ details, palette, ready, onTitled, link, badges, parent, ...props }) => {
   const { t } = useTranslation()
 
   return (
@@ -177,18 +176,24 @@ const UIAbout = ({ details, palette, ready, revealed, onTitled, link, badges, pa
         </span>
       </Skeleton>
       <DragScroll sx={UIAbout.styles.badges} byBackground={true}>
-        {revealed && badges?.reviews?.component && (
-          <div sx={{ ...reveal, ':hover + div': { opacity: 0, transition: 'none' } }}>
-            <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
-          </div>
-        )}
-        {revealed && badges?.guests?.component && (
-          <div sx={{ ...UIAbout.styles.guests, ...reveal }}>
-            <badges.guests.component {...badges?.guests?.props} />
-          </div>
-        )}
+        {/* The reviews' pill, 80 by 24 pixels */}
+        <Skeleton ready={ready} clip={false} placeholder={<Bar width='5em' height='1.5em' pill={true} />}>
+          <span sx={UIAbout.styles.pills}>
+            {badges?.reviews?.component && (
+              <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
+                <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
+              </div>
+            )}
+            {badges?.guests?.component && (
+              <div sx={UIAbout.styles.guests}>
+                <badges.guests.component {...badges?.guests?.props} />
+              </div>
+            )}
+          </span>
+        </Skeleton>
       </DragScroll>
-      <Skeleton ready={ready} placeholder={<Lines height='0.833em' lineHeight={1.125} />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
+      {/* 12px text on the 18px lines its 16px block sets */}
+      <Skeleton ready={ready} placeholder={<Lines height='0.75em' lineHeight={1.5} />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </Skeleton>
     </div>
@@ -242,6 +247,10 @@ UIAbout.styles = {
     overflowY: 'hidden',
     whiteSpace: 'nowrap',
     fontWeight: 'semibold',
+  },
+  pills: {
+    display: 'flex',
+    alignItems: 'center',
     '>*:not(:last-child)': {
       marginRight: 8
     },
