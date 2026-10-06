@@ -395,6 +395,10 @@ UIDetails.styles = {
       'details > summary > *': {
         whiteSpace: 'normal',
       },
+      // A subtitle longer than a line flows after the chevron instead of going under it
+      'details > summary > h4': {
+        display: 'inline',
+      },
     },
     // Above the drawer's knob, which passes behind it
     poster: {
