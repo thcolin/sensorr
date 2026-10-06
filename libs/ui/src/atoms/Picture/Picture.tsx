@@ -85,9 +85,11 @@ function UIPicture({
   ...props
 }: PictureProps) {
   const ref = useRef(null)
-  const [error, setError] = useState(false)
-  const [loaded, setLoaded] = useState(false)
   const src = pictureSrc(path, size)
+  // The source loaded, or failed: a flag reset in an effect would show the next source as loaded for a render
+  const [settled, setSettled] = useState({ src: undefined, error: false })
+  const loaded = settled.src === src
+  const error = loaded && settled.error
 
   const current = useRef(src)
   current.current = src
@@ -104,8 +106,7 @@ function UIPicture({
           return
         }
 
-        setLoaded(true)
-        setError(false)
+        setSettled({ src: current.current, error: false })
 
         if (typeof onReady === 'function') {
           onReady(e, false)
@@ -113,8 +114,11 @@ function UIPicture({
       })
     },
     onError: (e) => {
-      setLoaded(true)
-      setError(true)
+      if (e?.currentTarget?.getAttribute('src') !== current.current) {
+        return
+      }
+
+      setSettled({ src: current.current, error: true })
 
       if (typeof onReady === 'function') {
         onReady(e, true)
@@ -136,9 +140,6 @@ function UIPicture({
   }
 
   useEffect(() => {
-    setLoaded(false)
-    setError(false)
-
     if (!path || path.startsWith('data:image/')) {
       onLoadProps.onLoad(null)
     }
