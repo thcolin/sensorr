@@ -140,6 +140,7 @@ const UIDetails = ({
       state={state}
       setState={setState}
       artworks={['movie', 'tv'].includes(behavior) && !!ratingKeyOf(artworks) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
+      astride={variant === 'drawer'}
     />
   )
 
@@ -376,6 +377,9 @@ UIDetails.styles = {
     },
     poster: {
       marginBottom: 2,
+      '--theme-ui-colors-gray': 'var(--poster-pill)',
+      '--theme-ui-colors-grayDark': 'var(--poster-pill)',
+      '--theme-ui-colors-text': 'var(--poster-pill-text)',
       '>div': {
         height: '15em',
         width: '10em',
