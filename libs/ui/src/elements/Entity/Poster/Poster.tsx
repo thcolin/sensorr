@@ -81,6 +81,8 @@ const UIPoster = ({
   // what a hover shows on a desktop, until the next touch or scroll
   const [focused, setFocused] = useState(false)
   const raised = !!selected || focused
+  // On a phone an open selection moves the ratings to the right corner, over the state, and shows the whole checkbox
+  const aside = interactive && (!!selected || selectedVisible)
 
   useEffect(() => {
     if (!focused) {
@@ -143,7 +145,7 @@ const UIPoster = ({
         zIndex: (interactive && raised) ? 5 : 'auto',
         ':hover': {
           zIndex: 5,
-          ...(selected !== null ? {
+          ...((selected !== null && !interactive) ? {
             '>div:first-of-type': {
               '>div:first-of-type': {
                 left: '1.25em !important',
@@ -174,7 +176,7 @@ const UIPoster = ({
             ...UIPoster.styles.left,
             // Au repos le badge recouvre totalement la coche (position d'origine, identique aux
             // pages sans sélection). Il se décale (hover ou coché) pour révéler la coche.
-            left: (selected || selectedVisible) ? '1.25em' : ['-0.75em', '-1.5em'],
+            ...(aside ? { left: 'auto', right: '-1.25em' } : { left: (selected || selectedVisible) ? '1.25em' : ['-0.75em', '-1.5em'] }),
             opacity: ready ? 1 : 0,
             transition: [
               ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
@@ -241,6 +243,7 @@ const UIPoster = ({
           sx={{
             ...UIPoster.styles.right,
             ...pills,
+            top: aside ? '1.25em' : UIPoster.styles.right.top,
             // Like a hover on the badges at left, the focus opens the ratings over these
             opacity: (ready && !focused) ? 1 : 0,
             transition: focused ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
