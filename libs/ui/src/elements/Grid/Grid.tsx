@@ -34,7 +34,7 @@ const useScrollContainer = () => {
 
 const withGridItemContainer = () => (WrappedComponent) => {
   const withGridItemContainer = ({ style, index, readyInViewport, scrolling, ...props }) => (
-    <div sx={{ ...UIGrid.styles.entity, ...style, ':hover': { zIndex: 1 } }}>
+    <div sx={{ ...UIGrid.styles.entity, ...style, ':hover, :has([data-raised])': { zIndex: 1 } }}>
       <WrappedComponent {...props} index={index} placeholder={!readyInViewport} />
     </div>
   )

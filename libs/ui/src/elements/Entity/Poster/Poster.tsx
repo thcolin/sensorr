@@ -121,6 +121,8 @@ const UIPoster = ({
   return (
     <div
       ref={ref}
+      // Lets the cell of a list or a grid rise above its neighbours, the badges overflow the poster
+      data-raised={(interactive && raised) || undefined}
       onMouseEnter={loadExternals}
       sx={{
         ...UIPoster.styles.element,
