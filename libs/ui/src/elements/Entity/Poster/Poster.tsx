@@ -4,7 +4,7 @@ import { useDevice } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Link } from '../../../atoms/Link/Link'
 import { Picture, PictureProps, pictureSrc } from '../../../atoms/Picture/Picture'
-import { Skeleton, reveal } from '../../../atoms/Skeleton/Skeleton'
+import { Skeleton, reveal, conceal, useLeaving } from '../../../atoms/Skeleton/Skeleton'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 import { Option } from '../../../inputs/Option/Option'
 import { useCutout } from './cutout'
@@ -55,7 +55,7 @@ const UIPoster = ({
   interactive = false,
   onPress = null,
   meaningful = true,
-  badges = {},
+  badges: given = {},
   onReady,
   credits = false,
   selected = null,
@@ -77,6 +77,17 @@ const UIPoster = ({
   const [titled, setTitled] = useState(false)
   const revealed = meaningful ? ready && titled : ready
   const onTitled = useCallback(() => setTitled(true), [])
+  // The badges fade out with the texts as the poster goes back to loading, the last ones shown kept meanwhile
+  const leaving = useLeaving(revealed)
+  const badged = revealed || leaving
+  const entrance = leaving ? conceal : reveal
+  const kept = useRef(given)
+
+  if (revealed) {
+    kept.current = given
+  }
+
+  const badges = revealed ? given : kept.current
 
   useEffect(() => {
     if (!ready) {
@@ -238,11 +249,11 @@ const UIPoster = ({
             },
           }}
         >
-          {revealed && (badges?.focus?.component || badges?.reviews?.component) && (
+          {badged && (badges?.focus?.component || badges?.reviews?.component) && (
             <div
               sx={{
                 ...UIPoster.styles.focus,
-                ...reveal,
+                ...entrance,
                 ...pills,
                 zIndex: 2,
                 ...(selected !== null ? {} : {}),
@@ -296,11 +307,11 @@ const UIPoster = ({
             transition: 'opacity 200ms ease-in-out',
           }}
         >
-          {revealed && badges?.state?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.state, ...reveal }}><badges.state.component {...badges?.state?.props} /></div>}
-          {revealed && badges?.proposal?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.proposal, ...reveal }}><badges.proposal.component {...badges?.proposal?.props} /></div>}
+          {badged && badges?.state?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.state, ...entrance }}><badges.state.component {...badges?.state?.props} /></div>}
+          {badged && badges?.proposal?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.proposal, ...entrance }}><badges.proposal.component {...badges?.proposal?.props} /></div>}
         </div>
         <div sx={UIPoster.styles.guests}>
-          {revealed && badges?.guests?.component && <div sx={reveal}><badges.guests.component {...badges?.guests?.props} /></div>}
+          {badged && badges?.guests?.component && <div sx={entrance}><badges.guests.component {...badges?.guests?.props} /></div>}
         </div>
         <div
           sx={{

@@ -13,6 +13,31 @@ export const reveal = {
   },
 }
 
+// Whatever leaves with the texts going back to their bars fades out with them
+export const conceal = {
+  animation: `${animations.reveal} 250ms ease-in-out reverse forwards`,
+  '@media (prefers-reduced-motion: reduce)': {
+    animation: 'none',
+  },
+}
+
+// True while what `shown` held fades out: kept mounted from the render where `shown` turns false
+export const useLeaving = (shown: boolean) => {
+  const [kept, setKept] = useState(shown)
+
+  useEffect(() => {
+    if (shown) {
+      setKept(true)
+      return
+    }
+
+    const timeout = setTimeout(() => setKept(false), 250)
+    return () => clearTimeout(timeout)
+  }, [shown])
+
+  return kept && !shown
+}
+
 // The bars' color in a poster's colors, and the poster's own block while its picture loads: a seventh of its text
 // color into its background
 export const barTintOf = (palette) => `color-mix(in oklab, ${palette?.color || 'currentColor'} 14%, ${palette?.backgroundColor || 'transparent'})`
@@ -87,77 +112,118 @@ const FADE = 250
 // A bar that becomes its content. Once the content is there, it is laid out unseen in the bar's grid
 // cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
 // width; on the way the content fades in over the bar, then the bar fades out under it. A blank line holds
-// the cell at the height of one line of the text it waits for.
+// the cell at the height of one line of the text it waits for. When the content goes, as a pretty moves to
+// another movie, the same steps play backwards: the bar comes back under the content, which fades out as the cell
+// eases back to the bar's height.
 export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, fit = null, children, ...props }: SkeletonProps) => {
   const cell = useRef<HTMLSpanElement>(null)
   const cover = useRef<HTMLSpanElement>(null)
   const content = useRef<HTMLSpanElement>(null)
+  // The cell's height with its bars, and with its content
   const height = useRef<number>(null)
+  const full = useRef<number>(null)
   // Ready from the first render, the content shows at once: there was no bar to see
   const [shown, setShown] = useState(ready)
+  // The content last shown, kept while it fades out
+  const last = useRef(children)
+  const leaving = shown && !ready
+
+  if (ready) {
+    last.current = children
+  }
 
   const running = useRef<Animation[]>([])
+  const timer = useRef<ReturnType<typeof setTimeout>>(null)
 
-  const inking = useRef<ReturnType<typeof setTimeout>>(null)
+  const stop = () => {
+    clearTimeout(timer.current)
+    running.current.forEach(animation => animation.cancel())
+    running.current = []
+  }
 
   // Called as the content starts to show: what waits on it shows with it
   useEffect(() => {
-    if (shown && typeof onShown === 'function') {
+    if (shown && ready && typeof onShown === 'function') {
       onShown()
     }
   }, [shown])
 
-  useLayoutEffect(() => () => {
-    clearTimeout(inking.current)
-    running.current.forEach(animation => animation.cancel())
-  }, [])
+  useLayoutEffect(() => stop, [])
 
   useLayoutEffect(() => {
+    if (ready && shown && !running.current.length) {
+      full.current = cell.current.getBoundingClientRect().height
+    }
+  })
+
+  useLayoutEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timing = { duration: DURATION, easing: EASING }
+    // A single bar, given or drawn by the placeholder, takes the content's width and keeps the height of its text;
+    // a group of bars only follows the cell's height
+    const lone = cover.current?.childElementCount === 1 && !cover.current.firstElementChild.childElementCount && cover.current.firstElementChild as HTMLElement
+    const fitted = cover.current?.querySelector('[data-fit]') as HTMLElement
+    const morphed = fitted || lone
+    const widthOf = () => fitted ? fit?.(content.current) : content.current?.getBoundingClientRect().width
+
     if (!ready) {
-      clearTimeout(inking.current)
-      running.current.forEach(animation => animation.cancel())
-      running.current = []
+      stop()
       height.current = cell.current.getBoundingClientRect().height
-      setShown(false)
+
+      if (!shown) {
+        return
+      }
+
+      if (reduced || full.current === null) {
+        setShown(false)
+        return
+      }
+
+      const target = widthOf()
+      running.current = [cell.current.animate([{ height: `${full.current}px` }, { height: `${height.current}px` }], timing)]
+
+      if (morphed && target) {
+        running.current.push(morphed.animate([{ width: `${target}px` }, { width: `${morphed.getBoundingClientRect().width}px` }], timing))
+      }
+
+      timer.current = setTimeout(() => setShown(false), Math.max(DURATION, FADE))
       return
     }
 
+    // Back before the content had left: it stays
     if (shown) {
+      stop()
       return
     }
 
-    if (height.current === null || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (height.current === null || reduced) {
       setShown(true)
       return
     }
 
     const from = height.current
     const to = cell.current.getBoundingClientRect().height
-    const timing = { duration: DURATION, easing: EASING }
-    // A single bar, given or drawn by the placeholder, takes the content's width and keeps the height of its text;
-    // a group of bars only follows the cell's height
-    const lone = cover.current?.childElementCount === 1 && !cover.current.firstElementChild.childElementCount && cover.current.firstElementChild as HTMLElement
-    const fitted = cover.current?.querySelector('[data-fit]') as HTMLElement
-    const target = fitted ? fit?.(content.current) : content.current?.getBoundingClientRect().width
-    const morphed = fitted || lone
+    const target = widthOf()
     running.current = [cell.current.animate([{ height: `${from}px` }, { height: `${to}px` }], timing)]
 
     if (morphed && target) {
       running.current.push(morphed.animate([{ width: `${morphed.getBoundingClientRect().width}px` }, { width: `${target}px` }], { ...timing, fill: 'forwards' }))
     }
 
-    inking.current = setTimeout(() => setShown(true), INK)
+    timer.current = setTimeout(() => setShown(true), INK)
   }, [ready])
+
+  const visible = shown && ready
 
   return (
     <span {...props} ref={cell} sx={{ ...Skeleton.styles.element, alignItems: align }}>
       <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
-      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: shown ? 0 : 1, transition: `opacity ${FADE}ms ${EASING} ${shown ? INK : 0}ms` }}>
+      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: visible ? 0 : 1, transition: `opacity ${FADE}ms ${EASING} ${visible ? INK : 0}ms` }}>
         {placeholder || <Bar {...bar} />}
       </span>
-      {ready && (
-        <span sx={{ ...Skeleton.styles.content, display: clip ? 'flex' : 'block', ...(shown ? Skeleton.styles.after : { visibility: 'hidden' }) }}>
-          <span ref={content} sx={clip ? Skeleton.styles.clip : Skeleton.styles.block}>{children}</span>
+      {(ready || leaving) && (
+        <span sx={{ ...Skeleton.styles.content, display: clip ? 'flex' : 'block', ...(leaving ? Skeleton.styles.leaving : shown ? Skeleton.styles.after : { visibility: 'hidden' }) }}>
+          <span ref={content} sx={clip ? Skeleton.styles.clip : Skeleton.styles.block}>{ready ? children : last.current}</span>
         </span>
       )}
     </span>
@@ -202,6 +268,12 @@ Skeleton.styles = {
     '@media (prefers-reduced-motion: reduce)': {
       animation: 'none',
     },
+  },
+  // Out of the flow, so the cell eases back to the bars' height, and fading out over the bars coming back
+  leaving: {
+    position: 'absolute',
+    inset: '0px',
+    animation: `${animations.reveal} ${FADE}ms ${EASING} reverse forwards`,
   },
   clip: {
     minWidth: '0px',

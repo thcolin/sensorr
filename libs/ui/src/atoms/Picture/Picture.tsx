@@ -134,8 +134,10 @@ function UIPicture({
     empty: {
       opacity: (ready && !src) || error ? 1 : 0,
     },
+    // Fades out as fast as the texts that go back to their bars
     image: {
       opacity: loaded && ready && src && !error ? 1 : 0,
+      transition: loaded && ready && src && !error ? undefined : 'opacity 250ms ease-in-out',
     },
   }
 
