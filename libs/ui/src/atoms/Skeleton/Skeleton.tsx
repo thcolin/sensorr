@@ -50,6 +50,8 @@ export interface SkeletonProps {
   placeholder?: React.ReactNode
   // Where the bar sits in the cell: on the line of a text, or at the top of a paragraph
   align?: 'center' | 'start'
+  // Cut a text that overflows with an ellipsis, which a block holding menus or badges cannot afford
+  clip?: boolean
   children?: React.ReactNode
   [prop: string]: any
 }
@@ -57,7 +59,7 @@ export interface SkeletonProps {
 // A bar that becomes its content: both sit in the same grid cell, the bar fades out as the content
 // fades in, and the cell keeps the larger of the two, so nothing around it moves. A blank line holds
 // the cell at the height of one line of the text it waits for.
-export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', children, ...props }: SkeletonProps) => (
+export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, children, ...props }: SkeletonProps) => (
   <span {...props} sx={{ ...Skeleton.styles.element, alignItems: align }}>
     <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
     {placeholder ? (
@@ -65,7 +67,7 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
     ) : (
       <Bar {...bar} sx={{ ...Skeleton.styles.bar, opacity: ready ? 0 : 1 }} />
     )}
-    {ready && <span sx={{ ...Skeleton.styles.content, ...reveal }}>{children}</span>}
+    {ready && <span sx={{ ...Skeleton.styles.content, ...(clip ? Skeleton.styles.clip : {}), ...reveal }}>{children}</span>}
   </span>
 )
 
@@ -90,6 +92,8 @@ Skeleton.styles = {
   },
   content: {
     display: 'block',
+  },
+  clip: {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   },

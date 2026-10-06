@@ -5,6 +5,7 @@ import { Release } from '../../../components/Sensorr/Release'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { Gestures } from '../../../components/Sensorr/Gestures'
 import { emojize, filesize } from '@sensorr/utils'
+import { reveal } from '@sensorr/ui'
 import { isPending, proposalDiff, scoreReleases, sizeStateOf } from '../../Proposals/queue'
 
 const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, ready, ...props }) => {
@@ -39,8 +40,8 @@ const UIReleases = ({ movie, metadata, removeRelease, proceedRelease, entities, 
 
   return (
     <div sx={UIReleases.styles.element}>
-      {!!releases.length && (
-        <div sx={{ '>div': { opacity: ready ? 1 : 0, transition: 'opacity 400ms ease-in-out' } }}>
+      {ready && !!releases.length && (
+        <div sx={reveal}>
           {releases.map((release, i) => (
             <Release
               key={i}

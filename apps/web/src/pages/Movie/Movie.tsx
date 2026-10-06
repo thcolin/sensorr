@@ -270,6 +270,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
       details={movie.details}
       entity={movie.data}
       additional={additional.data}
+      additionalReady={!additional.loading}
       tabs={tabs}
       loading={movie.loading}
       ready={ready}

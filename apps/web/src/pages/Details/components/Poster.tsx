@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { Picture, Empty, Guests, MovieState, PersonState, ShowState } from '@sensorr/ui'
+import { Picture, Empty, Guests, MovieState, PersonState, ShowState, reveal } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
 const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, variant = 'page', ...props }) => {
@@ -9,9 +9,11 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
     { entity: { id: 0, name: guestsContext.guests[email].name, override: email, profile_path: guestsContext.guests[email].avatar } },
   ], []), [requested_by, guestsContext.loading, guestsContext.guests])
 
-  // In the drawer, the badges sit where a grid poster carries them and show once the poster has
+  // In the drawer, the badges sit where a grid poster carries them. Each mounts once known, and fades in then
   const drawer = variant === 'drawer'
-  const badge = (style) => drawer ? { ...style, ...UIPoster.styles.reveal(ready) } : style
+  const badge = (style) => ({ ...style, ...reveal })
+  const States = { movie: MovieState, tv: ShowState, person: PersonState }
+  const State = States[behavior]
 
   return (
     <div sx={UIPoster.styles.element}>
@@ -25,42 +27,17 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         lazy={false}
         // sx={{ viewTransitionName: 'poster' }}
       />
-      {behavior === 'movie' && (
-        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
-          <MovieState
-            value={ready ? state : 'loading'}
-            onChange={setState}
-            compact={true}
-            aria-label='State'
-          />
+      {!!State && ready && state !== 'loading' && (
+        <div sx={badge(drawer ? UIPoster.styles.astride : UIPoster.styles.state)}>
+          <State value={state} onChange={setState} compact={true} aria-label='State' />
         </div>
       )}
-      {behavior === 'tv' && (
-        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
-          <ShowState
-            value={ready ? state : 'loading'}
-            onChange={setState}
-            compact={true}
-            aria-label='State'
-          />
-        </div>
-      )}
-      {behavior === 'person' && (
-        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
-          <PersonState
-            value={ready ? state : 'loading'}
-            onChange={setState}
-            compact={true}
-            aria-label='State'
-          />
-        </div>
-      )}
-      {!!artworks && (drawer || ready) && <div sx={badge(drawer ? UIPoster.styles.compact : UIPoster.styles.artworks)}>{artworks}</div>}
-      <div sx={badge(UIPoster.styles.guests)}>
-        {!!requested_by?.length && (
+      {!!artworks && ready && <div sx={badge(drawer ? UIPoster.styles.compact : UIPoster.styles.artworks)}>{artworks}</div>}
+      {ready && !!guests.length && (
+        <div sx={badge(UIPoster.styles.guests)}>
           <Guests guests={guests} display='poster' compact={false} to={behavior === 'tv' ? '/tv/requests' : '/movie/requests'} />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -86,12 +63,6 @@ UIPoster.styles = {
     fontSize: 3,
     zIndex: 1,
   },
-  reveal: (ready) => ({
-    opacity: ready ? 1 : 0,
-    visibility: ready ? 'visible' : 'hidden',
-    // After the poster's own fade, 400ms after a 400ms delay
-    transition: ready ? 'opacity 400ms ease-in-out 900ms' : 'none',
-  }),
   // At the size of the state badge
   compact: {
     position: 'absolute',
