@@ -46,9 +46,19 @@ describe('stripDocument', () => {
     })
   })
 
-  it('returns a document without releases unchanged', () => {
-    const episode = { _id: 2, show_id: 1, release: 'r' }
-    expect(stripDocument(episode)).toBe(episode)
+  it('strips a release id that is a guid with a key, and the episode that points to it the same way', () => {
+    const guid = 'http://jackett:9117/dl/c411/?jackett_apikey=a&path=p'
+    const show = stripDocument({ _id: 1, releases: [{ id: guid, coverage: [{ season: 1 }] }] })
+    const episode = stripDocument({ _id: 2, show_id: 1, release: guid })
+    expect(show.releases[0].id).toBe('http://jackett:9117/dl/c411/?jackett_apikey=&path=p')
+    expect(episode.release).toBe(show.releases[0].id)
+  })
+
+  it('leaves dates, numbers and empty values as they are', () => {
+    const date = new Date('2026-10-05T04:00:00Z')
+    const doc = stripDocument({ _id: 2, show_id: 1, air_date: date, release: null, files: [] })
+    expect(doc).toEqual({ _id: 2, show_id: 1, air_date: date, release: null, files: [] })
+    expect(doc.air_date).toBe(date)
   })
 })
 
