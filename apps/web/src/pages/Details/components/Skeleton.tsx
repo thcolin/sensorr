@@ -5,10 +5,10 @@ import { Skeleton as Base } from '@sensorr/ui'
 const UISkeleton = ({ children, palette, ready, shape, ...props }) => (
   <Base
     clip={false}
+    align='start'
     {...props}
     ready={ready}
     placeholder={shape}
-    align='start'
     style={{ '--theme-ui-colors-gray': `color-mix(in oklab, ${palette?.color || 'currentColor'} 14%, ${palette?.backgroundColor || 'transparent'})` }}
   >
     {children}

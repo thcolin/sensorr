@@ -72,10 +72,12 @@ export interface SkeletonProps {
 
 const EASING = 'ease-in-out'
 const DURATION = 400
+// The bar leaves before its content comes: the two never show over each other
+const HIDE = 200
 
 // A bar that becomes its content. Once the content is there, it is laid out unseen in the bar's grid
 // cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
-// width, then the bar fades out as the content fades in. A blank line holds the cell at the height of
+// width, then the bar fades out, then the content fades in. A blank line holds the cell at the height of
 // one line of the text it waits for.
 export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, children, ...props }: SkeletonProps) => {
   const cell = useRef<HTMLSpanElement>(null)
@@ -137,7 +139,7 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
         {placeholder || <Bar {...bar} />}
       </span>
       {ready && (
-        <span sx={{ ...Skeleton.styles.content, display: clip ? 'flex' : 'block', ...(shown ? reveal : { visibility: 'hidden' }) }}>
+        <span sx={{ ...Skeleton.styles.content, display: clip ? 'flex' : 'block', ...(shown ? Skeleton.styles.after : { visibility: 'hidden' }) }}>
           <span ref={content} sx={clip ? Skeleton.styles.clip : Skeleton.styles.block}>{children}</span>
         </span>
       )}
@@ -160,7 +162,7 @@ Skeleton.styles = {
   },
   cover: {
     display: 'block',
-    transition: `opacity ${REVEAL}`,
+    transition: `opacity ${HIDE}ms ${EASING}`,
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
     },
@@ -168,6 +170,12 @@ Skeleton.styles = {
   // A flex row lays a text out at its own width, the one a lone bar takes, without the line box an
   // inline block would add under it
   content: {},
+  after: {
+    animation: `${animations.reveal} ${REVEAL} ${HIDE}ms backwards`,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
+  },
   clip: {
     minWidth: '0px',
     whiteSpace: 'inherit',

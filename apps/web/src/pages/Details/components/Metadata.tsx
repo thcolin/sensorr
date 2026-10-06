@@ -1,6 +1,6 @@
 import { memo, useId, useMemo, useRef } from 'react'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
-import { Icon, QuerySelect, Option } from '@sensorr/ui'
+import { Bar, Icon, QuerySelect, Option } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
 import { useCustomLists } from '../../../components/Lists/useCustomLists'
 import { useThemeUI } from 'theme-ui'
@@ -163,6 +163,54 @@ UIMetadata.styles = {
 }
 
 export const Metadata = memo(UIMetadata)
+
+// The editor while the movie loads, on its own grid and in its own blocks: a bar in each label and help text, at
+// their font size, and a bar per field at the height measured on the field (Terms and Years 37px under a 4px gap,
+// Lists 45px, Policy 36px under a 4px gap, an option's checkbox 16px)
+export const MetadataPlaceholder = ({ lists = false }) => {
+  const field = (label, top, height, help, line = false) => (
+    <div sx={{ ...UIMetadata.styles.block, ...(line ? UIMetadata.styles.line : UIMetadata.styles.column) }}>
+      <span><Bar inline={true} width={`${label}em`} height='1em' /></span>
+      <div sx={MetadataPlaceholder.styles.field}><Bar height={height} sx={{ marginTop: top }} /></div>
+      <small><Bar inline={true} width={`${help}em`} height='1em' /></small>
+    </div>
+  )
+  const option = (label, text, last = false) => (
+    <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...(last ? { gridColumn: ['auto', '2 / -1'] } : {}) }}>
+      <span><Bar inline={true} width={`${label}em`} height='1em' /></span>
+      <div sx={MetadataPlaceholder.styles.option}>
+        <Bar width='1em' height='1em' />
+        <Bar width={`${text}em`} height='0.625em' />
+      </div>
+    </div>
+  )
+
+  return (
+    <div sx={{ ...(lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container), marginTop: '0.5em' }}>
+      {field(3, '0.25em', '2.3125em', 30, true)}
+      {field(2.75, '0.25em', '2.3125em', 21)}
+      {lists && field(2.25, '0em', '2.8125em', 15, true)}
+      {field(2.75, '0.25em', '2.25em', 31)}
+      {option(12, 39)}
+      {option(12.5, 40, true)}
+    </div>
+  )
+}
+
+MetadataPlaceholder.styles = {
+  // From under the label to the help text, as the fields' own boxes and margins leave it
+  field: {
+    display: 'block',
+    height: '2.84375em',
+  },
+  option: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5em',
+    height: '2em',
+    marginTop: '0.25em',
+  },
+}
 
 export const MetadataStyles = UIMetadata.styles
 

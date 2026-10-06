@@ -13,7 +13,7 @@ import { Tabs } from '../../components/Entities/Tabs'
 import { MovieActions, OptionInput, ShowTicket } from './components/Actions'
 import { Releases } from './components/Releases'
 import { Sensorr } from '../../components/Sensorr'
-import { Metadata } from './components/Metadata'
+import { Metadata, MetadataPlaceholder } from './components/Metadata'
 import { Externals, Meaningful } from './components/Externals'
 import { Artworks, TitleLogo, logoSrcOf, useArtworksOf } from '../../components/Artworks/Artworks'
 import { ratingKeyOf } from '../../components/Artworks/candidates'
@@ -286,19 +286,28 @@ const UIDetails = ({
 
   const titleBlock = (
     <h1 sx={UIDetails.styles.title}>
-      <Skeleton palette={shown} ready={pageTitleReady} shape={<Bar width='8em' height='1em' />} clip={true}>
+      <Skeleton palette={shown} ready={pageTitleReady} shape={<Bar width='8em' height='1em' />} clip={true} align='center'>
         {artworks?.logo ? <TitleLogo key={artworks.logo} path={artworks.logo} title={title} /> : title}
       </Skeleton>
     </h1>
   )
 
-  const subtitleShape = <Bar width='14em' height='1.25em' />
+  // A bar on the line of its text, where the text starts: after the chevron of the subtitle's summary, after the emoji
+  // of the meaningful line
+  const lineOf = (bar, height, indent) => <span sx={{ display: 'flex', alignItems: 'center', height, paddingLeft: indent }}>{bar}</span>
+  const subtitleShape = lineOf(<Bar width='14em' height='1.25em' />, '2em', '1.5em')
 
   const metadataBlock = (
     <>
       {behavior === 'movie' && (
         // Its state opens the editor of a wished, archived or missing movie: it waits for it
-        <Skeleton palette={shown} ready={ready && state !== 'loading'} shape={subtitleShape} sx={{ marginBottom: 4 }}>
+        <Skeleton
+          palette={shown}
+          ready={ready && state !== 'loading'}
+          // Once its state is known, the editor it opens takes its own place among the bars
+          shape={metadataState ? <span sx={{ display: 'block' }}>{subtitleShape}<MetadataPlaceholder lists={true} /></span> : subtitleShape}
+          sx={{ marginBottom: 4 }}
+        >
           <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
             <summary>
               <span />
@@ -352,7 +361,7 @@ const UIDetails = ({
   )
 
   const meaningfulBlock = (
-    <Skeleton palette={shown} ready={ready} shape={<Bar width='22em' height='1em' />} sx={{ marginBottom: 4 }}>
+    <Skeleton palette={shown} ready={ready} shape={lineOf(<Bar width='22em' height='1em' />, '2em', '1.75em')} sx={{ marginBottom: 4 }}>
       <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
     </Skeleton>
   )
