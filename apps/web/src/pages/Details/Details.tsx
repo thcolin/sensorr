@@ -140,7 +140,7 @@ const UIDetails = ({
       state={state}
       setState={setState}
       artworks={['movie', 'tv'].includes(behavior) && !!ratingKeyOf(artworks) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
-      astride={variant === 'drawer'}
+      variant={variant}
     />
   )
 
@@ -285,7 +285,7 @@ const UIDetails = ({
           <div sx={UIDetails.styles.drawer.poster} data-drawer-poster>
             {posterBlock}
           </div>
-          <Skeleton palette={palette.palette} ready={ready} sx={{ alignSelf: 'stretch', marginBottom: 10 }}>
+          <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
             <Link to={`/${behavior}/${entity?.id}`} sx={{ variant: 'link.reset', display: 'block' }}>
               {logo ? (
                 <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
@@ -299,7 +299,9 @@ const UIDetails = ({
           {metadataBlock}
           <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
             <div sx={UIDetails.styles.drawer.ratings}>
-              <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
+              <span>
+                <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
+              </span>
             </div>
           </Skeleton>
           <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
@@ -369,13 +371,18 @@ UIDetails.styles = {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
+      alignItems: 'stretch',
       gap: 8,
       marginTop: '-3.5em',
-      paddingX: 4,
+      paddingX: 2,
       textAlign: 'center',
+      // A genre list longer than the drawer is wide wraps instead of running past its edge
+      'details > summary > *': {
+        whiteSpace: 'normal',
+      },
     },
     poster: {
+      alignSelf: 'center',
       marginBottom: 2,
       '--theme-ui-colors-gray': 'var(--poster-pill)',
       '--theme-ui-colors-grayDark': 'var(--poster-pill)',
@@ -410,10 +417,14 @@ UIDetails.styles = {
         whiteSpace: 'nowrap',
       },
     },
+    // Open at the width of its scores, not of the drawer
     ratings: {
       display: 'flex',
       justifyContent: 'center',
       fontSize: 3,
+      '>span': {
+        display: 'inline-block',
+      },
     },
     // One wrapping row: the column a phone gets on the page leaves the Plex chevron alone on its line
     externals: {
@@ -432,7 +443,7 @@ UIDetails.styles = {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      paddingX: 4,
+      paddingX: 2,
       paddingTop: 4,
       paddingBottom: 2,
       textAlign: 'center',

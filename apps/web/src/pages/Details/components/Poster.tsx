@@ -2,12 +2,16 @@ import { memo, useMemo } from 'react'
 import { Picture, Empty, Guests, MovieState, PersonState, ShowState } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
-const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, astride = false, ...props }) => {
+const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, variant = 'page', ...props }) => {
   const guestsContext = useGuestsContext() as any
   const guests = useMemo(() => guestsContext.loading ? [] : (requested_by || []).reduce((guests, email) => [
     ...guests,
     { entity: { id: 0, name: guestsContext.guests[email].name, override: email, profile_path: guestsContext.guests[email].avatar } },
   ], []), [requested_by, guestsContext.loading, guestsContext.guests])
+
+  // In the drawer, the badges sit where a grid poster carries them and show once the poster has
+  const drawer = variant === 'drawer'
+  const badge = (style) => drawer ? { ...style, ...UIPoster.styles.reveal(ready) } : style
 
   return (
     <div sx={UIPoster.styles.element}>
@@ -22,7 +26,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         // sx={{ viewTransitionName: 'poster' }}
       />
       {behavior === 'movie' && (
-        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
+        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
           <MovieState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -31,7 +35,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         </div>
       )}
       {behavior === 'tv' && (
-        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
+        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
           <ShowState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -40,7 +44,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         </div>
       )}
       {behavior === 'person' && (
-        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
+        <div sx={drawer ? badge(UIPoster.styles.astride) : UIPoster.styles.state}>
           <PersonState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -48,8 +52,8 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
           />
         </div>
       )}
-      {!!artworks && ready && <div sx={UIPoster.styles.artworks}>{artworks}</div>}
-      <div sx={UIPoster.styles.guests}>
+      {!!artworks && (drawer || ready) && <div sx={badge(drawer ? UIPoster.styles.compact : UIPoster.styles.artworks)}>{artworks}</div>}
+      <div sx={badge(UIPoster.styles.guests)}>
         {!!requested_by?.length && (
           <Guests guests={guests} display='poster' compact={false} to={behavior === 'tv' ? '/tv/requests' : '/movie/requests'} />
         )}
@@ -79,7 +83,24 @@ UIPoster.styles = {
     fontSize: 3,
     zIndex: 1,
   },
-  // Astride the top right corner, where a grid poster carries it
+  reveal: (ready) => ({
+    opacity: ready ? 1 : 0,
+    visibility: ready ? 'visible' : 'hidden',
+    // After the poster's own fade, 400ms from 400ms
+    transition: ready ? 'opacity 400ms ease-in-out 900ms' : 'none',
+  }),
+  // At the size of the state badge
+  compact: {
+    position: 'absolute',
+    bottom: '-1.1em',
+    left: '-1.1em',
+    fontSize: 3,
+    zIndex: 1,
+    '>button': {
+      height: '1.75em',
+      width: '1.75em',
+    },
+  },
   astride: {
     position: 'absolute',
     top: '-1em',
