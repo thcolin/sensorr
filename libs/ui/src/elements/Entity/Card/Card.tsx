@@ -67,13 +67,13 @@ export const Card = memo(UICard)
 const UIAbout = ({ details, link, ready, ...props }) => (
   <span sx={UIAbout.styles.element}>
     <strong sx={UIAbout.styles.title} title={details.title}>
-      <Skeleton ready={ready !== false} bar={{ width: '10em', height: '0.75em' }}>
+      <Skeleton ready={ready !== false} bar={{ width: '10em', height: '1em' }}>
         <Link to={link?.to} state={link?.state} sx={UICard.styles.link}>
           {details.title}
         </Link>
       </Skeleton>
     </strong>
-    <Skeleton ready={ready !== false} bar={{ width: '7em', height: '0.5em' }} sx={UIAbout.styles.subtitle}>
+    <Skeleton ready={ready !== false} bar={{ width: '7em', height: '0.75em' }} sx={UIAbout.styles.subtitle}>
       <span sx={UIAbout.styles.caption}>
         {!!details?.meaningful?.year && (
           <span>
@@ -88,7 +88,7 @@ const UIAbout = ({ details, link, ready, ...props }) => (
         )}
       </span>
     </Skeleton>
-    <Skeleton ready={ready !== false} placeholder={<Lines widths={['100%', '72%']} height='0.5em' />} align='start' sx={UIAbout.styles.overview}>
+    <Skeleton ready={ready !== false} placeholder={<Lines widths={['100%', '72%']} height='0.625em' lineHeight={1.125} />} align='start' sx={UIAbout.styles.overview}>
       <small>{details.overview}</small>
     </Skeleton>
   </span>

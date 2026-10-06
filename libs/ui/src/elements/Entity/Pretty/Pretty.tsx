@@ -140,11 +140,11 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
   return (
     <div sx={UIAbout.styles.element}>
       <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
-        <Skeleton ready={ready} bar={{ width: '12em', height: '0.875em' }}>
+        <Skeleton ready={ready} bar={{ width: '12em', height: '1em' }}>
           <Link to={link?.to} state={link?.state}>{details.title}</Link>
         </Skeleton>
       </h2>
-      <Skeleton ready={ready} bar={{ width: '9em', height: '0.625em' }} sx={UIAbout.styles.subtitle}>
+      <Skeleton ready={ready} bar={{ width: '9em', height: '0.75em' }} sx={UIAbout.styles.subtitle}>
         <span sx={UIAbout.styles.caption} style={{ color: palette.alternativeColor }}>
           {!!details?.meaningful?.year && (
             <span>
@@ -171,7 +171,7 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
           </div>
         )}
       </DragScroll>
-      <Skeleton ready={ready} placeholder={<Lines />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
+      <Skeleton ready={ready} placeholder={<Lines height='0.833em' lineHeight={1.125} />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </Skeleton>
     </div>

@@ -25,8 +25,9 @@ import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 // The page of `/tv/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
-// A season's row in `Seasons` is 57px high, measured: a bar of 47px, and the 10px between two bars of `Lines`
+// A season's row in `Seasons` is 57px high, measured: a bar of 47px, and 10px to the next one
 const SEASON_HEIGHT = '2.9375em'
+const SEASON_STEP = 57 / 47
 
 export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
@@ -250,7 +251,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
         <Skeleton
           palette={{ backgroundColor: theme.rawColors.grayLightest, color: theme.rawColors.text }}
           ready={seasonsReady}
-          shape={<Lines widths={(show.data?.seasons || []).map(() => '100%')} height={SEASON_HEIGHT} />}
+          shape={<Lines widths={(show.data?.seasons || []).map(() => '100%')} height={SEASON_HEIGHT} lineHeight={SEASON_STEP} />}
         >
           <Seasons
             entity={show.data}

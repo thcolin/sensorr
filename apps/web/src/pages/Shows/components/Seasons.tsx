@@ -625,7 +625,7 @@ const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, 
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
   if (loading) {
-    return <Lines widths={['100%', '100%', '100%']} height='2.5em' sx={UIEpisodes.styles.status} />
+    return <Lines widths={['100%', '100%', '100%']} height='2.5em' lineHeight={1.25} sx={UIEpisodes.styles.status} />
   }
 
   if (error || !data.episodes?.length) {

@@ -72,6 +72,16 @@ const UIPoster = ({
   const device = useDevice()
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
   const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
+  // The picture and everything around it show once the title's bar has taken the title's width
+  const [titled, setTitled] = useState(false)
+  const revealed = meaningful ? ready && titled : ready
+  const onTitled = useCallback(() => setTitled(true), [])
+
+  useEffect(() => {
+    if (!ready) {
+      setTitled(false)
+    }
+  }, [ready])
   const id = useId()
   const shape = SHAPES[[...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % SHAPES.length]
   const onPosterReady = useCallback(() => {
@@ -176,7 +186,7 @@ const UIPoster = ({
       onMouseEnter={loadExternals}
       sx={{
         ...UIPoster.styles.element,
-        opacity: ready ? opacity : 1,
+        opacity: revealed ? opacity : 1,
         zIndex: (interactive && raised) ? 5 : 'auto',
         ':hover': {
           zIndex: 5,
@@ -226,7 +236,7 @@ const UIPoster = ({
             },
           }}
         >
-          {ready && (badges?.focus?.component || badges?.reviews?.component) && (
+          {revealed && (badges?.focus?.component || badges?.reviews?.component) && (
             <div
               sx={{
                 ...UIPoster.styles.focus,
@@ -284,11 +294,11 @@ const UIPoster = ({
             transition: 'opacity 200ms ease-in-out',
           }}
         >
-          {ready && badges?.state?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.state, ...reveal }}><badges.state.component {...badges?.state?.props} /></div>}
-          {ready && badges?.proposal?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.proposal, ...reveal }}><badges.proposal.component {...badges?.proposal?.props} /></div>}
+          {revealed && badges?.state?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.state, ...reveal }}><badges.state.component {...badges?.state?.props} /></div>}
+          {revealed && badges?.proposal?.component && <div data-cutout={true} sx={{ ...UIPoster.styles.proposal, ...reveal }}><badges.proposal.component {...badges?.proposal?.props} /></div>}
         </div>
         <div sx={UIPoster.styles.guests}>
-          {ready && badges?.guests?.component && <div sx={reveal}><badges.guests.component {...badges?.guests?.props} /></div>}
+          {revealed && badges?.guests?.component && <div sx={reveal}><badges.guests.component {...badges?.guests?.props} /></div>}
         </div>
         <div
           sx={{
@@ -313,7 +323,7 @@ const UIPoster = ({
           >
             <Picture
               {...props}
-              ready={ready}
+              ready={revealed}
               path={details?.poster}
               onReady={onPosterReady}
               data-cutout-picture={true}
@@ -335,7 +345,7 @@ const UIPoster = ({
             </div>
           )}
         </div>
-        {ready && selected !== null && (
+        {revealed && selected !== null && (
           <div
             data-select={true}
             data-cutout={true}
@@ -377,13 +387,13 @@ const UIPoster = ({
       {meaningful && (
         <div sx={UIPoster.styles.meaningful}>
           <strong sx={UIPoster.styles.title} title={details?.title}>
-            <Skeleton ready={ready} bar={{ width: `${shape[0]}em`, height: '0.75em' }}>
+            <Skeleton ready={ready} bar={{ width: `${shape[0]}em`, height: '1em' }} onShown={onTitled}>
               <Link to={link?.to} state={link?.state} disabled={!link?.to}>
                 {details?.title}
               </Link>
             </Skeleton>
           </strong>
-          <Skeleton ready={ready} bar={{ width: `${shape[1]}em`, height: '0.5em' }} sx={UIPoster.styles.subtitle}>
+          <Skeleton ready={ready} bar={{ width: `${shape[1]}em`, height: '0.625em' }} sx={UIPoster.styles.subtitle}>
             <span sx={UIPoster.styles.caption}>
               {!!details?.meaningful?.year && (
                 <span>
@@ -399,7 +409,7 @@ const UIPoster = ({
             </span>
           </Skeleton>
           {(!!footer || !!footerPlaceholder) && (
-            <Skeleton ready={ready && !!footer} placeholder={footerPlaceholder} sx={UIPoster.styles.footer}>
+            <Skeleton ready={revealed && !!footer} placeholder={footerPlaceholder} sx={UIPoster.styles.footer}>
               {footer}
             </Skeleton>
           )}

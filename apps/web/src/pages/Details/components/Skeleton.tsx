@@ -4,11 +4,11 @@ import { Skeleton as Base } from '@sensorr/ui'
 // A block of the page while it loads: its `shape` in bars, in the poster's colors, which becomes the block once ready
 const UISkeleton = ({ children, palette, ready, shape, ...props }) => (
   <Base
+    clip={false}
     {...props}
     ready={ready}
     placeholder={shape}
     align='start'
-    clip={false}
     style={{ '--theme-ui-colors-gray': `color-mix(in oklab, ${palette?.color || 'currentColor'} 14%, ${palette?.backgroundColor || 'transparent'})` }}
   >
     {children}

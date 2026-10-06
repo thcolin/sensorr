@@ -160,8 +160,8 @@ const Friends = ({ ...props }) => {
                 <div key={index} sx={Friends.styles.guest}>
                   <Bar width='44px' height='44px' radius='50%' sx={{ gridArea: 'avatar' }} />
                   <div sx={{ ...Friends.styles.who, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <Bar width={`${name}em`} height='0.875em' />
-                    <Bar width={`${email}em`} height='0.625em' />
+                    <Bar width={`${name}em`} height='1em' />
+                    <Bar width={`${email}em`} height='0.833em' />
                   </div>
                 </div>
               ))}
