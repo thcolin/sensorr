@@ -28,9 +28,11 @@ const MovieDetails = compose(
   withProps({ behavior: 'movie' }),
 )(Details)
 
-const Movie = ({ ...props }) => {
+// The page of `/movie/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
+export const MovieContent = ({ id: drawn = null, variant = 'page', ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
-  const { id } = useParams() as any
+  const params = useParams() as any
+  const id = drawn ?? params.id
   const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { metadata: persons } = usePersonsMetadataContext() as any
@@ -53,10 +55,10 @@ const Movie = ({ ...props }) => {
 
   const ready = !movie.loading && !!(movie?.data?.id || movie?.error) && (!movie?.data?.belongs_to_collection || !collection.loading)
 
-  useTitle(ready && [movie.details.title, movie.details.year && `(${movie.details.year})`].filter(part => part).join(' '))
+  useTitle(variant !== 'page' ? null : ready && [movie.details.title, movie.details.year && `(${movie.details.year})`].filter(part => part).join(' '))
 
   useEffect(() => {
-    if (ready) {
+    if (ready && variant === 'page') {
       restoreScrollPosition()
     }
   }, [ready])
@@ -263,6 +265,7 @@ const Movie = ({ ...props }) => {
 
   return (
     <MovieDetails
+      variant={variant}
       details={movie.details}
       entity={movie.data}
       additional={additional.data}
@@ -273,4 +276,4 @@ const Movie = ({ ...props }) => {
   )
 }
 
-export default withBody({ overlayScrollbars: true })(Movie)
+export default withBody({ overlayScrollbars: true })(MovieContent)

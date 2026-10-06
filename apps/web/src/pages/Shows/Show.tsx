@@ -24,9 +24,11 @@ import { Seasons } from './components/Seasons'
 import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
-const Show = ({ ...props }) => {
+// The page of `/tv/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
+export const ShowContent = ({ id: drawn = null, variant = 'page', ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()
-  const { id } = useParams() as any
+  const params = useParams() as any
+  const id = drawn ?? params.id
   const { t } = useTranslation()
   const { theme } = useThemeUI() as any
   const { metadata: persons } = usePersonsMetadataContext() as any
@@ -54,10 +56,10 @@ const Show = ({ ...props }) => {
   const followed = state === 'followed'
   const ready = !show.loading && !!(show.data?.id || show.error)
 
-  useTitle(ready && [show.details.title, show.details.year && `(${show.details.year})`].filter(part => part).join(' '))
+  useTitle(variant !== 'page' ? null : ready && [show.details.title, show.details.year && `(${show.details.year})`].filter(part => part).join(' '))
 
   useEffect(() => {
-    if (ready) {
+    if (ready && variant === 'page') {
       restoreScrollPosition()
     }
   }, [ready])
@@ -116,11 +118,11 @@ const Show = ({ ...props }) => {
     }
 
     return [
-      <span key='pills' sx={Show.styles.pills}>
+      <span key='pills' sx={ShowContent.styles.pills}>
         <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.detail} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
         {!!pending && (
-          <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={Show.styles.anchor}>
+          <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={ShowContent.styles.anchor}>
             <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={pending} compact={true} size='small' />
           </a>
         )}
@@ -209,6 +211,7 @@ const Show = ({ ...props }) => {
 
   return (
     <Details
+      variant={variant}
       details={details}
       entity={show.data}
       additional={additional}
@@ -264,7 +267,7 @@ const Show = ({ ...props }) => {
   )
 }
 
-Show.styles = {
+ShowContent.styles = {
   // The pills of the "All seasons" row (Seasons.tsx), at the size of its release tags
   pills: {
     display: 'inline-flex',
@@ -295,4 +298,4 @@ Show.styles = {
   },
 }
 
-export default withBody({ overlayScrollbars: true })(Show)
+export default withBody({ overlayScrollbars: true })(ShowContent)
