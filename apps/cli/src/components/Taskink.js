@@ -28,8 +28,9 @@ export const Tasks = ({ state: initialState = {}, handlers, ...props }) => {
     handlers.error(error)
   }, [])
 
+  // A task in error has called `handleError`, which ends the logger: a success on top would write after its end
   useEffect(() => {
-    if (Object.keys(tasks).length && Object.values(tasks).every((task) => ['done', 'warning', 'error'].includes(task))) {
+    if (Object.keys(tasks).length && Object.values(tasks).every((task) => ['done', 'warning'].includes(task))) {
       handlers.success()
       exit()
     }
