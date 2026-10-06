@@ -35,7 +35,7 @@ const styles = {
 
 export const Provider = ({ children, ...props }) => {
   const { Portal, openPortal, closePortal, isOpen } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false, programmaticallyOpen: true })
-  const [{ link, palette }, setData] = useState({ link: null, palette: null })
+  const [{ link, palette, title }, setData] = useState({ link: null, palette: null, title: null })
   const [, behavior, id] = `${link?.to || ''}`.match(/^\/(movie|tv|person)\/(\d+)/) || []
   const location = useLocation()
   const navigationType = useNavigationType()
@@ -61,8 +61,8 @@ export const Provider = ({ children, ...props }) => {
   const loaded = useRef(location.key)
   const navigated = useRef(false)
 
-  const open = useCallback(({ link, palette }) => {
-    opened.current = { link: { to: link?.to }, palette }
+  const open = useCallback(({ link, palette, details = null, title = details?.title }) => {
+    opened.current = { link: { to: link?.to }, palette, title }
     setData(opened.current)
     if (band.current) {
       band.current.style.opacity = '0'
@@ -137,6 +137,7 @@ export const Provider = ({ children, ...props }) => {
             background='transparent'
             pullable={true}
             knob={palette?.color || 'whitePure'}
+            label={title}
           >
             <div ref={scroll} sx={styles.scroll} onScroll={onScroll} onClick={(e) => e.target === e.currentTarget && close()}>
               <div ref={band} sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: 0 }} />

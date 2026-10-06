@@ -11,6 +11,8 @@ export interface DrawerProps {
   background?: string
   knob?: string
   open: boolean
+  // The dialog's accessible name
+  label?: string
   close: (e?: any) => void
   level?: number
   // Pulled down from its content scrolled to the top, the drawer closes like from its knob
@@ -37,6 +39,7 @@ const UIDrawer = ({
   children,
   level = 0,
   pullable = false,
+  label = null,
 }: DrawerProps) => {
   const device = useDevice()
   const { theme } = useThemeUI()
@@ -62,6 +65,11 @@ const UIDrawer = ({
       await animate(scope.current, { visibility: 'visible', zIndex: (5 + level) }, { duration: 0 })
       animate(scope.current, { opacity: [0, 1] })
       await animate(drawer.current, { y: ['100%', '0%'] }, { ease: 'easeInOut', duration: 0.3 })
+
+      // Into the dialog, unless a field of its content already took the focus
+      if (toggle === toggles.current && !scope.current.contains(document.activeElement)) {
+        scope.current.focus({ preventScroll: true })
+      }
     } else {
       animate(scope.current, { opacity: [1, 0] }, { duration: 0.3, delay: 0.15 })
       animate(scope.current, { visibility: 'hidden', zIndex: 0 }, { duration: 0, delay: 0.6 })
@@ -105,11 +113,13 @@ const UIDrawer = ({
   return (
     <motion.div
       ref={scope}
-      {...(!hidden ? { role: 'dialog', 'aria-modal': true } : {})}
+      {...(!hidden ? { role: 'dialog', 'aria-modal': true, 'aria-label': label || undefined, tabIndex: -1 } : {})}
       initial={{ opacity: 0, visibility: 'hidden' }}
       style={{
         position: 'fixed',
         zIndex: 0,
+        // Focused to move the focus into it, not to be pointed at
+        outline: 'none',
       }}
     >
       <button
