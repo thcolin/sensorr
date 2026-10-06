@@ -66,6 +66,9 @@ export interface SkeletonProps {
   clip?: boolean
   // Once the bar has taken the content's size and the content shows, for what waits on it
   onShown?: () => void
+  // The width the placeholder's `[data-fit]` bar takes, read on the content laid out unseen, when the content is a
+  // block wider than its text
+  fit?: (content: HTMLElement) => number | null
   children?: React.ReactNode
   [prop: string]: any
 }
@@ -79,7 +82,7 @@ const HIDE = 200
 // cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
 // width, then the bar fades out, then the content fades in. A blank line holds the cell at the height of
 // one line of the text it waits for.
-export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, children, ...props }: SkeletonProps) => {
+export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, fit = null, children, ...props }: SkeletonProps) => {
   const cell = useRef<HTMLSpanElement>(null)
   const cover = useRef<HTMLSpanElement>(null)
   const content = useRef<HTMLSpanElement>(null)
@@ -121,12 +124,13 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
     // A single bar, given or drawn by the placeholder, takes the content's width and keeps the height of its text;
     // a group of bars only follows the cell's height
     const lone = cover.current?.childElementCount === 1 && !cover.current.firstElementChild.childElementCount && cover.current.firstElementChild as HTMLElement
+    const fitted = cover.current?.querySelector('[data-fit]') as HTMLElement
+    const target = fitted ? fit?.(content.current) : content.current?.getBoundingClientRect().width
+    const morphed = fitted || lone
     running.current = [cell.current.animate([{ height: `${from}px` }, { height: `${to}px` }], timing)]
 
-    if (lone && content.current) {
-      const was = lone.getBoundingClientRect()
-      const is = content.current.getBoundingClientRect()
-      running.current.push(lone.animate([{ width: `${was.width}px` }, { width: `${is.width}px` }], { ...timing, fill: 'forwards' }))
+    if (morphed && target) {
+      running.current.push(morphed.animate([{ width: `${morphed.getBoundingClientRect().width}px` }, { width: `${target}px` }], { ...timing, fill: 'forwards' }))
     }
 
     running.current[0].finished.then(() => setShown(true)).catch(() => null)
