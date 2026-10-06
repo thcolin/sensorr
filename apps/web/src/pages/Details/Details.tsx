@@ -55,6 +55,14 @@ const paintOf = ({ backgroundColor, color }) => {
   }
 }
 
+// One of the poster's other colors on the text tokens of a block, as `Pretty` gives the year, the genres and the
+// overview their own: the neutrals stay `paintOf`'s
+const tintOf = (color) => color ? {
+  color,
+  ...Object.fromEntries(['text', 'textLight', 'grayDarkest', 'grayDarker', 'gray-500', 'gray-550', 'gray-600']
+    .map(token => [`--theme-ui-colors-${token}`, color])),
+} : {}
+
 // The theme's own colors back, under what `paintOf` retinted: the pills' variables fall back to their raw values
 const plainOf = (rawColors) => ({
   backgroundColor: 'transparent',
@@ -333,7 +341,7 @@ const UIDetails = ({
                 )}
               </Link>
             </Skeleton>
-            {metadataBlock}
+            <div style={tintOf(shown.alternativeColor)}>{metadataBlock}</div>
             {['movie', 'tv'].includes(behavior) && (
               <>
                 <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
@@ -350,11 +358,11 @@ const UIDetails = ({
                 </Skeleton>
               </>
             )}
-            {meaningfulBlock}
+            <div style={tintOf(shown.alternativeColor)}>{meaningfulBlock}</div>
           </div>
         </div>
         <div sx={{ ...UIDetails.styles.drawer.body, ...UIDetails.styles.drawer.fade }} style={reveal}>
-          {overviewBlock}
+          <div style={tintOf(shown.negativeColor)}>{overviewBlock}</div>
           {ticketBlock}
         </div>
         {/* The rows go back to the app's black, as on the page, through a gradient behind the releases */}
