@@ -2,7 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useSt
 import { useThemeUI } from '@theme-ui/core'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
-import { Billboard, Link, ReviewsBadge, pictureSrc } from '@sensorr/ui'
+import { Billboard, Icon, Link, ReviewsBadge, pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -55,6 +55,18 @@ const paintOf = ({ backgroundColor, color }) => {
   }
 }
 
+// The theme's own colors back, under what `paintOf` retinted: the pills' variables fall back to their raw values
+const plainOf = (rawColors) => ({
+  backgroundColor: 'transparent',
+  color: rawColors.text,
+  '--poster-cutout': 'initial',
+  '--poster-pill': 'initial',
+  '--poster-pill-text': 'initial',
+  ...Object.fromEntries(Object.keys(paintOf({ backgroundColor: '', color: '' }))
+    .filter(key => key.startsWith('--theme-ui-colors-'))
+    .map(key => [key, rawColors[key.replace('--theme-ui-colors-', '')]])),
+})
+
 const UIDetails = ({
   entity,
   additional,
@@ -106,8 +118,9 @@ const UIDetails = ({
     },
     poster,
   )
-  // The drawer knows the poster's palette from the poster tapped, before this one resolves
-  const shown = (palette.loading || palette.initial) && initialPalette ? initialPalette : palette.palette
+  // The drawer knows the poster's palette from the poster tapped, before this one resolves. A poster tapped before
+  // its own palette resolved passes empty colors, which would leave the drawer see-through
+  const shown = (palette.loading || palette.initial) && initialPalette?.backgroundColor ? initialPalette : palette.palette
   const paint = useMemo(() => paintOf(shown), [shown])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
@@ -127,7 +140,12 @@ const UIDetails = ({
   const tmdbLogo = entity?.images?.logos?.[0]?.file_path
   const logoSrc = variant === 'drawer' ? (artworks?.logo ? logoSrcOf(artworks.logo, api.access_token) : tmdbLogo ? pictureSrc(tmdbLogo, 'w500') : null) : null
   const [failedLogo, setFailedLogo] = useState(null)
+  const [loadedLogo, setLoadedLogo] = useState(null)
   const logo = logoSrc !== failedLogo ? logoSrc : null
+  // In the drawer, what is under the poster shows with it, once the logo it opens on has loaded or failed
+  const revealed = ready && (!logo || loadedLogo === logo)
+  // The poster shows 400ms after `ready`, as `Picture` does
+  const reveal = { opacity: revealed ? 1 : 0, transitionDelay: revealed ? '400ms' : '0ms' }
 
   // A logo that does not load leaves the title, as TitleLogo does
   useEffect(() => {
@@ -136,6 +154,7 @@ const UIDetails = ({
     }
 
     const image = new Image()
+    image.onload = () => setLoadedLogo(logoSrc)
     image.onerror = () => setFailedLogo(logoSrc)
     image.src = logoSrc
   }, [logoSrc])
@@ -273,7 +292,10 @@ const UIDetails = ({
   const restBlock = (
     <>
       {variant === 'drawer' ? (
-        <div style={paintOf({ backgroundColor: shown.color, color: shown.backgroundColor })}>{releasesBlock}</div>
+        // Nothing until the movie's releases are known, and nothing without any: an empty band says nothing
+        ready && !!metadata?.releases?.length && (
+          <div style={paintOf({ backgroundColor: shown.color, color: shown.backgroundColor })}>{releasesBlock}</div>
+        )
       ) : releasesBlock}
       {children}
       <div>
@@ -296,41 +318,57 @@ const UIDetails = ({
           <div sx={UIDetails.styles.drawer.poster} data-drawer-poster>
             {posterBlock}
           </div>
-          <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
-            <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block' }}>
-              {logo ? (
-                <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
-                  <span>{title}</span>
-                </h1>
-              ) : (
-                <h1 sx={UIDetails.styles.drawer.title}>{title}</h1>
-              )}
-            </Link>
-          </Skeleton>
-          {metadataBlock}
-          {['movie', 'tv'].includes(behavior) && (
-            <>
-              <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
-                <div sx={UIDetails.styles.drawer.ratings}>
-                  <span>
-                    <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
-                  </span>
-                </div>
-              </Skeleton>
-              <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
-                <div sx={UIDetails.styles.drawer.externals}>
-                  <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
-                </div>
-              </Skeleton>
-            </>
-          )}
-          {meaningfulBlock}
+          <div sx={UIDetails.styles.drawer.spinner} style={{ opacity: 1 - reveal.opacity, transitionDelay: reveal.transitionDelay }} aria-hidden={revealed}>
+            <Icon value='spinner' />
+          </div>
+          <div sx={UIDetails.styles.drawer.reveal} style={reveal}>
+            <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
+              <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block' }}>
+                {logo ? (
+                  <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
+                    <span>{title}</span>
+                  </h1>
+                ) : (
+                  <h1 sx={UIDetails.styles.drawer.title}>{title}</h1>
+                )}
+              </Link>
+            </Skeleton>
+            {metadataBlock}
+            {['movie', 'tv'].includes(behavior) && (
+              <>
+                <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+                  <div sx={UIDetails.styles.drawer.ratings}>
+                    <span>
+                      <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
+                    </span>
+                  </div>
+                </Skeleton>
+                <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+                  <div sx={UIDetails.styles.drawer.externals}>
+                    <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
+                  </div>
+                </Skeleton>
+              </>
+            )}
+            {meaningfulBlock}
+          </div>
         </div>
-        <div sx={UIDetails.styles.drawer.body}>
+        <div sx={{ ...UIDetails.styles.drawer.body, ...UIDetails.styles.drawer.fade }} style={reveal}>
           {overviewBlock}
           {ticketBlock}
         </div>
-        {restBlock}
+        {/* The rows go back to the app's black, as on the page, through a gradient behind the releases */}
+        <div
+          sx={{ ...UIDetails.styles.drawer.fade, ...UIDetails.styles.drawer.rest }}
+          style={{
+            ...reveal,
+            ...plainOf(theme.rawColors),
+            // The page's black is `html`'s, `grayLightest`
+            backgroundImage: `linear-gradient(to bottom, ${shown.backgroundColor}, ${theme.rawColors.grayLightest} 12em)`,
+          }}
+        >
+          {restBlock}
+        </div>
       </div>
     )
   }
@@ -399,6 +437,32 @@ UIDetails.styles = {
       'details > summary > h4': {
         display: 'inline',
       },
+    },
+    // Under the poster while the rest loads, in the drawer's colors: `text` is the palette's color there.
+    // Halfway between the poster's bottom, 15em under the head's top, and the screen's bottom
+    spinner: {
+      position: 'absolute',
+      top: 'calc((100dvh - var(--drawer-rest, 15dvh) - 2.5em + 15em) / 2)',
+      left: '0px',
+      width: '100%',
+      transform: 'translateY(-50%)',
+      pointerEvents: 'none',
+      transition: 'opacity 200ms ease-in-out',
+    },
+    rest: {
+      flex: 1,
+    },
+    // What loads under the poster shows at once, once all of it has
+    fade: {
+      transition: 'opacity 400ms ease-in-out',
+    },
+    // The head under its poster, laid out as the head itself
+    reveal: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 8,
+      transition: 'opacity 400ms ease-in-out',
     },
     // Above the drawer's knob, which passes behind it
     poster: {
