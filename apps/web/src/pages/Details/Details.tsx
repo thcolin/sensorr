@@ -3,7 +3,7 @@ import { useThemeUI } from '@theme-ui/core'
 import { keyframes } from '@emotion/react'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
-import { Billboard, pictureSrc } from '@sensorr/ui'
+import { Billboard, Link, pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -43,16 +43,16 @@ const paintOf = ({ backgroundColor, color, colorfulColor }) => {
   const tokens = {
     text: color,
     textLight: color,
-    grayDarkest: mix(70),
-    grayDarker: mix(60),
+    grayDarkest: color,
+    grayDarker: color,
     grayDark: mix(25),
     gray: mix(12),
     grayLight: mix(8),
     grayLighter: mix(6),
     grayLightest: mix(3),
-    'gray-500': mix(70),
-    'gray-550': mix(60),
-    'gray-600': mix(50),
+    'gray-500': color,
+    'gray-550': color,
+    'gray-600': color,
     'gray-700': mix(35),
     'gray-800': mix(25),
     'gray-900': mix(12),
@@ -108,7 +108,7 @@ const UIDetails = ({
     },
     poster,
   )
-  const paint = useMemo(() => (palette.loading || palette.initial) ? undefined : paintOf(palette.palette), [palette.palette, palette.loading, palette.initial])
+  const paint = useMemo(() => paintOf(palette.palette), [palette.palette])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
   const ready = props.ready !== false && Object.values(pending).every(pending => !pending) && !!entity?.id
@@ -278,8 +278,8 @@ const UIDetails = ({
           <div sx={UIDetails.styles.drawer.poster}>
             {posterBlock}
           </div>
-          <div sx={UIDetails.styles.drawer.heading}>
-            <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
+          <Skeleton palette={palette.palette} ready={ready} sx={{ alignSelf: 'stretch', marginBottom: 10 }}>
+            <Link to={`/${behavior}/${entity?.id}`} sx={{ variant: 'link.reset', display: 'block' }}>
               {logo ? (
                 <h1 sx={UIDetails.styles.drawer.logo} style={{ maskImage: `url("${logo}")`, WebkitMaskImage: `url("${logo}")` }}>
                   <span>{title}</span>
@@ -287,31 +287,24 @@ const UIDetails = ({
               ) : (
                 <h1 sx={UIDetails.styles.drawer.title}>{title}</h1>
               )}
-            </Skeleton>
-            <Skeleton palette={palette.palette} ready={ready}>
-              <p sx={UIDetails.styles.drawer.caption}>
-                {!!meaningful?.year && <strong><meaningful.year /></strong>}
-                {!!meaningful?.year && !!meaningful?.genres && <span> · </span>}
-                {!!meaningful?.genres && <meaningful.genres emoji={false} />}
-              </p>
-            </Skeleton>
-            <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
-              <div sx={UIDetails.styles.drawer.ratings}>
-                <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} links={false} platforms={false} />
-              </div>
-            </Skeleton>
-          </div>
-        </div>
-        <div sx={UIDetails.styles.drawer.body}>
-          {overviewBlock}
+            </Link>
+          </Skeleton>
+          {metadataBlock}
+          <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+            <div sx={UIDetails.styles.drawer.ratings}>
+              <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} links={false} platforms={false} />
+            </div>
+          </Skeleton>
           <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
             <div sx={UIDetails.styles.drawer.externals}>
               <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
             </div>
           </Skeleton>
           {meaningfulBlock}
+        </div>
+        <div sx={UIDetails.styles.drawer.body}>
+          {overviewBlock}
           {ticketBlock}
-          {metadataBlock}
         </div>
         {restBlock}
       </div>
@@ -348,13 +341,13 @@ const UIDetails = ({
 
 UIDetails.styles = {
   drawer: {
-    // Transparent above its top, where the poster stands out of the drawer
+    // Transparent above its top: the knob, then the poster standing out of the drawer
     element: {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100%',
-      marginTop: '4.5em',
+      marginTop: '6em',
     },
     backdrop: {
       position: 'absolute',
@@ -368,40 +361,41 @@ UIDetails.styles = {
     head: {
       position: 'relative',
       display: 'flex',
-      alignItems: 'flex-end',
-      gap: 4,
-      marginTop: '-4.5em',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: '-3.5em',
       paddingX: 4,
+      textAlign: 'center',
     },
     poster: {
-      flexShrink: 0,
+      marginBottom: 2,
       animation: `400ms cubic-bezier(0.4, 0, 0.2, 1) 300ms both ${rise}`,
       '>div': {
-        height: '13.5em',
-        width: '9em',
+        height: '15em',
+        width: '10em',
         boxShadow: (theme) => `0px 3px 30px var(--poster-glow, ${theme.colors.primary})`,
       },
       '@media (prefers-reduced-motion: reduce)': {
         animation: 'none',
       },
     },
-    heading: {
-      flex: 1,
-      minWidth: '0em',
-    },
     title: {
       margin: '0em',
-      fontSize: 1,
+      fontSize: '2.5em',
       lineHeight: 'heading',
       overflowWrap: 'anywhere',
     },
     logo: {
-      height: '4.5rem',
-      margin: '0em',
+      width: '100%',
+      maxWidth: '20em',
+      height: '5rem',
+      marginX: 'auto',
+      marginY: '0em',
       backgroundColor: 'currentColor',
       maskSize: 'contain',
       maskRepeat: 'no-repeat',
-      maskPosition: 'left bottom',
+      maskPosition: 'center',
       '>span': {
         position: 'absolute',
         width: '1px',
@@ -412,19 +406,8 @@ UIDetails.styles = {
       },
     },
     ratings: {
-      marginTop: 8,
-      fontSize: 5,
-      '>div': {
-        alignItems: 'flex-start',
-      },
-    },
-    caption: {
-      margin: '0em',
-      fontSize: 6,
-      color: 'grayDarkest',
-      '>strong': {
-        color: 'text',
-      },
+      fontSize: 3,
+      fontWeight: 'strong',
     },
     // One wrapping row: the column a phone gets on the page leaves the Plex chevron alone on its line
     externals: {
@@ -441,9 +424,17 @@ UIDetails.styles = {
     body: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 4,
+      alignItems: 'center',
       paddingX: 4,
-      paddingTop: 2,
+      paddingTop: 4,
+      textAlign: 'center',
+      '>*': {
+        width: '100%',
+      },
+      '>div:last-of-type': {
+        width: '100%',
+        maxWidth: '17em',
+      },
     },
   },
   ticket: {
