@@ -197,7 +197,6 @@ UIDrawer.styles = {
     height: '100%',
     width: '100%',
     transition: 'opacity 200ms ease',
-    zIndex: 1,
   },
   spinner: {
     position: 'absolute',

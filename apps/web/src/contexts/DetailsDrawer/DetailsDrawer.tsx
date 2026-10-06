@@ -8,6 +8,9 @@ import { ShowContent } from '../../pages/Shows/Show'
 
 const detailsDrawerContext = createContext({})
 
+// The scroll, in px past the poster, over which the band under the knob fades in
+const BAND_FADE = 24
+
 const styles = {
   scroll: {
     flex: 1,
@@ -21,9 +24,8 @@ const styles = {
     top: '0px',
     height: '2.25em',
     marginBottom: '-2.25em',
-    zIndex: 2,
+    zIndex: 1,
     pointerEvents: 'none',
-    transition: 'opacity 200ms ease-in-out',
   },
 }
 
@@ -34,11 +36,18 @@ export const Provider = ({ children, ...props }) => {
   const location = useLocation()
   const navigationType = useNavigationType()
   const scroll = useRef<HTMLDivElement>(null)
-  const [past, setPast] = useState(false)
+  const band = useRef<HTMLDivElement>(null)
 
+  // Follows the scroll itself, so a fast scroll back up never shows the band over the poster
   const onScroll = useCallback(() => {
     const poster = scroll.current?.querySelector('[data-drawer-poster]')
-    setPast(!!poster && poster.getBoundingClientRect().bottom <= scroll.current.getBoundingClientRect().top)
+
+    if (!poster || !band.current) {
+      return
+    }
+
+    const past = scroll.current.getBoundingClientRect().top - poster.getBoundingClientRect().bottom
+    band.current.style.opacity = `${Math.min(1, Math.max(0, past / BAND_FADE))}`
   }, [])
   const opened = useRef(null)
   const loaded = useRef(location.key)
@@ -47,7 +56,9 @@ export const Provider = ({ children, ...props }) => {
   const open = useCallback(({ link, palette }) => {
     opened.current = { link: { to: link?.to }, palette }
     setData(opened.current)
-    setPast(false)
+    if (band.current) {
+      band.current.style.opacity = '0'
+    }
     openPortal()
   }, [])
 
@@ -116,7 +127,7 @@ export const Provider = ({ children, ...props }) => {
           knob={palette?.color || 'whitePure'}
         >
           <div ref={scroll} sx={styles.scroll} onScroll={onScroll}>
-            <div sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: past ? 1 : 0 }} />
+            <div ref={band} sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: 0 }} />
             {/* A poster in the drawer follows its link: the drawer does not open over itself */}
             <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
               {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' palette={palette} />}
