@@ -273,9 +273,9 @@ const UIPoster = ({
             ...UIPoster.styles.right,
             ...pills,
             top: aside ? '0.75em' : UIPoster.styles.right.top,
-            // Like a hover on the badges at left, the focus opens the ratings over these
-            opacity: (ready && !focused) ? 1 : 0,
-            transition: focused ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
+            // Like a hover on the badges at left, the focus opens the ratings over these: without ratings, they stay
+            opacity: (ready && !(focused && badges?.reviews?.component)) ? 1 : 0,
+            transition: (focused && badges?.reviews?.component) ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
           }}
         >
           {badges?.state?.component && <div data-cutout={true} sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
