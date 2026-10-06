@@ -1,4 +1,4 @@
-import { dumpFileOf, DUMP_FILE, isDumpManifest, restoreConfig, stripConfig, stripDocument, stripUrl } from './dump'
+import { dumpFileOf, DUMP_FILE, DUMP_FORMAT, dumpManifestError, isDumpManifest, restoreConfig, stripConfig, stripDocument, stripUrl } from './dump'
 
 const config = {
   tmdb: 'tmdb-secret',
@@ -135,5 +135,13 @@ describe('isDumpManifest', () => {
     expect(isDumpManifest({ format: 1, version: '1.0.0', date: '2026-10-05T04:00:00.000Z', counts: { movies: 1 } })).toBe(true)
     expect(isDumpManifest({ format: '1', version: '1.0.0', date: 'x', counts: {} })).toBe(false)
     expect(isDumpManifest(null)).toBe(false)
+  })
+})
+
+describe('dumpManifestError', () => {
+  it('says nothing about a manifest of this format, and why otherwise', () => {
+    expect(dumpManifestError({ format: DUMP_FORMAT, version: '1.0.0', date: 'x', counts: {} })).toBeNull()
+    expect(dumpManifestError({ format: DUMP_FORMAT + 1, version: '2.0.0', date: 'x', counts: {} })).toBe(`Dump format ${DUMP_FORMAT + 1}, this Sensorr reads format ${DUMP_FORMAT}`)
+    expect(dumpManifestError({ movies: 1 })).toBe('Not a Sensorr dump, its manifest.json is not one')
   })
 })

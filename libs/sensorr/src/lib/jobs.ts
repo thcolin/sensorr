@@ -27,6 +27,7 @@ export const JOB_EMOJIS: { [name: string]: string } = {
   'wrapped': '🎞️',
   'mail': '📬',
   'dump': '💾',
+  'restore': '📦',
   'migrate': '🚚',
   'refresh shows': '🔌',
   'sync shows': '🔗',

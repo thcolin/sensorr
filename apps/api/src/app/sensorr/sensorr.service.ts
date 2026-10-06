@@ -11,7 +11,7 @@ import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
+import { dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -161,7 +161,50 @@ export class SensorrService {
     return this.spawn('migrate', ['migrate', archive], { command: 'migrate', onClose: () => fs.rm(folder, { recursive: true, force: true }) })
   }
 
+  async runRestore(buffer: Buffer) {
+    const directory = await unzipper.Open.buffer(buffer).catch(() => null)
+    const entry = directory?.files.find(({ path }) => path === 'manifest.json')
+
+    if (!entry) {
+      throw new UnprocessableEntityException('Not a Sensorr dump, the archive has no manifest.json')
+    }
+
+    let manifest
+
+    try {
+      manifest = JSON.parse((await entry.buffer()).toString())
+    } catch {
+      throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is not JSON')
+    }
+
+    const error = dumpManifestError(manifest)
+
+    if (error) {
+      throw new UnprocessableEntityException(error)
+    }
+
+    // A job running meanwhile would write into a library about to be replaced
+    const [running] = this.runningJobs()
+
+    if (running) {
+      throw new ConflictException(`Sensorr job "${running}" is running, restore once it ends`)
+    }
+
+    const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'sensorr-restore-'))
+    const archive = path.join(folder, 'dump.zip')
+    await fs.writeFile(archive, buffer, { mode: 0o600 })
+
+    return this.spawn('restore', ['restore', archive], { command: 'restore', onClose: () => fs.rm(folder, { recursive: true, force: true }) })
+  }
+
   private spawn(name: string, args: string[], { command, type, cron, onClose }: { command: string, type?: string, cron?: string, onClose?: () => void }) {
+    // A restore empties then refills the library: no job starts before it ends
+    if (this.running.has('restore')) {
+      this.logger.warn(`RunProcess "${name}" refused, a restore is running` + (cron ? `, from cron "${cron}"` : ''))
+      onClose?.()
+      return Promise.reject(new ConflictException(`Sensorr job "${name}" refused, a restore is running`))
+    }
+
     const unlock = lockOf(this.running, name)
 
     if (!unlock) {
