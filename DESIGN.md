@@ -743,10 +743,12 @@ instead of writing a bespoke empty state.
   tabs slides by the same glide (`glide` and `pageOf` in `libs/utils/src/hooks/useDragScroll.ts`,
   `paging` in `libs/ui/src/layout/Entities/Entities.tsx`).
 - Loading draws the content's own shape in still bars, `Bar`, never a spinner, a shimmer or a
-  "Loading" text: a bar per line of text, a pill per pill, in `gray`, or in the poster's colors
-  on a details page. `Skeleton` holds a bar and its content in the same grid cell, so the bar
-  fades out as the content fades in and nothing moves. Whatever arrives after the rest, a badge,
-  a pill, a row of links, fades in on mount with `reveal`, `400ms ease-in-out`, the house
+  "Loading" text: a bar per line of text, as high as the text's font size, a pill per pill, in
+  `gray`, or in the poster's colors on a details page. `Skeleton` holds a bar and its content in
+  the same grid cell. Once the content is known, the cell eases to its height and a lone bar to
+  its width in `400ms ease-in-out`, then the bar fades out as the content fades in. A poster's
+  picture and badges wait for its title to settle. Whatever arrives after the rest, a badge, a
+  pill, a row of links, fades in on mount with `reveal`, `400ms ease-in-out`, the house
   transition as an animation, since a transition never plays on an element that mounts
   (`libs/ui/src/atoms/Skeleton/Skeleton.tsx`).
 - Keyframes live in `libs/theme/src/lib/theme/animations.ts`: `reveal`, `bounce`,
