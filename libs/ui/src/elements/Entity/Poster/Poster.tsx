@@ -9,8 +9,8 @@ import { Option } from '../../../inputs/Option/Option'
 // import { MovieDetails } from '../../../components/Movie/Movie'
 // import { PersonDetails } from '../../../components/Person/Person'
 
-// The ring around a badge takes the color of the surface under the poster, which sets `--poster-cutout` when it is not `grayLightest`
-const cutout = 'var(--poster-cutout, var(--theme-ui-colors-grayLightest))'
+// The ring around a badge stays empty: its badge cuts it out of the poster, see `useCutout`
+const cutout = { borderStyle: 'solid', borderWidth: '0.25em', borderColor: 'transparent', backgroundClip: 'padding-box' }
 
 // The badges' fill and text, which a surface painted by another poster sets with `--poster-pill` and `--poster-pill-text`
 const pills = {
@@ -60,6 +60,8 @@ const UIPoster = ({
   ...props
 }: PosterProps) => {
   const ref = useRef<HTMLDivElement>()
+  const wrapper = useRef<HTMLDivElement>()
+  const frame = useRef<HTMLDivElement>()
   const device = useDevice()
   const [loaded, setLoaded] = useState(details?.poster ? false : true)
   const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
@@ -105,6 +107,8 @@ const UIPoster = ({
     ratings.current.animate([{ transform: `translateX(${before.left - now.left}px)` }, { transform: 'none' }], timing)
     state.current.animate([{ transform: `translateY(${before.top - now.top}px)` }, { transform: 'none' }], timing)
   }, [aside])
+
+  useCutout(wrapper, frame)
 
   useEffect(() => {
     if (!focused) {
@@ -184,6 +188,7 @@ const UIPoster = ({
       }}
     >
       <div
+        ref={wrapper}
         sx={{
           ...UIPoster.styles.wrapper,
           transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
@@ -251,11 +256,11 @@ const UIPoster = ({
             >
               {badges?.reviews?.component && (
                 <span sx={{ visibility: badges?.focus?.component ? 'hidden' : 'visible' }}>
-                  <badges.reviews.component {...badges?.reviews?.props} forceOpen={focused} sx={{ borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }} />
+                  <badges.reviews.component {...badges?.reviews?.props} forceOpen={focused} data-cutout={true} sx={cutout} />
                 </span>
               )}
               {badges?.focus?.component && (
-                <span sx={{ display: 'block', marginTop: badges?.reviews?.component ? ['-1.75em', '-2em'] : 12, borderRadius: '2em', borderStyle: 'solid', borderWidth: '0.25em', borderColor: cutout }}>
+                <span data-cutout={true} sx={{ display: 'block', marginTop: badges?.reviews?.component ? ['-1.75em', '-2em'] : 12, borderRadius: '2em', ...cutout }}>
                   <badges.focus.component {...badges?.focus?.props} />
                 </span>
               )}
@@ -273,8 +278,8 @@ const UIPoster = ({
             transition: focused ? 'opacity 200ms ease-in-out' : ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
           }}
         >
-          {badges?.state?.component && <div sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
-          {badges?.proposal?.component && <div sx={UIPoster.styles.proposal}><badges.proposal.component {...badges?.proposal?.props} /></div>}
+          {badges?.state?.component && <div data-cutout={true} sx={UIPoster.styles.state}><badges.state.component {...badges?.state?.props} /></div>}
+          {badges?.proposal?.component && <div data-cutout={true} sx={UIPoster.styles.proposal}><badges.proposal.component {...badges?.proposal?.props} /></div>}
         </div>
         <div
           sx={{
@@ -286,6 +291,7 @@ const UIPoster = ({
           {badges?.guests?.component && <badges.guests.component {...badges?.guests?.props} />}
         </div>
         <div
+          ref={frame}
           sx={{
             '>a': UIPoster.styles.link,
             ':hover >div': {
@@ -312,25 +318,11 @@ const UIPoster = ({
               path={details?.poster}
               onReady={onPosterReady}
               sx={{
-                transition: `background-color 800ms ease-in-out, color 800ms ease-in-out, mask 100ms ease-in-out ${ready ? '400ms' : '200ms'}`,
-                // maskPosition: 'center center',
-                // maskSize: ready ? '100%' : '150%',
-                // maskRepeat: 'no-repeat',
-                // maskImage: !badges?.state?.component ? 'unset' : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 320 480"><path d="${(
-                //   (device === 'mobile') ? (
-                //     (badges?.reviews?.component) ? (
-                //       (badges?.proposal?.component) ? 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V106.7c0,0-29.3-14.1-23.2-57.1 c0,0-24.8-12.5-23.3-49.6' : 'M190.7,0c0,0-2.3,31.4-36.8,35H14.9c0,0-5.5,0.8-14.9-3.6V480h320V58.5c0,0-46.8-5.2-46.4-58.5'
-                //     ) : (
-                //       (badges?.proposal?.component) ? 'M0,0v480h320V106.7c0,0-29.3-14.1-23.2-57.1c0,0-24.8-12.5-23.3-49.6H0z' : 'M0,0v480h320V60c0,0-49.3-9.5-46.4-60H0z'
-                //     )
-                //   ) : (
-                //     (badges?.reviews?.component) ? (
-                //       (badges?.proposal?.component) ? 'M0 32.1h97.2s27-2.2 28.9-32.1H281s-6.9 27.9 17.9 42c0 0-13.2 34.4 21.1 45v393H0V32.1z' : 'M0,32.1h97.2c0,0,27-2.2,28.9-32.1H281c0,0-7.5,44.1,39,48v432H0V32.1z'
-                //     ) : (
-                //       (badges?.proposal?.component) ? 'M0,0c0,0,69.2,0,126.1,0S281,0,281,0s-6.9,27.9,17.9,42c0,0-13.2,34.4,21.1,45v393H0V0z' : 'M0,0h281c0,0-7.5,44.1,39,48v432H0V0z'
-                //     )
-                //   )
-                // )}"></path></svg>')`,
+                transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
+                maskSize: '100% 100%',
+                maskRepeat: 'no-repeat',
+                WebkitMaskSize: '100% 100%',
+                WebkitMaskRepeat: 'no-repeat',
               }}
             />
           </PressableLink>
@@ -350,6 +342,7 @@ const UIPoster = ({
         {selected !== null && (
           <div
             data-select={true}
+            data-cutout={true}
             sx={{
               position: 'absolute',
               top: '-1em',
@@ -369,9 +362,7 @@ const UIPoster = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderStyle: 'solid',
-              borderWidth: '0.25em',
-              borderColor: cutout,
+              ...cutout,
             }}
           >
             <Option
@@ -496,17 +487,13 @@ UIPoster.styles = {
   },
   state: {
     borderRadius: '50%',
-    borderStyle: 'solid',
-    borderWidth: '0.25em',
-    borderColor: cutout,
+    ...cutout,
     backgroundColor: 'gray',
   },
   proposal: {
     marginTop: '-0.75em',
     borderRadius: '50%',
-    borderStyle: 'solid',
-    borderWidth: '0.25em',
-    borderColor: cutout,
+    ...cutout,
   },
   link: {
     display: 'flex',
@@ -564,6 +551,109 @@ UIPoster.styles = {
 }
 
 export const Poster = memo(UIPoster)
+
+// Each `[data-cutout]` badge of `wrapper` cuts its border box out of the picture in `frame`, as opaque as the badge.
+// The mask is drawn again on every frame while a transition or an animation runs in the poster, so the hole follows the badge
+const useCutout = (wrapper: React.MutableRefObject<HTMLElement>, frame: React.MutableRefObject<HTMLElement>) => {
+  const schedule = useRef<() => void>(null)
+
+  useLayoutEffect(() => {
+    const element = wrapper.current
+    const picture = frame.current?.querySelector<HTMLElement>(':scope > a > span')
+
+    if (!element || !picture) {
+      return
+    }
+
+    let request = null
+    let mask = null
+
+    const draw = () => {
+      const box = picture.getBoundingClientRect()
+
+      if (!box.width || !picture.offsetWidth) {
+        return
+      }
+
+      // From the screen, where transforms apply, to the picture's own pixels
+      const scale = picture.offsetWidth / box.width
+      const holes = Array.from(element.querySelectorAll<HTMLElement>('[data-cutout]')).map((badge) => {
+        const style = getComputedStyle(badge)
+
+        if (style.visibility !== 'visible' || !badge.offsetWidth) {
+          return null
+        }
+
+        let opacity = 1
+
+        for (let node = badge; node && node !== element; node = node.parentElement) {
+          opacity *= Number(getComputedStyle(node).opacity)
+        }
+
+        if (opacity < 0.01) {
+          return null
+        }
+
+        const rect = badge.getBoundingClientRect()
+        const radius = style.borderTopLeftRadius.endsWith('%')
+          ? parseFloat(style.borderTopLeftRadius) / 100 * Math.min(rect.width, rect.height)
+          : parseFloat(style.borderTopLeftRadius) * rect.width / badge.offsetWidth
+        const [x, y, width, height, rx] = [
+          rect.left - box.left,
+          rect.top - box.top,
+          rect.width,
+          rect.height,
+          Math.min(radius, rect.width / 2, rect.height / 2),
+        ].map((value) => (value * scale).toFixed(1))
+
+        return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${rx}" fill-opacity="${opacity.toFixed(2)}"/>`
+      }).filter(Boolean)
+
+      const next = holes.length ? `url("data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${picture.offsetWidth}" height="${picture.offsetHeight}"><mask id="m"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${holes.join('')}</g></mask><rect width="100%" height="100%" mask="url(#m)"/></svg>`,
+      )}")` : 'none'
+
+      if (next !== mask) {
+        mask = next
+        picture.style.maskImage = next
+        picture.style.setProperty('-webkit-mask-image', next)
+      }
+    }
+
+    const moving = () => element.getAnimations({ subtree: true })
+      .some((animation) => animation.playState === 'running' && animation.effect?.getTiming().iterations !== Infinity)
+
+    const tick = () => {
+      draw()
+      request = moving() ? requestAnimationFrame(tick) : null
+    }
+
+    schedule.current = () => {
+      if (request === null) {
+        request = requestAnimationFrame(tick)
+      }
+    }
+
+    const observer = new ResizeObserver(schedule.current)
+    observer.observe(picture)
+
+    const events = ['transitionrun', 'animationstart', 'pointerenter', 'pointerleave', 'focusin', 'focusout']
+    events.forEach((event) => element.addEventListener(event, schedule.current))
+    draw()
+
+    return () => {
+      cancelAnimationFrame(request)
+      observer.disconnect()
+      events.forEach((event) => element.removeEventListener(event, schedule.current))
+      schedule.current = null
+    }
+  }, [wrapper, frame])
+
+  // A render can move, show or hide a badge without a transition
+  useLayoutEffect(() => {
+    schedule.current?.()
+  })
+}
 
 // On a phone, a tap calls `onPress` and a long press calls `onLongPress` while the finger is still down
 const PressableLink = ({

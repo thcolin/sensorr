@@ -49,7 +49,6 @@ const paintOf = ({ backgroundColor, color }) => {
     backgroundColor,
     color,
     transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
-    '--poster-cutout': backgroundColor,
     '--poster-pill': color,
     '--poster-pill-text': backgroundColor,
     ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),

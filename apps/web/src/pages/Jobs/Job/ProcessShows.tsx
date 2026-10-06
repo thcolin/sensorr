@@ -449,7 +449,6 @@ UIRecord.styles = {
     paddingY: 4,
     paddingX: [4, 0],
     backgroundColor: 'grayLighter',
-    '--poster-cutout': 'var(--theme-ui-colors-grayLighter)',
     overflow: 'hidden',
   },
   wrapper: {
