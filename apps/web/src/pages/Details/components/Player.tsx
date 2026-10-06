@@ -119,7 +119,7 @@ const UIPlayer = ({ entity, behavior = 'movie', ready, ...props }) => {
   }, [expanded])
 
   return (
-    <div sx={UIPlayer.styles.element} style={{ opacity: ready ? 1 : 0, transition: `opacity 400ms ease-in-out ${ready ? '800ms' : '0ms'}` }}>
+    <div sx={UIPlayer.styles.element} style={{ opacity: ready ? 1 : 0 }}>
       <div
         sx={{
           position: 'relative',
@@ -157,15 +157,16 @@ const UIPlayer = ({ entity, behavior = 'movie', ready, ...props }) => {
             height: '2rem',
             width: '2rem',
           },
-          opacity: ready && !expanded && !!playlist.length ? 1 : 0,
-          visibility: expanded || !ready || !playlist.length ? 'hidden' : 'visible',
+          // Shown once its videos are known, at the house pace
+          opacity: ready && playlistReady && !expanded && !!playlist.length ? 1 : 0,
+          visibility: expanded || !ready || !playlistReady || !playlist.length ? 'hidden' : 'visible',
           transition: `
-            opacity 400ms ease-in-out ${ready && !expanded ? '800ms' : '0ms'},
+            opacity 400ms ease-in-out,
             visibility 0ms ease ${expanded ? '800ms' : '0ms'}
           `,
         }}
       >
-        <Icon value={playlistReady ? 'play' : 'spinner'} />
+        <Icon value='play' />
       </button>
     </div>
   )
@@ -179,7 +180,7 @@ UIPlayer.styles = {
     justifyContent: 'center',
     height: '100%',
     width: '100%',
-    transition: 'opacity 400ms ease-in-out 400ms',
+    transition: 'opacity 400ms ease-in-out',
   },
 }
 

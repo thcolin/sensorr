@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Entities, AbstractEntity, transformCollectionDetails, transformCompanyDetails, transformKeywordDetails, Warning, Icon } from '@sensorr/ui'
+import { Bar, Entities, AbstractEntity, transformCollectionDetails, transformCompanyDetails, transformKeywordDetails, Warning, Icon } from '@sensorr/ui'
 import { useSearchContext } from '../../../contexts/Search/Search'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import Movie from '../../../components/Movie/Movie'
@@ -258,8 +258,19 @@ export const Results = ({ ...props }) => {
       <div sx={Results.styles.wrapper}>
 
         {loading ? (
-          <div sx={Results.styles.placeholder}>
-            <Icon value='spinner' />
+          // The movies' group, as its cards draw while they load
+          <div sx={Results.styles.container}>
+            <Entities
+              id="search-loading"
+              label={<Bar width='6em' height='0.75em' />}
+              ready={false}
+              hide={true}
+              placeholders={device !== 'mobile' ? 4 : 6}
+              child={Movie}
+              props={() => ({ display: device !== 'mobile' ? 'card' : 'poster' })}
+              display={device !== 'mobile' ? 'column' : 'row'}
+              stack={true}
+            />
           </div>
         ) : (results === null || Object.keys(results).every(key => results[key].total_results === 0) )? (
           <div sx={Results.styles.placeholder}>

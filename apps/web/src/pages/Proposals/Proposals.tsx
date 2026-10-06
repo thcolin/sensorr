@@ -480,7 +480,7 @@ const MORPH = {
 
 const omit = (object, ids) => Object.keys(object).filter(key => !ids.map(String).includes(key)).reduce((acc, key) => ({ ...acc, [key]: object[key] }), {})
 
-const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) => {
+const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...props }) => {
   const api = useAPI()
   const sensorr = useSensorr()
   const { metadata, setMovieMetadata } = useMoviesMetadataContext() as any
@@ -502,7 +502,9 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
   const [activeId, setActiveId] = useState(null)
   const [focus, setFocus] = useState([])
   const [session, setSession] = useState({ accept: 0, refuse: 0, ban: 0, retry: 0, drop: 0, replace: 0 })
-  const [overdue, setOverdue] = useState([])
+  // Null until known: the queue waits for it, so its group does not push the rows in once they show
+  const [overdue, setOverdue] = useState(null)
+  const ready = loaded && overdue !== null
   const toggleSensorr = useRef(null)
   const keys = useRef(null)
   const decidedRef = useRef({})
@@ -517,6 +519,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
       .then(res => setOverdue(res.results || []))
       .catch((error) => {
         console.warn(error)
+        setOverdue([])
         toast.error('Error while loading the overdue swaps')
       })
   }, [])
@@ -527,7 +530,7 @@ const UIProposals = ({ entities = {}, ready = true, error = null, ...props }) =>
 
   const sources = useMemo(() => {
     const ids = new Set(Object.values(entities).map((entity: any) => entity.id))
-    return [...Object.values(entities), ...overdue.filter(({ id }) => !ids.has(id))]
+    return [...Object.values(entities), ...(overdue || []).filter(({ id }) => !ids.has(id))]
   }, [entities, overdue])
 
   const all = useMemo(() => sources.map((entity: any) => {

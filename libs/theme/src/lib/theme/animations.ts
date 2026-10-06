@@ -1,14 +1,6 @@
 import { keyframes } from '@emotion/react'
 
 export const animations = {
-  placeholder: keyframes`
-    0%{
-      transform: translate3d(-80%, 0, 0);
-    }
-    100%{
-      transform: translate3d(0%, 0, 0);
-    }
-  `,
   bounce: keyframes`
     0%, 100% {
       transform: scale(0.0) translateZ(0);

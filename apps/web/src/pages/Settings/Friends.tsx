@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Button, Icon, Link, Option } from '@sensorr/ui'
+import { Bar, Button, Icon, Link, Option } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI } from '../../store/api'
 import Body from '../../layout/Body/Body'
@@ -155,8 +155,17 @@ const Friends = ({ ...props }) => {
           </p>
           <h3>Guests</h3>
           {loading && (
-            <div>
-              <Icon value='spinner' />
+            // A guest's row: the avatar, the name over the email
+            <div sx={Friends.styles.guests} aria-hidden={true}>
+              {[[7, 13], [5.5, 11], [8, 15]].map(([name, email], index) => (
+                <div key={index} sx={Friends.styles.guest}>
+                  <Bar width='44px' height='44px' radius='50%' sx={{ gridArea: 'avatar' }} />
+                  <div sx={{ ...Friends.styles.who, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Bar width={`${name}em`} height='0.875em' />
+                    <Bar width={`${email}em`} height='0.625em' />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {!loading && !Object.values(guests).length && (

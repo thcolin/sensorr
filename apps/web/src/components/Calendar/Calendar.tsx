@@ -810,11 +810,12 @@ UIAgenda.styles = {
       borderColor: 'gray',
     },
   },
+  // A `Bar`'s color and radius, inline on the line its text would take
   bar: {
     display: 'inline-block',
     height: '1em',
     borderRadius: '0.25em',
-    backgroundColor: 'grayLight',
+    backgroundColor: 'gray',
   },
 }
 

@@ -1,10 +1,9 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Button, Link } from '@sensorr/ui'
+import { Bar, Button, Link } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS } from '@sensorr/sensorr'
-import { animations } from '@sensorr/theme'
 import Body from '../../layout/Body/Body'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
@@ -23,7 +22,7 @@ const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?:
   </div>
 )
 
-const Placeholder = ({ width, height }: { width: string, height: string }) => <span aria-hidden={true} sx={{ ...Update.styles.placeholder, width, height }} />
+const Placeholder = ({ width, height }: { width: string, height: string }) => <Bar inline={true} width={width} height={height} />
 
 const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 
@@ -339,31 +338,6 @@ Update.styles = {
     gap: 8,
     '&& >p': {
       marginY: 12,
-    },
-  },
-  placeholder: {
-    position: 'relative',
-    display: 'inline-block',
-    maxWidth: '100%',
-    overflow: 'hidden',
-    borderRadius: '0.25em',
-    backgroundColor: 'grayDark',
-    verticalAlign: 'middle',
-    '::after': {
-      content: '""',
-      position: 'absolute',
-      top: '0px',
-      bottom: '0px',
-      // The keyframes move it by 80% of its width: this size takes the light band past both ends of the bar
-      left: '30%',
-      width: '200%',
-      background: (theme) => `linear-gradient(90deg, transparent 40%, color-mix(in srgb, ${theme.colors.grayDarker} 50%, transparent) 50%, transparent 60%)`,
-      animation: `${animations.placeholder} 1.2s ease-in-out infinite`,
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      '::after': {
-        animation: 'none',
-      },
     },
   },
   // The warning of Settings, as a job's missing requirement draws it (Jobs.tsx)

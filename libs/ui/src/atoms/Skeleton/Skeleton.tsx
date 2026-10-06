@@ -16,21 +16,26 @@ export interface BarProps {
   width?: string
   height?: string
   pill?: boolean
+  // In place of the bar's corners, for the round of an emoji or an avatar
+  radius?: string
+  // On the line of a text, as a word would sit
+  inline?: boolean
   color?: string
   [prop: string]: any
 }
 
 // Where a text or a pill goes while it loads: still, like an empty poster anywhere else.
-export const Bar = ({ width = '100%', height = '1em', pill = false, color = 'gray', ...props }: BarProps) => (
+export const Bar = ({ width = '100%', height = '1em', pill = false, radius = null, inline = false, color = 'gray', ...props }: BarProps) => (
   <span
     {...props}
     aria-hidden={true}
     sx={{
-      display: 'block',
+      display: inline ? 'inline-block' : 'block',
+      verticalAlign: inline ? 'middle' : undefined,
       width,
       maxWidth: '100%',
       height,
-      borderRadius: pill ? '1em' : '0.25em',
+      borderRadius: radius || (pill ? '1em' : '0.25em'),
       backgroundColor: color,
     }}
   />

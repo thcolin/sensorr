@@ -311,11 +311,13 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
     }
 
     const showsTabs = (!ready || tv.loading || tv.error || shows.entities.length) ? [{ id: 'shows', tabs: [shows] }] : []
+    // The movies they played in, split once their discover request answers: until then a skeleton, not a tab that comes
+    const castTabs = cast.loading ? [{ ...relevantCast, ready: false }] : relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast]
 
     if (data.known_for_department === 'Acting') {
       return [
         ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
-        ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
+        ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: castTabs }] : []),
         ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
         ...showsTabs,
       ]
@@ -324,10 +326,10 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
     return [
       ...((!ready || known.entities?.length) ? [{ id: 'known', tabs: [known] }] : []),
       ...((!ready || fullCrew.entities?.length) ? [{ id: 'crew', tabs: relevantCrew.entities.length ? [relevantCrew, fullCrew] : [fullCrew] }] : []),
-      ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast] }] : []),
+      ...((!ready || fullCast.entities?.length) ? [{ id: 'cast', tabs: castTabs }] : []),
       ...showsTabs,
     ]
-  }, [ready, id, data, metadata, tv.data, tv.loading, tv.error])
+  }, [ready, id, data, metadata, cast.data, cast.loading, tv.data, tv.loading, tv.error])
 
   if (error) {
     return (
