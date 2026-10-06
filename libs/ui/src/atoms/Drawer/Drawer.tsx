@@ -71,8 +71,12 @@ const UIDrawer = ({
         scope.current.focus({ preventScroll: true })
       }
     } else {
-      animate(scope.current, { opacity: [1, 0] }, { duration: 0.3, delay: 0.15 })
-      animate(scope.current, { visibility: 'hidden', zIndex: 0 }, { duration: 0, delay: 0.6 })
+      // A delay does not hold `zIndex` back: it drops once the shadow has faded, or the page shows over it
+      animate(scope.current, { opacity: [1, 0] }, { duration: 0.3, delay: 0.15 }).then(() => {
+        if (toggle === toggles.current) {
+          animate(scope.current, { visibility: 'hidden', zIndex: 0 }, { duration: 0 })
+        }
+      })
       await animate(drawer.current, { y: [(typeof y.get() === 'number' ? y.get() : 0), dimensions.height] }, { ease: 'easeInOut', duration: 0.3 })
 
       if (toggle === toggles.current) {
