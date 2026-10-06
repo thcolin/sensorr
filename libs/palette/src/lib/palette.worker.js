@@ -1,5 +1,6 @@
 import Colorthief from './colorthief'
 import Color from 'color'
+import { ambianceOf } from './ambiance'
 
 const THRESHOLD_CONTRAST_RATIO = 1.0
 const MINIMUM_CONTRAST_RATIO = 4.5 // This is the minimum required for "AA" certification
@@ -202,6 +203,7 @@ addEventListener('message', ({ data: { key, pixels, pixelCount } }) => {
         [Color(backgroundColor).isLight() ? 'lighten' : 'darken'](0.8)
         .negate()
         .hex(),
+      ambiance: ambianceOf(palette.map(({ rgb, count }) => ({ hex: Color(rgb).hex(), count }))),
     },
   })
 })

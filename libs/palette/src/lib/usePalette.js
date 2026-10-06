@@ -4,8 +4,10 @@ import { useThemeUI } from 'theme-ui'
 
 export function usePalette(url, initial, id) {
   const { colorMode } = useThemeUI()
+  // A palette cached before `ambiance` existed is computed again
+  const key = `${colorMode}-ambiance-${id || url}`
   const cache = useMemo(() => {
-    const raw = JSON.parse(sessionStorage.getItem(`${colorMode}-${id || url}`) || '{}')
+    const raw = JSON.parse(sessionStorage.getItem(key) || '{}')
     return raw.backgroundColor ? raw : null
   }, [url, id])
 
@@ -21,7 +23,7 @@ export function usePalette(url, initial, id) {
       return
     }
 
-    const cache = sessionStorage.getItem(`${colorMode}-${id || url}`)
+    const cache = sessionStorage.getItem(key)
     if (cache) {
       setPalette(JSON.parse(cache))
       setLoading(false)
@@ -34,7 +36,7 @@ export function usePalette(url, initial, id) {
         return
       }
 
-      sessionStorage.setItem(`${colorMode}-${id || url}`, JSON.stringify(p))
+      sessionStorage.setItem(key, JSON.stringify(p))
       setPalette(p)
       setLoading(false)
     })

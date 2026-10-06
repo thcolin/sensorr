@@ -116,7 +116,7 @@ const UIDetails = ({
 
   const { expanded } = useExpandContext() as any
   const { theme } = useThemeUI() as any
-  const palette = usePalette(
+  const resolved = usePalette(
     !!poster && pictureSrc(poster, 'w92'),
     {
       backgroundColor: theme.rawColors.grayLight,
@@ -126,9 +126,13 @@ const UIDetails = ({
     },
     poster,
   )
+  // The drawer is painted by the poster's ambiance, the page keeps the palette `Pretty` shares
+  const ambianceOf = (palette) => variant === 'drawer' && palette?.ambiance ? palette.ambiance : palette
+  const palette = { ...resolved, palette: ambianceOf(resolved.palette) }
+  const initial = ambianceOf(initialPalette)
   // The drawer knows the poster's palette from the poster tapped, before this one resolves. A poster tapped before
   // its own palette resolved passes empty colors, which would leave the drawer see-through
-  const shown = (palette.loading || palette.initial) && initialPalette?.backgroundColor ? initialPalette : palette.palette
+  const shown = (palette.loading || palette.initial) && initial?.backgroundColor ? initial : palette.palette
   const paint = useMemo(() => paintOf(shown), [shown])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
