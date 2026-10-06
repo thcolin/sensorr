@@ -36,6 +36,7 @@ import withFetchCalendarQuery, { discoverCalendar, refine, summarizeCalendar } f
 import { refinementsOf } from './refine'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+import withBulk from '../../components/enhancers/withBulk'
 
 const STATISTICS = {}
 
@@ -284,6 +285,7 @@ const GridCalendar = compose(
   withProps({
     display: 'grid',
     child: MovieWithCreditsAndReviews,
+    bulk: 'movie',
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -297,6 +299,7 @@ const GridCalendar = compose(
   controls({ release: PRIMARY_RELEASE_DATE, sort: true, hooks: { onChange: () => scrollToTop() }, useStatistics }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(EntitiesHideable)
 
 // The movies of each day, the most popular first

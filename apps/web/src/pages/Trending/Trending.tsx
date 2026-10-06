@@ -13,6 +13,7 @@ import withFetchQuery, { useControlsHistoryState } from '../../components/enhanc
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+import withBulk from '../../components/enhancers/withBulk'
 
 export const Trending = (resource) => compose(
   withTitle(resource === 'shows' ? i18n.t('pages.shows.trending.title') : `${i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title' }[resource])} ${resource}`),
@@ -20,6 +21,7 @@ export const Trending = (resource) => compose(
     id: 'trending',
     display: 'grid',
     child: { movies: MovieWithCreditsAndReviews, persons: Person, shows: Show }[resource],
+    bulk: { movies: 'movie', shows: 'tv' }[resource] || null,
     extra: { shows: FOOTER_HEIGHT }[resource],
     useMetadataContext: { shows: useShowsMetadataContext }[resource],
     empty: {
@@ -93,6 +95,7 @@ export const Trending = (resource) => compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(EntitiesHideable)
 
 export default Trending

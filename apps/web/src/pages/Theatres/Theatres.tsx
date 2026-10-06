@@ -11,6 +11,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
+import withBulk from '../../components/enhancers/withBulk'
 
 export const Theatres = compose(
   withTitle(i18n.t('pages.theatres.title')),
@@ -18,6 +19,7 @@ export const Theatres = compose(
     id: 'theatres',
     display: 'grid',
     child: MovieWithCreditsAndReviews,
+    bulk: 'movie',
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -107,6 +109,7 @@ export const Theatres = compose(
   }),
   withPlacehodersHistoryState(),
   withBody(),
+  withBulk(),
 )(EntitiesHideable)
 
 export default Theatres

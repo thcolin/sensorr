@@ -11,6 +11,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withFetchQuery, { useControlsHistoryState } from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import Body from '../../layout/Body/Body'
+import withBulk from '../../components/enhancers/withBulk'
 
 export const Similar = (id) => compose(
   withTitle(i18n.t('pages.similar.title')),
@@ -18,6 +19,7 @@ export const Similar = (id) => compose(
     id: 'similar',
     display: 'grid',
     child: MovieWithCreditsAndReviews,
+    bulk: 'movie',
     empty: {
       emoji: '🍿',
       title: "Oh no, your request didn't return results",
@@ -54,6 +56,7 @@ export const Similar = (id) => compose(
     fields: {},
   }),
   withPlacehodersHistoryState(),
+  withBulk(),
 )(Entities)
 
 const SimilarWrapper = ({ ...props }) => {
