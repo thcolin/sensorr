@@ -403,7 +403,6 @@ export class ShowsService {
 
     return this.changes$.pipe(
       filter((change: any) => change?.documentKey),
-      // A restore writes hundreds of shows in seconds: one query per batch, not one per change
       bufferTime(METADATA_BATCH),
       filter((changes: any[]) => changes.length > 0),
       concatMap(async (changes: any[]) => {

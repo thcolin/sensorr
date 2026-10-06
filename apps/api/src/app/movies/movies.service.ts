@@ -333,7 +333,6 @@ export class MoviesService {
   listenMetadata(): Observable<MessageEvent> {
     this.logger.log('ListenMetadata')
 
-    // A restore or a sync writes thousands of movies in seconds: one query per batch, not one per change
     return this.changes$.pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
       bufferTime(METADATA_BATCH),

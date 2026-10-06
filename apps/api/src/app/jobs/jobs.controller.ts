@@ -63,7 +63,6 @@ export class JobsController implements OnApplicationBootstrap {
   }
 
   @Post('restore')
-  // Held in memory like a 0.x dump: a dump of Cortex, 9 134 movies and 59 097 episodes, weighs about 20 MB
   @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
   async runRestore(@UploadedFile() archive) {
     if (!archive?.buffer) {
