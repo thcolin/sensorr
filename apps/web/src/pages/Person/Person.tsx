@@ -311,7 +311,7 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
     }
 
     const showsTabs = (!ready || tv.loading || tv.error || shows.entities.length) ? [{ id: 'shows', tabs: [shows] }] : []
-    // The movies they played in, split once their discover request answers: until then a skeleton, not a tab that comes
+    // Split once their discover request answers: a tab that came later would change the one shown
     const castTabs = cast.loading ? [{ ...relevantCast, ready: false }] : relevantCast.entities.length ? [relevantCast, fullCast] : [fullCast]
 
     if (data.known_for_department === 'Acting') {

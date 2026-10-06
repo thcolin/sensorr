@@ -224,7 +224,6 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               align='start'
               clip={false}
               placeholder={(
-                // The facts' line, and the pills of the ratings and the platforms beside it, or under it on a phone
                 <div sx={UIActive.styles.facts}>
                   <Bar width='18em' height='0.75em' />
                   <span sx={UIActive.styles.skeleton}>

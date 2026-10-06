@@ -247,7 +247,6 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
           subtitle={episodesError.message}
         />
       ) : (
-        // A bar per season, in the palette Details starts from, at the height of a season's row
         <Skeleton
           palette={{ backgroundColor: theme.rawColors.grayLightest, color: theme.rawColors.text }}
           ready={seasonsReady}

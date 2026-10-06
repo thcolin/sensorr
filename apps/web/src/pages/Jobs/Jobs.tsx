@@ -829,7 +829,6 @@ UIJob.styles = {
 
 const Job = memo(UIJob)
 
-// A job while the list loads: the card's own boxes, with a bar where each text goes and a pill per count
 const JobPlaceholder = ({ title, pills }) => (
   <div sx={UIJob.styles.element}>
     <span sx={{ ...UIJob.styles.wrapper, opacity: 0.5 }}>
@@ -847,7 +846,6 @@ const JobPlaceholder = ({ title, pills }) => (
   </div>
 )
 
-// The open job's head while the jobs load: the emoji, its command, its id and date, its counts
 const HeadPlaceholder = () => (
   <div sx={HeadPlaceholder.styles.element} aria-hidden={true}>
     <Bar width='5em' height='5em' radius='50%' />

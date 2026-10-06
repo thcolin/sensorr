@@ -258,7 +258,6 @@ export const Results = ({ ...props }) => {
       <div sx={Results.styles.wrapper}>
 
         {loading ? (
-          // The movies' group, as its cards draw while they load
           <div sx={Results.styles.container}>
             <Entities
               id="search-loading"
