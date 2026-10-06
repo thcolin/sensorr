@@ -150,6 +150,9 @@ const UIPoster = ({
           ...UIPoster.styles.wrapper,
           transition: 'transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
           transform: (interactive && raised) ? 'scale(1.05)' : 'none',
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+          },
         }}
       >
         <div
@@ -579,6 +582,7 @@ const PressableLink = ({
 
     if (pressed.current && e.cancelable) {
       e.preventDefault()
+      pressed.current = false
     }
   }
 
@@ -632,6 +636,12 @@ const PressableLink = ({
           boxShadow: (theme) => `0px 3px 30px ${palette?.colorfulColor || theme.colors.primary}`,
           opacity: (interactive && raised) ? 1 : 0,
           transition: 'opacity 600ms cubic-bezier(0.165, 0.84, 0.44, 1)',
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+          '::after': {
+            transition: 'none',
+          },
         },
       }}
     >
