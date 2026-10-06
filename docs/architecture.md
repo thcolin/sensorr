@@ -245,7 +245,7 @@ minutes rather than as a silent miss.
 
 ## Data
 
-One Mongo database, `sensorr`, eight collections. Schemas are Mongoose classes under
+One Mongo database, `sensorr`, thirteen collections. Schemas are Mongoose classes under
 `apps/api/src/app/`.
 
 | Collection | Schema | What it holds |
@@ -258,6 +258,13 @@ One Mongo database, `sensorr`, eight collections. Schemas are Mongoose classes u
 | `log` | `logs/log.schema.ts:6` | every line any CLI run emits; a TTL index expires them after two weeks (`log.schema.ts:25`) |
 | `subscriptions` | `notifications/subscription.schema.ts:4` | web push endpoints and their keys |
 | `blackhole` | `sensorr/metafile.schema.ts:4` | the `.torrent` buffer of a pending proposal, keyed by the release link |
+| `invitations` | `mail/invitation.schema.ts:6` | the last invitation mailed to an address, so the Friends page tells who was already invited |
+| `plays` | `wrapped/wrapped.schema.ts:6` | one grouped row of the Tautulli history, for the wrapped |
+| `viewers` | `wrapped/wrapped.schema.ts:42` | a Tautulli user, tied to a guest by `email` |
+| `titles` | `wrapped/wrapped.schema.ts:60` | a movie or a show watched on Plex, keyed by the `title` of its plays |
+| `editions` | `wrapped/wrapped.schema.ts:101` | a guest's wrapped of one year, frozen once `frozen_at` is set |
+
+A dump, Settings › Data or the `dump` job, carries `movies`, `shows`, `episodes` and `persons`, and `config.json` without its secrets ([jobs.md](jobs.md#dump)). The other collections stay out: `log` expires anyway, `guests` and `subscriptions` hold secrets, `blackhole` and `invitations` are rebuilt as jobs run. The wrapped ones stay out by choice, `editions` included, which Tautulli cannot give back once a year is frozen.
 
 The `_id` of a movie, a person, a show and an episode is its TMDB id, not an ObjectId
 (`movie.schema.ts:7-8`, `person.schema.ts:7-8`, `show.schema.ts:7-8`,
