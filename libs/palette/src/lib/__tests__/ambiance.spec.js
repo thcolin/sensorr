@@ -42,4 +42,16 @@ describe('ambianceOf', () => {
     expect(Color(color).contrast(Color('#60AE78'))).toBeGreaterThanOrEqual(4.5)
     expect(Math.abs(hue(color) - hue('#A4D1AF'))).toBeLessThan(10)
   })
+
+  it('takes the title from a small vivid accent, at its saturation', () => {
+    // Insidious with a red logo covering a hundredth of the poster
+    const { color } = ambianceOf(posters.insidious.map(([hex, count]) => ({ hex, count })), [{ hex: '#e02020', share: 0.012 }])
+
+    expect(hue(color)).toBeLessThan(45)
+    expect(Color(color).lch().array()[1]).toBeGreaterThan(70)
+  })
+
+  it('darkens a color on a vivid red that no white reads on', () => {
+    expect(Color(readableOn('#FFFFFF', '#E8473F', 4.5)).contrast(Color('#E8473F'))).toBeGreaterThanOrEqual(4.5)
+  })
 })
