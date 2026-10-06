@@ -350,13 +350,13 @@ const UIDetails = ({
 
 UIDetails.styles = {
   drawer: {
-    // Transparent above its top: the knob, then the poster standing out of the drawer
+    // Transparent above its top, down from the top of the screen: the knob at 15dvh, then the poster standing out
     element: {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100%',
-      marginTop: '6em',
+      marginTop: 'calc(15dvh + 6em)',
     },
     backdrop: {
       position: 'absolute',

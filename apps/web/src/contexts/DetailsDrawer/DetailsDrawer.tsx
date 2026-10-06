@@ -11,6 +11,9 @@ const detailsDrawerContext = createContext({})
 // The scroll, in px past the poster, over which the band under the knob fades in
 const BAND_FADE = 24
 
+// Where the knob rests, in % of the screen: the drawer fills the screen, transparent above its sheet
+const KNOB = 15
+
 const styles = {
   scroll: {
     flex: 1,
@@ -37,8 +40,10 @@ export const Provider = ({ children, ...props }) => {
   const navigationType = useNavigationType()
   const scroll = useRef<HTMLDivElement>(null)
   const band = useRef<HTMLDivElement>(null)
+  const layer = useRef<HTMLDivElement>(null)
 
-  // Follows the scroll itself, so a fast scroll back up never shows the band over the poster
+  // Follows the scroll itself: the knob rises with the sheet up to the top of the screen, where the poster
+  // passes over it, and the band under it shows once the poster is gone, never late over it
   const onScroll = useCallback(() => {
     const poster = scroll.current?.querySelector('[data-drawer-poster]')
 
@@ -46,8 +51,10 @@ export const Provider = ({ children, ...props }) => {
       return
     }
 
-    const past = scroll.current.getBoundingClientRect().top - poster.getBoundingClientRect().bottom
-    band.current.style.opacity = `${Math.min(1, Math.max(0, past / BAND_FADE))}`
+    const top = scroll.current.getBoundingClientRect().top
+    const rest = window.innerHeight * KNOB / 100
+    layer.current?.style.setProperty('--drawer-knob', `${Math.max(0, rest - scroll.current.scrollTop)}px`)
+    band.current.style.opacity = `${Math.min(1, Math.max(0, (top - poster.getBoundingClientRect().bottom) / BAND_FADE))}`
   }, [])
   const opened = useRef(null)
   const loaded = useRef(location.key)
@@ -59,6 +66,8 @@ export const Provider = ({ children, ...props }) => {
     if (band.current) {
       band.current.style.opacity = '0'
     }
+
+    layer.current?.style.setProperty('--drawer-knob', `${KNOB}dvh`)
     openPortal()
   }, [])
 
@@ -119,22 +128,24 @@ export const Provider = ({ children, ...props }) => {
     <detailsDrawerContext.Provider {...props} value={{ open, close, leave }}>
       {children}
       <Portal>
-        <Drawer
-          close={close}
-          open={isOpen}
-          height='85vh'
-          background='transparent'
-          knob={palette?.color || 'whitePure'}
-        >
-          <div ref={scroll} sx={styles.scroll} onScroll={onScroll}>
-            <div ref={band} sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: 0 }} />
-            {/* A poster in the drawer follows its link: the drawer does not open over itself */}
-            <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
-              {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' palette={palette} />}
-              {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' palette={palette} />}
-            </detailsDrawerContext.Provider>
-          </div>
-        </Drawer>
+        <div ref={layer} style={{ '--drawer-knob': `${KNOB}dvh` } as any}>
+          <Drawer
+            close={close}
+            open={isOpen}
+            height='100dvh'
+            background='transparent'
+            knob={palette?.color || 'whitePure'}
+          >
+            <div ref={scroll} sx={styles.scroll} onScroll={onScroll} onClick={(e) => e.target === e.currentTarget && close()}>
+              <div ref={band} sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: 0 }} />
+              {/* A poster in the drawer follows its link: the drawer does not open over itself */}
+              <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
+                {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' palette={palette} />}
+                {behavior === 'tv' && <ShowContent key={id} id={id} variant='drawer' palette={palette} />}
+              </detailsDrawerContext.Provider>
+            </div>
+          </Drawer>
+        </div>
       </Portal>
     </detailsDrawerContext.Provider>
   )
