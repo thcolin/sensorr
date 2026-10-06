@@ -23,11 +23,13 @@ export interface BulkAction {
   onChange?: (option: BulkOption) => void
 }
 
-// The count and the way out of the selection live with the page's own select-all checkbox.
+// The count and the way out of the selection live with the page's own select-all checkbox, or,
+// on a page without one, in a first segment that empties the selection: `onClear`.
 export interface BulkProps {
   count: number
   actions: BulkAction[]
   disabled?: boolean
+  onClear?: () => void
 }
 
 // Same curve as the moves of the Swaps screen.
@@ -39,7 +41,7 @@ const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matc
 
 const inset = (from, radius = '2em') => from ? `inset(${from.top}px ${from.right}px ${from.bottom}px ${from.left}px round ${radius})` : `inset(0px round ${radius})`
 
-const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
+const UIBulk = ({ count, actions, disabled = false, onClear = null }: BulkProps) => {
   const { theme } = useThemeUI()
   const [expanded, setExpanded] = useState(null)
   const [dimmed, setDimmed] = useState(false)
@@ -182,6 +184,12 @@ const UIBulk = ({ count, actions, disabled = false }: BulkProps) => {
         {...(!visible ? { inert: '' } : {})}
       >
         <div ref={drag} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`} {...(action ? { inert: '' } : {})}>
+          {!!onClear && (
+            <button type='button' sx={{ ...UIBulk.styles.segment, fontVariantNumeric: 'tabular-nums' }} data-key='clear' onClick={onClear} aria-label={`Clear the ${shown.current} selected`}>
+              {shown.current}
+              <Icon value='clear' active={true} width='0.75em' height='0.75em' />
+            </button>
+          )}
           {actions.map(({ key, label, icon = null, disabled: off = false, onClick, options }) => (
             <button
               key={key}
