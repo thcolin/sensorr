@@ -1,8 +1,8 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
-import { useHistoryState, createPendingReducer } from '@sensorr/utils'
+import { useDevice, useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
-import { pictureSrc } from '@sensorr/ui'
+import { Billboard, pictureSrc } from '@sensorr/ui'
 import { Provider as ExpandProvider, useExpandContext } from './contexts/Expand'
 import { Head } from './components/Head'
 import { Poster } from './components/Poster'
@@ -23,6 +23,37 @@ const pendingReducer = createPendingReducer({
   billboard: true,
 })
 
+// The theme's neutrals retinted from the poster, so every block keeps its own styles on the poster's colors
+const paintOf = ({ backgroundColor, color, colorfulColor }) => {
+  const mix = (amount) => `color-mix(in srgb, ${color} ${amount}%, ${backgroundColor})`
+  const tokens = {
+    text: color,
+    textLight: color,
+    grayDarkest: mix(70),
+    grayDarker: mix(60),
+    grayDark: mix(25),
+    gray: mix(12),
+    grayLight: mix(8),
+    grayLighter: mix(6),
+    grayLightest: mix(3),
+    'gray-500': mix(70),
+    'gray-550': mix(60),
+    'gray-600': mix(50),
+    'gray-700': mix(35),
+    'gray-800': mix(25),
+    'gray-900': mix(12),
+  }
+
+  return {
+    backgroundColor,
+    color,
+    transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
+    '--poster-cutout': backgroundColor,
+    '--poster-glow': colorfulColor,
+    ...Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--theme-ui-colors-${token}`, value])),
+  }
+}
+
 const UIDetails = ({
   entity,
   additional,
@@ -40,13 +71,14 @@ const UIDetails = ({
   search = null,
   summary = null,
   children = null,
+  variant = 'page',
   ...props
 }) => {
   const { title, tagline, overview, poster, billboard, meaningful } = details
   const artworks = useArtworksOf(behavior, entity?.id, metadata)
   // A show opens its settings once it is in the library, which is known only once its metadata loads
-  const [metadataState, setMetadataState] = useHistoryState('metadata', behavior === 'tv' ? null : ['wished', 'archived', 'missing'].includes(state))
-  const [meaningfulState, setMeaningfulState] = useHistoryState('meaningful', false)
+  const [metadataState, setMetadataState] = useHistoryState(`${variant}-metadata`, (behavior === 'tv' || variant === 'drawer') ? null : ['wished', 'archived', 'missing'].includes(state))
+  const [meaningfulState, setMeaningfulState] = useHistoryState(`${variant}-meaningful`, false)
 
   const toggleSensorr = useRef() as any
 
@@ -62,6 +94,8 @@ const UIDetails = ({
     },
     poster,
   )
+  const device = useDevice()
+  const paint = useMemo(() => (palette.loading || palette.initial) ? undefined : paintOf(palette.palette), [palette.palette, palette.loading, palette.initial])
 
   const [pending, mutatePending] = useReducer(pendingReducer.reducer, pendingReducer.initialState)
   const ready = props.ready !== false && Object.values(pending).every(pending => !pending) && !!entity?.id
@@ -76,122 +110,126 @@ const UIDetails = ({
     mutatePending({ billboard: loading || !!billboard })
   }, [loading])
 
-  return (
-    <div sx={UIDetails.styles.element}>
-      <Head billboard={billboard} palette={palette.palette} entity={entity} behavior={behavior} ready={ready} onReady={onReady.billboard} />
-      <div sx={UIDetails.styles.body}>
-        <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
-          <Poster
-            path={poster}
-            palette={palette.palette}
-            behavior={behavior}
-            ready={ready}
-            onReady={onReady.poster}
-            requested_by={metadata?.requested_by}
-            state={state}
-            setState={setState}
-            artworks={['movie', 'tv'].includes(behavior) && !!ratingKeyOf(artworks) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
+  const posterBlock = (
+    <Poster
+      path={poster}
+      palette={palette.palette}
+      behavior={behavior}
+      ready={ready}
+      onReady={onReady.poster}
+      requested_by={metadata?.requested_by}
+      state={state}
+      setState={setState}
+      artworks={['movie', 'tv'].includes(behavior) && !!ratingKeyOf(artworks) && <Artworks behavior={behavior} entity={entity} artworks={artworks} />}
+    />
+  )
+
+  const ticketBlock = (
+    <>
+      {behavior === 'tv' && !!search && (
+        <div sx={UIDetails.styles.ticket}>
+          <ShowTicket
+            palette={!palette.loading && !palette.initial ? palette.palette : null}
+            ready={ready && state !== 'loading'}
+            entity={entity}
+            toggleSensorr={search}
           />
-          <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
-            Contribute to TheMovieDB
-          </a>
-          {behavior === 'tv' && !!search && (
-            <div sx={UIDetails.styles.ticket}>
-              <ShowTicket
-                palette={!palette.loading && !palette.initial ? palette.palette : null}
-                ready={ready && state !== 'loading'}
-                entity={entity}
-                toggleSensorr={search}
-              />
-            </div>
-          )}
-          {behavior === 'movie' && (
-            <div sx={UIDetails.styles.ticket}>
-              <MovieActions
-                palette={!palette.loading && !palette.initial ? palette.palette : null}
-                ready={ready && state !== 'loading'}
-                entity={entity}
+        </div>
+      )}
+      {behavior === 'movie' && (
+        <div sx={UIDetails.styles.ticket}>
+          <MovieActions
+            palette={!palette.loading && !palette.initial ? palette.palette : null}
+            ready={ready && state !== 'loading'}
+            entity={entity}
+            metadata={metadata}
+            setMetadata={setMetadata}
+            toggleSensorr={(e) => toggleSensorr.current(e)}
+          />
+          <Sensorr
+            entity={entity || {}}
+            loading={!ready || state === 'loading'}
+            metadata={metadata}
+            setPortalToggle={(toggleOpen) => toggleSensorr.current = (e) => toggleOpen(e)}
+          />
+        </div>
+      )}
+    </>
+  )
+
+  const titleBlock = (
+    <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
+      <h1 sx={UIDetails.styles.title}>{artworks?.logo ? <TitleLogo key={artworks.logo} path={artworks.logo} title={title} /> : title}</h1>
+    </Skeleton>
+  )
+
+  const metadataBlock = (
+    <>
+      {behavior === 'movie' && (
+        <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+          <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
+            <summary>
+              <span />
+              <h4 sx={UIDetails.styles.subtitle}>
+                {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
+                {!!entity.original_title && !!meaningful.year && (<span> </span>)}
+                {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
+              </h4>
+            </summary>
+            <div>
+              <Metadata
+                entity={entity || {}}
                 metadata={metadata}
                 setMetadata={setMetadata}
-                toggleSensorr={(e) => toggleSensorr.current(e)}
-              />
-              <Sensorr
-                entity={entity || {}}
-                loading={!ready || state === 'loading'}
-                metadata={metadata}
-                setPortalToggle={(toggleOpen) => toggleSensorr.current = (e) => toggleOpen(e)}
+                lists={true}
               />
             </div>
-          )}
-        </div>
-        <div sx={{ ...UIDetails.styles.wrapper, marginTop: ['0em', expanded ? '1em' : '-2em'] }}>
-          <div sx={UIDetails.styles.container}>
-            <div sx={UIDetails.styles.content}>
-              <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 10 }}>
-                <h1 sx={UIDetails.styles.title}>{artworks?.logo ? <TitleLogo key={artworks.logo} path={artworks.logo} title={title} /> : title}</h1>
-              </Skeleton>
-              {behavior === 'movie' && (
-                <React.Fragment>
-                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                    <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
-                      <summary>
-                        <span />
-                        <h4 sx={UIDetails.styles.subtitle}>
-                          {!!entity.original_title && entity.original_title !== title && (<strong>{entity.original_title}</strong>)}
-                          {!!entity.original_title && !!meaningful.year && (<span> </span>)}
-                          {!!meaningful.year && (<span>({<meaningful.year />})</span>)}
-                        </h4>
-                      </summary>
-                      <div>
-                        <Metadata
-                          entity={entity || {}}
-                          metadata={metadata}
-                          setMetadata={setMetadata}
-                          lists={true}
-                        />
-                      </div>
-                    </details>
-                    </Skeleton>
-                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                    <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} />
-                  </Skeleton>
-                </React.Fragment>
-              )}
-              {behavior === 'tv' && (
-                <React.Fragment>
-                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                    {actions ? (
-                      <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? true}>
-                        <summary>
-                          <span />
-                          <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
-                        </summary>
-                        <div>
-                          {actions}
-                        </div>
-                      </details>
-                    ) : (
-                      <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
-                    )}
-                  </Skeleton>
-                  <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
-                    <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} />
-                  </Skeleton>
-                </React.Fragment>
-              )}
-              <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
-                <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
-              </Skeleton>
-            </div>
-            <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+          </details>
+        </Skeleton>
+      )}
+      {behavior === 'tv' && (
+        <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+          {actions ? (
+            <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? variant !== 'drawer'}>
+              <summary>
+                <span />
+                <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
+              </summary>
               <div>
-                {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
-                <Overview children={overview} />
+                {actions}
               </div>
-            </Skeleton>
-          </div>
-        </div>
+            </details>
+          ) : (
+            <ShowSubtitle entity={entity} title={title} meaningful={meaningful} summary={summary} />
+          )}
+        </Skeleton>
+      )}
+    </>
+  )
+
+  const externalsBlock = ['movie', 'tv'].includes(behavior) && (
+    <Skeleton palette={palette.palette} ready={ready} sx={{ marginBottom: 4 }}>
+      <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} />
+    </Skeleton>
+  )
+
+  const meaningfulBlock = (
+    <Skeleton palette={palette.palette} ready={ready} placeholder={false} sx={{ marginBottom: 4 }}>
+      <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
+    </Skeleton>
+  )
+
+  const overviewBlock = (
+    <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
+      <div>
+        {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
+        <Overview children={overview} />
       </div>
+    </Skeleton>
+  )
+
+  const restBlock = (
+    <>
       {behavior === 'movie' && (
         <Releases
           movie={entity}
@@ -210,11 +248,129 @@ const UIDetails = ({
           ))}
         </div>
       </div>
+    </>
+  )
+
+  if (variant === 'drawer') {
+    return (
+      <div sx={UIDetails.styles.drawer.element} style={paint}>
+        <div sx={UIDetails.styles.drawer.backdrop}>
+          <Billboard path={billboard} palette={palette.palette} ready={ready} onReady={onReady.billboard} lazy={false} fade={0.5} blur={4} />
+        </div>
+        <div sx={UIDetails.styles.drawer.head}>
+          <div sx={UIDetails.styles.drawer.poster}>
+            {posterBlock}
+          </div>
+          <div sx={UIDetails.styles.drawer.heading}>
+            {titleBlock}
+            <Skeleton palette={palette.palette} ready={ready}>
+              <p sx={UIDetails.styles.drawer.caption}>
+                {!!meaningful?.year && <strong><meaningful.year /></strong>}
+                {!!meaningful?.year && !!meaningful?.genres && <span> · </span>}
+                {!!meaningful?.genres && <meaningful.genres emoji={false} />}
+              </p>
+            </Skeleton>
+          </div>
+        </div>
+        <div sx={UIDetails.styles.drawer.body}>
+          {overviewBlock}
+          {metadataBlock}
+          {externalsBlock}
+          {meaningfulBlock}
+          {ticketBlock}
+        </div>
+        {restBlock}
+      </div>
+    )
+  }
+
+  return (
+    <div sx={UIDetails.styles.element} style={device === 'mobile' ? paint : undefined}>
+      <Head billboard={billboard} palette={palette.palette} entity={entity} behavior={behavior} ready={ready} onReady={onReady.billboard} />
+      <div sx={UIDetails.styles.body}>
+        <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
+          {posterBlock}
+          <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
+            Contribute to TheMovieDB
+          </a>
+          {ticketBlock}
+        </div>
+        <div sx={{ ...UIDetails.styles.wrapper, marginTop: ['0em', expanded ? '1em' : '-2em'] }}>
+          <div sx={UIDetails.styles.container}>
+            <div sx={UIDetails.styles.content}>
+              {titleBlock}
+              {metadataBlock}
+              {externalsBlock}
+              {meaningfulBlock}
+            </div>
+            {overviewBlock}
+          </div>
+        </div>
+      </div>
+      {restBlock}
     </div>
   )
 }
 
 UIDetails.styles = {
+  drawer: {
+    element: {
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100%',
+      paddingTop: '2.25em',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: '0px',
+      left: '0px',
+      width: '100%',
+      height: '16em',
+      opacity: 0.5,
+      maskImage: 'linear-gradient(to bottom, black, transparent)',
+    },
+    head: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: 4,
+      paddingX: 4,
+    },
+    poster: {
+      flexShrink: 0,
+      '>div': {
+        height: '13.5em',
+        width: '9em',
+        boxShadow: (theme) => `0px 3px 30px var(--poster-glow, ${theme.colors.primary})`,
+      },
+    },
+    heading: {
+      flex: 1,
+      minWidth: '0em',
+      paddingBottom: 2,
+      '>*:first-of-type h1': {
+        fontSize: 1,
+        lineHeight: 'heading',
+        overflowWrap: 'anywhere',
+      },
+    },
+    caption: {
+      margin: '0em',
+      fontSize: 6,
+      color: 'grayDarkest',
+      '>strong': {
+        color: 'text',
+      },
+    },
+    body: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+      paddingX: 4,
+      paddingTop: 2,
+    },
+  },
   ticket: {
     width: '100%',
     maxWidth: ['17em', 'unset'],
