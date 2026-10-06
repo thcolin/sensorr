@@ -36,11 +36,20 @@ export const Bar = ({ width = '100%', height = '1em', pill = false, color = 'gra
   />
 )
 
+// The lines of a paragraph, the last one shorter
+export const Lines = ({ widths = ['100%', '92%', '64%'], height = '0.625em', ...props }: { widths?: string[], height?: string, [prop: string]: any }) => (
+  <span {...props} aria-hidden={true} sx={{ display: 'flex', flexDirection: 'column', gap: '0.625em', paddingY: '0.25em' }}>
+    {widths.map((width, index) => <Bar key={index} width={width} height={height} />)}
+  </span>
+)
+
 export interface SkeletonProps {
   ready: boolean
   bar?: BarProps
   // In place of the bar, for a content of several parts drawn in its own shape
   placeholder?: React.ReactNode
+  // Where the bar sits in the cell: on the line of a text, or at the top of a paragraph
+  align?: 'center' | 'start'
   children?: React.ReactNode
   [prop: string]: any
 }
@@ -48,8 +57,8 @@ export interface SkeletonProps {
 // A bar that becomes its content: both sit in the same grid cell, the bar fades out as the content
 // fades in, and the cell keeps the larger of the two, so nothing around it moves. A blank line holds
 // the cell at the height of one line of the text it waits for.
-export const Skeleton = ({ ready, bar = {}, placeholder = null, children, ...props }: SkeletonProps) => (
-  <span {...props} sx={Skeleton.styles.element}>
+export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', children, ...props }: SkeletonProps) => (
+  <span {...props} sx={{ ...Skeleton.styles.element, alignItems: align }}>
     <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
     {placeholder ? (
       <span aria-hidden={true} sx={{ ...Skeleton.styles.bar, opacity: ready ? 0 : 1 }}>{placeholder}</span>
@@ -63,7 +72,6 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, children, ...pro
 Skeleton.styles = {
   element: {
     display: 'grid',
-    alignItems: 'center',
     minWidth: '0px',
     '>*': {
       gridArea: '1 / 1',
@@ -75,7 +83,6 @@ Skeleton.styles = {
     width: '0px',
   },
   bar: {
-    alignSelf: 'center',
     transition: `opacity ${REVEAL}`,
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',

@@ -1,6 +1,6 @@
 import { Link } from '../../../atoms/Link/Link'
 import { memo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Lines, Skeleton, reveal } from '../../../atoms/Skeleton/Skeleton'
 import { Poster, PosterProps } from '../Poster/Poster'
 
 export type CardProps = PosterProps
@@ -20,7 +20,7 @@ const UICard = ({
       <About details={details} link={link} ready={ready} />
     </div>
     <div sx={UICard.styles.actions}>
-      {badges?.state?.component && <badges.state.component {...badges?.state?.props} />}
+      {ready !== false && badges?.state?.component && <div sx={reveal}><badges.state.component {...badges?.state?.props} /></div>}
     </div>
   </div>
 )
@@ -64,17 +64,17 @@ UICard.styles = {
 
 export const Card = memo(UICard)
 
-const UIAbout = ({ details, link, ready, ...props }) => {
-  const { t } = useTranslation()
-
-  return (
-    <span sx={UIAbout.styles.element}>
-      <strong sx={UIAbout.styles.title} title={details.title}>
-        <Link to={link?.to} state={link?.state} disabled={ready === false} sx={UICard.styles.link}>
+const UIAbout = ({ details, link, ready, ...props }) => (
+  <span sx={UIAbout.styles.element}>
+    <strong sx={UIAbout.styles.title} title={details.title}>
+      <Skeleton ready={ready !== false} bar={{ width: '10em', height: '0.75em' }}>
+        <Link to={link?.to} state={link?.state} sx={UICard.styles.link}>
           {details.title}
         </Link>
-      </strong>
-      <span sx={UIAbout.styles.subtitle}>
+      </Skeleton>
+    </strong>
+    <Skeleton ready={ready !== false} bar={{ width: '7em', height: '0.5em' }} sx={UIAbout.styles.subtitle}>
+      <span sx={UIAbout.styles.caption}>
         {!!details?.meaningful?.year && (
           <span>
             <details.meaningful.year />
@@ -87,12 +87,12 @@ const UIAbout = ({ details, link, ready, ...props }) => {
           </small>
         )}
       </span>
-      <span sx={UIAbout.styles.overview}>
-        <small>{details.overview || <em>{ready ? '' : t('loading')}</em>}</small>
-      </span>
-    </span>
-  )
-}
+    </Skeleton>
+    <Skeleton ready={ready !== false} placeholder={<Lines widths={['100%', '72%']} height='0.5em' />} align='start' sx={UIAbout.styles.overview}>
+      <small>{details.overview}</small>
+    </Skeleton>
+  </span>
+)
 
 UIAbout.styles = {
   element: {
@@ -116,10 +116,12 @@ UIAbout.styles = {
     },
   },
   subtitle: {
-    display: 'flex',
-    alignItems: 'center',
     paddingBottom: 8,
     paddingTop: 10,
+  },
+  caption: {
+    display: 'flex',
+    alignItems: 'center',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     '>span': {
