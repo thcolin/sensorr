@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react'
 import { Picture, Empty, Guests, MovieState, PersonState, ShowState } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
-const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, ...props }) => {
+const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, astride = false, ...props }) => {
   const guestsContext = useGuestsContext() as any
   const guests = useMemo(() => guestsContext.loading ? [] : (requested_by || []).reduce((guests, email) => [
     ...guests,
@@ -22,7 +22,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         // sx={{ viewTransitionName: 'poster' }}
       />
       {behavior === 'movie' && (
-        <div sx={UIPoster.styles.state}>
+        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
           <MovieState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -31,7 +31,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         </div>
       )}
       {behavior === 'tv' && (
-        <div sx={UIPoster.styles.state}>
+        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
           <ShowState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -40,7 +40,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
         </div>
       )}
       {behavior === 'person' && (
-        <div sx={UIPoster.styles.state}>
+        <div sx={astride ? UIPoster.styles.astride : UIPoster.styles.state}>
           <PersonState
             value={ready ? state : 'loading'}
             onChange={setState}
@@ -76,6 +76,14 @@ UIPoster.styles = {
     position: 'absolute',
     top: '0.75em',
     right: '0.75em',
+    fontSize: 3,
+    zIndex: 1,
+  },
+  // Astride the top right corner, where a grid poster carries it
+  astride: {
+    position: 'absolute',
+    top: '-1em',
+    right: '-1.25em',
     fontSize: 3,
     zIndex: 1,
   },
