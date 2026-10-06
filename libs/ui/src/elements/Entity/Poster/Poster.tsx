@@ -12,6 +12,12 @@ import { Option } from '../../../inputs/Option/Option'
 // The ring around a badge takes the color of the surface under the poster, which sets `--poster-cutout` when it is not `grayLightest`
 const cutout = 'var(--poster-cutout, var(--theme-ui-colors-grayLightest))'
 
+// The badges' fill and text, which a surface painted by another poster sets with `--poster-pill` and `--poster-pill-text`
+const pills = {
+  '--theme-ui-colors-gray': (theme) => `var(--poster-pill, ${theme.rawColors.gray})`,
+  '--theme-ui-colors-text': (theme) => `var(--poster-pill-text, ${theme.rawColors.text})`,
+}
+
 export interface PosterProps extends Omit<PictureProps, 'path' | 'ready' | 'onReady'> {
   details: any // MovieDetails | PersonDetails
   link?: LinkProps
@@ -158,6 +164,7 @@ const UIPoster = ({
             <div
               sx={{
                 ...UIPoster.styles.focus,
+                ...pills,
                 zIndex: 2,
                 ...(selected !== null ? {} : {}),
                 ...((badges?.reviews?.component && badges?.focus?.component) ? {
@@ -194,6 +201,7 @@ const UIPoster = ({
         <div
           sx={{
             ...UIPoster.styles.right,
+            ...pills,
             opacity: ready ? 1 : 0,
             transition: ready ? 'opacity 400ms ease-in-out 400ms' : 'opacity 400ms ease-in-out',
           }}
