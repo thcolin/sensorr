@@ -11,7 +11,7 @@ import { Observable, Subject, merge, of, tap } from 'rxjs'
 import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { DumpManifest, dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
+import { DUMP_ENTRY_MAX, DumpManifest, dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
@@ -55,6 +55,10 @@ export const manifestOf = async (archive: Promise<any>): Promise<DumpManifest> =
 
   if (!entry) {
     throw new UnprocessableEntityException('Not a Sensorr dump, the archive has no manifest.json')
+  }
+
+  if (entry.uncompressedSize > DUMP_ENTRY_MAX) {
+    throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is too large')
   }
 
   let manifest
