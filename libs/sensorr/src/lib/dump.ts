@@ -9,6 +9,9 @@ export const DUMP_KEPT = 4
 // Resolved against the working directory, `/app` in Docker, where compose mounts it
 export const DUMP_FOLDER = 'dumps'
 
+// manifest.json and config.json weigh a few kB: past this, the archive is not a dump, or a zip bomb
+export const DUMP_ENTRY_MAX = 1024 * 1024
+
 export const DUMP_FILE = /^sensorr-dump-\d{4}-\d{2}-\d{2}-\d{4}\.zip$/
 
 const pad = (value: number) => `${value}`.padStart(2, '0')
@@ -20,7 +23,13 @@ export const dumpFileOf = (date: Date) => `sensorr-dump-${date.getFullYear()}-${
 export const DUMP_SECRET_KEYS = ['tmdb', 'plex.token', 'mail.password', 'tautulli.key', 'mediux.token']
 
 // What describes the instance and its host rather than the library: the instance that restores keeps its own
-export const DUMP_INSTANCE_KEYS = ['docker', 'onboarding', 'vapidPublicKey', 'plex.client_identifier', 'plex.pin', 'blackhole', 'shows.library', 'shows.blackhole', 'shows.staging']
+// The hosts a secret is sent to too: a dump that brought its own would hand them the secrets of this Sensorr
+export const DUMP_INSTANCE_KEYS = [
+  'docker', 'onboarding', 'vapidPublicKey', 'guests.public',
+  'plex.url', 'plex.client_identifier', 'plex.pin', 'tautulli.url',
+  'mail.url', 'mail.host', 'mail.port', 'mail.secure', 'mail.user', 'mail.from',
+  'blackhole', 'shows.library', 'shows.blackhole', 'shows.staging',
+]
 
 export interface DumpManifest {
   format: number
@@ -55,7 +64,14 @@ const deleteAt = (object: any, key: string) => {
 }
 
 // An indexer link carries its key in the query, as Jackett's `jackett_apikey=`: the name stays, the value goes
-export const stripUrl = (url: string) => typeof url === 'string' ? url.replace(/([?&][^=&#]*(?:api_?key|passkey|token))=[^&#]*/gi, '$1=') : url
+const KEY = '[^=&#]*(?:api[_-]?key|passkey|pass|authkey|rsskey|key|token|secret|sig)'
+
+export const stripUrl = (url: string) => typeof url === 'string'
+  ? url
+    .replace(new RegExp(`([?&#]${KEY})=[^&#]*`, 'gi'), '$1=')
+    .replace(new RegExp(`((?:%3F|%26)${KEY})%3D(?:(?!%26)[^&#])*`, 'gi'), '$1%3D')
+    .replace(/(\w+:\/\/)[^/@\s]+@/g, '$1')
+  : url
 
 // Every string of a document, not only the links: a release's id is the indexer's guid, often its link, and episodes
 // point to it. The same strip on both sides keeps them pointing to each other. Dates and ids are left as they are.
@@ -86,7 +102,7 @@ export const stripConfig = (config: any) => {
     stripped.znabs = stripped.znabs.map(({ key, ...znab }) => znab)
   }
 
-  return stripped
+  return stripDocument(stripped)
 }
 
 // The config a restore writes: the dump's, with the secrets and the instance keys of the config that restores,
@@ -101,8 +117,11 @@ export const restoreConfig = (current: any, dumped: any) => {
   }
 
   if (Array.isArray(restored.znabs)) {
-    const keys = new Map((current?.znabs || []).map(({ name, key }) => [name, key]))
-    restored.znabs = restored.znabs.map((znab) => keys.has(znab.name) ? { ...znab, key: keys.get(znab.name) } : znab)
+    // Only to the same indexer at the same address: a dump that moved it would get the key with it
+    restored.znabs = restored.znabs.map((znab) => {
+      const local = (current?.znabs || []).find(({ name, url }) => name === znab.name && url === znab.url)
+      return local ? { ...znab, key: local.key } : znab
+    })
   }
 
   // A job runs only once this Sensorr turns it on: its keys may not be set yet

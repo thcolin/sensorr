@@ -30,6 +30,14 @@ describe('stripUrl', () => {
     expect(stripUrl('http://x/dl?TOKEN=a')).toBe('http://x/dl?TOKEN=')
   })
 
+  it('empties the other names a tracker gives its key, an encoded one inside a magnet, and the credentials of a URL', () => {
+    expect(stripUrl('http://tracker/dl?id=1&torrent_pass=a&authkey=b')).toBe('http://tracker/dl?id=1&torrent_pass=&authkey=')
+    expect(stripUrl('http://x/rss?rsskey=a#key=b')).toBe('http://x/rss?rsskey=#key=')
+    expect(stripUrl('magnet:?xt=urn:btih:abc&tr=http%3A%2F%2Ftracker%2Fannounce.php%3Fpasskey%3DSECRET%26a%3D1'))
+      .toBe('magnet:?xt=urn:btih:abc&tr=http%3A%2F%2Ftracker%2Fannounce.php%3Fpasskey%3D%26a%3D1')
+    expect(stripUrl('http://me:secret@jackett:9117/api')).toBe('http://jackett:9117/api')
+  })
+
   it('leaves a link without key, a magnet and a missing link alone', () => {
     expect(stripUrl('https://yts.mx/torrent/download/ABC')).toBe('https://yts.mx/torrent/download/ABC')
     expect(stripUrl('magnet:?xt=urn:btih:abc&dn=Movie')).toBe('magnet:?xt=urn:btih:abc&dn=Movie')
@@ -77,13 +85,14 @@ describe('stripConfig', () => {
     expect(stripped.onboarding).toBeUndefined()
     expect(stripped.vapidPublicKey).toBeUndefined()
     expect(stripped.blackhole).toBeUndefined()
-    expect(stripped.plex).toEqual({ url: 'http://plex:32400' })
+    expect(stripped.plex).toEqual({})
+    expect(stripped.tautulli).toEqual({})
     expect(stripped.shows).toEqual({ cleanup: true })
   })
 
   it('keeps the rest, indexers without their key', () => {
     expect(stripped.region).toBe('fr-FR')
-    expect(stripped.mail).toEqual({ host: 'smtp.example.com', user: 'me' })
+    expect(stripped.mail).toEqual({})
     expect(stripped.znabs).toEqual([{ name: 'YGG', url: 'http://jackett/ygg' }, { name: 'TPB', url: 'http://jackett/tpb' }])
     expect(stripped.policies).toEqual(config.policies)
     expect(stripped.jobs).toEqual(config.jobs)
@@ -101,7 +110,7 @@ describe('restoreConfig', () => {
     docker: false,
     blackhole: '/new/blackhole',
     plex: { token: 'new-plex', client_identifier: 'new-uuid' },
-    znabs: [{ name: 'YGG', url: 'http://old', key: 'new-ygg' }],
+    znabs: [{ name: 'YGG', url: 'http://jackett/ygg', key: 'new-ygg' }, { name: 'TPB', url: 'http://elsewhere/tpb', key: 'new-tpb' }],
     region: 'en-US',
     policies: [],
   }
@@ -110,7 +119,6 @@ describe('restoreConfig', () => {
   it('takes what the dump carries', () => {
     expect(restored.region).toBe('fr-FR')
     expect(restored.policies).toEqual(config.policies)
-    expect(restored.plex.url).toBe('http://plex:32400')
   })
 
   it('keeps the secrets and the instance keys of the config that restores', () => {
@@ -118,6 +126,7 @@ describe('restoreConfig', () => {
     expect(restored.docker).toBe(false)
     expect(restored.blackhole).toBe('/new/blackhole')
     expect(restored.plex.token).toBe('new-plex')
+    expect(restored.plex.url).toBeUndefined()
     expect(restored.plex.client_identifier).toBe('new-uuid')
   })
 
@@ -131,7 +140,7 @@ describe('restoreConfig', () => {
     expect(jobs.dump).toEqual({ cron: '0 4 * * 0', paused: false })
   })
 
-  it('gives each indexer the key of the indexer of the same name, and none to an unknown one', () => {
+  it('gives each indexer the key of the same indexer at the same address, and none to one that moved', () => {
     expect(restored.znabs).toEqual([{ name: 'YGG', url: 'http://jackett/ygg', key: 'new-ygg' }, { name: 'TPB', url: 'http://jackett/tpb' }])
   })
 

@@ -4,7 +4,7 @@ import readline from 'readline'
 import mongoose from 'mongoose'
 import unzipper from 'unzipper'
 import { render, Text } from 'ink'
-import { DUMP_COLLECTIONS, dumpManifestError, restoreConfig } from '@sensorr/sensorr'
+import { DUMP_COLLECTIONS, DUMP_ENTRY_MAX, dumpManifestError, restoreConfig } from '@sensorr/sensorr'
 import { Tasks, Task, useTask, StdinMock } from '../components/Taskink'
 import api from '../store/api'
 import command from '../utils/command'
@@ -37,6 +37,10 @@ const readManifest = async (directory) => {
 
   if (!entry) {
     throw new Error('Not a Sensorr dump, the archive has no manifest.json')
+  }
+
+  if (entry.uncompressedSize > DUMP_ENTRY_MAX) {
+    throw new Error('Not a Sensorr dump, its manifest.json is too large')
   }
 
   const manifest = JSON.parse((await entry.buffer()).toString())
@@ -126,22 +130,26 @@ const RestoreTask = ({ archive }) => {
         const manifest = await readManifest(directory)
         setTask((task) => ({ ...task, output: <Text>Dump of <Text bold={true}>{manifest.date}</Text>, Sensorr {manifest.version}...</Text> }))
 
+        // Read before the library is touched: a config that cannot be restored stops the restore first
+        const entry = directory.files.find(({ path }) => path === 'config.json')
+
+        if (entry && entry.uncompressedSize > DUMP_ENTRY_MAX) {
+          throw new Error('Not a Sensorr dump, its config.json is too large')
+        }
+
+        const restored = entry && restoreConfig(state.config.getProperties(), JSON.parse((await entry.buffer()).toString()))
+
         const counts = await restore({
           directory,
           manifest,
           onCollection: (name, count) => setTask((task) => ({ ...task, output: <Text><Text bold={true}>{count}</Text> {name} written...</Text> })),
         })
 
-        const entry = directory.files.find(({ path }) => path === 'config.json')
-
-        if (entry) {
-          const restored = restoreConfig(state.config.getProperties(), JSON.parse((await entry.buffer()).toString()))
-
-          // Key by key: the save of Settings would hand the policy of each list to its movies, over the ones just restored
-          for (const [key, value] of Object.entries(restored)) {
-            const { uri, params, init } = api.query.config.putConfig({ body: { key, value } })
-            await api.fetch(uri, params, init)
-          }
+        // Key by key, the save of Settings would hand the policy of each list to the movies just restored. Only the
+        // keys this Sensorr knows: an unknown one would be kept as is, and leave in the next dump
+        for (const [key, value] of Object.entries(restored || {}).filter(([key]) => state.config.has(key))) {
+          const { uri, params, init } = api.query.config.putConfig({ body: { key, value } })
+          await api.fetch(uri, params, init)
         }
 
         const summary = DUMP_COLLECTIONS.map((name) => `${counts[name]} ${name}`).join(', ')
