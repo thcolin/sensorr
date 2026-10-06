@@ -126,9 +126,13 @@ const RestoreTask = ({ archive }) => {
         const entry = directory.files.find(({ path }) => path === 'config.json')
 
         if (entry) {
-          const dumped = JSON.parse((await entry.buffer()).toString())
-          const { uri, params, init } = api.query.config.postConfig({ body: restoreConfig(state.config.getProperties(), dumped) })
-          await api.fetch(uri, params, init)
+          const restored = restoreConfig(state.config.getProperties(), JSON.parse((await entry.buffer()).toString()))
+
+          // Key by key: the save of Settings would hand the policy of each list to its movies, over the ones just restored
+          for (const [key, value] of Object.entries(restored)) {
+            const { uri, params, init } = api.query.config.putConfig({ body: { key, value } })
+            await api.fetch(uri, params, init)
+          }
         }
 
         const summary = DUMP_COLLECTIONS.map((name) => `${counts[name]} ${name}`).join(', ')

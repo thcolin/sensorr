@@ -25,15 +25,16 @@ const Data = ({ ...props }) => {
   const api = useAPI()
   const { config } = useConfigContext() as any
   const { process } = useJobsContext() as any
-  const { runJob } = useJobRunner()
+  const { runJob, ongoing } = useJobRunner()
   const [state, setState] = useState(null)
   const [failure, setFailure] = useState(null)
   const [archive, setArchive] = useState(null)
   const [importing, setImporting] = useState(false)
+  const [downloading, setDownloading] = useState(null)
   const input = useRef(null)
 
   const jobs = useMemo(() => Object.values(process || {}).map(({ command, type }: any) => [command, type].filter(Boolean).join(' ')), [process])
-  const dumping = jobs.includes('dump')
+  const dumping = jobs.includes('dump') || ongoing.includes('dump')
   const restoring = jobs.includes('restore')
   const others = jobs.filter((job) => job !== 'dump')
   const schedule = config.get('jobs.dump')
@@ -54,6 +55,8 @@ const Data = ({ ...props }) => {
   }, [dumping, restoring])
 
   const download = async (name) => {
+    setDownloading(name)
+
     try {
       const { uri, params, init } = api.query.dumps.getDump({ params: { name } })
       const url = URL.createObjectURL(await api.fetch(uri, params, init, { blob: true }))
@@ -61,7 +64,9 @@ const Data = ({ ...props }) => {
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (err) {
-      toast.error(`Error while downloading ${name}, try again`)
+      toast.error(`Error while downloading ${name}, ${err.message}`)
+    } finally {
+      setDownloading(null)
     }
   }
 
@@ -114,7 +119,7 @@ const Data = ({ ...props }) => {
                         <strong>{name}</strong>
                         <small>{formatDistanceToNowStrict(new Date(date), { addSuffix: true })} · {filesize.stringify(size)}</small>
                       </div>
-                      <Button type='button' variant='outline' color='gray' onClick={() => download(name)} aria-label={`Download ${name}`}>Download</Button>
+                      <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={`Download ${name}`}>{downloading === name ? '⌛ Downloading' : 'Download'}</Button>
                     </li>
                   ))}
                 </ul>
@@ -130,6 +135,7 @@ const Data = ({ ...props }) => {
                 type='file'
                 accept='.zip,application/zip'
                 aria-label='Dump to import'
+                disabled={importing || restoring}
                 onChange={(e) => setArchive(e.target.files?.[0] || null)}
                 sx={Onboarding.styles.file}
               />
@@ -143,8 +149,8 @@ const Data = ({ ...props }) => {
                   <strong>Warning</strong>, {others.length > 2 ? `${emojize(JOB_EMOJIS[others[0]], others[0])} and ${others.length - 1} more` : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {others.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
                 </p>
               )}
-              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!archive || importing || !!jobs.length} aria-busy={importing || restoring} onClick={restore}>
-                {restoring ? '⌛ Importing' : 'Import'}
+              <Button type='button' color='error' sx={{ width: '100%' }} disabled={!archive || !state || importing || !!jobs.length} aria-busy={importing || restoring} onClick={restore}>
+                {importing || restoring ? '⌛ Importing' : 'Import'}
               </Button>
             </div>
           </div>

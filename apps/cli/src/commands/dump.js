@@ -41,6 +41,7 @@ const dump = async ({ config, folder, onCollection }) => {
   const date = new Date()
   const file = path.join(folder, dumpFileOf(date))
   const part = `${file}.part`
+  let output
 
   try {
     const counts = {}
@@ -53,6 +54,11 @@ const dump = async ({ config, folder, onCollection }) => {
     zip.addBuffer(Buffer.from(JSON.stringify({ format: DUMP_FORMAT, version: app.version, date: date.toISOString(), counts }, null, 2)), 'manifest.json')
     zip.addBuffer(Buffer.from(JSON.stringify(stripConfig(config.getProperties()), null, 2)), 'config.json')
 
+    // yazl listens to no stream it reads: a cursor that fails would throw outside of this function
+    let fail
+    const failure = new Promise((resolve, reject) => (fail = reject))
+    zip.outputStream.on('error', fail)
+
     for (const name of DUMP_COLLECTIONS) {
       const cursor = connection.db.collection(name).find({}, { session })
       zip.addReadStream(Readable.from((async function* () {
@@ -61,18 +67,19 @@ const dump = async ({ config, folder, onCollection }) => {
         }
 
         onCollection(name, counts[name])
-      })()), `${name}.jsonl`)
+      })()).on('error', fail), `${name}.jsonl`)
     }
 
     fs.mkdirSync(folder, { recursive: true })
-    const output = fs.createWriteStream(part, { mode: 0o600 })
+    output = fs.createWriteStream(part, { mode: 0o600 })
     zip.outputStream.pipe(output)
     zip.end()
-    await finished(output)
+    await Promise.race([finished(output), failure])
     fs.renameSync(part, file)
 
     return { file, counts, size: fs.statSync(file).size }
   } catch (error) {
+    output?.destroy()
     fs.rmSync(part, { force: true })
     throw error
   } finally {
