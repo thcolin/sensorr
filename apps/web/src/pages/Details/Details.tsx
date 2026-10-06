@@ -170,6 +170,24 @@ const UIDetails = ({
     titled.current = entity?.id
   }
   const titleReady = ready && titled.current === entity?.id
+
+  // On the page, the title waits for its logo to be decoded, so its bar takes the logo's size and not an empty one's
+  const pageLogo = page ? artworks?.logo : null
+  const [decodedLogo, setDecodedLogo] = useState(null)
+  useEffect(() => {
+    if (!pageLogo) {
+      return
+    }
+
+    let active = true
+    const image = new Image()
+    image.src = logoSrcOf(pageLogo, api.access_token)
+    image.decode().catch(() => null).then(() => active && setDecodedLogo(pageLogo))
+    return () => {
+      active = false
+    }
+  }, [pageLogo, api.access_token])
+  const pageTitleReady = ready && state !== 'loading' && (!pageLogo || decodedLogo === pageLogo)
   const externalsReady = ready && state !== 'loading' && additionalReady
 
   // A logo that reads on none keeps the first, with the tone the page would give it; none loaded leaves the title
@@ -238,7 +256,7 @@ const UIDetails = ({
       {behavior === 'tv' && !!search && (
         <div sx={UIDetails.styles.ticket}>
           <ShowTicket
-            palette={!palette.loading && !palette.initial ? palette.palette : null}
+            palette={shown}
             ready={ready && state !== 'loading'}
             entity={entity}
             toggleSensorr={search}
@@ -248,7 +266,7 @@ const UIDetails = ({
       {behavior === 'movie' && (
         <div sx={UIDetails.styles.ticket}>
           <MovieActions
-            palette={!palette.loading && !palette.initial ? palette.palette : null}
+            palette={shown}
             ready={ready && state !== 'loading'}
             entity={entity}
             metadata={metadata}
@@ -268,19 +286,19 @@ const UIDetails = ({
 
   const titleBlock = (
     <h1 sx={UIDetails.styles.title}>
-      <Skeleton palette={palette.palette} ready={ready} shape={<Bar width='60%' height='0.75em' />}>
+      <Skeleton palette={shown} ready={pageTitleReady} shape={<Bar width='8em' height='1em' />} clip={true}>
         {artworks?.logo ? <TitleLogo key={artworks.logo} path={artworks.logo} title={title} /> : title}
       </Skeleton>
     </h1>
   )
 
-  const subtitleShape = <Bar width='14em' height='0.875em' />
+  const subtitleShape = <Bar width='14em' height='1.25em' />
 
   const metadataBlock = (
     <>
       {behavior === 'movie' && (
         // Its state opens the editor of a wished, archived or missing movie: it waits for it
-        <Skeleton palette={palette.palette} ready={ready && state !== 'loading'} shape={subtitleShape} sx={{ marginBottom: 4 }}>
+        <Skeleton palette={shown} ready={ready && state !== 'loading'} shape={subtitleShape} sx={{ marginBottom: 4 }}>
           <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState}>
             <summary>
               <span />
@@ -302,7 +320,7 @@ const UIDetails = ({
         </Skeleton>
       )}
       {behavior === 'tv' && (
-        <Skeleton palette={palette.palette} ready={ready && subtitleReady} shape={subtitleShape} sx={{ marginBottom: 4 }}>
+        <Skeleton palette={shown} ready={ready && subtitleReady} shape={subtitleShape} sx={{ marginBottom: 4 }}>
           {actions ? (
             <details sx={UIDetails.styles.metadata} onToggle={(e: any) => setMetadataState(e.target.open)} open={metadataState ?? variant !== 'drawer'}>
               <summary>
@@ -328,19 +346,19 @@ const UIDetails = ({
   )
 
   const externalsBlock = ['movie', 'tv'].includes(behavior) && (
-    <Skeleton palette={palette.palette} ready={externalsReady} shape={externalsShape} sx={{ marginBottom: 4 }}>
+    <Skeleton palette={shown} ready={externalsReady} shape={externalsShape} sx={{ marginBottom: 4 }}>
       <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} />
     </Skeleton>
   )
 
   const meaningfulBlock = (
-    <Skeleton palette={palette.palette} ready={ready} shape={<Bar width='22em' height='0.75em' />} sx={{ marginBottom: 4 }}>
+    <Skeleton palette={shown} ready={ready} shape={<Bar width='22em' height='1em' />} sx={{ marginBottom: 4 }}>
       <Meaningful meaningful={meaningful} open={meaningfulState} onToggle={setMeaningfulState} />
     </Skeleton>
   )
 
   const overviewBlock = (
-    <Skeleton palette={palette.palette} ready={ready} shape={<Lines widths={['100%', '97%', '99%', '58%']} height='0.75em' />}>
+    <Skeleton palette={shown} ready={ready} shape={<Lines widths={['100%', '97%', '99%', '58%']} />}>
       <div>
         {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
         <Overview children={overview} remembered={page} lines={page ? 8 : 4} />
@@ -394,8 +412,8 @@ const UIDetails = ({
             {posterBlock}
           </div>
           <div sx={UIDetails.styles.drawer.under}>
-            <Skeleton palette={palette.palette} ready={titleReady} shape={<Bar width='12em' height='2.5em' sx={{ marginX: 'auto' }} />} sx={{ marginBottom: 10 }}>
-              <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block' }}>
+            <Skeleton palette={shown} ready={titleReady} shape={<Bar width='12em' height='2.5em' sx={{ marginX: 'auto' }} />} clip={true} sx={{ marginBottom: 10 }}>
+              <Link to={`/${behavior}/${entity?.id}`} disabled={!entity?.id} sx={{ variant: 'link.reset', display: 'block', marginX: 'auto' }}>
                 {logo ? (
                   <h1 sx={UIDetails.styles.drawer.logo}>
                     <img src={logo} alt={title} crossOrigin='anonymous' style={{ filter: logoFilterOf(chosenLogo.tone, background) }} />
@@ -408,14 +426,14 @@ const UIDetails = ({
             <div style={tintOf(shown.alternativeColor)} sx={{ 'details > div': tintOf(shown.negativeColor) }}>{metadataBlock}</div>
             {['movie', 'tv'].includes(behavior) && (
               <>
-                <Skeleton palette={palette.palette} ready={externalsReady} shape={<Bar pill={true} width='9em' height='2em' sx={{ marginX: 'auto' }} />}>
+                <Skeleton palette={shown} ready={externalsReady} shape={<Bar pill={true} width='9em' height='2em' sx={{ marginX: 'auto' }} />}>
                   <div sx={UIDetails.styles.drawer.ratings}>
                     <span>
                       <ReviewsBadge entity={entity} reviews={additional?.reviews} palette={shown} forceOpen={true} />
                     </span>
                   </div>
                 </Skeleton>
-                <Skeleton palette={palette.palette} ready={externalsReady} shape={externalsShape}>
+                <Skeleton palette={shown} ready={externalsReady} shape={<span sx={{ ...UIDetails.styles.pills, justifyContent: 'center' }}>{externalsShape.props.children}</span>}>
                   <div sx={UIDetails.styles.drawer.externals}>
                     <Externals entity={entity} metadata={metadata} additional={additional} meaningful={meaningful} reviews={false} />
                   </div>

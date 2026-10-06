@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { animations } from '@sensorr/theme'
 
 // The house transition. Whatever arrives after the rest, a badge, a pill, a row of links, takes it
@@ -34,12 +35,24 @@ export const Bar = ({ width = '100%', height = '1em', pill = false, radius = nul
       height,
       borderRadius: radius || (pill ? '1em' : '0.25em'),
       backgroundColor: color,
+      // A bar in a poster's colors follows them as `Shadow` does
+      transition: 'background-color 800ms ease-in-out',
     }}
   />
 )
 
-export const Lines = ({ widths = ['100%', '92%', '64%'], height = '0.625em', ...props }: { widths?: string[], height?: string, [prop: string]: any }) => (
-  <span {...props} aria-hidden={true} sx={{ display: 'flex', flexDirection: 'column', gap: '0.625em', paddingY: '0.25em' }}>
+// A bar per line of a paragraph, as high as its text, the lines as far apart as its line height
+export const Lines = ({ widths = ['100%', '92%', '64%'], height = '1em', lineHeight = 1.5, ...props }: { widths?: string[], height?: string, lineHeight?: number, [prop: string]: any }) => (
+  <span
+    {...props}
+    aria-hidden={true}
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: `calc(${height} * ${lineHeight - 1})`,
+      paddingY: `calc(${height} * ${(lineHeight - 1) / 2})`,
+    }}
+  >
     {widths.map((width, index) => <Bar key={index} width={width} height={height} />)}
   </span>
 )
@@ -51,24 +64,86 @@ export interface SkeletonProps {
   align?: 'center' | 'start'
   // Cut a text that overflows with an ellipsis, which a block holding menus or badges cannot afford
   clip?: boolean
+  // Once the bar has taken the content's size and the content shows, for what waits on it
+  onShown?: () => void
   children?: React.ReactNode
   [prop: string]: any
 }
 
-// A bar that becomes its content: both sit in the same grid cell, the bar fades out as the content
-// fades in, and the cell keeps the larger of the two, so nothing around it moves. A blank line holds
-// the cell at the height of one line of the text it waits for.
-export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, children, ...props }: SkeletonProps) => (
-  <span {...props} sx={{ ...Skeleton.styles.element, alignItems: align }}>
-    <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
-    {placeholder ? (
-      <span aria-hidden={true} sx={{ ...Skeleton.styles.bar, opacity: ready ? 0 : 1 }}>{placeholder}</span>
-    ) : (
-      <Bar {...bar} sx={{ ...Skeleton.styles.bar, opacity: ready ? 0 : 1 }} />
-    )}
-    {ready && <span sx={{ ...Skeleton.styles.content, ...(clip ? Skeleton.styles.clip : {}), ...reveal }}>{children}</span>}
-  </span>
-)
+const EASING = 'ease-in-out'
+const DURATION = 400
+
+// A bar that becomes its content. Once the content is there, it is laid out unseen in the bar's grid
+// cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
+// width, then the bar fades out as the content fades in. A blank line holds the cell at the height of
+// one line of the text it waits for.
+export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, children, ...props }: SkeletonProps) => {
+  const cell = useRef<HTMLSpanElement>(null)
+  const cover = useRef<HTMLSpanElement>(null)
+  const content = useRef<HTMLSpanElement>(null)
+  const height = useRef<number>(null)
+  // Ready from the first render, the content shows at once: there was no bar to see
+  const [shown, setShown] = useState(ready)
+
+  const running = useRef<Animation[]>([])
+
+  useEffect(() => {
+    if (shown && typeof onShown === 'function') {
+      onShown()
+    }
+  }, [shown])
+
+  useLayoutEffect(() => () => running.current.forEach(animation => animation.cancel()), [])
+
+  useLayoutEffect(() => {
+    if (!ready) {
+      running.current.forEach(animation => animation.cancel())
+      running.current = []
+      height.current = cell.current.getBoundingClientRect().height
+      setShown(false)
+      return
+    }
+
+    if (shown) {
+      return
+    }
+
+    if (height.current === null || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(true)
+      return
+    }
+
+    const from = height.current
+    const to = cell.current.getBoundingClientRect().height
+    const timing = { duration: DURATION, easing: EASING }
+    // A single bar, given or drawn by the placeholder, takes the content's width and keeps the height of its text;
+    // a group of bars only follows the cell's height
+    const lone = cover.current?.childElementCount === 1 && !cover.current.firstElementChild.childElementCount && cover.current.firstElementChild as HTMLElement
+    running.current = [cell.current.animate([{ height: `${from}px` }, { height: `${to}px` }], timing)]
+
+    if (lone && content.current) {
+      const was = lone.getBoundingClientRect()
+      const is = content.current.getBoundingClientRect()
+      running.current.push(lone.animate([{ width: `${was.width}px` }, { width: `${is.width}px` }], { ...timing, fill: 'forwards' }))
+    }
+
+    running.current[0].finished.then(() => setShown(true)).catch(() => null)
+  }, [ready])
+
+  return (
+    <span {...props} ref={cell} sx={{ ...Skeleton.styles.element, alignItems: align }}>
+      <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
+      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, opacity: shown ? 0 : 1 }}>
+        {placeholder || <Bar {...bar} />}
+      </span>
+      {ready && (
+        <span sx={{ ...Skeleton.styles.content, display: clip ? 'flex' : 'block', ...(shown ? reveal : { visibility: 'hidden' }) }}>
+          <span ref={content} sx={clip ? Skeleton.styles.clip : Skeleton.styles.block}>{children}</span>
+        </span>
+      )}
+    </span>
+  )
+}
 
 Skeleton.styles = {
   element: {
@@ -83,17 +158,23 @@ Skeleton.styles = {
     visibility: 'hidden',
     width: '0px',
   },
-  bar: {
+  cover: {
+    display: 'block',
     transition: `opacity ${REVEAL}`,
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
     },
   },
-  content: {
-    display: 'block',
-  },
+  // A flex row lays a text out at its own width, the one a lone bar takes, without the line box an
+  // inline block would add under it
+  content: {},
   clip: {
+    minWidth: '0px',
+    whiteSpace: 'inherit',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  },
+  block: {
+    display: 'block',
   },
 }

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Entities } from '@sensorr/ui'
+import { Bar, Entities } from '@sensorr/ui'
 import { useHistoryState } from '@sensorr/utils'
-import { useTranslation } from 'react-i18next'
 import nanobounce from 'nanobounce'
 
 // A tab of a row, the one not shown let through
@@ -20,7 +19,6 @@ export const TAB = {
 
 export const withTabsBehavior = () => (WrappedComponent) => {
   const WithTabsBehavior = ({ id, tabs, ...props }) => {
-    const { t } = useTranslation()
     const [current, setCurrent] = useHistoryState(`${id}-tab`, null)
     const [optimistic, setOptimistic] = useState(null)
     const debounce = useMemo(() => nanobounce(400), [])
@@ -45,7 +43,7 @@ export const withTabsBehavior = () => (WrappedComponent) => {
         ready={ready && tab?.ready !== false}
         label={(
           <>
-            {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: t('tabs.loading') }]]) as [string, any]).map(([key, { label: children }]) => (
+            {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: <Bar inline={true} width='7em' height='0.75em' /> }]]) as [string, any]).map(([key, { label: children }]) => (
               <button
                 key={key}
                 sx={{ ...TAB, ...(key !== optimistic && { opacity: 0.5 }) }}

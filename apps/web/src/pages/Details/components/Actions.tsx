@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon, QuerySelect, Option } from '@sensorr/ui'
+import { Bar, Icon, QuerySelect, Option } from '@sensorr/ui'
 import { keyframes } from '@emotion/react'
 import Color from 'color'
 import { readableOn } from '@sensorr/palette'
@@ -186,7 +186,7 @@ const UITicket = ({
             }}
           >
             <span>
-              {(ready && entity?.id) ? String(entity?.id).padStart(8, '0') : 'Loading'}
+              {(ready && entity?.id) ? String(entity?.id).padStart(8, '0') : <Bar inline={true} width='5em' height='0.625em' color='currentColor' />}
             </span>
           </span>
           <span sx={UITicket.styles.center}>
