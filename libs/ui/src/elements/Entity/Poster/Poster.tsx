@@ -319,10 +319,6 @@ const UIPoster = ({
               data-cutout-picture={true}
               sx={{
                 transition: 'background-color 800ms ease-in-out, color 800ms ease-in-out',
-                maskSize: '100% 100%',
-                maskRepeat: 'no-repeat',
-                WebkitMaskSize: '100% 100%',
-                WebkitMaskRepeat: 'no-repeat',
               }}
             />
           </PressableLink>

@@ -1,4 +1,7 @@
-import { Movie as UIMovie } from './Movie'
+import { Movie as UIMovie, transformMovieDetails } from './Movie'
+import { Poster } from '../../elements/Entity/Poster/Poster'
+import { MovieState } from './State/State'
+import { ReviewsBadge } from './Badges/ReviewsBadge'
 import { fixtures } from '@sensorr/tmdb'
 
 const credits = {
@@ -75,6 +78,24 @@ export const MoviePosterWithFocus = (args: any) => (
     entity={fixtures.movie}
     state='archived'
     focus='popularity'
+  />
+)
+
+// The poster a phone shows once checked, raised on its aura, forced here whatever the screen's width
+export const MoviePosterSelected = (args: any) => (
+  <Poster
+    {...args}
+    details={transformMovieDetails(fixtures.movie)}
+    link={{ to: '/movie/1' }}
+    interactive={true}
+    selected={true}
+    selectedVisible={true}
+    onSelectedChange={() => {}}
+    onPress={() => {}}
+    badges={{
+      state: { component: MovieState, props: { value: 'archived', onChange: () => {}, compact: true } },
+      reviews: { component: ReviewsBadge, props: { entity: fixtures.movie, display: 'poster' } },
+    }}
   />
 )
 
