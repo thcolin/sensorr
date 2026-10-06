@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
-import { filter, finalize, mergeMap, map, share, tap } from 'rxjs/operators'
+import { bufferTime, concatMap, filter, finalize, map, share, tap } from 'rxjs/operators'
 import { fields } from '@sensorr/tmdb'
 import { entryPolicy, listPolicy } from '@sensorr/sensorr'
 import { facetFilter, libraryStateFilter, movieFilter } from '../filters'
@@ -16,6 +16,9 @@ import { Movie as MovieDocument } from './movie.schema'
 import { arrivedOf } from './arrivals'
 
 const SWAPS = ['refine', 'shrink', 'report']
+
+// The changes listenMetadata gathers before it reads them back, in ms
+const METADATA_BATCH = 250
 
 const METADATA_FIELDS = ['title', 'state', 'policy', 'refine', 'shrink', 'query', 'plex_url', 'releases', 'banned_releases', 'requested_by', 'lists']
 
@@ -330,9 +333,12 @@ export class MoviesService {
   listenMetadata(): Observable<MessageEvent> {
     this.logger.log('ListenMetadata')
 
+    // A restore or a sync writes thousands of movies in seconds: one query per batch, not one per change
     return this.changes$.pipe(
       filter((change: any) => change?.ns?.coll === 'movies'),
-      mergeMap((change: any) => this.movieModel.find({ '_id': { $eq: change?.documentKey?._id } }, [...METADATA_FIELDS, 'plex_artworks'].join(' ')).lean().exec()),
+      bufferTime(METADATA_BATCH),
+      filter((changes: any[]) => changes.length > 0),
+      concatMap((changes: any[]) => this.movieModel.find({ '_id': { $in: [...new Set(changes.map((change) => change?.documentKey?._id))] } }, [...METADATA_FIELDS, 'plex_artworks'].join(' ')).lean().exec()),
       map(metadata => ({
         data: metadata.reduce((acc, curr) => ({
           ...acc,

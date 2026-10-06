@@ -84,3 +84,31 @@ describe('ShowsService.upsertShows', () => {
     expect(logsService.ammendLog).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('ShowsService.listenMetadata', () => {
+  it('reads a burst of changes back in one query, a deleted show as null', async () => {
+    const EventEmitter = (await import('events')).EventEmitter
+    const stream = Object.assign(new EventEmitter(), { close: jest.fn() })
+    const find = jest.fn((filter) => ({ lean: () => ({ exec: async () => filter._id.$in.filter((id) => id !== 3).map((_id) => ({ _id, name: `Show ${_id}` })) }) }))
+    const module = await Test.createTestingModule({
+      providers: [
+        ShowsService,
+        { provide: getModelToken(ShowDocument.name), useValue: { watch: () => stream, find } },
+        { provide: getModelToken(EpisodeDocument.name), useValue: {} },
+        { provide: ConfigService, useValue: {} },
+        { provide: LogsService, useValue: {} },
+        { provide: SensorrService, useValue: {} },
+      ],
+    }).compile()
+
+    const messages = []
+    const subscription = module.get(ShowsService).listenMetadata().subscribe((message) => messages.push(message))
+    ;[1, 2, 1, 3].forEach((_id) => stream.emit('change', { documentKey: { _id } }))
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    subscription.unsubscribe()
+
+    expect(find).toHaveBeenCalledTimes(1)
+    expect(find.mock.calls[0][0]).toEqual({ _id: { $in: [1, 2, 3] } })
+    expect(messages).toEqual([{ data: { 1: { _id: 1, name: 'Show 1' }, 2: { _id: 2, name: 'Show 2' }, 3: null } }])
+  })
+})

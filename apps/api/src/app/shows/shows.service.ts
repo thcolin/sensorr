@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter'
 import { InjectModel } from '@nestjs/mongoose'
 import { PaginateModel, PaginateResult } from 'mongoose'
 import { Observable, defer, fromEventPattern } from 'rxjs'
-import { filter, finalize, mergeMap, share, tap } from 'rxjs/operators'
+import { bufferTime, concatMap, filter, finalize, share, tap } from 'rxjs/operators'
 import { entryPolicy, listPolicy, STATUS_GROUPS, swapReplacesOf } from '@sensorr/sensorr'
 import { fields } from '@sensorr/tmdb'
 import { episodeStatusFilter, facetFilter, libraryStateFilter, showFilter } from '../filters'
@@ -15,6 +15,9 @@ import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
 import { landedOf } from './arrivals'
+
+// The changes listenMetadata gathers before it reads them back, in ms
+const METADATA_BATCH = 250
 
 const METADATA_FIELDS = ['name', 'status', 'last_air_date', 'state', 'monitored', 'monitor_new_seasons', 'policy', 'path', 'query', 'plex_artworks', 'plex_seasons', 'releases', 'banned_releases', 'requested_by', 'lists']
 
@@ -400,10 +403,13 @@ export class ShowsService {
 
     return this.changes$.pipe(
       filter((change: any) => change?.documentKey),
-      mergeMap(async (change: any) => {
-        const id = change?.documentKey?._id
-        const show = await this.showModel.findById(id, METADATA_FIELDS.join(' ')).lean().exec()
-        return { data: { [id]: show || null } } as MessageEvent
+      // A restore writes hundreds of shows in seconds: one query per batch, not one per change
+      bufferTime(METADATA_BATCH),
+      filter((changes: any[]) => changes.length > 0),
+      concatMap(async (changes: any[]) => {
+        const ids = [...new Set(changes.map((change) => change.documentKey._id))]
+        const shows = new Map((await this.showModel.find({ _id: { $in: ids } }, METADATA_FIELDS.join(' ')).lean().exec()).map((show: any) => [`${show._id}`, show]))
+        return { data: Object.fromEntries(ids.map((id) => [id, shows.get(`${id}`) || null])) } as MessageEvent
       }),
       tap(() => this.logger.log(`ListenMetadata, message=""`)),
     )
