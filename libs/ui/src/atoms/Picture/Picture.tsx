@@ -89,14 +89,28 @@ function UIPicture({
   const [loaded, setLoaded] = useState(false)
   const src = pictureSrc(path, size)
 
-  const onLoadProps = useMemo(() => ({
-    onLoad: (e) => {
-      setLoaded(true)
-      setError(false)
+  const current = useRef(src)
+  current.current = src
+  // The source a cached image is being decoded for, so a render does not decode it again
+  const decoding = useRef(null)
 
-      if (typeof onReady === 'function') {
-        onReady(e, false)
-      }
+  const onLoadProps = useMemo(() => ({
+    // Decoded before it is said loaded: an image decoded only once shown comes frames after what shows with it
+    onLoad: (e) => {
+      const image = e?.currentTarget as HTMLImageElement
+
+      Promise.resolve(image?.decode?.()).catch(() => null).then(() => {
+        if (image && image.getAttribute('src') !== current.current) {
+          return
+        }
+
+        setLoaded(true)
+        setError(false)
+
+        if (typeof onReady === 'function') {
+          onReady(e, false)
+        }
+      })
     },
     onError: (e) => {
       setLoaded(true)
@@ -131,13 +145,9 @@ function UIPicture({
   }, [path, size])
 
   useEffect(() => {
-    if (!loaded && ref.current?.complete) {
-      setLoaded(true)
-      setError(false)
-
-      if (typeof onReady === 'function') {
-        onReady(null, false)
-      }
+    if (!loaded && ref.current?.complete && decoding.current !== src) {
+      decoding.current = src
+      onLoadProps.onLoad({ currentTarget: ref.current })
     }
   })
 

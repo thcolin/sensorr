@@ -68,7 +68,7 @@ export interface SkeletonProps {
   align?: 'center' | 'start'
   // Cut a text that overflows with an ellipsis, which a block holding menus or badges cannot afford
   clip?: boolean
-  // Once the bar has taken the content's size and the content shows, for what waits on it
+  // Once the bar has taken the content's size and left, as the content starts to show, for what waits on it
   onShown?: () => void
   // The width the placeholder's `[data-fit]` bar takes, read on the content laid out unseen, when the content is a
   // block wider than its text
@@ -96,10 +96,14 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
 
   const running = useRef<Animation[]>([])
 
+  // Called as the content starts to show, once the bar has left: what waits on it shows with it
   useEffect(() => {
-    if (shown && typeof onShown === 'function') {
-      onShown()
+    if (!shown || typeof onShown !== 'function') {
+      return
     }
+
+    const timeout = setTimeout(onShown, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : HIDE)
+    return () => clearTimeout(timeout)
   }, [shown])
 
   useLayoutEffect(() => () => running.current.forEach(animation => animation.cancel()), [])
