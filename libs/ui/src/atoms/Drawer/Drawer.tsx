@@ -16,6 +16,16 @@ export interface DrawerProps {
   children: React.ReactNode
 }
 
+const isAtTop = (element: HTMLElement, root: HTMLElement) => {
+  for (let node = element; node && node !== root; node = node.parentElement) {
+    if (node.scrollTop > 0) {
+      return false
+    }
+  }
+
+  return true
+}
+
 const UIDrawer = ({
   height = '75vh',
   background: backgroundColor = 'primary',
@@ -35,6 +45,8 @@ const UIDrawer = ({
 
   const y = useMotionValue(0)
   const controls = useDragControls()
+
+  const pull = useRef<{ y: number, atTop: boolean }>(null)
 
   // A toggle overtaken by a newer one leaves the drawer to it
   const toggles = useRef(0)
@@ -100,10 +112,6 @@ const UIDrawer = ({
       <button
         sx={UIDrawer.styles.shadow}
         onClick={async (e) => {
-          if (device === 'mobile') {
-            return
-          }
-
           await animateToggle(false)
           preventEffectAnimation.current = true
           close()
@@ -151,7 +159,19 @@ const UIDrawer = ({
             }}
           ></button>
         )}
-        <div sx={UIDrawer.styles.wrapper} style={{ opacity: !hidden ? 1 : 0 }}>
+        <div
+          sx={UIDrawer.styles.wrapper}
+          style={{ opacity: !hidden ? 1 : 0 }}
+          onPointerDown={(e) => pull.current = { y: e.clientY, atTop: isAtTop(e.target as HTMLElement, e.currentTarget) }}
+          onPointerMove={(e) => {
+            // Pulled down from content scrolled to its top, the drawer follows the finger like the knob
+            if (pull.current?.atTop && e.clientY - pull.current.y > 8) {
+              pull.current = null
+              controls.start(e)
+            }
+          }}
+          onPointerUp={() => pull.current = null}
+        >
           {!hidden && children}
         </div>
         {/* <div sx={UIDrawer.styles.spinner} style={{ visibility: !hidden ? 'hidden' : 'visible' }}>

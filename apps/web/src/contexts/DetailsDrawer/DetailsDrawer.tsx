@@ -15,6 +15,16 @@ const styles = {
     overflowX: 'hidden',
     overscrollBehavior: 'contain',
   },
+  // Under the knob, once the poster standing out of the drawer has scrolled away
+  band: {
+    position: 'sticky',
+    top: '0px',
+    height: '2.25em',
+    marginBottom: '-2.25em',
+    zIndex: 2,
+    pointerEvents: 'none',
+    transition: 'opacity 200ms ease-in-out',
+  },
 }
 
 export const Provider = ({ children, ...props }) => {
@@ -24,6 +34,12 @@ export const Provider = ({ children, ...props }) => {
   const location = useLocation()
   const navigationType = useNavigationType()
   const scroll = useRef<HTMLDivElement>(null)
+  const [past, setPast] = useState(false)
+
+  const onScroll = useCallback(() => {
+    const poster = scroll.current?.querySelector('[data-drawer-poster]')
+    setPast(!!poster && poster.getBoundingClientRect().bottom <= scroll.current.getBoundingClientRect().top)
+  }, [])
   const opened = useRef(null)
   const loaded = useRef(location.key)
   const navigated = useRef(false)
@@ -31,6 +47,7 @@ export const Provider = ({ children, ...props }) => {
   const open = useCallback(({ link, palette }) => {
     opened.current = { link: { to: link?.to }, palette }
     setData(opened.current)
+    setPast(false)
     openPortal()
   }, [])
 
@@ -98,7 +115,8 @@ export const Provider = ({ children, ...props }) => {
           background='transparent'
           knob={palette?.color || 'whitePure'}
         >
-          <div ref={scroll} sx={styles.scroll}>
+          <div ref={scroll} sx={styles.scroll} onScroll={onScroll}>
+            <div sx={styles.band} style={{ backgroundColor: palette?.backgroundColor, opacity: past ? 1 : 0 }} />
             {/* A poster in the drawer follows its link: the drawer does not open over itself */}
             <detailsDrawerContext.Provider value={{ open: null, close, leave }}>
               {behavior === 'movie' && <MovieContent key={id} id={id} variant='drawer' />}
