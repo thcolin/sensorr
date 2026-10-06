@@ -12,7 +12,6 @@ const UNFOLLOWED = ShowStateOptions.find(({ value }) => value === 'unfollowed')
 export const movies = (count) => `${count} ${count === 1 ? 'movie' : 'movies'}`
 export const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
 
-// A grid's child gets its checkbox, the selection is kept per page in the bulk context
 export const withSelection = (WrappedComponent) => {
   const WithSelection = ({ entity, ...props }) => {
     const { selection, setSelection } = useBulkContext()
@@ -37,7 +36,6 @@ export const withSelection = (WrappedComponent) => {
   return WithSelection
 }
 
-// The bar of a grid without the Library's filters: what can be done to movies or shows Sensorr may not keep yet
 export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
   const { setMovieMetadata } = useMoviesMetadataContext() as any
   const { followShow, setShowLists } = useShowsMetadataContext() as any
@@ -103,7 +101,6 @@ export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
   )
 }
 
-// A page whose grid lists movies or shows, as `bulk` says, checks them and acts on them with the bar
 const withBulk = () => (WrappedComponent) => {
   const WithBulk = ({ bulk = null, child, ...props }: { bulk?: 'movie' | 'tv' | null, child: any, [key: string]: any }) => {
     const selectable = useMemo(() => bulk ? withSelection(child) : child, [bulk, child])
