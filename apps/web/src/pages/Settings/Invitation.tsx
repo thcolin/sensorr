@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Bulk, Button, Icon, Link, Option } from '@sensorr/ui'
+import { Bar, Bulk, Button, Link, Option } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { errorOf } from './Mail'
 import { Face } from './Face'
@@ -93,9 +93,19 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
       </div>
       <div sx={Invitation.styles.people}>
         {!shared && !unreachable && (
-          <div sx={Invitation.styles.state}>
-            <Icon value='spinner' />
-          </div>
+          // A person's row: the checkbox, the face, the name and the email
+          <ul sx={Invitation.styles.list} aria-hidden={true}>
+            {[[6, 12], [7.5, 14], [5, 11]].map(([name, email], index) => (
+              <li key={index} sx={Invitation.styles.person}>
+                <Bar width='1.25em' height='1.25em' />
+                <Bar width='34px' height='34px' radius='50%' />
+                <span sx={{ display: 'flex', gap: 6 }}>
+                  <Bar width={`${name}em`} height='0.875em' />
+                  <Bar width={`${email}em`} height='0.75em' />
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
         {unreachable && (
           <p sx={Invitation.styles.state}><small>Unable to read who your Plex server is shared with, <button type='button' sx={Invitation.styles.retry} onClick={fetchShared}>retry</button></small></p>

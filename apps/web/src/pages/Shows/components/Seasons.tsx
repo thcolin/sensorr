@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Picture, Progress, ProgressPill } from '@sensorr/ui'
+import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Lines, Picture, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
 import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -624,10 +624,15 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
 const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, search = null }) => {
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
-  if (loading || error || !data.episodes?.length) {
+  if (loading) {
+    // A bar per episode row, three before TMDB says how many
+    return <Lines widths={['100%', '100%', '100%']} height='2.5em' sx={UIEpisodes.styles.status} />
+  }
+
+  if (error || !data.episodes?.length) {
     return (
       <p sx={UIEpisodes.styles.status}>
-        {loading ? 'Loading the episodes…' : error ? `Unable to load the episodes: ${error.message}` : 'No episode announced yet'}
+        {error ? `Unable to load the episodes: ${error.message}` : 'No episode announced yet'}
       </p>
     )
   }

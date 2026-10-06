@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bar, Button, Link } from '@sensorr/ui'
+import { Bar, Button, Link, reveal } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS } from '@sensorr/sensorr'
 import Body from '../../layout/Body/Body'
@@ -225,7 +225,7 @@ const Update = ({ ...props }) => {
               </div>
             )}
             {ready && actionable && (
-              <div sx={Update.styles.action}>
+              <div sx={{ ...Update.styles.action, ...reveal }}>
                 <Button type='button' color='primary' sx={{ width: '100%' }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
                 {!updating && !!jobs.length ? (
                   <p sx={Update.styles.warning}>
@@ -242,7 +242,7 @@ const Update = ({ ...props }) => {
             {!updating && !failure && updater?.error && <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />}
             {!loading && (
               ready && !failure ? (
-                <details sx={Update.styles.details}>
+                <details sx={{ ...Update.styles.details, ...reveal }}>
                   <summary><strong>Manual update</strong></summary>
                   {manual}
                 </details>

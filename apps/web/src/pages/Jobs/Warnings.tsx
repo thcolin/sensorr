@@ -1,5 +1,8 @@
+import { reveal } from '@sensorr/ui'
+
+// Known once the job's logs come in, after its view: it fades in then
 export const Warnings = ({ logs = [], ...props }) => !logs.length ? null : (
-  <div sx={Warnings.styles.element}>
+  <div sx={{ ...Warnings.styles.element, ...reveal }}>
     <span>Warnings</span>
     <div>
       <div>
