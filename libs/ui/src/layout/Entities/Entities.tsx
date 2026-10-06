@@ -138,63 +138,96 @@ const UIEntities = ({
     />
   ) : null, [total, error, empty])
 
-  return (!!total || !ready || !hide) && (
+  // A row hidden once empty folds away instead of leaving the page at once, and the rows under it follow
+  const collapsed = hide && ready && !total
+
+  const content = (
+    <div sx={{ ...UIEntities.styles.element, ...UIEntities.styles[display] }}>
+      {label && (
+        <div sx={UIEntities.styles.head}>
+          <DragScroll sx={UIEntities.styles.label}>
+            {(typeof label === 'string' && more) ? (
+              <NavLink to={more.to} state={more.state} viewTransition>
+                {label}
+                <Icon value='chevron' direction={false} />
+              </NavLink>
+            ) : label}
+          </DragScroll>
+          {display === 'row' && !(edges.start && edges.end) && (
+            <div sx={UIEntities.styles.paging} role='group' aria-label={typeof label === 'string' ? label : undefined}>
+              {/* Disabled for the pointer only: a button that ends its row keeps the keyboard's focus */}
+              <button type='button' aria-label='Scroll left' aria-disabled={edges.start} onClick={() => !edges.start && glide(row.current, pageOf(row.current, -1))}>
+                <Icon value='chevron' direction={false} />
+              </button>
+              <button type='button' aria-label='Scroll right' aria-disabled={edges.end} onClick={() => !edges.end && glide(row.current, pageOf(row.current, 1))}>
+                <Icon value='chevron' direction={false} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {display === 'grid' ? (
+        <Grid
+          {...rest}
+          length={total}
+          child={WrappedChild}
+          childProps={{ props, ready }}
+          override={override}
+          onMore={ready && onMore}
+        />
+      ) : (
+        <List
+          {...rest}
+          id={id}
+          length={total}
+          child={WrappedChild}
+          childProps={{ props, ready }}
+          entities={entities}
+          override={override}
+          display={display}
+          more={more}
+          scroller={row}
+          onMore={ready && onMore}
+        />
+      )}
+      {subtitle && <div sx={UIEntities.styles.subtitle}>{subtitle}</div>}
+    </div>
+  )
+
+  return (
     <EntitiesContextProvider entities={entities}>
-      <div sx={{ ...UIEntities.styles.element, ...UIEntities.styles[display] }}>
-        {label && (
-          <div sx={UIEntities.styles.head}>
-            <DragScroll sx={UIEntities.styles.label}>
-              {(typeof label === 'string' && more) ? (
-                <NavLink to={more.to} state={more.state} viewTransition>
-                  {label}
-                  <Icon value='chevron' direction={false} />
-                </NavLink>
-              ) : label}
-            </DragScroll>
-            {display === 'row' && !(edges.start && edges.end) && (
-              <div sx={UIEntities.styles.paging} role='group' aria-label={typeof label === 'string' ? label : undefined}>
-                {/* Disabled for the pointer only: a button that ends its row keeps the keyboard's focus */}
-                <button type='button' aria-label='Scroll left' aria-disabled={edges.start} onClick={() => !edges.start && glide(row.current, pageOf(row.current, -1))}>
-                  <Icon value='chevron' direction={false} />
-                </button>
-                <button type='button' aria-label='Scroll right' aria-disabled={edges.end} onClick={() => !edges.end && glide(row.current, pageOf(row.current, 1))}>
-                  <Icon value='chevron' direction={false} />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        {display === 'grid' ? (
-          <Grid
-            {...rest}
-            length={total}
-            child={WrappedChild}
-            childProps={{ props, ready }}
-            override={override}
-            onMore={ready && onMore}
-          />
-        ) : (
-          <List
-            {...rest}
-            id={id}
-            length={total}
-            child={WrappedChild}
-            childProps={{ props, ready }}
-            entities={entities}
-            override={override}
-            display={display}
-            more={more}
-            scroller={row}
-            onMore={ready && onMore}
-          />
-        )}
-        {subtitle && <div sx={UIEntities.styles.subtitle}>{subtitle}</div>}
-      </div>
+      {hide ? (
+        <div sx={{ ...UIEntities.styles.fold, ...(collapsed ? UIEntities.styles.folded : {}) }} aria-hidden={collapsed || undefined}>
+          {content}
+        </div>
+      ) : content}
     </EntitiesContextProvider>
   )
 }
 
 UIEntities.styles = {
+  fold: {
+    display: 'grid',
+    gridTemplateRows: '1fr',
+    transition: 'grid-template-rows 400ms ease-in-out, opacity 400ms ease-in-out',
+    '>div': {
+      minHeight: '0px',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
+  },
+  // Clipped only while it folds: a row at rest lets its badges and credits overflow
+  folded: {
+    gridTemplateRows: '0fr',
+    '>div': {
+      minHeight: '0px',
+      overflow: 'hidden',
+    },
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'grid-template-rows 400ms ease-in-out, opacity 400ms ease-in-out, visibility 0ms linear 400ms',
+  },
   element: {
     position: 'relative',
     display: 'flex',

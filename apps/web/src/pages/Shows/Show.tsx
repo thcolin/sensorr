@@ -25,8 +25,8 @@ import { sizeOf } from './components/fills'
 import { aggregateCredits } from './credits'
 
 // The page of `/tv/:id`, also drawn in the details drawer with `id` and `variant='drawer'`
-// The height of a season's row in `Seasons`, measured
-const SEASON_HEIGHT = '3em'
+// A season's row in `Seasons` is 57px high, measured: a bar of 47px, and the 10px between two bars of `Lines`
+const SEASON_HEIGHT = '2.9375em'
 
 export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null, ...props }) => {
   const { restoreScrollPosition } = useScrollPositionContext()

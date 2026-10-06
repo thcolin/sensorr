@@ -69,7 +69,8 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
       label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
       entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
       child: MovieWithCreditsAndReviews,
-      props: ({ index }) => ({ display: ((ready || (index < 5)) && device !== 'mobile') ? 'pretty' : 'poster' }),
+      // Every part of a saga is pretty, its skeletons too: a display that changed with `ready` would remount them
+      props: () => ({ display: device !== 'mobile' ? 'pretty' : 'poster' }),
       ready: ready,
       more: {
         to: `/collection/${movie.data?.belongs_to_collection?.id}`,
