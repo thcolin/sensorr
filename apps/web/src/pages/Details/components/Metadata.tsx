@@ -73,8 +73,8 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
           {help && <small title="Sensorr will apply selected policy to sort and select the best release">Sensorr will apply selected policy to sort and select the best release</small>}
         </div>
         {help && (
-          <>
-            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...UIMetadata.styles.option }}>
+          <div sx={UIMetadata.styles.options}>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
               <span>Refine for better release</span>
               <OptionInput
                 id={`refine-${entity?.id}`}
@@ -83,7 +83,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
                 onChange={value => setMetadata('refine', value)}
               />
             </div>
-            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...UIMetadata.styles.option, gridColumn: ['auto', '2 / -1'] }}>
+            <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
               <span>Shrink for smaller release</span>
               <OptionInput
                 id={`shrink-${entity?.id}`}
@@ -92,7 +92,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
                 onChange={value => setMetadata('shrink', value)}
               />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -146,6 +146,13 @@ UIMetadata.styles = {
   column: {
     flex: [null, '1 1 12em'],
   },
+  // The two options on a line of their own, half of it each
+  options: {
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0, 1fr)', 'repeat(2, minmax(0, 1fr))'],
+    gridColumn: '1 / -1',
+    flexBasis: '100%',
+  },
   // An option's text wraps rather than run under its neighbour when its column is narrower than it
   option: {
     whiteSpace: 'normal',
@@ -175,8 +182,8 @@ export const MetadataPlaceholder = ({ lists = false }) => {
       <small><Bar inline={true} width={`${help}em`} height='1em' /></small>
     </div>
   )
-  const option = (label, text, last = false) => (
-    <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.line, ...(last ? { gridColumn: ['auto', '2 / -1'] } : {}) }}>
+  const option = (label, text) => (
+    <div sx={UIMetadata.styles.block}>
       <span><Bar inline={true} width={`${label}em`} height='1em' /></span>
       <div sx={MetadataPlaceholder.styles.option}>
         <Bar width='1em' height='1em' />
@@ -193,8 +200,10 @@ export const MetadataPlaceholder = ({ lists = false }) => {
         {field(2.75, '0.25em', '2.3125em', 21)}
         {lists && field(2.25, '0.25em', '2.3125em', 15, true)}
         {field(2.75, '0.25em', '2.25em', 31)}
-        {option(12, 39)}
-        {option(12.5, 40, true)}
+        <div sx={UIMetadata.styles.options}>
+          {option(12, 22.25)}
+          {option(12.5, 22.625)}
+        </div>
       </div>
       <Bar height='1px' radius='0px' />
     </div>
