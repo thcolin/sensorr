@@ -1,4 +1,4 @@
-import React, { useState, useCallback, createContext, useContext, useEffect } from 'react'
+import React, { useState, useCallback, createContext, useContext, useEffect, useRef } from 'react'
 import { useInput, Box, Text, useApp } from 'ink'
 import Spinner from 'ink-spinner'
 import EventEmitter from 'events'
@@ -22,18 +22,29 @@ export const Tasks = ({ state: initialState = {}, handlers, ...props }) => {
   const [tasks, setTasks] = useState({})
   const [state, setState] = useState(initialState)
   const [error, setError] = useState(null)
+  const failed = useRef(false)
 
   const handleError = useCallback((error) => {
+    failed.current = true
     setError(error)
     handlers.error(error)
   }, [])
 
-  // A task in error has called `handleError`, which ends the logger: a success on top would write after its end
+  // A task ends in error both for a movie without release and for a failed job: only the second calls `handleError`,
+  // right after its status, and ends the logger, so the success waits a tick and gives way to it
   useEffect(() => {
-    if (Object.keys(tasks).length && Object.values(tasks).every((task) => ['done', 'warning'].includes(task))) {
-      handlers.success()
-      exit()
+    if (!Object.keys(tasks).length || !Object.values(tasks).every((task) => ['done', 'warning', 'error'].includes(task))) {
+      return
     }
+
+    const timer = setTimeout(() => {
+      if (!failed.current) {
+        handlers.success()
+        exit()
+      }
+    })
+
+    return () => clearTimeout(timer)
   }, [tasks, exit])
 
   useInput((input, key) => {
