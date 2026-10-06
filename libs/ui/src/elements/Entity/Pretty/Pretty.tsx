@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useTranslation } from 'react-i18next'
 import { usePalette } from '@sensorr/palette'
@@ -22,11 +22,12 @@ const UIPretty = ({
   const ref = useRef()
   const { theme } = useThemeUI()
 
-  const [poster, setPoster] = useState(details?.poster === null)
-  const [background, setBackground] = useState(details?.billboard === null)
+  // The path each picture loaded: a placeholder reports its empty one as loaded, which says nothing of the entity's
+  const [poster, setPoster] = useState(undefined)
+  const [background, setBackground] = useState(undefined)
 
-  const onPosterReady = useCallback(() => setPoster(true), [])
-  const onBillboardReady = useCallback(() => setBackground(true), [])
+  const onPosterReady = useCallback(() => setPoster(details?.poster), [details?.poster])
+  const onBillboardReady = useCallback(() => setBackground(details?.billboard), [details?.billboard])
 
   const palette = usePalette(
     !!details?.poster && pictureSrc(details.poster, 'w92'),
@@ -39,7 +40,20 @@ const UIPretty = ({
     details?.poster,
   )
 
-  const ready = !palette.loading && background && poster && props.ready !== false
+  // Nothing shows before the poster, the billboard and their colors: the texts never come first
+  const colored = !details?.poster || (!palette.loading && !palette.initial)
+  const ready = colored && background === details?.billboard && poster === details?.poster && props.ready !== false
+  // One sequence: the poster's colors bleed into the blocks and the bars as soon as they are known, the bars take the
+  // texts' widths once everything is loaded, then the texts, the pictures and the badges show together
+  const [titled, setTitled] = useState(false)
+  const revealed = ready && titled
+  const onTitled = useCallback(() => setTitled(true), [])
+
+  useEffect(() => {
+    if (!ready) {
+      setTitled(false)
+    }
+  }, [ready])
 
   return (
     <div sx={UIPretty.styles.element} ref={ref} onMouseEnter={props.loadExternals}>
@@ -47,7 +61,7 @@ const UIPretty = ({
         <Billboard
           path={details?.billboard}
           palette={palette.palette}
-          ready={ready}
+          ready={revealed}
           size='w780'
           fade={0.125}
           onReady={onBillboardReady}
@@ -62,7 +76,7 @@ const UIPretty = ({
             ...(badges?.state ? { state: badges?.state } : {}),
             ...(badges?.proposal ? { proposal: badges?.proposal } : {}),
           }}
-          ready={ready}
+          ready={revealed}
           meaningful={false}
           palette={palette.palette}
           onReady={onPosterReady}
@@ -74,6 +88,8 @@ const UIPretty = ({
           link={link}
           badges={badges}
           ready={ready}
+          revealed={revealed}
+          onTitled={onTitled}
           palette={palette.palette}
           parent={ref}
         />
@@ -134,13 +150,13 @@ UIPretty.styles = {
 
 export const Pretty = memo(UIPretty)
 
-const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) => {
+const UIAbout = ({ details, palette, ready, revealed, onTitled, link, badges, parent, ...props }) => {
   const { t } = useTranslation()
 
   return (
-    <div sx={UIAbout.styles.element}>
+    <div sx={UIAbout.styles.element} style={{ '--theme-ui-colors-gray': `color-mix(in oklab, ${palette.color} 14%, ${palette.backgroundColor})` } as React.CSSProperties}>
       <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
-        <Skeleton ready={ready} bar={{ width: '12em', height: '1em' }}>
+        <Skeleton ready={ready} bar={{ width: '12em', height: '1em' }} onShown={onTitled}>
           <Link to={link?.to} state={link?.state}>{details.title}</Link>
         </Skeleton>
       </h2>
@@ -160,12 +176,12 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
         </span>
       </Skeleton>
       <DragScroll sx={UIAbout.styles.badges} byBackground={true}>
-        {ready && badges?.reviews?.component && (
+        {revealed && badges?.reviews?.component && (
           <div sx={{ ...reveal, ':hover + div': { opacity: 0, transition: 'none' } }}>
             <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
           </div>
         )}
-        {ready && badges?.guests?.component && (
+        {revealed && badges?.guests?.component && (
           <div sx={{ ...UIAbout.styles.guests, ...reveal }}>
             <badges.guests.component {...badges?.guests?.props} />
           </div>

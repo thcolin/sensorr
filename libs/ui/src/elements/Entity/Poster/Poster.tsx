@@ -70,8 +70,9 @@ const UIPoster = ({
   const ref = useRef<HTMLDivElement>()
   const wrapper = useRef<HTMLDivElement>()
   const device = useDevice()
-  const [loaded, setLoaded] = useState(details?.poster ? false : true)
-  const ready = useMemo(() => loaded && props?.ready !== false, [loaded, props?.ready])
+  // The path the picture loaded: a placeholder reports its empty one as loaded, which says nothing of the entity's
+  const [loaded, setLoaded] = useState(undefined)
+  const ready = loaded === details?.poster && props?.ready !== false
   // The picture and everything around it show once the title's bar has taken the title's width
   const [titled, setTitled] = useState(false)
   const revealed = meaningful ? ready && titled : ready
@@ -82,15 +83,16 @@ const UIPoster = ({
       setTitled(false)
     }
   }, [ready])
+
   const id = useId()
   const shape = SHAPES[[...id].reduce((sum, char) => sum + char.charCodeAt(0), 0) % SHAPES.length]
   const onPosterReady = useCallback(() => {
-    setLoaded(true)
+    setLoaded(details?.poster)
 
     if (typeof onReady === 'function') {
       onReady()
     }
-  }, [onReady])
+  }, [onReady, details?.poster])
 
   const { palette } = usePalette(
     interactive && !!details?.poster && pictureSrc(details.poster, 'w92'),

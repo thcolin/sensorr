@@ -409,6 +409,7 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
         {...props}
         {...(artworked.details ? { details: artworked.details } : {})}
         entity={artworked.entity}
+        ready={(props as any).ready !== false && !artworked.pending}
         state={loading ? 'loading' : showStateOf(metadata)}
         setState={setState}
         metadata={metadata}
