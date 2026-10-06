@@ -52,6 +52,7 @@ services:
     volumes:
       - ./config.json:/app/config.json
       - ./.secrets:/app/.secrets
+      - ./dumps:/app/dumps
       - ${SENSORR_BLACKHOLE:-./blackhole}:/blackhole
       - ${SENSORR_TVSHOWS:-./tvshows}:/tvshows
     networks:

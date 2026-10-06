@@ -110,7 +110,8 @@
     "winston": "^3.11.0",
     "winston-mongodb": "^5.1.1",
     "xml2json-light": "^1.0.6",
-    "yargs": "^18.2.0"
+    "yargs": "^18.2.0",
+    "yazl": "^3"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
@@ -141,6 +142,7 @@
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@types/webpack": "^5.28.5",
+    "@types/yazl": "^3.3.1",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "babel-jest": "^30.0.5",

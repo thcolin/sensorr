@@ -415,6 +415,18 @@ const schema = {
         default: false,
       },
     },
+    dump: {
+      cron: {
+        doc: 'Dump job cron, it writes the library and the settings without any secret into dumps/ and keeps the last 4',
+        format: 'String',
+        default: '0 4 * * 0',
+      },
+      paused: {
+        doc: 'Pause Dump job',
+        format: 'Boolean',
+        default: true,
+      },
+    },
   },
   guests: {
     public: {

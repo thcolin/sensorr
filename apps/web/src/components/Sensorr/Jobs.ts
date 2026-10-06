@@ -43,6 +43,12 @@ export const JOB_GROUPS: { label: string, jobs: JobEntry[] }[] = [
       { command: 'mail', description: 'Mail each friend their requests that reached Plex since their last mail', requires: 'mail.host', options: ['cron'] },
     ],
   },
+  {
+    label: 'Data',
+    jobs: [
+      { command: 'dump', description: 'Dump the library and the settings, without any secret, and keep the last 4', options: ['cron'] },
+    ],
+  },
 ]
 
 export const nameOfEntry = ({ command, type }: { command: string, type?: string }) => [command, type].filter(Boolean).join(' ')

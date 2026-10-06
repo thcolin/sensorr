@@ -4,6 +4,7 @@
 /dist
 /tmp
 /db
+/dumps
 /out-tsc
 
 # dependencies
