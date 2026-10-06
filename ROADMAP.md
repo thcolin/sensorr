@@ -9,6 +9,7 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 - **Translations**: no hard-coded string left in the interface.
 - **Responsive pass**: every screen checked and fixed at phone width.
 - **Skeletons**: loading placeholders shaped like the content they stand for.
+- **Settings menu**: the Settings entries ordered and grouped so that they read as one whole.
 
 ## After 1.0.0
 
