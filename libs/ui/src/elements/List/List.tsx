@@ -9,7 +9,7 @@ import { Link, LinkProps } from '../../atoms/Link/Link'
 
 const withGridItemContainer = () => (WrappedComponent) => {
   const withGridItemContainer = ({ style, index, readyInViewport, scrolling, more, moreIndex, total, ...props }) => (
-    <div sx={{ display: 'flex', justifyContent: 'center', ...style, ':focus-within': { zIndex: 1 } }}>
+    <div sx={{ display: 'flex', justifyContent: 'center', ...style, ':focus-within, :has([data-raised])': { zIndex: 1 } }}>
       {moreIndex === index ? (
         <div sx={UIList.styles.row.more}>
           <More {...more} />
