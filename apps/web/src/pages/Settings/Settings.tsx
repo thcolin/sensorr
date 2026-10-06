@@ -80,6 +80,7 @@ const Settings = ({ ...props }) => {
           <NavLink to='tautulli' viewTransition={device === 'mobile'}>Tautulli</NavLink>
           <NavLink to='mobile' viewTransition={device === 'mobile'}>Mobile</NavLink>
           <NavLink to='update' viewTransition={device === 'mobile'}>Update</NavLink>
+          <NavLink to='data' viewTransition={device === 'mobile'}>Data</NavLink>
         </nav>
         <footer>
           <span>🍿📼</span>

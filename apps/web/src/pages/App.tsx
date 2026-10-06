@@ -61,6 +61,7 @@ import TautulliSettings from './Settings/Tautulli'
 import MailSettings from './Settings/Mail'
 import MobileSettings from './Settings/Mobile'
 import UpdateSettings from './Settings/Update'
+import DataSettings from './Settings/Data'
 import { useDeviceContext } from '../contexts/Device/Device'
 import { useTitle } from '@sensorr/utils'
 
@@ -165,6 +166,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path='tautulli' element={<TautulliSettings />} />
           <Route path='mobile' element={<MobileSettings />} />
           <Route path='update' element={<UpdateSettings />} />
+          <Route path='data' element={<DataSettings />} />
         </Route>
       </Route>
     </Route>
