@@ -151,7 +151,6 @@ const Data = ({ ...props }) => {
                         <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={`Download ${name}`}>{downloading === name ? '⌛ Downloading' : 'Download'}</Button>
                         <Button
                           type='button'
-                          variant='outline'
                           color='error'
                           disabled={!manifest || blocked}
                           title={manifest ? undefined : `${name} has no manifest.json this Sensorr reads`}
