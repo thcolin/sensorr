@@ -57,9 +57,23 @@ const deleteAt = (object: any, key: string) => {
 // An indexer link carries its key in the query, as Jackett's `jackett_apikey=`: the name stays, the value goes
 export const stripUrl = (url: string) => typeof url === 'string' ? url.replace(/([?&][^=&#]*(?:api_?key|passkey|token))=[^&#]*/gi, '$1=') : url
 
-export const stripDocument = <T extends object>(doc: T & { releases?: any[] }): T => Array.isArray(doc?.releases)
-  ? { ...doc, releases: doc.releases.map((release) => ({ ...release, link: stripUrl(release?.link), enclosure: stripUrl(release?.enclosure) })) }
-  : doc
+// Every string of a document, not only the links: a release's id is the indexer's guid, often its link, and episodes
+// point to it. The same strip on both sides keeps them pointing to each other. Dates and ids are left as they are.
+export const stripDocument = <T>(value: T): T => {
+  if (typeof value === 'string') {
+    return stripUrl(value) as T
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(stripDocument) as T
+  }
+
+  if (value && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, stripDocument(child)])) as T
+  }
+
+  return value
+}
 
 export const stripConfig = (config: any) => {
   const stripped = structuredClone(config || {})
