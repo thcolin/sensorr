@@ -7,6 +7,7 @@ import { Billboard } from '../../../atoms/Billboard/Billboard'
 import { pictureSrc } from '../../../atoms/Picture/Picture'
 import { Link } from '../../../atoms/Link/Link'
 import { DragScroll } from '../../../atoms/DragScroll/DragScroll'
+import { Lines, Skeleton, reveal } from '../../../atoms/Skeleton/Skeleton'
 import { Credits } from '../../../components/Movie/Credits/Credits'
 
 export type PrettyProps = Omit<PosterProps, 'palette' | 'onReady'>
@@ -137,45 +138,42 @@ const UIAbout = ({ details, palette, ready, link, badges, parent, ...props }) =>
   const { t } = useTranslation()
 
   return (
-    <div
-      sx={{
-        ...UIAbout.styles.element,
-        opacity: ready ? 1 : 0,
-        transition: 'opacity 400ms ease-in-out',
-        transitionDelay: ready ? '800ms' : '0ms',
-      }}
-    >
+    <div sx={UIAbout.styles.element}>
       <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
-        <Link to={link?.to} state={link?.state}>{details.title}</Link>
+        <Skeleton ready={ready} bar={{ width: '12em', height: '0.875em' }}>
+          <Link to={link?.to} state={link?.state}>{details.title}</Link>
+        </Skeleton>
       </h2>
-      <div sx={UIAbout.styles.subtitle} style={{ color: palette.alternativeColor }}>
-        {!!details?.meaningful?.year && (
-          <span>
-            <details.meaningful.year />
-            {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
-          </span>
-        )}
-        {(!!details?.meaningful?.genres || !!details?.caption) && (
-          <small title={details?.caption}>
-            {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
-          </small>
-        )}
-      </div>
+      <Skeleton ready={ready} bar={{ width: '9em', height: '0.625em' }} sx={UIAbout.styles.subtitle}>
+        <span sx={UIAbout.styles.caption} style={{ color: palette.alternativeColor }}>
+          {!!details?.meaningful?.year && (
+            <span>
+              <details.meaningful.year />
+              {(!!details?.meaningful?.genres || !!details?.caption) && <span sx={{ marginX: 8 }}>&nbsp;·&nbsp;</span>}
+            </span>
+          )}
+          {(!!details?.meaningful?.genres || !!details?.caption) && (
+            <small title={details?.caption}>
+              {details?.meaningful?.genres ? <details.meaningful.genres emoji={false} /> : details?.caption}
+            </small>
+          )}
+        </span>
+      </Skeleton>
       <DragScroll sx={UIAbout.styles.badges} byBackground={true}>
-        {badges?.reviews?.component && (
-          <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
+        {ready && badges?.reviews?.component && (
+          <div sx={{ ...reveal, ':hover + div': { opacity: 0, transition: 'none' } }}>
             <badges.reviews.component {...badges?.reviews?.props} palette={palette} />
           </div>
         )}
-        {badges?.guests?.component && (
-          <div sx={UIAbout.styles.guests}>
+        {ready && badges?.guests?.component && (
+          <div sx={{ ...UIAbout.styles.guests, ...reveal }}>
             <badges.guests.component {...badges?.guests?.props} />
           </div>
         )}
       </DragScroll>
-      <div sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
+      <Skeleton ready={ready} placeholder={<Lines />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
-      </div>
+      </Skeleton>
     </div>
   )
 }
@@ -199,10 +197,12 @@ UIAbout.styles = {
     textOverflow: 'ellipsis',
   },
   subtitle: {
-    display: 'flex',
-    alignItems: 'center',
     paddingBottom: 8,
     paddingTop: 10,
+  },
+  caption: {
+    display: 'flex',
+    alignItems: 'center',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     '>span': {
@@ -232,7 +232,6 @@ UIAbout.styles = {
   guests: {
     fontSize: 9,
     marginLeft: 6,
-    transition: 'opacity ease-in-out 200ms 200ms',
   },
   overview: {
     flex: 1,
