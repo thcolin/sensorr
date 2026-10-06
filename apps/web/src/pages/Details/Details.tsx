@@ -254,7 +254,7 @@ const UIDetails = ({
     <Skeleton palette={palette.palette} ready={ready} placeholder={false}>
       <div>
         {!!tagline && <p sx={UIDetails.styles.tagline}>{tagline}</p>}
-        <Overview children={overview} remembered={page} />
+        <Overview children={overview} remembered={page} lines={page ? 8 : 4} />
       </div>
     </Skeleton>
   )

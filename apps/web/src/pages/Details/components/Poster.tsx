@@ -31,6 +31,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
             value={ready ? state : 'loading'}
             onChange={setState}
             compact={true}
+            aria-label='State'
           />
         </div>
       )}
@@ -40,6 +41,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
             value={ready ? state : 'loading'}
             onChange={setState}
             compact={true}
+            aria-label='State'
           />
         </div>
       )}
@@ -49,6 +51,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
             value={ready ? state : 'loading'}
             onChange={setState}
             compact={true}
+            aria-label='State'
           />
         </div>
       )}
@@ -107,6 +110,13 @@ UIPoster.styles = {
     right: '-1.25em',
     fontSize: 3,
     zIndex: 1,
+    // The badge stays its size, its select reaches the 44px a finger needs
+    'select': {
+      top: '-0.375em',
+      left: '-0.375em',
+      height: 'calc(100% + 0.75em)',
+      width: 'calc(100% + 0.75em)',
+    },
   },
   // Astride the corner, half its size out of the poster
   artworks: {
