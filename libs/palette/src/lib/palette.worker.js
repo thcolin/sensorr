@@ -98,6 +98,32 @@ function getMostDominantPrimaryColor(WCAGCompliantColorPairs) {
   return mostDominantColor
 }
 
+// The poster's saturated pixels alone, quantized apart: a red logo covering a hundredth of the poster keeps its red,
+// which the whole poster's swatches average with the dark around it. Each accent comes with the share it covers
+function getAccents(pixels, pixelCount) {
+  const saturated = []
+
+  for (let i = 0; i < pixelCount; i++) {
+    const [r, g, b, a] = pixels.slice(i * 4, i * 4 + 4)
+    const max = Math.max(r, g, b)
+
+    if (a >= 125 && max > 90 && (max - Math.min(r, g, b)) / max > 0.55) {
+      saturated.push(r, g, b, 255)
+    }
+  }
+
+  const count = saturated.length / 4
+
+  if (count < 16) {
+    return []
+  }
+
+  const accents = new Colorthief().getPaletteFromPixels(saturated, count, 5, 1) || []
+  const total = accents.reduce((total, accent) => total + accent.count, 0)
+
+  return accents.map(({ rgb, count: pixels }) => ({ hex: new Color(rgb).hex(), share: (pixels / total) * (count / pixelCount) }))
+}
+
 addEventListener('message', ({ data: { key, pixels, pixelCount } }) => {
   totalPixelCount = 0
   RGBToPixelCountMap = {}
@@ -203,7 +229,7 @@ addEventListener('message', ({ data: { key, pixels, pixelCount } }) => {
         [Color(backgroundColor).isLight() ? 'lighten' : 'darken'](0.8)
         .negate()
         .hex(),
-      ambiance: ambianceOf(palette.map(({ rgb, count }) => ({ hex: Color(rgb).hex(), count }))),
+      ambiance: ambianceOf(palette.map(({ rgb, count }) => ({ hex: Color(rgb).hex(), count })), getAccents(pixels, pixelCount)),
     },
   })
 })

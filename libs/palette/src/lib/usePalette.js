@@ -4,8 +4,8 @@ import { useThemeUI } from 'theme-ui'
 
 export function usePalette(url, initial, id) {
   const { colorMode } = useThemeUI()
-  // A palette cached before `ambiance` existed is computed again
-  const key = `${colorMode}-ambiance-${id || url}`
+  // Versioned: a palette cached by an older computation is computed again
+  const key = `${colorMode}-palette-2-${id || url}`
   const cache = useMemo(() => {
     const raw = JSON.parse(sessionStorage.getItem(key) || '{}')
     return raw.backgroundColor ? raw : null
