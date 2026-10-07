@@ -985,7 +985,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
           <Warning
             emoji='📭'
             title='Nothing to decide'
-            subtitle={<span>Jobs with <code>proposalOnly</code> set wait here for a choice, see <Link to='/settings/jobs'>job settings</Link></span>}
+            subtitle={<span>Jobs with <code>proposalOnly</code> set wait here for a choice, see <Link to='/settings/schedule'>job settings</Link></span>}
           />
         )}
       </>

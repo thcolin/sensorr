@@ -161,7 +161,7 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
       </div>
       {shared?.plex && !shared.tautulli && !!people.length && (
         <p><small>{config.get('tautulli.url')
-          ? <>No Tautulli activity imported yet, the <Link to='/settings/jobs'>wrapped</Link> job imports it to show who watched most recently first.</>
+          ? <>No Tautulli activity imported yet, the <Link to='/settings/schedule'>wrapped</Link> job imports it to show who watched most recently first.</>
           : <>Set up <Link to='/settings/tautulli'>Tautulli</Link> to see who watched most recently first.</>}</small></p>
       )}
       <Bulk

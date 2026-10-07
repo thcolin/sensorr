@@ -24,7 +24,7 @@ export const countsOf = (counts: { [collection: string]: number }) => Object.ent
 const sourceOf = (manifest) => `a dump of ${new Date(manifest.date).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}, Sensorr ${manifest.version}`
 
 const Data = ({ ...props }) => {
-  useTitle('Settings - Data')
+  useTitle('Settings - Backup')
   const api = useAPI()
   const { config } = useConfigContext() as any
   const { process } = useJobsContext() as any
@@ -122,7 +122,7 @@ const Data = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Data</h2>
+          <h2>Backup</h2>
           <p>Your library and its settings in a <code>.zip</code> of plain JSON: movies, TV shows, episodes and stars, then every setting but the keys and passwords, which never leave this Sensorr.</p>
           <div sx={Update.styles.stack}>
             <div sx={Update.styles.action}>
@@ -130,7 +130,7 @@ const Data = ({ ...props }) => {
                 {dumping ? '⌛ Dumping' : 'Dump now'}
               </Button>
               <small sx={Update.styles.muted}>
-                Keeps the last {DUMP_KEPT}. The {emojize(JOB_EMOJIS.dump, 'dump')} job {schedule?.paused ? 'is paused' : `runs ${cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true }).toLowerCase()}`}, in <Link to='/settings/jobs'>Settings › Jobs</Link>
+                Keeps the last {DUMP_KEPT}. The {emojize(JOB_EMOJIS.dump, 'dump')} job {schedule?.paused ? 'is paused' : `runs ${cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true }).toLowerCase()}`}, in <Link to='/settings/schedule'>Settings › Schedule</Link>
               </small>
             </div>
             {failure && (

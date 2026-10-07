@@ -407,7 +407,7 @@ const Onboarding = () => {
       emblem: <EmojiEmblem emoji='⏰' label='Jobs' />,
       emoji: '⏰',
       title: 'Jobs',
-      settings: '/settings/jobs',
+      settings: '/settings/schedule',
       subtitle: 'Sensorr runs these jobs on its own. Pause the ones you do not want yet',
       skippable: true,
       content: (

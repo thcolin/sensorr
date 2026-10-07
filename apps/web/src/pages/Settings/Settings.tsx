@@ -33,6 +33,13 @@ export const useSaveConfig = () => {
   }), [])
 }
 
+const GROUPS = [
+  { title: 'App', links: [['home', 'Home'], ['lists', 'Lists'], ['friends', 'Friends'], ['schedule', 'Schedule']] },
+  { title: 'Download', links: [['indexers', 'Indexers'], ['policies', 'Policies'], ['blackhole', 'Blackhole']] },
+  { title: 'Services', links: [['tmdb', 'TMDB'], ['plex', 'Plex'], ['tautulli', 'Tautulli']] },
+  { title: 'System', links: [['mail', 'Mail'], ['update', 'Update'], ['backup', 'Backup'], ['mobile', 'Mobile']] },
+]
+
 const Settings = ({ ...props }) => {
   const api = useAPI()
   const { theme } = useThemeUI()
@@ -73,20 +80,14 @@ const Settings = ({ ...props }) => {
       <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
         <h1>Settings</h1>
         <nav ref={nav}>
-          <NavLink to='tmdb' viewTransition={device === 'mobile'}>TMDB</NavLink>
-          <NavLink to='blackhole' viewTransition={device === 'mobile'}>Blackhole</NavLink>
-          <NavLink to='indexers' viewTransition={device === 'mobile'}>Indexers</NavLink>
-          <NavLink to='policies' viewTransition={device === 'mobile'}>Policies</NavLink>
-          <NavLink to='home' viewTransition={device === 'mobile'}>Home</NavLink>
-          <NavLink to='lists' viewTransition={device === 'mobile'}>Lists</NavLink>
-          <NavLink to='jobs' viewTransition={device === 'mobile'}>Jobs</NavLink>
-          <NavLink to='friends' viewTransition={device === 'mobile'}>Friends</NavLink>
-          <NavLink to='mail' viewTransition={device === 'mobile'}>Mail</NavLink>
-          <NavLink to='plex' viewTransition={device === 'mobile'}>Plex</NavLink>
-          <NavLink to='tautulli' viewTransition={device === 'mobile'}>Tautulli</NavLink>
-          <NavLink to='mobile' viewTransition={device === 'mobile'}>Mobile</NavLink>
-          <NavLink to='update' viewTransition={device === 'mobile'}>Update</NavLink>
-          <NavLink to='data' viewTransition={device === 'mobile'}>Data</NavLink>
+          {GROUPS.map(({ title, links }) => (
+            <div key={title} role='group' aria-labelledby={`settings-${title.toLowerCase()}`}>
+              <h2 id={`settings-${title.toLowerCase()}`}>{title}</h2>
+              {links.map(([to, label]) => (
+                <NavLink key={to} to={to} viewTransition={device === 'mobile'}>{label}</NavLink>
+              ))}
+            </div>
+          ))}
         </nav>
         <footer>
           <span>🍿📼</span>
@@ -135,12 +136,31 @@ Settings.styles = {
       flexDirection: 'column',
       overflowY: ['unset', 'auto'],
       overflowX: ['unset', 'hidden'],
-      backgroundColor: ['grayLight', 'unset'],
       marginX: [2, 12],
-      // borderRadius: '0.25em',
+      '>div': {
+        display: 'flex',
+        flexDirection: 'column',
+      },
+      // In its own 10px: 8px left of the links
+      'h2': {
+        margin: 12,
+        paddingX: ['0.8em', '3.2em'],
+        paddingTop: ['2.4em', '2em'],
+        paddingBottom: ['0.8em', '0.5em'],
+        fontFamily: 'heading',
+        fontSize: 7,
+        fontWeight: 'bold',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color: 'grayDarkest',
+      },
+      '>div:first-of-type>h2': {
+        paddingTop: [12, 12],
+      },
       'a': {
         fontFamily: 'heading',
         color: 'text',
+        backgroundColor: ['grayLight', 'transparent'],
         paddingX: [4, 0],
         paddingY: [4, 9],
         fontSize: [4, 3],

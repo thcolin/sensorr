@@ -114,7 +114,7 @@ const Navigation = ({ display = 'web', ...props }) => {
           <NavLink onClick={handleWebNavigation} to="/person/followed" viewTransition style={location.pathname.startsWith('/person') ? Navigation.styles.web.active : {}}>Stars</NavLink>
           {renderSecondary('/person')}
           <NavLink onClick={handleWebNavigation} to="/jobs" viewTransition style={({ isActive }) => isActive ? Navigation.styles.web.active : {}}>Jobs</NavLink>
-          <NavLink onClick={handleWebNavigation} to={device === 'mobile' ? '/settings' : '/settings/tmdb'} viewTransition style={location.pathname.startsWith('/settings') ? Navigation.styles.web.active : {}}>Settings</NavLink>
+          <NavLink onClick={handleWebNavigation} to={device === 'mobile' ? '/settings' : '/settings/home'} viewTransition style={location.pathname.startsWith('/settings') ? Navigation.styles.web.active : {}}>Settings</NavLink>
         </div>
       </div>
     )

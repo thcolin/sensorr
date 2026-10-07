@@ -164,7 +164,7 @@
     },
     {
       "file": "settings-jobs-desktop.webp",
-      "route": "/settings/jobs",
+      "route": "/settings/schedule",
       "device": "desktop",
       "width": 1440,
       "height": 1610,
@@ -173,7 +173,7 @@
     },
     {
       "file": "settings-jobs-mobile.webp",
-      "route": "/settings/jobs",
+      "route": "/settings/schedule",
       "device": "mobile",
       "width": 780,
       "height": 3440,
