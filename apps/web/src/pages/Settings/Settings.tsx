@@ -80,14 +80,17 @@ const Settings = ({ ...props }) => {
       <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
         <h1>Settings</h1>
         <nav ref={nav} aria-label='Settings'>
-          {GROUPS.map(({ title, links }) => (
-            <div key={title} role='group' aria-labelledby={`settings-${title.toLowerCase()}`}>
-              <span id={`settings-${title.toLowerCase()}`}>{title}</span>
-              {links.map(([to, label]) => (
-                <NavLink key={to} to={to} viewTransition={device === 'mobile'}>{label}</NavLink>
-              ))}
-            </div>
-          ))}
+          {GROUPS.map(({ title, links }) => {
+            const id = `settings-${title.toLowerCase()}`
+            return (
+              <div key={title} role='group' aria-labelledby={id}>
+                <span id={id}>{title}</span>
+                {links.map(([to, label]) => (
+                  <NavLink key={to} to={to} viewTransition={device === 'mobile'}>{label}</NavLink>
+                ))}
+              </div>
+            )
+          })}
         </nav>
         <footer>
           <span>🍿📼</span>
@@ -142,7 +145,7 @@ Settings.styles = {
         flexDirection: 'column',
       },
       // In its own 10px: 8px left of the links
-      'span': {
+      '>div>span': {
         display: 'block',
         margin: 12,
         paddingX: ['0.8em', '3.2em'],
@@ -156,7 +159,11 @@ Settings.styles = {
         color: 'grayDarkest',
       },
       '>div:first-of-type>span': {
-        paddingTop: 12,
+        paddingTop: ['2.4em', 12],
+      },
+      // Scrolled into view, the first link of a group keeps its title in sight
+      'span + a': {
+        scrollMarginTop: '2em',
       },
       'a': {
         fontFamily: 'heading',
@@ -167,8 +174,6 @@ Settings.styles = {
         fontSize: [4, 3],
         fontWeight: ['semibold', 'normal'],
         textDecoration: 'none',
-        // Scrolled into view, the first link of a group keeps its title in sight
-        scrollMarginTop: '2em',
         '&:not(:last-of-type)': {
           borderBottom: ['1px solid', 'none'],
           borderColor: 'gray',
