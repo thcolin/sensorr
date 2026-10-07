@@ -135,7 +135,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   if (!loading && !jobs.length) {
     return (
       <Body>
-        <section sx={UIJobs.styles.element}>
+        <section sx={UIJobs.styles.element} aria-busy={loading}>
           <div sx={UIJobs.styles.placeholder}>
             <Warning
               emoji="🏗️"
@@ -149,7 +149,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   }
 
   return (
-    <section sx={UIJobs.styles.element}>
+    <section sx={UIJobs.styles.element} aria-busy={loading}>
       <Sidebar loading={loading} jobs={jobs} job={job} />
       <Body>
         <div sx={UIJobs.styles.content}>
