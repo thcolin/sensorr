@@ -107,7 +107,7 @@ export const transformCollectionDetails = (entity) => {
     meaningful: {
       popularity: entity.popularity ? () => (
         <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>
-          {emojize('📣', entity.popularity.toLocaleString())}
+          {emojize('📣', entity.popularity.toLocaleString(i18n.language))}
         </span>
       ) : null,
       release_dates_range: entity.parts.length ? () => (
@@ -138,7 +138,7 @@ export const transformCollectionDetails = (entity) => {
             },
           }}
         >
-          {emojize(tmdb.judge(entity), entity.vote_average.toLocaleString())}
+          {emojize(tmdb.judge(entity), entity.vote_average.toLocaleString(i18n.language))}
         </Link>
       ) : null,
       vote_count: entity.vote_count ? () => (
@@ -155,7 +155,7 @@ export const transformCollectionDetails = (entity) => {
             },
           }}
         >
-          {emojize('🗳️', entity.vote_count.toLocaleString())}
+          {emojize('🗳️', entity.vote_count.toLocaleString(i18n.language))}
         </Link>
       ) : null,
       genres: entity.genres.length ? () => (
