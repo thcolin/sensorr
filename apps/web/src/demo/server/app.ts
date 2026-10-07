@@ -28,9 +28,10 @@ import { Log } from '../../../../api/src/app/logs/log.schema'
 import { Subscription } from '../../../../api/src/app/notifications/subscription.schema'
 import { mount } from './shims/files'
 import { Model } from './model'
+import { ProxyController } from './proxy.controller'
 import { Store } from './store'
 
-const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController]
+const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController, ProxyController]
 const SCHEMAS = [Movie, Show, Episode, Person, Log, Subscription]
 
 export type Response = { status: number, body?: any, stream?: Observable<any> }
