@@ -1,45 +1,121 @@
-# Sensorr
+<p align="center">
+  <img src="apps/web/src/assets/favicon-alt-full.png" width="112" alt="">
+</p>
 
-> 🍿📼 Your Friendly Digital Video Recorder. Think VCR but in modern times.
+<h1 align="center">Sensorr</h1>
 
-Sensorr watches for the movies and the TV series you want. You keep a library of wished
-movies, a library of followed shows and a list of people you follow, and on a schedule
-Sensorr searches your Torznab indexers, scores every release it finds against your policies,
-and drops the winning `.torrent` file into a blackhole directory for your download client to
-pick up. Out of the shipped configuration it
-queues that release as a proposal instead, and waits for you to accept it. It reads TMDB for
-metadata, your Plex server for what you already own, and your friends' Plex watchlists for
-what they would like to see. For series it also takes the finished files out of your
-download client's folder and hard links them into the shows library. It is meant for one
-person hosting their own library at home.
+<p align="center">
+  🍿📼 Your Friendly Digital Video Recorder. Think VCR but in modern times.
+</p>
 
-![Sensorr library](docs/assets/screenshots/library-desktop.webp)
+<p align="center">
+  <a href="https://thcolin.github.io/sensorr/"><b>Try the demo</b></a>
+  &nbsp;·&nbsp;
+  <a href="#install"><b>Install</b></a>
+  &nbsp;·&nbsp;
+  <a href="#documentation"><b>Documentation</b></a>
+</p>
 
-<sub>Library screen, captured 2026-09-18. More screens in [`docs/assets/screenshots/`](docs/assets/screenshots/).</sub>
+<p align="center">
+  <img src="docs/assets/readme/hero.webp" alt="Sensorr's Home on a desktop browser and on an iPhone">
+</p>
+
+You tell Sensorr which movies and TV shows you want. It searches your Torznab indexers on a schedule, ranks every release it finds against your own rules, and drops the winner into the folder your download client watches. Then it keeps going: it looks for a better or a lighter version of what you already own, turns your friends' Plex watchlists into requests, and shows you what's coming from the people you follow.
+
+It is one app where you would otherwise run Radarr, Sonarr and Overseerr side by side, built for one person hosting their own library at home.
 
 **[Try the demo](https://thcolin.github.io/sensorr/)**, login `demo` / `demo`. It runs in your browser, on TMDB's movies and shows with made-up libraries, releases and jobs: accept a proposal, follow a show, search an indexer, and your changes stay in this browser until you reset them. Jobs, Plex, friends and mails need Sensorr running on your own server.
 
-# Features
+<table>
+  <tr>
+    <td width="42%">
 
-- **A library with states.** A movie is `Pinned`, `Wished`, `Archived`, `Ignored` or `Missing`. `record` hunts the wished ones, `refine` and `shrink` go back over the archived ones.
-- **Follow people.** Follow a director, an actor, a composer, and the Calendar lists what they release, month by month.
-- **Torznab indexers.** Declare as many as you want, enable and disable them one by one.
-- **Policies instead of a quality profile.** Seven axes, source, encoding, resolution, language, dub, flags and indexer, each split in three groups: `avoid` rejects a release outright, `prefer` ranks the rest by score, `require` is the end-goal `refine` works towards.
-- **Blackhole downloads.** Sensorr writes the release file into your blackhole directory, named `.torrent`, and your download client does the rest. An indexer that only gives magnet links, The Pirate Bay through Jackett for one, gets its movie releases written as `.magnet` files once *Magnet links* is on in *Settings > Blackhole*. Turn it on only if your download client reads `.magnet` files from its watched folder, as qBittorrent does. Off, those releases are withdrawn, and so are show releases whatever the setting: importing a show needs the file list of its `.torrent`.
-- **Seven scheduled jobs for movies.** Each job takes the media type as its argument, `record movies` or `record shows`, and the ones below run on `movies`. `record` grabs the best release available for wished movies, `refine` looks for a better fitting one for archived movies, `shrink` for the smallest one for refined movies, `refresh` re-fetches TMDB metadata for every movie and person you store, `sync` reconciles the library with Plex, `keep-in-touch` reads your friends' watchlists, `report` replaces a movie a friend reported from Plex.
-- **Proposals.** `record`, `refine`, `shrink` and `report` can be set to `proposalOnly`: they submit what they found instead of downloading it, and you pick from the comparison screen.
-- **Requests from friends.** A friend links their Plex account with a code, and `keep-in-touch` turns the movies on their Plex watchlist into requests. A movie Sensorr did not know lands as `Ignored`, never `Wished`; you decide from the Requests screen.
-- **Browse TMDB from inside Sensorr.** Discover, Trending, Calendar, Theatres, Collections, Recommendations and Similar.
-- **A library of series, with seasons and episodes.** A show page lists every season and every episode TMDB knows, with how many aired episodes you own. Each episode is `upcoming`, `unmonitored`, `wanted`, `proposed` or `owned`. The Shows section adds a Calendar of the episodes of followed shows, Discover and Trending.
-- **Follow at three levels.** A whole show, one season or one episode. A show is `Ignored`, `Pinned` or `Followed`, and only a followed one is searched. A followed show can also follow the seasons TMDB adds later. Specials, season 0, are only followed by hand.
-- **Whole series, season packs or episodes, chosen by coverage.** An ended show you follow whole and own nothing of is searched as a complete series first, then season by season, then episode by episode. A season pack is only searched once every episode of it has aired and is followed. The policies rank the releases inside each level, the same policies as movies.
-- **Proposals for series.** `record shows` and `airing shows` queue what they found as proposals out of the shipped configuration, and a show can say otherwise. A pending release is named by what it covers, `S01-S10`, `S03` or `S03E04`, on the show page and in its notification.
-- **Hourly airing.** `airing shows` runs every hour and searches the followed episodes aired in the last seven days, one by one.
-- **File import by hard link.** Show releases go to their own blackhole. Once the download client has written every file of one into the staging folder, `import shows` hard links the wanted episodes into `<Show (year)>/Season NN/` of the shows library, and Plex picks them up from there. A hard link takes no space, so the download client can keep seeding.
-- **Migration from Sonarr.** `migrate sonarr`, a command run once by hand, takes over Sonarr's series, what Sonarr follows per season and per episode, whether it follows new seasons, and the folder of each show. It only reads Sonarr.
-- **Requests from Plex watchlists, series included.** `keep-in-touch` reads the shows of a friend's watchlist too. A show Sensorr did not know lands in Requests as `Ignored`, and nothing is searched until you follow it.
-- **A PWA with web push.** Installable, and it pushes a notification when a job grabs a release, finds a movie missing from Plex, or picks up a request.
-- **English and French.**
+### Movies and series, one app
+
+One library for both, with the same screens, the same policies and the same jobs. Home, Discover, Trending, Calendar and Requests each have a movie side and a show side, one tab apart.
+
+</td>
+    <td width="58%"><img src="docs/assets/readme/one-app.webp" alt="Home, with Trending and Trending Shows, Your Records and Library Shows"></td>
+  </tr>
+  <tr>
+    <td width="58%"><img src="docs/assets/readme/seasons.webp" alt="A show page listing its seasons and the files of each episode"></td>
+    <td width="42%">
+
+### A whole series, a season, an episode
+
+Follow a show, one season or one episode. An ended show you own nothing of is searched as a complete pack first, then season by season, then episode by episode. Finished files are hard linked into your shows library, so your download client keeps seeding and Plex picks them up.
+
+</td>
+  </tr>
+  <tr>
+    <td width="42%">
+
+### Policies, not quality profiles
+
+Seven axes, source, encoding, resolution, language, dub, flags and indexer, each split into `avoid`, `prefer` and `require`. Drag the tags to rank them, and the sandbox ranks a set of sample releases with your policy as you edit it.
+
+</td>
+    <td width="58%"><img src="docs/assets/readme/policies.webp" alt="A policy's rules, and its sandbox ranking sample releases"></td>
+  </tr>
+  <tr>
+    <td width="58%"><img src="docs/assets/readme/swaps.webp" alt="The Swaps screen, each movie with what changes and the disk space at stake"></td>
+    <td width="42%">
+
+### Swaps: Refine and Shrink
+
+Sensorr keeps working once a movie is in your library. `refine` looks for a release closer to your policy, `shrink` for a lighter one that loses nothing. Each swap shows what changes, language, resolution, source, codec, and the space it frees or costs. Accept it, and with cleanup on, the old file leaves Plex once the new one has landed.
+
+</td>
+  </tr>
+  <tr>
+    <td width="42%">
+
+### Follow people, see what's coming
+
+Follow a director, an actor or a composer, and their next films land in a calendar, month by month. The shows you follow get a calendar of their episodes.
+
+</td>
+    <td width="58%"><img src="docs/assets/readme/stars-calendar.webp" alt="The calendar of the people you follow"></td>
+  </tr>
+  <tr>
+    <td width="58%"><img src="docs/assets/readme/wrapped.webp" alt="A friend's wrapped, as a TV guide"></td>
+    <td width="42%">
+
+### Friends: requests and a wrapped
+
+A friend links their Plex account with a code, and the movies and shows on their Plex watchlist become requests you accept or ignore. They get a mail once a week with what reached Plex, and a wrapped of their year on your server, in five looks.
+
+</td>
+  </tr>
+  <tr>
+    <td width="42%">
+
+### Notifications
+
+A web push when a job grabs a release, proposes one, finds a movie missing from Plex or picks up a request. Accept or refuse a proposal from the notification itself.
+
+</td>
+    <td width="58%"><img src="docs/assets/readme/notifications.webp" alt="Notifications, with proposals to accept or refuse"></td>
+  </tr>
+  <tr>
+    <td width="58%" align="center"><img src="docs/assets/readme/mobile.webp" width="300" alt="Sensorr's Home on an iPhone"></td>
+    <td width="42%">
+
+### On your phone
+
+Sensorr is a PWA: add it to your home screen from Safari or Chrome, and it opens like an app, with its push notifications.
+
+</td>
+  </tr>
+</table>
+
+### And also
+
+- **Plex in sync.** `sync` reads what Plex holds, and a movie a friend reports from Plex is searched again, its replacement proposed to you.
+- **Coming from Sonarr or Sensorr 0.x.** `migrate sonarr` takes over your series, what Sonarr follows per season and per episode, and the folder of each show. A 0.x dump is imported from the onboarding.
+- **Magnet links.** An indexer that only gives magnet links gets its movie releases written as `.magnet` files, for a download client that reads them.
+- **Backup and update from the app.** *Settings › Backup* writes and imports dumps of your library, weekly once turned on. *Settings › Update* shows what each channel offers, and updates the stack with the `updater` profile on.
+- **English and French.** The interface, the mails and the wrapped.
 
 # Install
 
