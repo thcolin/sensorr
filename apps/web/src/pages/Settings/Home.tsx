@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useMemo, useState } from 'react'
+import { forwardRef, useCallback, useMemo, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid'
 import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button, Option } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
+import { languageOf } from '@sensorr/i18n'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { BUILTINS, GROUPABLE, LOCKED, HomeKey, List, Row, dropRow, fits, isGroup, listRowId, listsOf, rowsOf } from '../Home/rows'
@@ -60,6 +61,7 @@ const Home = ({ ...props }) => {
   }))
   const [adding, setAdding] = useState('')
   const [language, setLanguage] = useState(config.get('language'))
+  const saving = useRef(null)
   const labelOf = useRowLabel(lists)
 
   const rows = homes[home]
@@ -96,11 +98,16 @@ const Home = ({ ...props }) => {
             value={language}
             onChange={(value) => {
               setLanguage(value)
-              onSave({ language: value }).catch(() => setLanguage(config.get('language')))
+              // The arrow keys of a radio group move its selection: the language is saved once it settles
+              clearTimeout(saving.current)
+              saving.current = setTimeout(() => onSave({ language: value }).catch(() => setLanguage(config.get('language'))), 400)
             }}
-            options={['auto', 'en', 'fr'].map((value) => ({ value, label: t(`settings.home.language.options.${value}`) }))}
+            options={[
+              { value: 'auto', label: t('settings.home.language.auto', { language: t(`settings.home.language.options.${languageOf({ region: config.get('region') })}`) }) },
+              ...['en', 'fr'].map((value) => ({ value, label: <span lang={value}>{t(`settings.home.language.options.${value}`)}</span> })),
+            ]}
           />
-          <h2 id='home-home'>{t('settings.sections.home')}</h2>
+          <h2 id='home-home' sx={{ marginTop: '2em' }}>{t('settings.sections.home')}</h2>
           <p>
             <Trans t={t} i18nKey='settings.home.intro' components={[<strong />, <strong />, <strong />]} />
             {' '}<Trans t={t} i18nKey='settings.home.locked' components={[<code />]} />
