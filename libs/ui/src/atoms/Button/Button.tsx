@@ -265,4 +265,7 @@ UIButton.styles = {
   }),
 }
 
+// For a link that looks like a button
+export const buttonStyles = UIButton.styles
+
 export const Button = memo(UIButton)

@@ -64,6 +64,7 @@ import UpdateSettings from './Settings/Update'
 import DataSettings from './Settings/Data'
 import { useDeviceContext } from '../contexts/Device/Device'
 import { useTitle } from '@sensorr/utils'
+import { demo } from '../demo'
 
 import { Provider as ScrollPositionProvider } from '../contexts/ScrollPosition/ScrollPosition'
 import { Provider as DetailsDrawerProvider } from '../contexts/DetailsDrawer/DetailsDrawer'
@@ -171,7 +172,10 @@ const router = createBrowserRouter(createRoutesFromElements(
       </Route>
     </Route>
   </Route>
-))
+), {
+  // The `<base>` of index.html: `/` on a server, the repository's path on GitHub Pages
+  basename: new URL(document.baseURI).pathname.replace(/\/$/, '') || '/',
+})
 
 const App = ({ ...props }) => {
   const { ready } = useTranslation()
@@ -202,7 +206,10 @@ const App = ({ ...props }) => {
   }, [])
 
   return (
-    <RouterProvider router={router} />
+    <>
+      {!!demo && <demo.Banner />}
+      <RouterProvider router={router} />
+    </>
   )
 }
 

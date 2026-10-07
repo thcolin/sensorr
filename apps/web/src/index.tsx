@@ -1,3 +1,4 @@
+import './demo'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ThemeUIProvider } from 'theme-ui'
@@ -67,7 +68,7 @@ root.render(
 )
 
 if (process.env['NODE_ENV'] === 'production' && ('serviceWorker' in navigator)) {
-  navigator.serviceWorker.register('/service-worker.js')
+  navigator.serviceWorker.register('service-worker.js')
     .then((registration) => console.log('ServiceWorker registered: ', registration))
     .catch((err) => console.log('ServiceWorker registration failed: ', err))
 }

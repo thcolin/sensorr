@@ -11295,6 +11295,11 @@ min-document@^2.19.0:
   dependencies:
     dom-walk "^0.1.0"
 
+mingo@^7.2.4:
+  version "7.2.4"
+  resolved "https://registry.yarnpkg.com/mingo/-/mingo-7.2.4.tgz#c583dcd166f2f70e4723081ba54b05cdee42bbaf"
+  integrity sha512-KrxHKzMMguL+G1lBC6YbU5UTXdw2viwVHNTPzNYVfEQfSAoetC3M1a7rlveOksn/96oNy+QwBlIXvx/q6rWyxQ==
+
 mini-css-extract-plugin@~2.4.7:
   version "2.4.7"
   resolved "https://registry.yarnpkg.com/mini-css-extract-plugin/-/mini-css-extract-plugin-2.4.7.tgz#b9f4c4f4d727c7a3cd52a11773bb739f00177fac"
