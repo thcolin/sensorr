@@ -5,7 +5,7 @@ Betas ship from `dev` along the way, see [RELEASING.md](RELEASING.md).
 
 ## Before 1.0.0
 
-- **Responsive pass**: every screen checked and fixed at phone width.
+Nothing left: `1.0.0` ships once the last checks pass.
 
 ## After 1.0.0
 
