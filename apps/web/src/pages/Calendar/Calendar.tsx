@@ -247,12 +247,12 @@ const ASIDE = {
 const nav = (areas: string) => ({
   display: 'grid' as const,
   gridTemplateColumns: [
-    'minmax(0, 1fr)',
+    '1fr min-content',
     `min-content 1fr ${'min-content '.repeat(areas.split(' ').length - 2).trim()}`,
   ],
   gridTemplateRows: 'auto',
   gap: '2em',
-  gridTemplateAreas: [`"primary_release_date"`, areas],
+  gridTemplateAreas: [`"results toggle"`, areas],
   '>h4': {
     display: ['none', 'block'],
   },
@@ -260,12 +260,9 @@ const nav = (areas: string) => ({
 
 const STRIP = {
   display: 'grid' as const,
-  gridTemplateColumns: 'min-content minmax(0, 1fr) min-content',
+  gridTemplateColumns: 'minmax(0, 1fr) min-content',
   gap: '0em 2em',
-  gridTemplateAreas: [`"results toggle toggle" "hide_library hide_library view"`, ''],
-  '>[style*="grid-area: toggle"]': {
-    justifySelf: 'end',
-  },
+  gridTemplateAreas: [`"primary_release_date primary_release_date" "hide_library view"`, ''],
 }
 
 const controls = ({ release, sort = false, hooks = {}, useStatistics }) => withControls({
