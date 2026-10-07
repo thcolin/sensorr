@@ -4,7 +4,7 @@ import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import toast from 'react-hot-toast'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '@sensorr/i18n'
-import { Bulk, Button, Controls, ControlsStrip, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
+import { Bulk, Button, Controls, ControlsStripStyles, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { useLocation } from 'react-router-dom'
 import { Policy } from '@sensorr/sensorr'
@@ -1139,7 +1139,7 @@ UIProposals.styles = {
     },
   },
   balance: {
-    ...ControlsStrip,
+    ...ControlsStripStyles,
     alignItems: 'center',
     gap: 4,
     '>*': {

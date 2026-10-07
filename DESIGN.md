@@ -297,7 +297,9 @@ meaning and never for decoration.
 - **Spring Green Dark / Darker / Darkest** (`primaryDark`, `primaryDarker`,
   `primaryDarkest`): the hover, active and disabled steps of anything green. Saturation
   drops one point per step (99 → 98 → 97 → 96) while lightness drops three, so pressing a
-  button reads as the same color going quiet rather than a different color.
+  button reads as the same color going quiet rather than a different color. One resting
+  use: on a phone, `primaryDark` is the strip under the green controls bar, which carries
+  what the bar has no room for (`Nav.tsx`, `ControlsStripStyles`).
 - **Spring Green Lightest** (`primaryLightest`): a near-white green tint, reserved for
   type set on a green field.
 
