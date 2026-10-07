@@ -159,7 +159,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
 
   return (
     <div sx={ZnabSettings.styles.element}>
-      <div sx={ZnabSettings.styles.container} data-disabled={values.disabled}>
+      <div sx={ZnabSettings.styles.container} data-disabled={values.disabled} data-behavior={behavior}>
         {behavior === 'default' && (
           <React.Fragment>
             <Controller
@@ -180,6 +180,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
             <button
               type='button'
               sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.test }}
+              style={{ gridArea: 'test' }}
               onClick={() => test({ url: values.url, name: values.name, key: values.key })}
               title={t('settings.znabs.test.title')}
               disabled={values.disabled}
@@ -221,6 +222,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                 field.onChange(e.target.value)
               }}
               sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
+              style={{ gridArea: 'name' }}
               placeholder={t('settings.znabs.name')}
               disabled={values.disabled}
               required={true}
@@ -235,6 +237,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               type='url'
               {...field}
               sx={{ variant: 'input.default', flex: 4, fontFamily: 'monospace', width: '100%' }}
+              style={{ gridArea: 'url' }}
               placeholder={t('settings.znabs.url')}
               disabled={values.disabled}
               required={true}
@@ -249,6 +252,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               type='text'
               {...field}
               sx={{ variant: 'input.default', flex: 2, fontFamily: 'monospace', width: '100%' }}
+              style={{ gridArea: 'key' }}
               placeholder={t('settings.znabs.key')}
               disabled={values.disabled}
               required={true}
@@ -259,6 +263,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
           <button
             type='button'
             sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.remove }}
+            style={{ gridArea: 'remove' }}
             onClick={() => {
               if (window.confirm(t('settings.znabs.remove.confirm'))) {
                 remove(index)
@@ -290,7 +295,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
           </button>
         )}
         {behavior === 'create' && (
-          <button type='submit' sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }} title={t('settings.znabs.add')}>
+          <button type='submit' sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }} style={{ gridArea: 'add' }} title={t('settings.znabs.add')}>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
               <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
@@ -308,8 +313,14 @@ ZnabSettings.styles = {
     flexDirection: 'column',
     marginY: 6,
   },
+  // One row on a desktop; a card on a phone, the name on top, the URL and the key at full width under it
   container: {
-    display: 'flex',
+    display: ['grid', 'flex'],
+    gridTemplateColumns: 'auto auto minmax(0, 1fr) auto',
+    gridTemplateAreas: `"toggle test name remove" "url url url url" "key key key key"`,
+    '&[data-behavior="create"]': {
+      gridTemplateAreas: `"name name name add" "url url url url" "key key key key"`,
+    },
     alignItems: 'stretch',
     position: 'relative',
     '>*': {
@@ -320,12 +331,18 @@ ZnabSettings.styles = {
     },
     '>*:first-child': {
       borderTopLeftRadius: '0.25rem !important',
-      borderBottomLeftRadius: '0.25rem !important',
+      borderBottomLeftRadius: ['0rem !important', '0.25rem !important'],
     },
     '>*:last-child': {
       borderTopRightRadius: '0.25rem !important',
-      borderBottomRightRadius: '0.25rem !important',},
+      borderBottomRightRadius: ['0rem !important', '0.25rem !important'],
+    },
+    '>input:last-of-type': {
+      borderBottomLeftRadius: ['0.25rem !important', '0rem !important'],
+      borderBottomRightRadius: ['0.25rem !important', '0rem !important'],
+    },
     '>label': {
+      gridArea: 'toggle',
       border: '1px solid',
       borderColor: 'grayDark',
       borderRight: 'none',
@@ -342,7 +359,10 @@ ZnabSettings.styles = {
       },
     },
     '>input:not(:last-of-type)': {
-      marginRight: '-1px',
+      marginRight: ['0px', '-1px'],
+    },
+    '>input[type="url"], >input[type="url"] ~ input': {
+      marginTop: ['-1px', '0px'],
     },
     '&[data-disabled="true"] >label': {
       borderColor: 'gray',
