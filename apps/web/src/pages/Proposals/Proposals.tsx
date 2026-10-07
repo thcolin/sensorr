@@ -4,7 +4,7 @@ import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import toast from 'react-hot-toast'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '@sensorr/i18n'
-import { Bulk, Button, Controls, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
+import { Bulk, Button, Controls, ControlsStrip, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { useLocation } from 'react-router-dom'
 import { Policy } from '@sensorr/sensorr'
@@ -72,7 +72,7 @@ const UISelectAll = ({ id = 'swaps', style = {}, strip = false }: { id?: string,
   const { count, selectable, setSelected } = useContext(SelectAllContext)
 
   return (
-    <div style={style} sx={{ ...UISelectAll.styles.element, display: strip ? 'flex' : ['none', 'flex'], justifyContent: strip ? 'flex-end' : 'flex-start' }}>
+    <div style={style} sx={{ ...UISelectAll.styles.element, display: strip ? 'flex' : ['none', 'flex'] }}>
       <Option id={id} type='checkbox' checked={count !== 0} disabled={!selectable.length} onChange={() => setSelected(count ? [] : selectable.map(({ id }) => id))}>
         {count === 0 ? t('proposals.group.selectAll') : t('proposals.selected', { count })}
       </Option>
@@ -1004,10 +1004,10 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
       {nav}
       {mobile && (
         <div sx={UIProposals.styles.balance}>
-          <UIBalance balance={balance} compact={true} />
           <SelectAllContext.Provider value={selectAll}>
             <UISelectAll id='swaps-strip' strip={true} />
           </SelectAllContext.Provider>
+          <UIBalance balance={balance} compact={true} />
         </div>
       )}
       <div ref={list} sx={UIProposals.styles.element}>
@@ -1139,17 +1139,13 @@ UIProposals.styles = {
     },
   },
   balance: {
-    display: 'flex',
+    ...ControlsStrip,
     alignItems: 'center',
-    height: '3em',
-    paddingX: 6,
-    backgroundColor: 'primary',
-    borderTop: '1px solid',
-    borderColor: 'hsla(0, 0%, 0%, 0.12)',
     gap: 4,
-    color: 'whitePure',
-    fontSize: 5,
-    '>div:first-of-type': {
+    '>*': {
+      flex: 'none',
+    },
+    '>div:last-of-type': {
       flex: 1,
       maxWidth: 'none',
     },

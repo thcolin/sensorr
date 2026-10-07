@@ -80,6 +80,11 @@ UINav.styles = {
     '>*': {
       flex: 1,
     },
+    // Each control takes the strip's height, so the whole row is what a thumb taps
+    '& label, & button, & select': {
+      minHeight: '3em',
+      marginY: '0px',
+    },
   },
 }
 
@@ -88,6 +93,9 @@ const pick = (fields, keep: (key: string) => boolean) => Object.keys(fields)
   .reduce((acc, key) => ({ ...acc, [key]: fields[key] }), {})
 
 export const Nav = memo(UINav)
+
+// The strip under the bar, for a page that draws its own, as the swaps
+export const ControlsStrip = UINav.styles.strip
 
 export const Title = ({ children, style, ...props }) => (
   <h4 sx={{ color: 'white !important' }} style={style}>{children}</h4>

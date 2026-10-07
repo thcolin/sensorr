@@ -53,7 +53,7 @@ UICalendarMonthPicker.styles = {
     display: 'flex',
     maxWidth: ['none', 'min-content'],
     marginLeft: ['-2em', '2em'],
-    marginRight: ['0em', '2em'],
+    marginRight: ['-2em', '2em'],
     '>*': {
       flex: 1,
     },
