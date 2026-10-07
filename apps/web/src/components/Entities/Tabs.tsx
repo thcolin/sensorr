@@ -46,6 +46,8 @@ export const withTabsBehavior = () => (WrappedComponent) => {
             {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: <Bar inline={true} width='7em' height='0.75em' /> }]]) as [string, any]).map(([key, { label: children }]) => (
               <button
                 key={key}
+                // Its label is a bar while the tabs load: a disabled button with its name
+                {...(key === 'loading' ? { disabled: true, 'aria-label': 'Loading' } : {})}
                 sx={{ ...TAB, ...(key !== optimistic && { opacity: 0.5 }) }}
                 onClick={() => {
                   setScroll([0, 0])
