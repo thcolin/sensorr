@@ -73,31 +73,45 @@ export const nextAirDateOf = (episodes: ShowEpisode[], now: Date | number = Date
   .map(({ air_date }) => new Date(air_date))
   .sort((a, b) => a.getTime() - b.getTime())[0] || null
 
+// `detail` in English for the logs, `code` and `values` for a translation of it, `code` null when `detail` is empty
+export type Diffusion = {
+  airing: boolean
+  detail: string
+  code: 'ended' | 'endedIn' | 'canceled' | 'canceledIn' | 'first' | 'firstTba' | 'next' | 'airing' | null
+  values: { year?: string, date?: string }
+}
+
 export const diffusionOf = (
   show: { status?: string | null, first_air_date?: string | Date | null, last_air_date?: string | Date | null },
   { aired, next }: { aired: number, next?: string | Date | null },
   region = 'fr-FR',
-): { airing: boolean, detail: string } => {
+): Diffusion => {
   const year = show?.last_air_date ? new Date(show.last_air_date).getUTCFullYear() : null
 
   // Before the episode count: an ended show whose episodes are unknown still ended
   if (ENDED.includes(show?.status)) {
-    const word = show.status
-    return { airing: false, detail: year ? `${word.toLowerCase()} in ${year}` : word.toLowerCase() }
+    const word = show.status.toLowerCase() as 'ended' | 'canceled'
+    return year
+      ? { airing: false, detail: `${word} in ${year}`, code: `${word}In`, values: { year: String(year) } }
+      : { airing: false, detail: word, code: word, values: {} }
   }
 
   if (aired === 0) {
     const first = next || show?.first_air_date
     const date = first ? formatDay(first, region, { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-    return { airing: isAiring(show?.status), detail: date ? `first episode on ${date}` : 'first episode to be announced' }
+    return date
+      ? { airing: isAiring(show?.status), detail: `first episode on ${date}`, code: 'first', values: { date } }
+      : { airing: isAiring(show?.status), detail: 'first episode to be announced', code: 'firstTba', values: {} }
   }
 
   if (isAiring(show?.status)) {
     const date = next ? formatDay(next, region, { day: '2-digit', month: '2-digit' }) : null
-    return { airing: true, detail: date ? `next episode on ${date}` : 'still airing' }
+    return date
+      ? { airing: true, detail: `next episode on ${date}`, code: 'next', values: { date } }
+      : { airing: true, detail: 'still airing', code: 'airing', values: {} }
   }
 
-  return { airing: false, detail: '' }
+  return { airing: false, detail: '', code: null, values: {} }
 }
 
 // A season airs while its series does and one of its episodes outside season 0 has not aired yet, dated or not
@@ -106,15 +120,18 @@ export const seasonDiffusionOf = (
   episodes: ShowEpisode[],
   now: Date | number = Date.now(),
   region = 'fr-FR',
-): { airing: boolean, detail: string } => {
+): Diffusion => {
   const airing = isAiring(status) && episodes.some(({ season_number, air_date }) => season_number !== 0 && (!air_date || new Date(air_date).getTime() > new Date(now).getTime()))
 
   if (!airing) {
-    return { airing: false, detail: '' }
+    return { airing: false, detail: '', code: null, values: {} }
   }
 
   const next = nextAirDateOf(episodes, now)
-  return { airing: true, detail: next ? `next episode on ${formatDay(next, region, { day: '2-digit', month: '2-digit' })}` : 'still airing' }
+  const date = next ? formatDay(next, region, { day: '2-digit', month: '2-digit' }) : null
+  return date
+    ? { airing: true, detail: `next episode on ${date}`, code: 'next', values: { date } }
+    : { airing: true, detail: 'still airing', code: 'airing', values: {} }
 }
 
 export const isTvCategory = (category) => [].concat(category ?? []).some(value => Math.floor(Number(value) / 1000) === 5)
@@ -171,10 +188,13 @@ export const reachParamsOf = (unit: ShowUnit): { season?: number, episode?: numb
   {},
 ]
 
-export const unitLabel = (unit: ShowUnit) => unit.type === 'series' ? 'whole series' : [
+// The code of a unit, `S01` or `S01E02`, empty for the whole series: `unitLabel` without its English words
+export const unitCodeOf = (unit: ShowUnit) => unit.type === 'series' ? '' : [
   `S${String(unit.season).padStart(2, '0')}`,
-  unit.type === 'episode' ? `E${String(unit.episode).padStart(2, '0')}` : ' pack',
+  unit.type === 'episode' ? `E${String(unit.episode).padStart(2, '0')}` : '',
 ].join('')
+
+export const unitLabel = (unit: ShowUnit) => unit.type === 'series' ? 'whole series' : `${unitCodeOf(unit)}${unit.type === 'season' ? ' pack' : ''}`
 
 export const coverageOf = (meta, show, episodes: ShowEpisode[]): Coverage[] => {
   const seasons = meta?.seasons || []

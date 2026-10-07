@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Warning } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import Body from '../../layout/Body/Body'
@@ -11,8 +12,6 @@ import Show, { FOOTER_HEIGHT } from '../../components/Show/Show'
 import { List, compareOf, listsOf } from '../Home/rows'
 import { ListRow, fetchSource } from '../Home/Items/List'
 import withBulk from '../../components/enhancers/withBulk'
-
-const NOUNS = { movie: 'movies', tv: 'shows' }
 
 const EntitiesWithBulk = withBulk()(Entities)
 
@@ -116,12 +115,13 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
   const { config } = useConfigContext()
   const list = listsOf(config).find((list) => list.id === id && list.media === media)
   const { entities, length, onMore, error, ready } = useListAll(list)
-  useTitle(list?.name || 'List')
+  const { t } = useTranslation()
+  useTitle(list?.name || t('pages.lists.list'))
 
   if (!list) {
     return (
       <Body>
-        <Warning emoji='🗂️' title='No such list' subtitle={<span>It may have been deleted. Your lists are in <Link to='/settings/lists'>Settings</Link>.</span>} />
+        <Warning emoji='🗂️' title={t('pages.lists.missing.title')} subtitle={<span><Trans t={t} i18nKey='pages.lists.missing.subtitle' components={[<Link to='/settings/lists' />]} /></span>} />
       </Body>
     )
   }
@@ -140,7 +140,7 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
         onMore={onMore as any}
         ready={ready}
         error={error}
-        empty={{ emoji: '🗂️', title: 'Nothing in it yet', subtitle: <span>Add {NOUNS[media]} from their page or from <Link to={`/${media}/library`}>Library</Link>, or change its filters in <Link to='/settings/lists'>Settings</Link>.</span> }}
+        empty={{ emoji: '🗂️', title: t('pages.lists.empty.title'), subtitle: <span><Trans t={t} i18nKey='pages.lists.empty.subtitle' values={{ media }} components={[<Link to={`/${media}/library`} />, <Link to='/settings/lists' />]} /></span> }}
       />
     </Body>
   )
@@ -150,7 +150,8 @@ export const ListPage = ({ media }: { media: 'movie' | 'tv' }) => {
 export const ListsPage = ({ media }: { media: 'movie' | 'tv' }) => {
   const { config } = useConfigContext()
   const lists = listsOf(config).filter((list) => list.media === media)
-  useTitle('Lists')
+  const { t } = useTranslation()
+  useTitle(t('header.pages.lists'))
 
   return (
     // Without the scrollbars the empty state takes the height of the page, centered in it
@@ -158,8 +159,8 @@ export const ListsPage = ({ media }: { media: 'movie' | 'tv' }) => {
       {lists.length ? lists.map((list) => <ListRow key={list.id} list={list} hide={false} />) : (
         <Warning
           emoji='🗂️'
-          title={`No list of ${NOUNS[media]} yet`}
-          subtitle={<span>Save the filters of <Link to={`/${media}/discover`}>Discover</Link> or <Link to={`/${media}/library`}>Library</Link> as a list, or name a custom list in <Link to='/settings/lists'>Settings</Link>.</span>}
+          title={t('pages.lists.none.title', { media })}
+          subtitle={<span><Trans t={t} i18nKey='pages.lists.none.subtitle' components={[<Link to={`/${media}/discover`} />, <Link to={`/${media}/library`} />, <Link to='/settings/lists' />]} /></span>}
         />
       )}
     </Body>

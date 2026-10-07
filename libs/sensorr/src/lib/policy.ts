@@ -2,7 +2,7 @@ import { compareTwoStrings as similarity } from 'string-similarity'
 import oleoo from 'oleoo'
 import { Policy as PolicyInterface } from './interfaces'
 import { clean } from './utils'
-import { ShowUnit, levelOf, matchesUnit, reachesUnit, unitLabel } from './show'
+import { ShowUnit, levelOf, matchesUnit, reachesUnit, unitCodeOf, unitLabel } from './show'
 import { isMagnet } from './torrent'
 
 const MINIMUM_SIMILARITY = 0.6
@@ -189,6 +189,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `🚫 Release banned`,
+        explanation: valid ? null : { code: 'banned', values: {} },
         warning: valid ? 0 : 70,
       }
     },
@@ -204,6 +205,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : unit ? `🧲 Magnet link, a show needs a .torrent` : `🧲 Magnet link, turned off in Settings > Blackhole`,
+        explanation: valid ? null : { code: unit ? 'magnetShow' : 'magnetOff', values: {} },
         warning: valid ? 0 : 30,
       }
     },
@@ -218,6 +220,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📚 COLLECTION release`,
+        explanation: valid ? null : { code: 'collection', values: {} },
         warning: valid ? 0 : 60,
       }
     },
@@ -232,6 +235,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📺 TV show release`,
+        explanation: valid ? null : { code: 'tvShow', values: {} },
         warning: valid ? 0 : 60,
       }
     },
@@ -246,6 +250,9 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📰 Release published ${release.publishDate ? `on ${new Date(release.publishDate).toISOString().slice(0, 10)}` : 'on no date'}, before the season finale aired`,
+        explanation: valid ? null : release.publishDate
+          ? { code: 'publishedBeforeFinale', values: { date: new Date(release.publishDate).toISOString().slice(0, 10) } }
+          : { code: 'publishedBeforeFinaleUndated', values: {} },
         warning: valid ? 0 : 50,
       }
     },
@@ -260,6 +267,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📰 Release published year (${new Date(release.publishDate).getFullYear()}) prior to movie release years (${years.join(', ')})`,
+        explanation: valid ? null : { code: 'publishedBefore', values: { year: String(new Date(release.publishDate).getFullYear()), years: years.join(', ') } },
         warning: valid ? 0 : 50,
       }
     },
@@ -276,6 +284,9 @@ export class Policy {
         reason: valid ? null : `📅 Release year (${release.meta.year}) ${
           Number(release.meta.year) === 0 ? 'unknown' : `different from movie release years (${years.join(', ')})`
         }`,
+        explanation: valid ? null : Number(release.meta.year) === 0
+          ? { code: 'yearUnknown', values: { year: String(release.meta.year) } }
+          : { code: 'yearDifferent', values: { year: String(release.meta.year), years: years.join(', ') } },
         warning: valid ? 0 : 40,
       }
     },
@@ -290,6 +301,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📺 Release (${levelOf(release.meta, release.category) || release.meta.type}) doesn't match the ${unitLabel(unit)} searched`,
+        explanation: valid ? null : { code: 'unit', values: { level: String(levelOf(release.meta, release.category) || release.meta.type), type: unit.type, unit: unitCodeOf(unit) } },
         warning: valid ? 0 : 60,
       }
     },
@@ -306,6 +318,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `📅 Release year (${release.meta.year}) outside show years (${Math.min(...bounds)}-${Math.max(...bounds)})`,
+        explanation: valid ? null : { code: 'yearOutside', values: { year: String(release.meta.year), from: String(Math.min(...bounds)), to: String(Math.max(...bounds)) } },
         warning: valid ? 0 : 40,
       }
     },
@@ -320,6 +333,7 @@ export class Policy {
         ...release,
         valid,
         reason: valid ? null : `🌍 No seeders`,
+        explanation: valid ? null : { code: 'noSeeders', values: {} },
         warning: valid ? 0 : 30,
       }
     },
@@ -356,6 +370,7 @@ export class Policy {
         valid,
         score: valid ? 1000 : 0,
         reason: valid ? null : `🎯 Similarity too low: ${current.toFixed(2)} ("${clean(release.meta.title)}" doesn't match enough with any "${titles.join('", "')}")`,
+        explanation: valid ? null : { code: 'similarity', values: { score: current.toFixed(2), title: clean(release.meta.title), titles: titles.join(', ') } },
         warning: valid ? 0 : 20,
       })
     },
@@ -377,13 +392,14 @@ export class Policy {
               const intersection = policy.avoid[tag].filter(test)
 
               if (intersection.length) {
-                throw new Error(`🚨 Withdrawn by policy (${tag}=${intersection.join(', ')})`)
+                throw Object.assign(new Error(`🚨 Withdrawn by policy (${tag}=${intersection.join(', ')})`), { explanation: { code: 'avoided', values: { tag, keywords: intersection.join(', ') } } })
               }
 
               return true
             })
             .every(bool => bool),
           reason: null,
+          explanation: null,
           warning: 0,
         })
       } catch (e) {
@@ -391,6 +407,8 @@ export class Policy {
           ...release,
           valid: false,
           reason: e.message,
+          // An error thrown by anything else than a policy, an invalid `custom` pattern, has no translation
+          explanation: e.explanation || null,
           warning: 10,
         })
       }
@@ -414,13 +432,15 @@ export class Policy {
               const intersection = policy.require[tag].filter(test)
 
               if (!intersection.length) {
-                throw new Error(`🚨 Withdrawn by require policy (${tag}=${(Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).join(', ')} allowed ${policy.require[tag].join(', ')})`)
+                const found = (Array.isArray(release.meta[tag]) ? release.meta[tag] : [release.meta[tag]]).join(', ')
+                throw Object.assign(new Error(`🚨 Withdrawn by require policy (${tag}=${found} allowed ${policy.require[tag].join(', ')})`), { explanation: { code: 'required', values: { tag, found, allowed: policy.require[tag].join(', ') } } })
               }
 
               return true
             })
             .every(bool => bool),
           reason: null,
+          explanation: null,
           warning: 0,
         })
       } catch (e) {
@@ -428,6 +448,8 @@ export class Policy {
           ...release,
           valid: false,
           reason: e.message,
+          // An error thrown by anything else than a policy, an invalid `custom` pattern, has no translation
+          explanation: e.explanation || null,
           warning: 10,
         })
       }

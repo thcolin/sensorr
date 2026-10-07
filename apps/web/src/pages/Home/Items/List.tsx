@@ -44,7 +44,7 @@ export const summaryOf = (list: List, { kind, values }: List['sources'][number],
     const name = key.replace(/^with(out)?_/, '')
     const label = `ui.filters.${FILTER[name] || name}`
     const text = textOf(value, names)
-    return text && i18n.exists(label) ? `${i18n.t(label)}: ${key.startsWith('without_') ? 'not ' : ''}${text}` : null
+    return text && i18n.exists(label) ? i18n.t('pages.lists.summary', { label: i18n.t(label), without: String(key.startsWith('without_')), text }) : null
   })
   .filter(Boolean)
 

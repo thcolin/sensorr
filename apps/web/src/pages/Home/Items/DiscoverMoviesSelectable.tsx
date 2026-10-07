@@ -22,7 +22,7 @@ const DiscoverMoviesSelectable = ({ ...props }) => {
       label: (
         <Trans
           i18nKey="items.movies.discoverSelectable.year.label"
-          values={{ value: `(${values?.year || 'loading'})` }}
+          values={{ value: `(${values?.year || t('pages.home.loading')})` }}
           components={{ small: <span style={{ fontSize: 'smaller', fontWeight: 'normal' }} /> }}
         />
       ),
@@ -50,7 +50,7 @@ const DiscoverMoviesSelectable = ({ ...props }) => {
       label: (
         <Trans
           i18nKey="items.movies.discoverSelectable.genre.label"
-          values={{ value: `(${values?.genre?.name || 'loading'})` }}
+          values={{ value: `(${values?.genre?.name || t('pages.home.loading')})` }}
           components={{ small: <span style={{ fontSize: 'smaller', fontWeight: 'normal' }} /> }}
         />
       ),
@@ -81,7 +81,7 @@ const DiscoverMoviesSelectable = ({ ...props }) => {
       label: (
         <Trans
           i18nKey="items.movies.discoverSelectable.studio.label"
-          values={{ value: `(${values?.studio?.name || 'loading'})` }}
+          values={{ value: `(${values?.studio?.name || t('pages.home.loading')})` }}
           components={{ small: <span style={{ fontSize: 'smaller', fontWeight: 'normal' }} /> }}
         />
       ),
@@ -106,7 +106,7 @@ const DiscoverMoviesSelectable = ({ ...props }) => {
         },
       },
     },
-  }), [values])
+  }), [values, t])
 
   useEffect(() => {
     if (values !== null) {

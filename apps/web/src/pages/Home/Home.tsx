@@ -16,15 +16,15 @@ import { rowsOf, listRowId, listsOf, isGroup } from './rows'
 import { RowGroup } from './Items/Group'
 import { useConfigContext } from '../../contexts/Config/Config'
 
-const TITLES = { all: 'Home', movie: 'Movies', tv: 'TV', person: 'Stars' }
+const TITLES = { all: 'header.sections.home', movie: 'header.sections.movies', tv: 'header.sections.tv', person: 'header.sections.stars' }
 
 // The Stars Home keeps fixed rows, the others draw `config.home`
 const PERSON = ['followed_persons', 'birthday_persons', 'calendar', 'trending_persons']
 
 // `all` is the home of the browser, the other sections the home of a bottom bar tab in the PWA
 const Home = ({ section = 'all', ...props }: { section?: 'all' | 'movie' | 'tv' | 'person' }) => {
-  useTitle(TITLES[section])
   const { t } = useTranslation()
+  useTitle(t(TITLES[section]))
   const { device } = useDeviceContext()
   const { config } = useConfigContext()
   const navigationType = useNavigationType()

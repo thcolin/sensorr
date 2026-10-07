@@ -21,6 +21,7 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, utils, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
+import { Trans } from 'react-i18next'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
@@ -46,7 +47,7 @@ export const FIELDS = {
           checked={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
         >
-          Hide Library
+          <Trans i18nKey='pages.hideLibrary' />
         </Option>
       </div>
     ),
@@ -57,12 +58,12 @@ export const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
         <Warning
           emoji="🌐"
-          title="Discover"
+          title={<Trans i18nKey='pages.discover.title' />}
           subtitle={(
             <span>
-              Discover movies with various filters about movies like <strong>average rating</strong>, <strong>number of votes</strong>, <strong>genres</strong>, <strong>certifications</strong>, etc...
+              <Trans i18nKey='pages.discover.head' components={[<strong />, <strong />, <strong />, <strong />]} />
               <br/>
-              <small><em>Combine filters to discover new movies !</em></small>
+              <small><em><Trans i18nKey='pages.discover.hint' /></em></small>
             </span>
           )}
         />
@@ -261,10 +262,10 @@ export const Discover = compose(
     bulk: 'movie',
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },

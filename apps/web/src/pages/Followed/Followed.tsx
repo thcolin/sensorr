@@ -17,6 +17,7 @@ import withFetchQuery from '../../components/enhancers/withFetchQuery'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { useAPI, query as APIQuery } from '../../store/api'
 import i18n from '@sensorr/i18n'
+import { Trans } from 'react-i18next'
 import Body from '../../layout/Body/Body'
 
 const FollowedPersons = compose(
@@ -25,10 +26,10 @@ const FollowedPersons = compose(
     child: Person,
     empty: {
       emoji: '⭐️',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -74,13 +75,13 @@ const FollowedPersons = compose(
           <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
             <Warning
               emoji="⭐️"
-              title="Followed"
+              title={<Trans i18nKey='pages.followed.title' />}
               subtitle={(
                 <span>
-                  Explore followed directors, actors, writers, music composer, procuders... with various filters like <strong>department</strong>, <strong>gender</strong>, <strong>birthday</strong>, etc...
+                  <Trans i18nKey='pages.followed.head' components={[<strong />, <strong />, <strong />]} />
                   <br/>
                   <br/>
-                  <small><em>Follow favorite directors, actors, writers... by changing person <code sx={{ variant: 'code.reset', marginX: 6, fontStyle: 'normal' }}>🔕 state</code> from anywhere in Sensorr !</em></small>
+                  <small><em><Trans i18nKey='pages.followed.hint' components={[<code sx={{ variant: 'code.reset', marginX: 6, fontStyle: 'normal' }} />]} /></em></small>
                 </span>
               )}
             />

@@ -3,6 +3,7 @@ import Color from 'color'
 import deltaE from 'delta-e'
 import { utils } from '@sensorr/tmdb'
 import { Badge } from '../../../atoms/Badge/Badge'
+import i18n from '@sensorr/i18n'
 
 export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews = null, display = null, palette, forceOpen = false, ...props }) => {
   // const ref = useRef<HTMLSpanElement>()
@@ -77,12 +78,12 @@ export const ReviewsBadge = ({ entity, reviews: _reviews, loadReviews = null, di
           borderRadius: '2em',
         }}
       >
-        <span sx={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }} title={`${score.audience >= 0.6 ? 'Hot' : 'Stale'} - Audience Score (TMDB)`}>
+        <span sx={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }} title={i18n.t('ui.badges.reviews.audience', { hot: String(score.audience >= 0.6) })}>
           {score.audience >= 0.6 ? <Icons.hot /> : <Icons.stale />}
           <span sx={{ fontFamily: 'monospace', fontSize: 5, marginLeft: 8 }}>{Math.round((score.audience || 0) * 100)}%</span>
         </span>
         {score.critics !== null && (
-          <span sx={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }} title={`${score.critics >= 0.6 ? 'Fresh' : 'Rotten'} - Critics Score (${Object.keys(reviews).filter(review => ['Rotten Tomatoes', 'Metacritic'].includes(review)).map(source => `${Math.round(reviews[source].score * 100)}% ${source}`).join(', ')})`}>
+          <span sx={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }} title={i18n.t('ui.badges.reviews.critics', { fresh: String(score.critics >= 0.6), scores: Object.keys(reviews).filter(review => ['Rotten Tomatoes', 'Metacritic'].includes(review)).map(source => `${Math.round(reviews[source].score * 100)}% ${source}`).join(', ') })}>
             {score.critics >= 0.6 ? <Icons.fresh /> : <Icons.rotten />}
             <span sx={{ fontFamily: 'monospace', fontSize: 5, marginLeft: 8 }}>{Math.round(score.critics * 100)}%</span>
           </span>

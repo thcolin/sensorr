@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans } from 'react-i18next'
 import { compose } from '@sensorr/utils'
 import { Entities } from '@sensorr/ui'
 import { API } from '@sensorr/services'
@@ -54,8 +55,8 @@ export const TrendingShows = compose(
   withProps({
     empty: {
       emoji: '📺',
-      title: "Oh no, your request didn't return results",
-      subtitle: 'themoviedb.org lists no trending show today, try again later',
+      title: <Trans i18nKey='entities.empty.title' />,
+      subtitle: <Trans i18nKey='pages.trending.shows.empty' />,
     },
   }),
 )(Entities)
@@ -65,8 +66,8 @@ export const DiscoverShows = compose(
   withProps({
     empty: {
       emoji: '📺',
-      title: "Oh no, your request didn't return results",
-      subtitle: 'themoviedb.org has no show to discover right now, try again later',
+      title: <Trans i18nKey='entities.empty.title' />,
+      subtitle: <Trans i18nKey='pages.home.discoverShows.empty' />,
     },
   }),
 )(Entities)

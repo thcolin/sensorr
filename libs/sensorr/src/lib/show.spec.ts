@@ -791,46 +791,46 @@ describe('seasonDiffusionOf', () => {
   const season = (number: number) => airingEpisodes().filter(({ season_number }) => season_number === number)
 
   it('says a season of a show still airing airs while one of its episodes is to come, and when the next one does', () => {
-    expect(seasonDiffusionOf('Returning Series', season(3), now, 'fr-FR')).toEqual({ airing: true, detail: 'next episode on 01/10' })
-    expect(seasonDiffusionOf('In Production', [...season(2), { season_number: 2, episode_number: 9, air_date: null }], now, 'fr-FR')).toEqual({ airing: true, detail: 'still airing' })
+    expect(seasonDiffusionOf('Returning Series', season(3), now, 'fr-FR')).toEqual({ airing: true, detail: 'next episode on 01/10', code: 'next', values: { date: '01/10' } })
+    expect(seasonDiffusionOf('In Production', [...season(2), { season_number: 2, episode_number: 9, air_date: null }], now, 'fr-FR')).toEqual({ airing: true, detail: 'still airing', code: 'airing', values: {} })
   })
 
   it('never tints a season fully aired, one of an ended show, one of a show without status, nor the specials', () => {
-    expect(seasonDiffusionOf('Returning Series', season(2), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
-    expect(seasonDiffusionOf('Ended', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
-    expect(seasonDiffusionOf('Canceled', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
-    expect(seasonDiffusionOf(null, season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '' })
-    expect(seasonDiffusionOf('Returning Series', [{ season_number: 0, episode_number: 1, air_date: null }], now, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(seasonDiffusionOf('Returning Series', season(2), now, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
+    expect(seasonDiffusionOf('Ended', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
+    expect(seasonDiffusionOf('Canceled', season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
+    expect(seasonDiffusionOf(null, season(3), now, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
+    expect(seasonDiffusionOf('Returning Series', [{ season_number: 0, episode_number: 1, air_date: null }], now, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
   })
 })
 
 describe('diffusionOf', () => {
   it('gives the first air date of a show with nothing aired yet, tinted when it will air', () => {
-    expect(diffusionOf({ status: 'Returning Series' }, { aired: 0, next: '2026-11-25' }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode on 25/11/2026' })
-    expect(diffusionOf({ status: 'In Production', first_air_date: '2026-11-25' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode on 25/11/2026' })
-    expect(diffusionOf({ status: 'Planned' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode to be announced' })
+    expect(diffusionOf({ status: 'Returning Series' }, { aired: 0, next: '2026-11-25' }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode on 25/11/2026', code: 'first', values: { date: '25/11/2026' } })
+    expect(diffusionOf({ status: 'In Production', first_air_date: '2026-11-25' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode on 25/11/2026', code: 'first', values: { date: '25/11/2026' } })
+    expect(diffusionOf({ status: 'Planned' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: true, detail: 'first episode to be announced', code: 'firstTba', values: {} })
     expect(diffusionOf({ first_air_date: '2026-11-25' }, { aired: 0 }, 'fr-FR').airing).toBe(false)
   })
 
   it('gives the year an ended or canceled show stopped, never tinted', () => {
-    expect(diffusionOf({ status: 'Ended', last_air_date: '2017-05-19' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, detail: 'ended in 2017' })
-    expect(diffusionOf({ status: 'Ended' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, detail: 'ended' })
-    expect(diffusionOf({ status: 'Canceled', last_air_date: new Date('2019-01-01') }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled in 2019' })
-    expect(diffusionOf({ status: 'Canceled' }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled' })
+    expect(diffusionOf({ status: 'Ended', last_air_date: '2017-05-19' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, detail: 'ended in 2017', code: 'endedIn', values: { year: '2017' } })
+    expect(diffusionOf({ status: 'Ended' }, { aired: 42 }, 'fr-FR')).toEqual({ airing: false, detail: 'ended', code: 'ended', values: {} })
+    expect(diffusionOf({ status: 'Canceled', last_air_date: new Date('2019-01-01') }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled in 2019', code: 'canceledIn', values: { year: '2019' } })
+    expect(diffusionOf({ status: 'Canceled' }, { aired: 10 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled', code: 'canceled', values: {} })
   })
 
   it('says an ended or canceled show stopped even when none of its episodes is counted aired', () => {
-    expect(diffusionOf({ status: 'Ended', first_air_date: '2011-04-17', last_air_date: '2017-05-19' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: false, detail: 'ended in 2017' })
-    expect(diffusionOf({ status: 'Canceled', last_air_date: '2019-03-01' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled in 2019' })
+    expect(diffusionOf({ status: 'Ended', first_air_date: '2011-04-17', last_air_date: '2017-05-19' }, { aired: 0, next: null }, 'fr-FR')).toEqual({ airing: false, detail: 'ended in 2017', code: 'endedIn', values: { year: '2017' } })
+    expect(diffusionOf({ status: 'Canceled', last_air_date: '2019-03-01' }, { aired: 0 }, 'fr-FR')).toEqual({ airing: false, detail: 'canceled in 2019', code: 'canceledIn', values: { year: '2019' } })
   })
 
   it('gives the next episode of a show still airing, by day and month', () => {
-    expect(diffusionOf({ status: 'Returning Series', last_air_date: '2026-09-22' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: true, detail: 'next episode on 29/09' })
+    expect(diffusionOf({ status: 'Returning Series', last_air_date: '2026-09-22' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: true, detail: 'next episode on 29/09', code: 'next', values: { date: '29/09' } })
     expect(diffusionOf({ status: 'Returning Series' }, { aired: 42, next: new Date('2026-09-29T00:00:00Z') }, 'fr-FR').detail).toBe('next episode on 29/09')
-    expect(diffusionOf({ status: 'Returning Series' }, { aired: 42, next: null }, 'fr-FR')).toEqual({ airing: true, detail: 'still airing' })
+    expect(diffusionOf({ status: 'Returning Series' }, { aired: 42, next: null }, 'fr-FR')).toEqual({ airing: true, detail: 'still airing', code: 'airing', values: {} })
   })
 
   it('gives no verdict on a show without status', () => {
-    expect(diffusionOf({ last_air_date: '2017-05-19' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: false, detail: '' })
+    expect(diffusionOf({ last_air_date: '2017-05-19' }, { aired: 42, next: '2026-09-29' }, 'fr-FR')).toEqual({ airing: false, detail: '', code: null, values: {} })
   })
 })

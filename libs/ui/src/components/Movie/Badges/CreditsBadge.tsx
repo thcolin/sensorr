@@ -3,6 +3,7 @@ import { useResponsiveValue } from '@sensorr/utils'
 import Tippy from '@tippyjs/react'
 import { Badge } from '../../../atoms/Badge/Badge'
 import { Credits } from '../Credits/Credits'
+import i18n from '@sensorr/i18n'
 
 export const CreditsBadge = ({ entity, display = 'poster', credits, loadCredits, parent, palette, ...props }) => {
   const [target, setTarget] = useState(null)
@@ -32,7 +33,7 @@ export const CreditsBadge = ({ entity, display = 'poster', credits, loadCredits,
         ref={el => setTarget(el)}
         onMouseEnter={() => loadCredits()}
         sx={{ cursor: 'pointer' }}
-        title={credits === null ? 'Loading credits' : `Following ${(credits || []).filter(c => c.state === 'followed')?.length} credited stars`}
+        title={credits === null ? i18n.t('ui.badges.credits.loading') : i18n.t('ui.badges.credits.followed', { count: (credits || []).filter(c => c.state === 'followed')?.length })}
       >
         <Badge
           emoji='⭐️'

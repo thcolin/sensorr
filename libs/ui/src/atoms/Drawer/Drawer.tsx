@@ -5,6 +5,10 @@ import useMeasure from 'react-use-measure'
 import { useDevice } from '@sensorr/utils'
 import { Shadow } from '../Shadow/Shadow'
 import { Icon } from '../Icon/Icon'
+import i18n from '@sensorr/i18n'
+
+// A pull from these leaves the drawer open: they take the touch for themselves
+const EDITABLE = 'input, select, textarea, button, [contenteditable]'
 
 export interface DrawerProps {
   height?: string
@@ -165,7 +169,7 @@ const UIDrawer = ({
         {device === 'mobile' && (
           <button
             type='button'
-            aria-label='Close'
+            aria-label={i18n.t('ui.close')}
             sx={UIDrawer.styles.knob(knobColor)}
             // A content taller than the visible drawer sets where the knob sits, through `--drawer-knob`
             style={{ top: 'var(--drawer-knob, 0px)' }}
@@ -187,7 +191,7 @@ const UIDrawer = ({
           style={{ opacity: !hidden ? 1 : 0 }}
           {...(pullable ? {
             onPointerDown: (e) => {
-              const pullable = e.pointerType === 'touch' && !(e.target as HTMLElement).closest('input, select, textarea, button, [contenteditable]')
+              const pullable = e.pointerType === 'touch' && !(e.target as HTMLElement).closest(EDITABLE)
               pull.current = pullable ? { y: e.clientY, atTop: isAtTop(e.target as HTMLElement, e.currentTarget) } : null
             },
             onPointerMove: (e) => {

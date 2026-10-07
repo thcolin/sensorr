@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 import { compose, scrollToTop } from '@sensorr/utils'
 import { useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
+import { Trans } from 'react-i18next'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB } from '../../store/tmdb'
 import withProps from '../../components/enhancers/withProps'
@@ -22,10 +23,10 @@ export const Recommendations = (id) => compose(
     bulk: 'movie',
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },

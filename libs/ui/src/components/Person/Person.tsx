@@ -174,12 +174,12 @@ export const transformPersonDetails = (entity: PersonInterface | CrewInterface |
     ) : null,
     birthday: (entity as PersonInterface).birthday ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
-        {emojize('🎂', new Date((entity as PersonInterface).birthday).toLocaleDateString())}
+        {emojize('🎂', new Date((entity as PersonInterface).birthday).toLocaleDateString(i18n.language))}
       </span>
     ) : null,
     deathday: (entity as PersonInterface).deathday ? () => (
       <span sx={{ whiteSpace: 'nowrap' }}>
-        {emojize('🥀', new Date((entity as PersonInterface).deathday).toLocaleDateString())}
+        {emojize('🥀', new Date((entity as PersonInterface).deathday).toLocaleDateString(i18n.language))}
       </span>
     ) : null,
   },

@@ -4,7 +4,7 @@ import i18next from 'eslint-plugin-i18next'
 // Text a reader sees must go through t(): JSX text, and the attributes below
 export const literalStrings = (files) => ({
   files,
-  ignores: ['**/*.stories.tsx', '**/*.spec.*'],
+  ignores: ['**/*.stories.tsx', '**/*.spec.*', '**/web/src/pages/Design/**'],
   plugins: { i18next },
   rules: {
     'i18next/no-literal-string': ['error', {

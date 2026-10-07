@@ -5,6 +5,7 @@ import { useDragScroll } from '@sensorr/utils'
 import { Shadow } from '../../atoms/Shadow/Shadow'
 import { Icon } from '../../atoms/Icon/Icon'
 import { DragScroll } from '../../atoms/DragScroll/DragScroll'
+import i18n from '@sensorr/i18n'
 
 export interface BulkOption {
   value: any
@@ -183,9 +184,9 @@ const UIBulk = ({ count, actions, disabled = false, onClear = null }: BulkProps)
         aria-hidden={!visible}
         {...(!visible ? { inert: '' } : {})}
       >
-        <div ref={drag} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={`${shown.current} selected`} {...(action ? { inert: '' } : {})}>
+        <div ref={drag} sx={UIBulk.styles.row} onScroll={onScroll} role='toolbar' aria-label={i18n.t('ui.bulk.selected', { count: shown.current })} {...(action ? { inert: '' } : {})}>
           {!!onClear && (
-            <button type='button' sx={{ ...UIBulk.styles.segment, fontVariantNumeric: 'tabular-nums' }} data-key='clear' onClick={onClear} aria-label={`Clear the ${shown.current} selected`}>
+            <button type='button' sx={{ ...UIBulk.styles.segment, fontVariantNumeric: 'tabular-nums' }} data-key='clear' onClick={onClear} aria-label={i18n.t('ui.bulk.clear', { count: shown.current })}>
               {shown.current}
               <Icon value='clear' active={true} width='0.75em' height='0.75em' />
             </button>
@@ -220,7 +221,7 @@ const UIBulk = ({ count, actions, disabled = false, onClear = null }: BulkProps)
                 </button>
               ))}
             </DragScroll>
-            <button type='button' sx={UIBulk.styles.segment} data-cancel={true} onClick={() => close()} aria-label='Cancel' title='Cancel (Esc)'>
+            <button type='button' sx={UIBulk.styles.segment} data-cancel={true} onClick={() => close()} aria-label={i18n.t('ui.controls.cancel')} title={i18n.t('ui.bulk.cancel')}>
               <Icon value='clear' active={true} width='1em' height='1em' />
             </button>
           </div>

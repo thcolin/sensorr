@@ -37,6 +37,8 @@ export default {
       option: emojize('🎉', 'Cherchez ce que vous voulez !'),
       loading: emojize('⌛', 'Recherche de « {query} »...'),
       empty: emojize('💢', 'Aucun résultat'),
+      required: 'Requis',
+      optional: 'Facultatif',
       custom: {
         people: emojize('⭐️', 'Cherchez une personne, comme « Bill Murray »'),
         crew: emojize('🎬', 'Cherchez dans l’équipe, comme « Christopher Nolan »'),
@@ -90,6 +92,83 @@ export default {
       policy: emojize('🚨', 'Policies'),
       size: emojize('📦', 'Taille'),
       job: emojize('🏗️', 'Job d’origine'),
+      with: 'Avec',
+      without: 'Sans',
+    },
+    close: 'Fermer',
+    unknown: 'Inconnu',
+    sort: {
+      ascending: 'Tri croissant',
+      descending: 'Tri décroissant',
+    },
+    bulk: {
+      selected: '{count, plural, one {# sélectionné} other {# sélectionnés}}',
+      clear: '{count, plural, one {Retirer le # sélectionné} other {Retirer les # sélectionnés}}',
+      cancel: 'Annuler (Échap)',
+    },
+    entities: {
+      error: 'Désolé, impossible d’afficher les éléments...',
+      left: 'Défiler vers la gauche',
+      right: 'Défiler vers la droite',
+    },
+    proposal: {
+      accept: 'Accepter',
+      refuse: 'Refuser',
+    },
+    badges: {
+      credits: {
+        loading: 'Chargement des crédits',
+        followed: '{count, plural, one {# star suivie au générique} other {# stars suivies au générique}}',
+      },
+      guests: '{count, plural, one {Demandé par # ami} other {Demandé par # amis}}',
+      reviews: {
+        audience: '{hot, select, true {Hot} other {Stale}} - Score du public (TMDB)',
+        critics: '{fresh, select, true {Fresh} other {Rotten}} - Score des critiques ({scores})',
+      },
+    },
+    episodeStatus: {
+      upcoming: 'À venir',
+      unmonitored: 'Non suivi',
+      wanted: 'Voulu',
+      proposed: 'Proposé',
+      owned: 'Owned',
+    },
+    gender: {
+      female: 'Femme',
+      male: 'Homme',
+      nonBinary: 'Non binaire',
+      unknown: 'N/A',
+    },
+    entity: {
+      popularity: 'Popularité',
+      voteCount: 'Nombre de votes',
+    },
+    movie: {
+      director: 'Découvrir plus de films de « {name} »',
+      year: 'Découvrir plus de films de {year}',
+      years: 'Découvrir plus de films de {from} à {to}',
+      voteAverage: 'Découvrir plus de films « {judge} »',
+      voteAverageCount: 'Découvrir plus de films « {judge} » ({count} votes)',
+      voteCount: 'Découvrir plus de films avec environ {count} votes',
+      genre: 'Découvrir plus de films du genre « {genre} »',
+      runtime: 'Découvrir plus de films de durée similaire',
+      language: 'Découvrir plus de films en version originale « {language} »',
+      company: 'Découvrir plus de films du studio « {company} »',
+      keyword: 'Découvrir plus de films associés au mot-clé « {keyword} »',
+      budget: 'Budget',
+      revenue: 'Recettes',
+    },
+    show: {
+      owned: '{owned} sur {aired} épisodes diffusés possédés',
+      summary: '{owned}/{aired} épisodes diffusés possédés',
+      firstAirDate: 'Date de diffusion du premier épisode',
+      tba: 'À annoncer',
+      airing: 'En cours',
+      runtime: 'Durée d’un épisode',
+      year: 'Découvrir plus de séries de {year}',
+      genre: 'Découvrir plus de séries du genre « {genre} »',
+      voteAverage: 'Découvrir plus de séries « {judge} »',
+      voteAverageCount: 'Découvrir plus de séries « {judge} » ({count} votes)',
     },
     sorting: 'Trier par',
     sortings: {
@@ -283,20 +362,98 @@ export default {
     },
   },
   pages: {
+    hideLibrary: 'Masquer la bibliothèque',
+    home: {
+      loading: 'chargement',
+      discoverShows: {
+        empty: 'themoviedb.org n’a aucune série à découvrir pour le moment, réessayez plus tard',
+      },
+    },
+    lists: {
+      list: 'Liste',
+      summary: '{label} : {without, select, true {sauf } other {}}{text}',
+      missing: {
+        title: 'Liste introuvable',
+        subtitle: 'Elle a peut-être été supprimée. Vos listes sont dans <0>Paramètres</0>.',
+      },
+      empty: {
+        title: 'Rien pour l’instant',
+        subtitle: 'Ajoutez des {media, select, movie {films} other {séries}} depuis leur page ou depuis <0>Bibliothèque</0>, ou changez ses filtres dans <1>Paramètres</1>.',
+      },
+      none: {
+        title: 'Aucune liste de {media, select, movie {films} other {séries}} pour l’instant',
+        subtitle: 'Enregistrez les filtres de <0>Découvrir</0> ou de <1>Bibliothèque</1> comme liste, ou nommez une liste personnalisée dans <2>Paramètres</2>.',
+      },
+    },
     library: {
       title: 'Bibliothèque',
+      head: 'Explorez les films de votre bibliothèque avec divers filtres comme <0>l’état</0>, <1>les genres</1>, <2>la date de sortie</2>, etc...',
+      hint: 'Complétez votre bibliothèque en changeant l’état <0>🔕 Ignored</0> d’un film depuis n’importe où dans Sensorr !',
+      selectAll: 'Tout sélectionner',
+      selected: '{count, plural, one {# sélectionné} other {# sélectionnés}}',
+      unknownLanguage: 'Inconnue ({id})',
+      bulk: {
+        policy: 'Policy',
+        accept: 'Accepter',
+        refuse: 'Refuser',
+        enable: 'Activer',
+        disable: 'Désactiver',
+        confirmProposal: 'Voulez-vous {accept, select, true {accepter} other {refuser}} la Proposal {count, plural, one {de # film} other {des # films}} ?',
+        confirmPolicy: 'Voulez-vous changer la Policy de {selection} pour {policy} ?',
+        confirmJob: 'Voulez-vous {enable, select, true {activer} other {désactiver}} le job {job} pour {selection} ?',
+      },
     },
     requests: {
       title: 'Demandes',
+      unfulfilled: 'Non traitées',
+      empty: {
+        title: 'Aucune demande trouvée',
+        subtitle: 'Élargissez vos critères de recherche ou invitez plus d’amis à synchroniser leur Watchlist Plex avec votre Sensorr !',
+      },
+      movies: {
+        head: 'Explorez les films demandés par vos amis',
+        hint: 'Passez un film demandé à <0>🍿 Wished</0> pour l’accepter, ou à <1>🔕 Ignored</1> pour le refuser',
+      },
+      shows: {
+        head: 'Explorez les séries demandées par vos amis',
+        hint: 'Passez une série demandée à <0>📺 Followed</0> pour l’ajouter à votre bibliothèque',
+      },
     },
     followed: {
       title: 'Followed',
+      head: 'Explorez les réalisateurs, acteurs, scénaristes, compositeurs, producteurs... que vous suivez avec divers filtres comme <0>le métier</0>, <1>le genre</1>, <2>l’anniversaire</2>, etc...',
+      hint: 'Suivez vos réalisateurs, acteurs, scénaristes... préférés en changeant leur <0>🔕 état</0> depuis n’importe où dans Sensorr !',
     },
     discover: {
       title: 'Découvrir',
+      head: 'Découvrez des films avec divers filtres comme <0>la note moyenne</0>, <1>le nombre de votes</1>, <2>les genres</2>, <3>les classifications</3>, etc...',
+      hint: 'Combinez les filtres pour découvrir de nouveaux films !',
     },
     calendar: {
       title: 'Calendrier',
+      head: 'Explorez dans un calendrier les films des personnes que vous suivez, à affiner avec divers filtres comme <0>les crédits</0>, <1>la note moyenne</1>, <2>le nombre de votes</2>, <3>les genres</3>, <4>les classifications</4>, etc...',
+      hint: 'Suivez plus de personnes pour enrichir votre calendrier !',
+      empty: 'Suivez plus de personnes, regardez les stars en tendance ou la distribution de vos films préférés',
+      noun: 'films',
+      label: 'Films par jour',
+      fallback: {
+        title: 'Désolé, impossible d’afficher les films...',
+        subtitle: 'TMDB n’a pas répondu aux requêtes du calendrier, réessayez plus tard',
+      },
+      nobody: {
+        title: 'Suivez d’abord quelques personnes',
+        subtitle: 'Le calendrier repose sur les personnes que vous suivez, regardez les stars en tendance ou la distribution de vos films préférés',
+      },
+      credits: {
+        label: '{order, plural, =0 {Tous les rôles} other {Top # rôles}}',
+        title: 'Une personne suivie compte comme interprète si elle est créditée {order, plural, =0 {n’importe où dans la distribution} other {parmi les # premiers rôles}}',
+      },
+      list: {
+        empty: {
+          title: 'Aucun film à lister',
+          subtitle: 'Aucune des personnes que vous suivez n’a de film qui correspond à ces filtres',
+        },
+      },
     },
     recommendations: {
       title: 'Recommandations',
@@ -307,12 +464,15 @@ export default {
     trending: {
       movies: {
         title: 'Tendances',
+        document: 'Films en tendance',
       },
       persons: {
         title: 'Tendances',
+        document: 'Personnes en tendance',
       },
       shows: {
         title: 'Tendances',
+        empty: 'themoviedb.org ne liste aucune série en tendance aujourd’hui, réessayez plus tard',
       },
     },
     theatres: {
@@ -332,6 +492,11 @@ export default {
     },
     search: {
       title: 'Recherche',
+      movies: 'Rechercher des films',
+      persons: 'Rechercher des personnes',
+      empty: {
+        shows: 'Essayez quelque chose de plus connu, comme <0>Friends</0> ?',
+      },
     },
     shows: {
       library: {
@@ -352,6 +517,37 @@ export default {
       requests: {
         title: 'Séries · Demandes',
       },
+    },
+  },
+  policy: {
+    reasons: {
+      banned: '🚫 Release bannie',
+      magnetShow: '🧲 Lien magnet, une série a besoin d’un .torrent',
+      magnetOff: '🧲 Lien magnet, désactivé dans Paramètres > Blackhole',
+      collection: '📚 Release COLLECTION',
+      tvShow: '📺 Release de série',
+      publishedBeforeFinale: '📰 Release publiée le {date}, avant la diffusion du final de saison',
+      publishedBeforeFinaleUndated: '📰 Release publiée sans date, avant la diffusion du final de saison',
+      publishedBefore: '📰 Année de publication de la release ({year}) antérieure aux années de sortie du film ({years})',
+      yearUnknown: '📅 Année de la release ({year}) inconnue',
+      yearDifferent: '📅 Année de la release ({year}) différente des années de sortie du film ({years})',
+      unit: '📺 La release ({level}) ne correspond pas {type, select, series {à la série entière recherchée} season {au pack {unit} recherché} other {à l’épisode {unit} recherché}}',
+      yearOutside: '📅 Année de la release ({year}) hors des années de la série ({from}-{to})',
+      noSeeders: '🌍 Aucun seeder',
+      similarity: '🎯 Similarité trop faible : {score} (« {title} » ne correspond pas assez à {titles})',
+      avoided: '🚨 Écartée par la Policy ({tag}={keywords})',
+      required: '🚨 Écartée par la Policy require ({tag}={found}, autorisés : {allowed})',
+    },
+    unit: '{type, select, series {série entière} season {pack {unit}} other {{unit}}}',
+    diffusion: {
+      ended: 'terminée',
+      endedIn: 'terminée en {year}',
+      canceled: 'annulée',
+      canceledIn: 'annulée en {year}',
+      first: 'premier épisode le {date}',
+      firstTba: 'premier épisode pas encore annoncé',
+      next: 'prochain épisode le {date}',
+      airing: 'toujours en diffusion',
     },
   },
 }

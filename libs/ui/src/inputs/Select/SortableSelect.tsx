@@ -4,6 +4,7 @@ import { components } from 'react-select'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { useThemeUI } from 'theme-ui'
 import { Select } from './Select'
+import i18n from '@sensorr/i18n'
 
 const colors = (theme) => ({
   prefer: theme.rawColors.primaryDarker,
@@ -113,7 +114,7 @@ const MultiValue = (props) => {
       >
         {requirable && [RANKED, null].includes(props.data.group) && (
           <div
-            title={props.data.required ? `Required` : `Non Required`}
+            title={props.data.required ? i18n.t('ui.select.required') : i18n.t('ui.select.optional')}
             onClick={() => {
               props.selectProps.onChange(
                 props.selectProps.value.map(data => ({ ...data, ...(data.value === props.data.value ? { required: !data.required } : {}) })),

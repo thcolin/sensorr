@@ -23,6 +23,8 @@ const UIRelease = ({
   bars = downloadable,
 }) => {
   const { t } = useTranslation()
+  // A release judged by an older Sensorr carries its English reason alone
+  const reason = entity?.explanation ? t(`policy.reasons.${entity.explanation.code}`, entity.explanation.values) : entity?.reason
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
   return (
@@ -112,7 +114,7 @@ const UIRelease = ({
                 </div>
                 {(display !== 'column' && !entity?.valid && !!entity?.reason) ? (
                   <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
-                    <code title={entity?.reason}>{entity?.reason}</code>
+                    <code title={reason}>{reason}</code>
                   </div>
                 ) : !!note && (
                   // A note in the place of the reason, which it gives way to
@@ -124,7 +126,7 @@ const UIRelease = ({
             </div>
             {(display === 'column' && !entity?.valid && !!entity?.reason) && (
               <div sx={{ ...UIRelease.styles.reason, paddingY: 8 }}>
-                <code>{entity?.reason}</code>
+                <code>{reason}</code>
               </div>
             )}
             {!!entity?.title && (

@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { TransitionPill, TransitionPillProps } from '../../../atoms/TransitionPill/TransitionPill'
+import i18n from '@sensorr/i18n'
 
 export interface ProgressPillProps extends Omit<TransitionPillProps, 'from' | 'to' | 'state' | 'neutral'> {
   owned: number
@@ -8,7 +9,7 @@ export interface ProgressPillProps extends Omit<TransitionPillProps, 'from' | 't
   airing?: boolean
   // Sensorr follows the series: an airing one it does not follow draws its aired side as a violet ring
   followed?: boolean
-  // Appended to the title after the counts, like "next episode on 29/09"
+  // Appended to the title after the counts, like "next episode on 29/09", translated by the caller
   detail?: string
 }
 
@@ -17,7 +18,7 @@ export interface ProgressPillProps extends Omit<TransitionPillProps, 'from' | 't
 // Airing and not followed, the aired side is a violet ring and the owned side stays gray.
 const UIProgressPill = ({ owned, aired, airing = false, followed = true, detail, compact = true, ...props }: ProgressPillProps) => {
   const caught = aired > 0 && owned >= aired
-  const label = [`${owned} of ${aired} aired episodes owned`, detail].filter(Boolean).join(' · ')
+  const label = [i18n.t('ui.show.owned', { owned, aired }), detail].filter(Boolean).join(' · ')
 
   return (
     <TransitionPill
