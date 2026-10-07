@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useThemeUI } from 'theme-ui'
 import { Shadow } from '../Shadow/Shadow'
 import { Icon } from '../Icon/Icon'
+import i18n from '@sensorr/i18n'
 
 export interface ModalProps {
   title: React.ReactNode
@@ -88,7 +89,7 @@ const UIModal = ({ title, open, close, width = '36em', background = 'grayLightes
       >
         <div sx={{ ...UIModal.styles.head, backgroundColor: head }}>
           <h3 id={id}>{title}</h3>
-          <button type='button' onClick={close} aria-label='Close'>
+          <button type='button' onClick={close} aria-label={i18n.t('ui.close')}>
             <Icon value='clear' active={true} height='1.25em' width='1.25em' />
           </button>
         </div>

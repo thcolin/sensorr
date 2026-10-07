@@ -19,12 +19,12 @@ const UIFilterProposal = ({ statistics, ...props }: FilterProposalProps) => {
       options={[
         {
           value: true,
-          label: emojize('📬', 'With'),
+          label: emojize('📬', t('ui.filters.with')),
           // count: statistics?.find(obj => obj._id === genre.id)?.count || 0,
         },
         {
           value: false,
-          label: emojize('📭', 'Without'),
+          label: emojize('📭', t('ui.filters.without')),
           // count: statistics?.find(obj => obj._id === genre.id)?.count || 0,
         },
       ]}

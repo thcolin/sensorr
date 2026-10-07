@@ -11,6 +11,7 @@ import { Warning, WarningProps } from '../../atoms/Warning/Warning'
 import { DragScroll } from '../../atoms/DragScroll/DragScroll'
 import { NavLink } from 'react-router-dom'
 import { Icon } from '../../atoms/Icon/Icon'
+import i18n from '@sensorr/i18n'
 
 const withEntity = (context) => (WrappedComponent) => {
   const WithEntity = ({ index, placeholder = false, props, ready, ...rest }) => {
@@ -133,7 +134,7 @@ const UIEntities = ({
   const override = useMemo(() => (!total || !!error) ? (
     <Warning
       emoji={error ? ((error as any).emoji || '💢') : empty?.emoji}
-      title={error ? ((error as any).title || 'Sorry, unable to display entities...') : empty?.title}
+      title={error ? ((error as any).title || i18n.t('ui.entities.error')) : empty?.title}
       subtitle={error ? ((error as any).subtitle || error.message) : empty?.subtitle}
     />
   ) : null, [total, error, empty])
@@ -156,10 +157,10 @@ const UIEntities = ({
           {display === 'row' && !(edges.start && edges.end) && (
             <div sx={UIEntities.styles.paging} role='group' aria-label={typeof label === 'string' ? label : undefined}>
               {/* Disabled for the pointer only: a button that ends its row keeps the keyboard's focus */}
-              <button type='button' aria-label='Scroll left' aria-disabled={edges.start} onClick={() => !edges.start && glide(row.current, pageOf(row.current, -1))}>
+              <button type='button' aria-label={i18n.t('ui.entities.left')} aria-disabled={edges.start} onClick={() => !edges.start && glide(row.current, pageOf(row.current, -1))}>
                 <Icon value='chevron' direction={false} />
               </button>
-              <button type='button' aria-label='Scroll right' aria-disabled={edges.end} onClick={() => !edges.end && glide(row.current, pageOf(row.current, 1))}>
+              <button type='button' aria-label={i18n.t('ui.entities.right')} aria-disabled={edges.end} onClick={() => !edges.end && glide(row.current, pageOf(row.current, 1))}>
                 <Icon value='chevron' direction={false} />
               </button>
             </div>

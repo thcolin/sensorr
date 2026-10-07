@@ -37,6 +37,8 @@ export default {
       option: emojize('🎉', 'Search for anything !'),
       loading: emojize('⌛', 'Searching for "{query}"...'),
       empty: emojize('💢', 'No results'),
+      required: 'Required',
+      optional: 'Non Required',
       custom: {
         people: emojize('⭐️', 'Search for people, like "Bill Murray"'),
         crew: emojize('🎬', 'Search for crew, like "Christopher Nolan"'),
@@ -90,6 +92,83 @@ export default {
       policy: emojize('🚨', 'Policies'),
       size: emojize('📦', 'Size'),
       job: emojize('🏗️', 'Source Job'),
+      with: 'With',
+      without: 'Without',
+    },
+    close: 'Close',
+    unknown: 'Unknown',
+    sort: {
+      ascending: 'Sort ascending',
+      descending: 'Sort descending',
+    },
+    bulk: {
+      selected: '{count} selected',
+      clear: 'Clear the {count} selected',
+      cancel: 'Cancel (Esc)',
+    },
+    entities: {
+      error: 'Sorry, unable to display entities...',
+      left: 'Scroll left',
+      right: 'Scroll right',
+    },
+    proposal: {
+      accept: 'Accept',
+      refuse: 'Refuse',
+    },
+    badges: {
+      credits: {
+        loading: 'Loading credits',
+        followed: 'Following {count} credited stars',
+      },
+      guests: 'Requested from {count} friends',
+      reviews: {
+        audience: '{hot, select, true {Hot} other {Stale}} - Audience Score (TMDB)',
+        critics: '{fresh, select, true {Fresh} other {Rotten}} - Critics Score ({scores})',
+      },
+    },
+    episodeStatus: {
+      upcoming: 'Upcoming',
+      unmonitored: 'Not followed',
+      wanted: 'Wanted',
+      proposed: 'Proposed',
+      owned: 'Owned',
+    },
+    gender: {
+      female: 'Female',
+      male: 'Male',
+      nonBinary: 'Non-binary',
+      unknown: 'N/A',
+    },
+    entity: {
+      popularity: 'Popularity',
+      voteCount: 'Vote count',
+    },
+    movie: {
+      director: 'Discover more movies from "{name}"',
+      year: 'Discover more movies from {year}',
+      years: 'Discover more movies from {from}-{to}',
+      voteAverage: 'Discover more "{judge}" movies',
+      voteAverageCount: 'Discover more "{judge}" movies ({count} users rating)',
+      voteCount: 'Discover more movies with "~{count}" vote count',
+      genre: 'Discover more "{genre}" movies',
+      runtime: 'Discover more movies with similar runtime',
+      language: 'Discover more movies with "{language}" as original language',
+      company: 'Discover more movies from "{company}" production company',
+      keyword: 'Discover more movies associated to "{keyword}" keyword',
+      budget: 'Budget',
+      revenue: 'Revenue',
+    },
+    show: {
+      owned: '{owned} of {aired} aired episodes owned',
+      summary: '{owned}/{aired} aired episodes owned',
+      firstAirDate: 'First episode air date',
+      tba: 'TBA',
+      airing: 'Airing',
+      runtime: 'Episode runtime',
+      year: 'Discover more shows from {year}',
+      genre: 'Discover more "{genre}" shows',
+      voteAverage: 'Discover more "{judge}" shows',
+      voteAverageCount: 'Discover more "{judge}" shows ({count} users rating)',
     },
     sorting: 'Sort by',
     sortings: {
@@ -299,20 +378,98 @@ export default {
     },
   },
   pages: {
+    hideLibrary: 'Hide Library',
+    home: {
+      loading: 'loading',
+      discoverShows: {
+        empty: 'themoviedb.org has no show to discover right now, try again later',
+      },
+    },
+    lists: {
+      list: 'List',
+      summary: '{label}: {without, select, true {not } other {}}{text}',
+      missing: {
+        title: 'No such list',
+        subtitle: 'It may have been deleted. Your lists are in <0>Settings</0>.',
+      },
+      empty: {
+        title: 'Nothing in it yet',
+        subtitle: 'Add {media, select, movie {movies} other {shows}} from their page or from <0>Library</0>, or change its filters in <1>Settings</1>.',
+      },
+      none: {
+        title: 'No list of {media, select, movie {movies} other {shows}} yet',
+        subtitle: 'Save the filters of <0>Discover</0> or <1>Library</1> as a list, or name a custom list in <2>Settings</2>.',
+      },
+    },
     library: {
       title: 'Library',
+      head: 'Explore movies from your library with various filters about movies like <0>state</0>, <1>genres</1>, <2>release date</2>, etc...',
+      hint: 'Complete your library by changing movie <0>🔕 Ignored</0> state from anywhere in Sensorr !',
+      selectAll: 'Select All',
+      selected: '{count} Selected',
+      unknownLanguage: 'Unknown ({id})',
+      bulk: {
+        policy: 'Policy',
+        accept: 'Accept',
+        refuse: 'Refuse',
+        enable: 'Enable',
+        disable: 'Disable',
+        confirmProposal: 'Do you want to {accept, select, true {accept} other {refuse}} the proposal of {count, plural, one {# movie} other {all # movies}}?',
+        confirmPolicy: 'Do you want to change the policy of {selection} to {policy}?',
+        confirmJob: 'Do you want to {enable, select, true {enable} other {disable}} the {job} job for {selection}?',
+      },
     },
     requests: {
       title: 'Requests',
+      unfulfilled: 'Unfulfilled',
+      empty: {
+        title: 'No requests found',
+        subtitle: 'Expand your search criteria or invite some more guests to sync their Plex Watchlist with your Sensorr !',
+      },
+      movies: {
+        head: 'Explore your guests requested movies',
+        hint: 'Change each requested movie state to <0>🍿 Wished</0> if you want to accept it, or <1>🔕 Ignored</1> if you want to refuse it',
+      },
+      shows: {
+        head: 'Explore your guests requested shows',
+        hint: 'Change a requested show to <0>📺 Followed</0> to add it to your library',
+      },
     },
     followed: {
       title: 'Followed',
+      head: 'Explore followed directors, actors, writers, music composers, producers... with various filters like <0>department</0>, <1>gender</1>, <2>birthday</2>, etc...',
+      hint: 'Follow favorite directors, actors, writers... by changing person <0>🔕 state</0> from anywhere in Sensorr !',
     },
     discover: {
       title: 'Discover',
+      head: 'Discover movies with various filters about movies like <0>average rating</0>, <1>number of votes</1>, <2>genres</2>, <3>certifications</3>, etc...',
+      hint: 'Combine filters to discover new movies !',
     },
     calendar: {
       title: 'Calendar',
+      head: 'Explore movies from followed persons in a calendar view, refinable with various filters like <0>credits</0>, <1>average rating</1>, <2>number of votes</2>, <3>genres</3>, <4>certifications</4>, etc...',
+      hint: 'Follow more people to enhance your calendar !',
+      empty: 'Try to follow more people, check trending stars or look at casting from your favorite movies',
+      noun: 'movies',
+      label: 'Movies by day',
+      fallback: {
+        title: 'Sorry, unable to display movies...',
+        subtitle: 'TMDB did not answer the calendar requests, try again later',
+      },
+      nobody: {
+        title: 'Try to follow some people first',
+        subtitle: 'Calendar is based on people you follow, check trending stars or look at casting from your favorite movies',
+      },
+      credits: {
+        label: '{order, plural, =0 {Any cast} other {Top # cast}}',
+        title: 'Acting counts a followed person billed {order, plural, =0 {anywhere in the cast} other {in the first # of the cast}}',
+      },
+      list: {
+        empty: {
+          title: 'No movie to list',
+          subtitle: 'None of the people you follow has a movie matching these filters',
+        },
+      },
     },
     recommendations: {
       title: 'Recommendations',
@@ -323,12 +480,15 @@ export default {
     trending: {
       movies: {
         title: 'Trending',
+        document: 'Trending movies',
       },
       persons: {
         title: 'Trending',
+        document: 'Trending persons',
       },
       shows: {
         title: 'Trending',
+        empty: 'themoviedb.org lists no trending show today, try again later',
       },
     },
     theatres: {
@@ -348,6 +508,11 @@ export default {
     },
     search: {
       title: 'Search',
+      movies: 'Search movies',
+      persons: 'Search persons',
+      empty: {
+        shows: 'Try something more familiar, like <0>Friends</0> ?',
+      },
     },
     shows: {
       library: {
@@ -368,6 +533,37 @@ export default {
       requests: {
         title: 'Shows · Requests',
       },
+    },
+  },
+  policy: {
+    reasons: {
+      banned: '🚫 Release banned',
+      magnetShow: '🧲 Magnet link, a show needs a .torrent',
+      magnetOff: '🧲 Magnet link, turned off in Settings > Blackhole',
+      collection: '📚 COLLECTION release',
+      tvShow: '📺 TV show release',
+      publishedBeforeFinale: '📰 Release published on {date}, before the season finale aired',
+      publishedBeforeFinaleUndated: '📰 Release published on no date, before the season finale aired',
+      publishedBefore: '📰 Release published year ({year}) prior to movie release years ({years})',
+      yearUnknown: '📅 Release year ({year}) unknown',
+      yearDifferent: '📅 Release year ({year}) different from movie release years ({years})',
+      unit: '📺 Release ({level}) doesn\'t match the {type, select, series {whole series} season {{unit} pack} other {{unit}}} searched',
+      yearOutside: '📅 Release year ({year}) outside show years ({from}-{to})',
+      noSeeders: '🌍 No seeders',
+      similarity: '🎯 Similarity too low: {score} ("{title}" doesn\'t match enough with any of {titles})',
+      avoided: '🚨 Withdrawn by policy ({tag}={keywords})',
+      required: '🚨 Withdrawn by require policy ({tag}={found} allowed {allowed})',
+    },
+    unit: '{type, select, series {whole series} season {{unit} pack} other {{unit}}}',
+    diffusion: {
+      ended: 'ended',
+      endedIn: 'ended in {year}',
+      canceled: 'canceled',
+      canceledIn: 'canceled in {year}',
+      first: 'first episode on {date}',
+      firstTba: 'first episode to be announced',
+      next: 'next episode on {date}',
+      airing: 'still airing',
     },
   },
 }

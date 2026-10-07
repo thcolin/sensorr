@@ -118,4 +118,13 @@ describe('magnet releases', () => {
     const [unseeded] = policy.apply([{ ...release('magnet:?xt=urn:btih:ED0DA850C273E3E15A819BDCBBF418BC85107EC8'), seeders: 0 }], query)
     expect(unseeded.reason).toMatch(/No seeders/)
   })
+
+  it('gives a code and values the web translates next to each English reason', () => {
+    const [result] = policy.apply([{ ...release('https://jackett/dl/1'), title: 'Dune.1984.1080p.WEBRip.x264' }], query)
+    expect(result.explanation).toEqual({ code: 'yearDifferent', values: { year: '1984', years: expect.any(String) } })
+    const unit = Policy.normalizers.showReleaseUnit({ ...release('https://jackett/dl/1'), valid: true, meta: { type: 'movie' } }, { type: 'season', season: 2, episodes: [] })
+    expect(unit.explanation).toEqual({ code: 'unit', values: { level: 'movie', type: 'season', unit: 'S02' } })
+    expect(Policy.normalizers.releasePolicy({ ...release('https://jackett/dl/1'), valid: true, meta: { resolution: '720p' } }, { avoid: { resolution: ['720p'] } }).explanation)
+      .toEqual({ code: 'avoided', values: { tag: 'resolution', keywords: '720p' } })
+  })
 })

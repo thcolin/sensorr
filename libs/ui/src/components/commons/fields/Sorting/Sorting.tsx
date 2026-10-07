@@ -44,7 +44,7 @@ const UISorting = ({ display = 'default', options, value, onChange, ...props }: 
       return (
         <div sx={UISorting.styles.default}>
           <label htmlFor='sorting'>{t('ui.sorting')}</label>
-          <button aria-label={value?.sort ? 'Sort ascending' : 'Sort descending'} onClick={() => onChange({ ...value, sort: !value?.sort })}>
+          <button aria-label={value?.sort ? t('ui.sort.ascending') : t('ui.sort.descending')} onClick={() => onChange({ ...value, sort: !value?.sort })}>
             <Icon value='sort' direction={value?.sort} />
           </button>
           <div>

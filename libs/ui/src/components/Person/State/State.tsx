@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { State as UIState, StateProps } from '../../../atoms/State/State'
+import i18n from '@sensorr/i18n'
 
 export interface PersonStateProps extends Omit<StateProps, 'value' | 'options'> {
   value: 'loading' | 'ignored' | 'followed'
@@ -8,18 +9,18 @@ export interface PersonStateProps extends Omit<StateProps, 'value' | 'options'> 
 export const PersonStateOptions = [
   {
     emoji: '⌛',
-    label: 'Loading',
+    get label() { return i18n.t('state.loading') },
     value: 'loading',
     hide: true,
   },
   {
     emoji: '🔕',
-    label: 'Ignored',
+    get label() { return i18n.t('state.ignored') },
     value: 'ignored',
   },
   {
     emoji: '🔔',
-    label: 'Followed',
+    get label() { return i18n.t('state.followed') },
     value: 'followed',
   },
 ]

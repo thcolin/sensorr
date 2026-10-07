@@ -14,6 +14,7 @@ import {
   ControlsToggleButton,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
+import { Trans } from 'react-i18next'
 import { fields } from '@sensorr/tmdb'
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
@@ -37,7 +38,7 @@ const code = { variant: 'code.reset', backgroundColor: 'transparent', marginX: 6
 
 const Head = ({ children }) => (
   <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
-    <Warning emoji="🍻" title="Requests" subtitle={children} />
+    <Warning emoji="🍻" title={<Trans i18nKey='pages.requests.title' />} subtitle={children} />
   </div>
 )
 
@@ -85,10 +86,10 @@ const Requests = compose(
     bulk: 'movie',
     empty: {
       emoji: '🍻',
-      title: "No requests found",
+      title: <Trans i18nKey='pages.requests.empty.title' />,
       subtitle: (
         <span>
-          Expand your search criteria or invite some more guests to sync their Plex Watchlist with your Sensorr !
+          <Trans i18nKey='pages.requests.empty.subtitle' />
         </span>
       ),
     },
@@ -107,10 +108,10 @@ const Requests = compose(
         component: () => (
           <Head>
             <span>
-              Explore your guests requested movies
+              <Trans i18nKey='pages.requests.movies.head' />
               <br/>
               <br/>
-              <small><em>Change each requested movie state to <code sx={code}>🍿 Wished</code> if you want to accept it, or <code sx={code}>🔕 Ignored</code> if you want to refuse it</em></small>
+              <small><em><Trans i18nKey='pages.requests.movies.hint' components={[<code sx={code} />, <code sx={code} />]} /></em></small>
             </span>
           </Head>
         ),
@@ -145,7 +146,7 @@ const Requests = compose(
             checked={props.value === 'pinned|missing|ignored'}
             onChange={(e: any) => props.onChange(e.target.checked ? 'pinned|missing|ignored' : 'archived|wished|pinned|missing|ignored')}
           >
-            Unfulfilled
+            <Trans i18nKey='pages.requests.unfulfilled' />
           </Option>
         ),
       },
@@ -234,10 +235,10 @@ export const ShowsRequests = compose(
     extra: FOOTER_HEIGHT,
     empty: {
       emoji: '🍻',
-      title: 'No requests found',
+      title: <Trans i18nKey='pages.requests.empty.title' />,
       subtitle: (
         <span>
-          Expand your search criteria or invite some more guests to sync their Plex Watchlist with your Sensorr !
+          <Trans i18nKey='pages.requests.empty.subtitle' />
         </span>
       ),
     },
@@ -257,10 +258,10 @@ export const ShowsRequests = compose(
         component: () => (
           <Head>
             <span>
-              Explore your guests requested shows
+              <Trans i18nKey='pages.requests.shows.head' />
               <br/>
               <br/>
-              <small><em>Change a requested show to <code sx={code}>📺 Followed</code> to add it to your library</em></small>
+              <small><em><Trans i18nKey='pages.requests.shows.hint' components={[<code sx={code} />]} /></em></small>
             </span>
           </Head>
         ),
@@ -296,7 +297,7 @@ export const ShowsRequests = compose(
             checked={props.value === SHOWS_UNFULFILLED}
             onChange={(e: any) => props.onChange(e.target.checked ? SHOWS_UNFULFILLED : SHOWS_ALL)}
           >
-            Unfulfilled
+            <Trans i18nKey='pages.requests.unfulfilled' />
           </Option>
         ),
       },

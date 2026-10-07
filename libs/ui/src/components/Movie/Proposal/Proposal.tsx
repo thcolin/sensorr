@@ -4,6 +4,7 @@ import { useResponsiveValue } from '@sensorr/utils'
 import { emojize, filesize } from '@sensorr/utils'
 import { Icon } from '../../../atoms/Icon/Icon'
 import { Badge } from '../../../atoms/Badge/Badge'
+import i18n from '@sensorr/i18n'
 
 export interface ProposalProps {
   proposals: any[]
@@ -35,7 +36,7 @@ const UIProposal = ({ proposals, releases, proceed, summary = null, labelize = n
                 <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, true)}>
                   <Badge
                     emoji={<Icon value='check' width='1em' height='1em' />}
-                    label='Accept'
+                    label={i18n.t('ui.proposal.accept')}
                     compact={true}
                     size='small'
                     color='theme'
@@ -44,7 +45,7 @@ const UIProposal = ({ proposals, releases, proceed, summary = null, labelize = n
                 <button sx={{ variant: 'button.reset' }} onClick={() => proceed(proposal, false)}>
                   <Badge
                     emoji={<Icon value='clear' width='1em' height='1em' />}
-                    label='Refuse'
+                    label={i18n.t('ui.proposal.refuse')}
                     compact={true}
                     size='small'
                     color='theme'

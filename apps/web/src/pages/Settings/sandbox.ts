@@ -86,7 +86,7 @@ export const sandboxOf = (raw, znabs: string[] = []) => {
   const goals = new Set(policy.apply(sampleReleasesOf(znabs, avoided), SAMPLE_QUERY, true).filter(release => release.valid).map(release => release.id))
 
   return policy.apply(sampleReleasesOf(znabs, avoided), SAMPLE_QUERY)
-    .map(release => avoided.includes(release.znab) ? { ...release, valid: false, reason: i18n.t('settings.policies.sandbox.avoided'), warning: 70 } : release)
+    .map(release => avoided.includes(release.znab) ? { ...release, valid: false, reason: i18n.t('settings.policies.sandbox.avoided'), explanation: null, warning: 70 } : release)
     .map(release => ({ ...release, goal: release.valid && goals.has(release.id) }))
 }
 

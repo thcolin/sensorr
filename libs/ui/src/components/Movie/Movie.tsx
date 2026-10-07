@@ -17,6 +17,7 @@ import { Proposal } from './Proposal/Proposal'
 import { ReviewsBadge } from './Badges/ReviewsBadge'
 // import { CreditsBadge } from './Badges/CreditsBadge'
 import { Guests } from './Guests/Guests'
+import i18n from '@sensorr/i18n'
 // import { GuestsBadge } from './Badges/GuestsBadge'
 
 export interface MovieProps extends Omit<
@@ -204,7 +205,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       <span>
         {emojize('🎬')}{(entity as any)?.credits?.crew?.filter(credit => credit.job === 'Director').map((credit, index, arr) => (
           <Fragment key={credit.id}>
-            <Link title={`Discover more movies from "${credit.name}"`} to={`/person/${credit.id}`}>
+            <Link title={i18n.t('ui.movie.director', { name: credit.name })} to={`/person/${credit.id}`}>
               {credit.name}
             </Link>
             {index === arr.length - 1 ? '' : ', '}
@@ -214,7 +215,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     year: entity.release_date ? ({ disabled } = {}) => (
       <Link
-        title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
+        title={i18n.t('ui.movie.year', { year: String(new Date(entity.release_date).getFullYear()) })}
         sx={{ whiteSpace: 'nowrap' }}
         disabled={disabled}
         to='/movie/discover'
@@ -232,7 +233,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     release_date: entity.release_date ? () => (
       <Link
-        title={`Discover more movies from ${new Date(entity.release_date).getFullYear()}`}
+        title={i18n.t('ui.movie.year', { year: String(new Date(entity.release_date).getFullYear()) })}
         sx={{ whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
@@ -244,7 +245,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           },
         }}
       >
-        {emojize('📆', new Date(entity.release_date).toLocaleString((global as any)?.config?.region || 'fr-FR', {
+        {emojize('📆', new Date(entity.release_date).toLocaleString(i18n.language, {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -253,7 +254,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     vote_average: typeof entity.vote_average !== 'undefined' ? () => (
       <Link
-        title={`Discover more "${tmdb.judge(entity)}" movies${entity?.vote_count ? ` (${fields.vote_count.humanize(entity as any)} users rating)` : ''}`}
+        title={entity?.vote_count ? i18n.t('ui.movie.voteAverageCount', { judge: tmdb.judge(entity), count: fields.vote_count.humanize(entity as any) }) : i18n.t('ui.movie.voteAverage', { judge: tmdb.judge(entity) })}
         sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
@@ -268,7 +269,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     vote_count: entity.vote_count ? () => (
       <Link
-        title={`Discover more movies with "~${entity.vote_count}" vote count`}
+        title={i18n.t('ui.movie.voteCount', { count: String(entity.vote_count) })}
         sx={{ whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
@@ -284,7 +285,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       </Link>
     ) : null,
     popularity: entity.popularity ? () => (
-      <span title={`Popularity`} sx={{ whiteSpace: 'nowrap' }}>
+      <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('📣', entity.popularity.toLocaleString())}
       </span>
     ) : null,
@@ -293,7 +294,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
           <Fragment key={genre.id}>
             <Link
-              title={`Discover more "${genre.name}" movies`}
+              title={i18n.t('ui.movie.genre', { genre: genre.name })}
               disabled={disabled}
               to='/movie/discover'
               state={{
@@ -314,7 +315,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
     ) : null,
     runtime: entity.runtime ? () => (
       <Link
-        title={`Discover more movies with similar runtime`}
+        title={i18n.t('ui.movie.runtime')}
         sx={{ whiteSpace: 'nowrap' }}
         to='/movie/discover'
         state={{
@@ -334,7 +335,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
 
       return language?.name?.length && (
         <Link
-          title={`Discover more movies with "${language.name[0]}" as original language`}
+          title={i18n.t('ui.movie.language', { language: language.name[0] })}
           sx={{ whiteSpace: 'nowrap' }}
           to='/movie/discover'
           state={{
@@ -356,12 +357,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
       )
     } : null,
     budget: entity.budget ? () => (
-      <span title={`Budget`} sx={{ whiteSpace: 'nowrap' }}>
+      <span title={i18n.t('ui.movie.budget')} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('💸', entity.budget.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, maximumSignificantDigits: 3 }))}
       </span>
     ) : null,
     revenue: entity.revenue ? () => (
-      <span title={`Revenue`} sx={{ whiteSpace: 'nowrap' }}>
+      <span title={i18n.t('ui.movie.revenue')} sx={{ whiteSpace: 'nowrap' }}>
         {emojize('💰', entity.revenue.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, maximumSignificantDigits: 3 }))}
       </span>
     ) : null,
@@ -370,7 +371,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('🏛️')}{entity.production_companies.map((company, index, arr) => (
           <Fragment key={company.id}>
             <Link
-              title={`Discover more movies from "${company.name}" production company`}
+              title={i18n.t('ui.movie.company', { company: company.name })}
               to='/movie/discover'
               state={{
                 controls: {
@@ -393,7 +394,7 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
         {emojize('🔗')}{(entity as any).keywords?.keywords.map((keyword, index, arr) => (
           <Fragment key={keyword.id}>
             <Link
-              title={`Discover more movies associated to "${keyword.name}" keyword`}
+              title={i18n.t('ui.movie.keyword', { keyword: keyword.name })}
               to='/movie/discover'
               state={{
                 controls: {

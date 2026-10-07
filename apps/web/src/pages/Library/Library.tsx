@@ -19,6 +19,7 @@ import {
   Bulk,
 } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
+import { Trans } from 'react-i18next'
 import { fields } from '@sensorr/tmdb'
 import { compose, languages, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { useLocation } from 'react-router-dom'
@@ -52,13 +53,13 @@ export const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head_main' }}>
         <Warning
           emoji="📚"
-          title="Library"
+          title={<Trans i18nKey='pages.library.title' />}
           subtitle={(
             <span>
-              Explore movies from your library with various filters about movies like <strong>state</strong>, <strong>genres</strong>, <strong>release date</strong>, etc...
+              <Trans i18nKey='pages.library.head' components={[<strong />, <strong />, <strong />]} />
               <br/>
               <br/>
-              <small><em>Complete your library by changing movie <code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }}>🔕 Ignored</code> state from anywhere in Sensorr !</em></small>
+              <small><em><Trans i18nKey='pages.library.hint' components={[<code sx={{ variant: 'code.reset', backgroundColor: 'transparent', marginX: 6, fontStyle: 'normal' }} />]} /></em></small>
             </span>
           )}
         />
@@ -100,7 +101,7 @@ export const FIELDS = {
         setSending(false)
       }
 
-      const lists = useListsAction('movie', apply, `${selected.length} movies`)
+      const lists = useListsAction('movie', apply, i18n.t('enhancers.bulk.movies', { count: selected.length }))
 
       return (
         <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em', fontVariantNumeric: 'tabular-nums' }}>
@@ -111,7 +112,7 @@ export const FIELDS = {
             disabled={!entities && selected.length === 0}
             onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
           >
-            {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
+            {selected.length === 0 ? i18n.t('pages.library.selectAll') : i18n.t('pages.library.selected', { count: selected.length })}
           </Option>
           <Bulk
             count={selected.length}
@@ -120,36 +121,36 @@ export const FIELDS = {
               {
                 key: 'state',
                 icon: '📚',
-                label: 'State',
+                label: i18n.t('enhancers.bulk.state'),
                 options: MOVIE_STATES,
-                onChange: ({ value }) => apply('state', value, `Do you want to change ${selected.length} movies state to "${value}" ?`),
+                onChange: ({ value, label }) => apply('state', value, i18n.t('enhancers.bulk.confirm', { selection: i18n.t('enhancers.bulk.movies', { count: selected.length }), state: label })),
               },
               {
                 key: 'proposal',
                 icon: '🛎️',
-                label: 'Proposal',
+                label: i18n.t('state.proposal'),
                 options: [
-                  { value: true, label: 'Accept' },
-                  { value: false, label: 'Refuse' },
+                  { value: true, label: i18n.t('pages.library.bulk.accept') },
+                  { value: false, label: i18n.t('pages.library.bulk.refuse') },
                 ],
-                onChange: ({ value }) => apply('proposal', value, `Do you want to ${value ? 'accept' : 'refuse'} all ${selected.length} movies proposal ?`),
+                onChange: ({ value }) => apply('proposal', value, i18n.t('pages.library.bulk.confirmProposal', { accept: String(value), count: selected.length })),
               },
               {
                 key: 'policy',
                 icon: '🚨',
-                label: 'Policy',
+                label: i18n.t('pages.library.bulk.policy'),
                 options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
-                onChange: ({ value }) => apply('policy', value, `Do you want to change ${selected.length} movies policies to ${value} ?`),
+                onChange: ({ value }) => apply('policy', value, i18n.t('pages.library.bulk.confirmPolicy', { selection: i18n.t('enhancers.bulk.movies', { count: selected.length }), policy: value })),
               },
               ...['refine', 'shrink'].map(job => ({
                 key: job,
                 icon: { refine: '✨', shrink: '✂️' }[job],
                 label: { refine: 'Refine', shrink: 'Shrink' }[job],
                 options: [
-                  { value: true, label: 'Enable' },
-                  { value: false, label: 'Disable' },
+                  { value: true, label: i18n.t('pages.library.bulk.enable') },
+                  { value: false, label: i18n.t('pages.library.bulk.disable') },
                 ],
-                onChange: ({ value }) => apply(job, value, `Do you want to ${value ? 'enable' : 'disable'} ${job} job for ${selected.length} movies ?`),
+                onChange: ({ value }) => apply(job, value, i18n.t('pages.library.bulk.confirmJob', { enable: String(value), job: { refine: 'Refine', shrink: 'Shrink' }[job], selection: i18n.t('enhancers.bulk.movies', { count: selected.length }) })),
               })),
               lists,
             ]}
@@ -212,11 +213,11 @@ export const FIELDS = {
     ...fields.original_languages,
     initial: { values: [], behavior: 'or' },
     serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
-    component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+    component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || i18n.t('pages.library.unknownLanguage', { id: _id })}` })(FilterStatistics),
   },
   spoken_languages: {
     ...fields.spoken_languages,
-    component: withProps({ label: 'ui.filters.spoken_languages', display: 'select', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+    component: withProps({ label: 'ui.filters.spoken_languages', display: 'select', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || i18n.t('pages.library.unknownLanguage', { id: _id })}` })(FilterStatistics),
   },
   production_companies: {
     ...fields.production_companies,
@@ -345,10 +346,10 @@ const Library = compose(
     child: MovieWithCreditsAndReviewsAndBulk,
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },

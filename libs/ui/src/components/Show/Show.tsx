@@ -18,6 +18,7 @@ import { Guests } from '../Movie/Guests/Guests'
 import { ReviewsBadge } from '../Movie/Badges/ReviewsBadge'
 import { EpisodeStatusOptions, ShowState } from './State/State'
 import { ProgressPill } from './ProgressPill/ProgressPill'
+import i18n from '@sensorr/i18n'
 
 export interface ShowProps extends Omit<
   PosterProps,
@@ -64,7 +65,7 @@ const UIShow = ({
   const details = useMemo(() => transformShowDetails(entity), [entity])
   const link = useMemo(() => (props.link || ((entity) => !!entity?.id && { to : `/tv/${entity.id}` }))(entity), [entity, props.link])
   const progress = !placeholder && entity?.progress
-  const diffusion = progress ? diffusionOf(entity, progress, (global as any)?.config?.region || 'fr-FR') : null
+  const diffusion = progress ? diffusionOf(entity, progress, i18n.language) : null
 
   const badges = useMemo(() => {
     if (entity?.id === null) {
@@ -75,7 +76,7 @@ const UIShow = ({
       releases: [],
       proposals: (metadata?.releases || []).filter(release => release.proposal && typeof release.choice !== 'boolean'),
       proceed: proceedRelease,
-      summary: progress ? emojize('📼', `${progress.owned}/${progress.aired} aired episodes owned`) : null,
+      summary: progress ? emojize('📼', i18n.t('ui.show.summary', { owned: progress.owned, aired: progress.aired })) : null,
       labelize: (release) => coverageLabel(release.coverage || [], release.level || undefined),
     }
 
@@ -128,7 +129,7 @@ const UIShow = ({
       selected={selected}
       selectedVisible={selectedVisible}
       onSelectedChange={onSelectedChange}
-      footer={footer || (!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.detail} compact={device === 'mobile'} />)}
+      footer={footer || (!!progress && <ShowProgress {...progress} first_air_date={entity.first_air_date} airing={diffusion.airing} followed={state === 'followed'} detail={diffusion.code ? i18n.t(`policy.diffusion.${diffusion.code}`, diffusion.values) : ''} compact={device === 'mobile'} />)}
       // `progress` is null once known to be missing: the line it held goes with it
       footerPlaceholder={!footer && progress !== null && <ShowProgressPlaceholder compact={device === 'mobile'} />}
     />
@@ -145,7 +146,7 @@ interface ShowProgressProps {
   // The series still airs: the pill takes the airing tint, or its hollow ring when Sensorr does not follow it
   airing?: boolean
   followed?: boolean
-  // After the counts in the titles, like "next episode on 29/09"
+  // After the counts in the titles, like "next episode on 29/09", translated
   detail?: string
   compact?: boolean
 }
@@ -165,7 +166,7 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, followed,
             value={owned}
             max={aired}
             segments={seasons?.map(season => ({ value: season.owned, max: season.aired }))}
-            title={[`${owned} of ${aired} aired episodes owned`, detail].filter(Boolean).join(' · ')}
+            title={[i18n.t('ui.show.owned', { owned, aired }), detail].filter(Boolean).join(' · ')}
           />
         )}
       </>
@@ -175,8 +176,8 @@ const ShowProgress = ({ owned, aired, seasons, first_air_date, airing, followed,
           <span role='img' aria-label={EpisodeStatusOptions.upcoming.label}>{EpisodeStatusOptions.upcoming.emoji}</span>
           {!compact && <span aria-hidden={true}>{EpisodeStatusOptions.upcoming.label}</span>}
         </span>
-        <time title='First episode air date' dateTime={first_air_date ? new Date(first_air_date).toISOString().slice(0, 10) : undefined}>
-          {first_air_date ? new Date(first_air_date).toLocaleDateString((global as any)?.config?.region || 'fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
+        <time title={i18n.t('ui.show.firstAirDate')} dateTime={first_air_date ? new Date(first_air_date).toISOString().slice(0, 10) : undefined}>
+          {first_air_date ? new Date(first_air_date).toLocaleDateString(i18n.language, { year: 'numeric', month: '2-digit', day: '2-digit' }) : i18n.t('ui.show.tba')}
         </time>
       </>
     )}
@@ -240,7 +241,7 @@ export const transformShowDetails = (entity) => {
     meaningful: {
       year: first ? ({ disabled = false } = {}) => (
         <Link
-          title={`Discover more shows from ${first}`}
+          title={i18n.t('ui.show.year', { year: String(first) })}
           sx={{ whiteSpace: 'nowrap' }}
           disabled={disabled}
           to='/tv/discover'
@@ -256,11 +257,11 @@ export const transformShowDetails = (entity) => {
       release_dates_range: first ? () => (
         <span title={entity.status} sx={{ whiteSpace: 'nowrap' }}>
           {/* Before its first episode a show is not airing yet: the line keeps the year alone */}
-          {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : (isAiring(entity.status) && new Date(entity.first_air_date).getTime() <= Date.now()) ? `${first} - Airing` : `${first}`)}
+          {emojize('📆', ENDED.includes(entity.status) ? `${first} - ${last || first}` : (isAiring(entity.status) && new Date(entity.first_air_date).getTime() <= Date.now()) ? `${first} - ${i18n.t('ui.show.airing')}` : `${first}`)}
         </span>
       ) : null,
       runtime: entity.episode_run_time?.length ? () => (
-        <span title='Episode runtime' sx={{ whiteSpace: 'nowrap' }}>
+        <span title={i18n.t('ui.show.runtime')} sx={{ whiteSpace: 'nowrap' }}>
           {emojize('🕙', humanize.time(`${entity.episode_run_time[0]}`))}
         </span>
       ) : null,
@@ -269,7 +270,7 @@ export const transformShowDetails = (entity) => {
           {emoji && emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>
               <Link
-                title={`Discover more "${genre.name}" shows`}
+                title={i18n.t('ui.show.genre', { genre: genre.name })}
                 disabled={disabled}
                 to='/tv/discover'
                 state={{
@@ -297,7 +298,7 @@ export const transformShowDetails = (entity) => {
       } : null,
       vote_average: typeof entity.vote_average !== 'undefined' ? () => (
         <Link
-          title={`Discover more "${tmdb.judge(entity)}" shows${entity?.vote_count ? ` (${fields.vote_count.humanize(entity)} users rating)` : ''}`}
+          title={entity?.vote_count ? i18n.t('ui.show.voteAverageCount', { judge: tmdb.judge(entity), count: fields.vote_count.humanize(entity) }) : i18n.t('ui.show.voteAverage', { judge: tmdb.judge(entity) })}
           sx={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
           to='/tv/discover'
           state={{
@@ -311,10 +312,10 @@ export const transformShowDetails = (entity) => {
         </Link>
       ) : null,
       vote_count: entity.vote_count ? () => (
-        <span title='Vote count' sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
+        <span title={i18n.t('ui.entity.voteCount')} sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
       ) : null,
       popularity: entity.popularity ? () => (
-        <span title='Popularity' sx={{ whiteSpace: 'nowrap' }}>{emojize('📣', entity.popularity.toLocaleString())}</span>
+        <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>{emojize('📣', entity.popularity.toLocaleString())}</span>
       ) : null,
     },
   }

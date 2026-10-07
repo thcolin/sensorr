@@ -5,7 +5,15 @@ import { useControlsState } from '@sensorr/ui'
 import { useTMDB } from '../../store/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { ControlsContext } from '../../components/Calendar/Calendar'
+import { Trans } from 'react-i18next'
 import { departmentsOf, judge, refinementsOf, summarize } from './refine'
+
+// The error of a calendar while nobody is followed
+export const NOBODY = {
+  emoji: '⭐️',
+  title: <Trans i18nKey='pages.calendar.nobody.title' />,
+  subtitle: <Trans i18nKey='pages.calendar.nobody.subtitle' />,
+}
 
 // The requests a calendar keeps out at once, its discover pages as the details of its movies
 const POOL = 20
@@ -219,11 +227,7 @@ const withFetchCalendarQuery = (
         statistics={refined.statistics}
         ready={(props as any).ready !== false && !loading}
         controls={controls}
-        error={(!persons.loading && !Object.keys(persons.metadata).length) ? {
-          emoji: '⭐️',
-          title: "Try to follow some people first",
-          subtitle: "Calendar is based on people you follow, check trending stars or look at casting from your favorite movies",
-        } : error || (props as any).error}
+        error={(!persons.loading && !Object.keys(persons.metadata).length) ? NOBODY : error || (props as any).error}
       />
     )
   }

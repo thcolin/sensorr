@@ -3,6 +3,7 @@ import Tippy from '@tippyjs/react'
 import { useResponsiveValue } from '@sensorr/utils'
 import { Cast, Crew, Movie, Person, fields, utils } from '@sensorr/tmdb'
 import { Badge, BadgeProps } from '../Badge/Badge'
+import i18n from '@sensorr/i18n'
 
 export interface FocusProps extends Omit<BadgeProps, 'emoji' | 'label'> {
   entity: Movie | Person | Cast | Crew
@@ -24,12 +25,12 @@ const emojis = {
 
 const labels = {
   vote_average: (entity) => `${((entity as Movie).vote_average || 0).toFixed(1)}`,
-  release_date_full: (entity) => (entity as Movie).release_date ? new Date((entity as Movie).release_date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) : 'Unknown',
-  release_date: (entity) => (entity as Movie).release_date ? new Date((entity as Movie).release_date).getFullYear() : 'Unknown',
+  release_date_full: (entity) => (entity as Movie).release_date ? new Date((entity as Movie).release_date).toLocaleDateString(i18n.language, { month: '2-digit', day: '2-digit' }) : i18n.t('ui.unknown'),
+  release_date: (entity) => (entity as Movie).release_date ? new Date((entity as Movie).release_date).getFullYear() : i18n.t('ui.unknown'),
   popularity: (entity) => `${fields.popularity.humanize(entity as Movie)}`,
-  runtime: (entity) => <span style={{ textTransform: 'none' }}>{fields.runtime.humanize(entity as Movie) || 'Unknown'}</span>,
+  runtime: (entity) => <span style={{ textTransform: 'none' }}>{fields.runtime.humanize(entity as Movie) || i18n.t('ui.unknown')}</span>,
   vote_count: (entity) => `${fields.vote_count.humanize(entity as Movie)}`,
-  birthday: (entity) => (entity as Person).birthday ? new Date((entity as Person).birthday).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', timeZone: 'UTC' }) : 'Unknown',
+  birthday: (entity) => (entity as Person).birthday ? new Date((entity as Person).birthday).toLocaleDateString(i18n.language, { month: '2-digit', day: '2-digit', timeZone: 'UTC' }) : i18n.t('ui.unknown'),
 }
 
 const UIFocus = ({

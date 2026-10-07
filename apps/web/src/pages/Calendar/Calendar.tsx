@@ -24,6 +24,7 @@ import {
 import { compose, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics as useStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
+import { Trans, useTranslation } from 'react-i18next'
 import { MovieWithCreditsAndReviews } from '../../components/Movie/Movie'
 import { useTMDB, withTMDB } from '../../store/tmdb'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
@@ -33,7 +34,7 @@ import withTitle from '../../components/enhancers/withTitle'
 import withPlacehodersHistoryState from '../../components/enhancers/withPlacehodersHistoryState'
 import { Agenda, Cell, ControlsContext, Line, Month, Stream, Toggle, ViewSelect, useStreams, useView } from '../../components/Calendar/Calendar'
 import { dateOf, day, monthRange, monthWeeks, originOf, withToday } from '../../components/Calendar/agenda'
-import withFetchCalendarQuery, { discoverCalendar, refine, summarizeCalendar } from './withFetchCalendarQuery'
+import withFetchCalendarQuery, { NOBODY, discoverCalendar, refine, summarizeCalendar } from './withFetchCalendarQuery'
 import { refinementsOf } from './refine'
 import { withBody } from '../../layout/withLayout'
 import { EntitiesHideable } from '../../components/Entities/Hideable'
@@ -41,16 +42,10 @@ import withBulk from '../../components/enhancers/withBulk'
 
 const STATISTICS = {}
 
-const FALLBACK = {
-  title: 'Sorry, unable to display movies...',
-  subtitle: 'TMDB did not answer the calendar requests, try again later',
-}
-
-const NOBODY = {
-  emoji: '⭐️',
-  title: "Try to follow some people first",
-  subtitle: "Calendar is based on people you follow, check trending stars or look at casting from your favorite movies",
-}
+const fallbackOf = (t) => ({
+  title: t('pages.calendar.fallback.title'),
+  subtitle: t('pages.calendar.fallback.subtitle'),
+})
 
 const ORDERS = [3, 5, 10, 20, null]
 
@@ -61,8 +56,8 @@ const FilterCredits = ({ value, onChange, ...props }: any) => (
     value={value?.values}
     onChange={(values) => onChange({ ...value, values })}
     badge={{
-      label: value?.order ? `Top ${value.order} cast` : 'Any cast',
-      title: `Acting counts a followed person billed ${value?.order ? `in the first ${value.order} of the cast` : 'anywhere in the cast'}`,
+      label: i18n.t('pages.calendar.credits.label', { order: value?.order || 0 }),
+      title: i18n.t('pages.calendar.credits.title', { order: value?.order || 0 }),
       onClick: () => onChange({ ...value, order: ORDERS[(ORDERS.indexOf(value?.order) + 1) % ORDERS.length] }),
       disabled: !value?.values?.includes('Acting'),
     }}
@@ -83,19 +78,22 @@ const FIELDS = {
           checked={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
         >
-          Hide Library
+          <Trans i18nKey='pages.hideLibrary' />
         </Option>
       </div>
     ),
   },
   with_release_type: {
     ...fields.release_type,
-    initial: {
-      values: [
-        // { value: 1, label: 'Premiere' },
-        // { value: 2, label: 'Theatrical (limited)' },
-        { value: 3, label: 'Theatrical' }
-      ], behavior: 'or' },
+    // Read when the panel draws, so its chip speaks the language of the page
+    get initial() {
+      return {
+        values: [
+          // { value: 1, label: 'Premiere' },
+          // { value: 2, label: 'Theatrical (limited)' },
+          { value: 3, label: i18n.t('tmdb.release_type.theatrical') }
+        ], behavior: 'or' }
+    },
     component: FilterReleaseType,
   },
   with_credits_departments: {
@@ -112,12 +110,12 @@ const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
         <Warning
           emoji="🗓️"
-          title="Calendar"
+          title={<Trans i18nKey='pages.calendar.title' />}
           subtitle={(
             <span>
-              Explore movies from followed persons in a calendar view, refinable with various filters like <strong>credits</strong>, <strong>average rating</strong>, <strong>number of votes</strong>, <strong>genres</strong>, <strong>certifications</strong>, etc...
+              <Trans i18nKey='pages.calendar.head' components={[<strong />, <strong />, <strong />, <strong />, <strong />]} />
               <br/>
-              <small><em>Follow more people to enhance your calendar !</em></small>
+              <small><em><Trans i18nKey='pages.calendar.hint' /></em></small>
             </span>
           )}
         />
@@ -134,7 +132,10 @@ const FIELDS = {
   },
   without_genres: {
     ...fields.genres,
-    initial: { values: [{ value: 99, label: 'Documentary' }, { value: 10770, label: 'TV Movie' }], behavior: 'or' }, // Documentary -- sorry
+    // Documentary -- sorry. Read when the panel draws, so its chips speak the language of the page
+    get initial() {
+      return { values: [{ value: 99, label: i18n.t('person.genres.documentary') }, { value: 10770, label: i18n.t('person.genres.tvMovie') }], behavior: 'or' }
+    },
     statistics: null,
     component: compose(
       withProps({
@@ -289,8 +290,8 @@ const GridCalendar = compose(
     bulk: 'movie',
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
-      subtitle: "Try to follow more people, check trending stars or look at casting from your favorite movies",
+      title: <Trans i18nKey='entities.empty.title' />,
+      subtitle: <Trans i18nKey='pages.calendar.empty' />,
     },
     props: ({ entity, ...props }) => ({
       focus: 'release_date_full',
@@ -345,6 +346,7 @@ const useRender = (Entry, controls) => {
 const UIMoviesMonth = ({ entities, ready, error, controls }) => {
   const days = useMemo(() => new Map(byDay(Object.values(entities || {})).map(({ key, entries }) => [key, entries])), [entities])
   const render = useRender(Cell, controls)
+  const { t } = useTranslation()
 
   return (
     <Month
@@ -352,8 +354,8 @@ const UIMoviesMonth = ({ entities, ready, error, controls }) => {
       days={days}
       ready={ready}
       error={error}
-      fallback={FALLBACK}
-      label='Movies by day'
+      fallback={fallbackOf(t)}
+      label={t('pages.calendar.label')}
       render={render}
       keyOf={keyOf}
     />
@@ -440,7 +442,7 @@ const withMoviesAgenda = () => (WrappedComponent) => {
       }
     }, [tmdb, persons.metadata, origin, filters, refinements])
 
-    const { streams, more, ready, failure } = useStreams(key, fetchPage, 'movies')
+    const { streams, more, ready, failure } = useStreams(key, fetchPage, i18n.t('pages.calendar.noun'))
     const days = useMemo(() => {
       if (!ready) {
         return []
@@ -477,19 +479,20 @@ const withMoviesAgenda = () => (WrappedComponent) => {
 
 const UIMoviesAgenda = ({ controls, ...props }) => {
   const render = useRender(Line, controls)
+  const { t } = useTranslation()
 
   return (
     <Agenda
       {...props as any}
       month={monthOf(controls)}
-      fallback={FALLBACK}
+      fallback={fallbackOf(t)}
       empty={{
         emoji: '🍿',
-        title: 'No movie to list',
-        subtitle: 'None of the people you follow has a movie matching these filters',
+        title: t('pages.calendar.list.empty.title'),
+        subtitle: t('pages.calendar.list.empty.subtitle'),
       }}
-      noun='movies'
-      label='Movies by day'
+      noun={t('pages.calendar.noun')}
+      label={t('pages.calendar.label')}
       render={render}
       keyOf={keyOf}
     />

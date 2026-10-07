@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { State as UIState, StateProps } from '../../../atoms/State/State'
+import i18n from '@sensorr/i18n'
 
 export interface MovieStateProps extends Omit<StateProps, 'value' | 'options'> {
   value: 'loading' | 'ignored' | 'missing' | 'pinned' | 'wished' | 'archived'
@@ -8,34 +9,34 @@ export interface MovieStateProps extends Omit<StateProps, 'value' | 'options'> {
 export const MovieStateOptions = [
   {
     emoji: '⌛',
-    label: 'Loading',
+    get label() { return i18n.t('state.loading') },
     value: 'loading',
     hide: true,
   },
   {
     emoji: '🔕',
-    label: 'Ignored',
+    get label() { return i18n.t('state.ignored') },
     value: 'ignored',
   },
   {
     emoji: '💊',
-    label: 'Missing',
+    get label() { return i18n.t('state.missing') },
     value: 'missing',
     hide: true,
   },
   {
     emoji: '📍',
-    label: 'Pinned',
+    get label() { return i18n.t('state.pinned') },
     value: 'pinned',
   },
   {
     emoji: '🍿',
-    label: 'Wished',
+    get label() { return i18n.t('state.wished') },
     value: 'wished',
   },
   {
     emoji: '📼',
-    label: 'Archived',
+    get label() { return i18n.t('state.archived') },
     value: 'archived',
   },
 ]

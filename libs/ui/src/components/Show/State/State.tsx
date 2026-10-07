@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { State as UIState, StateProps } from '../../../atoms/State/State'
 import { Badge, BadgeProps } from '../../../atoms/Badge/Badge'
+import i18n from '@sensorr/i18n'
 
 export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
   value: 'loading' | 'ignored' | 'unfollowed' | 'followed'
@@ -9,25 +10,25 @@ export interface ShowStateProps extends Omit<StateProps, 'value' | 'options'> {
 export const ShowStateOptions = [
   {
     emoji: '⌛',
-    label: 'Loading',
+    get label() { return i18n.t('state.loading') },
     value: 'loading',
     hide: true,
   },
   {
     emoji: '🔕',
-    label: 'Ignored',
+    get label() { return i18n.t('state.ignored') },
     value: 'ignored',
   },
   {
     emoji: '📍',
-    label: 'Pinned',
+    get label() { return i18n.t('state.pinned') },
     value: 'unfollowed',
   },
   {
     // A television, it says TV. Not a bell, the 🛎️ of a pending proposal sits right under
     // this badge on a poster, and not 📹, the record job beside it in a notification
     emoji: '📺',
-    label: 'Followed',
+    get label() { return i18n.t('state.followed') },
     value: 'followed',
   },
 ]
@@ -48,13 +49,14 @@ export const INACTIVE = {
 
 type EpisodeStatusValue = 'upcoming' | 'unmonitored' | 'wanted' | 'proposed' | 'owned'
 
-// Keyed by the values of `episodeStatus` from @sensorr/sensorr. Not followed is the 📺 of a followed show, turned off
+// Keyed by the values of `episodeStatus` from @sensorr/sensorr. Not followed is the 📺 of a followed show, turned off.
+// The labels are read when drawn, in the language of the page
 export const EpisodeStatusOptions: Record<EpisodeStatusValue, { emoji: string, label: string, inactive?: boolean }> = {
-  upcoming: { emoji: '📅', label: 'Upcoming' },
-  unmonitored: { emoji: '📺', label: 'Not followed', inactive: true },
-  wanted: { emoji: '🍿', label: 'Wanted' },
-  proposed: { emoji: '🛎️', label: 'Proposed' },
-  owned: { emoji: '📼', label: 'Owned' },
+  upcoming: { emoji: '📅', get label() { return i18n.t('ui.episodeStatus.upcoming') } },
+  unmonitored: { emoji: '📺', get label() { return i18n.t('ui.episodeStatus.unmonitored') }, inactive: true },
+  wanted: { emoji: '🍿', get label() { return i18n.t('ui.episodeStatus.wanted') } },
+  proposed: { emoji: '🛎️', get label() { return i18n.t('ui.episodeStatus.proposed') } },
+  owned: { emoji: '📼', get label() { return i18n.t('ui.episodeStatus.owned') } },
 }
 
 export interface EpisodeStatusProps extends Omit<BadgeProps, 'emoji' | 'label'> {

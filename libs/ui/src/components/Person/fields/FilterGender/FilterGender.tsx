@@ -15,25 +15,25 @@ const UIFilterGender = ({ statistics, display, ...props }: FilterGenderProps) =>
   const options = useMemo(() => [
     {
       value: 1,
-      label: 'Female',
+      label: t('ui.gender.female'),
       count: statistics?.find(obj => obj._id === 1)?.count || 0,
     },
     {
       value: 2,
-      label: 'Male',
+      label: t('ui.gender.male'),
       count: statistics?.find(obj => obj._id === 2)?.count || 0,
     },
     {
       value: 3,
-      label: 'Non-binary',
+      label: t('ui.gender.nonBinary'),
       count: statistics?.find(obj => obj._id === 3)?.count || 0,
     },
     {
       value: 0,
-      label: 'N/A',
+      label: t('ui.gender.unknown'),
       count: statistics?.find(obj => obj._id === 0)?.count || 0,
     },
-  ], [statistics])
+  ], [statistics, t])
 
   return (
     <Checkbox

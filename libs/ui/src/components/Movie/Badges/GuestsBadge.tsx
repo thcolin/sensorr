@@ -3,6 +3,7 @@ import { useResponsiveValue } from '@sensorr/utils'
 import Tippy from '@tippyjs/react'
 import { Badge } from '../../../atoms/Badge/Badge'
 import { Guests } from '../Guests/Guests'
+import i18n from '@sensorr/i18n'
 
 export const GuestsBadge = ({ entity, display = 'poster', guests, parent, palette, visible, ...props }) => {
   const [target, setTarget] = useState(null)
@@ -32,7 +33,7 @@ export const GuestsBadge = ({ entity, display = 'poster', guests, parent, palett
       <span
         ref={el => setTarget(el)}
         sx={{ cursor: 'pointer' }}
-        title={`Requested from ${guests.length} friends`}
+        title={i18n.t('ui.badges.guests', { count: guests.length })}
       >
         <Badge
           emoji='🍺'

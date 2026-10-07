@@ -9,6 +9,7 @@ import { Card } from '../../elements/Entity/Card/Card'
 import { Poster, PosterProps } from '../../elements/Entity/Poster/Poster'
 import { Pretty } from '../../elements/Entity/Pretty/Pretty'
 import { Tag } from '../../elements/Entity/Tag/Tag'
+import i18n from '@sensorr/i18n'
 
 export interface AbstractEntityProps extends Omit<
   PosterProps,
@@ -105,13 +106,13 @@ export const transformCollectionDetails = (entity) => {
     parts: entity.parts,
     meaningful: {
       popularity: entity.popularity ? () => (
-        <span title={`Popularity`} sx={{ whiteSpace: 'nowrap' }}>
+        <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>
           {emojize('📣', entity.popularity.toLocaleString())}
         </span>
       ) : null,
       release_dates_range: entity.parts.length ? () => (
         <Link
-          title={`Discover more movies from ${release_dates_range.slice(0, 1).pop()}-${release_dates_range.slice(-1).pop()}`}
+          title={i18n.t('ui.movie.years', { from: String(release_dates_range.slice(0, 1).pop()), to: String(release_dates_range.slice(-1).pop()) })}
           sx={{ whiteSpace: 'nowrap' }}
           to='/movie/discover'
           state={{
@@ -128,7 +129,7 @@ export const transformCollectionDetails = (entity) => {
       ) : null,
       vote_average: entity.vote_average ? () => (
         <Link
-          title={`Discover more "${tmdb.judge(entity)}" movies`}
+          title={i18n.t('ui.movie.voteAverage', { judge: tmdb.judge(entity) })}
           sx={{ whiteSpace: 'nowrap' }}
           to='/movie/discover'
           state={{
@@ -142,7 +143,7 @@ export const transformCollectionDetails = (entity) => {
       ) : null,
       vote_count: entity.vote_count ? () => (
         <Link
-          title={`Discover more movies with "~${entity.vote_count}" vote count`}
+          title={i18n.t('ui.movie.voteCount', { count: String(entity.vote_count) })}
           sx={{ whiteSpace: 'nowrap' }}
           to='/movie/discover'
           state={{
@@ -162,7 +163,7 @@ export const transformCollectionDetails = (entity) => {
           {emojize('🎞️')}{entity.genres.map((genre, index, arr) => (
             <Fragment key={genre.id}>
               <Link
-                title={`Discover more "${genre.name}" movies`}
+                title={i18n.t('ui.movie.genre', { genre: genre.name })}
                 to='/movie/discover'
                 state={{
                   controls: {

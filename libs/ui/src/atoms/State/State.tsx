@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react'
 import { Badge, BadgeProps } from '../Badge/Badge'
+import i18n from '@sensorr/i18n'
 
 type ChildProps = { emoji: string, label: React.ReactNode }
 
@@ -24,7 +25,7 @@ function UIState({
   const handleChange = useCallback((e) => onChange(e.target.value), [onChange])
   const option = options.find((option) => option.value === value) || {
     emoji: '⌛',
-    label: 'Loading',
+    label: i18n.t('state.loading'),
     value: 'loading',
     hide: true,
   }
