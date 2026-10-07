@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr, Your Friendly Digital Video Recorder. Think VCR, but in modern times. Its Home on a desktop browser and on an iPhone">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/hero-dark.webp">
+    <img src="docs/assets/readme/hero-light.webp" width="100%" alt="Sensorr, Your Friendly Digital Video Recorder. Think VCR, but in modern times. Its Home on a desktop browser and on an iPhone">
+  </picture>
 </p>
 
 <p align="center">
