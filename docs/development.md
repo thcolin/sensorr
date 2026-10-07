@@ -77,7 +77,9 @@ No story throws on render: the 40 pages were opened one by one on 2026-09-18 and
 
 ### The demo build
 
-`nx run web:build:demo` builds the web app for **https://thcolin.github.io/sensorr/**, the public demo, with no server behind it. The controllers and services of `apps/api` run in the page: `apps/web/src/demo/server/app.ts` imports them, and the `demo` configuration of `apps/web/webpack.config.js` aliases what they import from Nest, mongoose and Node to `apps/web/src/demo/server/shims`. A model on [mingo](https://github.com/kofrasa/mingo) stands for mongoose, `apps/web/src/demo/server/model.ts`, and each visitor's data lives in their browser's `localStorage`. `fetch` and `EventSource` on `/api/` are answered there, `/api/proxy` by a made-up indexer (`apps/web/src/demo/releases.ts`), and what needs a server of its own, jobs, Plex, mails, guests, updates, answers 503. The other builds replace nothing and carry none of it: `apps/web/src/demo/index.ts` is a stub that the `demo` configuration swaps for `index.demo.ts`.
+`nx run web:build:demo` builds the web app for **https://thcolin.github.io/sensorr/**, the public demo, with no server behind it. The controllers and services of `apps/api` run in the page: `apps/web/src/demo/server/app.ts` imports them, and the `demo` configuration of `apps/web/webpack.config.js` aliases what they import from Nest, mongoose and Node to `apps/web/src/demo/server/shims`. A model on [mingo](https://github.com/kofrasa/mingo) stands for mongoose, `apps/web/src/demo/server/model.ts`, and each visitor's data lives in their browser's `localStorage`. `fetch` and `EventSource` on `/api/` are answered there, `/api/proxy` by a made-up indexer (`apps/web/src/demo/releases.ts`), and what needs a server of its own, jobs, Plex, mails, Tautulli, updates, answers 503. The other builds replace nothing and carry none of it: `apps/web/src/demo/index.ts` is a stub that the `demo` configuration swaps for `index.demo.ts`.
+
+`nx run wrapped:build:demo` builds the wrapped next to it, in `dist/apps/web-demo/wrapped`, with one wrapped: Alex's, at `/sensorr/wrapped/demo`, the link Settings › Friends copies. `tools/demo/seed.ts` makes up the plays of Alex and five other viewers over the last closed edition, and computes Alex's wrapped with `wrappedOf` into `apps/wrapped/src/demo/share.json`, which `apps/wrapped/src/demo/index.demo.ts` answers `/api/wrapped/share/demo` with. Posters come from TMDB, and the image of a story to share, which the API draws in Chromium, is left out.
 
 The data comes from TMDB at build time, never from the repository: TMDB data may not be kept more than 6 months.
 
@@ -85,9 +87,10 @@ The data comes from TMDB at build time, never from the repository: TMDB data may
 export SENSORR_DEMO_TMDB_KEY=<the demo's own key>
 npx ts-node -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/demo/seed.ts
 npx nx run web:build:demo
+npx nx run wrapped:build:demo
 ```
 
-The key ends up in the page, which is why it is the demo's own. `.github/workflows/demo.yml` runs the same on every push to `main` and on the first of each month, with the key as the `SENSORR_DEMO_TMDB_KEY` secret, and publishes `dist/apps/web-demo` to GitHub Pages. To look at it locally, serve `dist/apps/web-demo` under `/sensorr/` with `index.html` copied to `404.html`, as GitHub Pages answers a path it does not know.
+The key ends up in the page, which is why it is the demo's own. `.github/workflows/demo.yml` runs the same on every push to `main` and on the first of each month, with the key as the `SENSORR_DEMO_TMDB_KEY` secret, and publishes `dist/apps/web-demo` to GitHub Pages. To look at it locally, serve `dist/apps/web-demo` under `/sensorr/` with `index.html` copied to `404.html`, as GitHub Pages answers a path it does not know, and `wrapped/index.html` copied to `wrapped/demo/index.html`.
 
 ## Verify
 

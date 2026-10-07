@@ -2,8 +2,8 @@
 //
 //   SENSORR_DEMO_TMDB_KEY=... npx ts-node -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/demo/seed.ts
 //
-// The movies, shows and stars are TMDB's, the rest is made up: states, files, proposals and the runs of the jobs that
-// found them. TMDB data may not be kept more than 6 months, so the file is not committed: the Demo workflow builds it.
+// The movies, shows and stars are TMDB's, the rest is made up: states, files, proposals, the runs of the jobs that
+// found them, and the plays of Alex's wrapped, `apps/wrapped/src/demo/share.json`. TMDB data may not be kept more than 6 months, so the file is not committed: the Demo workflow builds it.
 
 import fs from 'fs'
 import path from 'path'
@@ -11,9 +11,11 @@ import oleoo from 'oleoo'
 import { refresh } from '../../apps/web/src/contexts/MoviesMetadata/refresh'
 import { lightenShow, lightenEpisodes } from '../../libs/tmdb/src/shows'
 import { INDEXER, searchOf } from '../../apps/web/src/demo/releases'
+import { editionBounds, editionOf, lookOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE } from '../../libs/sensorr/src/lib/wrapped'
 
 const KEY = process.env.SENSORR_DEMO_TMDB_KEY
 const OUTPUT = path.join(__dirname, '../../apps/web/src/demo/seed/seed.json')
+const SHARE = path.join(__dirname, '../../apps/wrapped/src/demo/share.json')
 const MOVIES = 300
 const PROPOSALS = 80
 const SHOWS = 12
@@ -21,6 +23,8 @@ const PERSONS = 150
 const DAY = 86400000
 const NOW = Date.now()
 const FRIEND = 'alex@sensorr.demo'
+// The viewers of the server, as Tautulli names them: Alex, the friend above, is the first
+const VIEWERS = ['Alex', 'Sam', 'Lou', 'Camille', 'Noa', 'Jo']
 
 const hash = (value: string) => [...value].reduce((acc, char) => (Math.imul(acc ^ char.charCodeAt(0), 16777619) >>> 0), 2166136261)
 
@@ -331,6 +335,139 @@ const persons = async () => {
   return docs.map((person) => ({ ...person, _id: person.id, birthday: iso(person.birthday), deathday: iso(person.deathday), state: 'followed', updated_at: NOW - Math.floor(next() * 200) * DAY }))
 }
 
+// Alex's wrapped, as `WrappedService.freeze` computes it from the plays Tautulli keeps: Alex and the other viewers watch
+// the movies and shows of the library over the last closed edition. Each story of the page has the plays it needs: a
+// rewatched movie, a dropped one, a binge, a streak, a late night, a show left halfway, movies seen first or alone
+const wrapped = async (movieDocs: any[], showDocs: any[], episodeDocs: any[]) => {
+  const year = editionOf(NOW / 1000, WRAPPED_TIME_ZONE) - 1
+  const { start, end } = editionBounds(year, WRAPPED_TIME_ZONE)
+  const days = Math.round((end - start) / 86400)
+  // Minutes after midnight, Paris time give or take the hour of summer time
+  const at = (day: number, minutes: number) => start + day * 86400 + minutes * 60
+  const evening = () => 19 * 60 + 30 + Math.floor(next() * 150)
+  const between = (from: number, to: number) => from + Math.floor(next() * (to - from))
+
+  const pool = movieDocs.filter((movie) => movie.state === 'archived' && movie.runtime && movie.poster_path).slice(0, 90)
+  const credits = await all(pool, (movie) => tmdb.fetch(`movie/${movie.id}/credits`))
+  const aired = (show) => episodeDocs.filter((episode) => episode.show_id === show.id && episode.files.length)
+    .sort((a, b) => a.season_number - b.season_number || a.episode_number - b.episode_number)
+  const shows = showDocs.filter((show) => aired(show).length >= 10).slice(0, 4)
+  const titles: WrappedTitle[] = [
+    ...pool.map((movie, index) => ({
+      key: `movie-${movie.id}`,
+      media_type: 'movie' as const,
+      title: movie.title,
+      year: Number(movie.release_date?.slice(0, 4)) || undefined,
+      genres: (movie.genres || []).map(({ name }) => name),
+      directors: (credits[index].crew || []).filter(({ job }) => job === 'Director').map(({ name }) => name),
+      actors: (credits[index].cast || []).slice(0, 5).map(({ name }) => name),
+      tmdb_id: movie.id,
+      thumb: movie.poster_path || undefined,
+      art: movie.backdrop_path || undefined,
+      duration: movie.runtime * 60,
+    })),
+    ...shows.map((show) => ({
+      key: `show-${show.id}`,
+      media_type: 'show' as const,
+      title: show.name,
+      year: Number(show.first_air_date?.slice(0, 4)) || undefined,
+      genres: (show.genres || []).map(({ name }) => name),
+      tmdb_id: show.id,
+      thumb: show.poster_path || undefined,
+      art: show.backdrop_path || undefined,
+      duration: (show.episode_run_time?.[0] || 45) * 60,
+      episode_count: aired(show).length,
+    })),
+  ]
+  const byKey = new Map(titles.map((title) => [title.key, title]))
+  const plays: WrappedPlay[] = []
+  const play = (user_id: number, title: string, started: number, episode?: any, share = 1) => {
+    const play_duration = Math.round(byKey.get(title).duration * share)
+    plays.push({
+      id: plays.length + 1,
+      user_id,
+      media_type: episode ? 'episode' : 'movie',
+      title,
+      started,
+      stopped: started + play_duration + 60,
+      play_duration,
+      ...(episode ? { parent_media_index: episode.season_number, media_index: episode.episode_number } : {}),
+    })
+    return started + play_duration + 120
+  }
+  // Episodes one after the other from `minutes`, the evening they are watched
+  const evenings = (user_id: number, show, from: number, count: number, day: number, minutes: number) => {
+    let started = at(day, minutes)
+    aired(show).slice(from, from + count).forEach((episode) => (started = play(user_id, `show-${show.id}`, started, episode)))
+  }
+
+  const [alex, sam, lou, camille, noa, jo] = VIEWERS.map((_, index) => index + 1)
+  const movies = pool.slice(0, 48)
+  const seen = new Map<string, number>()
+  const key = (movie) => `movie-${movie.id}`
+
+  // Alex: one movie every week or so, the first one rewatched twice, the second one left after a third
+  movies.forEach((movie, index) => {
+    const day = Math.floor((index + next()) * (days - 10) / movies.length)
+    seen.set(key(movie), day)
+    play(alex, key(movie), at(day, evening()), null, index === 1 ? 0.3 : 1)
+  })
+  play(alex, key(movies[0]), at(days - 40, evening()))
+  play(alex, key(movies[0]), at(days - 8, evening()))
+
+  const [binged, streaked, monthly, dropped] = shows
+  // A whole season in January, four episodes the first night
+  binged && evenings(alex, binged, 0, 4, 40, 19 * 60)
+  binged && Array.from({ length: 5 }, (_, index) => evenings(alex, binged, 4 + index * 2, 2, 41 + index * 2, 21 * 60))
+  // A week in a row in July
+  streaked && Array.from({ length: 7 }, (_, index) => evenings(alex, streaked, index * 2, 2, 212 + index, 21 * 60))
+  // A few episodes every month, one of them after a movie, past 1 AM
+  monthly && Array.from({ length: 12 }, (_, month) => [5, 14, 23].forEach((day, index) => evenings(alex, monthly, (month * 3 + index) % aired(monthly).length, 1, month * 30 + day, 22 * 60)))
+  monthly && evenings(alex, monthly, 0, 2, 151, 23 * 60 + 40)
+  // Four episodes in March, never picked up again, where Sam went on
+  dropped && evenings(alex, dropped, 0, 4, 100, 21 * 60)
+
+  // Sam: most of Alex's movies, always after Alex, and every show: the twin, and the server's first
+  movies.slice(0, 25).forEach((movie) => play(sam, key(movie), at(between(seen.get(key(movie)) + 8, days), evening())))
+  pool.slice(48).forEach((movie) => next() < 0.7 && play(sam, key(movie), at(between(0, days), evening())))
+  shows.forEach((show, index) => evenings(sam, show, 0, Math.min(aired(show).length, 12), 60 + index * 50, 20 * 60))
+
+  // Lou, Camille and Noa: the movies Alex saw first, one of them the same week, and a few of their own
+  const others = [lou, camille, noa]
+  movies.slice(2, 5).forEach((movie) => others.forEach((user) => play(user, key(movie), at(between(seen.get(key(movie)) + 10, days), evening()))))
+  others.forEach((user) => play(user, key(movies[10]), at(seen.get(key(movies[10])) + between(1, 6), evening())))
+  movies.slice(25, 30).forEach((movie) => play(lou, key(movie), at(between(0, days), evening())))
+  others.forEach((user) => pool.slice(48).forEach((movie) => next() < 0.3 && play(user, key(movie), at(between(0, days), evening()))))
+  streaked && evenings(lou, streaked, 0, 6, 90, 20 * 60)
+  monthly && evenings(camille, monthly, 0, 8, 180, 20 * 60)
+  // Jo: a handful of movies
+  pool.slice(60, 66).forEach((movie) => play(jo, key(movie), at(between(0, days), evening())))
+
+  // Who ever watched each movie, as `WrappedService.historyOf` reads it
+  const history: Record<string, number[]> = {}
+  plays.filter((p) => p.media_type === 'movie').forEach(({ title, user_id }) => (history[title] = [...new Set([...(history[title] || []), user_id])]))
+  const previous = { hours: Math.round(watchedHoursOf({ plays, titles, user_id: alex }) * 0.7) }
+  const shown = wrappedOf({ plays, titles, user_id: alex, year, previous, history, timeZone: WRAPPED_TIME_ZONE })
+  const ids = [shown.twin?.user_id, ...(shown.duo?.posters || []).map((poster) => poster.with)].filter(Number.isInteger)
+  const looks = config().wrapped.looks
+
+  console.log(`Wrapped ${year}: ${plays.length} plays, stories without data: ${Object.entries(shown).filter(([, value]) => value === null).map(([name]) => name).join(', ') || 'none'}`)
+  return {
+    // `WrappedService.share`, for the one link of the demo
+    share: {
+      name: VIEWERS[alex - 1],
+      server: null,
+      year,
+      editions: [year],
+      names: Object.fromEntries(ids.map((id) => [id, VIEWERS[id - 1]])),
+      look: { ...lookOf({ looks }), looks },
+      frozen: true,
+      wrapped: shown,
+    },
+    edition: { _id: objectId(), year, user_id: alex, frozen_at: end * 1000 },
+  }
+}
+
 const main = async () => {
   if (!KEY) {
     throw new Error('SENSORR_DEMO_TMDB_KEY is not set')
@@ -339,13 +476,16 @@ const main = async () => {
   const { movies: movieDocs, logs } = await movies()
   const { shows: showDocs, episodes } = await shows()
   const personDocs = await persons()
+  const { share, edition } = await wrapped(movieDocs, showDocs, episodes)
 
-  const guests = [{ _id: objectId(), email: FRIEND, name: 'Alex', avatar: '' }]
-  const data = { config: config(), collections: { movies: movieDocs, shows: showDocs, episodes, persons: personDocs, log: logs, guests } }
+  // The demo has one wrapped, Alex's, at `/wrapped/demo`
+  const guests = [{ _id: objectId(), email: FRIEND, name: VIEWERS[0], avatar: '', wrapped_token: 'demo' }]
+  const data = { config: config(), collections: { movies: movieDocs, shows: showDocs, episodes, persons: personDocs, log: logs, guests, editions: [edition] } }
   // Other data, another version: the page drops what a visitor had changed on the previous one
   const version = hash(JSON.stringify(data)).toString(16)
   fs.writeFileSync(OUTPUT, `${JSON.stringify({ version, ...data })}\n`)
   console.log(`${OUTPUT}: ${(fs.statSync(OUTPUT).size / 1e6).toFixed(1)} MB`)
+  fs.writeFileSync(SHARE, `${JSON.stringify(share)}\n`)
 }
 
 main().catch((err) => {

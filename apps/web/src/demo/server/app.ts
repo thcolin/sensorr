@@ -27,15 +27,17 @@ import { Person } from '../../../../api/src/app/persons/person.schema'
 import { Log } from '../../../../api/src/app/logs/log.schema'
 import { Subscription } from '../../../../api/src/app/notifications/subscription.schema'
 import { Guest } from '../../../../api/src/app/guests/guest.schema'
+import { Edition } from '../../../../api/src/app/wrapped/wrapped.schema'
 import { mount } from './shims/files'
 import { unavailable } from './sensorr.service'
 import { Model } from './model'
 import { ProxyController } from './proxy.controller'
 import { GuestsController } from './guests.controller'
+import { WrappedController } from './wrapped.controller'
 import { Store } from './store'
 
-const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController, ProxyController, GuestsController]
-const SCHEMAS = [Movie, Show, Episode, Person, Log, Subscription, Guest]
+const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController, ProxyController, GuestsController, WrappedController]
+const SCHEMAS = [Movie, Show, Episode, Person, Log, Subscription, Guest, Edition]
 
 export type Response = { status: number, body?: any, stream?: Observable<any> }
 
@@ -115,7 +117,7 @@ export class App {
     const pathname = url.pathname.replace(/^.*?\/api(?=\/)/, '')
     const route = this.table.map((route) => ({ route, params: route.verb === verb ? route.match(pathname) : null })).find(({ params }) => params)
 
-    // Plex, mails, guests, wrapped, dumps, updates: what needs a server of its own says so
+    // Plex, mails, Tautulli, dumps, updates: what needs a server of its own says so
     if (!route) {
       console.warn(`[Demo] No route for ${verb} /api${pathname}`)
       return { status: 503, body: { statusCode: 503, message: unavailable(), error: 'Service Unavailable' } }

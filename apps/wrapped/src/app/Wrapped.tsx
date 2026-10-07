@@ -8,6 +8,7 @@ import type { Art, StoryModel } from './themes/types'
 import { Card, ShareImage, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
 import { anchor as hrefOf } from './anchor'
+import { demo } from '../demo'
 
 type At = 'start' | 'end'
 
@@ -89,7 +90,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
   // An address from another day can name a story this one no longer has
   const current = Math.min(index, stories.length - 1)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
-    ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
+    ? demo ? demo.art(item, kind, width) : `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
   const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}?year=${share.year}&lang=${i18n.language}`
   const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
@@ -171,7 +172,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
         bar={<>
           {choice && at && <Switch at={at} theme={theme} looks={looks} onChoose={choose} />}
           {years && at && <Edition token={token} year={share.year} editions={share.editions} compact={choice} />}
-          <ShareImage key={idOf(story)} url={cardOf(idOf(story))} name={nameOf(idOf(story))} compact={choice && years && !!at} />
+          {!demo && <ShareImage key={idOf(story)} url={cardOf(idOf(story))} name={nameOf(idOf(story))} compact={choice && years && !!at} />}
         </>}
       >
         <Suspense fallback={null}>
@@ -198,7 +199,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
           {years && <Edition token={token} year={share.year} editions={share.editions} />}
         </div>
       )}
-      {Story && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label={t('wrapped.share.summary')} /></div>}
+      {Story && !demo && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label={t('wrapped.share.summary')} /></div>}
     </>
   )
 }

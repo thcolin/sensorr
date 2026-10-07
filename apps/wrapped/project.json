@@ -29,6 +29,32 @@
           "namedChunks": false,
           "extractLicenses": true,
           "vendorChunk": false
+        },
+        "demo": {
+          "fileReplacements": [
+            {
+              "replace": "apps/wrapped/src/demo/index.ts",
+              "with": "apps/wrapped/src/demo/index.demo.ts"
+            }
+          ],
+          "outputPath": "dist/apps/web-demo/wrapped",
+          "assets": [
+            "apps/wrapped/src/assets",
+            {
+              "input": "apps/wrapped/src/demo",
+              "glob": "share.json",
+              "output": "demo"
+            }
+          ],
+          "baseHref": "/sensorr/wrapped/",
+          "deployUrl": "/sensorr/wrapped/",
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
         }
       }
     },
