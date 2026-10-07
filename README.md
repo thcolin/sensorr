@@ -17,6 +17,16 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/thcolin/sensorr/actions/workflows/ci.yml"><img src="https://github.com/thcolin/sensorr/actions/workflows/ci.yml/badge.svg?branch=dev" alt="CI"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/-Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="https://www.plex.tv/"><img src="https://img.shields.io/badge/-Plex-EBAF00?style=flat&logo=plex&logoColor=white" alt="Plex"></a>
+  <a href="https://www.themoviedb.org/"><img src="https://img.shields.io/badge/-TMDB-01B4E4?style=flat&logo=themoviedatabase&logoColor=white" alt="TMDB"></a>
+  <a href="https://torznab.github.io/spec-1.3-draft/index.html"><img src="https://img.shields.io/badge/%20-warez-333?style=flat&labelColor=111&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMyAxMCIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMSAwaDF2MUgxek0xMSAwaDF2MUgxMXpNMCAxaDJ2MUgwek0xMSAxaDJ2MUgxMXpNMiAyaDF2MUgyek00IDJoNXYxSDR6TTEwIDJoMXYxSDEwek0zIDNoN3YxSDN6TTMgNGgxdjFIM3pNNiA0aDF2MUg2ek05IDRoMXYxSDl6TTMgNWgxdjFIM3pNNSA1aDN2MUg1ek05IDVoMXYxSDl6TTMgNmgzdjFIM3pNNyA2aDN2MUg3ek0yIDdoMXYxSDJ6TTQgN2g1djFINHpNMTAgN2gxdjFIMTB6TTAgOGgydjFIMHpNNCA4aDF2MUg0ek02IDhoMXYxSDZ6TTggOGgxdjFIOHpNMTEgOGgydjFIMTF6TTEgOWgxdjFIMXpNMTEgOWgxdjFIMTF6Ii8%2BPC9zdmc%2B" alt="warez"></a>
+  <a href="https://github.com/thcolin/sensorr/releases"><img src="https://img.shields.io/github/v/release/thcolin/sensorr?include_prereleases&label=release" alt="Release"></a>
+  <a href="https://github.com/sponsors/thcolin"><img src="https://img.shields.io/badge/sponsor-%E2%9D%A4-db61a2" alt="Sponsor"></a>
+</p>
+
+<p align="center">
   🍿 Wished &nbsp;→&nbsp; 📹 <a href="docs/jobs.md#record">Record</a> &nbsp;→&nbsp; 📼 Archived &nbsp;→&nbsp; ✨ <a href="docs/jobs.md#refine">Refine</a> &nbsp;→&nbsp; 💎 Refined &nbsp;→&nbsp; ✂️ <a href="docs/jobs.md#shrink">Shrink</a> &nbsp;→&nbsp; 💍 Shrinked
 </p>
 
