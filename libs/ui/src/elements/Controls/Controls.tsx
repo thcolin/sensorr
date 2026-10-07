@@ -40,7 +40,8 @@ export interface ControlsProps {
       gridTemplateRows?: any
       gap?: any
     },
-    // A second green bar under the nav, for what a phone has no room for in it
+    // A second green bar under the nav, for what a phone has no room for in it; it shows wherever
+    // its areas are not empty, so a page gives it `''` from the first breakpoint
     strip?: {
       [key: string]: any
       display: 'grid'
@@ -144,14 +145,14 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
     } : {}),
   })
 
-  // Every field of the strip comes from the nav: they share its form
+  // The strip shares the nav's form, its values included
   const strip = useLayoutFields(layout.strip, { ...fields, ...nav })
 
   const group = useMemo(() => ({
     nav: {
       fields: { ...nav, ...strip },
       defaultValues: Object.keys(values)
-        .filter(key => Object.keys(nav).includes(key))
+        .filter(key => key in nav || key in strip)
         .reduce((acc, key) => ({ ...acc, [key]: values[key] }), {})
     },
     asides: asides.map(aside => ({
