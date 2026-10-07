@@ -50,7 +50,7 @@
 
 ### And also
 
-- **Plex in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, and a movie a friend [reports](docs/jobs.md#report) from Plex is searched again.
+- **[Plex](https://www.plex.tv/) in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, and a movie a friend [reports](docs/jobs.md#report) from Plex is searched again.
 - **Coming from Sonarr.** [`migrate sonarr`](docs/jobs.md#migrate-sonarr) takes over your series as Sonarr follows them.
 - **[Backups](#backup-and-restore) and [updates](#update-from-the-app)** from *Settings*, with a weekly dump once turned on.
 - **English and French**, for the interface, the mails and the wrapped.
@@ -65,7 +65,7 @@ curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/
 
 The installer asks for a few folders, a login and your [TMDB API key](https://www.themoviedb.org/settings/api) (it comes with a [TMDB account](https://www.themoviedb.org/signup)), then starts the stack and gives you its URL. Run it again in the same folder to repair an install.
 
-The first login opens an onboarding: your indexers, through [Jackett](https://github.com/Jackett/Jackett) or [Prowlarr](https://github.com/Prowlarr/Prowlarr), a first [policy](docs/jobs.md#the-policy), the blackhole, the folder your download client watches, Plex, your friends and mail, then the [jobs](docs/jobs.md#the-jobs). Only TMDB is required, every other step can wait for *Settings*.
+The first login opens an onboarding: your indexers, through [Jackett](https://github.com/Jackett/Jackett) or [Prowlarr](https://github.com/Prowlarr/Prowlarr), a first [policy](docs/jobs.md#the-policy), the blackhole, the folder your download client watches, [Plex](https://www.plex.tv/), your friends, whose [Plex watchlist](https://support.plex.tv/articles/universal-watchlist/) becomes requests, and mail, then the [jobs](docs/jobs.md#the-jobs). Only TMDB is required, every other step can wait for *Settings*.
 
 <details>
 <summary><b>What the installer asks</b></summary>
