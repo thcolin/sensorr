@@ -168,6 +168,7 @@ export class WrappedService {
     const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { returnDocument: 'after' }).lean()).wrapped_token
     const { theme } = this.lookOf(year)
     await this.mailService.send(guest.email, mails.wrapped({
+      t: this.mailService.t(),
       url: this.mailService.url(),
       sender: this.mailService.sender(),
       name: viewer?.username || viewer?.friendly_name || guest.name,

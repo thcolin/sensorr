@@ -1,5 +1,6 @@
 import { checkPin, Plex } from '@sensorr/plex'
 import { GuestsService } from './guests.service'
+import { translatorOf } from '@sensorr/i18n/server'
 
 jest.mock('@sensorr/plex', () => ({ Plex: jest.fn(), createPin: jest.fn(), checkPin: jest.fn() }))
 // The schemas and the services only name injection tokens here; loading them pulls modules the API's jest setup cannot compile
@@ -38,6 +39,7 @@ const serviceOf = (guests: Record<string, any>[]) => {
     enabled: jest.fn(() => true),
     url: () => 'https://sensorr.example',
     sender: () => 'Thomas',
+    t: () => translatorOf('en-US'),
     service: async () => "Living Room's Sensorr",
     send: jest.fn(async () => undefined),
     unsubscribeOf: async () => ({ href: 'u', headers: {} }),

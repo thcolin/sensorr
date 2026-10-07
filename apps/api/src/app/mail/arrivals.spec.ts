@@ -1,8 +1,11 @@
+import { translatorOf } from '@sensorr/i18n/server'
 import { arrivalsOf } from './arrivals'
+
+const t = translatorOf('en-US')
 
 describe('arrivalsOf', () => {
   it('lists each movie, and each show once with the episodes that landed, the latest first', () => {
-    const arrivals = arrivalsOf({
+    const arrivals = arrivalsOf(t, {
       movies: [{ title: 'Dune', release_date: '2021-09-15', poster_path: '/dune.jpg', archived_at: 2 }],
       shows: [{ _id: 1, name: 'Andor', poster_path: '/andor.jpg' }, { _id: 2, name: 'Severance' }, { _id: 3, name: 'Nothing landed' }],
       episodes: [
@@ -21,6 +24,6 @@ describe('arrivalsOf', () => {
   })
 
   it('is empty when nothing landed', () => {
-    expect(arrivalsOf({ movies: [], shows: [{ _id: 1, name: 'Andor' }], episodes: [] })).toEqual([])
+    expect(arrivalsOf(t, { movies: [], shows: [{ _id: 1, name: 'Andor' }], episodes: [] })).toEqual([])
   })
 })

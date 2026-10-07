@@ -23,7 +23,7 @@ export class MailController {
 
   @Post('test')
   async test(@Body('to') to: string) {
-    await this.mailService.send(addressOf(to), mails.test({ url: this.mailService.url() }))
+    await this.mailService.send(addressOf(to), mails.test({ t: this.mailService.t(), url: this.mailService.url() }))
     return { success: true }
   }
 
@@ -47,7 +47,7 @@ export class MailController {
   @Get('unsubscribe/:token')
   async confirm(@Param('token') token: string, @Query('kind') kind: string, @Res() res: Response) {
     const found = UNSUBSCRIBABLE.includes(kind) && !!(await this.mailService.tokenExists(token))
-    return html(res, unsubscribePage({ kind, done: false, found }))
+    return html(res, unsubscribePage({ t: this.mailService.t(), kind, done: false, found }))
   }
 
   // The form of the page, and the one-click unsubscribe of mail clients from the `List-Unsubscribe-Post` header
@@ -55,6 +55,6 @@ export class MailController {
   @Post('unsubscribe/:token')
   async unsubscribe(@Param('token') token: string, @Query('kind') kind: string, @Res() res: Response) {
     const guest = await this.mailService.unsubscribe(token, kind)
-    return html(res, unsubscribePage({ kind, done: !!guest, found: !!guest }))
+    return html(res, unsubscribePage({ t: this.mailService.t(), kind, done: !!guest, found: !!guest }))
   }
 }
