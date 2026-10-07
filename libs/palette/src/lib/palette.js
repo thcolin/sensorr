@@ -45,6 +45,8 @@ export function getImagePalette(src) {
     const image = new Image()
     image.crossOrigin = 'anonymous'
     image.src = src
+    // An image that does not load has no palette: the caller keeps its initial colors
+    image.onerror = () => resolve(null)
     image.onload = () => {
       const canvas = new CanvasImage(image)
       const imageData = canvas.getImageData()

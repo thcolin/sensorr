@@ -38,8 +38,12 @@ export function usePalette(url, initial, id) {
         return
       }
 
-      sessionStorage.setItem(key, JSON.stringify(p))
-      setPalette(p)
+      // Without a palette, the initial colors stand as its own: what waits on the colors shows in them
+      if (p) {
+        sessionStorage.setItem(key, JSON.stringify(p))
+      }
+
+      setPalette(p || initial)
       setLoading(false)
     })
 
