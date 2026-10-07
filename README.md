@@ -50,7 +50,8 @@
 
 ### And also
 
-- **[Plex](https://www.plex.tv/) in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, and a movie a friend [reports](docs/jobs.md#report) from Plex is searched again.
+- **Reports from Plex, answered.** A friend uses *Report an Issue* on a movie in Plex, and [`report`](docs/jobs.md#report) bans the release they watched and finds another one, proposed on the Swaps screen.
+- **[Plex](https://www.plex.tv/) in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, so `refine` and `shrink` compare against your real files.
 - **Coming from Sonarr.** [`migrate sonarr`](docs/jobs.md#migrate-sonarr) takes over your series as Sonarr follows them.
 - **[Backups](#backup-and-restore) and [updates](#update-from-the-app)** from *Settings*, with a weekly dump once turned on.
 - **A wrapped for your friends**, from the Plex watch history [Tautulli](https://tautulli.com/) keeps, set in *Settings › Tautulli*.
