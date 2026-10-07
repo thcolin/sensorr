@@ -17,12 +17,12 @@
 </p>
 
 <p align="center">
-  🍿 Wished &nbsp;→&nbsp; 📹 Record &nbsp;→&nbsp; 📼 Archived &nbsp;→&nbsp; ✨ Refine &nbsp;→&nbsp; 💎 Refined &nbsp;→&nbsp; ✂️ Shrink &nbsp;→&nbsp; 💍 Shrinked
+  🍿 Wished &nbsp;→&nbsp; 📹 <a href="docs/jobs.md#record">Record</a> &nbsp;→&nbsp; 📼 Archived &nbsp;→&nbsp; ✨ <a href="docs/jobs.md#refine">Refine</a> &nbsp;→&nbsp; 💎 Refined &nbsp;→&nbsp; ✂️ <a href="docs/jobs.md#shrink">Shrink</a> &nbsp;→&nbsp; 💍 Shrinked
 </p>
 
 <p align="center">
-  Sensorr watches your indexers for the movies and shows you want,<br>
-  picks the best release by your rules, and hands it to your download client.
+  Sensorr watches your <a href="https://torznab.github.io/spec-1.3-draft/index.html">Torznab</a> indexers for the movies and shows you want,<br>
+  picks the best release by <a href="docs/jobs.md#the-policy">your rules</a>, and hands it to your download client.
 </p>
 
 <p align="center">
@@ -50,27 +50,27 @@
 
 ### And also
 
-- **Plex in sync.** A movie a friend reports from Plex is searched again.
-- **Coming from Sonarr.** `migrate sonarr` takes over your series as Sonarr follows them.
-- **Backups and updates** from *Settings*, with a weekly dump once turned on.
+- **Plex in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, and a movie a friend [reports](docs/jobs.md#report) from Plex is searched again.
+- **Coming from Sonarr.** [`migrate sonarr`](docs/jobs.md#migrate-sonarr) takes over your series as Sonarr follows them.
+- **[Backups](#backup-and-restore) and [updates](#update-from-the-app)** from *Settings*, with a weekly dump once turned on.
 - **English and French**, for the interface, the mails and the wrapped.
 
 # Install
 
-You need Docker and Docker Compose, on `linux/amd64` or `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
+You need [Docker and Docker Compose](https://docs.docker.com/compose/install/), on `linux/amd64` or `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
 
 ```sh
 curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/install.sh | sh
 ```
 
-The installer asks for a few folders, a login and your TMDB API key, then starts the stack and gives you its URL. Run it again in the same folder to repair an install.
+The installer asks for a few folders, a login and your [TMDB API key](https://www.themoviedb.org/settings/api) (it comes with a [TMDB account](https://www.themoviedb.org/signup)), then starts the stack and gives you its URL. Run it again in the same folder to repair an install.
 
-The first login opens an onboarding: your indexers, a first policy, the blackhole, Plex, your friends and mail, then the jobs. Only TMDB is required, every other step can wait for *Settings*.
+The first login opens an onboarding: your indexers, through [Jackett](https://github.com/Jackett/Jackett) or [Prowlarr](https://github.com/Prowlarr/Prowlarr), a first [policy](docs/jobs.md#the-policy), the blackhole, the folder your download client watches, Plex, your friends and mail, then the [jobs](docs/jobs.md#the-jobs). Only TMDB is required, every other step can wait for *Settings*.
 
 <details>
 <summary><b>What the installer asks</b></summary>
 
-It asks for the install folder, `~/.sensorr` by default, the channel, the blackhole and shows folders, your username and password, `sensorr` and `sensorr` by default, the time zone, whether to [update from the app](#update-from-the-app), off by default, and your TMDB API key. It generates the auth secret and the database password, starts the stack, and gives the URL once the login works. Run it again in the same folder to repair an install: it keeps every value its `.env` holds, asks only for the missing ones, then pulls and restarts the stack.
+It asks for the install folder, `~/.sensorr` by default, the channel, the blackhole and shows folders, your username and password, `sensorr` and `sensorr` by default, the time zone, whether to [update from the app](#update-from-the-app), off by default, and your [TMDB API key](https://www.themoviedb.org/settings/api). It generates the auth secret and the database password, starts the stack, and gives the URL once the login works. Run it again in the same folder to repair an install: it keeps every value its `.env` holds, asks only for the missing ones, then pulls and restarts the stack.
 
 </details>
 
@@ -212,6 +212,7 @@ docker compose up -d
 
 </details>
 
+<a name="backup-and-restore"></a>
 <details>
 <summary><b>Backup and restore</b></summary>
 
