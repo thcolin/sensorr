@@ -54,6 +54,12 @@
             }
           ],
           "outputPath": "dist/apps/web-demo",
+          "assets": [
+            "apps/web/src/assets/favicon.png",
+            "apps/web/src/assets",
+            "apps/web/src/manifest.json",
+            { "input": "apps/web/src/demo/seed", "glob": "seed.json", "output": "demo" }
+          ],
           "baseHref": "/sensorr/",
           "deployUrl": "/sensorr/",
           "optimization": true,
