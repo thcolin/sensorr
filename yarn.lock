@@ -15028,7 +15028,7 @@ ts-jest@^29.4.9:
     type-fest "^4.41.0"
     yargs-parser "^21.1.1"
 
-ts-loader@^9.5.7:
+ts-loader@^9.5.7, ts-loader@^9.6.2:
   version "9.6.2"
   resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-9.6.2.tgz#a08f4935ddb87edbd58ce33b7b2558c2a77fdd47"
   integrity sha512-R4iuczmtgxvtuI556s+hTZ6/7Ee03VCAk/l/M8LY1OAsUgB7YydsCxkgq9D9pKRaD7GJqUi2u8fp9zZP/ufjKA==

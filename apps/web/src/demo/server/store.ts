@@ -7,14 +7,16 @@ const PREFIX = 'sensorr-demo:'
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/
 const WRITE_DELAY = 200
 
+// Sent on `globalThis` once the visitor's changes can no longer be kept
+export const STORAGE_FAILED = `${PREFIX}storage`
+
 const revive = (key: string, value: any) => typeof value === 'string' && ISO.test(value) ? new Date(value) : value
 
 export class Store {
   private readonly data = new Map<string, any[]>()
   private readonly pending = new Map<string, ReturnType<typeof setTimeout>>()
-  failed = false
-
   private readonly storage: Storage | null
+  failed = false
 
   // With every cookie blocked, reading `localStorage` throws: the demo then keeps the visitor's changes in memory
   constructor(private readonly seed: Seed, storage?: Storage | null) {
@@ -29,6 +31,8 @@ export class Store {
       this.clear()
       this.write('version', seed.version)
     }
+
+    globalThis.addEventListener?.('pagehide', () => this.flush())
   }
 
   private read(key: string) {
@@ -39,12 +43,19 @@ export class Store {
     }
   }
 
+  // A collection that does not fit would be kept next to others that did, a state the services never see: the first
+  // failure stops writing and drops what was kept, so a reload starts from the seed again, as the banner then says
   private write(key: string, value: string) {
+    if (this.failed) {
+      return
+    }
+
     try {
       this.storage?.setItem(`${PREFIX}${key}`, value)
     } catch (err) {
       this.failed = true
-      globalThis.dispatchEvent?.(new Event(`${PREFIX}storage`))
+      this.clear()
+      globalThis.dispatchEvent?.(new Event(STORAGE_FAILED))
     }
   }
 
@@ -58,11 +69,23 @@ export class Store {
 
   collection(name: string): any[] {
     if (!this.data.has(name)) {
-      const stored = this.read(`collection:${name}`)
-      this.data.set(name, stored ? JSON.parse(stored, revive) : JSON.parse(JSON.stringify(this.seed.collections[name] || []), revive))
+      this.data.set(name, this.stored(name) ?? JSON.parse(JSON.stringify(this.seed.collections[name] || []), revive))
     }
 
     return this.data.get(name)
+  }
+
+  // What the visitor kept, or nothing when it does not parse: the collection starts from the seed again
+  private stored(name: string) {
+    const raw = this.read(`collection:${name}`)
+
+    try {
+      return raw ? JSON.parse(raw, revive) : null
+    } catch (err) {
+      console.warn(`[Demo] The stored "${name}" does not parse, it starts from the seed again`)
+      this.storage?.removeItem(`${PREFIX}collection:${name}`)
+      return null
+    }
   }
 
   file(name: string): string | null {
@@ -80,10 +103,18 @@ export class Store {
 
   save(name: string) {
     clearTimeout(this.pending.get(name))
-    this.pending.set(name, setTimeout(() => {
-      this.pending.delete(name)
-      this.write(`collection:${name}`, JSON.stringify(this.data.get(name)))
-    }, WRITE_DELAY))
+    this.pending.set(name, setTimeout(() => this.persist(name), WRITE_DELAY))
+  }
+
+  private persist(name: string) {
+    clearTimeout(this.pending.get(name))
+    this.pending.delete(name)
+    this.write(`collection:${name}`, JSON.stringify(this.data.get(name)))
+  }
+
+  // A reload right after a change does not wait for the delay
+  flush() {
+    [...this.pending.keys()].forEach((name) => this.persist(name))
   }
 
   reset() {
@@ -91,6 +122,7 @@ export class Store {
     this.pending.clear()
     this.data.clear()
     this.clear()
+    this.failed = false
     this.write('version', this.seed.version)
   }
 }

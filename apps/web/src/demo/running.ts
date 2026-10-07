@@ -14,6 +14,6 @@ install(app)
 
 // Back to the seed: the page reloads, as the services keep what they read in memory
 export const reset = async () => {
-  (await app).store.reset()
+  (await app.catch(() => null))?.store.reset()
   globalThis.location.reload()
 }

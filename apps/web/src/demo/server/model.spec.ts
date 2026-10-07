@@ -46,8 +46,8 @@ describe('Model', () => {
 
   it('paginates with the labels the services ask for', async () => {
     const movies = moviesOf(new Store(seed({ movies: [3, 1, 2].map((_id) => ({ _id })) })))
-    const page = await movies.paginate({}, { page: '2', limit: 2, sort: { _id: 'asc' }, customLabels: { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' } })
-    expect(page).toMatchObject({ results: [{ _id: 3 }], total_results: 3, total_pages: 2, page: 2, hasNextPage: false })
+    const page = await movies.paginate({}, { page: '2', limit: 2, lean: true, sort: { _id: 'asc' }, customLabels: { totalDocs: 'total_results', totalPages: 'total_pages', docs: 'results' } })
+    expect(page).toMatchObject({ results: [{ _id: 3, id: '3' }], total_results: 3, total_pages: 2, page: 2, hasNextPage: false })
   })
 
   it('compares across types as MongoDB does in an aggregation, a date after null', async () => {
@@ -82,5 +82,23 @@ describe('Store', () => {
 
     expect(new Store(seed()).collection('movies')).toEqual([{ _id: 603, archived_at: new Date(1700000000000) }])
     expect(new Store({ ...seed({ movies: [] }), version: '2' }).collection('movies')).toEqual([])
+  })
+
+  it('stops keeping anything once a write fails, so a reload starts from the seed', () => {
+    const store = new Store(seed({ movies: [{ _id: 603 }], shows: [{ _id: 1396 }] }))
+    store.collection('movies')[0].state = 'archived'
+    store.save('movies')
+    jest.runAllTimers()
+
+    const setItem = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('The quota has been exceeded', 'QuotaExceededError')
+    })
+    store.collection('shows')[0].monitored = true
+    store.save('shows')
+    jest.runAllTimers()
+    setItem.mockRestore()
+
+    expect(store.failed).toBe(true)
+    expect(Object.keys(localStorage).filter((key) => key.startsWith('sensorr-demo:'))).toEqual([])
   })
 })
