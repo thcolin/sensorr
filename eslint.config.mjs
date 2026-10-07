@@ -1,4 +1,19 @@
 import nx from '@nx/eslint-plugin'
+import i18next from 'eslint-plugin-i18next'
+
+// Text a reader sees must go through t(): JSX text, and the attributes below
+export const literalStrings = (files) => ({
+  files,
+  ignores: ['**/*.stories.tsx', '**/*.spec.*'],
+  plugins: { i18next },
+  rules: {
+    'i18next/no-literal-string': ['error', {
+      mode: 'jsx-only',
+      'jsx-attributes': { include: ['title', 'subtitle', 'label', 'placeholder', 'alt', 'aria-label', 'aria-description', 'aria-valuetext', 'noun', 'children', 'description'] },
+      words: { exclude: [/^[\p{P}\p{S}\p{N}\p{M}\p{Cf}\s]+$/u, '[A-Z_-]+', 'Sensorr', 'Plex', 'TMDB', 'MediUX'] },
+    }],
+  },
+})
 
 export default [
   ...nx.configs['flat/base'],
