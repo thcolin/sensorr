@@ -39,7 +39,7 @@ export const Search = (resource) => compose(
         title: <Trans i18nKey='entities.empty.title' />,
         subtitle: (
           <span>
-            <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
+            <Trans i18nKey='pages.search.empty.persons' components={[<em />]} />
           </span>
         ),
       },
@@ -82,6 +82,7 @@ export const Search = (resource) => compose(
         serialize: (key, raw) => ({ [key]: raw }),
         component: function QueryField({ value = '', onChange, style, ...props }) {
           const debounce = useMemo(() => nanobounce(400), [])
+          const label = i18n.t(`pages.search.${resource}`)
           const [temp, setTemp] = useState(value)
 
           useEffect(() => {
@@ -93,6 +94,8 @@ export const Search = (resource) => compose(
               <input
                 type='text'
                 value={temp}
+                aria-label={label}
+                placeholder={label}
                 onChange={(e) => {
                   const value = e.target.value
 
@@ -108,6 +111,10 @@ export const Search = (resource) => compose(
                   fontSize: 4,
                   textAlign: 'center',
                   backgroundColor: 'accent',
+                  // A desktop names the field with the title beside it, which a phone hides
+                  '::placeholder': {
+                    color: ['hsla(0, 0%, 100%, 0.85)', 'transparent'],
+                  },
                 }}
               />
             </div>

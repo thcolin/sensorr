@@ -494,8 +494,10 @@ export default {
       title: 'Recherche',
       movies: 'Rechercher des films',
       persons: 'Rechercher des personnes',
+      shows: 'Rechercher des séries',
       empty: {
         shows: 'Essayez quelque chose de plus connu, comme <0>Friends</0> ?',
+        persons: 'Essayez quelqu’un de plus connu, comme <0>Meryl Streep</0> ?',
       },
     },
     shows: {
