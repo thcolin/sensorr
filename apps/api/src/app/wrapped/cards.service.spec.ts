@@ -18,7 +18,6 @@ describe('CardsService.card', () => {
   it('refuses a language the wrapped does not speak, before computing the share', async () => {
     const { service, wrappedService } = serviceOf()
     await expect(service.card('token', 'tele', 'summary', 'de')).rejects.toBeInstanceOf(BadRequestException)
-    await expect(service.card('token', 'tele', 'summary', undefined as unknown as string)).rejects.toBeInstanceOf(BadRequestException)
     expect(wrappedService.share).not.toHaveBeenCalled()
   })
 

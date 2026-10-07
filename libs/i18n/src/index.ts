@@ -10,10 +10,23 @@ export { LANGUAGES, languageOf }
 
 export const dateLocale = () => (i18n.language === 'fr' ? frFR : enUS)
 
+// The language the config resolved last time, so a language set in Settings is there before the config loads
+const stored = () => {
+  try {
+    return LANGUAGES.find((language) => language === localStorage.getItem('language'))
+  } catch (e) {
+    return undefined
+  }
+}
+
 i18n.on('languageChanged', (language) => {
   if (typeof document !== 'undefined') {
     document.documentElement.lang = language
   }
+
+  try {
+    localStorage.setItem('language', language)
+  } catch (e) {}
 })
 
 i18n
@@ -25,7 +38,7 @@ i18n
       fr: { translation: fr },
       en: { translation: en }
     },
-    lng: languageOf(),
+    lng: stored() || languageOf(),
     fallbackLng: 'en',
     supportedLngs: LANGUAGES,
     interpolation: {

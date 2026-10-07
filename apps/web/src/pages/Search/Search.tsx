@@ -56,7 +56,7 @@ export const Search = (resource) => compose(
   }),
   withFetchQuery({ uri: { movies: 'search/movie', persons: 'search/person', shows: 'search/tv' }[resource] }, 1, useTMDB, useControlsHistoryState),
   withControls({
-    title: i18n.t('pages.search.title'),
+    get title() { return i18n.t('pages.search.title') },
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),

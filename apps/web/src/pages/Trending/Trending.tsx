@@ -54,7 +54,7 @@ export const Trending = (resource) => compose(
   }),
   withFetchQuery({ uri: { movies: 'trending/movie/day', persons: 'trending/person/day', shows: 'trending/tv/day' }[resource] }, 1, useTMDB, useControlsHistoryState),
   withControls({
-    title: i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource]),
+    get title() { return i18n.t({ movies: 'pages.trending.movies.title', persons: 'pages.trending.persons.title', shows: 'pages.trending.shows.title' }[resource]) },
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),

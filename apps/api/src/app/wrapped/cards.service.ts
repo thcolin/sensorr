@@ -46,7 +46,8 @@ export class CardsService implements OnModuleDestroy {
   constructor(private readonly wrappedService: WrappedService) {}
 
   // `lang`: the language the friend's page speaks, the browser that draws the card would speak its own
-  async card(token: string, look: string, story: string, lang: string, year?: number) {
+  // A page served before the wrapped spoke English asks without `lang`: it was French
+  async card(token: string, look: string, story: string, lang = 'fr', year?: number) {
     if (!Object.hasOwn(WRAPPED_THEME_NAMES, look) || typeof story !== 'string' || !STORY.test(story) || !LANGUAGES.includes(lang)) {
       throw new BadRequestException()
     }

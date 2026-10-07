@@ -223,7 +223,9 @@ export const valuesOfControls = (fields, values) => Object.keys(fields).reduce((
   ),
 }), {})
 
-export const withControls = ({ title = '', useStatistics, level, watch, hooks, layout, components, fields, footer }: withControlsArgs) => (WrappedComponent) => {
+// `args` is kept whole: its `title` may be a getter, read at render in the language shown
+export const withControls = (args: withControlsArgs) => (WrappedComponent) => {
+  const { useStatistics, level, watch, hooks, layout, components, fields, footer } = args
   const WithControls = ({ controls, ...props }: any) => {
     const state = useMemo(() => ({
       props: controls?.props,
@@ -261,7 +263,7 @@ export const withControls = ({ title = '', useStatistics, level, watch, hooks, l
     return (
       <>
         <Controls
-          title={title}
+          title={args.title || ''}
           layout={layout}
           components={components}
           fields={fields}

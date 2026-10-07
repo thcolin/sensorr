@@ -209,6 +209,9 @@ export default {
     },
   },
   sensorr: {
+    search: {
+      error: 'Error while fetching releases from indexers',
+    },
     jobs: {
       groups: {
         movies: 'Movies',

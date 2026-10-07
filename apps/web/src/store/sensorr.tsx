@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { Sensorr } from '@sensorr/sensorr'
 import { useAbortController } from '@sensorr/utils'
 
@@ -60,7 +61,7 @@ export const useSensorrRequest = () => {
         setDone(true)
         setLoading(false)
 
-        toast.error('Error while fetching releases from indexers')
+        toast.error(i18n.t('sensorr.search.error'))
       }
     }
   }, [])

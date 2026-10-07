@@ -209,6 +209,9 @@ export default {
     },
   },
   sensorr: {
+    search: {
+      error: 'Erreur lors de la recherche des releases sur les indexeurs',
+    },
     jobs: {
       groups: {
         movies: 'Films',
