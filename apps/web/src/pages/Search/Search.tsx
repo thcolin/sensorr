@@ -17,7 +17,7 @@ import { withBody } from '../../layout/withLayout'
 import withBulk from '../../components/enhancers/withBulk'
 
 export const Search = (resource) => compose(
-  withTitle(resource === 'shows' ? i18n.t('pages.shows.search.title') : i18n.t({ movies: 'pages.search.movies', persons: 'pages.search.persons' }[resource])),
+  withTitle(resource === 'shows' ? 'pages.shows.search.title' : { movies: 'pages.search.movies', persons: 'pages.search.persons' }[resource]),
   withProps({
     id: 'search',
     display: 'grid',

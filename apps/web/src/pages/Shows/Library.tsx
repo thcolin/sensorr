@@ -133,15 +133,15 @@ export const FIELDS = {
     },
     serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
     component: withProps({
-      label: i18n.t('ui.sorting'),
+      get label() { return i18n.t('ui.sorting') },
       options: [
-        { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
-        { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-        { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
-        { label: i18n.t('ui.sortings.last_air_date'), value: 'last_air_date' },
-        { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-        { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
-        { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
+        { get label() { return i18n.t('ui.sortings.refreshed_at') }, value: 'refreshed_at' },
+        { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+        { get label() { return i18n.t('ui.sortings.first_air_date') }, value: 'first_air_date' },
+        { get label() { return i18n.t('ui.sortings.last_air_date') }, value: 'last_air_date' },
+        { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+        { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
+        { get label() { return i18n.t('ui.sortings.name') }, value: 'name', sort: false },
       ]
     })(Sorting)
   },
@@ -189,7 +189,7 @@ export const FIELDS = {
   origin_country,
   first_air_date: untouched({
     ...fields.release_date,
-    component: withProps({ label: i18n.t('ui.filters.first_air_date') })(FilterReleaseDate),
+    component: withProps({ get label() { return i18n.t('ui.filters.first_air_date') } })(FilterReleaseDate),
   }),
   number_of_seasons,
   popularity: untouched({
@@ -206,14 +206,14 @@ export const FIELDS = {
   }),
   episode_run_time: untouched({
     ...fields.episode_runtime,
-    component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
+    component: withProps({ field: 'episode_runtime', get label() { return i18n.t('ui.filters.episode_runtime') } })(FilterRuntime),
   }),
   ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
 }
 
 // The filters panel, Settings › Lists opens it on a saved list too
 export const CONTROLS: withControlsArgs = {
-  title: i18n.t('pages.library.title'),
+  get title() { return i18n.t('pages.library.title') },
   hooks: {
     onChange: () => scrollToTop(),
   },
@@ -321,7 +321,7 @@ export const CONTROLS: withControlsArgs = {
 }
 
 const Library = compose(
-  withTitle(i18n.t('pages.shows.library.title')),
+  withTitle('pages.shows.library.title'),
   withProps({
     id: 'shows-library',
     display: 'grid',

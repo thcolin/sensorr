@@ -140,7 +140,7 @@ const FIELDS = {
     component: compose(
       withProps({
         display: 'select',
-        label: <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span>,
+        get label() { return <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span> },
       }),
       withTMDB()
     )(FilterGenres),
@@ -170,7 +170,7 @@ const FIELDS = {
     ...fields.keywords,
     component: compose(
       withProps({
-        label: <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span>,
+        get label() { return <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span> },
       }),
       withTMDB(),
     )(FilterKeywords),
@@ -194,12 +194,12 @@ const SORT_BY = {
   },
   serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
   component: withProps({
-    label: i18n.t('ui.sorting'),
+    get label() { return i18n.t('ui.sorting') },
     options: [
-      { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-      { label: i18n.t('ui.sortings.primary_release_date'), value: 'primary_release_date' },
-      { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-      { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+      { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+      { get label() { return i18n.t('ui.sortings.primary_release_date') }, value: 'primary_release_date' },
+      { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+      { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
     ]
   })(Sorting)
 }
@@ -516,6 +516,6 @@ const UICalendar = () => {
   )
 }
 
-export const Calendar = withTitle(i18n.t('pages.calendar.title'))(UICalendar)
+export const Calendar = withTitle('pages.calendar.title')(UICalendar)
 
 export default Calendar

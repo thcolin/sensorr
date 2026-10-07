@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { useTitle } from '@sensorr/utils'
 
-const withTitle = (title: string) => (WrappedComponent) => {
+// Takes a key, translated at render: a title translated at import would keep the language of the import
+const withTitle = (key: string) => (WrappedComponent) => {
   const WithTitle = (props) => {
-    useTitle(title)
+    const { t } = useTranslation()
+    useTitle(t(key))
 
     return (
       <WrappedComponent {...props} />

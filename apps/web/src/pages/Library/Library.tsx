@@ -166,15 +166,15 @@ export const FIELDS = {
     },
     serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
     component: withProps({
-      label: i18n.t('ui.sorting'),
+      get label() { return i18n.t('ui.sorting') },
       options: [
-        { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
-        { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-        { label: i18n.t('ui.sortings.primary_release_date'), value: 'release_date' },
-        { label: i18n.t('ui.sortings.revenue'), value: 'revenue' },
-        { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-        { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
-        { label: i18n.t('ui.sortings.budget'), value: 'budget' },
+        { get label() { return i18n.t('ui.sortings.updated_at') }, value: 'updated_at' },
+        { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+        { get label() { return i18n.t('ui.sortings.primary_release_date') }, value: 'release_date' },
+        { get label() { return i18n.t('ui.sortings.revenue') }, value: 'revenue' },
+        { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+        { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
+        { get label() { return i18n.t('ui.sortings.budget') }, value: 'budget' },
       ]
     })(Sorting)
   },
@@ -252,7 +252,7 @@ export const FIELDS = {
 
 // The filters panel, Settings › Lists opens it on a saved list too
 export const CONTROLS: withControlsArgs = {
-  title: i18n.t('pages.library.title'),
+  get title() { return i18n.t('pages.library.title') },
   hooks: {
     onChange: () => scrollToTop(),
   },
@@ -339,7 +339,7 @@ export const CONTROLS: withControlsArgs = {
 }
 
 const Library = compose(
-  withTitle(i18n.t('pages.library.title')),
+  withTitle('pages.library.title'),
   withProps({
     id: 'library',
     display: 'grid',

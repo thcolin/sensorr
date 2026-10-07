@@ -403,6 +403,6 @@ const UICalendar = () => {
   )
 }
 
-export const Calendar = withTitle(i18n.t('pages.shows.calendar.title'))(UICalendar)
+export const Calendar = withTitle('pages.shows.calendar.title')(UICalendar)
 
 export default Calendar

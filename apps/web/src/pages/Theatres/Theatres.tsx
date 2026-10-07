@@ -15,7 +15,7 @@ import { EntitiesHideable } from '../../components/Entities/Hideable'
 import withBulk from '../../components/enhancers/withBulk'
 
 export const Theatres = compose(
-  withTitle(i18n.t('pages.theatres.title')),
+  withTitle('pages.theatres.title'),
   withProps({
     id: 'theatres',
     display: 'grid',
@@ -37,7 +37,7 @@ export const Theatres = compose(
   // The history holds the values of the fields, and the `uri` field starts empty if it holds `uri: ''`: TMDB is then asked nothing
   withFetchQuery({}, 1, useTMDB, () => useHistoryState('controls', {}) as any),
   withControls({
-    title: i18n.t('pages.theatres.title'),
+    get title() { return i18n.t('pages.theatres.title') },
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),
