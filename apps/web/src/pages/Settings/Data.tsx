@@ -222,7 +222,6 @@ const Data = ({ ...props }) => {
 
 Data.styles = {
   // The field and its action on one line, as Settings › Lists creates a list
-  // On a phone the button goes under the file, which keeps the room to name it
   pick: {
     display: 'flex',
     flexDirection: ['column', 'row'],

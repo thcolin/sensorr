@@ -67,7 +67,6 @@ UINav.styles = {
     overflowY: 'hidden',
     scrollbarWidth: 'none',
   },
-  // Under the bar, a step darker, laid out like the strip of the swaps (Proposals.tsx)
   strip: {
     display: 'flex',
     minHeight: '3em',

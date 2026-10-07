@@ -243,8 +243,7 @@ const ASIDE = {
   `,
 }
 
-// The bar of the Theatres page: the view beside the library toggle, the sort only where the order is not the date.
-// A phone gives the month the whole bar, the rest to the strip, and the sort to the top of the filters.
+// The bar of the Theatres page: the view beside the library toggle, the sort only where the order is not the date
 const nav = (areas: string) => ({
   display: 'grid' as const,
   gridTemplateColumns: [
