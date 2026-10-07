@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { emojize, useTitle } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
-import { useAPI } from '../../store/api'
+import { useAPI, errorOf } from '../../store/api'
 import Body from '../../layout/Body/Body'
 
 const SENT = [
@@ -14,15 +14,6 @@ const SENT = [
   { key: 'requests', emoji: '🍿', label: 'Ready to watch', description: 'The requests of a friend that reached Plex, on each run of the 📬 Mail job' },
   { key: 'wrapped', emoji: '🎞️', label: 'Wrapped', description: 'When an edition of the wrapped freezes' },
 ]
-
-// The API answers a refused mail with the SMTP server's own words, they are the ones that say what to fix
-export const errorOf = async (err) => {
-  try {
-    return (await err.json()).message
-  } catch (e) {
-    return null
-  }
-}
 
 export const MailIntro = () => (
   <>Sensorr mails your friends: their invitation, a welcome once their Plex account is linked, a reminder when Plex disconnects it, their requests ready to watch and their wrapped. Any SMTP server works, the one of your mail provider included.</>

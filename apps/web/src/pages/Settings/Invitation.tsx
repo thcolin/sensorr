@@ -1,8 +1,7 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Bar, Bulk, Button, Link, Option } from '@sensorr/ui'
-import { useAPI } from '../../store/api'
-import { errorOf } from './Mail'
+import { useAPI, errorOf } from '../../store/api'
 import { Face } from './Face'
 import { useConfigContext } from '../../contexts/Config/Config'
 

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { jobTitleOf } from '@sensorr/sensorr'
-import { useAPI } from '../../store/api'
+import { errorOf, useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 
 export interface JobEntry {
@@ -67,7 +67,10 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
 
     setOngoing(ongoing => [...ongoing, name])
     const { uri, params, init } = api.query.jobs.runJob({ body: { command, type } })
-    const request = api.fetch(uri, params, init)
+    // The API says why it refused: a job already running, or a demo that runs none
+    const request = api.fetch(uri, params, init, { rawError: true }).catch(async (err) => {
+      throw Object.assign(new Error((await errorOf(err)) || ''), { cause: err })
+    })
 
     toast.promise(request, {
       loading: `Running new Job **${jobTitleOf(name)}**, please wait...`,
@@ -79,7 +82,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
       error: (err) => {
         console.warn(err)
         setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Error during Job **${jobTitleOf(name)}** run`
+        return `Error during Job **${jobTitleOf(name)}** run${err.message ? `: ${err.message}` : ''}`
       },
     })
 

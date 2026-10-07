@@ -2,11 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useOutlet } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useThemeUI } from 'theme-ui'
-import { useAPI } from '../../store/api'
+import { useAPI, errorOf } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import { availableOf } from './channels'
-import { errorOf } from './Mail'
 
 declare const SENSORR_VERSION: string
 
