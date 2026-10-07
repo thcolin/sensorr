@@ -10,6 +10,7 @@ import type { Response } from 'express'
 import unzipper from 'unzipper'
 import { DUMP_COLLECTIONS, DUMP_FILE, DUMP_FOLDER } from '@sensorr/sensorr'
 import { SensorrService, manifestOf } from '../sensorr/sensorr.service'
+import { coded } from '../errors'
 
 // The CLI the API spawns writes in the same working directory
 const FOLDER = path.resolve(DUMP_FOLDER)
@@ -26,7 +27,7 @@ export class DumpsController {
   // Only a name the dump job writes: nothing else in the folder, nothing outside it
   private fileOf(name: string) {
     if (!DUMP_FILE.test(name)) {
-      throw new NotFoundException(`No dump "${name}"`)
+      throw new NotFoundException(coded('dump.unknown', `No dump "${name}"`, { name }))
     }
 
     return path.join(FOLDER, name)
@@ -50,7 +51,7 @@ export class DumpsController {
   async download(@Param('name') name: string, @Res() res: Response) {
     const file = this.fileOf(name)
     const { size } = await fs.stat(file).catch(() => {
-      throw new NotFoundException(`No dump "${name}"`)
+      throw new NotFoundException(coded('dump.unknown', `No dump "${name}"`, { name }))
     })
 
     this.logger.log(`Download "${name}"`)
@@ -66,7 +67,7 @@ export class DumpsController {
   @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
   async preview(@UploadedFile() archive) {
     if (!archive?.buffer) {
-      throw new BadRequestException('No archive, send the dump as the "archive" field')
+      throw new BadRequestException(coded('dump.archive', 'No archive, send the dump as the "archive" field'))
     }
 
     return manifestOf(unzipper.Open.buffer(archive.buffer))
@@ -75,7 +76,7 @@ export class DumpsController {
   @Post(':name/restore')
   async restore(@Param('name') name: string) {
     const buffer = await fs.readFile(this.fileOf(name)).catch(() => {
-      throw new NotFoundException(`No dump "${name}"`)
+      throw new NotFoundException(coded('dump.unknown', `No dump "${name}"`, { name }))
     })
 
     this.logger.log(`Restore "${name}"`)

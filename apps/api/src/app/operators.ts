@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common'
+import { coded } from './errors'
 
 const operatorOf = (value: unknown, path: string[] = []): string | undefined => {
   if (!value || typeof value !== 'object') {
@@ -27,7 +28,7 @@ export class OperatorsPipe implements PipeTransform {
     const operator = operatorOf(value)
 
     if (operator) {
-      throw new BadRequestException(`Operator "${operator}" refused`)
+      throw new BadRequestException(coded('operator.refused', `Operator "${operator}" refused`, { operator }))
     }
 
     return value

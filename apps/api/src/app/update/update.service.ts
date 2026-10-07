@@ -7,6 +7,7 @@ import { Channel, TAGS, channelOf, versionOn } from './update'
 // The app version lives in the workspace package.json, outside any project
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import app from './../../../../../package.json'
+import { coded } from '../errors'
 
 const UPDATER = process.env.NX_UPDATER_URL
 const SECRET = path.resolve(process.env.NX_UPDATER_SECRET || '.secrets/updater')
@@ -46,7 +47,7 @@ export class UpdateService {
     const body = (await res.json()) as any
 
     if (!res.ok) {
-      throw new HttpException(`sensorr-updater answered ${res.status}, ${body.message}`, res.status === 401 ? 502 : res.status)
+      throw new HttpException(coded('update.updater', `sensorr-updater answered ${res.status}, ${body.message}`, { status: res.status, reason: body.message }), res.status === 401 ? 502 : res.status)
     }
 
     return body
@@ -85,17 +86,17 @@ export class UpdateService {
 
   async update(channel: Channel) {
     if (!Object.hasOwn(TAGS, channel)) {
-      throw new BadRequestException(`Unknown channel "${channel}", expected ${Object.keys(TAGS).join(' or ')}`)
+      throw new BadRequestException(coded('update.channel', `Unknown channel "${channel}", expected ${Object.keys(TAGS).join(' or ')}`, { channel }))
     }
 
     const [job] = this.sensorrService.runningJobs()
 
     if (job) {
-      throw new ConflictException(`Sensorr job "${job}" is running, recreating sensorr-api would kill it`)
+      throw new ConflictException(coded('update.jobRunning', `Sensorr job "${job}" is running, recreating sensorr-api would kill it`, { job }))
     }
 
     if (!UPDATER) {
-      throw new NotFoundException('No sensorr-updater, NX_UPDATER_URL is not set')
+      throw new NotFoundException(coded('update.unset', 'No sensorr-updater, NX_UPDATER_URL is not set'))
     }
 
     this.logger.log(`Update to "${TAGS[channel]}"`)
@@ -103,7 +104,7 @@ export class UpdateService {
       await this.updater('/update', { method: 'POST', body: JSON.stringify({ tag: TAGS[channel] }) })
     } catch (err) {
       if (['ENOTFOUND', 'EAI_AGAIN'].includes(err.cause?.code || err.code)) {
-        throw new NotFoundException('No sensorr-updater, turn on the updater profile')
+        throw new NotFoundException(coded('update.off', 'No sensorr-updater, turn on the updater profile'))
       }
 
       throw err

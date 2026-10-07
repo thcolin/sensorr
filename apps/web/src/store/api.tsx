@@ -1,14 +1,22 @@
 import { API } from '@sensorr/services'
+import i18n from '@sensorr/i18n'
 
 const api = new API('/api/', localStorage.getItem('sensorr_access_token'))
 
 export const query = api.query
 
 // The message of a request `api.fetch` refused with `rawError`: the API says what to fix, the SMTP server's words for
-// a refused mail
+// a refused mail. A coded error reads in the language of the interface, the others as the API wrote them
 export const errorOf = async (err) => {
   try {
-    return (await err.json()).message
+    const { code, values = {}, message } = await err.json()
+
+    if (!code || !i18n.exists(`errors.${code}`)) {
+      return message
+    }
+
+    const missing = values.missing && new Intl.ListFormat(i18n.language).format(values.missing.map((key) => i18n.t(`errors.mail.fields.${key}`)))
+    return i18n.t(`errors.${code}`, { ...values, ...(missing ? { missing } : {}) })
   } catch (e) {
     return null
   }

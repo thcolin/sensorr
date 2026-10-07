@@ -2,7 +2,7 @@ import { memo, useCallback, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Button } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
-import { useAPI } from '../../store/api'
+import { errorOf, useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
 import { useAuthContext } from '../../contexts/Auth/Auth'
 import { demo } from '../../demo'
@@ -23,12 +23,7 @@ const Login = () => {
       const { access_token } = await api.fetch(uri, params, init, { rawError: true })
       authenticate(access_token)
     } catch (err) {
-      try {
-        const body = await err.json()
-        setError(body.message)
-      } catch (e) {
-        setError('Unknown error, check Docker containers logs')
-      }
+      setError((await errorOf(err)) || 'Unknown error, check Docker containers logs')
     }
 
     setOngoing(false)

@@ -13,6 +13,7 @@ import { invitableOf, sharedIdsOf, sharedUsersOf } from './shared'
 // The app version lives in the workspace package.json, outside any project
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import app from './../../../../../package.json'
+import { coded } from '../errors'
 
 @Injectable()
 export class GuestsService {
@@ -116,7 +117,7 @@ export class GuestsService {
     }
 
     const xml = await this.plexTv('https://plex.tv/api/users').catch((error) => {
-      throw new BadGatewayException(error.message)
+      throw new BadGatewayException(coded('plex.answered', error.message, { reason: error.message }))
     })
     const users = sharedUsersOf(xml).filter(({ email }) => email)
     const guests = (await this.guestModel.find({}, { email: 1 }).lean()).map(({ email }) => email)

@@ -1,6 +1,7 @@
 import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { Public } from './auth.decorators'
+import { coded } from '../errors'
 
 @Controller('auth')
 export class AuthController {
@@ -12,7 +13,7 @@ export class AuthController {
     try {
       return await this.authService.signIn(body.username, body.password)
     } catch (err) {
-      throw new UnauthorizedException(err.message)
+      throw new UnauthorizedException(coded('auth.refused', err.message))
     }
   }
 }
