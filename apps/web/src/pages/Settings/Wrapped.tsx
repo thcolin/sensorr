@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
+import { Trans, useTranslation } from 'react-i18next'
 import { Button, Icon, Option } from '@sensorr/ui'
 import { WRAPPED_THEME_NAMES, WrappedTheme } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 
 const THEMES = Object.keys(WRAPPED_THEME_NAMES) as WrappedTheme[]
+const TELE = ['#f4efe4', '#ffd200', '#5fb7cf', '#3aa35b', '#b0489c', '#e2081c', '#1537a8']
+const VIDEOCLUB = ['#c3242b', '#1c4fb8', '#1e8a4a', '#e3a21a', '#6c2bb3', '#d9531e', '#c3242b', '#1c4fb8']
 
 // A glimpse of each look, drawn here so no friend's poster or name ever ships in the repo
 const Glimpse = ({ theme }: { theme: WrappedTheme }) => {
@@ -39,7 +42,7 @@ const Glimpse = ({ theme }: { theme: WrappedTheme }) => {
           <rect width='120' height='80' fill='#f4efe4' />
           <rect x='10' y='8' width='70' height='16' fill='#e2081c' />
           <rect x='80' y='8' width='30' height='16' fill='#ffd200' />
-          {['#f4efe4', '#ffd200', '#5fb7cf', '#3aa35b', '#b0489c', '#e2081c', '#1537a8'].map((color, index) => <rect key={color} x={10 + index * 14.3} y='32' width='14.3' height='30' fill={color} />)}
+          {TELE.map((color, index) => <rect key={color} x={10 + index * 14.3} y='32' width='14.3' height='30' fill={color} />)}
           <rect x='10' y='32' width='100' height='30' fill='none' stroke='#16140f' strokeWidth='2' />
           <rect x='10' y='66' width='60' height='5' fill='#16140f' />
         </svg>
@@ -50,7 +53,7 @@ const Glimpse = ({ theme }: { theme: WrappedTheme }) => {
           <rect width='120' height='80' fill='#17122b' />
           <rect x='22' y='8' width='76' height='14' rx='2' fill='#f7f1de' />
           <path d='M26 38 Q34 28 42 38 T58 38 T74 38 T90 38' stroke='#3ef2ff' strokeWidth='3' fill='none' strokeLinecap='round' />
-          {['#c3242b', '#1c4fb8', '#1e8a4a', '#e3a21a', '#6c2bb3', '#d9531e', '#c3242b', '#1c4fb8'].map((color, index) => <rect key={index} x={20 + index * 10} y='50' width='8' height='22' fill={color} />)}
+          {VIDEOCLUB.map((color, index) => <rect key={index} x={20 + index * 10} y='50' width='8' height='22' fill={color} />)}
           <rect x='14' y='72' width='92' height='4' fill='#5b3a22' />
         </svg>
       )
@@ -81,6 +84,7 @@ const editionsWith = (editions: Edition[], year: number, change: Partial<Edition
 
 // The looks a friend picks from, then each year Tautulli has plays for, open or not and with its look, saved with the config
 export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSave: (data: any) => void }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const [years, setYears] = useState<number[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -119,22 +123,22 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
                 id={`wrapped.looks.${theme}`}
                 checked={looks.includes(theme)}
                 disabled={looks.length === 1 && looks.includes(theme)}
-                title={looks.length === 1 && looks.includes(theme) ? 'At least one look stays offered' : undefined}
+                title={looks.length === 1 && looks.includes(theme) ? t('settings.wrapped.lastLook') : undefined}
                 onChange={(event: any) => offer(theme, event.target.checked)}
               >
-                <small>{looks.includes(theme) ? 'Offered' : 'Off'}</small>
+                <small>{looks.includes(theme) ? t('settings.wrapped.offered') : t('settings.wrapped.off')}</small>
               </Option>
             </div>
           </div>
         ))}
       </div>
-      <h4 sx={WrappedLooks.styles.subtitle}>Years <small>from Tautulli</small></h4>
+      <h4 sx={WrappedLooks.styles.subtitle}><Trans t={t} i18nKey='settings.wrapped.years.title' components={[<small />]} /></h4>
       {failed ? (
-        <p><small>Unable to load the years from Tautulli, <button type='button' sx={WrappedLooks.styles.retry} onClick={fetchYears}>retry</button></small></p>
+        <p><small><Trans t={t} i18nKey='settings.wrapped.years.error' components={[<button type='button' sx={WrappedLooks.styles.retry} onClick={fetchYears} />]} /></small></p>
       ) : !years ? (
-        <p aria-busy={true}><small>Looking for them in Tautulli...</small></p>
+        <p aria-busy={true}><small>{t('settings.wrapped.years.loading')}</small></p>
       ) : !rows.length ? (
-        <p><small>No play imported from Tautulli yet, the 🎞️ wrapped job imports them.</small></p>
+        <p><small>{t('settings.wrapped.years.empty')}</small></p>
       ) : rows.map((year) => {
         const edition = editions.find((edition) => edition.year === year)
         const enabled = edition?.enabled !== false
@@ -142,15 +146,15 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
 
         return (
           <div key={year} sx={WrappedLooks.styles.row} data-off={!enabled || undefined}>
-            <div sx={WrappedLooks.styles.tick} title={enabled ? `Friends can open their ${year}` : `Friends cannot open their ${year}`}>
-              <Option type='checkbox' id={`wrapped.editions.${year}`} aria-label={`Open the ${year} wrapped`} checked={enabled} onChange={(event: any) => change(year, { enabled: event.target.checked })} />
+            <div sx={WrappedLooks.styles.tick} title={enabled ? t('settings.wrapped.year.open', { year }) : t('settings.wrapped.year.closed', { year })}>
+              <Option type='checkbox' id={`wrapped.editions.${year}`} aria-label={t('settings.wrapped.year.toggle', { year })} checked={enabled} onChange={(event: any) => change(year, { enabled: event.target.checked })} />
             </div>
             <strong>{year}</strong>
             <label sx={WrappedLooks.styles.year}>
-              <select aria-label={`Look of the ${year} wrapped`} value={theme ?? ''} disabled={!enabled} data-any={!theme || undefined} onChange={(event) => change(year, { theme: (event.target.value || null) as WrappedTheme | null })}>
-                <option value=''>Any</option>
+              <select aria-label={t('settings.wrapped.year.look', { year })} value={theme ?? ''} disabled={!enabled} data-any={!theme || undefined} onChange={(event) => change(year, { theme: (event.target.value || null) as WrappedTheme | null })}>
+                <option value=''>{t('settings.wrapped.year.any')}</option>
                 {THEMES.filter((other) => looks.includes(other) || other === theme).map((other) => (
-                  <option key={other} value={other}>{WRAPPED_THEME_NAMES[other]}{looks.includes(other) ? '' : ' · off, they pick'}</option>
+                  <option key={other} value={other}>{WRAPPED_THEME_NAMES[other]}{looks.includes(other) ? '' : ` · ${t('settings.wrapped.year.offPick')}`}</option>
                 ))}
               </select>
               <Icon value='chevron' height='0.75em' width='0.75em' />
@@ -159,7 +163,7 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
         )
       })}
       <div sx={{ display: 'flex', marginTop: 2 }}>
-        <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+        <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
       </div>
     </form>
   )

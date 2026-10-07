@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Controller, useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
 import Body from '../../layout/Body/Body'
@@ -43,11 +44,13 @@ const SUMMARY = {
 
 export const policiesOf = (config) => (config.get('policies') || []).map(policy => ({ ...policy, oldName: policy.name, removed: false }))
 
-export const PoliciesIntro = () => (
-  <>Sensorr policies allow you to define and prioritize rules to automatically choose the best movie release.</>
-)
+export const PoliciesIntro = () => {
+  const { t } = useTranslation()
+  return <>{t('settings.policies.intro')}</>
+}
 
 export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard = false }) => {
+  const { t } = useTranslation()
   const policies = useFieldArray({ name: 'policies', control: form.control })
   const policy = useForm({ defaultValues: { name: '', sorting: 'size', descending: false, require: {}, prefer: {}, avoid: {} } })
 
@@ -65,7 +68,7 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
       </form>
       {!!examples.length && (
         <div sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingTop: 6 }}>
-          <small>Or start from</small>
+          <small>{t('settings.policies.examples')}</small>
           {examples.map((example) => (
             <Button
               key={example.name}
@@ -81,13 +84,13 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
         </div>
       )}
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-      <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error('Add the policy with +, or clear its name') : onSubmit(values))}>
+      <form sx={{ display: 'flex', flexDirection: 'column' }} onSubmit={form.handleSubmit((values) => (guard && policy.getValues('name')) ? toast.error(t('settings.policies.pending')) : onSubmit(values))}>
         <SortablePolicies
           policies={policies}
           form={form}
           onSortEnd={({ from, to }) => {
             if (from === 0 || to === 0) {
-              toast.success(`New default policy   ${(policies.fields[to === 0 ? from : to] as any).name}`)
+              toast.success(t('settings.policies.newDefault', { name: (policies.fields[to === 0 ? from : to] as any).name }))
             }
 
             policies.swap(from, to)
@@ -101,6 +104,7 @@ export const PoliciesFields = ({ form, onSubmit, children, examples = [], guard 
 
 // A policy of the form, saved or not, ranking the sample releases
 const PolicySandbox = ({ form, prefix }) => {
+  const { t } = useTranslation()
   const { device } = useDeviceContext()
   const { config } = useConfigContext()
   const [open, setOpen] = useState(false)
@@ -114,12 +118,12 @@ const PolicySandbox = ({ form, prefix }) => {
   return (
     <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} sx={PolicySandbox.styles.element}>
       <summary>
-        <span>Sandbox</span>
+        <span>{t('settings.policies.sandbox.title')}</span>
         <small>
-          <span>Fake <em>Big Buck Bunny</em> (2008) releases</span>
-          <ReleaseTag title='Valid releases'><code>⭐ {summary.valid}</code></ReleaseTag>
-          <ReleaseTag title='Withdrawn by the policy'><code>🚨 {summary.withdrawn}</code></ReleaseTag>
-          <ReleaseTag title='Rejected by the movie search'><code>🗑️ {summary.rejected}</code></ReleaseTag>
+          <span><Trans t={t} i18nKey='settings.policies.sandbox.subtitle' components={[<em />]} /></span>
+          <ReleaseTag title={t('settings.policies.sandbox.valid')}><code>⭐ {summary.valid}</code></ReleaseTag>
+          <ReleaseTag title={t('settings.policies.sandbox.withdrawn')}><code>🚨 {summary.withdrawn}</code></ReleaseTag>
+          <ReleaseTag title={t('settings.policies.sandbox.rejected')}><code>🗑️ {summary.rejected}</code></ReleaseTag>
         </small>
       </summary>
       {open && (
@@ -133,7 +137,7 @@ const PolicySandbox = ({ form, prefix }) => {
                 bars={true}
                 display={device === 'mobile' ? 'column' : 'row'}
                 actions={false}
-                note={[release === summary.pick && '🏆 Picked', release.goal && '✨ End-goal of the refine job'].filter(Boolean).join(' · ') || null}
+                note={[release === summary.pick && t('settings.policies.sandbox.picked'), release.goal && t('settings.policies.sandbox.goal')].filter(Boolean).join(' · ') || null}
               />
             ))}
           </div>
@@ -194,7 +198,8 @@ PolicySandbox.styles = {
 }
 
 const Policies = ({ ...props }) => {
-  useTitle('Settings - Policies')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.policies') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
 
@@ -210,31 +215,31 @@ const Policies = ({ ...props }) => {
 
       <section>
         <article>
-          <h2>Policies</h2>
+          <h2>{t('settings.sections.policies')}</h2>
           <p>
             <PoliciesIntro />
           </p>
           <ul>
-            <li><code>⛔ avoid</code> tags acts as a universal blacklist, immediately rejecting any release with a forbidden tag.</li>
-            <li><code>⭐ prefer</code> tags creates a score to rank and choose the best release accordingly to policy criteria. You can drag and drop tags to set their importance, and drop a tag onto another to give both the same rank.</li>
+            <li><Trans t={t} i18nKey='settings.policies.rules.avoid' components={[<code />]} /></li>
+            <li><Trans t={t} i18nKey='settings.policies.rules.prefer' components={[<code />]} /></li>
             <li sx={{ listStyleType: 'none' }}>
               <ul>
-                <li><code>* (require)</code> option define the <strong>end-goal</strong> release for the <code>✨ refine</code> job. Once these criteria matched, <code>✂️ shrink</code> job will take over.</li>
+                <li><Trans t={t} i18nKey='settings.policies.rules.require' components={[<code />, <strong />, <code />, <code />]} /></li>
               </ul>
             </li>
-            <li><code>🌐 original language</code> gives the policy to a movie of that language entering your library without a policy. The first matching policy wins, otherwise the default one. Movies already in your library are left as they are.</li>
+            <li><Trans t={t} i18nKey='settings.policies.rules.language' components={[<code />]} /></li>
           </ul>
-          <h4>Score</h4>
+          <h4>{t('settings.policies.score.title')}</h4>
           <p>
-            Sensorr ranks releases using a clear point system. A release first earns a base score of <strong>1000 points</strong> for matching the movie's title (original or localized).
+            <Trans t={t} i18nKey='settings.policies.score.base' components={[<strong />]} />
             <br/>
-            It then accumulates additional points from your <code>⭐ prefer</code> tags. The top-ranked tag is worth <strong>100 points</strong>, while subsequent tags in the same list are worth progressively less. Tags sharing a rank are worth the same points.
+            <Trans t={t} i18nKey='settings.policies.score.prefer' components={[<code />, <strong />]} />
             <br/>
-            The release with the highest total score is always chosen. In case of a tie, <code>sort</code> setting acts as the tie-breaker.
+            <Trans t={t} i18nKey='settings.policies.score.tie' components={[<code />]} />
           </p>
           <PoliciesFields form={form} onSubmit={onSave}>
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </PoliciesFields>
         </article>
@@ -320,6 +325,7 @@ const PolicySettings = forwardRef<any, any>(({
   role,
   ...props
 }, ref) => {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const originalLanguages = form.watch(`${prefix ? `${prefix}.` : ''}match.original_languages`) || []
   const name = form.watch(`${prefix ? `${prefix}.` : ''}name`)
@@ -477,14 +483,14 @@ const PolicySettings = forwardRef<any, any>(({
               type='text'
               {...field}
               sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
-              placeholder='Name'
+              placeholder={t('settings.policies.name')}
               required={true}
             />
           )}
         />
         {isDefault && (
           <div
-            title='Default policy will be applied to releases without policy specified'
+            title={t('settings.policies.default.title')}
             sx={{
               cursor: 'default',
               display: 'flex',
@@ -499,13 +505,13 @@ const PolicySettings = forwardRef<any, any>(({
               whiteSpace: 'nowrap',
             }}
           >
-            <span sx={{ display: ['none', 'inline'], marginRight: 6 }}>default</span>
+            <span sx={{ display: ['none', 'inline'], marginRight: 6 }}>{t('settings.policies.default.label')}</span>
             <span>✓</span>
           </div>
         )}
         {!!originalLanguages.length && (
           <div
-            title={originalLanguages.map(language => winners[language] === name ? `New movies in ${languages[language]?.name || language} get this policy` : `New movies in ${languages[language]?.name || language} go to ${winners[language]}`).join('\n')}
+            title={originalLanguages.map(language => winners[language] === name ? t('settings.policies.languages.own', { language: languages[language]?.name || language }) : t('settings.policies.languages.other', { language: languages[language]?.name || language, policy: winners[language] })).join('\n')}
             sx={{
               cursor: 'default',
               display: 'flex',
@@ -522,7 +528,7 @@ const PolicySettings = forwardRef<any, any>(({
           >
             {originalLanguages.map(language => (
               <span key={language} sx={{ opacity: winners[language] === name ? 1 : 0.3 }}>
-                <span role='img' aria-label={`New movies in ${languages[language]?.name || language} go to ${winners[language]}`}>{languages[language]?.emoji || '🏳️'}</span>
+                <span role='img' aria-label={t('settings.policies.languages.other', { language: languages[language]?.name || language, policy: winners[language] })}>{languages[language]?.emoji || '🏳️'}</span>
                 <span aria-hidden={true} sx={{ display: ['none', 'inline'], marginLeft: 6 }}>{language}</span>
               </span>
             ))}
@@ -556,7 +562,7 @@ const PolicySettings = forwardRef<any, any>(({
                   borderColor: 'grayDark',
                 }}
               >
-                Sort by
+                {t('ui.sorting')}
               </label>
               <Icon
                 value='sort'
@@ -575,9 +581,9 @@ const PolicySettings = forwardRef<any, any>(({
               {...field}
               sx={{ variant: 'select.default', width: 'auto', borderRadius: '0px', paddingX: 4, fontSize: 6, fontFamily: 'monospace' }}
             >
-              <option value='size'>{emojize('📦', 'size')}</option>
-              <option value='seeders'>{emojize('📡', 'seeders')}</option>
-              <option value='peers'>{emojize('🌍', 'peers')}</option>
+              <option value='size'>{emojize('📦', t('settings.policies.sortings.size'))}</option>
+              <option value='seeders'>{emojize('📡', t('settings.policies.sortings.seeders'))}</option>
+              <option value='peers'>{emojize('🌍', t('settings.policies.sortings.peers'))}</option>
             </select>
           )}
         />
@@ -589,9 +595,9 @@ const PolicySettings = forwardRef<any, any>(({
               <button
                 type='button'
                 sx={{ ...styles.button, ...styles.remove }}
-                title={value ? '' : 'Remove policy'}
+                title={value ? '' : t('settings.policies.remove.title')}
                 onClick={() => {
-                  if (window.confirm('Do you really want to remove this policy ? Movies with deleted policy defined will fallback to "default" policy')) {
+                  if (window.confirm(t('settings.policies.remove.confirm'))) {
                     policies.update(policies.fields.findIndex(p => p.id === id), { ...policies.fields[policies.fields.findIndex(p => p.id === id)], removed: true })
                   }
                 }}
@@ -604,7 +610,7 @@ const PolicySettings = forwardRef<any, any>(({
           />
         )}
         {behavior === 'create' && (
-          <button type='submit' sx={{ ...styles.button, ...styles.add }} title='Add policy'>
+          <button type='submit' sx={{ ...styles.button, ...styles.add }} title={t('settings.policies.add')}>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
               <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
@@ -614,7 +620,7 @@ const PolicySettings = forwardRef<any, any>(({
       <div sx={styles.options}>
         <details open={open} onToggle={() => setOpen((open) => !open)}>
           <summary>
-            <span>Rules</span>
+            <span>{t('settings.policies.rules.title')}</span>
           </summary>
           {open && (
             <div>
@@ -633,14 +639,14 @@ const PolicySettings = forwardRef<any, any>(({
                     {...field}
                     label={(
                       <>
-                        {emojize('🌐', 'Original language')}
+                        {emojize('🌐', t('settings.policies.languages.label'))}
                         <br />
-                        <small sx={{ fontWeight: 'normal' }}>New movies in these languages get this policy when they enter your library without one</small>
+                        <small sx={{ fontWeight: 'normal' }}>{t('settings.policies.languages.help')}</small>
                       </>
                     )}
-                    placeholder='No language'
+                    placeholder={t('settings.policies.languages.none')}
                     options={LANGUAGES}
-                    value={(value || []).map(language => LANGUAGES.find(option => option.value === language) || { value: language, label: `🏳️  Unknown (${language})` })}
+                    value={(value || []).map(language => LANGUAGES.find(option => option.value === language) || { value: language, label: `🏳️  ${t('settings.policies.languages.unknown', { language })}` })}
                     onChange={(options) => onChange((options || []).map(option => option.value))}
                     multi={true}
                     resetable={false}

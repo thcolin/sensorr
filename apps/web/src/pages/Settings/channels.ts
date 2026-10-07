@@ -1,9 +1,9 @@
 import semver from 'semver'
 
 export const CHANNELS = {
-  stable: { emoji: '📦', tag: 'latest', source: 'vX.Y.Z tag of the main branch' },
-  beta: { emoji: '🧪', tag: 'beta', source: 'vX.Y.Z-beta.N tag of the dev branch' },
-  dev: { emoji: '🚧', tag: 'dev', source: 'push to the dev branch' },
+  stable: { emoji: '📦', tag: 'latest' },
+  beta: { emoji: '🧪', tag: 'beta' },
+  dev: { emoji: '🚧', tag: 'dev' },
 }
 
 // The dev image always carries the version "dev": its revision tells one push from the next
