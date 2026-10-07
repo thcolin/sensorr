@@ -13,7 +13,7 @@ jest.mock('../../store/tmdb', () => ({ useTMDB: () => ({ init: async () => {} })
 jest.mock('../../store/sensorr', () => ({ useSensorr: () => ({}) }))
 jest.mock('../Auth/Auth', () => ({ useAuthContext: () => mockAuth }))
 jest.mock('@sensorr/config', () => ({ load: jest.fn(), get: jest.fn() }))
-jest.mock('@sensorr/i18n', () => ({ changeLanguage: jest.fn() }))
+jest.mock('@sensorr/i18n', () => ({ changeLanguage: jest.fn(), languageOf: () => 'en' }))
 
 const flush = () => act(() => new Promise(resolve => setTimeout(resolve, 0)))
 

@@ -4,7 +4,7 @@ import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
 import { useSensorr } from '../../store/sensorr'
-import i18n from '@sensorr/i18n'
+import i18n, { languageOf } from '@sensorr/i18n'
 
 const configContext = createContext({})
 
@@ -20,7 +20,7 @@ export const Provider = ({ children = null, ...props }) => {
   const load = useCallback(async (raw) => {
     config.load(raw)
 
-    i18n.changeLanguage(config.get('region') || localStorage.getItem('region') || 'en-US')
+    i18n.changeLanguage(languageOf(config.get('region') || localStorage.getItem('region')))
 
     sensorr.znabs = config.get('znabs')
     sensorr.policies = config.get('policies')
