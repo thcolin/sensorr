@@ -345,6 +345,9 @@ const PolicySettings = forwardRef<any, any>(({
       display: ['grid', 'flex'],
       gridTemplateColumns: 'auto minmax(0, 1fr) auto auto auto auto',
       gridTemplateAreas: `"grip name default languages remove add" "direction sorting sorting sorting sorting sorting"`,
+      '&[data-behavior="create"]': {
+        gridTemplateAreas: `"name name default languages remove add" "direction sorting sorting sorting sorting sorting"`,
+      },
       alignItems: 'stretch',
       position: 'relative',
       '>*:not(button)': {
@@ -469,7 +472,7 @@ const PolicySettings = forwardRef<any, any>(({
 
   return (
     <div {...props} ref={ref} sx={styles.element}>
-      <div sx={styles.container}>
+      <div sx={styles.container} data-behavior={behavior}>
         {remove && (
           <div
             onPointerDown={onPointerDown}

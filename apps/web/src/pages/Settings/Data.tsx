@@ -229,9 +229,9 @@ Data.styles = {
     '>input': {
       flex: 1,
       minWidth: 0,
-      borderTopRightRadius: ['0.25em', '0rem'],
+      borderTopRightRadius: ['0.25rem', '0rem'],
       borderBottomRightRadius: '0rem',
-      borderBottomLeftRadius: ['0rem', '0.25em'],
+      borderBottomLeftRadius: ['0rem', '0.25rem'],
     },
   },
   import: {
