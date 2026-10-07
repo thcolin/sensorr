@@ -85,3 +85,6 @@ Thumbs.db
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+
+# The demo data, generated from TMDB by tools/demo/seed.ts
+apps/web/src/demo/seed/seed.json

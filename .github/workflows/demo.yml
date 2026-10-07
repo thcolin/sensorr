@@ -1,0 +1,55 @@
+name: Demo
+
+on:
+  push:
+    branches: [main]
+  # TMDB data may not be kept more than 6 months: the demo data is fetched again every month
+  schedule:
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: >-
+          npx ts-node -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/demo/seed.ts
+        env:
+          SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
+      - run: npx nx run web:build:demo
+        env:
+          SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
+      # GitHub Pages answers an unknown path with 404.html: the app routes it
+      - run: cp dist/apps/web-demo/index.html dist/apps/web-demo/404.html
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/apps/web-demo
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
