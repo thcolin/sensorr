@@ -211,6 +211,29 @@ export const FIELDS = {
   ...releasesFields({ noun: 'shows', jobs: ['record', 'airing'] }),
 }
 
+// A phone has no room for the sorting in the bar: it moves to the top of the filters, as on the swaps
+const ASIDE = `
+  "head_main"
+  "state"
+  "status"
+  "proposal"
+  "policy"
+  "toggle_sub_asides_0"
+  "requested_by"
+  "lists"
+  "genres"
+  "type"
+  "networks"
+  "original_languages"
+  "origin_country"
+  "first_air_date"
+  "number_of_seasons"
+  "popularity"
+  "vote_average"
+  "vote_count"
+  "episode_run_time"
+`
+
 // The filters panel, Settings › Lists opens it on a saved list too
 export const CONTROLS: withControlsArgs = {
   get title() { return i18n.t('pages.library.title') },
@@ -220,16 +243,22 @@ export const CONTROLS: withControlsArgs = {
   layout: {
     nav: {
       display: 'grid',
-      gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateColumns: ['1fr min-content', '1fr min-content min-content min-content'],
       gridTemplateRows: 'auto',
       gap: '2em',
       gridTemplateAreas: [
-        `"results bulk toggle sort_by"`,
+        `"results toggle"`,
         `"title results bulk toggle sort_by"`,
       ],
       '>h4': {
         display: ['none', 'block'],
       },
+    },
+    strip: {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gap: '0em 2em',
+      gridTemplateAreas: [`"bulk"`, ''],
     },
     aside: [
       {
@@ -237,27 +266,7 @@ export const CONTROLS: withControlsArgs = {
         gridTemplateColumns: 'minmax(0, 1fr)',
         gridTemplateRows: 'auto',
         gap: '2em',
-        gridTemplateAreas: `
-          "head_main"
-          "state"
-          "status"
-          "proposal"
-          "policy"
-          "toggle_sub_asides_0"
-          "requested_by"
-          "lists"
-          "genres"
-          "type"
-          "networks"
-          "original_languages"
-          "origin_country"
-          "first_air_date"
-          "number_of_seasons"
-          "popularity"
-          "vote_average"
-          "vote_count"
-          "episode_run_time"
-        `,
+        gridTemplateAreas: [`"sort_by" ${ASIDE}`, ASIDE],
       },
       {
         display: 'grid',

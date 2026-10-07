@@ -92,15 +92,25 @@ const AIR_DATE = {
   component: CalendarMonthPicker,
 }
 
-// Beside the month, the count, the view and the filters, as on the movies calendar
+// Beside the month, the count, the view and the filters, as on the movies calendar; a phone gives the rest to the strip
 const nav = {
   display: 'grid' as const,
-  gridTemplateColumns: ['1fr min-content min-content min-content', 'min-content 1fr min-content min-content min-content'],
+  gridTemplateColumns: ['minmax(0, 1fr)', 'min-content 1fr min-content min-content min-content'],
   gridTemplateRows: 'auto',
   gap: '2em',
-  gridTemplateAreas: [`"air_date results view toggle"`, `"title air_date results view toggle"`],
+  gridTemplateAreas: [`"air_date"`, `"title air_date results view toggle"`],
   '>h4': {
     display: ['none', 'block'],
+  },
+}
+
+const strip = {
+  display: 'grid' as const,
+  gridTemplateColumns: 'min-content minmax(0, 1fr) min-content',
+  gap: '0em 2em',
+  gridTemplateAreas: [`"results toggle toggle" ". . view"`, ''],
+  '>[style*="grid-area: toggle"]': {
+    justifySelf: 'end',
   },
 }
 
@@ -190,7 +200,7 @@ const controls = (fields, hooks = {}) => withControls({
   get title() { return i18n.t('pages.calendar.title') },
   useStatistics,
   hooks,
-  layout: { nav, aside },
+  layout: { nav, strip, aside },
   components: { toggle: Toggle, view: withProps({ initial: VIEWS })(ViewSelect) },
   fields: { ...FIELDS, air_date: { ...AIR_DATE, ...fields } },
 })

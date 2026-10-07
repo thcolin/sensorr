@@ -47,14 +47,20 @@ export const Theatres = compose(
         display: 'grid',
         gridTemplateRows: 'auto',
         gap: '2em',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+        gridTemplateColumns: ['minmax(0, 1fr) min-content', '1fr min-content min-content min-content'],
         gridTemplateAreas: [
-          `"results hide_library uri region"`,
+          `"results uri"`,
           `"title results hide_library uri region"`,
         ],
         '>h4': {
           display: ['none', 'block'],
         },
+      },
+      strip: {
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) min-content',
+        gap: '0em 2em',
+        gridTemplateAreas: [`"hide_library region"`, ''],
       },
     },
     fields: {
@@ -62,8 +68,8 @@ export const Theatres = compose(
         initial: false,
         hideFromFiltersCount: true,
         serialize: () => ({}),
-        component: ({ value, onChange, ...props }) => (
-          <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+        component: ({ value, onChange, style }) => (
+          <div style={style} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
             <Option
               id='hide_library'
               type='checkbox'

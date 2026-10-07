@@ -51,23 +51,33 @@ const requested_by = {
 const layout = (aside: string[]) => ({
   nav: {
     display: 'grid' as const,
-    gridTemplateColumns: ['1fr min-content min-content min-content', '1fr min-content min-content min-content min-content'],
+    gridTemplateColumns: ['1fr min-content', '1fr min-content min-content min-content min-content'],
     gridTemplateRows: 'auto',
     gap: '2em',
     gridTemplateAreas: [
-      `"results state toggle sort_by"`,
+      `"results toggle"`,
       `"title results state toggle sort_by"`,
     ],
     '>h4': {
       display: ['none', 'block'],
     },
   },
+  strip: {
+    display: 'grid' as const,
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: '0em 2em',
+    gridTemplateAreas: [`"state"`, ''],
+  },
   aside: {
     display: 'grid' as const,
     gridTemplateColumns: 'minmax(0, 1fr)',
     gridTemplateRows: 'auto',
     gap: '2em',
-    gridTemplateAreas: aside.map(area => `"${area}"`).join(' '),
+    // A phone has no room for the sorting in the bar: it moves to the top of the filters, as on the swaps
+    gridTemplateAreas: [
+      ['sort_by', ...aside].map(area => `"${area}"`).join(' '),
+      aside.map(area => `"${area}"`).join(' '),
+    ],
   },
 })
 
