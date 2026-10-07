@@ -264,8 +264,7 @@ const KeepInTouch = () => {
   return (
     <div sx={Splash.styles.page}>
       <LoadingBar />
-      <div sx={Splash.styles.wrapper}>
-        <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
+      <div sx={KeepInTouch.styles.wrapper}>
         <div sx={KeepInTouch.styles.register}>
           <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
             <Warning
@@ -345,12 +344,18 @@ const KeepInTouch = () => {
             />
           </div>
         </div>
+        <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
       </div>
     </div>
   )
 }
 
 KeepInTouch.styles = {
+  // The register comes first, so a phone opens on it, at the top of the page, as Onboarding does
+  wrapper: {
+    ...Splash.styles.wrapper,
+    flexDirection: ['column', 'row-reverse'],
+  },
   register: {
     flex: 1,
     display: 'flex',
