@@ -152,15 +152,16 @@ export const Pretty = memo(UIPretty)
 
 const UIAbout = ({ details, palette, ready, onTitled, link, badges, parent, ...props }) => {
   const { t } = useTranslation()
+  const tint = barTintOf(palette)
 
   return (
-    <div sx={UIAbout.styles.element} style={{ '--theme-ui-colors-gray': barTintOf(palette) } as React.CSSProperties}>
+    <div sx={UIAbout.styles.element}>
       <h2 sx={UIAbout.styles.title} title={details.title} style={{ color: palette.color }}>
-        <Skeleton ready={ready} bar={{ width: '12em', height: '1em' }} onShown={onTitled}>
+        <Skeleton ready={ready} tint={tint} bar={{ width: '12em', height: '1em' }} onShown={onTitled}>
           <Link to={link?.to} state={link?.state}>{details.title}</Link>
         </Skeleton>
       </h2>
-      <Skeleton ready={ready} bar={{ width: '9em', height: '0.75em' }} sx={UIAbout.styles.subtitle}>
+      <Skeleton ready={ready} tint={tint} bar={{ width: '9em', height: '0.75em' }} sx={UIAbout.styles.subtitle}>
         <span sx={UIAbout.styles.caption} style={{ color: palette.alternativeColor }}>
           {!!details?.meaningful?.year && (
             <span>
@@ -177,7 +178,7 @@ const UIAbout = ({ details, palette, ready, onTitled, link, badges, parent, ...p
       </Skeleton>
       <DragScroll sx={UIAbout.styles.badges} byBackground={true}>
         {/* The reviews' pill, 80 by 24 pixels */}
-        <Skeleton ready={ready} clip={false} placeholder={<Bar width='5em' height='1.5em' pill={true} />}>
+        <Skeleton ready={ready} tint={tint} clip={false} placeholder={<Bar width='5em' height='1.5em' pill={true} />}>
           <span sx={UIAbout.styles.pills}>
             {badges?.reviews?.component && (
               <div sx={{ ':hover + div': { opacity: 0, transition: 'none' } }}>
@@ -193,7 +194,7 @@ const UIAbout = ({ details, palette, ready, onTitled, link, badges, parent, ...p
         </Skeleton>
       </DragScroll>
       {/* 12px text on the 18px lines its 16px block sets */}
-      <Skeleton ready={ready} placeholder={<Lines height='0.75em' lineHeight={1.5} />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
+      <Skeleton ready={ready} tint={tint} placeholder={<Lines height='0.75em' lineHeight={1.5} />} align='start' sx={UIAbout.styles.overview} style={{ color: palette.negativeColor }}>
         <small>{details.overview || <em>{t('noOverview')}</em>}</small>
       </Skeleton>
     </div>

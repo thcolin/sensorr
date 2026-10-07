@@ -13,11 +13,17 @@ export const reveal = {
   },
 }
 
-// Whatever leaves with the texts going back to their bars fades out with them
+// How long the content takes to fade in over its bar, and out as it goes back to it
+export const FADE = 250
+
+// Whatever leaves with the texts going back to their bars fades out with them, out of reach meanwhile: it belongs
+// to what is leaving
 export const conceal = {
-  animation: `${animations.reveal} 250ms ease-in-out reverse forwards`,
+  animation: `${animations.reveal} ${FADE}ms ease-in-out reverse forwards`,
+  pointerEvents: 'none',
   '@media (prefers-reduced-motion: reduce)': {
     animation: 'none',
+    opacity: 0,
   },
 }
 
@@ -31,7 +37,7 @@ export const useLeaving = (shown: boolean) => {
       return
     }
 
-    const timeout = setTimeout(() => setKept(false), 250)
+    const timeout = setTimeout(() => setKept(false), FADE)
     return () => clearTimeout(timeout)
   }, [shown])
 
@@ -95,6 +101,8 @@ export interface SkeletonProps {
   clip?: boolean
   // As the content starts to show over its bar, for what shows with it
   onShown?: () => void
+  // The bars' color, set on them only: the content keeps its own grays
+  tint?: string
   // The width the placeholder's `[data-fit]` bar takes, read on the content laid out unseen, when the content is a
   // block wider than its text
   fit?: (content: HTMLElement) => number | null
@@ -107,7 +115,6 @@ const DURATION = 250
 // The content inks in over its bar while the bar ends its size, then the bar fades out under it: no time where
 // neither shows
 const INK = 150
-const FADE = 250
 
 // A bar that becomes its content. Once the content is there, it is laid out unseen in the bar's grid
 // cell: the cell eases from the bar's height to the content's, and a lone bar takes the content's
@@ -115,7 +122,7 @@ const FADE = 250
 // the cell at the height of one line of the text it waits for. When the content goes, as a pretty moves to
 // another movie, the same steps play backwards: the bar comes back under the content, which fades out as the cell
 // eases back to the bar's height.
-export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, fit = null, children, ...props }: SkeletonProps) => {
+export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center', clip = true, onShown = null, fit = null, tint = null, children, ...props }: SkeletonProps) => {
   const cell = useRef<HTMLSpanElement>(null)
   const cover = useRef<HTMLSpanElement>(null)
   const content = useRef<HTMLSpanElement>(null)
@@ -141,17 +148,17 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
     running.current = []
   }
 
-  // Called as the content starts to show: what waits on it shows with it
+  // Called as the content starts to show, or stays when it was back before it had left: what waits on it shows with it
   useEffect(() => {
     if (shown && ready && typeof onShown === 'function') {
       onShown()
     }
-  }, [shown])
+  }, [shown, ready])
 
   useLayoutEffect(() => stop, [])
 
   useLayoutEffect(() => {
-    if (ready && shown && !running.current.length) {
+    if (ready && shown && !running.current.some(animation => animation.playState === 'running')) {
       full.current = cell.current.getBoundingClientRect().height
     }
   })
@@ -218,7 +225,7 @@ export const Skeleton = ({ ready, bar = {}, placeholder = null, align = 'center'
   return (
     <span {...props} ref={cell} sx={{ ...Skeleton.styles.element, alignItems: align }}>
       <span aria-hidden={true} sx={Skeleton.styles.strut}>&nbsp;</span>
-      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: visible ? 0 : 1, transition: `opacity ${FADE}ms ${EASING} ${visible ? INK : 0}ms` }}>
+      <span ref={cover} aria-hidden={true} sx={{ ...Skeleton.styles.cover, ...(ready ? { ...Skeleton.styles.out, justifyContent: align === 'center' ? 'center' : 'flex-start' } : {}), opacity: visible ? 0 : 1, transition: `opacity ${FADE}ms ${EASING} ${visible ? INK : 0}ms` }} style={tint ? { '--theme-ui-colors-gray': tint } as React.CSSProperties : undefined}>
         {placeholder || <Bar {...bar} />}
       </span>
       {(ready || leaving) && (

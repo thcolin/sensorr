@@ -18,7 +18,7 @@ const UISkeleton = ({ children, palette, ready, shape, ...props }) => {
       {...props}
       ready={ready}
       placeholder={shape}
-      style={{ '--theme-ui-colors-gray': tint.current }}
+      tint={tint.current}
     >
       {children}
     </Base>
