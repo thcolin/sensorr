@@ -82,7 +82,7 @@ const UIDatePicker = ({ label, getOptions, value, onChange, disabled, ...props }
                   backgroundColor: state.getMonth() === index ? 'whitePure' : 'transparent',
                   color: state.getMonth() === index ? 'primary' : 'whitePure',
                   ':hover': {
-                    backgroundColor: state.getMonth() === index ? 'whitePure' : 'primaryDarker',
+                    backgroundColor: state.getMonth() === index ? 'whitePure' : ['primaryDarkest', 'primaryDarker'],
                   },
                 }}
               >
@@ -112,14 +112,15 @@ UIDatePicker.styles = {
     alignItems: 'stretch',
     justifyContent: 'center',
     flexDirection: 'column',
-    backgroundColor: 'primaryDark',
+    // A step darker on a phone, where it sits in the strip, itself primaryDark
+    backgroundColor: ['primaryDarker', 'primaryDark'],
   },
   year: {
     flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'primaryDarker',
+    backgroundColor: ['primaryDarkest', 'primaryDarker'],
     '>select': {
       flex: 1,
       variant: 'select.reset',
@@ -147,7 +148,7 @@ UIDatePicker.styles = {
       opacity: 0.5,
     },
     ':hover:not(:disabled)': {
-      backgroundColor: 'primaryDarkest',
+      backgroundColor: ['accentDarkest', 'primaryDarkest'],
     },
   },
   month: {
