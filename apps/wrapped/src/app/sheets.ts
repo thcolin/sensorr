@@ -33,7 +33,6 @@ const rhythm = (perDay: number) => perDay >= 1.5 ? t('wrapped.rhythm.many', { co
       : t('wrapped.rhythm.every', { count: Math.round(1 / perDay) })
 // « 3 épisodes et 1 film », « le 1er février et le 8 février »
 const listOf = (items: string[]) => new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(items)
-// A heading cut into the lines a look sets one under the other
 const linesOf = (key: string, values?: Record<string, unknown>) => t(key, values).split('\n')
 
 // A quantity stands out with its unit: not a date, nor the digits of a name or of a title in quotes

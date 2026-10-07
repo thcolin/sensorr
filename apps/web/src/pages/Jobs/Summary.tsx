@@ -6,7 +6,6 @@ import { filesize } from '@sensorr/utils'
 // Freeing space is the usual outcome of a job, so it goes unsigned; only growing the disk carries a sign
 export const freed = (change) => change > 0 ? `+${filesize.stringify(change)}` : filesize.stringify(-change)
 
-// The `side` of the `jobs.space` sentences
 export const sideOf = (change) => change > 0 ? 'more' : 'freed'
 
 // date-fns writes the units in English, each one is then shortened in the language shown

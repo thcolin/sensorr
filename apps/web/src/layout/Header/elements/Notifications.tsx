@@ -719,7 +719,6 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
   )
 }
 
-// Rendered again with the notification above it, which follows the language
 const NotificationRelease = ({ release, swap = null }) => (
   <>
     {swap ? (

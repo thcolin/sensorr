@@ -3,7 +3,6 @@ import { Trans, useTranslation } from 'react-i18next'
 
 // Rendered whole, its figures marked: Trans keeps the children of a component it is given as `<1/>`
 const Marked = ({ text, figures }: { text: string, figures: (text: string) => ReactNode }) => <>{figures(text)}</>
-// A piece the look leaves as the rest of the sentence
 const Plain = ({ children }: { children?: ReactNode }) => children
 
 // One sentence of the edition: `<0>` the piece the look sets in its own tag, `<1/>` a text of the sheet with its figures marked
