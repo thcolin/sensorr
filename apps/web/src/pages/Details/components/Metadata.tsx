@@ -122,12 +122,14 @@ UIMetadata.styles = {
       fontSize: 7,
       color: 'gray-600',
     },
+    // A phone wraps the help rather than cut it
     '>small': {
       display: 'block',
       marginTop: 10,
       marginBottom: 10,
       fontSize: 7,
       color: 'gray-500',
+      whiteSpace: ['normal', 'nowrap'],
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     },
@@ -517,9 +519,11 @@ export const PolicyInput = memo(UIPolicyInput)
 
 const UIOptionInput = ({ id, value, onChange, children, disabled = false, ...props }) => {
   const styles = useMemo(() => ({
+    // Centred with its checkbox on a phone, as the rest of the editor there
     element: {
       display: 'flex',
       alignItems: 'center',
+      justifyContent: ['center', 'flex-start'],
       marginY: 10,
       ...(disabled ? { opacity: 0.5 } : {}),
       '>label': {
@@ -528,7 +532,7 @@ const UIOptionInput = ({ id, value, onChange, children, disabled = false, ...pro
         transition: 'color 200ms ease-in-out',
       },
       '>small': {
-        flex: 1,
+        flex: ['0 1 auto', 1],
         fontSize: 7,
         color: 'gray-500',
       },
