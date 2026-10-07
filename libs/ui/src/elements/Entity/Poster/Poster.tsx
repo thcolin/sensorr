@@ -657,6 +657,10 @@ const PressableLink = ({
         // WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',
         WebkitUserDrag: 'none',
+        // Not inherited: without it, a long press lifts the picture natively, above its badges
+        img: {
+          WebkitUserDrag: 'none',
+        },
         isolation: 'isolate',
         // The aura lies under the picture, so a badge's cutout shows it as well
         '::after': {
