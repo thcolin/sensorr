@@ -71,7 +71,7 @@ export default {
       proposed: 'Taille proposée',
     },
     sorting: {
-      time: 'Date de traitement',
+      time: 'Traitement',
       gain: 'Espace libéré',
     },
     filters: {

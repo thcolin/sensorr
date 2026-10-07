@@ -300,7 +300,7 @@ export default {
       },
       library: {
         emoji: '📚',
-        label: emojize('📚', 'Séries de la bibliothèque'),
+        label: emojize('📚', 'Vos séries'),
         title: 'Toutes les séries de votre bibliothèque',
         more: 'Plus de séries de votre bibliothèque',
       },
