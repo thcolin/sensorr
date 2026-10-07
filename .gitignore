@@ -88,3 +88,4 @@ Thumbs.db
 
 # The demo data, generated from TMDB by tools/demo/seed.ts
 apps/web/src/demo/seed/seed.json
+apps/wrapped/src/demo/share.json

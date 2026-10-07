@@ -8,5 +8,10 @@
     "types": ["node"],
     "ignoreDeprecations": "6.0"
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "ts-node": {
+    "moduleTypes": {
+      "../libs/sensorr/src/**/*": "cjs"
+    }
+  }
 }

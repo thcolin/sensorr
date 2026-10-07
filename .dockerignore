@@ -52,3 +52,4 @@ caddy
 
 # The demo data and its TMDB data, see tools/demo/seed.ts
 apps/web/src/demo/seed/seed.json
+apps/wrapped/src/demo/share.json
