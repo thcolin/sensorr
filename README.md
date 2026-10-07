@@ -34,7 +34,7 @@
   <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr's Home on a desktop browser and on an iPhone">
 </p>
 
-<img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows live side by side, with the same rules, the same screens and the same jobs. No Radarr next to Sonarr.">
+<img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows side by side, with the same rules and the same jobs, kept in sync with your Plex. No Radarr next to Sonarr.">
 
 <img src="docs/assets/readme/seasons.webp" width="100%" alt="Whole series, seasons or episodes. Follow a show, a season or a single episode. Sensorr looks for the whole series first, then season packs, then episodes, and hard links finished files into your library.">
 
@@ -42,19 +42,18 @@
 
 <img src="docs/assets/readme/swaps.webp" width="100%" alt="Better, then lighter. Refine looks for a release closer to your policy, Shrink for a smaller one that loses nothing. Each swap shows what changes, and the space it frees.">
 
+<img src="docs/assets/readme/report.webp" width="100%" alt="Reports from Plex, answered. A friend reports an issue on a movie in Plex. Sensorr bans the release they watched, and finds another one to swap in.">
+
 <img src="docs/assets/readme/people.webp" width="100%" alt="Follow the people you love. Follow a director, an actor or a composer, and their next films land in your calendar, month by month.">
 
-<img src="docs/assets/readme/friends.webp" width="100%" alt="Requests and a yearly wrapped. Friends link their Plex account, and their watchlist becomes requests. Each year, they get a wrapped of what they watched on your server.">
+<img src="docs/assets/readme/friends.webp" width="100%" alt="Requests and a yearly wrapped. Friends link their Plex account, and their watchlist becomes requests. Each year, Tautulli's watch history gives them a wrapped of their year on your server.">
 
 <img src="docs/assets/readme/phone.webp" width="100%" alt="In your pocket. Install Sensorr on your phone like an app, and accept a proposal right from its notification.">
 
 ### And also
 
-- **Reports from Plex, answered.** A friend uses [*Report an Issue*](https://support.plex.tv/articles/share-and-report/) on a movie in Plex, and [`report`](docs/jobs.md#report) bans the release they watched and finds another one, proposed on the Swaps screen.
-- **[Plex](https://www.plex.tv/) in sync.** [`sync`](docs/jobs.md#sync) reads what Plex holds, so `refine` and `shrink` compare against your real files.
 - **Coming from Sonarr.** [`migrate sonarr`](docs/jobs.md#migrate-sonarr) takes over your series as Sonarr follows them.
 - **[Backups](#backup-and-restore) and [updates](#update-from-the-app)** from *Settings*, with a weekly dump once turned on.
-- **A wrapped for your friends**, from the Plex watch history [Tautulli](https://tautulli.com/) keeps, set in *Settings › Tautulli*.
 - **English and French**, for the interface, the mails and the wrapped.
 
 # Install
