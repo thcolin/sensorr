@@ -1,57 +1,57 @@
 import { memo, useMemo } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
 import Movie from '../../../components/Movie/Movie'
 import { Transition } from '../../../components/Sensorr/Proposal'
 import { sizeStateOf } from '../../Proposals/queue'
-import { Summary, freed, freedLabel } from '../Summary'
+import { Summary, freed, sideOf, durationOf } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summary = ({ archived = 0, plex = 0, corrections, cleanups, missings }, extended = true) => [
   ...(extended ? [{
     key: 'archived',
     emoji: '🗄️',
-    title: <span><strong>{archived}</strong> Archived movies in Sensorr library</span>,
+    title: <Trans i18nKey='jobs.sync.summary.archived' values={{ count: archived }} components={[<strong />]} />,
     length: archived,
   }] : []),
   ...(extended ? [{
     key: 'plex',
     emoji: '📡',
-    title: <span><strong>{plex}</strong> Available movies on Plex server</span>,
+    title: <Trans i18nKey='jobs.sync.summary.plex' values={{ count: plex }} components={[<strong />]} />,
     length: plex,
   }] : []),
   {
     key: 'corrections',
     emoji: '🩹',
-    title: <span><strong>{corrections?.success || 0}</strong> Fixed movies with Plex metadata</span>,
+    title: <Trans i18nKey='jobs.sync.summary.corrections' values={{ count: corrections?.success || 0 }} components={[<strong />]} />,
     length: corrections?.success || 0,
   },
   ...(cleanups?.success > 0 ? [{
     key: 'cleanups',
     emoji: '🧹',
-    title: <span><strong>{cleanups?.success}</strong> Replaced versions deleted from Plex</span>,
+    title: <Trans i18nKey='jobs.sync.summary.cleanups' values={{ count: cleanups?.success }} components={[<strong />]} />,
     length: cleanups?.success,
   }] : []),
   ...((cleanups?.success > 0 && typeof cleanups?.deleted === 'number' && typeof cleanups?.arrived === 'number') ? [{
     key: 'space',
     emoji: cleanups.arrived > cleanups.deleted ? '📈' : '📉',
-    title: <span><strong>{freed(cleanups.arrived - cleanups.deleted)}</strong> {freedLabel(cleanups.arrived - cleanups.deleted)}, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
+    title: <Trans i18nKey='jobs.space.cleanups' values={{ size: freed(cleanups.arrived - cleanups.deleted), side: sideOf(cleanups.arrived - cleanups.deleted), deleted: filesize.stringify(cleanups.deleted), arrived: filesize.stringify(cleanups.arrived) }} components={[<strong />]} />,
     length: freed(cleanups.arrived - cleanups.deleted),
   }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',
     emoji: '💊',
-    title: <span><strong>{missings?.success}</strong> Missing movies in Sensorr but available on Plex</span>,
+    title: <Trans i18nKey='jobs.sync.summary.missings' values={{ count: missings?.success }} components={[<strong />]} />,
     length: missings?.success,
   }] : []),
   ...(((corrections?.warning || 0) + (missings?.warning || 0)) > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{(corrections?.warning || 0) + (missings?.warning || 0)}</strong> Movies not fixed</span>,
+    title: <Trans i18nKey='jobs.sync.summary.warning' values={{ count: (corrections?.warning || 0) + (missings?.warning || 0) }} components={[<strong />]} />,
     length: (corrections?.warning || 0) + (missings?.warning || 0),
   }] : []),
 ]
@@ -102,6 +102,7 @@ UICleanedMovie.styles = {
 const CleanedMovie = memo(UICleanedMovie)
 
 const UISyncJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const cleaned = useMemo(() => [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.movie?.id && log.meta.group === 'cleanups'), [logs])
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
@@ -123,11 +124,11 @@ const UISyncJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UISyncJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UISyncJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UISyncJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UISyncJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -176,7 +177,7 @@ const UISyncJob = ({ job, logs }) => {
               id={`sync-missing-${job.id}`}
               entities={entities?.missings}
               length={entities?.missings?.length}
-              label={emojize('💊', 'Missing')}
+              label={t('jobs.sync.missing')}
               display='grid'
               hide={true}
               child={Movie}
@@ -188,7 +189,7 @@ const UISyncJob = ({ job, logs }) => {
               id={`sync-cleaned-${job.id}`}
               entities={entities?.cleanups}
               length={entities?.cleanups?.length}
-              label={emojize('🧹', 'Cleaned')}
+              label={t('jobs.sync.cleaned')}
               display='grid'
               extra={36}
               hide={true}
@@ -202,7 +203,7 @@ const UISyncJob = ({ job, logs }) => {
               id={`sync-fixed-${job.id}`}
               entities={entities?.corrections}
               length={entities?.corrections?.length}
-              label={emojize('🩹', 'Fixed')}
+              label={t('jobs.sync.fixed')}
               display='grid'
               hide={true}
               child={Movie}
@@ -212,9 +213,9 @@ const UISyncJob = ({ job, logs }) => {
             />
           </div>
         ) : job.meta.done ? (
-          <Warning emoji={job.meta.error ? '💢' : '🗄️'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No fixed movies during this job'} />
+          <Warning emoji={job.meta.error ? '💢' : '🗄️'} title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')} subtitle={job.meta.error?.message || job.meta.error || t('jobs.sync.empty')} />
         ) : (
-          <Warning emoji='⏳' title='Loading' subtitle='Waiting for entities fix...' />
+          <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.sync.waiting')} />
         )}
       </div>
     </div>

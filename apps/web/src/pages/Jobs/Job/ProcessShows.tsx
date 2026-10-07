@@ -1,16 +1,16 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Icon, Warning } from '@sensorr/ui'
 import { coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
 import { useResponsiveValue } from '@sensorr/utils'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import toast from 'react-hot-toast'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useAPI } from '../../../store/api'
 import Show from '../../../components/Show/Show'
 import { Release } from '../../../components/Sensorr/Release'
-import { Summary } from '../Summary'
+import { Summary, durationOf } from '../Summary'
 import { RecordLogs, useRecordsVirtualizer } from './ProcessMovies'
 import { ShowSettings } from '../../Shows/components/Actions'
 import { ShowSearchSingleton } from '../../Shows/components/Search'
@@ -20,55 +20,55 @@ export const summary = ({ wished = 0, processed, recorded = 0, proposal = 0, tre
   ...(extended ? [{
     key: 'wished',
     emoji: '📺',
-    title: <span><strong>{wished}</strong> Wished shows with wanted episodes</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.wished' values={{ count: wished }} components={[<strong />]} />,
     length: wished,
   }] : []),
   ...(extended && (processed > 0) ? [{
     key: 'processed',
     emoji: '🎟 ',
-    title: <span><strong>{processed}</strong> Processed shows</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.processed' values={{ count: processed }} components={[<strong />]} />,
     length: processed,
   }] : []),
   ...((config?.proposalOnly || proposal > 0) ? [{
     key: 'proposal',
     emoji: '🛎️ ',
-    title: <span><strong>{Math.max(0, proposal - treated)}</strong> Release proposals</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.proposal' values={{ count: Math.max(0, proposal - treated) }} components={[<strong />]} />,
     length: Math.max(0, proposal - treated),
   }] : []),
   ...(treated > 0 ? [{
     key: 'treated',
     emoji: '✍️ ',
-    title: <span><strong>{treated}</strong> Answered release proposals</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.treated' values={{ count: treated }} components={[<strong />]} />,
     length: treated,
   }] : []),
   {
     key: 'recorded',
     emoji: '📼',
-    title: <span><strong>{recorded}</strong> Recorded show releases</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.recorded' values={{ count: recorded }} components={[<strong />]} />,
     length: recorded,
   },
   ...(extended && (withdrawn > 0) ? [{
     key: 'withdrawn',
     emoji: '⛔ ',
-    title: <span><strong>{withdrawn}</strong> Withdrawn shows releases</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.withdrawn' values={{ count: withdrawn }} components={[<strong />]} />,
     length: withdrawn,
   }] : []),
   ...(extended && (ignored > 0) ? [{
     key: 'ignored',
     emoji: '🗑️ ',
-    title: <span><strong>{ignored}</strong> Ignored shows releases</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.ignored' values={{ count: ignored }} components={[<strong />]} />,
     length: ignored,
   }] : []),
   ...(extended && (missing > 0) ? [{
     key: 'missing',
     emoji: '📭 ',
-    title: <span><strong>{missing}</strong> Shows with no releases found</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.missing' values={{ count: missing }} components={[<strong />]} />,
     length: missing,
   }] : []),
   ...(warning > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{warning}</strong> Disturbed during process</span>,
+    title: <Trans i18nKey='jobs.processShows.summary.warning' values={{ count: warning }} components={[<strong />]} />,
     length: warning,
   }] : []),
 ]
@@ -91,6 +91,7 @@ const matches = (record: any, filter: string) => ({
 })[filter] ?? true
 
 const UIProcessShowsJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
   const toggleZnab = (z: string) => setZnab(znab => znab === z ? null : z)
@@ -149,11 +150,11 @@ const UIProcessShowsJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIProcessShowsJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIProcessShowsJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIProcessShowsJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIProcessShowsJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -257,9 +258,9 @@ const UIProcessShowsJob = ({ job, logs }) => {
           </div>
           </>
         ) : job.meta.done ? (
-          <Warning emoji={job.meta.error ? '💢' : '📺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No recorded shows during this job'} />
+          <Warning emoji={job.meta.error ? '💢' : '📺'} title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')} subtitle={job.meta.error?.message || job.meta.error || t('jobs.processShows.empty')} />
         ) : (
-          <Warning emoji='⏳' title='Loading' subtitle='Waiting first record...' />
+          <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.process.waiting')} />
         )}
       </div>
     </div>
@@ -314,6 +315,7 @@ UIProcessShowsJob.styles = {
 export const ProcessShowsJob = memo(UIProcessShowsJob)
 
 const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, failure, metadata, setShowMetadata, banShowRelease, unbanShowRelease, logsCache, toggleSearch, done, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -325,16 +327,16 @@ const UIRecord = ({ command, job, group, show, logs: summaryLogs, releases, fail
   const setSettings = useCallback((key, value) => setShowMetadata(show?.id, key, value), [show?.id, setShowMetadata])
   // A ban goes through its own route: the list written whole would drop a ban a job made meanwhile
   const toggleBan = useCallback((title) => (banned.includes(title) ? unbanShowRelease : banShowRelease)(show?.id, title).catch(() => {
-    toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release')
-  }), [show?.id, banned, banShowRelease, unbanShowRelease])
+    toast.error(banned.includes(title) ? t('sensorr.release.errors.unban') : t('sensorr.release.errors.ban'))
+  }), [show?.id, banned, banShowRelease, unbanShowRelease, t])
 
   const proceed = useCallback(({ treated, choice: _choice, ...release }, choice) => {
     setOptimistic(optimistic => ({ ...optimistic, [release.id]: { treated: true, choice } }))
     setShowMetadata(show?.id, 'proposal', { id: release.id, choice }).catch(() => {
-      toast.error('Error while updating show metadata')
+      toast.error(t('jobs.processShows.update'))
       setOptimistic(({ [release.id]: reverted, ...optimistic }: any) => optimistic)
     })
-  }, [show?.id, setShowMetadata])
+  }, [show?.id, setShowMetadata, t])
 
   const settings = (
     <div sx={UIRecord.styles.metadata}>

@@ -1,12 +1,11 @@
 import { memo, useMemo } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Icon, Person, Warning } from '@sensorr/ui'
 import { jobNameOf } from '@sensorr/sensorr'
-import { emojize } from '@sensorr/utils'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
-import { Summary } from '../Summary'
+import { Summary, durationOf } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summary = ({
@@ -18,36 +17,37 @@ export const summary = ({
   {
     key: 'dump',
     emoji: '📦',
-    title: <span><strong>{(dump.movies + dump.persons)}</strong> Documents from dump ({dump.movies} Movies, {dump.persons} Persons)</span>,
+    title: <Trans i18nKey='jobs.migrate.summary.dump' values={{ count: dump.movies + dump.persons, movies: dump.movies, persons: dump.persons }} components={[<strong />]} />,
     length: (dump.movies + dump.persons),
   },
   {
     key: 'local',
     emoji: '🗄️',
-    title: <span><strong>{(local.movies + local.persons)}</strong> Documents from Sensorr library ({local.movies} Movies, {local.persons} Persons)</span>,
+    title: <Trans i18nKey='jobs.migrate.summary.local' values={{ count: local.movies + local.persons, movies: local.movies, persons: local.persons }} components={[<strong />]} />,
     length: (local.movies + local.persons),
   },
   ...(movies?.success > 0 ? [{
     key: 'movies',
     emoji: '🎞️',
-    title: <span><strong>{movies?.success}</strong> Movies migrated from dump</span>,
+    title: <Trans i18nKey='jobs.migrate.summary.movies' values={{ count: movies?.success }} components={[<strong />]} />,
     length: movies?.success,
   }] : []),
   ...(persons?.success > 0 ? [{
     key: 'persons',
     emoji: '⭐️',
-    title: <span><strong>{persons?.success}</strong> Persons migrated from dump</span>,
+    title: <Trans i18nKey='jobs.migrate.summary.persons' values={{ count: persons?.success }} components={[<strong />]} />,
     length: persons?.success,
   }] : []),
   ...(((movies?.warning || 0) + (persons?.warning || 0)) > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{(movies?.warning || 0) + (persons?.warning || 0)}</strong> Errors during documents migration</span>,
+    title: <Trans i18nKey='jobs.migrate.summary.warning' values={{ count: (movies?.warning || 0) + (persons?.warning || 0) }} components={[<strong />]} />,
     length: (movies?.warning || 0) + (persons?.warning || 0),
   }] : []),
 ]
 
 const UIMigrateJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     movies: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.entity?.id && log.meta.type === 'movies').map(({ meta: { entity } }) => entity).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
@@ -67,11 +67,11 @@ const UIMigrateJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIMigrateJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIMigrateJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIMigrateJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIMigrateJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -116,7 +116,7 @@ const UIMigrateJob = ({ job, logs }) => {
               id={`migrate-movies-${job.id}`}
               entities={entities?.movies}
               length={entities?.movies?.length}
-              label={emojize('🎞️', 'Movies')}
+              label={t('jobs.migrate.movies')}
               display='grid'
               hide={true}
               child={Movie}
@@ -128,7 +128,7 @@ const UIMigrateJob = ({ job, logs }) => {
               id={`migrate-persons-${job.id}`}
               entities={entities?.persons}
               length={entities?.persons?.length}
-              label={emojize('⭐️', 'Persons')}
+              label={t('jobs.migrate.persons')}
               display='grid'
               hide={true}
               child={Person}
@@ -138,9 +138,9 @@ const UIMigrateJob = ({ job, logs }) => {
             />
           </div>
         ) : job.meta.done ? (
-          <Warning emoji={job.meta.error ? '💢' : '📦'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No documents migrated from dump during this job'} />
+          <Warning emoji={job.meta.error ? '💢' : '📦'} title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')} subtitle={job.meta.error?.message || job.meta.error || t('jobs.migrate.empty')} />
         ) : (
-          <Warning emoji='⏳' title='Loading' subtitle='Waiting for dumped documents...' />
+          <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.migrate.waiting')} />
         )}
       </div>
     </div>

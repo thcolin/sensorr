@@ -1,10 +1,19 @@
 import Tippy from '@tippyjs/react'
+import { formatDuration, intervalToDuration } from 'date-fns'
+import i18n from '@sensorr/i18n'
 import { filesize } from '@sensorr/utils'
 
 // Freeing space is the usual outcome of a job, so it goes unsigned; only growing the disk carries a sign
 export const freed = (change) => change > 0 ? `+${filesize.stringify(change)}` : filesize.stringify(-change)
 
-export const freedLabel = (change) => change > 0 ? 'more on disk' : 'freed on disk'
+// The `side` of the `jobs.space` sentences
+export const sideOf = (change) => change > 0 ? 'more' : 'freed'
+
+// date-fns writes the units in English, each one is then shortened in the language shown
+export const durationOf = ({ start, end }) => formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] })
+  .replace(/ hours?/, i18n.t('jobs.duration.hours'))
+  .replace(/ minutes?/, i18n.t('jobs.duration.minutes'))
+  .replace(/ seconds?/, i18n.t('jobs.duration.seconds'))
 
 export const Summary = ({ error = null, meta }) => (
   <span sx={Summary.styles.element}>

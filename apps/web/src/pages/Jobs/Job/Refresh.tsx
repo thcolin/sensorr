@@ -1,43 +1,43 @@
 import { memo, useMemo } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Icon, Warning } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
 import Person from '../../../components/Person/Person'
 import Movie from '../../../components/Movie/Movie'
-import { Summary } from '../Summary'
+import { Summary, durationOf } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summary = ({ changes = 0, movie, person }, extended = true) => [
   ...(extended ? [{
     key: 'changes',
     emoji: '🗄️',
-    title: <span><strong>{changes}</strong> Affected changes</span>,
+    title: <Trans i18nKey='jobs.refresh.summary.changes' values={{ count: changes }} components={[<strong />]} />,
     length: changes,
   }] : []),
   {
     key: 'movie',
     emoji: '🎞️',
-    title: <span><strong>{movie?.success || 0}</strong> Applied movie changes</span>,
+    title: <Trans i18nKey='jobs.refresh.summary.movie' values={{ count: movie?.success || 0 }} components={[<strong />]} />,
     length: movie?.success || 0,
   },
   {
     key: 'person',
     emoji: '⭐️',
-    title: <span><strong>{person?.success || 0}</strong> Applied person changes</span>,
+    title: <Trans i18nKey='jobs.refresh.summary.person' values={{ count: person?.success || 0 }} components={[<strong />]} />,
     length: person?.success || 0,
   },
   ...(((movie?.warning || 0) + (person?.warning || 0)) > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{(movie?.warning || 0) + (person?.warning || 0)}</strong> Entities not refreshed</span>,
+    title: <Trans i18nKey='jobs.refresh.summary.warning' values={{ count: (movie?.warning || 0) + (person?.warning || 0) }} components={[<strong />]} />,
     length: (movie?.warning || 0) + (person?.warning || 0),
   }] : []),
 ]
 
 const UIRefreshJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const entities = useMemo(() => ({
     warning: [...(logs || [])].filter((log: any) => log.level === 'warn').sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     movie: [...(logs || [])].filter((log: any) => log.level === 'info' && log.meta.entity && log.meta.type === 'movie').map(({ meta: { entity } }) => entity).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
@@ -57,11 +57,11 @@ const UIRefreshJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIRefreshJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIRefreshJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIRefreshJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIRefreshJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -104,7 +104,7 @@ const UIRefreshJob = ({ job, logs }) => {
               id={`refresh-persons-${job.id}`}
               entities={entities?.person}
               length={entities?.person?.length}
-              label={emojize('⭐️', 'Persons')}
+              label={t('jobs.refresh.persons')}
               display='grid'
               hide={true}
               child={Person}
@@ -116,7 +116,7 @@ const UIRefreshJob = ({ job, logs }) => {
               id={`refresh-movies-${job.id}`}
               entities={entities?.movie}
               length={entities?.movie?.length}
-              label={emojize('🎞️', 'Movies')}
+              label={t('jobs.refresh.movies')}
               display='grid'
               hide={true}
               child={Movie}
@@ -128,11 +128,11 @@ const UIRefreshJob = ({ job, logs }) => {
         ) : job.meta.done ? (
           <Warning
             emoji={job.meta.error ? '💢' : '🗄️'}
-            title={job.meta.error ? 'Error': 'Empty'}
-            subtitle={job.meta.error?.message || job.meta.error || 'No changes applied during this job'}
+            title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')}
+            subtitle={job.meta.error?.message || job.meta.error || t('jobs.refresh.empty')}
           />
         ) : (
-          <Warning emoji='⏳' title='Loading' subtitle='Waiting for changes...' />
+          <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.refresh.waiting')} />
         )}
       </div>
     </div>

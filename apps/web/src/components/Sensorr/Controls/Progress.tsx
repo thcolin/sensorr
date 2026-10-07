@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import Tippy from '@tippyjs/react'
 import { DragScroll } from '@sensorr/ui'
 
@@ -132,6 +133,7 @@ const Task = ({ releases, znab, term, ongoing, done, ...props }) => {
 }
 
 const TaskTime = ({ ...props }) => {
+  const { t } = useTranslation()
   const [time, setTime] = useState(0)
   const now = useMemo(() => Date.now(), [])
 
@@ -141,32 +143,33 @@ const TaskTime = ({ ...props }) => {
   }, [])
 
   return (
-    <em><small>{(time / 1000).toFixed(1)}s</small></em>
+    <em><small>{t('sensorr.progress.seconds', { seconds: (time / 1000).toFixed(1) })}</small></em>
   )
 }
 
 const TaskDetails = ({ results, ...props }) => {
+  const { t } = useTranslation()
   const errors = [
-    ...(results.withdrawn ? [<code key='withdrawn'>🚨 <span><strong>{results.withdrawn}</strong> Releases withdrawn by policy</span></code>] : []),
-    ...(results.ignored ? [<code key='ignored'>🗑️ <span><strong>{results.ignored}</strong> Releases ignored</span></code>] : []),
+    ...(results.withdrawn ? [<code key='withdrawn'>🚨 <span><Trans t={t} i18nKey='sensorr.progress.withdrawn' values={{ count: results.withdrawn }} components={[<strong />]} /></span></code>] : []),
+    ...(results.ignored ? [<code key='ignored'>🗑️ <span><Trans t={t} i18nKey='sensorr.progress.ignored' values={{ count: results.ignored }} components={[<strong />]} /></span></code>] : []),
   ]
 
   return (
     <span sx={{ display: 'block', withSpace: 'nowrap', margin: 10 }}>
       {(!!results.matches && !errors.length) ? (
-        <code>⭐ <strong>{results.total}</strong> <em>matching</em> Releases found !</code>
+        <code>⭐ <Trans t={t} i18nKey='sensorr.progress.found' values={{ count: results.total }} components={[<strong />, <em />]} /></code>
       ) : (!!results.matches && errors.length) ? (
-        <code>🏁 <strong>{results.total}</strong> Releases found :</code>
+        <code>🏁 <Trans t={t} i18nKey='sensorr.progress.foundAmong' values={{ count: results.total }} components={[<strong />]} /></code>
       ) : (!results.matches && errors.length === 1) ? (
         errors[0]
       ) : (!results.matches && errors.length) ? (
-        <code>📭 No <em>matching</em> Releases found</code>
+        <code>📭 <Trans t={t} i18nKey='sensorr.progress.noneMatching' components={[<em />]} /></code>
       ) : (
-        <code>📭 No Releases found</code>
+        <code>📭 {t('sensorr.progress.none')}</code>
       )}
       {((!!results.matches && errors.length) || errors.length > 1) && (
         <ul sx={{ margin: 8, marginBottom: 12, padding: 12, paddingLeft: 2, '>li': { margin: 12, padding: 12, '>span': { fontSize: 5 } } }}>
-          {!!results.matches && <li><code>⭐ <span><strong>{results.matches}</strong> Releases matches </span></code></li>}
+          {!!results.matches && <li><code>⭐ <span><Trans t={t} i18nKey='sensorr.progress.matches' values={{ count: results.matches }} components={[<strong />]} /> </span></code></li>}
           {errors.map((error, index) => <li key={index}>{error}</li>)}
         </ul>
       )}

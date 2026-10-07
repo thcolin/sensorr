@@ -1,20 +1,25 @@
+import { useTranslation } from 'react-i18next'
 import { reveal } from '@sensorr/ui'
 
-export const Warnings = ({ logs = [], ...props }) => !logs.length ? null : (
+export const Warnings = ({ logs = [], ...props }) => {
+  const { t, i18n } = useTranslation()
+
+  return !logs.length ? null : (
   <div sx={{ ...Warnings.styles.element, ...reveal }}>
-    <span>Warnings</span>
+    <span>{t('jobs.warnings')}</span>
     <div>
       <div>
         {logs.map(({ message, timestamp }, index) => (
           <code key={index}>
-            {timestamp && <time>{new Date(timestamp).toLocaleString()}</time>}
+            {timestamp && <time>{new Date(timestamp).toLocaleString(i18n.language)}</time>}
             <span>{message}</span>
           </code>
         ))}
       </div>
     </div>
   </div>
-)
+  )
+}
 
 Warnings.styles = {
   element: {

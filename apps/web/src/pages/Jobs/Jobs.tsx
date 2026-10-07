@@ -1,13 +1,15 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import { throttle } from 'throttle-debounce'
-import { formatRelative, formatDuration, intervalToDuration } from 'date-fns'
+import { formatRelative } from 'date-fns'
 import { useRipple } from 'use-ripple-hook'
 import { Bar, Drawer, Icon, Link } from '@sensorr/ui'
 import { Warning } from '@sensorr/ui'
 import { usePainted, useResponsiveValue, useTitle } from '@sensorr/utils'
+import i18n from '@sensorr/i18n'
 import { JOB_EMOJIS, jobLabelOf, jobNameOf, jobTitleOf } from '@sensorr/sensorr'
 import { useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
@@ -21,7 +23,7 @@ import { ReportJob, summary as summaryReport } from './Job/Report'
 import { KeepInTouchJob, summary as summaryKeepInTouch } from './Job/KeepInTouch'
 import { ProcessShowsJob, summary as summaryProcessShows } from './Job/ProcessShows'
 import { ShowsJob, summaryRefreshShows, summarySyncShows, summaryImportShows, summaryMigrateSonarr } from './Job/Shows'
-import { Summary } from './Summary'
+import { Summary, durationOf } from './Summary'
 import { cumulate } from './cumulate'
 import Body from '../../layout/Body/Body'
 import { CommandTabs, commandTabsOf } from '../../components/Sensorr/CommandTabs'
@@ -60,11 +62,12 @@ const startOf = (job) => new Date(job.start).getTime()
 
 const summaryOf = (job, summary = job.meta.summary) => (JOBS_UI[jobNameOf(job.meta)]?.summary || (() => []))(summary, false, job.meta.config)
 
-const durationOf = ({ start, end }) => formatDuration(intervalToDuration({ start: new Date(start), end: new Date(end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')
-
+// `today` and `yesterday` are keys, translated where the day is shown
 const dayOf = (job) => {
   const relative = formatRelative(job.start ? new Date(job.start) : new Date(), new Date()).split(' ')[0]
-  return ['today', 'yesterday'].includes(relative) ? relative : (new Date(job.start)).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  const date = (new Date(job.start)).toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })
+  // Capitalized here and not by CSS, which would capitalize every word of a French date
+  return ['today', 'yesterday'].includes(relative) ? relative : date.charAt(0).toUpperCase() + date.slice(1)
 }
 
 // "all" stacks the jobs of a command on the same day under the newest, a job that failed stays on its own
@@ -89,6 +92,7 @@ const listedOf = (jobs) => {
 }
 
 const UIJobs = ({ controls = null, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const location = useLocation()
   const navigate = useNavigate()
@@ -96,7 +100,7 @@ const UIJobs = ({ controls = null, ...props }) => {
   const { job } = useParams() as any
   const active = jobs.find(j => j.job === job)
   const View = active && JOBS_UI[jobNameOf(active.meta)]?.view
-  useTitle(['Jobs', active && jobTitleOf(jobNameOf(active.meta))].filter(part => part).join(' - '))
+  useTitle([t('jobs.title'), active && jobTitleOf(jobNameOf(active.meta))].filter(part => part).join(' - '))
   const store = useRef(null)
   const [logs, setLogs] = useState(null)
   const drainLogs = useMemo(() => throttle(3000, () => setLogs(store.current)), [])
@@ -139,8 +143,8 @@ const UIJobs = ({ controls = null, ...props }) => {
           <div sx={UIJobs.styles.placeholder}>
             <Warning
               emoji="🏗️"
-              title="No jobs yet"
-              subtitle="Jobs start everyday automatically, but you can start one manually from Settings"
+              title={t('jobs.none.title')}
+              subtitle={t('jobs.none.subtitle')}
             />
           </div>
         </section>
@@ -161,8 +165,8 @@ const UIJobs = ({ controls = null, ...props }) => {
             <div sx={UIJobs.styles.placeholder}>
               <Warning
                 emoji="🏗️"
-                title="Setup job"
-                subtitle="Please wait a few moments..."
+                title={t('jobs.setup.title')}
+                subtitle={t('jobs.setup.subtitle')}
               />
             </div>
           )}
@@ -198,6 +202,7 @@ const Jobs = memo(UIJobs)
 export default Jobs
 
 const UISidebar = ({ loading, jobs, job, ...props }) => {
+  const { t } = useTranslation()
   const [ref, onPointerDown] = useRipple()
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
@@ -241,9 +246,9 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         {(painted || !mobile) && Object.entries(groups).map(([distance, jobs]: [string, any[]]) => (
           <Fragment key={distance}>
             <h6>
-              {distance === 'running' ? distance : (
+              {distance === 'running' ? t('jobs.sidebar.running') : (
                 <button type='button' aria-expanded={!folded[distance]} onClick={() => setFolded(folded => ({ ...folded, [distance]: !folded[distance] }))}>
-                  <span>{distance}</span>
+                  <span>{['today', 'yesterday'].includes(distance) ? t(`jobs.sidebar.${distance}`) : distance}</span>
                   {folded[distance] && <span>{jobs.reduce((count, entry) => count + 1 + (entry.stack?.length || 0), 0)}</span>}
                   <Icon value='chevron' direction={!folded[distance]} height='0.75em' width='0.75em' />
                 </button>
@@ -275,7 +280,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
   return (
     <aside sx={UISidebar.styles.element}>
       <div sx={UISidebar.styles.head}>
-        <h4>Jobs</h4>
+        <h4>{t('jobs.title')}</h4>
         {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
           <button ref={ref} type='button' onPointerDown={onPointerDown} onClick={() => setExpanded(e => !e)} aria-expanded={expanded} aria-haspopup='dialog' disabled={loading}>
@@ -287,12 +292,12 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
               </span>
               {!!active && (
                 <span>
-                  <span role='img' aria-label={active.meta.done ? 'done' : 'running'}><Icon value={active.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
+                  <span role='img' aria-label={active.meta.done ? t('jobs.sidebar.done') : t('jobs.sidebar.running')}><Icon value={active.meta.done ? 'check' : 'live'} height='0.75em' width='0.75em' /></span>
                   {active.meta.done && <strong>{durationOf(active)}</strong>}
                   <time dateTime={new Date(active.start).toISOString()}>
-                    {active.meta.done ? '· ' : ''}{(new Date(active.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} {(new Date(active.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}
+                    {active.meta.done ? '· ' : ''}{(new Date(active.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} {(new Date(active.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}
                   </time>
-                  {!!active.meta.error && <span role='img' aria-label='failed'>💢</span>}
+                  {!!active.meta.error && <span role='img' aria-label={t('jobs.sidebar.failed')}>💢</span>}
                 </span>
               )}
             </span>
@@ -311,7 +316,7 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         </>
       ) : mobile ? createPortal((
         <Drawer open={expanded} close={close} height='85vh'>
-          <DrawerHead title='Jobs' />
+          <DrawerHead title={t('jobs.title')} />
           {list}
         </Drawer>
       ), document.body) : list}
@@ -470,7 +475,6 @@ UISidebar.styles = {
       backgroundColor: 'grayLighter',
       borderBottom: '1px solid',
       borderColor: 'grayLight',
-      textTransform: 'capitalize',
       zIndex: 1,
       '>button': {
         variant: 'button.reset',
@@ -519,6 +523,7 @@ const roomOf = (element) => {
 }
 
 const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle }) => {
+  const { t } = useTranslation()
   const more = useRef(null)
   const opening = useRef(false)
   const [closing, setClosing] = useState(false)
@@ -601,7 +606,7 @@ const UIPile = ({ entry: { stack = [], ...head }, pile, job, unstacked, onToggle
             type='button'
             sx={UIPile.styles.toggle}
             aria-expanded={open}
-            aria-label={`${stack.length + 1}, ${open ? 'stack' : 'show'} the ${stack.length} older ${jobTitleOf(jobNameOf(head.meta))} jobs of the day`}
+            aria-label={t('jobs.sidebar.pile', { count: stack.length + 1, open: String(open), older: stack.length, name: jobTitleOf(jobNameOf(head.meta)) })}
             onClick={toggle}
           >
             {stack.length + 1}
@@ -741,7 +746,7 @@ const UIJob = ({ emoji, job, start, end, meta: { command, done, ...meta }, selec
                 </span>
               )}
             </span>
-            <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {since && `${(new Date(since)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })} → `}{(new Date(start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+            <span sx={UIJob.styles.subtitle}><strong>{job}</strong> - {(new Date(start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {since && `${(new Date(since)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })} → `}{(new Date(start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
           </span>
         </span>
         <Link to={`/jobs/${job}`} tabIndex={-1} aria-hidden={true} sx={UIJob.styles.summary} viewTransition={false}>

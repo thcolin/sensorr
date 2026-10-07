@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { jobTitleOf } from '@sensorr/sensorr'
+import i18n from '@sensorr/i18n'
 import { errorOf, useAPI } from '../../store/api'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 
@@ -13,40 +14,41 @@ export interface JobEntry {
   requires?: 'plex.token' | 'tautulli.url' | 'mail.host'
 }
 
+// `label` and `description` are getters: read where they are shown, they follow the language
 export const JOB_GROUPS: { label: string, jobs: JobEntry[] }[] = [
   {
-    label: 'Movies',
+    get label() { return i18n.t('sensorr.jobs.groups.movies') },
     jobs: [
-      { command: 'record', type: 'movies', description: 'Record Sensorr wished movies', options: ['cron', 'proposalOnly'] },
-      { command: 'refine', type: 'movies', description: 'Refine archived movies with better fitting release', options: ['cron', 'proposalOnly'] },
-      { command: 'shrink', type: 'movies', description: 'Shrink refined movies with smallest release available', options: ['cron', 'proposalOnly', 'threshold'] },
-      { command: 'report', type: 'movies', description: 'Replace archived movies reported from Plex with their best release', requires: 'plex.token', options: ['cron', 'proposalOnly'] },
-      { command: 'refresh', type: 'movies', description: 'Refresh Sensorr movies and persons with TMDB changes', options: ['cron'] },
-      { command: 'sync', type: 'movies', description: 'Sync Sensorr library with registered Plex server', requires: 'plex.token', options: ['cron', 'cleanup'] },
+      { command: 'record', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.recordMovies') }, options: ['cron', 'proposalOnly'] },
+      { command: 'refine', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.refineMovies') }, options: ['cron', 'proposalOnly'] },
+      { command: 'shrink', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.shrinkMovies') }, options: ['cron', 'proposalOnly', 'threshold'] },
+      { command: 'report', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.reportMovies') }, requires: 'plex.token', options: ['cron', 'proposalOnly'] },
+      { command: 'refresh', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.refreshMovies') }, options: ['cron'] },
+      { command: 'sync', type: 'movies', get description() { return i18n.t('sensorr.jobs.descriptions.syncMovies') }, requires: 'plex.token', options: ['cron', 'cleanup'] },
     ],
   },
   {
-    label: 'TV',
+    get label() { return i18n.t('sensorr.jobs.groups.tv') },
     jobs: [
-      { command: 'record', type: 'shows', description: 'Record wished shows by whole series, season packs and episodes', options: ['cron', 'proposalOnly'] },
-      { command: 'airing', type: 'shows', description: 'Record wanted episodes aired in the last 7 days', options: ['cron', 'proposalOnly'] },
-      { command: 'import', type: 'shows', description: 'Import finished show releases from the staging folder into the library', options: ['cron'] },
-      { command: 'refresh', type: 'shows', description: 'Refresh Sensorr shows and their episodes with TMDB changes', options: ['cron'] },
-      { command: 'sync', type: 'shows', description: 'Sync Sensorr shows with registered Plex server', requires: 'plex.token', options: ['cron', 'cleanup'] },
+      { command: 'record', type: 'shows', get description() { return i18n.t('sensorr.jobs.descriptions.recordShows') }, options: ['cron', 'proposalOnly'] },
+      { command: 'airing', type: 'shows', get description() { return i18n.t('sensorr.jobs.descriptions.airingShows') }, options: ['cron', 'proposalOnly'] },
+      { command: 'import', type: 'shows', get description() { return i18n.t('sensorr.jobs.descriptions.importShows') }, options: ['cron'] },
+      { command: 'refresh', type: 'shows', get description() { return i18n.t('sensorr.jobs.descriptions.refreshShows') }, options: ['cron'] },
+      { command: 'sync', type: 'shows', get description() { return i18n.t('sensorr.jobs.descriptions.syncShows') }, requires: 'plex.token', options: ['cron', 'cleanup'] },
     ],
   },
   {
-    label: 'Friends',
+    get label() { return i18n.t('sensorr.jobs.groups.friends') },
     jobs: [
-      { command: 'keep-in-touch', description: 'Goes through guests Plex watchlist: requested movies become wished, requested shows arrive not followed', options: ['cron'] },
-      { command: 'wrapped', description: 'Import the Plex watch history from Tautulli and compute each friend wrapped', requires: 'tautulli.url', options: ['cron'] },
-      { command: 'mail', description: 'Mail each friend their requests that reached Plex since their last mail', requires: 'mail.host', options: ['cron'] },
+      { command: 'keep-in-touch', get description() { return i18n.t('sensorr.jobs.descriptions.keepInTouch') }, options: ['cron'] },
+      { command: 'wrapped', get description() { return i18n.t('sensorr.jobs.descriptions.wrapped') }, requires: 'tautulli.url', options: ['cron'] },
+      { command: 'mail', get description() { return i18n.t('sensorr.jobs.descriptions.mail') }, requires: 'mail.host', options: ['cron'] },
     ],
   },
   {
-    label: 'Data',
+    get label() { return i18n.t('sensorr.jobs.groups.data') },
     jobs: [
-      { command: 'dump', description: 'Dump the library and the settings, without any secret, and keep the last 4', options: ['cron'] },
+      { command: 'dump', get description() { return i18n.t('sensorr.jobs.descriptions.dump') }, options: ['cron'] },
     ],
   },
 ]
@@ -61,7 +63,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
   const runJob = useCallback((command, type) => {
     const name = nameOfEntry({ command, type })
 
-    if (!window.confirm(`Do you really want to start ${jobTitleOf(name)} job?`)) {
+    if (!window.confirm(i18n.t('sensorr.jobs.confirm.start', { name: jobTitleOf(name) }))) {
       return false
     }
 
@@ -73,16 +75,16 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
     })
 
     toast.promise(request, {
-      loading: `Running new Job **${jobTitleOf(name)}**, please wait...`,
+      loading: i18n.t('sensorr.jobs.run.loading', { name: jobTitleOf(name) }),
       success: (data) => {
         setOngoing(ongoing => ongoing.filter(c => c !== name))
         onRun?.(data.job)
-        return `Job **${jobTitleOf(name)}** successfully run (${data.job})`
+        return i18n.t('sensorr.jobs.run.success', { name: jobTitleOf(name), job: data.job })
       },
       error: (err) => {
         console.warn(err)
         setOngoing(ongoing => ongoing.filter(c => c !== name))
-        return `Error during Job **${jobTitleOf(name)}** run${err.message ? `: ${err.message}` : ''}`
+        return err.message ? i18n.t('sensorr.jobs.run.errorWith', { name: jobTitleOf(name), message: err.message }) : i18n.t('sensorr.jobs.run.error', { name: jobTitleOf(name) })
       },
     })
 
@@ -90,7 +92,7 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
   }, [onRun])
 
   const stopJob = useCallback((name, job) => {
-    if (!window.confirm(`Do you really want to stop ${jobTitleOf(name)} job "${job}"?`)) {
+    if (!window.confirm(i18n.t('sensorr.jobs.confirm.stop', { name: jobTitleOf(name), job }))) {
       return
     }
 
@@ -99,12 +101,12 @@ export const useJobRunner = ({ onRun = null }: { onRun?: (job: string) => void }
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
-      loading: 'Loading...',
-      success: () => `Job "${job}" successfully stop`,
+      loading: i18n.t('loading'),
+      success: () => i18n.t('sensorr.jobs.stop.success', { job }),
       error: (err) => {
         console.warn(err)
         setStopping(stopping => stopping.filter(j => j !== job))
-        return `Error during Job "${job}" stop`
+        return i18n.t('sensorr.jobs.stop.error', { job })
       },
     })
   }, [])

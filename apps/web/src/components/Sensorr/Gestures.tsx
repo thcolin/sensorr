@@ -1,21 +1,26 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@sensorr/ui'
 
 const GESTURES = [
-  { verdict: 'accept', key: 'A', label: 'Accept', variant: 'contain' },
-  { verdict: 'refuse', key: 'R', label: 'Refuse', variant: 'outline' },
+  { verdict: 'accept', key: 'A', variant: 'contain' },
+  { verdict: 'refuse', key: 'R', variant: 'outline' },
 ] as const
 
 // `shortcuts` announces the A and R keys, which the Swaps screen and a show's page listen to.
-const UIGestures = ({ onGesture, disabled = false, shortcuts = true, ...props }) => (
-  <div {...props} sx={UIGestures.styles.element}>
-    {GESTURES.map(({ verdict, key, label, variant }) => (
-      <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} {...(shortcuts ? { 'aria-keyshortcuts': key } : {})}>
-        {label}
-      </Button>
-    ))}
-  </div>
-)
+const UIGestures = ({ onGesture, disabled = false, shortcuts = true, ...props }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div {...props} sx={UIGestures.styles.element}>
+      {GESTURES.map(({ verdict, key, variant }) => (
+        <Button key={verdict} variant={variant} color='primary' disabled={disabled} onClick={() => onGesture(verdict)} {...(shortcuts ? { 'aria-keyshortcuts': key } : {})}>
+          {t(`sensorr.gestures.${verdict}`)}
+        </Button>
+      ))}
+    </div>
+  )
+}
 
 UIGestures.styles = {
   element: {
