@@ -398,7 +398,7 @@ export default {
         refuse: 'Refuser',
         enable: 'Activer',
         disable: 'Désactiver',
-        confirmProposal: 'Voulez-vous {accept, select, true {accepter} other {refuser}} la Proposal {count, plural, one {de # film} other {des # films}} ?',
+        confirmProposal: 'Voulez-vous {accept, select, true {accepter} other {refuser}} la Proposal {count, plural, one {de # film} other {de tous les # films}} ?',
         confirmPolicy: 'Voulez-vous changer la Policy de {selection} pour {policy} ?',
         confirmJob: 'Voulez-vous {enable, select, true {activer} other {désactiver}} le job {job} pour {selection} ?',
       },
