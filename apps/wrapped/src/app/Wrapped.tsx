@@ -51,7 +51,8 @@ const Edition = ({ token, year, editions, compact }: { token: string, year: numb
 
   const choose = (next: number) => {
     setPending(next)
-    window.location.assign(`/wrapped/${encodeURIComponent(token)}/${next}`)
+    // Against the page's <base href>, the demo's included
+    window.location.assign(`${encodeURIComponent(token)}/${next}`)
   }
 
   return (

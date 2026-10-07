@@ -14,7 +14,8 @@ import { WrappedLooks } from './Wrapped'
 import { Invitation } from './Invitation'
 import { Face } from './Face'
 
-const linkOf = (token) => `${document.location.origin}/wrapped/${token}`
+// Next to the app, under its <base href>: `/wrapped/`, or `/sensorr/wrapped/` in the demo
+const linkOf = (token) => new URL(`wrapped/${token}`, document.baseURI).href
 const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })
 
 export const FriendsIntro = () => {
