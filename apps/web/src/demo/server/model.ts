@@ -140,10 +140,9 @@ export class Model {
   // What an upsert creates: the equalities of the filter, then the update
   private inserted(filter: any, update: any) {
     const equalities = Object.fromEntries(Object.entries(this.castFilter(filter)).filter(([key, value]) => !key.startsWith('$') && !key.includes('.') && !isOperator(value)))
-    const { $setOnInsert, ...rest } = update
-    const doc = { ...this.defaults(), ...equalities, ...this.castDocument($setOnInsert || {}) }
-    updateObject(doc, withoutId(rest, doc._id ?? rest.$set?._id))
-    return { _id: doc._id ?? rest.$set?._id ?? objectId(), ...doc }
+    const doc = { ...this.defaults(), ...equalities }
+    updateObject(doc, withoutId(update, doc._id ?? update.$set?._id))
+    return { _id: doc._id ?? update.$set?._id ?? objectId(), ...doc }
   }
 
   private matching(filter: any): any[] {
@@ -225,10 +224,6 @@ export class Model {
     return this.matching(filter).length
   }
 
-  countDocuments(filter: any = {}) {
-    return Promise.resolve(this.count(filter))
-  }
-
   updateOne(filter: any, update: any, options: any = {}) {
     const { docs, ...result } = this.write(filter, update, { upsert: !!options.upsert })
     return Promise.resolve(result)
@@ -260,10 +255,6 @@ export class Model {
     return this.findOneAndDelete({ _id: id })
   }
 
-  deleteOne(filter: any) {
-    return Promise.resolve({ acknowledged: true, deletedCount: this.remove(filter).length })
-  }
-
   deleteMany(filter: any = {}) {
     return Promise.resolve({ acknowledged: true, deletedCount: this.remove(filter, { many: true }).length })
   }
@@ -277,34 +268,21 @@ export class Model {
     return Promise.resolve(Array.isArray(input) ? clone(docs) : clone(docs[0]))
   }
 
-  bulkWrite(operations: any[]) {
+  // The services only send `updateOne` operations
+  bulkWrite(operations: { updateOne: { filter: any, update: any, upsert?: boolean } }[]) {
     const result = { insertedCount: 0, matchedCount: 0, modifiedCount: 0, deletedCount: 0, upsertedCount: 0 }
 
     for (const operation of operations) {
-      const [kind, body] = Object.entries(operation)[0] as [string, any]
+      const { updateOne } = operation
 
-      switch (kind) {
-        case 'insertOne': {
-          this.create(body.document)
-          result.insertedCount++
-          break
-        }
-        case 'updateOne':
-        case 'updateMany': {
-          const { matchedCount, modifiedCount, upsertedCount } = this.write(body.filter, body.update, { upsert: !!body.upsert, many: kind === 'updateMany' })
-          result.matchedCount += matchedCount
-          result.modifiedCount += modifiedCount
-          result.upsertedCount += upsertedCount
-          break
-        }
-        case 'deleteOne':
-        case 'deleteMany': {
-          result.deletedCount += this.remove(body.filter, { many: kind === 'deleteMany' }).length
-          break
-        }
-        default:
-          throw new Error(`[Demo] bulkWrite "${kind}" is not supported`)
+      if (!updateOne) {
+        throw new Error(`[Demo] bulkWrite "${Object.keys(operation)[0]}" is not supported`)
       }
+
+      const { matchedCount, modifiedCount, upsertedCount } = this.write(updateOne.filter, updateOne.update, { upsert: !!updateOne.upsert })
+      result.matchedCount += matchedCount
+      result.modifiedCount += modifiedCount
+      result.upsertedCount += upsertedCount
     }
 
     return Promise.resolve(result)
@@ -321,7 +299,7 @@ export class Model {
     const limit = paginated ? (Number(options.limit) || 10) : 0
     const total = this.count(filter)
     const docs = this.read(filter, options.select || options.projection, { sort: options.sort, skip: paginated ? (page - 1) * limit : 0, limit })
-      .map((doc) => (options.leanWithId ? { ...doc, id: `${doc._id}` } : doc))
+      .map((doc) => (options.lean && options.leanWithId !== false && doc._id ? { ...doc, id: `${doc._id}` } : doc))
     const pages = paginated ? Math.max(1, Math.ceil(total / limit)) : 1
     const labels = { docs: 'docs', totalDocs: 'totalDocs', totalPages: 'totalPages', ...options.customLabels }
 
@@ -388,27 +366,12 @@ const normalizeSort = (sort: any) => Object.fromEntries(Object.entries(typeof so
   : sort).map(([key, value]) => [key, ['desc', 'descending', '-1', -1].includes(value as any) ? -1 : 1]))
 
 export class Query implements PromiseLike<any> {
-  private options: { sort?: any, skip?: number, limit?: number } = {}
+  private options: { sort?: any } = {}
 
-  constructor(private readonly model: Model, private readonly filter: any, private projection: any, private readonly one: boolean) {}
+  constructor(private readonly model: Model, private readonly filter: any, private readonly projection: any, private readonly one: boolean) {}
 
   sort(sort: any) {
     this.options.sort = sort
-    return this
-  }
-
-  skip(skip: number) {
-    this.options.skip = skip
-    return this
-  }
-
-  limit(limit: number) {
-    this.options.limit = limit
-    return this
-  }
-
-  select(projection: any) {
-    this.projection = projection
     return this
   }
 

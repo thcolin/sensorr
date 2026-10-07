@@ -208,7 +208,8 @@ const Header = ({ ...props }) => {
   return (
     <div sx={{ ...Header.styles.element, ...(statusBar ? { paddingTop: Header.styles.statusBar.height } : {}) }} style={{ zIndex: (extanded || (historyDisplay && !!history.length)) ? 6 : 5 }}>
       {statusBar && <div sx={Header.styles.statusBar} />}
-      <div sx={{ ...Header.styles.container, height: extanded ? `calc(100dvh - ${statusBar ? Header.styles.statusBar.height : '0px'})` : 'initial' }}>
+      {/* `--banner-height`: what a banner above the app takes, the demo's */}
+      <div sx={{ ...Header.styles.container, height: extanded ? `calc(100dvh - ${statusBar ? Header.styles.statusBar.height : '0px'} - var(--banner-height, 0px))` : 'initial' }}>
         <Toolbar />
         <div sx={Header.styles.history}>
           <SearchHistory />

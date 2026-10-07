@@ -25,7 +25,11 @@ export class ProxyController {
     const [, title, searched] = /^(.*?)(?:\s+(\d{4}))?$/.exec((params.q || '').trim())
     const year = searched || (params.t === 'tvsearch' ? undefined : await tmdb.fetch('search/movie', { query: title })
       .then(({ results }) => `${results?.[0]?.release_date || ''}`.slice(0, 4) || undefined)
-      .catch(() => undefined))
+      // Without TMDB the releases come without their year, and Sensorr finds their titles too far from the movie's
+      .catch((err) => {
+        console.warn(`[Demo] No year from TMDB for "${title}", the indexer answers without it:`, err)
+        return undefined
+      }))
 
     return {
       items: searchOf({
