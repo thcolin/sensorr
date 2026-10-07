@@ -1,8 +1,7 @@
 # Releasing
 
 Sensorr ships through three image channels. Work lands on `dev`; `main` only receives stable
-releases. `main` is the former `master`, and still holds the 0.x history until the first
-stable release replaces it, see [First stable release only](#first-stable-release-only).
+releases. `main` is the former `master`; its 0.x history stays on the `legacy` branch.
 
 | Channel | Published by | Image tags | `SENSORR_TAG` in `.env` |
 | --- | --- | --- | --- |
@@ -85,29 +84,3 @@ section in the [changelog](CHANGELOG.md): the next stable release's section cove
    git push origin v1.0.0
    gh release create v1.0.0 --notes-file notes.md
    ```
-
-## First stable release only
-
-`main` still carries the 0.x history, and `dev` shares no commit with it: `dev` starts over
-at `3fbf049a`, the first commit of the Nx rewrite, on 2022-02-06. GitHub cannot open a pull
-request between two unrelated histories, so the first stable release runs step 1, then
-replaces `main` with `dev` instead of step 2, then runs step 3.
-
-In step 1, no stable tag is in the history of `dev`: `git log --oneline dev` lists every
-commit since the rewrite, and the section sums up what changed since 0.9.0. The same commit
-serves the installer from `main`, which only receives releases, instead of `dev`, where any
-push runs at once on every new install: replace `sensorr/dev/install.sh` with
-`sensorr/main/install.sh` in `README.md` and in the header of `install.sh`.
-
-In place of step 2, once `gh api repos/thcolin/sensorr/branches/main/protection` answers 404,
-no protection blocking a force-push:
-
-```sh
-git fetch origin --prune
-git push --force-with-lease=main:origin/main origin origin/dev:main
-```
-
-The 0.x history stays on the `legacy` branch, which points at `361d0937`, the last commit of
-`master`: never delete it. The tags `v0.2.0` to `v0.9.0` stay too, but they sit on commits
-outside `master`, so they do not keep its history. Once `v1.0.0` is published, delete this
-section.
