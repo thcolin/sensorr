@@ -28,6 +28,7 @@ import { Log } from '../../../../api/src/app/logs/log.schema'
 import { Subscription } from '../../../../api/src/app/notifications/subscription.schema'
 import { Guest } from '../../../../api/src/app/guests/guest.schema'
 import { mount } from './shims/files'
+import { UNAVAILABLE } from './sensorr.service'
 import { Model } from './model'
 import { ProxyController } from './proxy.controller'
 import { GuestsController } from './guests.controller'
@@ -42,7 +43,6 @@ const operators = new OperatorsPipe()
 
 const pathOf = (...parts: string[]) => `/${parts.join('/').split('/').filter(Boolean).join('/')}`
 
-// `/movies/:id/banned_releases` matches `/movies/603/banned_releases` with `{ id: '603' }`
 const matcherOf = (path: string) => {
   const names: string[] = []
   const pattern = new RegExp(`^${path.replace(/:([^/]+)/g, (_, name) => {
@@ -115,9 +115,10 @@ export class App {
     const pathname = url.pathname.replace(/^.*?\/api(?=\/)/, '')
     const route = this.table.map((route) => ({ route, params: route.verb === verb ? route.match(pathname) : null })).find(({ params }) => params)
 
+    // Plex, mails, guests, wrapped, dumps, updates: what needs a server of its own says so
     if (!route) {
       console.warn(`[Demo] No route for ${verb} /api${pathname}`)
-      return { status: 404, body: { statusCode: 404, message: `Cannot ${verb === 'SSE' ? 'GET' : verb} /api${pathname}`, error: 'Not Found' } }
+      return { status: 503, body: { statusCode: 503, message: UNAVAILABLE, error: 'Service Unavailable' } }
     }
 
     const { controller, key } = route.route

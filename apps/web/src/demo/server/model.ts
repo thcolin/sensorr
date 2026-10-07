@@ -203,7 +203,6 @@ export class Model {
     return new Query(this, filter, { _id: 1 }, true)
   }
 
-  // Used by Query, which resolves on the next tick like a database round trip
   read(filter: any, projection: any, { sort, skip, limit }: { sort?: any, skip?: number, limit?: number }): any[] {
     let cursor = find(this.docs, this.castFilter(filter), normalizeProjection(projection))
 
@@ -340,7 +339,6 @@ export class Model {
     }
   }
 
-  // A change stream: a `change` event after each write
   watch(pipeline: any[] = []) {
     const listeners = new Map<string, Set<(payload?: any) => void>>()
     const emit = (event: string, payload?: any) => listeners.get(event)?.forEach((listener) => listener(payload))
@@ -389,7 +387,6 @@ const normalizeSort = (sort: any) => Object.fromEntries(Object.entries(typeof so
   ? Object.fromEntries(sort.split(/\s+/).filter(Boolean).map((field) => field.startsWith('-') ? [field.slice(1), -1] : [field, 1]))
   : sort).map(([key, value]) => [key, ['desc', 'descending', '-1', -1].includes(value as any) ? -1 : 1]))
 
-// What mongoose returns from a query: a thenable that chains, `lean()` and `exec()` included
 export class Query implements PromiseLike<any> {
   private options: { sort?: any, skip?: number, limit?: number } = {}
 
@@ -435,7 +432,6 @@ export class Query implements PromiseLike<any> {
   }
 }
 
-// A result already known, chained like a mongoose query
 class Settled implements PromiseLike<any> {
   constructor(private readonly value: any) {}
 

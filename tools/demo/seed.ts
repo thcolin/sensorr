@@ -20,7 +20,6 @@ const SHOWS = 12
 const PERSONS = 12
 const DAY = 86400000
 const NOW = Date.now()
-// The friend whose Plex watchlist became requests
 const FRIEND = 'alex@sensorr.demo'
 
 const hash = (value: string) => [...value].reduce((acc, char) => (Math.imul(acc ^ char.charCodeAt(0), 16777619) >>> 0), 2166136261)

@@ -4,7 +4,7 @@ import { HttpException, Injectable } from './shims/nest-common'
 // Stands for `apps/api/src/app/sensorr/sensorr.service.ts` in the demo build: there is no blackhole to write to and no
 // CLI to start. Accepting a release succeeds, starting a job says why it cannot
 
-export const UNAVAILABLE = 'Not available in the demo: Sensorr runs its jobs on your own server'
+export const UNAVAILABLE = 'Not available in the demo, it needs Sensorr running on your own server'
 
 @Injectable()
 export class SensorrService {
