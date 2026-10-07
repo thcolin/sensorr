@@ -25,7 +25,7 @@ export default {
       address: '« {to} » n’est pas une adresse mail',
       friends: 'Entre 1 et 200 amis à inviter',
       refused: 'Le serveur SMTP a refusé le mail : {reason}',
-      unset: 'Les mails ne sont pas configurés, renseignez {missing} dans les réglages Mail',
+      unset: 'Les mails ne sont pas configurés, renseignez {missing} dans les paramètres Mail',
       fields: {
         host: 'le serveur SMTP',
         from: 'l’expéditeur',
@@ -46,7 +46,7 @@ export default {
       nothing: 'Rien à écrire sur l’élément Plex',
     },
     release: {
-      magnetOff: 'Lien magnet, désactivé dans Réglages > Blackhole',
+      magnetOff: 'Lien magnet, désactivé dans Paramètres > Blackhole',
       magnetShow: 'Lien magnet, une série a besoin d’un .torrent',
     },
     shows: {
@@ -64,7 +64,7 @@ export default {
       updater: 'sensorr-updater a répondu {status}, {reason}',
     },
     wrapped: {
-      closed: 'Aucune année de leur wrapped n’est ouverte, activez-en une dans les réglages',
+      closed: 'Aucune année de leur wrapped n’est ouverte, activez-en une dans les paramètres',
       email: 'Une adresse mail est requise',
       prune: 'Aucune lecture vue par l’exécution « {seen} », rien n’a été supprimé',
     },

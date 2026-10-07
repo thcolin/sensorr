@@ -13,8 +13,8 @@ export default {
       subject: 'Les mails fonctionnent',
       word: 'Test',
       paragraph: 'Vos amis recevront depuis cette adresse leur invitation, le mail de bienvenue, les rappels, les films prêts à regarder et leur wrapped.',
-      action: 'Ouvrir les réglages Mail',
-      foot: 'Envoyé par votre Sensorr depuis ses réglages Mail.',
+      action: 'Ouvrir les paramètres Mail',
+      foot: 'Envoyé par votre Sensorr depuis ses paramètres Mail.',
     },
     invitation: {
       subject: '{sender} vous invite à partager vos envies de films',
