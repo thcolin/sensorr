@@ -281,12 +281,12 @@ export const transformMovieDetails = (entity: MovieInterface): MovieDetails => (
           },
         }}
       >
-        {emojize('🗳️', entity.vote_count.toLocaleString())}
+        {emojize('🗳️', entity.vote_count.toLocaleString(i18n.language))}
       </Link>
     ) : null,
     popularity: entity.popularity ? () => (
       <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>
-        {emojize('📣', entity.popularity.toLocaleString())}
+        {emojize('📣', entity.popularity.toLocaleString(i18n.language))}
       </span>
     ) : null,
     genres: entity.genres?.length ? ({ emoji = true, disabled } = {}) => (

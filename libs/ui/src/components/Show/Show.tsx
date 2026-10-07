@@ -312,10 +312,10 @@ export const transformShowDetails = (entity) => {
         </Link>
       ) : null,
       vote_count: entity.vote_count ? () => (
-        <span title={i18n.t('ui.entity.voteCount')} sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString())}</span>
+        <span title={i18n.t('ui.entity.voteCount')} sx={{ whiteSpace: 'nowrap' }}>{emojize('🗳️', entity.vote_count.toLocaleString(i18n.language))}</span>
       ) : null,
       popularity: entity.popularity ? () => (
-        <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>{emojize('📣', entity.popularity.toLocaleString())}</span>
+        <span title={i18n.t('ui.entity.popularity')} sx={{ whiteSpace: 'nowrap' }}>{emojize('📣', entity.popularity.toLocaleString(i18n.language))}</span>
       ) : null,
     },
   }
