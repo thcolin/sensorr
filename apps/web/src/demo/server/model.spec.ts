@@ -50,6 +50,12 @@ describe('Model', () => {
     expect(page).toMatchObject({ results: [{ _id: 3 }], total_results: 3, total_pages: 2, page: 2, hasNextPage: false })
   })
 
+  it('compares across types as MongoDB does in an aggregation, a date after null', async () => {
+    const episodes = new Model(new Store(seed({ episodes: [{ _id: 1, air_date: new Date('2008-01-20') }, { _id: 2, air_date: null }] })), 'episodes', {})
+    const [{ aired }] = await episodes.aggregate([{ $group: { _id: null, aired: { $sum: { $cond: [{ $gt: ['$air_date', null] }, 1, 0] } } } }])
+    expect(aired).toBe(1)
+  })
+
   it('sends a change after a write, as a change stream would', async () => {
     const movies = moviesOf(new Store(seed({ movies: [{ _id: 603 }] })))
     const changes = []

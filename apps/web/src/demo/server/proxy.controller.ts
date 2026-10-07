@@ -1,12 +1,13 @@
 import { BadGatewayException, Controller, Get, Query } from './shims/nest-common'
 import { INDEXER, searchOf } from '../releases'
+import { tmdb } from '../../store/tmdb'
 
 // Stands for `apps/api/src/app/proxy/proxy.controller.ts`: the page reaches its indexers through `/api/proxy`, and
 // the demo has one, which answers here as a Torznab indexer answers in JSON
 @Controller('proxy')
 export class ProxyController {
   @Get()
-  get(@Query('target') target: string) {
+  async get(@Query('target') target: string) {
     const url = new URL(target)
 
     if (!`${url.origin}${url.pathname}`.startsWith(INDEXER.url)) {
@@ -19,8 +20,12 @@ export class ProxyController {
       return { caps: { searching: { 'tv-search': { available: 'yes', supportedParams: 'q,season,ep' } } } }
     }
 
-    // A movie is searched as its title then its year
-    const [, title, year] = /^(.*?)(?:\s+(\d{4}))?$/.exec((params.q || '').trim())
+    // A movie is searched by its title alone, and an indexer names its releases with the year, which Sensorr parses
+    // to tell the title apart: the demo asks TMDB for it
+    const [, title, searched] = /^(.*?)(?:\s+(\d{4}))?$/.exec((params.q || '').trim())
+    const year = searched || (params.t === 'tvsearch' ? undefined : await tmdb.fetch('search/movie', { query: title })
+      .then(({ results }) => `${results?.[0]?.release_date || ''}`.slice(0, 4) || undefined)
+      .catch(() => undefined))
 
     return {
       items: searchOf({

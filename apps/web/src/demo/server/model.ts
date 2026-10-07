@@ -1,5 +1,14 @@
-import { find, aggregate } from 'mingo'
-import { update as updateObject } from 'mingo'
+import { Context, update as updateObject } from 'mingo'
+import { Aggregator } from 'mingo/aggregator'
+import { Query as MingoQuery } from 'mingo/query'
+import { evalExpr } from 'mingo/core'
+import { compare } from 'mingo/util'
+import * as accumulator from 'mingo/operators/accumulator'
+import * as expression from 'mingo/operators/expression'
+import * as pipeline from 'mingo/operators/pipeline'
+import * as projection from 'mingo/operators/projection'
+import * as query from 'mingo/operators/query'
+import * as window from 'mingo/operators/window'
 import { Store } from './store'
 
 // The part of a mongoose model `apps/api` calls, on a collection the demo keeps in memory. Mongoose casts what it
@@ -8,6 +17,28 @@ import { Store } from './store'
 
 type Properties = { [key: string]: { type?: any, default?: any } }
 type Change = { operationType: 'insert' | 'update' | 'delete', ns: { db: string, coll: string }, documentKey: { _id: any }, fullDocument?: any }
+
+// An aggregation expression compares values of different types in the BSON order, where null comes before a date:
+// `{ $gt: ['$air_date', null] }` holds for any dated episode in `ShowsService.getProgress`. mingo compares them as a
+// query does, and only values of the same type, so the four comparisons are its `compare`, which sorts in that order
+const bson = (test: (order: number) => boolean) => (obj: any, expr: any, options: any) => {
+  const [a, b] = evalExpr(obj, expr, options) as any[]
+  return test(compare(a, b))
+}
+
+// mingo merges a context given to `find` or `aggregate` after its own, whose operators then win: the whole set is
+// built here, for the base classes
+const context = Context.init({
+  accumulator,
+  pipeline,
+  projection,
+  query,
+  window,
+  expression: { ...expression, $gt: bson((order) => order > 0), $gte: bson((order) => order >= 0), $lt: bson((order) => order < 0), $lte: bson((order) => order <= 0) },
+} as any)
+
+const find = (collection: any[], criteria: any, projected?: any) => new MingoQuery(criteria, { context }).find(collection, projected)
+const aggregate = (collection: any[], stages: any[]) => new Aggregator(stages, { context }).run(collection)
 
 const OPERATORS = ['$in', '$nin', '$eq', '$ne', '$gt', '$gte', '$lt', '$lte']
 
@@ -173,7 +204,7 @@ export class Model {
   }
 
   // Used by Query, which resolves on the next tick like a database round trip
-  read(filter: any, projection: any, { sort, skip, limit }: { sort?: any, skip?: number, limit?: number }) {
+  read(filter: any, projection: any, { sort, skip, limit }: { sort?: any, skip?: number, limit?: number }): any[] {
     let cursor = find(this.docs, this.castFilter(filter), normalizeProjection(projection))
 
     if (sort) {

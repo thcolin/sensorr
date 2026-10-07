@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TMDB } from '@sensorr/tmdb'
 
-const tmdb = new TMDB({})
+export const tmdb = new TMDB({})
 
 export const useTMDB = () => tmdb
 
