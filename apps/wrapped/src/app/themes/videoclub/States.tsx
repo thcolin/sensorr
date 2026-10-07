@@ -1,10 +1,11 @@
 import type { NoticeProps } from '../types'
+import { t } from '../../sheets'
 import './videoclub.css'
 
 // The fascia over the door, the same box as on the opening sheet
 const Fascia = () => (
   <span className="videoclub-fascia" aria-hidden="true">
-    <span className="videoclub-fascia-face">Vidéoclub</span>
+    <span className="videoclub-fascia-face">{t('wrapped.themes.videoclub')}</span>
   </span>
 )
 
@@ -12,7 +13,7 @@ const Fascia = () => (
 export const Loading = () => (
   <main className="videoclub videoclub-state videoclub-waiting" aria-busy="true">
     <Fascia />
-    <p className="visually-hidden">Chargement de la rétrospective</p>
+    <p className="visually-hidden">{t('wrapped.loading')}</p>
   </main>
 )
 

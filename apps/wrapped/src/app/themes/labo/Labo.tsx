@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Trans } from 'react-i18next'
 import { useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, type SheetModel, type Stat } from '../../sheets'
+import { QUOTED, months, number, quantity, t, type SheetModel, type Stat } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, ThemeProps } from '../types'
 import './labo.css'
 
@@ -17,14 +19,11 @@ export const rng = (seed: number) => {
 const two = (value: number) => String(value).padStart(2, '0')
 
 // A quantity is written over the print in grease pencil with its unit: not a date, nor the digits of a name or of a title in quotes
-const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
-const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
-const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(QUOTED).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
-  for (const match of part.matchAll(QUANTITY)) {
+  for (const match of part.matchAll(quantity())) {
     bits.push(part.slice(from, match.index), (
       <b key={`${index}-${match.index}`} className="labo-fig">
         <span className="labo-fig-n">{match[1]}</span>{match[2] && <> {match[2]}</>}
@@ -36,7 +35,7 @@ export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((par
 })
 
 // A paragraph of the model cut at its sentences
-export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«“])/)
 
 // The whole page is one strip of film: every sheet is a stretch of it, printed along both edges
 const Labo = ({ share, sheets, colophon, art }: ThemeProps) => {
@@ -76,12 +75,14 @@ const Labo = ({ share, sheets, colophon, art }: ThemeProps) => {
 
 export default Labo
 
+const SIDES = ['left', 'right']
+
 // Edge printing: film stock, the reel's name and a key number that climbs down the page
 export const Edges = ({ index, reel }: { index: number, reel?: Reel }) => {
   const marks = [`KODAK 5219`, reel && `${reel.name.toUpperCase()} ${reel.year}`, `▸ ${two(index * 4 + 1)}`, 'SAFETY FILM', `▸ ${two(index * 4 + 3)}`].filter(Boolean) as string[]
   return (
     <>
-      {['left', 'right'].map((side) => (
+      {SIDES.map((side) => (
         <div key={side} className={`labo-edge labo-edge-${side}`} aria-hidden="true">
           {marks.map((mark) => <span key={mark}>{mark}</span>)}
         </div>
@@ -290,7 +291,7 @@ const Rank = ({ sheet, index, reel }: { sheet: Of<'rank'>, index: number, reel: 
       </div>
       <ol ref={ref} className="labo-crowd" data-draw={draw} aria-hidden="true">
         {Array.from({ length: sheet.users }, (_, seat) => seat === sheet.rank - 1
-          ? <li key={seat} className="labo-crowd-you"><Ring /><span className="labo-grease">toi</span></li>
+          ? <li key={seat} className="labo-crowd-you"><Ring /><span className="labo-grease">{t('wrapped.labo.you')}</span></li>
           : <li key={seat} />)}
       </ol>
     </Sheet>
@@ -300,10 +301,10 @@ const Rank = ({ sheet, index, reel }: { sheet: Of<'rank'>, index: number, reel: 
 // The printer lights of the form: the reader's hours, the median's and the first viewer's, each a density on the strip
 export const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
   const lights = [
-    { label: 'Toi', hours: sheet.hours, you: true },
-    { label: 'Médiane', hours: sheet.median },
+    { label: t('wrapped.common.you'), hours: sheet.hours, you: true },
+    { label: t('wrapped.common.median'), hours: sheet.median },
     // An edition frozen before the first viewer's hours were kept does not know them
-    ...(sheet.max !== null && sheet.rank !== 1 ? [{ label: '1er', hours: sheet.max }] : []),
+    ...(sheet.max !== null && sheet.rank !== 1 ? [{ label: t('wrapped.labo.first'), hours: sheet.max }] : []),
   ]
   const top = Math.max(...lights.map((light) => light.hours), 1)
 
@@ -312,7 +313,7 @@ export const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
       {lights.map((light) => (
         <div key={light.label} className={'you' in light ? 'labo-lights-you' : undefined}>
           <dt>{light.label}</dt>
-          <dd className="labo-felt">{number.format(light.hours)}{THIN}h</dd>
+          <dd className="labo-felt">{t('wrapped.labo.hours', { hours: number.format(light.hours) })}</dd>
           <span className="labo-lights-bar" style={{ '--share': Math.max(light.hours / top, 0.02) } as React.CSSProperties} aria-hidden="true" />
         </div>
       ))}
@@ -322,7 +323,7 @@ export const Lights = ({ sheet }: { sheet: Of<'rank'> }) => {
 
 export const FicheHead = ({ reel, children }: { reel: Reel, children?: ReactNode }) => (
   <header className="labo-fiche-head" aria-hidden="true">
-    <span>Fiche d’étalonnage<br />Bobine {reel.year}</span>
+    <span><Trans i18nKey="wrapped.labo.fiche" values={{ year: reel.year }} components={[<br />]} /></span>
     <strong>{reel.name}</strong>
     {children}
   </header>
@@ -386,7 +387,7 @@ const Months = ({ sheet, index, reel, art }: { sheet: Of<'months'>, index: numbe
       <p className="labo-lede">{sheet.lede}</p>
       <div className="labo-paper">
         <div ref={ref} className="labo-planche" role="img" aria-label={sheet.alt} data-draw={draw}>
-          {MONTHS.map((month, row) => {
+          {months().map((month, row) => {
             const show = sheet.shows[row]
             const future = row >= sheet.elapsed
             return (
@@ -394,7 +395,7 @@ const Months = ({ sheet, index, reel, art }: { sheet: Of<'months'>, index: numbe
                 <p className="labo-planche-head">
                   <span>{month}</span>
                   {show && !future && <strong>{show.title}</strong>}
-                  {show && !future && <span>{plural(show.episodes, 'épisode', 'épisodes')}</span>}
+                  {show && !future && <span>{t('wrapped.count.episodes', { count: show.episodes })}</span>}
                 </p>
                 {show && !future
                   ? <Cells count={show.episodes} src={art(show, 'art', 640) || art(show, 'thumb', 320)} seed={row * 97 + show.episodes} />
@@ -407,7 +408,7 @@ const Months = ({ sheet, index, reel, art }: { sheet: Of<'months'>, index: numbe
         {sheet.peak && (
           <div className="labo-planche-foot">
             <Frame poster={sheet.peak.show} art={art} width={320} code={`${sheet.peak.index + 1}A`} />
-            <p className="labo-grease labo-planche-note">En {sheet.peak.month}{THIN}: {figures(sheet.peak.bare)}</p>
+            <p className="labo-grease labo-planche-note"><Sentence i18nKey="wrapped.sheets.months.peak.month" values={{ month: sheet.peak.month }} text={sheet.peak.bare} figures={figures} /></p>
           </div>
         )}
       </div>
@@ -457,6 +458,9 @@ const Binge = ({ sheet, index, reel, art, episodes }: { sheet: Of<'binge'>, inde
   )
 }
 
+// The hour the projector stopped, written over the print like a figure
+export const Hour = ({ children }: { children?: ReactNode }) => <b className="labo-fig"><span className="labo-fig-n">{children}</span></b>
+
 // The tail of the reel, the hour the projector stopped marked on the leader
 const Night = ({ sheet, index, reel, art }: { sheet: Of<'night'>, index: number, reel: Reel, art: Art }) => (
   <Sheet sheet={sheet} index={index} reel={reel}>
@@ -464,13 +468,13 @@ const Night = ({ sheet, index, reel, art }: { sheet: Of<'night'>, index: number,
     <div className="labo-tail">
       <Frame poster={sheet.poster} art={art} code="99A" />
       <div className="labo-tail-leader" aria-hidden="true">
-        <span className="labo-tail-mark">Queue</span>
+        <span className="labo-tail-mark">{t('wrapped.labo.tail')}</span>
         <span className="labo-tail-hour">{sheet.end}</span>
-        <span className="labo-tail-mark">Fin de bobine</span>
+        <span className="labo-tail-mark">{t('wrapped.labo.reelEnd')}</span>
       </div>
     </div>
     <p className="labo-intro">{sheet.date}</p>
-    <p className="labo-body">Tu éteins à <b className="labo-fig"><span className="labo-fig-n">{sheet.end}</span></b>{figures(sheet.after)}.</p>
+    <p className="labo-body"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<Hour />} text={sheet.after} figures={figures} /></p>
     {sheet.listing
       ? (
         <div className="labo-log">
@@ -498,7 +502,7 @@ const Server = ({ sheet, index, reel, art }: { sheet: Of<'server'>, index: numbe
       <div ref={ref} className="labo-ringed" data-draw={draw}>
         <Frame poster={sheet.poster} art={art} code="0A" />
         <Ring />
-        {sheet.first && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">Copie zéro</span>}
+        {sheet.first && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">{t('wrapped.labo.zeroCopy')}</span>}
       </div>
       <h3 className="labo-name">{sheet.title}</h3>
       {sentences(sheet.bare).map((sentence) => <p key={sentence} className="labo-body">{figures(sentence)}</p>)}
@@ -553,7 +557,7 @@ const Figure = ({ sheet, index, reel, art }: { sheet: Of<'figure'>, index: numbe
 // Two reels printed on one frame: where they overlap, the titles both viewers saw
 export const Exposure = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
   <div className="labo-exposure">
-    <p className="labo-exposure-reel labo-exposure-you" aria-hidden="true"><b>Toi</b><span>{number.format(sides.you)}</span></p>
+    <p className="labo-exposure-reel labo-exposure-you" aria-hidden="true"><b>{t('wrapped.common.you')}</b><span>{number.format(sides.you)}</span></p>
     <p className="labo-exposure-reel labo-exposure-them" aria-hidden="true"><b>{name}</b>{sides.them !== null && <span>{number.format(sides.them)}</span>}</p>
     <p className="labo-exposure-shared"><span aria-hidden="true">{number.format(count)}</span><span className="visually-hidden">{spoken}</span></p>
   </div>
@@ -605,7 +609,7 @@ const Genre = ({ sheet, index, reel, art }: { sheet: Of<'genre'>, index: number,
         <Title lines={sheet.lines} className="labo-fiche-title" />
         <dl className="labo-fiche-values">
           <div>
-            <dt aria-hidden="true">Dominante</dt>
+            <dt aria-hidden="true">{t('wrapped.labo.dominant')}</dt>
             <dd className="labo-felt labo-felt-large">{sheet.name}</dd>
           </div>
         </dl>
@@ -617,7 +621,7 @@ const Genre = ({ sheet, index, reel, art }: { sheet: Of<'genre'>, index: number,
           </p>
         )}
         {lead && !!lead.posters.length && <Strip posters={lead.posters} art={art} start={index * 4 + 4} titled={!(lead.posters.length === 1 && lead.name.includes(lead.posters[0].title))} />}
-        <span className="labo-stamp labo-stamp-ok" aria-hidden="true">Bon à tirer</span>
+        <span className="labo-stamp labo-stamp-ok" aria-hidden="true">{t('wrapped.labo.approved')}</span>
       </div>
     </Sheet>
   )
@@ -631,7 +635,7 @@ const Finale = ({ sheet, index, reel, art }: { sheet: Of<'finale'>, index: numbe
     <h3 className="labo-name">{sheet.title}</h3>
     <div className="labo-finale-date">
       <p className="labo-intro">{sheet.date}</p>
-      {!sheet.closed && <span className="labo-stamp labo-stamp-draft" aria-hidden="true">Provisoire</span>}
+      {!sheet.closed && <span className="labo-stamp labo-stamp-draft" aria-hidden="true">{t('wrapped.common.draft')}</span>}
     </div>
     <div className="labo-burn">
       <p className="labo-burn-end">{sheet.end}</p>

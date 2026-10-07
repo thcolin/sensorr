@@ -3,8 +3,8 @@ export const WRAPPED_TIME_ZONE = 'Europe/Paris'
 // The looks of the wrapped page, the same list as `WRAPPED_THEMES` in `@sensorr/config`
 export type WrappedTheme = 'affiche' | 'labo' | 'tele' | 'videoclub' | 'scenario'
 
-// Each look as the page names it to the friend
-// In the order Settings and the page list them
+// Each look, in the order Settings and the page list them, under its French name
+// What a reader sees is `wrapped.themes.<look>` of `@sensorr/i18n`, this library is bundled where i18n is not
 export const WRAPPED_THEME_NAMES: Record<WrappedTheme, string> = {
   tele: 'Télé-magazine',
   labo: 'Labo 35 mm',

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Wrapped, WrappedTheme } from '@sensorr/sensorr'
+import i18n, { LANGUAGES, languageOf } from '@sensorr/i18n/wrapped'
+import { useTranslation } from 'react-i18next'
 import { WrappedPage } from './Wrapped'
 import { known, read } from './look'
 import { DEFAULT_THEME, STATES } from './themes'
@@ -17,6 +19,9 @@ export interface Share {
   // The look the page opens with, and whether the friend may switch it
   // `looks`: the ones Thomas offers, the switch lists no other
   look: { theme: WrappedTheme, choice: boolean, looks?: WrappedTheme[] }
+  // The language and the TMDB region set in Sensorr, the page speaks the friend's browser language before the region
+  language?: string
+  region?: string
   wrapped: Wrapped
 }
 
@@ -37,13 +42,20 @@ const asked = window.location.pathname.replace(/^\/wrapped\/?/, '').split('/')[1
 const year = /^\d{4}$/.test(asked) ? Number(asked) : null
 // The look this link last showed on this device, so the wait and the notices already wear it
 const shown = read('shown', token)
+// The API's browser asks for a card in the language the friend's page speaks: `?lang=`, over everything else
+const lang = new URLSearchParams(window.location.search).get('lang')
+const forced = lang && LANGUAGES.includes(lang) ? lang : null
+forced && i18n.changeLanguage(forced)
 
 // Before any look is known, the wait belongs to none of them
-const Waiting = () => (
-  <main className="waiting" aria-busy="true">
-    <p className="visually-hidden">Chargement de la rétrospective</p>
-  </main>
-)
+const Waiting = () => {
+  const { t } = useTranslation()
+  return (
+    <main className="waiting" aria-busy="true">
+      <p className="visually-hidden">{t('wrapped.loading')}</p>
+    </main>
+  )
+}
 
 const States = ({ notice }: { notice?: NoticeProps }) => {
   // A notice on a device that never showed a look asks the server for the one Thomas set
@@ -77,6 +89,7 @@ const States = ({ notice }: { notice?: NoticeProps }) => {
 }
 
 export const App = () => {
+  const { t } = useTranslation()
   const [state, setState] = useState<State>({ status: 'loading' })
 
   const load = useCallback(async () => {
@@ -100,7 +113,8 @@ export const App = () => {
         window.history.replaceState(null, '', `/wrapped/${encodeURIComponent(token)}${window.location.search}${window.location.hash}`)
       }
 
-      document.title = `Rétrospective de ${share.name} ${share.year}`
+      await i18n.changeLanguage(forced || languageOf({ language: share.language, region: share.region }))
+      document.title = i18n.t('wrapped.title', { name: share.name, year: share.year })
       setState({ status: 'done', share })
     } catch (error) {
       console.error('Unable to load the wrapped', error)
@@ -116,9 +130,9 @@ export const App = () => {
     case 'loading':
       return <States />
     case 'gone':
-      return <States notice={{ lines: ['Séance', 'annulée'], text: 'Ce lien n’est plus valable. Demande‑en un nouveau à Thomas.' }} />
+      return <States notice={{ lines: t('wrapped.notices.gone.lines').split('\n'), text: t('wrapped.notices.gone.text') }} />
     case 'error':
-      return <States notice={{ lines: ['La projection', 'a sauté'], text: 'La rétrospective n’a pas pu se charger. Vérifie ta connexion, puis relance.', action: { label: 'Relancer', onClick: load } }} />
+      return <States notice={{ lines: t('wrapped.notices.error.lines').split('\n'), text: t('wrapped.notices.error.text'), action: { label: t('wrapped.notices.error.retry'), onClick: load } }} />
     case 'done':
       return <WrappedPage share={state.share} token={token} />
   }

@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, quoted, type SheetModel, type Stat } from '../../sheets'
+import { QUOTED, months, number, quantity, quoted, suffix, t, type SheetModel, type Stat } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, ThemeProps } from '../types'
 import './videoclub.css'
 
@@ -12,14 +13,11 @@ const tapeOf = (key: string) => TAPES[[...key].reduce((sum, char) => (sum * 31 +
 const tilts = (count: number) => Array.from({ length: count }, (_, index) => count > 1 ? (index / (count - 1) - 0.5) * 24 : 0)
 
 // A quantity is priced with its unit: not a date, nor the digits of a name or of a title in quotes
-const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
-const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
-const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(QUOTED).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
-  for (const match of part.matchAll(QUANTITY)) {
+  for (const match of part.matchAll(quantity())) {
     bits.push(part.slice(from, match.index), (
       <b key={`${index}-${match.index}`} className="videoclub-figure">
         <span className="videoclub-figure-n">{match[1]}</span>{match[2] && <> {match[2]}</>}
@@ -31,7 +29,7 @@ export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((par
 })
 
 // A paragraph of the model cut at its sentences
-export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«“])/)
 
 // Price tags hung side by side, one figure each, the unit under it
 export const Tags = ({ stats }: { stats: Stat[] }) => (
@@ -164,7 +162,7 @@ export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art,
               art={art}
               className={poster === sheet.posters[0] ? 'videoclub-box-hero' : undefined}
               tilt={tilts(order.length)[index]}
-              sticker={poster.key === first ? '1re location' : undefined}
+              sticker={poster.key === first ? t('wrapped.videoclub.firstRental') : undefined}
             />
           ))}
         </div>
@@ -172,7 +170,7 @@ export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art,
       <div className="videoclub-counter">
         {sheet.lede && <p className="videoclub-lede">{figures(sheet.lede)}</p>}
         <div className="videoclub-ticket videoclub-ticket-receipt">
-          <p className="videoclub-ticket-head" aria-hidden="true">Vidéoclub · N° {sheet.year}</p>
+          <p className="videoclub-ticket-head" aria-hidden="true">{t('wrapped.videoclub.receipt', { year: sheet.year })}</p>
           <ul>
             {sheet.figures.map((figure) => <li key={figure}>{figures(figure)}</li>)}
           </ul>
@@ -189,7 +187,7 @@ export const Rank = ({ sheet, name, server }: { sheet: Of<'rank'>, name: string,
     <div className="videoclub-card">
       <p className="visually-hidden">{sheet.rank}{sheet.suffix} {sheet.unit}</p>
       <div className="videoclub-card-face" aria-hidden="true">
-        <span className="videoclub-card-brand">Vidéoclub</span>
+        <span className="videoclub-card-brand">{t('wrapped.themes.videoclub')}</span>
         {server && <span className="videoclub-card-server">{server}</span>}
         <span className="videoclub-card-chip" />
         <span className="videoclub-card-number">{String(sheet.rank).padStart(4, '0')} / {number.format(sheet.users)}</span>
@@ -211,16 +209,16 @@ const Board = ({ sheet }: { sheet: Of<'rank'> }) => {
 
   return (
     <div className="videoclub-board">
-      <p className="videoclub-board-head" aria-hidden="true">Meilleurs clients</p>
+      <p className="videoclub-board-head" aria-hidden="true">{t('wrapped.videoclub.topCustomers')}</p>
       <ol aria-hidden="true">
         {[...new Set([1, sheet.rank, middle, sheet.users])].sort((a, b) => a - b).flatMap((rank, index, ranks) => {
           const hours = hoursOf(rank)
           return [
             index > 0 && rank - ranks[index - 1] > 1 && <li key={`gap-${rank}`} className="videoclub-board-gap">…</li>,
             <li key={rank} className={rank === sheet.rank ? 'videoclub-board-you' : undefined}>
-              <span>{rank}{rank === 1 ? 'er' : 'e'}</span>
-              <span>{rank === sheet.rank ? 'Toi' : rank === middle ? 'Médiane' : ''}</span>
-              <span>{hours !== null ? `${number.format(hours)} h` : ''}</span>
+              <span>{rank}{suffix(rank)}</span>
+              <span>{rank === sheet.rank ? t('wrapped.common.you') : rank === middle ? t('wrapped.common.median') : ''}</span>
+              <span>{hours !== null ? t('wrapped.common.hours', { hours: number.format(hours) }) : ''}</span>
             </li>,
           ]
         })}
@@ -237,7 +235,7 @@ const Streak = ({ sheet, art }: { sheet: Of<'streak'>, art: Art }) => (
     <div className="videoclub-pair">
       <Box poster={sheet.poster} art={art} className="videoclub-box-large" tilt={-8} />
       <div className="videoclub-ticket videoclub-ticket-stamps">
-        <p className="videoclub-ticket-head" aria-hidden="true">Ticket de location</p>
+        <p className="videoclub-ticket-head" aria-hidden="true">{t('wrapped.videoclub.rentalTicket')}</p>
         <p className="videoclub-ticket-figure">
           <span aria-hidden="true">{number.format(sheet.evenings)}</span>
           <span className="visually-hidden">{sheet.spoken}</span>
@@ -251,14 +249,14 @@ const Streak = ({ sheet, art }: { sheet: Of<'streak'>, art: Art }) => (
     </div>
     {sheet.nights.some(({ poster }) => poster) && (
       <div className="videoclub-run">
-        <p className="videoclub-aisle-tag" aria-hidden="true">Rendus, soir après soir</p>
+        <p className="videoclub-aisle-tag" aria-hidden="true">{t('wrapped.videoclub.returned')}</p>
         <ol className="videoclub-run-tapes" data-long={sheet.nights.length > 16 || undefined}>
-          {sheet.nights.map(({ day, poster }, index) => (
+          {sheet.nights.map(({ short, poster }, index) => (
             <li key={index}>
               {poster
                 ? <Box poster={poster} art={art} width={320} className="videoclub-box-mini" />
                 : <span className="videoclub-run-empty" aria-hidden="true" />}
-              <small>{day.replace(/^(\S+) (\S+).*$/, '$1 $2')}</small>
+              <small>{short}</small>
             </li>
           ))}
         </ol>
@@ -276,13 +274,13 @@ const Months = ({ sheet, art }: { sheet: Of<'months'>, art: Art }) => {
       <Neon lines={sheet.lines} tone="cyan" />
       <p className="videoclub-lede">{sheet.lede}</p>
       <ol className="videoclub-rack" role="img" aria-label={sheet.alt}>
-        {MONTHS.map((month, index) => {
+        {months().map((month, index) => {
           const show = index < elapsed ? shows[index] : null
           return (
             <li key={month} className={`videoclub-rack-row ${index >= elapsed ? 'videoclub-rack-future' : ''} ${peak?.index === index ? 'videoclub-rack-peak' : ''}`}>
               <span className="videoclub-rack-tag">
                 {month}
-                {show && <small><b>{number.format(show.episodes)}</b> {show.episodes > 1 ? 'épisodes' : 'épisode'}</small>}
+                {show && <small><b>{number.format(show.episodes)}</b> {t('wrapped.units.episodes', { count: show.episodes })}</small>}
               </span>
               {show && (
                 <>
@@ -299,7 +297,7 @@ const Months = ({ sheet, art }: { sheet: Of<'months'>, art: Art }) => {
           <Box poster={peak.show} art={art} width={320} tilt={-6} sticker="Top 1" />
           <div className="videoclub-shelf-card">
             <h3>{peak.show.title}</h3>
-            <p>En <strong>{peak.month}</strong>{THIN}: {figures(peak.bare)}</p>
+            <p><Sentence i18nKey="wrapped.sheets.months.peak.month" values={{ month: peak.month }} tag={<strong />} text={peak.bare} figures={figures} /></p>
           </div>
         </div>
       )}
@@ -346,11 +344,11 @@ const Night = ({ sheet, art }: { sheet: Of<'night'>, art: Art }) => (
       <div className="videoclub-returns-slot">
         <Box poster={sheet.poster} art={art} className="videoclub-box-returned" />
       </div>
-      <p className="videoclub-returns-plate" aria-hidden="true">Retours</p>
+      <p className="videoclub-returns-plate" aria-hidden="true">{t('wrapped.videoclub.returns')}</p>
     </div>
     <div className="videoclub-night-text">
       <p className="videoclub-night-date">{sheet.date}</p>
-      <p className="videoclub-lede">Tu éteins à <strong className="videoclub-time">{sheet.end}</strong>{figures(sheet.after)}.</p>
+      <p className="videoclub-lede"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong className="videoclub-time" />} text={sheet.after} figures={figures} /></p>
       {sheet.listing
         ? (
           <div className="videoclub-ticket videoclub-ticket-returns">
@@ -375,7 +373,7 @@ export const Server = ({ sheet, art }: { sheet: Of<'server'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-server" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-spot">
-      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.first ? 'Exclusivité' : 'Même semaine'} />
+      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={t(sheet.first ? 'wrapped.videoclub.exclusive' : 'wrapped.videoclub.sameWeek')} />
     </div>
     <div className="videoclub-shelf-card">
       <h3>{sheet.title}</h3>
@@ -396,7 +394,7 @@ export const Nobody = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => (
     <p className="videoclub-lede">{figures(sheet.details)}</p>
     {!!sheet.posters.length && (
       <div className="videoclub-aisle">
-        <p className="videoclub-aisle-tag" aria-hidden="true">Introuvables</p>
+        <p className="videoclub-aisle-tag" aria-hidden="true">{t('wrapped.videoclub.rarities')}</p>
         <Shelf posters={sheet.posters} art={art} />
       </div>
     )}
@@ -412,7 +410,7 @@ export const Twin = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
     <section className="videoclub-sheet videoclub-twin" aria-label={sheet.label}>
       <Neon lines={sheet.lines || [sheet.label]} tone="pink" />
       <div className="videoclub-loan">
-        <p className="videoclub-loan-head" aria-hidden="true">Fiche de prêt</p>
+        <p className="videoclub-loan-head" aria-hidden="true">{t('wrapped.videoclub.loanCard')}</p>
         <p className="videoclub-loan-figure">
           <span aria-hidden="true">{number.format(sheet.count)}</span>
           <span className="visually-hidden">{sheet.spoken}</span>
@@ -420,8 +418,8 @@ export const Twin = ({ sheet, art }: { sheet: Of<'figure'>, art: Art }) => {
         </p>
         {sheet.sides && (
           <dl className="videoclub-loan-ledger">
-            <div><dt>Toi</dt><dd>{plural(sheet.sides.you, 'titre', 'titres')}</dd></div>
-            {sheet.highlight && sheet.sides.them !== null && <div><dt>{sheet.highlight}</dt><dd>{plural(sheet.sides.them, 'titre', 'titres')}</dd></div>}
+            <div><dt>{t('wrapped.common.you')}</dt><dd>{t('wrapped.count.titles', { count: sheet.sides.you })}</dd></div>
+            {sheet.highlight && sheet.sides.them !== null && <div><dt>{sheet.highlight}</dt><dd>{t('wrapped.count.titles', { count: sheet.sides.them })}</dd></div>}
           </dl>
         )}
         {/* The ledger says the first sentence already */}
@@ -490,7 +488,7 @@ export const Finale = ({ sheet, art }: { sheet: Of<'finale'>, art: Art }) => (
   <section className="videoclub-sheet videoclub-finale" aria-label={sheet.label}>
     <Neon lines={sheet.lines} tone="pink" />
     <div className="videoclub-window" data-closed={sheet.closed}>
-      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.closed ? undefined : 'Provisoire'} />
+      <Box poster={sheet.poster} art={art} className="videoclub-box-large" sticker={sheet.closed ? undefined : t('wrapped.common.draft')} />
       <div className="videoclub-shutter" aria-hidden="true" />
       <p className="videoclub-end">{sheet.end}</p>
     </div>

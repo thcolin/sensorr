@@ -115,7 +115,7 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
           <div key={theme} sx={WrappedLooks.styles.cell} data-off={!looks.includes(theme) || undefined}>
             <div sx={WrappedLooks.styles.look}>
               <Glimpse theme={theme} />
-              <span>{WRAPPED_THEME_NAMES[theme]}</span>
+              <span>{t(`wrapped.themes.${theme}`)}</span>
             </div>
             <div sx={WrappedLooks.styles.offer}>
               <Option
@@ -154,7 +154,7 @@ export const WrappedLooks = ({ form, onSave }: { form: UseFormReturn<any>, onSav
               <select aria-label={t('settings.wrapped.year.look', { year })} value={theme ?? ''} disabled={!enabled} data-any={!theme || undefined} onChange={(event) => change(year, { theme: (event.target.value || null) as WrappedTheme | null })}>
                 <option value=''>{t('settings.wrapped.year.any')}</option>
                 {THEMES.filter((other) => looks.includes(other) || other === theme).map((other) => (
-                  <option key={other} value={other}>{WRAPPED_THEME_NAMES[other]}{looks.includes(other) ? '' : ` · ${t('settings.wrapped.year.offPick')}`}</option>
+                  <option key={other} value={other}>{t(`wrapped.themes.${other}`)}{looks.includes(other) ? '' : ` · ${t('settings.wrapped.year.offPick')}`}</option>
                 ))}
               </select>
               <Icon value='chevron' height='0.75em' width='0.75em' />

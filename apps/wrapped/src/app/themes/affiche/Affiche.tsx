@@ -1,7 +1,8 @@
 import { ReactNode, useCallback, useEffect, useId, useRef } from 'react'
 import { animate, MotionValue, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, number, type SheetModel, type Stat } from '../../sheets'
+import { QUOTED, months, number, quantity, t, type SheetModel, type Stat } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, ThemeProps } from '../types'
 import { Painted, useRevealProgress } from './Painted'
 import { Brushed, Lettering, Sheet, lean } from './Sheet'
@@ -10,14 +11,11 @@ import './affiche.css'
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
 
 // A quantity is lettered with its unit: not a date, nor the digits of a name or of a title in quotes
-const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
-const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
-const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(QUOTED).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
-  for (const match of part.matchAll(QUANTITY)) {
+  for (const match of part.matchAll(quantity())) {
     bits.push(part.slice(from, match.index), (
       <b key={`${index}-${match.index}`} className="daub" style={{ '--lean': `${(lean(match.index || 0, index + 3) - 0.5) * 8}deg` } as React.CSSProperties}>
         <span className="daub-n">{match[1]}</span>{match[2] && <> <span className="daub-unit">{match[2]}</span></>}
@@ -118,7 +116,7 @@ const Streak = ({ sheet, art }: { sheet: Of<'streak'>, art: Art }) => {
       <Lettering className="figure-unit" text={sheet.unit} seed={2} />
       <Tally nights={sheet.nights} lead={sheet.lead ? sheet.poster.key : null} />
       <p className="figure-details">{figures(sheet.details)}</p>
-      {!!others.length && <Strip posters={others} layout="row" caption={(poster) => figures(`${poster.evenings} ${poster.evenings > 1 ? 'soirs' : 'soir'}`)} progress={progress} art={art} />}
+      {!!others.length && <Strip posters={others} layout="row" caption={(poster) => figures(t('wrapped.count.evenings', { count: poster.evenings }))} progress={progress} art={art} />}
     </Sheet>
   )
 }
@@ -183,11 +181,11 @@ const Months = ({ sheet, art }: { sheet: Of<'months'>, art: Art }) => {
         <p className="lede">{sheet.lede}</p>
         <Painted className="year-strips" compose={compose} alt={sheet.alt} progress={repaint} />
         <ol className="year-months" aria-hidden="true">
-          {MONTHS.map((name, index) => <li key={name} className={index >= elapsed ? 'year-month-future' : undefined}>{name[0]}</li>)}
+          {months().map((name, index) => <li key={name} className={index >= elapsed ? 'year-month-future' : undefined}>{name[0]}</li>)}
         </ol>
         {peak && (
           <p className="year-peak">
-            En <span className="year-peak-month">{peak.month}</span>, {figures(peak.text)}
+            <Sentence i18nKey="wrapped.sheets.months.peak.then" values={{ month: peak.month }} tag={<span className="year-peak-month" />} text={peak.text} figures={figures} />
           </p>
         )}
       </Sheet>
@@ -237,7 +235,7 @@ const Night = ({ sheet, art }: { sheet: Of<'night'>, art: Art }) => {
       <div className="night-text">
         <Brushed lines={sheet.lines} seed={8} />
         <p className="night-date">{sheet.date}</p>
-        <p className="night-figures">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
+        <p className="night-figures"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong />} text={sheet.after} figures={figures} /></p>
         {sheet.listing
           ? (
             <ol className="night-schedule" aria-label={sheet.listing}>
@@ -323,7 +321,7 @@ export const Twins = ({ name, count, spoken, sides }: { name: string, count: num
         <circle className="twins-you" cx="140" cy="120" r="108" filter={`url(#${id}-dry)`} />
         <circle className="twins-them" cx="260" cy="120" r="108" filter={`url(#${id}-dry)`} />
       </svg>
-      <p className="twins-side twins-side-you" aria-hidden="true"><span>Toi</span><b>{number.format(sides.you)}</b></p>
+      <p className="twins-side twins-side-you" aria-hidden="true"><span>{t('wrapped.common.you')}</span><b>{number.format(sides.you)}</b></p>
       <p className="twins-side twins-side-them" aria-hidden="true"><span>{name}</span>{sides.them !== null && <b>{number.format(sides.them)}</b>}</p>
       <p className="twins-shared"><span aria-hidden="true">{number.format(count)}</span><span className="visually-hidden">{spoken}</span></p>
     </div>
@@ -400,9 +398,9 @@ const Genre = ({ sheet, art }: { sheet: Of<'genre'>, art: Art }) => {
 export const Rank = ({ sheet }: { sheet: Of<'rank'> }) => {
   // The hours known on the server, each lettered as large as its share of the first viewer's
   const hours = [
-    sheet.max !== null && sheet.rank > 1 && { label: 'Le 1er', hours: sheet.max },
-    { label: 'Toi', hours: sheet.hours, you: true },
-    { label: 'Médiane', hours: sheet.median },
+    sheet.max !== null && sheet.rank > 1 && { label: t('wrapped.affiche.first'), hours: sheet.max },
+    { label: t('wrapped.common.you'), hours: sheet.hours, you: true },
+    { label: t('wrapped.common.median'), hours: sheet.median },
   ].filter(Boolean) as { label: string, hours: number, you?: boolean }[]
   const top = Math.max(...hours.map((entry) => entry.hours), 1)
 
@@ -421,7 +419,7 @@ export const Rank = ({ sheet }: { sheet: Of<'rank'> }) => {
       <ol className="rank-hours" aria-hidden="true">
         {hours.sort((a, b) => b.hours - a.hours).map((entry, index) => (
           <li key={entry.label} className={entry.you ? 'rank-hours-you' : undefined} style={{ '--share': Math.sqrt(entry.hours / top), '--lean': `${(lean(index, 14) - 0.5) * 8}deg` } as React.CSSProperties}>
-            <b>{number.format(entry.hours)}<small>h</small></b>
+            <b>{number.format(entry.hours)}<small>{t('wrapped.affiche.h')}</small></b>
             <span>{entry.label}</span>
           </li>
         ))}
@@ -441,7 +439,7 @@ const Finale = ({ sheet, art }: { sheet: Of<'finale'>, art: Art }) => {
         <Brushed lines={sheet.lines} seed={12} />
         <Lettering as="p" className="finale-title" text={sheet.title} seed={13} />
         <p className="finale-next">{sheet.date}</p>
-        {!sheet.closed && <p className="stamp stamp-finale">Provisoire</p>}
+        {!sheet.closed && <p className="stamp stamp-finale">{t('wrapped.common.draft')}</p>}
         <p className="finale-end">{sheet.end}</p>
       </div>
     </Sheet>

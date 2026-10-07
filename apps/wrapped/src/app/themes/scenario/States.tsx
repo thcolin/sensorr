@@ -1,4 +1,5 @@
 import type { NoticeProps } from '../types'
+import { t } from '../../sheets'
 import './scenario.css'
 
 const Holes = () => (
@@ -16,7 +17,7 @@ export const Loading = () => (
         <div className="scenario-title-block">
           <p className="scenario-title scenario-title-blank" aria-hidden="true">{'​'}<span className="scenario-caret" /></p>
         </div>
-        <p className="visually-hidden">Chargement de la rétrospective</p>
+        <p className="visually-hidden">{t('wrapped.loading')}</p>
       </section>
     </main>
   </div>
@@ -33,8 +34,8 @@ export const Notice = ({ lines, text, action }: NoticeProps) => (
         </div>
         <p className="scenario-action scenario-notice-text">{text}</p>
         {action
-          ? <button className="scenario-retry" type="button" onClick={action.onClick}>{action.label}{' '}:</button>
-          : <p className="scenario-transition" aria-hidden="true">Fondu au noir.</p>}
+          ? <button className="scenario-retry" type="button" onClick={action.onClick}>{t('wrapped.scenario.retry', { label: action.label })}</button>
+          : <p className="scenario-transition" aria-hidden="true">{t('wrapped.scenario.fadeOut')}</p>}
       </section>
     </main>
   </div>
