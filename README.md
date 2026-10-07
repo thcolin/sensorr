@@ -11,8 +11,6 @@
 </p>
 
 <p align="center">
-  <a href="https://thcolin.github.io/sensorr/"><b>Try the demo</b></a>
-  &nbsp;·&nbsp;
   <a href="#install"><b>Install</b></a>
   &nbsp;·&nbsp;
   <a href="#documentation"><b>Documentation</b></a>
@@ -29,7 +27,7 @@
 
 <p align="center">
   <a href="https://thcolin.github.io/sensorr/"><b>Try the demo</b></a>, login <code>demo</code> / <code>demo</code>.<br>
-  It runs in your browser on made-up libraries, and your changes stay there until you reset them.
+  <sub><i>It runs in your browser on made-up libraries, and your changes stay there until you reset them.</i></sub>
 </p>
 
 <p align="center">
