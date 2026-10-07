@@ -1,5 +1,6 @@
 import { memo, useState, useMemo, useEffect, useRef } from 'react'
 import { Palette } from '@sensorr/palette'
+import { FADE } from '../Skeleton/Skeleton'
 
 export const Empty = {
   movie: memo(({ ...props }) => (
@@ -101,8 +102,19 @@ function UIPicture({
     onLoad: (e) => {
       const image = e?.currentTarget as HTMLImageElement
 
-      Promise.resolve(image?.decode?.()).catch(() => null).then(() => {
+      // A decode that fails on an image without pixels, a cached broken one, is a failure: one with pixels is shown
+      Promise.resolve(image?.decode?.()).then(() => true, () => !image || image.naturalWidth > 0).then((decoded) => {
         if (image && image.getAttribute('src') !== current.current) {
+          return
+        }
+
+        if (!decoded) {
+          setSettled({ src: current.current, error: true })
+
+          if (typeof onReady === 'function') {
+            onReady(e, true)
+          }
+
           return
         }
 
@@ -137,7 +149,7 @@ function UIPicture({
     // Fades out as fast as the texts that go back to their bars
     image: {
       opacity: loaded && ready && src && !error ? 1 : 0,
-      transition: loaded && ready && src && !error ? undefined : 'opacity 250ms ease-in-out',
+      transition: loaded && ready && src && !error ? undefined : `opacity ${FADE}ms ease-in-out`,
     },
   }
 
