@@ -22,16 +22,16 @@ const DemoBanner = () => {
 
   return (
     <aside sx={DemoBanner.styles.element} aria-label='Demo'>
-      <Badge emoji='🍿' label='Demo' size='small' />
+      <Badge emoji='🍿' label='Demo' />
       <span sx={{ ...DemoBanner.styles.text, display: failed ? 'block' : ['none', 'block'] }}>
-        {failed ? 'This browser blocks storage, your changes go away on reload' : 'Your changes stay in this browser'}
+        {failed ? 'This browser keeps nothing, your changes go away on reload' : 'Your changes stay in this browser'}
       </span>
       <div sx={DemoBanner.styles.actions}>
         <button type='button' onClick={onReset} aria-label='Reset the demo' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
-          ↺<span sx={DemoBanner.styles.label}>&nbsp;Reset</span>
+          Reset
         </button>
-        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label='Sensorr on GitHub' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
-          ↗<span sx={DemoBanner.styles.label}>&nbsp;GitHub</span>
+        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label='Sensorr on GitHub, in a new tab' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
+          GitHub
         </a>
       </div>
     </aside>
@@ -44,13 +44,13 @@ DemoBanner.styles = {
     alignItems: 'center',
     gap: 8,
     paddingX: 4,
-    paddingY: 8,
+    paddingY: [12, 8],
     backgroundColor: 'grayLighter',
     borderBottom: '1px solid',
     borderColor: 'grayDark',
     fontFamily: 'body',
     fontSize: 5,
-    color: 'textLight',
+    color: 'text',
   },
   text: {
     flex: 1,
@@ -68,14 +68,10 @@ DemoBanner.styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: ['44px', 'auto'],
     minHeight: ['44px', 'auto'],
     paddingX: 6,
-    paddingY: 10,
+    paddingY: 8,
     textDecoration: 'none',
-  },
-  label: {
-    display: ['none', 'inline'],
   },
 }
 

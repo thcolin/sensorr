@@ -123,7 +123,7 @@ Login.styles = {
   tmdb: {
     maxWidth: '14rem',
     marginTop: 4,
-    color: 'grayDark',
+    color: 'text',
     textAlign: 'center',
   },
   form: {

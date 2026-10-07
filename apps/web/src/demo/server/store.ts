@@ -14,7 +14,17 @@ export class Store {
   private readonly pending = new Map<string, ReturnType<typeof setTimeout>>()
   failed = false
 
-  constructor(private readonly seed: Seed, private readonly storage: Storage | null = globalThis.localStorage ?? null) {
+  private readonly storage: Storage | null
+
+  // With every cookie blocked, reading `localStorage` throws: the demo then keeps the visitor's changes in memory
+  constructor(private readonly seed: Seed, storage?: Storage | null) {
+    try {
+      this.storage = storage === undefined ? globalThis.localStorage : storage
+    } catch (err) {
+      this.storage = null
+      this.failed = true
+    }
+
     if (this.read('version') !== seed.version) {
       this.clear()
       this.write('version', seed.version)
