@@ -70,7 +70,8 @@ Capsule.styles = {
     '>label': {
       position: 'relative',
       paddingY: '0.375rem',
-      paddingX: '1rem',
+      // Three options and a long one, `Auto (Français)`, fit a phone
+      paddingX: ['0.625rem', '1rem'],
       borderRadius: '2em',
       fontFamily: 'monospace',
       fontSize: 5,

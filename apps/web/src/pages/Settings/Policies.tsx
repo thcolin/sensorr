@@ -341,8 +341,11 @@ const PolicySettings = forwardRef<any, any>(({
       marginY: 6,
       opacity: overlay ? 0.5 : 1,
     },
+    // One row on a desktop; on a phone the sorting goes under the name, at full width
     container: {
-      display: 'flex',
+      display: ['grid', 'flex'],
+      gridTemplateColumns: 'auto minmax(0, 1fr) auto auto auto auto',
+      gridTemplateAreas: `"grip name default languages remove add" "direction sorting sorting sorting sorting sorting"`,
       alignItems: 'stretch',
       position: 'relative',
       '>*:not(button)': {
@@ -354,11 +357,22 @@ const PolicySettings = forwardRef<any, any>(({
       },
       '>*:first-child': {
         borderTopLeftRadius: '0.25rem !important',
-        borderBottomLeftRadius: '0.25rem !important',
+        borderBottomLeftRadius: ['0rem !important', '0.25rem !important'],
       },
       '>*:last-child': {
         borderTopRightRadius: '0.25rem !important',
-        borderBottomRightRadius: '0.25rem !important',},
+        borderBottomRightRadius: ['0rem !important', '0.25rem !important'],
+      },
+      '>[style*="grid-area: direction"]': {
+        marginTop: ['-1px', '0px'],
+        borderLeft: ['1px solid', 'none'],
+        borderColor: 'grayDark',
+        borderBottomLeftRadius: ['0.25rem !important', '0rem !important'],
+      },
+      '>[style*="grid-area: sorting"]': {
+        marginTop: ['-1px', '0px'],
+        borderBottomRightRadius: ['0.25rem !important', '0rem !important'],
+      },
       '>label': {
         border: '1px solid',
         borderColor: 'grayDark',
@@ -461,6 +475,7 @@ const PolicySettings = forwardRef<any, any>(({
           <div
             onPointerDown={onPointerDown}
             role={role}
+            style={{ gridArea: 'grip' }}
             sx={{
               cursor: 'grab',
               display: 'flex',
@@ -483,6 +498,7 @@ const PolicySettings = forwardRef<any, any>(({
               type='text'
               {...field}
               sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
+              style={{ gridArea: 'name' }}
               placeholder={t('settings.policies.name')}
               required={true}
             />
@@ -491,6 +507,7 @@ const PolicySettings = forwardRef<any, any>(({
         {isDefault && (
           <div
             title={t('settings.policies.default.title')}
+            style={{ gridArea: 'default' }}
             sx={{
               cursor: 'default',
               display: 'flex',
@@ -511,6 +528,7 @@ const PolicySettings = forwardRef<any, any>(({
         )}
         {!!originalLanguages.length && (
           <div
+            style={{ gridArea: 'languages' }}
             title={originalLanguages.map(language => winners[language] === name ? t('settings.policies.languages.own', { language: languages[language]?.name || language }) : t('settings.policies.languages.other', { language: languages[language]?.name || language, policy: winners[language] })).join('\n')}
             sx={{
               cursor: 'default',
@@ -539,6 +557,7 @@ const PolicySettings = forwardRef<any, any>(({
           control={form.control}
           render={({ field: { ref, ...field } }) => (
             <div
+              style={{ gridArea: 'direction' }}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -579,6 +598,7 @@ const PolicySettings = forwardRef<any, any>(({
           render={({ field: { ref, ...field } }) => (
             <select
               {...field}
+              style={{ gridArea: 'sorting' }}
               sx={{ variant: 'select.default', width: 'auto', borderRadius: '0px', paddingX: 4, fontSize: 6, fontFamily: 'monospace' }}
             >
               <option value='size'>{emojize('📦', t('settings.policies.sortings.size'))}</option>
@@ -594,6 +614,7 @@ const PolicySettings = forwardRef<any, any>(({
             render={({ field: { value, ...field } }) => (
               <button
                 type='button'
+                style={{ gridArea: 'remove' }}
                 sx={{ ...styles.button, ...styles.remove }}
                 title={value ? '' : t('settings.policies.remove.title')}
                 onClick={() => {
@@ -610,7 +631,7 @@ const PolicySettings = forwardRef<any, any>(({
           />
         )}
         {behavior === 'create' && (
-          <button type='submit' sx={{ ...styles.button, ...styles.add }} title={t('settings.policies.add')}>
+          <button type='submit' sx={{ ...styles.button, ...styles.add }} style={{ gridArea: 'add' }} title={t('settings.policies.add')}>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
               <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>
