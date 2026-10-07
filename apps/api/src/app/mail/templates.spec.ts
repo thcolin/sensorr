@@ -1,7 +1,7 @@
 import { translatorOf } from '@sensorr/i18n/server'
 import { escape, mails, senderOf, unsubscribePage } from './templates'
 
-const t = translatorOf('en-US')
+const t = translatorOf({ region: 'en-US' })
 
 describe('senderOf', () => {
   it('reads the name of the sender, quoted or not, else the mailbox', () => {
@@ -116,7 +116,7 @@ describe('links', () => {
 
 describe('language', () => {
   it('writes in the language of the TMDB region', () => {
-    const fr = translatorOf('fr-FR')
+    const fr = translatorOf({ region: 'fr-FR' })
     const mail = mails.requests({ t: fr, sender: 'Thomas', name: 'Léa', arrivals: [{ title: 'Dune', detail: '2021' }, { title: 'Andor', detail: '2025' }], unsubscribe: 'u' })
     expect(mail.subject).toBe('2 de vos demandes sont prêtes à regarder')
     expect(mail.html).toContain('<html lang="fr">')
@@ -130,7 +130,7 @@ describe('language', () => {
   })
 
   it('translates the unsubscribe page', () => {
-    expect(unsubscribePage({ t: translatorOf('fr-FR'), kind: 'requests', done: false, found: true })).toContain('le mail hebdomadaire de vos demandes prêtes à regarder')
+    expect(unsubscribePage({ t: translatorOf({ region: 'fr-FR' }), kind: 'requests', done: false, found: true })).toContain('le mail hebdomadaire de vos demandes prêtes à regarder')
     expect(unsubscribePage({ t, kind: 'nope', done: false, found: true })).toContain('This link no longer works')
   })
 })

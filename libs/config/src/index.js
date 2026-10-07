@@ -175,6 +175,11 @@ const schema = {
     format: 'String',
     default: 'fr-FR',
   },
+  language: {
+    doc: 'Language of the interface, the mails and the wrapped; auto follows the browser, then the region',
+    format: ['auto', 'en', 'fr'],
+    default: 'auto',
+  },
   adult: {
     doc: 'Allow adult content from TMDB on Sensorr',
     format: 'Boolean',

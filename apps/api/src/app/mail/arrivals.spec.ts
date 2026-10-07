@@ -1,7 +1,7 @@
 import { translatorOf } from '@sensorr/i18n/server'
 import { arrivalsOf } from './arrivals'
 
-const t = translatorOf('en-US')
+const t = translatorOf({ region: 'en-US' })
 
 describe('arrivalsOf', () => {
   it('lists each movie, and each show once with the episodes that landed, the latest first', () => {

@@ -59,6 +59,7 @@ const Home = ({ ...props }) => {
     tv: rowsOf('tv', config.get('home.tv'), lists),
   }))
   const [adding, setAdding] = useState('')
+  const [language, setLanguage] = useState(config.get('language'))
   const labelOf = useRowLabel(lists)
 
   const rows = homes[home]
@@ -87,6 +88,18 @@ const Home = ({ ...props }) => {
     <Body>
       <section>
         <article>
+          <h2 id='home-language'>{t('settings.home.language.title')}</h2>
+          <p>{t('settings.home.language.help')}</p>
+          <Capsule
+            name='language'
+            labelledBy='home-language'
+            value={language}
+            onChange={(value) => {
+              setLanguage(value)
+              onSave({ language: value }).catch(() => setLanguage(config.get('language')))
+            }}
+            options={['auto', 'en', 'fr'].map((value) => ({ value, label: t(`settings.home.language.options.${value}`) }))}
+          />
           <h2 id='home-home'>{t('settings.sections.home')}</h2>
           <p>
             <Trans t={t} i18nKey='settings.home.intro' components={[<strong />, <strong />, <strong />]} />

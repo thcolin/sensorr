@@ -4,7 +4,7 @@ import en from './translations/en/mail'
 import fr from './translations/fr/mail'
 import { LANGUAGES, languageOf } from './language'
 
-// The API has no browser to ask, it writes in the language of the TMDB region
+// The API has no browser to ask: it writes in the language set in Settings, else the one of the TMDB region
 const i18n = i18next.createInstance()
 
 i18n.use(icuFormat).init({
@@ -20,8 +20,8 @@ i18n.use(icuFormat).init({
   },
 })
 
-export const translatorOf = (region?: string) => {
-  const language = languageOf(region, [])
+export const translatorOf = (config: { language?: string, region?: string }) => {
+  const language = languageOf(config, [])
   return Object.assign(i18n.getFixedT(language), { language })
 }
 

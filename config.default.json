@@ -1,6 +1,7 @@
 {
   "tmdb": "tmdb-api-key",
   "region": "en-US",
+  "language": "auto",
   "adult": false,
   "blackhole": "/blackhole",
   "magnet": false,
