@@ -222,18 +222,24 @@ const Data = ({ ...props }) => {
 
 Data.styles = {
   // The field and its action on one line, as Settings › Lists creates a list
+  // On a phone the button goes under the file, which keeps the room to name it
   pick: {
     display: 'flex',
+    flexDirection: ['column', 'row'],
     alignItems: 'stretch',
     '>input': {
       flex: 1,
       minWidth: 0,
-      borderTopRightRadius: '0rem',
+      borderTopRightRadius: ['0.25em', '0rem'],
       borderBottomRightRadius: '0rem',
+      borderBottomLeftRadius: ['0rem', '0.25em'],
     },
   },
   import: {
     ...Lists.styles.plus,
+    paddingY: ['0.75em', '0px'],
+    borderTopRightRadius: ['0rem', '0.25rem'],
+    borderBottomLeftRadius: ['0.25rem', '0rem'],
     fontFamily: 'heading',
     fontWeight: 'semibold',
     backgroundColor: 'error',

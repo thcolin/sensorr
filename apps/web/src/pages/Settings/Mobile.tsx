@@ -8,7 +8,7 @@ const Mobile = ({ ...props }) => {
 
   return (
   <div sx={{ display: 'flex', alignItems: 'stretch', minHeight: '100%', width: '100%' }}>
-    <div sx={{ flex: 1, overflow: 'auto', paddingX: '2.5em', paddingBottom: 0 }}>
+    <div sx={{ flex: 1, overflow: 'auto', paddingX: ['1.5em', '2.5em'], paddingBottom: 0 }}>
       <h2>{t('settings.mobile.title')}</h2>
       <p>{t('settings.mobile.intro')}</p>
       <h3 sx={{ margin: 12, marginTop: 4 }}>{t('settings.mobile.ios.title')}</h3>
