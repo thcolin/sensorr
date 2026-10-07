@@ -95,10 +95,10 @@ const AIR_DATE = {
 // Beside the month, the count, the view and the filters, as on the movies calendar
 const nav = {
   display: 'grid' as const,
-  gridTemplateColumns: ['minmax(0, 1fr)', 'min-content 1fr min-content min-content min-content'],
+  gridTemplateColumns: ['1fr min-content', 'min-content 1fr min-content min-content min-content'],
   gridTemplateRows: 'auto',
   gap: '2em',
-  gridTemplateAreas: [`"air_date"`, `"title air_date results view toggle"`],
+  gridTemplateAreas: [`"results toggle"`, `"title air_date results view toggle"`],
   '>h4': {
     display: ['none', 'block'],
   },
@@ -106,12 +106,9 @@ const nav = {
 
 const strip = {
   display: 'grid' as const,
-  gridTemplateColumns: 'min-content minmax(0, 1fr) min-content',
+  gridTemplateColumns: 'minmax(0, 1fr) min-content',
   gap: '0em 2em',
-  gridTemplateAreas: [`"results toggle toggle" ". . view"`, ''],
-  '>[style*="grid-area: toggle"]': {
-    justifySelf: 'end',
-  },
+  gridTemplateAreas: [`"air_date air_date" ". view"`, ''],
 }
 
 const aside = {
