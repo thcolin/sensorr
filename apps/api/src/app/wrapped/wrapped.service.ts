@@ -10,6 +10,7 @@ import { MailService } from '../mail/mail.service'
 import { TMDB } from '../plex/image'
 import { mails } from '../mail/templates'
 import { Play, Viewer, Title, Edition } from './wrapped.schema'
+import { coded } from '../errors'
 
 const IMAGE_WIDTHS = [320, 640, 1280]
 const TMDB_SIZES = { 320: 'w342', 640: 'w780', 1280: 'w1280' }
@@ -47,7 +48,7 @@ export class WrappedService {
 
   async prunePlays(seen: string) {
     if (typeof seen !== 'string' || !(await this.playModel.exists({ seen }))) {
-      throw new BadRequestException(`No play seen by run "${seen}", nothing pruned`)
+      throw new BadRequestException(coded('wrapped.prune', `No play seen by run "${seen}", nothing pruned`, { seen }))
     }
 
     const { deletedCount } = await this.playModel.deleteMany({ seen: { $ne: seen } })
@@ -191,7 +192,7 @@ export class WrappedService {
     const year = await this.openedEdition(guest.email)
 
     if (!year) {
-      throw new BadRequestException('No year of their wrapped is open, turn one on in Settings')
+      throw new BadRequestException(coded('wrapped.closed', 'No year of their wrapped is open, turn one on in Settings'))
     }
 
     await this.mailWrapped(guest, year)
@@ -371,7 +372,7 @@ export class WrappedService {
 
   async renewToken(email: string) {
     if (typeof email !== 'string') {
-      throw new BadRequestException('An email is required')
+      throw new BadRequestException(coded('wrapped.email', 'An email is required'))
     }
 
     this.logger.log(`RenewToken "${email}"`)

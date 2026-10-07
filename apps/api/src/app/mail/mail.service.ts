@@ -15,8 +15,12 @@ import { Episode } from '../shows/episode.schema'
 import { Mail, mails, senderOf } from './templates'
 import { arrivalsOf } from './arrivals'
 import { Invitation } from './invitation.schema'
+import { coded } from '../errors'
 
 export const UNSUBSCRIBABLE = ['reconnect', 'requests']
+
+// What a mail needs, named as in the logs
+const SETTINGS = { host: 'SMTP host', from: 'sender', url: 'address of Sensorr' }
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
 // `nx build api` copies `src/assets` into the bundle's folder, in dev and in the image
@@ -44,16 +48,12 @@ export class MailService {
   }
 
   missing(): string[] {
-    return [
-      !this.config.get('mail.host') && 'SMTP host',
-      !this.config.get('mail.from') && 'sender',
-      !this.config.get('mail.url') && 'address of Sensorr',
-    ].filter(Boolean)
+    return Object.keys(SETTINGS).filter((key) => !this.config.get(`mail.${key}`))
   }
 
   enabled(kind: 'welcome' | 'reconnect' | 'requests' | 'wrapped') {
     const missing = this.missing()
-    const reason = missing.length ? `the ${missing.join(', ')} of the Mail settings are missing` : !this.config.get(`mail.send.${kind}`) ? 'it is off in the Mail settings' : null
+    const reason = missing.length ? `the ${missing.map((key) => SETTINGS[key]).join(', ')} of the Mail settings are missing` : !this.config.get(`mail.send.${kind}`) ? 'it is off in the Mail settings' : null
     reason && this.logger.log(`Mail "${kind}" not sent, ${reason}`)
     return !reason
   }
@@ -120,7 +120,7 @@ export class MailService {
     const missing = this.missing()
 
     if (missing.length) {
-      throw new BadRequestException(`Mail is not set up, fill the ${missing.join(', ')} on the Mail settings page`)
+      throw new BadRequestException(coded('mail.unset', `Mail is not set up, fill the ${missing.map((key) => SETTINGS[key]).join(', ')} on the Mail settings page`, { missing }))
     }
   }
 
@@ -145,7 +145,7 @@ export class MailService {
         attachments: mail.picto ? [{ filename: `${mail.picto}.png`, path: path.join(PICTOS, `${mail.picto}.png`), cid: mail.picto }] : [],
       })
     } catch (error) {
-      throw new BadGatewayException(`The SMTP server refused the mail: ${error.message}`)
+      throw new BadGatewayException(coded('mail.refused', `The SMTP server refused the mail: ${error.message}`, { reason: error.message }))
     } finally {
       transport.close()
     }

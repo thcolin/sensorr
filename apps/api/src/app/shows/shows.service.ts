@@ -16,6 +16,7 @@ import { EpisodeDTO } from './episode.dto'
 import { Show as ShowDocument } from './show.schema'
 import { Episode as EpisodeDocument } from './episode.schema'
 import { landedOf } from './arrivals'
+import { coded } from '../errors'
 
 // The changes listenMetadata gathers before it reads them back, in ms
 const METADATA_BATCH = 250
@@ -365,7 +366,7 @@ export class ShowsService {
     this.logger.log(`GetShow "${id}"`)
     const show = await this.showModel.findById(id).lean()
     if (!show) {
-      throw new NotFoundException(`Show ${id} not found`)
+      throw new NotFoundException(coded('shows.unknown', `Show ${id} not found`, { id: String(id) }))
     }
 
     return show

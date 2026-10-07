@@ -3,6 +3,7 @@ import { Response } from 'express'
 import { PlexService } from './plex.service'
 import { imageRequestOf, fallbackOf } from './image'
 import { artworkChoicesOf, ratingKeyOf } from './artworks'
+import { coded } from '../errors'
 
 @Controller('plex')
 export class PlexController {
@@ -36,7 +37,7 @@ export class PlexController {
     const request = imageRequestOf(query)
 
     if (!request) {
-      throw new BadRequestException('Not a Plex artwork path')
+      throw new BadRequestException(coded('plex.artwork', 'Not a Plex artwork path'))
     }
 
     const image = await this.plexService.image(request).catch((err) => {
@@ -65,14 +66,14 @@ export class PlexController {
     const ratingKey = ratingKeyOf(raw)
 
     if (!ratingKey) {
-      throw new BadRequestException('Not a Plex item')
+      throw new BadRequestException(coded('plex.item', 'Not a Plex item'))
     }
 
     try {
       return await this.plexService.candidates(ratingKey)
     } catch (err) {
       this.logger.warn(`Candidates "${ratingKey}", ${err.message}`)
-      throw new HttpException(err.message, 502)
+      throw new HttpException(coded('plex.answered', err.message, { reason: err.message }), 502)
     }
   }
 
@@ -82,14 +83,14 @@ export class PlexController {
     const choices = artworkChoicesOf(body)
 
     if (!ratingKey || !choices) {
-      throw new BadRequestException('Nothing to write on a Plex item')
+      throw new BadRequestException(coded('plex.nothing', 'Nothing to write on a Plex item'))
     }
 
     try {
       return await this.plexService.write(ratingKey, choices)
     } catch (err) {
       this.logger.warn(`Write "${ratingKey}", ${err.message}`)
-      throw new HttpException(err.message, 502)
+      throw new HttpException(coded('plex.answered', err.message, { reason: err.message }), 502)
     }
   }
 }

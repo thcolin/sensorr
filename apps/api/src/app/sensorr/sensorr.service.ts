@@ -8,14 +8,15 @@ import unzipper from 'unzipper'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Observable, Subject, merge, of, tap } from 'rxjs'
-import { ConflictException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
+import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { DUMP_ENTRY_MAX, DumpManifest, dumpManifestError, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
+import { DUMP_ENTRY_MAX, DUMP_FORMAT, DumpManifest, dumpManifestError, isDumpManifest, isJob, isMagnet, torrentFiles, TorrentFiles, MEDIA } from '@sensorr/sensorr'
 import { ReleaseDTO } from '../movies/release.dto'
 import { ConfigService } from '../config/config.service'
 import { Metafile as MetafileDocument } from './metafile.schema'
 import { lockOf } from './lock'
+import { coded } from '../errors'
 
 const moduleDir = dirname(fileURLToPath(import.meta.url))
 const SENSORR_BIN = process.env.NX_SENSORR_BIN || path.resolve(`${moduleDir}/../../../../../bin/sensorr`)
@@ -26,11 +27,11 @@ const showTorrentOf = (buffer: Uint8Array): TorrentFiles => {
   try {
     torrent = torrentFiles(buffer)
   } catch (error) {
-    throw new UnprocessableEntityException(error.message)
+    throw new UnprocessableEntityException(coded('torrent.invalid', error.message, { reason: error.message }))
   }
 
   if (!torrent.files.some(({ path }) => MEDIA.test(path))) {
-    throw new UnprocessableEntityException('Invalid .torrent, no video file')
+    throw new UnprocessableEntityException(coded('torrent.video', 'Invalid .torrent, no video file'))
   }
 
   return torrent
@@ -54,11 +55,11 @@ export const manifestOf = async (archive: Promise<any>): Promise<DumpManifest> =
   const entry = directory?.files.find(({ path }) => path === 'manifest.json')
 
   if (!entry) {
-    throw new UnprocessableEntityException('Not a Sensorr dump, the archive has no manifest.json')
+    throw new UnprocessableEntityException(coded('dump.noManifest', 'Not a Sensorr dump, the archive has no manifest.json'))
   }
 
   if (entry.uncompressedSize > DUMP_ENTRY_MAX) {
-    throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is too large')
+    throw new UnprocessableEntityException(coded('dump.manifestSize', 'Not a Sensorr dump, its manifest.json is too large'))
   }
 
   let manifest
@@ -66,13 +67,13 @@ export const manifestOf = async (archive: Promise<any>): Promise<DumpManifest> =
   try {
     manifest = JSON.parse((await entry.buffer()).toString())
   } catch {
-    throw new UnprocessableEntityException('Not a Sensorr dump, its manifest.json is not JSON')
+    throw new UnprocessableEntityException(coded('dump.manifestJson', 'Not a Sensorr dump, its manifest.json is not JSON'))
   }
 
   const error = dumpManifestError(manifest)
 
   if (error) {
-    throw new UnprocessableEntityException(error)
+    throw new UnprocessableEntityException(isDumpManifest(manifest) ? coded('dump.format', error, { format: manifest.format, expected: DUMP_FORMAT }) : coded('dump.notManifest', error))
   }
 
   return manifest
@@ -98,7 +99,7 @@ export class SensorrService {
     let res, buffer
 
     if (magnet && (kind === 'show' || !this.configService.config.get('magnet'))) {
-      throw new UnprocessableEntityException(kind === 'show' ? 'Magnet link, a show needs a .torrent' : 'Magnet link, turned off in Settings > Blackhole')
+      throw new UnprocessableEntityException(kind === 'show' ? coded('release.magnetShow', 'Magnet link, a show needs a .torrent') : coded('release.magnetOff', 'Magnet link, turned off in Settings > Blackhole'))
     }
 
     // An accepted release has already left the cache, so it is fetched again from its indexer
@@ -166,7 +167,7 @@ export class SensorrService {
     const name = [command, type].filter(Boolean).join(' ')
 
     if (!isJob(command, type)) {
-      throw new NotFoundException(`Unknown Sensorr job "${name}"`)
+      throw new NotFoundException(coded('jobs.unknown', `Unknown Sensorr job "${name}"`, { job: name }))
     }
 
     return this.spawn(name, [command, type].filter(Boolean), { command, type, cron })
@@ -176,12 +177,12 @@ export class SensorrService {
     const entries = await unzipper.Open.buffer(buffer).then(({ files }) => files.map(({ path }) => path), () => [])
 
     if (!entries.some((entry) => ['movies.txt', 'stars.txt'].includes(entry))) {
-      throw new UnprocessableEntityException('Not a 0.x dump, the archive has neither movies.txt nor stars.txt')
+      throw new UnprocessableEntityException(coded('dump.legacy', 'Not a 0.x dump, the archive has neither movies.txt nor stars.txt'))
     }
 
     // A second upload would write its archive before the lock refuses it, and its cleanup would take the running one's
     if (this.running.has('migrate')) {
-      throw new ConflictException('Sensorr job "migrate" is already running')
+      throw new ConflictException(coded('jobs.migrating', 'Sensorr job "migrate" is already running'))
     }
 
     const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'sensorr-migrate-'))
@@ -198,7 +199,7 @@ export class SensorrService {
     const [running] = this.runningJobs()
 
     if (running) {
-      throw new ConflictException(`Sensorr job "${running}" is running, restore once it ends`)
+      throw new ConflictException(coded('jobs.restoreBusy', `Sensorr job "${running}" is running, restore once it ends`, { job: running }))
     }
 
     const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'sensorr-restore-'))
@@ -267,7 +268,7 @@ export class SensorrService {
 
         if (!fulfilled) {
           fulfilled = true
-          reject(new Error(`Sensorr job "${name}" exited (${code}) before it started`))
+          reject(new InternalServerErrorException(coded('jobs.exited', `Sensorr job "${name}" exited (${code}) before it started`, { job: name, code })))
         }
 
         delete this.process[job]
@@ -285,7 +286,7 @@ export class SensorrService {
 
   stopProcess(job: string) {
     if (!this.process[job]) {
-      throw new NotFoundException(`Job ${job} not found or not running`)
+      throw new NotFoundException(coded('jobs.notRunning', `Job ${job} not found or not running`, { job }))
     }
 
     this.logger.log(`StopProcess "${job}" (${[this.process[job].command, this.process[job].type].filter(Boolean).join(' ')})`)

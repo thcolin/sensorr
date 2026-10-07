@@ -5,6 +5,7 @@ import { isJob } from '@sensorr/sensorr'
 import { JobsService } from './jobs.service'
 import { Log as LogDocument } from '../logs/log.schema'
 import { SensorrService } from '../sensorr/sensorr.service'
+import { coded } from '../errors'
 
 @Controller('jobs')
 export class JobsController implements OnApplicationBootstrap {
@@ -33,7 +34,7 @@ export class JobsController implements OnApplicationBootstrap {
   @Post()
   async runJob(@Body() body) {
     if (!isJob(body.command, body.type)) {
-      throw new HttpException(`Unknown Sensorr job "${[body.command, body.type].filter(Boolean).join(' ')}"`, 404)
+      throw new HttpException(coded('jobs.unknown', `Unknown Sensorr job "${[body.command, body.type].filter(Boolean).join(' ')}"`, { job: [body.command, body.type].filter(Boolean).join(' ') }), 404)
     }
 
     try {
@@ -50,7 +51,7 @@ export class JobsController implements OnApplicationBootstrap {
   @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
   async runMigrate(@UploadedFile() archive) {
     if (!archive?.buffer) {
-      throw new BadRequestException('No archive, send the 0.x dump as the "archive" field')
+      throw new BadRequestException(coded('dump.legacyArchive', 'No archive, send the 0.x dump as the "archive" field'))
     }
 
     try {
@@ -66,7 +67,7 @@ export class JobsController implements OnApplicationBootstrap {
   @UseInterceptors(FileInterceptor('archive', { limits: { fileSize: 200 * 1024 * 1024, files: 1 } }))
   async runRestore(@UploadedFile() archive) {
     if (!archive?.buffer) {
-      throw new BadRequestException('No archive, send the dump as the "archive" field')
+      throw new BadRequestException(coded('dump.archive', 'No archive, send the dump as the "archive" field'))
     }
 
     try {

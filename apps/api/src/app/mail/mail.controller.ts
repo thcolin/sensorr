@@ -3,13 +3,14 @@ import { Response } from 'express'
 import { Public } from '../auth/auth.decorators'
 import { MailService, UNSUBSCRIBABLE } from './mail.service'
 import { mails, unsubscribePage } from './templates'
+import { coded } from '../errors'
 
 // One address, nothing a header could be built from
 const ADDRESS = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/
 
 const addressOf = (to: string) => {
   if (typeof to !== 'string' || !ADDRESS.test(to.trim())) {
-    throw new BadRequestException(`"${to}" is not an email address`)
+    throw new BadRequestException(coded('mail.address', `"${to}" is not an email address`, { to }))
   }
 
   return to.trim()
@@ -31,7 +32,7 @@ export class MailController {
   @Post('invitation')
   async invitation(@Body('to') to: { email: string, name?: string }[]) {
     if (!Array.isArray(to) || !to.length || to.length > 200) {
-      throw new BadRequestException('Between 1 and 200 friends to invite')
+      throw new BadRequestException(coded('mail.friends', 'Between 1 and 200 friends to invite'))
     }
 
     const friends = to.map((friend) => ({ email: addressOf(friend?.email), name: typeof friend?.name === 'string' && friend.name.trim() ? friend.name.trim().slice(0, 100) : undefined }))
