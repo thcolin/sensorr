@@ -93,7 +93,7 @@ const SettingsRedirector = ({ ...props }) => {
   }
 
   return (
-    <Navigate replace={true} to='tmdb' />
+    <Navigate replace={true} to='home' />
   )
 }
 
@@ -159,14 +159,14 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path='policies' element={<PoliciesSettings />} />
           <Route path='home' element={<HomeSettings />} />
           <Route path='lists' element={<ListsSettings />} />
-          <Route path='jobs' element={<JobsSettings />} />
+          <Route path='schedule' element={<JobsSettings />} />
           <Route path='friends' element={<FriendsSettings />} />
           <Route path='mail' element={<MailSettings />} />
           <Route path='plex' element={<PlexSettings />} />
           <Route path='tautulli' element={<TautulliSettings />} />
           <Route path='mobile' element={<MobileSettings />} />
           <Route path='update' element={<UpdateSettings />} />
-          <Route path='data' element={<DataSettings />} />
+          <Route path='backup' element={<DataSettings />} />
         </Route>
       </Route>
     </Route>

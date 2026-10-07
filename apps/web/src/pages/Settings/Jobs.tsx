@@ -72,7 +72,7 @@ export const JobsFields = ({ form, compact = false }) => {
 }
 
 const JobsSettings = ({ ...props }) => {
-  useTitle('Settings - Jobs')
+  useTitle('Settings - Schedule')
   const { config } = useConfigContext()
   const { onSave } = useOutletContext() as any
   const form = useForm({ defaultValues: config.getProperties() })
@@ -96,7 +96,7 @@ const JobsSettings = ({ ...props }) => {
             For shows, the <code>📹 Record shows</code> job looks for the wanted episodes of <code>📺 Followed</code> shows, by whole series, then season packs, then episodes; <code>📡 Airing shows</code> looks for episodes aired in the last 7 days.{' '}
             <code>📥 Import shows</code> hard links finished files from staging into the library and marks those episodes <code>📼 Owned</code>.
           </p>
-          <h2>Jobs</h2>
+          <h2>Schedule</h2>
           <p>
             Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
           </p>

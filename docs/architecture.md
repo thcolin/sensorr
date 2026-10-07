@@ -264,7 +264,7 @@ One Mongo database, `sensorr`, thirteen collections. Schemas are Mongoose classe
 | `titles` | `wrapped/wrapped.schema.ts:60` | a movie or a show watched on Plex, keyed by the `title` of its plays |
 | `editions` | `wrapped/wrapped.schema.ts:101` | a guest's wrapped of one year, frozen once `frozen_at` is set |
 
-A dump, Settings › Data or the `dump` job, carries `movies`, `shows`, `episodes` and `persons`, and `config.json` without its secrets ([jobs.md](jobs.md#dump)). The other collections stay out: `log` expires anyway, `guests` and `subscriptions` hold secrets, `blackhole` and `invitations` are rebuilt as jobs run. The wrapped ones stay out by choice, `editions` included, which Tautulli cannot give back once a year is frozen.
+A dump, Settings › Backup or the `dump` job, carries `movies`, `shows`, `episodes` and `persons`, and `config.json` without its secrets ([jobs.md](jobs.md#dump)). The other collections stay out: `log` expires anyway, `guests` and `subscriptions` hold secrets, `blackhole` and `invitations` are rebuilt as jobs run. The wrapped ones stay out by choice, `editions` included, which Tautulli cannot give back once a year is frozen.
 
 The `_id` of a movie, a person, a show and an episode is its TMDB id, not an ObjectId
 (`movie.schema.ts:7-8`, `person.schema.ts:7-8`, `show.schema.ts:7-8`,
