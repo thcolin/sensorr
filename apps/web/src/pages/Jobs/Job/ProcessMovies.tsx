@@ -1,9 +1,9 @@
 import { Fragment, createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Icon, Warning } from '@sensorr/ui'
 import { filesize, useResponsiveValue } from '@sensorr/utils'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import toast from 'react-hot-toast'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useAPI } from '../../../store/api'
@@ -11,7 +11,7 @@ import Movie from '../../../components/Movie/Movie'
 import { SensorrSingleton } from '../../../components/Sensorr'
 import { Release, reportOleoo, safeUrl } from '../../../components/Sensorr/Release'
 import { Metadata } from '../../Details/components/Metadata'
-import { Summary, freed, freedLabel } from '../Summary'
+import { Summary, freed, sideOf, durationOf } from '../Summary'
 import { MovieActions } from '../../Details/components/Actions'
 import { Policy, jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
@@ -25,13 +25,13 @@ export const spacePills = ({ proposed, accepted }) => typeof proposed !== 'numbe
   {
     key: 'proposed',
     emoji: '💾',
-    title: <span><strong>{freed(proposed)}</strong> {freedLabel(proposed)} once every proposal of this job is accepted</span>,
+    title: <Trans i18nKey='jobs.space.proposed' values={{ size: freed(proposed), side: sideOf(proposed) }} components={[<strong />]} />,
     length: freed(proposed),
   },
   {
     key: 'accepted',
     emoji: '💿',
-    title: <span><strong>{freed(accepted || 0)}</strong> {freedLabel(accepted || 0)} from the proposals of this job already accepted</span>,
+    title: <Trans i18nKey='jobs.space.accepted' values={{ size: freed(accepted || 0), side: sideOf(accepted || 0) }} components={[<strong />]} />,
     length: freed(accepted || 0),
   },
 ]
@@ -130,6 +130,7 @@ export const useRecordsVirtualizer = (count: number, estimateSize: (index: numbe
 }
 
 const UIProcessMoviesJob = ({ job, logs, summary }) => {
+  const { t, i18n } = useTranslation()
   const { device } = useDeviceContext()
   const [filter, setFilter] = useState(null)
   const [znab, setZnab] = useState(null)
@@ -199,11 +200,11 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIProcessMoviesJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIProcessMoviesJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIProcessMoviesJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIProcessMoviesJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -307,9 +308,9 @@ const UIProcessMoviesJob = ({ job, logs, summary }) => {
               </div>
             </div>
           ) : job.meta.done ? (
-            <Warning emoji={job.meta.error ? '💢' : '🍿'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No recorded movies during this job'} />
+            <Warning emoji={job.meta.error ? '💢' : '🍿'} title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')} subtitle={job.meta.error?.message || job.meta.error || t('jobs.process.empty')} />
           ) : (
-            <Warning emoji='⏳' title='Loading' subtitle='Waiting first record...' />
+            <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.process.waiting')} />
           )}
         </RecordsContext.Provider>
       </div>
@@ -370,6 +371,7 @@ UIProcessMoviesJob.styles = {
 export const ProcessMoviesJob = memo(UIProcessMoviesJob)
 
 const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs, release, treated, choice, metadata, setMovieMetadata, banMovieRelease, unbanMovieRelease, toggleSensorr, logsCache, done, error, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const cacheKey = `${job}-${group}`
   const [logs, setLogs] = useState(() => logsCache?.get(cacheKey) ?? null)
@@ -391,8 +393,8 @@ const UIRecord = ({ command, proposalOnly, job, group, movie, logs: summaryLogs,
 
   const banned = metadata?.banned_releases || []
   const toggleBan = useCallback((title) => (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title).catch(() => {
-    toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release')
-  }), [movie?.id, banned, banMovieRelease, unbanMovieRelease])
+    toast.error(banned.includes(title) ? t('sensorr.release.errors.unban') : t('sensorr.release.errors.ban'))
+  }), [movie?.id, banned, banMovieRelease, unbanMovieRelease, t])
 
   useEffect(() => {
     setOptimistic({ treated, choice })
@@ -607,6 +609,8 @@ UIRecord.styles = {
 const Record = memo(UIRecord)
 
 const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metadata, toggleBan }) => {
+  const { t } = useTranslation()
+
   return (
     <div sx={UIRecordLogs.styles.element}>
       <div sx={UIRecordLogs.styles.container}>
@@ -639,14 +643,14 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                         <i></i>
                         <i>➤</i>
                         <span> {release.title} </span>
-                        score={release.score}, size={filesize.stringify(release.size)}, job={release.from}#{release.job}
+                        {t('jobs.process.stats.release', { score: release.score, size: filesize.stringify(release.size), from: release.from, job: release.job })}
                       </code>
                     ))}
                     {['record', 'airing'].includes(command) && query?.terms?.length && (
                       <code>
                         <i></i>
                         <i>➤</i>
-                        <span> Use query terms "{query.terms.join('", "')}" and years "{(query.years || []).join('", "')}"</span>
+                        <span> {t('jobs.process.query', { terms: query.terms.join('", "'), years: (query.years || []).join('", "') })}</span>
                       </code>
                     )}
                     {!!log.meta?.stats?.total && (
@@ -657,70 +661,70 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                               <i></i>
                               <i></i>
                               <i>➤</i>
-                              <span> ⭐ <strong>{log.meta?.stats?.matches?.length}</strong> Releases matches</span>
+                              <span> ⭐ <Trans t={t} i18nKey='sensorr.progress.matches' values={{ count: log.meta?.stats?.matches?.length }} components={[<strong />]} /></span>
                             </code>
                             {(log.meta?.stats?.matches || []).map(({ release, original, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  title={(metadata?.banned_releases || []).includes(release) ? t('sensorr.release.unban') : t('sensorr.release.ban')}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>
-                                <i title="Report release parsing issue">
+                                <i title={t('sensorr.release.report')}>
                                   <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
                                 <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
-                                <span> score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
+                                <span> {t('jobs.process.stats.match', { score, size: filesize.stringify(size), seeders })}</span>
                               </code>
                             ))}
                           </Fragment>
                         )}
                         {!!log.meta?.stats?.withdrawn?.length && (
                           <Fragment>
-                            <code><i></i><i></i><i>➤</i> <span>🚨 <strong>{log.meta?.stats?.withdrawn?.length}</strong> Releases withdrawn by policy</span></code>
+                            <code><i></i><i></i><i>➤</i> <span>🚨 <Trans t={t} i18nKey='sensorr.progress.withdrawn' values={{ count: log.meta?.stats?.withdrawn?.length }} components={[<strong />]} /></span></code>
                             {(log.meta?.stats?.withdrawn || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  title={(metadata?.banned_releases || []).includes(release) ? t('sensorr.release.unban') : t('sensorr.release.ban')}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>
-                                <i title="Report release parsing issue">
+                                <i title={t('sensorr.release.report')}>
                                   <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
                                 <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
-                                <span> {reason}, score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
+                                <span> {t('jobs.process.stats.reason', { reason, score, size: filesize.stringify(size), seeders })}</span>
                               </code>
                             ))}
                           </Fragment>
                         )}
                         {!!log.meta?.stats?.ignored?.length && (
                           <Fragment>
-                            <code><i></i><i></i><i>➤</i> <span>🗑️  <strong>{log.meta?.stats?.ignored?.length}</strong> Releases ignored</span></code>
+                            <code><i></i><i></i><i>➤</i> <span>🗑️  <Trans t={t} i18nKey='sensorr.progress.ignored' values={{ count: log.meta?.stats?.ignored?.length }} components={[<strong />]} /></span></code>
                             {(log.meta?.stats?.ignored || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
-                                  title={(metadata?.banned_releases || []).includes(release) ? 'Unban release' : 'Ban release'}
+                                  title={(metadata?.banned_releases || []).includes(release) ? t('sensorr.release.unban') : t('sensorr.release.ban')}
                                   sx={(metadata?.banned_releases || []).includes(release) ? { opacity: '1 !important' } : {}}
                                   onClick={() => toggleBan(release)}
                                 >
                                   ⊘
                                 </i>
-                                <i title="Report release parsing issue">
+                                <i title={t('sensorr.release.report')}>
                                   <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: release, original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                                 </i>
                                 <i></i>
                                 <i>➤</i>
                                 <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
-                                <span> {reason}, score={score}, size={filesize.stringify(size)}, seeders={seeders}</span>
+                                <span> {t('jobs.process.stats.reason', { reason, score, size: filesize.stringify(size), seeders })}</span>
                               </code>
                             ))}
                           </Fragment>
@@ -729,9 +733,9 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                     )}
                     {!!log.meta?.release && (
                       release?.valid ? (
-                        <code><i></i><i>➤</i> <span>{release?.title}</span>score={release?.score}, size={filesize.stringify(release?.size)}, seeders={release?.seeders}</code>
+                        <code><i></i><i>➤</i> <span>{release?.title}</span>{t('jobs.process.stats.match', { score: release?.score, size: filesize.stringify(release?.size), seeders: release?.seeders })}</code>
                       ) : !release?.hide ? (
-                        <code><i></i><i>➤</i> <span>{release?.title}</span>{release?.reason ? `${release?.reason}, ` : ''}score={release?.score}, size={filesize.stringify(release?.size)}, seeders={release?.seeders}</code>
+                        <code><i></i><i>➤</i> <span>{release?.title}</span>{t(release?.reason ? 'jobs.process.stats.reason' : 'jobs.process.stats.match', { reason: release?.reason, score: release?.score, size: filesize.stringify(release?.size), seeders: release?.seeders })}</code>
                       ) : null
                     )}
                   </Fragment>
@@ -797,6 +801,7 @@ const MetadataSingleton = ({ setToggle, ...props }) => {
 }
 
 const RecordLog = ({ line, message, meta = {}, children = null, timestamp = null, expandable = false, forceOpen = false, ...props }) => {
+  const { i18n } = useTranslation()
   const [open, setOpen] = useState(false)
 
   return (
@@ -812,7 +817,7 @@ const RecordLog = ({ line, message, meta = {}, children = null, timestamp = null
           <span>
             <b sx={{ color: (meta as any)?.important ? 'text' : 'grayDarkest' }}>{message}</b>
           </span>
-          {timestamp && <time>{new Date(timestamp).toLocaleString()}</time>}
+          {timestamp && <time>{new Date(timestamp).toLocaleString(i18n.language)}</time>}
         </code>
       </summary>
       {expandable && open && children && children()}

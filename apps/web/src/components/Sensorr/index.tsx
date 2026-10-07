@@ -1,5 +1,7 @@
 import { memo, useMemo, useRef, useState } from 'react'
-import { compose, emojize } from '@sensorr/utils'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
+import { compose } from '@sensorr/utils'
 import { Icon, Sorting, Warning, Drawer, withControls, QuerySelect } from '@sensorr/ui'
 import { Policy, SENSORR_POLICY_FALLBACK, unranked } from '@sensorr/sensorr'
 import { useBreakpointIndex } from '@sensorr/utils'
@@ -102,8 +104,8 @@ const UISensorr = compose(
               },
             }}
           >
-            <div title="Sensorr will apply selected policy to sort and filter releases">
-              <strong>Policy</strong>
+            <div title={i18n.t('sensorr.policy.help')}>
+              <strong>{i18n.t('sensorr.policy.label')}</strong>
               <label>
                 <select
                   value={values.policy?.value}
@@ -137,7 +139,7 @@ const UISensorr = compose(
                     }
                   }}
                 >
-                  <option value=''>(blank)</option>
+                  <option value=''>{i18n.t('sensorr.policy.blank')}</option>
                   <hr/>
                   {sensorr.policies.map(policy => (
                     <option value={policy.name}>{policy.name}</option>
@@ -157,8 +159,8 @@ const UISensorr = compose(
         initial: [],
         serialize: (key, values) => ({ [key]: values.filter(({ disabled }) => !disabled).map(({ value }) => value) }),
         component: ({ style, ...props }) => (
-          <div title="Sensorr will search for all selected terms on configured indexers" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
-            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>Terms</strong>
+          <div title={i18n.t('sensorr.terms.help')} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
+            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>{i18n.t('sensorr.terms.label')}</strong>
             <div sx={{ flex: 1, marginBottom: 8 }}><QueryInput direction='row' {...props} /></div>
           </div>
         ),
@@ -167,8 +169,8 @@ const UISensorr = compose(
         initial: [],
         serialize: (key, values) => ({ [key]: values.filter(({ disabled }) => !disabled).map(({ value }) => value) }),
         component: ({ style, ...props }) => (
-          <div title="Sensorr will filter releases with selected years" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
-            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>Years</strong>
+          <div title={i18n.t('sensorr.years.help')} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', paddingLeft: 4, borderRight: ['unset', '2px solid'], borderBottom: ['2px solid', 'unset'], borderColor: ['accentDark', 'accentDark'], ...style }}>
+            <strong sx={{ fontSize: 5, fontWeight: 'strong', marginTop: 6 }}>{i18n.t('sensorr.years.label')}</strong>
             <div sx={{ flex: 1, marginBottom: 8 }}><QueryInput direction='row' {...props} /></div>
           </div>
         ),
@@ -184,15 +186,15 @@ const UISensorr = compose(
           <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
             <Warning
               emoji="🚨"
-              title="Policy"
+              title={i18n.t('sensorr.policy.label')}
               subtitle={(
                 <span>
-                  Narrow your releases search with custom policy, <span style={{ textDecoration: 'underline' }}>define</span> and <span style={{ textDecoration: 'underline' }}>order</span> each rule tag according to your preferences
+                  <Trans i18nKey='sensorr.policy.subtitle' components={[<span style={{ textDecoration: 'underline' }} />, <span style={{ textDecoration: 'underline' }} />]} />
                   <br/>
                   <span sx={{ display: 'inline-block', marginTop: 4, marginBottom: 8 }}>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'primaryDarkest', borderRadius: '2px', marginX: 8 }}>⭐ PREFER</code>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'error', borderRadius: '2px', marginX: 8 }}>⛔ AVOID</code>
-                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', border: '1px solid white', borderRadius: '2px', marginX: 8 }}>🔕 N/A</code>
+                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'primaryDarkest', borderRadius: '2px', marginX: 8 }}>{i18n.t('sensorr.policy.prefer')}</code>
+                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', backgroundColor: 'error', borderRadius: '2px', marginX: 8 }}>{i18n.t('sensorr.policy.avoid')}</code>
+                    <code sx={{ variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', border: '1px solid white', borderRadius: '2px', marginX: 8 }}>{i18n.t('sensorr.policy.none')}</code>
                   </span>
                 </span>
               )}
@@ -202,10 +204,11 @@ const UISensorr = compose(
       },
       sorting: {
         initial: { value: 'seeders', sort: true },
+        // Getters: `withProps` spreads them at each render, the labels follow the language
         component: withProps({
           display: 'radio',
-          label: emojize('💈', 'Sorting'),
-          options: [{ label: emojize('🌍', 'Seeders'), value: 'seeders' }, { label: emojize('📦', 'Size'), value: 'size' }],
+          get label() { return i18n.t('sensorr.sorting.label') },
+          get options() { return [{ label: i18n.t('sensorr.sorting.seeders'), value: 'seeders' }, { label: i18n.t('sensorr.sorting.size'), value: 'size' }] },
         })(Sorting),
         serialize: (key, { value: sorting, sort: descending }) => ({ sorting, descending }),
       },
@@ -247,10 +250,11 @@ const UISensorr = compose(
     },
   }),
 )(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, describe = null, ...props }) => {
+  const { t } = useTranslation()
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
   const banned = (onBan !== null ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
-    .catch(() => toast.error(banned.includes(title) ? 'Error while unbanning the release' : 'Error while banning the release'))
+    .catch(() => toast.error(banned.includes(title) ? t('sensorr.release.errors.unban') : t('sensorr.release.errors.ban')))
   const statistics = useMemo(() => statisticsOf(entities), [entities])
 
   return (
@@ -272,7 +276,7 @@ const UISensorr = compose(
                   await (onPick ? onPick(release) : setMovieMetadata(movie.id, 'release', { ...release, from: 'record', job: 'manual', proposal: true, choice: true }))
                 } catch (err) {
                   console.warn(err)
-                  toast.error('Error while processing release')
+                  toast.error(t('sensorr.release.errors.process'))
                 }
               }}
               banned={banned.includes(release?.title)}
@@ -286,7 +290,8 @@ const UISensorr = compose(
   )
 })
 
-const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = 'Releases', proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, ...props }) => {
+const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = undefined, proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, ...props }) => {
+  const { t } = useTranslation()
   const { Portal, closePortal, togglePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
 
   if (props.setPortalToggle) {
@@ -304,7 +309,7 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
         <Drawer close={closePortal} open={open} height='85vh'>
           <div sx={UISensorrWrapper.styles.container}>
             <div sx={UISensorrWrapper.styles.head}>
-              <h4>{title}</h4>
+              <h4>{title ?? t('sensorr.drawer.title')}</h4>
             </div>
             <UISensorr
               metadata={metadata}

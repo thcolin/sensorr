@@ -1,61 +1,61 @@
 import { memo, useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Icon, Warning } from '@sensorr/ui'
 import { jobNameOf } from '@sensorr/sensorr'
-import { emojize } from '@sensorr/utils'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import Movie from '../../../components/Movie/Movie'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
-import { Summary } from '../Summary'
+import { Summary, durationOf } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summary = ({ library = 0, guests = 0, watchlist = 0, processed = 0, watchlist_shows = 0, processed_shows = 0, warning = 0 }, extended = true) => [
   ...(extended ? [{
     key: 'library',
     emoji: '🗄️',
-    title: <span><strong>{library}</strong> Movies in Sensorr library</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.library' values={{ count: library }} components={[<strong />]} />,
     length: library,
   }] : []),
   ...(extended ? [{
     key: 'guests',
     emoji: '🏘️',
-    title: <span><strong>{guests}</strong> Guests registered on Sensorr</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.guests' values={{ count: guests }} components={[<strong />]} />,
     length: guests,
   }] : []),
   ...(extended ? [{
     key: 'watchlist',
     emoji: '📡',
-    title: <span><strong>{watchlist}</strong> Movies found on guests Plex watchlist</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.watchlist' values={{ count: watchlist }} components={[<strong />]} />,
     length: watchlist,
   }] : []),
   ...(extended && watchlist_shows > 0 ? [{
     key: 'watchlist_shows',
     emoji: '📺',
-    title: <span><strong>{watchlist_shows}</strong> Shows found on guests Plex watchlist</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.watchlistShows' values={{ count: watchlist_shows }} components={[<strong />]} />,
     length: watchlist_shows,
   }] : []),
   {
     key: 'processed',
     emoji: '🍺',
-    title: <span><strong>{processed}</strong> Requests processed (added or updated)</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.processed' values={{ count: processed }} components={[<strong />]} />,
     length: processed,
   },
   ...(processed_shows > 0 ? [{
     key: 'processed_shows',
     emoji: '🍻',
-    title: <span><strong>{processed_shows}</strong> Show requests processed (added or updated)</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.processedShows' values={{ count: processed_shows }} components={[<strong />]} />,
     length: processed_shows,
   }] : []),
   ...(warning ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{warning}</strong> Warning(s)</span>,
+    title: <Trans i18nKey='jobs.keepInTouch.summary.warning' values={{ count: warning }} components={[<strong />]} />,
     length: warning,
   }] : []),
 ]
 
 const UIKeepInTouchJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const [guest, setGuest] = useState(null)
   const warning = useMemo(() => (logs || []).filter(log => log.level === 'warn'), [logs])
   const entities = useMemo(() => (logs || []).filter(log => log.meta.movie && log.meta.processed && (!guest || log.meta.requested_by?.includes(guest))).map(({ meta: { movie, requested_by } }) => ({ ...movie, requested_by })), [logs, guest])
@@ -82,11 +82,11 @@ const UIKeepInTouchJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIKeepInTouchJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIKeepInTouchJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIKeepInTouchJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIKeepInTouchJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -123,7 +123,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
               id={`keep-in-touch-shows-${job.id}`}
               entities={shows}
               length={shows.length}
-              label={emojize('📺', 'Shows')}
+              label={t('jobs.keepInTouch.shows')}
               display='grid'
               extra={FOOTER_HEIGHT}
               hide={true}
@@ -134,7 +134,7 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 id={`keep-in-touch-${job.id}`}
                 entities={entities}
                 length={entities?.length}
-                label={shows.length ? emojize('🎞️', 'Movies') : emojize('🍺', 'Requests')}
+                label={shows.length ? t('jobs.keepInTouch.movies') : t('jobs.keepInTouch.requests')}
                 display='grid'
                 hide={true}
                 child={Movie}
@@ -146,9 +146,9 @@ const UIKeepInTouchJob = ({ job, logs }) => {
                 })}
               />
             ) : job.meta.done ? (
-              <Warning emoji={job.meta.error ? '💢' : '🍺'} title={job.meta.error ? 'Error': 'Empty'} subtitle={job.meta.error?.message || job.meta.error || 'No processed requests during this job'} />
+              <Warning emoji={job.meta.error ? '💢' : '🍺'} title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')} subtitle={job.meta.error?.message || job.meta.error || t('jobs.keepInTouch.empty')} />
             ) : (
-              <Warning emoji='⏳' title='Loading' subtitle='Waiting for entities fix...' />
+              <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.keepInTouch.waiting')} />
             )}
           </div>
         )}

@@ -1,16 +1,18 @@
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import oleoo from 'oleoo'
 import { SortableSelect } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
 import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
+// Titled by `sensorr.oleoo.marks`
 const MARKS = {
-  prefer: { label: '⭐', title: 'Prefer' },
-  avoid: { label: '⛔', title: 'Avoid' },
-  current: { label: '📀', title: 'Current: an owned release carries one of them' },
-  proposed: { label: '💿', title: 'Proposed: the proposed release carries one of them' },
-  ignore: { label: '🔕', title: 'Ignored' },
+  prefer: '⭐',
+  avoid: '⛔',
+  current: '📀',
+  proposed: '💿',
+  ignore: '🔕',
 }
 
 // A click moves a value to the next group of `groups`, then back to 🔕. Swaps passes
@@ -18,7 +20,9 @@ const MARKS = {
 const RULES = ['prefer', 'avoid']
 
 const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RULES, ...props }) => {
+  const { t } = useTranslation()
   const value = useMemo(() => {
+    const mark = (group) => ({ label: MARKS[group], title: t(`sensorr.oleoo.marks.${group}`) })
     const ignore = [
       ...props.value.filter(v => !v.group && v.required),
       ...options
@@ -29,11 +33,11 @@ const RuleSortableSelect = ({ onChange, options, requirable = false, groups = RU
     return [
       ...groups.flatMap(group => {
         const values = props.value.filter(v => v.group === group)
-        return values.length ? [MARKS[group], ...values, { separator: true }] : []
+        return values.length ? [mark(group), ...values, { separator: true }] : []
       }),
-      ...(ignore.length ? [MARKS.ignore, ...ignore, { separator: true }] : []),
+      ...(ignore.length ? [mark('ignore'), ...ignore, { separator: true }] : []),
     ]
-  }, [props.value, options, groups])
+  }, [props.value, options, groups, t])
 
   const handleChange = useCallback((values, { action, removedValue } = { action: null, removedValue: null }) => {
     switch (action) {
@@ -70,12 +74,13 @@ const rules = {
 }
 
 export const ZNABFilter = ({ ...props }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
 
   return (
     <RuleSortableSelect
       {...props as any}
-      label={emojize('☠️', 'Indexer')}
+      label={t('sensorr.oleoo.filters.indexer')}
       options={sensorr.znabs.map(({ name }) => ({ label: name, value: name }))}
       isClearable={false}
       defaultOptions={true}
@@ -85,7 +90,8 @@ export const ZNABFilter = ({ ...props }) => {
 }
 
 export const EncodingFilter = withProps({
-  label: emojize('🎥', 'Encoding'),
+  // A getter: `withProps` spreads it at each render, the label follows the language
+  get label() { return i18n.t('sensorr.oleoo.filters.encoding') },
   options: rules.encoding.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
@@ -93,7 +99,7 @@ export const EncodingFilter = withProps({
 })(RuleSortableSelect)
 
 export const ResolutionFilter = withProps({
-  label: emojize('🎞️', 'Resolution'),
+  get label() { return i18n.t('sensorr.oleoo.filters.resolution') },
   options: rules.resolution.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
@@ -101,7 +107,7 @@ export const ResolutionFilter = withProps({
 })(RuleSortableSelect)
 
 export const SourceFilter = withProps({
-  label: emojize('💽', 'Source'),
+  get label() { return i18n.t('sensorr.oleoo.filters.source') },
   options: rules.source.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
@@ -109,7 +115,7 @@ export const SourceFilter = withProps({
 })(RuleSortableSelect)
 
 export const DubFilter = withProps({
-  label: emojize('🔈', 'Dub'),
+  get label() { return i18n.t('sensorr.oleoo.filters.dub') },
   options: rules.dub.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
@@ -117,7 +123,7 @@ export const DubFilter = withProps({
 })(RuleSortableSelect)
 
 export const LanguageFilter = withProps({
-  label: emojize('🇺🇳', 'Language'),
+  get label() { return i18n.t('sensorr.oleoo.filters.language') },
   options: rules.language.map(source => ({ label: source, value: source })),
   isClearable: false,
   defaultOptions: true,
@@ -125,7 +131,7 @@ export const LanguageFilter = withProps({
 })(RuleSortableSelect)
 
 export const FlagsFilter = withProps({
-  label: emojize('🚩', 'Flags'),
+  get label() { return i18n.t('sensorr.oleoo.filters.flags') },
   rankable: false,
   options: rules.flags.map(source => ({ label: source, value: source })),
   isClearable: false,

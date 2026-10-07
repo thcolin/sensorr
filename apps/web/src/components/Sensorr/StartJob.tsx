@@ -1,6 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Drawer, Icon, Modal } from '@sensorr/ui'
 import { useResponsiveValue } from '@sensorr/utils'
 import { JOB_EMOJIS, jobTitleOf } from '@sensorr/sensorr'
@@ -9,6 +10,7 @@ import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import { JOB_GROUPS, nameOfEntry, useJobRunner } from './Jobs'
 
 const UIStartJob = ({ ...props }) => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const mobile = useResponsiveValue([true, false])
   const [open, setOpen] = useState(false)
@@ -21,8 +23,8 @@ const UIStartJob = ({ ...props }) => {
         type='button'
         onClick={() => setOpen(true)}
         aria-haspopup='dialog'
-        aria-label='Start a job'
-        title='Start a job'
+        aria-label={t('sensorr.startJob.title')}
+        title={t('sensorr.startJob.title')}
         sx={UIStartJob.styles.button}
         {...props}
       >
@@ -30,11 +32,11 @@ const UIStartJob = ({ ...props }) => {
       </button>
       {mobile ? createPortal((
         <Drawer open={open} close={close} height='85vh'>
-          <DrawerHead title='Start a job' />
+          <DrawerHead title={t('sensorr.startJob.title')} />
           <JobList onRun={onRun} close={close} touch={true} />
         </Drawer>
       ), document.body) : (
-        <Modal title='Start a job' open={open} close={close} width='30em' background='primary' head='primary' border='accentDarkest'>
+        <Modal title={t('sensorr.startJob.title')} open={open} close={close} width='30em' background='primary' head='primary' border='accentDarkest'>
           <JobList onRun={onRun} close={close} />
         </Modal>
       )}
@@ -91,10 +93,12 @@ export const DrawerHead = memo(UIDrawerHead)
 // A palette: arrows or the pointer move the active job, Enter or a click runs it, or stops it while it runs.
 // On touch nothing is active at first: a tap picks a job, a second tap runs it, so a stray tap while scrolling runs nothing.
 const UIJobList = ({ onRun, close, touch = false }) => {
+  const { t } = useTranslation()
   const { config } = useConfigContext() as any
   const { process } = useJobsContext() as any
   const { runJob, stopJob, ongoing } = useJobRunner({ onRun })
-  const entries = useMemo(() => JOB_GROUPS.flatMap(({ label, jobs }) => jobs.map(entry => ({ ...entry, group: label, name: nameOfEntry(entry) }))), [])
+  // Built at each render: the spread reads the getters of `JOB_GROUPS`, translated in the language shown
+  const entries = JOB_GROUPS.flatMap(({ label, jobs }) => jobs.map(entry => ({ ...entry, group: label, name: nameOfEntry(entry) })))
   const [active, setActive] = useState(touch ? -1 : 0)
 
   useEffect(() => {
@@ -146,7 +150,7 @@ const UIJobList = ({ onRun, close, touch = false }) => {
   return (
     <div
       role='listbox'
-      aria-label='Jobs'
+      aria-label={t('jobs.title')}
       tabIndex={0}
       data-autofocus={true}
       aria-activedescendant={`start-job-${active}`}
@@ -171,14 +175,14 @@ const UIJobList = ({ onRun, close, touch = false }) => {
                   role='option'
                   aria-selected={index === active}
                   aria-disabled={unconfigured || pending}
-                  aria-label={`${running ? 'Stop' : 'Start'} ${jobTitleOf(entry.name)}`}
+                  aria-label={running ? t('sensorr.startJob.stop', { name: jobTitleOf(entry.name) }) : t('sensorr.startJob.start', { name: jobTitleOf(entry.name) })}
                   onPointerMove={(e) => e.pointerType === 'mouse' && index !== active && setActive(index)}
                   onClick={() => touch && index !== active ? setActive(index) : trigger(entry)}
                 >
                   <span aria-hidden={true}>{JOB_EMOJIS[entry.name]}</span>
                   <span>
                     <code>{entry.command}</code>
-                    <small>{unconfigured ? `Needs ${entry.requires.split('.')[0]}, see Settings` : entry.description}</small>
+                    <small>{unconfigured ? t('sensorr.startJob.needs', { setting: entry.requires.split('.')[0] }) : entry.description}</small>
                   </span>
                   <span aria-hidden={true}>
                     {running ? (

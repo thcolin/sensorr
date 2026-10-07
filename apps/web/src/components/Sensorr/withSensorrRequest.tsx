@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useControlsState, Warning } from '@sensorr/ui'
 import { Policy, levelOf, ranked, reachesUnit, unranked } from '@sensorr/sensorr'
 import { useSensorrRequest } from '../../store/sensorr'
@@ -7,6 +8,7 @@ import { useConfigContext } from '../../contexts/Config/Config'
 export const withSensorrRequest = () => (WrappedComponent) => {
   // `unit` searches a show from that level up to the whole series, and keeps only the releases that hold it
   const WithSensorrRequest = ({ entity, metadata, onChange, ready, unit = null, ...props }) => {
+    const { t } = useTranslation()
     const [serialized, state] = useSensorrControlsState(metadata)
     const { call, reset, id, loading, done, tasks, releases } = useSensorrRequest() as any
     const request = useRef(null)
@@ -77,18 +79,18 @@ export const withSensorrRequest = () => (WrappedComponent) => {
           <div sx={styles.empty}>
             <Warning
               emoji="🎟"
-              title="Setting up Sensorr"
-              subtitle={`Loading ${unit ? 'show' : 'movie'} data and custom preferences, please wait a few moments...`}
+              title={t('sensorr.request.setup.title')}
+              subtitle={t('sensorr.request.setup.subtitle', { unit: unit ? 'show' : 'movie' })}
             />
           </div>
         ) : (!releases.length && (loading || !done)) ? (
           <div sx={styles.empty}>
             <Warning
               emoji="🎟"
-              title={`Searching for ${unit ? 'show' : 'movie'} releases on ZNABS`}
-              subtitle={!progress.ongoing ? `Setting up Sensorr with ${unit ? 'show' : 'movie'} data and custom preferences, please wait a few moments...` : (
+              title={t('sensorr.request.searching.title', { unit: unit ? 'show' : 'movie' })}
+              subtitle={!progress.ongoing ? t('sensorr.request.searching.subtitle', { unit: unit ? 'show' : 'movie' }) : (
                 <span>
-                  Using <em>"{progress.ongoing?.term}"</em> term on <strong>{progress.ongoing?.znab?.name}</strong>...
+                  <Trans t={t} i18nKey='sensorr.request.searching.using' values={{ term: progress.ongoing?.term, znab: progress.ongoing?.znab?.name }} components={[<em />, <strong />]} />
                 </span>
               )}
             />
@@ -97,10 +99,10 @@ export const withSensorrRequest = () => (WrappedComponent) => {
           <div sx={styles.empty}>
             <Warning
               emoji="📭"
-              title="No releases found"
+              title={t('sensorr.request.empty.title')}
               subtitle={(
                 <span>
-                  Sorry, no releases found on <strong>{[...new Set(progress.tasks.map(({ znab }) => znab.name))].join(', ')}</strong> with "{[...new Set(progress.tasks.map(({ term }) => term))].join('", "')}" terms
+                  <Trans t={t} i18nKey='sensorr.request.empty.subtitle' values={{ znabs: [...new Set(progress.tasks.map(({ znab }) => znab.name))].join(', '), terms: [...new Set(progress.tasks.map(({ term }) => term))].join('", "') }} components={[<strong />]} />
                 </span>
               )}
             />

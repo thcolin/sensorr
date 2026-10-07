@@ -1,40 +1,41 @@
 import { memo, useMemo } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Entities, Icon, Progress, Show as UIShow, TransitionPill, Warning } from '@sensorr/ui'
 import { compose, emojize, filesize } from '@sensorr/utils'
+import i18n from '@sensorr/i18n'
 import { jobNameOf } from '@sensorr/sensorr'
 import { JobName } from '../../../components/Sensorr/JobName'
 import { JobState } from '../../../components/Sensorr/JobState'
-import { formatDuration, intervalToDuration } from 'date-fns'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import { withShowProgress } from '../../../components/Show/withShowProgress'
 import { withShowMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { withMovieGuestsContext } from '../../../contexts/Guests/Guests'
-import { Summary, freed, freedLabel } from '../Summary'
+import { Summary, freed, sideOf, durationOf } from '../Summary'
 import { Warnings } from '../Warnings'
 
 export const summaryRefreshShows = ({ due = 0, show }, extended = true) => [
   ...(extended ? [{
     key: 'due',
     emoji: '🗄️',
-    title: <span><strong>{due}</strong> Shows due for a refresh</span>,
+    title: <Trans i18nKey='jobs.shows.refresh.summary.due' values={{ count: due }} components={[<strong />]} />,
     length: due,
   }] : []),
   {
     key: 'show',
     emoji: '📺',
-    title: <span><strong>{show?.success || 0}</strong> Applied show changes</span>,
+    title: <Trans i18nKey='jobs.shows.refresh.summary.show' values={{ count: show?.success || 0 }} components={[<strong />]} />,
     length: show?.success || 0,
   },
   ...(show?.episodes > 0 ? [{
     key: 'episodes',
     emoji: '🆕',
-    title: <span><strong>{show.episodes}</strong> New episodes</span>,
+    title: <Trans i18nKey='jobs.shows.refresh.summary.episodes' values={{ count: show.episodes }} components={[<strong />]} />,
     length: show.episodes,
   }] : []),
   ...(show?.warning > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{show.warning}</strong> Shows not refreshed</span>,
+    title: <Trans i18nKey='jobs.shows.refresh.summary.warning' values={{ count: show.warning }} components={[<strong />]} />,
     length: show.warning,
   }] : []),
 ]
@@ -43,67 +44,67 @@ export const summarySyncShows = ({ shows = 0, plex, corrections, cleanups, missi
   ...(extended ? [{
     key: 'shows',
     emoji: '🗄️',
-    title: <span><strong>{shows}</strong> Shows in Sensorr library</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.shows' values={{ count: shows }} components={[<strong />]} />,
     length: shows,
   }] : []),
   ...(extended ? [{
     key: 'plex',
     emoji: '📡',
-    title: <span><strong>{plex?.shows || 0}</strong> Shows and <strong>{plex?.episodes || 0}</strong> episodes available on Plex server</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.plex' values={{ shows: plex?.shows || 0, episodes: plex?.episodes || 0 }} components={[<strong />, <strong />]} />,
     length: plex?.shows || 0,
   }] : []),
   {
     key: 'corrections',
     emoji: '🩹',
-    title: <span><strong>{corrections?.success || 0}</strong> Fixed shows with Plex metadata</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.corrections' values={{ count: corrections?.success || 0 }} components={[<strong />]} />,
     length: corrections?.success || 0,
   },
   ...(created > 0 ? [{
     key: 'created',
     emoji: '🆕',
-    title: <span><strong>{created}</strong> Shows added from Plex (archived), among the fixed shows</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.created' values={{ count: created }} components={[<strong />]} />,
     length: created,
   }] : []),
   ...(withdrawals > 0 ? [{
     key: 'withdrawals',
     emoji: '🗑️',
-    title: <span><strong>{withdrawals}</strong> Proposals withdrawn, Plex holds all their episodes</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.withdrawals' values={{ count: withdrawals }} components={[<strong />]} />,
     length: withdrawals,
   }] : []),
   ...(cleanups?.success > 0 ? [{
     key: 'cleanups',
     emoji: '🧹',
-    title: <span><strong>{cleanups.success}</strong> Replaced episode versions deleted from Plex</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.cleanups' values={{ count: cleanups.success }} components={[<strong />]} />,
     length: cleanups.success,
   }] : []),
   ...((cleanups?.success > 0 && typeof cleanups?.deleted === 'number' && typeof cleanups?.arrived === 'number') ? [{
     key: 'space',
     emoji: cleanups.arrived > cleanups.deleted ? '📈' : '📉',
-    title: <span><strong>{freed(cleanups.arrived - cleanups.deleted)}</strong> {freedLabel(cleanups.arrived - cleanups.deleted)}, {filesize.stringify(cleanups.deleted)} deleted from Plex for {filesize.stringify(cleanups.arrived)} arrived</span>,
+    title: <Trans i18nKey='jobs.space.cleanups' values={{ size: freed(cleanups.arrived - cleanups.deleted), side: sideOf(cleanups.arrived - cleanups.deleted), deleted: filesize.stringify(cleanups.deleted), arrived: filesize.stringify(cleanups.arrived) }} components={[<strong />]} />,
     length: freed(cleanups.arrived - cleanups.deleted),
   }] : []),
   ...(missings?.success > 0 ? [{
     key: 'missings',
     emoji: '💊',
-    title: <span><strong>{missings.success}</strong> Episodes no longer on Plex</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.missings' values={{ count: missings.success }} components={[<strong />]} />,
     length: missings.success,
   }] : []),
   ...(extended && read > 0 ? [{
     key: 'read',
     emoji: '🔍',
-    title: <span><strong>{read}</strong> New episode files read from Plex</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.read' values={{ count: read }} components={[<strong />]} />,
     length: read,
   }] : []),
   ...(extended && unmatched > 0 ? [{
     key: 'unmatched',
     emoji: '❓',
-    title: <span><strong>{unmatched}</strong> Plex episodes unknown to TMDB</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.unmatched' values={{ count: unmatched }} components={[<strong />]} />,
     length: unmatched,
   }] : []),
   ...(((corrections?.warning || 0) + (missings?.warning || 0)) > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{(corrections?.warning || 0) + (missings?.warning || 0)}</strong> Shows not fixed</span>,
+    title: <Trans i18nKey='jobs.shows.sync.summary.warning' values={{ count: (corrections?.warning || 0) + (missings?.warning || 0) }} components={[<strong />]} />,
     length: (corrections?.warning || 0) + (missings?.warning || 0),
   }] : []),
 ]
@@ -112,31 +113,31 @@ export const summaryImportShows = ({ shows = 0, releases = 0, imports }, extende
   ...(extended ? [{
     key: 'releases',
     emoji: '🗄️',
-    title: <span><strong>{releases}</strong> Releases of <strong>{shows}</strong> shows waiting for an import</span>,
+    title: <Trans i18nKey='jobs.shows.import.summary.releases' values={{ releases, shows }} components={[<strong />, <strong />]} />,
     length: releases,
   }] : []),
   {
     key: 'imports',
     emoji: '📥',
-    title: <span><strong>{imports?.success || 0}</strong> Imported show releases</span>,
+    title: <Trans i18nKey='jobs.shows.import.summary.imports' values={{ count: imports?.success || 0 }} components={[<strong />]} />,
     length: imports?.success || 0,
   },
   ...(extended && imports?.links > 0 ? [{
     key: 'links',
     emoji: '🔗',
-    title: <span><strong>{imports.links}</strong> Files linked into the library</span>,
+    title: <Trans i18nKey='jobs.shows.import.summary.links' values={{ count: imports.links }} components={[<strong />]} />,
     length: imports.links,
   }] : []),
   ...(imports?.pending > 0 ? [{
     key: 'pending',
     emoji: '⏳',
-    title: <span><strong>{imports.pending}</strong> Releases still downloading{imports.downloading?.length ? `: ${imports.downloading.join(', ')}` : ''}</span>,
+    title: <Trans i18nKey={imports.downloading?.length ? 'jobs.shows.import.summary.pendingOf' : 'jobs.shows.import.summary.pending'} values={{ count: imports.pending, releases: imports.downloading?.join(', ') }} components={[<strong />]} />,
     length: imports.pending,
   }] : []),
   ...(imports?.warning > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{imports.warning}</strong> Releases not imported</span>,
+    title: <Trans i18nKey='jobs.shows.import.summary.warning' values={{ count: imports.warning }} components={[<strong />]} />,
     length: imports.warning,
   }] : []),
 ]
@@ -146,39 +147,44 @@ export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated =
   ...(extended ? [{
     key: 'sonarr',
     emoji: '🗄️',
-    title: <span><strong>{sonarr}</strong> Series found on Sonarr</span>,
+    title: <Trans i18nKey='jobs.shows.migrateSonarr.summary.sonarr' values={{ count: sonarr }} components={[<strong />]} />,
     length: sonarr,
   }] : []),
   {
     key: 'migrated',
     emoji: '🚚',
-    title: <span><strong>{migrated ?? ((shows.wished || 0) + (shows.archived || 0))}</strong> Migrated series (<strong>{shows.wished || 0}</strong> wished, <strong>{shows.archived || 0}</strong> archived)</span>,
+    title: <Trans i18nKey='jobs.shows.migrateSonarr.summary.migrated' values={{ count: migrated ?? ((shows.wished || 0) + (shows.archived || 0)), wished: shows.wished || 0, archived: shows.archived || 0 }} components={[<strong />, <strong />, <strong />]} />,
     length: migrated ?? ((shows.wished || 0) + (shows.archived || 0)),
   },
   // `skipped`, series without monitoring nor file, only exists in the logs of runs before they were migrated too
   ...(extended && ((shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0)) > 0 ? [{
     key: 'skipped',
     emoji: '🗑️ ',
-    title: <span><strong>{(shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0)}</strong> Skipped series (<strong>{shows.known || 0}</strong> already in Sensorr, {shows.skipped ? <><strong>{shows.skipped}</strong> without monitoring nor file, </> : null}<strong>{shows.untracked || 0}</strong> not found on TMDB)</span>,
+    title: <Trans i18nKey={shows.skipped ? 'jobs.shows.migrateSonarr.summary.skippedUnmonitored' : 'jobs.shows.migrateSonarr.summary.skipped'} values={{ count: (shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0), known: shows.known || 0, skipped: shows.skipped, untracked: shows.untracked || 0 }} components={[<strong />, <strong />, <strong />, <strong />]} />,
     length: (shows.known || 0) + (shows.skipped || 0) + (shows.untracked || 0),
   }] : []),
   ...(((shows.warning || 0) + (shows.unmatched || 0)) > 0 ? [{
     key: 'warning',
     emoji: '⚠️',
-    title: <span><strong>{shows.warning || 0}</strong> Series not migrated, <strong>{shows.unmatched || 0}</strong> episodes unknown to TMDB</span>,
+    title: <Trans i18nKey='jobs.shows.migrateSonarr.summary.warning' values={{ count: shows.warning || 0, unmatched: shows.unmatched || 0 }} components={[<strong />, <strong />]} />,
     length: (shows.warning || 0) + (shows.unmatched || 0),
   }] : []),
 ]
 
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 
-// A library card with one line under it, what the job found about the show
-const UINotedShow = ({ entity, ...props }) => (
-  <div sx={UINotedShow.styles.element}>
-    <Show entity={entity} {...props} />
-    <code title={entity.details || entity.note}>{entity.note}</code>
-  </div>
-)
+// A library card with one line under it, what the job found about the show: its note, or the count of episodes it misses
+const UINotedShow = ({ entity, ...props }) => {
+  const { t } = useTranslation()
+  const note = entity.note ?? emojize('💊', t('jobs.shows.episodes', { count: entity.missing }))
+
+  return (
+    <div sx={UINotedShow.styles.element}>
+      <Show entity={entity} {...props} />
+      <code title={entity.details || note}>{note}</code>
+    </div>
+  )
+}
 
 UINotedShow.styles = {
   element: {
@@ -203,15 +209,13 @@ const NotedShow = memo(UINotedShow)
 // The show's name already titles the card: a release title is read from its season on
 const fromSeason = (title: string) => title.replace(/^.*?(?=\bS\d{2})/i, '')
 
-const episodesLabel = (count: number) => `${count} episode${count > 1 ? 's' : ''}`
-
 // The footer of a library card, its pill and its bar, counting the downloaded files instead of the owned episodes
 const UIDownloadingShow = ({ entity, ...props }) => {
   const staged = entity.waiting.reduce((sum, { staged }) => sum + staged, 0)
   const files = entity.waiting.reduce((sum, { files }) => sum + files, 0)
   const partial = entity.waiting.reduce((sum, { partial = 0 }) => sum + partial, 0)
   const title = [
-    `${staged} of ${files} files downloaded${partial ? `, ${partial} in progress` : ''}`,
+    i18n.t('jobs.shows.downloading', { staged, files, partial }),
     filesize.stringify(entity.waiting.reduce((sum, { size }) => sum + (size || 0), 0)),
     ...entity.waiting.map(({ title }) => title),
   ].join(' · ')
@@ -255,7 +259,6 @@ const showsOf = (logs, test) => logs
   .map(({ meta }) => meta.show || meta.entity)
   .filter((show, index, shows) => shows.findIndex(({ id }) => id === show.id) === index)
 
-const unmatchedTitle = (unmatched: string[]) => `${unmatched.length} Plex episode${unmatched.length > 1 ? 's' : ''} unknown to TMDB: ${unmatched.join(', ')}`
 
 // Read left to right, the Plex episodes TMDB knows in gray, then the ones it does not know in blue. The bar draws each
 // season the same way, its known episodes then its unknown ones right after
@@ -276,7 +279,7 @@ const UIUnmatchedShow = ({ entity, ...props }) => {
       { value: unknown[season] || 0, max: unknown[season] || 0 },
     ])
   }, [progress, entity.unmatched])
-  const title = progress ? `${progress.owned} Plex episodes known to TMDB, ${unmatchedTitle(entity.unmatched)}` : null
+  const title = progress ? i18n.t('jobs.shows.known', { owned: progress.owned, count: entity.unmatched.length, episodes: entity.unmatched.join(', ') }) : null
 
   return (
     <UIShow
@@ -301,7 +304,7 @@ const UnmatchedShow = compose(
   withMovieGuestsContext(),
 )(memo(UIUnmatchedShow))
 
-// Keyed by `jobNameOf`
+// Keyed by `jobNameOf`. `label` and `empty` are translation keys, resolved where they are shown
 const COMMANDS = {
   'refresh shows': {
     emoji: '🔌',
@@ -309,9 +312,9 @@ const COMMANDS = {
     live: (sections, summary) => ({ show: { ...summary.show, success: sections.refreshed.length } }),
     warnings: (log) => log.level === 'warn',
     sections: [
-      { key: 'refreshed', label: emojize('📺', 'Shows'), test: (log) => log.level === 'info' && log.meta.type === 'show' && log.meta.entity },
+      { key: 'refreshed', label: 'jobs.shows.refresh.refreshed', test: (log) => log.level === 'info' && log.meta.type === 'show' && log.meta.entity },
     ],
-    empty: 'No changes applied during this job',
+    empty: 'jobs.shows.refresh.empty',
   },
   'sync shows': {
     emoji: '🔗',
@@ -325,12 +328,12 @@ const COMMANDS = {
     // A show whose episodes left Plex is logged as a warning too, with its count
     warnings: (log) => log.level === 'warn' && typeof log.meta.missing !== 'number',
     sections: [
-      { key: 'missings', label: emojize('💊', 'Missing episodes'), test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing, note: emojize('💊', episodesLabel(missing)) }), child: NotedShow, extra: 36 },
-      { key: 'withdrawals', label: emojize('🗑️', 'Withdrawn'), test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', fromSeason(release.title)), details: release.title }), child: NotedShow, extra: 36 },
-      { key: 'unmatched', label: emojize('❓', 'Unknown to TMDB'), test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched }), child: UnmatchedShow },
-      { key: 'corrections', label: emojize('🩹', 'Fixed'), test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
+      { key: 'missings', label: 'jobs.shows.sync.missings', test: (log) => log.meta.group === 'missings' && log.meta.show && typeof log.meta.missing === 'number', entity: ({ show, missing }) => ({ ...show, missing }), child: NotedShow, extra: 36 },
+      { key: 'withdrawals', label: 'jobs.shows.sync.withdrawals', test: (log) => log.meta.group === 'withdrawals' && log.meta.show && log.meta.release, entity: ({ show, release }) => ({ ...show, note: emojize('🗑️', fromSeason(release.title)), details: release.title }), child: NotedShow, extra: 36 },
+      { key: 'unmatched', label: 'jobs.shows.sync.unmatched', test: (log) => log.meta.group === 'unmatched' && log.meta.show && Array.isArray(log.meta.unmatched), entity: ({ show, unmatched }) => ({ ...show, unmatched }), child: UnmatchedShow },
+      { key: 'corrections', label: 'jobs.shows.sync.corrections', test: (log) => log.level === 'info' && log.meta.group === 'corrections' && log.meta.show },
     ],
-    empty: 'No fixed shows during this job',
+    empty: 'jobs.shows.sync.empty',
   },
   'import shows': {
     emoji: '📥',
@@ -338,16 +341,16 @@ const COMMANDS = {
     live: (sections, summary) => ({ imports: { ...summary.imports, success: sections.imported.length } }),
     warnings: (log) => log.level === 'warn',
     sections: [
-      { key: 'imported', label: emojize('📥', 'Imported'), test: (log) => log.level === 'info' && log.meta.show && typeof log.meta.links === 'number' },
+      { key: 'imported', label: 'jobs.shows.import.imported', test: (log) => log.level === 'info' && log.meta.show && typeof log.meta.links === 'number' },
       {
         key: 'downloading',
-        label: emojize('⏳', 'Downloading'),
+        label: 'jobs.shows.import.downloading',
         test: (log) => log.level === 'info' && log.meta.show && log.meta.waiting,
         entity: ({ show, waiting }) => ({ ...show, waiting }),
         child: DownloadingShow,
       },
     ],
-    empty: 'No imported releases during this job',
+    empty: 'jobs.shows.import.empty',
   },
   'migrate sonarr': {
     emoji: '🚚',
@@ -355,13 +358,14 @@ const COMMANDS = {
     live: (sections) => ({ migrated: sections.migrated.length }),
     warnings: (log) => log.level === 'warn',
     sections: [
-      { key: 'migrated', label: emojize('🚚', 'Migrated'), test: (log) => log.level === 'info' && log.meta.type === 'show' && log.meta.entity },
+      { key: 'migrated', label: 'jobs.shows.migrateSonarr.migrated', test: (log) => log.level === 'info' && log.meta.type === 'show' && log.meta.entity },
     ],
-    empty: 'No migrated series during this job',
+    empty: 'jobs.shows.migrateSonarr.empty',
   },
 }
 
 const UIShowsJob = ({ job, logs }) => {
+  const { t, i18n } = useTranslation()
   const command = COMMANDS[jobNameOf(job.meta)]
   const warnings = useMemo(() => [...(logs || [])].filter(command.warnings).sort(newest), [logs, command])
   const sections = useMemo(() => command.sections.reduce((acc, { key, test, entity }: any) => ({
@@ -385,11 +389,11 @@ const UIShowsJob = ({ job, logs }) => {
           )}
           subtitle={(
             <>
-              <span sx={UIShowsJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}</span>
+              <span sx={UIShowsJob.styles.subtitle}>{job.job} - {(new Date(job.start)).toLocaleDateString(i18n.language, { month: 'numeric', day: 'numeric' })} - {(new Date(job.start)).toLocaleTimeString(i18n.language, { hour: '2-digit', minute:'2-digit' })}</span>
               {job.meta.done && (
                 <>
                   <br/>
-                  <strong sx={UIShowsJob.styles.subtitle}>{formatDuration(intervalToDuration({ start: new Date(job.start), end: new Date(job.end) }), { format: ['hours', 'minutes', 'seconds'] }).replace(/ hours?/, 'h').replace(/ minutes?/, 'm').replace(/ seconds?/, 's')}</strong>
+                  <strong sx={UIShowsJob.styles.subtitle}>{durationOf(job)}</strong>
                 </>
               )}
             </>
@@ -427,7 +431,7 @@ const UIShowsJob = ({ job, logs }) => {
                 id={`${job.meta.command}-${key}-${job.job}`}
                 entities={sections[key]}
                 length={sections[key].length}
-                label={label}
+                label={t(label)}
                 display='grid'
                 hide={true}
                 child={child as any}
@@ -438,11 +442,11 @@ const UIShowsJob = ({ job, logs }) => {
         ) : job.meta.done ? (
           <Warning
             emoji={job.meta.error ? '💢' : '🗄️'}
-            title={job.meta.error ? 'Error': 'Empty'}
-            subtitle={job.meta.error?.message || job.meta.error || command.empty}
+            title={job.meta.error ? t('jobs.job.error') : t('jobs.job.empty')}
+            subtitle={job.meta.error?.message || job.meta.error || t(command.empty)}
           />
         ) : (
-          <Warning emoji='⏳' title='Loading' subtitle='Waiting for shows...' />
+          <Warning emoji='⏳' title={t('state.loading')} subtitle={t('jobs.shows.waiting')} />
         )}
       </div>
     </div>

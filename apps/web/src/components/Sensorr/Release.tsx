@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useThemeUI } from 'theme-ui'
 import oleoo from 'oleoo'
 import report from 'new-github-issue-url'
@@ -21,6 +22,7 @@ const UIRelease = ({
   note = null,
   bars = downloadable,
 }) => {
+  const { t } = useTranslation()
   const meta = useMemo(() => entity?.meta || oleoo.parse(entity?.title || '', { strict: false, flagged: true }), [entity?.meta])
 
   return (
@@ -32,7 +34,7 @@ const UIRelease = ({
               <div sx={{ display: 'flex', alignItems: 'center' }}>
                 {entity?.valid !== false && remove && !entity.proposal && ['record', 'refine', 'shrink', 'report'].includes(entity?.from) && (
                   // In the text's gray, which the details' drawer retints: the icon's own white reads on no poster color
-                  <button sx={UIRelease.styles.remove} title="Remove release" onClick={() => remove(entity)}>
+                  <button sx={UIRelease.styles.remove} title={t('sensorr.release.remove')} onClick={() => remove(entity)}>
                     <Icon value='clear' width='1em' height='1em' active={true} style={{ color: 'inherit' }} />
                   </button>
                 )}
@@ -65,13 +67,13 @@ const UIRelease = ({
                     }}
                   >
                     <i
-                      title={banned ? 'Unban release' : 'Ban release'}
+                      title={banned ? t('sensorr.release.unban') : t('sensorr.release.ban')}
                       sx={banned ? { opacity: '1 !important' } : {}}
                       onClick={ban}
                     >
                       ⊘
                     </i>
-                    <i title="Report release parsing issue">
+                    <i title={t('sensorr.release.report')}>
                       <a target='_blank' rel='noreferrer noopener' href={reportOleoo({ generated: meta.generated, original: meta.original })} sx={{ variant: 'link.reset', fontFamily: 'monospace-no-emoji' }}>⚠</a>
                     </i>
                   </div>
@@ -83,11 +85,11 @@ const UIRelease = ({
                   <Tippy maxWidth='80vw' disabled={!entity?.original} content={<code><small>{entity?.original}</small></code>}>
                     <span sx={UIRelease.styles.name}>
                       <button
-                        {...(downloadable ? { title: 'Download release to Sensorr blackhole' } : {})}
+                        {...(downloadable ? { title: t('sensorr.release.download') } : {})}
                         onClick={() => proceed(entity, true)}
                         disabled={!downloadable}
                       >
-                        <code title={entity?.title}>{entity?.title || 'No releases found during this job'}</code>
+                        <code title={entity?.title}>{entity?.title || t('sensorr.release.empty')}</code>
                       </button>
                     </span>
                   </Tippy>
@@ -102,7 +104,7 @@ const UIRelease = ({
                       {!!entity?.enclosure && (
                         <>
                           <span>&nbsp;&nbsp;&nbsp;</span>
-                          <a href={safeUrl(entity?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+                          <a href={safeUrl(entity?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={t('sensorr.release.torrent')}><code><small>.torrent</small></code></a>
                         </>
                       )}
                     </span>
@@ -134,13 +136,13 @@ const UIRelease = ({
                 {!bars ? (
                   <div sx={{ ...UIRelease.styles.tags, marginLeft: [12, 0] }}>
                     {typeof entity?.peers !== 'undefined' && (
-                      <ReleaseTag title={`Peers (${entity?.seeders}/${entity?.peers})`} sx={{ marginLeft: [12, 4] }}>
+                      <ReleaseTag title={t('sensorr.release.peers', { seeders: entity?.seeders, peers: entity?.peers })} sx={{ marginLeft: [12, 4] }}>
                         <code>{emojize('🌍 ', entity?.peers || 0)}</code>
                       </ReleaseTag>
                     )}
                     {typeof entity?.size !== 'undefined' && <ReleaseSize size={entity?.size} />}
                     {typeof entity?.score !== 'undefined' && (
-                      <ReleaseTag title={`Score (${entity?.score})`}>
+                      <ReleaseTag title={t('sensorr.release.score', { score: entity?.score })}>
                         <code>{emojize('💯 ', entity?.score || 0)}</code>
                       </ReleaseTag>
                     )}
@@ -148,17 +150,17 @@ const UIRelease = ({
                 ) : (
                   <div sx={UIRelease.styles.statistics}>
                     {typeof statistics.lowest.score !== 'undefined' && (
-                      <Statistic emoji='💯' title={`Score (${entity?.score})`} valid={entity?.valid !== false} ratio={Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)}>
+                      <Statistic emoji='💯' title={t('sensorr.release.score', { score: entity?.score })} valid={entity?.valid !== false} ratio={Math.max(1, entity?.score - statistics.lowest.score) / Math.max(1, statistics.highest.score - statistics.lowest.score)}>
                         {entity?.score}
                       </Statistic>
                     )}
                     {typeof statistics.lowest.peers !== 'undefined' && (
-                      <Statistic emoji='🌍' title={`Peers (${entity?.seeders}/${entity?.peers})`} valid={entity?.valid !== false} ratio={Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)}>
+                      <Statistic emoji='🌍' title={t('sensorr.release.peers', { seeders: entity?.seeders, peers: entity?.peers })} valid={entity?.valid !== false} ratio={Math.max(1, entity?.peers - statistics.lowest.peers) / Math.max(1, statistics.highest.peers - statistics.lowest.peers)}>
                         {entity?.peers}
                       </Statistic>
                     )}
                     {typeof statistics.lowest.size !== 'undefined' && (
-                      <Statistic emoji='📦' title={`Size (${filesize.stringify(entity?.size)})`} valid={entity?.valid !== false} ratio={Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size)))}>
+                      <Statistic emoji='📦' title={t('sensorr.release.size', { size: filesize.stringify(entity?.size) })} valid={entity?.valid !== false} ratio={Math.min(1, Math.max(0.01, (entity?.size / statistics.highest.size)))}>
                         {filesize.stringify(entity?.size)}
                       </Statistic>
                     )}
@@ -320,7 +322,7 @@ const UIReleaseState = ({ entity = null }) => (
       <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>📭</span>
     </Tippy>
   ) : entity?.from === 'sync' ? (
-    <Tippy maxWidth='80vw' content={<code>Synced from Plex <strong>sync#{entity?.job}</strong></code>}>
+    <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.synced' values={{ job: entity?.job }} components={[<strong />]} /></code>}>
       <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
         {/* Plex's tile: bare, its yellow reads on no light background */}
         <Icon value='plex' width='1.25em' height='1.25em' style={{ display: 'block' }} />
@@ -331,19 +333,19 @@ const UIReleaseState = ({ entity = null }) => (
   ) : !entity?.valid && entity?.warning > 10 ? (
     <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>🗑️</span>
   ) : (entity?.proposal && typeof entity?.choice !== 'boolean') ? (
-    <Tippy maxWidth='80vw' content={<code>Proposal from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+    <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.proposal' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>🛎️</Link></span>
     </Tippy>
   ) : (entity?.proposal && entity?.choice === false) ? (
-    <Tippy maxWidth='80vw' content={<code>Refused from <strong>{entity?.from}#{entity?.job}</strong></code>}>
+    <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.refused' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>❌</Link></span>
     </Tippy>
   ) : (entity?.proposal && entity?.choice === true) ? (
-    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+    <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.recorded' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>
   ) : ['record', 'refine', 'shrink', 'report', 'airing'].includes(entity?.from) ? (
-    <Tippy maxWidth='80vw' content={<code>Recorded by <strong>{entity?.from}#{entity?.job}</strong></code>}>
+    <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.recorded' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>
   ) : (
@@ -386,22 +388,28 @@ export const ReleaseTag = memo(UIReleaseTag)
 // The axes a release row tags, in this order, then its flags
 const TAGGED = ['source', 'encoding', 'resolution', 'dub', 'language']
 
-const NAMES = { source: 'Source', encoding: 'Encoding', resolution: 'Resolution', dub: 'Dub', language: 'Language', flags: 'Flag' }
-
 // `account` holds the score points the policy's `prefer` gave each value, shown in the title
-const UIReleaseAxis = ({ axis, value, account = null }) => (
-  <ReleaseTag title={`${NAMES[axis]}: ${value}${(account?.[axis] || {})[value] ? ` (+${account[axis][value]})` : ''}`}>
-    {logos[axis]?.[value] || <code>{value}</code>}
-  </ReleaseTag>
-)
+const UIReleaseAxis = ({ axis, value, account = null }) => {
+  const { t } = useTranslation()
+
+  return (
+    <ReleaseTag title={`${t('sensorr.release.axis', { name: t(`sensorr.release.axes.${axis}`), value })}${(account?.[axis] || {})[value] ? ` (+${account[axis][value]})` : ''}`}>
+      {logos[axis]?.[value] || <code>{value}</code>}
+    </ReleaseTag>
+  )
+}
 
 export const ReleaseAxis = memo(UIReleaseAxis)
 
-const UIReleaseSize = ({ size, ...props }) => (
-  <ReleaseTag {...props} title={`Size (${filesize.stringify(size)})`}>
-    <code>{emojize('📦 ', filesize.stringify(size || 0))}</code>
-  </ReleaseTag>
-)
+const UIReleaseSize = ({ size, ...props }) => {
+  const { t } = useTranslation()
+
+  return (
+    <ReleaseTag {...props} title={t('sensorr.release.size', { size: filesize.stringify(size) })}>
+      <code>{emojize('📦 ', filesize.stringify(size || 0))}</code>
+    </ReleaseTag>
+  )
+}
 
 export const ReleaseSize = memo(UIReleaseSize)
 

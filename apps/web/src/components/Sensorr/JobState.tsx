@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icon } from '@sensorr/ui'
 import { jobTitleOf } from '@sensorr/sensorr'
 import { useJobRunner } from './Jobs'
@@ -11,6 +12,7 @@ interface JobStateProps {
 }
 
 const UIJobState = ({ job, name, done = false }: JobStateProps) => {
+  const { t } = useTranslation()
   const { stopJob, stopping } = useJobRunner()
 
   if (done) {
@@ -20,14 +22,14 @@ const UIJobState = ({ job, name, done = false }: JobStateProps) => {
   // The job stays running until the CLI exits, its `done` replaces this button
   if (stopping.includes(job)) {
     return (
-      <button type='button' disabled={true} aria-label={`Stopping ${jobTitleOf(name)} job`} sx={UIJobState.styles.stop}>
+      <button type='button' disabled={true} aria-label={t('sensorr.jobState.stopping', { name: jobTitleOf(name) })} sx={UIJobState.styles.stop}>
         <Icon value='spinner' height='0.75em' width='0.75em' />
       </button>
     )
   }
 
   return (
-    <button type='button' onClick={() => stopJob(name, job)} aria-label={`Stop ${jobTitleOf(name)} job`} title='Stop' sx={UIJobState.styles.stop}>
+    <button type='button' onClick={() => stopJob(name, job)} aria-label={t('sensorr.jobState.stopJob', { name: jobTitleOf(name) })} title={t('sensorr.jobState.stop')} sx={UIJobState.styles.stop}>
       <Icon value='live' height='0.75em' width='0.75em' />
     </button>
   )

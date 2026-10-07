@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { jobLabelOf, jobNameOf } from '@sensorr/sensorr'
 import { glide, useDragScroll } from '@sensorr/utils'
 
@@ -47,6 +48,7 @@ const capsulesOf = (tabs) => tabs.reduce((capsules, tab) => {
 
 // One command at a time, `null` shows them all. Sits flush under a `primary` head.
 const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsProps) => {
+  const { t } = useTranslation()
   const row = useRef<HTMLDivElement>(null)
   const drag = useDragScroll(row)
 
@@ -61,7 +63,7 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
   }, [value])
 
   const capsules = capsulesOf([
-    { value: null, emoji: '📼', label: 'all', count: all },
+    { value: null, emoji: '📼', label: t('sensorr.commandTabs.all'), count: all },
     ...options,
   ])
 
@@ -84,7 +86,7 @@ const UICommandTabs = ({ options, all, value, onChange, ...props }: CommandTabsP
   }
 
   return (
-    <div ref={drag} role='group' aria-label='Filter by command' {...props} sx={UICommandTabs.styles.element}>
+    <div ref={drag} role='group' aria-label={t('sensorr.commandTabs.label')} {...props} sx={UICommandTabs.styles.element}>
       {capsules.map(({ group, tabs }) => group ? (
         <div key={group} role='group' aria-label={group}>
           <span>{group}</span>

@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { Button, Checkbox, Range, Warning } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
 import { emojize } from '@sensorr/utils'
@@ -24,7 +25,10 @@ export const JOBS = {
   shrink: emojize('✂️', 'Shrink'),
 }
 
-export const ReleasesToggle = ({ toggleOpen, ...props }) => (
+export const ReleasesToggle = ({ toggleOpen, ...props }) => {
+  const { t } = useTranslation()
+
+  return (
   <div
     sx={{
       display: 'flex',
@@ -44,14 +48,15 @@ export const ReleasesToggle = ({ toggleOpen, ...props }) => (
       }}
     >
       <span>
-        {emojize('📀', 'Releases')}
+        {t('sensorr.releases.label')}
       </span>
     </label>
     <Button {...props} variant='contain' color={'primaryDark' as any} type='button' onClick={toggleOpen}>
-      Show <strong>Releases</strong> filters
+      <Trans t={t} i18nKey='sensorr.releases.toggle' components={[<strong />]} />
     </Button>
   </div>
-)
+  )
+}
 
 const RULE = { variant: 'code.reset', paddingX: 6, paddingY: 8, fontSize: 6, fontFamily: 'monospace', fontWeight: 'semibold', borderRadius: '2px', marginX: 8 }
 
@@ -67,15 +72,15 @@ export const releasesFields = ({ noun, jobs }: { noun: string, jobs: (keyof type
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head_release' }}>
         <Warning
           emoji="📀"
-          title="Releases"
+          title={i18n.t('sensorr.releases.title')}
           subtitle={(
             <span>
-              Narrow your {noun} search with releases filters, use each rule tag according to your preferences
+              {i18n.t('sensorr.releases.subtitle', { noun })}
               <br/>
               <span sx={{ display: 'inline-block', marginTop: 4, marginBottom: 8 }}>
-                <code sx={{ ...RULE, backgroundColor: 'primaryDarkest' }}>⭐ ACCEPT</code>
-                <code sx={{ ...RULE, backgroundColor: 'error' }}>⛔ FILTER</code>
-                <code sx={{ ...RULE, border: '1px solid white' }}>🔕 IGNORE</code>
+                <code sx={{ ...RULE, backgroundColor: 'primaryDarkest' }}>{i18n.t('sensorr.releases.accept')}</code>
+                <code sx={{ ...RULE, backgroundColor: 'error' }}>{i18n.t('sensorr.releases.filter')}</code>
+                <code sx={{ ...RULE, border: '1px solid white' }}>{i18n.t('sensorr.releases.ignore')}</code>
               </span>
             </span>
           )}
