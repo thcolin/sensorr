@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react'
-import { Badge, buttonStyles } from '@sensorr/ui'
+import { Badge, buttonStyles, Icon } from '@sensorr/ui'
 import { app, reset } from './running'
 import { STORAGE_FAILED } from './server/store'
 
@@ -37,7 +37,7 @@ const DemoBanner = () => {
 
   return (
     <aside ref={ref} sx={DemoBanner.styles.element} aria-label='Demo'>
-      <Badge emoji='🍿' label='Demo' />
+      <Badge emoji='🍿' label='Demo' compact={true} />
       <span sx={state === 'kept' ? DemoBanner.styles.text : DemoBanner.styles.failure}>
         {MESSAGES[state]}
       </span>
@@ -45,8 +45,8 @@ const DemoBanner = () => {
         <button type='button' onClick={onReset} aria-label='Reset the demo' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
           Reset
         </button>
-        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label='Sensorr on GitHub, in a new tab' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
-          GitHub
+        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label='Sensorr on GitHub, in a new tab' title='Sensorr on GitHub' sx={DemoBanner.styles.github}>
+          <Icon value='github' sx={DemoBanner.styles.logo} />
         </a>
       </div>
     </aside>
@@ -93,6 +93,22 @@ DemoBanner.styles = {
     paddingX: 6,
     paddingY: 8,
     textDecoration: 'none',
+  },
+  github: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: ['44px', '28px'],
+    minHeight: ['44px', '28px'],
+    color: 'text',
+    transition: 'opacity 200ms ease-in-out',
+    ':hover': {
+      opacity: 0.8,
+    },
+  },
+  logo: {
+    width: '1.5em',
+    height: '1.5em',
   },
 }
 
