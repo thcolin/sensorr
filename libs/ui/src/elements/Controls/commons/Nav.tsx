@@ -67,13 +67,13 @@ UINav.styles = {
     overflowY: 'hidden',
     scrollbarWidth: 'none',
   },
-  // The strip of the swaps (Proposals.tsx), under the bar
+  // Under the bar, a step darker, laid out like the strip of the swaps (Proposals.tsx)
   strip: {
     display: 'flex',
     minHeight: '3em',
     // The bar's `paddingX: 0` reads the first step of the scale, 2em
     paddingX: '2em',
-    backgroundColor: 'primary',
+    backgroundColor: 'primaryDark',
     borderTop: '1px solid',
     borderColor: 'hsla(0, 0%, 0%, 0.12)',
     fontSize: 5,
