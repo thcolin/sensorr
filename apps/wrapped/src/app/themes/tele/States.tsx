@@ -2,7 +2,6 @@ import type { NoticeProps } from '../types'
 import { t } from '../../sheets'
 import './tele.css'
 
-// The colour of each bar of the card, then of each block of the strip under them
 const BARS = ['paper', 'yellow', 'cyan', 'green', 'magenta', 'red', 'blue']
 const STRIP = ['blue', 'ink', 'magenta', 'ink', 'cyan', 'ink', 'paper']
 

@@ -6,7 +6,6 @@ import { SortableSelect } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
 import { withProps } from '../../enhancers/withProps'
 
-// Titled by `sensorr.oleoo.marks`
 const MARKS = {
   prefer: '⭐',
   avoid: '⛔',

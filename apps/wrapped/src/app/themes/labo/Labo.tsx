@@ -458,7 +458,6 @@ const Binge = ({ sheet, index, reel, art, episodes }: { sheet: Of<'binge'>, inde
   )
 }
 
-// The hour the projector stopped, written over the print like a figure
 export const Hour = ({ children }: { children?: ReactNode }) => <b className="labo-fig"><span className="labo-fig-n">{children}</span></b>
 
 // The tail of the reel, the hour the projector stopped marked on the leader

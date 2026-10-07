@@ -8,7 +8,6 @@ import { ControlsContext } from '../../components/Calendar/Calendar'
 import { Trans } from 'react-i18next'
 import { departmentsOf, judge, refinementsOf, summarize } from './refine'
 
-// The error of a calendar while nobody is followed
 export const NOBODY = {
   emoji: '⭐️',
   title: <Trans i18nKey='pages.calendar.nobody.title' />,

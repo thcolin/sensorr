@@ -6,7 +6,6 @@ import { scrollToTop } from '@sensorr/utils'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { SECONDARY } from './sections'
 
-// The sections with pages of their own, listed under their link
 const [MOVIE, TV, PERSON] = ['/movie', '/tv', '/person']
 
 const Chevron = ({ ...props }) => (

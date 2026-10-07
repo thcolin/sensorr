@@ -21,7 +21,6 @@ export const statusOf = (key, config) => {
   }
 }
 
-// What the missing step costs, said where it is listed, in the language of the interface when it is read
 export const MISSING = {
   get tmdb() { return i18n.t('onboarding.recap.missing.tmdb') },
   get indexers() { return i18n.t('onboarding.recap.missing.indexers') },

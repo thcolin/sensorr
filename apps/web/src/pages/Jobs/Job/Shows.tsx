@@ -173,7 +173,6 @@ export const summaryMigrateSonarr = ({ sonarr = 0, shows = {} as any, migrated =
 
 const newest = (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 
-// A library card with one line under it, what the job found about the show: its note, or the count of episodes it misses
 const UINotedShow = ({ entity, ...props }) => {
   const { t } = useTranslation()
   const note = entity.note ?? emojize('💊', t('jobs.shows.episodes', { count: entity.missing }))
