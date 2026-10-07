@@ -27,9 +27,12 @@ export interface Share {
 
 type State = { status: 'loading' } | { status: 'gone' } | { status: 'error' } | { status: 'done', share: Share }
 
+// The page's <base href>: `/wrapped/`, or `/sensorr/wrapped/` in the demo
+const BASE = new URL(document.baseURI).pathname
+
 const tokenOf = (path: string) => {
   try {
-    return decodeURIComponent(path.replace(/^\/wrapped\/?/, '').split('/')[0] || '')
+    return decodeURIComponent(path.slice(BASE.length).split('/')[0] || '')
   } catch (error) {
     // A mangled link is a link that leads nowhere, the page says so
     return ''
@@ -38,7 +41,7 @@ const tokenOf = (path: string) => {
 
 const token = tokenOf(window.location.pathname)
 // `/wrapped/<token>/<year>` opens that edition, a bare link the one shown now
-const asked = window.location.pathname.replace(/^\/wrapped\/?/, '').split('/')[1] || ''
+const asked = window.location.pathname.slice(BASE.length).split('/')[1] || ''
 const year = /^\d{4}$/.test(asked) ? Number(asked) : null
 // The look this link last showed on this device, so the wait and the notices already wear it
 const shown = read('shown', token)
@@ -110,7 +113,7 @@ export const App = () => {
 
       // A year turned off, or one this friend has nothing in, opened another: the address stops naming it
       if (asked && share.year !== year) {
-        window.history.replaceState(null, '', `/wrapped/${encodeURIComponent(token)}${window.location.search}${window.location.hash}`)
+        window.history.replaceState(null, '', `${BASE}${encodeURIComponent(token)}${window.location.search}${window.location.hash}`)
       }
 
       await i18n.changeLanguage(forced || languageOf({ language: share.language, region: share.region }))
