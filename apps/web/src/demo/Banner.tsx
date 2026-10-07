@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge, buttonStyles, Icon } from '@sensorr/ui'
 import { app, reset } from './running'
 import { STORAGE_FAILED } from './server/store'
@@ -6,12 +7,13 @@ import { STORAGE_FAILED } from './server/store'
 const REPOSITORY = 'https://github.com/thcolin/sensorr'
 
 const MESSAGES = {
-  kept: 'Your changes stay in this browser',
-  storage: 'This browser keeps nothing, your changes go away on reload',
-  data: 'The demo data did not load, reload the page',
+  kept: 'demo.messages.kept',
+  storage: 'demo.messages.storage',
+  data: 'demo.messages.data',
 }
 
 const DemoBanner = () => {
+  const { t } = useTranslation()
   const [state, setState] = useState<keyof typeof MESSAGES>('kept')
   const ref = useRef<HTMLElement>(null)
 
@@ -30,22 +32,22 @@ const DemoBanner = () => {
   }, [])
 
   const onReset = () => {
-    if (window.confirm('Reset the demo? Everything you changed goes back to how it started')) {
+    if (window.confirm(t('demo.reset.confirm'))) {
       reset()
     }
   }
 
   return (
-    <aside ref={ref} sx={DemoBanner.styles.element} aria-label='Demo'>
-      <Badge emoji='🍿' label='Demo' compact={true} />
+    <aside ref={ref} sx={DemoBanner.styles.element} aria-label={t('demo.label')}>
+      <Badge emoji='🍿' label={t('demo.label')} compact={true} />
       <span sx={state === 'kept' ? DemoBanner.styles.text : DemoBanner.styles.failure}>
-        {MESSAGES[state]}
+        {t(MESSAGES[state])}
       </span>
       <div sx={DemoBanner.styles.actions}>
-        <button type='button' onClick={onReset} aria-label='Reset the demo' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
-          Reset
+        <button type='button' onClick={onReset} aria-label={t('demo.reset.title')} sx={{ ...buttonStyles.outline({ color: 'gray' }), ...DemoBanner.styles.action }}>
+          {t('demo.reset.label')}
         </button>
-        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label='Sensorr on GitHub, in a new tab' title='Sensorr on GitHub' sx={DemoBanner.styles.github}>
+        <a href={REPOSITORY} target='_blank' rel='noopener noreferrer' aria-label={t('demo.github.label')} title={t('demo.github.title')} sx={DemoBanner.styles.github}>
           <Icon value='github' sx={DemoBanner.styles.logo} />
         </a>
       </div>

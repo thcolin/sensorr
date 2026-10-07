@@ -1,4 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning, reveal } from '@sensorr/ui'
 import toast from 'react-hot-toast'
@@ -8,6 +9,7 @@ import { useRipple } from 'use-ripple-hook'
 import Tippy from '@tippyjs/react'
 import usePortal from 'react-useportal'
 import { formatDistanceToNowStrict } from 'date-fns'
+import i18n, { dateLocale } from '@sensorr/i18n'
 import { useNotificationsContext } from '../../../contexts/Notifications/Notifications'
 import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/MoviesMetadata'
 import { showStateOf, useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
@@ -26,16 +28,17 @@ const COMMANDS = {
   'refine movies': { emoji: '✨' },
   'shrink movies': { emoji: '✂️' },
   'report movies': { emoji: '🚩' },
-  'sync movies': { emoji: '💊', label: 'missing' },
-  'keep-in-touch': { emoji: '🍺', label: 'request' },
+  'sync movies': { emoji: '💊', get label() { return i18n.t('header.notifications.commands.missing') } },
+  'keep-in-touch': { emoji: '🍺', get label() { return i18n.t('header.notifications.commands.request') } },
   'record shows': { emoji: '📹' },
   'airing shows': { emoji: '📡' },
-  'sync shows': { emoji: '💊', label: 'missing' },
+  'sync shows': { emoji: '💊', get label() { return i18n.t('header.notifications.commands.missing') } },
 }
 
 const timestampOf = (notification) => new Date(notification.timestamp).getTime()
 
 const UINotifications = ({ ...props }) => {
+  const { t } = useTranslation()
   const { pwa } = useDeviceContext()
   // The list is rendered in a portal: a state, so the virtualizer renders again once its container exists
   const [scroller, setScroller] = useState<HTMLDivElement>(null)
@@ -92,9 +95,9 @@ const UINotifications = ({ ...props }) => {
             <span>
               <span>
                 <span>
-                  <h2>Notifications</h2>
+                  <h2>{t('header.notifications.title')}</h2>
                   <button
-                    title={!subscribable ? 'Push Notifications unavailable' : subscribed ? 'Disable Push Notifications' : 'Enable Push Notifications'}
+                    title={t(!subscribable ? 'header.notifications.push.unavailable' : subscribed ? 'header.notifications.push.disable' : 'header.notifications.push.enable')}
                     onClick={(e) => toggleNotificationsSubscription(e)}
                     disabled={!subscribable}
                   >
@@ -103,10 +106,10 @@ const UINotifications = ({ ...props }) => {
                   {!!unseen.length && (
                     <span
                       role='button'
-                      title='Mark all as read'
+                      title={t('header.notifications.read.title')}
                       sx={{ cursor: 'pointer' }}
                       onClick={() => {
-                        if (window.confirm(`Mark all ${unseen.length} notification${unseen.length > 1 ? 's' : ''} as read ?`)) {
+                        if (window.confirm(t('header.notifications.read.confirm', { count: unseen.length }))) {
                           dismissNotifications(unseen)
                         }
                       }}
@@ -137,11 +140,11 @@ const UINotifications = ({ ...props }) => {
                 </div>
               ) : (
                 filter ? (
-                  <Warning emoji='🔔' title='No match' subtitle={`No ${COMMANDS[filter]?.label || filter} notification`}>
-                    <Button variant='outline' color='gray' onClick={() => setFilter(null)}>Show all</Button>
+                  <Warning emoji='🔔' title={t('header.notifications.empty.match.title')} subtitle={t('header.notifications.empty.match.subtitle', { command: COMMANDS[filter]?.label || filter })}>
+                    <Button variant='outline' color='gray' onClick={() => setFilter(null)}>{t('header.notifications.empty.match.all')}</Button>
                   </Warning>
                 ) : (
-                  <Warning emoji='🔔' title='Up to date' subtitle='No notifications yet' />
+                  <Warning emoji='🔔' title={t('header.notifications.empty.none.title')} subtitle={t('header.notifications.empty.none.subtitle')} />
                 )
               )}
             </div>
@@ -291,7 +294,7 @@ const NotificationFrame = ({ _id, timestamp, meta, closePortal, to, poster, head
             </span>
             <span sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
               <span sx={{ fontSize: 7, fontWeight: 'semibold', whiteSpace: 'nowrap' }}>
-                {formatDistanceToNowStrict(new Date(timestamp), { addSuffix: true })}
+                {formatDistanceToNowStrict(new Date(timestamp), { addSuffix: true, locale: dateLocale() })}
               </span>
               <Link to={`/jobs/${meta?.job}`} onClick={() => closePortal()} sx={{ marginTop: 10, fontSize: 7, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                 #{meta?.job}
@@ -306,6 +309,7 @@ const NotificationFrame = ({ _id, timestamp, meta, closePortal, to, poster, head
 }
 
 const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
+  const { t } = useTranslation()
   const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.movie?.id]: metadata = {} }, setMovieMetadata, banMovieRelease } = useMoviesMetadataContext() as any
   const { guests } = useGuestsContext() as any
@@ -361,12 +365,12 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
       to={`/movie/${meta?.movie?.id}`}
       poster={meta?.movie?.poster_path}
       heading={{
-        'record': meta?.release?.proposal ? `Movie record proposal` : `Movie recorded`,
-        'refine': meta?.release?.proposal ? `Movie refine proposal` : `Movie refined`,
-        'shrink': meta?.release?.proposal ? `Movie shrink proposal` : `Movie shrinked`,
-        'report': meta?.release?.proposal ? `Report proposal` : `Reported movie, replacement downloaded`,
-        'sync': `Movie missing from your Plex Server`,
-        'keep-in-touch': `Movie request`,
+        'record': t('header.notifications.movie.record', { proposal: String(!!meta?.release?.proposal) }),
+        'refine': t('header.notifications.movie.refine', { proposal: String(!!meta?.release?.proposal) }),
+        'shrink': t('header.notifications.movie.shrink', { proposal: String(!!meta?.release?.proposal) }),
+        'report': t('header.notifications.movie.report', { proposal: String(!!meta?.release?.proposal) }),
+        'sync': t('header.notifications.movie.sync'),
+        'keep-in-touch': t('header.notifications.movie.request'),
       }[meta?.command]}
     >
       <div sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 8, paddingY: 10 }}>
@@ -379,7 +383,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
         </span>
         <span sx={{ fontFamily: 'heading', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta?.movie?.title}</span>
         {!!swapped.current && (
-          <span sx={{ display: 'flex', flexShrink: 0, marginLeft: 'auto', paddingLeft: 6 }} title={`Size against the lightest owned release: ${delta(swapped.current.diff.size)}`}>
+          <span sx={{ display: 'flex', flexShrink: 0, marginLeft: 'auto', paddingLeft: 6 }} title={t('header.notifications.movie.size', { delta: delta(swapped.current.diff.size) })}>
             <Size item={swapped.current} threshold={0} compact={true} named={false} />
           </span>
         )}
@@ -388,12 +392,12 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
         <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
           <span sx={{ fontSize: 6 }}>
             {{
-              'record': meta?.release?.proposal ? `Release proposal` : `Release`,
-              'refine': meta?.release?.proposal ? `Release proposal` : `Release`,
-              'shrink': meta?.release?.proposal ? `Release proposal` : `Release`,
-              'report': meta?.release?.proposal ? `Release proposal` : `Release`,
-              'sync': `Do you want to fix it ?`,
-              'keep-in-touch': `Requested by`,
+              'record': t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+              'refine': t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+              'shrink': t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+              'report': t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+              'sync': t('header.notifications.movie.fix'),
+              'keep-in-touch': t('header.notifications.requested'),
             }[meta?.command]}
           </span>
         </div>
@@ -414,7 +418,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                       answerNotification(_id, true)
                     }}
                   >
-                    {choice === null ? 'Accept' : 'Accepted'}
+                    {t(choice === null ? 'sensorr.gestures.accept' : 'header.notifications.actions.accepted')}
                   </Button>
                 )}
                 {(choice === null || choice === false) && (
@@ -427,7 +431,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                       answerNotification(_id, false)
                     }}
                   >
-                    {choice === null ? 'Refuse' : 'Refused'}
+                    {t(choice === null ? 'sensorr.gestures.refuse' : 'header.notifications.actions.refused')}
                   </Button>
                 )}
                 {(choice === false) && (
@@ -436,14 +440,14 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                     color={(loading || (metadata.banned_releases || []).includes(meta?.release?.title)) ? 'gray' : 'primary'}
                     disabled={loading || (metadata.banned_releases || []).includes(meta?.release?.title)}
                     onClick={() => banMovieRelease(meta?.movie?.id, meta?.release?.title)
-                      .catch(() => toast.error('Error while banning the release'))}
+                      .catch(() => toast.error(t('sensorr.release.errors.ban')))}
                   >
-                    {!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'Ban' : 'Banned'}
+                    {t(!(metadata.banned_releases || []).includes(meta?.release?.title) ? 'header.notifications.actions.ban' : 'header.notifications.actions.banned')}
                   </Button>
                 )}
               </>
             ) : (
-              <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
+              <Button variant='contain' color='gray' disabled={true}>{t('header.notifications.actions.downloaded')}</Button>
             )}
           </div>
         </div>
@@ -460,7 +464,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                 answerNotification(_id, true)
               }}
             >
-              {choice === null ? '"Wish" it back' : 'Fixed'}
+              {t(choice === null ? 'header.notifications.actions.wishBack' : 'header.notifications.actions.fixed')}
             </Button>
           )}
           {(choice === null || choice === false) && (
@@ -470,7 +474,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
               disabled={loading || choice !== null}
               onClick={() => answerNotification(_id, false)}
             >
-              {choice === null ? 'Ignore' : 'Ignored'}
+              {t(choice === null ? 'header.notifications.actions.ignore' : 'state.ignored')}
             </Button>
           )}
         </div>
@@ -496,7 +500,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                   answerNotification(_id, true)
                 }}
               >
-                {choice === null ? '"Wish" it' : ({ archived: 'Archived', wished: 'Wished' }[metadata.state] || 'Loading')}
+                {t(choice === null ? 'header.notifications.actions.wish' : ({ archived: 'state.archived', wished: 'state.wished' }[metadata.state] || 'state.loading'))}
               </Button>
             )}
             {(choice === null || choice === false) && (
@@ -506,7 +510,7 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
                 disabled={loading || choice !== null}
                 onClick={() => answerNotification(_id, false)}
               >
-                {choice === null ? 'Ignore' : 'Ignored'}
+                {t(choice === null ? 'header.notifications.actions.ignore' : 'state.ignored')}
               </Button>
             )}
           </div>
@@ -517,14 +521,15 @@ const MovieNotification = ({ _id, timestamp, meta, closePortal }) => {
 }
 
 const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
+  const { t } = useTranslation()
   const { answerNotification } = useNotificationsContext() as any
   const { loading, metadata: { [meta?.show?.id]: metadata = {} }, setShowMetadata, followShow, setShowState, banShowRelease } = useShowsMetadataContext() as any
   const { guests } = useGuestsContext() as any
   const [following, setFollowing] = useState(false)
   const label = useMemo(() => (
-    meta?.command === 'sync' ? `${meta?.missing} episode${meta?.missing > 1 ? 's' : ''}` :
+    meta?.command === 'sync' ? t('header.notifications.show.episodes', { count: meta?.missing }) :
     meta?.release?.coverage?.length ? coverageLabel(meta.release.coverage, levelOf(meta.release.meta, meta.release.category) || undefined) : ''
-  ), [meta?.command, meta?.missing, meta?.release])
+  ), [meta?.command, meta?.missing, meta?.release, t])
   const stored = (metadata.releases || []).find(release => release.id === meta?.release?.id)
   const banned = (metadata.banned_releases || []).includes(meta?.release?.title)
 
@@ -556,12 +561,12 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
       await setShowMetadata(meta?.show?.id, 'proposal', { id: meta?.release?.id, choice })
     } catch {
       answerNotification(_id, undefined)
-      toast.error('Error while answering the proposal')
+      toast.error(t('contexts.shows.errors.answer'))
     }
   }
 
   // `followShow` toasts a show it adds to the library, not one already there
-  const followError = () => (metadata.state && metadata.state !== 'ignored') && toast.error('Error while following the show')
+  const followError = () => (metadata.state && metadata.state !== 'ignored') && toast.error(t('contexts.shows.errors.follow'))
 
   const follow = async () => {
     setFollowing(true)
@@ -579,7 +584,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
   const toggleFollow = (state) => setShowState(meta?.show?.id, state).catch(followError)
 
   const ban = () => banShowRelease(meta?.show?.id, meta?.release?.title)
-    .catch(() => toast.error('Error while banning the release'))
+    .catch(() => toast.error(t('sensorr.release.errors.ban')))
 
   return (
     <NotificationFrame
@@ -590,10 +595,10 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
       to={`/tv/${meta?.show?.id}`}
       poster={meta?.show?.poster_path}
       heading={{
-        'record': meta?.release?.swap ? `Season swap proposal` : meta?.release?.proposal ? `Show record proposal` : `Show recorded`,
-        'airing': meta?.release?.proposal ? `Airing episode proposal` : `Airing episode recorded`,
-        'sync': `Episodes missing from your Plex Server`,
-        'keep-in-touch': `Show request`,
+        'record': t('header.notifications.show.record', { swap: String(!!meta?.release?.swap), proposal: String(!!meta?.release?.proposal) }),
+        'airing': t('header.notifications.show.airing', { proposal: String(!!meta?.release?.proposal) }),
+        'sync': t('header.notifications.show.sync'),
+        'keep-in-touch': t('header.notifications.show.request'),
       }[meta?.command]}
     >
       <div sx={{ display: 'flex', alignItems: 'center', paddingY: 10 }}>
@@ -612,10 +617,10 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
       <div sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', color: 'grayDarker' }}>
         <span sx={{ fontSize: 6 }}>
           {{
-            'record': meta?.swap ? swapLabelOf(meta?.release?.size, meta.swap) : meta?.release?.proposal ? `Release proposal` : `Release`,
-            'airing': meta?.release?.proposal ? `Release proposal` : `Release`,
-            'sync': `${label} no longer on Plex`,
-            'keep-in-touch': `Requested by`,
+            'record': meta?.swap ? swapLabelOf(meta?.release?.size, meta.swap) : t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+            'airing': t('header.notifications.release', { proposal: String(!!meta?.release?.proposal) }),
+            'sync': t('header.notifications.show.gone', { count: meta?.missing }),
+            'keep-in-touch': t('header.notifications.requested'),
           }[meta?.command]}
         </span>
       </div>
@@ -632,7 +637,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
                     disabled={loading || choice !== null}
                     onClick={() => answer(true)}
                   >
-                    {choice === null ? 'Accept' : 'Accepted'}
+                    {t(choice === null ? 'sensorr.gestures.accept' : 'header.notifications.actions.accepted')}
                   </Button>
                 )}
                 {(choice === null || choice === false) && (
@@ -642,7 +647,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
                     disabled={loading || choice !== null}
                     onClick={() => answer(false)}
                   >
-                    {choice === null ? 'Refuse' : 'Refused'}
+                    {t(choice === null ? 'sensorr.gestures.refuse' : 'header.notifications.actions.refused')}
                   </Button>
                 )}
                 {(choice === false && !!metadata.state) && (
@@ -652,12 +657,12 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
                     disabled={loading || banned}
                     onClick={ban}
                   >
-                    {!banned ? 'Ban' : 'Banned'}
+                    {t(!banned ? 'header.notifications.actions.ban' : 'header.notifications.actions.banned')}
                   </Button>
                 )}
               </>
             ) : (
-              <Button variant='contain' color='gray' disabled={true}>Downloaded</Button>
+              <Button variant='contain' color='gray' disabled={true}>{t('header.notifications.actions.downloaded')}</Button>
             )}
           </div>
         </div>
@@ -670,7 +675,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
             disabled={loading || choice !== null}
             onClick={() => answerNotification(_id, false)}
           >
-            {choice === null ? 'Ignore' : 'Ignored'}
+            {t(choice === null ? 'header.notifications.actions.ignore' : 'state.ignored')}
           </Button>
         </div>
       )}
@@ -694,7 +699,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
                 aria-busy={following}
                 onClick={follow}
               >
-                {following ? 'Following...' : choice === null ? 'Follow' : metadata.monitored ? 'Followed' : 'Pinned'}
+                {t(following ? 'header.notifications.actions.following' : choice === null ? 'header.notifications.actions.follow' : metadata.monitored ? 'state.followed' : 'state.pinned')}
               </Button>
             )}
             {(choice === null || choice === false) && (
@@ -704,7 +709,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
                 disabled={loading || following || choice !== null}
                 onClick={() => answerNotification(_id, false)}
               >
-                {choice === null ? 'Ignore' : 'Ignored'}
+                {t(choice === null ? 'header.notifications.actions.ignore' : 'state.ignored')}
               </Button>
             )}
           </div>
@@ -714,6 +719,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
   )
 }
 
+// Rendered again with the notification above it, which follows the language
 const NotificationRelease = ({ release, swap = null }) => (
   <>
     {swap ? (
@@ -741,7 +747,7 @@ const NotificationRelease = ({ release, swap = null }) => (
             fontSize: 6,
           }}
         >
-          {release?.title || 'No releases found during this job'}
+          {release?.title || i18n.t('sensorr.release.empty')}
         </code>
       </Tippy>
     )}
@@ -767,13 +773,13 @@ const NotificationRelease = ({ release, swap = null }) => (
         }}
       >
         {typeof release?.peers !== 'undefined' && (
-          <ReleaseTag title={`Peers (${release?.seeders}/${release?.peers})`} fontSize={7}>
+          <ReleaseTag title={i18n.t('sensorr.release.peers', { seeders: release?.seeders, peers: release?.peers })} fontSize={7}>
             <code>{emojize('🌍 ', release?.peers || 0)}</code>
           </ReleaseTag>
         )}
         {(!swap && typeof release?.size !== 'undefined') && <ReleaseSize size={release?.size} fontSize={7} />}
         {typeof release?.score !== 'undefined' && (
-          <ReleaseTag title={`Score (${release?.score})`} fontSize={7}>
+          <ReleaseTag title={i18n.t('sensorr.release.score', { score: release?.score })} fontSize={7}>
             <code>{emojize('💯 ', release?.score || 0)}</code>
           </ReleaseTag>
         )}
@@ -794,7 +800,7 @@ const NotificationRelease = ({ release, swap = null }) => (
       >
         <a href={safeUrl(release?.link)} target='_blank' rel='noreferrer noopener' sx={{ color: 'primary' }}><code><small>({release?.znab})</small></code></a>
         <span>&nbsp;&nbsp;&nbsp;</span>
-        <a href={safeUrl(release?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={`Download .torrent file`}><code><small>.torrent</small></code></a>
+        <a href={safeUrl(release?.enclosure)} target='_blank' rel='noreferrer noopener' sx={{ color: 'grayDarker' }} title={i18n.t('sensorr.release.torrent')}><code><small>.torrent</small></code></a>
       </div>
     </div>
     {!!swap && (

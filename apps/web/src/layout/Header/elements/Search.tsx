@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Bar, Entities, AbstractEntity, transformCollectionDetails, transformCompanyDetails, transformKeywordDetails, Warning, Icon } from '@sensorr/ui'
 import { useSearchContext } from '../../../contexts/Search/Search'
 import { useDeviceContext } from '../../../contexts/Device/Device'
@@ -6,10 +7,12 @@ import Movie from '../../../components/Movie/Movie'
 import Person from '../../../components/Person/Person'
 import Show, { FOOTER_HEIGHT } from '../../../components/Show/Show'
 import nanobounce from 'nanobounce'
+import { emojize } from '@sensorr/utils'
 
 export const Input = ({ ...props }) => {
   const ref = useRef<HTMLInputElement>()
   const [focused, setFocused] = useState(false)
+  const { t } = useTranslation()
   const { input, setInput, results, loading, clear, query, setQuery, history, historyDisplay, setHistoryDisplay } = useSearchContext() as any
   const debounce = useMemo(() => nanobounce(400), [])
 
@@ -74,7 +77,7 @@ export const Input = ({ ...props }) => {
         sx={Input.styles.input}
         {...props}
         type='text'
-        aria-label='Search'
+        aria-label={t('pages.search.title')}
         ref={ref}
         value={input}
         onChange={(e) => onChange(e.target.value)}
@@ -135,6 +138,7 @@ Input.styles = {
 
 export const History = ({ ...props }) => {
   const ref = useRef()
+  const { t } = useTranslation()
   const { history, removeHistoryQuery, setQuery, setInput, historyDisplay, setHistoryDisplay } = useSearchContext() as any
 
   useEffect(() => {
@@ -150,7 +154,7 @@ export const History = ({ ...props }) => {
 
   return (
     <div ref={ref} sx={History.styles.element} style={(historyDisplay && !!history.length) ? {} : { display: 'none' }}>
-      <h4>Recent searches</h4>
+      <h4>{t('header.search.recent')}</h4>
       <ul>
         {history.map((query, i) => (
           <li key={i}>
@@ -249,6 +253,7 @@ History.styles = {
 }
 
 export const Results = ({ ...props }) => {
+  const { t } = useTranslation()
   const { query, results, loading } = useSearchContext() as any
   const { device } = useDeviceContext()
   const extanded = results !== null || loading
@@ -275,10 +280,10 @@ export const Results = ({ ...props }) => {
           <div sx={Results.styles.placeholder}>
             <Warning
               emoji="🔍"
-              title="Sorry, no results"
+              title={t('header.search.empty.title')}
               subtitle={(
                 <span>
-                  Try something more familiar, like <em>Pulp Fiction</em> ?
+                  <Trans t={t} i18nKey='header.search.empty.subtitle' components={[<em />]} />
                 </span>
               )}
             />
@@ -289,7 +294,7 @@ export const Results = ({ ...props }) => {
               {!!results.movies?.results?.length && (
                 <Entities
                   id="search-movies"
-                  label="🎞️ Movies"
+                  label={emojize('🎞️', t('header.search.movies'))}
                   entities={results.movies.results}
                   hide={true}
                   child={Movie}
@@ -297,7 +302,7 @@ export const Results = ({ ...props }) => {
                   display={device !== 'mobile' ? 'column' : 'row'}
                   stack={true}
                   more={{
-                    title: `More results for ${query}`,
+                    title: t('header.search.more', { query }),
                     to: `/movie/search`,
                     state: { controls: { query } },
                   }}
@@ -306,7 +311,7 @@ export const Results = ({ ...props }) => {
               {!!results.shows?.results?.length && (
                 <Entities
                   id="search-shows"
-                  label="📺 Shows"
+                  label={emojize('📺', t('header.search.shows'))}
                   entities={results.shows.results}
                   hide={true}
                   child={Show}
@@ -315,7 +320,7 @@ export const Results = ({ ...props }) => {
                   extra={FOOTER_HEIGHT}
                   stack={true}
                   more={{
-                    title: `More results for ${query}`,
+                    title: t('header.search.more', { query }),
                     to: `/tv/search`,
                     state: { controls: { query } },
                   }}
@@ -324,7 +329,7 @@ export const Results = ({ ...props }) => {
               {!!results.collections?.results?.length && (
                 <Entities
                   id="search-collections"
-                  label="📚 Collections"
+                  label={emojize('📚', t('header.search.collections'))}
                   entities={results.collections.results}
                   hide={true}
                   child={AbstractEntity}
@@ -340,7 +345,7 @@ export const Results = ({ ...props }) => {
               {!!results.persons?.results?.length && (
                 <Entities
                   id="search-stars"
-                  label="⭐ Stars"
+                  label={emojize('⭐', t('header.search.stars'))}
                   entities={results.persons.results}
                   hide={true}
                   child={Person}
@@ -348,7 +353,7 @@ export const Results = ({ ...props }) => {
                   display={device !== 'mobile' ? 'column' : 'row'}
                   stack={true}
                   more={{
-                    title: `More results for ${query}`,
+                    title: t('header.search.more', { query }),
                     to: `/person/search`,
                     state: { controls: { query } },
                   }}
@@ -359,7 +364,7 @@ export const Results = ({ ...props }) => {
               {!!results.companies?.results?.length && (
                 <Entities
                   id="search-companies"
-                  label="🏛️ Companies"
+                  label={emojize('🏛️', t('header.search.companies'))}
                   entities={results.companies.results}
                   hide={true}
                   child={AbstractEntity}
@@ -389,7 +394,7 @@ export const Results = ({ ...props }) => {
               {!!results.keywords?.results?.length && (
                 <Entities
                   id="search-keywords"
-                  label="🔗 Keywords"
+                  label={emojize('🔗', t('header.search.keywords'))}
                   entities={results.keywords.results}
                   hide={true}
                   child={AbstractEntity}

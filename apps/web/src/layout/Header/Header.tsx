@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useRipple } from 'use-ripple-hook'
 import { Link } from '@sensorr/ui'
@@ -12,20 +13,21 @@ import Navigation from './elements/Navigation'
 import { pageLabelOf, sectionRootOf } from './elements/sections'
 
 const PWD = ({ ...props }) => {
+  const { t } = useTranslation()
   const location = useLocation()
 
   return (
     <button sx={PWD.styles.element} onClick={() => scrollToTop()}>
-      {(
-        location.pathname === '/' ? 'Home' :
-        location.pathname.startsWith('/movie') ? 'Movies' :
-        location.pathname.startsWith('/tv') ? 'TV' :
-        location.pathname.startsWith('/collection') ? 'Collections' :
-        location.pathname.startsWith('/person') ? 'Stars' :
-        location.pathname.startsWith('/search') ? 'Search' :
-        location.pathname.startsWith('/jobs') ? 'Jobs' :
-        location.pathname.startsWith('/settings') ? 'Settings' :
-        'Navigation'
+      {t(
+        location.pathname === '/' ? 'header.sections.home' :
+        location.pathname.startsWith('/movie') ? 'header.sections.movies' :
+        location.pathname.startsWith('/tv') ? 'header.sections.tv' :
+        location.pathname.startsWith('/collection') ? 'header.sections.collections' :
+        location.pathname.startsWith('/person') ? 'header.sections.stars' :
+        location.pathname.startsWith('/search') ? 'pages.search.title' :
+        location.pathname.startsWith('/jobs') ? 'jobs.title' :
+        location.pathname.startsWith('/settings') ? 'settings.title' :
+        'header.sections.navigation'
       )}
     </button>
   )
@@ -54,6 +56,7 @@ Seperator.styles = {
 }
 
 const Logo = ({ ...props }) => {
+  const { t } = useTranslation()
   const [ref, onPointerDown] = useRipple()
   const { pwa, device } = useDeviceContext()
   const location = useLocation()
@@ -77,7 +80,7 @@ const Logo = ({ ...props }) => {
       onPointerDown={onPointerDown}
       onClick={back}
       disabled={!root}
-      aria-label='Back'
+      aria-label={t('header.back')}
       sx={{
         variant: 'button.reset',
         flex: 1,

@@ -1,4 +1,7 @@
+import i18n from '@sensorr/i18n'
 import { pageLabelOf, sectionRootOf } from './sections'
+
+beforeAll(() => i18n.changeLanguage('en'))
 
 describe('sectionRootOf', () => {
   it('has no root to go back to on a bottom bar target', () => {

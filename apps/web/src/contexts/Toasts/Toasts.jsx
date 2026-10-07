@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast, { useToaster, CheckmarkIcon, ErrorIcon, LoaderIcon } from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import { useThemeUI } from 'theme-ui'
@@ -10,6 +11,9 @@ const STACK_THRESHOLD = 3
 const STACK_DEPTH = 3
 const STACK_PEEK = 10
 const GUTTER = 8
+const STRIPES = { success: 'success', error: 'error', loading: 'grayDarkest' }
+const TRANSITION = 'transform 230ms cubic-bezier(.21,1.02,.73,1), opacity 230ms, filter 230ms'
+const stripeOf = (type) => STRIPES[type] || 'info'
 
 const ToastWrapper = ({ id, onHeightUpdate, style, card, children }) => {
   const ref = useCallback((el) => {
@@ -30,6 +34,7 @@ const ToastWrapper = ({ id, onHeightUpdate, style, card, children }) => {
 }
 
 const UIToasts = ({ ...props }) => {
+  const { i18n } = useTranslation()
   const { device, pwa } = useDeviceContext()
   const { theme } = useThemeUI()
   const [expanded, setExpanded] = useState(false)
@@ -62,10 +67,10 @@ const UIToasts = ({ ...props }) => {
     >
       {toasts.map((t) => {
         const depth = visible.indexOf(t)
-        const stripe = { success: 'success', error: 'error', loading: 'grayDarkest' }[t.type] || 'info'
+        const stripe = stripeOf(t.type)
         const behind = stacked && depth > 0
         const layer = Math.min(depth, STACK_DEPTH)
-        const transition = reduced ? undefined : 'transform 230ms cubic-bezier(.21,1.02,.73,1), opacity 230ms, filter 230ms'
+        const transition = reduced ? undefined : TRANSITION
 
         return (
           <ToastWrapper
@@ -118,7 +123,7 @@ const UIToasts = ({ ...props }) => {
               <div sx={{ flex: 1, padding: 4, paddingRight: typeof t.message !== 'string' && !t.title ? 2 : 4 }}>
                 {typeof t.message !== 'string' && !t.title ? t.message : (
                   <>
-                    <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, paddingRight: 2, fontFamily: 'heading', textTransform: 'capitalize' }}>
+                    <strong sx={{ display: 'flex', alignItems: 'center', marginBottom: 6, paddingRight: 2, fontFamily: 'heading' }}>
                       <span sx={{ marginRight: 8 }}>
                         {t.icon || (
                           t.type === 'blank' ? <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 416.979 416.979"><path fill={theme.colors.black} d="M356.004 61.156c-81.37-81.47-213.377-81.551-294.848-.182-81.47 81.371-81.552 213.379-.181 294.85 81.369 81.47 213.378 81.551 294.849.181 81.469-81.369 81.551-213.379.18-294.849zM237.6 340.786a5.821 5.821 0 0 1-5.822 5.822h-46.576a5.821 5.821 0 0 1-5.822-5.822V167.885a5.821 5.821 0 0 1 5.822-5.822h46.576a5.82 5.82 0 0 1 5.822 5.822v172.901zm-29.11-202.885c-18.618 0-33.766-15.146-33.766-33.765 0-18.617 15.147-33.766 33.766-33.766s33.766 15.148 33.766 33.766c0 18.619-15.149 33.765-33.766 33.765z"/></svg> :
@@ -127,7 +132,7 @@ const UIToasts = ({ ...props }) => {
                           t.type === 'loading' ? <LoaderIcon primary={theme.rawColors.grayDarkest} secondary={theme.rawColors.grayDark} /> : null
                         )}
                       </span>
-                      <span> {t.title || (t.type === 'blank' ? 'Info' : t.type)}</span>
+                      <span> {t.title || i18n.t(`contexts.toasts.types.${t.type}`, { defaultValue: t.type })}</span>
                     </strong>
                     <span sx={{ display: 'block', fontSize: 5, 'p': { margin: 12 } }}>{typeof t.message === 'string' ? <Markdown>{t.message}</Markdown> : t.message}</span>
                     {t.actions && (
@@ -135,7 +140,7 @@ const UIToasts = ({ ...props }) => {
                         {t.actions}
                       </span>
                     )}
-                    {t.type === 'error' && !t.actions && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>See browser console for more details</span>}
+                    {t.type === 'error' && !t.actions && <span sx={{ display: 'block', fontSize: 7, marginTop: 6 }}>{i18n.t('contexts.toasts.console')}</span>}
                   </>
                 )}
               </div>

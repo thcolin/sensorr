@@ -1,4 +1,7 @@
+import i18n from '@sensorr/i18n'
 import { nextRunsOf, statusOf } from './recap'
+
+beforeAll(() => i18n.changeLanguage('en'))
 
 const configOf = (values) => ({ get: (key) => key.split('.').reduce((value, part) => value?.[part], values) })
 

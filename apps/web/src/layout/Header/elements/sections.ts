@@ -1,32 +1,37 @@
+import i18n from '@sensorr/i18n'
+
+// A getter, so a label follows the language the interface has when it is shown
+const page = (to, key) => ({ to, get label() { return i18n.t(key) } })
+
 export const SECONDARY = {
   '/movie': [
-    { to: '/movie/library', label: 'Library' },
-    { to: '/movie/discover', label: 'Discover' },
-    { to: '/movie/lists', label: 'Lists' },
-    { to: '/movie/calendar', label: 'Calendar' },
-    { to: '/movie/trending', label: 'Trending' },
-    { to: '/movie/theatres', label: 'Theatres' },
-    { to: '/movie/requests', label: 'Requests' },
-    { to: '/movie/swaps', label: 'Swaps' },
+    page('/movie/library', 'pages.library.title'),
+    page('/movie/discover', 'pages.discover.title'),
+    page('/movie/lists', 'header.pages.lists'),
+    page('/movie/calendar', 'pages.calendar.title'),
+    page('/movie/trending', 'pages.trending.movies.title'),
+    page('/movie/theatres', 'pages.theatres.title'),
+    page('/movie/requests', 'pages.requests.title'),
+    page('/movie/swaps', 'header.pages.swaps'),
   ],
   '/tv': [
-    { to: '/tv/library', label: 'Library' },
-    { to: '/tv/discover', label: 'Discover' },
-    { to: '/tv/lists', label: 'Lists' },
-    { to: '/tv/calendar', label: 'Calendar' },
-    { to: '/tv/trending', label: 'Trending' },
-    { to: '/tv/requests', label: 'Requests' },
+    page('/tv/library', 'pages.library.title'),
+    page('/tv/discover', 'pages.discover.title'),
+    page('/tv/lists', 'header.pages.lists'),
+    page('/tv/calendar', 'pages.calendar.title'),
+    page('/tv/trending', 'pages.trending.shows.title'),
+    page('/tv/requests', 'pages.requests.title'),
   ],
   '/person': [
-    { to: '/person/followed', label: 'Followed' },
-    { to: '/person/trending', label: 'Trending' },
+    page('/person/followed', 'pages.followed.title'),
+    page('/person/trending', 'pages.trending.persons.title'),
   ],
 }
 
 // The page a sub-route shows, named as its tab in the browser
 export const pageLabelOf = (pathname) => [
   ...Object.values(SECONDARY).flat(),
-  { to: '/person/calendar', label: 'Calendar' },
+  page('/person/calendar', 'pages.calendar.title'),
 ].find(({ to }) => pathname === to || pathname.startsWith(`${to}/`))?.label || null
 
 // null when pathname is itself a root, a bottom bar target of the PWA: the home of a section, jobs or settings

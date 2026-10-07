@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { useAuthContext } from '../Auth/Auth'
 import { useConfigContext } from '../Config/Config'
 import { useAPI } from '../../store/api'
@@ -42,7 +43,7 @@ export const Provider = ({ ...props }) => {
             Notification.requestPermission((permission) => {
               if (permission !== 'granted') {
                 setSubscribed(false)
-                return reject('Notifications disabled, allow permission from your navigator or system settings')
+                return reject(i18n.t('contexts.notifications.denied'))
               }
 
               return resolve(registration)
@@ -74,11 +75,11 @@ export const Provider = ({ ...props }) => {
           })
         ),
       {
-        loading: `Handling Push Notifications...`,
-        success: (data) => `Push Notifications ${data.subscribed ? 'enabled' : 'disabled'}`,
+        loading: i18n.t('contexts.notifications.loading'),
+        success: (data) => i18n.t('contexts.notifications.success', { subscribed: String(data.subscribed) }),
         error: (err) => {
           console.warn(err)
-          return typeof err === 'string' ? err : `Error during Push Notifications subscription`
+          return typeof err === 'string' ? err : i18n.t('contexts.notifications.error')
         },
       })
     }

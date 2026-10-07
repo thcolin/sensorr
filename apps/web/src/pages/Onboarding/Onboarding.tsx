@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { keyframes } from '@emotion/react'
 import { TMDB } from '@sensorr/tmdb'
+import i18n from '@sensorr/i18n'
 import { Badge, Button, Icon, Option, Steps, Warning } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
 import { useAPI, errorOf } from '../../store/api'
@@ -51,77 +53,85 @@ const checkTMDB = async (key) => {
     await new TMDB({ key }).fetch('configuration', {}, {}, true)
     return null
   } catch (err) {
-    return /Invalid TMDB API key/.test(err.message) ? err.message : null
+    return /Invalid TMDB API key/.test(err.message) ? i18n.t('onboarding.steps.tmdb.invalid') : null
   }
 }
 
-const Welcome = ({ config, origin, setOrigin, archive, setArchive }) => (
-  <>
-    {config.get('onboarding.defaultPassword') && (
-      <p sx={{ ...Update.styles.warning, marginBottom: 6 }}>
-        <strong>Warning</strong>, the password is still <code sx={{ variant: 'code.reset' }}>sensorr</code>: change <code sx={{ variant: 'code.reset' }}>SENSORR_PASSWORD</code> in the <code sx={{ variant: 'code.reset' }}>.env</code> of your install folder, then run <code sx={{ variant: 'code.reset' }}>docker compose up -d</code> there
-      </p>
-    )}
-    <div sx={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Option type='radio' id='onboarding-fresh' name='onboarding-origin' checked={origin === 'fresh'} onChange={() => setOrigin('fresh')}>
-        <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-          <strong>New instance</strong>
-          <br />
-          <small>Start from an empty library</small>
-        </div>
-      </Option>
-      <Option type='radio' id='onboarding-dump' name='onboarding-origin' checked={origin === 'dump'} onChange={() => setOrigin('dump')}>
-        <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-          <strong>From a dump</strong>
-          <br />
-          <small>Bring the library and the settings of another Sensorr over</small>
-        </div>
-      </Option>
-      <Option type='radio' id='onboarding-legacy' name='onboarding-origin' checked={origin === 'legacy'} onChange={() => setOrigin('legacy')}>
-        <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-          <strong>From a 0.x</strong>
-          <br />
-          <small>Bring the movies and stars of a Sensorr 0.x over</small>
-        </div>
-      </Option>
-    </div>
-    {origin === 'dump' && (
-      <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
-        <input
-          type='file'
-          accept='.zip,application/zip'
-          aria-label='Dump to import'
-          onChange={(e) => setArchive(e.target.files?.[0] || null)}
-          sx={Onboarding.styles.file}
-        />
-        <small>
-          The <code>.zip</code> of <code>Settings &#x3E; Data</code>, on the other Sensorr. Imported as you continue, its settings then fill the next steps, all but the keys and passwords.
-        </small>
+const Welcome = ({ config, origin, setOrigin, archive, setArchive }) => {
+  const { t } = useTranslation()
+  const defaultPassword = config.get('onboarding.defaultPassword')
+  const legacy = config.get('onboarding.legacy')
+  const indexers = (config.get('znabs') || []).length
+
+  return (
+    <>
+      {defaultPassword && (
+        <p sx={{ ...Update.styles.warning, marginBottom: 6 }}>
+          <Trans t={t} i18nKey='onboarding.welcome.password' components={[<strong />, <code sx={{ variant: 'code.reset' }} />, <code sx={{ variant: 'code.reset' }} />, <code sx={{ variant: 'code.reset' }} />, <code sx={{ variant: 'code.reset' }} />]} />
+        </p>
+      )}
+      <div sx={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Option type='radio' id='onboarding-fresh' name='onboarding-origin' checked={origin === 'fresh'} onChange={() => setOrigin('fresh')}>
+          <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+            <strong>{t('onboarding.welcome.fresh.title')}</strong>
+            <br />
+            <small>{t('onboarding.welcome.fresh.description')}</small>
+          </div>
+        </Option>
+        <Option type='radio' id='onboarding-dump' name='onboarding-origin' checked={origin === 'dump'} onChange={() => setOrigin('dump')}>
+          <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+            <strong>{t('onboarding.welcome.dump.title')}</strong>
+            <br />
+            <small>{t('onboarding.welcome.dump.description')}</small>
+          </div>
+        </Option>
+        <Option type='radio' id='onboarding-legacy' name='onboarding-origin' checked={origin === 'legacy'} onChange={() => setOrigin('legacy')}>
+          <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
+            <strong>{t('onboarding.welcome.legacy.title')}</strong>
+            <br />
+            <small>{t('onboarding.welcome.legacy.description')}</small>
+          </div>
+        </Option>
       </div>
-    )}
-    {origin === 'legacy' && (
-      <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
-        {config.get('onboarding.legacy') && (
+      {origin === 'dump' && (
+        <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
+          <input
+            type='file'
+            accept='.zip,application/zip'
+            aria-label={t('onboarding.welcome.dump.file')}
+            onChange={(e) => setArchive(e.target.files?.[0] || null)}
+            sx={Onboarding.styles.file}
+          />
           <small>
-            Its <code>config.json</code> was converted at boot: {(config.get('znabs') || []).length} indexers and its policy are already set, Plex has to be linked again
+            <Trans t={t} i18nKey='onboarding.welcome.dump.help' values={{ settings: t('settings.title'), page: t('settings.sections.backup') }} components={[<code />, <code />]} />
           </small>
-        )}
-        <input
-          type='file'
-          accept='.zip,application/zip'
-          aria-label='0.x dump'
-          onChange={(e) => setArchive(e.target.files?.[0] || null)}
-          sx={Onboarding.styles.file}
-        />
-        <small>
-          The <code>.zip</code> the <strong>Dump</strong> button of a 0.x gives, in <code>Settings &#x3E; Database</code>. {archive ? `It is imported once TMDB answers, follow it in Jobs.` : ''}
-        </small>
-      </div>
-    )}
-  </>
-)
+        </div>
+      )}
+      {origin === 'legacy' && (
+        <div sx={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
+          {legacy && (
+            <small>
+              <Trans t={t} i18nKey='onboarding.welcome.legacy.converted' values={{ count: indexers }} components={[<code />]} />
+            </small>
+          )}
+          <input
+            type='file'
+            accept='.zip,application/zip'
+            aria-label={t('onboarding.welcome.legacy.file')}
+            onChange={(e) => setArchive(e.target.files?.[0] || null)}
+            sx={Onboarding.styles.file}
+          />
+          <small>
+            <Trans t={t} i18nKey='onboarding.welcome.legacy.help' values={{ archive: String(!!archive) }} components={[<code />, <strong />, <code />]} />
+          </small>
+        </div>
+      )}
+    </>
+  )
+}
 
 const End = ({ steps, config, go }) => {
+  const { t } = useTranslation()
   const runs = nextRunsOf(config)
   const listed = steps
     .map(({ key, emoji, label }, index) => ({ key, emoji: key === 'plex' ? PLEX_STEPS.url.emoji : emoji, label, index, status: statusOf(key, config) }))
@@ -132,7 +142,7 @@ const End = ({ steps, config, go }) => {
   return (
     <div sx={Onboarding.styles.recap}>
       <section>
-        <h4>Next</h4>
+        <h4>{t('onboarding.end.next')}</h4>
         {runs.length ? (
           <ul sx={Onboarding.styles.next}>
             {runs.map(({ name, emoji, when }) => (
@@ -143,18 +153,18 @@ const End = ({ steps, config, go }) => {
             ))}
           </ul>
         ) : (
-          <p sx={Onboarding.styles.missing}>Every job is paused, nothing runs on its own</p>
+          <p sx={Onboarding.styles.missing}>{t('onboarding.end.paused')}</p>
         )}
       </section>
       {!!missing.length && (
         <section>
-          <h4>Still to set up</h4>
+          <h4>{t('onboarding.end.todo')}</h4>
           <ul sx={Onboarding.styles.todo}>
             {missing.map(({ key, emoji, label, index }) => (
               <li key={key}>
                 <span>{emoji} <strong>{label}</strong></span>
                 <span sx={Onboarding.styles.missing}>{MISSING[key]}</span>
-                <button type='button' onClick={() => go(index)} sx={Onboarding.styles.setup}>Set up ›</button>
+                <button type='button' onClick={() => go(index)} sx={Onboarding.styles.setup}>{t('onboarding.end.setup')}</button>
               </li>
             ))}
           </ul>
@@ -162,7 +172,7 @@ const End = ({ steps, config, go }) => {
       )}
       {!!set.length && (
         <section sx={Onboarding.styles.set}>
-          <h4>Set</h4>
+          <h4>{t('onboarding.end.set')}</h4>
           {set.map(({ key, emoji, status }) => (
             <Badge key={key} emoji={emoji} label={status} compact={true} size='small' palette={{ color: 'primaryDarkest', backgroundColor: 'whitePure' }} />
           ))}
@@ -173,7 +183,8 @@ const End = ({ steps, config, go }) => {
 }
 
 const Onboarding = () => {
-  useTitle('Onboarding')
+  const { t } = useTranslation()
+  useTitle(t('onboarding.title'))
   const api = useAPI()
   const navigate = useNavigate()
   const { config, load } = useConfigContext() as any
@@ -253,7 +264,7 @@ const Onboarding = () => {
     }
 
     if (!archive) {
-      setRestoration({ error: "Choose the dump's .zip, or start from a new instance" })
+      setRestoration({ error: t('onboarding.restore.choose') })
       throw new Error('No dump')
     }
 
@@ -272,7 +283,7 @@ const Onboarding = () => {
       }
 
       if (ended.meta.error) {
-        throw new Error(ended.messages?.[ended.messages.length - 1] || `The restore ${job} failed`)
+        throw new Error(ended.messages?.[ended.messages.length - 1] || t('onboarding.restore.failed', { job }))
       }
 
       const query = api.query.config.getConfig({})
@@ -288,11 +299,11 @@ const Onboarding = () => {
   const steps = [
     {
       key: 'welcome',
-      label: 'Welcome',
+      label: t('onboarding.steps.welcome.title'),
       emblem: <Brand />,
       emoji: '👋',
-      title: 'Welcome',
-      subtitle: 'A few steps get this Sensorr searching: TMDB, your indexers, where releases go. Only TMDB is required, and everything stays in Settings afterwards',
+      title: t('onboarding.steps.welcome.title'),
+      subtitle: t('onboarding.steps.welcome.subtitle'),
       content: <Welcome config={config} origin={origin} setOrigin={setOrigin} archive={archive} setArchive={setArchive} />,
       submit: restore,
     },
@@ -311,7 +322,7 @@ const Onboarding = () => {
         />
       ),
       submit: async (values) => {
-        const error = (!values.tmdb || values.tmdb === TMDB_PLACEHOLDER) ? 'A TMDB API key is required' : await checkTMDB(values.tmdb)
+        const error = (!values.tmdb || values.tmdb === TMDB_PLACEHOLDER) ? t('onboarding.steps.tmdb.required') : await checkTMDB(values.tmdb)
         setTMDBError(error)
 
         if (error) {
@@ -324,10 +335,10 @@ const Onboarding = () => {
     },
     {
       key: 'indexers',
-      label: 'Indexers',
-      emblem: <EmojiEmblem emoji='🔎' label='Indexers' />,
+      label: t('settings.sections.indexers'),
+      emblem: <EmojiEmblem emoji='🔎' label={t('settings.sections.indexers')} />,
       emoji: '🔎',
-      title: 'Indexers',
+      title: t('settings.sections.indexers'),
       settings: '/settings/indexers',
       subtitle: <ZnabsIntro />,
       skippable: true,
@@ -336,10 +347,10 @@ const Onboarding = () => {
     },
     {
       key: 'policies',
-      label: 'Policies',
-      emblem: <EmojiEmblem emoji='🚨' label='Policies' />,
+      label: t('settings.sections.policies'),
+      emblem: <EmojiEmblem emoji='🚨' label={t('settings.sections.policies')} />,
       emoji: '🚨',
-      title: 'Policies',
+      title: t('settings.sections.policies'),
       settings: '/settings/policies',
       subtitle: <PoliciesIntro />,
       skippable: true,
@@ -348,10 +359,10 @@ const Onboarding = () => {
     },
     {
       key: 'blackhole',
-      label: 'Blackhole',
-      emblem: <EmojiEmblem emoji='🕳️' label='Blackhole' />,
+      label: t('settings.sections.blackhole'),
+      emblem: <EmojiEmblem emoji='🕳️' label={t('settings.sections.blackhole')} />,
       emoji: '🕳️',
-      title: 'Blackhole',
+      title: t('settings.sections.blackhole'),
       settings: '/settings/blackhole',
       subtitle: <BlackholeIntro />,
       skippable: true,
@@ -376,26 +387,26 @@ const Onboarding = () => {
       ),
       submit: async () => {
         if (plex.step !== 'token') {
-          toast.error('Link your Plex server, or skip this step')
+          toast.error(t('onboarding.steps.plex.required'))
           throw new Error('Plex not linked')
         }
       },
     },
     {
       key: 'friends',
-      label: 'Friends',
-      emblem: <EmojiEmblem emoji='🍻' label='Friends' />,
+      label: t('settings.sections.friends'),
+      emblem: <EmojiEmblem emoji='🍻' label={t('settings.sections.friends')} />,
       emoji: '🍻',
-      title: 'Friends',
+      title: t('settings.sections.friends'),
       settings: '/settings/friends',
       subtitle: <FriendsIntro />,
       skippable: true,
       content: (
         <>
           <p>
-            Share <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a> with them, or set up Mail below to invite them from <code>Settings &#x3E; Friends</code>.
+            <Trans t={t} i18nKey='onboarding.steps.friends.share' values={{ url: `${document.location.origin}/keep-in-touch`, settings: t('settings.title'), page: t('settings.sections.friends') }} components={[<a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener' />, <code />]} />
           </p>
-          <h3>Mail</h3>
+          <h3>{t('settings.sections.mail')}</h3>
           <MailFields form={form} compact={true} />
         </>
       ),
@@ -403,28 +414,28 @@ const Onboarding = () => {
     },
     {
       key: 'jobs',
-      label: 'Jobs',
-      emblem: <EmojiEmblem emoji='⏰' label='Jobs' />,
+      label: t('jobs.title'),
+      emblem: <EmojiEmblem emoji='⏰' label={t('jobs.title')} />,
       emoji: '⏰',
-      title: 'Jobs',
+      title: t('jobs.title'),
       settings: '/settings/schedule',
-      subtitle: 'Sensorr runs these jobs on its own. Pause the ones you do not want yet',
+      subtitle: t('onboarding.steps.jobs.subtitle'),
       skippable: true,
       content: (
         <div sx={JobsSettings.styles.element}>
           <JobsFields form={form} compact={true} />
-          <p><small>Schedules, proposals and manual runs stay in <code>Settings &#x3E; Jobs</code>.</small></p>
+          <p><small><Trans t={t} i18nKey='onboarding.steps.jobs.stay' values={{ settings: t('settings.title'), page: t('settings.sections.schedule') }} components={[<code />]} /></small></p>
         </div>
       ),
       submit: save,
     },
     {
       key: 'end',
-      label: 'Ready',
+      label: t('onboarding.steps.end.title'),
       emblem: <Brand />,
       emoji: '📼',
-      title: 'Ready',
-      subtitle: 'Sensorr is programmed. Settings keeps everything for later',
+      title: t('onboarding.steps.end.title'),
+      subtitle: t('onboarding.steps.end.subtitle'),
       submit: (values) => save({ ...values, onboarding: { ...values.onboarding, done: true } }),
     },
   ]
@@ -468,14 +479,14 @@ const Onboarding = () => {
   const footer = (
     <div sx={Onboarding.styles.footer}>
       {step > 0 && (
-        <Button type='button' color='gray' variant='outline' onClick={() => go(step - 1)} disabled={pending}>Back</Button>
+        <Button type='button' color='gray' variant='outline' onClick={() => go(step - 1)} disabled={pending}>{t('onboarding.footer.back')}</Button>
       )}
       <span sx={{ flex: 1 }} />
       {current.skippable && (
-        <Button type='button' color='gray' variant='outline' onClick={skip} disabled={pending}>Skip</Button>
+        <Button type='button' color='gray' variant='outline' onClick={skip} disabled={pending}>{t('onboarding.footer.skip')}</Button>
       )}
       <Button type='submit' color='primary' disabled={pending}>
-        {last ? 'Open Sensorr' : 'Continue'}
+        {t(last ? 'onboarding.footer.open' : 'onboarding.footer.continue')}
       </Button>
     </div>
   )
@@ -486,7 +497,7 @@ const Onboarding = () => {
       <div sx={Onboarding.styles.wrapper}>
         <div ref={panel} sx={Onboarding.styles.panel}>
           <div sx={Onboarding.styles.content}>
-            <p role='status' sx={Onboarding.styles.hidden}>Step {steps.indexOf(current) + 1} of {steps.length}, {current.label}</p>
+            <p role='status' sx={Onboarding.styles.hidden}>{t('onboarding.status', { step: steps.indexOf(current) + 1, count: steps.length, label: current.label })}</p>
             <Steps value={steps.indexOf(current)}>
               {steps.map(({ key }) => (
                 <div key={key} />
@@ -505,7 +516,7 @@ const Onboarding = () => {
             )}
             {restoration?.job && !restoration.error && (
               <small sx={{ display: 'block', textAlign: 'center', marginBottom: 6 }}>
-                📦 {restoration.done ? 'The dump is imported' : 'The dump is being imported'}, follow it in <Link to={`/jobs/${restoration.job}`} target='_blank'>Jobs</Link>
+                📦 <Trans t={t} i18nKey='onboarding.restore.progress' values={{ done: String(!!restoration.done) }} components={[<Link to={`/jobs/${restoration.job}`} target='_blank' />]} />
               </small>
             )}
             {migration?.error && (
@@ -513,7 +524,7 @@ const Onboarding = () => {
             )}
             {migration?.job && (
               <small sx={{ display: 'block', textAlign: 'center', marginBottom: 6 }}>
-                🚚 The 0.x dump is being imported, follow it in <Link to={`/jobs/${migration.job}`} target='_blank'>Jobs</Link>
+                🚚 <Trans t={t} i18nKey='onboarding.restore.legacy' components={[<Link to={`/jobs/${migration.job}`} target='_blank' />]} />
               </small>
             )}
           </div>

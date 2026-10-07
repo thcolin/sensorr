@@ -1,3 +1,4 @@
+import i18n from '@sensorr/i18n'
 import { BadGatewayException, Controller, Get, Query } from './shims/nest-common'
 import { INDEXER, searchOf } from '../releases'
 import { tmdb } from '../../store/tmdb'
@@ -11,7 +12,7 @@ export class ProxyController {
     const url = new URL(target)
 
     if (`${url.origin}${url.pathname}` !== INDEXER.url) {
-      throw new BadGatewayException(`The demo only reaches its own indexer, not ${url.host}`)
+      throw new BadGatewayException(i18n.t('demo.indexer', { host: url.host }))
     }
 
     const params = Object.fromEntries(url.searchParams)
