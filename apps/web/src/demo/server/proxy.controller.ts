@@ -10,7 +10,7 @@ export class ProxyController {
   async get(@Query('target') target: string) {
     const url = new URL(target)
 
-    if (!`${url.origin}${url.pathname}`.startsWith(INDEXER.url)) {
+    if (`${url.origin}${url.pathname}` !== INDEXER.url) {
       throw new BadGatewayException(`The demo only reaches its own indexer, not ${url.host}`)
     }
 

@@ -1,6 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# compiled output
+# compiled output, the images build their own
+/dist
 /tmp
 /db
 /out-tsc
@@ -48,3 +49,6 @@ Thumbs.db
 .nx/cache
 .secrets
 caddy
+
+# The demo data and its TMDB data, see tools/demo/seed.ts
+apps/web/src/demo/seed/seed.json
