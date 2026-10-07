@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { nanoid } from 'nanoid'
 import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
@@ -11,10 +11,10 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { BUILTINS, GROUPABLE, LOCKED, HomeKey, List, Row, dropRow, fits, isGroup, listRowId, listsOf, rowsOf } from '../Home/rows'
 import { Capsule } from './Capsule'
 
-const HOMES: { [home in HomeKey]: { emoji: string, label: string } } = {
-  all: { emoji: '🖥️', label: 'Browser' },
-  movie: { emoji: '🍿', label: 'Movies' },
-  tv: { emoji: '📺', label: 'TV' },
+const HOMES: { [home in HomeKey]: { emoji: string } } = {
+  all: { emoji: '🖥️' },
+  movie: { emoji: '🍿' },
+  tv: { emoji: '📺' },
 }
 
 export const useRowLabel = (lists: List[]) => {
@@ -23,10 +23,10 @@ export const useRowLabel = (lists: List[]) => {
   return useCallback((id: string) => {
     if (id.startsWith('list:')) {
       const list = lists.find((list) => listRowId(list) === id)
-      return { label: emojize('🗂️', list?.name), title: `${list?.sources.length} source${list?.sources.length === 1 ? '' : 's'}`, kind: 'list' }
+      return { label: emojize('🗂️', list?.name), title: t('settings.home.sources', { count: list?.sources.length }), kind: t('settings.home.kinds.list') }
     }
 
-    return { label: t(`items.${BUILTINS[id].item}.label`).replace(/<\/?small>/g, ''), title: t(`items.${BUILTINS[id].item}.title`), kind: 'built-in' }
+    return { label: t(`items.${BUILTINS[id].item}.label`).replace(/<\/?small>/g, ''), title: t(`items.${BUILTINS[id].item}.title`), kind: t('settings.home.kinds.builtin') }
   }, [lists, t])
 }
 
@@ -47,7 +47,8 @@ const collide = (args) => {
 }
 
 const Home = ({ ...props }) => {
-  useTitle('Settings - Home')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.home') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const lists = listsOf(config)
@@ -86,10 +87,10 @@ const Home = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2 id='home-home'>Home</h2>
+          <h2 id='home-home'>{t('settings.sections.home')}</h2>
           <p>
-            The rows of each Home, in order. Drag a row to move it, drop it on the middle of another to show both as the tabs of one row, uncheck it to hide it. The <strong>Browser</strong> Home is the one of a browser, <strong>Movies</strong> and <strong>TV</strong> the ones of the installed app.
-            {' '}A <code>🔒</code> row opens a screen the app reaches only from its Home: it moves, it stays shown.
+            <Trans t={t} i18nKey='settings.home.intro' components={[<strong />, <strong />, <strong />]} />
+            {' '}<Trans t={t} i18nKey='settings.home.locked' components={[<code />]} />
           </p>
           <Capsule
             name='home'
@@ -99,7 +100,7 @@ const Home = ({ ...props }) => {
               setHome(value as HomeKey)
               setAdding('')
             }}
-            options={Object.entries(HOMES).map(([value, { emoji, label }]) => ({ value, label: emojize(emoji, label) }))}
+            options={Object.entries(HOMES).map(([value, { emoji }]) => ({ value, label: emojize(emoji, t(`settings.home.homes.${value}`)) }))}
           />
           <form
             sx={Home.styles.add}
@@ -113,16 +114,16 @@ const Home = ({ ...props }) => {
             }}
           >
             <select
-              aria-label='Row to add'
+              aria-label={t('settings.home.add.label')}
               value={adding}
               onChange={(e) => setAdding(e.target.value)}
               disabled={!addable.length}
               sx={{ variant: 'select.default', flex: 1 }}
             >
-              <option value=''>{addable.length ? 'Add a row…' : 'Every row is on this Home'}</option>
+              <option value=''>{addable.length ? t('settings.home.add.placeholder') : t('settings.home.add.none')}</option>
               {addable.map((id) => <option key={id} value={id}>{[labelOf(id).label, labelOf(id).title].filter(Boolean).join(' · ')}</option>)}
             </select>
-            <button type='submit' title='Add the row' disabled={!adding} sx={Home.styles.plus}>+</button>
+            <button type='submit' title={t('settings.home.add.submit')} disabled={!adding} sx={Home.styles.plus}>+</button>
           </form>
           <form
             sx={{ display: 'flex', flexDirection: 'column' }}
@@ -156,9 +157,9 @@ const Home = ({ ...props }) => {
                     key={row.id}
                     row={row}
                     target={target}
-                    label={emojize('🗂️', 'Group')}
+                    label={emojize('🗂️', t('settings.home.group'))}
                     title={row.tabs.map((id) => labelOf(id).label).join(' · ')}
-                    kind='tabs'
+                    kind={t('settings.home.kinds.tabs')}
                     locked={row.tabs.some(locked)}
                     onToggle={() => toggle(row.id)}
                     onMove={(step) => move(row.id, step)}
@@ -191,12 +192,12 @@ const Home = ({ ...props }) => {
               </ol>
               {createPortal((
                 <DragOverlay dropAnimation={null}>
-                  {dragged && <div sx={Home.styles.overlay}>{String(dragged).startsWith('group:') ? emojize('🗂️', 'Group') : labelOf(String(dragged)).label}</div>}
+                  {dragged && <div sx={Home.styles.overlay}>{String(dragged).startsWith('group:') ? emojize('🗂️', t('settings.home.group')) : labelOf(String(dragged)).label}</div>}
                 </DragOverlay>
               ), document.body)}
             </DndContext>
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : t('settings.save.nothing')} sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </form>
         </article>
@@ -205,7 +206,10 @@ const Home = ({ ...props }) => {
   )
 }
 
-const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle = null, onUngroup = null, onMove, handle, zone, children, ...props }, ref) => (
+const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, locked, onToggle = null, onUngroup = null, onMove, handle, zone, children, ...props }, ref) => {
+  const { t } = useTranslation()
+
+  return (
   <li ref={ref} {...props} sx={Home.styles.row} data-hidden={row.hidden || undefined} data-zone={zone || undefined} data-group={!!children || undefined}>
     <div>
       <span
@@ -217,7 +221,7 @@ const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, l
           }
         }}
         sx={Home.styles.handle}
-        aria-label={`Move ${label}, with the up and down arrows`}
+        aria-label={t('settings.home.move', { label })}
       >
         ⁝
       </span>
@@ -227,18 +231,19 @@ const RowSettings = forwardRef<HTMLLIElement, any>(({ row, label, title, kind, l
       </span>
       {kind && <span sx={Home.styles.kind}>{kind}</span>}
       {onUngroup ? (
-        <button type='button' onClick={onUngroup} title='Take it out of the group' sx={Home.styles.ungroup}>✕</button>
+        <button type='button' onClick={onUngroup} title={t('settings.home.ungroup')} sx={Home.styles.ungroup}>✕</button>
       ) : locked ? (
-        <span sx={Home.styles.toggle} title='Opens a screen the app reaches only from this Home' aria-label='Always shown'>🔒</span>
+        <span sx={Home.styles.toggle} title={t('settings.home.lockedTitle')} aria-label={t('settings.home.alwaysShown')}>🔒</span>
       ) : (
         <span sx={Home.styles.toggle}>
-          <Option id={`row-${row.id}`} type='checkbox' checked={!row.hidden} onChange={onToggle} title={row.hidden ? 'Show the row' : 'Hide the row'} aria-label={`Show ${label}`} />
+          <Option id={`row-${row.id}`} type='checkbox' checked={!row.hidden} onChange={onToggle} title={row.hidden ? t('settings.home.show') : t('settings.home.hide')} aria-label={t('settings.home.showLabel', { label })} />
         </span>
       )}
     </div>
     {children}
   </li>
-))
+  )
+})
 
 const DraggableRow = ({ target, ...props }) => {
   const draggable = useDraggable({ id: props.row.id })

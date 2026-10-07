@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Icon, Warning } from '@sensorr/ui'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
@@ -25,7 +27,7 @@ export const usePlexLink = () => {
       setStep('pin')
     } catch (err) {
       console.warn(err)
-      toast.error('Error while fetching Plex PIN')
+      toast.error(i18n.t('settings.plex.errors.pin'))
     } finally {
       setRegistering(false)
     }
@@ -65,7 +67,7 @@ export const usePlexLink = () => {
           if (interval) {
             clearInterval(interval)
           }
-          toast.error('Plex PIN expired, please register again')
+          toast.error(i18n.t('settings.plex.errors.expired'))
           setStep('url')
           return
         }
@@ -105,7 +107,7 @@ export const usePlexLink = () => {
   }, [step])
 
   const handleReset = useCallback(async () => {
-    if (!window.confirm('Are you sure you want to unregister your Plex server ? Every releases from this server will be removed from Sensorr, but movies will still be "archived"')) {
+    if (!window.confirm(i18n.t('settings.plex.reset.confirm'))) {
       return
     }
 
@@ -120,7 +122,7 @@ export const usePlexLink = () => {
       setStep('url')
     } catch (err) {
       console.warn(err)
-      toast.error('Error while reseting Plex configuration')
+      toast.error(i18n.t('settings.plex.reset.error'))
     }
   }, [])
 
@@ -128,13 +130,14 @@ export const usePlexLink = () => {
 }
 
 export const PlexServerInputs = ({ link }) => {
+  const { t } = useTranslation()
   const { config } = useConfigContext()
 
   return (
     <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
       <form onSubmit={link.handleRegister} sx={UIPlex.styles.inputs}>
-        <input name='url' type='url' placeholder='http://192.168.0.42:32400' defaultValue={config.get('plex.url')} disabled={link.step !== 'url'} />
-        <button type='submit' disabled={link.step !== 'url'}>Register</button>
+        <input name='url' type='url' placeholder={t('settings.plex.url.placeholder')} defaultValue={config.get('plex.url')} disabled={link.step !== 'url'} />
+        <button type='submit' disabled={link.step !== 'url'}>{t('settings.plex.url.register')}</button>
       </form>
       {link.registering && (
         <Icon value='spinner' sx={{ position: 'absolute', bottom: '-1em' }} />
@@ -144,22 +147,23 @@ export const PlexServerInputs = ({ link }) => {
 }
 
 export const PlexPinInputs = ({ link }) => {
+  const { t } = useTranslation()
   const { config } = useConfigContext()
 
   return (
     <div sx={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
       <div sx={UIPlex.styles.inputs}>
-        <label>PIN</label>
+        <label>{t('settings.plex.pin.label')}</label>
         <input type='text' value={config.get('plex.pin.code')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
         <button
           type='button'
           onClick={() =>  {
             navigator.clipboard.writeText(config.get('plex.pin.code'))
-            toast.success('PIN copied to clipboard !')
+            toast.success(t('settings.plex.pin.copied'))
           }}
           disabled={link.step !== 'pin'}
         >
-          Copy
+          {t('settings.plex.pin.copy')}
         </button>
       </div>
       {link.step === 'pin' && (
@@ -170,13 +174,14 @@ export const PlexPinInputs = ({ link }) => {
 }
 
 export const PlexTokenInputs = ({ link }) => {
+  const { t } = useTranslation()
   const { config } = useConfigContext()
 
   return (
     <div sx={UIPlex.styles.inputs}>
-      <label>Token</label>
+      <label>{t('settings.plex.token.label')}</label>
       <input type='text' value={config.get('plex.token')} sx={{ cursor: 'text', textAlign: 'center' }} disabled={true} />
-      <button type='button' onClick={link.handleReset} disabled={link.step !== 'token'}>Unregister</button>
+      <button type='button' onClick={link.handleReset} disabled={link.step !== 'token'}>{t('settings.plex.token.unregister')}</button>
     </div>
   )
 }
@@ -184,26 +189,27 @@ export const PlexTokenInputs = ({ link }) => {
 export const PLEX_STEPS: { [step: string]: { emoji: string, title: string, subtitle: (step: string) => React.ReactNode, Inputs: (props: { link: any }) => React.ReactElement } } = {
   url: {
     emoji: '📡',
-    title: 'Your Plex Server',
-    subtitle: () => 'Connect your Plex server to enable library synchronization between your Plex library and Sensorr movies releases',
+    get title() { return i18n.t('settings.plex.steps.url.title') },
+    subtitle: () => i18n.t('settings.plex.steps.url.subtitle'),
     Inputs: PlexServerInputs,
   },
   pin: {
     emoji: '🔑',
-    title: 'Authorize Sensorr',
-    subtitle: (step) => <span>Complete your Plex server registration with Sensorr on <a href={step === 'pin' ? 'https://plex.tv/pin' : null} target='_blank' rel='norefer noopener' sx={{ color: 'accentDarkest' }}>Plex website</a> using 4-character PIN code below</span>,
+    get title() { return i18n.t('settings.plex.steps.pin.title') },
+    subtitle: (step) => <span><Trans i18nKey='settings.plex.steps.pin.subtitle' components={[<a href={step === 'pin' ? 'https://plex.tv/pin' : null} target='_blank' rel='norefer noopener' sx={{ color: 'accentDarkest' }} />]} /></span>,
     Inputs: PlexPinInputs,
   },
   token: {
     emoji: '🔗',
-    title: 'Plex Server Linked !',
-    subtitle: () => <span>The connection between your Plex Server and Sensorr is now successful, you're now able to sync your Plex movie library with <code sx={{ backgroundColor: 'accent', paddingY: 11, paddingX: 9, borderRadius: '0.25em' }}>sync</code> job</span>,
+    get title() { return i18n.t('settings.plex.steps.token.title') },
+    subtitle: () => <span><Trans i18nKey='settings.plex.steps.token.subtitle' components={[<code sx={{ backgroundColor: 'accent', paddingY: 11, paddingX: 9, borderRadius: '0.25em' }} />]} /></span>,
     Inputs: PlexTokenInputs,
   },
 }
 
 const UIPlex = ({ ...props }) => {
-  useTitle('Settings - Plex')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.plex') }))
   const { config } = useConfigContext()
   const api = useAPI()
   const handleMediux = useCallback(async (e) => {
@@ -214,10 +220,10 @@ const UIPlex = ({ ...props }) => {
       const { uri, params, init } = api.query.config.putConfig({ body: { key: 'mediux.token', value } })
       await api.fetch(uri, params, init)
       config.set('mediux.token', value)
-      toast.success(value ? 'MediUX token saved' : 'MediUX token removed')
+      toast.success(value ? i18n.t('settings.plex.mediux.saved') : i18n.t('settings.plex.mediux.removed'))
     } catch (err) {
       console.warn(err)
-      toast.error('Error while saving the MediUX token')
+      toast.error(i18n.t('settings.plex.mediux.error'))
     }
   }, [])
   const link = usePlexLink()
@@ -301,12 +307,12 @@ const UIPlex = ({ ...props }) => {
       <div>
         <Warning
           emoji='🎨'
-          title='MediUX'
-          subtitle={<span>With a MediUX token, the artworks of a movie or a show also list the sets MediUX users made for it</span>}
+          title={t('settings.plex.mediux.title')}
+          subtitle={<span>{t('settings.plex.mediux.subtitle')}</span>}
           children={(
             <form onSubmit={handleMediux} sx={UIPlex.styles.inputs}>
-              <input name='mediux' type='password' placeholder='MediUX token' defaultValue={config.get('mediux.token')} autoComplete='off' spellCheck={false} />
-              <button type='submit'>Save</button>
+              <input name='mediux' type='password' placeholder={t('settings.plex.mediux.placeholder')} defaultValue={config.get('mediux.token')} autoComplete='off' spellCheck={false} />
+              <button type='submit'>{t('settings.save.label')}</button>
             </form>
           )}
         />

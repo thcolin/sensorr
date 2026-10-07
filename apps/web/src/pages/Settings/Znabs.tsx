@@ -3,6 +3,7 @@ import { Option, Button, Label } from '@sensorr/ui'
 import { Znab, ranked, unranked } from '@sensorr/sensorr'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useAPI } from '../../store/api'
@@ -12,6 +13,7 @@ import { useTitle } from '@sensorr/utils'
 export const znabsOf = (config) => (config.get('znabs') || []).map(znab => ({ ...znab, oldName: znab.name }))
 
 export const ZnabsFields = ({ form, onSubmit, children, guard = false }) => {
+  const { t } = useTranslation()
   const znabs = useFieldArray({ name: 'znabs', control: form.control })
   const znab = useForm({ defaultValues: { name: '', url:'', key:'' } })
 
@@ -29,14 +31,14 @@ export const ZnabsFields = ({ form, onSubmit, children, guard = false }) => {
       </form>
       <ul sx={{ listStyleType: 'none', padding: 12, margin: 12, '>li': { paddingBottom: 8, lineHeight: '1 !important' } }}>
         <li>
-          <small><strong>Jackett</strong>, use <code>Torznab Feed</code> of your favorite indexers and your <code>API Key</code> displayed in your home page</small>
+          <small><Trans t={t} i18nKey='settings.znabs.jackett' components={[<strong />, <code />, <code />]} /></small>
         </li>
         <li>
-          <small><strong>Prowlarr</strong>, use <code>Torznab Url</code> of your favorite indexers and your <code>API Key</code> from <code>Settings &#x3E; General &#x3E; Security</code> section</small>
+          <small><Trans t={t} i18nKey='settings.znabs.prowlarr' components={[<strong />, <code />, <code />, <code />]} /></small>
         </li>
       </ul>
       <hr sx={{ variant: 'hr.default', marginY: 6, marginX: '25%' }}></hr>
-      <form onSubmit={form.handleSubmit((values) => (guard && Object.values(znab.getValues()).some(Boolean)) ? toast.error('Add the indexer with +, or clear its row') : onSubmit(values))}>
+      <form onSubmit={form.handleSubmit((values) => (guard && Object.values(znab.getValues()).some(Boolean)) ? toast.error(t('settings.znabs.pending')) : onSubmit(values))}>
         <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
           {znabs.fields.map((znab: any, index) => (
             <ZnabSettings key={znab.id} form={form} prefix={`znabs[${index}]`} index={index} remove={znabs.remove} />
@@ -48,12 +50,14 @@ export const ZnabsFields = ({ form, onSubmit, children, guard = false }) => {
   )
 }
 
-export const ZnabsIntro = () => (
-  <>Sensorr uses an <strong>Indexer Proxy</strong> (like <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer'>Jackett</a> and <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer'>Prowlarr</a>) which offers a standardized API (<a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer'>Torznab</a>) to search for releases on your favorite torrent trackers or usenet indexers, add and configure indexers you want to use</>
-)
+export const ZnabsIntro = () => {
+  const { t } = useTranslation()
+  return <Trans t={t} i18nKey='settings.znabs.intro' components={[<strong />, <a href='https://github.com/Jackett/Jackett' target='_blank' rel='noopener noreferrer' />, <a href='https://github.com/Prowlarr/Prowlarr' target='_blank' rel='noopener noreferrer' />, <a href='https://torznab.github.io/spec-1.3-draft/index.html' target='_blank' rel='noopener noreferrer' />]} />
+}
 
 const Znabs = ({ ...props }) => {
-  useTitle('Settings - Indexers')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.indexers') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const form = useForm({
@@ -67,11 +71,11 @@ const Znabs = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Indexers</h2>
+          <h2>{t('settings.sections.indexers')}</h2>
           <p><ZnabsIntro /></p>
           <ZnabsFields form={form} onSubmit={onSave}>
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </ZnabsFields>
         </article>
@@ -81,6 +85,7 @@ const Znabs = ({ ...props }) => {
 }
 
 const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'default', remove = null, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const { config } = useConfigContext()
   const values = form.watch(prefix)
@@ -125,24 +130,24 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
         }
       }),
       {
-        loading: `Testing indexer **${name}** operability...`,
+        loading: t('settings.znabs.test.loading', { name }),
         success: () => {
           const latency = Math.round(performance.now() - start)
           setOperable(true)
           setLatency(latency)
           setLoading(false)
-          return `Indexer **${name}** operationnal ! (${latency > 1000 ? `${(latency / 1000).toFixed(0)}s` : `${latency}ms`})`
+          return t('settings.znabs.test.success', { name, latency: latency > 1000 ? `${(latency / 1000).toFixed(0)}s` : `${latency}ms` })
         },
         error: (err) => {
           setOperable(false)
           setError(err.toString())
           console.warn(err)
           setLoading(false)
-          return `Unable to connect to indexer **${name}**`
+          return t('settings.znabs.test.error', { name })
         },
       }
     )
-  }, [api.access_token])
+  }, [api.access_token, t])
 
   useEffect(() => {
     if (behavior !== 'default') {
@@ -168,7 +173,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                   borderless={true}
                   checked={!checked}
                   onChange={(e: any) => onChange(!e.target.checked)}
-                  title={values.disabled ? 'Enable indexer' : 'Disable indexer'}
+                  title={values.disabled ? t('settings.znabs.enable') : t('settings.znabs.disable')}
                 />
               )}
             />
@@ -176,7 +181,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               type='button'
               sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.test }}
               onClick={() => test({ url: values.url, name: values.name, key: values.key })}
-              title='Test indexer operability'
+              title={t('settings.znabs.test.title')}
               disabled={values.disabled}
             >
               <i sx={{ backgroundColor: values.disabled ? 'grayDarker' : loading ? 'warning' : operable ? 'success' : 'error' }}></i>
@@ -216,7 +221,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                 field.onChange(e.target.value)
               }}
               sx={{ variant: 'input.default', flex: 1, fontFamily: 'monospace', width: '100%' }}
-              placeholder='Name'
+              placeholder={t('settings.znabs.name')}
               disabled={values.disabled}
               required={true}
             />
@@ -230,7 +235,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               type='url'
               {...field}
               sx={{ variant: 'input.default', flex: 4, fontFamily: 'monospace', width: '100%' }}
-              placeholder='URL'
+              placeholder={t('settings.znabs.url')}
               disabled={values.disabled}
               required={true}
             />
@@ -244,7 +249,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
               type='text'
               {...field}
               sx={{ variant: 'input.default', flex: 2, fontFamily: 'monospace', width: '100%' }}
-              placeholder='API Key'
+              placeholder={t('settings.znabs.key')}
               disabled={values.disabled}
               required={true}
             />
@@ -255,7 +260,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
             type='button'
             sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.remove }}
             onClick={() => {
-              if (window.confirm('Do you really want to delete this Indexer? All references to this indexer in policies will be removed')) {
+              if (window.confirm(t('settings.znabs.remove.confirm'))) {
                 remove(index)
                 form.setValue(
                   'policies',
@@ -277,7 +282,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
                 )
               }
             }}
-            title='Remove indexer'
+            title={t('settings.znabs.remove.title')}
           >
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ transform: 'rotate(45deg)' }}>
               <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
@@ -285,7 +290,7 @@ const ZnabSettings = ({ form, prefix = undefined, index = null, behavior = 'defa
           </button>
         )}
         {behavior === 'create' && (
-          <button type='submit' sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }} title='Add indexer'>
+          <button type='submit' sx={{ ...ZnabSettings.styles.button, ...ZnabSettings.styles.add }} title={t('settings.znabs.add')}>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
               <path fill='currentColor' d='M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z' />
             </svg>

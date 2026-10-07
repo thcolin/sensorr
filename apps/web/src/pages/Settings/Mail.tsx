@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Option, Label, Button } from '@sensorr/ui'
 import { useOutletContext } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { emojize, useTitle } from '@sensorr/utils'
@@ -9,17 +10,19 @@ import { useAPI, errorOf } from '../../store/api'
 import Body from '../../layout/Body/Body'
 
 const SENT = [
-  { key: 'welcome', emoji: '👋', label: 'Welcome', description: 'Once a friend links their Plex account' },
-  { key: 'reconnect', emoji: '🔌', label: 'Reconnect', description: 'When Plex disconnects a friend, then up to 3 weekly reminders, and once they reconnect' },
-  { key: 'requests', emoji: '🍿', label: 'Ready to watch', description: 'The requests of a friend that reached Plex, on each run of the 📬 Mail job' },
-  { key: 'wrapped', emoji: '🎞️', label: 'Wrapped', description: 'When an edition of the wrapped freezes' },
+  { key: 'welcome', emoji: '👋' },
+  { key: 'reconnect', emoji: '🔌' },
+  { key: 'requests', emoji: '🍿' },
+  { key: 'wrapped', emoji: '🎞️' },
 ]
 
-export const MailIntro = () => (
-  <>Sensorr mails your friends: their invitation, a welcome once their Plex account is linked, a reminder when Plex disconnects it, their requests ready to watch and their wrapped. Any SMTP server works, the one of your mail provider included.</>
-)
+export const MailIntro = () => {
+  const { t } = useTranslation()
+  return <>{t('settings.mail.intro')}</>
+}
 
 export const MailFields = ({ form, compact = false }) => {
+  const { t } = useTranslation()
   const secure = (
     <div sx={Mail.styles.field}>
       <Controller
@@ -28,9 +31,9 @@ export const MailFields = ({ form, compact = false }) => {
         render={({ field: { value, onChange } }) => (
           <Option type='checkbox' id='mail.secure' checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
             <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-              <strong>{emojize('🔒', 'TLS from the start')}</strong>
+              <strong>{emojize('🔒', t('settings.mail.secure.label'))}</strong>
               <br />
-              <small>Usually on port <code>465</code>. Off, the connection still upgrades to TLS when the server offers it, usually on port <code>587</code></small>
+              <small><Trans t={t} i18nKey='settings.mail.secure.help' components={[<code />, <code />]} /></small>
             </div>
           </Option>
         )}
@@ -40,9 +43,9 @@ export const MailFields = ({ form, compact = false }) => {
 
   const sent = (
     <>
-      <h3>Sent on their own</h3>
-      <p>An invitation, a test, or a mail sent from <code>Friends</code> always goes.</p>
-      {SENT.map(({ key, emoji, label, description }) => (
+      <h3>{t('settings.mail.sent.title')}</h3>
+      <p><Trans t={t} i18nKey='settings.mail.sent.help' components={[<code />]} /></p>
+      {SENT.map(({ key, emoji }) => (
         <div key={key} sx={{ paddingY: 10 }}>
           <Controller
             name={`mail.send.${key}`}
@@ -50,9 +53,9 @@ export const MailFields = ({ form, compact = false }) => {
             render={({ field: { value, onChange } }) => (
               <Option type='checkbox' id={`mail.send.${key}`} checked={!!value} onChange={(e: any) => onChange(e.target.checked)}>
                 <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                  <strong>{emojize(emoji, label)}</strong>
+                  <strong>{emojize(emoji, t(`settings.mail.sent.${key}.label`))}</strong>
                   <br />
-                  <small>{description}</small>
+                  <small>{t(`settings.mail.sent.${key}.description`)}</small>
                 </div>
               </Option>
             )}
@@ -70,12 +73,12 @@ export const MailFields = ({ form, compact = false }) => {
           control={form.control}
           rules={{ required: true }}
           render={({ field: { ref, ...field } }) => (
-            <Label label='Address of Sensorr'>
-              <input type='url' {...field} placeholder='https://sensorr.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+            <Label label={t('settings.mail.url.label')}>
+              <input type='url' {...field} placeholder={t('settings.mail.url.placeholder')} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
             </Label>
           )}
         />
-        <small sx={{ marginTop: 6 }}>The one your friends open from home, every link of a mail starts with it, like <code>{document.location.origin}</code> if they reach this page there</small>
+        <small sx={{ marginTop: 6 }}><Trans t={t} i18nKey='settings.mail.url.help' values={{ origin: document.location.origin }} components={[<code />]} /></small>
       </div>
       <div sx={Mail.styles.row}>
         <div sx={{ ...Mail.styles.field, flex: 3 }}>
@@ -84,8 +87,8 @@ export const MailFields = ({ form, compact = false }) => {
             control={form.control}
             rules={{ required: true }}
             render={({ field: { ref, ...field } }) => (
-              <Label label='SMTP host'>
-                <input type='text' {...field} placeholder='smtp.example.com' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+              <Label label={t('settings.mail.host.label')}>
+                <input type='text' {...field} placeholder={t('settings.mail.host.placeholder')} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
               </Label>
             )}
           />
@@ -96,7 +99,7 @@ export const MailFields = ({ form, compact = false }) => {
             control={form.control}
             rules={{ required: true }}
             render={({ field: { ref, onChange, ...field } }) => (
-              <Label label='Port'>
+              <Label label={t('settings.mail.port.label')}>
                 <input type='number' min={1} max={65535} {...field} onChange={(e) => onChange(Number(e.target.value))} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
               </Label>
             )}
@@ -110,7 +113,7 @@ export const MailFields = ({ form, compact = false }) => {
             name='mail.user'
             control={form.control}
             render={({ field: { ref, ...field } }) => (
-              <Label label='Username'>
+              <Label label={t('settings.mail.user.label')}>
                 <input type='text' autoComplete='off' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
               </Label>
             )}
@@ -121,7 +124,7 @@ export const MailFields = ({ form, compact = false }) => {
             name='mail.password'
             control={form.control}
             render={({ field: { ref, ...field } }) => (
-              <Label label='Password'>
+              <Label label={t('settings.mail.password.label')}>
                 <input type='password' autoComplete='new-password' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} />
               </Label>
             )}
@@ -134,16 +137,16 @@ export const MailFields = ({ form, compact = false }) => {
           control={form.control}
           rules={{ required: true }}
           render={({ field: { ref, ...field } }) => (
-            <Label label='Sender'>
-              <input type='text' {...field} placeholder='Thomas <sensorr@example.com>' sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
+            <Label label={t('settings.mail.from.label')}>
+              <input type='text' {...field} placeholder={t('settings.mail.from.placeholder')} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
             </Label>
           )}
         />
-        <small sx={{ marginTop: 6 }}>Its name is the one your friends read in every mail, give yours</small>
+        <small sx={{ marginTop: 6 }}>{t('settings.mail.from.help')}</small>
       </div>
       {compact ? (
         <details sx={Mail.styles.more}>
-          <summary>More</summary>
+          <summary>{t('settings.mail.more')}</summary>
           {secure}
           {sent}
         </details>
@@ -153,7 +156,8 @@ export const MailFields = ({ form, compact = false }) => {
 }
 
 const Mail = ({ ...props }) => {
-  useTitle('Settings - Mail')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.mail') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const api = useAPI()
@@ -168,9 +172,9 @@ const Mail = ({ ...props }) => {
     try {
       const { uri, params, init } = api.query.mail.postTest({ body: { to } })
       await api.fetch(uri, params, init, { rawError: true })
-      toast.success(`Test mail sent to "${to}"`)
+      toast.success(t('settings.mail.test.sent', { to }))
     } catch (err) {
-      toast.error((await errorOf(err)) || `Error while sending the test mail to "${to}", try again`)
+      toast.error((await errorOf(err)) || t('settings.mail.test.error', { to }))
     } finally {
       setSending(false)
     }
@@ -180,19 +184,19 @@ const Mail = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Mail</h2>
+          <h2>{t('settings.sections.mail')}</h2>
           <p><MailIntro /></p>
           <form onSubmit={form.handleSubmit(onSave)}>
             <MailFields form={form} />
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </form>
-          <h3>Test</h3>
-          <p>Sends a mail with the saved settings, save them first.</p>
+          <h3>{t('settings.mail.test.title')}</h3>
+          <p>{t('settings.mail.test.help')}</p>
           <form onSubmit={sendTest} sx={Mail.styles.row}>
-            <input type='email' id='mail-test-to' aria-label='Address to send the test mail to' placeholder='you@example.com' value={to} onChange={(e) => setTo(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
-            <Button type='submit' color='primary' disabled={sending} aria-busy={sending}>Send test</Button>
+            <input type='email' id='mail-test-to' aria-label={t('settings.mail.test.to')} placeholder={t('settings.mail.test.placeholder')} value={to} onChange={(e) => setTo(e.target.value)} required={true} sx={{ variant: 'input.default', fontFamily: 'monospace', flex: 1, minWidth: 0 }} />
+            <Button type='submit' color='primary' disabled={sending} aria-busy={sending}>{t('settings.mail.test.send')}</Button>
           </form>
         </article>
       </section>

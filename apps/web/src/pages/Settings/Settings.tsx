@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useOutlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Icon } from '@sensorr/ui'
+import i18n from '@sensorr/i18n'
 import { useAPI, errorOf } from '../../store/api'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useDeviceContext } from '../../contexts/Device/Device'
@@ -26,20 +28,21 @@ export const useSaveConfig = () => {
       throw err
     }
   })(), {
-    loading: `Updating **config**...`,
-    success: () => `Config **updated** !`,
-    error: () => `Error while updating **config**`,
+    loading: i18n.t('settings.save.loading'),
+    success: () => i18n.t('settings.save.success'),
+    error: () => i18n.t('settings.save.error'),
   }), [])
 }
 
 const GROUPS = [
-  { title: 'App', links: [['home', 'Home'], ['lists', 'Lists'], ['friends', 'Friends'], ['schedule', 'Schedule']] },
-  { title: 'Download', links: [['indexers', 'Indexers'], ['policies', 'Policies'], ['blackhole', 'Blackhole']] },
-  { title: 'Services', links: [['tmdb', 'TMDB'], ['plex', 'Plex'], ['tautulli', 'Tautulli']] },
-  { title: 'System', links: [['mail', 'Mail'], ['update', 'Update'], ['backup', 'Backup'], ['mobile', 'Mobile']] },
+  { key: 'app', links: ['home', 'lists', 'friends', 'schedule'] },
+  { key: 'download', links: ['indexers', 'policies', 'blackhole'] },
+  { key: 'services', links: ['tmdb', 'plex', 'tautulli'] },
+  { key: 'system', links: ['mail', 'update', 'backup', 'mobile'] },
 ]
 
 const Settings = ({ ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const { device } = useDeviceContext()
   const location = useLocation()
@@ -56,14 +59,14 @@ const Settings = ({ ...props }) => {
       return raw
     } catch (err) {
       console.warn(err)
-      setUpdate({ error: (await errorOf(err)) || (err.status ? `the API answered ${err.status}` : err.message) })
+      setUpdate({ error: (await errorOf(err)) || (err.status ? i18n.t('settings.update.apiAnswered', { status: err.status }) : err.message) })
     }
   }, [])
 
   useEffect(() => {
     loadUpdate().then((raw) => {
       if (availableOf(raw) && !location.pathname.startsWith('/settings/update')) {
-        toast(`New version available **${availableOf(raw)}**`, { id: 'update-available' })
+        toast(t('settings.update.toast', { version: availableOf(raw) }), { id: 'update-available' })
       }
     })
   }, [])
@@ -76,15 +79,15 @@ const Settings = ({ ...props }) => {
   return (
     <section sx={Settings.styles.element}>
       <aside sx={Settings.styles.sidebar} style={device === 'mobile' ? { display: (location.pathname === '/settings') ? 'flex' : 'none' } : {}}>
-        <h1>Settings</h1>
-        <nav ref={nav} aria-label='Settings'>
-          {GROUPS.map(({ title, links }) => {
-            const id = `settings-${title.toLowerCase()}`
+        <h1>{t('settings.title')}</h1>
+        <nav ref={nav} aria-label={t('settings.title')}>
+          {GROUPS.map(({ key, links }) => {
+            const id = `settings-${key}`
             return (
-              <div key={title} role='group' aria-labelledby={id}>
-                <span id={id}>{title}</span>
-                {links.map(([to, label]) => (
-                  <NavLink key={to} to={to} viewTransition={device === 'mobile'}>{label}</NavLink>
+              <div key={key} role='group' aria-labelledby={id}>
+                <span id={id}>{t(`settings.groups.${key}`)}</span>
+                {links.map((to) => (
+                  <NavLink key={to} to={to} viewTransition={device === 'mobile'}>{t(`settings.sections.${to}`)}</NavLink>
                 ))}
               </div>
             )
@@ -92,13 +95,13 @@ const Settings = ({ ...props }) => {
         </nav>
         <footer>
           <span>🍿📼</span>
-          <h2>sensorr</h2>
-          <small>Your Friendly Digital Video Recorder</small>
+          <h2>{t('settings.footer.name')}</h2>
+          <small>{t('settings.footer.tagline')}</small>
           <div>
             <a href='https://github.com/thcolin/sensorr' target='_blank' rel='noopener noreferrer'>
               <Icon value='github' sx={{ color: 'black' }} />
             </a>
-            <code {...(availableOf(update) ? { 'data-update-available': true, title: 'Update available' } : {})}>v{SENSORR_VERSION}</code>
+            <code data-update-available={availableOf(update) ? true : undefined} title={availableOf(update) ? t('settings.update.available') : undefined}>{`v${SENSORR_VERSION}`}</code>
           </div>
         </footer>
       </aside>

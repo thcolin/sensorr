@@ -1,30 +1,35 @@
 import { QRCodeSVG } from 'qrcode.react'
-import withTitle from '../../components/enhancers/withTitle'
+import { Trans, useTranslation } from 'react-i18next'
+import { useTitle } from '@sensorr/utils'
 
-const Mobile = ({ ...props }) => (
+const Mobile = ({ ...props }) => {
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.mobile') }))
+
+  return (
   <div sx={{ display: 'flex', alignItems: 'stretch', minHeight: '100%', width: '100%' }}>
     <div sx={{ flex: 1, overflow: 'auto', paddingX: '2.5em', paddingBottom: 0 }}>
-      <h2>Mobile Installation Instructions (PWA)</h2>
-      <p>Scan the QR code to open this page on your device, then follow the specific installation steps for your OS.</p>
-      <h3 sx={{ margin: 12, marginTop: 4 }}>iOS & iPadOS</h3>
+      <h2>{t('settings.mobile.title')}</h2>
+      <p>{t('settings.mobile.intro')}</p>
+      <h3 sx={{ margin: 12, marginTop: 4 }}>{t('settings.mobile.ios.title')}</h3>
       <ol sx={{ paddingLeft: 4, margin: 4, fontSize: 5, 'li': { marginBottom: 8 } }}>
-        <li>Open this page in <strong>Safari</strong>.</li>
-        <li>Tap the <strong>Share</strong> icon (the square with an arrow pointing up).</li>
-        <li>Scroll down and select <strong>Add to Home Screen</strong>.</li>
-        <li>Confirm by tapping <strong>Add</strong> in the top-right corner.</li>
+        <li><Trans t={t} i18nKey='settings.mobile.ios.open' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.ios.share' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.ios.add' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.ios.confirm' components={[<strong />]} /></li>
       </ol>
-      <h3 sx={{ margin: 12, marginTop: 4 }}>Android</h3>
+      <h3 sx={{ margin: 12, marginTop: 4 }}>{t('settings.mobile.android.title')}</h3>
       <ol sx={{ paddingLeft: 4, margin: 4, fontSize: 5, 'li': { marginBottom: 8 } }}>
-        <li>Open this page in <strong>Chrome</strong>.</li>
-        <li>Look for an <strong>"Add Sensorr to Home screen"</strong> banner and tap it.</li>
-        <li>If the banner doesn't appear, tap the <strong>three-dot menu</strong> icon (⋮) in the top-right corner.</li>
-        <li>Select <strong>Install app</strong> from the menu and confirm.</li>
+        <li><Trans t={t} i18nKey='settings.mobile.android.open' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.android.banner' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.android.menu' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.android.install' components={[<strong />]} /></li>
       </ol>
-      <h3 sx={{ margin: 12, marginTop: 4 }}>Desktop</h3>
+      <h3 sx={{ margin: 12, marginTop: 4 }}>{t('settings.mobile.desktop.title')}</h3>
       <ol sx={{ paddingLeft: 4, margin: 4, fontSize: 5, 'li': { marginBottom: 8 } }}>
-        <li>While on this page, click the <strong>Install icon</strong> located on the right side of the address bar frome Chrome.</li>
-        <li>Click the <strong>Install</strong> button when prompted.</li>
-        <li>Sensorr will now be available as a standalone app on your computer.</li>
+        <li><Trans t={t} i18nKey='settings.mobile.desktop.icon' components={[<strong />]} /></li>
+        <li><Trans t={t} i18nKey='settings.mobile.desktop.install' components={[<strong />]} /></li>
+        <li>{t('settings.mobile.desktop.done')}</li>
       </ol>
     </div>
     <div sx={{ position: 'relative', flex: 1, display: ['none', 'flex'], flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', backgroundColor: 'primaryDark', overflow: 'hidden' }}>
@@ -44,10 +49,10 @@ const Mobile = ({ ...props }) => (
         />
       </div>
       <h2 sx={{ margin: 8, textAlign: 'center', }}>
-        Take Sensorr With You
+        {t('settings.mobile.pitch.title')}
       </h2>
       <p sx={{ margin: 12, maxWidth: '35em', paddingX: 0, textAlign: 'center' }}>
-        Install the PWA for a fast, app-like experience to manage your media library from anywhere
+        {t('settings.mobile.pitch.subtitle')}
       </p>
       <img
         src={require('../../assets/screenshot-mobile-1.png')}
@@ -75,6 +80,7 @@ const Mobile = ({ ...props }) => (
       />
     </div>
   </div>
-)
+  )
+}
 
-export default withTitle('Settings - Mobile')(Mobile)
+export default Mobile

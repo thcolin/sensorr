@@ -1,23 +1,27 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Bar, Bulk, Button, Link, Option } from '@sensorr/ui'
 import { useAPI, errorOf } from '../../store/api'
 import { Face } from './Face'
 import { useConfigContext } from '../../contexts/Config/Config'
 
-const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString('en-GB', {
+const dayOf = (timestamp) => new Date(timestamp).toLocaleDateString(i18n.language, {
   day: 'numeric',
   month: 'short',
   ...(new Date(timestamp).getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}),
 })
 
 const activityOf = ({ plays, seen_at }) => !seen_at
-  ? 'never seen'
-  : `seen ${dayOf(seen_at)} · ${plays.toLocaleString('en-GB')} ${plays === 1 ? 'play' : 'plays'}`
+  ? i18n.t('settings.invitation.activity.never')
+  : i18n.t('settings.invitation.activity.seen', { day: dayOf(seen_at), plays })
 
 export const Invitation = ({ mailable, children }: { mailable: boolean, children?: ReactNode }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const { config } = useConfigContext()
+  const tautulli = config.get('tautulli.url')
   const [shared, setShared] = useState(null)
   const [unreachable, setUnreachable] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
@@ -51,14 +55,14 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
       setFailed((failed) => ({ ...Object.fromEntries(Object.entries(failed).filter(([email]) => !emails.includes(email))), ...Object.fromEntries(errors.map(({ email, error }) => [email, error])) }))
 
       if (!errors.length) {
-        toast.success(people.length === 1 ? `Invitation sent to "${people[0].email}"` : `Invitation sent to ${people.length} friends`)
+        toast.success(people.length === 1 ? t('settings.invitation.sent', { email: people[0].email }) : t('settings.invitation.sentMany', { count: people.length }))
       } else if (errors.length === 1 && people.length === 1) {
         toast.error(errors[0].error)
       } else {
-        toast.error(`Invitation sent to ${results.length - errors.length} of ${results.length} friends, the others are marked in the list`)
+        toast.error(t('settings.invitation.partial', { sent: results.length - errors.length, count: results.length }))
       }
     } catch (err) {
-      toast.error((await errorOf(err)) || 'Error while sending the invitations, the list shows who got one')
+      toast.error((await errorOf(err)) || t('settings.invitation.error'))
       // The server may have mailed some of them before the request failed
       fetchShared()
     } finally {
@@ -71,13 +75,13 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
 
   return (
     <>
-      <h3>Invitation</h3>
+      <h3>{t('settings.invitation.title')}</h3>
       <p sx={{ lineHeight: 'body' }}>
-        Your friend gets a mail asking them to link their Plex account from <a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener'>{document.location.origin}/keep-in-touch</a>.
+        <Trans t={t} i18nKey='settings.invitation.intro' values={{ link: `${document.location.origin}/keep-in-touch` }} components={[<a href={`${document.location.origin}/keep-in-touch`} target='_blank' rel='noreferrer noopener' />]} />
       </p>
       {children}
       <div sx={Invitation.styles.heading}>
-        <p>People your Plex server is shared with who are not guests yet</p>
+        <p>{t('settings.invitation.shared')}</p>
         {!!people.length && (
           <Option
             id='invitation-all'
@@ -86,7 +90,7 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
             disabled={!mailable || !!sending.length || (!selected.length && !invitable.length)}
             onChange={() => setSelected(selected.length === 0 ? invitable : [])}
           >
-            {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
+            {selected.length === 0 ? t('settings.invitation.selectAll') : t('settings.invitation.selected', { count: selected.length })}
           </Option>
         )}
       </div>
@@ -106,13 +110,13 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
           </ul>
         )}
         {unreachable && (
-          <p sx={Invitation.styles.state}><small>Unable to read who your Plex server is shared with, <button type='button' sx={Invitation.styles.retry} onClick={fetchShared}>retry</button></small></p>
+          <p sx={Invitation.styles.state}><small><Trans t={t} i18nKey='settings.invitation.unreachable' components={[<button type='button' sx={Invitation.styles.retry} onClick={fetchShared} />]} /></small></p>
         )}
         {shared && !shared.plex && (
-          <p sx={Invitation.styles.state}><small>Set up <Link to='/settings/plex'>Plex</Link> to list the people your Plex server is shared with.</small></p>
+          <p sx={Invitation.styles.state}><small><Trans t={t} i18nKey='settings.invitation.setupPlex' components={[<Link to='/settings/plex' />]} /></small></p>
         )}
         {shared?.plex && !people.length && (
-          <p sx={Invitation.styles.state}>Everyone your Plex server is shared with is a guest</p>
+          <p sx={Invitation.styles.state}>{t('settings.invitation.everyone')}</p>
         )}
         {!!people.length && (
           <ul sx={Invitation.styles.list}>
@@ -122,7 +126,7 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
                   <Option
                     id={`invitation-${person.email}`}
                     type='checkbox'
-                    aria-label={`Select ${person.name}`}
+                    aria-label={t('settings.invitation.select', { name: person.name })}
                     checked={selected.includes(person.email)}
                     disabled={!mailable || !!person.invited_at || sending.includes(person.email)}
                     onChange={(e: any) => setSelected((selected) => e.target.checked ? [...selected, person.email] : selected.filter((email) => email !== person.email))}
@@ -132,8 +136,8 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
                 <div sx={Invitation.styles.who}>
                   <span><strong>{person.name}</strong> <small>{person.email}</small></span>
                   {failed[person.email]
-                    ? <small data-failed={true}>not sent, {failed[person.email]}</small>
-                    : (shared.tautulli || person.invited_at) && <small>{[person.invited_at && `invited ${dayOf(person.invited_at)}`, shared.tautulli && activityOf(person)].filter(Boolean).join(' · ')}</small>}
+                    ? <small data-failed={true}>{t('settings.invitation.failed', { error: failed[person.email] })}</small>
+                    : (shared.tautulli || person.invited_at) && <small>{[person.invited_at && t('settings.invitation.invited', { day: dayOf(person.invited_at) }), shared.tautulli && activityOf(person)].filter(Boolean).join(' · ')}</small>}
                 </div>
                 <Button
                   type='button'
@@ -143,15 +147,15 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
                   // Not `disabled` without Mail, which hides the reason in the title from the hover and from screen readers
                   aria-disabled={!mailable || undefined}
                   aria-busy={sending.includes(person.email)}
-                  aria-label={person.invited_at ? `Invite ${person.name} again` : `Invite ${person.name}`}
-                  title={mailable ? undefined : 'Set up Mail first'}
+                  aria-label={person.invited_at ? t('settings.invitation.inviteAgain', { name: person.name }) : t('settings.invitation.inviteName', { name: person.name })}
+                  title={mailable ? undefined : t('settings.invitation.setupMail')}
                   onClick={() => {
-                    if (mailable && (!person.invited_at || window.confirm(`${person.name} was invited on ${dayOf(person.invited_at)}. Invite them again ?`))) {
+                    if (mailable && (!person.invited_at || window.confirm(t('settings.invitation.confirmAgain', { name: person.name, day: dayOf(person.invited_at) })))) {
                       invite([person])
                     }
                   }}
                 >
-                  {person.invited_at ? 'Again' : 'Invite'}
+                  {person.invited_at ? t('settings.invitation.again') : t('settings.invitation.invite')}
                 </Button>
               </li>
             ))}
@@ -159,9 +163,9 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
         )}
       </div>
       {shared?.plex && !shared.tautulli && !!people.length && (
-        <p><small>{config.get('tautulli.url')
-          ? <>No Tautulli activity imported yet, the <Link to='/settings/schedule'>wrapped</Link> job imports it to show who watched most recently first.</>
-          : <>Set up <Link to='/settings/tautulli'>Tautulli</Link> to see who watched most recently first.</>}</small></p>
+        <p><small>{tautulli
+          ? <Trans t={t} i18nKey='settings.invitation.noActivity' components={[<Link to='/settings/schedule' />]} />
+          : <Trans t={t} i18nKey='settings.invitation.setupTautulli' components={[<Link to='/settings/tautulli' />]} />}</small></p>
       )}
       <Bulk
         count={selected.length}
@@ -169,9 +173,9 @@ export const Invitation = ({ mailable, children }: { mailable: boolean, children
         actions={[{
           key: 'invite',
           icon: '✉️',
-          label: 'Invite',
+          label: t('settings.invitation.invite'),
           onClick: () => {
-            if (window.confirm(`Invite ${selected.length} ${selected.length === 1 ? 'friend' : 'friends'} by mail ?`)) {
+            if (window.confirm(t('settings.invitation.confirmMany', { count: selected.length }))) {
               invite(people.filter(({ email }) => selected.includes(email)))
             }
           },

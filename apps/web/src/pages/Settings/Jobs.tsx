@@ -6,12 +6,15 @@ import { useOutletContext } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { CronExpressionParser } from 'cron-parser'
 import cronstrue from 'cronstrue'
+import 'cronstrue/locales/fr'
+import { Trans, useTranslation } from 'react-i18next'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useJobsContext } from '../../contexts/Jobs/Jobs'
 import Body from '../../layout/Body/Body'
 import { JOB_GROUPS, nameOfEntry, useJobRunner } from '../../components/Sensorr/Jobs'
 
 export const JobsFields = ({ form, compact = false }) => {
+  const { t } = useTranslation()
   const { config } = useConfigContext()
   const { process } = useJobsContext() as any
   const { runJob, stopJob, ongoing } = useJobRunner()
@@ -20,7 +23,7 @@ export const JobsFields = ({ form, compact = false }) => {
     disabled: !config.get('plex.token'),
     warning: config.get('plex.token') ? null : (
       <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-        <strong>Warning</strong>, you need to register your Plex server on dedicated <Link to='/settings/plex'>"Plex" Settings page</Link> first
+        <Trans t={t} i18nKey='settings.jobs.requires.plex' components={[<strong />, <Link to='/settings/plex' />]} />
       </span>
     ),
   }
@@ -29,7 +32,7 @@ export const JobsFields = ({ form, compact = false }) => {
     disabled: !config.get('tautulli.url'),
     warning: config.get('tautulli.url') ? null : (
       <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-        <strong>Warning</strong>, you need to configure Tautulli on dedicated <Link to='/settings/tautulli'>"Tautulli" Settings page</Link> first
+        <Trans t={t} i18nKey='settings.jobs.requires.tautulli' components={[<strong />, <Link to='/settings/tautulli' />]} />
       </span>
     ),
   }
@@ -39,7 +42,7 @@ export const JobsFields = ({ form, compact = false }) => {
     disabled: !mailable,
     warning: mailable ? null : (
       <span sx={{ '>a': { color: 'warningDark', ':hover:not(:disabled)': { color: 'warningDarker' }, ':active': { color: 'warningDarkest' } } }}>
-        <strong>Warning</strong>, you need to set up Mail on dedicated <Link to='/settings/mail'>"Mail" Settings page</Link> first
+        <Trans t={t} i18nKey='settings.jobs.requires.mail' components={[<strong />, <Link to='/settings/mail' />]} />
       </span>
     ),
   }
@@ -72,7 +75,8 @@ export const JobsFields = ({ form, compact = false }) => {
 }
 
 const JobsSettings = ({ ...props }) => {
-  useTitle('Settings - Schedule')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.schedule') }))
   const { config } = useConfigContext()
   const { onSave } = useOutletContext() as any
   const form = useForm({ defaultValues: config.getProperties() })
@@ -81,31 +85,29 @@ const JobsSettings = ({ ...props }) => {
     <Body>
       <section sx={JobsSettings.styles.element}>
         <article>
-          <h2>Lifecycle Logic</h2>
+          <h2>{t('settings.jobs.lifecycle.title')}</h2>
           <p sx={{ paddingBottom: 4 }}>
-            The <code>📹 Record</code> job acts upon <code>🍿 Wished</code> movies, finding and downloading the best-scored version to change their status to <code>📼 Archived</code>.
+            <Trans t={t} i18nKey='settings.jobs.lifecycle.record' components={[<code />, <code />, <code />]} />
           </p>
           <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
-            An <code>📼 Archived</code> release failing to meet <code>* Required</code> policy rules is considered as <code>🪨 Unrefined</code> and will be treated by <code>✨ Refine</code> job which will seek a <code>💎 Refined</code> version for this release with a better score.
-            Subsequently, the <code>✂️ Shrink</code> job will optimize <code>💎 Refined</code> releases by finding smaller <code>💍 Shrinked</code> ones.
+            <Trans t={t} i18nKey='settings.jobs.lifecycle.refine' components={[<code />, <code />, <code />, <code />, <code />, <code />, <code />, <code />]} />
           </p>
           <p sx={{ paddingBottom: 4 }}>
-            If a movie is <code>📍 Pinned</code>, it will not be treated by jobs. If <code>🔕 Ignored</code>, it is fully excluded from the system.
+            <Trans t={t} i18nKey='settings.jobs.lifecycle.pinned' components={[<code />, <code />]} />
           </p>
           <p sx={{ paddingBottom: 4 }} style={{ lineHeight: 2 }}>
-            For shows, the <code>📹 Record shows</code> job looks for the wanted episodes of <code>📺 Followed</code> shows, by whole series, then season packs, then episodes; <code>📡 Airing shows</code> looks for episodes aired in the last 7 days.{' '}
-            <code>📥 Import shows</code> hard links finished files from staging into the library and marks those episodes <code>📼 Owned</code>.
+            <Trans t={t} i18nKey='settings.jobs.lifecycle.shows' components={[<code />, <code />, <code />, <code />, <code />]} />
           </p>
-          <h2>Schedule</h2>
+          <h2>{t('settings.sections.schedule')}</h2>
           <p>
-            Sensorr schedules background jobs for application operation, use <a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer'>cron</a> syntax to set frequency. Use the "play" button to trigger a job manually
+            <Trans t={t} i18nKey='settings.jobs.intro' components={[<a href='https://crontab.guru/' target='_blank' rel='noopener noreferrer' />]} />
           </p>
         </article>
         <article>
           <form onSubmit={form.handleSubmit(onSave)} >
             <JobsFields form={form} />
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </form>
         </article>
@@ -142,6 +144,7 @@ JobsSettings.styles = {
 export default JobsSettings
 
 const JobSettings = ({ command, type = undefined, description, warning = null, options, running, runJob, stopJob, control, watch, disabled = false, compact = false, ...props }) => {
+  const { t, i18n } = useTranslation()
   const name = [command, type].filter(Boolean).join(' ')
   const emoji = JOB_EMOJIS[name]
   const key = ['jobs', command, type].filter(Boolean).join('.')
@@ -156,9 +159,10 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
       throwExceptionOnParseError: true,
       use24HourTimeFormat: true,
       verbose: true,
+      locale: i18n.language,
     })
   } catch (e) {
-    cronString = 'Invalid syntax, see crontab.guru for help'
+    cronString = t('settings.jobs.invalid')
   }
 
   return (
@@ -173,8 +177,8 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
             name={`${key}.paused`}
             control={control}
             render={({ field: { value: checked, onChange } }) => (
-              <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)} title={checked ? 'Paused' : cronString}>
-                <small sx={{ whiteSpace: ['normal', 'nowrap'], paddingRight: 4 }}>{checked ? 'Paused' : cronString}</small>
+              <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)} title={checked ? t('settings.jobs.paused') : cronString}>
+                <small sx={{ whiteSpace: ['normal', 'nowrap'], paddingRight: 4 }}>{checked ? t('settings.jobs.paused') : cronString}</small>
               </Option>
             )}
           />
@@ -183,8 +187,8 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
           <button
             type='button'
             sx={JobSettings.styles.run}
-            aria-label={running ? `Stop ${jobTitleOf(name)}` : `Run ${jobTitleOf(name)}`}
-            title={running ? `Stop ${jobTitleOf(name)}` : `Run ${jobTitleOf(name)}`}
+            aria-label={running ? t('settings.jobs.stop', { job: jobTitleOf(name) }) : t('settings.jobs.run', { job: jobTitleOf(name) })}
+            title={running ? t('settings.jobs.stop', { job: jobTitleOf(name) }) : t('settings.jobs.run', { job: jobTitleOf(name) })}
             onClick={() => (running ? stopJob(name, running.job) : runJob(command, type))}
             disabled={disabled}
           >
@@ -220,9 +224,9 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
               render={({ field: { value: checked, onChange } }) => (
                 <Option type='checkbox' id={`${key}.paused`} checked={!checked} onChange={(e: any) => onChange(!e.target.checked)}>
                   <div sx={{ lineHeight: 'normal', paddingY: 10, whiteSpace: 'nowrap', marginRight: 0 }}>
-                    <strong>{emojize('🤖', 'Scheduled')}</strong>
+                    <strong>{emojize('🤖', t('settings.jobs.scheduled'))}</strong>
                     <br />
-                    <small>{paused ? 'Paused' : cronString}</small>
+                    <small>{paused ? t('settings.jobs.paused') : cronString}</small>
                   </div>
                 </Option>
               )}
@@ -282,11 +286,10 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                 onChange={(e: any) => onChange(e.target.checked)}
               >
                 <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                  <strong>{emojize('🛎', 'Proposal only')}</strong>
+                  <strong>{emojize('🛎', t('settings.jobs.proposalOnly.label'))}</strong>
                   <br />
                   <small>
-                    Won't download best release, will only <strong>propose</strong> it, up to you to decide whether to accept or refuse it
-                    later
+                    <Trans t={t} i18nKey='settings.jobs.proposalOnly.help' components={[<strong />]} />
                   </small>
                 </div>
               </Option>
@@ -307,10 +310,10 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                 onChange={(e: any) => onChange(e.target.checked)}
               >
                 <div sx={{ lineHeight: 'normal', paddingY: 10 }}>
-                  <strong>{emojize('🧹', 'Cleanup')}</strong>
+                  <strong>{emojize('🧹', t('settings.jobs.cleanup.label'))}</strong>
                   <br />
                   <small>
-                    Once an accepted swap has landed on Plex, will <strong>delete</strong> the versions it replaces, files included
+                    <Trans t={t} i18nKey='settings.jobs.cleanup.help' components={[<strong />]} />
                   </small>
                 </div>
               </Option>
@@ -331,9 +334,9 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                 onChange={(e: any) => onChange(e.target.checked ? (value ? value : 1) : 0)}
               >
                 <div sx={{ lineHeight: 'normal', paddingY: 10, marginRight: 4 }}>
-                  <strong>{emojize('📦', 'Threshold')}</strong>
+                  <strong>{emojize('📦', t('settings.jobs.threshold.label'))}</strong>
                   <br />
-                  <small>Will consider movies with releases under this threshold as valid and will not shrink them</small>
+                  <small>{t('settings.jobs.threshold.help')}</small>
                 </div>
               </Option>
             )}
@@ -369,7 +372,7 @@ const JobSettings = ({ command, type = undefined, description, warning = null, o
                     },
                   }}
                 />
-                <div>Gb</div>
+                <div>{t('settings.jobs.threshold.unit')}</div>
               </div>
             )}
           />

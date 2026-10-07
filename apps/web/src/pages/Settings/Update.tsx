@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import { Bar, Button, Link, reveal } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
 import { JOB_EMOJIS } from '@sensorr/sensorr'
@@ -13,20 +14,25 @@ import { Capsule } from './Capsule'
 // Pulling the images and recreating three containers takes a minute or two
 const PATIENCE = 5 * 60 * 1000
 
-const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => (
-  <div role='alert' sx={Update.styles.failure}>
-    <strong>{emojize('🚨', title)}</strong>
-    {cause && <span>{cause}</span>}
-    {logs && <span>Logs: <strong sx={{ variant: 'code.reset' }}>docker logs {logs}</strong></span>}
-  </div>
-)
+const Failure = ({ title, cause, logs }: { title: string, cause?: string, logs?: string }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div role='alert' sx={Update.styles.failure}>
+      <strong>{emojize('🚨', title)}</strong>
+      {cause && <span>{cause}</span>}
+      {logs && <span><Trans t={t} i18nKey='settings.update.logs' values={{ container: logs }} components={[<strong sx={{ variant: 'code.reset' }} />]} /></span>}
+    </div>
+  )
+}
 
 const Placeholder = ({ width, height }: { width: string, height: string }) => <Bar inline={true} width={width} height={height} />
 
 const durationOf = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 
 const Update = ({ ...props }) => {
-  useTitle('Settings - Update')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.update') }))
   const api = useAPI()
   const { update, loadUpdate } = useOutletContext() as any
   const { process } = useJobsContext() as any
@@ -65,7 +71,7 @@ const Update = ({ ...props }) => {
       setFailure(null)
       setUpdating({ key, image, label, from: update, since: Date.parse(run.started) })
     } else if (run.code !== 0) {
-      setFailure({ title: `The last update, to ${label}, failed`, cause: `sensorr-updater-run exited (${run.code})`, logs: 'sensorr-updater-run' })
+      setFailure({ title: t('settings.update.failure.last', { label }), cause: t('settings.update.failure.exited', { code: run.code }), logs: 'sensorr-updater-run' })
     }
   }, [update])
 
@@ -88,7 +94,7 @@ const Update = ({ ...props }) => {
         }
 
         if (raw.updater?.run?.status === 'exited' && raw.updater.run.code !== 0) {
-          setFailure({ title: `Update to ${updating.label} failed`, cause: `sensorr-updater-run exited (${raw.updater.run.code})`, logs: 'sensorr-updater-run' })
+          setFailure({ title: t('settings.update.failure.title', { label: updating.label }), cause: t('settings.update.failure.exited', { code: raw.updater.run.code }), logs: 'sensorr-updater-run' })
           return setUpdating(null)
         }
       } catch (err) {
@@ -96,7 +102,7 @@ const Update = ({ ...props }) => {
       }
 
       if (Date.now() - updating.since > PATIENCE) {
-        setFailure({ title: `Update to ${updating.label} failed`, cause: `${updating.label} still does not answer after ${PATIENCE / 60000} minutes`, logs: 'sensorr-updater-run' })
+        setFailure({ title: t('settings.update.failure.title', { label: updating.label }), cause: t('settings.update.failure.patience', { label: updating.label, minutes: PATIENCE / 60000 }), logs: 'sensorr-updater-run' })
         return setUpdating(null)
       }
 
@@ -116,7 +122,7 @@ const Update = ({ ...props }) => {
       setNow(Date.now())
       setUpdating({ key: selected, image: update.channels[selected], label: target, from: update, since: Date.now() })
     } catch (err) {
-      toast.error((await errorOf(err)) || `Error while updating to ${target}, try again`)
+      toast.error((await errorOf(err)) || t('settings.update.error', { target }))
     }
   }
 
@@ -125,18 +131,18 @@ const Update = ({ ...props }) => {
 
   const status = (() => {
     if (updating) {
-      return <>Updating<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
+      return <>{t('settings.update.status.updating')}<span aria-hidden='true' sx={{ fontVariantNumeric: 'tabular-nums' }}> · {durationOf(now - updating.since)}</span></>
     }
 
     if (!update?.channel) {
-      return 'SENSORR_TAG is not set'
+      return t('settings.update.status.unset')
     }
 
     if (unreachable) {
-      return "Can't reach GHCR"
+      return t('settings.update.status.unreachable')
     }
 
-    return available ? `${available} available` : 'Up to date'
+    return available ? t('settings.update.status.available', { version: available }) : t('settings.update.status.upToDate')
   })()
 
   const state = (failure || updater?.error) ? 'error' : (updating || available || unreachable) ? 'warning' : !update?.channel ? 'grayDarker' : 'success'
@@ -144,12 +150,12 @@ const Update = ({ ...props }) => {
   const reasonOf = (key) => {
     const { error } = update?.channels?.[key] || {}
 
-    return labelOf(key, update?.channels?.[key]) ? null : error ? `can't reach GHCR, ${error}` : key === 'dev' ? 'no build yet' : 'no release yet'
+    return labelOf(key, update?.channels?.[key]) ? null : error ? t('settings.update.reasons.unreachable', { error }) : key === 'dev' ? t('settings.update.reasons.noBuild') : t('settings.update.reasons.noRelease')
   }
 
   const source = (key) => [
-    <Fragment key={key}>Every {CHANNELS[key].source}, {reasonOf(key) || `latest ${labelOf(key, update.channels[key])}`}.</Fragment>,
-    ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <Fragment key={other}> {other[0].toUpperCase() + other.slice(1)}: {reasonOf(other)}.</Fragment>),
+    <Fragment key={key}>{t('settings.update.source', { source: t(`settings.update.channels.${key}`), state: reasonOf(key) || t('settings.update.latest', { label: labelOf(key, update.channels[key]) }) })}</Fragment>,
+    ...Object.keys(CHANNELS).filter((other) => other !== key && reasonOf(other)).map((other) => <Fragment key={other}> {t('settings.update.other', { channel: other[0].toUpperCase() + other.slice(1), reason: reasonOf(other) })}</Fragment>),
   ]
 
   const ready = !!updater && !updater.error
@@ -157,21 +163,21 @@ const Update = ({ ...props }) => {
   const disabled = !!updating || !!jobs.length
 
   const action = updating
-    ? `⌛ Updating to ${updating.label}`
+    ? t('settings.update.action.updating', { label: updating.label })
     : current
-      ? `Update to ${target}${pinned ? ', replaces your pin' : ''}`
-      : `Switch to ${selected}, ${target}${pinned ? ', replaces your pin' : ''}`
+      ? t('settings.update.action.update', { target, pinned: pinned ? 'yes' : 'no' })
+      : t('settings.update.action.switch', { channel: selected, target, pinned: pinned ? 'yes' : 'no' })
 
   const manual = (
     <>
-      <p>Set <code>SENSORR_TAG={CHANNELS[selected || 'stable'].tag}</code> in the env file you pass to compose, then:</p>
+      <p><Trans t={t} i18nKey='settings.update.manual.tag' values={{ tag: CHANNELS[selected || 'stable'].tag }} components={[<code />]} /></p>
       <code sx={Update.styles.commands}>
-        docker compose --env-file &lt;env file&gt; pull sensorr-api sensorr-web<br />
-        docker compose --env-file &lt;env file&gt; up -d sensorr-api sensorr-web
+        {t('settings.update.manual.pull')}<br />
+        {t('settings.update.manual.up')}
       </code>
       {!updater && (
         <p>
-          <small>To update from this page instead, turn on the <code>updater</code> profile, see <a href='https://github.com/thcolin/sensorr#update-from-the-app' target='_blank' rel='noopener noreferrer'>Update from the app</a>.</small>
+          <small><Trans t={t} i18nKey='settings.update.manual.updater' components={[<code />, <a href='https://github.com/thcolin/sensorr#update-from-the-app' target='_blank' rel='noopener noreferrer' />]} /></small>
         </p>
       )}
     </>
@@ -181,19 +187,19 @@ const Update = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Update</h2>
+          <h2>{t('settings.sections.update')}</h2>
           <div sx={Update.styles.stack}>
             {update?.error ? (
-              <Failure title="Can't read the update status" cause={update.error} logs='sensorr-api' />
+              <Failure title={t('settings.update.failure.status')} cause={update.error} logs='sensorr-api' />
             ) : (
               <div sx={Update.styles.panel} aria-busy={loading}>
                 <div sx={Update.styles.running}>
                   <span title={build ? update.revision : undefined}>{loading ? <Placeholder width='10.5rem' height='1.25rem' /> : build ? revision : `v${update.version}`}</span>
                   {loading ? <small><Placeholder width='11.25rem' height='0.875rem' /></small> : (
                     <small>
-                      {update.channel || 'no'} channel
-                      {pinned && <> · <span title='SENSORR_TAG pins this version'>📍 pinned</span></>}
-                      {build ? <> · based on v{update.version}</> : revision && <> · revision <span title={update.revision}>{revision}</span></>}
+                      {t('settings.update.channel', { channel: update.channel || 'none' })}
+                      {pinned && <> · <span title={t('settings.update.pinned.title')}>{t('settings.update.pinned.label')}</span></>}
+                      {build ? <> · {t('settings.update.basedOn', { version: update.version })}</> : revision && <> · {t('settings.update.revision')} <span title={update.revision}>{revision}</span></>}
                     </small>
                   )}
                 </div>
@@ -207,7 +213,7 @@ const Update = ({ ...props }) => {
             )}
             {!update?.error && (
               <div sx={Update.styles.channel}>
-                <h3 id='update-channel'>Channel</h3>
+                <h3 id='update-channel'>{t('settings.update.channelTitle')}</h3>
                 <Capsule
                   name='channel'
                   labelledBy='update-channel'
@@ -228,26 +234,31 @@ const Update = ({ ...props }) => {
                 <Button type='button' color='primary' sx={{ width: '100%' }} disabled={disabled} aria-busy={!!updating} onClick={start}>{action}</Button>
                 {!updating && !!jobs.length ? (
                   <p sx={Update.styles.warning}>
-                    <strong>Warning</strong>, {jobs.length > 2 ? `${emojize(JOB_EMOJIS[jobs[0]], jobs[0])} and ${jobs.length - 1} more` : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {jobs.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
+                    <Trans
+                      t={t}
+                      i18nKey='settings.running.warning'
+                      values={{ count: jobs.length, jobs: jobs.length > 2 ? t('settings.running.more', { job: emojize(JOB_EMOJIS[jobs[0]], jobs[0]), count: jobs.length - 1 }) : jobs.map((job) => emojize(JOB_EMOJIS[job], job)).join(t('settings.running.and')) }}
+                      components={[<strong />, <Link to='/jobs' />]}
+                    />
                   </p>
                 ) : (
                   <small sx={Update.styles.muted}>
-                    {updating ? `The page reloads once ${updating.label} answers` : `${selected === 'dev' && !current ? 'Untested build of every push to the dev branch. ' : ''}Recreates sensorr-api, sensorr-web and sensorr-updater`}
+                    {updating ? t('settings.update.reload', { label: updating.label }) : `${selected === 'dev' && !current ? `${t('settings.update.untested')} ` : ''}${t('settings.update.recreates')}`}
                   </small>
                 )}
               </div>
             )}
             {!updating && failure && <Failure {...failure} />}
-            {!updating && !failure && updater?.error && <Failure title="sensorr-updater does not answer" cause={updater.error} logs='sensorr-updater' />}
+            {!updating && !failure && updater?.error && <Failure title={t('settings.update.failure.updater')} cause={updater.error} logs='sensorr-updater' />}
             {!loading && (
               ready && !failure ? (
                 <details sx={{ ...Update.styles.details, ...reveal }}>
-                  <summary><strong>Manual update</strong></summary>
+                  <summary><strong>{t('settings.update.manual.title')}</strong></summary>
                   {manual}
                 </details>
               ) : (
                 <div sx={Update.styles.manual}>
-                  <h3>Manual update</h3>
+                  <h3>{t('settings.update.manual.title')}</h3>
                   {manual}
                 </div>
               )

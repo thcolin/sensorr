@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { formatDistanceToNowStrict } from 'date-fns'
 import cronstrue from 'cronstrue'
+import 'cronstrue/locales/fr'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n, { dateLocale } from '@sensorr/i18n'
 import { Button, Link } from '@sensorr/ui'
 import { emojize, filesize, useTitle } from '@sensorr/utils'
 import { DUMP_KEPT, JOB_EMOJIS } from '@sensorr/sensorr'
@@ -14,16 +17,17 @@ import Onboarding from '../Onboarding/Onboarding'
 import Update from './Update'
 import Lists from './Lists'
 
-const LABELS = { movies: 'movies', shows: 'TV shows', episodes: 'episodes', persons: 'stars' }
+const COLLECTIONS = ['movies', 'shows', 'episodes', 'persons']
 
-export const countsOf = (counts: { [collection: string]: number }) => Object.entries(LABELS)
-  .map(([collection, label]) => `${(counts?.[collection] || 0).toLocaleString('en-US')} ${label}`)
+export const countsOf = (counts: { [collection: string]: number }) => COLLECTIONS
+  .map((collection) => i18n.t(`settings.data.counts.${collection}`, { count: counts?.[collection] || 0 }))
   .join(', ')
 
-const sourceOf = (manifest) => `a dump of ${new Date(manifest.date).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}, Sensorr ${manifest.version}`
+const sourceOf = (manifest) => i18n.t('settings.data.source', { date: new Date(manifest.date).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }), version: manifest.version })
 
 const Data = ({ ...props }) => {
-  useTitle('Settings - Backup')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.backup') }))
   const api = useAPI()
   const { config } = useConfigContext() as any
   const { process } = useJobsContext() as any
@@ -48,7 +52,7 @@ const Data = ({ ...props }) => {
       setState(await api.fetch(uri, params, init))
       setFailure(null)
     } catch (err) {
-      setFailure(`Can't list the dumps, ${err.message}`)
+      setFailure(t('settings.data.list.error', { error: err.message }))
     }
   }, [])
 
@@ -67,7 +71,7 @@ const Data = ({ ...props }) => {
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (err) {
-      toast.error(`Error while downloading ${name}, ${err.message}`)
+      toast.error(t('settings.data.download.error', { name, error: err.message }))
     } finally {
       setDownloading(null)
     }
@@ -86,12 +90,12 @@ const Data = ({ ...props }) => {
       const { uri, params, init } = api.query.dumps.previewDump({ body: { archive: file } })
       setPreview({ manifest: await api.fetch(uri, params, init, { rawError: true }) })
     } catch (err) {
-      setPreview({ error: (await errorOf(err)) || `Can't read ${file.name}, ${err.message}` })
+      setPreview({ error: (await errorOf(err)) || t('settings.data.preview.error', { name: file.name, error: err.message }) })
     }
   }
 
   const restore = async ({ label, manifest, request }) => {
-    if (!window.confirm(`Replace ${countsOf(state?.counts)} with ${countsOf(manifest.counts)} of ${sourceOf(manifest)}?`)) {
+    if (!window.confirm(t('settings.data.restore.confirm', { current: countsOf(state?.counts), next: countsOf(manifest.counts), source: sourceOf(manifest) }))) {
       return
     }
 
@@ -100,9 +104,9 @@ const Data = ({ ...props }) => {
     try {
       const { uri, params, init } = request
       await api.fetch(uri, params, init, { rawError: true })
-      toast.success(`${label} is being imported, follow it in Jobs`)
+      toast.success(t('settings.data.restore.started', { label }))
     } catch (err) {
-      toast.error((await errorOf(err)) || `Error while importing ${label}, try again`)
+      toast.error((await errorOf(err)) || t('settings.data.restore.error', { label }))
     } finally {
       setImporting(false)
     }
@@ -121,15 +125,20 @@ const Data = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>Backup</h2>
-          <p>Your library and its settings in a <code>.zip</code> of plain JSON: movies, TV shows, episodes and stars, then every setting but the keys and passwords, which never leave this Sensorr.</p>
+          <h2>{t('settings.sections.backup')}</h2>
+          <p><Trans t={t} i18nKey='settings.data.intro' components={[<code />]} /></p>
           <div sx={Update.styles.stack}>
             <div sx={Update.styles.action}>
               <Button type='button' color='primary' sx={{ width: '100%' }} disabled={dumping || restoring} aria-busy={dumping} onClick={() => runJob('dump', undefined)}>
-                {dumping ? '⌛ Dumping' : 'Dump now'}
+                {dumping ? t('settings.data.dump.running') : t('settings.data.dump.label')}
               </Button>
               <small sx={Update.styles.muted}>
-                Keeps the last {DUMP_KEPT}. The {emojize(JOB_EMOJIS.dump, 'dump')} job {schedule?.paused ? 'is paused' : `runs ${cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true }).toLowerCase()}`}, in <Link to='/settings/schedule'>Settings › Schedule</Link>
+                <Trans
+                  t={t}
+                  i18nKey={schedule?.paused ? 'settings.data.dump.paused' : 'settings.data.dump.scheduled'}
+                  values={{ kept: DUMP_KEPT, job: emojize(JOB_EMOJIS.dump, 'dump'), schedule: schedule?.paused ? null : cronstrue.toString(schedule?.cron || '', { use24HourTimeFormat: true, locale: i18n.language }).toLowerCase() }}
+                  components={[<Link to='/settings/schedule' />]}
+                />
               </small>
             </div>
             {failure && (
@@ -139,48 +148,48 @@ const Data = ({ ...props }) => {
             )}
             {state && (
               state.dumps.length ? (
-                <ul sx={Data.styles.dumps} aria-label='Dumps'>
+                <ul sx={Data.styles.dumps} aria-label={t('settings.data.dumps')}>
                   {state.dumps.map(({ name, size, date, manifest }) => (
                     <li key={name}>
                       <div>
                         <strong>{name}</strong>
-                        <small>{formatDistanceToNowStrict(new Date(date), { addSuffix: true })} · {filesize.stringify(size)}</small>
+                        <small>{formatDistanceToNowStrict(new Date(date), { addSuffix: true, locale: dateLocale() })} · {filesize.stringify(size)}</small>
                       </div>
                       <div>
-                        <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={`Download ${name}`}>{downloading === name ? '⌛ Downloading' : 'Download'}</Button>
+                        <Button type='button' variant='outline' color='gray' disabled={!!downloading} aria-busy={downloading === name} onClick={() => download(name)} aria-label={t('settings.data.download.label', { name })}>{downloading === name ? t('settings.data.download.running') : t('settings.data.download.action')}</Button>
                         <Button
                           type='button'
                           color='error'
                           disabled={!manifest || blocked}
-                          title={manifest ? undefined : `${name} has no manifest.json this Sensorr reads`}
+                          title={manifest ? undefined : t('settings.data.manifest', { name })}
                           onClick={() => restore({ label: name, manifest, request: api.query.dumps.restoreDump({ params: { name } }) })}
-                          aria-label={`Import ${name}`}
+                          aria-label={t('settings.data.import.label', { name })}
                         >
-                          Import
+                          {t('settings.data.import.action')}
                         </Button>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p sx={Update.styles.muted}>No dump yet.</p>
+                <p sx={Update.styles.muted}>{t('settings.data.empty')}</p>
               )
             )}
             <div sx={Update.styles.action}>
-              <h3>Import</h3>
-              <p>A dump of this Sensorr or of another one replaces the library and the settings of this Sensorr. Its keys and passwords stay.</p>
+              <h3>{t('settings.data.import.title')}</h3>
+              <p>{t('settings.data.import.help')}</p>
               <div sx={Data.styles.pick}>
                 <input
                   ref={input}
                   type='file'
                   accept='.zip,application/zip'
-                  aria-label='Dump to import'
+                  aria-label={t('settings.data.import.file')}
                   disabled={importing || restoring}
                   onChange={(e) => pick(e.target.files?.[0] || null)}
                   sx={Onboarding.styles.file}
                 />
                 <button type='button' disabled={!preview?.manifest || !state || blocked} aria-busy={importing || restoring || !!preview?.loading} onClick={restoreArchive} sx={Data.styles.import}>
-                  {importing || restoring ? '⌛ Importing' : 'Import'}
+                  {importing || restoring ? t('settings.data.import.running') : t('settings.data.import.action')}
                 </button>
               </div>
               {preview?.error && (
@@ -190,12 +199,17 @@ const Data = ({ ...props }) => {
               )}
               {preview?.manifest && !others.length && state && (
                 <p role='status' sx={Update.styles.warning}>
-                  <strong>Warning</strong>, replaces {countsOf(state.counts)} with {countsOf(preview.manifest.counts)} of {sourceOf(preview.manifest)}
+                  <Trans t={t} i18nKey='settings.data.import.warning' values={{ current: countsOf(state.counts), next: countsOf(preview.manifest.counts), source: sourceOf(preview.manifest) }} components={[<strong />]} />
                 </p>
               )}
               {!!others.length && (
                 <p sx={Update.styles.warning}>
-                  <strong>Warning</strong>, {others.length > 2 ? `${emojize(JOB_EMOJIS[others[0]], others[0])} and ${others.length - 1} more` : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(' and ')} {others.length > 1 ? 'are running, wait for them or stop them' : 'is running, wait for it or stop it'} in <Link to='/jobs'>Jobs</Link>
+                  <Trans
+                    t={t}
+                    i18nKey='settings.running.warning'
+                    values={{ count: others.length, jobs: others.length > 2 ? t('settings.running.more', { job: emojize(JOB_EMOJIS[others[0]], others[0]), count: others.length - 1 }) : others.map((job) => emojize(JOB_EMOJIS[job], job)).join(t('settings.running.and')) }}
+                    components={[<strong />, <Link to='/jobs' />]}
+                  />
                 </p>
               )}
             </div>

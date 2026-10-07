@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
 import { Button, Controls, Entities, Sorting, serializeControls, valuesOfControls } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
@@ -17,12 +18,12 @@ import { CONTROLS as LIBRARY_SHOWS } from '../Shows/Library'
 import { List, Row, listRowId, listsOf, pruned } from '../Home/rows'
 import { fetchSource, summaryOf, useListPages } from '../Home/Items/List'
 
-const MEDIA = { movie: emojize('🍿', 'Movies'), tv: emojize('📺', 'TV') }
-const NOUNS = { movie: 'movies', tv: 'shows' }
-const KINDS = { discover: emojize('🌍', 'TMDB'), library: emojize('📚', 'Library'), custom: emojize('✍️', 'Custom') }
+const MEDIA = { movie: '🍿', tv: '📺' }
+const KINDS = { discover: '🌍', library: '📚', custom: '✍️' }
+const SOURCES = ['discover', 'library', 'custom'] as const
 // The sorts a whole list takes, its sources merged; none keeps them one after the other
 const sortings = (media: 'movie' | 'tv') => [
-  { value: 'none', label: emojize('🗂️', 'Sources in order') },
+  { value: 'none', label: emojize('🗂️', i18n.t('settings.lists.sortings.none')) },
   { value: 'popularity', label: i18n.t('ui.sortings.popularity') },
   { value: 'release_date', label: i18n.t(media === 'movie' ? 'ui.sortings.primary_release_date' : 'ui.sortings.first_air_date') },
   { value: 'vote_average', label: i18n.t('ui.sortings.vote_average') },
@@ -35,7 +36,8 @@ const CONTROLS = {
 }
 
 const Lists = ({ ...props }) => {
-  useTitle('Settings - Lists')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.lists') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const api = useAPI()
@@ -55,17 +57,17 @@ const Lists = ({ ...props }) => {
   const confirmPolicies = async () => {
     const given = lists.filter((list) => list.policy && list.policy !== saved.find(({ id }) => id === list.id)?.policy && list.sources.some(({ kind }) => kind === 'custom'))
     const counts = await Promise.all(given.map((list) => fetchSource(api, tmdb, list, { kind: 'custom' }, 1, { signal: undefined }).then(({ total_results }) => total_results, () => null)))
-    const lines = given.map((list, index) => `"${list.name}" gives ${list.policy} to its ${counts[index] ?? 'unknown number of'} ${NOUNS[list.media]}${list.media === 'movie' ? ', and refines the archived ones again' : ''}.`)
-    return !lines.length || window.confirm(`${lines.join('\n')}\n\nSave?`)
+    const lines = given.map((list, index) => t(counts[index] == null ? 'settings.lists.confirm.unknown' : 'settings.lists.confirm.line', { name: list.name, policy: list.policy, count: counts[index], media: list.media }))
+    return !lines.length || window.confirm(`${lines.join('\n')}\n\n${t('settings.lists.confirm.save')}`)
   }
 
   return (
     <Body>
       <section>
         <article>
-          <h2>Lists</h2>
+          <h2>{t('settings.sections.lists')}</h2>
           <p>
-            A list is a row you can show on a Home, from <Link to='/settings/home'>Home</Link>. It follows the filters you saved from <Link to='/movie/discover'>Discover</Link> or <Link to='/movie/library'>Library</Link>, the movies and shows you add to it from their page or from Library, or both, one after the other.
+            <Trans t={t} i18nKey='settings.lists.intro' components={[<Link to='/settings/home' />, <Link to='/movie/discover' />, <Link to='/movie/library' />]} />
           </p>
           <form
             sx={Lists.styles.create}
@@ -75,12 +77,12 @@ const Lists = ({ ...props }) => {
               setName('')
             }}
           >
-            <input type='text' value={name} onChange={(e) => setName(e.target.value)} placeholder='Name of a new custom list' aria-label='Name of a new custom list' required={true} sx={{ variant: 'input.default', flex: 1, minWidth: 0 }} />
-            <select value={media} onChange={(e) => setMedia(e.target.value as 'movie' | 'tv')} aria-label='Movies or shows' sx={{ variant: 'select.default', width: 'auto', flex: '0 0 auto' }}>
-              <option value='movie'>{MEDIA.movie}</option>
-              <option value='tv'>{MEDIA.tv}</option>
+            <input type='text' value={name} onChange={(e) => setName(e.target.value)} placeholder={t('settings.lists.create.name')} aria-label={t('settings.lists.create.name')} required={true} sx={{ variant: 'input.default', flex: 1, minWidth: 0 }} />
+            <select value={media} onChange={(e) => setMedia(e.target.value as 'movie' | 'tv')} aria-label={t('settings.lists.create.media')} sx={{ variant: 'select.default', width: 'auto', flex: '0 0 auto' }}>
+              <option value='movie'>{emojize(MEDIA.movie, t('settings.lists.media.movie'))}</option>
+              <option value='tv'>{emojize(MEDIA.tv, t('settings.lists.media.tv'))}</option>
             </select>
-            <button type='submit' title='Create the list' disabled={!name.trim()} sx={Lists.styles.plus}>+</button>
+            <button type='submit' title={t('settings.lists.create.submit')} disabled={!name.trim()} sx={Lists.styles.plus}>+</button>
           </form>
           <form
             sx={{ display: 'flex', flexDirection: 'column' }}
@@ -100,7 +102,7 @@ const Lists = ({ ...props }) => {
           >
             {!lists.length ? (
               <p sx={Lists.styles.empty}>
-                No list yet. Save the filters of <Link to='/movie/discover'>Discover</Link> or <Link to='/movie/library'>Library</Link> as a list, or name a custom list above.
+                <Trans t={t} i18nKey='settings.lists.empty' components={[<Link to='/movie/discover' />, <Link to='/movie/library' />]} />
               </p>
             ) : lists.map((list) => (
               <ListSettings
@@ -110,11 +112,11 @@ const Lists = ({ ...props }) => {
                 policies={policies}
                 saved={saved.some(({ id }) => id === list.id)}
                 onChange={(change) => setList(list.id, change)}
-                onDelete={() => window.confirm(`Delete "${list.name}"? It leaves every Home once you Save.`) && setLists((lists) => lists.filter(({ id }) => id !== list.id))}
+                onDelete={() => window.confirm(t('settings.lists.delete.confirm', { name: list.name })) && setLists((lists) => lists.filter(({ id }) => id !== list.id))}
               />
             ))}
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : 'Nothing to save'} sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' disabled={!dirty} title={dirty ? undefined : t('settings.save.nothing')} sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </form>
         </article>
@@ -124,30 +126,31 @@ const Lists = ({ ...props }) => {
 }
 
 const ListSettings = ({ list, names, policies, saved, onChange, onDelete }) => {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(true)
   const custom = list.sources.some(({ kind }) => kind === 'custom')
 
   return (
     <div sx={Lists.styles.list} role='group' aria-label={list.name}>
       <div>
-        <button type='button' aria-expanded={open} title={open ? 'Fold the list' : 'Unfold the list'} onClick={() => setOpen((open) => !open)} sx={Lists.styles.fold}>
+        <button type='button' aria-expanded={open} title={open ? t('settings.lists.fold') : t('settings.lists.unfold')} onClick={() => setOpen((open) => !open)} sx={Lists.styles.fold}>
           {open ? '▾' : '▸'}
         </button>
         <input
           type='text'
           value={list.name}
           onChange={(e) => onChange((list) => ({ ...list, name: e.target.value }))}
-          aria-label='Name of the list'
+          aria-label={t('settings.lists.name')}
           required={true}
         />
-        <label sx={Lists.styles.policy} title={custom ? `Policy given to the ${NOUNS[list.media]} you add by hand` : 'A policy goes to the titles added by hand: add Custom to the list first'}>
-          <span>Policy</span>
+        <label sx={Lists.styles.policy} title={custom ? t('settings.lists.policy.title', { media: list.media }) : t('settings.lists.policy.disabled')}>
+          <span>{t('settings.lists.policy.label')}</span>
           <select
             value={list.policy || ''}
             onChange={(e) => onChange((list) => ({ ...list, policy: e.target.value || null }))}
             disabled={!custom}
           >
-            <option value=''>None</option>
+            <option value=''>{t('settings.lists.policy.none')}</option>
             {policies.map((name) => <option key={name} value={name}>{name}</option>)}
           </select>
         </label>
@@ -158,7 +161,7 @@ const ListSettings = ({ list, names, policies, saved, onChange, onDelete }) => {
             onChange={({ value, sort }) => onChange((list) => ({ ...list, sort: value === 'none' ? null : { by: value, descending: sort } }))}
           />
         </span>
-        <button type='button' title='Delete the list' onClick={onDelete}>✕</button>
+        <button type='button' title={t('settings.lists.delete.title')} onClick={onDelete}>✕</button>
       </div>
       {open && <ListBody list={list} names={names} saved={saved} onChange={onChange} />}
     </div>
@@ -167,6 +170,7 @@ const ListSettings = ({ list, names, policies, saved, onChange, onDelete }) => {
 
 // What fills a list and a sample of it, loaded only while the list is unfolded
 const ListBody = ({ list, names, saved, onChange }) => {
+  const { t } = useTranslation()
   const { entities, totals, error } = useListPages(list)
   // The source just added opens its filters panel at once
   const [added, setAdded] = useState(null)
@@ -178,23 +182,23 @@ const ListBody = ({ list, names, saved, onChange }) => {
         {list.sources.map((source, index) => (
           // A source changes its hooks with its kind: its key changes with it
           <li key={`${source.kind}-${index}`}>
-            <strong>{KINDS[source.kind]}</strong>
+            <strong>{emojize(KINDS[source.kind], t(`settings.lists.kinds.${source.kind}`))}</strong>
             {source.kind === 'custom' ? (
-              <span>{typeof totals[index] === 'number' ? `${totals[index]} ${NOUNS[list.media]}` : '…'}</span>
+              <span>{typeof totals[index] === 'number' ? t('settings.lists.count', { count: totals[index], media: list.media }) : '…'}</span>
             ) : (
               <SourceFilters
                 list={list}
                 source={source}
                 open={added === index}
                 onOpened={() => setAdded(null)}
-                summary={summaryOf(list, source, names).join(' · ') || 'Every one'}
+                summary={summaryOf(list, source, names).join(' · ') || t('settings.lists.everyOne')}
                 onChange={(values) => onChange((list) => ({ ...list, sources: list.sources.map((other, i) => i === index ? { ...other, values } : other) }))}
               />
             )}
             <button
               type='button'
               sx={Lists.styles.remove}
-              title={list.sources.length === 1 ? 'A list keeps one source at least' : 'Remove from the list'}
+              title={list.sources.length === 1 ? t('settings.lists.remove.last') : t('settings.lists.remove.title')}
               disabled={list.sources.length === 1}
               onClick={() => onChange((list) => ({ ...list, sources: list.sources.filter((_, other) => other !== index) }))}
             >
@@ -203,19 +207,19 @@ const ListBody = ({ list, names, saved, onChange }) => {
           </li>
         ))}
         <li sx={Lists.styles.add}>
-          <span>Add</span>
-          {(['discover', 'library', 'custom'] as const).map((kind) => (
+          <span>{t('settings.lists.add.label')}</span>
+          {SOURCES.map((kind) => (
             <button
               key={kind}
               type='button'
               disabled={kind === 'custom' && list.sources.some((source) => source.kind === 'custom')}
-              title={kind === 'custom' ? `The ${NOUNS[list.media]} you add from their page or from Library` : `Filters of ${kind === 'discover' ? 'Discover' : 'Library'}`}
+              title={kind === 'custom' ? t('settings.lists.add.custom', { media: list.media }) : t(`settings.lists.add.${kind}`)}
               onClick={() => {
                 setAdded(kind === 'custom' ? null : list.sources.length)
                 onChange((list) => ({ ...list, sources: [...list.sources, kind === 'custom' ? { kind } : { kind, values: {} }] }))
               }}
             >
-              {KINDS[kind]}
+              {emojize(KINDS[kind], t(`settings.lists.kinds.${kind}`))}
             </button>
           ))}
         </li>
@@ -231,10 +235,10 @@ const ListBody = ({ list, names, saved, onChange }) => {
           length={entities?.length}
           ready={!!entities}
           error={error}
-          empty={{ emoji: '🗂️', title: 'Nothing in it yet', subtitle: list.sources.some(({ kind }) => kind === 'custom') ? `Add ${NOUNS[list.media]} from their page or from Library` : 'Its filters match nothing' }}
+          empty={{ emoji: '🗂️', title: t('settings.lists.nothing.title'), subtitle: list.sources.some(({ kind }) => kind === 'custom') ? t('settings.lists.nothing.custom', { media: list.media }) : t('settings.lists.nothing.filters') }}
         />
       </div>
-      {saved && <Link to={`/${list.media}/lists/${list.id}`} sx={Lists.styles.see}>See the whole list ›</Link>}
+      {saved && <Link to={`/${list.media}/lists/${list.id}`} sx={Lists.styles.see}>{t('settings.lists.see')}</Link>}
     </>
   )
 }
@@ -244,6 +248,7 @@ const NONE = []
 
 // The filters of a source as a button that opens their panel; a source just added opens it at once
 const SourceSummary = ({ toggleOpen, summary, open, onOpened }) => {
+  const { t } = useTranslation()
   const button = useRef(null)
   // Once: a second run, as StrictMode does, would close it again
   const opened = useRef(false)
@@ -257,7 +262,7 @@ const SourceSummary = ({ toggleOpen, summary, open, onOpened }) => {
     }
   }, [])
 
-  return <button ref={button} type='button' title='Edit the filters' onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
+  return <button ref={button} type='button' title={t('settings.lists.edit')} onClick={toggleOpen} sx={Lists.styles.summary}>{summary}</button>
 }
 
 // The filters of a source as their panel titles them: a click opens the panel on them

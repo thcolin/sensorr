@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Label, Button } from '@sensorr/ui'
 import { useOutletContext } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { countries, flag, name } from 'country-emoji'
 import cl from 'country-language'
@@ -31,6 +32,7 @@ export const useRegions = () => {
 }
 
 export const TMDBFields = ({ form, after = null }) => {
+  const { t } = useTranslation()
   const regions = useRegions()
 
   return (
@@ -41,12 +43,12 @@ export const TMDBFields = ({ form, after = null }) => {
           control={form.control}
           rules={{ required: true }}
           render={({ field: { ref, ...field } }) => (
-            <Label label='API Key'>
+            <Label label={t('settings.tmdb.key.label')}>
               <input type='text' {...field} sx={{ variant: 'input.default', fontFamily: 'monospace', width: '100%' }} required={true} />
             </Label>
           )}
         />
-        <small sx={{ disply: 'block', marginTop: 6 }}><a href='https://www.themoviedb.org/signup' target='_blank' rel='noopener noreferrer'>Sign up</a> and fill <a href='https://www.themoviedb.org/settings/api' target='_blank' rel='noopener noreferrer'>your own <code>API Key</code> (v3 auth)</a></small>
+        <small sx={{ disply: 'block', marginTop: 6 }}><Trans t={t} i18nKey='settings.tmdb.key.help' components={[<a href='https://www.themoviedb.org/signup' target='_blank' rel='noopener noreferrer' />, <a href='https://www.themoviedb.org/settings/api' target='_blank' rel='noopener noreferrer' />, <code />]} /></small>
         {after}
       </div>
       <div sx={{ display: 'flex', flexDirection: 'column', paddingY: 8 }}>
@@ -55,7 +57,7 @@ export const TMDBFields = ({ form, after = null }) => {
           rules={{ required: true }}
           control={form.control}
           render={({ field: { ref, ...field } }) => (
-            <Label label='Region'>
+            <Label label={t('settings.tmdb.region.label')}>
               <select {...field} sx={{ variant: 'select.default' }}>
                 {regions.sort((a, b) => a.name.localeCompare(b.name)).map(region => (
                   <option key={region.country} value={`${region.language}-${region.country}`}>
@@ -66,18 +68,20 @@ export const TMDBFields = ({ form, after = null }) => {
             </Label>
           )}
         />
-        <small sx={{ disply: 'block', marginTop: 6 }}>Region will be used to show <a href='https://developer.themoviedb.org/docs/languages' target='_blank' rel='noopener noreferrer'>localized data and metadata</a> from TMDB</small>
+        <small sx={{ disply: 'block', marginTop: 6 }}><Trans t={t} i18nKey='settings.tmdb.region.help' components={[<a href='https://developer.themoviedb.org/docs/languages' target='_blank' rel='noopener noreferrer' />]} /></small>
       </div>
     </>
   )
 }
 
-export const TMDBIntro = () => (
-  <>Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, which needs a few settings to work properly</>
-)
+export const TMDBIntro = () => {
+  const { t } = useTranslation()
+  return <Trans t={t} i18nKey='settings.tmdb.intro' components={[<a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer' />]} />
+}
 
 const TMDB = ({ ...props }) => {
-  useTitle('Settings - TMDB')
+  const { t } = useTranslation()
+  useTitle(t('settings.documentTitle', { page: t('settings.sections.tmdb') }))
   const { onSave } = useOutletContext() as any
   const { config } = useConfigContext()
   const form = useForm({ defaultValues: config.getProperties() })
@@ -86,12 +90,12 @@ const TMDB = ({ ...props }) => {
     <Body>
       <section>
         <article>
-          <h2>TMDB</h2>
+          <h2>{t('settings.sections.tmdb')}</h2>
           <p><TMDBIntro /></p>
           <form onSubmit={form.handleSubmit(onSave)}>
             <TMDBFields form={form} />
             <div sx={{ display: 'flex', marginTop: 4 }}>
-              <Button type='submit' color='primary' sx={{ flex: 1 }}>Save</Button>
+              <Button type='submit' color='primary' sx={{ flex: 1 }}>{t('settings.save.label')}</Button>
             </div>
           </form>
         </article>
