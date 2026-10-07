@@ -1,0 +1,525 @@
+{
+ "hero": {
+  "head": {
+   "title": "Your Friendly Digital Video Recorder.",
+   "body": "Think VCR, but in modern times.",
+   "top": 24,
+   "logo": 260
+  },
+  "items": [
+   {
+    "card": "s-home.png",
+    "crop": [
+     0,
+     0,
+     2880,
+     1800
+    ],
+    "width": 740,
+    "at": [
+     60,
+     300
+    ],
+    "id": "home"
+   },
+   {
+    "phone": "m-home.png",
+    "width": 200,
+    "at": [
+     760,
+     330
+    ]
+   }
+  ],
+  "height": 810
+ },
+ "movies-tv": {
+  "kicker": "\ud83c\udf7f Movies \u00b7 \ud83d\udcfa TV",
+  "title": "One library for everything",
+  "body": "Movies and shows side by side, with the same rules and the same jobs, kept in sync with your Plex. No Radarr next to Sonarr.",
+  "items": [
+   {
+    "card": "s-movie-library.png",
+    "crop": [
+     0,
+     0,
+     2560,
+     1800
+    ],
+    "width": 520,
+    "at": [
+     430,
+     36
+    ],
+    "id": "movies"
+   },
+   {
+    "card": "s-tv-library.png",
+    "crop": [
+     0,
+     0,
+     2560,
+     1800
+    ],
+    "width": 520,
+    "at": [
+     560,
+     230
+    ],
+    "id": "tv"
+   }
+  ]
+ },
+ "seasons": {
+  "kicker": "\ud83d\udcfa TV",
+  "title": "Whole series, seasons or episodes",
+  "body": "Follow a show, a season or a single episode. Sensorr looks for the whole series first, then season packs, then episodes, and hard links finished files into your library.",
+  "items": [
+   {
+    "card": "d-show.png",
+    "crop": [
+     100,
+     3660,
+     2400,
+     1600
+    ],
+    "width": 600,
+    "at": [
+     430,
+     50
+    ],
+    "id": "show"
+   },
+   {
+    "zoom": "show",
+    "crop": [
+     560,
+     4030,
+     1460,
+     210
+    ],
+    "mag": 1.5
+   },
+   {
+    "zoom": "show",
+    "crop": [
+     1300,
+     4380,
+     1120,
+     250
+    ],
+    "mag": 1.5
+   }
+  ]
+ },
+ "policies": {
+  "kicker": "\ud83d\udea8 Policies",
+  "title": "Your rules, not a quality profile",
+  "body": "Avoid, prefer or require each source, codec, resolution, language and indexer. The sandbox shows which release would win.",
+  "items": [
+   {
+    "card": "po-1.png",
+    "crop": [
+     740,
+     500,
+     1760,
+     1500
+    ],
+    "width": 540,
+    "at": [
+     440,
+     30
+    ],
+    "id": "policy"
+   },
+   {
+    "zoom": "policy",
+    "crop": [
+     800,
+     1280,
+     1630,
+     230
+    ],
+    "mag": 1.2
+   },
+   {
+    "zoom": "policy",
+    "crop": [
+     800,
+     1600,
+     1630,
+     140
+    ],
+    "mag": 1.15
+   }
+  ],
+  "frames": [
+   {
+    "0": {
+     "card": "po-1.png"
+    }
+   },
+   {
+    "0": {
+     "card": "po-2.png"
+    }
+   },
+   {
+    "0": {
+     "card": "po-4.png"
+    }
+   }
+  ]
+ },
+ "swaps": {
+  "kicker": "\u2728 Refine \u00b7 \u2702\ufe0f Shrink",
+  "title": "Better, then lighter",
+  "body": "Refine looks for a release closer to your policy, Shrink for a smaller one that loses nothing. Each swap shows what changes, and the space it frees.",
+  "items": [
+   {
+    "card": "d-swaps.png",
+    "crop": [
+     0,
+     246,
+     2560,
+     1554
+    ],
+    "width": 560,
+    "at": [
+     390,
+     60
+    ],
+    "id": "swaps"
+   },
+   {
+    "zoom": "swaps",
+    "crop": [
+     205,
+     285,
+     530,
+     70
+    ],
+    "mag": 1.9
+   },
+   {
+    "zoom": "swaps",
+    "crop": [
+     2180,
+     470,
+     370,
+     160
+    ],
+    "mag": 1.8
+   }
+  ],
+  "frames": [
+   {
+    "0": {
+     "card": "sw-1.png"
+    }
+   },
+   {
+    "0": {
+     "card": "sw-2.png"
+    }
+   },
+   {
+    "0": {
+     "card": "sw-3.png"
+    }
+   },
+   {
+    "0": {
+     "card": "sw-4.png"
+    }
+   },
+   {
+    "0": {
+     "card": "sw-5.png"
+    }
+   }
+  ]
+ },
+ "report": {
+  "kicker": "\ud83d\udea9 Report",
+  "title": "Reports from Plex, answered",
+  "body": "A friend reports an issue on a movie in Plex. Sensorr bans the release they watched, and finds another one to swap in.",
+  "items": [
+   {
+    "card": "rp-job.png",
+    "crop": [
+     720,
+     380,
+     1840,
+     2000
+    ],
+    "width": 540,
+    "at": [
+     440,
+     30
+    ],
+    "id": "job"
+   },
+   {
+    "zoom": "job",
+    "crop": [
+     1260,
+     1390,
+     1240,
+     30
+    ],
+    "mag": 1.5
+   },
+   {
+    "zoom": "job",
+    "crop": [
+     1260,
+     1420,
+     1240,
+     290
+    ],
+    "mag": 1.25
+   },
+   {
+    "zoom": "job",
+    "crop": [
+     1280,
+     2110,
+     1140,
+     170
+    ],
+    "mag": 1.45
+   }
+  ],
+  "frames": [
+   {
+    "2": {
+     "hide": true
+    },
+    "3": {
+     "hide": true
+    }
+   },
+   {
+    "1": {
+     "hide": true
+    },
+    "3": {
+     "hide": true
+    }
+   },
+   {
+    "1": {
+     "hide": true
+    },
+    "2": {
+     "hide": true
+    }
+   }
+  ]
+ },
+ "people": {
+  "kicker": "\u2b50 Stars",
+  "title": "Follow the people you love",
+  "body": "Follow a director, an actor or a composer, and their next films land in your calendar, month by month.",
+  "items": [
+   {
+    "card": "st-cal-1.png",
+    "crop": [
+     0,
+     0,
+     2880,
+     1800
+    ],
+    "width": 560,
+    "at": [
+     430,
+     40
+    ],
+    "id": "calendar"
+   },
+   {
+    "card": "st-p-1.png",
+    "crop": [
+     150,
+     630,
+     1200,
+     620
+    ],
+    "width": 340,
+    "at": [
+     640,
+     330
+    ],
+    "id": "person"
+   },
+   {
+    "zoom": "person",
+    "crop": [
+     550,
+     660,
+     105,
+     105
+    ],
+    "mag": 2.2
+   },
+   {
+    "zoom": "calendar",
+    "crop": [
+     10,
+     1140,
+     350,
+     590
+    ],
+    "mag": 1.6
+   }
+  ],
+  "frames": [
+   {
+    "3": {
+     "hide": true
+    }
+   },
+   {
+    "1": {
+     "card": "st-p-2.png"
+    },
+    "3": {
+     "hide": true
+    }
+   },
+   {
+    "0": {
+     "card": "st-cal-2.png"
+    },
+    "1": {
+     "card": "st-p-2.png"
+    },
+    "2": {
+     "hide": true
+    }
+   }
+  ]
+ },
+ "friends": {
+  "kicker": "\ud83c\udf7a Requests \u00b7 \ud83c\udf9e\ufe0f Wrapped",
+  "title": "Requests and a yearly wrapped",
+  "body": "Friends link their Plex account, and their watchlist becomes requests. Each year, Tautulli's watch history gives them a wrapped of their year on your server.",
+  "items": [
+   {
+    "card": "s-requests.png",
+    "crop": [
+     0,
+     0,
+     2560,
+     1800
+    ],
+    "width": 440,
+    "at": [
+     420,
+     230
+    ],
+    "id": "requests"
+   },
+   {
+    "card": "wr-tele.png",
+    "crop": [
+     0,
+     80,
+     2560,
+     1720
+    ],
+    "width": 470,
+    "at": [
+     500,
+     40
+    ],
+    "id": "wrapped"
+   },
+   {
+    "zoom": "requests",
+    "crop": [
+     18,
+     740,
+     805,
+     290
+    ],
+    "mag": 1.7
+   }
+  ],
+  "frames": [
+   {
+    "1": {
+     "card": "wr-tele.png"
+    }
+   },
+   {
+    "1": {
+     "card": "wr-videoclub.png"
+    }
+   },
+   {
+    "1": {
+     "card": "wr-labo.png"
+    }
+   },
+   {
+    "1": {
+     "card": "wr-scenario.png"
+    }
+   }
+  ]
+ },
+ "phone": {
+  "kicker": "\ud83d\udd14 Notifications",
+  "title": "In your pocket",
+  "body": "Install Sensorr on your phone like an app, and accept a proposal right from its notification.",
+  "items": [
+   {
+    "phone": "m-home.png",
+    "width": 230,
+    "at": [
+     450,
+     40
+    ]
+   },
+   {
+    "card": "s-notifications.png",
+    "crop": [
+     1270,
+     262,
+     1290,
+     440
+    ],
+    "width": 460,
+    "at": [
+     520,
+     300
+    ],
+    "id": "notif"
+   }
+  ],
+  "frames": [
+   {
+    "0": {
+     "phone": "m-home.png"
+    }
+   },
+   {
+    "0": {
+     "phone": "m-tv.png"
+    }
+   },
+   {
+    "0": {
+     "phone": "m-calendar.png"
+    }
+   },
+   {
+    "0": {
+     "phone": "m-notif.png"
+    }
+   }
+  ]
+ }
+}
