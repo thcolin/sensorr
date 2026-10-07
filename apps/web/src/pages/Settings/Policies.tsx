@@ -341,7 +341,6 @@ const PolicySettings = forwardRef<any, any>(({
       marginY: 6,
       opacity: overlay ? 0.5 : 1,
     },
-    // One row on a desktop; on a phone the sorting goes under the name, at full width
     container: {
       display: ['grid', 'flex'],
       gridTemplateColumns: 'auto minmax(0, 1fr) auto auto auto auto',

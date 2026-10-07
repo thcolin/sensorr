@@ -92,7 +92,7 @@ const AIR_DATE = {
   component: CalendarMonthPicker,
 }
 
-// Beside the month, the count, the view and the filters, as on the movies calendar; a phone gives the rest to the strip
+// Beside the month, the count, the view and the filters, as on the movies calendar
 const nav = {
   display: 'grid' as const,
   gridTemplateColumns: ['minmax(0, 1fr)', 'min-content 1fr min-content min-content min-content'],

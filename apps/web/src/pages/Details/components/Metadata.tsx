@@ -122,7 +122,6 @@ UIMetadata.styles = {
       fontSize: 7,
       color: 'gray-600',
     },
-    // A phone wraps the help rather than cut it
     '>small': {
       display: 'block',
       marginTop: 10,

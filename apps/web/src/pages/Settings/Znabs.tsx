@@ -313,7 +313,6 @@ ZnabSettings.styles = {
     flexDirection: 'column',
     marginY: 6,
   },
-  // One row on a desktop; a card on a phone, the name on top, the URL and the key at full width under it
   container: {
     display: ['grid', 'flex'],
     gridTemplateColumns: 'auto auto minmax(0, 1fr) auto',
