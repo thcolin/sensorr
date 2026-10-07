@@ -70,7 +70,7 @@ const Settings = ({ ...props }) => {
     })
   }, [])
 
-  // The nav scrolls on a short window: the page open stays in sight, the last ones included
+  // The sidebar scrolls on a short window: the page open stays in sight, the last ones included
   useEffect(() => {
     nav.current?.querySelector('a.active')?.scrollIntoView({ block: 'nearest' })
   }, [location.pathname])
@@ -121,11 +121,12 @@ Settings.styles = {
   },
   sidebar: {
     display: 'flex',
-    flexDirection: ['column-reverse', 'column'],
+    flexDirection: 'column',
     minWidth: ['100%', '21em'],
     maxWidth: ['100%', '21em'],
     paddingBottom: [0, 12],
-    overflowY: ['auto', 'unset'],
+    overflowY: 'auto',
+    overflowX: 'hidden',
     backgroundColor: 'grayLighter',
     '>h1': {
       display: ['none', 'block'],
@@ -134,11 +135,9 @@ Settings.styles = {
       margin: 12,
     },
     '>nav': {
-      flex: ['none', 1],
+      flex: ['none', '1 0 auto'],
       display: 'flex',
       flexDirection: 'column',
-      overflowY: ['unset', 'auto'],
-      overflowX: ['unset', 'hidden'],
       marginX: [2, 12],
       '>div': {
         display: 'flex',
@@ -188,6 +187,7 @@ Settings.styles = {
       },
     },
     '>footer': {
+      order: [-1, 0],
       paddingX: 4,
       paddingY: [0, 4],
       textAlign: 'center',
