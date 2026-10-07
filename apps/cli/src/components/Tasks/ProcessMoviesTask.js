@@ -272,8 +272,8 @@ const ProcessMovieTask = ({ movie, hide, dependencies = [], proposalOnly = false
             const stats = {
               total: results?.length || 0,
               matches: results?.filter(release => release.valid && !release.warning).map(({ size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, size, score, seeders, link })),
-              withdrawn: results?.filter(release => !release.valid && release.warning <= 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
-              ignored: results?.filter(release => !release.valid && release.warning > 10).map(({ reason, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, size, score, seeders, link })),
+              withdrawn: results?.filter(release => !release.valid && release.warning <= 10).map(({ reason, explanation, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, explanation, size, score, seeders, link })),
+              ignored: results?.filter(release => !release.valid && release.warning > 10).map(({ reason, explanation, size, score, seeders, link, meta: { generated: release, original } }) => ({ release, original, reason, explanation, size, score, seeders, link })),
             }
 
             state.logger.info({ message: (

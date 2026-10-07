@@ -33,7 +33,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
   const { restoreScrollPosition } = useScrollPositionContext()
   const params = useParams() as any
   const id = drawn ?? params.id
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { theme } = useThemeUI() as any
   const { metadata: persons } = usePersonsMetadataContext() as any
   const {
@@ -103,8 +103,8 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
       return null
     }
 
-    return diffusionOf(show.data, { aired: progress.aired, next: nextAirDateOf(episodes) }, (global as any)?.config?.region || 'fr-FR')
-  }, [show.data, metadataLoading, inLibrary, episodes, progress])
+    return diffusionOf(show.data, { aired: progress.aired, next: nextAirDateOf(episodes) }, i18n.language)
+  }, [show.data, metadataLoading, inLibrary, episodes, progress, i18n.language])
 
   // In the pills of the header: owned over aired, the size, then what waits on a gesture
   const summary = useMemo(() => {
@@ -123,7 +123,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
 
     return [
       <span key='pills' sx={ShowContent.styles.pills}>
-        <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.detail} />
+        <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.code ? t(`policy.diffusion.${diffusion.code}`, diffusion.values) : ''} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
         {!!pending && (
           <a href={`#seasons-${id}`} onClick={toProposals} title={t('shows.seasons.proposed', { count: pending })} sx={ShowContent.styles.anchor}>
