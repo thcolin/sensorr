@@ -93,7 +93,7 @@ export default {
   keepInTouch: {
     title: 'Keep in touch',
     heading: 'Keep In Touch',
-    subtitle: 'Quelqu’un de formidable veut suivre votre watchlist Plex et tenir compte de vos envies de films !',
+    subtitle: 'Quelqu’un de formidable veut suivre votre Watchlist Plex et tenir compte de vos envies de films !',
     tagline: 'Un magnétoscope numérique sympathique. Le magnétoscope, version moderne.',
     pin: 'Erreur lors de la récupération du code PIN Plex, contactez l’administrateur',
     refused: {

@@ -125,7 +125,7 @@ export default {
       decided: 'Tout est décidé',
       nothing: {
         title: 'Rien à décider',
-        subtitle: 'Les Jobs avec <0>proposalOnly</0> attendent ici votre choix, voir les <1>réglages des Jobs</1>',
+        subtitle: 'Les Jobs avec <0>proposalOnly</0> attendent ici votre choix, voir les <1>paramètres des Jobs</1>',
       },
     },
     end: {
@@ -217,7 +217,7 @@ export default {
       noPoster: 'Aucune affiche',
       complete: 'Tous les épisodes diffusés sont possédés',
       episode: {
-        tba: 'À venir',
+        tba: 'À annoncer',
         followed: 'Épisode {number} suivi',
         follow: 'Suivre l’épisode {number}',
       },
@@ -248,7 +248,7 @@ export default {
     },
     discover: {
       statuses: {
-        returning: 'En cours',
+        returning: 'Renouvelée',
         production: 'En production',
         planned: 'Prévue',
         pilot: 'Pilote',
