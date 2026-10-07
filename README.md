@@ -17,6 +17,8 @@ person hosting their own library at home.
 
 <sub>Library screen, captured 2026-09-18. More screens in [`docs/assets/screenshots/`](docs/assets/screenshots/).</sub>
 
+**[Try the demo](https://thcolin.github.io/sensorr/)**, login `demo` / `demo`. It runs in your browser, on TMDB's movies and shows with made-up libraries, releases and jobs: accept a proposal, follow a show, search an indexer, and your changes stay in this browser until you reset them. Jobs, Plex, friends and mails need Sensorr running on your own server.
+
 # Features
 
 - **A library with states.** A movie is `Pinned`, `Wished`, `Archived`, `Ignored` or `Missing`. `record` hunts the wished ones, `refine` and `shrink` go back over the archived ones.
