@@ -73,8 +73,6 @@ UINav.styles = {
     // The bar's `paddingX: 0` reads the first step of the scale, 2em
     paddingX: '2em',
     backgroundColor: 'primaryDark',
-    borderTop: '1px solid',
-    borderColor: 'hsla(0, 0%, 0%, 0.12)',
     fontSize: 5,
     color: 'white !important',
     '>*': {
