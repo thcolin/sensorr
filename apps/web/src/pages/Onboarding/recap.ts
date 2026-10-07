@@ -1,8 +1,7 @@
 import { CronExpressionParser } from 'cron-parser'
 import { JOB_EMOJIS, JOBS } from '@sensorr/sensorr'
+import i18n from '@sensorr/i18n'
 import { hasTMDBKey } from './needsOnboarding'
-
-const count = (n, one, many = `${one}s`) => `${n} ${n > 1 ? many : one}`
 
 // What a step left in the config: a Continue on an empty step sets nothing
 export const statusOf = (key, config) => {
@@ -10,44 +9,47 @@ export const statusOf = (key, config) => {
     case 'tmdb':
       return hasTMDBKey(config) ? 'TMDB' : null
     case 'indexers':
-      return (config.get('znabs') || []).length ? count(config.get('znabs').length, 'indexer') : null
+      return (config.get('znabs') || []).length ? i18n.t('onboarding.recap.indexers', { count: config.get('znabs').length }) : null
     case 'policies':
-      return (config.get('policies') || []).length ? count(config.get('policies').length, 'policy', 'policies') : null
+      return (config.get('policies') || []).length ? i18n.t('onboarding.recap.policies', { count: config.get('policies').length }) : null
     case 'blackhole':
-      return config.get('blackhole') ? 'Blackhole' : null
+      return config.get('blackhole') ? i18n.t('settings.sections.blackhole') : null
     case 'plex':
       return config.get('plex.token') ? 'Plex' : null
     case 'friends':
-      return (config.get('mail.host') && config.get('mail.from') && config.get('mail.url')) ? 'Mail' : null
+      return (config.get('mail.host') && config.get('mail.from') && config.get('mail.url')) ? i18n.t('settings.sections.mail') : null
   }
 }
 
-// What the missing step costs, said where it is listed
+// What the missing step costs, said where it is listed, in the language of the interface when it is read
 export const MISSING = {
-  tmdb: 'no key, nothing loads',
-  indexers: 'nothing to search yet',
-  policies: 'seeders pick the release',
-  blackhole: 'no folder to drop releases',
-  plex: 'not linked',
-  friends: 'no mail',
+  get tmdb() { return i18n.t('onboarding.recap.missing.tmdb') },
+  get indexers() { return i18n.t('onboarding.recap.missing.indexers') },
+  get policies() { return i18n.t('onboarding.recap.missing.policies') },
+  get blackhole() { return i18n.t('onboarding.recap.missing.blackhole') },
+  get plex() { return i18n.t('onboarding.recap.missing.plex') },
+  get friends() { return i18n.t('onboarding.recap.missing.friends') },
 }
 
 const whenOf = (date: Date, now: Date) => {
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((day(date) - day(now)) / 86400000)
-  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const time = date.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 
   if (days === 0) {
-    return `today at ${time}`
+    return i18n.t('onboarding.recap.today', { time })
   }
 
   if (days === 1) {
-    return `tomorrow at ${time}`
+    return i18n.t('onboarding.recap.tomorrow', { time })
   }
 
-  return days < 7
-    ? `${date.toLocaleDateString('en-GB', { weekday: 'long' })} at ${time}`
-    : `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} at ${time}`
+  return i18n.t('onboarding.recap.day', {
+    time,
+    day: days < 7
+      ? date.toLocaleDateString(i18n.language, { weekday: 'long' })
+      : date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }),
+  })
 }
 
 // The jobs that will run first, as the scheduler reads them: a paused or unreadable cron never runs

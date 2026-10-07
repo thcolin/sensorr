@@ -1,7 +1,9 @@
 import { memo, useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Bar, Warning, Icon } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
+import i18n from '@sensorr/i18n'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
 
@@ -34,13 +36,17 @@ const EmblemSide = ({ icon, label }) => (
   </span>
 )
 
-export const Emblem = ({ icon, label }) => (
-  <div sx={Emblem.styles.element}>
-    <EmblemSide icon={icon} label={label} />
-    <span sx={Emblem.styles.plus}>+</span>
-    <EmblemSide icon={<span sx={{ fontSize: '4em', lineHeight: 1 }}>🍿</span>} label='sensorr' />
-  </div>
-)
+export const Emblem = ({ icon, label }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div sx={Emblem.styles.element}>
+      <EmblemSide icon={icon} label={label} />
+      <span sx={Emblem.styles.plus}>+</span>
+      <EmblemSide icon={<span sx={{ fontSize: '4em', lineHeight: 1 }}>🍿</span>} label={t('settings.footer.name')} />
+    </div>
+  )
+}
 
 Emblem.styles = {
   element: {
@@ -80,15 +86,19 @@ Emblem.styles = {
   },
 }
 
-export const Splash = ({ emblem, step = 0 }) => (
-  <div sx={Splash.styles.element} style={{ '--step': step } as any}>
-    {emblem}
-    <div sx={{ width: '100%' }}>
-      <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
-      <p>A Friendly Digital Video Recorder. Think VCR but in modern times.</p>
+export const Splash = ({ emblem, step = 0 }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div sx={Splash.styles.element} style={{ '--step': step } as any}>
+      {emblem}
+      <div sx={{ width: '100%' }}>
+        <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
+        <p>{t('keepInTouch.tagline')}</p>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 Splash.styles = {
   page: {
@@ -137,7 +147,8 @@ Splash.styles = {
 }
 
 const KeepInTouch = () => {
-  useTitle('Keep in touch')
+  const { t } = useTranslation()
+  useTitle(t('keepInTouch.title'))
   const api = useAPI()
   const [pin, setPin] = useState(null) as any
 
@@ -226,7 +237,7 @@ const KeepInTouch = () => {
         interval = setInterval(() => check(current.id), POLL_INTERVAL)
       } catch (err) {
         console.warn(err)
-        toast.error('Error while fetching Plex PIN, contact administrator')
+        toast.error(i18n.t('keepInTouch.pin'))
       }
     }
 
@@ -259,31 +270,31 @@ const KeepInTouch = () => {
           <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
             <Warning
               emoji='🍻'
-              title='Keep In Touch'
-              subtitle='Someone wonderful want to follow your Plex watchlist and consider your movie wishes !'
+              title={t('keepInTouch.heading')}
+              subtitle={t('keepInTouch.subtitle')}
               children={(
                 <div sx={{ marginY: 0 }}>
                   {pin?.refused ? (
                     <div>
                       <p sx={{ marginTop: 2 }}>
-                        This Plex account is not one the Plex server of this Sensorr is shared with.
+                        {t('keepInTouch.refused.title')}
                       </p>
                       <br/>
                       <p sx={{ fontSize: 6 }}>
-                        Ask the person who sent you this link to share their Plex server with you, then open it again. Or sign in to Plex with the account they share it with.
+                        {t('keepInTouch.refused.help')}
                       </p>
                     </div>
                   ) : pin?.done ? (
                     <div>
                       <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />
                       <p sx={{ marginTop: 2 }}>
-                        Thanks, you've linked your Plex account with Sensorr server !
+                        {t('keepInTouch.done.title')}
                       </p>
                       <br/>
                       <p sx={{ fontSize: 6 }}>
-                        Administrator is now allowed to follow movies from your <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex "Watchlist"</a> and consider adding them to his library.
+                        <Trans t={t} i18nKey='keepInTouch.done.watchlist' components={[<a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                         <br/><br/>
-                        Sensorr server will be listed as an <a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>authorized device</a> on your <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex account</a> where you can manage it.
+                        <Trans t={t} i18nKey='keepInTouch.device' components={[<a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />, <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                       </p>
                     </div>
                   ) : (
@@ -314,18 +325,18 @@ const KeepInTouch = () => {
                           },
                         }}
                       >
-                        Go to <span sx={{ textDecoration: 'underline' }}>plex.tv/link</span>
+                        <Trans t={t} i18nKey='keepInTouch.link.go' components={[<span sx={{ textDecoration: 'underline' }} />]} />
                       </a>
                       <br/>
-                      <span>And enter below code to link your Plex account with Sensorr server :</span>
+                      <span>{t('keepInTouch.link.code')}</span>
                       <br/>
                       <code sx={{ fontSize: '4em', fontWeight: 'bold', color: 'black' }}>
                         {pin?.code || <Bar inline={true} width='2.75em' height='0.75em' />}
                       </code>
                       <p sx={{ fontSize: 6, marginTop: '2rem', textAlign: 'left', color: 'grayDark' }}>
-                        Linking your Plex account with Sensorr server will allow administrator to follow movies from your <a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex "Watchlist"</a> and consider adding them to his library.
+                        <Trans t={t} i18nKey='keepInTouch.link.watchlist' components={[<a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                         <br/><br/>
-                        Sensorr server will be listed as an <a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>authorized device</a> on your <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }}>Plex account</a> where you can manage it.
+                        <Trans t={t} i18nKey='keepInTouch.device' components={[<a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />, <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                       </p>
                     </div>
                   )}

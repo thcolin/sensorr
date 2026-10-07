@@ -1,20 +1,25 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { animations } from '@sensorr/theme'
 import { LoadingBar } from '../LoadingBar'
 
-const Loading = () => (
-  <div sx={Loading.styles.element}>
-    <LoadingBar />
-    <div sx={Loading.styles.wrapper}>
-      <div sx={Loading.styles.logo}>
-        <span>🍿📼</span>
-        <h2>sensorr</h2>
-        <small>Your Friendly Digital Video Recorder</small>
-        <p>⌛</p>
+const Loading = () => {
+  const { t } = useTranslation()
+
+  return (
+    <div sx={Loading.styles.element}>
+      <LoadingBar />
+      <div sx={Loading.styles.wrapper}>
+        <div sx={Loading.styles.logo}>
+          <span>🍿📼</span>
+          <h2>{t('settings.footer.name')}</h2>
+          <small>{t('settings.footer.tagline')}</small>
+          <p>⌛</p>
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 Loading.styles = {
   element: {

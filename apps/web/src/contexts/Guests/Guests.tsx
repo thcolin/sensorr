@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
 
@@ -16,18 +17,18 @@ export const Provider = ({ ...props }) => {
     const request = api.fetch(uri, params, init)
 
     toast.promise(request, {
-      loading: `Deleting guest "${email}"...`,
+      loading: i18n.t('contexts.guests.delete.loading', { email }),
       success: (data) => {
         setGuests(guests => Object.values(guests)
           .filter((guest: any) => guest.email !== email)
           .reduce((acc: any, guest: any) => ({ ...acc, [guest.email]: guest }), {})
         )
 
-        return `Guest "${email}" successfully deleted !`
+        return i18n.t('contexts.guests.delete.success', { email })
       },
       error: (err) => {
         console.warn(err)
-        return `Error while deleting guest "${email}"`
+        return i18n.t('contexts.guests.delete.error', { email })
       },
     })
   }, [])

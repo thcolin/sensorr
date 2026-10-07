@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { fetchShow } from '@sensorr/tmdb'
 import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
@@ -221,9 +222,9 @@ export const Provider = ({ ...props }) => {
     }
 
     await toast.promise(promise, {
-      loading: ids.length === 1 ? `Updating show metadata...` : `Updating **${ids.length}** shows metadata...`,
-      success: () => ids.length === 1 ? `Show metadata updated` : `Updated **${ids.length}** shows metadata`,
-      error: (err) => err?.failed?.length ? (ids.length === 1 ? `Release not downloaded` : `**${err.failed.length}** of **${ids.length}** shows not downloaded`) : ids.length === 1 ? `Error while updating show metadata` : `Error while updating **${ids.length}** shows metadata`,
+      loading: ids.length === 1 ? i18n.t('contexts.shows.loading') : i18n.t('contexts.shows.bulk.loading', { count: ids.length }),
+      success: () => ids.length === 1 ? i18n.t('contexts.shows.success') : i18n.t('contexts.shows.bulk.success', { count: ids.length }),
+      error: (err) => err?.failed?.length ? (ids.length === 1 ? i18n.t('contexts.shows.failed') : i18n.t('contexts.shows.bulk.failed', { failed: err.failed.length, count: ids.length })) : ids.length === 1 ? i18n.t('contexts.shows.error') : i18n.t('contexts.shows.bulk.error', { count: ids.length }),
     })
   }, [])
 
@@ -256,9 +257,9 @@ export const Provider = ({ ...props }) => {
     }
 
     await toast.promise(promise, {
-      loading: `Updating **${ids.length}** episodes...`,
-      success: () => `Updated **${ids.length}** episodes`,
-      error: () => `Error while updating **${ids.length}** episodes`,
+      loading: i18n.t('contexts.shows.episodes.loading', { count: ids.length }),
+      success: () => i18n.t('contexts.shows.episodes.success', { count: ids.length }),
+      error: () => i18n.t('contexts.shows.episodes.error', { count: ids.length }),
     })
   }, [])
 
@@ -283,11 +284,11 @@ export const Provider = ({ ...props }) => {
     })()
 
     return toast.promise(promise, {
-      loading: `Adding show to the library...`,
-      success: () => `Show added to the library`,
+      loading: i18n.t('contexts.shows.add.loading'),
+      success: () => i18n.t('contexts.shows.add.success'),
       error: (err) => {
         console.warn(err)
-        return `Error while adding show to the library`
+        return i18n.t('contexts.shows.add.error')
       },
     })
   }, [])
@@ -306,11 +307,11 @@ export const Provider = ({ ...props }) => {
     await api.fetch(uri, params, init)
     setMetadata(metadata => ({ ...metadata, [show.id]: { ...(metadata[show.id] || {}), ...body[show.id] } }))
   })(), {
-    loading: `Updating the lists of the show...`,
-    success: () => `Lists of the show updated`,
+    loading: i18n.t('contexts.shows.lists.loading'),
+    success: () => i18n.t('contexts.shows.lists.success'),
     error: (err) => {
       console.warn(err)
-      return `Error while updating the lists of the show`
+      return i18n.t('contexts.shows.lists.error')
     },
   }), [setShowMetadata])
 
@@ -333,11 +334,11 @@ export const Provider = ({ ...props }) => {
     })()
 
     await toast.promise(promise, {
-      loading: `Removing show from the library...`,
-      success: () => `Show removed from the library`,
+      loading: i18n.t('contexts.shows.remove.loading'),
+      success: () => i18n.t('contexts.shows.remove.success'),
       error: (err) => {
         console.warn(err)
-        return `Error while removing show from the library`
+        return i18n.t('contexts.shows.remove.error')
       },
     })
   }, [])
@@ -361,7 +362,7 @@ export const Provider = ({ ...props }) => {
     const show = ref.current[id]
     const count = episodesRef.current[id]?.length
 
-    if (!show || !window.confirm(`Do you want to remove "${show.name}"${typeof count === 'number' ? ` and its ${count} episodes` : ''} from the library ? Their files stay on disk`)) {
+    if (!show || !window.confirm(typeof count === 'number' ? i18n.t('contexts.shows.remove.confirmEpisodes', { name: show.name, count }) : i18n.t('contexts.shows.remove.confirm', { name: show.name }))) {
       return
     }
 
@@ -400,9 +401,9 @@ export const withShowMetadataContext = () => (WrappedComponent) => {
     const artworked = usePlexArtworks(entity, (props as any).details, metadata?.plex_artworks, loading)
     const setMetadata = useCallback((key, value) => setShowMetadata(entity.id, key, value), [entity?.id])
     const proceedRelease = useCallback((release, choice) => setShowMetadata(entity.id, 'proposal', { id: release.id, choice })
-      .catch(() => toast.error('Error while answering the proposal')), [entity?.id])
+      .catch(() => toast.error(i18n.t('contexts.shows.errors.answer'))), [entity?.id])
     const setState = useCallback(state => setShowState(entity.id, state)
-      .catch(() => metadata?.state && metadata.state !== 'ignored' && toast.error('Error while following the show')), [entity?.id, setShowState, metadata?.state])
+      .catch(() => metadata?.state && metadata.state !== 'ignored' && toast.error(i18n.t('contexts.shows.errors.follow'))), [entity?.id, setShowState, metadata?.state])
 
     return (
       <WrappedComponent

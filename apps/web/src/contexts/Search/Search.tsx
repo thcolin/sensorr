@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { useTMDB } from '../../store/tmdb'
 
 const searchContext = createContext({})
@@ -69,7 +70,7 @@ export const Provider = ({ ...props }) => {
       } catch (err) {
         setResults(null)
         console.warn(err)
-        toast.error('Error while fetching results')
+        toast.error(i18n.t('contexts.search.error'))
       } finally {
         setLoading(false)
       }

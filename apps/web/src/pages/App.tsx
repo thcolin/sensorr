@@ -86,7 +86,8 @@ const SearchPersons = Search('persons')
 const SearchShows = Search('shows')
 
 const SettingsRedirector = ({ ...props }) => {
-  useTitle('Settings')
+  const { t } = useTranslation()
+  useTitle(t('settings.title'))
   const { device } = useDeviceContext()
 
   if (device === 'mobile') {

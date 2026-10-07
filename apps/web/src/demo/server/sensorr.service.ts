@@ -1,10 +1,12 @@
 import { Observable, Subject, merge, of } from 'rxjs'
+import i18n from '@sensorr/i18n'
 import { HttpException, Injectable } from './shims/nest-common'
 
 // Stands for `apps/api/src/app/sensorr/sensorr.service.ts` in the demo build: there is no blackhole to write to and no
 // CLI to start. Accepting a release succeeds, starting a job says why it cannot
 
-export const UNAVAILABLE = 'Not available in the demo, it needs Sensorr running on your own server'
+// The demo server runs in the page, so it answers in the language of the interface
+export const unavailable = () => i18n.t('demo.unavailable')
 
 @Injectable()
 export class SensorrService {
@@ -26,15 +28,15 @@ export class SensorrService {
   }
 
   runProcess(command: string, type?: string, cron?: string): Promise<string> {
-    throw new HttpException(UNAVAILABLE, 503)
+    throw new HttpException(unavailable(), 503)
   }
 
   async runMigrate(buffer: any): Promise<string> {
-    throw new HttpException(UNAVAILABLE, 503)
+    throw new HttpException(unavailable(), 503)
   }
 
   async runRestore(buffer: any): Promise<string> {
-    throw new HttpException(UNAVAILABLE, 503)
+    throw new HttpException(unavailable(), 503)
   }
 
   runningJobs(): string[] {

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { useAuthContext } from '../Auth/Auth'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
@@ -83,7 +84,7 @@ export const Provider = ({ ...props }) => {
     } catch (err) {
       setMetadata(metadata => Object.keys(metadata).filter(_id => Number(_id) !== id).reduce((acc, curr) => ({ ...acc, [curr]: metadata[curr] }), {}))
       console.warn(err)
-      toast.error('Error while updating person metadata')
+      toast.error(i18n.t('contexts.persons.error'))
     }
   }, [setMetadata])
 

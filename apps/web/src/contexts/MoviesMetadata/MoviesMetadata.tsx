@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReconnectingEventSource from 'reconnecting-eventsource'
 import toast from 'react-hot-toast'
+import i18n from '@sensorr/i18n'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useAuthContext } from '../Auth/Auth'
 import { useConfigContext } from '../Config/Config'
@@ -203,15 +204,15 @@ export const Provider = ({ ...props }) => {
       }
 
       await toast.promise(promise, {
-        loading: `Updating movie metadata...`,
-        success: () => `Movie metadata updated`,
-        error: () => `Error while updating movie metadata`,
+        loading: i18n.t('contexts.movies.loading'),
+        success: () => i18n.t('contexts.movies.success'),
+        error: () => i18n.t('contexts.movies.error'),
       })
     } else {
       await toast.promise(promise, {
-        loading: `Updating **${ids.length}** movies metadata...`,
-        success: () => `Updated **${ids.length}** movies metadata`,
-        error: (err) => err?.failed?.length ? `**${err.failed.length}** of **${ids.length}** movies not ${key === 'proposal' ? 'downloaded' : 'updated'}` : `Error while updating **${ids.length}** movies metadata`,
+        loading: i18n.t('contexts.movies.bulk.loading', { count: ids.length }),
+        success: () => i18n.t('contexts.movies.bulk.success', { count: ids.length }),
+        error: (err) => err?.failed?.length ? i18n.t('contexts.movies.bulk.failed', { failed: err.failed.length, count: ids.length, key }) : i18n.t('contexts.movies.bulk.error', { count: ids.length }),
       })
     }
   }, [setMetadata])

@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@sensorr/ui'
 import { useTitle } from '@sensorr/utils'
 import { errorOf, useAPI } from '../../store/api'
@@ -8,7 +9,8 @@ import { useAuthContext } from '../../contexts/Auth/Auth'
 import { demo } from '../../demo'
 
 const Login = () => {
-  useTitle('Login')
+  const { t } = useTranslation()
+  useTitle(t('login.title'))
   const api = useAPI()
   const { authenticate, authenticated } = useAuthContext()
   const [ongoing, setOngoing] = useState(false)
@@ -23,11 +25,11 @@ const Login = () => {
       const { access_token } = await api.fetch(uri, params, init, { rawError: true })
       authenticate(access_token)
     } catch (err) {
-      setError((await errorOf(err)) || 'Unknown error, check Docker containers logs')
+      setError((await errorOf(err)) || t('login.unknown'))
     }
 
     setOngoing(false)
-  }, [])
+  }, [t])
 
   if (authenticated) {
     return (
@@ -41,20 +43,20 @@ const Login = () => {
       <div sx={Login.styles.wrapper}>
         <div sx={Login.styles.logo}>
           <span>🍿📼</span>
-          <h2>sensorr</h2>
-          <small>Your Friendly Digital Video Recorder</small>
+          <h2>{t('settings.footer.name')}</h2>
+          <small>{t('settings.footer.tagline')}</small>
         </div>
         {!!error && (
           <div sx={Login.styles.error}>{error}</div>
         )}
         <form sx={Login.styles.form} onSubmit={handleLogin}>
-          <input type='text' name='username' sx={{ variant: 'input.default' }} placeholder='Username' required={true} defaultValue={demo?.credentials.username} />
-          <input type='password' name='password' sx={{ variant: 'input.default' }} placeholder='Password' required={true} defaultValue={demo?.credentials.password} />
-          <Button type='submit' variant='contain' color='primary' disabled={ongoing}>{ongoing ? 'Login...' : 'Login'}</Button>
+          <input type='text' name='username' sx={{ variant: 'input.default' }} placeholder={t('login.username')} required={true} defaultValue={demo?.credentials.username} />
+          <input type='password' name='password' sx={{ variant: 'input.default' }} placeholder={t('login.password')} required={true} defaultValue={demo?.credentials.password} />
+          <Button type='submit' variant='contain' color='primary' disabled={ongoing}>{t(ongoing ? 'login.pending' : 'login.submit')}</Button>
         </form>
         {!!demo && (
           <small sx={Login.styles.tmdb}>
-            Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, but is not endorsed or certified by TMDB
+            <Trans t={t} i18nKey='login.tmdb' components={[<a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer' />]} />
           </small>
         )}
       </div>
